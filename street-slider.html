@@ -45,18 +45,18 @@
         .divider {
             position: absolute;
             top: 0;
-            right: 0;
-            width: 4px;
+            right: -8px; /* make handle overflow slightly */
+            width: 20px;  /* increased from 4px */
             height: 100%;
             cursor: col-resize;
             z-index: 10;
-            background-color: rgba(0, 0, 0, 0.15);
+            background-color: transparent; /* invisible except on hover */
+            touch-action: none;
         }
 
         .divider:hover {
-            background-color: rgba(0, 0, 0, 0.3);
+            background-color: rgba(0, 0, 0, 0.1);
         }
-
         .ruler {
             margin-top: 6px;
             position: relative;
@@ -429,6 +429,6 @@
             React.createElement(SegmentedCurbEditor)
         )
     </script>
-    <div> j</div>
+    <div> k</div>
 </body>
 </html>
