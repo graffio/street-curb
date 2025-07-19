@@ -254,7 +254,6 @@
                 })
                 setEditingIndex(null)
             }
-
             return React.createElement('div', { id: 'editor-wrapper' },
                 React.createElement('div', {
                         className: 'segment-container',
@@ -289,7 +288,19 @@
                                     setDraggingIndex(null)
                                     if (from !== undefined && from !== to) handleSwap(from, to)
                                 },
-                                onDragEnd: () => setDraggingIndex(null)
+                                onDragEnd: () => setDraggingIndex(null),
+                                onTouchStart: e => {
+                                    if (e.target.classList.contains('divider')) return
+                                    dragData.current = { index: i }
+                                    setDraggingIndex(i)
+                                },
+                                onTouchEnd: e => {
+                                    const from = dragData.current.index
+                                    const to = i
+                                    setDraggingIndex(null)
+                                    if (from !== undefined && from !== to) handleSwap(from, to)
+                                    dragData.current = {}
+                                }
                             },
                             i < segments.length - 1 && React.createElement(DraggableDivider, {
                                 onDrag: delta => {
@@ -368,6 +379,7 @@
 
         function DraggableDivider ({ onDrag }) {
             const startX = useRef(null)
+
             const onMouseDown = e => {
                 e.stopPropagation()
                 e.preventDefault()
@@ -388,9 +400,28 @@
                 window.addEventListener('mouseup', onUp)
             }
 
+            const onTouchStart = e => {
+                startX.current = e.touches[0].clientX
+                const onTouchMove = te => {
+                    if (startX.current !== null) {
+                        const delta = te.touches[0].clientX - startX.current
+                        startX.current = te.touches[0].clientX
+                        onDrag(delta)
+                    }
+                }
+                const onTouchEnd = () => {
+                    startX.current = null
+                    window.removeEventListener('touchmove', onTouchMove)
+                    window.removeEventListener('touchend', onTouchEnd)
+                }
+                window.addEventListener('touchmove', onTouchMove, { passive: false })
+                window.addEventListener('touchend', onTouchEnd)
+            }
+
             return React.createElement('div', {
                 className: 'divider',
-                onMouseDown
+                onMouseDown,
+                onTouchStart
             })
         }
 
@@ -398,5 +429,6 @@
             React.createElement(SegmentedCurbEditor)
         )
     </script>
+    <div> j</div>
 </body>
 </html>
