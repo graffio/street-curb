@@ -23,6 +23,9 @@
             display: flex;
             overflow: hidden;
             user-select: none;
+            touch-action: none;     /* 🔹 disables native scroll during drag */
+            user-select: none;      /* 🔹 disables accidental text selection */
+
         }
 
         .segment {
@@ -290,9 +293,10 @@
                                 },
                                 onDragEnd: () => setDraggingIndex(null),
                                 onTouchStart: e => {
-                                    if (e.target.classList.contains('divider')) return
-                                    dragData.current = { index: i }
-                                    setDraggingIndex(i)
+                                    if (e.target.classList.contains('divider')) return;
+                                    e.preventDefault();           // 🔹 prevent default scroll
+                                    dragData.current = { index: i };
+                                    setDraggingIndex(i);
                                 },
                                 onTouchEnd: e => {
                                     const from = dragData.current.index
@@ -429,6 +433,6 @@
             React.createElement(SegmentedCurbEditor)
         )
     </script>
-    <div> k</div>
+    <div> l</div>
 </body>
 </html>
