@@ -57,7 +57,8 @@ const DraggableDivider = ({ onDrag }) => {
 
     return (
         <div
-            className="divider"
+            className="draggable-divider"
+            style={{ width: '100%', height: '100%', cursor: 'col-resize', touchAction: 'none' }}
             onMouseDown={e => handleMouseDown(startX, e)}
             onTouchStart={e => handleTouchStart(startX, e)}
         />
