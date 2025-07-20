@@ -1,0 +1,15 @@
+*.log
+.DS_Store
+.idea
+.nyc_output
+.tap
+node_modules
+
+# Vite build files
+*.timestamp-*.mjs
+vite.config.js.timestamp-*
+dist
+
+# Claude Code settings
+.claude
+
