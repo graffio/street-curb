@@ -559,7 +559,6 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
 
     return (
         <>
-            <h1>Segmented Curb Editor</h1>
             <div id="editor-wrapper">
                 <div className={containerClassName} ref={containerRef}>
                     {segments.map((segment, i) =>
