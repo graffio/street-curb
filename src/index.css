@@ -29,6 +29,12 @@ h1 {
     touch-action: manipulation;
 }
 
+.segment-container.vertical {
+    height: 400px;
+    width: 80px;
+    flex-direction: column;
+}
+
 .drag-preview {
     position: absolute;
     border-radius: 6px;
@@ -77,6 +83,14 @@ h1 {
     justify-content: center;
 }
 
+.segment-container.vertical .divider {
+    top: auto;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    cursor: row-resize;
+}
+
 .divider:hover {
     /*background-color: rgba(0, 0, 0, 0.1);*/
 }
@@ -85,6 +99,10 @@ h1 {
     width: 100%;
     height: 100%;
     cursor: col-resize;
+}
+
+.segment-container.vertical .divider .draggable-divider {
+    cursor: row-resize;
 }
 
 .divider::before {
@@ -102,9 +120,19 @@ h1 {
     transition: all 0.2s ease;
 }
 
+.segment-container.vertical .divider::before {
+    width: 60%;
+    height: 4px;
+}
+
 .divider:hover::before {
     background-color: rgba(255, 255, 255, 1);
     height: 70%;
+}
+
+.segment-container.vertical .divider:hover::before {
+    width: 70%;
+    height: 4px;
 }
 
 .divider::after {
@@ -122,10 +150,26 @@ h1 {
     z-index: -1;
 }
 
+.segment-container.vertical ~ .ruler {
+    position: absolute;
+    top: 0;
+    left: -20px;
+    margin: 0;
+    height: 400px;
+    width: 1.2em;
+    flex-direction: column;
+}
+
 .ruler .tick {
     position: absolute;
     transform: translateX(-50%);
     white-space: nowrap;
+}
+
+.segment-container.vertical ~ .ruler .tick {
+    transform: translateY(-50%);
+    left: auto;
+    right: 0;
 }
 
 .label-layer {
@@ -136,9 +180,15 @@ h1 {
     pointer-events: none;
 }
 
+.segment-container.vertical ~ .label-layer {
+    top: 0;
+    left: 85px;
+    width: auto;
+    height: 400px;
+}
+
 .floating-label {
     position: absolute;
-    transform: translateX(-50%);
     white-space: nowrap;
     padding: 2px 4px;
     border-radius: 4px;
@@ -151,6 +201,12 @@ h1 {
     align-items: center;
     justify-content: center;
     min-width: 60px;
+}
+
+.segment-container.vertical ~ .label-layer .floating-label {
+    white-space: nowrap;
+    writing-mode: initial;
+    text-orientation: initial;
 }
 
 .dropdown {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { COLORS, initialSegments, STREET_LENGTH } from '../constants.js'
+import { calculateLabelPositions } from '../label-positioning.js'
 import DraggableDivider from './DraggableDivider.jsx'
 
 /**
@@ -19,9 +20,12 @@ import DraggableDivider from './DraggableDivider.jsx'
 
 /**
  * Main component for editing segmented curb configurations with drag and drop functionality
- * @sig SegmentedCurbEditor :: () -> JSXElement
+ * @sig SegmentedCurbEditor :: ({ orientation?: String }) -> JSXElement
+ * orientation = 'horizontal' | 'vertical'
  */
-const SegmentedCurbEditor = () => {
+const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
+    const isVertical = orientation === 'vertical'
+
     /**
      * Creates cumulative position markers for ruler display
      * @sig buildTickPoints :: [Segment] -> [Number]
@@ -32,37 +36,14 @@ const SegmentedCurbEditor = () => {
     }
 
     /**
-     * Calculates vertical offsets for overlapping labels to prevent visual conflicts
-     * @sig calculateLabelOffsets :: { current: [Element] } -> [Number]
-     */
-    const calculateLabelOffsets = labelRefs => {
-        const boxes = labelRefs.current.map(el => el?.getBoundingClientRect())
-        const offsets = new Array(boxes.length).fill(0)
-
-        const hasOverlap = (a, b) => !(a.right < b.left || a.left > b.right)
-
-        for (let i = 0; i < boxes.length; i++) {
-            if (!boxes[i]) continue
-
-            for (let j = 0; j < i; j++) {
-                if (!boxes[j]) continue
-                if (!hasOverlap(boxes[i], boxes[j])) continue
-                if (offsets[i] <= offsets[j]) offsets[i] = offsets[j] + 1
-            }
-        }
-
-        return offsets
-    }
-
-    /**
      * Creates handler for divider dragging that resizes adjacent segments
      * @sig buildDragHandler :: (Number, SetStateFn) -> (Number, Number, Number) -> Void
      */
     const buildDragHandler = (total, setSegments) =>
         useCallback(
-            (index, deltaPx, containerWidth) => {
+            (index, deltaPx, containerSize) => {
                 const updateSegments = prev => {
-                    const pxPerUnit = containerWidth / total
+                    const pxPerUnit = containerSize / total
                     const deltaUnits = deltaPx / pxPerUnit
                     const left = prev[index]
                     const right = prev[index + 1]
@@ -238,20 +219,20 @@ const SegmentedCurbEditor = () => {
     }
 
     /**
-     * Determines which segment index is under the given touch x-coordinate
+     * Determines which segment index is under the given touch coordinate
      * @sig findSegmentUnderTouch :: (Element, Number) -> Number
      */
-    const findSegmentUnderTouch = (container, touchX) => {
-        let totalWidth = 0
+    const findSegmentUnderTouch = (container, touchCoord) => {
+        let totalSize = 0
         const segments = container.children
 
         for (let i = 0; i < segments.length; i++) {
             const segment = segments[i]
             if (!segment.classList.contains('segment')) continue
 
-            const segmentWidth = segment.offsetWidth
-            if (touchX >= totalWidth && touchX <= totalWidth + segmentWidth) return i
-            totalWidth += segmentWidth
+            const segmentSize = isVertical ? segment.offsetHeight : segment.offsetWidth
+            if (touchCoord >= totalSize && touchCoord <= totalSize + segmentSize) return i
+            totalSize += segmentSize
         }
 
         return -1
@@ -271,14 +252,14 @@ const SegmentedCurbEditor = () => {
             if (!container) return
 
             const rect = container.getBoundingClientRect()
-            const x = touch.clientX - rect.left
+            const coord = isVertical ? touch.clientY - rect.top : touch.clientX - rect.left
 
             setDragPreviewPos({
                 x: touch.clientX - rect.left - dragData.current.offsetX,
                 y: touch.clientY - rect.top - dragData.current.offsetY,
             })
 
-            dragData.current.targetIndex = findSegmentUnderTouch(container, x)
+            dragData.current.targetIndex = findSegmentUnderTouch(container, coord)
         }
 
         const handleTouchEnd = e => {
@@ -314,14 +295,19 @@ const SegmentedCurbEditor = () => {
         containerRef,
         setDragPreviewPos,
     ) => {
-        const width = (segment.length / total) * 100
+        const size = (segment.length / total) * 100
         const isDragging = draggingIndex === i
+
+        const segmentStyle = {
+            backgroundColor: COLORS[segment.type] || '#999',
+            ...(isVertical ? { height: `${size}%`, width: '100%' } : { width: `${size}%`, height: '100%' }),
+        }
 
         return (
             <div
                 key={segment.id}
                 className={`segment${isDragging ? ' dragging' : ''}`}
-                style={{ width: `${width}%`, backgroundColor: COLORS[segment.type] || '#999' }}
+                style={segmentStyle}
                 draggable
                 onDragStart={buildDragStartHandler(dragData, setDraggingIndex, i)}
                 onDragOver={e => e.preventDefault()}
@@ -339,33 +325,39 @@ const SegmentedCurbEditor = () => {
     const renderDivider = (i, segments, total, handleDrag, containerRef) => {
         if (i >= segments.length - 1) return null
 
-        const calculateLeftPercent = () => {
-            let leftPercent = 0
+        const calculatePositionPercent = () => {
+            let positionPercent = 0
             for (let j = 0; j <= i; j++) {
-                leftPercent += (segments[j].length / total) * 100
+                positionPercent += (segments[j].length / total) * 100
             }
-            return leftPercent
+            return positionPercent
         }
 
-        const leftPercent = calculateLeftPercent()
+        const positionPercent = calculatePositionPercent()
+
+        const dividerStyle = {
+            position: 'absolute',
+            ...(isVertical
+                ? { top: `${positionPercent}%`, transform: 'translateY(-50%)', left: 0, width: '100%', height: '40px' }
+                : {
+                      left: `${positionPercent}%`,
+                      transform: 'translateX(-50%)',
+                      top: 0,
+                      width: '40px',
+                      height: '100%',
+                  }),
+        }
 
         return (
-            <div
-                key={`divider-${i}`}
-                className="divider"
-                style={{
-                    left: `${leftPercent}%`,
-                    transform: 'translateX(-50%)',
-                    position: 'absolute',
-                    top: 0,
-                    width: '40px',
-                    height: '100%',
-                }}
-            >
+            <div key={`divider-${i}`} className="divider" style={dividerStyle}>
                 <DraggableDivider
+                    orientation={orientation}
                     onDrag={delta => {
                         if (!containerRef.current) return
-                        handleDrag(i, delta, containerRef.current.offsetWidth)
+                        const containerSize = isVertical
+                            ? containerRef.current.offsetHeight
+                            : containerRef.current.offsetWidth
+                        handleDrag(i, delta, containerSize)
                     }}
                 />
             </div>
@@ -407,7 +399,7 @@ const SegmentedCurbEditor = () => {
         i,
         tickPoints,
         total,
-        labelOffsets,
+        smartLabelPositions,
         labelRefs,
         editingIndex,
         setEditingIndex,
@@ -415,8 +407,20 @@ const SegmentedCurbEditor = () => {
         handleAddLeft,
     ) => {
         const mid = tickPoints[i] + s.length / 2
-        const leftPct = (mid / total) * 100
+        const positionPct = (mid / total) * 100
         const feet = Math.round((s.length / total) * STREET_LENGTH)
+
+        const labelStyle = {
+            backgroundColor: COLORS[s.type] || '#999',
+            ...(isVertical
+                ? {
+                      top: `${positionPct}%`,
+                      left: `${smartLabelPositions[i] || 0}px`,
+                      transform: 'translateY(-50%)',
+                      width: uniformLabelWidth > 0 ? `${uniformLabelWidth}px` : 'auto',
+                  }
+                : { left: `${positionPct}%`, top: `${smartLabelPositions[i] || 0}em`, transform: 'translateX(-50%)' }),
+        }
 
         const labelContent =
             editingIndex === i ? (
@@ -434,11 +438,7 @@ const SegmentedCurbEditor = () => {
             <div
                 key={`label-${s.id}`}
                 className="floating-label"
-                style={{
-                    left: `${leftPct}%`,
-                    top: `${labelOffsets[i] * 1.5}em`,
-                    backgroundColor: COLORS[s.type] || '#999',
-                }}
+                style={labelStyle}
                 ref={el => (labelRefs.current[i] = el)}
                 onClick={buildLabelClickHandler(editingIndex, setEditingIndex, i)}
             >
@@ -454,8 +454,11 @@ const SegmentedCurbEditor = () => {
     const renderTick = (p, i, total) => {
         const ft = Math.round((p / total) * STREET_LENGTH)
         const pct = (p / total) * 100
+
+        const tickStyle = isVertical ? { top: `${pct}%` } : { left: `${pct}%` }
+
         return (
-            <div key={`tick-${i}`} className="tick" style={{ left: `${pct}%` }}>
+            <div key={`tick-${i}`} className="tick" style={tickStyle}>
                 {ft} ft
             </div>
         )
@@ -469,27 +472,25 @@ const SegmentedCurbEditor = () => {
         if (draggingIndex === null) return null
 
         const segment = segments[draggingIndex]
-        return (
-            <div
-                className="drag-preview"
-                style={{
-                    position: 'absolute',
-                    left: `${dragPreviewPos.x}px`,
-                    top: `${dragPreviewPos.y}px`,
-                    width: `${(segment.length / total) * 100}%`,
-                    height: '80px',
-                    backgroundColor: COLORS[segment.type] || '#999',
-                    border: '2px solid rgba(255, 255, 255, 0.8)',
-                    borderRadius: '6px',
-                    opacity: 0.9,
-                    zIndex: 200,
-                    pointerEvents: 'none',
-                    transform: 'scale(1.08)',
-                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
-                    filter: 'brightness(1.1)',
-                }}
-            />
-        )
+        const size = (segment.length / total) * 100
+
+        const previewStyle = {
+            position: 'absolute',
+            left: `${dragPreviewPos.x}px`,
+            top: `${dragPreviewPos.y}px`,
+            backgroundColor: COLORS[segment.type] || '#999',
+            border: '2px solid rgba(255, 255, 255, 0.8)',
+            borderRadius: '6px',
+            opacity: 0.9,
+            zIndex: 200,
+            pointerEvents: 'none',
+            transform: 'scale(1.08)',
+            boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
+            filter: 'brightness(1.1)',
+            ...(isVertical ? { width: '80px', height: `${size}%` } : { width: `${size}%`, height: '80px' }),
+        }
+
+        return <div className="drag-preview" style={previewStyle} />
     }
 
     /**
@@ -524,7 +525,8 @@ const SegmentedCurbEditor = () => {
     const [dragPreviewPos, setDragPreviewPos] = useState({ x: 0, y: 0 })
     const containerRef = useRef(null)
     const labelRefs = useRef([])
-    const [labelOffsets, setLabelOffsets] = useState([])
+    const [smartLabelPositions, setSmartLabelPositions] = useState([])
+    const [uniformLabelWidth, setUniformLabelWidth] = useState(0)
     const dragData = useRef({})
 
     // Derived values and handlers
@@ -542,14 +544,24 @@ const SegmentedCurbEditor = () => {
     )
 
     useEffect(() => {
-        setLabelOffsets(calculateLabelOffsets(labelRefs))
-    }, [segments])
+        // Use requestAnimationFrame to ensure labels are rendered before calculating offsets
+        const calculateOffsets = () => {
+            const { positions, contentWidth } = calculateLabelPositions(isVertical, labelRefs.current)
+            setSmartLabelPositions(positions)
+            setUniformLabelWidth(contentWidth) // Store contentWidth for CSS
+        }
+
+        const timeoutId = setTimeout(calculateOffsets, 0)
+        return () => clearTimeout(timeoutId)
+    }, [segments, isVertical])
+
+    const containerClassName = `segment-container ${isVertical ? 'vertical' : 'horizontal'}`
 
     return (
         <>
             <h1>Segmented Curb Editor</h1>
             <div id="editor-wrapper">
-                <div className="segment-container" ref={containerRef}>
+                <div className={containerClassName} ref={containerRef}>
                     {segments.map((segment, i) =>
                         renderSegment(
                             segment,
@@ -575,7 +587,7 @@ const SegmentedCurbEditor = () => {
                             i,
                             tickPoints,
                             total,
-                            labelOffsets,
+                            smartLabelPositions,
                             labelRefs,
                             editingIndex,
                             setEditingIndex,

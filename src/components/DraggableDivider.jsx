@@ -1,20 +1,24 @@
 import { useRef } from 'react'
 
 /**
- * @sig DraggableDivider :: ({ onDrag: Function }) -> JSXElement
+ * @sig DraggableDivider :: ({ onDrag: Function, orientation?: String }) -> JSXElement
  * Creates a draggable divider handle for resizing segments
+ * orientation = 'horizontal' | 'vertical'
  */
-const DraggableDivider = ({ onDrag }) => {
-    const createMouseHandlers = startX => {
+const DraggableDivider = ({ onDrag, orientation = 'horizontal' }) => {
+    const isVertical = orientation === 'vertical'
+
+    const createMouseHandlers = startCoord => {
         const onMove = e => {
-            if (startX.current === null) return
-            const delta = e.clientX - startX.current
-            startX.current = e.clientX
+            if (startCoord.current === null) return
+            const currentCoord = isVertical ? e.clientY : e.clientX
+            const delta = currentCoord - startCoord.current
+            startCoord.current = currentCoord
             onDrag(delta)
         }
 
         const onUp = () => {
-            startX.current = null
+            startCoord.current = null
             window.removeEventListener('mousemove', onMove)
             window.removeEventListener('mouseup', onUp)
         }
@@ -23,16 +27,17 @@ const DraggableDivider = ({ onDrag }) => {
         window.addEventListener('mouseup', onUp)
     }
 
-    const createTouchHandlers = startX => {
+    const createTouchHandlers = startCoord => {
         const onTouchMove = e => {
-            if (startX.current === null) return
-            const delta = e.touches[0].clientX - startX.current
-            startX.current = e.touches[0].clientX
+            if (startCoord.current === null) return
+            const currentCoord = isVertical ? e.touches[0].clientY : e.touches[0].clientX
+            const delta = currentCoord - startCoord.current
+            startCoord.current = currentCoord
             onDrag(delta)
         }
 
         const onTouchEnd = () => {
-            startX.current = null
+            startCoord.current = null
             window.removeEventListener('touchmove', onTouchMove)
             window.removeEventListener('touchend', onTouchEnd)
         }
@@ -41,26 +46,27 @@ const DraggableDivider = ({ onDrag }) => {
         window.addEventListener('touchend', onTouchEnd)
     }
 
-    const handleMouseDown = (startX, e) => {
+    const handleMouseDown = (startCoord, e) => {
         e.stopPropagation()
         e.preventDefault()
-        startX.current = e.clientX
-        createMouseHandlers(startX)
+        startCoord.current = isVertical ? e.clientY : e.clientX
+        createMouseHandlers(startCoord)
     }
 
-    const handleTouchStart = (startX, e) => {
-        startX.current = e.touches[0].clientX
-        createTouchHandlers(startX)
+    const handleTouchStart = (startCoord, e) => {
+        startCoord.current = isVertical ? e.touches[0].clientY : e.touches[0].clientX
+        createTouchHandlers(startCoord)
     }
 
-    const startX = useRef(null)
+    const startCoord = useRef(null)
+    const cursor = isVertical ? 'row-resize' : 'col-resize'
 
     return (
         <div
             className="draggable-divider"
-            style={{ width: '100%', height: '100%', cursor: 'col-resize', touchAction: 'none' }}
-            onMouseDown={e => handleMouseDown(startX, e)}
-            onTouchStart={e => handleTouchStart(startX, e)}
+            style={{ width: '100%', height: '100%', cursor, touchAction: 'none' }}
+            onMouseDown={e => handleMouseDown(startCoord, e)}
+            onTouchStart={e => handleTouchStart(startCoord, e)}
         />
     )
 }
