@@ -1,38 +1,24 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
+import CurbTable from './components/CurbTable.jsx'
 import MapboxMap from './components/MapboxMap.jsx'
 import SegmentedCurbEditor from './components/SegmentedCurbEditor.jsx'
-import { initialSegments, STREET_LENGTH } from './constants.js'
 import './index.css'
 
 const accessToken = 'pk.eyJ1IjoiZ3JhZmZpbyIsImEiOiJjbWRkZ3lkNjkwNG9xMmpuYmt4bHd2YTVvIn0.lzlmjq8mnXOSKB18lKLBpg'
 
 const App = () => {
-    const [isEditorVisible, setIsEditorVisible] = useState(false)
     const [selectedBlockface, setSelectedBlockface] = useState(null)
-    const [currentSegments, setCurrentSegments] = useState(null)
+    const [currentSegments, setCurrentSegments] = useState([])
+    const [isEditorVisible, setIsEditorVisible] = useState(false)
+    const [showCurbTable, setShowCurbTable] = useState(false)
 
-    /**
-     * Scales initial segments to match actual blockface length
-     * @sig scaleInitialSegments :: (Number, Number) -> [Segment]
-     */
-    const scaleInitialSegments = (actualLength, defaultLength = STREET_LENGTH) => {
-        const scale = actualLength / defaultLength
-        return initialSegments.map(segment => ({ ...segment, length: Math.round(segment.length * scale) }))
-    }
-
-    /**
-     * Handles blockface selection from map
+    /** Handles blockface selection from map
      * @sig handleBlockfaceSelect :: (String, Feature, Number) -> Void
      */
-    const handleBlockfaceSelect = useCallback((blockfaceId, feature, length) => {
-        console.log('Blockface selected:', blockfaceId, 'Length:', length, 'feet')
-
-        // Create initial segments scaled to blockface length
-        const initialScaledSegments = scaleInitialSegments(length)
-
-        setSelectedBlockface({ id: blockfaceId, feature, length })
-        setCurrentSegments(initialScaledSegments)
+    const handleBlockfaceSelect = useCallback(blockfaceData => {
+        console.log('Selected blockface:', blockfaceData)
+        setSelectedBlockface(blockfaceData)
         setIsEditorVisible(true)
     }, [])
 
@@ -41,6 +27,7 @@ const App = () => {
      * @sig handleSegmentsChange :: [Segment] -> Void
      */
     const handleSegmentsChange = useCallback(segments => {
+        console.log('Segments updated:', segments)
         setCurrentSegments(segments)
     }, [])
 
@@ -48,11 +35,13 @@ const App = () => {
      * Closes the editor
      * @sig handleEditorClose :: () -> Void
      */
-    const handleEditorClose = () => {
+    const handleEditorClose = useCallback(() => {
         setIsEditorVisible(false)
-        setSelectedBlockface(null)
-        setCurrentSegments(null)
-    }
+    }, [])
+
+    const toggleCurbTable = useCallback(() => {
+        setShowCurbTable(prev => !prev)
+    }, [])
 
     return (
         <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -149,16 +138,54 @@ const App = () => {
                             </button>
                         </div>
 
+                        {/* Editor Toggle */}
+                        {selectedBlockface && (
+                            <div
+                                style={{
+                                    marginBottom: '16px',
+                                    padding: '12px',
+                                    backgroundColor: '#f8f9fa',
+                                    borderRadius: '6px',
+                                }}
+                            >
+                                <label
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={showCurbTable}
+                                        onChange={toggleCurbTable}
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    Show Table View (for field data collection)
+                                </label>
+                            </div>
+                        )}
+
                         {/* Editor Content */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                            {selectedBlockface && (
-                                <SegmentedCurbEditor
-                                    orientation="vertical"
-                                    blockfaceLength={selectedBlockface.length}
-                                    blockfaceId={selectedBlockface.id}
-                                    onSegmentsChange={handleSegmentsChange}
-                                />
-                            )}
+                            {selectedBlockface &&
+                                (showCurbTable ? (
+                                    <div style={{ flex: 1, overflow: 'auto' }}>
+                                        <CurbTable
+                                            blockfaceLength={selectedBlockface.length}
+                                            onSegmentsChange={handleSegmentsChange}
+                                        />
+                                    </div>
+                                ) : (
+                                    <SegmentedCurbEditor
+                                        orientation="vertical"
+                                        blockfaceLength={selectedBlockface.length}
+                                        blockfaceId={selectedBlockface.id}
+                                        onSegmentsChange={handleSegmentsChange}
+                                    />
+                                ))}
                         </div>
                     </div>
                 )}

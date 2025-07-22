@@ -268,3 +268,374 @@ h1 {
         transform: rotate(0deg);
     }
 }
+
+/* CurbTable Component Styles - Matching SegmentedCurbEditor Design */
+.curb-table-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    background-color: transparent;
+    font-size: 13px;
+    user-select: none;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.curb-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ccc;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.curb-table-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    flex-shrink: 0;
+}
+
+.blockface-info {
+    font-size: 13px;
+    color: #666;
+    font-weight: normal;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.curb-table-wrapper {
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    overflow: auto;
+    background: white;
+    max-width: 100%;
+}
+
+.curb-table {
+    width: 100%;
+    min-width: 300px;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+.curb-table th {
+    background-color: #f8f9fa;
+    padding: 8px 6px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    color: #555;
+    border-bottom: 1px solid #ccc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.curb-table-row {
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.1s ease;
+}
+
+.curb-table-row:hover {
+    background-color: #f8f9fa;
+}
+
+.curb-table-row:last-child {
+    border-bottom: none;
+}
+
+.curb-table-row.current-row {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid #007bff;
+}
+
+.curb-table td {
+    padding: 6px;
+    vertical-align: middle;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Type Column Styling - Matching floating-label design */
+.type-cell {
+    position: relative;
+    width: 30%;
+    min-width: 80px;
+    padding: 4px;
+}
+
+.type-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.type-button {
+    width: 100%;
+    min-height: 32px;
+    padding: 2px 4px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+}
+
+.type-button:hover {
+    transform: translateY(-1px);
+}
+
+.type-button:active {
+    transform: translateY(0);
+}
+
+/* Dropdown Styling - Matching existing dropdown */
+.curb-dropdown {
+    position: fixed;
+    z-index: 9999;
+    background-color: #666;
+    border: 1px solid rgba(0, 0, 0, 0.75);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+    color: white;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.curb-dropdown-item {
+    padding: 4px 12px;
+    cursor: pointer;
+    color: white;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.1s ease;
+}
+
+.curb-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.curb-dropdown-item:active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.unknown-option {
+    background-color: #666;
+    color: white;
+}
+
+/* Length and Start Columns */
+.length-cell,
+.start-cell {
+    font-weight: normal;
+    color: #333;
+    text-align: right;
+    width: 20%;
+    min-width: 50px;
+    font-size: 13px;
+}
+
+/* Add Button Column - Matching divider styling */
+.add-cell {
+    width: 15%;
+    min-width: 40px;
+    text-align: center;
+    padding: 4px;
+}
+
+.add-button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ccc;
+    background-color: white;
+    color: #666;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-button:hover {
+    background-color: #f0f0f0;
+    color: #333;
+    transform: translateY(-1px);
+}
+
+.add-button:active {
+    transform: translateY(0);
+}
+
+.add-button:disabled {
+    border-color: #e0e0e0;
+    color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.add-button:disabled:hover {
+    background-color: white;
+    color: #ccc;
+    transform: none;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 480px) {
+    .curb-table-container {
+        font-size: 12px;
+    }
+
+    .curb-table-header h3 {
+        font-size: 14px;
+    }
+
+    .blockface-info {
+        font-size: 12px;
+    }
+
+    .curb-table {
+        font-size: 12px;
+    }
+
+    .curb-table th {
+        padding: 6px 4px;
+        font-size: 11px;
+    }
+
+    .curb-table td {
+        padding: 4px;
+    }
+
+    .type-button {
+        min-height: 28px;
+        font-size: 12px;
+        padding: 2px 3px;
+    }
+
+    .curb-dropdown-item {
+        padding: 4px 8px;
+        font-size: 12px;
+        min-height: 26px;
+    }
+
+    .add-button {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+}
+
+/* Extra small screens (iPhone 14 mini and smaller) */
+@media (max-width: 375px) {
+    .curb-table-header {
+        margin-bottom: 8px;
+    }
+
+    .curb-table-header h3 {
+        font-size: 13px;
+    }
+
+    .curb-table {
+        font-size: 11px;
+    }
+
+    .curb-table th,
+    .curb-table td {
+        padding: 3px 2px;
+    }
+
+    .type-button {
+        font-size: 11px;
+        min-height: 26px;
+    }
+
+    .add-button {
+        width: 26px;
+        height: 26px;
+        font-size: 13px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .curb-table-wrapper {
+        background: #1a1a1a;
+        border-color: #444;
+    }
+
+    .curb-table-header h3 {
+        color: #ffffff;
+    }
+
+    .blockface-info {
+        color: #cccccc;
+    }
+
+    .curb-table th {
+        background-color: #2a2a2a;
+        color: #ffffff;
+        border-bottom-color: #444;
+    }
+
+    .curb-table-row:hover {
+        background-color: #2a2a2a;
+    }
+
+    .curb-table-row {
+        border-bottom-color: #444;
+    }
+
+    .curb-table-row.current-row {
+        background-color: rgba(0, 123, 255, 0.2);
+        border-left-color: #1e90ff;
+    }
+
+    .length-cell,
+    .start-cell {
+        color: #cccccc;
+    }
+
+    .add-button {
+        background-color: #2a2a2a;
+        border-color: #666;
+        color: #cccccc;
+    }
+
+    .add-button:hover {
+        background-color: #333;
+        color: #ffffff;
+    }
+
+    .add-button:disabled {
+        background-color: #1a1a1a;
+        border-color: #444;
+        color: #666;
+    }
+}
