@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Segmented Curb Editor</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+        }
+
+        #editor-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .segment-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            display: flex;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;     /* 🔹 disables native scroll during drag */
+            user-select: none;      /* 🔹 disables accidental text selection */
+
+        }
+
+        .segment {
+            height: 100%;
+            min-width: 0;
+            overflow: hidden;
+            flex-shrink: 1;
+            position: relative;
+            cursor: grab;
+            transition: transform 0.1s ease;
+        }
+
+        .segment.dragging {
+            opacity: 0.7;
+            z-index: 100;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .divider {
+            position: absolute;
+            top: 0;
+            right: -8px; /* make handle overflow slightly */
+            width: 20px;  /* increased from 4px */
+            height: 100%;
+            cursor: col-resize;
+            z-index: 10;
+            background-color: transparent; /* invisible except on hover */
+            touch-action: none;
+        }
+
+        .divider:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        .ruler {
+            margin-top: 6px;
+            position: relative;
+            display: flex;
+            width: 100%;
+            font-size: 12px;
+            color: #444;
+            height: 1.2em;
+            z-index: -1;
+        }
+
+        .ruler .tick {
+            position: absolute;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        .label-layer {
+            position: absolute;
+            top: -2.5em;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        .floating-label {
+            position: absolute;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 1px solid rgba(0, 0, 0, 0.25);
+            color: white;
+            pointer-events: auto;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 100%;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(0, 0, 0, 0.75);
+            z-index: 999;
+            white-space: nowrap;
+            color: white;
+        }
+
+        .dropdown-item {
+            padding: 4px 12px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>Segmented Curb Editor</h1>
+    <div id="root" style="padding-top: 40px"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <script type="text/javascript">
+        const { useState, useCallback, useRef, useEffect } = React
+        const STREET_LENGTH = 240
+
+        const initialSegments = [
+            { id: 's1', type: 'Driveway', length: 20 },
+            { id: 's2', type: 'Parking', length: 40 },
+            { id: 's3', type: 'Curb Cut', length: 10 },
+            { id: 's4', type: 'Driveway', length: 30 },
+            { id: 's5', type: 'Parking', length: 60 },
+            { id: 's6', type: 'Loading', length: 80 },
+        ]
+
+        const COLORS = {
+            Driveway: '#f4a261',
+            Parking: '#2a9d8f',
+            'Curb Cut': '#e76f51',
+            Loading: '#264653',
+        }
+
+        function SegmentedCurbEditor () {
+            const [segments, setSegments] = useState(initialSegments)
+            const [draggingIndex, setDraggingIndex] = useState(null)
+            const [editingIndex, setEditingIndex] = useState(null)
+            const containerRef = useRef(null)
+            const labelRefs = useRef([])
+            const [labelOffsets, setLabelOffsets] = useState([])
+            const dragData = useRef({})
+
+            const total = segments.reduce((sum, s) => sum + s.length, 0)
+
+            const handleDrag = useCallback((index, deltaPx, containerWidth) => {
+                setSegments(prev => {
+                    const next = [...prev]
+                    const pxPerUnit = containerWidth / total
+                    const deltaUnits = deltaPx / pxPerUnit
+
+                    const left = next[index]
+                    const right = next[index + 1]
+                    if (!left || !right) return prev
+
+                    const newLeftLength = left.length + deltaUnits
+                    const newRightLength = right.length - deltaUnits
+                    if (newLeftLength < 1 || newRightLength < 1) return prev
+
+                    next[index] = { ...left, length: newLeftLength }
+                    next[index + 1] = { ...right, length: newRightLength }
+
+                    return next
+                })
+            }, [total])
+
+            const tickPoints = [0]
+            let cum = 0
+            for (const s of segments) {
+                cum += s.length
+                tickPoints.push(cum)
+            }
+
+            useEffect(() => {
+                const boxes = labelRefs.current.map(el => el?.getBoundingClientRect())
+                const offsets = new Array(boxes.length).fill(0)
+
+                for (let i = 0; i < boxes.length; i++) {
+                    for (let j = 0; j < i; j++) {
+                        if (!boxes[i] || !boxes[j]) continue
+                        const a = boxes[i]
+                        const b = boxes[j]
+                        const overlap = !(a.right < b.left || a.left > b.right)
+                        if (overlap && offsets[i] <= offsets[j]) {
+                            offsets[i] = offsets[j] + 1
+                        }
+                    }
+                }
+                setLabelOffsets(offsets)
+            }, [segments])
+
+            const handleSwap = (fromIndex, toIndex) => {
+                setSegments(prev => {
+                    const copy = [...prev]
+                    const [moved] = copy.splice(fromIndex, 1)
+                    copy.splice(toIndex, 0, moved)
+                    return copy
+                })
+            }
+
+            const handleChangeType = (index, newType) => {
+                setSegments(prev => {
+                    const next = [...prev]
+                    next[index] = { ...next[index], type: newType }
+                    return next
+                })
+                setEditingIndex(null)
+            }
+
+            const handleAddLeft = (index) => {
+                setSegments(prev => {
+                    const next = [...prev]
+                    const desiredLength = 10
+                    const fromSegment = next[index]
+
+                    if (!fromSegment) return prev
+
+                    if (fromSegment.length >= desiredLength + 1) {
+                        fromSegment.length -= desiredLength
+                        const newSegment = {
+                            id: 's' + Math.random().toString(36).slice(2, 7),
+                            type: 'Parking',
+                            length: desiredLength
+                        }
+                        next.splice(index, 0, newSegment)
+                    } else if (index > 0 && next[index - 1].length >= desiredLength + 1) {
+                        next[index - 1].length -= desiredLength
+                        const newSegment = {
+                            id: 's' + Math.random().toString(36).slice(2, 7),
+                            type: 'Parking',
+                            length: desiredLength
+                        }
+                        next.splice(index, 0, newSegment)
+                    }
+
+                    return [...next]
+                })
+                setEditingIndex(null)
+            }
+            return React.createElement('div', { id: 'editor-wrapper' },
+                React.createElement('div', {
+                        className: 'segment-container',
+                        ref: containerRef
+                    },
+                    segments.map((segment, i) => {
+                        const width = (segment.length / total) * 100
+                        const isDragging = draggingIndex === i
+
+                        return React.createElement('div', {
+                                key: segment.id,
+                                className: 'segment' + (isDragging ? ' dragging' : ''),
+                                style: {
+                                    width: width + '%',
+                                    backgroundColor: COLORS[segment.type] || '#999'
+                                },
+                                draggable: true,
+                                onDragStart: e => {
+                                    if (e.target.classList.contains('divider')) {
+                                        e.preventDefault()
+                                        return
+                                    }
+                                    dragData.current = { index: i }
+                                    setDraggingIndex(i)
+                                    e.dataTransfer.effectAllowed = 'move'
+                                },
+                                onDragOver: e => e.preventDefault(),
+                                onDrop: e => {
+                                    if (e.target.classList.contains('divider')) return
+                                    const from = dragData.current.index
+                                    const to = i
+                                    setDraggingIndex(null)
+                                    if (from !== undefined && from !== to) handleSwap(from, to)
+                                },
+                                onDragEnd: () => setDraggingIndex(null),
+                                onTouchStart: e => {
+                                    if (e.target.classList.contains('divider')) return;
+                                    e.preventDefault();           // 🔹 prevent default scroll
+                                    dragData.current = { index: i };
+                                    setDraggingIndex(i);
+                                },
+                                onTouchEnd: e => {
+                                    const from = dragData.current.index
+                                    const to = i
+                                    setDraggingIndex(null)
+                                    if (from !== undefined && from !== to) handleSwap(from, to)
+                                    dragData.current = {}
+                                }
+                            },
+                            i < segments.length - 1 && React.createElement(DraggableDivider, {
+                                onDrag: delta => {
+                                    if (containerRef.current) {
+                                        handleDrag(i, delta, containerRef.current.offsetWidth)
+                                    }
+                                }
+                            })
+                        )
+                    })
+                ),
+                React.createElement('div', { className: 'label-layer' },
+                    segments.map((s, i) => {
+                        const mid = tickPoints[i] + s.length / 2
+                        const leftPct = (mid / total) * 100
+                        const feet = Math.round(s.length / total * STREET_LENGTH)
+
+                        return React.createElement('div', {
+                                key: 'label-' + s.id,
+                                className: 'floating-label',
+                                style: {
+                                    left: `${leftPct}%`,
+                                    top: `${labelOffsets[i] * 1.5}em`,
+                                    backgroundColor: COLORS[s.type] || '#999'
+                                },
+                                ref: el => labelRefs.current[i] = el,
+                                onClick: e => {
+                                    e.stopPropagation()
+                                    setEditingIndex(editingIndex === i ? null : i)
+                                }
+                            },
+                            editingIndex === i
+                                ? [
+                                    React.createElement('span', { key: 'text' }, `${s.type} ${feet} ft`),
+                                    React.createElement('div', {
+                                            key: 'dropdown', className: 'dropdown'
+                                        },
+                                        Object.keys(COLORS).map(type =>
+                                            React.createElement('div', {
+                                                key: type,
+                                                className: 'dropdown-item',
+                                                style: { backgroundColor: COLORS[type] },
+                                                onClick: e => {
+                                                    e.stopPropagation()
+                                                    handleChangeType(i, type)
+                                                }
+                                            }, type)
+                                        ),
+                                        React.createElement('div', {
+                                            className: 'dropdown-item',
+                                            style: { backgroundColor: 'red', textAlign: 'center', marginTop: '10px' },
+                                            onClick: e => {
+                                                e.stopPropagation()
+                                                handleAddLeft(i)
+                                            }
+                                        }, '+ Add left')
+                                    )
+                                ]
+                                : `${s.type} ${feet} ft`
+                        )
+                    })
+                ),
+                React.createElement('div', { className: 'ruler' },
+                    tickPoints.map((p, i) => {
+                        const ft = Math.round(p / total * STREET_LENGTH)
+                        const pct = (p / total) * 100
+                        return React.createElement('div', {
+                            key: 'tick-' + i,
+                            className: 'tick',
+                            style: { left: `${pct}%` }
+                        }, `${ft} ft`)
+                    })
+                )
+            )
+        }
+
+        function DraggableDivider ({ onDrag }) {
+            const startX = useRef(null)
+
+            const onMouseDown = e => {
+                e.stopPropagation()
+                e.preventDefault()
+                startX.current = e.clientX
+                const onMove = me => {
+                    if (startX.current !== null) {
+                        const delta = me.clientX - startX.current
+                        startX.current = me.clientX
+                        onDrag(delta)
+                    }
+                }
+                const onUp = () => {
+                    startX.current = null
+                    window.removeEventListener('mousemove', onMove)
+                    window.removeEventListener('mouseup', onUp)
+                }
+                window.addEventListener('mousemove', onMove)
+                window.addEventListener('mouseup', onUp)
+            }
+
+            const onTouchStart = e => {
+                startX.current = e.touches[0].clientX
+                const onTouchMove = te => {
+                    if (startX.current !== null) {
+                        const delta = te.touches[0].clientX - startX.current
+                        startX.current = te.touches[0].clientX
+                        onDrag(delta)
+                    }
+                }
+                const onTouchEnd = () => {
+                    startX.current = null
+                    window.removeEventListener('touchmove', onTouchMove)
+                    window.removeEventListener('touchend', onTouchEnd)
+                }
+                window.addEventListener('touchmove', onTouchMove, { passive: false })
+                window.addEventListener('touchend', onTouchEnd)
+            }
+
+            return React.createElement('div', {
+                className: 'divider',
+                onMouseDown,
+                onTouchStart
+            })
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(
+            React.createElement(SegmentedCurbEditor)
+        )
+    </script>
+    <div> n</div>
+</body>
+</html>
