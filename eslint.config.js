@@ -1,4 +1,7 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook'
+
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 
 import { FlatCompat } from '@eslint/eslintrc'
 import eslintPluginReact from 'eslint-plugin-react'
@@ -24,6 +27,7 @@ export default defineConfig([
             'prefer-const': 'error',
         },
     },
+    { files: ['**/*.stories.{js,jsx}'], plugins: { storybook }, rules: { ...storybook.configs.recommended.rules } },
     ...compat.extends('standard'),
     ...compat.extends('prettier'),
 ])
