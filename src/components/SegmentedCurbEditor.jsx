@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { COLORS, initialSegments, STREET_LENGTH } from '../constants.js'
+import { COLORS, initialSegments } from '../constants.js'
 import { calculateLabelPositions } from '../label-positioning.js'
 import DraggableDivider from './DraggableDivider.jsx'
 
@@ -20,11 +20,20 @@ import DraggableDivider from './DraggableDivider.jsx'
 
 /**
  * Main component for editing segmented curb configurations with drag and drop functionality
- * @sig SegmentedCurbEditor :: ({ orientation?: String }) -> JSXElement
+ * @sig SegmentedCurbEditor :: ({ orientation?: String, blockfaceLength?: Number, blockfaceId?: String, onSegmentsChange?: Function }) -> JSXElement
  * orientation = 'horizontal' | 'vertical'
  */
-const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
+const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240, blockfaceId, onSegmentsChange }) => {
     const isVertical = orientation === 'vertical'
+
+    /**
+     * Scales initial segments to match actual blockface length
+     * @sig scaleInitialSegments :: (Number, Number) -> [Segment]
+     */
+    const scaleInitialSegments = (actualLength, defaultLength = 240) => {
+        const scale = actualLength / defaultLength
+        return initialSegments.map(segment => ({ ...segment, length: Math.round(segment.length * scale) }))
+    }
 
     /**
      * Creates cumulative position markers for ruler display
@@ -408,7 +417,7 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
     ) => {
         const mid = tickPoints[i] + s.length / 2
         const positionPct = (mid / total) * 100
-        const feet = Math.round((s.length / total) * STREET_LENGTH)
+        const feet = Math.round((s.length / total) * blockfaceLength)
 
         const labelStyle = {
             backgroundColor: COLORS[s.type] || '#999',
@@ -452,7 +461,7 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
      * @sig renderTick :: (Number, Number, Number) -> JSXElement
      */
     const renderTick = (p, i, total) => {
-        const ft = Math.round((p / total) * STREET_LENGTH)
+        const ft = Math.round((p / total) * blockfaceLength)
         const pct = (p / total) * 100
 
         const tickStyle = isVertical ? { top: `${pct}%` } : { left: `${pct}%` }
@@ -519,7 +528,31 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
     }
 
     // Component state and refs
-    const [segments, setSegments] = useState(initialSegments)
+    const [segments, setSegmentsInternal] = useState(() => scaleInitialSegments(blockfaceLength))
+
+    // Wrapper to update both local state and notify parent
+    const setSegments = useCallback(newSegments => {
+        if (typeof newSegments === 'function') {
+            setSegmentsInternal(prev => {
+                const updated = newSegments(prev)
+                // Defer parent notification to avoid setState during render
+                setTimeout(() => {
+                    if (onSegmentsChangeRef.current) {
+                        onSegmentsChangeRef.current(updated)
+                    }
+                }, 0)
+                return updated
+            })
+        } else {
+            setSegmentsInternal(newSegments)
+            // Defer parent notification to avoid setState during render
+            setTimeout(() => {
+                if (onSegmentsChangeRef.current) {
+                    onSegmentsChangeRef.current(newSegments)
+                }
+            }, 0)
+        }
+    }, [])
     const [draggingIndex, setDraggingIndex] = useState(null)
     const [editingIndex, setEditingIndex] = useState(null)
     const [dragPreviewPos, setDragPreviewPos] = useState({ x: 0, y: 0 })
@@ -536,6 +569,32 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal' }) => {
     const handleChangeType = buildChangeTypeHandler(setSegments, setEditingIndex)
     const handleAddLeft = buildAddLeftHandler(setSegments, setEditingIndex)
     const tickPoints = buildTickPoints(segments)
+
+    // Reset segments when a new blockface is selected
+    useEffect(() => {
+        if (blockfaceId) {
+            const newSegments = scaleInitialSegments(blockfaceLength)
+            setSegmentsInternal(newSegments)
+            // Defer parent notification to avoid setState during render
+            setTimeout(() => {
+                if (onSegmentsChangeRef.current) {
+                    onSegmentsChangeRef.current(newSegments)
+                }
+            }, 0)
+        }
+    }, [blockfaceId, blockfaceLength])
+
+    // Store callback ref to avoid dependency issues
+    const onSegmentsChangeRef = useRef(onSegmentsChange)
+    onSegmentsChangeRef.current = onSegmentsChange
+
+    // Send initial segments to parent after mount (only once)
+    useEffect(() => {
+        if (onSegmentsChangeRef.current && segments.length > 0) {
+            // Use setTimeout to ensure this runs after render
+            setTimeout(() => onSegmentsChangeRef.current(segments), 0)
+        }
+    }, []) // Empty dependency array - run only once
 
     // Global touch handlers for better mobile support
     useEffect(
