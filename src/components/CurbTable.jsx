@@ -1,5 +1,16 @@
 import { useCallback, useState } from 'react'
-import { COLORS } from '../constants.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { COLORS, formatLength } from '../constants.js'
+import NumberPad from './NumberPad.jsx'
+import {
+    selectSegments,
+    selectBlockfaceLength,
+    selectUnknownSegment,
+    updateSegmentType,
+    updateSegmentLength,
+    addSegment,
+    updateStartPosition,
+} from '../store/curbStore.js'
 
 /**
  * CurbTable - Mobile-friendly table-based curb editor for field data collection
@@ -9,26 +20,7 @@ import { COLORS } from '../constants.js'
  * a single "Unknown" segment of the full blockface length.
  */
 
-/**
- * Creates initial segment data structure for new blockface
- * @sig createInitialSegment :: Number -> Segment
- * Segment = { id: String, type: String, length: Number }
- */
-const createInitialSegment = blockfaceLength => ({
-    id: 's' + Math.random().toString(36).slice(2, 7),
-    type: 'Unknown',
-    length: blockfaceLength,
-})
-
-/**
- * Creates new segment with default properties for insertion
- * @sig createNewSegment :: (String, Number) -> Segment
- */
-const createNewSegment = (type = 'Parking', length = 20) => ({
-    id: 's' + Math.random().toString(36).slice(2, 7),
-    type,
-    length,
-})
+// Helper functions moved to Redux store
 
 /**
  * Calculates start positions for all segments based on their lengths
@@ -43,42 +35,7 @@ const calculateStartPositions = segments => {
     })
 }
 
-/**
- * Updates segment type at given index
- * @sig updateSegmentType :: ([Segment], Number, String) -> [Segment]
- */
-const updateSegmentType = (segments, index, newType) => {
-    const next = [...segments]
-    next[index] = { ...next[index], type: newType }
-    return next
-}
-
-/**
- * Adds new segment by consuming space from Unknown segment
- * @sig addSegmentFromUnknown :: ([Segment], Number) -> { segments: [Segment], newIndex: Number }
- */
-const addSegmentFromUnknown = (segments, targetIndex) => {
-    const target = segments[targetIndex]
-    if (!target) return { segments, newIndex: targetIndex }
-
-    const unknownIndex = segments.findIndex(segment => segment.type === 'Unknown')
-    if (unknownIndex === -1) return { segments, newIndex: targetIndex }
-
-    const unknownSegment = segments[unknownIndex]
-    const newSegmentSize = Math.min(20, unknownSegment.length)
-
-    if (newSegmentSize <= 0) return { segments, newIndex: targetIndex }
-
-    const newSegment = createNewSegment('Parking', newSegmentSize)
-    const next = [...segments]
-
-    next[unknownIndex] = { ...unknownSegment, length: unknownSegment.length - newSegmentSize }
-
-    const insertIndex = target.type === 'Unknown' ? unknownIndex : targetIndex + 1
-    next.splice(insertIndex, 0, newSegment)
-
-    return { segments: next, newIndex: insertIndex }
-}
+// These helper functions are no longer needed - Redux handles the logic
 
 /**
  * Calculates dropdown position based on button element
@@ -123,27 +80,7 @@ const handleTypeButtonClick = (e, index, handleDropdownToggle) => {
     handleDropdownToggle(index)
 }
 
-/**
- * Processes type change and updates state
- * @sig processTypeChange :: (Number, String, [Segment], Function, Function, Function) -> Void
- */
-const processTypeChange = (index, newType, segments, setSegments, onSegmentsChange, setCurrentRowIndex) => {
-    const updatedSegments = updateSegmentType(segments, index, newType)
-    setSegments(updatedSegments)
-    if (onSegmentsChange) onSegmentsChange(updatedSegments)
-    setCurrentRowIndex(index)
-}
-
-/**
- * Processes segment addition and updates state
- * @sig processSegmentAddition :: (Number, [Segment], Function, Function, Function) -> Void
- */
-const processSegmentAddition = (index, segments, setSegments, onSegmentsChange, setCurrentRowIndex) => {
-    const { segments: updatedSegments, newIndex } = addSegmentFromUnknown(segments, index)
-    setSegments(updatedSegments)
-    if (onSegmentsChange) onSegmentsChange(updatedSegments)
-    setTimeout(() => setCurrentRowIndex(newIndex), 0)
-}
+// These functions are no longer needed - Redux handles state updates
 
 /**
  * Processes dropdown toggle and positioning
@@ -176,27 +113,44 @@ const processTypeSelection = (index, type, handleTypeChange, setActiveDropdown, 
 
 /**
  * Mobile-friendly table-based curb configuration editor
- * @sig CurbTable :: ({ blockfaceLength?: Number, onSegmentsChange?: Function }) -> JSXElement
+ * @sig CurbTable :: ({ blockfaceLength?: Number, onSegmentsChange?: Function, segments?: [Segment] }) -> JSXElement
  */
-const CurbTable = ({ blockfaceLength = 240, onSegmentsChange }) => {
-    const [segments, setSegments] = useState(() => [createInitialSegment(blockfaceLength)])
+const CurbTable = ({ blockfaceLength = 240 }) => {
+    const dispatch = useDispatch()
+    const segments = useSelector(selectSegments) || []
+    const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
+    const unknownSegment = useSelector(selectUnknownSegment)
+
     const [activeDropdown, setActiveDropdown] = useState(null)
     const [currentRowIndex, setCurrentRowIndex] = useState(0)
     const [dropdownPosition, setDropdownPosition] = useState(null)
+    const [numberPadState, setNumberPadState] = useState({
+        isOpen: false,
+        editingIndex: null,
+        editingField: null,
+        originalValue: 0,
+    })
 
-    const startPositions = calculateStartPositions(segments)
-    const unknownSegment = segments.find(segment => segment.type === 'Unknown')
+    // Use Redux blockface length if available, otherwise use prop
+    const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
+
+    const startPositions = segments && segments.length > 0 ? calculateStartPositions(segments) : []
     const canAddSegments = unknownSegment && unknownSegment.length > 0
 
     const handleTypeChange = useCallback(
-        (index, newType) =>
-            processTypeChange(index, newType, segments, setSegments, onSegmentsChange, setCurrentRowIndex),
-        [segments, onSegmentsChange],
+        (index, newType) => {
+            dispatch(updateSegmentType(index, newType))
+            setCurrentRowIndex(index)
+        },
+        [dispatch],
     )
 
     const handleAddSegment = useCallback(
-        index => processSegmentAddition(index, segments, setSegments, onSegmentsChange, setCurrentRowIndex),
-        [segments, onSegmentsChange],
+        index => {
+            dispatch(addSegment(index))
+            setTimeout(() => setCurrentRowIndex(index), 0)
+        },
+        [dispatch],
     )
 
     const handleDropdownToggle = useCallback(
@@ -208,6 +162,31 @@ const CurbTable = ({ blockfaceLength = 240, onSegmentsChange }) => {
         (index, type) => processTypeSelection(index, type, handleTypeChange, setActiveDropdown, setDropdownPosition),
         [handleTypeChange],
     )
+
+    const handleCellClick = useCallback((index, field, value) => {
+        setNumberPadState({ isOpen: true, editingIndex: index, editingField: field, originalValue: value })
+        setCurrentRowIndex(index)
+    }, [])
+
+    const handleNumberPadSave = useCallback(
+        newValue => {
+            const { editingIndex, editingField } = numberPadState
+            if (editingIndex === null || editingField === null) return
+
+            if (editingField === 'length') {
+                dispatch(updateSegmentLength(editingIndex, newValue))
+            } else if (editingField === 'start') {
+                dispatch(updateStartPosition(editingIndex, newValue))
+            }
+
+            setNumberPadState({ isOpen: false, editingIndex: null, editingField: null, originalValue: 0 })
+        },
+        [numberPadState, dispatch],
+    )
+
+    const handleNumberPadCancel = useCallback(() => {
+        setNumberPadState({ isOpen: false, editingIndex: null, editingField: null, originalValue: 0 })
+    }, [])
 
     const renderDropdownOptions = () => {
         if (!dropdownPosition) return null
@@ -246,8 +225,26 @@ const CurbTable = ({ blockfaceLength = 240, onSegmentsChange }) => {
                         </button>
                     </div>
                 </td>
-                <td className="length-cell">{Math.round(segment.length)} ft</td>
-                <td className="start-cell">{Math.round(startPositions[index])} ft</td>
+                <td
+                    className="length-cell editable-cell"
+                    onClick={e => {
+                        e.stopPropagation()
+                        handleCellClick(index, 'length', segment.length)
+                    }}
+                    style={{ cursor: 'pointer' }}
+                >
+                    {formatLength(segment.length)}
+                </td>
+                <td
+                    className="start-cell editable-cell"
+                    onClick={e => {
+                        e.stopPropagation()
+                        handleCellClick(index, 'start', startPositions[index])
+                    }}
+                    style={{ cursor: 'pointer' }}
+                >
+                    {formatLength(startPositions[index])}
+                </td>
                 <td className="add-cell">
                     <button className="add-button" onClick={() => handleAddSegment(index)} disabled={!canAddSegments}>
                         +
@@ -262,9 +259,9 @@ const CurbTable = ({ blockfaceLength = 240, onSegmentsChange }) => {
             <div className="curb-table-header">
                 <h3>Curb Configuration</h3>
                 <div className="blockface-info">
-                    Total: {blockfaceLength} ft
+                    Total: {effectiveBlockfaceLength} ft
                     {unknownSegment && unknownSegment.length > 0 && (
-                        <span> • Remaining: {Math.round(unknownSegment.length)} ft</span>
+                        <span> • Remaining: {formatLength(unknownSegment.length)}</span>
                     )}
                 </div>
             </div>
@@ -279,10 +276,20 @@ const CurbTable = ({ blockfaceLength = 240, onSegmentsChange }) => {
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>{segments.map(renderTableRow)}</tbody>
+                    <tbody>{segments && segments.length > 0 ? segments.map(renderTableRow) : null}</tbody>
                 </table>
             </div>
             {renderDropdownOptions()}
+            {numberPadState.isOpen && (
+                <NumberPad
+                    value={numberPadState.originalValue}
+                    min={numberPadState.editingField === 'length' ? 1 : 0}
+                    max={numberPadState.editingField === 'length' ? effectiveBlockfaceLength : effectiveBlockfaceLength}
+                    onSave={handleNumberPadSave}
+                    onCancel={handleNumberPadCancel}
+                    label={numberPadState.editingField === 'length' ? 'Length' : 'Start'}
+                />
+            )}
         </div>
     )
 }

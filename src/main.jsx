@@ -1,35 +1,38 @@
 import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
+import { Provider , useDispatch, useSelector } from 'react-redux'
 import CurbTable from './components/CurbTable.jsx'
 import MapboxMap from './components/MapboxMap.jsx'
 import SegmentedCurbEditor from './components/SegmentedCurbEditor.jsx'
+import { initializeSegments, selectSegments, selectBlockfaceLength } from './store/curbStore.js'
+import store from './store/index.js'
 import './index.css'
 
 const accessToken = 'pk.eyJ1IjoiZ3JhZmZpbyIsImEiOiJjbWRkZ3lkNjkwNG9xMmpuYmt4bHd2YTVvIn0.lzlmjq8mnXOSKB18lKLBpg'
 
 const App = () => {
+    const dispatch = useDispatch()
+    const segments = useSelector(selectSegments)
+    const blockfaceLength = useSelector(selectBlockfaceLength)
+
     const [selectedBlockface, setSelectedBlockface] = useState(null)
-    const [currentSegments, setCurrentSegments] = useState([])
     const [isEditorVisible, setIsEditorVisible] = useState(false)
     const [showCurbTable, setShowCurbTable] = useState(false)
 
     /** Handles blockface selection from map
      * @sig handleBlockfaceSelect :: (String, Feature, Number) -> Void
      */
-    const handleBlockfaceSelect = useCallback(blockfaceData => {
-        console.log('Selected blockface:', blockfaceData)
-        setSelectedBlockface(blockfaceData)
-        setIsEditorVisible(true)
-    }, [])
+    const handleBlockfaceSelect = useCallback(
+        blockfaceData => {
+            console.log('Selected blockface:', blockfaceData)
+            setSelectedBlockface(blockfaceData)
+            setIsEditorVisible(true)
 
-    /**
-     * Handles segment updates from editor
-     * @sig handleSegmentsChange :: [Segment] -> Void
-     */
-    const handleSegmentsChange = useCallback(segments => {
-        console.log('Segments updated:', segments)
-        setCurrentSegments(segments)
-    }, [])
+            // Initialize Redux store with new blockface
+            dispatch(initializeSegments(blockfaceData.length, blockfaceData.id))
+        },
+        [dispatch],
+    )
 
     /**
      * Closes the editor
@@ -65,7 +68,7 @@ const App = () => {
                 accessToken={accessToken}
                 onBlockfaceSelect={handleBlockfaceSelect}
                 selectedBlockface={selectedBlockface}
-                currentSegments={currentSegments}
+                currentSegments={Array.isArray(segments) ? segments : []}
             />
 
             {/* Sliding Editor Panel */}
@@ -173,17 +176,13 @@ const App = () => {
                             {selectedBlockface &&
                                 (showCurbTable ? (
                                     <div style={{ flex: 1, overflow: 'auto' }}>
-                                        <CurbTable
-                                            blockfaceLength={selectedBlockface.length}
-                                            onSegmentsChange={handleSegmentsChange}
-                                        />
+                                        <CurbTable blockfaceLength={blockfaceLength} />
                                     </div>
                                 ) : (
                                     <SegmentedCurbEditor
                                         orientation="vertical"
-                                        blockfaceLength={selectedBlockface.length}
+                                        blockfaceLength={blockfaceLength}
                                         blockfaceId={selectedBlockface.id}
-                                        onSegmentsChange={handleSegmentsChange}
                                     />
                                 ))}
                         </div>
@@ -194,4 +193,8 @@ const App = () => {
     )
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+ReactDOM.createRoot(document.getElementById('root')).render(
+    <Provider store={store}>
+        <App />
+    </Provider>,
+)
