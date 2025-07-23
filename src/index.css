@@ -458,6 +458,14 @@ h1 {
     font-size: 13px;
 }
 
+.editable-cell {
+    transition: background-color 0.1s ease;
+}
+
+.editable-cell:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
 /* Add Button Column - Matching divider styling */
 .add-cell {
     width: 15%;
@@ -637,5 +645,430 @@ h1 {
         background-color: #1a1a1a;
         border-color: #444;
         color: #666;
+    }
+}
+
+/* NumberPad Component Styles */
+.number-pad-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+    padding-bottom: 52px;
+}
+
+.number-pad-container {
+    background-color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 12px;
+    width: fit-content;
+    min-width: 180px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s ease-out;
+    transform-origin: bottom;
+}
+
+.number-pad-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.number-pad-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.number-pad-display {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    margin-bottom: 8px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease;
+    width: 166px;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.number-pad-display.error {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.number-pad-error {
+    font-size: 12px;
+    color: #dc3545;
+    margin-top: 4px;
+}
+
+.number-pad-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.number-pad-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.number-pad-button {
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.number-button {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #e0e0e0;
+}
+
+.number-button:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.number-button:active {
+    background-color: #dee2e6;
+    transform: translateY(0);
+}
+
+.function-button {
+    background-color: #e9ecef;
+    color: #666;
+    border: 1px solid #ced4da;
+}
+
+.function-button:hover {
+    background-color: #dee2e6;
+    transform: translateY(-1px);
+}
+
+.function-button:active {
+    background-color: #ced4da;
+    transform: translateY(0);
+}
+
+.enter-button {
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #1e7e34;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.enter-button:hover {
+    background-color: #1e7e34;
+    transform: translateY(-1px);
+}
+
+.enter-button:active {
+    background-color: #155724;
+    transform: translateY(0);
+}
+
+.enter-button:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.cancel-button {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #c82333;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.cancel-button:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.cancel-button:active {
+    background-color: #bd2130;
+    transform: translateY(0);
+}
+
+.clear-button {
+    background-color: #ffc107;
+    color: #212529;
+    border: 1px solid #e0a800;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.clear-button:hover {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+}
+
+.clear-button:active {
+    background-color: #c69500;
+    transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+    .number-pad-backdrop {
+        padding-bottom: 48px;
+    }
+    
+    .number-pad-container {
+        padding: 16px;
+        border-radius: 8px;
+    }
+
+    .number-pad-display {
+        font-size: 28px;
+        padding: 10px;
+        min-height: 50px;
+    }
+
+    .number-pad-button {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    /* Edit Blockface Modal - Full Screen on Mobile */
+    .edit-blockface-modal {
+        width: 100% !important;
+        height: 100vh !important;
+        right: 0 !important;
+        top: 0 !important;
+        border-left: none !important;
+        border-radius: 0 !important;
+    }
+
+    .edit-blockface-content {
+        padding: 16px !important;
+        height: 100% !important;
+    }
+
+    .edit-blockface-header h2 {
+        font-size: 18px !important;
+    }
+
+    .edit-blockface-close-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 24px !important;
+    }
+}
+
+@media (max-width: 375px) {
+    .number-pad-backdrop {
+        padding-bottom: 44px;
+    }
+    
+    .number-pad-container {
+        padding: 12px;
+    }
+
+    .number-pad-display {
+        font-size: 24px;
+        padding: 8px;
+        min-height: 45px;
+    }
+
+    .number-pad-button {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+
+    /* Edit Blockface Modal - Even Smaller Screens */
+    .edit-blockface-content {
+        padding: 12px !important;
+    }
+
+    .edit-blockface-header h2 {
+        font-size: 16px !important;
+    }
+
+    .edit-blockface-close-btn {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 20px !important;
+    }
+}
+
+/* Dark mode support for NumberPad */
+@media (prefers-color-scheme: dark) {
+    .number-pad-container {
+        background-color: #1a1a1a;
+        border-color: #444;
+    }
+
+    .number-pad-label {
+        color: #cccccc;
+    }
+
+    .number-pad-display {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #ffffff;
+    }
+
+    .number-pad-display.error {
+        border-color: #ff6b6b;
+        color: #ff6b6b;
+    }
+
+    .number-pad-error {
+        color: #ff6b6b;
+    }
+
+    .number-button {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #ffffff;
+    }
+
+    .number-button:hover {
+        background-color: #333;
+    }
+
+    .number-button:active {
+        background-color: #444;
+    }
+
+    .function-button {
+        background-color: #333;
+        border-color: #555;
+        color: #cccccc;
+    }
+
+    .function-button:hover {
+        background-color: #444;
+    }
+
+    .function-button:active {
+        background-color: #555;
+    }
+
+    .enter-button {
+        background-color: #28a745;
+        border-color: #1e7e34;
+    }
+
+    .enter-button:hover {
+        background-color: #1e7e34;
+    }
+
+    .enter-button:active {
+        background-color: #155724;
+    }
+
+    .enter-button:disabled {
+        background-color: #444;
+        border-color: #555;
+        color: #666;
+    }
+
+    .cancel-button {
+        background-color: #dc3545;
+        border-color: #c82333;
+    }
+
+    .cancel-button:hover {
+        background-color: #c82333;
+    }
+
+    .cancel-button:active {
+        background-color: #bd2130;
+    }
+
+    .clear-button {
+        background-color: #ffc107;
+        border-color: #e0a800;
+        color: #212529;
+    }
+
+    .clear-button:hover {
+        background-color: #e0a800;
+    }
+
+    .clear-button:active {
+        background-color: #c69500;
     }
 }
