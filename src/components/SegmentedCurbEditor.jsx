@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { COLORS, initialSegments } from '../constants.js'
+import { useDispatch, useSelector } from 'react-redux'
+import { COLORS, formatLength, roundToPrecision } from '../constants.js'
 import { calculateLabelPositions } from '../label-positioning.js'
 import DraggableDivider from './DraggableDivider.jsx'
+import { selectSegments, selectBlockfaceLength, replaceSegments } from '../store/curbStore.js'
 
 /**
  * SegmentedCurbEditor - Interactive street curb configuration editor
@@ -23,17 +25,15 @@ import DraggableDivider from './DraggableDivider.jsx'
  * @sig SegmentedCurbEditor :: ({ orientation?: String, blockfaceLength?: Number, blockfaceId?: String, onSegmentsChange?: Function }) -> JSXElement
  * orientation = 'horizontal' | 'vertical'
  */
-const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240, blockfaceId, onSegmentsChange }) => {
+const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240, blockfaceId }) => {
+    const dispatch = useDispatch()
+    const segments = useSelector(selectSegments) || []
+    const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
+
     const isVertical = orientation === 'vertical'
 
-    /**
-     * Scales initial segments to match actual blockface length
-     * @sig scaleInitialSegments :: (Number, Number) -> [Segment]
-     */
-    const scaleInitialSegments = (actualLength, defaultLength = 240) => {
-        const scale = actualLength / defaultLength
-        return initialSegments.map(segment => ({ ...segment, length: Math.round(segment.length * scale) }))
-    }
+    // Use Redux values if available, otherwise use props
+    const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
 
     /**
      * Creates cumulative position markers for ruler display
@@ -46,101 +46,94 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240
 
     /**
      * Creates handler for divider dragging that resizes adjacent segments
-     * @sig buildDragHandler :: (Number, SetStateFn) -> (Number, Number, Number) -> Void
+     * @sig buildDragHandler :: (Number, Function) -> (Number, Number, Number) -> Void
      */
-    const buildDragHandler = (total, setSegments) =>
+    const buildDragHandler = (total, updateRedux) =>
         useCallback(
             (index, deltaPx, containerSize) => {
-                const updateSegments = prev => {
-                    const pxPerUnit = containerSize / total
-                    const deltaUnits = deltaPx / pxPerUnit
-                    const left = prev[index]
-                    const right = prev[index + 1]
+                const pxPerUnit = containerSize / total
+                const deltaUnits = deltaPx / pxPerUnit
 
-                    if (!left || !right) return prev
+                // Use functional update to get current segments
+                updateRedux(currentSegments => {
+                    const left = currentSegments[index]
+                    const right = currentSegments[index + 1]
 
-                    const newLeftLength = left.length + deltaUnits
-                    const newRightLength = right.length - deltaUnits
-                    if (newLeftLength < 1 || newRightLength < 1) return prev
+                    if (!left || !right) return currentSegments
 
-                    const next = [...prev]
+                    const newLeftLength = roundToPrecision(left.length + deltaUnits)
+                    const newRightLength = roundToPrecision(right.length - deltaUnits)
+                    if (newLeftLength < 1 || newRightLength < 1) return currentSegments
+
+                    const next = [...currentSegments]
                     next[index] = { ...left, length: newLeftLength }
                     next[index + 1] = { ...right, length: newRightLength }
-                    return next
-                }
 
-                setSegments(updateSegments)
+                    return next
+                })
             },
             [total],
         )
 
     /**
      * Creates handler for reordering segments via drag and drop
-     * @sig buildSwapHandler :: SetStateFn -> (Number, Number) -> Void
+     * @sig buildSwapHandler :: Function -> (Number, Number) -> Void
      */
-    const buildSwapHandler = setSegments => (fromIndex, toIndex) => {
-        const swapSegments = prev => {
-            const copy = [...prev]
-            const [moved] = copy.splice(fromIndex, 1)
-            copy.splice(toIndex, 0, moved)
-            return copy
-        }
-
-        setSegments(swapSegments)
+    const buildSwapHandler = updateRedux => (fromIndex, toIndex) => {
+        const copy = [...segments]
+        const [moved] = copy.splice(fromIndex, 1)
+        copy.splice(toIndex, 0, moved)
+        updateRedux(copy)
     }
 
     /**
      * Creates handler for changing segment type through label dropdown
-     * @sig buildChangeTypeHandler :: (SetStateFn, SetStateFn) -> (Number, String) -> Void
+     * @sig buildChangeTypeHandler :: (Function, SetStateFn) -> (Number, String) -> Void
      */
-    const buildChangeTypeHandler = (setSegments, setEditingIndex) => (index, newType) => {
-        const updateType = prev => {
-            const next = [...prev]
-            next[index] = { ...next[index], type: newType }
-            return next
-        }
-
-        setSegments(updateType)
+    const buildChangeTypeHandler = (updateRedux, setEditingIndex) => (index, newType) => {
+        const next = [...segments]
+        next[index] = { ...next[index], type: newType }
+        updateRedux(next)
         setEditingIndex(null)
     }
 
     /**
      * Creates handler for adding new segment to the left of clicked segment
-     * @sig buildAddLeftHandler :: (SetStateFn, SetStateFn) -> Number -> Void
+     * @sig buildAddLeftHandler :: (Function, SetStateFn) -> Number -> Void
      */
-    const buildAddLeftHandler = (setSegments, setEditingIndex) => index => {
-        const addSegment = prev => {
-            const desiredLength = 10
-            const fromSegment = prev[index]
-            if (!fromSegment) return prev
+    const buildAddLeftHandler = (updateRedux, setEditingIndex) => index => {
+        const desiredLength = 10
+        const fromSegment = segments[index]
+        if (!fromSegment) return
 
-            const createNewSegment = () => ({
-                id: 's' + Math.random().toString(36).slice(2, 7),
-                type: 'Parking',
-                length: desiredLength,
-            })
+        const createNewSegment = () => ({
+            id: 's' + Math.random().toString(36).slice(2, 7),
+            type: 'Parking',
+            length: roundToPrecision(desiredLength),
+        })
 
-            const canSplitCurrent = fromSegment.length >= desiredLength + 1
-            if (canSplitCurrent) {
-                const next = [...prev]
-                next[index] = { ...fromSegment, length: fromSegment.length - desiredLength }
-                next.splice(index, 0, createNewSegment())
-                return next
-            }
-
-            const canSplitPrevious = index > 0 && prev[index - 1].length >= desiredLength + 1
-            if (canSplitPrevious) {
-                const next = [...prev]
-                next[index - 1] = { ...prev[index - 1], length: prev[index - 1].length - desiredLength }
-                next.splice(index, 0, createNewSegment())
-                return next
-            }
-
-            return prev
+        const canSplitCurrent = fromSegment.length >= desiredLength + 1
+        if (canSplitCurrent) {
+            const next = [...segments]
+            next[index] = { ...fromSegment, length: roundToPrecision(fromSegment.length - desiredLength) }
+            next.splice(index, 0, createNewSegment())
+            updateRedux(next)
+            setEditingIndex(null)
+            return
         }
 
-        setSegments(addSegment)
-        setEditingIndex(null)
+        const canSplitPrevious = index > 0 && segments[index - 1].length >= desiredLength + 1
+        if (canSplitPrevious) {
+            const next = [...segments]
+            next[index - 1] = {
+                ...segments[index - 1],
+                length: roundToPrecision(segments[index - 1].length - desiredLength),
+            }
+            next.splice(index, 0, createNewSegment())
+            updateRedux(next)
+            setEditingIndex(null)
+            
+        }
     }
 
     /**
@@ -417,7 +410,7 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240
     ) => {
         const mid = tickPoints[i] + s.length / 2
         const positionPct = (mid / total) * 100
-        const feet = Math.round((s.length / total) * blockfaceLength)
+        const feet = formatLength((s.length / total) * effectiveBlockfaceLength)
 
         const labelStyle = {
             backgroundColor: COLORS[s.type] || '#999',
@@ -435,12 +428,12 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240
             editingIndex === i ? (
                 <>
                     <span>
-                        {s.type} {feet} ft
+                        {s.type} {feet}
                     </span>
                     <div className="dropdown">{renderDropdownItems(handleChangeType, handleAddLeft, i)}</div>
                 </>
             ) : (
-                `${s.type} ${feet} ft`
+                `${s.type} ${feet}`
             )
 
         return (
@@ -461,14 +454,14 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240
      * @sig renderTick :: (Number, Number, Number) -> JSXElement
      */
     const renderTick = (p, i, total) => {
-        const ft = Math.round((p / total) * blockfaceLength)
+        const ft = formatLength((p / total) * effectiveBlockfaceLength)
         const pct = (p / total) * 100
 
         const tickStyle = isVertical ? { top: `${pct}%` } : { left: `${pct}%` }
 
         return (
             <div key={`tick-${i}`} className="tick" style={tickStyle}>
-                {ft} ft
+                {ft}
             </div>
         )
     }
@@ -528,31 +521,7 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240
     }
 
     // Component state and refs
-    const [segments, setSegmentsInternal] = useState(() => scaleInitialSegments(blockfaceLength))
-
-    // Wrapper to update both local state and notify parent
-    const setSegments = useCallback(newSegments => {
-        if (typeof newSegments === 'function') {
-            setSegmentsInternal(prev => {
-                const updated = newSegments(prev)
-                // Defer parent notification to avoid setState during render
-                setTimeout(() => {
-                    if (onSegmentsChangeRef.current) {
-                        onSegmentsChangeRef.current(updated)
-                    }
-                }, 0)
-                return updated
-            })
-        } else {
-            setSegmentsInternal(newSegments)
-            // Defer parent notification to avoid setState during render
-            setTimeout(() => {
-                if (onSegmentsChangeRef.current) {
-                    onSegmentsChangeRef.current(newSegments)
-                }
-            }, 0)
-        }
-    }, [])
+    // Segments are now managed by Redux
     const [draggingIndex, setDraggingIndex] = useState(null)
     const [editingIndex, setEditingIndex] = useState(null)
     const [dragPreviewPos, setDragPreviewPos] = useState({ x: 0, y: 0 })
@@ -564,37 +533,16 @@ const SegmentedCurbEditor = ({ orientation = 'horizontal', blockfaceLength = 240
 
     // Derived values and handlers
     const total = segments.reduce((sum, s) => sum + s.length, 0)
-    const handleDrag = buildDragHandler(total, setSegments)
-    const handleSwap = buildSwapHandler(setSegments)
-    const handleChangeType = buildChangeTypeHandler(setSegments, setEditingIndex)
-    const handleAddLeft = buildAddLeftHandler(setSegments, setEditingIndex)
+    const handleDrag = buildDragHandler(total, newSegments => dispatch(replaceSegments(newSegments)))
+    const handleSwap = buildSwapHandler(newSegments => dispatch(replaceSegments(newSegments)))
+    const handleChangeType = buildChangeTypeHandler(
+        newSegments => dispatch(replaceSegments(newSegments)),
+        setEditingIndex,
+    )
+    const handleAddLeft = buildAddLeftHandler(newSegments => dispatch(replaceSegments(newSegments)), setEditingIndex)
     const tickPoints = buildTickPoints(segments)
 
-    // Reset segments when a new blockface is selected
-    useEffect(() => {
-        if (blockfaceId) {
-            const newSegments = scaleInitialSegments(blockfaceLength)
-            setSegmentsInternal(newSegments)
-            // Defer parent notification to avoid setState during render
-            setTimeout(() => {
-                if (onSegmentsChangeRef.current) {
-                    onSegmentsChangeRef.current(newSegments)
-                }
-            }, 0)
-        }
-    }, [blockfaceId, blockfaceLength])
-
-    // Store callback ref to avoid dependency issues
-    const onSegmentsChangeRef = useRef(onSegmentsChange)
-    onSegmentsChangeRef.current = onSegmentsChange
-
-    // Send initial segments to parent after mount (only once)
-    useEffect(() => {
-        if (onSegmentsChangeRef.current && segments.length > 0) {
-            // Use setTimeout to ensure this runs after render
-            setTimeout(() => onSegmentsChangeRef.current(segments), 0)
-        }
-    }, []) // Empty dependency array - run only once
+    // Redux handles blockface initialization and segment management
 
     // Global touch handlers for better mobile support
     useEffect(
