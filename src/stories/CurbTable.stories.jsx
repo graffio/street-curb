@@ -40,6 +40,7 @@ Designed for one-handed phone use while collecting street curb data.
             description: 'Total length of the blockface in feet',
         },
         onSegmentsChange: { action: 'segments-changed', description: 'Callback fired when segments are modified' },
+        segments: { control: false, description: 'External segments to sync with (used by main app)' },
     },
 }
 
@@ -239,6 +240,8 @@ export const InteractionTest = {
 6. Verify start positions update correctly
 7. Test dropdown closes when selecting an option
 8. Test dropdown closes when tapping outside (if implemented)
+9. **NEW: Click on Length or Start cells to test NumberPad**
+10. **NEW: Test NumberPad input, validation, and save/cancel**
 
 **Expected Behavior:**
 - Type button should show color corresponding to segment type
@@ -246,6 +249,8 @@ export const InteractionTest = {
 - + button should split current segment and add new 20ft Parking segment
 - Length and Start columns should update automatically
 - Component should feel responsive to touch on mobile
+- **NEW: Length/Start cells should be clickable and show hover effect**
+- **NEW: NumberPad should open with current value and proper validation**
                 `,
             },
         },
@@ -272,6 +277,70 @@ export const EdgeCases = {
         docs: {
             description: {
                 story: 'Edge cases testing very small and very large blockface lengths to ensure component handles extreme values gracefully.',
+            },
+        },
+    },
+}
+
+/**
+ * NumberPad integration test
+ */
+export const NumberPadIntegration = {
+    args: { blockfaceLength: 240 },
+    parameters: {
+        docs: {
+            description: {
+                story: `
+**NumberPad Integration Testing:**
+1. Click on any Length cell to open NumberPad for length editing
+2. Click on any Start cell to open NumberPad for start position editing
+3. Test number input with decimal values (e.g., 12.5)
+4. Test validation (min/max limits)
+5. Test cancel functionality (should revert to original value)
+6. Test enter functionality (should save new value)
+7. Verify table updates correctly after saving
+
+**Expected Behavior:**
+- Length cells should open NumberPad with min=1, max=blockfaceLength
+- Start cells should open NumberPad with min=0, max=blockfaceLength
+- NumberPad should slide up from bottom with fade-in backdrop
+- Invalid values should show error messages
+- Cancel should close NumberPad without saving changes
+- Enter should save changes and update the table
+- Table should recalculate start positions after length changes
+                `,
+            },
+        },
+    },
+}
+
+/**
+ * Mobile NumberPad testing
+ */
+export const MobileNumberPad = {
+    args: { blockfaceLength: 240 },
+    parameters: {
+        viewport: {
+            viewports: { iphone14mini: { name: 'iPhone 14 mini', styles: { width: '375px', height: '812px' } } },
+            defaultViewport: 'iphone14mini',
+        },
+        docs: {
+            description: {
+                story: `
+**Mobile NumberPad Testing (iPhone 14 mini):**
+1. Test NumberPad on smallest target device
+2. Verify touch targets are 44px+ for accessibility
+3. Test one-handed thumb interaction
+4. Verify NumberPad positioning doesn't cover important UI
+5. Test keyboard navigation (Escape key)
+6. Test backdrop click to close
+
+**Expected Behavior:**
+- NumberPad should be easily accessible with thumb
+- Buttons should be large enough for comfortable tapping
+- NumberPad should position near bottom of screen
+- All interactions should work smoothly on mobile
+                `,
             },
         },
     },

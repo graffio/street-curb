@@ -263,7 +263,8 @@ const handleClick = (map, onBlockfaceSelectRef) => e => {
     const blockfaceId = getBlockfaceId(feature)
     const blockfaceLength = calculateBlockfaceLength(feature)
 
-    if (onBlockfaceSelectRef.current) onBlockfaceSelectRef.current(blockfaceId, feature, blockfaceLength)
+    if (onBlockfaceSelectRef.current)
+        onBlockfaceSelectRef.current({ id: blockfaceId, feature, length: blockfaceLength })
 }
 
 /**
