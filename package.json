@@ -10,7 +10,8 @@
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",
         "precommit": "lint-staged",
         "storybook": "storybook dev -p 6006",
-        "build-storybook": "storybook build"
+        "build-storybook": "storybook build",
+        "tap": "TAP_DISABLE_COVERAGE=1 tap test/**/*.tap.js -R tap | tap-mocha-reporter spec"
     },
     "devDependencies": {
         "@chromatic-com/storybook": "^4.0.1",
@@ -40,6 +41,8 @@
         "prettier": "^3.5.3",
         "prop-types": "^15.8.1",
         "storybook": "^9.0.18",
+        "tap": "^21.1.0",
+        "tap-mocha-reporter": "^5.0.4",
         "vite": "^5.2.0",
         "vitest": "^3.2.4"
     },
@@ -48,8 +51,7 @@
             "prettier --write",
             "eslint --fix"
         ],
-        "docs/**/*.{mjs,js,jsx}": [
-        ]
+        "docs/**/*.{mjs,js,jsx}": []
     },
     "prettier": {
         "tabWidth": 4,
