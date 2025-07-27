@@ -972,6 +972,93 @@ h1 {
     }
 }
 
+/* Segment Controls Bottom Layout */
+.segment-controls-bottom {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: rgba(248, 249, 250, 0.8);
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.remaining-space-info {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.add-buttons-container {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.add-segment-button {
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #1e7e34;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+}
+
+.add-segment-button:hover {
+    background-color: #1e7e34;
+    transform: translateY(-1px);
+}
+
+.add-segment-button:active {
+    background-color: #155724;
+    transform: translateY(0);
+}
+
+/* Mobile Responsive for Bottom Controls */
+@media (max-width: 480px) {
+    .segment-controls-bottom {
+        padding: 10px;
+        gap: 8px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .remaining-space-info {
+        text-align: center;
+        font-size: 13px;
+    }
+    
+    .add-buttons-container {
+        justify-content: center;
+    }
+    
+    .add-segment-button {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* Dark mode support for Bottom Controls */
+@media (prefers-color-scheme: dark) {
+    .segment-controls-bottom {
+        background-color: rgba(42, 42, 42, 0.8);
+        border-color: #444;
+    }
+    
+    .remaining-space-info {
+        color: #cccccc;
+    }
+}
+
 /* Dark mode support for NumberPad */
 @media (prefers-color-scheme: dark) {
     .number-pad-container {

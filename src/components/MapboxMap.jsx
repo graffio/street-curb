@@ -125,26 +125,24 @@ const createSegmentFeature = (
 
 /**
  * Creates segmented highlight data from blockface feature and segments using proper distance-based slicing
- * @sig createSegmentedHighlight :: (Feature, [Segment]) -> GeoJSONFeatureCollection
+ * @sig createSegmentedHighlight :: (Feature, [Segment], Number) -> GeoJSONFeatureCollection
  */
-const createSegmentedHighlight = (blockfaceFeature, segments) => {
+const createSegmentedHighlight = (blockfaceFeature, segments, blockfaceLengthFeet) => {
     if (!blockfaceFeature?.geometry || blockfaceFeature.geometry.type !== 'LineString' || !segments?.length)
         return { type: 'FeatureCollection', features: [] }
 
     const totalGeographicLengthKm = length(blockfaceFeature)
-    const totalSegmentLengthFeet = segments.reduce((sum, seg) => sum + seg.length, 0)
     const epsilon = 0.000001
-    let currentRatio = 0
+    let currentDistanceFeet = 0
 
     const features = segments.map(segment => {
-        const segmentRatio = segment.length / totalSegmentLengthFeet
-        const startRatio = currentRatio
-        const endRatio = currentRatio + segmentRatio
+        const startRatio = currentDistanceFeet / blockfaceLengthFeet
+        const endRatio = (currentDistanceFeet + segment.length) / blockfaceLengthFeet
 
         const startDistanceKm = startRatio * totalGeographicLengthKm
         const endDistanceKm = endRatio * totalGeographicLengthKm
 
-        currentRatio = endRatio
+        currentDistanceFeet += segment.length
 
         return createSegmentFeature(
             blockfaceFeature,
@@ -309,14 +307,14 @@ const initializeSegmentedHighlight = map => {
 
 /**
  * Updates segmented highlight with new data
- * @sig updateSegmentedHighlight :: (Map, Feature, [Segment]) -> Void
+ * @sig updateSegmentedHighlight :: (Map, Feature, [Segment], Number) -> Void
  */
-const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments) => {
+const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockfaceLength) => {
     const source = map.getSource('segmented-highlight-source')
     if (!source) return
 
     if (blockfaceFeature && currentSegments?.length) {
-        const segmentedData = createSegmentedHighlight(blockfaceFeature, currentSegments)
+        const segmentedData = createSegmentedHighlight(blockfaceFeature, currentSegments, blockfaceLength || 240)
         source.setData(segmentedData)
         removeExistingHighlight(map)
         return
@@ -370,7 +368,7 @@ const MapboxMap = ({
 
     useEffect(() => {
         if (!map.current?.isStyleLoaded()) return
-        updateSegmentedHighlight(map.current, selectedBlockface?.feature, currentSegments)
+        updateSegmentedHighlight(map.current, selectedBlockface?.feature, currentSegments, selectedBlockface?.length)
     }, [selectedBlockface?.feature, selectedBlockface?.id, currentSegments])
 
     return (

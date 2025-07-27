@@ -5,11 +5,11 @@ import NumberPad from './NumberPad.jsx'
 import {
     selectSegments,
     selectBlockfaceLength,
-    selectUnknownSegment,
+    selectUnknownRemaining,
+    selectIsCollectionComplete,
     updateSegmentType,
     updateSegmentLength,
     addSegment,
-    updateStartPosition,
 } from '../store/curbStore.js'
 
 /**
@@ -62,16 +62,6 @@ const renderTypeOption = (type, handleTypeSelect, activeDropdown) => (
 )
 
 /**
- * Renders Unknown type option for dropdown
- * @sig renderUnknownOption :: (Function, Number) -> JSXElement
- */
-const renderUnknownOption = (handleTypeSelect, activeDropdown) => (
-    <div className="curb-dropdown-item unknown-option" onClick={() => handleTypeSelect(activeDropdown, 'Unknown')}>
-        Unknown
-    </div>
-)
-
-/**
  * Handles type button click with event propagation prevention
  * @sig handleTypeButtonClick :: (Event, Number, Function) -> Void
  */
@@ -119,7 +109,8 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
     const dispatch = useDispatch()
     const segments = useSelector(selectSegments) || []
     const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
-    const unknownSegment = useSelector(selectUnknownSegment)
+    const unknownRemaining = useSelector(selectUnknownRemaining)
+    const isCollectionComplete = useSelector(selectIsCollectionComplete)
 
     const [activeDropdown, setActiveDropdown] = useState(null)
     const [currentRowIndex, setCurrentRowIndex] = useState(0)
@@ -135,7 +126,7 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
     const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
 
     const startPositions = segments && segments.length > 0 ? calculateStartPositions(segments) : []
-    const canAddSegments = unknownSegment && unknownSegment.length > 0
+    const canAddSegments = unknownRemaining > 0
 
     const handleTypeChange = useCallback(
         (index, newType) => {
@@ -175,9 +166,8 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
 
             if (editingField === 'length') {
                 dispatch(updateSegmentLength(editingIndex, newValue))
-            } else if (editingField === 'start') {
-                dispatch(updateStartPosition(editingIndex, newValue))
             }
+            // Note: start position editing removed as per specification
 
             setNumberPadState({ isOpen: false, editingIndex: null, editingField: null, originalValue: 0 })
         },
@@ -197,7 +187,6 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
                 style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: dropdownPosition.width }}
             >
                 {Object.keys(COLORS).map(type => renderTypeOption(type, handleTypeSelect, activeDropdown))}
-                {renderUnknownOption(handleTypeSelect, activeDropdown)}
             </div>
         )
     }
@@ -235,16 +224,7 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
                 >
                     {formatLength(segment.length)}
                 </td>
-                <td
-                    className="start-cell editable-cell"
-                    onClick={e => {
-                        e.stopPropagation()
-                        handleCellClick(index, 'start', startPositions[index])
-                    }}
-                    style={{ cursor: 'pointer' }}
-                >
-                    {formatLength(startPositions[index])}
-                </td>
+                <td className="start-cell">{formatLength(startPositions[index])}</td>
                 <td className="add-cell">
                     <button className="add-button" onClick={() => handleAddSegment(index)} disabled={!canAddSegments}>
                         +
@@ -260,9 +240,8 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
                 <h3>Curb Configuration</h3>
                 <div className="blockface-info">
                     Total: {effectiveBlockfaceLength} ft
-                    {unknownSegment && unknownSegment.length > 0 && (
-                        <span> • Remaining: {formatLength(unknownSegment.length)}</span>
-                    )}
+                    {unknownRemaining > 0 && <span> • Remaining: {formatLength(unknownRemaining)}</span>}
+                    {isCollectionComplete && <span> • Collection Complete</span>}
                 </div>
             </div>
 
@@ -276,9 +255,36 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>{segments && segments.length > 0 ? segments.map(renderTableRow) : null}</tbody>
+                    <tbody>
+                        {segments && segments.length > 0 ? (
+                            segments.map(renderTableRow)
+                        ) : (
+                            <tr className="empty-state-row">
+                                <td colSpan="4" className="empty-state-cell">
+                                    <div className="empty-state-message">No segments yet</div>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
                 </table>
             </div>
+
+            <div className="segment-controls-bottom">
+                <div className="remaining-space-info">Remaining: {formatLength(unknownRemaining)} ft</div>
+                <div className="add-buttons-container">
+                    {segments.length === 0 && unknownRemaining > 0 && (
+                        <button className="add-segment-button" onClick={() => handleAddSegment(0)}>
+                            + Add First Segment
+                        </button>
+                    )}
+                    {segments.length > 0 && unknownRemaining > 0 && (
+                        <button className="add-segment-button" onClick={() => handleAddSegment(segments.length)}>
+                            + Add Segment
+                        </button>
+                    )}
+                </div>
+            </div>
+
             {renderDropdownOptions()}
             {numberPadState.isOpen && (
                 <NumberPad

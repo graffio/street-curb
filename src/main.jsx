@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { Provider , useDispatch, useSelector } from 'react-redux'
+import { Provider, useDispatch, useSelector } from 'react-redux'
 import CurbTable from './components/CurbTable.jsx'
 import MapboxMap from './components/MapboxMap.jsx'
 import SegmentedCurbEditor from './components/SegmentedCurbEditor.jsx'
@@ -180,7 +180,6 @@ const App = () => {
                                     </div>
                                 ) : (
                                     <SegmentedCurbEditor
-                                        orientation="vertical"
                                         blockfaceLength={blockfaceLength}
                                         blockfaceId={selectedBlockface.id}
                                     />

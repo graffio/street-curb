@@ -7,6 +7,7 @@ export default defineConfig({
     server: {
         host: '0.0.0.0', // This allows access from any IP address
         port: 3000,
+        allowedHosts: ['79d4e5f4a452.ngrok-free.app'],
         open: true,
     },
     build: {
