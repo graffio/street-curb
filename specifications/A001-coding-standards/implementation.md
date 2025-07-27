@@ -90,6 +90,7 @@
 - AVOID mocking when possible - test with real pure functions
 - WRITE tests that verify @sig contracts
 - ALWAYS write tests that act as documentation, using Given/When/Then
+- **CRITICAL: Test descriptions MUST be proper English sentences with articles (the, a, an)**
      
     ❌ AVOID THIS
     ```  
@@ -115,16 +116,20 @@
 ```
 
 
-- USE proper English and AVOID test descriptions that essentially reproduce code
+- **CRITICAL: USE proper English with articles and AVOID programming notation**
  
-    ❌ AVOID THIS
+    ❌ AVOID THIS (missing articles, programming symbols)
     ``` 
-      t.test('Then should maintain blockfaceLength = sum(segments) + unknownRemaining', ...) 
+      t.test('Then should maintain blockfaceLength = sum(segments) + unknownRemaining', ...)
+      t.test('Then has start + 2 segment ends + final tick', ...)
+      t.test('When calculating dropdown position', ...)
     ```
-    ✅ DO THIS INSTEAD
+    ✅ DO THIS INSTEAD (proper English sentences)
 
     ```
       t.test('Then the segment lengths and the remaining unknown length always total to the blockface length', ...)
+      t.test('Then it has a start, 2 segment ends, and a final tick', ...)
+      t.test('When calculating THE dropdown position', ...)
     ``` 
   
 ## React Patterns
@@ -140,6 +145,13 @@
 
 ## React UI
 - ALL components should be based on Radix UI and Radix Themes (and Vanilla Extract)
+
+## UI Logic Separation
+- EXTRACT calculatable UI logic to pure utility functions for testability
+- KEEP pure CSS/DOM calculations in utils/ rather than JSX files  
+- PREFER unit-testable functions over untestable JSX-embedded calculations
+- EXAMPLES: Dropdown positioning, coordinate mapping, layout calculations, percentage calculations
+- CREATE separate files: `utils/geometry.js` for pure math, `utils/ui-calculations.js` for DOM/CSS logic
 
 ## Naming Conventions
 - USE kebab-case for file names: `parse-qif-file.js` not `Parse QIF.js`.

@@ -9,10 +9,12 @@
 **Agent:** tech-lead-complexity-reducer  
 **Input:** Requirements specification + current codebase
 **Tasks:**
+- **FIRST**: Read @A001-coding-standards for project requirements
 - Analyze complexity reduction opportunities  
 - Create detailed simplification plan
 - Identify implementation priorities
 - Assess risks and trade-offs
+- **Test Strategy**: Plan comprehensive test approach including cleanup of trivial tests
 
 **Output:** `.claude/artifacts/[task]/complexity-analysis.md`
 
@@ -20,10 +22,12 @@
 **Agent:** tdd-implementer  
 **Input:** Complexity analysis + coding standards
 **Tasks:**
-- Test current behavior first
-- Implement changes in small increments
-- Follow strict red-green-refactor cycle
-- Create implementation log
+- **FIRST**: Read @A001-coding-standards, especially test requirements  
+- **Test Cleanup**: Remove trivial tests that only verify JavaScript works
+- **TDD RED Phase**: Create stub files with intentionally wrong return values (not missing imports)
+- **TDD GREEN Phase**: Implement minimal code to pass tests
+- **TDD REFACTOR Phase**: Optimize while keeping tests green
+- **Handoff Summary**: Clearly state what was accomplished for next agent
 
 **Output:** Code changes + `.claude/artifacts/[task]/implementation-log.md`
 
@@ -31,10 +35,12 @@
 **Agent:** code-reviewer  
 **Input:** Implementation changes + success criteria  
 **Tasks:**
-- Verify complexity reduction achieved
-- Check adherence to coding standards
-- Validate test coverage
-- Assess architectural integrity
+- **Handoff Summary**: Acknowledge what was received from previous agent
+- **Coding Standards Verification**: Check ALL standards including file formatting, functional style
+- **Test Quality Review**: Verify proper English, meaningful assertions, business logic validation
+- **Architectural Assessment**: Evaluate file organization and separation of concerns
+- **Mathematical Invariant Check**: Verify business rules preserved (if applicable)
+- **Go/No-Go Decision**: Clear recommendation for proceeding
 
 **Output:** `.claude/artifacts/[task]/review-report.md`
 
@@ -76,8 +82,15 @@ code-reviewer: Review just that change
 ### **Handoff Protocol**
 1. **Receiving agent** reads all previous artifacts
 2. **Previous artifacts** provide full context
-3. **New artifacts** build on previous work
-4. **User updates** between phases when needed
+3. **Receiving agent** explicitly summarizes what they received
+4. **New artifacts** build on previous work
+5. **User updates** between phases when needed
+
+### **Test Management Protocol**
+- **Proactively remove** tests that only verify JavaScript language features work
+- **Consolidate** duplicated test logic across multiple files
+- **Focus tests** on actual business logic and edge cases
+- **Use proper English** in all test descriptions per @A001-coding-standards
 
 ## Quality Gates
 
@@ -89,9 +102,11 @@ code-reviewer: Review just that change
 
 ### **After Each Implementation Cycle**
 - [ ] Tests pass for implemented changes
-- [ ] Coding standards followed
+- [ ] ALL coding standards followed (formatting, functional style, test English)
 - [ ] No regressions introduced
+- [ ] Mathematical invariants preserved (if applicable)
 - [ ] Progress toward overall goal
+- [ ] Clear handoff summary provided
 
 ### **Before Final Completion**
 - [ ] All success criteria met
