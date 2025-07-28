@@ -1,0 +1,233 @@
+import t from 'tap'
+import { checkSingleLevelIndentation } from '../../tools/lib/rules/single-level-indentation.js'
+import { parseCode } from '../../tools/lib/parser.js'
+
+t.test('Given a function with nested indentation violations', t => {
+    t.test('When the function contains nested if statements', t => {
+        const code = `const processData = (data) => {
+            if (data) {
+                if (data.length > 0) {
+                    return data.filter(item => item.active)
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.equal(
+            violations[0].type,
+            'single-level-indentation',
+            'Then the violation type should be single-level-indentation',
+        )
+        t.equal(violations[0].rule, 'single-level-indentation', 'Then the rule field should be set correctly')
+        t.match(violations[0].message, /nested indentation/, 'Then the message should mention nested indentation')
+        t.end()
+    })
+
+    t.test('When the function contains nested for loops', t => {
+        const code = `const processMatrix = (matrix) => {
+            for (let i = 0; i < matrix.length; i++) {
+                for (let j = 0; j < matrix[i].length; j++) {
+                    matrix[i][j] = matrix[i][j] * 2
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for the nested loop')
+        t.match(violations[0].message, /nested indentation/, 'Then the message should mention nested indentation')
+        t.end()
+    })
+
+    t.test('When the function contains nested while loops', t => {
+        const code = `const processQueue = (queue) => {
+            while (queue.length > 0) {
+                const item = queue.shift()
+                while (item.pending) {
+                    item.process()
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for the nested while loop')
+        t.end()
+    })
+
+    t.test('When the function contains multiple levels of nesting', t => {
+        const code = `const complexFunction = (data) => {
+            if (data) {
+                for (let item of data) {
+                    if (item.active) {
+                        console.log(item)
+                    }
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 2, 'Then two violations should be detected')
+        t.equal(
+            violations[0].type,
+            'single-level-indentation',
+            'Then the first violation should be single-level-indentation',
+        )
+        t.equal(
+            violations[1].type,
+            'single-level-indentation',
+            'Then the second violation should be single-level-indentation',
+        )
+        t.end()
+    })
+
+    t.test('When the function contains a nested switch statement', t => {
+        const code = `const handleEvent = (event) => {
+            if (event) {
+                switch (event.type) {
+                    case 'click':
+                        handleClick()
+                        break
+                    case 'hover':
+                        handleHover()
+                        break
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for the nested switch')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a function with proper single-level indentation', t => {
+    t.test('When the function uses early returns instead of nesting', t => {
+        const code = `const processData = (data) => {
+            if (!data) return null
+            if (data.length === 0) return []
+            
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.test('When the function contains only single-level if statements', t => {
+        const code = `const handleClick = (event) => {
+            if (event.shiftKey) doShiftClick()
+            if (event.ctrlKey) doCtrlClick()
+            if (event.altKey) doAltClick()
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a function with allowed nesting patterns', t => {
+    t.test('When the function contains try-catch blocks with nested statements', t => {
+        const code = `const handleError = (operation) => {
+            try {
+                if (operation.risky) {
+                    operation.execute()
+                }
+            } catch (error) {
+                if (error.recoverable) {
+                    error.recover()
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for nesting inside try-catch')
+        t.end()
+    })
+
+    t.test('When the function contains nested object literals', t => {
+        const code = `const createConfig = (options) => {
+            return {
+                database: {
+                    host: options.host,
+                    port: options.port,
+                    credentials: {
+                        username: options.user,
+                        password: options.pass
+                    }
+                }
+            }
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for nested object literals')
+        t.end()
+    })
+
+    t.test('When the React component contains nested JSX elements', t => {
+        const code = `const MyComponent = ({ items }) => {
+            return (
+                <div>
+                    {items.map(item => (
+                        <div key={item.id}>
+                            <span>{item.name}</span>
+                            <button onClick={() => handleClick(item)}>
+                                Click me
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for nested JSX elements')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a function with nested callback functions', t => {
+    t.test('When the callback function contains nested indentation violations', t => {
+        const code = `const outerFunction = (data) => {
+            if (data) return data.map(item => item.value)
+            
+            return data.reduce((acc, item) => {
+                if (item.valid) {
+                    if (item.processed) {
+                        return acc + item.value
+                    }
+                }
+                return acc
+            }, 0)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected in the reduce callback')
+        t.match(
+            violations[0].message,
+            /nested indentation/,
+            'Then the violation should be for nested indentation in the callback',
+        )
+        t.end()
+    })
+
+    t.end()
+})

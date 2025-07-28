@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises'
 import { checkLineLength } from './rules/line-length.js'
 import { checkExportPlacement } from './rules/export-placement.js'
 import { checkUnnecessaryBraces } from './rules/unnecessary-braces.js'
+import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { parseCode } from './parser.js'
 
 /**
@@ -44,6 +45,10 @@ const runAllRules = (ast, sourceCode, filePath) => {
     // Run unnecessary braces rule (AST-based)
     const bracesViolations = checkUnnecessaryBraces(ast, sourceCode, filePath)
     allViolations.push(...bracesViolations)
+
+    // Run single-level indentation rule (AST-based)
+    const indentationViolations = checkSingleLevelIndentation(ast, sourceCode, filePath)
+    allViolations.push(...indentationViolations)
 
     // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)

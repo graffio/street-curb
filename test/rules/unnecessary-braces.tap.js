@@ -2,21 +2,22 @@ import t from 'tap'
 import { checkUnnecessaryBraces } from '../../tools/lib/rules/unnecessary-braces.js'
 import { parseCode } from '../../tools/lib/parser.js'
 
-t.test('Unnecessary braces validation should detect single-statement blocks with braces', async t => {
-    await t.test('Single-statement if blocks should be flagged when they have braces', async t => {
+t.test('Given code with unnecessary braces violations', t => {
+    t.test('When an if statement has braces around a single statement', t => {
         const code = `if (condition) {
             doSomething()
         }`
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 1, 'One violation should be detected')
-        t.equal(violations[0].type, 'unnecessary-braces', 'Violation type should be unnecessary-braces')
-        t.equal(violations[0].rule, 'unnecessary-braces', 'Rule field should be set correctly')
-        t.match(violations[0].message, /unnecessary braces/, 'Message should mention unnecessary braces')
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.equal(violations[0].type, 'unnecessary-braces', 'Then the violation type should be unnecessary-braces')
+        t.equal(violations[0].rule, 'unnecessary-braces', 'Then the rule field should be set correctly')
+        t.match(violations[0].message, /unnecessary braces/, 'Then the message should mention unnecessary braces')
+        t.end()
     })
 
-    await t.test('Single-statement else blocks should be flagged when they have braces', async t => {
+    t.test('When both if and else blocks have unnecessary braces', t => {
         const code = `if (condition) {
             doSomething()
         } else {
@@ -25,23 +26,41 @@ t.test('Unnecessary braces validation should detect single-statement blocks with
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 2, 'Two violations should be detected')
-        t.equal(violations[0].type, 'unnecessary-braces', 'First violation should be unnecessary-braces')
-        t.equal(violations[1].type, 'unnecessary-braces', 'Second violation should be unnecessary-braces')
+        t.equal(violations.length, 2, 'Then two violations should be detected')
+        t.equal(violations[0].type, 'unnecessary-braces', 'Then the first violation should be unnecessary-braces')
+        t.equal(violations[1].type, 'unnecessary-braces', 'Then the second violation should be unnecessary-braces')
+        t.end()
     })
 
-    await t.test('Single-statement for loops should be flagged when they have braces', async t => {
+    t.test('When a for loop has braces around a single statement', t => {
         const code = `for (let i = 0; i < 10; i++) {
             console.log(i)
         }`
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 1, 'One violation should be detected')
-        t.match(violations[0].message, /single statement/, 'Message should mention single statement')
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.match(violations[0].message, /single statement/, 'Then the message should mention single statement')
+        t.end()
     })
 
-    await t.test('Properly formatted single-statement blocks should pass validation', async t => {
+    t.test('When an arrow function has braces around a single return', t => {
+        const code = `const myFunction = () => {
+            return something
+        }`
+        const ast = parseCode(code)
+        const violations = checkUnnecessaryBraces(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for the single-return arrow function')
+        t.match(violations[0].message, /unnecessary braces/, 'Then the message should mention unnecessary braces')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given code with proper brace usage', t => {
+    t.test('When single statements are written without braces', t => {
         const code = `if (condition) doSomething()
         else doSomethingElse()
         
@@ -49,10 +68,11 @@ t.test('Unnecessary braces validation should detect single-statement blocks with
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 0, 'No violations should be detected')
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
     })
 
-    await t.test('Multi-statement blocks should pass validation even with braces', async t => {
+    t.test('When multi-statement blocks use braces', t => {
         const code = `if (condition) {
             doSomething()
             doSomethingElse()
@@ -60,31 +80,22 @@ t.test('Unnecessary braces validation should detect single-statement blocks with
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 0, 'No violations should be detected for multi-statement blocks')
+        t.equal(violations.length, 0, 'Then no violations should be detected for multi-statement blocks')
+        t.end()
     })
 
-    await t.test('Arrow functions with single return statements should be flagged when they have braces', async t => {
-        const code = `const myFunction = () => {
-            return something
-        }`
-        const ast = parseCode(code)
-        const violations = checkUnnecessaryBraces(ast, code, 'test.js')
-
-        t.equal(violations.length, 1, 'One violation should be detected for single-return arrow function')
-        t.match(violations[0].message, /unnecessary braces/, 'Message should mention unnecessary braces')
-    })
-
-    await t.test('Traditional function declarations should pass validation with braces', async t => {
+    t.test('When traditional function declarations use braces', t => {
         const code = `function myFunction() {
             return something
         }`
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 0, 'No violations should be detected for traditional function declarations')
+        t.equal(violations.length, 0, 'Then no violations should be detected for traditional function declarations')
+        t.end()
     })
 
-    await t.test('Multi-statement arrow functions should pass validation with braces', async t => {
+    t.test('When multi-statement arrow functions use braces', t => {
         const code = `const myFunction = () => {
             doSomething()
             return something
@@ -92,6 +103,9 @@ t.test('Unnecessary braces validation should detect single-statement blocks with
         const ast = parseCode(code)
         const violations = checkUnnecessaryBraces(ast, code, 'test.js')
 
-        t.equal(violations.length, 0, 'No violations should be detected for multi-statement arrow functions')
+        t.equal(violations.length, 0, 'Then no violations should be detected for multi-statement arrow functions')
+        t.end()
     })
+
+    t.end()
 })
