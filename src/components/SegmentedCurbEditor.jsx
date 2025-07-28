@@ -6,6 +6,7 @@ import {
     addSegment,
     replaceSegments,
     selectBlockfaceLength,
+    selectCumulativePositions,
     selectSegments,
     selectUnknownRemaining,
     updateSegmentLength,
@@ -40,23 +41,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
 
     /**
-     * Creates cumulative position markers for ruler display including unknown space
-     * @sig buildTickPoints :: ([Segment], Number) -> [Number]
-     */
-    const buildTickPoints = (segments, unknownRemaining) => {
-        const addCumulative = (acc, s) => [...acc, acc[acc.length - 1] + s.length]
-        const segmentTicks = segments.reduce(addCumulative, [0])
-
-        // Add final tick point including unknown space if it exists
-        if (unknownRemaining > 0) {
-            const lastPoint = segmentTicks[segmentTicks.length - 1]
-            return [...segmentTicks, lastPoint + unknownRemaining]
-        }
-
-        return segmentTicks
-    }
-
-    /**
      * Creates handler for divider dragging that uses universal boundary adjustment
      * @sig buildDragHandler :: (Number, Function) -> (Number, Number, Number) -> Void
      */
@@ -84,6 +68,43 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     }
 
     /**
+     * Creates new segment with default properties
+     * @sig createNewSegment :: Number -> Segment
+     *     Segment = { id: String, type: String, length: Number }
+     */
+    const createNewSegment = desiredLength => ({
+        id: 's' + Math.random().toString(36).slice(2, 7),
+        type: 'Parking',
+        length: roundToPrecision(desiredLength),
+    })
+
+    /**
+     * Splits current segment to make space for new segment
+     * @sig splitCurrentSegment :: ([Segment], Number, Number) -> [Segment]
+     */
+    const splitCurrentSegment = (segments, index, desiredLength) => {
+        const next = [...segments]
+        const fromSegment = segments[index]
+        next[index] = { ...fromSegment, length: roundToPrecision(fromSegment.length - desiredLength) }
+        next.splice(index, 0, createNewSegment(desiredLength))
+        return next
+    }
+
+    /**
+     * Splits previous segment to make space for new segment
+     * @sig splitPreviousSegment :: ([Segment], Number, Number) -> [Segment]
+     */
+    const splitPreviousSegment = (segments, index, desiredLength) => {
+        const next = [...segments]
+        next[index - 1] = {
+            ...segments[index - 1],
+            length: roundToPrecision(segments[index - 1].length - desiredLength),
+        }
+        next.splice(index, 0, createNewSegment(desiredLength))
+        return next
+    }
+
+    /**
      * Creates handler for adding new segment to the left of clicked segment
      * @sig buildAddLeftHandler :: (Function, SetStateFn) -> Number -> Void
      */
@@ -92,31 +113,16 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         const fromSegment = segments[index]
         if (!fromSegment) return
 
-        const createNewSegment = () => ({
-            id: 's' + Math.random().toString(36).slice(2, 7),
-            type: 'Parking',
-            length: roundToPrecision(desiredLength),
-        })
-
         const canSplitCurrent = fromSegment.length >= desiredLength + 1
         if (canSplitCurrent) {
-            const next = [...segments]
-            next[index] = { ...fromSegment, length: roundToPrecision(fromSegment.length - desiredLength) }
-            next.splice(index, 0, createNewSegment())
-            updateRedux(next)
+            updateRedux(splitCurrentSegment(segments, index, desiredLength))
             setEditingIndex(null)
             return
         }
 
         const canSplitPrevious = index > 0 && segments[index - 1].length >= desiredLength + 1
         if (canSplitPrevious) {
-            const next = [...segments]
-            next[index - 1] = {
-                ...segments[index - 1],
-                length: roundToPrecision(segments[index - 1].length - desiredLength),
-            }
-            next.splice(index, 0, createNewSegment())
-            updateRedux(next)
+            updateRedux(splitPreviousSegment(segments, index, desiredLength))
             setEditingIndex(null)
         }
     }
@@ -335,13 +341,8 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         if (i >= segments.length && unknownRemaining <= 0) return null
         if (i >= segments.length - 1 && unknownRemaining <= 0) return null
 
-        const calculatePositionPercent = () => {
-            let positionPercent = 0
-            for (let j = 0; j <= i; j++) {
-                positionPercent += (segments[j].length / total) * 100
-            }
-            return positionPercent
-        }
+        const calculatePositionPercent = () =>
+            segments.slice(0, i + 1).reduce((acc, segment) => acc + (segment.length / total) * 100, 0)
 
         const positionPercent = calculatePositionPercent()
 
@@ -605,7 +606,7 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         setEditingIndex,
     )
     const handleAddLeft = buildAddLeftHandler(newSegments => dispatch(replaceSegments(newSegments)), setEditingIndex)
-    const tickPoints = buildTickPoints(segments, unknownRemaining)
+    const tickPoints = useSelector(selectCumulativePositions)
 
     // Redux handles blockface initialization and segment management
 

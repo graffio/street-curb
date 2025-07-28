@@ -3,6 +3,31 @@
 **Date:** 2025.07.27  
 **Purpose:** Technical protocols for agent collaboration and handoffs
 
+## Agent Selection by Task Type
+
+### **Code Quality Issues**
+- Use **code-reviewer** directly for standards violations, formatting issues, review feedback
+- Examples: Fix linting errors, enforce coding standards, review completed work
+
+### **Simple Implementation Tasks** 
+- Use **tdd-implementer** directly for focused changes with clear requirements
+- Examples: Fix specific bugs, implement well-defined features, apply coding standards fixes
+
+### **Strategic Analysis**
+- Use **tech-lead-complexity-reducer** for architecture decisions, complexity reduction
+- Examples: Plan feature approach, reduce system complexity, design decisions
+
+### **Complex Feature Development**
+- Use formal sequence: tech-lead-complexity-reducer → tdd-implementer → code-reviewer
+- Examples: New features requiring design decisions, major refactoring projects, multi-component changes
+
+### **Ambiguous Task Resolution**
+When task doesn't clearly fit above categories:
+1. **Default to single agent** for focused, well-defined work
+2. **Escalate to tech-lead** when scope or approach unclear
+3. **Ask user for clarification** when agent choice impacts deliverables
+4. **Prefer simpler approach** - avoid full sequence unless complexity warrants it
+
 ## Standard Three-Agent Sequence
 
 ### **Phase 1: Strategic Analysis**
@@ -79,6 +104,20 @@ code-reviewer: Review just that change
 └── review-report.md         # Code reviewer assessment
 ```
 
+### **File Creation Guidelines**
+
+#### **Artifact Creation (Always Allowed)**
+- Analysis reports in `.claude/artifacts/`
+- Implementation logs and progress tracking
+- Review reports and quality assessments
+- Documentation artifacts for handoffs
+
+#### **Code File Creation (Requires Clear Need)**
+- **Create new code files** only when specifications explicitly require them
+- **Create test files** for new functionality or missing test coverage
+- **Create utility files** when extracting reusable logic from existing code
+- **Ask user permission** before creating files not explicitly specified
+
 ### **Handoff Protocol**
 1. **Receiving agent** reads all previous artifacts
 2. **Previous artifacts** provide full context
@@ -87,10 +126,17 @@ code-reviewer: Review just that change
 5. **User updates** between phases when needed
 
 ### **Test Management Protocol**
+
+#### **Autonomous Test Cleanup**
 - **Proactively remove** tests that only verify JavaScript language features work
 - **Consolidate** duplicated test logic across multiple files
 - **Focus tests** on actual business logic and edge cases
 - **Use proper English** in all test descriptions per @A001-coding-standards
+
+#### **Consultative Test Changes**
+- **Ask user permission** before removing tests that verify business logic
+- **Ask user permission** before major restructuring of test organization
+- **Ask user permission** before changing test frameworks or approaches
 
 ## Quality Gates
 

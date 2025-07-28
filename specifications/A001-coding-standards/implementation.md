@@ -385,6 +385,7 @@ Examples:
 - AVOID more than one level of code indentation in a function: a nested `if` is wrong. These are ok to nest:
   - try / catch
   - object literals
+  - JSX elements (React components may have nested JSX structure)
 
     ❌ AVOID THIS
     ```

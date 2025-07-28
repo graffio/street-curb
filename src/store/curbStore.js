@@ -1,4 +1,5 @@
 import { roundToPrecision } from '../constants.js'
+import { calculateCumulativePositions, calculateVisualPercentages } from '../utils/geometry.js'
 
 /**
  * Action types for curb segment management
@@ -211,3 +212,91 @@ export const selectUnknownRemaining = state => state.curb.unknownRemaining
 export const selectIsCollectionComplete = state => state.curb.isCollectionComplete
 export const selectTotalLength = state =>
     state.curb.segments.reduce((sum, segment) => sum + segment.length, 0) + state.curb.unknownRemaining
+
+/**
+ * Memoized selector for cumulative positions
+ * Replaces buildTickPoints from SegmentedCurbEditor.jsx
+ * @sig selectCumulativePositions :: State -> [Number]
+ */
+export const selectCumulativePositions = (() => {
+    const createMemoizedSelector = () => {
+        let lastSegments = null
+        let lastUnknownRemaining = null
+        let lastResult = null
+
+        return state => {
+            const segments = selectSegments(state)
+            const unknownRemaining = selectUnknownRemaining(state)
+
+            if (segments === lastSegments && unknownRemaining === lastUnknownRemaining) {
+                return lastResult
+            }
+
+            lastSegments = segments
+            lastUnknownRemaining = unknownRemaining
+            lastResult = calculateCumulativePositions(segments, unknownRemaining)
+            return lastResult
+        }
+    }
+
+    return createMemoizedSelector()
+})()
+
+/**
+ * Memoized selector for start positions
+ * Replaces calculateStartPositions from CurbTable.jsx
+ * @sig selectStartPositions :: State -> [Number]
+ */
+export const selectStartPositions = (() => {
+    const createMemoizedSelector = () => {
+        let lastSegments = null
+        let lastResult = null
+
+        return state => {
+            const segments = selectSegments(state)
+
+            if (segments === lastSegments) {
+                return lastResult
+            }
+
+            lastSegments = segments
+            lastResult = segments.reduce((positions, segment) => {
+                const start =
+                    positions.length === 0 ? 0 : positions[positions.length - 1] + segments[positions.length - 1].length
+                return [...positions, start]
+            }, [])
+            return lastResult
+        }
+    }
+
+    return createMemoizedSelector()
+})()
+
+/**
+ * Memoized selector for visual percentages
+ * Provides percentage calculations for rendering
+ * @sig selectVisualPercentages :: State -> [Number]
+ */
+export const selectVisualPercentages = (() => {
+    const createMemoizedSelector = () => {
+        let lastSegments = null
+        let lastBlockfaceLength = null
+        let lastResult = null
+
+        return state => {
+            const segments = selectSegments(state)
+            const blockfaceLength = selectBlockfaceLength(state)
+
+            if (segments === lastSegments && blockfaceLength === lastBlockfaceLength) {
+                return lastResult
+            }
+
+            lastSegments = segments
+            lastBlockfaceLength = blockfaceLength
+            lastResult = calculateVisualPercentages(segments, blockfaceLength)
+            return lastResult
+        }
+    }
+
+    return createMemoizedSelector()
+})()

@@ -7,6 +7,7 @@ import {
     selectBlockfaceLength,
     selectUnknownRemaining,
     selectIsCollectionComplete,
+    selectStartPositions,
     updateSegmentType,
     updateSegmentLength,
     addSegment,
@@ -21,19 +22,6 @@ import {
  */
 
 // Helper functions moved to Redux store
-
-/**
- * Calculates start positions for all segments based on their lengths
- * @sig calculateStartPositions :: [Segment] -> [Number]
- */
-const calculateStartPositions = segments => {
-    let cumulative = 0
-    return segments.map(segment => {
-        const start = cumulative
-        cumulative += segment.length
-        return start
-    })
-}
 
 // These helper functions are no longer needed - Redux handles the logic
 
@@ -125,7 +113,7 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
     // Use Redux blockface length if available, otherwise use prop
     const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
 
-    const startPositions = segments && segments.length > 0 ? calculateStartPositions(segments) : []
+    const startPositions = useSelector(selectStartPositions)
     const canAddSegments = unknownRemaining > 0
 
     const handleTypeChange = useCallback(
