@@ -2,7 +2,7 @@
  * Check for line length violations (A001 standard: max 120 characters)
  * @sig checkLineLength :: (AST?, String, String) -> [Violation]
  */
-export const checkLineLength = (ast, sourceCode, filePath) => {
+const checkLineLength = (ast, sourceCode, filePath) => {
     const violations = []
     const lines = sourceCode.split('\n')
 
@@ -20,3 +20,5 @@ export const checkLineLength = (ast, sourceCode, filePath) => {
 
     return violations
 }
+
+export { checkLineLength }
