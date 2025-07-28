@@ -4,6 +4,7 @@ import { COLORS, formatLength, roundToPrecision } from '../constants.js'
 import { calculateLabelPositions } from '../label-positioning.js'
 import {
     addSegment,
+    addSegmentLeft,
     replaceSegments,
     selectBlockfaceLength,
     selectCumulativePositions,
@@ -65,66 +66,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         next[index] = { ...next[index], type: newType }
         updateRedux(next)
         setEditingIndex(null)
-    }
-
-    /**
-     * Creates new segment with default properties
-     * @sig createNewSegment :: Number -> Segment
-     *     Segment = { id: String, type: String, length: Number }
-     */
-    const createNewSegment = desiredLength => ({
-        id: 's' + Math.random().toString(36).slice(2, 7),
-        type: 'Parking',
-        length: roundToPrecision(desiredLength),
-    })
-
-    /**
-     * Splits current segment to make space for new segment
-     * @sig splitCurrentSegment :: ([Segment], Number, Number) -> [Segment]
-     */
-    const splitCurrentSegment = (segments, index, desiredLength) => {
-        const next = [...segments]
-        const fromSegment = segments[index]
-        next[index] = { ...fromSegment, length: roundToPrecision(fromSegment.length - desiredLength) }
-        next.splice(index, 0, createNewSegment(desiredLength))
-        return next
-    }
-
-    /**
-     * Splits previous segment to make space for new segment
-     * @sig splitPreviousSegment :: ([Segment], Number, Number) -> [Segment]
-     */
-    const splitPreviousSegment = (segments, index, desiredLength) => {
-        const next = [...segments]
-        next[index - 1] = {
-            ...segments[index - 1],
-            length: roundToPrecision(segments[index - 1].length - desiredLength),
-        }
-        next.splice(index, 0, createNewSegment(desiredLength))
-        return next
-    }
-
-    /**
-     * Creates handler for adding new segment to the left of clicked segment
-     * @sig buildAddLeftHandler :: (Function, SetStateFn) -> Number -> Void
-     */
-    const buildAddLeftHandler = (updateRedux, setEditingIndex) => index => {
-        const desiredLength = 10
-        const fromSegment = segments[index]
-        if (!fromSegment) return
-
-        const canSplitCurrent = fromSegment.length >= desiredLength + 1
-        if (canSplitCurrent) {
-            updateRedux(splitCurrentSegment(segments, index, desiredLength))
-            setEditingIndex(null)
-            return
-        }
-
-        const canSplitPrevious = index > 0 && segments[index - 1].length >= desiredLength + 1
-        if (canSplitPrevious) {
-            updateRedux(splitPreviousSegment(segments, index, desiredLength))
-            setEditingIndex(null)
-        }
     }
 
     /**
@@ -212,6 +153,16 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     }
 
     /**
+     * Checks if segment contains touch coordinate
+     * @sig isSegmentUnderTouch :: (Element, Number, Number) -> Boolean
+     */
+    const isSegmentUnderTouch = (segment, touchCoord, totalSize) => {
+        if (!segment.classList.contains('segment')) return false
+        const segmentSize = segment.offsetHeight
+        return touchCoord >= totalSize && touchCoord <= totalSize + segmentSize
+    }
+
+    /**
      * Determines which segment index is under the given touch coordinate
      * @sig findSegmentUnderTouch :: (Element, Number) -> Number
      */
@@ -222,53 +173,62 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         for (let i = 0; i < segments.length; i++) {
             const segment = segments[i]
             if (!segment.classList.contains('segment')) continue
-
-            const segmentSize = segment.offsetHeight
-            if (touchCoord >= totalSize && touchCoord <= totalSize + segmentSize) return i
-            totalSize += segmentSize
+            if (isSegmentUnderTouch(segment, touchCoord, totalSize)) return i
+            totalSize += segment.offsetHeight
         }
 
         return -1
     }
 
     /**
+     * Creates touch move handler for mobile drag operations
+     * @sig createTouchMoveHandler :: (RefObject, RefObject, SetStateFn, Function) -> (Event) -> Void
+     */
+    const createTouchMoveHandler = (containerRef, dragData, setDragPreviewPos, findSegmentUnderTouch) => e => {
+        if (dragData.current.index === undefined) return
+        e.preventDefault()
+
+        const touch = e.touches[0]
+        const container = containerRef.current
+        if (!container) return
+
+        const rect = container.getBoundingClientRect()
+        const coord = touch.clientY - rect.top
+
+        setDragPreviewPos({
+            x: touch.clientX - rect.left - dragData.current.offsetX,
+            y: touch.clientY - rect.top - dragData.current.offsetY,
+        })
+
+        dragData.current.targetIndex = findSegmentUnderTouch(container, coord)
+    }
+
+    /**
+     * Creates touch end handler for mobile drag operations
+     * @sig createTouchEndHandler :: (RefObject, Function, SetStateFn, SetStateFn) -> (Event) -> Void
+     */
+    const createTouchEndHandler = (dragData, handleSwap, setDraggingIndex, setDragPreviewPos) => e => {
+        if (dragData.current.index === undefined) return
+        e.preventDefault()
+
+        const from = dragData.current.index
+        const to = dragData.current.targetIndex !== undefined ? dragData.current.targetIndex : from
+
+        if (from !== undefined && from !== to) handleSwap(from, to)
+
+        setDraggingIndex(null)
+        setDragPreviewPos({ x: 0, y: 0 })
+        dragData.current = {}
+    }
+
+    /**
      * Creates global touch event handlers for mobile drag operations
-     * @sig buildGlobalTouchHandlers :: (RefObject, RefObject, SetStateFn, Function, SetStateFn) -> { handleTouchMove: Function, handleTouchEnd: Function }
+     * @sig buildGlobalTouchHandlers :: (RefObject, RefObject, SetStateFn, Function, SetStateFn) -> TouchHandlers
+     *     TouchHandlers = { handleTouchMove: Function, handleTouchEnd: Function }
      */
     const buildGlobalTouchHandlers = (containerRef, dragData, setDragPreviewPos, handleSwap, setDraggingIndex) => {
-        const handleTouchMove = e => {
-            if (dragData.current.index === undefined) return
-            e.preventDefault()
-
-            const touch = e.touches[0]
-            const container = containerRef.current
-            if (!container) return
-
-            const rect = container.getBoundingClientRect()
-            const coord = touch.clientY - rect.top
-
-            setDragPreviewPos({
-                x: touch.clientX - rect.left - dragData.current.offsetX,
-                y: touch.clientY - rect.top - dragData.current.offsetY,
-            })
-
-            dragData.current.targetIndex = findSegmentUnderTouch(container, coord)
-        }
-
-        const handleTouchEnd = e => {
-            if (dragData.current.index === undefined) return
-            e.preventDefault()
-
-            const from = dragData.current.index
-            const to = dragData.current.targetIndex !== undefined ? dragData.current.targetIndex : from
-
-            if (from !== undefined && from !== to) handleSwap(from, to)
-
-            setDraggingIndex(null)
-            setDragPreviewPos({ x: 0, y: 0 })
-            dragData.current = {}
-        }
-
+        const handleTouchMove = createTouchMoveHandler(containerRef, dragData, setDragPreviewPos, findSegmentUnderTouch)
+        const handleTouchEnd = createTouchEndHandler(dragData, handleSwap, setDraggingIndex, setDragPreviewPos)
         return { handleTouchMove, handleTouchEnd }
     }
 
@@ -293,7 +253,9 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     /**
      * Renders individual segment with drag and drop capabilities
-     * @sig renderSegment :: (Segment, Number, [Segment], Number, Number?, RefObject, SetStateFn, Function, RefObject, SetStateFn) -> JSXElement
+     * @sig renderSegment :: (Segment, Number, [Segment], Number, Number?, DragRefs, DragHandlers) -> JSXElement
+     *     DragRefs = { dragData: RefObject, containerRef: RefObject }
+     *     DragHandlers = { setDraggingIndex: SetStateFn, handleSwap: Function, setDragPreviewPos: SetStateFn }
      */
     const renderSegment = (
         segment,
@@ -398,7 +360,8 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     /**
      * Renders floating label with interactive dropdown for segment configuration
-     * @sig renderLabel :: (Segment, Number, [Number], Number, [Number], RefObject, Number?, SetStateFn, Function, Function) -> JSXElement
+     * @sig renderLabel :: (Segment, Number, [Number], Number, [Number], RefObject, Number?, Handlers) -> JSXElement
+     *     Handlers = { setEditingIndex: SetStateFn, handleChangeType: Function, handleAddLeft: Function }
      */
     const renderLabel = (
         s,
@@ -538,6 +501,78 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     // Direct drag implementation without DraggableDivider
     const dragState = useRef({ isDragging: false, startCoord: null, startLength: null, index: null })
 
+    /**
+     * Calculates label offsets for positioning
+     * @sig calculateLabelOffsets :: ([Element], Function, Function) -> Void
+     */
+    const calculateLabelOffsets = (labelRefs, setSmartLabelPositions, setUniformLabelWidth) => {
+        const { positions, contentWidth } = calculateLabelPositions(true, labelRefs) // Always vertical
+        setSmartLabelPositions(positions)
+        setUniformLabelWidth(contentWidth) // Store contentWidth for CSS
+    }
+
+    /**
+     * Attempts zero snap adjustment when length is very small
+     * @sig attemptZeroSnap :: (Number, Number, Number, Function) -> Void
+     */
+    const attemptZeroSnap = (index, unknownRemaining, segments, dispatch) => {
+        const segment = segments[index]
+        if (!segment) return
+        if (unknownRemaining <= 0) return
+        if (unknownRemaining >= 1) return
+
+        // Snap to zero when very close
+        try {
+            dispatch(updateSegmentLength(index, dragState.current.startLength + unknownRemaining))
+        } catch (error) {
+            console.warn('Invalid segment adjustment:', error.message)
+        }
+    }
+
+    /**
+     * Handles drag move events with length adjustment
+     * @sig createDragMoveHandler :: (Number, Number, Function, Number, Number) -> (Event) -> Void
+     */
+    const createDragMoveHandler = (index, total, dispatch, unknownRemaining, segments) => moveEvent => {
+        if (!dragState.current.isDragging) return
+
+        const currentCoord = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientY : moveEvent.clientY
+        const deltaPixels = currentCoord - dragState.current.startCoord
+
+        if (!containerRef.current) return
+        const containerSize = containerRef.current.offsetHeight
+        const pxPerUnit = containerSize / total
+        const deltaUnits = deltaPixels / pxPerUnit
+        const newLength = roundToPrecision(dragState.current.startLength + deltaUnits)
+
+        // Allow going to exactly 0 if close enough (within thumb constraint distance)
+        if (newLength < 0.1) {
+            attemptZeroSnap(index, unknownRemaining, segments, dispatch)
+            return
+        }
+
+        try {
+            dispatch(updateSegmentLength(index, newLength))
+        } catch (error) {
+            console.warn('Invalid segment adjustment:', error.message)
+        }
+    }
+
+    /**
+     * Handles drag end events with cleanup
+     * @sig createDragEndHandler :: (Function) -> Function
+     */
+    const createDragEndHandler = handleMove => {
+        const handleEnd = () => {
+            dragState.current = { isDragging: false, startCoord: null, startLength: null, index: null }
+            window.removeEventListener('mousemove', handleMove)
+            window.removeEventListener('touchmove', handleMove)
+            window.removeEventListener('mouseup', handleEnd)
+            window.removeEventListener('touchend', handleEnd)
+        }
+        return handleEnd
+    }
+
     const handleDirectDragStart = useCallback(
         (e, index) => {
             e.preventDefault()
@@ -547,51 +582,10 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
             if (!segment) return
 
             const startCoord = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY
-
             dragState.current = { isDragging: true, startCoord, startLength: segment.length, index }
 
-            const handleMove = moveEvent => {
-                if (!dragState.current.isDragging) return
-
-                const currentCoord = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientY : moveEvent.clientY
-
-                const deltaPixels = currentCoord - dragState.current.startCoord
-
-                if (!containerRef.current) return
-                const containerSize = containerRef.current.offsetHeight
-                const pxPerUnit = containerSize / total
-                const deltaUnits = deltaPixels / pxPerUnit
-
-                const newLength = roundToPrecision(dragState.current.startLength + deltaUnits)
-
-                // Allow going to exactly 0 if close enough (within thumb constraint distance)
-                if (newLength < 0.1) {
-                    const segment = segments[index]
-                    if (segment && unknownRemaining > 0 && unknownRemaining < 1) {
-                        // Snap to zero when very close
-                        try {
-                            dispatch(updateSegmentLength(index, dragState.current.startLength + unknownRemaining))
-                        } catch (error) {
-                            console.warn('Invalid segment adjustment:', error.message)
-                        }
-                    }
-                    return
-                }
-
-                try {
-                    dispatch(updateSegmentLength(index, newLength))
-                } catch (error) {
-                    console.warn('Invalid segment adjustment:', error.message)
-                }
-            }
-
-            const handleEnd = () => {
-                dragState.current = { isDragging: false, startCoord: null, startLength: null, index: null }
-                window.removeEventListener('mousemove', handleMove)
-                window.removeEventListener('mouseup', handleEnd)
-                window.removeEventListener('touchmove', handleMove)
-                window.removeEventListener('touchend', handleEnd)
-            }
+            const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining, segments)
+            const handleEnd = createDragEndHandler(handleMove)
 
             window.addEventListener('mousemove', handleMove)
             window.addEventListener('mouseup', handleEnd)
@@ -605,7 +599,13 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         newSegments => dispatch(replaceSegments(newSegments)),
         setEditingIndex,
     )
-    const handleAddLeft = buildAddLeftHandler(newSegments => dispatch(replaceSegments(newSegments)), setEditingIndex)
+    const handleAddLeft = useCallback(
+        index => {
+            dispatch(addSegmentLeft(index))
+            setEditingIndex(null)
+        },
+        [dispatch],
+    )
     const tickPoints = useSelector(selectCumulativePositions)
 
     // Redux handles blockface initialization and segment management
@@ -618,13 +618,10 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     useEffect(() => {
         // Use requestAnimationFrame to ensure labels are rendered before calculating offsets
-        const calculateOffsets = () => {
-            const { positions, contentWidth } = calculateLabelPositions(true, labelRefs.current) // Always vertical
-            setSmartLabelPositions(positions)
-            setUniformLabelWidth(contentWidth) // Store contentWidth for CSS
-        }
-
-        const timeoutId = setTimeout(calculateOffsets, 0)
+        const timeoutId = setTimeout(
+            () => calculateLabelOffsets(labelRefs.current, setSmartLabelPositions, setUniformLabelWidth),
+            0,
+        )
         return () => clearTimeout(timeoutId)
     }, [segments])
 

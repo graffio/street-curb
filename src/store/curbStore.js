@@ -1,5 +1,6 @@
 import { roundToPrecision } from '../constants.js'
 import { calculateCumulativePositions, calculateVisualPercentages } from '../utils/geometry.js'
+import { performSegmentSplit } from '../utils/segments.js'
 
 /**
  * Action types for curb segment management
@@ -9,6 +10,7 @@ const ACTION_TYPES = {
     UPDATE_SEGMENT_TYPE: 'UPDATE_SEGMENT_TYPE',
     UPDATE_SEGMENT_LENGTH: 'UPDATE_SEGMENT_LENGTH',
     ADD_SEGMENT: 'ADD_SEGMENT',
+    ADD_SEGMENT_LEFT: 'ADD_SEGMENT_LEFT',
     REPLACE_SEGMENTS: 'REPLACE_SEGMENTS',
 }
 
@@ -21,6 +23,31 @@ const createNewSegment = (type = 'Parking', length = 20) => ({
     type,
     length: roundToPrecision(length),
 })
+
+/**
+ * Adjusts the last segment boundary affecting unknown space
+ * @sig adjustLastSegmentBoundary :: (State, Number, Number, Number) -> State
+ */
+const adjustLastSegmentBoundary = (state, segmentIndex, roundedLength, lengthDelta) => {
+    // Last segment affects unknown space
+    let newUnknownRemaining = roundToPrecision(state.unknownRemaining - lengthDelta)
+
+    // Snap to zero if very close (handles floating point precision issues)
+    if (Math.abs(newUnknownRemaining) < 0.01) {
+        newUnknownRemaining = 0
+    }
+
+    if (newUnknownRemaining < 0) {
+        throw new Error('Insufficient unknown space')
+    }
+
+    return {
+        ...state,
+        segments: state.segments.map((seg, i) => (i === segmentIndex ? { ...seg, length: roundedLength } : seg)),
+        unknownRemaining: newUnknownRemaining,
+        isCollectionComplete: Math.abs(newUnknownRemaining) < 0.01, // Handle floating point precision
+    }
+}
 
 /**
  * Universal boundary adjustment operation - core of the refactored implementation
@@ -41,24 +68,7 @@ const adjustSegmentBoundary = (state, segmentIndex, newLength) => {
     const lengthDelta = roundedLength - state.segments[segmentIndex].length
 
     if (segmentIndex === state.segments.length - 1) {
-        // Last segment affects unknown space
-        let newUnknownRemaining = roundToPrecision(state.unknownRemaining - lengthDelta)
-
-        // Snap to zero if very close (handles floating point precision issues)
-        if (Math.abs(newUnknownRemaining) < 0.01) {
-            newUnknownRemaining = 0
-        }
-
-        if (newUnknownRemaining < 0) {
-            throw new Error('Insufficient unknown space')
-        }
-
-        return {
-            ...state,
-            segments: state.segments.map((seg, i) => (i === segmentIndex ? { ...seg, length: roundedLength } : seg)),
-            unknownRemaining: newUnknownRemaining,
-            isCollectionComplete: Math.abs(newUnknownRemaining) < 0.01, // Handle floating point precision
-        }
+        return adjustLastSegmentBoundary(state, segmentIndex, roundedLength, lengthDelta)
     }
 
     // Middle segment affects next segment
@@ -75,6 +85,27 @@ const adjustSegmentBoundary = (state, segmentIndex, newLength) => {
             if (i === segmentIndex + 1) return { ...seg, length: newNextLength }
             return seg
         }),
+    }
+}
+
+/**
+ * Processes adding a new segment by consuming unknown space
+ * @sig processAddSegment :: (State, Number) -> State
+ */
+const processAddSegment = (state, targetIndex) => {
+    const newSegmentSize = Math.min(20, state.unknownRemaining)
+    const newSegment = createNewSegment('Parking', newSegmentSize)
+
+    // Insert new segment at the specified position
+    const newSegments = [...state.segments]
+    const insertIndex = targetIndex >= 0 ? targetIndex + 1 : newSegments.length
+    newSegments.splice(insertIndex, 0, newSegment)
+
+    return {
+        ...state,
+        segments: newSegments,
+        unknownRemaining: roundToPrecision(state.unknownRemaining - newSegmentSize),
+        isCollectionComplete: state.unknownRemaining - newSegmentSize === 0,
     }
 }
 
@@ -122,6 +153,15 @@ export const updateSegmentLength = (index, newLength) => ({
  * @sig addSegment :: Number -> Action
  */
 export const addSegment = targetIndex => ({ type: ACTION_TYPES.ADD_SEGMENT, payload: { targetIndex } })
+
+/**
+ * Add new segment to the left of target segment by splitting
+ * @sig addSegmentLeft :: (Number, Number?) -> Action
+ */
+export const addSegmentLeft = (index, desiredLength = 10) => ({
+    type: ACTION_TYPES.ADD_SEGMENT_LEFT,
+    payload: { index, desiredLength },
+})
 
 /**
  * Replace all segments (for drag and drop reordering)
@@ -175,20 +215,16 @@ const curbReducer = (state = initialState, action) => {
             // Check if we have unknown space to consume
             if (state.unknownRemaining <= 0) return state
 
-            const newSegmentSize = Math.min(20, state.unknownRemaining)
-            const newSegment = createNewSegment('Parking', newSegmentSize)
+            return processAddSegment(state, targetIndex)
+        }
 
-            // Insert new segment at the specified position
-            const newSegments = [...state.segments]
-            const insertIndex = targetIndex >= 0 ? targetIndex + 1 : newSegments.length
-            newSegments.splice(insertIndex, 0, newSegment)
+        case ACTION_TYPES.ADD_SEGMENT_LEFT: {
+            const { index, desiredLength } = action.payload
+            const result = performSegmentSplit(state.segments, index, desiredLength)
 
-            return {
-                ...state,
-                segments: newSegments,
-                unknownRemaining: roundToPrecision(state.unknownRemaining - newSegmentSize),
-                isCollectionComplete: state.unknownRemaining - newSegmentSize === 0,
-            }
+            if (!result.success) return state
+
+            return { ...state, segments: result.segments }
         }
 
         case ACTION_TYPES.REPLACE_SEGMENTS: {
