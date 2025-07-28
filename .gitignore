@@ -5,10 +5,17 @@
 .tap
 node_modules
 
+*storybook.log
+storybook-static
+
 # Vite build files
 *.timestamp-*.mjs
 vite.config.js.timestamp-*
 dist
+
+.last-run.json
+playwright-report
+test-results
 
 # Claude Code settings
 .claude

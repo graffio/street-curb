@@ -1,72 +1,85 @@
 import { useRef } from 'react'
 
 /**
- * @sig DraggableDivider :: ({ onDrag: Function, orientation?: String }) -> JSXElement
+ * @sig DraggableDivider :: ({ onDrag: Function, onDragStart?: Function, onDragEnd?: Function, orientation?: String }) -> JSXElement
  * Creates a draggable divider handle for resizing segments
  * orientation = 'horizontal' | 'vertical'
  */
-const DraggableDivider = ({ onDrag, orientation = 'horizontal' }) => {
+const DraggableDivider = ({ onDrag, onDragStart, onDragEnd, orientation = 'horizontal' }) => {
     const isVertical = orientation === 'vertical'
+    const dragState = useRef({ isDragging: false, startCoord: null, totalDelta: 0 })
 
-    const createMouseHandlers = startCoord => {
+    const createMouseHandlers = () => {
         const onMove = e => {
-            if (startCoord.current === null) return
+            if (!dragState.current.isDragging) return
             const currentCoord = isVertical ? e.clientY : e.clientX
-            const delta = currentCoord - startCoord.current
-            startCoord.current = currentCoord
-            onDrag(delta)
+            const totalDelta = currentCoord - dragState.current.startCoord
+            const incrementalDelta = totalDelta - dragState.current.totalDelta
+            dragState.current.totalDelta = totalDelta
+            onDrag(incrementalDelta)
         }
 
         const onUp = () => {
-            startCoord.current = null
+            dragState.current.isDragging = false
+            dragState.current.startCoord = null
+            dragState.current.totalDelta = 0
             window.removeEventListener('mousemove', onMove)
             window.removeEventListener('mouseup', onUp)
+            onDragEnd?.()
         }
 
         window.addEventListener('mousemove', onMove)
         window.addEventListener('mouseup', onUp)
     }
 
-    const createTouchHandlers = startCoord => {
+    const createTouchHandlers = () => {
         const onTouchMove = e => {
-            if (startCoord.current === null) return
+            if (!dragState.current.isDragging) return
             const currentCoord = isVertical ? e.touches[0].clientY : e.touches[0].clientX
-            const delta = currentCoord - startCoord.current
-            startCoord.current = currentCoord
-            onDrag(delta)
+            const totalDelta = currentCoord - dragState.current.startCoord
+            const incrementalDelta = totalDelta - dragState.current.totalDelta
+            dragState.current.totalDelta = totalDelta
+            onDrag(incrementalDelta)
         }
 
         const onTouchEnd = () => {
-            startCoord.current = null
+            dragState.current.isDragging = false
+            dragState.current.startCoord = null
+            dragState.current.totalDelta = 0
             window.removeEventListener('touchmove', onTouchMove)
             window.removeEventListener('touchend', onTouchEnd)
+            onDragEnd?.()
         }
 
         window.addEventListener('touchmove', onTouchMove, { passive: false })
         window.addEventListener('touchend', onTouchEnd)
     }
 
-    const handleMouseDown = (startCoord, e) => {
+    const handleMouseDown = e => {
         e.stopPropagation()
         e.preventDefault()
-        startCoord.current = isVertical ? e.clientY : e.clientX
-        createMouseHandlers(startCoord)
+        dragState.current.isDragging = true
+        dragState.current.startCoord = isVertical ? e.clientY : e.clientX
+        dragState.current.totalDelta = 0
+        onDragStart?.()
+        createMouseHandlers()
     }
 
-    const handleTouchStart = (startCoord, e) => {
-        startCoord.current = isVertical ? e.touches[0].clientY : e.touches[0].clientX
-        createTouchHandlers(startCoord)
+    const handleTouchStart = e => {
+        dragState.current.isDragging = true
+        dragState.current.startCoord = isVertical ? e.touches[0].clientY : e.touches[0].clientX
+        dragState.current.totalDelta = 0
+        onDragStart?.()
+        createTouchHandlers()
     }
-
-    const startCoord = useRef(null)
     const cursor = isVertical ? 'row-resize' : 'col-resize'
 
     return (
         <div
             className="draggable-divider"
             style={{ width: '100%', height: '100%', cursor, touchAction: 'none' }}
-            onMouseDown={e => handleMouseDown(startCoord, e)}
-            onTouchStart={e => handleTouchStart(startCoord, e)}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
         />
     )
 }

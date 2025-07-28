@@ -1,14 +1,15 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import { FlatCompat } from '@eslint/eslintrc'
 import eslintPluginReact from 'eslint-plugin-react'
+import storybook from 'eslint-plugin-storybook'
 import { defineConfig } from 'eslint/config'
 import path from 'path'
 
 const compat = new FlatCompat({ baseDirectory: path.resolve() })
 
 export default defineConfig([
-    { ignores: ['**/dist/*.js'] },
+    { ignores: ['**/dist/*.js', '**/docs/**/*.js'] },
     {
         files: ['**/*.{js,jsx}'],
         languageOptions: { globals: { browser: true } },
@@ -24,6 +25,7 @@ export default defineConfig([
             'prefer-const': 'error',
         },
     },
+    { files: ['**/*.stories.{js,jsx}'], plugins: { storybook }, rules: { ...storybook.configs.recommended.rules } },
     ...compat.extends('standard'),
     ...compat.extends('prettier'),
 ])
