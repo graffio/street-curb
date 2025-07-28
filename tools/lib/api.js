@@ -10,7 +10,7 @@ import { parseCode } from './parser.js'
  *     CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
  *     Violation = { type: String, line: Number, column: Number, message: String, rule: String }
  */
-export const checkFile = async filePath => {
+const checkFile = async filePath => {
     const sourceCode = await readFile(filePath, 'utf8')
 
     let ast = null
@@ -48,3 +48,5 @@ const runAllRules = (ast, sourceCode, filePath) => {
     // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)
 }
+
+export { checkFile }

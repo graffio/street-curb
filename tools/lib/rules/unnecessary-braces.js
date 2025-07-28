@@ -1,16 +1,4 @@
 /**
- * Create a violation object for unnecessary braces
- * @sig createViolation :: (ASTNode, String) -> Violation
- */
-const createViolation = (blockNode, message) => ({
-    type: 'unnecessary-braces',
-    line: blockNode.loc.start.line,
-    column: blockNode.loc.start.column + 1,
-    message,
-    rule: 'unnecessary-braces',
-})
-
-/**
  * Traverse AST node and visit all child nodes
  * @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
  */
@@ -25,6 +13,18 @@ const traverseAST = (node, visitor) => {
         else if (child && typeof child === 'object' && child.type) traverseAST(child, visitor)
     }
 }
+
+/**
+ * Create an unnecessary-braces violation object from AST node
+ * @sig createViolation :: (ASTNode, String) -> Violation
+ */
+const createViolation = (node, message) => ({
+    type: 'unnecessary-braces',
+    line: node.loc.start.line,
+    column: node.loc.start.column + 1,
+    message,
+    rule: 'unnecessary-braces',
+})
 
 /**
  * Check for unnecessary braces on single-statement blocks (A001 standard)
