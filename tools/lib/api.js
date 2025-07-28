@@ -1,6 +1,8 @@
 import { readFile } from 'fs/promises'
 import { checkLineLength } from './rules/line-length.js'
 import { checkExportPlacement } from './rules/export-placement.js'
+import { checkUnnecessaryBraces } from './rules/unnecessary-braces.js'
+import { parseCode } from './parser.js'
 
 /**
  * Check single file for A001 violations
@@ -10,25 +12,38 @@ import { checkExportPlacement } from './rules/export-placement.js'
  */
 export const checkFile = async filePath => {
     const sourceCode = await readFile(filePath, 'utf8')
-    const violations = runAllRules(sourceCode, filePath)
+
+    let ast = null
+    try {
+        ast = parseCode(sourceCode)
+    } catch (parseError) {
+        // If parsing fails, continue with string-based rules only
+        console.warn(`AST parsing failed for ${filePath}: ${parseError.message}`)
+    }
+
+    const violations = runAllRules(ast, sourceCode, filePath)
 
     return { filePath, violations, isCompliant: violations.length === 0 }
 }
 
 /**
  * Run all A001 violation rules on source code
- * @sig runAllRules :: (String, String) -> [Violation]
+ * @sig runAllRules :: (AST?, String, String) -> [Violation]
  */
-const runAllRules = (sourceCode, filePath) => {
+const runAllRules = (ast, sourceCode, filePath) => {
     const allViolations = []
 
-    // Run line-length rule
+    // Run line-length rule (string-based)
     const lineLengthViolations = checkLineLength(null, sourceCode, filePath)
     allViolations.push(...lineLengthViolations)
 
-    // Run export placement rule
+    // Run export placement rule (string-based)
     const exportViolations = checkExportPlacement(null, sourceCode, filePath)
     allViolations.push(...exportViolations)
+
+    // Run unnecessary braces rule (AST-based)
+    const bracesViolations = checkUnnecessaryBraces(ast, sourceCode, filePath)
+    allViolations.push(...bracesViolations)
 
     // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)
