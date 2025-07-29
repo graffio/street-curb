@@ -34,17 +34,17 @@ const checkExportPlacement = (ast, sourceCode, filePath) => {
     const lines = sourceCode.split('\n')
     const lineIndexMap = createLineIndexMap(lines)
 
+    /**
+     * Create export default violation from line index
+     * @sig createExportDefaultViolation :: Number -> Violation
+     */
+    const createExportDefaultViolation = index =>
+        createViolation('export-default', index + 1, 1, 'Use of export default is forbidden - use named exports only')
+
     // Check for export default violations
     const exportDefaultViolations = lineIndexMap
         .filter(({ line }) => line.startsWith('export default'))
-        .map(({ index }) =>
-            createViolation(
-                'export-default',
-                index + 1,
-                1,
-                'Use of export default is forbidden - use named exports only',
-            ),
-        )
+        .map(({ index }) => createExportDefaultViolation(index))
 
     violations.push(...exportDefaultViolations)
 

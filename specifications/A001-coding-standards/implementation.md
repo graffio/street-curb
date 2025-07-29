@@ -64,10 +64,16 @@
         if (a) {
             b()
         }
+        
+        const fn = (x) => {
+            return x * 2
+        }
     ```
     ✅ DO THIS INSTEAD
     ```
         if (a) b()
+        
+        const fn = (x) => x * 2
     ```
 
 ## Error Handling and Asynchronous Operations
@@ -165,7 +171,7 @@
 
 ## Functions
 - USE arrow functions for anonymous functions.
-- CREATE named functions if an anonymous function doesn't fit on one line.
+- CREATE named functions if an anonymous function is longer than one line (multi-line).
     Pay particular attention to this inside React functions like useEffect -- or other library calls -- 
     that take functions as arguments.
 
@@ -329,7 +335,7 @@
 
 
 ## Documentation (@sig requirements)
-- ALWAYS include @sig for all functions at the top-level of a JavaScript file, including, especially, exported functions
+- ALWAYS include @sig for all top-level functions and all functions longer than 5 lines
 - INCLUDE usage examples for non-trivial functions
 - the @sig block should be the last thing the function comment
 

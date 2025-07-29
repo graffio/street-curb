@@ -1,4 +1,16 @@
 /**
+ * Process child node in AST traversal
+ * @sig processChildNode :: (Any, Function) -> Void
+ */
+const processChildNode = (child, visitor) => {
+    if (Array.isArray(child)) {
+        child.forEach(item => traverseAST(item, visitor))
+        return
+    }
+    if (child && typeof child === 'object' && child.type) traverseAST(child, visitor)
+}
+
+/**
  * Traverse AST node and visit all child nodes
  * @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
  */
@@ -7,11 +19,7 @@ const traverseAST = (node, visitor) => {
 
     visitor(node)
 
-    for (const key in node) {
-        const child = node[key]
-        if (Array.isArray(child)) child.forEach(item => traverseAST(item, visitor))
-        else if (child && typeof child === 'object' && child.type) traverseAST(child, visitor)
-    }
+    Object.values(node).forEach(child => processChildNode(child, visitor))
 }
 
 /**
@@ -27,6 +35,46 @@ const createViolation = (node, message) => ({
 })
 
 /**
+ * Check if statement for violations
+ * @sig checkIfStatement :: (ASTNode, [Violation]) -> Void
+ */
+const checkIfStatement = (node, violations) => {
+    if (isSingleStatementBlock(node.consequent))
+        violations.push(createViolation(node.consequent, 'Remove unnecessary braces from single statement if block'))
+
+    // Check else block if it exists
+    if (node.alternate && isSingleStatementBlock(node.alternate))
+        violations.push(createViolation(node.alternate, 'Remove unnecessary braces from single statement else block'))
+}
+
+/**
+ * Check node for violations
+ * @sig checkNodeForViolations :: (ASTNode, [Violation]) -> Void
+ */
+const checkNodeForViolations = (node, violations) => {
+    // Check if statements with single-statement consequent
+    if (node.type === 'IfStatement') checkIfStatement(node, violations)
+
+    // Check for loops with single-statement body
+    if (isLoopStatement(node) && isSingleStatementBlock(node.body))
+        violations.push(createViolation(node.body, 'Remove unnecessary braces from single statement for loop'))
+
+    // Check arrow functions with single return statement
+    if (isArrowFunctionWithUnnecessaryBraces(node))
+        violations.push(createViolation(node.body, 'Remove unnecessary braces from single-return arrow function'))
+
+    // Check arrow functions with single statement (not return)
+    if (isArrowFunctionWithSingleStatement(node))
+        violations.push(createViolation(node.body, 'Remove unnecessary braces from single-statement arrow function'))
+
+    // Check function expressions with single statement (not declarations, which require braces)
+    if (isFunctionExpressionWithSingleStatement(node))
+        violations.push(
+            createViolation(node.body, 'Remove unnecessary braces from single-statement function expression'),
+        )
+}
+
+/**
  * Check for unnecessary braces on single-statement blocks (A001 standard)
  * @sig checkUnnecessaryBraces :: (AST?, String, String) -> [Violation]
  */
@@ -35,29 +83,7 @@ const checkUnnecessaryBraces = (ast, sourceCode, filePath) => {
 
     const violations = []
 
-    traverseAST(ast, node => {
-        // Check if statements with single-statement consequent
-        if (node.type === 'IfStatement') {
-            if (isSingleStatementBlock(node.consequent))
-                violations.push(
-                    createViolation(node.consequent, 'Remove unnecessary braces from single statement if block'),
-                )
-
-            // Check else block if it exists
-            if (node.alternate && isSingleStatementBlock(node.alternate))
-                violations.push(
-                    createViolation(node.alternate, 'Remove unnecessary braces from single statement else block'),
-                )
-        }
-
-        // Check for loops with single-statement body
-        if (isLoopStatement(node) && isSingleStatementBlock(node.body))
-            violations.push(createViolation(node.body, 'Remove unnecessary braces from single statement for loop'))
-
-        // Check arrow functions with single return statement
-        if (isArrowFunctionWithUnnecessaryBraces(node))
-            violations.push(createViolation(node.body, 'Remove unnecessary braces from single-return arrow function'))
-    })
+    traverseAST(ast, node => checkNodeForViolations(node, violations))
 
     return violations
 }
@@ -78,6 +104,26 @@ const isLoopStatement = node =>
  */
 const isArrowFunctionWithUnnecessaryBraces = node =>
     node.type === 'ArrowFunctionExpression' && node.body.type === 'BlockStatement' && isSingleReturnStatement(node.body)
+
+/**
+ * Check if a node is an arrow function with single statement (not return)
+ * @sig isArrowFunctionWithSingleStatement :: ASTNode -> Boolean
+ */
+const isArrowFunctionWithSingleStatement = node =>
+    node.type === 'ArrowFunctionExpression' &&
+    node.body.type === 'BlockStatement' &&
+    isSingleStatementBlock(node.body) &&
+    !isSingleReturnStatement(node.body)
+
+/**
+ * Check if a node is a function expression with single statement (not declaration)
+ * @sig isFunctionExpressionWithSingleStatement :: ASTNode -> Boolean
+ */
+const isFunctionExpressionWithSingleStatement = node =>
+    node.type === 'FunctionExpression' &&
+    node.body &&
+    node.body.type === 'BlockStatement' &&
+    isSingleStatementBlock(node.body)
 
 /**
  * Check if a node is a block statement with only one statement

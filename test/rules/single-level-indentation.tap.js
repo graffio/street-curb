@@ -203,6 +203,90 @@ t.test('Given a function with allowed nesting patterns', t => {
     t.end()
 })
 
+t.test('Given functions with multi-line unnamed function violations', t => {
+    t.test('When an arrow function callback is longer than 1 line', t => {
+        const code = `const processData = (items) => {
+            return items.map(item => {
+                const processed = item.value * 2
+                return processed + 1
+            })
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for the multi-line arrow function')
+        t.match(
+            violations[0].message,
+            /multi-line unnamed function/,
+            'Then the message should mention multi-line unnamed function',
+        )
+        t.end()
+    })
+
+    t.test('When a function expression callback is longer than 1 line', t => {
+        const code = `const processItems = (data) => {
+            return data.filter(function(item) {
+                const isValid = item.active
+                return isValid && item.value > 0
+            })
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for the multi-line function expression')
+        t.end()
+    })
+
+    t.test('When there are multiple multi-line unnamed functions', t => {
+        const code = `const processAll = (data) => {
+            const filtered = data.filter(item => {
+                const valid = item.active
+                return valid
+            })
+            const mapped = filtered.map(item => {
+                const doubled = item.value * 2
+                return doubled
+            })
+            return mapped
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 2, 'Then two violations should be detected for both multi-line unnamed functions')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given functions with proper single-line unnamed functions', t => {
+    t.test('When arrow function callbacks are single-line', t => {
+        const code = `const processData = (items) => {
+            return items
+                .filter(item => item.active)
+                .map(item => item.value * 2)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for single-line arrow functions')
+        t.end()
+    })
+
+    t.test('When function expressions are single-line', t => {
+        const code = `const processItems = (data) => {
+            return data.reduce(function(acc, item) { return acc + item.value }, 0)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for single-line function expressions')
+        t.end()
+    })
+
+    t.end()
+})
+
 t.test('Given a function with nested callback functions', t => {
     t.test('When the callback function contains nested indentation violations', t => {
         const code = `const outerFunction = (data) => {
@@ -220,12 +304,11 @@ t.test('Given a function with nested callback functions', t => {
         const ast = parseCode(code)
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
-        t.equal(violations.length, 1, 'Then one violation should be detected in the reduce callback')
-        t.match(
-            violations[0].message,
-            /nested indentation/,
-            'Then the violation should be for nested indentation in the callback',
-        )
+        t.equal(violations.length, 2, 'Then two violations should be detected')
+        const nestedViolation = violations.find(v => v.message.includes('nested indentation'))
+        const unnamedViolation = violations.find(v => v.message.includes('multi-line unnamed function'))
+        t.ok(nestedViolation, 'Then one violation should be for nested indentation')
+        t.ok(unnamedViolation, 'Then one violation should be for multi-line unnamed function')
         t.end()
     })
 

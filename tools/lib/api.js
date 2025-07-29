@@ -3,6 +3,7 @@ import { checkLineLength } from './rules/line-length.js'
 import { checkExportPlacement } from './rules/export-placement.js'
 import { checkUnnecessaryBraces } from './rules/unnecessary-braces.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
+import { checkSigDocumentation } from './rules/sig-documentation.js'
 import { parseCode } from './parser.js'
 
 /**
@@ -49,6 +50,10 @@ const runAllRules = (ast, sourceCode, filePath) => {
     // Run single-level indentation rule (AST-based)
     const indentationViolations = checkSingleLevelIndentation(ast, sourceCode, filePath)
     allViolations.push(...indentationViolations)
+
+    // Run @sig documentation rule (AST-based)
+    const sigViolations = checkSigDocumentation(ast, sourceCode, filePath)
+    allViolations.push(...sigViolations)
 
     // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)
