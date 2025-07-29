@@ -11,7 +11,7 @@
         "precommit": "lint-staged",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "tap": "TAP_DISABLE_COVERAGE=1 tap test/**/*.tap.js -R tap | tap-mocha-reporter spec"
+        "tap": "TAP_DISABLE_COVERAGE=1 tap test/*.tap.js test/**/*.tap.js -R tap | tap-mocha-reporter spec"
     },
     "devDependencies": {
         "@chromatic-com/storybook": "^4.0.1",

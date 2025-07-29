@@ -1,7 +1,7 @@
 // Pure business logic functions for segment operations
 // Extracted from SegmentedCurbEditor.jsx for testability
 
-import { roundToPrecision } from '../constants.js'
+import { roundToPrecision } from './formatting.js'
 
 /**
  * Creates a new segment with specified length and type

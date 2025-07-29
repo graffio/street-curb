@@ -35,10 +35,7 @@ const getBlockfaceId = feature => {
  * Gets segment color based on type (matching SegmentedCurbEditor colors)
  * @sig getSegmentColor :: String -> String
  */
-const getSegmentColor = type => {
-    const colorMap = { ...COLORS, 'No Parking': '#E91E63', 'Bus Stop': '#2196F3', Taxi: '#FFEB3B', Disabled: '#9C27B0' }
-    return colorMap[type] || '#999999'
-}
+const getSegmentColor = type => COLORS[type] || '#999999'
 
 /**
  * Normalizes a Point feature to remove elevation data
