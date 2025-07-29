@@ -180,7 +180,7 @@ const traverseASTNodes = (node, ast, sourceCode, processedNodes, violations) => 
     processFunctionNode(node, ast, sourceCode, processedNodes, violations)
 
     // Recursively check all child nodes
-    for (const key in node) processChildInTraversal(node[key], ast, sourceCode, processedNodes, violations)
+    Object.keys(node).forEach(key => processChildInTraversal(node[key], ast, sourceCode, processedNodes, violations))
 }
 
 /**

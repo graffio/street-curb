@@ -28,7 +28,7 @@ const traverseAST = (node, visitor) => {
 
     visitor(node)
 
-    for (const key in node) processChild(node[key], visitor)
+    Object.keys(node).forEach(key => processChild(node[key], visitor))
 }
 
 /**
@@ -261,16 +261,22 @@ const findNestedViolations = (node, depth, processedNodes, violations) => {
             createViolation(node, 'Avoid nested indentation - extract to separate functions or use early returns'),
         )
 
-    // Always traverse child nodes, but adjust depth based on node type
-    const nextDepth = isAllowedNesting(node) ? depth : isIndentationStatement(node) ? depth + 1 : depth
-
-    for (const key in node) {
+    /**
+     * Process child node key for violations
+     * @sig processChildKey :: (String, Number, Set, [Violation]) -> Void
+     */
+    const processChildKey = (key, nextDepth, processedNodes, violations) => {
         const child = node[key]
         const processChild = Array.isArray(child) ? processChildArray : processSingleChild
         processChild(child, nextDepth, (childNode, childDepth) =>
             findNestedViolations(childNode, childDepth, processedNodes, violations),
         )
     }
+
+    // Always traverse child nodes, but adjust depth based on node type
+    const nextDepth = isAllowedNesting(node) ? depth : isIndentationStatement(node) ? depth + 1 : depth
+
+    Object.keys(node).forEach(key => processChildKey(key, nextDepth, processedNodes, violations))
 }
 
 /**

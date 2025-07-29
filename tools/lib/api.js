@@ -4,6 +4,7 @@ import { checkExportPlacement } from './rules/export-placement.js'
 import { checkUnnecessaryBraces } from './rules/unnecessary-braces.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { checkSigDocumentation } from './rules/sig-documentation.js'
+import { checkFunctionalPatterns } from './rules/functional-patterns.js'
 import { parseCode } from './parser.js'
 
 /**
@@ -54,6 +55,10 @@ const runAllRules = (ast, sourceCode, filePath) => {
     // Run @sig documentation rule (AST-based)
     const sigViolations = checkSigDocumentation(ast, sourceCode, filePath)
     allViolations.push(...sigViolations)
+
+    // Run functional patterns rule (AST-based)
+    const functionalViolations = checkFunctionalPatterns(ast, sourceCode, filePath)
+    allViolations.push(...functionalViolations)
 
     // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)
