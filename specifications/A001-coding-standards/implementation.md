@@ -54,7 +54,7 @@
 - STRICTLY adhere to a maximum line length of 120 characters.
 - USE 4 spaces for indentation.
 - LIMIT functions to a single level of indentation.
-- DEFINE all inner functions at the top of their containing function.
+- DEFINE all inner functions at the top of their nearest containing block (after opening brace).
 - DEFINE functions before use, with main function(s) at the end of the file.
 
 - ALWAYS Remove unnecessary parens and braces
