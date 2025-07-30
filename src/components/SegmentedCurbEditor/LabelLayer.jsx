@@ -38,6 +38,28 @@ const LabelLayer = ({
     const [uniformLabelWidth, setUniformLabelWidth] = useState(0)
 
     /**
+     * Processes positioning calculation with DOM elements
+     * @sig processPositioning :: () -> Void
+     */
+    const processPositioning = () => {
+        const { positions, contentWidth } = calculateLabelPositions(true, labelRefs.current)
+        setSmartLabelPositions(positions)
+        setUniformLabelWidth(contentWidth)
+    }
+
+    /**
+     * Updates label positions using collision detection
+     * @sig updateLabelPositions :: () -> () -> Void?
+     */
+    const updateLabelPositions = () => {
+        const timeoutId = setTimeout(processPositioning, 0)
+        return () => clearTimeout(timeoutId)
+    }
+
+    // Update positions when segments change
+    useEffect(updateLabelPositions, [segments, tickPoints, total])
+
+    /**
      * Renders individual label with dropdown functionality
      * @sig renderLabel :: (Segment, Number) -> JSXElement
      */
@@ -117,27 +139,6 @@ const LabelLayer = ({
             </div>
         )
     }
-
-    /**
-     * Updates label positioning after render
-     * @sig updateLabelPositioning :: () -> Void
-     */
-    const updateLabelPositioning = () => {
-        const { positions, contentWidth } = calculateLabelPositions(true, labelRefs.current)
-        setSmartLabelPositions(positions)
-        setUniformLabelWidth(contentWidth)
-    }
-
-    /**
-     * Sets up positioning effect cleanup
-     * @sig setupPositioningEffect :: () -> () -> Void
-     */
-    const setupPositioningEffect = () => {
-        const timeoutId = setTimeout(updateLabelPositioning, 0)
-        return () => clearTimeout(timeoutId)
-    }
-
-    useEffect(setupPositioningEffect, [segments])
 
     return <div className="label-layer">{segments.map(renderLabel)}</div>
 }

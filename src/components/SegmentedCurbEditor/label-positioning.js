@@ -24,8 +24,7 @@ const hasHorizontalOverlap = (rectA, rectB) => !(rectA.right < rectB.left || rec
 const processHorizontalCollision = (offsets, currentRect, i, rects) => {
     if (!currentRect) return [...offsets, 0]
 
-    const maxOverlappingOffset = findMaxOverlappingOffset(rects, offsets, currentRect, i, hasHorizontalOverlap)
-    const currentOffset = maxOverlappingOffset >= 0 ? maxOverlappingOffset + 1 : 0
+    const currentOffset = findFirstAvailableOffset(rects, offsets, currentRect, i, hasHorizontalOverlap)
     return [...offsets, currentOffset]
 }
 
@@ -46,8 +45,7 @@ const calculateHorizontalCollisionOffsets = labelElements => {
 const processVerticalCollision = (offsets, currentRect, i, rects) => {
     if (!currentRect) return [...offsets, 0]
 
-    const maxOverlappingOffset = findMaxOverlappingOffset(rects, offsets, currentRect, i, hasVerticalOverlap)
-    const currentOffset = maxOverlappingOffset >= 0 ? maxOverlappingOffset + 1 : 0
+    const currentOffset = findFirstAvailableOffset(rects, offsets, currentRect, i, hasVerticalOverlap)
     return [...offsets, currentOffset]
 }
 
@@ -74,24 +72,26 @@ const resetElementWidth = el => el && (el.style.width = 'auto')
 const restoreElementWidth = (el, i, originalWidths) => el && (el.style.width = originalWidths[i] || 'auto')
 
 /**
- * Processes overlap check for maximum offset calculation
- * @sig processOverlapCheck :: (Number, DOMRect, Number, [Number], DOMRect, Function) -> Number
+ * Checks if offset has collision with any previous element
+ * @sig hasOffsetCollision :: ([DOMRect], [Number], DOMRect, Number, Function, Number) -> Boolean
  */
-const processOverlapCheck = (maxOffset, prevRect, j, offsets, currentRect, overlapFn) => {
-    if (!prevRect || !overlapFn(currentRect, prevRect)) return maxOffset
-    return Math.max(maxOffset, offsets[j])
-}
+const hasOffsetCollision = (previousRects, offsets, currentRect, overlapFn, testOffset) =>
+    previousRects.some((prevRect, j) => prevRect && offsets[j] === testOffset && overlapFn(currentRect, prevRect))
 
 /**
- * Finds maximum overlapping offset from previous elements
- * @sig findMaxOverlappingOffset :: ([DOMRect], [Number], DOMRect, Number, Function) -> Number
+ * Finds first available offset column by checking left-to-right
+ * @sig findFirstAvailableOffset :: ([DOMRect], [Number], DOMRect, Number, Function) -> Number
  */
-const findMaxOverlappingOffset = (rects, offsets, currentRect, i, overlapFn) => {
-    const processOverlap = (maxOffset, prevRect, j) =>
-        processOverlapCheck(maxOffset, prevRect, j, offsets, currentRect, overlapFn)
-
+const findFirstAvailableOffset = (rects, offsets, currentRect, i, overlapFn) => {
     const previousRects = rects.slice(0, i)
-    return previousRects.reduce(processOverlap, -1)
+    const checkCollision = testOffset => hasOffsetCollision(previousRects, offsets, currentRect, overlapFn, testOffset)
+
+    // Try each offset level starting from 0 (leftmost)
+    const availableOffset = Array.from({ length: i + 1 }, (_, testOffset) => testOffset).find(
+        testOffset => !checkCollision(testOffset),
+    )
+
+    return availableOffset ?? i
 }
 
 /**
