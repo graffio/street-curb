@@ -11,6 +11,7 @@ import {
     selectUnknownRemaining,
     updateSegmentLength,
 } from '../../store/curbStore.js'
+import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
 import { formatLength, roundToPrecision } from '../../utils/formatting.js'
 import { DividerLayer } from './DividerLayer.jsx'
 import { DragDropHandler } from './DragDropHandler.jsx'
@@ -109,21 +110,22 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     }
 
     /**
-     * Sets up and manages global touch event listeners for mobile drag operations
-     * @sig setupGlobalTouchListeners :: () -> () -> Void
+     * Sets up and manages global unified event listeners for drag operations
+     * @sig setupGlobalEventListeners :: () -> () -> Void
      */
-    const setupGlobalTouchListeners = () => {
+    const setupGlobalEventListeners = () => {
         const container = containerRef.current
         if (!container) return
 
         const { handleTouchMove, handleTouchEnd } = dragDropHandler.getGlobalTouchHandlers()
 
-        container.addEventListener('touchmove', handleTouchMove, { passive: false })
-        container.addEventListener('touchend', handleTouchEnd)
+        // Use unified event handling for better cross-platform support
+        const cleanupMove = addUnifiedEventListener(container, 'MOVE', handleTouchMove, { passive: false })
+        const cleanupEnd = addUnifiedEventListener(container, 'END', handleTouchEnd)
 
         return () => {
-            container.removeEventListener('touchmove', handleTouchMove)
-            container.removeEventListener('touchend', handleTouchEnd)
+            cleanupMove()
+            cleanupEnd()
         }
     }
 
@@ -169,13 +171,13 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     }
 
     /**
-     * Handles drag move events with length adjustment
+     * Handles drag move events with length adjustment (unified touch/mouse)
      * @sig createDragMoveHandler :: (Number, Number, Function, Number, Number) -> (Event) -> Void
      */
     const createDragMoveHandler = (index, total, dispatch, unknownRemaining, segments) => moveEvent => {
         if (!dragState.current.isDragging) return
 
-        const currentCoord = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientY : moveEvent.clientY
+        const currentCoord = getPrimaryCoordinate(moveEvent)
         const deltaPixels = currentCoord - dragState.current.startCoord
 
         if (!containerRef.current) return
@@ -198,25 +200,14 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     }
 
     /**
-     * Creates drag end cleanup handler
-     * @sig createDragEndCleanup :: (Function) -> () -> Void
+     * Creates drag end cleanup handler (unified touch/mouse)
+     * @sig createDragEndCleanup :: () -> Void
      */
-    const createDragEndCleanup = handleMove => () => {
-        dragState.current = { isDragging: false, startCoord: null, startLength: null, index: null }
-        window.removeEventListener('mousemove', handleMove)
-        window.removeEventListener('touchmove', handleMove)
-        window.removeEventListener('mouseup', createDragEndCleanup(handleMove))
-        window.removeEventListener('touchend', createDragEndCleanup(handleMove))
-    }
+    const createDragEndCleanup = () =>
+        (dragState.current = { isDragging: false, startCoord: null, startLength: null, index: null })
 
     /**
-     * Handles drag end events with cleanup
-     * @sig createDragEndHandler :: (Function) -> Function
-     */
-    const createDragEndHandler = handleMove => createDragEndCleanup(handleMove)
-
-    /**
-     * Handles direct drag start for dividers
+     * Handles direct drag start for dividers (unified touch/mouse)
      * @sig handleDirectDragStartImpl :: (Event, Number) -> Void
      */
     const handleDirectDragStartImpl = (e, index) => {
@@ -226,16 +217,17 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         const segment = segments[index]
         if (!segment) return
 
-        const startCoord = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY
+        const startCoord = getPrimaryCoordinate(e)
         dragState.current = { isDragging: true, startCoord, startLength: segment.length, index }
 
+        const dragManager = createDragManager()
         const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining, segments)
-        const handleEnd = createDragEndHandler(handleMove)
+        const handleEnd = () => {
+            createDragEndCleanup()
+            dragManager.cleanup()
+        }
 
-        window.addEventListener('mousemove', handleMove)
-        window.addEventListener('mouseup', handleEnd)
-        window.addEventListener('touchmove', handleMove, { passive: false })
-        window.addEventListener('touchend', handleEnd)
+        dragManager.startDrag(handleMove, handleEnd)
     }
 
     const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, dispatch, unknownRemaining])
@@ -257,8 +249,8 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     // Redux handles blockface initialization and segment management
 
-    // Global touch handlers for better mobile support
-    useEffect(() => setupGlobalTouchListeners(), [dragDropHandler])
+    // Global unified event handlers for better cross-platform support
+    useEffect(() => setupGlobalEventListeners(), [dragDropHandler])
 
     const containerClassName = 'segment-container vertical'
 

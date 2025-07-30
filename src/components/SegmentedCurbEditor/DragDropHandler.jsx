@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { getBothCoordinates } from '../../utils/event-utils.js'
 
 /**
  * DragDropHandler - Manages all drag and drop logic for segment reordering
@@ -62,32 +63,24 @@ const DragDropHandler = ({
     }
 
     /**
-     * Creates handler for mobile touch start events with drag preview setup
-     * @sig buildTouchStartHandler :: TouchStartConfig -> Event -> Void
+     * Creates handler for drag start events with preview setup (unified touch/mouse)
+     * @sig buildDragStartHandlerWithPreview :: DragStartConfig -> Event -> Void
      */
-    const buildTouchStartHandler = (dragData, setDraggingIndex, i, containerRef, setDragPreviewPos) => e => {
+    const buildDragStartHandlerWithPreview = (dragData, setDraggingIndex, i, containerRef, setDragPreviewPos) => e => {
         if (e.target.classList.contains('divider')) return
-        e.preventDefault()
 
-        const touch = e.touches[0]
+        const coords = getBothCoordinates(e)
         const rect = containerRef.current?.getBoundingClientRect()
         if (!rect) return
 
         const targetRect = e.target.getBoundingClientRect()
-        const offsetX = touch.clientX - targetRect.left
-        const offsetY = touch.clientY - targetRect.top
+        const offsetX = coords.x - targetRect.left
+        const offsetY = coords.y - targetRect.top
 
-        dragData.current = {
-            index: i,
-            startY: touch.clientY,
-            startX: touch.clientX,
-            isDragging: true,
-            offsetX,
-            offsetY,
-        }
+        dragData.current = { index: i, startY: coords.y, startX: coords.x, isDragging: true, offsetX, offsetY }
 
         setDraggingIndex(i)
-        setDragPreviewPos({ x: touch.clientX - rect.left - offsetX, y: touch.clientY - rect.top - offsetY })
+        setDragPreviewPos({ x: coords.x - rect.left - offsetX, y: coords.y - rect.top - offsetY })
     }
 
     /**
@@ -126,35 +119,33 @@ const DragDropHandler = ({
     }
 
     /**
-     * Creates touch move handler for mobile drag operations
-     * @sig createTouchMoveHandler :: Event -> Void
+     * Creates unified move handler for drag operations
+     * @sig createMoveHandler :: Event -> Void
      */
-    const createTouchMoveHandler = e => {
+    const createMoveHandler = e => {
         if (dragData.current.index === undefined) return
-        e.preventDefault()
 
-        const touch = e.touches[0]
+        const coords = getBothCoordinates(e)
         const container = containerRef.current
         if (!container) return
 
         const rect = container.getBoundingClientRect()
-        const coord = touch.clientY - rect.top
+        const coord = coords.y - rect.top
 
         setDragPreviewPos({
-            x: touch.clientX - rect.left - dragData.current.offsetX,
-            y: touch.clientY - rect.top - dragData.current.offsetY,
+            x: coords.x - rect.left - dragData.current.offsetX,
+            y: coords.y - rect.top - dragData.current.offsetY,
         })
 
         dragData.current.targetIndex = findSegmentUnderTouch(container, coord)
     }
 
     /**
-     * Creates touch end handler for mobile drag operations
-     * @sig createTouchEndHandler :: Event -> Void
+     * Creates unified end handler for drag operations
+     * @sig createEndHandler :: Event -> Void
      */
-    const createTouchEndHandler = e => {
+    const createEndHandler = e => {
         if (dragData.current.index === undefined) return
-        e.preventDefault()
 
         const from = dragData.current.index
         const to = dragData.current.targetIndex !== undefined ? dragData.current.targetIndex : from
@@ -167,37 +158,34 @@ const DragDropHandler = ({
     }
 
     /**
-     * Creates global touch event handlers for mobile drag operations
-     * @sig buildGlobalTouchHandlers :: () -> TouchHandlers
+     * Creates unified global event handlers for drag operations
+     * @sig buildGlobalHandlers :: () -> GlobalHandlers
      */
-    const buildGlobalTouchHandlers = () => ({
-        handleTouchMove: createTouchMoveHandler,
-        handleTouchEnd: createTouchEndHandler,
-    })
+    const buildGlobalHandlers = () => ({ handleTouchMove: createMoveHandler, handleTouchEnd: createEndHandler })
 
     const handleSwap = buildSwapHandler(onSwap)
 
     /**
-     * Creates touch start handler for specific segment index
-     * @sig createTouchStartHandler :: Number -> Event -> Void
+     * Creates unified start handler for specific segment index
+     * @sig createStartHandler :: Number -> Event -> Void
      */
-    const createTouchStartHandler = i =>
-        buildTouchStartHandler(dragData, setDraggingIndex, i, containerRef, setDragPreviewPos)
+    const createStartHandler = i =>
+        buildDragStartHandlerWithPreview(dragData, setDraggingIndex, i, containerRef, setDragPreviewPos)
 
     /**
-     * Creates global touch handlers for drag operations
-     * @sig createGlobalTouchHandlers :: () -> TouchHandlers
+     * Creates unified global handlers for drag operations
+     * @sig createGlobalHandlers :: () -> GlobalHandlers
      */
-    const createGlobalTouchHandlers = () => buildGlobalTouchHandlers()
+    const createGlobalHandlers = () => buildGlobalHandlers()
 
     return {
         // Event handlers for parent to attach
         getDragStartHandler: i => buildDragStartHandler(dragData, setDraggingIndex, i),
         getDropHandler: i => buildDropHandler(dragData, setDraggingIndex, handleSwap, i),
-        getTouchStartHandler: createTouchStartHandler,
+        getUnifiedStartHandler: createStartHandler,
 
-        // Global touch handlers
-        getGlobalTouchHandlers: createGlobalTouchHandlers,
+        // Global unified handlers (backwards compatibility)
+        getGlobalTouchHandlers: createGlobalHandlers,
 
         // Utility functions
         findSegmentUnderTouch,

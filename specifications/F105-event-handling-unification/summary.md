@@ -18,11 +18,11 @@ Create unified event handling system to replace duplicated touch/mouse implement
 - **Incremental** - Apply changes component by component after F104 decomposition
 
 ## Success Criteria
-- [ ] Eliminate ~200 lines of duplicated touch/mouse event code
-- [ ] Single drag preview system handles both input types
-- [ ] Touch and mouse interactions feel identical to users
-- [ ] Event handling logic is testable with mocked events
-- [ ] No regressions in mobile or desktop functionality
+- [x] Eliminate ~200 lines of duplicated touch/mouse event code
+- [x] Single drag preview system handles both input types
+- [x] Touch and mouse interactions feel identical to users
+- [x] Event handling logic is testable with mocked events
+- [x] No regressions in mobile or desktop functionality
 
 ## Cross-References
 - **Prerequisite**: @F104-component-decomposition - Must complete component extraction first

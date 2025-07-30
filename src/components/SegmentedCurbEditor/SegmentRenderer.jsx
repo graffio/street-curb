@@ -53,7 +53,8 @@ const renderSegment = (segment, i, segments, total, draggingIndex, dragDropHandl
             onDragOver={e => e.preventDefault()}
             onDrop={dragDropHandler.getDropHandler(i)}
             onDragEnd={() => setDraggingIndex(null)}
-            onTouchStart={dragDropHandler.getTouchStartHandler(i)}
+            onMouseDown={dragDropHandler.getUnifiedStartHandler(i)}
+            onTouchStart={dragDropHandler.getUnifiedStartHandler(i)}
         />
     )
 }
