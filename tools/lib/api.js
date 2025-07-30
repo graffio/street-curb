@@ -5,6 +5,7 @@ import { checkUnnecessaryBraces } from './rules/unnecessary-braces.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { checkSigDocumentation } from './rules/sig-documentation.js'
 import { checkFunctionalPatterns } from './rules/functional-patterns.js'
+import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
 import { parseCode } from './parser.js'
 
 /**
@@ -59,6 +60,10 @@ const runAllRules = (ast, sourceCode, filePath) => {
     // Run functional patterns rule (AST-based)
     const functionalViolations = checkFunctionalPatterns(ast, sourceCode, filePath)
     allViolations.push(...functionalViolations)
+
+    // Run function declaration ordering rule (AST-based)
+    const functionOrderingViolations = checkFunctionDeclarationOrdering(ast, sourceCode, filePath)
+    allViolations.push(...functionOrderingViolations)
 
     // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)

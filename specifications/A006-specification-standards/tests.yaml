@@ -1,0 +1,39 @@
+tests:
+  - id: validate-F103
+    description: Ensure F103 conforms to the specification format
+    input:
+      meta.yaml:
+        spec_id: F103
+        type: system
+        files:
+          - name: llm-loader.md
+            role: llm_bootstrap
+          - name: logic.yaml
+            role: implementation_rules
+          - name: tests.yaml
+            role: validation_suite
+    expect:
+      - all required files present
+      - roles match declared purposes
+      - filenames unique
+      - valid top-level structure
+
+  - id: validate-F209
+    description: Ensure F209 (CurbTable) conforms to the specification format
+    input:
+      meta.yaml:
+        spec_id: F209
+        type: feature
+        files:
+          - name: llm-loader.md
+            role: llm_bootstrap
+          - name: logic.yaml
+            role: implementation_rules
+          - name: tests.yaml
+            role: validation_suite
+          - name: overview.md
+            role: human_context
+    expect:
+      - required files (meta, loader, logic) present
+      - declared optional file (overview) allowed
+      - correct roles and file structure
