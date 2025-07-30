@@ -48,10 +48,27 @@ const checkExportPlacement = (ast, sourceCode, filePath) => {
 
     violations.push(...exportDefaultViolations)
 
-    // Find all export lines
-    const exportLines = lineIndexMap
+    // Find all export statements (including multi-line)
+    const exportStartLines = lineIndexMap
         .filter(({ line }) => line.startsWith('export ') && !line.startsWith('export default'))
         .map(({ index }) => index)
+
+    /**
+     * Finds the end line of a multi-line export block
+     * @sig findExportEndLine :: (Number, [String]) -> Number
+     */
+    const findExportEndLine = (startLine, lines) => {
+        if (!lines[startLine].trim().includes('{')) return startLine
+
+        const endLineIndex = lines.findIndex((line, index) => index >= startLine && line.trim().includes('}'))
+
+        return endLineIndex === -1 ? startLine : endLineIndex
+    }
+
+    // For multi-line exports, find the end of each export block
+    const exportEndLines = exportStartLines.map(startLine => findExportEndLine(startLine, lines))
+
+    const exportLines = exportStartLines
 
     // Check for scattered exports (more than one export statement)
     if (exportLines.length > 1)
@@ -67,14 +84,16 @@ const checkExportPlacement = (ast, sourceCode, filePath) => {
     // Check if single export is at bottom
     if (exportLines.length !== 1) return violations
 
-    const exportLine = exportLines[0]
+    const exportStartLine = exportLines[0]
+    const exportEndLine = exportEndLines[0]
     const lastNonEmptyLineIndex = findLastNonEmptyLine(lines)
 
-    if (exportLine < lastNonEmptyLineIndex)
+    // Check if the export block ends at the last non-empty line
+    if (exportEndLine < lastNonEmptyLineIndex)
         violations.push(
             createViolation(
                 'export-not-at-bottom',
-                exportLine + 1,
+                exportStartLine + 1,
                 1,
                 'Export statement must be at the bottom of the file',
             ),

@@ -39,6 +39,21 @@ t.test('Given a file with export violations', t => {
         t.end()
     })
 
+    t.test('When the multi-line export statement is not at the bottom', t => {
+        const code = `const firstFunction = () => {}
+            export {
+                firstFunction,
+                secondFunction,
+            }
+            const anotherFunction = () => {}`
+        const violations = checkExportPlacement(null, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.equal(violations[0].type, 'export-not-at-bottom', 'Then the violation type should be export-not-at-bottom')
+        t.match(violations[0].message, /bottom/, 'Then the message should mention bottom placement')
+        t.end()
+    })
+
     t.end()
 })
 
@@ -48,6 +63,22 @@ t.test('Given a file with proper export placement', t => {
             const anotherFunction = () => {}
 
             export { myFunction, anotherFunction }`
+        const violations = checkExportPlacement(null, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.test('When the file has a multi-line export at the bottom', t => {
+        const code = `const firstFunction = () => {}
+            const secondFunction = () => {}
+            const thirdFunction = () => {}
+
+            export {
+                firstFunction,
+                secondFunction,
+                thirdFunction,
+            }`
         const violations = checkExportPlacement(null, code, 'test.js')
 
         t.equal(violations.length, 0, 'Then no violations should be detected')
