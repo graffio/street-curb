@@ -169,6 +169,32 @@
 - USE a single `export` statement at the bottom of each file; avoid `export default`; exporting multiple objects
   with a single export is fine; the point is for the reader to have exactly one place to look to see what's exported
 
+### Index Files
+- INDEX files (index.js) should contain ONLY imports and exports, NO implementation code
+- USE index.js files to create clean public APIs for directories/modules
+- KEEP implementation in properly named files (e.g., `ComponentName.jsx`)
+- INDEX files should re-export the main component/functions for easier importing
+
+    ❌ AVOID THIS
+    ```
+    // index.jsx with implementation
+    const MyComponent = () => {
+        // 200 lines of implementation
+    }
+    export default MyComponent
+    ```
+    ✅ DO THIS INSTEAD
+    ```
+    // MyComponent.jsx
+    const MyComponent = () => {
+        // implementation here
+    }
+    export { MyComponent }
+    
+    // index.js (re-export only)
+    export { MyComponent as default } from './MyComponent.jsx'
+    ```
+
 ## Functions
 - USE arrow functions for anonymous functions.
 - CREATE named functions if an anonymous function is longer than one line (multi-line).

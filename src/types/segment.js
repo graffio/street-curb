@@ -1,4 +1,4 @@
-import { roundToPrecision } from '../constants.js'
+import { roundToPrecision } from '../utils/formatting.js'
 
 /**
  * @sig Segment :: { id: String, type: String, length: Number }

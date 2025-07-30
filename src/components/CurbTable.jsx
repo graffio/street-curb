@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { COLORS, formatLength } from '../constants.js'
+import { COLORS } from '../constants.js'
+import { formatLength } from '../utils/formatting.js'
 import NumberPad from './NumberPad.jsx'
 import {
     selectSegments,

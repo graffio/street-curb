@@ -1,4 +1,4 @@
-import { roundToPrecision } from '../constants.js'
+import { roundToPrecision } from '../utils/formatting.js'
 import { calculateCumulativePositions, calculateVisualPercentages } from '../utils/geometry.js'
 import { performSegmentSplit } from '../utils/segments.js'
 
