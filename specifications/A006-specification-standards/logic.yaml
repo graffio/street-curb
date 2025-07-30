@@ -1,0 +1,53 @@
+spec_format:
+  version: 1.0
+  description: >
+    This document defines the structure and validation rules for all specifications
+    used by LLMs in this system. Each spec must consist of modular files with defined roles.
+
+files:
+  - meta.yaml:
+      role: system_metadata
+      required: true
+      fields:
+        - spec_id: string
+        - name: string
+        - type: enum [feature, system, module, design]
+        - status: enum [active, deprecated, draft]
+        - files: list of file descriptors (see below)
+
+  - llm-loader.md:
+      role: llm_bootstrap
+      required: true
+      purpose: >
+        Guides the LLM in how to load and interpret the spec. Includes file roles,
+        loading order, and special instructions.
+
+  - logic.yaml:
+      role: implementation_rules
+      required: true
+      format: freeform YAML describing the system, behavior, data model, or constraints
+      guideline: >
+        Should avoid prose and use structured data whenever possible.
+        Must define key inputs, outputs, and logic units.
+
+  - tests.yaml:
+      role: validation_suite
+      required: false
+      format: YAML list of test cases with clear input/expectation mapping
+      guideline: Used to validate spec correctness, not runtime tests
+
+  - overview.md:
+      role: human_context
+      required: false
+      guideline: >
+        Optional high-level summary. Should be brief and explanatory.
+        Not loaded by default unless in documentation mode.
+
+rules:
+  - Each spec must contain at least:
+      - meta.yaml
+      - llm-loader.md
+      - logic.yaml
+  - All file names must be unique within the spec
+  - Each file declared in meta.yaml must exist and match its declared role
+  - Specs must be modular and loadable without prior context
