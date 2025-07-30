@@ -1,0 +1,195 @@
+coding_standards:
+  version: 1.0
+  description: Functional JavaScript coding standards with strict anti-TypeScript stance
+  
+core_principles:
+  functional_programming: 
+    required: true
+    forbidden_keywords: [class, new]
+    preferred_patterns: [map, reduce, filter, forEach]
+    immutability: required
+    mutation_alternative: assoc_function
+    
+  typescript_prohibition:
+    status: absolutely_forbidden
+    file_extensions: 
+      allowed: [.js, .jsx]
+      forbidden: [.ts, .tsx, .d.ts]
+    syntax_forbidden: [TypeScript_annotations, JSDoc_types, tsconfig.json]
+    validation_alternative: runtime_validation
+    
+  single_indentation_level:
+    max_nesting: 1
+    exceptions: [try_catch, object_literals, jsx_elements]
+    enforcement: strict
+
+formatting_rules:
+  line_length: 
+    max_characters: 120
+    enforcement: strict
+    
+  indentation:
+    type: spaces
+    count: 4
+    
+  function_placement:
+    inner_functions: top_of_nearest_containing_block
+    main_functions: end_of_file
+    order: functions_before_variables_before_execution
+    
+  braces_and_parens:
+    unnecessary_removal: required
+    single_statement_blocks: no_braces
+    arrow_functions: minimal_syntax
+    
+  blank_lines:
+    before_braced_statements: required
+    logical_sections: separate_with_blanks
+    comment_blocks: blank_before_first_comment
+
+language_features:
+  variables:
+    preferred: const
+    fallback: let
+    forbidden: var
+    
+  strings:
+    quote_style: single_quotes
+    exception: contains_single_quotes
+    
+  objects_arrays:
+    trailing_commas: required_in_multiline
+    
+  functions:
+    anonymous_single_line: allowed_inline
+    anonymous_multiline: must_be_named
+    arrow_vs_function: prefer_arrow_for_anonymous
+    
+  control_flow:
+    if_else: avoid_prefer_ternary_or_early_return
+    nested_ternary: forbidden
+    switch_statements: avoid_use_functions
+    for_loops: forbidden_use_functional_patterns
+
+error_handling:
+  pure_functions: no_exceptions
+  boundaries: try_catch_allowed
+  async_operations: prefer_async_await
+  promise_rejections: explicit_handling_required
+
+testing_requirements:
+  framework: node_tap
+  file_pattern: "test/*.tap.js"
+  command: tap
+  execution: 
+    all_tests: "yarn tap"
+    single_test: "tap test/filename.tap.js"
+  
+  documentation_style:
+    purpose: tests_act_as_documentation
+    structure: given_when_then_required
+    nesting: proper_test_hierarchy
+    descriptions: proper_english_with_articles_required
+    
+  test_structure:
+    outer_test: "Given [scenario context]"
+    inner_test: "When [action occurs]" 
+    assertion: "Then [expected outcome]"
+    proper_english: true
+    articles_required: [the, a, an]
+    
+  description_rules:
+    avoid_programming_notation: true
+    avoid_symbols: [=, +, (), programming_variables]
+    use_natural_language: true
+    examples:
+      correct: 
+        - "Given a user clicks the Add Segment button"
+        - "When there are no existing segments" 
+        - "Then one segment of 20 feet is added"
+        - "Then the segment lengths and the remaining unknown length always total to the blockface length"
+      incorrect:
+        - "processAddSegment returns 20"
+        - "should maintain blockfaceLength = sum(segments) + unknownRemaining"
+        - "has start + 2 segment ends + final tick"
+        - "When calculating dropdown position" # missing "the"
+        
+  test_methodology:
+    pure_function_testing: preferred
+    mocking: avoid_when_possible
+    test_real_functions: true
+    verify_sig_contracts: required
+    
+  assertion_style:
+    method: "t.equal, t.same, t.ok"
+    description_format: "natural_english_sentence"
+    example: 't.equal(result.segments.length, 1, "Then one segment is added")'
+
+documentation_requirements:
+  sig_annotations:
+    required_for: [top_level_functions, functions_over_5_lines]
+    format: hindley_milner
+    type_casing: capitalized_primitives
+    optional_types: "Type?"
+    
+  inline_comments:
+    single_line: "//"
+    multi_line: "/* */"
+    purposes: [variable_purpose, business_logic, non_obvious_details]
+
+react_specific:
+  components:
+    class_components: forbidden
+    jsx_complexity_limit: 20_lines
+    extract_when_exceeded: required
+    
+  state_management:
+    preferred: redux_with_selectors
+    useState: component_local_only
+    context: avoid
+    
+  ui_library: radix_ui_with_radix_themes_vanilla_extract
+  
+  logic_separation:
+    calculatable_ui_logic: extract_to_pure_functions
+    testable_functions: prefer_over_jsx_embedded
+
+naming_conventions:
+  files:
+    react_components: PascalCase_single_word_dot_jsx  # SegmentCurbEditor.jsx
+    other_files: kebab_case_dot_js  # ui-calculations.js
+  abbreviations: single_uppercase_character
+  examples:
+    react_correct: "SegmentCurbEditor.jsx"
+    react_incorrect: "segment-curb-editor.jsx"
+    other_correct: "ui-calculations.js"
+    other_incorrect: "uiCalculations.js"
+
+module_system:
+  import_style: es6_import
+  require: forbidden
+  exports:
+    single_export_statement: required
+    location: bottom_of_file
+    default_exports: avoid
+    
+security_rules:
+  input_validation: required_at_boundaries
+  data_sanitization: before_database_operations
+  secrets: environment_variables_only
+  sensitive_data: never_commit
+  
+package_management:
+  preferred: yarn
+  forbidden: npm
+
+libraries:
+  functional: home_grown_in_@functional
+  runtime_validation: tagged_and_taggedSum_from_@tagged_type
+  testing: node_tap
+  react_props: PropTypes_for_exported_components
+
+behavioral_constraints:
+  code_modification: only_task_related_changes
+  guessing: forbidden_ask_questions_instead
+  response_length: prefer_brief_answers
