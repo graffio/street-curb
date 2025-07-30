@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { COLORS } from '../../constants.js'
-import { formatLength, roundToPrecision } from '../../utils/formatting.js'
-import { calculateLabelPositions } from './label-positioning.js'
 import {
     addSegment,
     addSegmentLeft,
@@ -13,7 +11,10 @@ import {
     selectUnknownRemaining,
     updateSegmentLength,
 } from '../../store/curbStore.js'
+import { formatLength, roundToPrecision } from '../../utils/formatting.js'
+import { DividerLayer } from './DividerLayer.jsx'
 import { DragDropHandler } from './DragDropHandler.jsx'
+import { LabelLayer } from './LabelLayer.jsx'
 import { SegmentRenderer } from './SegmentRenderer.jsx'
 
 /**
@@ -58,151 +59,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         next[index] = { ...next[index], type: newType }
         updateRedux(next)
         setEditingIndex(null)
-    }
-
-    /**
-     * Creates handler for label click events to toggle dropdown
-     * @sig buildLabelClickHandler :: (Number?, SetStateFn, Number) -> Event -> Void
-     */
-    const buildLabelClickHandler = (editingIndex, setEditingIndex, i) => e => {
-        e.stopPropagation()
-        setEditingIndex(editingIndex === i ? null : i)
-    }
-
-    /**
-     * Creates handler for dropdown type selection
-     * @sig buildTypeClickHandler :: (Function, Number) -> (Event, String) -> Void
-     */
-    const buildTypeClickHandler = (handleChangeType, i) => (e, type) => {
-        e.stopPropagation()
-        handleChangeType(i, type)
-    }
-
-    /**
-     * Creates handler for "Add left" dropdown option
-     * @sig buildAddLeftClickHandler :: (Function, Number) -> Event -> Void
-     */
-    const buildAddLeftClickHandler = (handleAddLeft, i) => e => {
-        e.stopPropagation()
-        handleAddLeft(i)
-    }
-
-    /**
-     * Renders draggable divider between segments for resizing
-     * @sig renderDivider :: (Number, [Segment], Number, RefObject) -> JSXElement?
-     */
-    const renderDivider = (i, segments, total) => {
-        // Allow divider after last segment if there's unknown space
-        if (i >= segments.length && unknownRemaining <= 0) return null
-        if (i >= segments.length - 1 && unknownRemaining <= 0) return null
-
-        const calculatePositionPercent = () =>
-            segments.slice(0, i + 1).reduce((acc, segment) => acc + (segment.length / total) * 100, 0)
-
-        const positionPercent = calculatePositionPercent()
-
-        const dividerStyle = {
-            position: 'absolute',
-            top: `${positionPercent}%`,
-            transform: 'translateY(-50%)',
-            left: 0,
-            width: '100%',
-            height: '40px',
-        }
-
-        return (
-            <div
-                key={`divider-${i}-${segments.length}`}
-                className="divider"
-                style={{ ...dividerStyle, cursor: 'row-resize', touchAction: 'none' }}
-                onMouseDown={e => handleDirectDragStart(e, i)}
-                onTouchStart={e => handleDirectDragStart(e, i)}
-            >
-                <div
-                    style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: '2px' }}
-                />
-            </div>
-        )
-    }
-
-    /**
-     * Renders dropdown menu items for segment type changing and addition
-     * @sig renderDropdownItems :: (Function, Function, Number) -> JSXElement
-     */
-    const renderDropdownItems = (handleChangeType, handleAddLeft, i) => (
-        <>
-            {Object.keys(COLORS).map(type => (
-                <div
-                    key={type}
-                    className="dropdown-item"
-                    style={{ backgroundColor: COLORS[type] }}
-                    onClick={e => buildTypeClickHandler(handleChangeType, i)(e, type)}
-                >
-                    {type}
-                </div>
-            ))}
-            <div
-                className="dropdown-item"
-                style={{ backgroundColor: 'red', textAlign: 'center', marginTop: '10px' }}
-                onClick={buildAddLeftClickHandler(handleAddLeft, i)}
-            >
-                + Add left
-            </div>
-        </>
-    )
-
-    /**
-     * Renders floating label with interactive dropdown for segment configuration
-     * @sig renderLabel :: (Segment, Number, [Number], Number, [Number], RefObject, Number?, Handlers) -> JSXElement
-     *     Handlers = { setEditingIndex: SetStateFn, handleChangeType: Function, handleAddLeft: Function }
-     */
-    const renderLabel = (
-        s,
-        i,
-        tickPoints,
-        total,
-        smartLabelPositions,
-        labelRefs,
-        editingIndex,
-        setEditingIndex,
-        handleChangeType,
-        handleAddLeft,
-    ) => {
-        const mid = tickPoints[i] + s.length / 2
-        const positionPct = (mid / total) * 100
-        const feet = formatLength((s.length / total) * effectiveBlockfaceLength)
-
-        const labelStyle = {
-            backgroundColor: COLORS[s.type] || '#999',
-            top: `${positionPct}%`,
-            left: `${smartLabelPositions[i] || 0}px`,
-            transform: 'translateY(-50%)',
-            width: uniformLabelWidth > 0 ? `${uniformLabelWidth}px` : 'auto',
-        }
-
-        const labelContent =
-            editingIndex === i ? (
-                <>
-                    <span>
-                        {s.type} {feet}
-                    </span>
-                    <div className="dropdown">{renderDropdownItems(handleChangeType, handleAddLeft, i)}</div>
-                </>
-            ) : (
-                `${s.type} ${feet}`
-            )
-
-        return (
-            <div
-                key={`label-${s.id}`}
-                className="floating-label"
-                style={labelStyle}
-                ref={el => (labelRefs.current[i] = el)}
-                onClick={buildLabelClickHandler(editingIndex, setEditingIndex, i)}
-            >
-                {labelContent}
-            </div>
-        )
     }
 
     /**
@@ -277,9 +133,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     const [editingIndex, setEditingIndex] = useState(null)
     const [dragPreviewPos, setDragPreviewPos] = useState({ x: 0, y: 0 })
     const containerRef = useRef(null)
-    const labelRefs = useRef([])
-    const [smartLabelPositions, setSmartLabelPositions] = useState([])
-    const [uniformLabelWidth, setUniformLabelWidth] = useState(0)
     // Drag and drop handler
     const dragDropHandler = DragDropHandler({
         segments,
@@ -296,16 +149,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     // Direct drag implementation without DraggableDivider
     const dragState = useRef({ isDragging: false, startCoord: null, startLength: null, index: null })
-
-    /**
-     * Calculates label offsets for positioning
-     * @sig calculateLabelOffsets :: ([Element], Function, Function) -> Void
-     */
-    const calculateLabelOffsets = (labelRefs, setSmartLabelPositions, setUniformLabelWidth) => {
-        const { positions, contentWidth } = calculateLabelPositions(true, labelRefs) // Always vertical
-        setSmartLabelPositions(positions)
-        setUniformLabelWidth(contentWidth) // Store contentWidth for CSS
-    }
 
     /**
      * Attempts zero snap adjustment when length is very small
@@ -355,67 +198,67 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     }
 
     /**
+     * Creates drag end cleanup handler
+     * @sig createDragEndCleanup :: (Function) -> () -> Void
+     */
+    const createDragEndCleanup = handleMove => () => {
+        dragState.current = { isDragging: false, startCoord: null, startLength: null, index: null }
+        window.removeEventListener('mousemove', handleMove)
+        window.removeEventListener('touchmove', handleMove)
+        window.removeEventListener('mouseup', createDragEndCleanup(handleMove))
+        window.removeEventListener('touchend', createDragEndCleanup(handleMove))
+    }
+
+    /**
      * Handles drag end events with cleanup
      * @sig createDragEndHandler :: (Function) -> Function
      */
-    const createDragEndHandler = handleMove => {
-        const handleEnd = () => {
-            dragState.current = { isDragging: false, startCoord: null, startLength: null, index: null }
-            window.removeEventListener('mousemove', handleMove)
-            window.removeEventListener('touchmove', handleMove)
-            window.removeEventListener('mouseup', handleEnd)
-            window.removeEventListener('touchend', handleEnd)
-        }
-        return handleEnd
+    const createDragEndHandler = handleMove => createDragEndCleanup(handleMove)
+
+    /**
+     * Handles direct drag start for dividers
+     * @sig handleDirectDragStartImpl :: (Event, Number) -> Void
+     */
+    const handleDirectDragStartImpl = (e, index) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const segment = segments[index]
+        if (!segment) return
+
+        const startCoord = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY
+        dragState.current = { isDragging: true, startCoord, startLength: segment.length, index }
+
+        const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining, segments)
+        const handleEnd = createDragEndHandler(handleMove)
+
+        window.addEventListener('mousemove', handleMove)
+        window.addEventListener('mouseup', handleEnd)
+        window.addEventListener('touchmove', handleMove, { passive: false })
+        window.addEventListener('touchend', handleEnd)
     }
 
-    const handleDirectDragStart = useCallback(
-        (e, index) => {
-            e.preventDefault()
-            e.stopPropagation()
-
-            const segment = segments[index]
-            if (!segment) return
-
-            const startCoord = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY
-            dragState.current = { isDragging: true, startCoord, startLength: segment.length, index }
-
-            const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining, segments)
-            const handleEnd = createDragEndHandler(handleMove)
-
-            window.addEventListener('mousemove', handleMove)
-            window.addEventListener('mouseup', handleEnd)
-            window.addEventListener('touchmove', handleMove, { passive: false })
-            window.addEventListener('touchend', handleEnd)
-        },
-        [segments, total, dispatch, unknownRemaining],
-    )
+    const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, dispatch, unknownRemaining])
     const handleChangeType = buildChangeTypeHandler(
         newSegments => dispatch(replaceSegments(newSegments)),
         setEditingIndex,
     )
-    const handleAddLeft = useCallback(
-        index => {
-            dispatch(addSegmentLeft(index))
-            setEditingIndex(null)
-        },
-        [dispatch],
-    )
+    /**
+     * Handles adding segment to the left
+     * @sig handleAddLeftImpl :: Number -> Void
+     */
+    const handleAddLeftImpl = index => {
+        dispatch(addSegmentLeft(index))
+        setEditingIndex(null)
+    }
+
+    const handleAddLeft = useCallback(handleAddLeftImpl, [dispatch])
     const tickPoints = useSelector(selectCumulativePositions)
 
     // Redux handles blockface initialization and segment management
 
     // Global touch handlers for better mobile support
     useEffect(() => setupGlobalTouchListeners(), [dragDropHandler])
-
-    useEffect(() => {
-        // Use requestAnimationFrame to ensure labels are rendered before calculating offsets
-        const timeoutId = setTimeout(
-            () => calculateLabelOffsets(labelRefs.current, setSmartLabelPositions, setUniformLabelWidth),
-            0,
-        )
-        return () => clearTimeout(timeoutId)
-    }, [segments])
 
     const containerClassName = 'segment-container vertical'
 
@@ -453,29 +296,25 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
                         dragDropHandler={dragDropHandler}
                         setDraggingIndex={setDraggingIndex}
                     />
-                    {segments.map((_, i) => renderDivider(i, segments, total, containerRef))}
-                    {unknownRemaining > 0 &&
-                        segments.length > 0 &&
-                        renderDivider(segments.length - 1, segments, total, containerRef)}
+                    <DividerLayer
+                        segments={segments}
+                        total={total}
+                        unknownRemaining={unknownRemaining}
+                        handleDirectDragStart={handleDirectDragStart}
+                    />
                     {renderDragPreview(draggingIndex, dragPreviewPos, segments, total)}
                 </div>
 
-                <div className="label-layer">
-                    {segments.map((s, i) =>
-                        renderLabel(
-                            s,
-                            i,
-                            tickPoints,
-                            total,
-                            smartLabelPositions,
-                            labelRefs,
-                            editingIndex,
-                            setEditingIndex,
-                            handleChangeType,
-                            handleAddLeft,
-                        ),
-                    )}
-                </div>
+                <LabelLayer
+                    segments={segments}
+                    tickPoints={tickPoints}
+                    total={total}
+                    effectiveBlockfaceLength={effectiveBlockfaceLength}
+                    editingIndex={editingIndex}
+                    setEditingIndex={setEditingIndex}
+                    handleChangeType={handleChangeType}
+                    handleAddLeft={handleAddLeft}
+                />
 
                 <div className="ruler">{tickPoints.map((p, i) => renderTick(p, i, total))}</div>
 
