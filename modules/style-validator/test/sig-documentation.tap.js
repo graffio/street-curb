@@ -1,6 +1,6 @@
 import t from 'tap'
-import { checkSigDocumentation } from '../../tools/lib/rules/sig-documentation.js'
-import { parseCode } from '../../tools/lib/parser.js'
+import { checkSigDocumentation } from '../src/lib/rules/sig-documentation.js'
+import { parseCode } from '../src/lib/parser.js'
 
 t.test('Given functions that require @sig documentation', t => {
     t.test('When a top-level function has no @sig comment', t => {

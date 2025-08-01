@@ -1,5 +1,5 @@
 import t from 'tap'
-import { checkExportPlacement } from '../../tools/lib/rules/export-placement.js'
+import { checkExportPlacement } from '../src/lib/rules/export-placement.js'
 
 t.test('Given a file with export violations', t => {
     t.test('When the file uses export default', t => {
