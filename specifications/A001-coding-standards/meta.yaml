@@ -1,8 +1,5 @@
-spec_version: 1.0
 spec_id: A001
-name: JavaScript Functional Coding Standards
-type: system
-status: active
+name: "JavaScript Functional Coding Standards"
 
 files:
   - name: llm-loader.md

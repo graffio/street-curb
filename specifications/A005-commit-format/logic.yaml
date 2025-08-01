@@ -4,31 +4,34 @@ commit_format:
   
 format_structure:
   pattern: "type: description"
-  type: required_in_brackets_with_4_spaces
+  type: "Required in brackets with 4 spaces"
   description: required
   
 commit_types:
-  "[feat]": new_feature_for_user
-  "[fix ]": bug_fix_for_user
-  "[docs]": documentation_changes
-  "[styl]": formatting_changes_no_logic_impact
-  "[refr]": code_changes_neither_fix_nor_feature
-  "[test]": adding_or_correcting_tests
-  "[chre]": maintenance_tasks_build_deps
+  "[feat]": "New feature for user"
+  "[fix ]": "Bug fix for user"
+  "[docs]": "Documentation changes"
+  "[styl]": "Formatting changes, no logic impact"
+  "[refr]": "Code changes, neither fix nor feature"
+  "[test]": "Adding or correcting tests"
+  "[chre]": "Maintenance tasks, build deps"
   
 header_rules:
   max_length: 50
-  case: lowercase_first_letter_after_type
-  tense: imperative_present  # "add feature" not "added feature"
-  punctuation: no_period_at_end
+  case: "Lowercase first letter after type"
+  tense: "Imperative present"  # "add feature" not "added feature"
+  punctuation: "No period at end"
+  descriptiveness: "Must be informative for future developers/Claude sessions"
   format_example: "[feat] add user authentication system"
   
 body_rules:
   optional: true
-  line_wrap: 72_characters
-  purpose: explain_motivation_and_context_when_needed
+  line_wrap: "72 characters"
+  purpose: "Explain motivation and context when needed"
+  structured_format: "Consider YAML format for complex changes to help future Claude sessions"
+  claude_context: "Include key details that help future Claude understand the change scope and reasoning"
       
 grouping_rules:
-  single_purpose: one_logical_change_per_commit
-  atomic_changes: commit_should_be_complete_and_working
-  separate_types: different_commit_types_need_separate_commits
+  single_purpose: "One logical change per commit"
+  atomic_changes: "Commit should be complete and working"
+  separate_types: "Different commit types need separate commits"

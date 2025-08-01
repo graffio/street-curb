@@ -1,8 +1,5 @@
-spec_version: 1.0
 spec_id: A005
-name: Git Commit Message Format
-type: system
-status: active
+name: "Git Commit Message Format"
 
 files:
   - name: llm-loader.md

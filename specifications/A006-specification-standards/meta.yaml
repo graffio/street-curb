@@ -1,8 +1,5 @@
-spec_version: 1.0
 spec_id: A006
-name: Specification Format Standard
-type: system
-status: active
+name: "Specification Format Standard"
 
 files:
   - name: llm-loader.md
