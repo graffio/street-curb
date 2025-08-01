@@ -1,0 +1,13 @@
+{
+    "name"       : "functional",
+    "version"    : "0.0.1",
+    "main"       : "index.js",
+    "module"     : "index.js",
+    "type"       : "module",
+    "sideEffects": false,
+    "scripts"    : {
+        "tap": " TAP_DISABLE_COVERAGE=1 tap **/*.tap.js tap **/**/*.tap.js -R tap | tap-mocha-reporter spec",
+        "unit-tests": "yarn unit-test '**/*.tap.js' "
+    },
+    "private"    : true
+}
