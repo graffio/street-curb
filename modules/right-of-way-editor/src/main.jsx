@@ -1,10 +1,11 @@
+import { MainTheme } from '@qt/design-system'
 import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import CurbTable from './components/CurbTable.jsx'
 import MapboxMap from './components/MapboxMap.jsx'
 import SegmentedCurbEditor from './components/SegmentedCurbEditor'
-import { initializeSegments, selectSegments, selectBlockfaceLength } from './store/curbStore.js'
+import { initializeSegments, selectBlockfaceLength, selectSegments } from './store/curbStore.js'
 import store from './store/index.js'
 import './index.css'
 
@@ -193,7 +194,11 @@ const App = () => {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-    <Provider store={store}>
-        <App />
-    </Provider>,
+    <React.StrictMode>
+        <MainTheme>
+            <Provider store={store}>
+                <App />
+            </Provider>
+        </MainTheme>
+    </React.StrictMode>,
 )
