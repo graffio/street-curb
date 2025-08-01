@@ -1,5 +1,5 @@
-spec_id: A006
-name: "Specification Format Standard"
+spec_id: A002
+name: "Claude Workflow and Subagent Usage"
 
 files:
   - name: llm-loader.md

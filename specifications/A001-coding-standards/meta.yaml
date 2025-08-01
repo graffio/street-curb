@@ -1,5 +1,5 @@
-spec_id: A006
-name: "Specification Format Standard"
+spec_id: A001
+name: "JavaScript Functional Coding Standards"
 
 files:
   - name: llm-loader.md

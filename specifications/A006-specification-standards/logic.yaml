@@ -10,9 +10,7 @@ files:
       required: true
       fields:
         - spec_id: string
-        - name: string
-        - type: enum [feature, system, module, design]
-        - status: enum [active, deprecated, draft]
+        - name: string (quoted for natural language)
         - files: list of file descriptors (see below)
 
   - llm-loader.md:
@@ -29,6 +27,8 @@ files:
       guideline: >
         Should avoid prose and use structured data whenever possible.
         Must define key inputs, outputs, and logic units.
+        Use natural language strings in quotes for human-readable values
+        rather than underscore_separated_encoded_values for better LLM comprehension.
 
   - tests.yaml:
       role: validation_suite

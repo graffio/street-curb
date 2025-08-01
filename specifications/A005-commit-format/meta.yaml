@@ -1,5 +1,5 @@
-spec_id: A006
-name: "Specification Format Standard"
+spec_id: A005
+name: "Git Commit Message Format"
 
 files:
   - name: llm-loader.md

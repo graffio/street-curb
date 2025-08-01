@@ -1,0 +1,38 @@
+commit_format:
+  version: 1.0
+  description: Simple conventional commit format for clean git history
+  
+format_structure:
+  pattern: "type: description"
+  type: "Required in brackets with 4 spaces"
+  description: required
+  
+commit_types:
+  "[feat]": "New feature for user"
+  "[fix ]": "Bug fix for user"
+  "[docs]": "Documentation changes"
+  "[styl]": "Formatting changes, no logic impact"
+  "[refr]": "Code changes, neither fix nor feature"
+  "[test]": "Adding or correcting tests"
+  "[chre]": "Maintenance tasks, build deps"
+  
+header_rules:
+  max_length: 50
+  case: "Lowercase first letter after type"
+  tense: "Imperative present"  # "add feature" not "added feature"
+  punctuation: "No period at end"
+  descriptiveness: "Must be informative for future developers/Claude sessions"
+  format_example: "[feat] add user authentication system"
+  
+body_rules:
+  optional: true
+  line_wrap: "72 characters"
+  purpose: "Explain motivation and context when needed"
+  structured_format: "Consider YAML format for complex changes to help future Claude sessions"
+  claude_context: "Include key details that help future Claude understand the change scope and reasoning"
+  no_signatures: "Do not add Claude/AI attribution footers - commit message should stand alone"
+      
+grouping_rules:
+  single_purpose: "One logical change per commit"
+  atomic_changes: "Commit should be complete and working"
+  separate_types: "Different commit types need separate commits"
