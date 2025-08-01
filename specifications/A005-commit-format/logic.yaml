@@ -30,6 +30,7 @@ body_rules:
   purpose: "Explain motivation and context when needed"
   structured_format: "Consider YAML format for complex changes to help future Claude sessions"
   claude_context: "Include key details that help future Claude understand the change scope and reasoning"
+  no_signatures: "Do not add Claude/AI attribution footers - commit message should stand alone"
       
 grouping_rules:
   single_purpose: "One logical change per commit"
