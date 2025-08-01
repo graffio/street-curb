@@ -1,0 +1,93 @@
+claude_workflow:
+  version: 5.0
+  description: "Simplified workflow with natural Claude behavior and developer subagent for complex implementations"
+
+core_principle: "Claude works naturally, uses developer subagent for complex implementations with hidden grunt work"
+
+workflow_patterns:
+
+  simple_tasks:
+    when_to_use: ["simple bugs", "typos", "minor changes", "obvious fixes", "small features"]
+    approach: "Direct implementation"
+    steps:
+      1. "Analyze the problem"
+      2. "Implement the fix or feature"
+      3. "Run tests to verify"
+      4. "Commit with clear message"
+    user_involvement: "Minimal approval and oversight"
+    
+  complex_implementations:
+    when_to_use: ["specifications", "complex features", "multi-file changes", "substantial new functionality"]
+    approach: "Strategic discussion then delegated implementation"
+    steps:
+      1. "Discuss requirements with user"
+      2. "Analyze codebase and approach"
+      3. "Propose implementation strategy to user"
+      4. "User approves or modifies approach"
+      5. "Invoke developer subagent for implementation"
+      6. "Developer subagent writes findings to .claude/developer-output.md"
+      7. "Present completed work and commit"
+    user_involvement: "Heavy collaboration on strategy, minimal on implementation"
+    
+  architecture_discussions:
+    when_to_use: ["complexity concerns", "refactoring decisions", "design choices", "system analysis"]
+    approach: "Collaborative analysis"
+    steps:
+      1. "Ask clarifying questions about concerns"
+      2. "Analyze relevant code and systems"
+      3. "Perform complexity analysis with user"
+      4. "Identify simplification opportunities"
+      5. "Discuss tradeoffs and approaches with user"
+      6. "User and Claude decide on approach together"
+      7. "Implementation follows appropriate workflow pattern"
+    user_involvement: "Full collaboration on architectural decisions"
+    
+  code_reviews:
+    when_to_use: ["review completed work", "validate changes", "pre-commit review", "quality assessment"]
+    approach: "Analysis with discussion"
+    steps:
+      1. "Analyze changed files and tests"
+      2. "Check standards compliance"  
+      3. "Present findings to user"
+      4. "Discuss issues and concerns with user"
+      5. "Provide specific recommendations"
+      6. "User decides whether to proceed or make changes"
+    user_involvement: "Collaborative discussion of findings and quality decisions"
+
+workflow_selection:
+  how_to_choose:
+    - "Assess complexity: simple vs complex vs architectural vs review need"
+    - "Consider scope: single file vs multi-file vs system analysis"
+    - "Evaluate collaboration need: direct execution vs strategic discussion vs quality analysis"
+    
+  defaults:
+    - "Simple bugs and small features: simple_tasks"
+    - "Specifications and complex features: complex_implementations"
+    - "Architecture and design concerns: architecture_discussions"
+    - "Reviewing and validating work: code_reviews"
+
+developer_subagent:
+  when_to_invoke: "Complex implementations where separate context beneficial"
+  how_to_invoke: "Task tool with subagent_type developer"
+  output_location: ".claude/developer-output.md"
+  claude_responsibility: "Always read and present subagent findings to user"
+  example: "Task(description='Implement F108 function ordering rule', subagent_type='developer')"
+
+core_principles:
+  - "Strategic collaboration: Architecture and design decisions happen in visible conversation"
+  - "Natural behavior: Claude adapts naturally to task requirements"
+  - "Subagent for complexity: Use developer subagent when implementation scope justifies separate context"
+  - "Always synthesize: Claude presents all subagent work, never hides results from user"
+
+session_onboarding:
+  new_claude_sessions_must_read:
+    - "A001 coding standards llm-loader and logic.yaml"
+    - "A005 commit format for git standards"
+    - "A006 specification format for reading YAML"
+    - "A002 claude workflow (this file) for workflow patterns and subagent usage"
+    
+  getting_started:
+    - "Assess what user wants to accomplish"
+    - "Choose appropriate workflow pattern"
+    - "Decide whether task complexity warrants developer subagent"
+    - "Execute workflow naturally"

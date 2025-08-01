@@ -1,0 +1,47 @@
+workflow_effectiveness_tests:
+  - id: simple-vs-complex-tasks
+    description: "Choose appropriate workflow based on task complexity"
+    effective_usage:
+      - task: "Fix validation bug in user registration"
+        approach: "Use simple_tasks workflow directly"
+        rationale: "Clear scope, focused implementation task"
+      - task: "Review completed feature for standards compliance"  
+        approach: "Use code_reviews workflow"
+        rationale: "Clear quality validation task"
+      - task: "Design new user authentication system"
+        approach: "Use architecture_discussions then complex_implementations"
+        rationale: "Complex architecture requiring strategy"
+    ineffective_usage:
+      - task: "Fix simple CSS styling issue"
+        approach: "Full architecture discussion first"
+        problem: "Unnecessary process overhead for simple task"
+      - task: "Add one new field to existing form"
+        approach: "Complex implementation with subagent"
+        problem: "Over-engineering simple addition"
+        
+  - id: subagent-usage
+    description: "Use developer subagent only when complexity justifies separate context"
+    effective_usage:
+      - task: "Implement multi-file feature with new data models"
+        approach: "Discussion then developer subagent"
+        rationale: "Complex implementation benefits from separate context"
+      - task: "Major refactoring affecting multiple components"
+        approach: "Architecture discussion then developer subagent"
+        rationale: "Large scope with substantial grunt work"
+    ineffective_usage:
+      - task: "Fix single function bug"
+        approach: "Developer subagent"
+        problem: "Simple task doesn't need separate context"
+        
+  - id: collaboration-patterns
+    description: "Match collaboration level to decision importance"
+    appropriate_collaboration:
+      - situation: "Breaking API change required for improvement"
+        action: "Architecture discussion with user approval"
+      - situation: "Multiple valid architectural approaches"
+        action: "Present options to user for decision"
+    inappropriate_collaboration:
+      - situation: "Choosing between two equivalent function names"
+        action: "Claude should decide based on coding standards"
+      - situation: "Standard refactoring pattern application"
+        action: "Claude should apply established patterns"
