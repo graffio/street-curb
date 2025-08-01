@@ -1,6 +1,6 @@
 import t from 'tap'
-import { checkUnnecessaryBraces } from '../../tools/lib/rules/unnecessary-braces.js'
-import { parseCode } from '../../tools/lib/parser.js'
+import { checkUnnecessaryBraces } from '../src/lib/rules/unnecessary-braces.js'
+import { parseCode } from '../src/lib/parser.js'
 
 t.test('Given code with unnecessary braces violations', t => {
     t.test('When an if statement has braces around a single statement', t => {

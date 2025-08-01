@@ -1,5 +1,5 @@
 import t from 'tap'
-import { checkLineLength } from '../../tools/lib/rules/line-length.js'
+import { checkLineLength } from '../src/lib/rules/line-length.js'
 
 t.test('Given a file with line length violations', t => {
     t.test('When a line exceeds 120 characters', t => {

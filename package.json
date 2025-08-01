@@ -3,30 +3,15 @@
     "private": true,
     "version": "0.0.0",
     "type": "module",
+    "workspaces": [
+        "modules/*"
+    ],
     "scripts": {
-        "dev": "vite",
-        "build": "vite build",
-        "preview": "vite preview",
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",
         "precommit": "lint-staged",
-        "storybook": "storybook dev -p 6006",
-        "build-storybook": "storybook build",
-        "tap": "TAP_DISABLE_COVERAGE=1 tap test/*.tap.js test/**/*.tap.js -R tap | tap-mocha-reporter spec"
+        "tap": "yarn workspaces run tap"
     },
     "devDependencies": {
-        "@chromatic-com/storybook": "^4.0.1",
-        "@eslint/js": "^9.28.0",
-        "@ngrok/ngrok": "^1.5.1",
-        "@playwright/test": "^1.54.1",
-        "@storybook/addon-a11y": "^9.0.18",
-        "@storybook/addon-docs": "^9.0.18",
-        "@storybook/addon-vitest": "^9.0.18",
-        "@storybook/react-vite": "^9.0.18",
-        "@types/react": "^18.2.66",
-        "@types/react-dom": "^18.2.22",
-        "@vitejs/plugin-react": "^4.2.1",
-        "@vitest/browser": "^3.2.4",
-        "@vitest/coverage-v8": "^3.2.4",
         "eslint": "^9.28.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-config-standard": "^17.1.0",
@@ -34,19 +19,10 @@
         "eslint-plugin-n": "^17.19.0",
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-promise": "^7.2.1",
-        "eslint-plugin-react": "^7.37.5",
-        "eslint-plugin-storybook": "^9.0.18",
         "globals": "^16.2.0",
         "lint-staged": "^15.2.9",
-        "playwright": "^1.54.1",
         "pre-commit": "^1.2.2",
-        "prettier": "^3.5.3",
-        "prop-types": "^15.8.1",
-        "storybook": "^9.0.18",
-        "tap": "^21.1.0",
-        "tap-mocha-reporter": "^5.0.4",
-        "vite": "^5.2.0",
-        "vitest": "^3.2.4"
+        "prettier": "^3.5.3"
     },
     "lint-staged": {
         "**/*.{mjs,js,jsx}": [
@@ -66,15 +42,5 @@
     "pre-commit": [
         "precommit"
     ],
-    "dependencies": {
-        "@reduxjs/toolkit": "^2.8.2",
-        "@turf/along": "^7.2.0",
-        "@turf/length": "^7.2.0",
-        "@turf/line-slice": "^7.2.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "react-redux": "^9.2.0",
-        "redux": "^5.0.1",
-        "yargs": "^18.0.0"
-    }
+    "dependencies": {}
 }

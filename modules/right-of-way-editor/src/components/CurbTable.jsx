@@ -1,18 +1,18 @@
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { COLORS } from '../constants.js'
+import {
+    addSegment,
+    selectBlockfaceLength,
+    selectIsCollectionComplete,
+    selectSegments,
+    selectStartPositions,
+    selectUnknownRemaining,
+    updateSegmentLength,
+    updateSegmentType,
+} from '../store/curbStore.js'
 import { formatLength } from '../utils/formatting.js'
 import NumberPad from './NumberPad.jsx'
-import {
-    selectSegments,
-    selectBlockfaceLength,
-    selectUnknownRemaining,
-    selectIsCollectionComplete,
-    selectStartPositions,
-    updateSegmentType,
-    updateSegmentLength,
-    addSegment,
-} from '../store/curbStore.js'
 
 /**
  * CurbTable - Mobile-friendly table-based curb editor for field data collection
