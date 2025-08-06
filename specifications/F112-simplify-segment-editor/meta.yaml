@@ -1,0 +1,10 @@
+spec_id: F112
+name: "Simplify SegmentedCurbEditor"
+
+files:
+  - name: llm-loader.md
+    role: llm_bootstrap
+  - name: logic.yaml
+    role: implementation_rules
+  - name: tests.yaml
+    role: validation_suite 
