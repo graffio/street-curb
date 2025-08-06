@@ -18,22 +18,15 @@ tests:
       - filenames unique
       - valid top-level structure
 
-  - id: validate-F209
-    description: Ensure F209 (CurbTable) conforms to the specification format
+  - id: validate-F110-task-level
+    description: Ensure F110 follows task-level specification format
     input:
-      meta.yaml:
-        spec_id: F209
-        type: feature
-        files:
-          - name: llm-loader.md
-            role: llm_bootstrap
-          - name: logic.yaml
-            role: implementation_rules
-          - name: tests.yaml
-            role: validation_suite
-          - name: overview.md
-            role: human_context
+      specification:
+        - tasks: "List of specific tasks with task_X_Y_description pattern"
+        - execution_status: "execution_status section with current task"
+        - granularity: "Task-level instead of phase-level"
     expect:
-      - required files (meta, loader, logic) present
-      - declared optional file (overview) allowed
-      - correct roles and file structure
+      - tasks_defined: "All tasks have unique IDs following task_X_Y_description pattern"
+      - execution_status_present: "execution_status section exists"
+      - current_task_defined: "current_task points to next task to execute"
+      - human_guidance_required: "Progression requires human approval"
