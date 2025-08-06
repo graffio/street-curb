@@ -19,12 +19,12 @@ simplification_strategy:
       - dual_orientation_calculations: "Eliminate orientation-specific logic"
       - complex_positioning: "Simplify to vertical-only positioning"
   
-  phase_2_consolidate_events:
-    description: "Replace dual event systems with single unified approach"
+  phase_2_simplify_drag_handler:
+    description: "Simplify DragDropHandler abstraction while preserving dual event systems"
     targets:
-      - drag_drop_handler: "Simplify to single touch-based system"
-      - event_handlers: "Consolidate desktop/mobile handlers"
-      - drag_preview: "Simplify to basic visual feedback"
+      - drag_drop_handler: "Simplify complex abstraction layer"
+      - event_handlers: "Keep dual systems but simplify implementation"
+      - drag_preview: "Simplify preview positioning calculations"
   
   phase_3_decompose_components:
     description: "Break monolithic component into focused sub-components"
@@ -42,15 +42,22 @@ simplification_strategy:
       - preview_positioning: "Simplify drag preview calculations"
 
 execution_status:
-  current_task: "task_1_3_remove_orientation_checks"
+  current_task: "task_4_3_simplify_preview_positioning"
   completed_tasks:
     - task_1_1_remove_horizontal_positioning: "COMPLETED - Removed horizontal collision detection functions and simplified calculateLabelPositions signature"
+    - task_1_3_remove_orientation_checks: "COMPLETED - Removed orientation-specific CSS classes and made vertical styles the default"
+    - task_1_2_simplify_label_positioning: "COMPLETED - Simplified label positioning while preserving correct slot-filling algorithm"
+    - task_2_1_simplify_drag_drop_handler: "COMPLETED - Simplified DragDropHandler abstraction while preserving dual event systems"
+    - task_2_2_simplify_drag_preview: "COMPLETED - Simplified drag preview positioning and styling"
+    - task_2_3_simplify_event_setup: "COMPLETED - Simplified global event listener setup"
+    - task_3_1_create_segment_list_component: "COMPLETED - SegmentRenderer component already exists and is well-structured"
+    - task_3_2_create_segment_controls_component: "COMPLETED - Created SegmentControls component and extracted controls logic"
+    - task_4_1_consolidate_drag_state: "COMPLETED - Consolidated draggingIndex, dragPreviewPos, and isDragging into single dragState object"
+    - task_4_2_remove_redundant_variables: "COMPLETED - Removed redundant variables and calculated values locally"
   pending_tasks:
-    - task_1_3_remove_orientation_checks: "NEXT"
-    - task_1_2_simplify_label_positioning: "PENDING"
-    - task_2_1_consolidate_event_handlers: "PENDING"
-    - task_2_2_simplify_drag_drop_handler: "PENDING"
-    - task_2_3_simplify_drag_preview: "PENDING"
+    - task_4_3_simplify_preview_positioning: "NEXT"
+    - task_2_2_simplify_drag_preview: "PENDING"
+    - task_2_3_simplify_event_setup: "PENDING"
     - task_3_1_create_segment_list_component: "PENDING"
     - task_3_2_create_segment_controls_component: "PENDING"
     - task_3_3_create_segment_ruler_component: "PENDING"
@@ -106,44 +113,45 @@ tasks:
       - vertical_only_classes: "Container uses only vertical-specific classes"
       - no_orientation_conditionals: "No conditional logic based on orientation"
 
-  task_2_1_consolidate_event_handlers:
-    description: "Replace dual desktop/mobile event systems with single touch-based system"
-    files:
-      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
-    changes:
-      - remove_desktop_handlers: "Remove onDragStart, onDrop, onDragEnd handlers"
-      - use_unified_touch_handlers: "Use only onMouseDown, onTouchStart for all interactions"
-      - simplify_event_setup: "Remove complex unified event listener setup"
-    validation:
-      - no_desktop_handlers: "No desktop drag/drop handlers remain"
-      - unified_touch_handlers: "All interactions use touch-based handlers"
-      - drag_functionality_preserved: "Drag and drop still works correctly"
-
-  task_2_2_simplify_drag_drop_handler:
-    description: "Simplify DragDropHandler to remove complex abstractions"
+  task_2_1_simplify_drag_drop_handler:
+    description: "Simplify DragDropHandler abstraction while preserving dual event systems"
     files:
       - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/DragDropHandler.jsx"
     changes:
-      - remove_dual_handlers: "Remove separate desktop and mobile handler functions"
-      - simplify_handler_creation: "Use single handler creation pattern"
-      - remove_complex_preview_logic: "Simplify preview positioning calculations"
+      - simplify_handler_creation: "Simplify complex handler creation patterns"
+      - keep_dual_systems: "Preserve HTML5 drag/drop and unified touch/mouse systems"
+      - remove_complex_abstractions: "Eliminate unnecessary abstraction layers"
     validation:
-      - simplified_handler: "DragDropHandler has single handler creation pattern"
-      - no_dual_handlers: "No separate desktop/mobile handlers"
-      - preview_works: "Drag preview still functions correctly"
+      - desktop_drag_works: "HTML5 drag/drop still works on desktop"
+      - touch_works: "Touch interactions work on mobile"
+      - unified_handlers_work: "Unified handlers work across platforms"
+      - drag_functionality_preserved: "All drag and drop functionality preserved"
 
-  task_2_3_simplify_drag_preview:
-    description: "Simplify drag preview to basic visual feedback"
+  task_2_2_simplify_drag_preview:
+    description: "Simplify drag preview positioning calculations"
     files:
       - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
     changes:
       - simplify_preview_calculation: "Use simple offset calculation for preview position"
-      - remove_complex_positioning: "Eliminate complex coordinate calculations"
+      - remove_complex_coordinates: "Eliminate complex coordinate calculations"
       - simplify_preview_style: "Use basic transform and opacity for preview"
     validation:
       - simple_preview_calculation: "Preview position uses simple offset calculation"
       - preview_visible: "Drag preview still shows during drag operations"
       - no_complex_positioning: "No complex coordinate calculations in preview"
+
+  task_2_3_simplify_event_setup:
+    description: "Simplify global event listener setup"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+    changes:
+      - simplify_global_listeners: "Simplify unified event listener setup"
+      - remove_complex_cleanup: "Simplify event cleanup logic"
+      - keep_cross_platform: "Maintain cross-platform event handling"
+    validation:
+      - event_listeners_work: "Global event listeners work correctly"
+      - cleanup_works: "Event cleanup works properly"
+      - cross_platform_support: "Cross-platform event handling preserved"
 
   task_3_1_create_segment_list_component:
     description: "Extract segment rendering into pure SegmentList component"
@@ -275,7 +283,8 @@ component_structure:
     - label-positioning.js: "Replaced with simple vertical stacking"
 
   simplified_logic:
-    - single_event_system: "Touch-based events only"
+    - preserved_dual_events: "Keep HTML5 drag/drop and unified touch/mouse systems"
+    - simplified_abstractions: "Simplify DragDropHandler abstraction layer"
     - simplified_collision_detection: "Simplified but correct slot-filling algorithm"
     - consolidated_state: "Single drag state reducer"
     - pure_components: "Clear separation of rendering and logic"

@@ -8,7 +8,6 @@ import {
     selectBlockfaceLength,
     selectCumulativePositions,
     selectSegments,
-    selectUnknownRemaining,
     updateSegmentLength,
 } from '../../store/curbStore.js'
 import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
@@ -41,10 +40,13 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     const dispatch = useDispatch()
     const segments = useSelector(selectSegments) || []
     const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
-    const unknownRemaining = useSelector(selectUnknownRemaining) || 0
 
     // Use Redux values if available, otherwise use props
-    const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
+    const total = reduxBlockfaceLength || blockfaceLength
+
+    // Calculate remaining space locally
+    const segmentsLength = segments.reduce((sum, segment) => sum + segment.length, 0)
+    const unknownRemaining = total - segmentsLength
 
     /**
      * Creates handler for divider dragging that uses universal boundary adjustment
@@ -67,7 +69,7 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
      * @sig renderTick :: (Number, Number, Number) -> JSXElement
      */
     const renderTick = (p, i, total) => {
-        const ft = formatLength((p / total) * effectiveBlockfaceLength)
+        const ft = formatLength((p / total) * total)
         const pct = (p / total) * 100
 
         const tickStyle = { top: `${pct}%` }
@@ -81,27 +83,24 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     /**
      * Renders floating preview of dragged segment for mobile touch interactions
-     * @sig renderDragPreview :: (Number?, { x: Number, y: Number }, [Segment], Number) -> JSXElement?
+     * @sig renderDragPreview :: (Object?, [Segment], Number) -> JSXElement?
      */
-    const renderDragPreview = (draggingIndex, dragPreviewPos, segments, total) => {
-        if (draggingIndex === null) return null
+    const renderDragPreview = (segmentDragState, segments, total) => {
+        if (!segmentDragState?.segmentIndex) return null
 
-        const segment = segments[draggingIndex]
+        const segment = segments[segmentDragState.segmentIndex]
         const size = (segment.length / total) * 100
 
         const previewStyle = {
             position: 'absolute',
-            left: `${dragPreviewPos.x}px`,
-            top: `${dragPreviewPos.y}px`,
+            left: `${segmentDragState.previewPos.x}px`,
+            top: `${segmentDragState.previewPos.y}px`,
             backgroundColor: COLORS[segment.type] || '#999',
             border: '2px solid rgba(255, 255, 255, 0.8)',
             borderRadius: '6px',
             opacity: 0.9,
             zIndex: 200,
             pointerEvents: 'none',
-            transform: 'scale(1.08)',
-            boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
-            filter: 'brightness(1.1)',
             width: '80px',
             height: `${size}%`,
         }
@@ -131,23 +130,22 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
     // Component state and refs
     // Segments are now managed by Redux
-    const [draggingIndex, setDraggingIndex] = useState(null)
+    const [segmentDragState, setSegmentDragState] = useState(null)
     const [editingIndex, setEditingIndex] = useState(null)
-    const [dragPreviewPos, setDragPreviewPos] = useState({ x: 0, y: 0 })
     const containerRef = useRef(null)
+
     // Drag and drop handler
     const dragDropHandler = DragDropHandler({
         segments,
         onSwap: newSegments => dispatch(replaceSegments(newSegments)),
-        draggingIndex,
-        setDraggingIndex,
-        dragPreviewPos,
-        setDragPreviewPos,
+        draggingIndex: segmentDragState?.segmentIndex ?? null,
+        setDraggingIndex: index =>
+            setSegmentDragState(index !== null ? { ...segmentDragState, segmentIndex: index } : null),
+        dragPreviewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 },
+        setDragPreviewPos: pos =>
+            setSegmentDragState(segmentDragState ? { ...segmentDragState, previewPos: pos } : null),
         containerRef,
     })
-
-    // Derived values and handlers - total includes unknown space for visual rendering
-    const total = effectiveBlockfaceLength // Use full blockface length for visual calculations
 
     // Direct drag implementation without DraggableDivider
     const dragState = useRef({ isDragging: false, startCoord: null, startLength: null, index: null })
@@ -252,7 +250,7 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     // Global unified event handlers for better cross-platform support
     useEffect(() => setupGlobalEventListeners(), [dragDropHandler])
 
-    const containerClassName = 'segment-container vertical'
+    const containerClassName = 'segment-container'
 
     /**
      * Renders bottom controls for segment creation and remaining space display
@@ -284,9 +282,11 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
                         segments={segments}
                         total={total}
                         unknownRemaining={unknownRemaining}
-                        draggingIndex={draggingIndex}
+                        draggingIndex={segmentDragState?.segmentIndex ?? null}
                         dragDropHandler={dragDropHandler}
-                        setDraggingIndex={setDraggingIndex}
+                        setDraggingIndex={index =>
+                            setSegmentDragState(index !== null ? { ...segmentDragState, segmentIndex: index } : null)
+                        }
                     />
                     <DividerLayer
                         segments={segments}
@@ -294,14 +294,14 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
                         unknownRemaining={unknownRemaining}
                         handleDirectDragStart={handleDirectDragStart}
                     />
-                    {renderDragPreview(draggingIndex, dragPreviewPos, segments, total)}
+                    {renderDragPreview(segmentDragState, segments, total)}
                 </div>
 
                 <LabelLayer
                     segments={segments}
                     tickPoints={tickPoints}
                     total={total}
-                    effectiveBlockfaceLength={effectiveBlockfaceLength}
+                    effectiveBlockfaceLength={total}
                     editingIndex={editingIndex}
                     setEditingIndex={setEditingIndex}
                     handleChangeType={handleChangeType}

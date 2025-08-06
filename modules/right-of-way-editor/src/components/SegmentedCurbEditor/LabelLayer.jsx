@@ -42,7 +42,7 @@ const LabelLayer = ({
      * @sig processPositioning :: () -> Void
      */
     const processPositioning = () => {
-        const { positions, contentWidth } = calculateLabelPositions(true, labelRefs.current)
+        const { positions, contentWidth } = calculateLabelPositions(labelRefs.current)
         setSmartLabelPositions(positions)
         setUniformLabelWidth(contentWidth)
     }
