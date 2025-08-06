@@ -26,20 +26,15 @@ h1 {
 
 .segment-container {
     position: relative;
-    width: 100%;
-    height: 80px;
+    height: 400px;
+    width: 80px;
     border: 1px solid #ccc;
     border-radius: 6px;
     display: flex;
+    flex-direction: column;
     overflow: visible;
     user-select: none;
     touch-action: manipulation;
-}
-
-.segment-container.vertical {
-    height: 400px;
-    width: 80px;
-    flex-direction: column;
 }
 
 .drag-preview {
@@ -90,7 +85,7 @@ h1 {
     justify-content: center;
 }
 
-.segment-container.vertical .divider {
+.segment-container .divider {
     top: auto;
     left: 0;
     width: 100%;
@@ -108,7 +103,7 @@ h1 {
     cursor: col-resize;
 }
 
-.segment-container.vertical .divider .draggable-divider {
+.segment-container .divider .draggable-divider {
     cursor: row-resize;
 }
 
@@ -127,7 +122,7 @@ h1 {
     transition: all 0.2s ease;
 }
 
-.segment-container.vertical .divider::before {
+.segment-container .divider::before {
     width: 60%;
     height: 4px;
 }
@@ -137,7 +132,7 @@ h1 {
     height: 70%;
 }
 
-.segment-container.vertical .divider:hover::before {
+.segment-container .divider:hover::before {
     width: 70%;
     height: 4px;
 }
@@ -157,7 +152,7 @@ h1 {
     z-index: -1;
 }
 
-.segment-container.vertical ~ .ruler {
+.segment-container ~ .ruler {
     position: absolute;
     top: 0;
     left: 90px;
@@ -173,7 +168,7 @@ h1 {
     white-space: nowrap;
 }
 
-.segment-container.vertical ~ .ruler .tick {
+.segment-container ~ .ruler .tick {
     transform: translateY(-50%);
     left: 0;
     right: auto;
@@ -192,7 +187,7 @@ h1 {
     pointer-events: none;
 }
 
-.segment-container.vertical ~ .label-layer {
+.segment-container ~ .label-layer {
     top: 0;
     left: 130px;
     width: auto;
@@ -215,7 +210,7 @@ h1 {
     min-width: 60px;
 }
 
-.segment-container.vertical ~ .label-layer .floating-label {
+.segment-container ~ .label-layer .floating-label {
     white-space: nowrap;
     writing-mode: initial;
     text-orientation: initial;

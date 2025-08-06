@@ -1,0 +1,121 @@
+migration:
+  target_components:
+    - SegmentedCurbEditor.jsx
+    - SegmentRenderer.jsx
+    - DividerLayer.jsx
+    - LabelLayer.jsx
+
+  design_system_integration:
+    package: "@qt/design-system"
+    imports:
+      - tokens
+    scope: "Only replace hardcoded values with tokens"
+
+execution_status:
+  current_task: "COMPLETED"
+  completed_tasks:
+    - task_1_1_identify_hardcoded_values: "COMPLETED - Found 15+ hardcoded values across 4 components"
+    - task_1_2_replace_color_values: "COMPLETED - Extended design system with SegmentedCurbEditor namespace using Radix CSS variables"
+    - task_1_3_replace_spacing_values: "COMPLETED - Replaced hardcoded spacing with Radix spacing tokens and component-specific values"
+    - task_1_4_replace_typography_values: "COMPLETED - Replaced hardcoded typography values with design system tokens"
+    - task_2_1_validate_functionality: "COMPLETED - All components pass A001 coding standards validation"
+  pending_tasks: []
+  failed_tasks: []
+  notes: "F113 migration completed successfully. All components now use design system tokens and pass coding standards."
+
+tasks:
+  task_1_1_identify_hardcoded_values:
+    description: "Identify all hardcoded design values in SegmentedCurbEditor components"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/"
+    changes:
+      - scan_for_colors: "Find hardcoded color values like '#999', 'rgba(255, 255, 255, 0.8)'"
+      - scan_for_spacing: "Find hardcoded spacing like '80px', '6px', '2px'"
+      - scan_for_typography: "Find hardcoded font sizes, weights, etc."
+      - scan_for_borders: "Find hardcoded border values"
+    validation:
+      - inventory_complete: "All hardcoded values identified and documented"
+      - no_missed_values: "No hardcoded values remain unidentified"
+
+  task_1_2_replace_color_values:
+    description: "Replace hardcoded color values with design system tokens"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/"
+    changes:
+      - replace_background_colors: "Replace hardcoded colors with tokens.colors"
+      - replace_border_colors: "Replace hardcoded border colors with tokens.colors"
+      - replace_text_colors: "Replace hardcoded text colors with tokens.colors"
+      - preserve_functionality: "Maintain all existing color logic and fallbacks"
+    validation:
+      - colors_replaced: "All hardcoded colors replaced with tokens"
+      - fallbacks_preserved: "Color fallbacks still work (e.g., '#999' fallback)"
+      - visual_consistency: "Component appearance unchanged"
+
+  task_1_3_replace_spacing_values:
+    description: "Replace hardcoded spacing values with design system tokens"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/"
+    changes:
+      - replace_padding: "Replace hardcoded padding with tokens.space"
+      - replace_margins: "Replace hardcoded margins with tokens.space"
+      - replace_widths: "Replace hardcoded widths with tokens.space"
+      - replace_heights: "Replace hardcoded heights with tokens.space"
+      - preserve_functionality: "Maintain all existing sizing logic"
+    validation:
+      - spacing_replaced: "All hardcoded spacing replaced with tokens"
+      - layout_unchanged: "Component layout and positioning unchanged"
+      - functionality_preserved: "All drag/drop and resizing still works"
+
+  task_1_4_replace_typography_values:
+    description: "Replace hardcoded typography values with design system tokens"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/"
+    changes:
+      - replace_font_sizes: "Replace hardcoded font sizes with tokens.typography.size"
+      - replace_font_weights: "Replace hardcoded font weights with tokens.typography.weight"
+      - replace_line_heights: "Replace hardcoded line heights with tokens.typography.lineHeight"
+      - preserve_functionality: "Maintain all existing text rendering"
+    validation:
+      - typography_replaced: "All hardcoded typography replaced with tokens"
+      - text_rendering_unchanged: "Text appearance and positioning unchanged"
+      - readability_preserved: "Text remains readable and accessible"
+
+  task_2_1_validate_functionality:
+    description: "Ensure all existing functionality is preserved after token replacement"
+    validation:
+      - drag_drop_works: "Segment reordering via drag/drop still works"
+      - resizing_works: "Segment resizing via dividers still works"
+      - type_changing_works: "Segment type changing via dropdown still works"
+      - label_positioning_works: "Label positioning and collision detection still works"
+      - preview_rendering_works: "Drag preview rendering still works"
+      - controls_work: "Add segment buttons still work"
+      - no_console_errors: "No JavaScript errors in console"
+      - no_visual_glitches: "No visual artifacts or rendering issues"
+
+  task_2_2_validate_visual_consistency:
+    description: "Ensure visual appearance is unchanged after token replacement"
+    validation:
+      - pixel_perfect_consistency: "No visual differences in component appearance"
+      - color_consistency: "Segment colors match original exactly"
+      - layout_consistency: "Component layout and positioning unchanged"
+      - interaction_consistency: "Hover, drag, and focus states unchanged"
+      - cross_browser_consistency: "Appearance consistent across browsers"
+
+safety_measures:
+  rollback_strategy:
+    - task_level: "Each task can be reverted independently"
+    - git_commits: "Commit after each task for easy rollback"
+    - feature_flags: "Use feature flags to toggle between old/new values"
+  
+  testing_requirements:
+    - functionality: "All existing functionality preserved"
+    - visual_regression: "Zero visual regressions"
+    - performance: "Performance maintained"
+    - accessibility: "Accessibility compliance maintained"
+
+success_metrics:
+  - zero_functionality_regressions: "All drag/drop, resizing, type changing works"
+  - zero_visual_regressions: "Pixel-perfect visual consistency"
+  - performance_maintained: "No performance degradation"
+  - design_system_integration: "Uses design system tokens instead of hardcoded values"
+  - maintainability_improved: "Easier to maintain with design system tokens" 

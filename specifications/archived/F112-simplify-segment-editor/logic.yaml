@@ -1,0 +1,297 @@
+simplification_goals:
+  complexity_reduction: "Reduce code complexity by ~60%"
+  maintainability_improvement: "Make components easier to understand and modify"
+  migration_preparation: "Prepare for Radix Themes migration"
+  functionality_preservation: "Maintain all existing user functionality"
+
+current_complexity_issues:
+  - dual_event_systems: "Desktop drag/drop and mobile touch with complex unified handlers"
+  - over_engineered_positioning: "Complex collision detection for both orientations"
+  - redundant_state_management: "Multiple state variables tracking similar operations"
+  - complex_drag_preview: "Mobile-specific drag preview with complex calculations"
+  - mixed_responsibilities: "Components handle both rendering and business logic"
+
+simplification_strategy:
+  phase_1_remove_horizontal:
+    description: "Remove horizontal orientation support and related complexity"
+    targets:
+      - label_positioning_js: "Remove horizontal collision detection"
+      - dual_orientation_calculations: "Eliminate orientation-specific logic"
+      - complex_positioning: "Simplify to vertical-only positioning"
+  
+  phase_2_simplify_drag_handler:
+    description: "Simplify DragDropHandler abstraction while preserving dual event systems"
+    targets:
+      - drag_drop_handler: "Simplify complex abstraction layer"
+      - event_handlers: "Keep dual systems but simplify implementation"
+      - drag_preview: "Simplify preview positioning calculations"
+  
+  phase_3_decompose_components:
+    description: "Break monolithic component into focused sub-components"
+    targets:
+      - segment_list: "Pure rendering of segments"
+      - segment_controls: "Add/remove segment buttons"
+      - segment_ruler: "Measurement ticks"
+      - segment_label: "Individual label with dropdown"
+  
+  phase_4_simplify_state:
+    description: "Consolidate state management and remove redundancy"
+    targets:
+      - drag_state: "Single reducer for drag operations"
+      - redundant_variables: "Remove duplicate state tracking"
+      - preview_positioning: "Simplify drag preview calculations"
+
+execution_status:
+  current_task: "task_4_3_simplify_preview_positioning"
+  completed_tasks:
+    - task_1_1_remove_horizontal_positioning: "COMPLETED - Removed horizontal collision detection functions and simplified calculateLabelPositions signature"
+    - task_1_3_remove_orientation_checks: "COMPLETED - Removed orientation-specific CSS classes and made vertical styles the default"
+    - task_1_2_simplify_label_positioning: "COMPLETED - Simplified label positioning while preserving correct slot-filling algorithm"
+    - task_2_1_simplify_drag_drop_handler: "COMPLETED - Simplified DragDropHandler abstraction while preserving dual event systems"
+    - task_2_2_simplify_drag_preview: "COMPLETED - Simplified drag preview positioning and styling"
+    - task_2_3_simplify_event_setup: "COMPLETED - Simplified global event listener setup"
+    - task_3_1_create_segment_list_component: "COMPLETED - SegmentRenderer component already exists and is well-structured"
+    - task_3_2_create_segment_controls_component: "COMPLETED - Created SegmentControls component and extracted controls logic"
+    - task_4_1_consolidate_drag_state: "COMPLETED - Consolidated draggingIndex, dragPreviewPos, and isDragging into single dragState object"
+    - task_4_2_remove_redundant_variables: "COMPLETED - Removed redundant variables and calculated values locally"
+  pending_tasks:
+    - task_4_3_simplify_preview_positioning: "NEXT"
+    - task_2_2_simplify_drag_preview: "PENDING"
+    - task_2_3_simplify_event_setup: "PENDING"
+    - task_3_1_create_segment_list_component: "PENDING"
+    - task_3_2_create_segment_controls_component: "PENDING"
+    - task_3_3_create_segment_ruler_component: "PENDING"
+    - task_3_4_create_segment_label_component: "PENDING"
+    - task_4_1_consolidate_drag_state: "PENDING"
+    - task_4_2_remove_redundant_variables: "PENDING"
+    - task_4_3_simplify_preview_positioning: "PENDING"
+    - task_5_1_validate_functionality: "PENDING"
+    - task_5_2_test_performance: "PENDING"
+    - task_5_3_verify_migration_readiness: "PENDING"
+  failed_tasks: []
+  notes: "Starting with horizontal orientation removal to reduce complexity"
+
+tasks:
+  task_1_1_remove_horizontal_positioning:
+    description: "Remove horizontal collision detection from label-positioning.js"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/label-positioning.js"
+    changes:
+      - remove_horizontal_functions: "Delete hasHorizontalOverlap, calculateHorizontalCollisionOffsets, calculateHorizontalPositions"
+      - simplify_calculate_label_positions: "Remove isVertical parameter, always use vertical positioning"
+      - remove_horizontal_variants: "Eliminate horizontal-specific logic from all functions"
+    validation:
+      - file_modified: "label-positioning.js updated"
+      - no_horizontal_functions: "No horizontal collision detection functions remain"
+      - vertical_only_positioning: "All positioning uses vertical calculations only"
+      - no_console_errors: "No errors in label positioning functionality"
+
+  task_1_2_simplify_label_positioning:
+    description: "Simplify fixed-width label positioning while preserving slot-filling algorithm"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/label-positioning.js"
+    changes:
+      - simplify_fixed_width_positioning: "Keep uniform width calculation but simplify slot-filling"
+      - remove_complex_measurement_logic: "Simplify natural width measurement"
+      - preserve_vertical_overlap_detection: "Maintain vertical overlap detection for slot-filling"
+    validation:
+      - fixed_width_preserved: "Labels maintain uniform width"
+      - slot_filling_works: "Slot-filling algorithm works correctly"
+      - labels_positioned_correctly: "Labels positioned correctly without vertical overlap"
+
+  task_1_3_remove_orientation_checks:
+    description: "Remove all orientation-specific logic from components"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/LabelLayer.jsx"
+    changes:
+      - remove_orientation_parameters: "Remove isVertical parameters from function calls"
+      - simplify_container_class: "Remove orientation-specific CSS classes"
+      - remove_orientation_checks: "Eliminate conditional logic based on orientation"
+    validation:
+      - no_orientation_parameters: "No orientation parameters in function calls"
+      - vertical_only_classes: "Container uses only vertical-specific classes"
+      - no_orientation_conditionals: "No conditional logic based on orientation"
+
+  task_2_1_simplify_drag_drop_handler:
+    description: "Simplify DragDropHandler abstraction while preserving dual event systems"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/DragDropHandler.jsx"
+    changes:
+      - simplify_handler_creation: "Simplify complex handler creation patterns"
+      - keep_dual_systems: "Preserve HTML5 drag/drop and unified touch/mouse systems"
+      - remove_complex_abstractions: "Eliminate unnecessary abstraction layers"
+    validation:
+      - desktop_drag_works: "HTML5 drag/drop still works on desktop"
+      - touch_works: "Touch interactions work on mobile"
+      - unified_handlers_work: "Unified handlers work across platforms"
+      - drag_functionality_preserved: "All drag and drop functionality preserved"
+
+  task_2_2_simplify_drag_preview:
+    description: "Simplify drag preview positioning calculations"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+    changes:
+      - simplify_preview_calculation: "Use simple offset calculation for preview position"
+      - remove_complex_coordinates: "Eliminate complex coordinate calculations"
+      - simplify_preview_style: "Use basic transform and opacity for preview"
+    validation:
+      - simple_preview_calculation: "Preview position uses simple offset calculation"
+      - preview_visible: "Drag preview still shows during drag operations"
+      - no_complex_positioning: "No complex coordinate calculations in preview"
+
+  task_2_3_simplify_event_setup:
+    description: "Simplify global event listener setup"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+    changes:
+      - simplify_global_listeners: "Simplify unified event listener setup"
+      - remove_complex_cleanup: "Simplify event cleanup logic"
+      - keep_cross_platform: "Maintain cross-platform event handling"
+    validation:
+      - event_listeners_work: "Global event listeners work correctly"
+      - cleanup_works: "Event cleanup works properly"
+      - cross_platform_support: "Cross-platform event handling preserved"
+
+  task_3_1_create_segment_list_component:
+    description: "Extract segment rendering into pure SegmentList component"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentList.jsx"
+    changes:
+      - create_new_component: "Create SegmentList.jsx with pure rendering logic"
+      - extract_segment_rendering: "Move segment rendering from SegmentedCurbEditor"
+      - preserve_event_handlers: "Maintain drag/drop event handlers"
+    validation:
+      - file_created: "SegmentList.jsx exists"
+      - pure_rendering: "Component only handles rendering, no business logic"
+      - event_handlers_preserved: "Drag/drop functionality works correctly"
+
+  task_3_2_create_segment_controls_component:
+    description: "Extract add/remove segment controls into separate component"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentControls.jsx"
+    changes:
+      - create_new_component: "Create SegmentControls.jsx for add/remove buttons"
+      - extract_control_logic: "Move control rendering from SegmentedCurbEditor"
+      - preserve_button_functionality: "Maintain add segment functionality"
+    validation:
+      - file_created: "SegmentControls.jsx exists"
+      - button_functionality: "Add segment buttons work correctly"
+      - remaining_space_display: "Remaining space info displays correctly"
+
+  task_3_3_create_segment_ruler_component:
+    description: "Extract ruler rendering into separate component"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentRuler.jsx"
+    changes:
+      - create_new_component: "Create SegmentRuler.jsx for measurement ticks"
+      - extract_ruler_rendering: "Move ruler rendering from SegmentedCurbEditor"
+      - preserve_tick_positioning: "Maintain correct tick positioning"
+    validation:
+      - file_created: "SegmentRuler.jsx exists"
+      - tick_positioning: "Ruler ticks positioned correctly"
+      - measurement_display: "Distance measurements display correctly"
+
+  task_3_4_create_segment_label_component:
+    description: "Extract individual label rendering into separate component"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentLabel.jsx"
+    changes:
+      - create_new_component: "Create SegmentLabel.jsx for individual labels"
+      - extract_label_rendering: "Move label rendering from LabelLayer"
+      - preserve_dropdown_functionality: "Maintain type changing dropdown"
+    validation:
+      - file_created: "SegmentLabel.jsx exists"
+      - dropdown_functionality: "Type changing dropdown works correctly"
+      - label_positioning: "Labels positioned correctly on segments"
+
+  task_4_1_consolidate_drag_state:
+    description: "Consolidate drag state into single reducer"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+    changes:
+      - create_drag_reducer: "Create useDragState hook with single state object"
+      - consolidate_state_variables: "Combine draggingIndex, dragPreviewPos into single state"
+      - simplify_state_updates: "Use single state update pattern"
+    validation:
+      - drag_reducer_created: "useDragState hook exists"
+      - state_consolidated: "Drag state managed in single object"
+      - functionality_preserved: "Drag operations work correctly"
+
+  task_4_2_remove_redundant_variables:
+    description: "Remove redundant state variables and simplify state management"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+    changes:
+      - remove_redundant_state: "Remove duplicate state tracking variables"
+      - simplify_state_declarations: "Consolidate useState declarations"
+      - clean_up_unused_variables: "Remove unused state variables"
+    validation:
+      - no_redundant_variables: "No duplicate state tracking"
+      - simplified_state: "State declarations consolidated"
+      - no_unused_variables: "No unused state variables"
+
+  task_4_3_simplify_preview_positioning:
+    description: "Simplify drag preview positioning calculations"
+    files:
+      - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.jsx"
+    changes:
+      - simplify_preview_calculation: "Use simple offset-based positioning"
+      - remove_complex_coordinates: "Eliminate complex coordinate calculations"
+      - simplify_preview_style: "Use basic transform for preview positioning"
+    validation:
+      - simple_preview_calculation: "Preview uses simple offset calculation"
+      - preview_positioned_correctly: "Preview appears in correct position"
+      - no_complex_calculations: "No complex coordinate calculations"
+
+  task_5_1_validate_functionality:
+    description: "Ensure all existing functionality is preserved"
+    validation:
+      - drag_drop_works: "Segment reordering via drag/drop works"
+      - resizing_works: "Segment resizing via dividers works"
+      - type_changing_works: "Segment type changing via dropdown works"
+      - segment_addition_works: "Adding new segments works"
+      - visual_consistency: "Visual appearance unchanged"
+
+  task_5_2_test_performance:
+    description: "Verify performance is maintained or improved"
+    validation:
+      - render_performance: "No degradation in render performance"
+      - drag_responsiveness: "Drag operations remain responsive"
+      - memory_usage: "No memory leaks introduced"
+      - bundle_size: "Bundle size not significantly increased"
+
+  task_5_3_verify_migration_readiness:
+    description: "Ensure components are ready for Radix Themes migration"
+    validation:
+      - component_decomposition: "Components are properly decomposed"
+      - clear_responsibilities: "Each component has single responsibility"
+      - minimal_complexity: "Complexity reduced by ~60%"
+      - migration_path_clear: "Clear path for Radix Themes integration"
+
+component_structure:
+  simplified_architecture:
+    SegmentedCurbEditor.jsx: "Main orchestrator with simplified logic"
+    SegmentList.jsx: "Pure rendering of segments"
+    SegmentControls.jsx: "Add/remove segment controls"
+    SegmentRuler.jsx: "Measurement ticks"
+    SegmentLabel.jsx: "Individual label with dropdown"
+    useDragState.js: "Simplified drag state management"
+
+  removed_components:
+    - DragDropHandler.jsx: "Replaced with simplified inline handlers"
+    - label-positioning.js: "Replaced with simple vertical stacking"
+
+  simplified_logic:
+    - preserved_dual_events: "Keep HTML5 drag/drop and unified touch/mouse systems"
+    - simplified_abstractions: "Simplify DragDropHandler abstraction layer"
+    - simplified_collision_detection: "Simplified but correct slot-filling algorithm"
+    - consolidated_state: "Single drag state reducer"
+    - pure_components: "Clear separation of rendering and logic"
+
+success_metrics:
+  - complexity_reduction: "Code complexity reduced by ~60%"
+  - functionality_preservation: "All existing functionality maintained"
+  - performance_maintained: "No performance degradation"
+  - migration_readiness: "Components ready for Radix Themes migration"
+  - maintainability_improved: "Easier to understand and modify" 

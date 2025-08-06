@@ -3,60 +3,37 @@
 ## Quick Start
 New Claude sessions should read this file to understand project standards and workflows.
 
-## Coding Standards (A001)
-- **Language**: Functional JavaScript only, no classes, no TypeScript
-- **Documentation**: Sig annotations required for all functions
-- **Testing**: Node TAP with given-when-then proper English descriptions  
-- **Formatting**: Single indentation, 120 char lines, proper structure
-- **Package manager**: Use `yarn` not `npm` for all commands
+## REQUIRED: Read These Specification Files First
+Before starting any work, you MUST read these files in order:
 
-## Workflow Patterns (A002)
-Choose the right approach based on task complexity:
+1. **A001-coding-standards**: `specifications/A001-coding-standards/llm-loader.md` - Functional JavaScript patterns, testing with node-tap, formatting rules
+2. **A002-claude-workflow**: `specifications/A002-claude-workflow/llm-loader.md` - When to use direct implementation vs. strategic discussion vs. developer subagent  
+3. **A005-commit-format**: `specifications/A005-commit-format/llm-loader.md` - Conventional commit format and testing requirements
+4. **A006-specification-standards**: `specifications/A006-specification-standards/llm-loader.md` - How to read/write specifications
 
-### Simple Tasks
-- **When**: Simple bugs, typos, minor changes, obvious fixes, small features
-- **Approach**: Direct implementation
-- **Steps**: Analyze → Implement → Test → Commit
-
-### Complex Implementations  
-- **When**: Specifications, complex features, multi-file changes
-- **Approach**: Strategic discussion then delegated implementation
-- **Steps**: Discuss → Analyze → Propose strategy → Get approval → Use developer subagent → Present results
-
-### Architecture Discussions
-- **When**: Complexity concerns, refactoring decisions, design choices
-- **Approach**: Collaborative analysis
-- **Focus**: Simplification opportunities, tradeoffs, system impact
-
-### Code Reviews
-- **When**: Review completed work, validate changes, pre-commit review
-- **Approach**: Analysis with discussion  
-- **Focus**: Standards compliance, quality assessment
-
-## Developer Subagent
-- **When to use**: Complex implementations where separate context beneficial
-- **How to invoke**: `Task(description="...", subagent_type="developer")`
-- **Output**: Writes to `.claude/developer-output.md`
-- **Claude must**: Always read and present subagent findings to user
-
-## Commit Standards (A005)
-- Use conventional commit format
-- Always run tests before committing
-- Include co-authored by Claude signature
+## Context Renewal
+If this guide gets lost in context window, ask user: "Should I refresh my understanding of project standards by re-reading CLAUDE.md?"
 
 ## Key Commands
 - Tests: `yarn tap` or `tap ...tap.js`
 - Build: Check package.json for build scripts
+- Package manager: Use `yarn` not `npm`
 
-## Specification Format (A006)
-When reading or creating specifications in `specifications/` folder:
-- **meta.yaml**: System metadata (spec_id, name, file list)
-- **llm-loader.md**: Instructions for Claude on how to interpret the spec
-- **logic.yaml**: Implementation rules/data (use natural language strings, not underscore_values)
-- **tests.yaml**: Validation examples (optional)
+## Workflow Decision Tree
+1. **Simple Tasks**: Direct implementation (typos, obvious fixes, small features)
+2. **Complex Implementations**: Strategic discussion → delegated implementation with developer subagent
+3. **Architecture Discussions**: Collaborative analysis focusing on simplification opportunities
+4. **Code Reviews**: Analysis with discussion, standards compliance focus
+
+## Developer Subagent
+- **When**: Complex implementations where separate context beneficial
+- **How**: `Task(description="...", subagent_type="developer")`
+- **Output**: Writes to `.claude/developer-output.md`
+- **Claude must**: Always read and present subagent findings to user
 
 ## Core Principles
 - Strategic collaboration on architecture decisions
 - Claude works naturally without artificial personas
 - Use subagent when implementation scope justifies separate context
 - Always present subagent work, never hide results from user
+- Reference specifications rather than duplicating content

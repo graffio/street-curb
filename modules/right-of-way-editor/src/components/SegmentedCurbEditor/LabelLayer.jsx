@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { COLORS } from '../../constants.js'
+import { tokens } from '@qt/design-system'
 import { formatLength } from '../../utils/formatting.js'
 import { calculateLabelPositions } from './label-positioning.js'
 
@@ -33,16 +34,12 @@ const LabelLayer = ({
     handleChangeType,
     handleAddLeft,
 }) => {
-    const labelRefs = useRef([])
-    const [smartLabelPositions, setSmartLabelPositions] = useState([])
-    const [uniformLabelWidth, setUniformLabelWidth] = useState(0)
-
     /**
      * Processes positioning calculation with DOM elements
      * @sig processPositioning :: () -> Void
      */
     const processPositioning = () => {
-        const { positions, contentWidth } = calculateLabelPositions(true, labelRefs.current)
+        const { positions, contentWidth } = calculateLabelPositions(labelRefs.current)
         setSmartLabelPositions(positions)
         setUniformLabelWidth(contentWidth)
     }
@@ -56,26 +53,11 @@ const LabelLayer = ({
         return () => clearTimeout(timeoutId)
     }
 
-    // Update positions when segments change
-    useEffect(updateLabelPositions, [segments, tickPoints, total])
-
     /**
      * Renders individual label with dropdown functionality
      * @sig renderLabel :: (Segment, Number) -> JSXElement
      */
     const renderLabel = (segment, index) => {
-        const mid = tickPoints[index] + segment.length / 2
-        const positionPct = (mid / total) * 100
-        const feet = formatLength((segment.length / total) * effectiveBlockfaceLength)
-
-        const labelStyle = {
-            backgroundColor: COLORS[segment.type] || '#999',
-            top: `${positionPct}%`,
-            left: `${smartLabelPositions[index] || 0}px`,
-            transform: 'translateY(-50%)',
-            width: uniformLabelWidth > 0 ? `${uniformLabelWidth}px` : 'auto',
-        }
-
         const handleLabelClick = e => {
             e.stopPropagation()
             setEditingIndex(editingIndex === index ? null : index)
@@ -106,6 +88,18 @@ const LabelLayer = ({
             </div>
         )
 
+        const mid = tickPoints[index] + segment.length / 2
+        const positionPct = (mid / total) * 100
+        const feet = formatLength((segment.length / total) * effectiveBlockfaceLength)
+
+        const labelStyle = {
+            backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback,
+            top: `${positionPct}%`,
+            left: `${smartLabelPositions[index] || 0}px`,
+            transform: 'translateY(-50%)',
+            width: uniformLabelWidth > 0 ? `${uniformLabelWidth}px` : tokens.SegmentedCurbEditor.widthFallback,
+        }
+
         const labelContent =
             editingIndex === index ? (
                 <>
@@ -116,7 +110,11 @@ const LabelLayer = ({
                         {Object.keys(COLORS).map(renderTypeOption)}
                         <div
                             className="dropdown-item"
-                            style={{ backgroundColor: 'red', textAlign: 'center', marginTop: '10px' }}
+                            style={{
+                                backgroundColor: tokens.SegmentedCurbEditor.addButton,
+                                textAlign: tokens.SegmentedCurbEditor.textAlign,
+                                marginTop: tokens.SegmentedCurbEditor.addButtonMargin,
+                            }}
                             onClick={handleAddLeftClick}
                         >
                             + Add left
@@ -139,6 +137,13 @@ const LabelLayer = ({
             </div>
         )
     }
+
+    const labelRefs = useRef([])
+    const [smartLabelPositions, setSmartLabelPositions] = useState([])
+    const [uniformLabelWidth, setUniformLabelWidth] = useState(0)
+
+    // Update positions when segments change
+    useEffect(updateLabelPositions, [segments, tickPoints, total])
 
     return <div className="label-layer">{segments.map(renderLabel)}</div>
 }

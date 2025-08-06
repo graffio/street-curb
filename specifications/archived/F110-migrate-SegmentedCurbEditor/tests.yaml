@@ -1,0 +1,263 @@
+tests:
+  - id: validate-task-1-1-add-dependency
+    description: "Ensure design system dependency is added correctly"
+    input:
+      task: "task_1_1_add_design_system_dependency"
+      commands:
+        - "yarn add @qt/design-system"
+      location: "modules/right-of-way-editor"
+    expect:
+      - package_appears_in_package_json: "Check @qt/design-system in dependencies"
+      - import_works: "Test import from @qt/design-system"
+
+  - id: validate-task-1-2-wrap-with-theme
+    description: "Ensure MainTheme wrapper is implemented correctly"
+    input:
+      task: "task_1_2_wrap_with_main_theme"
+      files:
+        - target: "App.jsx or main component that renders SegmentedCurbEditor"
+        - import: "import { MainTheme } from '@qt/design-system'"
+        - wrap: "<MainTheme><SegmentedCurbEditor /></MainTheme>"
+    expect:
+      - main_theme_wrapper: "MainTheme component wraps SegmentedCurbEditor"
+      - no_console_errors: "No import or render errors"
+
+  - id: validate-task-1-3-add-color-tokens
+    description: "Ensure segment color tokens are added to design system"
+    input:
+      task: "task_1_3_add_segment_color_tokens"
+      files:
+        - target: "modules/design-system/src/themes/tokens.css.js"
+        - additions:
+            - segmentColors: "Contract for segment type colors"
+            - segmentColors_theme: "Radix-based color mapping"
+    expect:
+      - contract_defined: "segmentColors contract exists in tokens"
+      - theme_defined: "segmentColors theme mapping exists"
+      - radix_colors_used: "Uses Radix color variables"
+
+  - id: validate-task-2-1-create-css-module
+    description: "Ensure CSS module is created with theme tokens"
+    input:
+      task: "task_2_1_create_css_module"
+      files:
+        - target: "modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditor.css.js"
+      structure:
+        - container: "Base container styles with Radix tokens"
+        - segment: "Recipe with color variants using segmentColors from theme"
+        - divider: "Draggable divider styles with theme tokens"
+        - label: "Interactive label styles with theme tokens"
+        - ruler: "Measurement ruler styles with theme tokens"
+        - controls: "Bottom control panel styles with theme tokens"
+    expect:
+      - file_exists: "SegmentedCurbEditor.css.js exists"
+      - vanilla_extract_imports: "style and recipe imports present"
+      - theme_tokens_used: "All styles use tokens from @qt/design-system"
+      - all_classes_defined: "container, segment, divider, label, ruler, controls defined"
+
+  - id: validate-task-2-2-migrate-segment-renderer
+    description: "Ensure SegmentRenderer migration maintains functionality with theme integration"
+    input:
+      task: "task_2_2_migrate_segment_renderer"
+      component: "SegmentRenderer.jsx"
+      changes:
+        - replace_inline_styles: "Convert style={{}} to className={segment({ type, isDragging })}"
+        - integrate_radix_box: "Replace div elements with Box components"
+        - preserve_drag_handlers: "Maintain all drag/drop event handlers"
+    expect:
+      - no_inline_styles: "No style={{}} objects in component"
+      - vanilla_extract_used: "segment({ type, isDragging }) pattern with theme tokens"
+      - radix_box_integrated: "Box component from @qt/design-system used"
+      - drag_handlers_preserved: "onDragStart, onDrop, onMouseDown handlers intact"
+      - visual_consistency: "Segments render with same colors and sizes"
+      - theme_tokens_used: "segmentColors from theme used for segment colors"
+
+  - id: validate-task-2-3-migrate-divider-layer
+    description: "Ensure DividerLayer migration maintains functionality"
+    input:
+      task: "task_2_3_migrate_divider_layer"
+      component: "DividerLayer.jsx"
+      changes:
+        - replace_inline_styles: "Convert style={{}} to className={divider}"
+        - integrate_radix_box: "Replace div elements with Box components"
+        - preserve_drag_handlers: "Maintain drag handlers"
+    expect:
+      - no_inline_styles: "No style={{}} objects in component"
+      - vanilla_extract_used: "divider and dividerHandle classes used"
+      - radix_box_integrated: "Box component from @qt/design-system used"
+      - drag_handlers_preserved: "onMouseDown, onTouchStart handlers intact"
+      - divider_positioning: "Dividers positioned correctly between segments"
+
+  - id: validate-task-2-4-migrate-label-layer
+    description: "Ensure LabelLayer migration maintains functionality"
+    input:
+      task: "task_2_4_migrate_label_layer"
+      component: "LabelLayer.jsx"
+      changes:
+        - replace_inline_styles: "Convert style={{}} to className={label}"
+        - integrate_radix_components: "Use Box and Select components"
+        - preserve_dropdown_functionality: "Maintain type changing dropdown"
+    expect:
+      - no_inline_styles: "No style={{}} objects in component"
+      - vanilla_extract_used: "label class used"
+      - radix_components_integrated: "Box and Select from @qt/design-system used"
+      - dropdown_functionality: "Type changing dropdown works correctly"
+      - label_positioning: "Labels positioned correctly on segments"
+
+  - id: validate-task-3-1-migrate-main-component
+    description: "Ensure main SegmentedCurbEditor migration maintains functionality"
+    input:
+      task: "task_3_1_migrate_main_component"
+      component: "SegmentedCurbEditor.jsx"
+      changes:
+        - replace_container_styles: "Convert style={{}} to className={container}"
+        - integrate_radix_components: "Use Box, Button, Text components"
+        - preserve_state_management: "Maintain Redux integration"
+        - preserve_event_handlers: "Maintain all drag/drop functionality"
+    expect:
+      - container_styles_migrated: "container class from Vanilla Extract used"
+      - radix_components_used: "Box, Button, Text from @qt/design-system used"
+      - redux_integration_preserved: "useDispatch, useSelector hooks intact"
+      - drag_drop_functionality: "All drag/drop operations work correctly"
+      - segment_resizing: "Divider dragging resizes segments correctly"
+      - segment_reordering: "Drag/drop reorders segments correctly"
+
+  - id: validate-task-3-2-migrate-ruler-component
+    description: "Ensure ruler component migration maintains functionality"
+    input:
+      task: "task_3_2_migrate_ruler_component"
+      component: "SegmentedCurbEditor.jsx"
+      changes:
+        - replace_tick_styles: "Convert tick style={{}} to className={tick}"
+        - integrate_radix_text: "Use Text component for tick labels"
+    expect:
+      - no_inline_tick_styles: "No style={{}} objects in tick rendering"
+      - radix_text_used: "Text component from @qt/design-system used"
+      - tick_positioning: "Ticks positioned correctly on ruler"
+
+  - id: validate-task-3-3-migrate-controls-component
+    description: "Ensure controls component migration maintains functionality"
+    input:
+      task: "task_3_3_migrate_controls_component"
+      component: "SegmentedCurbEditor.jsx"
+      changes:
+        - replace_controls_styles: "Convert style={{}} to className={controls}"
+        - integrate_radix_components: "Use Box, Button, Text components"
+        - preserve_button_functionality: "Maintain add segment button functionality"
+    expect:
+      - no_inline_controls_styles: "No style={{}} objects in controls"
+      - radix_components_used: "Box, Button, Text from @qt/design-system used"
+      - button_functionality: "Add segment buttons work correctly"
+
+  - id: validate-task-4-1-optimize-theme-usage
+    description: "Ensure theme usage is optimized across all components"
+    input:
+      task: "task_4_1_optimize_theme_usage"
+      files:
+        - all_migrated_components: "All SegmentedCurbEditor components"
+      changes:
+        - optimize_token_usage: "Ensure consistent theme token usage"
+        - remove_hardcoded_values: "Replace any remaining hardcoded values with tokens"
+    expect:
+      - consistent_token_usage: "All components use theme tokens consistently"
+      - no_hardcoded_values: "No hardcoded colors, spacing, or typography values"
+
+  - id: validate-task-4-2-validate-performance
+    description: "Ensure theme integration doesn't impact performance"
+    input:
+      task: "task_4_2_validate_performance"
+      performance_metrics:
+        - render_time: "Component render performance"
+        - drag_responsiveness: "Drag operation responsiveness"
+        - memory_usage: "Memory usage during interactions"
+        - bundle_size: "Bundle size impact"
+    expect:
+      - render_performance_maintained: "No degradation in render performance"
+      - drag_responsiveness_maintained: "Drag operations remain responsive"
+      - memory_usage_stable: "No memory leaks introduced"
+      - bundle_size_acceptable: "Design system integration doesn't significantly increase bundle size"
+
+  - id: validate-task-4-3-add-missing-tokens
+    description: "Ensure all required theme tokens are defined"
+    input:
+      task: "task_4_3_add_missing_tokens"
+      files:
+        - target: "modules/design-system/src/themes/tokens.css.js"
+    expect:
+      - all_required_tokens_defined: "All tokens used in components are defined"
+      - no_undefined_tokens: "No undefined token references"
+
+  - id: validate-task-4-4-visual-regression-testing
+    description: "Ensure theme integration maintains visual consistency"
+    input:
+      task: "task_4_4_visual_regression_testing"
+      before_migration: "Original SegmentedCurbEditor appearance"
+      after_migration: "Migrated SegmentedCurbEditor appearance"
+    expect:
+      - pixel_perfect_consistency: "No visual differences in component appearance"
+      - color_consistency: "Segment colors match original exactly"
+      - layout_consistency: "Component layout and positioning unchanged"
+      - interaction_consistency: "Hover, drag, and focus states unchanged"
+
+  - id: validate-functionality-preservation
+    description: "Ensure all existing functionality is preserved"
+    input:
+      original_functionality:
+        - drag_drop_reordering: "Segments can be reordered via drag/drop"
+        - divider_resizing: "Dividers can be dragged to resize segments"
+        - type_changing: "Segment types can be changed via dropdown"
+        - segment_addition: "New segments can be added"
+        - unknown_space: "Unknown space is displayed correctly"
+    expect:
+      - drag_drop_works: "All drag/drop operations function correctly"
+      - resizing_works: "Divider dragging resizes segments correctly"
+      - type_changing_works: "Dropdown type changing works correctly"
+      - segment_addition_works: "Add segment buttons work correctly"
+      - unknown_space_displayed: "Unknown space renders correctly"
+
+  - id: validate-accessibility-compliance
+    description: "Ensure accessibility compliance is maintained"
+    input:
+      accessibility_requirements:
+        - keyboard_navigation: "All interactions work with keyboard"
+        - screen_reader: "Screen reader compatibility"
+        - focus_management: "Proper focus management"
+        - aria_attributes: "Appropriate ARIA attributes"
+    expect:
+      - keyboard_navigation_works: "All interactions accessible via keyboard"
+      - screen_reader_compatible: "Screen readers can navigate component"
+      - focus_management_correct: "Focus moves appropriately during interactions"
+      - aria_attributes_present: "Required ARIA attributes are present"
+
+  - id: validate-cross-browser-compatibility
+    description: "Ensure cross-browser compatibility is maintained"
+    input:
+      browsers:
+        - chrome: "Google Chrome"
+        - firefox: "Mozilla Firefox"
+        - safari: "Apple Safari"
+        - edge: "Microsoft Edge"
+    expect:
+      - chrome_compatibility: "Component works correctly in Chrome"
+      - firefox_compatibility: "Component works correctly in Firefox"
+      - safari_compatibility: "Component works correctly in Safari"
+      - edge_compatibility: "Component works correctly in Edge"
+
+  - id: validate-a001-coding-standards
+    description: "Ensure all code changes follow A001 coding standards"
+    input:
+      coding_standards:
+        - functional_javascript: "No classes, no TypeScript"
+        - sig_annotations: "All functions require @sig documentation"
+        - node_tap_testing: "Use TAP with given-when-then descriptions"
+        - single_indentation: "Maximum one level of nesting"
+        - line_length: "120 character limits"
+        - yarn_package_manager: "Use yarn, not npm"
+    expect:
+      - no_classes_used: "No class declarations in any files"
+      - no_typescript: "No .ts or .tsx files created"
+      - sig_annotations_present: "All functions have @sig documentation"
+      - tap_testing_used: "Tests use node-tap, not Jest"
+      - single_indentation: "No nested conditionals or loops"
+      - line_length_compliance: "All lines under 120 characters"
+      - yarn_commands: "All package commands use yarn" 

@@ -2,7 +2,7 @@
  * Label positioning computations for segmented curb editor
  *
  * This module provides pure functions for calculating label positions and
- * collision detection in both horizontal and vertical orientations.
+ * collision detection for vertical orientation only.
  */
 
 /**
@@ -12,86 +12,42 @@
 const hasVerticalOverlap = (rectA, rectB) => !(rectA.bottom < rectB.top || rectA.top > rectB.bottom)
 
 /**
- * Checks if two DOM element rects overlap horizontally
- * @sig hasHorizontalOverlap :: (DOMRect, DOMRect) -> Boolean
+ * Finds first available offset column by checking left-to-right
+ * @sig findFirstAvailableOffset :: ([DOMRect], [Number], DOMRect, Number) -> Number
  */
-const hasHorizontalOverlap = (rectA, rectB) => !(rectA.right < rectB.left || rectA.left > rectB.right)
+const findFirstAvailableOffset = (rects, offsets, currentRect, i) => {
+    const previousRects = rects.slice(0, i)
 
-/**
- * Processes horizontal collision calculation for a single element
- * @sig processHorizontalCollision :: ([Number], DOMRect, Number, [DOMRect]) -> [Number]
- */
-const processHorizontalCollision = (offsets, currentRect, i, rects) => {
-    if (!currentRect) return [...offsets, 0]
-
-    const currentOffset = findFirstAvailableOffset(rects, offsets, currentRect, i, hasHorizontalOverlap)
-    return [...offsets, currentOffset]
+    // Try each offset level starting from 0 (leftmost)
+    for (let slot = 0; slot <= i; slot++) {
+        const hasCollision = previousRects.some(
+            (prevRect, j) => prevRect && offsets[j] === slot && hasVerticalOverlap(currentRect, prevRect),
+        )
+        if (!hasCollision) return slot
+    }
+    return i
 }
 
 /**
- * Calculates collision offset levels for horizontal labels (using vertical overlap check)
- * @sig calculateHorizontalCollisionOffsets :: [Element] -> [Number]
- */
-const calculateHorizontalCollisionOffsets = labelElements => {
-    const rects = labelElements.map(el => el?.getBoundingClientRect())
-
-    return rects.reduce(processHorizontalCollision, [])
-}
-
-/**
- * Processes vertical collision calculation for a single element
- * @sig processVerticalCollision :: ([Number], DOMRect, Number, [DOMRect]) -> [Number]
- */
-const processVerticalCollision = (offsets, currentRect, i, rects) => {
-    if (!currentRect) return [...offsets, 0]
-
-    const currentOffset = findFirstAvailableOffset(rects, offsets, currentRect, i, hasVerticalOverlap)
-    return [...offsets, currentOffset]
-}
-
-/**
- * Calculates collision offset levels for vertical labels (using vertical overlap check)
+ * Calculates collision offset levels for vertical labels
  * @sig calculateVerticalCollisionOffsets :: [Element] -> [Number]
  */
 const calculateVerticalCollisionOffsets = labelElements => {
     const rects = labelElements.map(el => el?.getBoundingClientRect())
+    const offsets = []
 
-    return rects.reduce(processVerticalCollision, [])
-}
+    for (let i = 0; i < rects.length; i++) {
+        const currentRect = rects[i]
+        if (!currentRect) {
+            offsets.push(0)
+            continue
+        }
 
-/**
- * Resets element width to auto
- * @sig resetElementWidth :: Element -> Void
- */
-const resetElementWidth = el => el && (el.style.width = 'auto')
+        const currentOffset = findFirstAvailableOffset(rects, offsets, currentRect, i)
+        offsets.push(currentOffset)
+    }
 
-/**
- * Restores element width from original values
- * @sig restoreElementWidth :: (Element, Number, [String]) -> Void
- */
-const restoreElementWidth = (el, i, originalWidths) => el && (el.style.width = originalWidths[i] || 'auto')
-
-/**
- * Checks if offset has collision with any previous element
- * @sig hasOffsetCollision :: ([DOMRect], [Number], DOMRect, Number, Function, Number) -> Boolean
- */
-const hasOffsetCollision = (previousRects, offsets, currentRect, overlapFn, testOffset) =>
-    previousRects.some((prevRect, j) => prevRect && offsets[j] === testOffset && overlapFn(currentRect, prevRect))
-
-/**
- * Finds first available offset column by checking left-to-right
- * @sig findFirstAvailableOffset :: ([DOMRect], [Number], DOMRect, Number, Function) -> Number
- */
-const findFirstAvailableOffset = (rects, offsets, currentRect, i, overlapFn) => {
-    const previousRects = rects.slice(0, i)
-    const checkCollision = testOffset => hasOffsetCollision(previousRects, offsets, currentRect, overlapFn, testOffset)
-
-    // Try each offset level starting from 0 (leftmost)
-    const availableOffset = Array.from({ length: i + 1 }, (_, testOffset) => testOffset).find(
-        testOffset => !checkCollision(testOffset),
-    )
-
-    return availableOffset ?? i
+    return offsets
 }
 
 /**
@@ -102,26 +58,15 @@ const measureNaturalWidths = labelElements => {
     const originalWidths = labelElements.map(el => el?.style.width)
 
     // Reset to natural width
-    labelElements.forEach(resetElementWidth)
+    labelElements.forEach(el => el && (el.style.width = 'auto'))
 
     // Measure maximum natural width
     const maxWidth = labelElements.reduce((max, el) => (el ? Math.max(max, el.offsetWidth) : max), 0)
 
     // Restore original widths
-    labelElements.forEach((el, i) => restoreElementWidth(el, i, originalWidths))
+    labelElements.forEach((el, i) => el && (el.style.width = originalWidths[i] || 'auto'))
 
     return maxWidth
-}
-
-/**
- * Calculates horizontal label positions (simple em-based offsets)
- * @sig calculateHorizontalPositions :: [Element] -> HorizontalPositions
- *     HorizontalPositions = { positions: [Number], uniformWidth: Number, contentWidth: Number }
- */
-const calculateHorizontalPositions = labelElements => {
-    const collisionOffsets = calculateHorizontalCollisionOffsets(labelElements)
-    const positions = collisionOffsets.map(offset => offset * 1.5) // em-based offsets
-    return { positions, uniformWidth: 0, contentWidth: 0 }
 }
 
 /**
@@ -141,11 +86,10 @@ const calculateVerticalPositions = labelElements => {
 }
 
 /**
- * Main function to calculate label positions based on orientation
- * @sig calculateLabelPositions :: (Boolean, [Element]) -> LabelPositions
+ * Main function to calculate label positions (vertical orientation only)
+ * @sig calculateLabelPositions :: [Element] -> LabelPositions
  *     LabelPositions = { positions: [Number], uniformWidth: Number, contentWidth: Number }
  */
-const calculateLabelPositions = (isVertical, labelElements) =>
-    isVertical ? calculateVerticalPositions(labelElements) : calculateHorizontalPositions(labelElements)
+const calculateLabelPositions = labelElements => calculateVerticalPositions(labelElements)
 
 export { calculateLabelPositions }
