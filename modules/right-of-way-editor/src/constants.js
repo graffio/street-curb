@@ -20,32 +20,14 @@ const PRECISION_CONFIG = {
  * @sig COLORS :: { [String]: String }
  * Color mapping for different segment types
  */
-// prettier-ignore
 const COLORS = {
-    // Parking      : '#2a9d8f',
-    // 'Curb Cut'   : '#e76f51',
-    // Loading      : '#264653',
-    // 'No Parking' : '#E91E63',
-    // 'Bus Stop'   : '#2196F3',
-    // Taxi         : '#FFEB3B',
-    // Disabled     : '#9C27B0',
-    
-    Parking     : '#a6cee3',
-    'Curb Cut'  : '#1f78b4',
-    Loading     : '#b2df8a',
+    Parking: '#a6cee3',
+    'Curb Cut': '#1f78b4',
+    Loading: '#b2df8a',
     'No Parking': '#33a02c',
-    'Bus Stop'  : '#fb9a99',
-    Taxi        : '#e31a1c',
-    Disabled    : '#fdbf6f',
-    
-
-
-
-
-
-
-
-
+    'Bus Stop': '#fb9a99',
+    Taxi: '#e31a1c',
+    Disabled: '#fdbf6f',
 }
 
 export { COLORS, PRECISION_CONFIG }
