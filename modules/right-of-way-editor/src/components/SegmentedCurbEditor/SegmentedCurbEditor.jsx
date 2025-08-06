@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { COLORS } from '../../constants.js'
+import { tokens } from '@qt/design-system'
 import {
     addSegment,
     addSegmentLeft,
@@ -37,22 +38,6 @@ import { SegmentRenderer } from './SegmentRenderer.jsx'
  * @sig SegmentedCurbEditor :: ({ blockfaceLength?: Number, blockfaceId?: String }) -> JSXElement
  */
 const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
-    const dispatch = useDispatch()
-    const segments = useSelector(selectSegments) || []
-    const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
-
-    // Use Redux values if available, otherwise use props
-    const total = reduxBlockfaceLength || blockfaceLength
-
-    // Calculate remaining space locally
-    const segmentsLength = segments.reduce((sum, segment) => sum + segment.length, 0)
-    const unknownRemaining = total - segmentsLength
-
-    /**
-     * Creates handler for divider dragging that uses universal boundary adjustment
-     * @sig buildDragHandler :: (Number, Function) -> (Number, Number, Number) -> Void
-     */
-
     /**
      * Creates handler for changing segment type through label dropdown
      * @sig buildChangeTypeHandler :: (Function, SetStateFn) -> (Number, String) -> Void
@@ -95,13 +80,13 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
             position: 'absolute',
             left: `${segmentDragState.previewPos.x}px`,
             top: `${segmentDragState.previewPos.y}px`,
-            backgroundColor: COLORS[segment.type] || '#999',
-            border: '2px solid rgba(255, 255, 255, 0.8)',
-            borderRadius: '6px',
+            backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback,
+            border: `${tokens.SegmentedCurbEditor.borderWidth} solid ${tokens.SegmentedCurbEditor.overlay}`,
+            borderRadius: tokens.SegmentedCurbEditor.borderRadius,
             opacity: 0.9,
             zIndex: 200,
             pointerEvents: 'none',
-            width: '80px',
+            width: tokens.SegmentedCurbEditor.previewWidth,
             height: `${size}%`,
         }
 
@@ -127,28 +112,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
             cleanupEnd()
         }
     }
-
-    // Component state and refs
-    // Segments are now managed by Redux
-    const [segmentDragState, setSegmentDragState] = useState(null)
-    const [editingIndex, setEditingIndex] = useState(null)
-    const containerRef = useRef(null)
-
-    // Drag and drop handler
-    const dragDropHandler = DragDropHandler({
-        segments,
-        onSwap: newSegments => dispatch(replaceSegments(newSegments)),
-        draggingIndex: segmentDragState?.segmentIndex ?? null,
-        setDraggingIndex: index =>
-            setSegmentDragState(index !== null ? { ...segmentDragState, segmentIndex: index } : null),
-        dragPreviewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 },
-        setDragPreviewPos: pos =>
-            setSegmentDragState(segmentDragState ? { ...segmentDragState, previewPos: pos } : null),
-        containerRef,
-    })
-
-    // Direct drag implementation without DraggableDivider
-    const dragState = useRef({ isDragging: false, startCoord: null, startLength: null, index: null })
 
     /**
      * Attempts zero snap adjustment when length is very small
@@ -209,6 +172,11 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
      * @sig handleDirectDragStartImpl :: (Event, Number) -> Void
      */
     const handleDirectDragStartImpl = (e, index) => {
+        const handleEnd = () => {
+            createDragEndCleanup()
+            dragManager.cleanup()
+        }
+
         e.preventDefault()
         e.stopPropagation()
 
@@ -220,19 +188,10 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
 
         const dragManager = createDragManager()
         const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining, segments)
-        const handleEnd = () => {
-            createDragEndCleanup()
-            dragManager.cleanup()
-        }
 
         dragManager.startDrag(handleMove, handleEnd)
     }
 
-    const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, dispatch, unknownRemaining])
-    const handleChangeType = buildChangeTypeHandler(
-        newSegments => dispatch(replaceSegments(newSegments)),
-        setEditingIndex,
-    )
     /**
      * Handles adding segment to the left
      * @sig handleAddLeftImpl :: Number -> Void
@@ -241,16 +200,6 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         dispatch(addSegmentLeft(index))
         setEditingIndex(null)
     }
-
-    const handleAddLeft = useCallback(handleAddLeftImpl, [dispatch])
-    const tickPoints = useSelector(selectCumulativePositions)
-
-    // Redux handles blockface initialization and segment management
-
-    // Global unified event handlers for better cross-platform support
-    useEffect(() => setupGlobalEventListeners(), [dragDropHandler])
-
-    const containerClassName = 'segment-container'
 
     /**
      * Renders bottom controls for segment creation and remaining space display
@@ -273,6 +222,55 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
             </div>
         </div>
     )
+
+    const dispatch = useDispatch()
+    const segments = useSelector(selectSegments) || []
+    const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
+
+    // Use Redux values if available, otherwise use props
+    const total = reduxBlockfaceLength || blockfaceLength
+
+    // Calculate remaining space locally
+    const segmentsLength = segments.reduce((sum, segment) => sum + segment.length, 0)
+    const unknownRemaining = total - segmentsLength
+
+    // Component state and refs
+    // Segments are now managed by Redux
+    const [segmentDragState, setSegmentDragState] = useState(null)
+    const [editingIndex, setEditingIndex] = useState(null)
+    const containerRef = useRef(null)
+
+    // Drag and drop handler
+    const dragDropHandler = DragDropHandler({
+        segments,
+        onSwap: newSegments => dispatch(replaceSegments(newSegments)),
+        draggingIndex: segmentDragState?.segmentIndex ?? null,
+        setDraggingIndex: index =>
+            setSegmentDragState(index !== null ? { ...segmentDragState, segmentIndex: index } : null),
+        dragPreviewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 },
+        setDragPreviewPos: pos =>
+            setSegmentDragState(segmentDragState ? { ...segmentDragState, previewPos: pos } : null),
+        containerRef,
+    })
+
+    // Direct drag implementation without DraggableDivider
+    const dragState = useRef({ isDragging: false, startCoord: null, startLength: null, index: null })
+
+    const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, dispatch, unknownRemaining])
+    const handleChangeType = buildChangeTypeHandler(
+        newSegments => dispatch(replaceSegments(newSegments)),
+        setEditingIndex,
+    )
+
+    const handleAddLeft = useCallback(handleAddLeftImpl, [dispatch])
+    const tickPoints = useSelector(selectCumulativePositions)
+
+    // Redux handles blockface initialization and segment management
+
+    // Global unified event handlers for better cross-platform support
+    useEffect(() => setupGlobalEventListeners(), [dragDropHandler])
+
+    const containerClassName = 'segment-container'
 
     return (
         <>

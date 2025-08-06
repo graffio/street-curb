@@ -1,3 +1,5 @@
+import { tokens } from '@qt/design-system'
+
 /**
  * DividerLayer - Interactive dividers for segment boundary adjustment
  *
@@ -34,7 +36,7 @@ const DividerLayer = ({ segments, total, unknownRemaining, handleDirectDragStart
             transform: 'translateY(-50%)',
             left: 0,
             width: '100%',
-            height: '40px',
+            height: tokens.SegmentedCurbEditor.dividerHeight,
             cursor: 'row-resize',
             touchAction: 'none',
         }
@@ -48,7 +50,12 @@ const DividerLayer = ({ segments, total, unknownRemaining, handleDirectDragStart
                 onTouchStart={e => handleDirectDragStart(e, index)}
             >
                 <div
-                    style={{ width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: '2px' }}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: tokens.SegmentedCurbEditor.divider,
+                        borderRadius: tokens.SegmentedCurbEditor.borderRadius,
+                    }}
                 />
             </div>
         )

@@ -1,4 +1,5 @@
 import { COLORS } from '../../constants.js'
+import { tokens } from '@qt/design-system'
 
 /**
  * SegmentRenderer - Renders individual segments and unknown space
@@ -16,8 +17,8 @@ const renderUnknownSpace = (unknownRemaining, total) => {
 
     const size = (unknownRemaining / total) * 100
     const unknownStyle = {
-        backgroundColor: '#f0f0f0',
-        border: '2px dashed #ccc',
+        backgroundColor: tokens.SegmentedCurbEditor.unknownBg,
+        border: `${tokens.SegmentedCurbEditor.borderWidth} dashed ${tokens.SegmentedCurbEditor.unknownBorder}`,
         boxSizing: 'border-box',
         height: `${size}%`,
         width: '100%',
@@ -37,7 +38,7 @@ const renderSegment = (segment, i, segments, total, draggingIndex, dragDropHandl
     const isDragging = draggingIndex === i
 
     const segmentStyle = {
-        backgroundColor: COLORS[segment.type] || '#999',
+        backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback,
         boxSizing: 'border-box',
         height: `${size}%`,
         width: '100%',

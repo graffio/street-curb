@@ -4,6 +4,24 @@ import { createTheme, createThemeContract } from '@vanilla-extract/css'
 const tokens = createThemeContract({
     layout: { topBarHeight: null, sidebarWidth: null, contentPadding: null },
     colors: { background: null, surface: null, border: null, text: null, primary: null, accent: null, muted: null },
+    // Component-specific namespaces
+    SegmentedCurbEditor: {
+        fallback: null,
+        overlay: null,
+        addButton: null,
+        divider: null,
+        unknownBg: null,
+        unknownBorder: null,
+        // Spacing values
+        borderWidth: null,
+        borderRadius: null,
+        previewWidth: null,
+        dividerHeight: null,
+        addButtonMargin: null,
+        // Typography values
+        textAlign: null,
+        widthFallback: null,
+    },
     space: { xs: null, sm: null, md: null, lg: null, xl: null },
     typography: {
         size: { xs: null, sm: null, md: null, lg: null, xl: null },
@@ -26,6 +44,24 @@ const defaultTheme = createTheme(tokens, {
         primary: 'var(--accent-9)',
         accent: 'var(--accent-3)',
         muted: 'var(--gray-11)',
+    },
+    // Component-specific theme values using Radix CSS variables
+    SegmentedCurbEditor: {
+        fallback: 'var(--gray-8)',
+        overlay: 'var(--gray-a-8)',
+        addButton: 'var(--accent-9)',
+        divider: 'var(--gray-a-3)',
+        unknownBg: 'var(--gray-2)',
+        unknownBorder: 'var(--gray-6)',
+        // Spacing values - using Radix spacing scale where appropriate
+        borderWidth: 'var(--space-1)', // 2px equivalent
+        borderRadius: 'var(--radius-2)', // 6px equivalent
+        previewWidth: '80px', // Keep specific width
+        dividerHeight: '40px', // Keep specific height
+        addButtonMargin: 'var(--space-3)', // 10px equivalent
+        // Typography values
+        textAlign: 'center',
+        widthFallback: 'auto',
     },
     // Use Radix spacing scale
     space: {
