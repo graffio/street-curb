@@ -1,0 +1,101 @@
+validation_tests:
+  draggable_divider:
+    - test_name: "touch functionality preserved"
+      input: "touch start, touch move, touch end sequence"
+      expected: "onDrag callback receives correct touch deltas"
+      validation: "mobile touch interactions work identically"
+
+    - test_name: "orientation support maintained"
+      input: "orientation prop set to 'vertical' or 'horizontal'"
+      expected: "cursor changes to row-resize or col-resize appropriately"
+      validation: "visual cursor feedback matches original"
+
+    - test_name: "styling integration"
+      input: "component rendered within MainTheme"
+      expected: "Vanilla Extract styles applied, no inline styles"
+      validation: "CSS-in-JS generates correct styles"
+
+  table_component:
+    - test_name: "radix table integration"
+      input: "data array with columns configuration"
+      expected: "Radix Table renders with proper accessibility"
+      validation: "table structure matches HTML table semantics"
+
+    - test_name: "mobile responsiveness"
+      input: "viewport resize to mobile dimensions"
+      expected: "table scrolls horizontally, maintains readability"
+      validation: "responsive behavior identical to original"
+
+    - test_name: "row selection behavior"
+      input: "click on table row"
+      expected: "row highlights, callback fired with row data"
+      validation: "selection state management preserved"
+
+  select_component:
+    - test_name: "radix select integration"
+      input: "options array with color coding"
+      expected: "Radix Select renders with proper dropdown behavior"
+      validation: "accessibility improvements over custom dropdown"
+
+    - test_name: "option styling preserved"
+      input: "options with background colors from COLORS constant"
+      expected: "visual styling matches original dropdown items"
+      validation: "color coding functionality maintained"
+
+    - test_name: "mobile interaction"
+      input: "tap to open, tap to select on mobile device"
+      expected: "native mobile select behavior where appropriate"
+      validation: "better mobile UX than original custom dropdown"
+
+  curb_table_integration:
+    - test_name: "redux integration preserved"
+      input: "dispatch actions for segment updates"
+      expected: "Redux store updates correctly, UI reflects changes"
+      validation: "all Redux functionality unchanged"
+
+    - test_name: "numberpad integration maintained"
+      input: "click on editable cell"
+      expected: "NumberPad opens with correct initial value"
+      validation: "editing workflow identical to original"
+
+    - test_name: "add segment functionality"
+      input: "click add segment button"
+      expected: "new segment added, table updates"
+      validation: "segment management unchanged"
+
+    - test_name: "type selection workflow"
+      input: "click type button, select new type"
+      expected: "segment type updates, color changes"
+      validation: "type management workflow preserved"
+
+  storybook_validation:
+    - test_name: "comparison stories render"
+      input: "load Storybook stories for each component"
+      expected: "original and new versions render side by side"
+      validation: "visual comparison shows equivalent functionality"
+
+    - test_name: "interactive behavior testing"
+      input: "interact with components in Storybook"
+      expected: "both versions respond identically to user actions"
+      validation: "behavior parity demonstrated in stories"
+
+    - test_name: "mobile viewport testing"
+      input: "test stories in mobile viewport sizes"
+      expected: "responsive behavior matches between versions"
+      validation: "mobile optimization preserved"
+
+  coding_standards:
+    - test_name: "a001 compliance validation"
+      input: "run style validator on all new component files"
+      expected: "zero A001 violations reported"
+      validation: "functional programming standards met"
+
+    - test_name: "sig annotation coverage"
+      input: "check all functions for @sig documentation"
+      expected: "all functions over 5 lines have proper signatures"
+      validation: "documentation standards maintained"
+
+    - test_name: "export standards compliance"
+      input: "verify export statements in all files"
+      expected: "named exports only, single export statement per file"
+      validation: "export patterns follow A001 standards"

@@ -104,7 +104,6 @@ src/components/
 │   ├── DividerLayer.jsx                 # Boundary resizing handles
 │   └── index.js                         # Clean exports
 ├── CurbTable.jsx
-├── DraggableDivider.jsx                 # Keep for potential reuse
 ├── MapboxMap.jsx
 └── NumberPad.jsx
 ```
