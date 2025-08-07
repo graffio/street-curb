@@ -4,4 +4,3 @@
  */
 export { default } from './CurbTable.jsx'
 export { CurbSegmentSelect, createColorOptions, createOption } from './CurbSegmentSelect.jsx'
-export { CurbDataTable } from './CurbDataTable.jsx'

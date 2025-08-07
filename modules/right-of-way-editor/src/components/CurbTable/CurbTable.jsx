@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Table as RadixTable } from '@radix-ui/themes'
 import {
     addSegment,
     selectBlockfaceLength,
@@ -11,6 +12,7 @@ import {
 } from '../../store/curbStore.js'
 import { formatLength } from '../../utils/formatting.js'
 import { CurbSegmentSelect, createColorOptions } from './CurbSegmentSelect.jsx'
+import { curbTableStyles } from './CurbTable.css.js'
 import { COLORS } from '../../constants.js'
 import NumberPad from '../NumberPad.jsx'
 
@@ -45,9 +47,9 @@ const CurbTypeSelector = ({ value, onChange, disabled = false }) => {
  * @sig CurbTableHeader :: ({ totalLength: Number, unknownRemaining: Number, isComplete: Boolean }) -> JSXElement
  */
 const CurbTableHeader = ({ totalLength, unknownRemaining, isComplete }) => (
-    <div className="curb-table-header">
-        <h3>Curb Configuration</h3>
-        <div className="blockface-info">
+    <div className={curbTableStyles.header}>
+        <h3 className={curbTableStyles.headerTitle}>Curb Configuration</h3>
+        <div className={curbTableStyles.blockfaceInfo}>
             Total: {totalLength} ft
             {unknownRemaining > 0 && <span> • Remaining: {formatLength(unknownRemaining)}</span>}
             {isComplete && <span> • Collection Complete</span>}
@@ -60,14 +62,14 @@ const CurbTableHeader = ({ totalLength, unknownRemaining, isComplete }) => (
  * @sig CurbTableHeaders :: () -> JSXElement
  */
 const CurbTableHeaders = () => (
-    <thead>
-        <tr>
-            <th aria-label="Segment type"></th>
-            <th style={{ textAlign: 'right' }}>Length</th>
-            <th style={{ textAlign: 'right' }}>Start</th>
-            <th aria-label="Actions"></th>
-        </tr>
-    </thead>
+    <RadixTable.Header>
+        <RadixTable.Row>
+            <RadixTable.ColumnHeaderCell aria-label="Segment type"></RadixTable.ColumnHeaderCell>
+            <RadixTable.ColumnHeaderCell style={{ textAlign: 'right' }}>Length</RadixTable.ColumnHeaderCell>
+            <RadixTable.ColumnHeaderCell style={{ textAlign: 'right' }}>Start</RadixTable.ColumnHeaderCell>
+            <RadixTable.ColumnHeaderCell aria-label="Actions"></RadixTable.ColumnHeaderCell>
+        </RadixTable.Row>
+    </RadixTable.Header>
 )
 
 /**
@@ -101,38 +103,55 @@ const CurbSegmentRow = ({
         onAddSegment(index)
     }
 
-    const rowClassName = `curb-table-row${isSelected ? ' current-row' : ''}`
+    const rowClassName = `${curbTableStyles.tableRow}${isSelected ? ` ${curbTableStyles.selectedRow}` : ''}`
 
     return (
-        <tr className={rowClassName} data-row-index={index} onClick={handleRowClick} style={{ cursor: 'pointer' }}>
-            <td className="type-cell" role="gridcell" aria-label={`Segment ${index + 1} type`}>
-                <div className="type-container">
+        <RadixTable.Row
+            className={rowClassName}
+            data-row-index={index}
+            onClick={handleRowClick}
+            style={{ cursor: 'pointer' }}
+        >
+            <RadixTable.Cell
+                className={curbTableStyles.typeCell}
+                role="gridcell"
+                aria-label={`Segment ${index + 1} type`}
+            >
+                <div className={curbTableStyles.typeContainer}>
                     <CurbTypeSelector value={segment.type} onChange={handleTypeChange} />
                 </div>
-            </td>
-            <td
-                className="length-cell editable-cell"
+            </RadixTable.Cell>
+            <RadixTable.Cell
+                className={curbTableStyles.lengthCell}
                 onClick={handleEditLengthClick}
                 style={{ cursor: 'pointer' }}
                 role="gridcell"
                 aria-label={`Segment ${index + 1} length`}
             >
                 {formatLength(segment.length)}
-            </td>
-            <td className="start-cell" role="gridcell" aria-label={`Segment ${index + 1} start position`}>
+            </RadixTable.Cell>
+            <RadixTable.Cell
+                className={curbTableStyles.startCell}
+                role="gridcell"
+                aria-label={`Segment ${index + 1} start position`}
+            >
                 {formatLength(startPosition)}
-            </td>
-            <td className="add-cell" role="gridcell" aria-label={`Add segment after ${segment.type}`}>
+            </RadixTable.Cell>
+            <RadixTable.Cell
+                className={curbTableStyles.addCell}
+                role="gridcell"
+                aria-label={`Add segment after ${segment.type}`}
+            >
                 <button
-                    className="add-button"
+                    className={curbTableStyles.addButton()}
                     onClick={handleAddSegmentClick}
                     disabled={!canAddSegment}
                     aria-label={`Add segment after ${segment.type}`}
                 >
                     +
                 </button>
-            </td>
-        </tr>
+            </RadixTable.Cell>
+        </RadixTable.Row>
     )
 }
 
@@ -141,11 +160,11 @@ const CurbSegmentRow = ({
  * @sig CurbEmptyState :: () -> JSXElement
  */
 const CurbEmptyState = () => (
-    <tr className="empty-state-row">
-        <td colSpan="4" className="empty-state-cell">
-            <div className="empty-state-message">No segments yet</div>
-        </td>
-    </tr>
+    <RadixTable.Row className={curbTableStyles.emptyStateRow}>
+        <RadixTable.Cell colSpan="4" className={curbTableStyles.emptyStateCell}>
+            <div className={curbTableStyles.emptyStateMessage}>No segments yet</div>
+        </RadixTable.Cell>
+    </RadixTable.Row>
 )
 
 /**
@@ -154,16 +173,24 @@ const CurbEmptyState = () => (
  *   canAddSegments: Boolean, onAddFirst: Function, onAddSegment: Function }) -> JSXElement
  */
 const CurbSegmentControls = ({ unknownRemaining, hasSegments, canAddSegments, onAddFirst, onAddSegment }) => (
-    <div className="segment-controls-bottom">
-        <div className="remaining-space-info">Remaining: {formatLength(unknownRemaining)} ft</div>
-        <div className="add-buttons-container">
+    <div className={curbTableStyles.segmentControlsBottom}>
+        <div className={curbTableStyles.remainingSpaceInfo}>Remaining: {formatLength(unknownRemaining)} ft</div>
+        <div className={curbTableStyles.addButtonsContainer}>
             {!hasSegments && unknownRemaining > 0 && (
-                <button className="add-segment-button" onClick={onAddFirst} aria-label="Add first segment">
+                <button
+                    className={curbTableStyles.addSegmentButton()}
+                    onClick={onAddFirst}
+                    aria-label="Add first segment"
+                >
                     + Add First Segment
                 </button>
             )}
             {hasSegments && unknownRemaining > 0 && (
-                <button className="add-segment-button" onClick={onAddSegment} aria-label="Add new segment">
+                <button
+                    className={curbTableStyles.addSegmentButton()}
+                    onClick={onAddSegment}
+                    aria-label="Add new segment"
+                >
                     + Add Segment
                 </button>
             )}
@@ -280,17 +307,17 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
 
     return (
         <CurbTableErrorBoundary>
-            <div className="curb-table-container">
+            <div className={curbTableStyles.container}>
                 <CurbTableHeader
                     totalLength={effectiveBlockfaceLength}
                     unknownRemaining={unknownRemaining}
                     isComplete={isComplete}
                 />
 
-                <div className="curb-table-wrapper">
-                    <table className="curb-table" aria-label="Curb segments configuration">
+                <div className={curbTableStyles.wrapper}>
+                    <RadixTable.Root className="curb-table" aria-label="Curb segments configuration">
                         <CurbTableHeaders />
-                        <tbody>
+                        <RadixTable.Body>
                             {hasAnySegments ? (
                                 segments.map((segment, index) => (
                                     <CurbSegmentRow
@@ -309,8 +336,8 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
                             ) : (
                                 <CurbEmptyState />
                             )}
-                        </tbody>
-                    </table>
+                        </RadixTable.Body>
+                    </RadixTable.Root>
                 </div>
 
                 <CurbSegmentControls
