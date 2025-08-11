@@ -1,7 +1,6 @@
 import { MainTheme } from '@qt/design-system'
-import { configureStore } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
-import curbReducer from '../../store/curbStore.js'
+import { createStoreWithScenario } from '../../../test/test-store.js'
 import CurbTable from './CurbTable.jsx'
 
 /**
@@ -21,32 +20,7 @@ const StoryWrapper = ({ children, store }) => (
     </Provider>
 )
 
-/**
- * Creates a mock Redux store for stories with configurable initial state
- * @sig createMockStore :: (Object) -> Store
- */
-const createMockStore = (initialState = {}) =>
-    configureStore({
-        reducer: { curb: curbReducer },
-        preloadedState: {
-            curb: {
-                blockfaceLength: 240,
-                segments: [],
-                unknownRemaining: 240,
-                isCollectionComplete: false,
-                ...initialState,
-            },
-        },
-    })
-
-// Sample segments data for testing
-const sampleSegments = [
-    { id: '1', type: 'Parking', length: 50.0, start: 0 },
-    { id: '2', type: 'Curb Cut', length: 15.0, start: 50 },
-    { id: '3', type: 'Loading', length: 30.0, start: 65 },
-    { id: '4', type: 'No Parking', length: 25.0, start: 95 },
-    { id: '5', type: 'Bus Stop', length: 40.0, start: 120 },
-]
+// Uses unified test store architecture shared with Playwright and tap tests
 
 const meta = {
     title: 'Components/CurbTable',
@@ -85,14 +59,10 @@ The CurbTable component provides an interface for managing curb segments with th
  */
 const Default = {
     render: () => {
-        const storeWithData = createMockStore({
-            segments: sampleSegments,
-            unknownRemaining: 80,
-            isCollectionComplete: false,
-        })
+        const store = createStoreWithScenario('multiple')
 
         return (
-            <StoryWrapper store={storeWithData}>
+            <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable Component</h2>
                     <CurbTable blockfaceLength={240} />
@@ -101,11 +71,7 @@ const Default = {
         )
     },
     parameters: {
-        docs: { 
-            description: { 
-                story: 'Default CurbTable showing multiple segments with remaining unknown space.' 
-            } 
-        },
+        docs: { description: { story: 'Default CurbTable showing multiple segments with remaining unknown space.' } },
     },
 }
 
@@ -115,14 +81,10 @@ const Default = {
  */
 const EmptyState = {
     render: () => {
-        const emptyStore = createMockStore({ 
-            segments: [], 
-            unknownRemaining: 240, 
-            isCollectionComplete: false 
-        })
+        const store = createStoreWithScenario('empty')
 
         return (
-            <StoryWrapper store={emptyStore}>
+            <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable - Empty State</h2>
                     <CurbTable blockfaceLength={240} />
@@ -130,13 +92,7 @@ const EmptyState = {
             </StoryWrapper>
         )
     },
-    parameters: {
-        docs: { 
-            description: { 
-                story: 'Empty state with "Add First Segment" functionality.' 
-            } 
-        },
-    },
+    parameters: { docs: { description: { story: 'Empty state with "Add First Segment" functionality.' } } },
 }
 
 /**
@@ -145,14 +101,10 @@ const EmptyState = {
  */
 const MobileView = {
     render: () => {
-        const storeWithData = createMockStore({
-            segments: sampleSegments,
-            unknownRemaining: 80,
-            isCollectionComplete: false,
-        })
+        const store = createStoreWithScenario('multiple')
 
         return (
-            <StoryWrapper store={storeWithData}>
+            <StoryWrapper store={store}>
                 <div style={{ maxWidth: '375px', margin: '0 auto' }}>
                     <h3 style={{ marginBottom: '15px', color: 'var(--gray-12)', fontSize: '16px' }}>
                         CurbTable - Mobile View
@@ -165,9 +117,7 @@ const MobileView = {
     parameters: {
         viewport: { defaultViewport: 'mobile1' },
         docs: {
-            description: {
-                story: 'Mobile responsive view demonstrating touch-friendly design and compact layout.',
-            },
+            description: { story: 'Mobile responsive view demonstrating touch-friendly design and compact layout.' },
         },
     },
 }
@@ -178,20 +128,10 @@ const MobileView = {
  */
 const CompleteCollection = {
     render: () => {
-        const completeStore = createMockStore({
-            segments: [
-                { id: '1', type: 'Parking', length: 100.0, start: 0 },
-                { id: '2', type: 'Curb Cut', length: 15.0, start: 100 },
-                { id: '3', type: 'Loading', length: 50.0, start: 115 },
-                { id: '4', type: 'No Parking', length: 35.0, start: 165 },
-                { id: '5', type: 'Bus Stop', length: 40.0, start: 200 },
-            ],
-            unknownRemaining: 0,
-            isCollectionComplete: true,
-        })
+        const store = createStoreWithScenario('full')
 
         return (
-            <StoryWrapper store={completeStore}>
+            <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable - Complete Collection</h2>
                     <CurbTable blockfaceLength={240} />
@@ -199,13 +139,7 @@ const CompleteCollection = {
             </StoryWrapper>
         )
     },
-    parameters: {
-        docs: {
-            description: { 
-                story: 'Complete collection state with no remaining unknown segments.' 
-            },
-        },
-    },
+    parameters: { docs: { description: { story: 'Complete collection state with no remaining unknown segments.' } } },
 }
 
 /**
@@ -214,14 +148,10 @@ const CompleteCollection = {
  */
 const FeatureShowcase = {
     render: () => {
-        const storeWithData = createMockStore({
-            segments: sampleSegments,
-            unknownRemaining: 80,
-            isCollectionComplete: false,
-        })
+        const store = createStoreWithScenario('multiple')
 
         return (
-            <StoryWrapper store={storeWithData}>
+            <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)', textAlign: 'center' }}>
                         CurbTable - Feature Showcase
@@ -237,22 +167,50 @@ const FeatureShowcase = {
                     >
                         <h3 style={{ color: 'var(--gray-12)', marginBottom: '12px' }}>Interactive Features:</h3>
                         <ul style={{ color: 'var(--gray-11)', fontSize: '14px', lineHeight: '1.6' }}>
-                            <li><strong>Type Selection:</strong> Click any segment type to change it via dropdown</li>
-                            <li><strong>Length Editing:</strong> Click length values to open NumberPad for precise editing</li>
-                            <li><strong>Add Segments:</strong> Use + buttons to insert new segments at any position</li>
-                            <li><strong>Row Selection:</strong> Click rows to highlight and track current segment</li>
-                            <li><strong>Real-time Updates:</strong> All changes immediately update remaining space calculations</li>
-                            <li><strong>Mobile Optimized:</strong> Touch-friendly design with proper sizing and spacing</li>
-                            <li><strong>Accessibility:</strong> Full keyboard navigation and screen reader support</li>
+                            <li>
+                                <strong>Type Selection:</strong> Click any segment type to change it via dropdown
+                            </li>
+                            <li>
+                                <strong>Length Editing:</strong> Click length values to open NumberPad for precise
+                                editing
+                            </li>
+                            <li>
+                                <strong>Add Segments:</strong> Use + buttons to insert new segments at any position
+                            </li>
+                            <li>
+                                <strong>Row Selection:</strong> Click rows to highlight and track current segment
+                            </li>
+                            <li>
+                                <strong>Real-time Updates:</strong> All changes immediately update remaining space
+                                calculations
+                            </li>
+                            <li>
+                                <strong>Mobile Optimized:</strong> Touch-friendly design with proper sizing and spacing
+                            </li>
+                            <li>
+                                <strong>Accessibility:</strong> Full keyboard navigation and screen reader support
+                            </li>
                         </ul>
-                        
-                        <h3 style={{ color: 'var(--gray-12)', marginBottom: '12px', marginTop: '20px' }}>Technical Implementation:</h3>
+
+                        <h3 style={{ color: 'var(--gray-12)', marginBottom: '12px', marginTop: '20px' }}>
+                            Technical Implementation:
+                        </h3>
                         <ul style={{ color: 'var(--gray-11)', fontSize: '14px', lineHeight: '1.6' }}>
-                            <li><strong>Design System:</strong> Uses Radix Themes with MainTheme integration</li>
-                            <li><strong>State Management:</strong> Redux with optimized selectors and memoization</li>
-                            <li><strong>Styling:</strong> Vanilla Extract CSS-in-JS with design tokens</li>
-                            <li><strong>Performance:</strong> Proper React memoization and efficient re-renders</li>
-                            <li><strong>Testing:</strong> 147 comprehensive tests covering all functionality</li>
+                            <li>
+                                <strong>Design System:</strong> Uses Radix Themes with MainTheme integration
+                            </li>
+                            <li>
+                                <strong>State Management:</strong> Redux with optimized selectors and memoization
+                            </li>
+                            <li>
+                                <strong>Styling:</strong> Vanilla Extract CSS-in-JS with design tokens
+                            </li>
+                            <li>
+                                <strong>Performance:</strong> Proper React memoization and efficient re-renders
+                            </li>
+                            <li>
+                                <strong>Testing:</strong> 147 comprehensive tests covering all functionality
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -260,19 +218,8 @@ const FeatureShowcase = {
         )
     },
     parameters: {
-        docs: {
-            description: { 
-                story: 'Detailed showcase of CurbTable features and implementation details.' 
-            },
-        },
+        docs: { description: { story: 'Detailed showcase of CurbTable features and implementation details.' } },
     },
 }
 
-export {
-    meta as default,
-    Default,
-    EmptyState,
-    MobileView,
-    CompleteCollection,
-    FeatureShowcase,
-}
+export { meta as default, Default, EmptyState, MobileView, CompleteCollection, FeatureShowcase }
