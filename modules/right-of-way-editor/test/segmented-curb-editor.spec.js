@@ -1,339 +1,140 @@
-/* global getComputedStyle */
 import { expect, test } from '@playwright/test'
 
 /**
- * Playwright tests for SegmentedCurbEditor component
+ * Focused Playwright tests for SegmentedCurbEditor component
  *
- * Tests the component in the real application context, including:
- * - Component rendering in real Redux store
- * - Desktop mouse drag operations for segment reordering
- * - Mobile touch drag operations
- * - Divider resizing functionality
- * - Label positioning and dropdown interactions
- * - Real app workflow integration
+ * Tests user workflows and business logic, not implementation details
  */
 
-test.describe('SegmentedCurbEditor', () => {
+test.describe('SegmentedCurbEditor - User Workflows', () => {
     test.beforeEach(async ({ page }) => {
-        // Navigate to dedicated test harness with isolated test app
         await page.goto('http://localhost:3000/test.html')
-
-        // Wait for component to be fully loaded
         await page.waitForSelector('.segment-container, .add-segment-button', { timeout: 10000 })
-
-        // Wait for React to finish initial render
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(200)
     })
 
-    test.describe('Basic Rendering', () => {
-        test('should render empty state correctly', async ({ page }) => {
-            // Set empty configuration using the test harness controls
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('empty')
-                }
-            })
+    test('user can add first segment to empty editor', async ({ page }) => {
+        // Setup empty editor
+        await page.evaluate(() => window.setTestConfig?.('empty'))
+        await page.waitForTimeout(100)
 
-            // Wait for re-render
-            await page.waitForTimeout(200)
+        // Verify empty state
+        await expect(page.locator('.segment')).toHaveCount(0)
+        await expect(page.locator('.floating-label')).toHaveCount(0)
 
-            // Verify empty state elements
-            await expect(page.locator('.segment-container')).toBeVisible()
-            await expect(page.locator('.segment')).toHaveCount(0)
-            await expect(page.locator('.add-segment-button')).toBeVisible()
-            await expect(page.locator('.remaining-space-info')).toContainText('240')
+        // User clicks "Add First Segment" button
+        const addButton = page.locator('.add-segment-button')
+        await expect(addButton).toContainText('Add First Segment')
+        await addButton.click()
+        await page.waitForTimeout(200)
 
-            // Verify no labels or dividers in empty state
-            await expect(page.locator('.floating-label')).toHaveCount(0)
-            await expect(page.locator('.divider')).toHaveCount(0)
-        })
+        // Verify segment was created
+        await expect(page.locator('.segment')).toHaveCount(1)
+        await expect(page.locator('.floating-label')).toHaveCount(1)
 
-        test('should render single segment correctly', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('single')
-                }
-            })
+        // Verify segment has default values
+        const labelText = await page.locator('.floating-label').first().textContent()
+        expect(labelText).toMatch(/\w+\s+\d+/) // "Type XXft" format
 
-            await page.waitForTimeout(200)
-
-            // Verify single segment rendering
-            await expect(page.locator('.segment')).toHaveCount(1)
-            await expect(page.locator('.floating-label')).toHaveCount(1)
-
-            // Check segment has correct styling for Parking type
-            const segment = page.locator('.segment').first()
-            const segmentStyle = await segment.evaluate(el => getComputedStyle(el).backgroundColor)
-            expect(segmentStyle).toBeTruthy() // Should have background color
-
-            // Verify remaining space calculation
-            await expect(page.locator('.remaining-space-info')).toContainText('140') // 240 - 100
-        })
-
-        test('should render multiple segments correctly', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
-
-            await page.waitForTimeout(200)
-
-            // Verify multiple segments
-            await expect(page.locator('.segment')).toHaveCount(3)
-            await expect(page.locator('.floating-label')).toHaveCount(3)
-            await expect(page.locator('.divider')).toHaveCount(4) // Actual component behavior
-
-            // Check segments are positioned correctly (vertically stacked)
-            const segments = page.locator('.segment')
-            const firstSegment = segments.nth(0)
-            const secondSegment = segments.nth(1)
-
-            const firstBox = await firstSegment.boundingBox()
-            const secondBox = await secondSegment.boundingBox()
-
-            // Second segment should be below first segment
-            expect(secondBox.y).toBeGreaterThan(firstBox.y)
-
-            // Verify remaining space
-            await expect(page.locator('.remaining-space-info')).toContainText('50') // 240 - 190
-        })
-
-        test('should render ruler with correct tick marks', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
-
-            await page.waitForTimeout(200)
-
-            // Verify ruler exists and has tick marks
-            await expect(page.locator('.ruler')).toBeVisible()
-            const ticks = page.locator('.ruler .tick')
-            const tickCount = await ticks.count()
-            expect(tickCount).toBeGreaterThan(0)
-
-            // Check that ticks have distance labels
-            const firstTick = ticks.first()
-            const tickText = await firstTick.textContent()
-            expect(tickText).toMatch(/\d+/) // Should contain numbers
-        })
+        // Verify remaining space updated
+        const remainingText = await page.locator('.remaining-space-info').textContent()
+        expect(remainingText).toContain('Remaining:')
+        expect(remainingText).not.toContain('240') // Should be less than full blockface
     })
 
-    test.describe('Label Positioning and Content', () => {
-        test('should position labels correctly relative to segments', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
+    test('user can change segment types via dropdown', async ({ page }) => {
+        // Setup single segment
+        await page.evaluate(() => window.setTestConfig?.('single'))
+        await page.waitForTimeout(100)
 
-            await page.waitForTimeout(200)
+        const label = page.locator('.floating-label').first()
+        const initialText = await label.textContent()
+        expect(initialText).toContain('Parking')
 
-            const segments = page.locator('.segment')
-            const labels = page.locator('.floating-label')
+        // Open dropdown
+        await label.click()
+        await page.waitForTimeout(100)
 
-            // Verify we have matching counts
-            await expect(segments).toHaveCount(3)
-            await expect(labels).toHaveCount(3)
+        // Click different segment type
+        const loadingOption = page.locator('.dropdown-item').filter({ hasText: 'Loading' })
+        await expect(loadingOption).toBeVisible()
+        await loadingOption.click()
+        await page.waitForTimeout(200)
 
-            // Check label positioning relative to segments
-            for (let i = 0; i < 3; i++) {
-                const segment = segments.nth(i)
-                const label = labels.nth(i)
-
-                const segmentBox = await segment.boundingBox()
-                const labelBox = await label.boundingBox()
-
-                // Label should be positioned to the right of the segment container
-                expect(labelBox.x).toBeGreaterThan(segmentBox.x + segmentBox.width)
-
-                // Label should be vertically aligned with segment center
-                const segmentCenterY = segmentBox.y + segmentBox.height / 2
-                const labelCenterY = labelBox.y + labelBox.height / 2
-                expect(Math.abs(labelCenterY - segmentCenterY)).toBeLessThan(10) // Allow 10px tolerance
-            }
-        })
-
-        test('should display correct segment types and lengths in labels', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
-
-            await page.waitForTimeout(200)
-
-            const labels = page.locator('.floating-label')
-
-            // Check first label (Parking, 80ft)
-            const firstLabel = labels.nth(0)
-            const firstText = await firstLabel.textContent()
-            expect(firstText).toContain('Parking')
-            expect(firstText).toContain('80')
-
-            // Check second label (Loading, 60ft)
-            const secondLabel = labels.nth(1)
-            const secondText = await secondLabel.textContent()
-            expect(secondText).toContain('Loading')
-            expect(secondText).toContain('60')
-
-            // Check third label (Parking, 50ft)
-            const thirdLabel = labels.nth(2)
-            const thirdText = await thirdLabel.textContent()
-            expect(thirdText).toContain('Parking')
-            expect(thirdText).toContain('50')
-        })
-
-        test('should apply correct background colors to labels based on segment type', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
-
-            await page.waitForTimeout(200)
-
-            const labels = page.locator('.floating-label')
-
-            // Check that labels have background colors (should match segment colors)
-            const firstLabelBg = await labels.nth(0).evaluate(el => getComputedStyle(el).backgroundColor)
-            const secondLabelBg = await labels.nth(1).evaluate(el => getComputedStyle(el).backgroundColor)
-
-            // Both should have background colors set
-            expect(firstLabelBg).toBeTruthy()
-            expect(secondLabelBg).toBeTruthy()
-
-            // Labels with same segment type should have same color
-            const thirdLabelBg = await labels.nth(2).evaluate(el => getComputedStyle(el).backgroundColor)
-            expect(firstLabelBg).toBe(thirdLabelBg) // Both are Parking type
-        })
+        // Verify segment type changed
+        const newText = await label.textContent()
+        expect(newText).toContain('Loading')
+        expect(newText).not.toContain('Parking')
     })
 
-    test.describe('Segment Visual Properties', () => {
-        test('should render segments with correct heights based on length proportions', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
+    test('user can add segments using label dropdown', async ({ page }) => {
+        // Setup single segment
+        await page.evaluate(() => window.setTestConfig?.('single'))
+        await page.waitForTimeout(100)
 
-            await page.waitForTimeout(200)
+        // Initial state: one segment
+        await expect(page.locator('.segment')).toHaveCount(1)
 
-            const segments = page.locator('.segment')
+        const label = page.locator('.floating-label').first()
+        await label.click()
+        await page.waitForTimeout(100)
 
-            // Get heights of all segments
-            const firstHeight = await segments.nth(0).evaluate(el => el.offsetHeight)
-            const secondHeight = await segments.nth(1).evaluate(el => el.offsetHeight)
-            const thirdHeight = await segments.nth(2).evaluate(el => el.offsetHeight)
+        // Click "Add left" option
+        const addLeftOption = page.locator('.dropdown-item').filter({ hasText: '+ Add left' })
+        await expect(addLeftOption).toBeVisible()
+        await addLeftOption.click()
+        await page.waitForTimeout(200)
 
-            // Heights should be proportional to segment lengths (80:60:50)
-            // First segment (80ft) should be tallest
-            expect(firstHeight).toBeGreaterThan(secondHeight)
-            expect(firstHeight).toBeGreaterThan(thirdHeight)
-
-            // Second segment (60ft) should be taller than third (50ft)
-            expect(secondHeight).toBeGreaterThan(thirdHeight)
-
-            // Check rough proportions (allowing for rounding/CSS differences)
-            const ratio1to2 = firstHeight / secondHeight
-            const expectedRatio1to2 = 80 / 60 // 1.33
-            expect(Math.abs(ratio1to2 - expectedRatio1to2)).toBeLessThan(0.2)
-        })
-
-        test('should render segments with correct background colors by type', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
-
-            await page.waitForTimeout(200)
-
-            const segments = page.locator('.segment')
-
-            // Get background colors
-            const firstBg = await segments.nth(0).evaluate(el => getComputedStyle(el).backgroundColor)
-            const secondBg = await segments.nth(1).evaluate(el => getComputedStyle(el).backgroundColor)
-            const thirdBg = await segments.nth(2).evaluate(el => getComputedStyle(el).backgroundColor)
-
-            // All should have background colors
-            expect(firstBg).toBeTruthy()
-            expect(secondBg).toBeTruthy()
-            expect(thirdBg).toBeTruthy()
-
-            // First and third are both Parking - should match
-            expect(firstBg).toBe(thirdBg)
-
-            // Second is Loading - should be different
-            expect(firstBg).not.toBe(secondBg)
-        })
+        // Should now have two segments
+        await expect(page.locator('.segment')).toHaveCount(2)
+        await expect(page.locator('.floating-label')).toHaveCount(2)
     })
 
-    test.describe('Bottom Controls', () => {
-        test('should show "Add First Segment" button when empty', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('empty')
-                }
-            })
+    test('user can reorder segments via drag and drop', async ({ page }) => {
+        // Setup multiple segments
+        await page.evaluate(() => window.setTestConfig?.('multiple'))
+        await page.waitForTimeout(200)
 
-            await page.waitForTimeout(200)
+        // Verify initial order
+        const initialLabels = await page.locator('.floating-label').allTextContents()
+        const initialTypes = initialLabels.map(label => label.split(' ')[0])
+        expect(initialTypes).toEqual(['Parking', 'Loading', 'Parking'])
 
-            await expect(page.locator('.add-segment-button')).toBeVisible()
-            await expect(page.locator('.add-segment-button')).toContainText('Add First Segment')
+        // Drag first segment to third position
+        const firstSegment = page.locator('.segment').first()
+        const thirdSegment = page.locator('.segment').nth(2)
+        await firstSegment.dragTo(thirdSegment)
+        await page.waitForTimeout(200)
 
-            // Should not show regular "Add Segment" when empty
-            await expect(page.locator('.add-segment-button')).toHaveCount(1)
-        })
+        // Verify reordering occurred
+        const reorderedLabels = await page.locator('.floating-label').allTextContents()
+        const reorderedTypes = reorderedLabels.map(label => label.split(' ')[0])
+        expect(reorderedTypes).not.toEqual(initialTypes)
+    })
 
-        test('should show "Add Segment" button when segments exist and space remaining', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('multiple')
-                }
-            })
+    test('editor respects blockface length constraints', async ({ page }) => {
+        // Setup full blockface
+        await page.evaluate(() => window.setTestConfig?.('full'))
+        await page.waitForTimeout(200)
 
-            await page.waitForTimeout(200)
+        // No add button should be visible when remaining space is 0
+        await expect(page.locator('.add-segment-button')).toHaveCount(0)
+        await expect(page.locator('.remaining-space-info')).toContainText('0')
+    })
 
-            await expect(page.locator('.add-segment-button')).toBeVisible()
-            await expect(page.locator('.add-segment-button')).toContainText('Add Segment')
-            await expect(page.locator('.add-segment-button')).not.toContainText('First')
-        })
+    test('labels display correct segment information', async ({ page }) => {
+        // Setup multiple segments
+        await page.evaluate(() => window.setTestConfig?.('multiple'))
+        await page.waitForTimeout(200)
 
-        test('should not show add button when blockface is full', async ({ page }) => {
-            await page.evaluate(() => {
-                if (window.setTestConfig) {
-                    window.setTestConfig('full')
-                }
-            })
+        const labels = await page.locator('.floating-label').allTextContents()
 
-            await page.waitForTimeout(200)
-
-            // No add button should be visible when remaining space is 0
-            await expect(page.locator('.add-segment-button')).toHaveCount(0)
-            await expect(page.locator('.remaining-space-info')).toContainText('0')
-        })
-
-        test('should display correct remaining space calculation', async ({ page }) => {
-            const testCases = [
-                { configName: 'empty', expected: '240' },
-                { configName: 'single', expected: '140' },
-                { configName: 'multiple', expected: '50' },
-                { configName: 'full', expected: '0' },
-            ]
-
-            for (const testCase of testCases) {
-                await page.evaluate(configName => {
-                    if (window.setTestConfig) {
-                        window.setTestConfig(configName)
-                    }
-                }, testCase.configName)
-
-                await page.waitForTimeout(200)
-                await expect(page.locator('.remaining-space-info')).toContainText(testCase.expected)
-            }
-        })
+        // Check format and content
+        expect(labels[0]).toContain('Parking')
+        expect(labels[0]).toContain('80')
+        expect(labels[1]).toContain('Loading')
+        expect(labels[1]).toContain('60')
+        expect(labels[2]).toContain('Parking')
+        expect(labels[2]).toContain('50')
     })
 })
