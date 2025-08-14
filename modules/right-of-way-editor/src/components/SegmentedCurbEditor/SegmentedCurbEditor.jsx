@@ -71,15 +71,17 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
      * @sig renderDragPreview :: (Object?, [Segment], Number) -> JSXElement?
      */
     const renderDragPreview = (segmentDragState, segments, total) => {
-        if (!segmentDragState?.segmentIndex) return null
+        if (!segmentDragState?.segmentIndex || !segmentDragState?.previewPos) return null
 
         const segment = segments[segmentDragState.segmentIndex]
+        if (!segment) return null
+
         const size = (segment.length / total) * 100
 
         const previewStyle = {
             position: 'absolute',
-            left: `${segmentDragState.previewPos.x}px`,
-            top: `${segmentDragState.previewPos.y}px`,
+            left: `${segmentDragState.previewPos.x || 0}px`,
+            top: `${segmentDragState.previewPos.y || 0}px`,
             backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback,
             border: `${tokens.SegmentedCurbEditor.borderWidth} solid ${tokens.SegmentedCurbEditor.overlay}`,
             borderRadius: tokens.SegmentedCurbEditor.borderRadius,
@@ -246,10 +248,16 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
         onSwap: newSegments => dispatch(replaceSegments(newSegments)),
         draggingIndex: segmentDragState?.segmentIndex ?? null,
         setDraggingIndex: index =>
-            setSegmentDragState(index !== null ? { ...segmentDragState, segmentIndex: index } : null),
+            setSegmentDragState(
+                index !== null
+                    ? { segmentIndex: index, previewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 } }
+                    : null,
+            ),
         dragPreviewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 },
         setDragPreviewPos: pos =>
-            setSegmentDragState(segmentDragState ? { ...segmentDragState, previewPos: pos } : null),
+            setSegmentDragState(
+                segmentDragState ? { ...segmentDragState, previewPos: pos } : { segmentIndex: null, previewPos: pos },
+            ),
         containerRef,
     })
 
@@ -283,7 +291,14 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
                         draggingIndex={segmentDragState?.segmentIndex ?? null}
                         dragDropHandler={dragDropHandler}
                         setDraggingIndex={index =>
-                            setSegmentDragState(index !== null ? { ...segmentDragState, segmentIndex: index } : null)
+                            setSegmentDragState(
+                                index !== null
+                                    ? {
+                                          segmentIndex: index,
+                                          previewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 },
+                                      }
+                                    : null,
+                            )
                         }
                     />
                     <DividerLayer
