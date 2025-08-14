@@ -29,7 +29,7 @@ export default defineConfig({
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
 
         /* Test against mobile viewports for touch interactions */
-        { name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
+        { name: 'mobile-chrome', use: { ...devices['Pixel 5'], hasTouch: true } },
 
         /* Test against branded browsers. */
         // {
