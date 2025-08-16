@@ -1,5 +1,3 @@
-import { tokens } from '@qt/design-system'
-
 /**
  * DividerLayer - Interactive dividers for segment boundary adjustment
  *
@@ -36,9 +34,20 @@ const DividerLayer = ({ segments, total, unknownRemaining, handleDirectDragStart
             transform: 'translateY(-50%)',
             left: 0,
             width: '100%',
-            height: tokens.SegmentedCurbEditor.dividerHeight,
+            height: '20px', // Match original thick thumb height
             cursor: 'row-resize',
             touchAction: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }
+
+        const thumbStyle = {
+            width: '60%',
+            height: '4px',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            borderRadius: '2px',
+            transition: 'all 0.2s ease',
         }
 
         return (
@@ -48,15 +57,22 @@ const DividerLayer = ({ segments, total, unknownRemaining, handleDirectDragStart
                 style={dividerStyle}
                 onMouseDown={e => handleDirectDragStart(e, index)}
                 onTouchStart={e => handleDirectDragStart(e, index)}
+                onMouseEnter={e => {
+                    const thumb = e.target.querySelector('.thumb')
+                    if (thumb) {
+                        thumb.style.width = '70%'
+                        thumb.style.backgroundColor = 'rgba(255, 255, 255, 1)'
+                    }
+                }}
+                onMouseLeave={e => {
+                    const thumb = e.target.querySelector('.thumb')
+                    if (thumb) {
+                        thumb.style.width = '60%'
+                        thumb.style.backgroundColor = 'rgba(255, 255, 255, 0.8)'
+                    }
+                }}
             >
-                <div
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: tokens.SegmentedCurbEditor.divider,
-                        borderRadius: tokens.SegmentedCurbEditor.borderRadius,
-                    }}
-                />
+                <div className="thumb" style={thumbStyle} />
             </div>
         )
     }

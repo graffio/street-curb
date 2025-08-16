@@ -1,6 +1,6 @@
 import { tokens, useChannel } from '@qt/design-system'
 import { Box, DropdownMenu, Text } from '@radix-ui/themes'
-import React, { useState } from 'react'
+import React, { useState, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
@@ -34,13 +34,22 @@ const TypeMenuItem = ({ type, isSelected, onSelect }) => (
 // Layout constants
 const LABEL_VERTICAL_OFFSET = 12 // Half label height for centering
 
+// Reserved for future fixed-width implementation:
+// const calculateOptimalLabelWidth = () => {
+//     const longestSegmentType = Math.max(...Object.keys(COLORS).map(type => type.length))
+//     const maxReasonableLength = "399.9 ft".length
+//     const totalChars = longestSegmentType + 1 + maxReasonableLength
+//     const CHAR_WIDTH = 6.5, PADDING = 16
+//     return Math.ceil(totalChars * CHAR_WIDTH + PADDING)
+// }
+
 /**
  * Individual label dropdown menu component with Radix DropdownMenu primitives
- * @sig LabelDropdownMenu :: ({ segment: Segment, index: Number, isOpen: Boolean,
- *                               onClose: () -> Void, handleChangeType: (Number, String) -> Void,
- *                               handleAddLeft: Number -> Void }) -> JSXElement
+ * @sig LabelDropdownMenu :: React.memo(({ segment: Segment, index: Number, isOpen: Boolean,
+ *                                         onClose: () -> Void, handleChangeType: (Number, String) -> Void,
+ *                                         handleAddLeft: Number -> Void }) -> JSXElement)
  */
-const LabelDropdownMenu = ({ segment, index, isOpen, onClose, handleChangeType, handleAddLeft }) => {
+const LabelDropdownMenu = React.memo(({ segment, index, isOpen, onClose, handleChangeType, handleAddLeft }) => {
     const segmentTypes = Object.keys(COLORS)
 
     const handleTypeSelect = type => {
@@ -74,31 +83,40 @@ const LabelDropdownMenu = ({ segment, index, isOpen, onClose, handleChangeType, 
             </DropdownMenu.Content>
         </DropdownMenu.Root>
     )
-}
+})
 
 /**
  * Individual label component with drag interaction support and hover state
- * @sig LabelItem :: React.forwardRef(({ segment: Segment, index: Number,
- *                                       position: { top: Number, left: Number },
- *                                       width: Number, contentWidth: Number,
- *                                       handleChangeType: (Number, String) -> Void,
- *                                       handleAddLeft: Number -> Void }) -> JSXElement)
+ * @sig LabelItem :: React.memo(React.forwardRef(({ segment: Segment, index: Number,
+ *                                                 position: { top: Number, left: Number },
+ *                                                 width: Number, contentWidth: Number,
+ *                                                 handleChangeType: (Number, String) -> Void,
+ *                                                 handleAddLeft: Number -> Void }) -> JSXElement))
  */
-const LabelItem = React.forwardRef(
-    ({ segment, index, position, width, contentWidth, handleChangeType, handleAddLeft }, ref) => {
+const LabelItem = React.memo(
+    React.forwardRef(({ segment, index, position, width, contentWidth, handleChangeType, handleAddLeft }, ref) => {
         const handleLabelClick = () => setDragState({ editingIndex: isEditing ? null : index })
         const handleDropdownClose = () => setDragState({ editingIndex: null })
 
         const [isHovered, setIsHovered] = useState(false)
         const [dragState, setDragState] = useChannel(dragStateChannel, ['editingIndex'])
+        const labelRef = useRef(null)
 
         const isEditing = dragState.editingIndex === index
+        const effectiveWidth = Math.max(width, 80) // Component enforces minimum width
+
+        // Synchronous position updates using useLayoutEffect for instant responsiveness
+        useLayoutEffect(() => {
+            if (labelRef.current) {
+                labelRef.current.style.top = `calc(${position.top}% - ${LABEL_VERTICAL_OFFSET}px)`
+                labelRef.current.style.left = `${position.left}px`
+                labelRef.current.style.width = `${effectiveWidth}px`
+            }
+        }, [position.top, position.left, effectiveWidth])
 
         const labelStyle = {
             position: 'absolute',
-            top: `calc(${position.top}% - ${LABEL_VERTICAL_OFFSET}px)`,
-            left: `${position.left}px`,
-            width: `${width}px`,
+            // Remove top, left, width from here since useLayoutEffect handles them
             backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor?.fallback || '#666',
             color: 'white',
             padding: '3px 6px',
@@ -112,13 +130,14 @@ const LabelItem = React.forwardRef(
             transition: 'all 0.15s ease-out',
             transform: isHovered ? 'scale(1.02)' : 'scale(1)',
             zIndex: isHovered || isEditing ? 1000 : 100,
-            pointerEvents: 'auto', // Enable pointer events for labels
+            pointerEvents: 'auto',
+            whiteSpace: 'nowrap', // Prevent text wrapping
         }
 
         return (
             <>
                 <Box
-                    ref={ref}
+                    ref={labelRef}
                     style={labelStyle}
                     onClick={handleLabelClick}
                     onMouseEnter={() => setIsHovered(true)}
@@ -139,12 +158,12 @@ const LabelItem = React.forwardRef(
                 )}
             </>
         )
-    },
+    }),
 )
 
 /**
  * Calculates label positions using memoized computation
- * @sig calculateMemoizedPositions :: ([Segment], Number) -> LabelPositions
+ * @sig calculateMemoizedPositions :: ([Segment], Number, Number?) -> LabelPositions
  */
 const calculateMemoizedPositions = (segments, blockfaceLength) =>
     !segments.length || !blockfaceLength
@@ -191,20 +210,20 @@ const createLabelItem = (labelPositions, segmentPositions, handleChangeType, han
 }
 
 /**
- * LabelLayerNew - Pure JSX label renderer with Redux and channel integration
+ * LabelLayerNew - Pure JSX label renderer with optimized performance
  *
- * Uses Radix Box components, connects directly to Redux for data,
- * and coordinates label UI state via channels instead of prop drilling.
+ * Uses Radix Box components and receives data via props for optimal performance.
+ * Coordinates label UI state via channels instead of prop drilling.
  *
  * Architecture:
- * - LabelLayerNew: Main container, gets segments from Redux, integrates positioning
- * - LabelItem: Individual label components with Redux/channel integration and hover state
+ * - LabelLayerNew: Main container, receives segments/blockfaceLength as props
+ * - LabelItem: Individual label components with channel integration and hover state
  * - LabelDropdownMenu: Radix-based dropdown for type selection and actions
  *
- * DragDropHandler Interface:
- * Not applicable for labels, but component follows similar patterns:
- * - handleChangeType(index, type): Updates segment type via Redux action
- * - handleAddLeft(index): Adds segment to the left via Redux action
+ * Performance Optimization:
+ * - Receives segments and blockfaceLength as props (no Redux selectors)
+ * - Parent component handles local drag state for smooth updates
+ * - Labels render immediately when parent state changes
  *
  * Channel Coordination:
  * Uses dragStateChannel for UI state coordination:
@@ -217,17 +236,8 @@ const createLabelItem = (labelPositions, segmentPositions, handleChangeType, han
  * - Applies minimal horizontal offsets to prevent overlap
  * - Predictable, deterministic results
  *
- * Redux Integration:
- * - segments: Retrieved via useSelector(selectSegments)
- * - blockfaceLength: Retrieved via useSelector(selectBlockfaceLength)
- * - Position calculations trigger on segment changes
- * - Channel state manages dropdown editing UI
- *
- * Interactive labels rendered as pure JSX elements using Radix components.
- * Preserves collision detection positioning while modernizing React architecture.
- * Eliminates prop drilling by connecting directly to Redux and channels.
- *
- * @sig LabelLayerNew :: ({ handleChangeType: (Number, String) -> Void,
+ * @sig LabelLayerNew :: ({ segments: [Segment], blockfaceLength: Number,
+ *                          handleChangeType: (Number, String) -> Void,
  *                          handleAddLeft: Number -> Void }) -> JSXElement
  */
 const LabelLayerNew = ({ handleChangeType, handleAddLeft }) => {
@@ -240,7 +250,10 @@ const LabelLayerNew = ({ handleChangeType, handleAddLeft }) => {
         [segments, blockfaceLength],
     )
 
-    const segmentPositions = calculateSegmentPositions(segments, blockfaceLength)
+    const segmentPositions = React.useMemo(
+        () => calculateSegmentPositions(segments, blockfaceLength),
+        [segments, blockfaceLength],
+    )
 
     if (!segments || segments.length === 0) return null
 
