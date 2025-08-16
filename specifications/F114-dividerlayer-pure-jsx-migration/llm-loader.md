@@ -22,12 +22,16 @@ This specification defines the migration of the entire SegmentedCurbEditor compo
 **Migration Strategy**: Bottom-up by component dependencies:
 1. DividerLayer (most independent) → 2. SegmentRenderer → 3. DragDropHandler → 4. LabelLayer → 5. SegmentedCurbEditor (most dependent)
 
-**TDD Process**: Create Storybook stories FIRST to define expected behavior, then implement components to satisfy stories.
+**TDD Process**: 
+1. Create Storybook story with side-by-side comparison framework
+2. Create placeholder component with expected props interface but minimal implementation ("Coming Soon")
+3. Iteratively implement component features until story requirements satisfied
 
 ## Execution Model
 - This is a **task-level specification**
 - Execute ONLY the current task identified in execution_status.current_task
-- Each task: Write story → Implement component → Validate → Mark COMPLETED
+- Each task: Write story → Create placeholder component → Iteratively implement → Validate → Mark COMPLETED
+- Placeholder components accept expected props and render "Coming Soon" or minimal feedback
 - Update execution_status section with results
 - STOP after each task and report completion to human
 - Do NOT proceed to next task without human instruction
