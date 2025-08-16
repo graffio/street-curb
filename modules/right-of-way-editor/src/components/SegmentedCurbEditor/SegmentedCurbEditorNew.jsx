@@ -1,4 +1,4 @@
-import { Box, tokens } from '@qt/design-system'
+import { Box, Button, Flex, Text } from '@radix-ui/themes'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { COLORS } from '../../constants.js'
@@ -13,18 +13,21 @@ import {
 } from '../../store/curbStore.js'
 import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
 import { formatLength, roundToPrecision } from '../../utils/formatting.js'
-import { DividerLayer } from './DividerLayer.jsx'
+import { DividerLayerNew } from './DividerLayerNew.jsx'
 import { DragDropHandler } from './DragDropHandler.jsx'
 import { LabelLayerNew } from './LabelLayerNew.jsx'
-import { SegmentRenderer } from './SegmentRenderer.jsx'
+import { SegmentRendererNew } from './SegmentRendererNew.jsx'
 
 /**
  * SegmentedCurbEditorNew - Redesigned street curb configuration editor
  *
- * Phase 2: Container Structure Only - Incremental Implementation
- * This component replaces ONLY the outer container structure with Radix components:
- * - Uses Radix Box instead of div#editor-wrapper and div.segment-container
- * - Imports existing old components: SegmentRenderer, DividerLayer, LabelLayer (unchanged)
+ * Phase 3: CSS-to-Radix Migration Complete - Incremental Implementation
+ * This component migrates all CSS-dependent sections to Radix design system:
+ * - Container structure migrated to Radix Box components
+ * - Ruler tick marks migrated to Radix Box and Text components
+ * - Bottom controls migrated to Radix Flex, Button, and Text components
+ * - Drag preview migrated to Radix Box with inline styling
+ * - Imports all *New components: SegmentRendererNew, DividerLayerNew, LabelLayerNew
  * - Preserves exact same layout, dimensions, and positioning
  * - Maintains all drag logic and event handlers
  */
@@ -46,27 +49,38 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
     }
 
     /**
-     * Renders individual ruler tick mark with distance label
-     * @sig renderTick :: (Number, Number, Number) -> JSXElement
+     * Individual ruler tick mark component
+     * @sig RulerTick :: ({ position: Number, total: Number, index: Number }) -> JSXElement
      */
-    const renderTick = (p, i, total) => {
-        const ft = formatLength((p / total) * total)
-        const pct = (p / total) * 100
-
-        const tickStyle = { top: `${pct}%` }
+    const RulerTick = ({ position, total, index }) => {
+        const ft = formatLength((position / total) * total)
+        const pct = (position / total) * 100
 
         return (
-            <div key={`tick-${i}`} className="tick" style={tickStyle}>
-                {ft}
-            </div>
+            <Box
+                key={`tick-${index}`}
+                style={{
+                    position: 'absolute',
+                    top: `${pct}%`,
+                    transform: 'translateY(-50%)',
+                    left: 0,
+                    right: 'auto',
+                    width: '100%',
+                    display: 'block',
+                }}
+            >
+                <Text size="1" color="gray">
+                    {ft}
+                </Text>
+            </Box>
         )
     }
 
     /**
-     * Renders floating preview of dragged segment for mobile touch interactions
-     * @sig renderDragPreview :: (Object?, [Segment], Number) -> JSXElement?
+     * Floating drag preview component for mobile touch interactions
+     * @sig DragPreview :: ({ segmentDragState: Object?, segments: [Segment], total: Number }) -> JSXElement?
      */
-    const renderDragPreview = (segmentDragState, segments, total) => {
+    const DragPreview = ({ segmentDragState, segments, total }) => {
         if (!segmentDragState?.segmentIndex || !segmentDragState?.previewPos) return null
 
         const segment = segments[segmentDragState.segmentIndex]
@@ -74,21 +88,24 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
 
         const size = (segment.length / total) * 100
 
-        const previewStyle = {
-            position: 'absolute',
-            left: `${segmentDragState.previewPos.x || 0}px`,
-            top: `${segmentDragState.previewPos.y || 0}px`,
-            backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback,
-            border: `${tokens.SegmentedCurbEditor.borderWidth} solid ${tokens.SegmentedCurbEditor.overlay}`,
-            borderRadius: tokens.SegmentedCurbEditor.borderRadius,
-            opacity: 0.9,
-            zIndex: 200,
-            pointerEvents: 'none',
-            width: tokens.SegmentedCurbEditor.previewWidth,
-            height: `${size}%`,
-        }
-
-        return <div className="drag-preview" style={previewStyle} />
+        return (
+            <Box
+                style={{
+                    position: 'absolute',
+                    left: `${segmentDragState.previewPos.x || 0}px`,
+                    top: `${segmentDragState.previewPos.y || 0}px`,
+                    backgroundColor: COLORS[segment.type] || '#666',
+                    border: '2px solid rgba(255, 255, 255, 0.9)',
+                    borderRadius: '6px',
+                    opacity: 0.9,
+                    zIndex: 200,
+                    pointerEvents: 'none',
+                    width: '80px',
+                    height: `${size}%`,
+                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
+                }}
+            />
+        )
     }
 
     /**
@@ -115,7 +132,7 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
      * Handles drag move events with length adjustment (unified touch/mouse) - uses local state for smooth updates
      * @sig createDragMoveHandler :: (Number, Number, Function, Number, Number) -> (Event) -> Void
      */
-    const createDragMoveHandler = (index, total, dispatch, unknownRemaining, segments) => moveEvent => {
+    const createDragMoveHandler = (index, total, dispatch, unknownRemaining) => moveEvent => {
         if (!dragState.current.isDragging) return
 
         const currentCoord = getPrimaryCoordinate(moveEvent)
@@ -172,31 +189,33 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
         dragState.current = { isDragging: true, startCoord, startLength: segment.length, index }
 
         const dragManager = createDragManager()
-        const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining, segments)
+        const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining)
 
         dragManager.startDrag(handleMove, handleEnd)
     }
 
     /**
-     * Renders bottom controls for segment creation and remaining space display
-     * @sig renderBottomControls :: (Number, Number, Function) -> JSXElement
+     * Bottom controls component for segment creation and remaining space display
+     * @sig BottomControls :: ({ unknownRemaining: Number, segmentsLength: Number, dispatch: Function }) -> JSXElement
      */
-    const renderBottomControls = (unknownRemaining, segmentsLength, dispatch) => (
-        <div className="segment-controls-bottom">
-            <div className="remaining-space-info">Remaining: {formatLength(unknownRemaining)} ft</div>
-            <div className="add-buttons-container">
+    const BottomControls = ({ unknownRemaining, segmentsLength, dispatch }) => (
+        <Flex direction="column" gap="2" style={{ marginTop: '16px' }}>
+            <Text size="2" color="gray" align="center">
+                Remaining: {formatLength(unknownRemaining)} ft
+            </Text>
+            <Flex gap="2" justify="center">
                 {segmentsLength === 0 && unknownRemaining > 0 && (
-                    <button className="add-segment-button" onClick={() => dispatch(addSegment(0))}>
+                    <Button size="2" variant="soft" onClick={() => dispatch(addSegment(0))}>
                         + Add First Segment
-                    </button>
+                    </Button>
                 )}
                 {segmentsLength > 0 && unknownRemaining > 0 && (
-                    <button className="add-segment-button" onClick={() => dispatch(addSegment(segmentsLength))}>
+                    <Button size="2" variant="soft" onClick={() => dispatch(addSegment(segmentsLength))}>
                         + Add Segment
-                    </button>
+                    </Button>
                 )}
-            </div>
-        </div>
+            </Flex>
+        </Flex>
     )
 
     const dispatch = useDispatch()
@@ -243,12 +262,7 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
         () => {}, // setEditingIndex not needed since we removed it
     )
 
-    const handleAddLeft = useCallback(
-        index => {
-            dispatch(addSegmentLeft(index))
-        },
-        [dispatch],
-    )
+    const handleAddLeft = useCallback(index => dispatch(addSegmentLeft(index)), [dispatch])
     const tickPoints = useSelector(selectCumulativePositions)
 
     // Redux handles blockface initialization and segment management
@@ -274,30 +288,9 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
                         touchAction: 'manipulation',
                     }}
                 >
-                    <SegmentRenderer
-                        segments={segments}
-                        total={total}
-                        unknownRemaining={unknownRemaining}
-                        draggingIndex={segmentDragState?.segmentIndex ?? null}
-                        dragDropHandler={dragDropHandler}
-                        setDraggingIndex={index =>
-                            setSegmentDragState(
-                                index !== null
-                                    ? {
-                                          segmentIndex: index,
-                                          previewPos: segmentDragState?.previewPos ?? { x: 0, y: 0 },
-                                      }
-                                    : null,
-                            )
-                        }
-                    />
-                    <DividerLayer
-                        segments={segments}
-                        total={total}
-                        unknownRemaining={unknownRemaining}
-                        handleDirectDragStart={handleDirectDragStart}
-                    />
-                    {renderDragPreview(segmentDragState, segments, total)}
+                    <SegmentRendererNew dragDropHandler={dragDropHandler} />
+                    <DividerLayerNew handleDirectDragStart={handleDirectDragStart} />
+                    <DragPreview segmentDragState={segmentDragState} segments={segments} total={total} />
                 </Box>
 
                 <Box
@@ -313,9 +306,27 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
                     <LabelLayerNew handleChangeType={handleChangeType} handleAddLeft={handleAddLeft} />
                 </Box>
 
-                <div className="ruler">{tickPoints.map((p, i) => renderTick(p, i, total))}</div>
+                <Box
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '90px',
+                        height: '400px',
+                        width: '60px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}
+                >
+                    {tickPoints.map((p, i) => (
+                        <RulerTick key={`tick-${i}`} position={p} total={total} index={i} />
+                    ))}
+                </Box>
 
-                {renderBottomControls(unknownRemaining, segments.length, dispatch)}
+                <BottomControls
+                    unknownRemaining={unknownRemaining}
+                    segmentsLength={segments.length}
+                    dispatch={dispatch}
+                />
             </Box>
         </>
     )

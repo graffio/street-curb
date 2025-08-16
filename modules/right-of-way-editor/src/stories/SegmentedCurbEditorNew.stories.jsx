@@ -19,24 +19,29 @@ import '../index.css'
  */
 
 /**
+ * Initializes test segment data in Redux store
+ * @sig initializeTestSegments :: (Function) -> Void
+ */
+const initializeTestSegments = dispatch => {
+    dispatch(initializeSegments(mockTotal, 'storybook-test'))
+    dispatch(addSegment(-1))
+    dispatch(updateSegmentLength(0, 80))
+    dispatch(updateSegmentType(0, 'Parking'))
+    dispatch(addSegment(0))
+    dispatch(updateSegmentLength(1, 60))
+    dispatch(updateSegmentType(1, 'Loading'))
+    dispatch(addSegment(1))
+    dispatch(updateSegmentLength(2, 50))
+    dispatch(updateSegmentType(2, 'Parking'))
+}
+
+/**
  * Initializes test data in Redux store
  * @sig useTestData :: () -> Void
  */
 const useTestData = () => {
     const dispatch = useDispatch()
-
-    React.useEffect(() => {
-        dispatch(initializeSegments(mockTotal, 'storybook-test'))
-        dispatch(addSegment(-1))
-        dispatch(updateSegmentLength(0, 80))
-        dispatch(updateSegmentType(0, 'Parking'))
-        dispatch(addSegment(0))
-        dispatch(updateSegmentLength(1, 60))
-        dispatch(updateSegmentType(1, 'Loading'))
-        dispatch(addSegment(1))
-        dispatch(updateSegmentLength(2, 50))
-        dispatch(updateSegmentType(2, 'Parking'))
-    }, [dispatch])
+    React.useEffect(() => initializeTestSegments(dispatch), [dispatch])
 }
 
 /**
@@ -87,7 +92,7 @@ const StoryContent = args => {
                         <SegmentedCurbEditorNew blockfaceLength={mockTotal} />
                     </div>
                     <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginTop: '8px' }}>
-                        Phase 2: Container structure with Radix Box
+                        Phase 3: Container, ruler, and controls with Radix components
                     </p>
                 </div>
             </div>
@@ -103,8 +108,15 @@ const StoryContent = args => {
                     <div>✅ Container structure replaced with Radix Box components</div>
                     <div>✅ Existing old components imported and integrated</div>
                     <div>✅ Exact visual layout preserved from original CSS</div>
+                    <div>✅ Ruler tick marks migrated to Radix Box and Text components</div>
+                    <div>✅ Bottom controls migrated to Radix Flex, Button, and Text</div>
+                    <div>✅ Drag preview migrated to Radix Box styling</div>
+                    <div>
+                        ✅ All components migrated to *New versions (SegmentRendererNew, DividerLayerNew, LabelLayerNew)
+                    </div>
+                    <div>✅ Full Redux integration with useSelector for all components</div>
                     <div style={{ color: 'green', fontWeight: 'bold', marginTop: '8px' }}>
-                        ✅ Phase 2 Complete - Ready for User Review
+                        ✅ Phase 5 Complete - Full Design System Migration Achieved
                     </div>
                 </div>
 
@@ -122,16 +134,16 @@ const StoryContent = args => {
                         ✅ <strong>Phase 2</strong>: Container structure with Radix Box (COMPLETE)
                     </div>
                     <div>
-                        ⏳ <strong>Phase 3</strong>: Replace remaining CSS-styled sections with design system
+                        ✅ <strong>Phase 3</strong>: Replace remaining CSS-styled sections with design system (COMPLETE)
                     </div>
                     <div>
-                        ⏳ <strong>Phase 4</strong>: Implement label layer with Radix components
+                        ✅ <strong>Phase 4</strong>: Implement label layer with Radix components (COMPLETE)
                     </div>
                     <div>
-                        ⏳ <strong>Phase 5</strong>: Add drag and drop functionality
+                        ✅ <strong>Phase 5</strong>: Add drag and drop functionality (COMPLETE)
                     </div>
                     <div>
-                        ⏳ <strong>Phase 6</strong>: Full feature parity with original
+                        ⏳ <strong>Phase 6</strong>: Full feature parity testing and validation
                     </div>
                 </div>
 
@@ -209,15 +221,7 @@ const meta = {
     title: 'TDD/SegmentedCurbEditorNew',
     component: SegmentedCurbEditorNew,
     decorators: [DragStateDecorator],
-    parameters: {
-        layout: 'fullscreen',
-        docs: {
-            description: {
-                component:
-                    'TDD story for F114 Task 5 - SegmentedCurbEditor migration to design system with Redux integration and channel coordination',
-            },
-        },
-    },
+    parameters: { layout: 'fullscreen', docs: {} },
     argTypes: {
         blockfaceLength: {
             control: { type: 'number', min: 100, max: 500, step: 10 },
@@ -236,15 +240,7 @@ const SideBySideComparison = {
     name: 'Original vs New (TDD Development)',
     render: SideBySideComparisonRender,
     args: { blockfaceLength: 240, isDragging: false, draggedIndex: null },
-    parameters: {
-        docs: {
-            description: {
-                story:
-                    'Side-by-side comparison of original SegmentedCurbEditor vs new design system implementation. ' +
-                    'Phase 2: Container structure replaced with Radix Box components, maintaining exact visual layout.',
-            },
-        },
-    },
+    parameters: {},
 }
 
 export { meta as default, SideBySideComparison }

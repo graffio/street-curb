@@ -102,7 +102,9 @@ const DividerLayerNew = ({ handleDirectDragStart }) => {
     if (!segments || segments.length === 0) return null
 
     // Create array of divider indices - one between each segment, plus final if unknown space
-    const dividerIndices = [...segments.map((_, i) => i), ...(unknownRemaining > 0 ? [segments.length - 1] : [])]
+    const baseDividers = segments.map((_, i) => i).slice(0, -1) // All but last segment
+    const finalDivider = unknownRemaining > 0 ? [segments.length - 1] : []
+    const dividerIndices = [...baseDividers, ...finalDivider]
 
     return (
         <>
