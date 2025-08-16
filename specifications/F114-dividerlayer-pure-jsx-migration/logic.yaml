@@ -7,10 +7,14 @@ architecture_principles:
   - radix_theme_only: "Use only Radix Theme components and CSS variables"
   - state_driven_interactions: "Hover/focus/drag effects via React state, not CSS"
   - functional_equivalence: "User workflows work, pixel-perfect appearance not required"
-  - interface_flexibility: "New component props acceptable for better architecture"
+  - redux_integration: "Use useSelector for Redux data, no prop drilling"
+  - channel_coordination: "Use dragStateChannel for UI state coordination"
+  - component_decomposition: "Split into individual sub-components (e.g., SegmentItem, DividerThumb)"
+  - comprehensive_documentation: "Include detailed file header explaining architecture and interfaces"
+  - precise_types: "Use specific type signatures, not vague 'Object' types"
   - component_isolation: "Each component independently testable in Storybook"
   - stories_first_tdd: "Define behavior in Storybook with placeholder components before full implementation"
-  - placeholder_components: "Start with props interface and minimal render to enable immediate story testing"
+  - consistency_patterns: "Base new components on existing *New.jsx architecture patterns"
 
 component_mapping:
   css_dependent_components:
@@ -80,98 +84,140 @@ implementation_tasks:
       - functional_equivalence: "New component provides same divider functionality"
 
   task_2_segment_renderer_migration:
-    description: "Migrate SegmentRenderer to pure JSX with Radix styling"
+    description: "Migrate SegmentRenderer to pure JSX with Redux and channel integration"
     commands:
-      - "Create SegmentRendererNew.jsx replacing all CSS classes"
-      - "Implement drag states via React props and state"
-      - "Use Radix colors for segment types and unknown space"
+      - "Create Storybook story with side-by-side comparison framework"
+      - "Create SegmentRendererNew.jsx with Redux useSelector integration"
+      - "Implement individual SegmentItem and UnknownSpaceItem components"
+      - "Use drag state channel for UI coordination"
+      - "Replace all CSS classes with Radix Box components"
     files:
       - modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentRendererNew.jsx
+      - modules/right-of-way-editor/src/stories/SegmentRendererNew.stories.jsx
     changes:
+      - "Create side-by-side comparison story with Redux provider"
+      - "Use useSelector for segments, total, unknownRemaining (no props)"
+      - "Use drag state channel for draggingIndex coordination"
       - "Replace .segment class with Radix Box styling"
-      - "Implement .dragging state via opacity and transform props"
-      - "Replace .unknown-space with Radix styling and dashed borders"
-      - "Use COLORS constants with Radix fallbacks"
+      - "Replace .dragging state with channel-driven visual effects"
+      - "Replace .unknown-space with Radix Box and dashed border styling"
+      - "Create individual SegmentItem components with local hover state"
+      - "Use COLORS constants with Radix CSS variable fallbacks"
     validation:
-      - file_exists: "SegmentRendererNew.jsx created"
+      - files_exist: "Both component and story files created"
+      - redux_integration: "Component uses useSelector, no Redux props"
+      - channel_integration: "Uses drag state channel for UI state"
       - no_css_classes: "No className props except for drag handler refs"
-      - drag_states: "Dragging state visual effects work correctly"
-      - segment_colors: "All segment type colors render correctly"
+      - drag_states: "Channel-driven drag visual effects work correctly"
+      - segment_colors: "All segment type colors render with Radix variables"
+      - storybook_working: "Side-by-side story renders with Redux"
 
   task_3_label_layer_migration:
-    description: "Migrate LabelLayer to pure JSX with Radix styling"
+    description: "Migrate LabelLayer to pure JSX with Redux and channel integration"
     commands:
-      - "Create LabelLayerNew.jsx with pure JSX label and dropdown structure"
-      - "Implement dropdown interactions via React state"
-      - "Use Radix positioning and styling for floating labels"
+      - "Create Storybook story with side-by-side comparison framework"
+      - "Create LabelLayerNew.jsx with comprehensive file header documentation"
+      - "Implement individual LabelItem and DropdownItem components"
+      - "Use Redux useSelector for segment data, channel for UI state"
+      - "Replace all CSS classes with Radix Box components"
     files:
       - modules/right-of-way-editor/src/components/SegmentedCurbEditor/LabelLayerNew.jsx
+      - modules/right-of-way-editor/src/stories/LabelLayerNew.stories.jsx
     changes:
+      - "Create side-by-side comparison story with Redux provider"
+      - "Add comprehensive file header explaining component architecture and interfaces"
+      - "Use useSelector for segments data (no props)"
+      - "Use channel for dropdown/label UI state coordination"
       - "Replace .floating-label with Radix Box components"
-      - "Replace .dropdown and .dropdown-item with Radix components"
-      - "Implement label positioning via style props"
-      - "Use Radix color system for label backgrounds"
+      - "Replace .dropdown and .dropdown-item with individual components"
+      - "Implement precise type signatures for all interfaces"
+      - "Follow DividerLayerNew/SegmentRendererNew patterns"
     validation:
-      - file_exists: "LabelLayerNew.jsx created"
-      - no_css_classes: "No className props in component"
-      - dropdown_behavior: "Dropdown interactions work correctly"
-      - label_positioning: "Smart positioning algorithm still functions"
+      - files_exist: "Both component and story files created"
+      - redux_integration: "Component uses useSelector, no Redux props"
+      - channel_integration: "Uses appropriate channels for UI state"
+      - no_css_classes: "No className props in components"
+      - precise_types: "All function signatures use specific types"
+      - comprehensive_docs: "File header explains architecture and interfaces"
+      - storybook_working: "Side-by-side story renders with Redux"
 
   task_4_drag_drop_handler_migration:
-    description: "Migrate DragDropHandler to pure JSX approach"
+    description: "Review and update DragDropHandler for channel integration"
     commands:
-      - "Analyze DragDropHandler for CSS dependencies"
-      - "Create DragDropHandlerNew.jsx if CSS migration needed"
-      - "Ensure drag feedback uses Radix styling"
+      - "Analyze existing DragDropHandler for CSS and state dependencies"
+      - "Update to work with dragStateChannel instead of local state"
+      - "Ensure drag feedback integrates with channel system"
+      - "Create comprehensive documentation for handler interfaces"
     files:
-      - modules/right-of-way-editor/src/components/SegmentedCurbEditor/DragDropHandlerNew.jsx
+      - modules/right-of-way-editor/src/components/SegmentedCurbEditor/DragDropHandler.jsx (analysis/update)
     changes:
+      - "Update drag handlers to set dragStateChannel state"
       - "Remove any CSS class dependencies in drag feedback"
-      - "Use Radix styling for any visual drag indicators"
-      - "Maintain exact same handler interface and behavior"
+      - "Ensure handler methods work with SegmentRendererNew/DividerLayerNew"
+      - "Add comprehensive interface documentation"
+      - "Maintain backward compatibility with existing components"
     validation:
-      - file_exists: "DragDropHandlerNew.jsx created if needed"
+      - channel_integration: "Handlers set dragStateChannel state correctly"
       - no_css_classes: "No className dependencies for styling"
-      - drag_behavior: "All drag and drop interactions preserved"
+      - interface_compatibility: "Works with existing *New components"
+      - comprehensive_docs: "Handler interfaces fully documented"
 
   task_5_main_editor_migration:
-    description: "Migrate SegmentedCurbEditor main component to pure JSX"
+    description: "Migrate SegmentedCurbEditor main component with full Redux/channel integration"
     commands:
-      - "Create SegmentedCurbEditorNew.jsx replacing all CSS classes"
-      - "Implement ruler, controls, and container with Radix components"
-      - "Update component imports to use *New versions"
+      - "Create Storybook story with side-by-side comparison framework"
+      - "Create SegmentedCurbEditorNew.jsx with comprehensive file header"
+      - "Implement individual sub-components (RulerItem, ControlsPanel, etc.)"
+      - "Use Redux useSelector for editor state, channels for UI coordination"
+      - "Replace all CSS classes with Radix Box components"
+      - "Integrate all *New component versions"
     files:
       - modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditorNew.jsx
+      - modules/right-of-way-editor/src/stories/SegmentedCurbEditorNew.stories.jsx
     changes:
+      - "Create side-by-side comparison story with Redux provider"
+      - "Add comprehensive file header explaining complete editor architecture"
+      - "Use useSelector for blockface/editor state (no props)"
+      - "Use channels for drag/UI state coordination across components"
       - "Replace .segment-container with Radix container styling"
-      - "Replace .tick, .ruler with Radix positioned elements"
-      - "Replace .segment-controls-bottom, .add-segment-button with Radix buttons"
+      - "Replace .tick, .ruler with individual RulerItem components"
+      - "Replace .segment-controls-bottom with ControlsPanel component"
       - "Replace .drag-preview with Radix styled preview"
-      - "Import and use all *New component versions"
+      - "Import DividerLayerNew, SegmentRendererNew, LabelLayerNew"
+      - "Follow established *New.jsx patterns for architecture"
     validation:
-      - file_exists: "SegmentedCurbEditorNew.jsx created"
+      - files_exist: "Both component and story files created"
+      - redux_integration: "Uses useSelector for all data, no prop drilling"
+      - channel_integration: "Coordinates via channels across all sub-components"
       - no_css_classes: "No className props except for functional refs"
-      - component_integration: "All sub-components integrate correctly"
+      - component_integration: "All *New sub-components integrate correctly"
+      - precise_types: "All interfaces use specific type signatures"
+      - comprehensive_docs: "File header explains complete editor architecture"
       - full_functionality: "Complete editor functionality preserved"
+      - storybook_working: "Side-by-side story demonstrates full functionality"
 
   task_6_storybook_integration:
-    description: "Update Storybook stories to showcase complete migration"
+    description: "Enhance and consolidate Storybook stories with comprehensive testing"
     commands:
-      - "Create comprehensive Storybook stories for all components"
-      - "Add side-by-side comparisons for each component"
-      - "Create full SegmentedCurbEditor comparison story"
+      - "Review and enhance existing individual component stories"
+      - "Create comprehensive ecosystem comparison story"
+      - "Add interaction testing and drag state demonstrations"
+      - "Document architectural differences and benefits"
     files:
-      - modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditorNew.stories.jsx
-      - modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentRendererNew.stories.jsx
-      - modules/right-of-way-editor/src/components/SegmentedCurbEditor/LabelLayerNew.stories.jsx
+      - modules/right-of-way-editor/src/stories/F114-EcosystemComparison.stories.jsx
+      - Enhancement of existing DividerLayerNew.stories.jsx, SegmentRendererNew.stories.jsx, LabelLayerNew.stories.jsx
     changes:
-      - "Create isolated stories for each new component"
-      - "Add full ecosystem comparison story"
-      - "Document interaction differences and improvements"
+      - "Create comprehensive ecosystem story showing all components together"
+      - "Enhance existing stories with better drag state testing"
+      - "Add documentation of Redux/channel architecture benefits"
+      - "Create interaction testing scenarios for mobile/desktop"
+      - "Document performance improvements and maintainability benefits"
     validation:
-      - stories_render: "All new stories render without errors"
-      - visual_parity: "Side-by-side comparisons show identical behavior"
-      - interaction_testing: "All interactions testable in Storybook"
+      - ecosystem_story: "Full ecosystem story renders both old and new versions"
+      - enhanced_stories: "Individual stories demonstrate all features"
+      - interaction_testing: "Drag states and channels testable via controls"
+      - comprehensive_docs: "Stories document architectural benefits"
+      - mobile_testing: "Touch interactions work in Storybook"
 
   task_7_integration_testing:
     description: "Test complete ecosystem integration and performance"
@@ -190,19 +236,46 @@ implementation_tasks:
       - performance_maintained: "No significant performance degradation"
       - mobile_compatible: "All touch interactions work on mobile"
 
+implementation_guidelines:
+  file_structure:
+    component_header: "Include comprehensive file header with component purpose, architecture overview, interface documentation, and channel coordination details"
+    type_signatures: "Use precise type signatures - DragDropHandler, not 'Object'; include function return types"
+    component_decomposition: "Split large components into individual sub-components (e.g., SegmentItem, DividerThumb, RulerItem)"
+    
+  redux_integration:
+    data_access: "Use useSelector for all Redux data access, no prop drilling"
+    selectors: "Import specific selectors (selectSegments, selectBlockfaceLength, etc.)"
+    no_prop_drilling: "Components connect directly to Redux, parent components don't pass Redux data as props"
+    
+  channel_coordination:
+    ui_state: "Use dragStateChannel for drag/UI state that needs cross-component coordination"
+    local_state: "Use React useState for component-local state (hover, expanded, etc.)"
+    channel_patterns: "Follow DividerThumb/SegmentItem patterns for channel integration"
+    
+  component_patterns:
+    radix_only: "Use Box from @radix-ui/themes, no HTML elements for styled components"
+    css_variables: "Use var(--radix-color-name) for theming, no hardcoded colors"
+    event_handlers: "Follow established patterns for drag handlers and event coordination"
+    
+  storybook_requirements:
+    side_by_side: "Every *New component needs side-by-side comparison story"
+    redux_provider: "Stories must wrap with Redux Provider and initialize test data"
+    real_data: "Use real Redux data via useTestData(), not mock props"
+    progress_tracking: "Include implementation progress section in stories"
+
 execution_status:
-  current_task: "task_2_segment_renderer_migration"
+  current_task: "task_3_label_layer_migration"
   completed_tasks: 
-    - task_1_divider_migration: "COMPLETED - DividerLayerNew.jsx functional with pure JSX thumb handles, React hover state, and Radix CSS variables"
+    - task_1_divider_migration: "COMPLETED - DividerLayerNew.jsx with pure JSX, Redux useSelector, channel coordination"
+    - task_2_segment_renderer_migration: "COMPLETED - SegmentRendererNew.jsx with individual components, comprehensive docs"
   pending_tasks:
-    - task_2_segment_renderer_migration: "NEXT"
-    - task_3_label_layer_migration: "PENDING"
+    - task_3_label_layer_migration: "NEXT"
     - task_4_drag_drop_handler_migration: "PENDING"
     - task_5_main_editor_migration: "PENDING"
     - task_6_storybook_integration: "PENDING"
     - task_7_integration_testing: "PENDING"
   failed_tasks: []
-  notes: "Task 1 completed successfully. DividerLayerNew replaces CSS pseudo-elements with pure JSX, uses React state for hover effects, and Radix CSS variables for theming. Ready for task 2."
+  notes: "Tasks 1-2 established architectural patterns: Redux useSelector, channel coordination, component decomposition, comprehensive documentation. All future tasks follow these patterns."
 
 validation_criteria:
   technical:
