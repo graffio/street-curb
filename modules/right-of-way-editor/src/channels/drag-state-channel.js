@@ -1,13 +1,14 @@
 import { createChannel } from '@qt/design-system'
 
 /**
- * Channel for coordinating drag state within SegmentedCurbEditor components
- * Domain-specific channel for editor drag interactions
+ * Channel for coordinating UI state within SegmentedCurbEditor components
+ * Domain-specific channel for editor interactions (drag, label editing, etc.)
  */
 const initialDragState = {
     isDragging: false,
     draggedIndex: null,
     dragType: null, // 'divider', 'segment', etc.
+    editingIndex: null, // Index of label currently being edited (dropdown open)
 }
 
 /**
