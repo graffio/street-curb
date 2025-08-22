@@ -1,4 +1,4 @@
-import { tokens, useChannel } from '@qt/design-system'
+import { useChannel } from '@qt/design-system'
 import { Box, DropdownMenu, Text } from '@radix-ui/themes'
 import React, { useState, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
@@ -117,7 +117,7 @@ const LabelItem = React.memo(
         const labelStyle = {
             position: 'absolute',
             // Remove top, left, width from here since useLayoutEffect handles them
-            backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor?.fallback || '#666',
+            backgroundColor: COLORS[segment.type] || '#666',
             color: 'white',
             padding: '3px 6px',
             borderRadius: '4px',
