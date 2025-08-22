@@ -1,1 +1,1 @@
-export { SegmentedCurbEditorNew as default } from './SegmentedCurbEditorNew.jsx'
+export { SegmentedCurbEditor as default } from './SegmentedCurbEditor.jsx'

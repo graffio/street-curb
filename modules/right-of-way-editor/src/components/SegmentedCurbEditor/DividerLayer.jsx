@@ -93,9 +93,9 @@ const DividerThumb = ({ index, handleDirectDragStart }) => {
  * Interactive dividers rendered as pure JSX elements using Radix CSS variables.
  * No external CSS dependencies - all styling inline via style props.
  *
- * @sig DividerLayerNew :: ({ handleDirectDragStart: Function }) -> JSXElement?
+ * @sig DividerLayer :: ({ handleDirectDragStart: Function }) -> JSXElement?
  */
-const DividerLayerNew = ({ handleDirectDragStart }) => {
+const DividerLayer = ({ handleDirectDragStart }) => {
     const segments = useSelector(selectSegments) || []
     const unknownRemaining = useSelector(selectUnknownRemaining) || 0
 
@@ -115,4 +115,4 @@ const DividerLayerNew = ({ handleDirectDragStart }) => {
     )
 }
 
-export { DividerLayerNew }
+export { DividerLayer }

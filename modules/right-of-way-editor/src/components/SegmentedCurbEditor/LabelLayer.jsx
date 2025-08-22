@@ -236,11 +236,11 @@ const createLabelItem = (labelPositions, segmentPositions, handleChangeType, han
  * - Applies minimal horizontal offsets to prevent overlap
  * - Predictable, deterministic results
  *
- * @sig LabelLayerNew :: ({ segments: [Segment], blockfaceLength: Number,
- *                          handleChangeType: (Number, String) -> Void,
- *                          handleAddLeft: Number -> Void }) -> JSXElement
+ * @sig LabelLayer :: ({ segments: [Segment], blockfaceLength: Number,
+ *                      handleChangeType: (Number, String) -> Void,
+ *                      handleAddLeft: Number -> Void }) -> JSXElement
  */
-const LabelLayerNew = ({ handleChangeType, handleAddLeft }) => {
+const LabelLayer = ({ handleChangeType, handleAddLeft }) => {
     const segments = useSelector(selectSegments) || []
     const blockfaceLength = useSelector(selectBlockfaceLength) || 0
 
@@ -265,4 +265,4 @@ const LabelLayerNew = ({ handleChangeType, handleAddLeft }) => {
     )
 }
 
-export { LabelLayerNew }
+export { LabelLayer }

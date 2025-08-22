@@ -102,9 +102,9 @@ const UnknownSpaceItem = () => {
  * Interactive segments rendered as pure JSX elements using Radix CSS variables.
  * No external CSS dependencies - all styling inline via style props.
  *
- * @sig SegmentRendererNew :: ({ dragDropHandler: DragDropHandler }) -> JSXElement
+ * @sig SegmentRenderer :: ({ dragDropHandler: DragDropHandler }) -> JSXElement
  */
-const SegmentRendererNew = ({ dragDropHandler }) => {
+const SegmentRenderer = ({ dragDropHandler }) => {
     const segments = useSelector(selectSegments) || []
 
     if (!segments || segments.length === 0) return null
@@ -119,4 +119,4 @@ const SegmentRendererNew = ({ dragDropHandler }) => {
     )
 }
 
-export { SegmentRendererNew }
+export { SegmentRenderer }

@@ -13,10 +13,10 @@ import {
 } from '../../store/curbStore.js'
 import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
 import { formatLength, roundToPrecision } from '../../utils/formatting.js'
-import { DividerLayerNew } from './DividerLayerNew.jsx'
+import { DividerLayer } from './DividerLayer.jsx'
 import { DragDropHandler } from './DragDropHandler.jsx'
-import { LabelLayerNew } from './LabelLayerNew.jsx'
-import { SegmentRendererNew } from './SegmentRendererNew.jsx'
+import { LabelLayer } from './LabelLayer.jsx'
+import { SegmentRenderer } from './SegmentRenderer.jsx'
 
 /**
  * SegmentedCurbEditorNew - Redesigned street curb configuration editor
@@ -34,9 +34,9 @@ import { SegmentRendererNew } from './SegmentRendererNew.jsx'
 
 /**
  * Main component for editing segmented curb configurations with drag and drop functionality (vertical orientation only)
- * @sig SegmentedCurbEditorNew :: ({ blockfaceLength?: Number, blockfaceId?: String }) -> JSXElement
+ * @sig SegmentedCurbEditor :: ({ blockfaceLength?: Number, blockfaceId?: String }) -> JSXElement
  */
-const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
+const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     /**
      * Creates handler for changing segment type through label dropdown
      * @sig buildChangeTypeHandler :: (Function, SetStateFn) -> (Number, String) -> Void
@@ -288,8 +288,8 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
                         touchAction: 'manipulation',
                     }}
                 >
-                    <SegmentRendererNew dragDropHandler={dragDropHandler} />
-                    <DividerLayerNew handleDirectDragStart={handleDirectDragStart} />
+                    <SegmentRenderer dragDropHandler={dragDropHandler} />
+                    <DividerLayer handleDirectDragStart={handleDirectDragStart} />
                     <DragPreview segmentDragState={segmentDragState} segments={segments} total={total} />
                 </Box>
 
@@ -303,7 +303,7 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
                         height: '400px',
                     }}
                 >
-                    <LabelLayerNew handleChangeType={handleChangeType} handleAddLeft={handleAddLeft} />
+                    <LabelLayer handleChangeType={handleChangeType} handleAddLeft={handleAddLeft} />
                 </Box>
 
                 <Box
@@ -332,4 +332,4 @@ const SegmentedCurbEditorNew = ({ blockfaceLength = 240 }) => {
     )
 }
 
-export { SegmentedCurbEditorNew }
+export { SegmentedCurbEditor }
