@@ -1,7 +1,6 @@
 import { MainTheme } from '@qt/design-system'
 import React from 'react'
-import { Provider , useDispatch } from 'react-redux'
-import { DividerLayer } from '../components/SegmentedCurbEditor/DividerLayer.jsx'
+import { Provider, useDispatch } from 'react-redux'
 import { DividerLayerNew } from '../components/SegmentedCurbEditor/DividerLayerNew.jsx'
 import { DragStateDecorator } from './DragStateDecorator.jsx'
 import store from '../store/index.js'
@@ -237,7 +236,7 @@ const mockTotal = 240
 const mockUnknownRemaining = 50
 
 const meta = {
-    title: 'TDD/DividerLayerNew',
+    title: 'Components/DividerLayerNew',
     component: DividerLayerNew,
     decorators: [DragStateDecorator],
     parameters: {

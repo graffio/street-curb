@@ -280,7 +280,7 @@ const SideBySideComparisonRender = args => (
 )
 
 const meta = {
-    title: 'TDD/LabelLayerNew',
+    title: 'Components/LabelLayerNew',
     component: LabelLayerNew,
     decorators: [DragStateDecorator],
     parameters: {

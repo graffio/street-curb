@@ -3,17 +3,17 @@ import React from 'react'
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { SegmentRenderer } from '../components/SegmentedCurbEditor/SegmentRenderer.jsx'
 import { SegmentRendererNew } from '../components/SegmentedCurbEditor/SegmentRendererNew.jsx'
-import { DragStateDecorator } from './DragStateDecorator.jsx'
-import store from '../store/index.js'
 import {
     addSegment,
     initializeSegments,
+    selectBlockfaceLength,
+    selectSegments,
+    selectUnknownRemaining,
     updateSegmentLength,
     updateSegmentType,
-    selectSegments,
-    selectBlockfaceLength,
-    selectUnknownRemaining,
 } from '../store/curbStore.js'
+import store from '../store/index.js'
+import { DragStateDecorator } from './DragStateDecorator.jsx'
 import '../index.css'
 
 /**
@@ -179,7 +179,7 @@ const SideBySideComparisonRender = args => (
 )
 
 const meta = {
-    title: 'TDD/SegmentRendererNew',
+    title: 'Components/SegmentRendererNew',
     component: SegmentRendererNew,
     decorators: [DragStateDecorator],
     parameters: {
