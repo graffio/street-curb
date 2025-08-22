@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Button, Dialog, Grid, Text } from '../../../design-system/src/index.js'
+import { Box, Button, Grid, Text } from '@radix-ui/themes'
+import { Dialog } from '../../../design-system/src/index.js'
 
 /**
  * NumberPad - Mobile-optimized number input component using Radix UI
