@@ -1,0 +1,32 @@
+spec_id: F114
+name: "SegmentedCurbEditor Pure JSX Migration"
+description: "Migrate entire SegmentedCurbEditor component ecosystem from CSS-dependent styling to pure JSX elements using Radix Theme components for maximum flexibility and future adaptability"
+version: 1.0
+created: 2025-01-15
+type: feature
+
+files:
+  - meta.yaml: "Specification metadata"
+  - llm-loader.md: "LLM bootstrap instructions"
+  - logic.yaml: "Implementation tasks and validation rules"
+  - tests.yaml: "Validation test cases"
+
+dependencies:
+  - A006-specification-standards
+  - "@radix-ui/themes"
+  - "Redux store (curbStore)"
+  - "Event utilities"
+
+scope:
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/DividerLayerNew.jsx
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentRendererNew.jsx
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/LabelLayerNew.jsx
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/SegmentedCurbEditorNew.jsx
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/DragDropHandlerNew.jsx
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/DividerLayer.stories.jsx
+  - modules/right-of-way-editor/src/components/SegmentedCurbEditor/label-positioning.js (no changes needed)
+
+rationale: |
+  The SegmentedCurbEditor components are actively developed with major changes expected 
+  (e.g., start-point editing, new interaction modes). Pure JSX approach maximizes 
+  flexibility for LLM-driven changes over CSS-dependent implementations.

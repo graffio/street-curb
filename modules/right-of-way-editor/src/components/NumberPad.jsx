@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, Button, Dialog, Grid, Text } from '../../../design-system/src/index.js'
-import {
-    dialogContent,
-    dialogDescription,
-    dialogOverlay,
-    dialogTitle,
-    functionButton,
-    inputContainer,
-    inputContainerError,
-    numberButton,
-} from './NumberPad.css.js'
+import { Box, Button, Grid, Text } from '@radix-ui/themes'
+import { Dialog } from '../../../design-system/src/index.js'
 
 /**
  * NumberPad - Mobile-optimized number input component using Radix UI
@@ -85,11 +76,26 @@ const processKeyPress = (key, currentInput, min, max, setInput) => {
  * Renders individual number pad button
  * @sig renderNumberButton :: (String, Function, String) -> JSXElement
  */
-const renderNumberButton = (key, onKeyPress) => (
-    <Button key={key} variant="soft" size="4" onClick={() => onKeyPress(key)} className={numberButton}>
-        {key}
-    </Button>
-)
+const renderNumberButton = (key, onKeyPress) => {
+    const numberButtonStyle = {
+        aspectRatio: '1',
+        fontSize: '20px',
+        fontWeight: '600',
+        height: '64px',
+        width: '64px',
+        minWidth: '64px',
+        backgroundColor: 'var(--accent-3)',
+        border: '1px solid var(--accent-6)',
+        borderRadius: 'var(--radius-2)',
+        margin: '3px',
+    }
+
+    return (
+        <Button key={key} variant="soft" size="4" onClick={() => onKeyPress(key)} style={numberButtonStyle}>
+            {key}
+        </Button>
+    )
+}
 
 /**
  * Renders function button (backspace, enter, cancel)
@@ -123,6 +129,18 @@ const renderFunctionButton = (key, onKeyPress, currentInput, isValid) => {
         return key
     }
 
+    const functionButtonStyle = {
+        aspectRatio: '1',
+        fontSize: '18px',
+        fontWeight: '600',
+        height: '64px',
+        width: '64px',
+        minWidth: '64px',
+        borderRadius: 'var(--radius-2)',
+        border: '1px solid var(--gray-6)',
+        margin: '3px',
+    }
+
     return (
         <Button
             key={key}
@@ -131,7 +149,7 @@ const renderFunctionButton = (key, onKeyPress, currentInput, isValid) => {
             size="4"
             onClick={() => onKeyPress(key)}
             disabled={disabled}
-            className={functionButton}
+            style={functionButtonStyle}
         >
             {getButtonText()}
         </Button>
@@ -143,6 +161,52 @@ const renderFunctionButton = (key, onKeyPress, currentInput, isValid) => {
  * @sig NumberPad :: ({ value: Number, min: Number, max: Number, onSave: Function, onCancel: Function, label: String }) -> JSXElement
  */
 const NumberPad = ({ value, min = 0, max = 999, onSave, onCancel, label = 'Value' }) => {
+    const dialogOverlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 10000 }
+
+    const dialogContentStyle = {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '236px',
+        maxHeight: '80vh',
+        padding: '16px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px rgba(22, 23, 24, 0.2)',
+        fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
+        zIndex: 10001,
+    }
+
+    const dialogTitleStyle = {
+        textAlign: 'center',
+        marginBottom: '8px',
+        fontSize: '18px',
+        fontWeight: '600',
+        color: '#374151',
+    }
+
+    const dialogDescriptionStyle = { display: 'none' }
+
+    const inputContainerStyle = {
+        backgroundColor: 'var(--gray-2)',
+        borderRadius: '12px',
+        border: '2px solid var(--gray-6)',
+        textAlign: 'center',
+        minHeight: '60px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+    }
+
+    const inputContainerErrorStyle = {
+        ...inputContainerStyle,
+        backgroundColor: 'var(--red-2)',
+        border: '2px solid var(--red-6)',
+    }
+
     const [input, setInput] = useState(value.toString())
     const { isValid, errorMessage } = validateInput(input, min, max)
 
@@ -172,31 +236,31 @@ const NumberPad = ({ value, min = 0, max = 999, onSave, onCancel, label = 'Value
     return (
         <Dialog.Root open={true}>
             <Dialog.Portal>
-                <Dialog.Overlay className={dialogOverlay} />
-                <Dialog.Content className={dialogContent}>
-                    <Dialog.Title className={dialogTitle}>{label}</Dialog.Title>
-                    <Dialog.Description className={dialogDescription}>
+                <Dialog.Overlay style={dialogOverlayStyle} />
+                <Dialog.Content style={dialogContentStyle}>
+                    <Dialog.Title style={dialogTitleStyle}>{label}</Dialog.Title>
+                    <Dialog.Description style={dialogDescriptionStyle}>
                         Number input dialog for {label}
                     </Dialog.Description>
                     <Box mb="3">
-                        <Box p="4" className={isValid ? inputContainer : `${inputContainer} ${inputContainerError}`}>
+                        <Box p="4" style={isValid ? inputContainerStyle : inputContainerErrorStyle}>
                             <Text size="8" weight="bold" color={isValid ? 'gray' : 'red'}>
                                 {input || '0'}
                             </Text>
                         </Box>
                         {!isValid && errorMessage && (
-                            <Text size="3" color="red" mt="2" className={errorMessage}>
+                            <Text size="3" color="red" mt="2">
                                 {errorMessage}
                             </Text>
                         )}
                     </Box>
 
                     <Grid columns="3" gap="2" mb="2">
-                        {['1', '2', '3'].map(key => renderNumberButton(key, handleKeyPress, input))}
-                        {['4', '5', '6'].map(key => renderNumberButton(key, handleKeyPress, input))}
-                        {['7', '8', '9'].map(key => renderNumberButton(key, handleKeyPress, input))}
-                        {renderNumberButton('0', handleKeyPress, input)}
-                        {renderNumberButton('.', handleKeyPress, input)}
+                        {['1', '2', '3'].map(key => renderNumberButton(key, handleKeyPress))}
+                        {['4', '5', '6'].map(key => renderNumberButton(key, handleKeyPress))}
+                        {['7', '8', '9'].map(key => renderNumberButton(key, handleKeyPress))}
+                        {renderNumberButton('0', handleKeyPress)}
+                        {renderNumberButton('.', handleKeyPress)}
                         {renderFunctionButton('backspace', handleKeyPress, input, isValid)}
                     </Grid>
 

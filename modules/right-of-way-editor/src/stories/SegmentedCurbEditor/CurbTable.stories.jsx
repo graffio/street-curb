@@ -1,7 +1,7 @@
 import { MainTheme } from '@qt/design-system'
 import { Provider } from 'react-redux'
 import { createStoreWithScenario } from '../../../test/test-store.js'
-import CurbTable from './CurbTable.jsx'
+import CurbTable from '../../components/CurbTable/CurbTable.jsx'
 
 /**
  * Storybook stories for CurbTable component
@@ -23,7 +23,7 @@ const StoryWrapper = ({ children, store }) => (
 // Uses unified test store architecture shared with Playwright and tap tests
 
 const meta = {
-    title: 'Components/CurbTable',
+    title: 'SegmentedCurbEditor/CurbTable',
     component: CurbTable,
     parameters: {
         layout: 'fullscreen',

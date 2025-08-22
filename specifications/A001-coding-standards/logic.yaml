@@ -20,8 +20,14 @@ core_principles:
     
   single_indentation_level:
     max_nesting: 1
-    exceptions: ["try/catch", "object literals", "jsx elements"]
+    exceptions: ["try/catch", "object literals", "jsx elements", "locally scoped functions"]
     enforcement: strict
+    locally_scoped_functions: 
+      definition: "Functions defined within their narrowest usage scope (component, function, or module)"
+      reasoning: "Creates new cognitive context, reduces parameter passing, doesn't count as nesting"
+      examples: 
+        allowed: "Event handlers inside React components, utilities inside functions that use them"
+        forbidden: "Functions extracted to arbitrary file-top locations with excessive parameters"
 
 formatting_rules:
   line_length: 
@@ -33,9 +39,13 @@ formatting_rules:
     count: 4
     
   function_placement:
-    inner_functions: "Top of nearest containing block"
+    narrowest_scope_principle: "Define functions in the narrowest scope that contains all their usages"
+    single_usage: "Define function inside the component/function that uses it"
+    multiple_usages_same_parent: "Define at parent scope level"
+    cross_component_usage: "Extract to module level"
     main_functions: "End of file"
     order: "Functions before variables before execution"
+    cognitive_load_priority: "Function placement should minimize context jumping and parameter passing"
     
   braces_and_parens:
     unnecessary_removal: "Required"

@@ -1,151 +1,268 @@
-import { useEffect, useRef, useState } from 'react'
+import { tokens, useChannel } from '@qt/design-system'
+import { Box, DropdownMenu, Text } from '@radix-ui/themes'
+import React, { useState, useLayoutEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
+import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
-import { tokens } from '@qt/design-system'
+import { selectBlockfaceLength, selectSegments } from '../../store/curbStore.js'
 import { formatLength } from '../../utils/formatting.js'
-import { calculateLabelPositions } from './label-positioning.js'
+import { calculateSimplePositions } from './label-positioning-simple.js'
 
 /**
- * LabelLayer - Interactive label overlay for segment configuration
- *
- * Renders smart-positioned labels with dropdown menus for type changing and segment addition.
+ * Individual menu item for segment type selection
+ * @sig TypeMenuItem :: ({ type: String, segment: Segment, isSelected: Boolean, onSelect: String -> Void }) -> JSXElement
  */
+const TypeMenuItem = ({ type, isSelected, onSelect }) => (
+    <DropdownMenu.Item
+        key={type}
+        onSelect={() => onSelect(type)}
+        style={{ backgroundColor: isSelected ? 'var(--accent-3)' : undefined }}
+    >
+        <Box
+            style={{
+                width: '12px',
+                height: '12px',
+                backgroundColor: COLORS[type],
+                borderRadius: '2px',
+                marginRight: '8px',
+            }}
+        />
+        <Text size="2">{type}</Text>
+    </DropdownMenu.Item>
+)
+
+// Layout constants
+const LABEL_VERTICAL_OFFSET = 12 // Half label height for centering
+
+// Reserved for future fixed-width implementation:
+// const calculateOptimalLabelWidth = () => {
+//     const longestSegmentType = Math.max(...Object.keys(COLORS).map(type => type.length))
+//     const maxReasonableLength = "399.9 ft".length
+//     const totalChars = longestSegmentType + 1 + maxReasonableLength
+//     const CHAR_WIDTH = 6.5, PADDING = 16
+//     return Math.ceil(totalChars * CHAR_WIDTH + PADDING)
+// }
 
 /**
- * Main LabelLayer component that renders all interactive labels
- * @sig LabelLayer :: (LabelLayerProps) -> JSXElement
- *     LabelLayerProps = {
- *         segments: [Segment],
- *         tickPoints: [Number],
- *         total: Number,
- *         effectiveBlockfaceLength: Number,
- *         editingIndex: Number?,
- *         setEditingIndex: Function,
- *         handleChangeType: Function,
- *         handleAddLeft: Function
- *     }
+ * Individual label dropdown menu component with Radix DropdownMenu primitives
+ * @sig LabelDropdownMenu :: React.memo(({ segment: Segment, index: Number, isOpen: Boolean,
+ *                                         onClose: () -> Void, handleChangeType: (Number, String) -> Void,
+ *                                         handleAddLeft: Number -> Void }) -> JSXElement)
  */
-const LabelLayer = ({
-    segments,
-    tickPoints,
-    total,
-    effectiveBlockfaceLength,
-    editingIndex,
-    setEditingIndex,
-    handleChangeType,
-    handleAddLeft,
-}) => {
-    /**
-     * Processes positioning calculation with DOM elements
-     * @sig processPositioning :: () -> Void
-     */
-    const processPositioning = () => {
-        const { positions, contentWidth } = calculateLabelPositions(labelRefs.current)
-        setSmartLabelPositions(positions)
-        setUniformLabelWidth(contentWidth)
+const LabelDropdownMenu = React.memo(({ segment, index, isOpen, onClose, handleChangeType, handleAddLeft }) => {
+    const segmentTypes = Object.keys(COLORS)
+
+    const handleTypeSelect = type => {
+        handleChangeType(index, type)
+        onClose()
     }
 
-    /**
-     * Updates label positions using collision detection
-     * @sig updateLabelPositions :: () -> () -> Void?
-     */
-    const updateLabelPositions = () => {
-        const timeoutId = setTimeout(processPositioning, 0)
-        return () => clearTimeout(timeoutId)
+    const handleAddLeftClick = () => {
+        handleAddLeft(index)
+        onClose()
     }
 
-    /**
-     * Renders individual label with dropdown functionality
-     * @sig renderLabel :: (Segment, Number) -> JSXElement
-     */
-    const renderLabel = (segment, index) => {
-        const handleLabelClick = e => {
-            e.stopPropagation()
-            setEditingIndex(editingIndex === index ? null : index)
-        }
+    return (
+        <DropdownMenu.Root open={isOpen} onOpenChange={open => !open && onClose()}>
+            <DropdownMenu.Trigger asChild>
+                <Box />
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content size="2">
+                <DropdownMenu.Item onSelect={handleAddLeftClick}>
+                    <Text size="2">Add Left</Text>
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator />
+                {segmentTypes.map(type => (
+                    <TypeMenuItem
+                        key={type}
+                        type={type}
+                        isSelected={segment.type === type}
+                        onSelect={handleTypeSelect}
+                    />
+                ))}
+            </DropdownMenu.Content>
+        </DropdownMenu.Root>
+    )
+})
 
-        const handleTypeClick = (e, type) => {
-            e.stopPropagation()
-            handleChangeType(index, type)
-        }
+/**
+ * Individual label component with drag interaction support and hover state
+ * @sig LabelItem :: React.memo(React.forwardRef(({ segment: Segment, index: Number,
+ *                                                 position: { top: Number, left: Number },
+ *                                                 width: Number, contentWidth: Number,
+ *                                                 handleChangeType: (Number, String) -> Void,
+ *                                                 handleAddLeft: Number -> Void }) -> JSXElement))
+ */
+const LabelItem = React.memo(
+    React.forwardRef(({ segment, index, position, width, contentWidth, handleChangeType, handleAddLeft }, ref) => {
+        const handleLabelClick = () => setDragState({ editingIndex: isEditing ? null : index })
+        const handleDropdownClose = () => setDragState({ editingIndex: null })
 
-        const handleAddLeftClick = e => {
-            e.stopPropagation()
-            handleAddLeft(index)
-        }
+        const [isHovered, setIsHovered] = useState(false)
+        const [dragState, setDragState] = useChannel(dragStateChannel, ['editingIndex'])
+        const labelRef = useRef(null)
 
-        /**
-         * Renders dropdown type option
-         * @sig renderTypeOption :: String -> JSXElement
-         */
-        const renderTypeOption = type => (
-            <div
-                key={type}
-                className="dropdown-item"
-                style={{ backgroundColor: COLORS[type] }}
-                onClick={e => handleTypeClick(e, type)}
-            >
-                {type}
-            </div>
-        )
+        const isEditing = dragState.editingIndex === index
+        const effectiveWidth = Math.max(width, 80) // Component enforces minimum width
 
-        const mid = tickPoints[index] + segment.length / 2
-        const positionPct = (mid / total) * 100
-        const feet = formatLength((segment.length / total) * effectiveBlockfaceLength)
+        // Synchronous position updates using useLayoutEffect for instant responsiveness
+        useLayoutEffect(() => {
+            if (labelRef.current) {
+                labelRef.current.style.top = `calc(${position.top}% - ${LABEL_VERTICAL_OFFSET}px)`
+                labelRef.current.style.left = `${position.left}px`
+                labelRef.current.style.width = `${effectiveWidth}px`
+            }
+        }, [position.top, position.left, effectiveWidth])
 
         const labelStyle = {
-            backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback,
-            top: `${positionPct}%`,
-            left: `${smartLabelPositions[index] || 0}px`,
-            transform: 'translateY(-50%)',
-            width: uniformLabelWidth > 0 ? `${uniformLabelWidth}px` : tokens.SegmentedCurbEditor.widthFallback,
+            position: 'absolute',
+            // Remove top, left, width from here since useLayoutEffect handles them
+            backgroundColor: COLORS[segment.type] || tokens.SegmentedCurbEditor?.fallback || '#666',
+            color: 'white',
+            padding: '3px 6px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            border: isHovered ? '2px solid var(--accent-8)' : '1px solid rgba(0,0,0,0.2)',
+            boxShadow: isHovered ? '0 2px 8px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.2)',
+            transition: 'all 0.15s ease-out',
+            transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+            zIndex: isHovered || isEditing ? 1000 : 100,
+            pointerEvents: 'auto',
+            whiteSpace: 'nowrap', // Prevent text wrapping
         }
 
-        const labelContent =
-            editingIndex === index ? (
-                <>
-                    <span>
-                        {segment.type} {feet}
-                    </span>
-                    <div className="dropdown">
-                        {Object.keys(COLORS).map(renderTypeOption)}
-                        <div
-                            className="dropdown-item"
-                            style={{
-                                backgroundColor: tokens.SegmentedCurbEditor.addButton,
-                                textAlign: tokens.SegmentedCurbEditor.textAlign,
-                                marginTop: tokens.SegmentedCurbEditor.addButtonMargin,
-                            }}
-                            onClick={handleAddLeftClick}
-                        >
-                            + Add left
-                        </div>
-                    </div>
-                </>
-            ) : (
-                `${segment.type} ${feet}`
-            )
-
         return (
-            <div
-                key={`label-${segment.id}`}
-                className="floating-label"
-                style={labelStyle}
-                ref={el => (labelRefs.current[index] = el)}
-                onClick={handleLabelClick}
-            >
-                {labelContent}
-            </div>
+            <>
+                <Box
+                    ref={labelRef}
+                    style={labelStyle}
+                    onClick={handleLabelClick}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                >
+                    {segment.type} {formatLength(segment.length)}
+                </Box>
+
+                {isEditing && (
+                    <LabelDropdownMenu
+                        segment={segment}
+                        index={index}
+                        isOpen={isEditing}
+                        onClose={handleDropdownClose}
+                        handleChangeType={handleChangeType}
+                        handleAddLeft={handleAddLeft}
+                    />
+                )}
+            </>
         )
-    }
+    }),
+)
 
-    const labelRefs = useRef([])
-    const [smartLabelPositions, setSmartLabelPositions] = useState([])
-    const [uniformLabelWidth, setUniformLabelWidth] = useState(0)
+/**
+ * Calculates label positions using memoized computation
+ * @sig calculateMemoizedPositions :: ([Segment], Number, Number?) -> LabelPositions
+ */
+const calculateMemoizedPositions = (segments, blockfaceLength) =>
+    !segments.length || !blockfaceLength
+        ? { positions: [], uniformWidth: 0, contentWidth: 0 }
+        : calculateSimplePositions(segments, blockfaceLength)
 
-    // Update positions when segments change
-    useEffect(updateLabelPositions, [segments, tickPoints, total])
+/**
+ * Calculates vertical positions for segment midpoints
+ * @sig calculateSegmentPositions :: ([Segment], Number) -> [Number]
+ */
+const calculateSegmentPositions = (segments, blockfaceLength) => {
+    if (!blockfaceLength) return []
 
-    return <div className="label-layer">{segments.map(renderLabel)}</div>
+    let currentPosition = 0
+    return segments.map(segment => {
+        // Calculate midpoint like original: tickPoints[index] + segment.length / 2
+        const midpoint = currentPosition + segment.length / 2
+        const position = (midpoint / blockfaceLength) * 100
+        currentPosition += segment.length
+        return position
+    })
+}
+
+/**
+ * Creates label item element for rendering
+ * @sig createLabelItem :: (LabelPositions, [Number], Function, Function) ->
+ *                         (Segment, Number) -> JSXElement
+ */
+const createLabelItem = (labelPositions, segmentPositions, handleChangeType, handleAddLeft) => (segment, index) => {
+    const segmentTop = segmentPositions[index] || 0
+
+    return (
+        <LabelItem
+            key={segment.id}
+            segment={segment}
+            index={index}
+            position={{ top: segmentTop, left: labelPositions.positions[index] || 0 }}
+            width={labelPositions.uniformWidth || 80}
+            contentWidth={labelPositions.contentWidth || 60}
+            handleChangeType={handleChangeType}
+            handleAddLeft={handleAddLeft}
+        />
+    )
+}
+
+/**
+ * LabelLayerNew - Pure JSX label renderer with optimized performance
+ *
+ * Uses Radix Box components and receives data via props for optimal performance.
+ * Coordinates label UI state via channels instead of prop drilling.
+ *
+ * Architecture:
+ * - LabelLayerNew: Main container, receives segments/blockfaceLength as props
+ * - LabelItem: Individual label components with channel integration and hover state
+ * - LabelDropdownMenu: Radix-based dropdown for type selection and actions
+ *
+ * Performance Optimization:
+ * - Receives segments and blockfaceLength as props (no Redux selectors)
+ * - Parent component handles local drag state for smooth updates
+ * - Labels render immediately when parent state changes
+ *
+ * Channel Coordination:
+ * Uses dragStateChannel for UI state coordination:
+ * - editingIndex: Index of label currently being edited (dropdown open)
+ * - isDragging/draggedIndex: Coordinated with other component drag states
+ *
+ * Pure Mathematical Positioning:
+ * - Uses mathematical collision detection (no DOM dependencies)
+ * - Calculates label positions at segment midpoints
+ * - Applies minimal horizontal offsets to prevent overlap
+ * - Predictable, deterministic results
+ *
+ * @sig LabelLayer :: ({ segments: [Segment], blockfaceLength: Number,
+ *                      handleChangeType: (Number, String) -> Void,
+ *                      handleAddLeft: Number -> Void }) -> JSXElement
+ */
+const LabelLayer = ({ handleChangeType, handleAddLeft }) => {
+    const segments = useSelector(selectSegments) || []
+    const blockfaceLength = useSelector(selectBlockfaceLength) || 0
+
+    // Calculate label positions using pure math - no DOM dependencies
+    const labelPositions = React.useMemo(
+        () => calculateMemoizedPositions(segments, blockfaceLength),
+        [segments, blockfaceLength],
+    )
+
+    const segmentPositions = React.useMemo(
+        () => calculateSegmentPositions(segments, blockfaceLength),
+        [segments, blockfaceLength],
+    )
+
+    if (!segments || segments.length === 0) return null
+
+    return (
+        /* Allow clicks to pass through to segments */
+        <Box position="relative" width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+            {segments.map(createLabelItem(labelPositions, segmentPositions, handleChangeType, handleAddLeft))}
+        </Box>
+    )
 }
 
 export { LabelLayer }

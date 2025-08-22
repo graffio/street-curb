@@ -3,7 +3,9 @@ import along from '@turf/along'
 import length from '@turf/length'
 import lineSlice from '@turf/line-slice'
 import { useEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
 import { COLORS } from '../constants.js'
+import { selectSegments } from '../store/curbStore.js'
 
 /**
  * MapboxMap - Interactive map component displaying San Francisco blockfaces
@@ -329,14 +331,11 @@ const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockf
 
 /**
  * MapboxMap component - renders interactive map with blockface highlighting
- * @sig MapboxMap :: { accessToken: String, onBlockfaceSelect?: Function, selectedBlockface?: Object, currentSegments?: [Segment] } -> ReactElement
+ * @sig MapboxMap :: { accessToken: String, onBlockfaceSelect?: Function, selectedBlockface?: Object } -> ReactElement
  */
-const MapboxMap = ({
-    accessToken = 'your-mapbox-token-here',
-    onBlockfaceSelect,
-    selectedBlockface,
-    currentSegments,
-}) => {
+const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, selectedBlockface }) => {
+    const currentSegments = useSelector(selectSegments)
+
     const mapContainer = useRef(null)
     const map = useRef(null)
     const onBlockfaceSelectRef = useRef(onBlockfaceSelect)
