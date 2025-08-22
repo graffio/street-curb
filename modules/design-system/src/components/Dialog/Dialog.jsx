@@ -13,15 +13,21 @@ import { forwardRef, useEffect, useState } from 'react'
  * Dialog Title component
  * @sig Title :: ({ children: ReactNode, className?: String, style?: Object }) -> JSXElement
  */
-const Title = ({ children, className, style, ...props }) => (
-    <RadixDialog.Title
-        className={className}
-        style={{ fontSize: '18px', fontWeight: '600', color: '#374151', marginBottom: '16px', ...style }}
-        {...props}
-    >
-        {children}
-    </RadixDialog.Title>
-)
+const Title = ({ children, className, style, ...props }) => {
+    const titleStyle = {
+        fontSize: 'var(--font-size-4)',
+        fontWeight: '600',
+        color: 'var(--gray-12)',
+        marginBottom: 'var(--space-3)',
+        ...style,
+    }
+
+    return (
+        <RadixDialog.Title className={className} style={titleStyle} {...props}>
+            {children}
+        </RadixDialog.Title>
+    )
+}
 
 /**
  * Dialog Description component
@@ -111,46 +117,40 @@ const Trigger = ({ children, ...props }) => <RadixDialog.Trigger {...props}>{chi
  * Dialog Overlay component
  * @sig Overlay :: ({ className?: String, style?: Object }) -> JSXElement
  */
-const Overlay = forwardRef(({ className, style, ...props }, ref) => (
-    <RadixDialog.Overlay
-        ref={ref}
-        className={className}
-        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 10000, ...style }}
-        {...props}
-    />
-))
+const Overlay = forwardRef(({ className, style, ...props }, ref) => {
+    const overlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'var(--black-a-8)', zIndex: 10000, ...style }
+
+    return <RadixDialog.Overlay ref={ref} className={className} style={overlayStyle} {...props} />
+})
 Overlay.displayName = 'Dialog.Overlay'
 
 /**
  * Dialog Content component with automatic centering
  * @sig Content :: ({ children: ReactNode, className?: String, style?: Object, maxWidth?: String }) -> JSXElement
  */
-const Content = forwardRef(({ children, className, style, maxWidth = '90vw', ...props }, ref) => (
-    <RadixDialog.Content
-        ref={ref}
-        className={className}
-        style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            maxWidth,
-            maxHeight: '90vh',
-            padding: '16px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px rgba(22, 23, 24, 0.2)',
-            fontFamily:
-                '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, ' +
-                '"Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
-            zIndex: 10001,
-            ...style,
-        }}
-        {...props}
-    >
-        {children}
-    </RadixDialog.Content>
-))
+const Content = forwardRef(({ children, className, style, maxWidth = '90vw', ...props }, ref) => {
+    const contentStyle = {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        maxWidth,
+        maxHeight: '90vh',
+        padding: 'var(--space-4)',
+        backgroundColor: 'var(--color-panel-solid)',
+        borderRadius: 'var(--radius-4)',
+        boxShadow: 'var(--shadow-6)',
+        fontFamily: 'var(--default-font-family)',
+        zIndex: 10001,
+        ...style,
+    }
+
+    return (
+        <RadixDialog.Content ref={ref} className={className} style={contentStyle} {...props}>
+            {children}
+        </RadixDialog.Content>
+    )
+})
 Content.displayName = 'Dialog.Content'
 
 const Dialog = { Root, Portal, Trigger, Overlay, Content, Title, Description, Close }

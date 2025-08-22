@@ -1,4 +1,4 @@
-import { tokens, useChannel } from '@qt/design-system'
+import { useChannel } from '@qt/design-system'
 import { Box } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
@@ -46,7 +46,7 @@ const SegmentItem = ({ segment, index, dragDropHandler }) => {
     const isDragging = dragState.isDragging && dragState.dragType === 'segment' && dragState.draggedIndex === index
 
     const size = (segment.length / total) * 100
-    const backgroundColor = COLORS[segment.type] || tokens.SegmentedCurbEditor.fallback
+    const backgroundColor = COLORS[segment.type] || '#666'
 
     // Apply drag visual effects
     const style = {
@@ -86,8 +86,8 @@ const UnknownSpaceItem = () => {
 
     const size = (unknownRemaining / total) * 100
     const style = {
-        backgroundColor: tokens.SegmentedCurbEditor.unknownBg,
-        border: `${tokens.SegmentedCurbEditor.borderWidth} dashed ${tokens.SegmentedCurbEditor.unknownBorder}`,
+        backgroundColor: '#f5f5f5',
+        border: '1px dashed #ccc',
         boxSizing: 'border-box',
         height: `${size}%`,
         width: '100%',
