@@ -1,7 +1,7 @@
 import { MainTheme } from '@qt/design-system'
 import { Provider } from 'react-redux'
-import { createStoreWithScenario } from '../../../test/test-store.js'
-import CurbTable from './CurbTable.jsx'
+import { createStoreWithScenario } from '../../test/test-store.js'
+import CurbTable from '../components/CurbTable/CurbTable.jsx'
 
 /**
  * Storybook stories for CurbTable component
