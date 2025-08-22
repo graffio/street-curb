@@ -7,8 +7,8 @@ import NumberPad from '../components/NumberPad.jsx'
  * during field data collection, replacing the device keyboard.
  */
 
-export default {
-    title: 'Components/NumberPad',
+const meta = {
+    title: 'SegmentedCurbEditor/NumberPad',
     component: NumberPad,
     parameters: { layout: 'centered', viewport: { defaultViewport: 'mobile1' } },
     argTypes: {
@@ -24,32 +24,32 @@ export default {
 /**
  * Basic NumberPad with default value
  */
-export const Basic = { args: { value: 20, min: 1, max: 240, label: 'Length' } }
+const Basic = { args: { value: 20, min: 1, max: 240, label: 'Length' } }
 
 /**
  * NumberPad with decimal value
  */
-export const DecimalValue = { args: { value: 12.5, min: 0, max: 100, label: 'Start' } }
+const DecimalValue = { args: { value: 12.5, min: 0, max: 100, label: 'Start' } }
 
 /**
  * NumberPad with zero value
  */
-export const ZeroValue = { args: { value: 0, min: 0, max: 240, label: 'Start' } }
+const ZeroValue = { args: { value: 0, min: 0, max: 240, label: 'Start' } }
 
 /**
  * NumberPad with high value
  */
-export const HighValue = { args: { value: 200, min: 1, max: 240, label: 'Length' } }
+const HighValue = { args: { value: 200, min: 1, max: 240, label: 'Length' } }
 
 /**
  * NumberPad with tight constraints
  */
-export const TightConstraints = { args: { value: 5, min: 5, max: 10, label: 'Length' } }
+const TightConstraints = { args: { value: 5, min: 5, max: 10, label: 'Length' } }
 
 /**
  * NumberPad for length input (typical use case)
  */
-export const LengthInput = {
+const LengthInput = {
     args: { value: 20, min: 1, max: 240, label: 'Length' },
     parameters: { docs: { description: { story: 'Typical use case for editing segment length in CurbTable' } } },
 }
@@ -57,7 +57,7 @@ export const LengthInput = {
 /**
  * NumberPad for start position input
  */
-export const StartInput = {
+const StartInput = {
     args: { value: 0, min: 0, max: 240, label: 'Start' },
     parameters: { docs: { description: { story: 'Use case for editing segment start position in CurbTable' } } },
 }
@@ -65,7 +65,7 @@ export const StartInput = {
 /**
  * Mobile viewport testing - iPhone 14 mini
  */
-export const MobileViewport = {
+const MobileViewport = {
     args: { value: 15, min: 1, max: 240, label: 'Length' },
     parameters: {
         viewport: { defaultViewport: 'mobile1' },
@@ -76,7 +76,7 @@ export const MobileViewport = {
 /**
  * Tablet viewport testing
  */
-export const TabletViewport = {
+const TabletViewport = {
     args: { value: 25, min: 1, max: 240, label: 'Length' },
     parameters: { viewport: { defaultViewport: 'tablet' } },
 }
@@ -84,7 +84,7 @@ export const TabletViewport = {
 /**
  * Desktop viewport testing
  */
-export const DesktopViewport = {
+const DesktopViewport = {
     args: { value: 30, min: 1, max: 240, label: 'Length' },
     parameters: { viewport: { defaultViewport: 'desktop' } },
 }
@@ -92,7 +92,7 @@ export const DesktopViewport = {
 /**
  * Dark mode testing
  */
-export const DarkMode = {
+const DarkMode = {
     args: { value: 18, min: 1, max: 240, label: 'Length' },
     parameters: { backgrounds: { default: 'dark' } },
 }
@@ -100,7 +100,7 @@ export const DarkMode = {
 /**
  * Integration test - within CurbTable context
  */
-export const InCurbTableContext = {
+const InCurbTableContext = {
     args: { value: 20, min: 1, max: 240, label: 'Length' },
     decorators: [
         Story => (
@@ -189,4 +189,20 @@ export const InCurbTableContext = {
         ),
     ],
     parameters: { docs: { description: { story: 'NumberPad shown in context of CurbTable interface' } } },
+}
+
+export {
+    meta as default,
+    Basic,
+    DarkMode,
+    DecimalValue,
+    DesktopViewport,
+    HighValue,
+    InCurbTableContext,
+    LengthInput,
+    MobileViewport,
+    StartInput,
+    TabletViewport,
+    TightConstraints,
+    ZeroValue,
 }
