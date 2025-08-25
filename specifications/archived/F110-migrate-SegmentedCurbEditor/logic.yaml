@@ -8,7 +8,7 @@ migration:
     - label-positioning.js
 
   design_system_integration:
-    package: "@qt/design-system"
+    package: "@graffio/design-system"
     dependencies:
       - "@radix-ui/themes"
       - "@vanilla-extract/css"
@@ -46,17 +46,17 @@ tasks:
   task_1_1_add_design_system_dependency:
     description: "Add design system package to right-of-way-editor"
     commands:
-      - "yarn add @qt/design-system"
+      - "yarn add @graffio/design-system"
     location: "modules/right-of-way-editor"
     validation:
-      - package_appears_in_package_json: "Check @qt/design-system in dependencies"
-      - import_works: "Test import from @qt/design-system"
+      - package_appears_in_package_json: "Check @graffio/design-system in dependencies"
+      - import_works: "Test import from @graffio/design-system"
 
   task_1_2_wrap_with_main_theme:
     description: "Wrap application with MainTheme component"
     files:
       - target: "App.jsx or main component that renders SegmentedCurbEditor"
-      - import: "import { MainTheme } from '@qt/design-system'"
+      - import: "import { MainTheme } from '@graffio/design-system'"
       - wrap: "<MainTheme><SegmentedCurbEditor /></MainTheme>"
     validation:
       - main_theme_wrapper: "MainTheme component wraps SegmentedCurbEditor"
@@ -88,7 +88,7 @@ tasks:
     validation:
       - file_exists: "SegmentedCurbEditor.css.js exists"
       - vanilla_extract_imports: "style and recipe imports present"
-      - theme_tokens_used: "All styles use tokens from @qt/design-system"
+      - theme_tokens_used: "All styles use tokens from @graffio/design-system"
       - all_classes_defined: "container, segment, divider, label, ruler, controls defined"
 
   task_2_2_migrate_segment_renderer:
@@ -102,7 +102,7 @@ tasks:
     validation:
       - no_inline_styles: "No style={{}} objects in component"
       - vanilla_extract_used: "segment({ type, isDragging }) pattern used"
-      - radix_box_integrated: "Box component from @qt/design-system used"
+      - radix_box_integrated: "Box component from @graffio/design-system used"
       - drag_handlers_preserved: "onDragStart, onDrop, onMouseDown handlers intact"
       - visual_consistency: "Segments render with same colors and sizes"
 
@@ -117,7 +117,7 @@ tasks:
     validation:
       - no_inline_styles: "No style={{}} objects in component"
       - vanilla_extract_used: "divider and dividerHandle classes used"
-      - radix_box_integrated: "Box component from @qt/design-system used"
+      - radix_box_integrated: "Box component from @graffio/design-system used"
       - drag_handlers_preserved: "onMouseDown, onTouchStart handlers intact"
       - divider_positioning: "Dividers positioned correctly between segments"
 
@@ -132,7 +132,7 @@ tasks:
     validation:
       - no_inline_styles: "No style={{}} objects in component"
       - vanilla_extract_used: "label class used"
-      - radix_components_integrated: "Box and Select from @qt/design-system used"
+      - radix_components_integrated: "Box and Select from @graffio/design-system used"
       - dropdown_functionality: "Type changing dropdown works correctly"
       - label_positioning: "Labels positioned correctly on segments"
 
@@ -147,7 +147,7 @@ tasks:
       - preserve_event_handlers: "Maintain all drag/drop functionality"
     validation:
       - container_styles_migrated: "container class from Vanilla Extract used"
-      - radix_components_used: "Box, Button, Text from @qt/design-system used"
+      - radix_components_used: "Box, Button, Text from @graffio/design-system used"
       - redux_integration_preserved: "useDispatch, useSelector hooks intact"
       - drag_drop_functionality: "All drag/drop operations work correctly"
       - segment_resizing: "Divider dragging resizes segments correctly"
@@ -162,7 +162,7 @@ tasks:
       - integrate_radix_text: "Use Text component for tick labels"
     validation:
       - no_inline_tick_styles: "No style={{}} objects in tick rendering"
-      - radix_text_used: "Text component from @qt/design-system used"
+      - radix_text_used: "Text component from @graffio/design-system used"
       - tick_positioning: "Ticks positioned correctly on ruler"
 
   task_3_3_migrate_controls_component:
@@ -175,7 +175,7 @@ tasks:
       - preserve_button_functionality: "Maintain add segment button functionality"
     validation:
       - no_inline_controls_styles: "No style={{}} objects in controls"
-      - radix_components_used: "Box, Button, Text from @qt/design-system used"
+      - radix_components_used: "Box, Button, Text from @graffio/design-system used"
       - button_functionality: "Add segment buttons work correctly"
 
   task_4_1_optimize_theme_usage:

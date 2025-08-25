@@ -6,7 +6,7 @@ migration:
     - LabelLayer.jsx
 
   design_system_integration:
-    package: "@qt/design-system"
+    package: "@graffio/design-system"
     imports:
       - tokens
     scope: "Only replace hardcoded values with tokens"

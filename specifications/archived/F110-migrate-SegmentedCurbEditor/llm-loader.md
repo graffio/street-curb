@@ -1,6 +1,6 @@
 # LLM Loader for F110 – Migrate SegmentedCurbEditor to Design System
 
-This specification defines the safe migration of SegmentedCurbEditor components from inline styles to the @qt/design-system using Radix Themes and Vanilla Extract.
+This specification defines the safe migration of SegmentedCurbEditor components from inline styles to the @graffio/design-system using Radix Themes and Vanilla Extract.
 
 ## How to Use This Specification
 1. Load all specification files
@@ -24,7 +24,7 @@ This specification defines the safe migration of SegmentedCurbEditor components 
 
 ## Context
 - Source: SegmentedCurbEditor components in modules/right-of-way-editor/src/components/SegmentedCurbEditor/
-- Target: Design system integration with @qt/design-system
+- Target: Design system integration with @graffio/design-system
 - Approach: Task-level migration with rollback capability
 - Coding Standards: Must follow A001 functional JavaScript patterns
 
