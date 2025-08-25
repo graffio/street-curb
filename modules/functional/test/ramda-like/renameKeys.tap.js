@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { renameKeys } from '../../index.js'
 
 const o = { a: 1, b: 2 }

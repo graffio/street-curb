@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import * as F from '../../index.js'
 
 tap.describeTests({

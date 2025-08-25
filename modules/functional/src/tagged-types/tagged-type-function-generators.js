@@ -8,7 +8,7 @@
  * Generating Type Checks in the constructors
  * ==========================================
  *
- * To reduce the likelihood of type errors, we generate runtime checks in the constructors. For example:
+ * To reduce the likelihood of type errors, we generate types-runtime checks in the constructors. For example:
  *
  *   generateTypeConstructor('Circle', { centre: 'Coord', radius: 'Number' }) =>
  *
@@ -429,7 +429,6 @@ const generateFrom = (protoName, typeName, fullName, fields) => {
         return ${typeName}(${params.join(', ')})
     })`
 }
- 
 
 /*
  * Usually o.toString(), but adds special handling for arrays and strings to make them more legible

@@ -1,4 +1,4 @@
-import { useChannel } from '@qt/design-system'
+import { useChannel } from '@graffio/design-system'
 import { Box } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'

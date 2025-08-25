@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { nonNilValues } from '../../index.js'
 
 const o = { a: 'hello', b: undefined, c: null }

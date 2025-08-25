@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { nth } from '../../index.js'
 
 const l = ['foo', 'bar', 'baz', 'quux']

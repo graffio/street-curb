@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { asyncMapObject } from '../../index.js'
 
 const f = async x => Promise.resolve(2 * x)

@@ -1,4 +1,4 @@
-# @qt/functional #
+# @graffio/functional #
 
 This package defines generic functions for use elsewhere. They are all "functional" in the sense that
 their parameters provide the entire context of each function and they don't mutate their inputs

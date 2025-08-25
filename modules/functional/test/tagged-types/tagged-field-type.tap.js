@@ -1,4 +1,4 @@
-import { tap } from '@Qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import TypeDefinition from '../../src/tagged-types/tagged-field-type.js'
 import Generator from '../../src/tagged-types/tagged-type-function-generators.js'
 

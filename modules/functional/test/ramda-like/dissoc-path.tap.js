@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import dissocPath from '../../src/ramda-like/dissoc-path.js'
 
 const l3 = { a3: 'a3' }

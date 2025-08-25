@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { pluck } from '../../index.js'
 
 const a1 = [{ a: 1 }, { a: 2 }]

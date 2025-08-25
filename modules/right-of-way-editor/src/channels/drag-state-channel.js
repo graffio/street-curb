@@ -1,4 +1,4 @@
-import { createChannel } from '@qt/design-system'
+import { createChannel } from '@graffio/design-system'
 
 /**
  * Channel for coordinating UI state within SegmentedCurbEditor components

@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import splitEvery from '../../src/ramda-like/split-every.js'
 
 tap.describeTests({

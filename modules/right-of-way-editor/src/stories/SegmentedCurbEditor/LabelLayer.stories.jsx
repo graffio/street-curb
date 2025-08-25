@@ -1,4 +1,4 @@
-import { MainTheme } from '@qt/design-system'
+import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { LabelLayer } from '../../components/SegmentedCurbEditor/LabelLayer.jsx'

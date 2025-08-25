@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import diffObjects from '../../src/ramda-like/diff-objects.js'
 
 const a = { a: 1, b: { c: 5, d: [1, 2, 3], e: { f: 6 } } }

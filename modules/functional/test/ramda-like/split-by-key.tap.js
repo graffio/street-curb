@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { splitByKey } from '../../index.js'
 
 const o = { a: 'a', b: 'b', c: 'c' }

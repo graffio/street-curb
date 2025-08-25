@@ -7,7 +7,8 @@
         "style-validator": "./src/cli.js"
     },
     "scripts": {
-        "tap": "TAP_DISABLE_COVERAGE=1 tap test/*.tap.js -R tap | tap-mocha-reporter spec",
+        "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh",
         "validate-style": "node src/cli.js"
     },
     "devDependencies": {

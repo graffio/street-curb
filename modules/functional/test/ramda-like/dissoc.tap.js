@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import dissoc from '../../src/ramda-like/dissoc.js'
 
 const o = { a: 1, b: 2, c: 3 }

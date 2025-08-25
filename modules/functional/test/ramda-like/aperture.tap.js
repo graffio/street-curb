@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { aperture } from '../../index.js'
 
 const as = [1, 2, 3, 4, 5]

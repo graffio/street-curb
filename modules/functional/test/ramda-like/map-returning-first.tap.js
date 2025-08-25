@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import mapReturningFirst from '../../src/ramda-like/map-returning-first.js'
 
 tap.describeTests({
