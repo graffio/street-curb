@@ -1,0 +1,164 @@
+spec_id: F115
+name: Redux Architecture Refactoring with Tagged Types
+version: 1.0
+
+# Data Model Decisions
+data_model:
+  domain_entities:
+    segment:
+      type: tagged_type
+      fields:
+        use: String  # 'parking', 'curb_cut', 'loading', etc.
+        length: Number  # in feet, positive values only
+      notes: "No position field - array index is position, no IDs - not independent entities"
+    
+    blockface:
+      type: tagged_type  
+      fields:
+        id: String  # unique identifier
+        geometry: Object  # GeoJSON LineString
+        streetName: String
+        segments: Array  # Array of Segment tagged types
+      notes: "Top-level entity stored in LookupTable in Redux"
+
+  storage_patterns:
+    redux_state:
+      blockfaces: "LookupTable([Blockface], Blockface) - for multi-blockface editing"
+      current_blockface_id: "String - references active blockface being edited"
+      computed_selectors: "unknownRemaining computed from blockface length - segment totals"
+    
+    firestore_documents:
+      pattern: "Single document per blockface with segments as JSON array"
+      writes: "Via Firebase Functions only, replace entire document"
+      
+  file_organization:
+    approach: "Flat organization for discoverability"
+    rationale: "Avoid cross-slice boundary confusion - single lookup location"
+    structure:
+      - "store/actions.js - ALL actions"  
+      - "store/selectors.js - ALL selectors"
+      - "store/reducer.js - root reducer"
+
+# Implementation Tasks
+tasks:
+  task_1_generate_segment_type:
+    id: task_1_generate_segment_type
+    description: "Generate Segment tagged type using types-generation system"
+    commands:
+      - "Create modules/types/src/right-of-way/segment.type.js"
+      - "Define Segment with use and length fields"
+      - "Run type generation to create modules/types/generated/right-of-way/segment.js"
+      - "Export from modules/types/generated/right-of-way/index.js"
+    files:
+      - "modules/types/src/right-of-way/segment.type.js"
+      - "modules/types/generated/right-of-way/segment.js"  
+      - "modules/types/generated/right-of-way/index.js"
+    changes:
+      - "Add Segment tagged type definition"
+      - "Generate runtime validation code"
+      - "Make type available for import"
+    validation:
+      - "Segment.create({ use: 'parking', length: 100 }) succeeds"
+      - "Segment.create({ use: 'parking', length: -5 }) succeeds (structure validation only)"
+      - "Segment.create({ length: 100 }) throws (missing use field)"
+      - "Import { Segment } from '@modules/types/generated/right-of-way' works"
+
+  task_2_extract_actions:
+    id: task_2_extract_actions
+    description: "Extract all action creators to separate actions.js file"
+    commands:
+      - "Create modules/right-of-way-editor/src/store/actions.js"
+      - "Move all action creators from curbStore.js to actions.js"
+      - "Update imports in components"
+      - "Remove action creators from curbStore.js"
+    files:
+      - "modules/right-of-way-editor/src/store/actions.js"
+      - "modules/right-of-way-editor/src/store/curbStore.js"  
+      - "All component files that import actions"
+    changes:
+      - "Move ACTION_TYPES, initializeSegments, updateSegmentType, updateSegmentLength, addSegment, addSegmentLeft, replaceSegments"
+      - "Update all imports from './store/curbStore' to './store/actions'"
+      - "Clean up curbStore.js exports"
+    validation:
+      - "All components import actions successfully"
+      - "No build errors"
+      - "Application functionality preserved"
+      - "Redux DevTools shows same action types"
+
+  task_3_extract_selectors:
+    id: task_3_extract_selectors  
+    description: "Extract selectors and make unknownRemaining computed"
+    commands:
+      - "Create modules/right-of-way-editor/src/store/selectors.js"
+      - "Move all selectors from curbStore.js to selectors.js"
+      - "Convert selectUnknownRemaining to computed selector"
+      - "Update imports in components"
+    files:
+      - "modules/right-of-way-editor/src/store/selectors.js"
+      - "modules/right-of-way-editor/src/store/curbStore.js"
+      - "All component files that use selectors"
+    changes:
+      - "Move selectSegments, selectBlockfaceLength, selectBlockfaceId, etc."
+      - "Change selectUnknownRemaining to: blockfaceLength - segments.reduce((sum, s) => sum + s.length, 0)"
+      - "Update component imports"
+      - "Remove unknownRemaining from Redux state"
+    validation:
+      - "All selectors work correctly"
+      - "unknownRemaining computed correctly"
+      - "Components display correct values"
+      - "No references to state.unknownRemaining in reducer"
+
+  task_4_generate_blockface_type:
+    id: task_4_generate_blockface_type
+    description: "Generate Blockface tagged type"
+    commands:
+      - "Create modules/types/src/right-of-way/blockface.type.js"
+      - "Define Blockface with id, geometry, streetName, segments fields"
+      - "Run type generation"
+      - "Update generated index.js exports"
+    files:
+      - "modules/types/src/right-of-way/blockface.type.js"
+      - "modules/types/generated/right-of-way/blockface.js"
+      - "modules/types/generated/right-of-way/index.js"  
+    changes:
+      - "Add Blockface tagged type definition"
+      - "Include segments as Array type"
+      - "Generate validation code"
+    validation:
+      - "Blockface.create({ id: 'test', geometry: {}, streetName: 'Test', segments: [] }) succeeds"
+      - "Import { Blockface } from '@modules/types/generated/right-of-way' works"
+      - "Type validation enforces required fields"
+
+  task_5_implement_tagged_segments:
+    id: task_5_implement_tagged_segments
+    description: "Update segment creation to use tagged types"
+    commands:
+      - "Update createNewSegment to use Segment.create()"
+      - "Update business logic functions to expect Segment objects"
+      - "Add type imports to store files"
+      - "Test validation behavior"
+    files:
+      - "modules/right-of-way-editor/src/store/curbStore.js"
+      - "modules/right-of-way-editor/src/store/actions.js"
+    changes:
+      - "Change createNewSegment to return Segment.create({ use: type, length: roundToPrecision(length) })"
+      - "Update adjustSegmentBoundary and other functions"
+      - "Add import { Segment } from '@modules/types/generated/right-of-way'"
+    validation:
+      - "New segments are Segment tagged types"
+      - "Segment.is() returns true for created segments"
+      - "All existing functionality works"
+      - "No console errors or validation failures"
+
+# Execution Status
+execution_status:
+  current_task: task_2_extract_actions
+  completed_tasks: 
+    - task_1_generate_segment_type: COMPLETED
+  pending_tasks: 
+    - task_2_extract_actions: NEXT
+    - task_3_extract_selectors: PENDING  
+    - task_4_generate_blockface_type: PENDING
+    - task_5_implement_tagged_segments: PENDING
+  failed_tasks: []
+  notes: "Task 1 completed successfully. Segment tagged type generated with validation working. Ready for task 2."

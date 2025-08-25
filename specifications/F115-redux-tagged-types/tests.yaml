@@ -1,0 +1,142 @@
+spec_id: F115
+name: Redux Architecture Refactoring with Tagged Types - Test Cases
+version: 1.0
+
+# Validation Test Cases for Each Task
+
+task_1_tests:
+  segment_type_generation:
+    valid_segment_creation:
+      test: "Segment.create({ use: 'parking', length: 100 })"
+      expected: "Creates segment successfully"
+      validates: "Basic tagged type functionality"
+    
+    structural_validation:
+      test: "Segment.create({ use: 'parking', length: -5 })" 
+      expected: "Succeeds (structure validation only)"
+      validates: "Tagged type validates structure, not semantics"
+      
+    missing_field_validation:
+      test: "Segment.create({ length: 100 })"
+      expected: "Throws error for missing 'use' field"
+      validates: "Required field validation"
+      
+    wrong_type_validation:
+      test: "Segment.create({ use: 'parking', length: 'invalid' })"
+      expected: "Throws error for wrong type"
+      validates: "Type validation works"
+      
+    import_functionality:
+      test: "import { Segment } from '@modules/types/generated/right-of-way'"
+      expected: "Import succeeds without errors"
+      validates: "Module exports correctly"
+
+task_2_tests:
+  action_extraction:
+    component_imports:
+      test: "All components import actions from new location"
+      expected: "No import errors in any component"
+      validates: "Import paths updated correctly"
+      
+    redux_functionality:
+      test: "Dispatch actions and verify state updates"
+      expected: "Same behavior as before refactoring" 
+      validates: "Redux functionality preserved"
+      
+    action_types_consistency:
+      test: "Check Redux DevTools action names"
+      expected: "Action types unchanged"
+      validates: "No breaking changes to action interface"
+
+task_3_tests:
+  selector_extraction:
+    computed_unknown_remaining:
+      test: "selectUnknownRemaining(state) with segments totaling 200, blockface 240"
+      expected: "Returns 40"
+      validates: "Computed selector works correctly"
+      
+    selector_imports:
+      test: "All components import selectors from new location"
+      expected: "No import errors"
+      validates: "Import paths updated correctly"
+      
+    state_cleanup:
+      test: "Search codebase for 'unknownRemaining' in reducer"
+      expected: "No direct state.unknownRemaining assignments"
+      validates: "State properly cleaned up"
+      
+    ui_consistency:
+      test: "Visual verification of segment editor"
+      expected: "UI displays same values as before"
+      validates: "No visual regressions"
+
+task_4_tests:
+  blockface_type_generation:
+    valid_blockface_creation:
+      test: "Blockface.create({ id: 'test', geometry: lineString, streetName: 'Test St', segments: [] })"
+      expected: "Creates successfully"
+      validates: "Blockface tagged type works"
+      
+    segments_array_validation:
+      test: "Blockface with segments: [Segment.create({ use: 'parking', length: 100 })]"
+      expected: "Accepts Segment objects in array"
+      validates: "Nested tagged type compatibility"
+      
+    required_fields:
+      test: "Blockface.create({ id: 'test' })"
+      expected: "Throws for missing required fields"
+      validates: "Field validation works"
+
+task_5_tests:
+  tagged_segment_implementation:
+    segment_creation:
+      test: "createNewSegment('parking', 100)"
+      expected: "Returns Segment tagged type instance"
+      validates: "Factory function uses tagged types"
+      
+    segment_type_checking:
+      test: "Segment.is(createdSegment)"
+      expected: "Returns true"
+      validates: "Created segments are proper tagged types"
+      
+    business_logic_compatibility:
+      test: "adjustSegmentBoundary with tagged segments"
+      expected: "Works correctly with new segment types"
+      validates: "Business logic handles tagged types"
+      
+    functionality_preservation:
+      test: "Complete segment editor workflow"
+      expected: "All features work as before"
+      validates: "No regression in functionality"
+
+# Integration Tests
+integration_tests:
+  full_workflow:
+    test_description: "Complete segment editing session"
+    steps:
+      - "Load blockface"
+      - "Add new segment using actions"
+      - "Update segment length using selectors"
+      - "Verify computed values"
+      - "Check tagged type integrity"
+    expected_outcome: "All operations work seamlessly with tagged types"
+    
+  type_validation_integration:
+    test_description: "Tagged type validation in Redux flow"
+    steps:
+      - "Create invalid segment data"
+      - "Attempt to create tagged type"
+      - "Verify validation error handling"
+    expected_outcome: "Runtime validation prevents invalid data in store"
+
+# Performance Tests  
+performance_tests:
+  selector_performance:
+    test: "Measure selectUnknownRemaining computation time"
+    baseline: "Current stored value lookup"
+    expected: "Computed value performance acceptable (< 1ms)"
+    
+  tagged_type_overhead:
+    test: "Measure segment creation performance" 
+    baseline: "Plain object creation"
+    expected: "Tagged type overhead acceptable for UI operations"
