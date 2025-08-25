@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import mapAccum from '../../src/ramda-like/map-accum.js'
 
 const add = (a, b) => [a + b, a + b]

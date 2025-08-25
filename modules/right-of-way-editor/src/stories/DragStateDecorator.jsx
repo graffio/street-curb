@@ -1,5 +1,5 @@
 import React from 'react'
-import { useChannel } from '@qt/design-system'
+import { useChannel } from '@graffio/design-system'
 import { dragStateChannel } from '../channels/drag-state-channel.js'
 
 /**

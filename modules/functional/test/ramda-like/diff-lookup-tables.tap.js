@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import diffLookupTables from '../../src/ramda-like/diff-lookup-tables.js'
 
 const o1 = { a: 1 }

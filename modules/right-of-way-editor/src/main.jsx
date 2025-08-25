@@ -1,4 +1,4 @@
-import { MainTheme } from '@qt/design-system'
+import { MainTheme } from '@graffio/design-system'
 import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider, useDispatch, useSelector } from 'react-redux'

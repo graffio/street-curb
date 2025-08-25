@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import without from '../../src/ramda-like/without.js'
 
 tap.describeTests({

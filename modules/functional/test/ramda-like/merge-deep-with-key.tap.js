@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { mergeDeepWithKey } from '../../index.js'
 
 const o1 = { a: 'a', b: 'b1', c: { d: 'd1', e: 2 } }

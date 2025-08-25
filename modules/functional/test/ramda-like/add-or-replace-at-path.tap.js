@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import addOrReplaceAtPath from '../../src/ramda-like/add-or-replace-at-path.js'
 
 const o = {

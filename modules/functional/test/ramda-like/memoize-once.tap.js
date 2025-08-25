@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import memoizeOnce from '../../src/ramda-like/memoize-once.js'
 
 tap.describeTests({

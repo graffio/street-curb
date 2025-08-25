@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { assocPath } from '../../index.js'
 import memoizeReduxState from '../../src/ramda-like/memoize-redux-state.js'
 

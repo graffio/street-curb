@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import equals from '../../src/ramda-like/equals.js'
 
 /* eslint-disable no-new-wrappers, prefer-regex-literals */

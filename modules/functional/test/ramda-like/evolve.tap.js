@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { equals } from '../../index.js'
 import evolve from '../../src/ramda-like/evolve.js'
 

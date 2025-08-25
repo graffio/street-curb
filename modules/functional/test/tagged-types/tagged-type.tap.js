@@ -1,4 +1,4 @@
-import { tap } from '@Qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { tagged, taggedSum } from '../../src/tagged-types/tagged-type.js'
 import LinkedList from './linked-list.js'
 import StringTypes from './string-types.js'

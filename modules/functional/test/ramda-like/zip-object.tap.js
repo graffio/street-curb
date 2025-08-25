@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { zipObject } from '../../index.js'
 
 const toString = o => JSON.stringify(o).replace(/"/g, '').replace(/,/g, ', ')

@@ -1,4 +1,4 @@
-import { MainTheme } from '@qt/design-system'
+import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'

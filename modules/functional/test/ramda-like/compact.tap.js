@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import compact from '../../src/ramda-like/compact.js'
 
 const a = [3, undefined, null, {}, 'a']

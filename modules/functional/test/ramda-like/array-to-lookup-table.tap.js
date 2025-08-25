@@ -1,4 +1,4 @@
-import { tap } from '@qt/test-helpers'
+import { tap } from '@graffio/test-helpers'
 import { arrayToLookupTable } from '../../index.js'
 
 const a = [
