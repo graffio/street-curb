@@ -2,15 +2,8 @@ import { Box, Button, Flex, Text } from '@radix-ui/themes'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { COLORS } from '../../constants.js'
-import {
-    addSegment,
-    addSegmentLeft,
-    replaceSegments,
-    selectBlockfaceLength,
-    selectCumulativePositions,
-    selectSegments,
-    updateSegmentLength,
-} from '../../store/curbStore.js'
+import { addSegment, addSegmentLeft, replaceSegments, updateSegmentLength } from '../../store/actions.js'
+import { selectBlockfaceLength, selectCumulativePositions, selectSegments } from '../../store/selectors.js'
 import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
 import { formatLength, roundToPrecision } from '../../utils/formatting.js'
 import { DividerLayer } from './DividerLayer.jsx'

@@ -5,7 +5,7 @@ import lineSlice from '@turf/line-slice'
 import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { COLORS } from '../constants.js'
-import { selectSegments } from '../store/curbStore.js'
+import { selectSegments } from '../store/selectors.js'
 
 /**
  * MapboxMap - Interactive map component displaying San Francisco blockfaces

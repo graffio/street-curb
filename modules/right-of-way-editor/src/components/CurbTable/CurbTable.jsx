@@ -2,15 +2,13 @@ import { Table as RadixTable } from '@radix-ui/themes'
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { COLORS } from '../../constants.js'
+import { addSegment, updateSegmentLength, updateSegmentType } from '../../store/actions.js'
 import {
-    addSegment,
     selectBlockfaceLength,
     selectSegments,
     selectStartPositions,
     selectUnknownRemaining,
-    updateSegmentLength,
-    updateSegmentType,
-} from '../../store/curbStore.js'
+} from '../../store/selectors.js'
 import { formatLength } from '../../utils/formatting.js'
 import NumberPad from '../NumberPad.jsx'
 import { createColorOptions, CurbSegmentSelect } from './CurbSegmentSelect.jsx'
