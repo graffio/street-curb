@@ -23,7 +23,7 @@ import {
     startOfWeek,
     startOfYear,
     subtractDays,
-} from 'functional'
+} from '@graffio/functional'
 
 import { parseDateFromInput } from './date-input-utils.js'
 

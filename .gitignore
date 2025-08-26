@@ -20,3 +20,6 @@ test-results
 # Claude Code settings
 .claude
 
+# don't save files generated in testing type-generation
+modules/types-generation/test/generated/*
+

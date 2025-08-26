@@ -1,6 +1,6 @@
 {
     "name": "@graffio/types-generation",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "description": "Build tools for compile-time type generation",
     "type": "module",
     "main": "src/generate-type-file.js",
@@ -9,7 +9,7 @@
         "acorn": "^8.15.0",
         "escodegen": "^2.1.0",
         "estree-walker": "^3.0.3",
-        "functional": "0.0.1"
+        "@graffio/functional": "0.1.0"
     },
     "scripts": {
         "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",

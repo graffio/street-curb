@@ -17,8 +17,8 @@
  * - Compatible with existing filterByDateRange function patterns
  */
 
+import { endOfDay } from '@graffio/functional'
 import { Select, Text } from '@radix-ui/themes'
-import { endOfDay } from 'functional/src/date-utils.js'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef, useState } from 'react'
 import { calculateDateRange, DATE_RANGES } from '../../utils/date-range-utils.js'

@@ -11,10 +11,8 @@
  * would be rerendered whenever ANY field of o changed.
  */
 
+import { equals, memoizeOnceWithIdenticalParams, pick } from '@graffio/functional'
 import { useEffect, useState } from 'react'
-import equals from '../../../functional/src/ramda-like/equals.js'
-import memoizeOnceWithIdenticalParams from '../../../functional/src/ramda-like/memoize-once-with-identical-params.js'
-import pick from '../../../functional/src/ramda-like/pick.js'
 
 // Memoized pick - returns same object reference for same inputs
 const memoizedPick = memoizeOnceWithIdenticalParams(pick)
