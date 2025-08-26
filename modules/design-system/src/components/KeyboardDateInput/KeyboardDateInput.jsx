@@ -30,8 +30,8 @@
  *     }
  */
 
+import { datePartsToDate, dateToDateParts, formatDateString } from '@graffio/functional'
 import { Box, Text, TextField } from '@radix-ui/themes'
-import { datePartsToDate, dateToDateParts, formatDateString } from 'functional'
 import PropTypes from 'prop-types'
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { parseDateString, toDisplayDateString, updateDatePartWithValidation } from '../../utils/date-input-utils.js'

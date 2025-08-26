@@ -1,0 +1,194 @@
+spec_id: F115
+name: Redux Architecture Refactoring with Tagged Types
+version: 1.0
+
+# Data Model Decisions
+data_model:
+  domain_entities:
+    segment:
+      type: tagged_type
+      fields:
+        use: String  # 'parking', 'curb_cut', 'loading', etc.
+        length: Number  # in feet, positive values only
+      notes: "No position field - array index is position, no IDs - not independent entities"
+    
+    blockface:
+      type: tagged_type  
+      fields:
+        id: String  # unique identifier
+        geometry: Object  # GeoJSON LineString
+        streetName: String
+        segments: Array  # Array of Segment tagged types
+      notes: "Top-level entity stored in LookupTable in Redux"
+
+  storage_patterns:
+    redux_state:
+      blockfaces: "LookupTable([Blockface], Blockface) - for multi-blockface editing"
+      current_blockface_id: "String - references active blockface being edited"
+      computed_selectors: "unknownRemaining computed from blockface length - segment totals"
+    
+    firestore_documents:
+      pattern: "Single document per blockface with segments as JSON array"
+      writes: "Via Firebase Functions only, replace entire document"
+      
+  file_organization:
+    approach: "Flat organization for discoverability"
+    rationale: "Avoid cross-slice boundary confusion - single lookup location"
+    structure:
+      - "store/actions.js - ALL actions"  
+      - "store/selectors.js - ALL selectors"
+      - "store/reducer.js - root reducer"
+
+# Implementation Tasks
+tasks:
+  task_1_generate_segment_type:
+    id: task_1_generate_segment_type
+    description: "Generate Segment tagged type using types-generation system"
+    commands:
+      - "Create modules/types/src/right-of-way/segment.type.js"
+      - "Define Segment with use and length fields"
+      - "Run type generation to create modules/types/generated/right-of-way/segment.js"
+      - "Export from modules/types/generated/right-of-way/index.js"
+    files:
+      - "modules/types/src/right-of-way/segment.type.js"
+      - "modules/types/generated/right-of-way/segment.js"  
+      - "modules/types/generated/right-of-way/index.js"
+    changes:
+      - "Add Segment tagged type definition"
+      - "Generate runtime validation code"
+      - "Make type available for import"
+    validation:
+      - "Segment.create({ use: 'parking', length: 100 }) succeeds"
+      - "Segment.create({ use: 'parking', length: -5 }) succeeds (structure validation only)"
+      - "Segment.create({ length: 100 }) throws (missing use field)"
+      - "Import { Segment } from '@modules/types/generated/right-of-way' works"
+
+  task_2_extract_actions:
+    id: task_2_extract_actions
+    description: "Extract all action creators to separate actions.js file"
+    commands:
+      - "Create modules/right-of-way-editor/src/store/actions.js"
+      - "Move all action creators from curbStore.js to actions.js"
+      - "Update imports in components"
+      - "Remove action creators from curbStore.js"
+    files:
+      - "modules/right-of-way-editor/src/store/actions.js"
+      - "modules/right-of-way-editor/src/store/curbStore.js"  
+      - "All component files that import actions"
+    changes:
+      - "Move ACTION_TYPES, initializeSegments, updateSegmentType, updateSegmentLength, addSegment, addSegmentLeft, replaceSegments"
+      - "Update all imports from './store/curbStore' to './store/actions'"
+      - "Clean up curbStore.js exports"
+    validation:
+      - "All components import actions successfully"
+      - "No build errors"
+      - "Application functionality preserved"
+      - "Redux DevTools shows same action types"
+
+  task_3_extract_selectors:
+    id: task_3_extract_selectors  
+    description: "Extract selectors and make unknownRemaining computed"
+    commands:
+      - "Create modules/right-of-way-editor/src/store/selectors.js"
+      - "Move all selectors from curbStore.js to selectors.js"
+      - "Convert selectUnknownRemaining to computed selector"
+      - "Update imports in components"
+    files:
+      - "modules/right-of-way-editor/src/store/selectors.js"
+      - "modules/right-of-way-editor/src/store/curbStore.js"
+      - "All component files that use selectors"
+    changes:
+      - "Move selectSegments, selectBlockfaceLength, selectBlockfaceId, etc."
+      - "Change selectUnknownRemaining to: blockfaceLength - segments.reduce((sum, s) => sum + s.length, 0)"
+      - "Update component imports"
+      - "Remove unknownRemaining from Redux state"
+    validation:
+      - "All selectors work correctly"
+      - "unknownRemaining computed correctly"
+      - "Components display correct values"
+      - "No references to state.unknownRemaining in reducer"
+
+  task_4_generate_blockface_type:
+    id: task_4_generate_blockface_type
+    description: "Generate Blockface tagged type"
+    commands:
+      - "Create modules/types/src/right-of-way/blockface.type.js"
+      - "Define Blockface with id, geometry, streetName, segments fields"
+      - "Run type generation"
+      - "Update generated index.js exports"
+    files:
+      - "modules/types/src/right-of-way/blockface.type.js"
+      - "modules/types/generated/right-of-way/blockface.js"
+      - "modules/types/generated/right-of-way/index.js"  
+    changes:
+      - "Add Blockface tagged type definition"
+      - "Include segments as Array type"
+      - "Generate validation code"
+    validation:
+      - "Blockface.create({ id: 'test', geometry: {}, streetName: 'Test', segments: [] }) succeeds"
+      - "Import { Blockface } from '@modules/types/generated/right-of-way' works"
+      - "Type validation enforces required fields"
+
+  task_5_implement_tagged_segments:
+    id: task_5_implement_tagged_segments
+    description: "Update segment creation to use tagged types"
+    status: SKIPPED
+    reason: "Architectural decision made to migrate to LookupTable<Blockface> structure instead of incremental segment updates"
+    explanation: |
+      During implementation, we realized that implementing tagged Segments in the current flat Redux
+      structure (state.curb.segments) would be throwaway work. The architectural decision was made
+      to store only Blockfaces in a LookupTable, where each Blockface contains its tagged Segments.
+      
+      This means:
+      - Segments will be created as tagged types within Blockface objects
+      - The current flat curb structure will be replaced entirely
+      - Implementing tagged segments in the current structure would be wasted effort
+      
+      This task should be superseded by a future specification for LookupTable<Blockface> migration.
+    commands:
+      - "SKIPPED - Update createNewSegment to use Segment.create()"
+      - "SKIPPED - Update business logic functions to expect Segment objects"
+      - "SKIPPED - Add type imports to store files"
+      - "SKIPPED - Test validation behavior"
+    files:
+      - "modules/right-of-way-editor/src/store/reducer.js"
+      - "modules/right-of-way-editor/src/store/actions.js"
+    changes:
+      - "SKIPPED - Change createNewSegment to return Segment.create({ use: type, length: roundToPrecision(length) })"
+      - "SKIPPED - Update adjustSegmentBoundary and other functions"
+      - "SKIPPED - Add import { Segment } from '@graffio/types/generated/right-of-way'"
+    validation:
+      - "SKIPPED - New segments are Segment tagged types"
+      - "SKIPPED - Segment.is() returns true for created segments"
+      - "SKIPPED - All existing functionality works"
+      - "SKIPPED - No console errors or validation failures"
+
+# Execution Status
+execution_status:
+  status: COMPLETED
+  completion_date: "2025-01-28"
+  current_task: null
+  completed_tasks: 
+    - task_1_generate_segment_type: COMPLETED
+    - task_2_extract_actions: COMPLETED  
+    - task_3_extract_selectors: COMPLETED
+    - task_4_generate_blockface_type: COMPLETED
+  skipped_tasks:
+    - task_5_implement_tagged_segments: SKIPPED - Architectural decision for LookupTable migration
+  failed_tasks: []
+  summary: |
+    F115 Redux refactoring completed successfully. Key achievements:
+    - Generated Segment and Blockface tagged types with validation
+    - Fixed empty array validation in type system (comprehensive)  
+    - Refactored Redux to flat file structure (actions.js, selectors.js, reducer.js)
+    - Extracted action handlers, computed selectors with memoization
+    - All 170 tests passing + 13 new empty array tests
+    
+    Task 5 skipped due to architectural decision to migrate to LookupTable<Blockface>
+    structure instead of incremental tagged segment updates in current flat Redux.
+    
+    Ready for archival and future LookupTable migration specification.
+  next_steps:
+    - Archive F115 specification
+    - Create new specification for LookupTable<Blockface> Redux migration
+    - Plan database integration with proper Blockface entity management

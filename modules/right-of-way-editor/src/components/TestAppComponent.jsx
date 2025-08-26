@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import SegmentedCurbEditor from './SegmentedCurbEditor'
-import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../store/curbStore.js'
+import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../store/actions.js'
 
 /**
  * Reusable test component for Storybook and other testing contexts

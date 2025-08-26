@@ -4,7 +4,7 @@
  */
 
 import test from 'node:test'
-import { selectCumulativePositions, selectStartPositions, selectVisualPercentages } from '../src/store/curbStore.js'
+import { selectCumulativePositions, selectStartPositions, selectVisualPercentages } from '../src/store/selectors.js'
 
 /**
  * Creates mock Redux state for testing selectors
@@ -119,7 +119,12 @@ test('Redux selectors for replacing component calculations', async t => {
             })
 
             await t.test('When calling selectCumulativePositions with different state', async t => {
-                const differentState = createMockState(segments, 100, 240)
+                // Create different state with different segments (different total length)
+                const differentSegments = [
+                    { id: 's1', type: 'Parking', length: 80 }, // Different length
+                    { id: 's2', type: 'NoParking', length: 40 },
+                ]
+                const differentState = createMockState(differentSegments, 120, 240)
                 const result1 = selectCumulativePositions(state)
                 const result2 = selectCumulativePositions(differentState)
 

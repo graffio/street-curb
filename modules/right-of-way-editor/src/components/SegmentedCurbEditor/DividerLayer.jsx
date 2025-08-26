@@ -3,7 +3,7 @@ import { Box } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
-import { selectBlockfaceLength, selectSegments, selectUnknownRemaining } from '../../store/curbStore.js'
+import { selectBlockfaceLength, selectSegments, selectUnknownRemaining } from '../../store/selectors.js'
 
 /**
  * Gets visual state for divider thumb based on interaction state

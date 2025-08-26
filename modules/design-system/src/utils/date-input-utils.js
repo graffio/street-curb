@@ -11,7 +11,7 @@
  * - Follows Hindley-Milner type documentation
  */
 
-import { convertSlashToIso, getDaysInMonth, parseIsoDateFormat, parseSlashDateFormat } from 'functional'
+import { convertSlashToIso, getDaysInMonth, parseIsoDateFormat, parseSlashDateFormat } from '@graffio/functional'
 
 // ==================== DATE VALIDATION AND CONSTRAINTS ====================
 

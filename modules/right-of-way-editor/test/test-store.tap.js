@@ -5,7 +5,7 @@
 
 import { test } from 'tap'
 import { createStoreWithScenario } from './test-store.js'
-import { selectSegments, selectUnknownRemaining } from '../src/store/curbStore.js'
+import { selectSegments, selectUnknownRemaining } from '../src/store/selectors.js'
 
 test('Given a vanilla Redux test store architecture', t => {
     test('When creating an empty scenario', t => {

@@ -1,21 +1,11 @@
 import { createStore } from 'redux'
-import curbReducer, {
-    addSegment,
-    initializeSegments,
-    updateSegmentLength,
-    updateSegmentType,
-} from '../src/store/curbStore.js'
+import rootReducer from '../src/store/reducer.js'
+import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../src/store/actions.js'
 
 /**
  * Vanilla Redux test store utilities for test data consistency
  * Supports Playwright tests, unit (tap) tests, and Storybook tests
  */
-
-/**
- * Root reducer that matches the expected state shape
- * @sig rootReducer :: (State, Action) -> State
- */
-const rootReducer = (state = {}, action) => ({ curb: curbReducer(state.curb, action) })
 
 /**
  * Creates a store with scenario actions applied
@@ -29,7 +19,7 @@ const createStoreWithScenario = scenarioName => {
 }
 
 /**
- * Creates a vanilla Redux store with real curbReducer
+ * Creates a vanilla Redux store with real rootReducer
  * @sig createTestStore :: () -> Store
  */
 const createTestStore = () => createStore(rootReducer)

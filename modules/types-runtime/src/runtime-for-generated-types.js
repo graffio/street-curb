@@ -147,6 +147,9 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
             throw new TypeError(message)
         }
 
+        // Empty arrays are always valid regardless of declared element type
+        if (o.length === 0) return
+
         o = o[0]
         d++
     } while (d < arrayDepth)

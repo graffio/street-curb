@@ -4,7 +4,7 @@ import React, { useState, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
-import { selectBlockfaceLength, selectSegments } from '../../store/curbStore.js'
+import { selectBlockfaceLength, selectSegments } from '../../store/selectors.js'
 import { formatLength } from '../../utils/formatting.js'
 import { calculateSimplePositions } from './label-positioning-simple.js'
 

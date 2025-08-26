@@ -1,6 +1,6 @@
 {
     "name": "@graffio/types-runtime",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Runtime utilities for generated tagged types",
     "type": "module",
     "main": "index.js",

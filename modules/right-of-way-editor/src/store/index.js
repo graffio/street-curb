@@ -1,11 +1,10 @@
-import { createStore, combineReducers } from 'redux'
-import curbReducer from './curbStore.js'
+import { createStore } from 'redux'
+import { rootReducer } from './reducer.js'
 
 /**
  * Main Redux store configuration using vanilla Redux
  * @sig createStore :: Object -> Store
  */
-const rootReducer = combineReducers({ curb: curbReducer })
 
 const store = createStore(
     rootReducer,

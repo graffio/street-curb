@@ -20,14 +20,13 @@ core_principles:
     
   single_indentation_level:
     max_nesting: 1
-    exceptions: ["try/catch", "object literals", "jsx elements", "locally scoped functions"]
+    solution_for_complexity: "Extract helper functions at top of current scope"
+    indentation_contexts: ["try/catch", "object literals", "jsx elements", "function definitions"]
     enforcement: strict
-    locally_scoped_functions: 
-      definition: "Functions defined within their narrowest usage scope (component, function, or module)"
-      reasoning: "Creates new cognitive context, reduces parameter passing, doesn't count as nesting"
-      examples: 
-        allowed: "Event handlers inside React components, utilities inside functions that use them"
-        forbidden: "Functions extracted to arbitrary file-top locations with excessive parameters"
+    indentation_resets:
+      definition: "Each function definition creates a new indentation context"
+      reasoning: "Functions are cognitive boundaries - complexity inside doesn't count toward parent nesting"
+      practical_rule: "When a function gets complex, add helper functions inside it at the top"
 
 formatting_rules:
   line_length: 
@@ -39,13 +38,13 @@ formatting_rules:
     count: 4
     
   function_placement:
-    narrowest_scope_principle: "Define functions in the narrowest scope that contains all their usages"
-    single_usage: "Define function inside the component/function that uses it"
-    multiple_usages_same_parent: "Define at parent scope level"
-    cross_component_usage: "Extract to module level"
-    main_functions: "End of file"
-    order: "Functions before variables before execution"
-    cognitive_load_priority: "Function placement should minimize context jumping and parameter passing"
+    core_principle: "Functions belong at the top of their narrowest usage scope"
+    scope_hierarchy:
+      - "Used by one function: top of that function"
+      - "Used by one component: top of that component" 
+      - "Used by multiple components: top of module"
+    cognitive_benefits: "Keeps related code together, reduces parameter passing, eliminates context jumping"
+    execution_order: "Within each scope, functions before variables before execution"
     
   braces_and_parens:
     unnecessary_removal: "Required"
