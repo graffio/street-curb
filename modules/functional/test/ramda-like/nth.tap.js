@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import { nth } from '../../index.js'
 
 const l = ['foo', 'bar', 'baz', 'quux']
@@ -17,17 +17,45 @@ const s = 'abc'
  * @symb R.nth(0, [a, b, c]) = a
  * @symb R.nth(1, [a, b, c]) = b
  */
-const tests = {
-    [`Given l = ${tap.stringify(l)}`]: {
-        'When I call nth(1, l)': t => t.sameR(`Then I should get bar`, 'bar', nth(1, l)),
-        'When I call nth(-1, l)': t => t.sameR(`Then I should get quux`, 'quux', nth(-1, l)),
-        'When I call nth(-99, l)': t => t.sameR(`Then I should get undefined`, undefined, nth(-99, l)),
-    },
-    [`Given s = ${s}`]: {
-        'When I call nth(1, s)': t => t.sameR(`Then I should get 'b'`, 'b', nth(1, s)),
-        'When I call nth(-2, s)': t => t.sameR(`Then I should get 'c'`, 'c', nth(-1, s)),
-        'When I call nth(-99, s)': t => t.sameR(`Then I should get ''`, '', nth(-99, s)),
-    },
-}
 
-tap.describeTests({ mergeDeepRight: tests })
+tap.test('nth', t => {
+    t.test(`Given l = ${JSON.stringify(l)}`, t => {
+        t.test('When I call nth(1, l)', t => {
+            t.same(nth(1, l), 'bar', `Then I should get bar`)
+            t.end()
+        })
+
+        t.test('When I call nth(-1, l)', t => {
+            t.same(nth(-1, l), 'quux', `Then I should get quux`)
+            t.end()
+        })
+
+        t.test('When I call nth(-99, l)', t => {
+            t.same(nth(-99, l), undefined, `Then I should get undefined`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.test(`Given s = ${s}`, t => {
+        t.test('When I call nth(1, s)', t => {
+            t.same(nth(1, s), 'b', `Then I should get 'b'`)
+            t.end()
+        })
+
+        t.test('When I call nth(-2, s)', t => {
+            t.same(nth(-2, s), 'b', `Then I should get 'b'`)
+            t.end()
+        })
+
+        t.test('When I call nth(-99, s)', t => {
+            t.same(nth(-99, s), '', `Then I should get ''`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})

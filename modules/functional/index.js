@@ -61,7 +61,6 @@ import uniq from './src/ramda-like/uniq.js'
 import update from './src/ramda-like/update.js'
 import without from './src/ramda-like/without.js'
 import zipObject from './src/ramda-like/zip-object.js'
-import { tagged, taggedSum } from './src/tagged-types/tagged-type.js'
 
 export * from './src/ramda-like/list.js'
 export {
@@ -159,7 +158,5 @@ export {
     zipObject,
 
     //
-    tagged,
-    taggedSum,
     LookupTable,
 }

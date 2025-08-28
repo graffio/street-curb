@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import { reindent } from '../../index.js'
 
 const s = `
@@ -43,13 +43,15 @@ const expected = `--
 --function canCreate() { return canCreateOrganization(); }
 --function canUpdate() { return organizationMember();    }`
 
-const tests = {
-    [`Given multiline string s with minimum 12 character indentations`]: {
-        [`When I call reindent('--', s)`]: t => {
+tap.test('reindent', t => {
+    t.test('Given multiline string s with minimum 12 character indentations', t => {
+        t.test(`When I call reindent('--', s)`, t => {
             const actual = reindent('--', s)
-            t.sameR(`Then I should get each line of the output should be prefixed with only '--'`, actual, expected)
-        },
-    },
-}
+            t.same(actual, expected, `Then I should get each line of the output should be prefixed with only '--'`)
+            t.end()
+        })
+        t.end()
+    })
 
-tap.describeTests({ reindent: tests })
+    t.end()
+})

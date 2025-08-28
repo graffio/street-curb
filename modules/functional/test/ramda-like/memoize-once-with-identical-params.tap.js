@@ -1,7 +1,7 @@
-import { test } from 'tap'
+import tap from 'tap'
 import memoizeOnceWithIdenticalParams from '../../src/ramda-like/memoize-once-with-identical-params.js'
 
-test('memoizeOnceWithIdenticalParams', t => {
+tap.test('memoizeOnceWithIdenticalParams', t => {
     t.test('Given I memoize a function with identical parameters', t => {
         t.test('When I call it multiple times with same args', t => {
             let callCount = 0

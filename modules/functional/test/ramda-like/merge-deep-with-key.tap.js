@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import { mergeDeepWithKey } from '../../index.js'
 
 const o1 = { a: 'a', b: 'b1', c: { d: 'd1', e: 2 } }
@@ -15,15 +15,20 @@ const expected2s = toString(expected2)
 
 const concatEValues = (k, l, r) => (k === 'e' ? l + r : r)
 
-const tests = {
-    [`"Given o1 = ${o1s} and o2 = ${o2s} and f that adds just 'e' values`]: {
-        'When I call mergeDeepWithKey(f, o1, o2)': t => {
-            t.sameR(`Then I should get ${expected1s}`, expected1, mergeDeepWithKey(concatEValues, o1, o2))
-        },
-        'But when I reverse o1 and o2 and call mergeDeepWithKey(f, o2, o1)': t => {
-            t.sameR(`Then I should get ${expected2s}`, expected2, mergeDeepWithKey(concatEValues, o2, o1))
-        },
-    },
-}
+tap.test('mergeDeepWithKey', t => {
+    t.test(`Given o1 = ${o1s} and o2 = ${o2s} and f that adds just 'e' values`, t => {
+        t.test('When I call mergeDeepWithKey(f, o1, o2)', t => {
+            t.same(mergeDeepWithKey(concatEValues, o1, o2), expected1, `Then I should get ${expected1s}`)
+            t.end()
+        })
 
-tap.describeTests({ mergeDeepWithKey: tests })
+        t.test('But when I reverse o1 and o2 and call mergeDeepWithKey(f, o2, o1)', t => {
+            t.same(mergeDeepWithKey(concatEValues, o2, o1), expected2, `Then I should get ${expected2s}`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})

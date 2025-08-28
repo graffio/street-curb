@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import diffLookupTables from '../../src/ramda-like/diff-lookup-tables.js'
 
 const o1 = { a: 1 }
@@ -21,13 +21,18 @@ const b = { 13: o2, 14: o2, 15: o4, 16: o33 }
 
 const expected = { removed: [12], changed: [16], added: [13, 15] }
 
-const s = tap.stringify
-const tests = {
-    [`Given before: ${s(a)} and after: ${s(b)}`]: {
-        'When I call diffLookupTable(before, after)': t => {
-            t.sameR(`Then I should get ${s(expected)}`, diffLookupTables(a, b), expected)
-        },
-    },
-}
+const s = JSON.stringify
 
-tap.describeTests({ diffLookupTables: tests })
+tap.test('diffLookupTables', t => {
+    t.test(`Given before: ${s(a)} and after: ${s(b)}`, t => {
+        t.test('When I call diffLookupTable(before, after)', t => {
+            const result = diffLookupTables(a, b)
+            t.same(result, expected, `Then I should get ${s(expected)}`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})
