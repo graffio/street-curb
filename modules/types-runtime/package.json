@@ -5,6 +5,9 @@
     "type": "module",
     "main": "index.js",
     "private": true,
+    "scripts": {
+        "tap": "echo 'no tests in types-runtime'"
+    },
     "exports": {
         ".": "./index.js",
         "./runtime": "./src/runtime-for-generated-types.js"

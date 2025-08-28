@@ -1,13 +1,19 @@
 {
-    "name"       : "@graffio/functional",
-    "version"    : "0.1.0",
-    "main"       : "index.js",
-    "module"     : "index.js",
-    "type"       : "module",
+    "name": "@graffio/functional",
+    "version": "0.1.0",
+    "main": "index.js",
+    "module": "index.js",
+    "type": "module",
     "sideEffects": false,
-    "scripts"    : {
+    "scripts": {
         "tap": " TAP_DISABLE_COVERAGE=1 tap **/*.tap.js tap **/**/*.tap.js -R tap | tap-mocha-reporter spec",
         "unit-tests": "yarn unit-test '**/*.tap.js' "
     },
-    "private"    : true
+    "dependencies": {
+        "@graffio/test-helpers": "0.1.0"
+    },
+    "private": true,
+    "devDependencies": {
+        "tap": "^21.1.0"
+    }
 }

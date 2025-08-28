@@ -5,6 +5,7 @@
     "main"           : "generated/index.js",
     "type"           : "module",
     "scripts"        : {
+        "tap": "echo 'no tests in types'",
         "generate": "node ../types-generation/src/generate-index-file.js src generated"
     },
     "dependencies"   : {
