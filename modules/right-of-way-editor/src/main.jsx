@@ -2,11 +2,12 @@ import { MainTheme } from '@graffio/design-system'
 import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider, useDispatch, useSelector } from 'react-redux'
+import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import CurbTable from './components/CurbTable'
 import MapboxMap from './components/MapboxMap.jsx'
 import SegmentedCurbEditor from './components/SegmentedCurbEditor'
-import { initializeSegments } from './store/actions.js'
-import { selectBlockfaceLength, selectSegments } from './store/selectors.js'
+import { selectBlockface } from './store/actions.js'
+import * as S from './store/selectors.js'
 import store from './store/index.js'
 import './index.css'
 
@@ -14,8 +15,9 @@ const accessToken = 'pk.eyJ1IjoiZ3JhZmZpbyIsImEiOiJjbWRkZ3lkNjkwNG9xMmpuYmt4bHd2
 
 const App = () => {
     const dispatch = useDispatch()
-    const segments = useSelector(selectSegments)
-    const blockfaceLength = useSelector(selectBlockfaceLength)
+    const blockface = useSelector(S.currentBlockface)
+    const segments = blockface?.segments || []
+    const blockfaceLength = Blockface.totalLength(blockface)
 
     const [selectedBlockface, setSelectedBlockface] = useState(null)
     const [isEditorVisible, setIsEditorVisible] = useState(false)
@@ -26,12 +28,12 @@ const App = () => {
      */
     const handleBlockfaceSelect = useCallback(
         blockfaceData => {
-            console.log('Selected blockface:', blockfaceData)
             setSelectedBlockface(blockfaceData)
             setIsEditorVisible(true)
 
             // Initialize Redux store with new blockface
-            dispatch(initializeSegments(blockfaceData.length, blockfaceData.id))
+            const geometry = blockfaceData.feature?.geometry || blockfaceData.geometry
+            dispatch(selectBlockface(blockfaceData.id, geometry, blockfaceData.streetName, blockfaceData.cnnId))
         },
         [dispatch],
     )
@@ -111,7 +113,7 @@ const App = () => {
                             }}
                         >
                             <h2 style={{ margin: 0, color: '#333', fontSize: '20px', fontWeight: '600' }}>
-                                Edit Blockface ({selectedBlockface?.length || 0} ft)
+                                Edit Blockface ({blockfaceLength || 0} ft)
                             </h2>
                             <button
                                 onClick={handleEditorClose}
@@ -178,13 +180,10 @@ const App = () => {
                             {selectedBlockface &&
                                 (showCurbTable ? (
                                     <div style={{ flex: 1, overflow: 'auto' }}>
-                                        <CurbTable blockfaceLength={blockfaceLength} />
+                                        <CurbTable />
                                     </div>
                                 ) : (
-                                    <SegmentedCurbEditor
-                                        blockfaceLength={blockfaceLength}
-                                        blockfaceId={selectedBlockface.id}
-                                    />
+                                    <SegmentedCurbEditor />
                                 ))}
                         </div>
                     </div>

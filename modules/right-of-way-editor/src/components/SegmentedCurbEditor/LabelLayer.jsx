@@ -4,7 +4,8 @@ import React, { useState, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
-import { selectBlockfaceLength, selectSegments } from '../../store/selectors.js'
+import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
+import * as S from '../../store/selectors.js'
 import { formatLength } from '../../utils/formatting.js'
 import { calculateSimplePositions } from './label-positioning-simple.js'
 
@@ -76,7 +77,7 @@ const LabelDropdownMenu = React.memo(({ segment, index, isOpen, onClose, handleC
                     <TypeMenuItem
                         key={type}
                         type={type}
-                        isSelected={segment.type === type}
+                        isSelected={segment.use === type}
                         onSelect={handleTypeSelect}
                     />
                 ))}
@@ -117,7 +118,7 @@ const LabelItem = React.memo(
         const labelStyle = {
             position: 'absolute',
             // Remove top, left, width from here since useLayoutEffect handles them
-            backgroundColor: COLORS[segment.type] || '#666',
+            backgroundColor: COLORS[segment.use] || '#666',
             color: 'white',
             padding: '3px 6px',
             borderRadius: '4px',
@@ -143,7 +144,7 @@ const LabelItem = React.memo(
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
-                    {segment.type} {formatLength(segment.length)}
+                    {segment.use} {formatLength(segment.length)}
                 </Box>
 
                 {isEditing && (
@@ -197,7 +198,7 @@ const createLabelItem = (labelPositions, segmentPositions, handleChangeType, han
 
     return (
         <LabelItem
-            key={segment.id}
+            key={index}
             segment={segment}
             index={index}
             position={{ top: segmentTop, left: labelPositions.positions[index] || 0 }}
@@ -241,8 +242,12 @@ const createLabelItem = (labelPositions, segmentPositions, handleChangeType, han
  *                      handleAddLeft: Number -> Void }) -> JSXElement
  */
 const LabelLayer = ({ handleChangeType, handleAddLeft }) => {
-    const segments = useSelector(selectSegments) || []
-    const blockfaceLength = useSelector(selectBlockfaceLength) || 0
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return null
+
+    const segments = blockface.segments
+    const blockfaceLength = Blockface.totalLength(blockface)
 
     // Calculate label positions using pure math - no DOM dependencies
     const labelPositions = React.useMemo(
@@ -260,7 +265,9 @@ const LabelLayer = ({ handleChangeType, handleAddLeft }) => {
     return (
         /* Allow clicks to pass through to segments */
         <Box position="relative" width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-            {segments.map(createLabelItem(labelPositions, segmentPositions, handleChangeType, handleAddLeft))}
+            {segments.map((segment, index) =>
+                createLabelItem(labelPositions, segmentPositions, handleChangeType, handleAddLeft)(segment, index),
+            )}
         </Box>
     )
 }

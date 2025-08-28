@@ -4,7 +4,8 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
-import { selectBlockfaceLength, selectSegments, selectUnknownRemaining } from '../../store/selectors.js'
+import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
+import * as S from '../../store/selectors.js'
 
 /**
  * SegmentRendererNew - Pure JSX segment renderer with Redux and channel integration
@@ -41,12 +42,16 @@ import { selectBlockfaceLength, selectSegments, selectUnknownRemaining } from '.
  * @sig SegmentItem :: ({ segment: Segment, index: Number, dragDropHandler: DragDropHandler }) -> JSXElement
  */
 const SegmentItem = ({ segment, index, dragDropHandler }) => {
-    const total = useSelector(selectBlockfaceLength) || 0
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return null
+
+    const total = Blockface.totalLength(blockface)
     const [dragState, setDragState] = useChannel(dragStateChannel, ['isDragging', 'draggedIndex', 'dragType'])
     const isDragging = dragState.isDragging && dragState.dragType === 'segment' && dragState.draggedIndex === index
 
     const size = (segment.length / total) * 100
-    const backgroundColor = COLORS[segment.type] || '#666'
+    const backgroundColor = COLORS[segment.use] || '#666'
 
     // Apply drag visual effects
     const style = {
@@ -79,8 +84,12 @@ const SegmentItem = ({ segment, index, dragDropHandler }) => {
  * @sig UnknownSpaceItem :: () -> JSXElement?
  */
 const UnknownSpaceItem = () => {
-    const total = useSelector(selectBlockfaceLength) || 0
-    const unknownRemaining = useSelector(selectUnknownRemaining) || 0
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return null
+
+    const total = Blockface.totalLength(blockface)
+    const unknownRemaining = Blockface.unknownRemaining(blockface)
 
     if (unknownRemaining <= 0) return null
 
@@ -105,14 +114,18 @@ const UnknownSpaceItem = () => {
  * @sig SegmentRenderer :: ({ dragDropHandler: DragDropHandler }) -> JSXElement
  */
 const SegmentRenderer = ({ dragDropHandler }) => {
-    const segments = useSelector(selectSegments) || []
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return null
+
+    const segments = blockface.segments
 
     if (!segments || segments.length === 0) return null
 
     return (
         <>
             {segments.map((segment, index) => (
-                <SegmentItem key={segment.id} segment={segment} index={index} dragDropHandler={dragDropHandler} />
+                <SegmentItem key={index} segment={segment} index={index} dragDropHandler={dragDropHandler} />
             ))}
             <UnknownSpaceItem />
         </>

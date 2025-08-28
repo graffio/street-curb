@@ -5,7 +5,7 @@ import lineSlice from '@turf/line-slice'
 import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { COLORS } from '../constants.js'
-import { selectSegments } from '../store/selectors.js'
+import * as S from '../store/selectors.js'
 
 /**
  * MapboxMap - Interactive map component displaying San Francisco blockfaces
@@ -96,7 +96,7 @@ const createSegmentFeature = (
         return {
             type: 'Feature',
             geometry: { type: 'LineString', coordinates: [] },
-            properties: { color: getSegmentColor(segment.type), type: segment.type, length: segment.length },
+            properties: { color: getSegmentColor(segment.use), type: segment.use, length: segment.length },
         }
     }
 
@@ -115,7 +115,7 @@ const createSegmentFeature = (
         return {
             type: 'Feature',
             geometry: segmentGeometry.geometry,
-            properties: { color: getSegmentColor(segment.type), type: segment.type, length: segment.length },
+            properties: { color: getSegmentColor(segment.use), type: segment.use, length: segment.length },
         }
     } catch (error) {
         return handleError(error)
@@ -313,7 +313,10 @@ const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockf
     if (!source) return
 
     if (blockfaceFeature && currentSegments?.length) {
-        const segmentedData = createSegmentedHighlight(blockfaceFeature, currentSegments, blockfaceLength || 240)
+        if (!blockfaceLength) {
+            throw new Error('blockfaceLength is required for segmented highlight')
+        }
+        const segmentedData = createSegmentedHighlight(blockfaceFeature, currentSegments, blockfaceLength)
         source.setData(segmentedData)
         removeExistingHighlight(map)
         return
@@ -334,7 +337,8 @@ const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockf
  * @sig MapboxMap :: { accessToken: String, onBlockfaceSelect?: Function, selectedBlockface?: Object } -> ReactElement
  */
 const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, selectedBlockface }) => {
-    const currentSegments = useSelector(selectSegments)
+    const blockface = useSelector(S.currentBlockface)
+    const currentSegments = blockface?.segments || [] // Keep defensive here since map works without blockface
 
     const mapContainer = useRef(null)
     const map = useRef(null)

@@ -3,7 +3,8 @@ import { Box } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
-import { selectBlockfaceLength, selectSegments, selectUnknownRemaining } from '../../store/selectors.js'
+import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
+import * as S from '../../store/selectors.js'
 
 /**
  * Gets visual state for divider thumb based on interaction state
@@ -43,9 +44,13 @@ const getVisualState = (isBeingDragged, isHovered) => {
  */
 const DividerThumb = ({ index, handleDirectDragStart }) => {
     const [isHovered, setIsHovered] = React.useState(false)
-    const segments = useSelector(selectSegments) || []
-    const total = useSelector(selectBlockfaceLength) || 0
-    const unknownRemaining = useSelector(selectUnknownRemaining) || 0
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return null
+
+    const segments = blockface.segments
+    const total = Blockface.totalLength(blockface)
+    const unknownRemaining = Blockface.unknownRemaining(blockface)
     const [dragState] = useChannel(dragStateChannel, ['isDragging', 'draggedIndex', 'dragType'])
 
     const isDragging = dragState.isDragging && dragState.dragType === 'divider'
@@ -96,8 +101,12 @@ const DividerThumb = ({ index, handleDirectDragStart }) => {
  * @sig DividerLayer :: ({ handleDirectDragStart: Function }) -> JSXElement?
  */
 const DividerLayer = ({ handleDirectDragStart }) => {
-    const segments = useSelector(selectSegments) || []
-    const unknownRemaining = useSelector(selectUnknownRemaining) || 0
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return null
+
+    const segments = blockface.segments
+    const unknownRemaining = Blockface.unknownRemaining(blockface)
 
     if (!segments || segments.length === 0) return null
 

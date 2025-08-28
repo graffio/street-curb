@@ -2,7 +2,7 @@ import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { SegmentedCurbEditor } from '../../components/SegmentedCurbEditor/SegmentedCurbEditor.jsx'
-import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../../store/actions.js'
+import { addSegment, selectBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import store from '../../store/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 import '../../index.css'
@@ -22,19 +22,19 @@ const useTestData = () => {
     const dispatch = useDispatch()
 
     React.useEffect(() => {
-        dispatch(initializeSegments(240, 'editor-showcase'))
+        dispatch(selectBlockface('editor-showcase', {}, 'Editor Street'))
         dispatch(addSegment(-1))
         dispatch(updateSegmentLength(0, 80))
-        dispatch(updateSegmentType(0, 'Parking'))
+        dispatch(updateSegmentUse(0, 'Parking'))
         dispatch(addSegment(0))
         dispatch(updateSegmentLength(1, 60))
-        dispatch(updateSegmentType(1, 'Loading'))
+        dispatch(updateSegmentUse(1, 'Loading'))
         dispatch(addSegment(1))
         dispatch(updateSegmentLength(2, 50))
-        dispatch(updateSegmentType(2, 'Bus Stop'))
+        dispatch(updateSegmentUse(2, 'Bus Stop'))
         dispatch(addSegment(2))
         dispatch(updateSegmentLength(3, 50))
-        dispatch(updateSegmentType(3, 'Parking'))
+        dispatch(updateSegmentUse(3, 'Parking'))
     }, [dispatch])
 }
 
@@ -61,7 +61,7 @@ const StoryContent = args => {
                             margin: '0 auto',
                         }}
                     >
-                        <SegmentedCurbEditor blockfaceLength={args.blockfaceLength} />
+                        <SegmentedCurbEditor />
                     </div>
                     <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginTop: '8px' }}>
                         Complete editor with all sub-components integrated
@@ -123,14 +123,9 @@ const meta = {
             },
         },
     },
-    argTypes: {
-        blockfaceLength: {
-            control: { type: 'number', min: 100, max: 500, step: 10 },
-            description: 'Total blockface length in feet (optional, defaults to 240)',
-        },
-    },
+    argTypes: {},
 }
 
-const SegmentedCurbEditor_ = { name: 'SegmentedCurbEditor', render: ShowcaseRender, args: { blockfaceLength: 240 } }
+const SegmentedCurbEditor_ = { name: 'SegmentedCurbEditor', render: ShowcaseRender, args: {} }
 
 export { meta as default, SegmentedCurbEditor_ }
