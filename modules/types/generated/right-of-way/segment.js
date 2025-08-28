@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: Segment
-// Generated from: ../types/src/right-of-way/segment.type.js
+// Generated from: ./src/right-of-way/segment.type.js
 // Fields: { use: "String", length: "Number" }
 
 import * as R from '@graffio/types-runtime'
@@ -47,5 +47,11 @@ Object.defineProperty(prototype, '@@typeName', { value: 'Segment' }) // Add hidd
 Segment.toString = () => 'Segment'
 Segment.is = v => v && v['@@typeName'] === 'Segment'
 Segment.from = o => Segment(o.use, o.length)
+
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
+// Additional function: updateUse
+Segment.updateUse = (segment, use) => Segment(use, segment.length)
 
 export { Segment }
