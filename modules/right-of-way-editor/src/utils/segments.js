@@ -4,15 +4,11 @@
 import { roundToPrecision } from './formatting.js'
 
 /**
- * Creates a new segment with specified length and type
+ * Creates a new segment with specified length and use
  * @sig createSegmentWithLength :: (Number, String?) -> Segment
- *     Segment = { id: String, type: String, length: Number }
+ *     Segment = { use: String, length: Number }
  */
-const createSegmentWithLength = (length, type = 'Parking') => ({
-    id: 's' + Math.random().toString(36).slice(2, 7),
-    type,
-    length: roundToPrecision(length),
-})
+const createSegmentWithLength = (length, use = 'Parking') => ({ use, length: roundToPrecision(length) })
 
 /**
  * Checks if a segment can be split by the desired length
