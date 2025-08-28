@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import { aperture } from '../../index.js'
 
 const as = [1, 2, 3, 4, 5]
@@ -14,19 +14,30 @@ const expected2 = [
     [3, 4, 5],
 ]
 
-const s = tap.stringify
-const tests = {
-    [`Given array a = ${s(as)}`]: {
-        'When I call aperture(2, as)': t => {
-            t.sameR(`Then I should get ${s(expected1)}`, expected1, aperture(2, as))
-        },
-        'When I call aperture(3, as)': t => {
-            t.sameR(`Then I should get ${s(expected2)}`, expected2, aperture(3, as))
-        },
-        'When I call aperture(7, as)': t => {
-            t.sameR(`Then I should get []`, [], aperture(7, as))
-        },
-    },
-}
+const s = JSON.stringify
 
-tap.describeTests({ aperture: tests })
+tap.test('aperture', t => {
+    t.test(`Given array a = ${s(as)}`, t => {
+        t.test('When I call aperture(2, as)', t => {
+            const result = aperture(2, as)
+            t.same(result, expected1, `Then I should get ${s(expected1)}`)
+            t.end()
+        })
+
+        t.test('When I call aperture(3, as)', t => {
+            const result = aperture(3, as)
+            t.same(result, expected2, `Then I should get ${s(expected2)}`)
+            t.end()
+        })
+
+        t.test('When I call aperture(7, as)', t => {
+            const result = aperture(7, as)
+            t.same(result, [], `Then I should get []`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})

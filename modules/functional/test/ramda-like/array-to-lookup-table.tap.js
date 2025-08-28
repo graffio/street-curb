@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import { arrayToLookupTable } from '../../index.js'
 
 const a = [
@@ -16,23 +16,22 @@ const as = toString(a)
 const expected1s = toString(expected1)
 const expected2s = toString(expected2)
 
-const tests = {
-    [`Given array a = ${as}`]: {
-        'When I call arrayToLookupTable(a => a.id, a)': t => {
-            t.sameR(
-                `Then I should get ${expected1s}`,
-                expected1,
-                arrayToLookupTable(a => a.id, a),
-            )
-        },
-        'When I call arrayToLookupTable(a => a.a, a)': t => {
-            t.sameR(
-                `Then I should get ${expected2s}`,
-                expected2,
-                arrayToLookupTable(a => a.a, a),
-            )
-        },
-    },
-}
+tap.test('mergeDeepRight', t => {
+    t.test(`Given array a = ${as}`, t => {
+        t.test('When I call arrayToLookupTable(a => a.id, a)', t => {
+            const result = arrayToLookupTable(a => a.id, a)
+            t.same(result, expected1, `Then I should get ${expected1s}`)
+            t.end()
+        })
 
-tap.describeTests({ mergeDeepRight: tests })
+        t.test('When I call arrayToLookupTable(a => a.a, a)', t => {
+            const result = arrayToLookupTable(a => a.a, a)
+            t.same(result, expected2, `Then I should get ${expected2s}`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})

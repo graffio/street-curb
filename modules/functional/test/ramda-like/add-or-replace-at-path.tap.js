@@ -1,4 +1,4 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import addOrReplaceAtPath from '../../src/ramda-like/add-or-replace-at-path.js'
 
 const o = {
@@ -34,16 +34,24 @@ const expectedAdd = {
 
 const path = ['top', 'array']
 
-const s = tap.stringify
-tap.describeTests({
-    addOrReplaceAtPath: {
-        [`Given o = ${s(o)}`]: {
-            [`When I addOrReplaceAtPath(${s(path)}, ${JSON.stringify(b1)}, o)`]: t => {
-                t.sameR(`Then I should get ${s(expectedReplace)}`, addOrReplaceAtPath(path, b1, o), expectedReplace)
-            },
-            [`When I then addOrReplaceAtPath(${s(path)}, ${JSON.stringify(c)}, o)`]: t => {
-                t.sameR(`Then I should get ${s(expectedAdd)}`, addOrReplaceAtPath(path, c, o), expectedAdd)
-            },
-        },
-    },
+const s = JSON.stringify
+
+tap.test('addOrReplaceAtPath', t => {
+    t.test(`Given o = ${s(o)}`, t => {
+        t.test(`When I addOrReplaceAtPath(${s(path)}, ${JSON.stringify(b1)}, o)`, t => {
+            const result = addOrReplaceAtPath(path, b1, o)
+            t.same(result, expectedReplace, `Then I should get ${s(expectedReplace)}`)
+            t.end()
+        })
+
+        t.test(`When I then addOrReplaceAtPath(${s(path)}, ${JSON.stringify(c)}, o)`, t => {
+            const result = addOrReplaceAtPath(path, c, o)
+            t.same(result, expectedAdd, `Then I should get ${s(expectedAdd)}`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
 })

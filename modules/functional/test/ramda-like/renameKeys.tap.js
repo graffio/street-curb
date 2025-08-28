@@ -1,20 +1,24 @@
-import { tap } from '@graffio/test-helpers'
+import tap from 'tap'
 import { renameKeys } from '../../index.js'
 
 const o = { a: 1, b: 2 }
 
-const s = tap.stringify
-const tests = {
-    [`Given object o = ${tap.stringify(o)}`]: {
-        [`When I call renameKeys({ a: 'c' }, o)`]: t => {
+tap.test('renameKeys', t => {
+    t.test(`Given object o = ${JSON.stringify(o)}`, t => {
+        t.test(`When I call renameKeys({ a: 'c' }, o)`, t => {
             const expected = { c: 1, b: 2 }
-            t.sameR(`Then I should get ${s(expected)}`, expected, renameKeys({ a: 'c' }, o))
-        },
-        [`When I call renameKeys({ a: ['c', o => o.a * 7] }, o)`]: t => {
-            const expected = { c: 7, b: 2 }
-            t.sameR(`Then I should get ${s(expected)}`, expected, renameKeys({ a: ['c', o => o.a * 7] }, o))
-        },
-    },
-}
+            t.same(renameKeys({ a: 'c' }, o), expected, `Then I should get ${JSON.stringify(expected)}`)
+            t.end()
+        })
 
-tap.describeTests({ aperture: tests })
+        t.test(`When I call renameKeys({ a: ['c', o => o.a * 7] }, o)`, t => {
+            const expected = { c: 7, b: 2 }
+            t.same(renameKeys({ a: ['c', o => o.a * 7] }, o), expected, `Then I should get ${JSON.stringify(expected)}`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})
