@@ -1,9 +1,10 @@
 import { Box, Button, Flex, Text } from '@radix-ui/themes'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import { COLORS } from '../../constants.js'
 import { addSegment, addSegmentLeft, replaceSegments, updateSegmentLength } from '../../store/actions.js'
-import { selectBlockfaceLength, selectCumulativePositions, selectSegments } from '../../store/selectors.js'
+import * as S from '../../store/selectors.js'
 import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
 import { formatLength, roundToPrecision } from '../../utils/formatting.js'
 import { DividerLayer } from './DividerLayer.jsx'
@@ -29,14 +30,14 @@ import { SegmentRenderer } from './SegmentRenderer.jsx'
  * Main component for editing segmented curb configurations with drag and drop functionality (vertical orientation only)
  * @sig SegmentedCurbEditor :: ({ blockfaceLength?: Number, blockfaceId?: String }) -> JSXElement
  */
-const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
+const SegmentedCurbEditor = () => {
     /**
      * Creates handler for changing segment type through label dropdown
      * @sig buildChangeTypeHandler :: (Function, SetStateFn) -> (Number, String) -> Void
      */
     const buildChangeTypeHandler = (updateRedux, setEditingIndex) => (index, newType) => {
         const next = [...segments]
-        next[index] = { ...next[index], type: newType }
+        next[index] = { ...next[index], use: newType }
         updateRedux(next)
         setEditingIndex(null)
     }
@@ -87,7 +88,7 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
                     position: 'absolute',
                     left: `${segmentDragState.previewPos.x || 0}px`,
                     top: `${segmentDragState.previewPos.y || 0}px`,
-                    backgroundColor: COLORS[segment.type] || '#666',
+                    backgroundColor: COLORS[segment.use] || '#666',
                     border: '2px solid rgba(255, 255, 255, 0.9)',
                     borderRadius: '6px',
                     opacity: 0.9,
@@ -212,11 +213,12 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     )
 
     const dispatch = useDispatch()
-    const segments = useSelector(selectSegments) || []
-    const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
+    const blockface = useSelector(S.currentBlockface)
 
-    // Use Redux values if available, otherwise use props
-    const total = reduxBlockfaceLength || blockfaceLength
+    if (!blockface) return <div>Loading...</div>
+
+    const segments = blockface.segments
+    const total = Blockface.totalLength(blockface)
 
     // Calculate remaining space locally
     const segmentsLength = segments.reduce((sum, segment) => sum + segment.length, 0)
@@ -256,7 +258,7 @@ const SegmentedCurbEditor = ({ blockfaceLength = 240 }) => {
     )
 
     const handleAddLeft = useCallback(index => dispatch(addSegmentLeft(index)), [dispatch])
-    const tickPoints = useSelector(selectCumulativePositions)
+    const tickPoints = Blockface.cumulativePositions(blockface)
 
     // Redux handles blockface initialization and segment management
 

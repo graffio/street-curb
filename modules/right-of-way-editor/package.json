@@ -37,6 +37,8 @@
         "vitest": "^3.2.4"
     },
     "dependencies": {
+        "@graffio/functional": "0.1.0",
+        "@graffio/types": "0.1.0",
         "@reduxjs/toolkit": "^2.8.2",
         "@turf/along": "^7.2.0",
         "@turf/length": "^7.2.0",

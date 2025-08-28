@@ -2,7 +2,7 @@ import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { DividerLayer } from '../../components/SegmentedCurbEditor/DividerLayer.jsx'
-import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../../store/actions.js'
+import { addSegment, selectBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import store from '../../store/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 import '../../index.css'
@@ -41,7 +41,7 @@ const SegmentVisualizer = ({ segments, total }) => (
                         color: '#333',
                     }}
                 >
-                    {segment.type} {segment.length}ft
+                    {segment.use} {segment.length}ft
                 </div>
             )
         })}
@@ -56,16 +56,16 @@ const useTestData = () => {
     const dispatch = useDispatch()
 
     React.useEffect(() => {
-        dispatch(initializeSegments(240, 'divider-showcase'))
+        dispatch(selectBlockface('divider-showcase', {}, 'Divider Street'))
         dispatch(addSegment(-1))
         dispatch(updateSegmentLength(0, 80))
-        dispatch(updateSegmentType(0, 'Parking'))
+        dispatch(updateSegmentUse(0, 'Parking'))
         dispatch(addSegment(0))
         dispatch(updateSegmentLength(1, 60))
-        dispatch(updateSegmentType(1, 'Loading'))
+        dispatch(updateSegmentUse(1, 'Loading'))
         dispatch(addSegment(1))
         dispatch(updateSegmentLength(2, 50))
-        dispatch(updateSegmentType(2, 'Parking'))
+        dispatch(updateSegmentUse(2, 'Parking'))
     }, [dispatch])
 }
 

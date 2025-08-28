@@ -65,7 +65,7 @@ const Default = {
             <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable Component</h2>
-                    <CurbTable blockfaceLength={240} />
+                    <CurbTable />
                 </div>
             </StoryWrapper>
         )
@@ -87,7 +87,7 @@ const EmptyState = {
             <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable - Empty State</h2>
-                    <CurbTable blockfaceLength={240} />
+                    <CurbTable />
                 </div>
             </StoryWrapper>
         )
@@ -109,7 +109,7 @@ const MobileView = {
                     <h3 style={{ marginBottom: '15px', color: 'var(--gray-12)', fontSize: '16px' }}>
                         CurbTable - Mobile View
                     </h3>
-                    <CurbTable blockfaceLength={240} />
+                    <CurbTable />
                 </div>
             </StoryWrapper>
         )
@@ -134,7 +134,7 @@ const CompleteCollection = {
             <StoryWrapper store={store}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable - Complete Collection</h2>
-                    <CurbTable blockfaceLength={240} />
+                    <CurbTable />
                 </div>
             </StoryWrapper>
         )
@@ -156,7 +156,7 @@ const FeatureShowcase = {
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)', textAlign: 'center' }}>
                         CurbTable - Feature Showcase
                     </h2>
-                    <CurbTable blockfaceLength={240} />
+                    <CurbTable />
                     <div
                         style={{
                             marginTop: '30px',

@@ -1,6 +1,6 @@
 import { createStore } from 'redux'
-import rootReducer from '../src/store/reducer.js'
-import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../src/store/actions.js'
+import { addSegment, createBlockface, updateSegmentLength, updateSegmentUse } from '../src/store/actions.js'
+import { rootReducer } from '../src/store/reducer.js'
 
 /**
  * Vanilla Redux test store utilities for test data consistency
@@ -32,45 +32,45 @@ const TEST_SCENARIOS = {
     /**
      * @sig empty :: () -> [Action]
      */
-    empty: () => [initializeSegments(240, 'test-blockface-empty')],
+    empty: () => [createBlockface('test-blockface-empty', {}, 'Empty Street')],
 
     /**
      * @sig single :: () -> [Action]
      */
     single: () => [
-        initializeSegments(240, 'test-blockface-single'),
+        createBlockface('test-blockface-single', {}, 'Single Street'),
         addSegment(-1),
         updateSegmentLength(0, 100),
-        updateSegmentType(0, 'Parking'),
+        updateSegmentUse(0, 'Parking'),
     ],
 
     /**
      * @sig multiple :: () -> [Action]
      */
     multiple: () => [
-        initializeSegments(240, 'test-blockface-multiple'),
+        createBlockface('test-blockface-multiple', {}, 'Multiple Street'),
         addSegment(-1),
         updateSegmentLength(0, 80),
-        updateSegmentType(0, 'Parking'),
+        updateSegmentUse(0, 'Parking'),
         addSegment(0),
         updateSegmentLength(1, 60),
-        updateSegmentType(1, 'Loading'),
+        updateSegmentUse(1, 'Loading'),
         addSegment(1),
         updateSegmentLength(2, 50),
-        updateSegmentType(2, 'Parking'),
+        updateSegmentUse(2, 'Parking'),
     ],
 
     /**
      * @sig full :: () -> [Action]
      */
     full: () => [
-        initializeSegments(240, 'test-blockface-full'),
+        createBlockface('test-blockface-full', {}, 'Full Street'),
         addSegment(-1),
         updateSegmentLength(0, 120),
-        updateSegmentType(0, 'Parking'),
+        updateSegmentUse(0, 'Parking'),
         addSegment(0),
         updateSegmentLength(1, 120),
-        updateSegmentType(1, 'Loading'),
+        updateSegmentUse(1, 'Loading'),
     ],
 }
 

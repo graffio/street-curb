@@ -2,8 +2,9 @@ import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { SegmentRenderer } from '../../components/SegmentedCurbEditor/SegmentRenderer.jsx'
-import { addSegment, initializeSegments, updateSegmentLength, updateSegmentType } from '../../store/actions.js'
+import { addSegment, createBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import store from '../../store/index.js'
+import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 import '../../index.css'
 
@@ -32,19 +33,19 @@ const useTestData = () => {
     const dispatch = useDispatch()
 
     React.useEffect(() => {
-        dispatch(initializeSegments(240, 'segment-showcase'))
+        dispatch(createBlockface('segment-showcase', DEFAULT_STORY_GEOMETRY, 'Showcase Street'))
         dispatch(addSegment(-1))
         dispatch(updateSegmentLength(0, 80))
-        dispatch(updateSegmentType(0, 'Parking'))
+        dispatch(updateSegmentUse(0, 'Parking'))
         dispatch(addSegment(0))
         dispatch(updateSegmentLength(1, 60))
-        dispatch(updateSegmentType(1, 'Loading'))
+        dispatch(updateSegmentUse(1, 'Loading'))
         dispatch(addSegment(1))
         dispatch(updateSegmentLength(2, 40))
-        dispatch(updateSegmentType(2, 'Bus Stop'))
+        dispatch(updateSegmentUse(2, 'Bus Stop'))
         dispatch(addSegment(2))
         dispatch(updateSegmentLength(3, 30))
-        dispatch(updateSegmentType(3, 'Disabled'))
+        dispatch(updateSegmentUse(3, 'Disabled'))
     }, [dispatch])
 }
 

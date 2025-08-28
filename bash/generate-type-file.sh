@@ -8,8 +8,10 @@ output_dir="$2"
 base_name=$(basename "$input_file" .type.js)
 output_file="$output_dir/${base_name}.js"
 
-# build-tools directory relative to the location of the caller (in module x at .../quicken-tools/modules/x)
-BUILD_TOOLS_DIR="../../modules/build-tools"
+# types-generation directory - handle both relative and absolute calls
+SCRIPT_DIR="$(dirname "$0")"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+TYPES_GEN_DIR="$REPO_ROOT/modules/types-generation"
 
 # Call the Node.js generator
-node "$BUILD_TOOLS_DIR/src/generate-type-file.js" "$input_file" "$output_file"
+node "$TYPES_GEN_DIR/src/generate-type-file.js" "$input_file" "$output_file"

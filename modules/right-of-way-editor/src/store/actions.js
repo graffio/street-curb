@@ -8,10 +8,10 @@ const initializeSegments = (blockfaceLength, blockfaceId = null) => ({
 })
 
 /**
- * Update segment type
- * @sig updateSegmentType :: (Number, String) -> Action
+ * Update segment use
+ * @sig updateSegmentUse :: (Number, String) -> Action
  */
-const updateSegmentType = (index, type) => ({ type: ACTION_TYPES.UPDATE_SEGMENT_TYPE, payload: { index, type } })
+const updateSegmentUse = (index, use) => ({ type: ACTION_TYPES.UPDATE_SEGMENT_USE, payload: { index, use } })
 
 /**
  * Update segment length and adjust Unknown segment accordingly
@@ -44,23 +44,48 @@ const addSegmentLeft = (index, desiredLength = 10) => ({
 const replaceSegments = segments => ({ type: ACTION_TYPES.REPLACE_SEGMENTS, payload: { segments } })
 
 /**
- * Action types for curb segment management
+ * Action types for blockface and segment management
  */
 const ACTION_TYPES = {
+    // Legacy segment actions
     INITIALIZE_SEGMENTS: 'INITIALIZE_SEGMENTS',
-    UPDATE_SEGMENT_TYPE: 'UPDATE_SEGMENT_TYPE',
+    UPDATE_SEGMENT_USE: 'UPDATE_SEGMENT_USE',
     UPDATE_SEGMENT_LENGTH: 'UPDATE_SEGMENT_LENGTH',
     ADD_SEGMENT: 'ADD_SEGMENT',
     ADD_SEGMENT_LEFT: 'ADD_SEGMENT_LEFT',
     REPLACE_SEGMENTS: 'REPLACE_SEGMENTS',
+
+    // New blockface actions
+    SELECT_BLOCKFACE: 'SELECT_BLOCKFACE',
+    CREATE_BLOCKFACE: 'CREATE_BLOCKFACE',
 }
+
+/**
+ * Select an existing blockface for editing, creating it if necessary
+ * @sig selectBlockface :: (String, Object?, String?, String?) -> Action
+ */
+const selectBlockface = (blockfaceId, geometry = {}, streetName = '', cnnId = undefined) => ({
+    type: ACTION_TYPES.SELECT_BLOCKFACE,
+    payload: { blockfaceId, geometry, streetName, cnnId },
+})
+
+/**
+ * Create a new blockface and select it for editing
+ * @sig createBlockface :: (String, Object?, String?, String?) -> Action
+ */
+const createBlockface = (id, geometry = {}, streetName = '', cnnId = undefined) => ({
+    type: ACTION_TYPES.CREATE_BLOCKFACE,
+    payload: { id, geometry, streetName, cnnId },
+})
 
 export {
     ACTION_TYPES,
     addSegment,
     addSegmentLeft,
+    createBlockface,
     initializeSegments,
     replaceSegments,
+    selectBlockface,
     updateSegmentLength,
-    updateSegmentType,
+    updateSegmentUse,
 }

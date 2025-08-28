@@ -1,14 +1,10 @@
 import { Table as RadixTable } from '@radix-ui/themes'
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import { COLORS } from '../../constants.js'
-import { addSegment, updateSegmentLength, updateSegmentType } from '../../store/actions.js'
-import {
-    selectBlockfaceLength,
-    selectSegments,
-    selectStartPositions,
-    selectUnknownRemaining,
-} from '../../store/selectors.js'
+import { addSegment, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
+import * as S from '../../store/selectors.js'
 import { formatLength } from '../../utils/formatting.js'
 import NumberPad from '../NumberPad.jsx'
 import { createColorOptions, CurbSegmentSelect } from './CurbSegmentSelect.jsx'
@@ -195,7 +191,7 @@ const CurbSegmentRow = ({
         <RadixTable.Row data-row-index={index} onClick={handleRowClick} style={rowStyle}>
             <RadixTable.Cell style={typeCellStyle} role="gridcell" aria-label={`Segment ${index + 1} type`}>
                 <div style={typeContainerStyle}>
-                    <CurbTypeSelector value={segment.type} onChange={handleTypeChange} />
+                    <CurbTypeSelector value={segment.use} onChange={handleTypeChange} />
                 </div>
             </RadixTable.Cell>
             <RadixTable.Cell
@@ -209,12 +205,12 @@ const CurbSegmentRow = ({
             <RadixTable.Cell style={startCellStyle} role="gridcell" aria-label={`Segment ${index + 1} start position`}>
                 {formatLength(startPosition)}
             </RadixTable.Cell>
-            <RadixTable.Cell style={addCellStyle} role="gridcell" aria-label={`Add segment after ${segment.type}`}>
+            <RadixTable.Cell style={addCellStyle} role="gridcell" aria-label={`Add segment after ${segment.use}`}>
                 <button
                     style={addButtonStyle}
                     onClick={handleAddSegmentClick}
                     disabled={!canAddSegment}
-                    aria-label={`Add segment after ${segment.type}`}
+                    aria-label={`Add segment after ${segment.use}`}
                 >
                     +
                 </button>
@@ -311,7 +307,7 @@ const CurbSegmentControls = ({ unknownRemaining, hasSegments, canAddSegments, on
  *
  * @sig CurbTable :: ({ blockfaceLength?: Number }) -> JSXElement
  */
-const CurbTable = ({ blockfaceLength = 240 }) => {
+const CurbTable = () => {
     const containerStyle = {
         position: 'relative',
         width: '100%',
@@ -335,13 +331,16 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
     const dispatch = useDispatch()
 
     // Redux selectors
-    const segments = useSelector(selectSegments) || []
-    const reduxBlockfaceLength = useSelector(selectBlockfaceLength)
-    const unknownRemaining = useSelector(selectUnknownRemaining)
-    const startPositions = useSelector(selectStartPositions)
+    const blockface = useSelector(S.currentBlockface)
+
+    if (!blockface) return <div>No blockface selected</div>
+
+    const segments = blockface.segments
+    const reduxBlockfaceLength = Blockface.totalLength(blockface)
+    const unknownRemaining = Blockface.unknownRemaining(blockface)
+    const startPositions = Blockface.startPositions(blockface)
 
     // Computed values
-    const effectiveBlockfaceLength = reduxBlockfaceLength || blockfaceLength
     const canAddNewSegments = unknownRemaining > 0
     const isComplete = unknownRemaining === 0
     const hasAnySegments = segments.length > 0
@@ -350,7 +349,7 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
     const changeSegmentType = useCallback(
         (index, newType) => {
             if (Object.keys(COLORS).includes(newType)) {
-                dispatch(updateSegmentType(index, newType))
+                dispatch(updateSegmentUse(index, newType))
             }
         },
         [dispatch],
@@ -431,7 +430,7 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
         <CurbTableErrorBoundary>
             <div style={containerStyle}>
                 <CurbTableHeader
-                    totalLength={effectiveBlockfaceLength}
+                    totalLength={reduxBlockfaceLength}
                     unknownRemaining={unknownRemaining}
                     isComplete={isComplete}
                 />
@@ -474,7 +473,7 @@ const CurbTable = ({ blockfaceLength = 240 }) => {
                     <NumberPad
                         value={numberPadState.originalValue}
                         min={1}
-                        max={effectiveBlockfaceLength}
+                        max={reduxBlockfaceLength}
                         onSave={handleNumberPadSave}
                         onCancel={handleNumberPadCancel}
                         label="Length"
