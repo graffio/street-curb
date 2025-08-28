@@ -1,27 +1,46 @@
-import { combineReducers } from 'redux'
-import { roundToPrecision } from '../utils/formatting.js'
-import { performSegmentSplit } from '../utils/segments.js'
+import LookupTable from '@graffio/functional/src/lookup-table.js'
+import { Blockface } from '@graffio/types/generated/right-of-way/blockface.js'
 import { ACTION_TYPES } from './actions.js'
-import { selectUnknownRemaining } from './selectors.js'
 
 /**
- * Reset segments array and set new blockface parameters
- * @sig initializeSegments :: (State, Action) -> State
+ * Initial state for the application
  */
-const initializeSegments = (state, action) => {
-    const { blockfaceLength, blockfaceId } = action.payload
-    return { ...state, blockfaceLength, blockfaceId, segments: [], isCollectionComplete: false }
-}
+const initialState = { blockfaces: LookupTable([], Blockface, 'id'), currentBlockfaceId: null }
+
+/*
+ * Add the new or modified blockface to the blockfaces; leaves state unchanged in Blockface is undefined
+ * @sig addBlockface :: (State, Blockface) -> State
+ */
+const _addBlockface = (state, blockface) =>
+    blockface
+        ? { ...state, blockfaces: state.blockfaces.addItemWithId(blockface), currentBlockfaceId: blockface.id }
+        : state
 
 /**
- * Change the type of a specific segment by index
- * @sig updateSegmentType :: (State, Action) -> State
+ * Helper functions for working with current blockface
  */
-const updateSegmentType = (state, action) => {
-    const { index, type } = action.payload
-    if (!state.segments[index]) return state
 
-    return { ...state, segments: state.segments.map((segment, i) => (i === index ? { ...segment, type } : segment)) }
+/**
+ * Get the current blockface from state
+ * @sig _currentBlockface :: State -> Blockface?
+ */
+const _currentBlockface = state => state.blockfaces?.[state.currentBlockfaceId] || null
+
+/**
+ * New blockface management reducers
+ */
+
+/**
+ * Segment operation functions using domain functions
+ */
+
+/**
+ * Change the use of a specific segment by index
+ * @sig updateSegmentUse :: (State, Action) -> State
+ */
+const updateSegmentUse = (state, action) => {
+    const { index, use } = action.payload
+    return _addBlockface(state, Blockface.updateSegmentUse(_currentBlockface(state), index, use))
 }
 
 /**
@@ -29,62 +48,8 @@ const updateSegmentType = (state, action) => {
  * @sig updateSegmentLength :: (State, Action) -> State
  */
 const updateSegmentLength = (state, action) => {
-    /**
-     * Handle last segment length adjustment (affects unknown space)
-     * @sig adjustLastSegment :: () -> State
-     */
-    const adjustLastSegment = () => {
-        const currentUnknownRemaining = selectUnknownRemaining({ curb: state })
-        let newUnknownRemaining = roundToPrecision(currentUnknownRemaining - lengthDelta)
-
-        // Snap to zero if very close (handles floating point precision issues)
-        if (Math.abs(newUnknownRemaining) < 0.01) newUnknownRemaining = 0
-        if (newUnknownRemaining < 0) throw new Error('Insufficient unknown space')
-
-        const newSegments = state.segments.map((seg, i) => (i === index ? { ...seg, length: roundedLength } : seg))
-        return { ...state, segments: newSegments, isCollectionComplete: Math.abs(newUnknownRemaining) < 0.01 }
-    }
-
-    /**
-     * Handle middle segment length adjustment (affects next segment)
-     * @sig adjustMiddleSegment :: () -> State
-     */
-    const adjustMiddleSegment = () => {
-        /**
-         * Map segments to update lengths for current and next segment
-         * @sig mapSegmentLengths :: (Segment, Number) -> Segment
-         */
-        const mapSegmentLengths = (seg, i) => {
-            if (i === index) return { ...seg, length: roundedLength }
-            if (i === index + 1) return { ...seg, length: newNextLength }
-            return seg
-        }
-
-        const nextSegment = state.segments[index + 1]
-        const newNextLength = roundToPrecision(nextSegment.length - lengthDelta)
-        if (newNextLength <= 0) throw new Error('Cannot create zero or negative segment length')
-
-        const newSegments = state.segments.map(mapSegmentLengths)
-        return { ...state, segments: newSegments }
-    }
-
     const { index, newLength } = action.payload
-    if (!state.segments[index]) return state
-
-    // Validate parameters
-    if (index < 0 || index >= state.segments.length) return state
-    if (newLength <= 0) return state
-
-    const roundedLength = roundToPrecision(newLength)
-    const lengthDelta = roundedLength - state.segments[index].length
-
-    try {
-        if (index === state.segments.length - 1) return adjustLastSegment()
-
-        return adjustMiddleSegment()
-    } catch (error) {
-        return state
-    }
+    return _addBlockface(state, Blockface.updateSegmentLength(_currentBlockface(state), index, newLength))
 }
 
 /**
@@ -93,28 +58,7 @@ const updateSegmentLength = (state, action) => {
  */
 const addSegment = (state, action) => {
     const { targetIndex } = action.payload
-
-    // Check if we have unknown space to consume
-    if (selectUnknownRemaining({ curb: state }) <= 0) return state
-
-    // Process adding segment by consuming unknown space
-    const currentUnknownRemaining = selectUnknownRemaining({ curb: state })
-    const newSegmentSize = Math.min(20, currentUnknownRemaining)
-
-    // Create new segment with default properties
-    const newSegment = {
-        id: 's' + Math.random().toString(36).slice(2, 7),
-        type: 'Parking',
-        length: roundToPrecision(newSegmentSize),
-    }
-
-    // Insert new segment at the specified position
-    const newSegments = [...state.segments]
-    const insertIndex = targetIndex >= 0 ? targetIndex + 1 : newSegments.length
-    newSegments.splice(insertIndex, 0, newSegment)
-
-    const newUnknownRemaining = roundToPrecision(currentUnknownRemaining - newSegmentSize)
-    return { ...state, segments: newSegments, isCollectionComplete: newUnknownRemaining === 0 }
+    return _addBlockface(state, Blockface.addSegment(_currentBlockface(state), targetIndex))
 }
 
 /**
@@ -123,11 +67,7 @@ const addSegment = (state, action) => {
  */
 const addSegmentLeft = (state, action) => {
     const { index, desiredLength } = action.payload
-    const result = performSegmentSplit(state.segments, index, desiredLength)
-
-    if (!result.success) return state
-
-    return { ...state, segments: result.segments }
+    return _addBlockface(state, Blockface.addSegmentLeft(_currentBlockface(state), index, desiredLength))
 }
 
 /**
@@ -136,33 +76,44 @@ const addSegmentLeft = (state, action) => {
  */
 const replaceSegments = (state, action) => {
     const { segments } = action.payload
-    const newSegments = typeof segments === 'function' ? segments(state.segments) : segments
-    return { ...state, segments: newSegments }
+    return _addBlockface(state, Blockface.replaceSegments(_currentBlockface(state), segments))
 }
 
 /**
- * Curb reducer for segment management
- * @sig curbReducer :: (State, Action) -> State
+ * Create blockface action handler; mostly for testing
+ * @sig createBlockface :: (State, Action) -> State
  */
-const curbReducer = (state = curbInitialState, action) => {
-    if (action.type === ACTION_TYPES.INITIALIZE_SEGMENTS) return initializeSegments(state, action)
-    if (action.type === ACTION_TYPES.UPDATE_SEGMENT_TYPE) return updateSegmentType(state, action)
+const createBlockface = (state, action) => {
+    const { id, geometry, streetName, cnnId } = action.payload
+    return _addBlockface(state, Blockface(id, geometry, streetName, cnnId, []))
+}
+
+/**
+ * Select blockface action handler (with auto-creation)
+ * @sig selectBlockface :: (State, Action) -> State
+ */
+const selectBlockface = (state, action) => {
+    const { blockfaceId, geometry, streetName, cnnId } = action.payload
+
+    // If blockface already exists, just select it, otherwise, create it and select it
+    return state.blockfaces[blockfaceId]
+        ? { ...state, currentBlockfaceId: blockfaceId }
+        : _addBlockface(state, Blockface(blockfaceId, geometry, streetName, cnnId, []))
+}
+
+/**
+ * Root reducer handling all actions
+ * @sig rootReducer :: (State, Action) -> State
+ */
+const rootReducer = (state = initialState, action) => {
+    if (action.type === ACTION_TYPES.CREATE_BLOCKFACE) return createBlockface(state, action)
+    if (action.type === ACTION_TYPES.SELECT_BLOCKFACE) return selectBlockface(state, action)
+    if (action.type === ACTION_TYPES.UPDATE_SEGMENT_USE) return updateSegmentUse(state, action)
     if (action.type === ACTION_TYPES.UPDATE_SEGMENT_LENGTH) return updateSegmentLength(state, action)
     if (action.type === ACTION_TYPES.ADD_SEGMENT) return addSegment(state, action)
     if (action.type === ACTION_TYPES.ADD_SEGMENT_LEFT) return addSegmentLeft(state, action)
     if (action.type === ACTION_TYPES.REPLACE_SEGMENTS) return replaceSegments(state, action)
     return state
 }
-
-/**
- * Initial state for curb segments - unknownRemaining now computed
- */
-const curbInitialState = { segments: [], blockfaceLength: 240, blockfaceId: null, isCollectionComplete: false }
-
-/**
- * Root reducer combining all slice reducers
- * @sig rootReducer :: (State, Action) -> State
- */
-const rootReducer = combineReducers({ curb: curbReducer })
 
 export { rootReducer }
