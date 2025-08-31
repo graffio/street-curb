@@ -1,0 +1,388 @@
+# Firebase SOC2 Infrastructure Implementation Requirements
+# LLM-friendly specification for complete system implementation
+
+project_structure:
+  environments:
+    - name: "development"
+      description: "Individual developer sandboxes"
+      soc2_required: false
+      stripe_mode: "disabled"
+      naming: "myapp-dev-{developer}-{timestamp}"
+      user_questions:
+        - this is confusing developer and development environments?
+        - naming is myapp-development-{timestamp} here
+    - name: "staging"
+      description: "Pre-production testing"
+      soc2_required: false  # unless using real customer data
+      stripe_mode: "test"
+      naming: "myapp-staging-{timestamp}"
+      user_questions:
+        - using real customer data:
+          - where would such data come from?
+          - if we're SOC2 compliant, how can we view/copy/manage customer data that's causing issues? Copy it to staging?
+          - how would we manage the auth/user information when copying into staging?
+    - name: "production"
+      description: "Live customer environment"
+      soc2_required: true
+      stripe_mode: "live"
+      naming: "myapp-production"
+
+infrastructure_creation:
+  function_parameters:
+    required:
+      - environment: "dev | staging | production"
+      - project_name: "Human-readable name"
+      - owner: "Developer email or name"
+    optional:
+      - project_id: "Auto-generated if not provided"
+      - billing_account_id: "Required for production"
+      - region: "Default us-central1"
+      - soc2_mode: "full | minimal | dev-only"
+
+  questions:
+    - "How do we handle billing account assignment per environment?":
+    - "Should region be configurable per environment or global?"
+    - "Do we need different SOC2 modes or just on/off?"
+    - user_questions:
+        - I don't understand these questions; how will we decide them? Do we need to decide now? When should we?
+
+gcp_services_required:
+  core:
+    - firebase.googleapis.com
+    - firestore.googleapis.com
+    - cloudfunctions.googleapis.com
+    - secretmanager.googleapis.com
+    - cloudresourcemanager.googleapis.com
+    - user_questions:
+        - auth?
+        - remote config for feature flags
+        - what is cloudresourcemanager?
+  soc2_specific:
+    - logging.googleapis.com
+    - monitoring.googleapis.com
+    - cloudaudit.googleapis.com
+    - user_questions:
+        - how are these used for SOC2 compliance?
+  optional:
+    - cloudsql.googleapis.com  # Future PostgreSQL integration
+
+  questions:
+    - "Are there other GCP services needed for SOC2 compliance?"
+    - "Should we enable all services upfront or as needed?"
+    - user_questions:
+      - how will we answer these questions?
+
+firebase_auth_integration:
+  collections:
+    users:
+      fields:
+        - firebase_uid: "Links to Firebase Auth user.uid"
+        - email: "Synced from Firebase Auth"
+        - display_name: "From Auth or manually set"
+        - created_at: "Timestamp"
+        - last_login: "Updated via audit log"
+        - user_questions:
+            - do we need created_at, last_login if we're recording SOC2 compliance elsewhere
+            - if we have these fields do we also want created_by, last_updated_at, last_updated_by
+            - these questions are not just about users, but about all collections I guess
+      questions:
+        - "Should we sync Firebase Auth users to Firestore automatically?"
+        - "How do we handle Firebase Auth user deletion vs Firestore user?"
+        - "Do we store additional user metadata beyond Firebase Auth?"
+
+database-versioning-and-migration:
+  - we'll need to migrate the database schemas over time
+  - user_questions
+      - how can we do this at all
+      - should we migrate the entire database at once? If so, does the App have to be "down" during this transition
+      - should we forward-migrate only collections that users are actively using as they load them?
+      - if we don't migrate everything together, how will we track version data for objects in our collection?
+      - do we need version data
+
+authentication:
+  - user_questions:
+      - should we allow users without any credentials to view data for a city?
+      - should we skip passwords and use passcodes only?
+
+user_creation_flow:
+  method: "Queue-based via giant function"
+  steps:
+    - client_queues_request:
+        collection: "update_queue"
+        action: "createUser"
+        data: "{ email, password, cityId, role }"
+    - function_processes:
+        validates: "Email, password policy, permissions"
+        creates_firebase_user: "admin.auth().createUser()"
+        creates_firestore_user: "users collection"
+        assigns_role: "user_city_roles collection"
+
+  questions:
+    - "Should initial password be generated or user-provided?"
+    - "How do we handle email verification in the queue flow?"
+    - "Do we send welcome emails from the function?":
+      - user_questions:
+          - Is there not a built-in way to do this in Firebase? What's best practice?
+          - Do we need to integrate with sendgrid? Does GCP offer a service similar to sendgrid?
+    - user_questions:
+        - Or just passcode; no passwords at all?
+
+firestore_collections:
+  update_queue:
+    purpose: "Offline-capable command queue"
+    security_rules: "User can create own items, read own status"
+    fields:
+      - action: "createUser | updateUser | assignRole | deleteUser"
+      - data: "Action-specific payload"
+      - idempotency_key: "UUID for duplicate prevention"
+      - user_id: "Requesting user Firebase UID"
+      - status: "pending | completed | failed"
+      - timestamp: "Created timestamp"
+
+  processed_operations:
+    purpose: "Idempotency tracking"
+    security_rules: "Admin read-only"
+    retention: "30 days"
+
+  users:
+    purpose: "User profiles linked to Firebase Auth"
+    security_rules: "Function write-only, user read own"
+
+  cities:
+    purpose: "Multi-tenant city/organization data"
+    security_rules: "Function write-only, user read accessible cities"
+    user_questions:
+      - not all customers will be cities; should we rename "city" to "organization" throughout this spec?
+
+  user_city_roles:
+    purpose: "Role-based access control per city"
+    security_rules: "Function write-only, user read own roles"
+    user_questions:
+      - not all customers will be cities; should we rename "city" to "organization" throughout this spec?
+
+  audit_logs:
+    purpose: "SOC2 compliance audit trail"
+    security_rules: "Function write-only, admin read-only"
+    retention: "7 years for SOC2"
+    user_questions:
+      - what is the format of this collection:
+          - what does SOC2 require be tracked?
+          - will we track both normal end-user actions and developer/internal actions in the same table?
+
+  questions:
+    - "Should we use subcollections for city-specific data isolation?"
+    - "How do we handle Firestore query limits with many cities?"
+    - user_questions:
+        - should we structure all the data for an organization hierarchically under it?
+        - or should we have top-level collections for user, organization
+        - do we need a level of hierarchy *below* organization? Would a customer ever want more than one "project"?
+
+authorization:
+  user_questions:
+    - for now there are just admins and (regular) users, but:
+        - what's a good term for "regular user" here? User is too generic
+        - should we organize authorization as GCP does resource + action?:
+          - what is the terminology for "resource + action" in GCP? What's a "role"?
+          - how would we implement that in our code?
+          - how do we assign a collecgtion of resource + actions to a given user?
+
+stripe_integration:
+  environments:
+    development:
+      enabled: false
+      resources: []
+    staging:
+      enabled: true
+      mode: "test"
+      resources:
+        - products: "City subscription tiers"
+        - prices: "Annual pricing"
+        - webhooks: "Test webhook endpoints"
+        - user_questions:
+            - which functions do we trap in our webhook?
+            - how do we handle failures in the webhook? In stripe in general
+            - how do we integrate Stripe approval with actions in the app
+    production:
+      enabled: true
+      mode: "live"
+      resources:
+        - products: "City subscription tiers"
+        - prices: "Annual pricing"
+        - customers: "One per city"
+        - subscriptions: "Annual billing"
+        - webhooks: "Payment event handling"
+
+  questions:
+    - "Should Stripe resources be created with infrastructure or separately?"
+    - "How do we handle Stripe webhook signatures verification?"
+    - "Do we need separate Stripe accounts per environment?"
+
+permissions_and_iam:
+  human_accounts:
+    developer:
+      roles:
+        - "roles/firebase.developer"
+        - "roles/logging.viewer"
+      usage: "Daily development, debugging"
+    admin:
+      roles:
+        - "roles/firebase.admin"
+        - "roles/resourcemanager.projectCreator"
+      usage: "Infrastructure changes, user management"
+
+  service_accounts:
+    deployment_sa:
+      roles:
+        - "roles/cloudfunctions.developer"
+        - "roles/firebase.admin"
+      usage: "CI/CD deployments"
+    monitoring_sa:
+      roles:
+        - "roles/logging.viewer"
+        - "roles/monitoring.viewer"
+      usage: "Error reporting, alerts"
+
+  questions:
+    - "Should each environment have separate service accounts?"
+    - "How do we rotate service account keys for security?"
+
+error_tracking_and_monitoring:
+  options:
+    sentry:
+      pros: "Better developer experience, error grouping"
+      cons: "Additional service, cost"
+      setup: "Sentry project per environment"
+    user_questions:
+      - what's the pricing for "better developer experience"? Is even the free version better than GCP error reporting
+      - is GCP error reporting integrated with logging?
+      - we need to send enough data from our 'giant Firebase function' to get good data
+      - we need to track our clients to send data too; is there a good way to correlate client actions to server errors
+    gcp_error_reporting:
+      pros: "Native GCP integration, included in SOC2"
+      cons: "Less developer-friendly interface"
+      setup: "Enabled automatically with Cloud Functions"
+
+  monitoring_stack:
+    - cloud_logging: "All function logs"
+    - cloud_monitoring: "Performance metrics"
+    - cloud_error_reporting: "Automated error detection"
+    - custom_alerts: "SOC2 security events"
+    - user_questions:
+        - what's a "SOC2 security event"?
+        - how do "cloud errors" get reported to Sentry (?) or GCP Error? Who 'has the pager' when something goes wrong?
+
+  questions:
+    - "Can we use both Sentry and GCP Error Reporting?"
+    - "What specific alerts do we need for SOC2?"
+
+testing_strategy:
+  unit_tests:
+    scope: "Validation functions, business logic"
+    tools: "Jest, mock Firebase Admin SDK"
+    location: "functions/test/"
+
+  integration_tests:
+    scope: "Giant function end-to-end"
+    tools: "Firebase emulator, test Firestore"
+    setup: "Local emulator with test data"
+
+  infrastructure_tests:
+    scope: "Project creation, service enabling"
+    method: "Create real test projects, then cleanup"
+    naming: "test-infrastructure-{timestamp}"
+
+  questions:
+    - "How do we test Stripe integration without charges?"
+    - "Should we test actual GCP project creation or mock it?"
+
+security_and_compliance:
+  soc2_requirements:
+    audit_logging:
+      what: "All user actions, system changes"
+      where: "Cloud Audit Logs + custom audit_logs collection"
+      retention: "7 years"
+    access_controls:
+      mfa: "Enforced for production admin accounts"
+      rbac: "City-based role isolation"
+      principle_of_least_privilege: "Minimal IAM roles"
+    change_management:
+      infrastructure: "Version controlled deployment scripts"
+      application: "Git-tracked function deployments"
+      approval: "Required for production changes"
+
+  security_rules:
+    firestore:
+      update_queue: "User can create/read own items only"
+      other_collections: "Function write-only, role-based read"
+    storage:
+      not_needed: "No file uploads in user management MVP"
+
+  questions:
+    - "Do we need additional security scanning tools?"
+    - "How do we handle security incident response?"
+
+deployment_and_cicd:
+  infrastructure_deployment:
+    trigger: "Manual script execution"
+    authentication: "Human account with proper roles"
+    process:
+      - "Run createSOC2Project() function"
+      - "Deploy Firebase functions"
+      - "Set up Firestore rules"
+      - "Configure monitoring"
+
+  application_deployment:
+    trigger: "Git push to main branch"
+    authentication: "Service account"
+    process:
+      - "Deploy Cloud Functions"
+      - "Update Firestore rules"
+      - "Run database migrations"
+
+  questions:
+    - "Should infrastructure creation be automated or manual?":
+      - user_questions:
+          - how do it ever be "automated"?
+    - "How do we handle rollbacks of infrastructure changes?"
+
+  user_questions:
+      - probably using GitHub or GitLab (which would you recommend? I'm more familiar with GitLab; is GitHub better?
+      - should we use GCP CI/CD instead of GitLab or GitHub?
+
+
+cost_management:
+  development:
+    strategy: "Use free tiers, auto-cleanup old projects"
+    firestore: "Minimal reads/writes"
+    functions: "Within free tier limits"
+    user_questions:
+      - what are the free tier limits?
+
+  production:
+    strategy: "Monitor usage, set billing alerts"
+    firestore: "Optimize queries, index management"
+    functions: "Monitor invocation costs"
+    audit_logs: "Significant storage cost over time"
+
+  questions:
+    - "What billing alerts should we set up?"
+    - "How do we forecast costs as user base grows?"
+
+open_questions:
+  architectural:
+    - "Should we start with Firestore-only or include PostgreSQL from day 1?":
+        - answer: Firestore only
+    - "How do we handle data migration if we switch from Firestore to PostgreSQL later?"
+    - "Should audit logs be in Firestore or separate storage?":
+      user_questions:
+        - what are the tradeoff?
+
+  operational:
+    - "How do we handle environment promotion (dev → staging → prod)?"
+    - "What's our backup and disaster recovery strategy?"
+    - "How do we handle zero-downtime deployments?"
+
+  compliance:
+    - "What additional documentation do we need for SOC2 audit?"
+    - "How do we demonstrate segregation of duties?"
+    - "What regular compliance checks should be automated?"
