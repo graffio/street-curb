@@ -1,35 +1,60 @@
-# Firebase SOC2 Vanilla App Specifications
+# CurbMap - SOC2-Ready Multi-Tenant SaaS
 
-**Updated:** 2025.08.29
+**Multi-tenant SaaS application for cities to manage curb data collection with offline-capable mobile web app.**
 
-## Document Structure
+## What We're Building
 
-### Active Documents
-- **`decisions-needed-now.md`** - Critical blockers that must be decided before coding infrastructure
-- **`implementation-details.md`** - Technical decisions with reasonable defaults for during implementation  
-- **`future-considerations.md`** - Long-term architecture decisions (3-6 month timeline)
-- **`offline-queue-architecture.md`** - Core architectural pattern for offline-capable user management
-- **`infrastructure-as-code-strategy.md`** - Project creation, deployment, and security strategy
+**Target Customers**: Cities and municipalities  
+**Pricing**: Annual fixed fee (thousands/year, check payment)  
+**Core Use Case**: Field workers collect curb measurements using mobile web app, works offline, syncs when online
 
-### Reference Documents
-- **`business.md`** - Original business requirements
-- **`implementation.md`** - Detailed implementation guide with code examples
-- **`summary.md`** - High-level project overview
+## Architecture Decisions (✅ DECIDED)
 
-### Archive
-- **`implementation-requirements-archive.yaml`** - Original comprehensive requirements (archived 2025.08.29)
+- **App Name**: CurbMap
+- **Architecture**: Event sourcing with Firestore queue + giant function
+- **Data Model**: Organizations + Projects hierarchy with event scoping
+- **Authentication**: Passcode-only, no anonymous users
+- **Environments**: `curb-map-development`, `curb-map-staging`, `curb-map-production`
+- **Error Monitoring**: Sentry.io
+- **CI/CD**: GitLab
+- **Billing**: Single account with project labels
+- **Terminology**: Organizations (not cities), Members (not users)
 
-## Decision Process
+## Core Pattern
 
-**Current Status**: All user questions extracted from archive YAML into focused documents
+```
+Client (Online/Offline) → Firestore Queue → Giant Function → Events → Materialized Views
+```
 
-**Next Steps**:
-1. Review `decisions-needed-now.md` and classify each item as:
-   - 🚫 **True blocker** - Must decide now
-   - ✅ **Defaultable** - Can use reasonable default, change later  
-   - 🔄 **Move to implementation-details** - Technical decision for during coding
+**Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
 
-2. Make firm decisions on true blockers only
-3. Begin infrastructure code development using defaults from `implementation-details.md`
+## Implementation Order
 
-**Goal**: Unblock infrastructure development while capturing all important considerations for future reference.
+1. **Week 1**: Infrastructure Foundation (`phase1-infrastructure.md`)
+2. **Week 2**: Event Sourcing Core (`phase2-events.md`)
+3. **Week 3**: Authentication System (`phase3-auth.md`)
+4. **Week 4**: Multi-Tenant Data Model (`phase4-multitenant.md`)
+5. **Week 5**: Offline Queue Architecture (`phase5-offline.md`)
+6. **Week 6**: Billing & Export (`phase6-billing.md`)
+
+## Key Files
+
+- **`architecture.md`** - Technical architecture and data model
+- **`roadmap.md`** - Detailed 6-week implementation sequence
+- **`decisions.md`** - All decisions made and remaining questions
+- **`phase1-infrastructure.md`** through **`phase6-billing.md`** - Implementation details
+
+## Quick Start
+
+1. Read `architecture.md` for core patterns
+2. Follow `roadmap.md` for implementation sequence
+3. Check `decisions.md` for any remaining questions
+4. Start with `phase1-infrastructure.md`
+
+## Success Criteria
+
+**Technical**: Multi-tenant data isolation, comprehensive audit logging, role-based access control, secure authentication, performance monitoring
+
+**Business**: Annual billing support, usage tracking, export functionality, customer onboarding
+
+**Compliance**: SOC2-ready security controls, comprehensive audit trails, data encryption, access controls
