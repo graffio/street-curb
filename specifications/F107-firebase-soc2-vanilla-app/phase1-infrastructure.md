@@ -1,531 +1,471 @@
-# Phase 1: Infrastructure Foundation
+# Phase 1: Infrastructure Safety Architecture
 
-**Goal**: Set up development environment and basic project provisioning
+**Goal**: Implement production-safe infrastructure management with plan/apply workflow and environment versioning
 
-## Deliverables
-- [ ] `createSOC2Project()` function working
-- [ ] Three environments created: `curb-map-development`, `curb-map-staging`, `curb-map-production`
-- [ ] GitLab CI/CD pipeline configured
-- [ ] Basic Firebase services enabled (Auth, Firestore, Functions, Hosting)
+## Environment Strategy
 
-## Step 1: Firebase Project Creation
+### Four Base Environments
+- `curb-map-iac-test` - Test infrastructure changes safely
+- `curb-map-development` - Application development
+- `curb-map-staging` - Production-like testing  
+- `curb-map-production` - Live customer system
 
-### 1.1 Create Firebase Project
-```bash
-# Install Firebase CLI
-npm install -g firebase-tools
+### A/B Versioning (Phase 1a)
+Each environment supports versioned pairs:
+- `curb-map-development-47a`, `curb-map-development-47b`
+- Enables rollback from failed non-rollbackable migrations
+- Only production persists permanently
 
-# Login to Firebase
-firebase login
+## Plan/Apply Workflow
 
-# Create new project
-firebase projects:create curb-map-development --display-name "CurbMap Development"
+### Core Interface
+```javascript
+// Generate execution plan
+const plan = await generatePlan(operation, config)
 
-# Set project ID
-firebase use curb-map-development
+// Show plan to user
+await showPlan(plan)
+
+// Execute after confirmation  
+const result = await executePlan(plan)
 ```
 
-### 1.2 Enable Firebase Services
-```bash
-# Enable required services
-firebase init hosting
-firebase init functions
-firebase init firestore
-firebase init storage
-```
-
-### 1.3 Configure Firebase Project
-```json
+### Plan Structure
+```javascript
 {
-  "hosting": {
-    "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**",
-        "headers": [
-          {
-            "key": "X-Content-Type-Options",
-            "value": "nosniff"
-          },
-          {
-            "key": "X-Frame-Options",
-            "value": "DENY"
-          },
-          {
-            "key": "X-XSS-Protection",
-            "value": "1; mode=block"
-          },
-          {
-            "key": "Strict-Transport-Security",
-            "value": "max-age=31536000; includeSubDomains"
-          }
-        ]
-      }
+  id: 'plan-abc123',
+  operation: 'create-environment',
+  steps: [
+    {
+      action: 'create-project',
+      command: 'firebase projects:create curb-map-iac-test',
+      rollback: 'firebase projects:delete curb-map-iac-test',
+      canRollback: true
+    }
+  ],
+  expiresAt: timestamp,
+  stateHash: 'current-infrastructure-hash'
+}
+```
+
+### Execution Engine
+- Execute steps sequentially
+- On failure: automatically attempt rollback of completed steps
+- Log all operations for SOC2 audit trail
+- Plans expire after 15 minutes to prevent stale execution
+
+## Safety Guard Framework
+
+### Test Context Protection
+```javascript
+// Block protected environments during tests
+if (isTestContext() && isProtectedEnvironment(projectId)) {
+  throw new Error('Cannot modify protected environment during tests')
+}
+```
+
+### Interactive Confirmation
+```javascript
+// Require typed confirmation for destructive operations
+console.log('Type "DELETE curb-map-production" to proceed:')
+const answer = await getUserInput()
+if (answer !== expectedText) {
+  throw new Error('Operation cancelled')
+}
+```
+
+### Environment Classification
+- **Test Context**: Only allow `test-*`, `temp-*`, `throwaway-*` prefixes
+- **Protected Environments**: `production`, `staging` require extra confirmation
+- **Development**: Ephemeral, can be recreated from canonical state
+
+## Required Interfaces
+
+### Plan Generation
+```javascript
+/**
+ * Generate execution plan for infrastructure operation
+ * @sig generatePlan :: (String, Object) -> Promise<Plan>
+ */
+const generatePlan = async (operation, config) => {
+  // Analyze current state
+  // Generate step-by-step commands
+  // Include rollback actions
+  // Return structured plan
+}
+```
+
+### Plan Execution  
+```javascript
+/**
+ * Execute infrastructure plan with automatic rollback
+ * @sig executePlan :: (Plan) -> Promise<ExecutionResult>
+ */
+const executePlan = async (plan) => {
+  // Validate plan not expired
+  // Execute steps sequentially
+  // On failure: rollback completed steps
+  // Return execution summary
+}
+```
+
+### State Analysis
+```javascript
+/**
+ * Analyze current infrastructure state
+ * @sig analyzeCurrentState :: (String) -> Promise<StateSnapshot>
+ */
+const analyzeCurrentState = async (environment) => {
+  // Check existing projects
+  // Verify API states
+  // Return structured state
+}
+```
+
+## SOC2 Audit Requirements
+
+### Audit Log Structure
+```javascript
+{
+  timestamp: '2025-01-15T10:30:00Z',
+  operator: 'alice@company.com',
+  operation: 'create-environment', 
+  environment: 'production',
+  planId: 'plan-abc123',
+  result: 'success',
+  duration: '3m45s',
+  commandsExecuted: ['firebase projects:create...'],
+  rollbackAvailable: true
+}
+```
+
+### Audit Trail Storage
+- Permanent storage separate from operational files
+- 7-year retention for SOC2 compliance
+- No sensitive data in git repository
+
+## Success Criteria (Concrete Tests)
+
+### Phase 1 Tests
+```javascript
+tap.test('Given plan/apply system', async (t) => {
+  t.test('When generating plan for new environment', async (t) => {
+    const plan = await generatePlan('create-environment', config)
+    t.ok(plan.steps.length > 0, 'Then plan should contain executable steps')
+    t.ok(plan.expiresAt > Date.now(), 'Then plan should have expiration time')
+  })
+  
+  t.test('When executing valid plan', async (t) => {
+    const result = await executePlan(validPlan)
+    t.equal(result.status, 'success', 'Then execution should succeed')
+    t.ok(result.auditLog, 'Then audit log should be generated')
+  })
+})
+```
+
+### Safety Tests
+```javascript
+tap.test('Given test context safety guards', async (t) => {
+  t.test('When attempting to modify production in tests', async (t) => {
+    try {
+      await generatePlan('delete-environment', { environment: 'production' })
+      t.fail('Then operation should be blocked')
+    } catch (error) {
+      t.ok(error.message.includes('test safety'), 'Then safety error should be thrown')
+    }
+  })
+})
+```
+
+### Rollback Tests
+```javascript
+tap.test('Given plan execution failure', async (t) => {
+  t.test('When step fails mid-execution', async (t) => {
+    const result = await executePlan(planThatFailsAtStep3)
+    t.equal(result.status, 'failed', 'Then execution should report failure')
+    t.equal(result.rollbackAttempted, true, 'Then rollback should be attempted')
+  })
+})
+```
+
+## Implementation Priority
+
+### Phase 1: Core Plan/Apply (Immediate)
+- Implement plan generation and execution
+- Add safety guards for test contexts
+- Create SOC2 audit logging
+- **Success**: Can safely create/delete environments through plan/apply
+
+### Phase 1a: Environment Versioning (Before First Migration)
+- Add A/B environment pairs
+- Implement version rotation
+- Add migration rollback capabilities  
+- **Success**: Can recover from failed non-rollbackable migrations
+
+## Phase 1a: Environment Versioning Architecture
+
+### Version State Management
+
+#### Version Registry
+```javascript
+// Stored in git repository as canonical source
+// environmentVersions.json
+{
+  "iac-test": { "current": 47, "available": ["47a", "47b"] },
+  "development": { "current": 47, "available": ["47a", "47b"] },
+  "staging": { "current": 47, "available": ["47a", "47b"] },
+  "production": { "current": 47, "available": ["47a"] }
+}
+```
+
+#### State Analysis Interface
+```javascript
+/**
+ * Get current version state for all environments
+ * @sig getVersionState :: () -> Promise<VersionRegistry>
+ */
+const getVersionState = async () => {
+  const registry = await loadVersionRegistry()
+  const actualProjects = await listExistingProjects()
+  return reconcileVersionState(registry, actualProjects)
+}
+```
+
+### A/B Rotation Workflows
+
+#### Migration Process
+```javascript
+/**
+ * Execute migration across all environments
+ * @sig executeMigration :: (Number, Number) -> Promise<MigrationResult>
+ */
+const executeMigration = async (fromVersion, toVersion) => {
+  // 1. Test migration on iac-test
+  await rotatePair('iac-test', fromVersion, toVersion)
+  
+  // 2. If successful, migrate development
+  await rotatePair('development', fromVersion, toVersion)
+  
+  // 3. If successful, migrate staging
+  await rotatePair('staging', fromVersion, toVersion)
+  
+  // 4. Production migration requires separate approval
+  // (Manual process with additional safety checks)
+}
+
+/**
+ * Rotate A/B pair for single environment
+ * @sig rotatePair :: (String, Number, Number) -> Promise<RotationResult>
+ */
+const rotatePair = async (environment, fromVersion, toVersion) => {
+  // Example: development-47a -> development-48a
+  // Keep development-47b as rollback
+  
+  const sourceProject = `curb-map-${environment}-${fromVersion}a`
+  const targetProject = `curb-map-${environment}-${toVersion}a`
+  
+  // 1. Create new version by migrating from current 'a' version
+  const migrationPlan = await generateMigrationPlan(sourceProject, targetProject)
+  const result = await executePlan(migrationPlan)
+  
+  if (result.status === 'success') {
+    // 2. Update version registry
+    await updateVersionRegistry(environment, toVersion, ['47b', '48a'])
+    return { status: 'success', rollbackAvailable: `${environment}-${fromVersion}b` }
+  } else {
+    // 3. Migration failed - cleanup and report
+    await cleanupFailedMigration(targetProject)
+    return { status: 'failed', rollbackAvailable: `${environment}-${fromVersion}b` }
+  }
+}
+```
+
+### Migration Failure Recovery
+
+#### Recovery Scenarios
+```javascript
+/**
+ * Recover from failed migration
+ * @sig recoverFromFailedMigration :: (String, Number, Number) -> Promise<RecoveryResult>
+ */
+const recoverFromFailedMigration = async (environment, fromVersion, toVersion) => {
+  // Scenario 1: Migration failed on 47a, 47b still exists
+  if (await projectExists(`curb-map-${environment}-${fromVersion}b`)) {
+    // Create 47c from 47b for retry
+    await createRetryVersion(environment, fromVersion, 'c')
+    return { strategy: 'retry-from-backup', retryVersion: `${fromVersion}c` }
+  }
+  
+  // Scenario 2: Need to recreate from earlier version
+  const earlierVersion = fromVersion - 1
+  if (await projectExists(`curb-map-${environment}-${earlierVersion}a`)) {
+    // Recreate 47c by migrating from 46a -> 47c
+    await recreateFromEarlierVersion(environment, earlierVersion, fromVersion, 'c')
+    return { strategy: 'recreate-from-earlier', sourceVersion: earlierVersion }
+  }
+  
+  // Scenario 3: Nuclear option - rebuild from canonical state
+  await rebuildFromCanonicalState(environment, fromVersion)
+  return { strategy: 'rebuild-from-scratch' }
+}
+
+/**
+ * Create retry version from backup
+ * @sig createRetryVersion :: (String, Number, String) -> Promise<String>
+ */
+const createRetryVersion = async (environment, version, letter) => {
+  const source = `curb-map-${environment}-${version}b`
+  const target = `curb-map-${environment}-${version}${letter}`
+  
+  // Clone existing environment (expensive but reliable)
+  const clonePlan = await generateClonePlan(source, target)
+  await executePlan(clonePlan)
+  
+  return target
+}
+```
+
+### Cleanup Automation
+
+#### Cleanup Strategy
+```javascript
+/**
+ * Clean up old environment versions
+ * @sig cleanupOldVersions :: (Number) -> Promise<CleanupResult>
+ */
+const cleanupOldVersions = async (retainGenerations = 3) => {
+  const versionState = await getVersionState()
+  const cleanupPlan = []
+  
+  for (const [env, state] of Object.entries(versionState)) {
+    if (env === 'production') continue // Never auto-cleanup production
+    
+    const currentVersion = state.current
+    const versionsToKeep = [
+      currentVersion - 2, // Two versions back
+      currentVersion - 1, // One version back  
+      currentVersion      // Current version
     ]
-  },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs18"
-  },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
+    
+    // Find versions to delete
+    const allVersions = await listEnvironmentVersions(env)
+    const versionsToDelete = allVersions.filter(v => !versionsToKeep.includes(v.version))
+    
+    for (const version of versionsToDelete) {
+      cleanupPlan.push({
+        action: 'delete-environment-version',
+        projectId: version.projectId,
+        environment: env,
+        version: version.version
+      })
+    }
   }
+  
+  // Execute cleanup plan
+  return await executePlan({ steps: cleanupPlan })
 }
 ```
 
-## Step 2: createSOC2Project() Function
+### Multi-Environment Coordination
 
-### 2.1 Core Function Implementation
+#### Coordinated Migration Interface
 ```javascript
-// functions/src/infrastructure/createSOC2Project.js
-const { ResourceManagerClient } = require('@google-cloud/resource-manager');
-const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
-const admin = require('firebase-admin');
-
 /**
- * Create SOC2-compliant Firebase project
- * @sig createSOC2Project :: (Object) -> Promise<String>
+ * Coordinate migration across all environments
+ * @sig coordinatedMigration :: (Number, Number, Object) -> Promise<CoordinationResult>
  */
-const createSOC2Project = async ({
-  environment,
-  projectName,
-  owner,
-  projectId = null
-}) => {
-  const resourceManager = new ResourceManagerClient();
-  const secretManager = new SecretManagerServiceClient();
+const coordinatedMigration = async (fromVersion, toVersion, options = {}) => {
+  const results = {}
   
-  // Generate project ID if not provided
-  const finalProjectId = projectId || `curb-map-${environment}-${Date.now()}`;
-  
-  try {
-    // 1. Create GCP project
-    const [project] = await resourceManager.createProject({
-      projectId: finalProjectId,
-      name: projectName,
-      labels: {
-        environment,
-        owner,
-        app: 'curbmap'
-      }
-    });
-    
-    // 2. Enable required APIs
-    await enableRequiredAPIs(finalProjectId);
-    
-    // 3. Add Firebase services
-    await addFirebaseServices(finalProjectId);
-    
-    // 4. Configure security based on environment
-    if (environment === 'production') {
-      await configureSOC2Security(finalProjectId);
-    } else {
-      await configureDevSecurity(finalProjectId);
-    }
-    
-    // 5. Set up billing
-    await configureBilling(finalProjectId, environment);
-    
-    // 6. Create service accounts
-    await createServiceAccounts(finalProjectId, environment);
-    
-    return finalProjectId;
-    
-  } catch (error) {
-    console.error('Failed to create project:', error);
-    throw error;
-  }
-};
-
-/**
- * Enable required GCP APIs
- * @sig enableRequiredAPIs :: (String) -> Promise<Void>
- */
-const enableRequiredAPIs = async (projectId) => {
-  const apis = [
-    'firebase.googleapis.com',
-    'firestore.googleapis.com',
-    'cloudfunctions.googleapis.com',
-    'cloudbuild.googleapis.com',
-    'secretmanager.googleapis.com',
-    'cloudresourcemanager.googleapis.com',
-    'cloudaudit.googleapis.com',
-    'monitoring.googleapis.com'
-  ];
-  
-  for (const api of apis) {
-    await gcloud.services.enable(api, { project: projectId });
-  }
-};
-
-/**
- * Add Firebase services to project
- * @sig addFirebaseServices :: (String) -> Promise<Void>
- */
-const addFirebaseServices = async (projectId) => {
-  // Add Firebase to existing GCP project
-  await firebase.projects().addFirebase(projectId);
-  
-  // Enable Firebase services
-  await firebase.projects().update(projectId, {
-    services: {
-      auth: { enabled: true },
-      firestore: { enabled: true },
-      functions: { enabled: true },
-      hosting: { enabled: true },
-      storage: { enabled: true }
-    }
-  });
-};
-
-/**
- * Configure SOC2 security for production
- * @sig configureSOC2Security :: (String) -> Promise<Void>
- */
-const configureSOC2Security = async (projectId) => {
-  // Enable comprehensive audit logging
-  await enableAuditLogging(projectId);
-  
-  // Set up monitoring and alerting
-  await configureMonitoring(projectId);
-  
-  // Configure backup policies
-  await configureBackups(projectId);
-  
-  // Set up security policies
-  await configureSecurityPolicies(projectId);
-};
-
-/**
- * Configure relaxed security for development
- * @sig configureDevSecurity :: (String) -> Promise<Void>
- */
-const configureDevSecurity = async (projectId) => {
-  // Minimal audit logging for development
-  await enableBasicAuditLogging(projectId);
-  
-  // Basic monitoring
-  await configureBasicMonitoring(projectId);
-};
-
-module.exports = { createSOC2Project };
-```
-
-### 2.2 Environment-Specific Configuration
-```javascript
-// functions/src/infrastructure/environments.js
-const environments = {
-  development: {
-    projectId: 'curb-map-development',
-    displayName: 'CurbMap Development',
-    security: 'relaxed',
-    auditLogging: 'minimal',
-    billing: 'shared-dev-billing'
-  },
-  staging: {
-    projectId: 'curb-map-staging',
-    displayName: 'CurbMap Staging',
-    security: 'production-like',
-    auditLogging: 'comprehensive',
-    billing: 'shared-dev-billing',
-    dataStrategy: 'synthetic'
-  },
-  production: {
-    projectId: 'curb-map-production',
-    displayName: 'CurbMap Production',
-    security: 'soc2-compliant',
-    auditLogging: 'comprehensive',
-    billing: 'production-billing',
-    dataStrategy: 'real-customer-data'
-  }
-};
-
-const createEnvironment = async (environment) => {
-  const config = environments[environment];
-  if (!config) {
-    throw new Error(`Unknown environment: ${environment}`);
+  // Phase 1: IaC Test (always first)
+  results.iacTest = await rotatePair('iac-test', fromVersion, toVersion)
+  if (results.iacTest.status !== 'success') {
+    return { status: 'failed', failedAt: 'iac-test', results }
   }
   
-  return await createSOC2Project({
-    environment,
-    projectName: config.displayName,
-    owner: 'developer',
-    projectId: config.projectId
-  });
-};
-
-module.exports = { environments, createEnvironment };
-```
-
-## Step 3: GitLab CI/CD Pipeline
-
-### 3.1 GitLab CI Configuration
-```yaml
-# .gitlab-ci.yml
-stages:
-  - test
-  - build
-  - deploy
-
-variables:
-  NODE_VERSION: "18"
-  FIREBASE_TOKEN: $FIREBASE_TOKEN
-
-# Test stage
-test:
-  stage: test
-  image: node:${NODE_VERSION}
-  script:
-    - npm ci
-    - npm run test
-    - npm run lint
-  only:
-    - merge_requests
-    - main
-
-# Build stage
-build:
-  stage: build
-  image: node:${NODE_VERSION}
-  script:
-    - npm ci
-    - npm run build
-  artifacts:
-    paths:
-      - dist/
-    expire_in: 1 hour
-  only:
-    - main
-
-# Deploy to staging
-deploy_staging:
-  stage: deploy
-  image: node:${NODE_VERSION}
-  script:
-    - npm install -g firebase-tools
-    - firebase use curb-map-staging
-    - firebase deploy --only hosting,functions
-  environment:
-    name: staging
-    url: https://curb-map-staging.web.app
-  only:
-    - main
-  when: manual
-
-# Deploy to production
-deploy_production:
-  stage: deploy
-  image: node:${NODE_VERSION}
-  script:
-    - npm install -g firebase-tools
-    - firebase use curb-map-production
-    - firebase deploy --only hosting,functions
-  environment:
-    name: production
-    url: https://curb-map-production.web.app
-  only:
-    - main
-  when: manual
-```
-
-### 3.2 Environment Setup Script
-```bash
-#!/bin/bash
-# scripts/setup-environments.sh
-
-# Create all environments
-echo "Creating development environment..."
-firebase projects:create curb-map-development --display-name "CurbMap Development"
-
-echo "Creating staging environment..."
-firebase projects:create curb-map-staging --display-name "CurbMap Staging"
-
-echo "Creating production environment..."
-firebase projects:create curb-map-production --display-name "CurbMap Production"
-
-# Set up GitLab CI variables
-echo "Setting up GitLab CI variables..."
-echo "FIREBASE_TOKEN: $(firebase login:ci)"
-
-# Deploy to staging
-echo "Deploying to staging..."
-firebase use curb-map-staging
-firebase deploy
-
-echo "Infrastructure setup complete!"
-```
-
-## Step 4: Service Account Management
-
-### 4.1 Service Account Creation
-```javascript
-// functions/src/infrastructure/serviceAccounts.js
-const { IAMClient } = require('@google-cloud/iam');
-
-/**
- * Create service accounts for different purposes
- * @sig createServiceAccounts :: (String, String) -> Promise<Void>
- */
-const createServiceAccounts = async (projectId, environment) => {
-  const iam = new IAMClient();
-  
-  const serviceAccounts = [
-    {
-      name: 'firebase-deploy',
-      displayName: 'Firebase Deploy Service Account',
-      roles: [
-        'roles/firebase.admin',
-        'roles/cloudfunctions.admin',
-        'roles/firestore.admin'
-      ]
-    },
-    {
-      name: 'firebase-functions',
-      displayName: 'Firebase Functions Service Account',
-      roles: [
-        'roles/firestore.user',
-        'roles/secretmanager.secretAccessor'
-      ]
-    }
-  ];
-  
-  for (const sa of serviceAccounts) {
-    await createServiceAccount(projectId, sa);
-  }
-};
-
-const createServiceAccount = async (projectId, config) => {
-  const iam = new IAMClient();
-  
-  // Create service account
-  const [serviceAccount] = await iam.createServiceAccount({
-    name: `projects/${projectId}`,
-    accountId: config.name,
-    serviceAccount: {
-      displayName: config.displayName,
-      description: `Service account for ${config.displayName}`
-    }
-  });
-  
-  // Assign roles
-  for (const role of config.roles) {
-    await iam.setIamPolicy({
-      resource: `projects/${projectId}`,
-      policy: {
-        bindings: [
-          {
-            role,
-            members: [`serviceAccount:${serviceAccount.email}`]
-          }
-        ]
-      }
-    });
+  // Phase 2: Development (if iac-test succeeded)
+  results.development = await rotatePair('development', fromVersion, toVersion)
+  if (results.development.status !== 'success') {
+    return { status: 'failed', failedAt: 'development', results }
   }
   
-  return serviceAccount;
-};
-
-module.exports = { createServiceAccounts };
-```
-
-## Step 5: Security Configuration
-
-### 5.1 Firestore Security Rules
-```javascript
-// firestore.rules
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Update queue - structure validation only
-    match /update_queue/{queueId} {
-      allow create: if 
-        request.auth != null &&
-        request.resource.data.keys().hasAll(['action', 'data', 'idempotencyKey', 'userId']) &&
-        request.resource.data.userId == request.auth.uid;
-      
-      allow read: if 
-        request.auth != null && 
-        resource.data.userId == request.auth.uid;
-      
-      allow update: if false; // Only server functions can update
-    }
-    
-    // Events - read-only for users, write-only for functions
-    match /events/{eventId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Only server functions can write
-    }
-    
-    // Organizations - organization members only
-    match /organizations/{organizationId} {
-      allow read, write: if 
-        request.auth != null &&
-        request.auth.token.organizations[organizationId] != null;
-    }
-    
-    // Users - own data only
-    match /users/{userId} {
-      allow read, write: if 
-        request.auth != null &&
-        request.auth.uid == userId;
-    }
+  // Phase 3: Staging (if development succeeded)  
+  results.staging = await rotatePair('staging', fromVersion, toVersion)
+  if (results.staging.status !== 'success') {
+    return { status: 'failed', failedAt: 'staging', results }
   }
+  
+  // Phase 4: Production (manual approval required)
+  if (options.includeProduction && options.productionApproved) {
+    results.production = await rotatePair('production', fromVersion, toVersion)
+  }
+  
+  return { status: 'success', results }
 }
 ```
 
-### 5.2 Storage Security Rules
+### Phase 1a Success Criteria
+
+#### Version Management Tests
 ```javascript
-// storage.rules
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Organization data - members only
-    match /organizations/{organizationId}/{allPaths=**} {
-      allow read, write: if 
-        request.auth != null &&
-        request.auth.token.organizations[organizationId] != null;
-    }
-  }
-}
+tap.test('Given environment versioning system', async (t) => {
+  t.test('When creating A/B pair', async (t) => {
+    const result = await createVersionPair('development', 47)
+    t.equal(result.versions.length, 2, 'Then both A and B versions should exist')
+    t.ok(result.versions.includes('47a'), 'Then version A should exist')
+    t.ok(result.versions.includes('47b'), 'Then version B should exist')
+  })
+  
+  t.test('When migrating version pair', async (t) => {
+    const result = await rotatePair('development', 47, 48)
+    t.equal(result.status, 'success', 'Then migration should succeed')
+    t.ok(result.rollbackAvailable, 'Then rollback version should be available')
+  })
+})
 ```
 
-## Success Criteria
+#### Migration Failure Tests  
+```javascript
+tap.test('Given migration failure scenarios', async (t) => {
+  t.test('When migration fails mid-execution', async (t) => {
+    const result = await rotatePair('development', 47, 48)
+    t.equal(result.status, 'failed', 'Then migration should report failure')
+    
+    const recovery = await recoverFromFailedMigration('development', 47, 48)
+    t.ok(recovery.strategy, 'Then recovery strategy should be available')
+  })
+})
+```
 
-### Technical
-- [ ] `createSOC2Project()` function creates projects successfully
-- [ ] All three environments provisioned and configured
-- [ ] GitLab CI/CD pipeline deploys to staging
-- [ ] Service accounts created with appropriate permissions
-- [ ] Security rules configured and tested
+#### Cleanup Tests
+```javascript
+tap.test('Given old environment versions', async (t) => {
+  t.test('When running cleanup', async (t) => {
+    await createVersionPair('development', 44)
+    await createVersionPair('development', 45)  
+    await createVersionPair('development', 46)
+    await createVersionPair('development', 47)
+    
+    const result = await cleanupOldVersions(3)
+    t.equal(result.status, 'success', 'Then cleanup should succeed')
+    
+    const remaining = await listEnvironmentVersions('development')
+    t.ok(remaining.length <= 6, 'Then only recent versions should remain') // 3 versions × 2 (a/b)
+  })
+})
+```
 
-### Operational
-- [ ] Development environment ready for team use
-- [ ] Staging environment mirrors production configuration
-- [ ] Production environment SOC2-compliant
-- [ ] CI/CD pipeline functional with manual production approval
-- [ ] Documentation updated with setup procedures
-
-### Security
-- [ ] Firestore rules prevent unauthorized access
-- [ ] Storage rules enforce organization isolation
-- [ ] Service accounts follow principle of least privilege
-- [ ] Audit logging enabled for production
-- [ ] Security policies configured appropriately
-
-## Next Phase
-Once infrastructure foundation is complete, proceed to **Phase 2: Event Sourcing Core** (`phase2-events.md`).
+## File Structure
+```
+modules/infrastructure-management/
+  src/
+    plan-system.js          # Plan generation and execution
+    state-analyzer.js       # Current state analysis  
+    audit-logger.js         # SOC2 compliance logging
+    environment-manager.js  # Environment versioning (Phase 2)
+    safety-guards.js        # Enhanced safety framework
+  test/
+    plan-system.tap.js      # Plan/apply workflow tests
+    safety-guards.tap.js    # Safety mechanism tests
+    rollback.tap.js         # Rollback scenario tests
+```
