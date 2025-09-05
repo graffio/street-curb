@@ -15,8 +15,7 @@
 
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import { generatePlan } from './core/planner.js'
-import { executePlan } from './core/executor.js'
+import { createProductionAdapters, generatePlan, executePlan } from './index.js'
 import { displayPlan } from './ui/display.js'
 import { promptEnvironment, promptProjectConfig } from './ui/prompts.js'
 
@@ -53,10 +52,14 @@ const handlePlanCommand = async (argv) => {
         }
         
         console.log('📋 Generating infrastructure plan...')
-        const plan = await generatePlan(argv.operation, config)
         
-        // Store plan for later apply
-        planStore.set(plan.id, plan)
+        // Create production adapter lookup table
+        // TODO: In the future, support additional adapter path for testing
+        const adapters = createProductionAdapters()
+        const plan = await generatePlan(argv.operation, config, adapters)
+        
+        // Store plan with adapters for later apply
+        planStore.set(plan.id, { plan, adapters })
         
         // Display the plan
         displayPlan(plan)
@@ -77,16 +80,18 @@ const handlePlanCommand = async (argv) => {
  */
 const handleApplyCommand = async (argv) => {
     try {
-        const plan = planStore.get(argv.planId)
+        const planData = planStore.get(argv.planId)
         
-        if (!plan) {
+        if (!planData) {
             console.error(`❌ Plan not found: ${argv.planId}`)
             console.log('Generate a plan first with: curb-infra plan <operation>')
             process.exit(1)
         }
         
+        const { plan, adapters } = planData
+        
         console.log(`🚀 Executing plan: ${argv.planId}`)
-        const result = await executePlan(plan)
+        const result = await executePlan(plan, adapters)
         
         // Clean up executed plan
         planStore.delete(argv.planId)
@@ -112,7 +117,8 @@ const handleListCommand = () => {
     }
     
     console.log('📋 Available plans:')
-    planStore.forEach((plan, id) => {
+    planStore.forEach((planData, id) => {
+        const { plan } = planData
         const expires = new Date(plan.expiresAt)
         const isExpired = expires < new Date()
         
@@ -164,6 +170,10 @@ yargs(hideBin(process.argv))
                     describe: 'Use interactive prompts',
                     type: 'boolean',
                     default: false
+                })
+                .option('additional-adapter-path', {
+                    describe: 'Additional path to load adapters from (for testing)',
+                    type: 'string'
                 })
         },
         handlePlanCommand

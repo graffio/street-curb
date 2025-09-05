@@ -22,7 +22,11 @@ export const validateConfig = (operation, config, currentState) => {
         const projectId = config.projectId || `curb-map-${config.environment}`
         const firebaseState = currentState.adapters.firebase
         
-        if (firebaseState.existingProjects.includes(projectId)) {
+        // Check if state collection failed
+        if (firebaseState.error) {
+            console.warn(`Warning: Cannot validate project uniqueness due to Firebase state error: ${firebaseState.error}`)
+            // Continue with plan generation but warn about validation limitation
+        } else if (firebaseState.existingProjects && firebaseState.existingProjects.includes(projectId)) {
             throw new Error(`Firebase project ${projectId} already exists`)
         }
     }

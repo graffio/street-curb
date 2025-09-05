@@ -10,87 +10,64 @@
  */
 
 import { createId } from '@paralleldrive/cuid2'
-import { collectCurrentState } from './state-manager.js'
 
 /**
- * Determine which adapters are needed for a given operation
- * @sig getRequiredAdapters :: (String, Object) -> Array<String>
+ * Collect current state from all adapters
+ * @sig collectCurrentState :: (LookupTable<InfrastructureAdapter>) -> Promise<Object>
  */
-const getRequiredAdapters = (operation, config) => {
-    const adapterMap = {
-        'create-environment': ['firebase', 'gcp'],
-        'delete-environment': ['firebase', 'gcp'],
-        'setup-monitoring': ['gcp'],
-        'configure-payments': ['stripe'],
-        'setup-error-tracking': ['sentry']
-    }
-    
-    return adapterMap[operation] || []
-}
+const collectCurrentState = async adapters => {
+    const adapterStates = {}
+    let combinedHash = ''
 
-/**
- * Load and validate adapter plan capabilities
- * @sig loadAdapterPlanners :: (Array<String>) -> Promise<Array<Object>>
- */
-const loadAdapterPlanners = async (adapterNames) => {
-    const planners = []
-    
-    for (const adapterName of adapterNames) {
+    for (const adapter of adapters) {
         try {
-            const adapter = await import(`../adapters/${adapterName}/planner.js`)
-            planners.push({
-                name: adapterName,
-                generateSteps: adapter.generateSteps,
-                validateConfig: adapter.validateConfig || (() => {})
-            })
+            const state = await adapter.getCurrentState()
+            adapterStates[adapter.name] = state
+            combinedHash += JSON.stringify(state)
         } catch (error) {
-            throw new Error(`Failed to load ${adapterName} adapter: ${error.message}`)
+            console.warn(`Could not collect state from ${adapter.name}: ${error.message}`)
+            adapterStates[adapter.name] = { error: error.message }
         }
     }
-    
-    return planners
+
+    // Simple hash of combined state
+    const hash = combinedHash.length.toString(36) + combinedHash.slice(-8)
+
+    return { adapters: adapterStates, hash, timestamp: Date.now() }
 }
+
 
 /**
  * Generate comprehensive infrastructure execution plan
  *
  * This orchestrates the entire planning process:
- * 1. Determines required adapters for the operation
- * 2. Collects current infrastructure state
- * 3. Validates configuration across adapters
- * 4. Generates coordinated steps from all adapters
- * 5. Creates immutable plan with expiration
+ * 1. Collects current infrastructure state from adapters
+ * 2. Validates configuration across adapters
+ * 3. Generates coordinated steps from all adapters
+ * 4. Creates immutable plan with expiration
  *
- * @sig generatePlan :: (String, Object) -> Promise<Plan>
+ * @sig generatePlan :: (String, Object, LookupTable<InfrastructureAdapter>) -> Promise<Plan>
  */
-export const generatePlan = async (operation, config) => {
+const generatePlan = async (operation, config, adapters) => {
     const planId = `plan-${createId()}`
-    const expiresAt = Date.now() + (15 * 60 * 1000) // 15 minutes
-    
-    // Determine what adapters we need
-    const requiredAdapters = getRequiredAdapters(operation, config)
-    if (requiredAdapters.length === 0) {
-        throw new Error(`Unknown operation: ${operation}`)
-    }
-    
-    // Collect current state from all required adapters
-    const currentState = await collectCurrentState(requiredAdapters)
-    
-    // Load adapter planners
-    const planners = await loadAdapterPlanners(requiredAdapters)
-    
-    // Validate configuration with each adapter
-    planners.forEach(planner => {
-        planner.validateConfig(operation, config, currentState)
-    })
-    
-    // Generate steps from all adapters
+    const expiresAt = Date.now() + 15 * 60 * 1000 // 15 minutes
+
+    if (adapters.length === 0) throw new Error(`No adapters provided`)
+
+    // Collect current state from all adapters
+    const currentState = await collectCurrentState(adapters)
+
+    // Validate configuration with each adapter and generate steps
     const allSteps = []
-    for (const planner of planners) {
-        const steps = await planner.generateSteps(operation, config, currentState)
+
+    for (const adapter of adapters) {
+        // Validate configuration
+        if (adapter.validateConfig) adapter.validateConfig(operation, config, currentState)
+
+        const steps = await adapter.generateSteps(operation, config, currentState)
         allSteps.push(...steps)
     }
-    
+
     return {
         id: planId,
         operation,
@@ -101,6 +78,8 @@ export const generatePlan = async (operation, config) => {
         stateHash: currentState.hash,
         expectedState: currentState.adapters, // Store expected state for drift detection
         status: 'ready',
-        requiredAdapters
+        adapters: adapters.map(a => a.name),
     }
 }
+
+export { generatePlan }
