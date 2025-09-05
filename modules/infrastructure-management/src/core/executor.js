@@ -8,6 +8,7 @@
  * adapter operations and manages the overall execution lifecycle.
  */
 
+import { InfrastructureStep } from '../types/index.js'
 import { requireConfirmation } from '../ui/confirmations.js'
 import {
     displayExecutionComplete,
@@ -18,23 +19,33 @@ import {
 import { logInfrastructureOperation } from './audit.js'
 
 /**
- * Execute a single infrastructure step
- * @sig executeStep :: (LookupTable<InfrastructureAdapter>, Step) -> Promise<StepResult>
+ * Execute a command (execute or rollback) for a single infrastructure step
+ * @sig executeCommand :: (LookupTable<InfrastructureAdapter>, Step, Bool, StepResult?) -> Promise<ExecutionResult>
  */
-const executeStep = async (adapters, step) => {
-    const adapter = adapters[step.adapter]
-    if (!adapter) throw new Error(`No adapter found: ${step.adapter}`)
+const executeCommand = async (adapters, step, forwardResult) => {
+    const isRollback = !!forwardResult
+
+    const { canRollback, adapter, action } = step
+
+    // Check rollback eligibility first for rollback commands
+    if (isRollback && !canRollback) return { step, skipped: true, reason: 'not rollbackable' }
+
+    const command = InfrastructureStep.commands[adapter]?.[action]
+    if (!command) throw new Error(`No command found for ${adapter}/${action}`)
+
+    const f = isRollback ? command.rollback : command.execute
+    if (!f) throw new Error(`No ${isRollback ? 'rollback' : 'execute'} function found for ${adapter}/${action}`)
 
     const stepStart = Date.now()
-    const result = await adapter.executeStep(step)
+    const stepResult = await f(step, forwardResult, { adapters })
     const executionTime = Date.now() - stepStart
 
-    return { ...result, executionTime }
+    return { step, result: { ...stepResult, executionTime }, success: true }
 }
 
 /**
  * Execute infrastructure steps (core execution logic)
- * @sig executeSteps :: (Array<Step>, LookupTable<InfrastructureAdapter>) -> Promise<Array<ExecutedStep>>
+ * @sig executeSteps :: (Array<Step>, LookupTable<InfrastructureAdapter>) -> Promise<Array<ExecutionResult>>
  */
 const executeSteps = async (steps, adapters) => {
     const result = []
@@ -42,8 +53,8 @@ const executeSteps = async (steps, adapters) => {
     // for..of will *wait* for the await; map wouldn't
     for (const step of steps) {
         try {
-            const stepResult = await executeStep(adapters, step)
-            result.push({ step, result: stepResult, success: true })
+            const executionResult = await executeCommand(adapters, step)
+            result.push(executionResult)
         } catch (error) {
             // Record the failure and stop execution, but return results so far
             result.push({ step, success: false, error: error.message })
@@ -55,52 +66,35 @@ const executeSteps = async (steps, adapters) => {
 }
 
 /**
- * Rollback a single executed step
- * @sig rollbackStep :: (LookupTable<InfrastructureAdapter>, ExecutedStep) -> Promise<RollbackResult>
- */
-const rollbackStep = async (adapters, executedStep) => {
-    const { step } = executedStep
-
-    if (!step.canRollback || !step.rollback) return { step, skipped: true, reason: 'not rollbackable' }
-
-    const adapter = adapters[step.adapter]
-    if (!adapter || !adapter.executeStep) throw new Error(`No adapter found: ${step.adapter}`)
-
-    // Create rollback step
-    const rollbackStepDef = {
-        ...step,
-        command: step.rollback,
-        action: `rollback-${step.action}`,
-        description: `Rollback: ${step.description}`,
-    }
-
-    const stepResult = await adapter.executeStep(rollbackStepDef)
-    return { step, result: stepResult, success: true }
-}
-
-/**
  * Rollback executed steps in reverse order
- * @sig rollbackSteps :: (Array<ExecutedStep>, LookupTable<InfrastructureAdapter>) -> Promise<Array<RollbackResult>>
+ * @sig rollbackSteps :: (Array<ExecutionResult>, LookupTable<InfrastructureAdapter>) -> Promise<Array<StepResult>>
  */
-export const rollbackSteps = async (executedSteps, adapters) => {
+const rollbackSteps = async (executionResults, adapters) => {
     const result = []
 
     // Rollback in reverse order
-    const reversedSteps = executedSteps.reverse()
-    for (const executedStep of reversedSteps) {
+    const reversedSteps = executionResults.reverse()
+    for (const executionResult of reversedSteps) {
         try {
-            const rollbackResult = await rollbackStep(adapters, executedStep)
+            const { step, result: forwardResult } = executionResult
+            const rollbackResult = await executeCommand(adapters, step, forwardResult)
             result.push(rollbackResult)
 
             // If step was skipped (not rollbackable), fail-fast
             if (rollbackResult.skipped) break
         } catch (error) {
-            result.push({ step: executedStep.step, success: false, error: error.message })
+            result.push({ step: executionResult.step, success: false, error: error.message })
             break
         }
     }
 
     return result
+}
+
+const defaultDependencies = {
+    requireConfirmation,
+    display: { displayExecutionStart, displayStepProgress, displayStepComplete, displayExecutionComplete },
+    audit: logInfrastructureOperation,
 }
 
 /**
@@ -114,12 +108,41 @@ export const rollbackSteps = async (executedSteps, adapters) => {
  *
  * @sig executePlan :: (Plan, LookupTable<InfrastructureAdapter>, Object?) -> Promise<ExecutionResult>
  */
-export const executePlan = async (plan, adapters, dependencies = {}) => {
-    const {
-        requireConfirmation: confirmFn = requireConfirmation,
-        display = { displayExecutionStart, displayStepProgress, displayStepComplete, displayExecutionComplete },
-        audit = logInfrastructureOperation,
-    } = dependencies
+const executePlan = async (plan, adapters, dependencies = defaultDependencies) => {
+    const executeStep = async i => {
+        const step = plan.steps[i]
+        display.displayStepProgress(step, i + 1, plan.steps.length)
+
+        try {
+            const stepResult = await executeCommand(adapters, step)
+            executionResults.push({ step, result: stepResult, success: true })
+            display.displayStepComplete(step, stepResult)
+        } catch (error) {
+            // Record the failure and attempt rollback
+            executionResults.push({ step, success: false, error: error.message })
+            rollbackAttempted = true
+            rollbackResults = await rollbackSteps(executionResults.slice(0, -1), adapters) // Don't rollback the failed step
+
+            // Throw a special error that contains the failure result
+            const failureResult = {
+                status: 'failed',
+                planId: plan.id,
+                operation: plan.operation,
+                environment,
+                executedSteps: executionResults,
+                rollbackResults,
+                rollbackAttempted,
+                error: error.message,
+                duration: Date.now() - executionStart,
+            }
+
+            const executionError = new Error('Step execution failed')
+            executionError.failure = failureResult
+            throw executionError
+        }
+    }
+
+    const { requireConfirmation, display, audit } = dependencies
 
     const executionStart = Date.now()
 
@@ -130,7 +153,7 @@ export const executePlan = async (plan, adapters, dependencies = {}) => {
 
     // Require user confirmation
     const environment = plan.config.environment || 'unknown'
-    await confirmFn(plan.operation, environment, {
+    await requireConfirmation(plan.operation, environment, {
         warning: plan.steps.some(s => !s.canRollback) ? 'Contains permanent operations' : null,
         impact: plan.steps.length > 1 ? `Will execute ${plan.steps.length} steps` : null,
     })
@@ -138,60 +161,38 @@ export const executePlan = async (plan, adapters, dependencies = {}) => {
     // Execute plan with progress reporting
     display.displayExecutionStart(plan)
 
-    const executedSteps = []
+    const executionResults = []
     let rollbackResults = []
     let rollbackAttempted = false
+    const operator = process.env.USER || 'unknown'
 
     // Execute all steps with progress reporting
-    for (let i = 0; i < plan.steps.length; i++) {
-        const step = plan.steps[i]
-        display.displayStepProgress(step, i + 1, plan.steps.length)
-
-        try {
-            const stepResult = await executeStep(adapters, step)
-            executedSteps.push({ step, result: stepResult, success: true })
-            display.displayStepComplete(step, stepResult)
-        } catch (error) {
-            // Record the failure and attempt rollback
-            executedSteps.push({ step, success: false, error: error.message })
-            rollbackAttempted = true
-            rollbackResults = await rollbackSteps(executedSteps.slice(0, -1), adapters) // Don't rollback the failed step
-
-            const result = {
-                status: 'failed',
-                planId: plan.id,
-                operation: plan.operation,
-                environment,
-                executedSteps,
-                rollbackResults,
-                rollbackAttempted,
-                error: error.message,
-                duration: Date.now() - executionStart,
-            }
-
-            // Audit log the failure
-            await audit('infrastructure-execution', { ...result, operator: process.env.USER || 'unknown' })
-
-            throw error
+    try {
+        for (let i = 0; i < plan.steps.length; i++) await executeStep(i)
+    } catch (e) {
+        if (e.failure) {
+            await audit('infrastructure-execution', { ...e.failure, operator })
+            return e.failure
         }
+
+        throw e // Re-throw if it's not our special error
     }
 
-    const result = {
+    const success = {
         status: 'success',
         planId: plan.id,
         operation: plan.operation,
         environment,
-        executedSteps,
+        executedSteps: executionResults,
         rollbackResults,
         rollbackAttempted,
         duration: Date.now() - executionStart,
     }
 
     // Audit log the execution
-    await audit('infrastructure-execution', { ...result, operator: process.env.USER || 'unknown' })
-
-    display.displayExecutionComplete(result)
-    return result
+    await audit('infrastructure-execution', { ...success, operator })
+    display.displayExecutionComplete(success)
+    return success
 }
 
-export { executeSteps }
+export { executeSteps, rollbackSteps, executePlan }
