@@ -1,25 +1,31 @@
 {
-  "name": "@row-canvas/infrastructure-management",
-  "version": "1.0.0",
-  "description": "Infrastructure management for Firebase, Sentry, Stripe, and other services",
-  "main": "src/index.js",
-  "type": "module",
-  "bin": {
-    "curb-infra": "./src/cli.js"
-  },
-  "scripts": {
-    "test": "tap test/**/*.tap.js",
-    "cli": "node src/cli.js"
-  },
-  "dependencies": {
-    "@google-cloud/iam": "^2.3.0",
-    "@google-cloud/resource-manager": "^6.2.0",
-    "@google-cloud/secret-manager": "^6.1.0",
-    "@paralleldrive/cuid2": "^2.2.2",
-    "firebase-admin": "^13.5.0",
-    "yargs": "^18.0.0"
-  },
-  "devDependencies": {
-    "tap": "^21.1.0"
-  }
+    "name": "@row-canvas/infrastructure-management",
+    "version": "1.0.0",
+    "description": "Infrastructure management for Firebase, Sentry, Stripe, and other services",
+    "main": "src/index.js",
+    "type": "module",
+    "bin": {
+        "curb-infra": "./src/cli.js"
+    },
+    "scripts": {
+        "test": "tap test/**/*.tap.js",
+        "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh",
+        "cli": "node src/cli.js",
+        "types:generate": "find . -path '*/types/*.type.js' -exec ../../bash/generate-type-file.sh {} src/types \\; && ../types-generation/src/generate-index-file.js src/types",
+        "types:watch": "onchange 'types/*.type.js' -- sh -c 'yarn types:generate'"
+    },
+    "dependencies": {
+        "@google-cloud/iam": "^2.3.0",
+        "@google-cloud/resource-manager": "^6.2.0",
+        "@google-cloud/secret-manager": "^6.1.0",
+        "@graffio/functional": "^0.1.0",
+        "@paralleldrive/cuid2": "^2.2.2",
+        "firebase-admin": "^13.5.0",
+        "yargs": "^18.0.0"
+    },
+    "devDependencies": {
+        "onchange": "^7.1.0",
+        "tap": "^21.1.0"
+    }
 }
