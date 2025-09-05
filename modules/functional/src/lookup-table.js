@@ -35,7 +35,7 @@ const addNonEnumerable = (target, key, value) => Object.defineProperty(target, k
 // LookupTable
 // ---------------------------------------------------------------------------------------------------------------------
 const validateTypes = (items, ItemType) => {
-    if (!ItemType || !ItemType.is || !ItemType.from) {
+    if (!ItemType || !ItemType.is) {
         console.error(`You must pass a tagged Type when creating a LookupTable`)
         return
     }
