@@ -1,6 +1,9 @@
 // Auto-generated static tagged type: ImportInfo
 // Generated from: ./src/types/import-info.type.js
-// Fields: { source: "String", specifiers: "Array" }
+// {
+//     source    : "String"
+//     specifiers: "Array"
+// }
 
 import * as R from '@graffio/types-runtime'
 

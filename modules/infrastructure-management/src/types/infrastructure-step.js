@@ -5,8 +5,6 @@
 //     action     : "String"
 //     description: "String"
 //     canRollback: "Boolean"
-//     command    : "String?"
-//     rollback   : "String?"
 //     additional : "Object?"
 // }
 
@@ -17,53 +15,33 @@ import * as R from '@graffio/types-runtime'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const InfrastructureStep = function InfrastructureStep(
-    adapter,
-    action,
-    description,
-    canRollback,
-    command,
-    rollback,
-    additional,
-) {
+const InfrastructureStep = function InfrastructureStep(adapter, action, description, canRollback, additional) {
     R.validateString(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
+        'InfrastructureStep(adapter, action, description, canRollback, additional)',
         'adapter',
         false,
         adapter,
     )
     R.validateString(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
+        'InfrastructureStep(adapter, action, description, canRollback, additional)',
         'action',
         false,
         action,
     )
     R.validateString(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
+        'InfrastructureStep(adapter, action, description, canRollback, additional)',
         'description',
         false,
         description,
     )
     R.validateBoolean(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
+        'InfrastructureStep(adapter, action, description, canRollback, additional)',
         'canRollback',
         false,
         canRollback,
     )
-    R.validateString(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
-        'command',
-        true,
-        command,
-    )
-    R.validateString(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
-        'rollback',
-        true,
-        rollback,
-    )
     R.validateObject(
-        'InfrastructureStep(adapter, action, description, canRollback, command, rollback, additional)',
+        'InfrastructureStep(adapter, action, description, canRollback, additional)',
         'additional',
         true,
         additional,
@@ -74,8 +52,6 @@ const InfrastructureStep = function InfrastructureStep(
     result.action = action
     result.description = description
     result.canRollback = canRollback
-    if (command != null) result.command = command
-    if (rollback != null) result.rollback = rollback
     if (additional != null) result.additional = additional
     return result
 }
@@ -87,7 +63,7 @@ const InfrastructureStep = function InfrastructureStep(
 // -------------------------------------------------------------------------------------------------------------
 const prototype = {
     toString: function () {
-        return `InfrastructureStep(${R._toString(this.adapter)}, ${R._toString(this.action)}, ${R._toString(this.description)}, ${R._toString(this.canRollback)}, ${R._toString(this.command)}, ${R._toString(this.rollback)}, ${R._toString(this.additional)})`
+        return `InfrastructureStep(${R._toString(this.adapter)}, ${R._toString(this.action)}, ${R._toString(this.description)}, ${R._toString(this.canRollback)}, ${R._toString(this.additional)})`
     },
     toJSON() {
         return this
@@ -106,7 +82,6 @@ Object.defineProperty(prototype, '@@typeName', { value: 'InfrastructureStep' }) 
 // -------------------------------------------------------------------------------------------------------------
 InfrastructureStep.toString = () => 'InfrastructureStep'
 InfrastructureStep.is = v => v && v['@@typeName'] === 'InfrastructureStep'
-InfrastructureStep.from = o =>
-    InfrastructureStep(o.adapter, o.action, o.description, o.canRollback, o.command, o.rollback, o.additional)
+InfrastructureStep.from = o => InfrastructureStep(o.adapter, o.action, o.description, o.canRollback, o.additional)
 
 export { InfrastructureStep }
