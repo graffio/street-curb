@@ -1,0 +1,111 @@
+spec_format:
+  version: 1.0
+  phase: 1
+  description: "Test Adapter Foundation for Infrastructure Testing Strategy"
+
+objectives:
+  primary: "Create minimal test adapters that can store state and execute basic operations"
+  secondary: "Enable systematic testing of A/B migration workflows without real infrastructure"
+  success_criteria: "Working test adapters with basic create/delete operations using local state"
+
+architecture:
+  current_state:
+    - "Working plan/apply architecture with UI/Core/Adapters separation" 
+    - "Function registry execution system (InfrastructureStep.commands)"
+    - "Alice/Bob test adapters in test/adapter-foundation.tap.js"
+    - "Premature Firebase adapters that should be removed"
+  target_state:
+    - "Standalone test adapter modules in test/adapters/"
+    - "JSON state persistence between CLI invocations" 
+    - "No dependency on Firebase CLI for testing"
+    - "Reusable test adapters for complex orchestration testing"
+
+tasks:
+  task_1_1_extract_alice_bob_adapters:
+    description: "Extract Alice/Bob test adapters from test file into standalone modules"
+    commands:
+      - "Create test/adapters/alice/ directory structure"
+      - "Create test/adapters/bob/ directory structure" 
+      - "Extract Alice adapter logic to alice/index.js, alice/state.js, alice/planner.js"
+      - "Extract Bob adapter logic to bob/index.js, bob/state.js, bob/planner.js"
+    files:
+      - "test/adapters/alice/index.js"
+      - "test/adapters/alice/state.js"
+      - "test/adapters/alice/planner.js"
+      - "test/adapters/bob/index.js"
+      - "test/adapters/bob/state.js" 
+      - "test/adapters/bob/planner.js"
+    changes:
+      - "Move Alice adapter prototype functions to alice/index.js"
+      - "Move Alice command registry to alice/index.js"
+      - "Move Alice state logic to alice/state.js"
+      - "Move Alice step generation to alice/planner.js"
+      - "Replicate structure for Bob adapter"
+    validation:
+      - "test/adapters/ directory exists with alice/ and bob/ subdirectories"
+      - "Each adapter has index.js, state.js, planner.js files"
+      - "No errors when importing test adapters"
+
+  task_1_2_add_json_state_persistence:
+    description: "Add JSON state persistence to test adapters"
+    commands:
+      - "Modify alice/state.js to read/write .test-state/alice.json"
+      - "Modify bob/state.js to read/write .test-state/bob.json"
+      - "Add state directory creation logic"
+    files:
+      - "test/adapters/alice/state.js"
+      - "test/adapters/bob/state.js"
+    changes:
+      - "Replace in-memory state with JSON file persistence"
+      - "Add getCurrentState and updateState functions"
+      - "Handle missing state files gracefully"
+    validation:
+      - ".test-state/ directory created automatically"
+      - "State persists between separate CLI invocations"
+      - "State operations work with missing/corrupted files"
+
+  task_1_3_update_adapter_foundation_test:
+    description: "Update adapter-foundation.tap.js to use extracted test adapters"
+    commands:
+      - "Import Alice/Bob adapters from test/adapters/"
+      - "Remove embedded adapter logic from test file"
+      - "Update test assertions to work with persistent state"
+    files:
+      - "test/adapter-foundation.tap.js"
+    changes:
+      - "Replace embedded adapters with imports from test/adapters/"
+      - "Update function registry setup to use imported adapters"
+      - "Add state cleanup before/after tests"
+    validation:
+      - "All existing tests continue to pass"
+      - "Test adapters loaded from separate modules"
+      - "No embedded adapter logic remains in test file"
+
+  task_1_4_add_cli_adapter_loading:
+    description: "Add CLI support for loading additional adapter paths"
+    commands:
+      - "Modify src/core/planner.js to support --additional-adapter-path"
+      - "Modify src/cli.js to parse --additional-adapter-path flag"  
+      - "Update loadAdapterPlanners to load from additional paths"
+    files:
+      - "src/core/planner.js"
+      - "src/cli.js"
+    changes:
+      - "Add --additional-adapter-path flag parsing to CLI"
+      - "Extend adapter loading logic for additional paths"
+      - "Preserve existing production adapter loading"
+    validation:
+      - "CLI accepts --additional-adapter-path flag"
+      - "Test adapters can be loaded via CLI flag"
+      - "Production adapters still work without flag"
+
+execution_status:
+  current_task: "task_1_1_extract_alice_bob_adapters"
+  completed_tasks: []
+  pending_tasks:
+    - task_1_1_extract_alice_bob_adapters: NEXT
+    - task_1_2_add_json_state_persistence: PENDING
+    - task_1_3_update_adapter_foundation_test: PENDING
+    - task_1_4_add_cli_adapter_loading: PENDING
+  failed_tasks: []
+  notes: "Phase 1 specification rewritten to match current architecture with function registry"

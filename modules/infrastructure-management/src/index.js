@@ -11,9 +11,6 @@
 import { LookupTable } from '@graffio/functional'
 import { InfrastructureAdapter } from './types/index.js'
 
-// Import adapters to register their prototype functions
-import './adapters/firebase/index.js'
-
 // Core functions
 export { generatePlan } from './core/planner.js'
 export { executePlan } from './core/executor.js'
@@ -25,11 +22,10 @@ export { requireConfirmation } from './ui/confirmations.js'
  * Create production adapter lookup table
  * @sig createProductionAdapters :: () -> LookupTable<InfrastructureAdapter>
  */
-export const createProductionAdapters = () => {
-    return LookupTable([
-        InfrastructureAdapter.Firebase('firebase')
-    ], InfrastructureAdapter, 'name')
-}
+export const createProductionAdapters = () => 
+    // TODO: Add production adapters when they are properly tested
+     LookupTable([], InfrastructureAdapter, 'name')
+
 
 /**
  * Convenience function for generating plans with production adapters
@@ -45,7 +41,7 @@ export const plan = async (operation, config) => {
  * Convenience function for executing plans with production adapters
  * @sig apply :: (Plan) -> Promise<ExecutionResult>
  */
-export const apply = async (plan) => {
+export const apply = async plan => {
     const { executePlan } = await import('./core/executor.js')
     const adapters = createProductionAdapters()
     return await executePlan(plan, adapters)

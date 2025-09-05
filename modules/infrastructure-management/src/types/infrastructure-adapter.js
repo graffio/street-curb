@@ -1,6 +1,6 @@
 // Auto-generated static tagged sum type: InfrastructureAdapter
 // Generated from: ./types/infrastructure-adapter.type.js
-// fields from: { Firebase: { name: {  }}, Alice: { name: {  }}, Bob: { name: {  }}}
+// fields from: { Alice: { name: {  }}, Bob: { name: {  }}}
 
 import * as R from '@graffio/types-runtime'
 
@@ -11,16 +11,12 @@ import * as R from '@graffio/types-runtime'
 // -------------------------------------------------------------------------------------------------------------
 const InfrastructureAdapter = {
     '@@typeName': 'InfrastructureAdapter',
-    '@@tagNames': ['Firebase', 'Alice', 'Bob'],
+    '@@tagNames': ['Alice', 'Bob'],
     toString: () => 'InfrastructureAdapter',
     is: v => {
         if (typeof v !== 'object') return false
         const constructor = Object.getPrototypeOf(v).constructor
-        return (
-            constructor === InfrastructureAdapter.Firebase ||
-            constructor === InfrastructureAdapter.Alice ||
-            constructor === InfrastructureAdapter.Bob
-        )
+        return constructor === InfrastructureAdapter.Alice || constructor === InfrastructureAdapter.Bob
     },
 }
 
@@ -33,7 +29,7 @@ const InfrastructureAdapter = {
 const InfrastructureAdapterPrototype = {
     match(variants) {
         // Validate all variants are handled
-        const requiredVariants = ['Firebase', 'Alice', 'Bob']
+        const requiredVariants = ['Alice', 'Bob']
         requiredVariants.map(variant => {
             if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
             return variant
@@ -46,55 +42,10 @@ const InfrastructureAdapterPrototype = {
 
 // Add hidden properties
 Object.defineProperty(InfrastructureAdapter, '@@typeName', { value: 'InfrastructureAdapter' })
-Object.defineProperty(InfrastructureAdapter, '@@tagNames', { value: ['Firebase', 'Alice', 'Bob'] })
+Object.defineProperty(InfrastructureAdapter, '@@tagNames', { value: ['Alice', 'Bob'] })
 
 InfrastructureAdapterPrototype.constructor = InfrastructureAdapter
 InfrastructureAdapter.prototype = InfrastructureAdapterPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant InfrastructureAdapter.Firebase constructor
-//
-// -------------------------------------------------------------------------------------------------------------
-const FirebaseConstructor = function Firebase(name) {
-    R.validateArgumentLength('InfrastructureAdapter.Firebase(name)', 1, arguments)
-    R.validateRegex('InfrastructureAdapter.Firebase(name)', /firebase/, 'name', false, name)
-
-    const result = Object.create(FirebasePrototype)
-    result.name = name
-    return result
-}
-
-InfrastructureAdapter.Firebase = FirebaseConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant InfrastructureAdapter.Firebase prototype
-//
-// -------------------------------------------------------------------------------------------------------------
-const FirebasePrototype = Object.create(InfrastructureAdapterPrototype)
-Object.defineProperty(FirebasePrototype, '@@tagName', { value: 'Firebase' })
-Object.defineProperty(FirebasePrototype, '@@typeName', { value: 'InfrastructureAdapter' })
-
-FirebasePrototype.toString = function () {
-    return `InfrastructureAdapter.Firebase(${R._toString(this.name)})`
-}
-
-FirebasePrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-FirebaseConstructor.prototype = FirebasePrototype
-FirebasePrototype.constructor = FirebaseConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant InfrastructureAdapter.Firebase: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
-FirebaseConstructor.is = val => val && val.constructor === FirebaseConstructor
-FirebaseConstructor.toString = () => 'InfrastructureAdapter.Firebase'
-FirebaseConstructor.from = o => InfrastructureAdapter.Firebase(o.name)
 
 // -------------------------------------------------------------------------------------------------------------
 //
