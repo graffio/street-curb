@@ -7,12 +7,8 @@ export const InfrastructureAdapter = {
     name: 'InfrastructureAdapter',
     kind: 'taggedSum',
     variants: {
-        Alice: {
-            name: /alice/
-        },
-        
-        Bob: {
-            name: /bob/
-        },
+        Alice  : { name: /alice/   },
+        Bob    : { name: /bob/     },
+        Charlie: { name: /charlie/ },
     }
 }

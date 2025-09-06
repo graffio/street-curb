@@ -1,6 +1,6 @@
 // Auto-generated static tagged sum type: InfrastructureAdapter
 // Generated from: ./types/infrastructure-adapter.type.js
-// fields from: { Alice: { name: {  }}, Bob: { name: {  }}}
+// fields from: { Alice: { name: {  }}, Bob: { name: {  }}, Charlie: { name: {  }}}
 
 import * as R from '@graffio/types-runtime'
 
@@ -11,12 +11,16 @@ import * as R from '@graffio/types-runtime'
 // -------------------------------------------------------------------------------------------------------------
 const InfrastructureAdapter = {
     '@@typeName': 'InfrastructureAdapter',
-    '@@tagNames': ['Alice', 'Bob'],
+    '@@tagNames': ['Alice', 'Bob', 'Charlie'],
     toString: () => 'InfrastructureAdapter',
     is: v => {
         if (typeof v !== 'object') return false
         const constructor = Object.getPrototypeOf(v).constructor
-        return constructor === InfrastructureAdapter.Alice || constructor === InfrastructureAdapter.Bob
+        return (
+            constructor === InfrastructureAdapter.Alice ||
+            constructor === InfrastructureAdapter.Bob ||
+            constructor === InfrastructureAdapter.Charlie
+        )
     },
 }
 
@@ -29,7 +33,7 @@ const InfrastructureAdapter = {
 const InfrastructureAdapterPrototype = {
     match(variants) {
         // Validate all variants are handled
-        const requiredVariants = ['Alice', 'Bob']
+        const requiredVariants = ['Alice', 'Bob', 'Charlie']
         requiredVariants.map(variant => {
             if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
             return variant
@@ -42,7 +46,7 @@ const InfrastructureAdapterPrototype = {
 
 // Add hidden properties
 Object.defineProperty(InfrastructureAdapter, '@@typeName', { value: 'InfrastructureAdapter' })
-Object.defineProperty(InfrastructureAdapter, '@@tagNames', { value: ['Alice', 'Bob'] })
+Object.defineProperty(InfrastructureAdapter, '@@tagNames', { value: ['Alice', 'Bob', 'Charlie'] })
 
 InfrastructureAdapterPrototype.constructor = InfrastructureAdapter
 InfrastructureAdapter.prototype = InfrastructureAdapterPrototype
@@ -136,5 +140,50 @@ BobPrototype.constructor = BobConstructor
 BobConstructor.is = val => val && val.constructor === BobConstructor
 BobConstructor.toString = () => 'InfrastructureAdapter.Bob'
 BobConstructor.from = o => InfrastructureAdapter.Bob(o.name)
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant InfrastructureAdapter.Charlie constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const CharlieConstructor = function Charlie(name) {
+    R.validateArgumentLength('InfrastructureAdapter.Charlie(name)', 1, arguments)
+    R.validateRegex('InfrastructureAdapter.Charlie(name)', /charlie/, 'name', false, name)
+
+    const result = Object.create(CharliePrototype)
+    result.name = name
+    return result
+}
+
+InfrastructureAdapter.Charlie = CharlieConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant InfrastructureAdapter.Charlie prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const CharliePrototype = Object.create(InfrastructureAdapterPrototype)
+Object.defineProperty(CharliePrototype, '@@tagName', { value: 'Charlie' })
+Object.defineProperty(CharliePrototype, '@@typeName', { value: 'InfrastructureAdapter' })
+
+CharliePrototype.toString = function () {
+    return `InfrastructureAdapter.Charlie(${R._toString(this.name)})`
+}
+
+CharliePrototype.toJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+CharlieConstructor.prototype = CharliePrototype
+CharliePrototype.constructor = CharlieConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant InfrastructureAdapter.Charlie: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+CharlieConstructor.is = val => val && val.constructor === CharlieConstructor
+CharlieConstructor.toString = () => 'InfrastructureAdapter.Charlie'
+CharlieConstructor.from = o => InfrastructureAdapter.Charlie(o.name)
 
 export { InfrastructureAdapter }

@@ -19,11 +19,10 @@ import { createId } from '@paralleldrive/cuid2'
  * 2. Generates coordinated steps from all adapters
  * 3. Creates immutable plan with expiration
  *
- * @sig generatePlan :: (String, Object, LookupTable<InfrastructureAdapter>) -> Promise<Plan>
+ * @sig generatePlan :: (String, Object, LookupTable<InfrastructureAdapter>) -> Promise<InfrastructurePlan>
  */
 const generatePlan = async (operation, config, adapters) => {
     const planId = `plan-${createId()}`
-    const expiresAt = Date.now() + 15 * 60 * 1000 // 15 minutes
 
     if (adapters.length === 0) throw new Error(`No adapters provided`)
 
@@ -38,16 +37,7 @@ const generatePlan = async (operation, config, adapters) => {
         allSteps.push(...steps)
     }
 
-    return {
-        id: planId,
-        operation,
-        config,
-        steps: allSteps,
-        expiresAt,
-        createdAt: Date.now(),
-        status: 'ready',
-        adapters: adapters.map(a => a.name),
-    }
+    return { id: planId, operation, config, steps: allSteps }
 }
 
 export { generatePlan }
