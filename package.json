@@ -4,7 +4,8 @@
     "version": "0.0.0",
     "type": "module",
     "workspaces": [
-        "modules/*"
+        "modules/*",
+        "modules/*/*"
     ],
     "scripts": {
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",

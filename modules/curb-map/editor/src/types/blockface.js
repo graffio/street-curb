@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: Blockface
-// Generated from: ./types/blockface.type.js
+// Generated from: ../types/blockface.type.js
 // {
 //     id        : "String"
 //     geometry  : "Object"

@@ -13,7 +13,7 @@
         "tap:file": "../../bash/run-tap.sh",
         "validate-style": "node ../style-validator/src/cli.js",
 
-        "types:generate": "find . -path '*/types/*.type.js' -exec ../../bash/generate-type-file.sh {} src/types \\; && ../types-generation/src/generate-index-file.js src/types",
+        "types:generate": "find ../types -name \"*.type.js\" -exec ../../../bash/generate-type-file.sh {} src/types \\; && ../../types-generation/src/generate-index-file.js src/types",
         "types:watch": "onchange 'types/*.type.js' -- sh -c 'yarn types:generate'"
     },
     "devDependencies": {
@@ -42,7 +42,6 @@
     },
     "dependencies": {
         "@graffio/functional": "0.1.0",
-        "@graffio/types": "0.1.0",
         "@reduxjs/toolkit": "^2.8.2",
         "@turf/along": "^7.2.0",
         "@turf/length": "^7.2.0",
