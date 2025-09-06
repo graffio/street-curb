@@ -13,14 +13,14 @@
  * Display a comprehensive infrastructure plan
  * @sig displayPlan :: (Plan) -> Void
  */
-export const displayPlan = (plan) => {
+export const displayPlan = plan => {
     console.log('\n=== INFRASTRUCTURE OPERATION PLAN ===')
     console.log(`Operation: ${plan.operation.toUpperCase()}`)
     console.log(`Plan ID: ${plan.id}`)
     console.log(`Environment: ${plan.config.environment || 'unknown'}`)
     console.log(`Created: ${new Date(plan.createdAt).toISOString()}`)
     console.log(`Expires: ${new Date(plan.expiresAt).toISOString()}`)
-    
+
     console.log('\n📋 Steps to execute:')
     plan.steps.forEach((step, index) => {
         console.log(`  ${index + 1}. ${step.description}`)
@@ -30,7 +30,7 @@ export const displayPlan = (plan) => {
             console.log(`     ⚠️  Cannot rollback: ${step.warning || 'Permanent operation'}`)
         }
     })
-    
+
     const dangerousSteps = plan.steps.filter(step => !step.canRollback)
     if (dangerousSteps.length > 0) {
         console.log('\n⚠️  PERMANENT OPERATIONS WARNING:')
@@ -52,7 +52,7 @@ export const displayStepProgress = (step, current, total) => {
 
 /**
  * Display successful step completion
- * @sig displayStepComplete :: (Step, StepResult) -> Void  
+ * @sig displayStepComplete :: (Step, StepResult) -> Void
  */
 export const displayStepComplete = (step, result) => {
     console.log(`✅ Completed: ${step.description}`)
@@ -65,7 +65,7 @@ export const displayStepComplete = (step, result) => {
  * Display execution start banner
  * @sig displayExecutionStart :: (Plan) -> Void
  */
-export const displayExecutionStart = (plan) => {
+export const displayExecutionStart = plan => {
     console.log('\n🚀 EXECUTING INFRASTRUCTURE PLAN')
     console.log(`Plan ID: ${plan.id}`)
     console.log(`Operation: ${plan.operation}`)
@@ -76,7 +76,7 @@ export const displayExecutionStart = (plan) => {
  * Display execution completion banner
  * @sig displayExecutionComplete :: (ExecutionResult) -> Void
  */
-export const displayExecutionComplete = (result) => {
+export const displayExecutionComplete = result => {
     console.log('\n✅ PLAN EXECUTION COMPLETED SUCCESSFULLY')
     console.log(`Total Duration: ${(result.duration / 1000).toFixed(1)}s`)
     console.log(`Steps Executed: ${result.executedSteps.length}`)

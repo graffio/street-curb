@@ -22,10 +22,9 @@ export { requireConfirmation } from './ui/confirmations.js'
  * Create production adapter lookup table
  * @sig createProductionAdapters :: () -> LookupTable<InfrastructureAdapter>
  */
-export const createProductionAdapters = () => 
+export const createProductionAdapters = () =>
     // TODO: Add production adapters when they are properly tested
-     LookupTable([], InfrastructureAdapter, 'name')
-
+    LookupTable([], InfrastructureAdapter, 'name')
 
 /**
  * Convenience function for generating plans with production adapters

@@ -2,13 +2,13 @@ import { MainTheme } from '@graffio/design-system'
 import React, { useCallback, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider, useDispatch, useSelector } from 'react-redux'
-import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import CurbTable from './components/CurbTable'
 import MapboxMap from './components/MapboxMap.jsx'
 import SegmentedCurbEditor from './components/SegmentedCurbEditor'
 import { selectBlockface } from './store/actions.js'
-import * as S from './store/selectors.js'
 import store from './store/index.js'
+import * as S from './store/selectors.js'
+import { Blockface } from './types/index.js'
 import './index.css'
 
 const accessToken = 'pk.eyJ1IjoiZ3JhZmZpbyIsImEiOiJjbWRkZ3lkNjkwNG9xMmpuYmt4bHd2YTVvIn0.lzlmjq8mnXOSKB18lKLBpg'
@@ -65,7 +65,7 @@ const App = () => {
                     fontWeight: 'bold',
                 }}
             >
-                Row Canvas
+                Curb Map
             </h1>
 
             <MapboxMap

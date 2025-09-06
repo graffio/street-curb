@@ -4,8 +4,8 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
-import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import * as S from '../../store/selectors.js'
+import { Blockface } from '../../types/index.js'
 
 /**
  * SegmentRendererNew - Pure JSX segment renderer with Redux and channel integration

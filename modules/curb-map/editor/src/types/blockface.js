@@ -1,9 +1,15 @@
 // Auto-generated static tagged type: Blockface
-// Generated from: modules/types/src/right-of-way/blockface.type.js
-// Fields: { id: "String", geometry: "Object", streetName: "String", cnnId: "String?", segments: "[Segment]" }
+// Generated from: ../types/blockface.type.js
+// {
+//     id        : "String"
+//     geometry  : "Object"
+//     streetName: "String"
+//     cnnId     : "String?"
+//     segments  : "[Segment]"
+// }
 
 import { length } from '@turf/length'
-import { Segment } from '../../generated/right-of-way/index.js'
+import { Segment } from './segment.js'
 
 import * as R from '@graffio/types-runtime'
 

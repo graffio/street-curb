@@ -80,7 +80,7 @@ curb-infra --help
 ### Programmatic Usage
 
 ```javascript
-import { generatePlan, executePlan } from '@row-canvas/infrastructure-management'
+import { generatePlan, executePlan } from '@graffio/infrastructure-management'
 
 // Step 1: Generate plan
 const plan = await generatePlan('create-environment', {

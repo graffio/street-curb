@@ -3,9 +3,8 @@
  * Tests the business logic functions directly without Redux
  */
 
-import { Blockface } from '@graffio/types/generated/right-of-way/blockface.js'
-import { Segment } from '@graffio/types/generated/right-of-way/segment.js'
 import { test } from 'tap'
+import { Blockface, Segment } from '../src/types/index.js'
 
 test('Blockface domain functions', t => {
     t.test('Blockface.unknownRemaining', t => {

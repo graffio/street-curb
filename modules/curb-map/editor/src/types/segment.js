@@ -1,6 +1,9 @@
 // Auto-generated static tagged type: Segment
-// Generated from: ./src/right-of-way/segment.type.js
-// Fields: { use: "String", length: "Number" }
+// Generated from: ../types/segment.type.js
+// {
+//     use   : "String"
+//     length: "Number"
+// }
 
 import * as R from '@graffio/types-runtime'
 

@@ -1,5 +1,5 @@
 {
-    "name": "@row-canvas/infrastructure-management",
+    "name": "@graffio/infrastructure-management",
     "version": "1.0.0",
     "description": "Infrastructure management for Firebase, Sentry, Stripe, and other services",
     "main": "src/index.js",

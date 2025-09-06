@@ -1,5 +1,5 @@
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { Blockface } from '@graffio/types/generated/right-of-way/blockface.js'
+import { Blockface } from '../types/index.js'
 import { ACTION_TYPES } from './actions.js'
 
 /**
