@@ -3,8 +3,8 @@ import { Box } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
-import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import * as S from '../../store/selectors.js'
+import { Blockface } from '../../types/index.js'
 
 /**
  * Gets visual state for divider thumb based on interaction state

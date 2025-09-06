@@ -1,6 +1,6 @@
 # Architecture Specifications
 
-This folder contains high-level architectural specifications and refactoring plans for the row-canvas project.
+This folder contains high-level architectural specifications and refactoring plans for the curb-map project.
 
 ## Purpose
 

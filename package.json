@@ -1,5 +1,5 @@
 {
-    "name": "row-canvas",
+    "name": "graffio-monorepo",
     "private": true,
     "version": "0.0.0",
     "type": "module",
@@ -9,8 +9,7 @@
     "scripts": {
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",
         "precommit": "lint-staged",
-        "tap": "yarn workspaces run tap",
-        "types:generate": "bash/generate-type-file.sh modules/types/src/right-of-way/blockface.type.js modules/types/generated/right-of-way/ && bash/generate-type-file.sh modules/types/src/right-of-way/segment.type.js modules/types/generated/right-of-way/"
+        "tap": "yarn workspaces run tap"
     },
     "devDependencies": {
         "eslint": "^9.28.0",

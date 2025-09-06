@@ -15,27 +15,26 @@ import path from 'path'
  * Check if running in test context to avoid creating audit files
  * @sig isTestContext :: () -> Boolean
  */
-const isTestContext = () => process.env.NODE_ENV === 'test' || 
-                            process.env.TAP === '1' ||
-                            process.argv.some(arg => arg.includes('tap'))
+const isTestContext = () =>
+    process.env.NODE_ENV === 'test' || process.env.TAP === '1' || process.argv.some(arg => arg.includes('tap'))
 
 /**
  * Write audit entry to daily log file
  * @sig writeAuditEntry :: (Object) -> Promise<Void>
  */
-const writeAuditEntry = async (logEntry) => {
+const writeAuditEntry = async logEntry => {
     const auditDir = path.join(process.cwd(), '.audit-logs')
-    
+
     try {
         await fs.mkdir(auditDir, { recursive: true })
     } catch (error) {
         // Directory might already exist
     }
-    
+
     const date = new Date().toISOString().split('T')[0]
     const logFile = path.join(auditDir, `infrastructure-${date}.log`)
     const logLine = JSON.stringify(logEntry) + '\n'
-    
+
     await fs.appendFile(logFile, logLine)
 }
 
@@ -55,11 +54,11 @@ export const logInfrastructureOperation = async (eventType, data) => {
         ...data,
         auditVersion: '1.0'
     }
-    
+
     if (isTestContext()) {
         console.log(`[AUDIT LOG] ${eventType}:`, JSON.stringify(logEntry, null, 2))
         return
     }
-    
+
     await writeAuditEntry(logEntry)
 }

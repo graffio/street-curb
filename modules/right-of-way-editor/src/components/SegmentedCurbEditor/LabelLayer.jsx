@@ -1,11 +1,11 @@
 import { useChannel } from '@graffio/design-system'
 import { Box, DropdownMenu, Text } from '@radix-ui/themes'
-import React, { useState, useLayoutEffect, useRef } from 'react'
+import React, { useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { dragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
-import { Blockface } from '@graffio/types/generated/right-of-way/index.js'
 import * as S from '../../store/selectors.js'
+import { Blockface } from '../../types/index.js'
 import { formatLength } from '../../utils/formatting.js'
 import { calculateSimplePositions } from './label-positioning-simple.js'
 

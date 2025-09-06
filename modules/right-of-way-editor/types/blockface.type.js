@@ -3,7 +3,7 @@
  * @sig Blockface :: { id: String, geometry: Object, streetName: String, cnnId: String?, segments: [Segment] }
  */
 import { length } from '@turf/length'
-import { Segment } from '../../generated/right-of-way/index.js'
+import { Segment } from './segment.js'
 
 export const Blockface = {
     name: 'Blockface',
