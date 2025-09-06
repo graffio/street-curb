@@ -1,6 +1,11 @@
 // Auto-generated static tagged type: ParseResult
 // Generated from: ./src/types/parse-result.type.js
-// Fields: { typeDefinition: "Object", imports: "Array", functions: "Array", sourceContent: "String" }
+// {
+//     typeDefinition: "Object"
+//     imports       : "Array"
+//     functions     : "Array"
+//     sourceContent : "String"
+// }
 
 import * as R from '@graffio/types-runtime'
 

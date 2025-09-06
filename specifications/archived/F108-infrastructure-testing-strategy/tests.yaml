@@ -1,0 +1,72 @@
+test_suite:
+  version: 1.0
+  description: "Validation tests for F108 Phase 1: Test Adapter Foundation"
+
+validation_tests:
+  task_1_1_validation:
+    name: "Extract Alice/Bob adapters validation"
+    checks:
+      - directory_exists: "test/adapters/"
+      - directory_exists: "test/adapters/alice/"
+      - directory_exists: "test/adapters/bob/"
+      - file_exists: "test/adapters/alice/index.js"
+      - file_exists: "test/adapters/alice/state.js"
+      - file_exists: "test/adapters/alice/planner.js"
+      - file_exists: "test/adapters/bob/index.js"
+      - file_exists: "test/adapters/bob/state.js"
+      - file_exists: "test/adapters/bob/planner.js"
+      - imports_work: "import from test/adapters/alice/index.js"
+      - imports_work: "import from test/adapters/bob/index.js"
+      - no_errors: "node -e \"import('./test/adapters/alice/index.js')\""
+      - no_errors: "node -e \"import('./test/adapters/bob/index.js')\""
+
+  task_1_2_validation:
+    name: "JSON state persistence validation"
+    checks:
+      - functionality_preserved: "Alice adapter can read/write state to .test-state/alice.json"
+      - functionality_preserved: "Bob adapter can read/write state to .test-state/bob.json"
+      - directory_created: ".test-state/ directory created automatically"
+      - state_persistence: "State survives between separate process invocations"
+      - error_handling: "Missing state files handled gracefully"
+      - error_handling: "Corrupted state files handled gracefully"
+
+  task_1_3_validation:
+    name: "Updated adapter-foundation test validation"
+    checks:
+      - tests_pass: "yarn test test/adapter-foundation.tap.js"
+      - imports_work: "Test imports Alice/Bob from test/adapters/"
+      - no_embedded_logic: "No embedded adapter logic remains in test file"
+      - functionality_preserved: "All existing test assertions continue to pass"
+      - state_cleanup: "Test state cleaned before/after test runs"
+
+  task_1_4_validation:
+    name: "CLI adapter loading validation"
+    checks:
+      - cli_flag_exists: "CLI accepts --additional-adapter-path flag"
+      - functionality_preserved: "Production adapters work without flag"
+      - adapter_loading: "Test adapters loaded when --additional-adapter-path specified"
+      - no_errors: "CLI help shows --additional-adapter-path option"
+      - integration_test: "Can generate plan using test adapters via CLI"
+
+integration_tests:
+  full_phase_1:
+    name: "Complete Phase 1 integration test"
+    description: "End-to-end test of extracted test adapters"
+    commands:
+      - "node src/cli.js plan create-environment --additional-adapter-path test/adapters --env test --name 'Phase 1 Test'"
+    validation:
+      - "Plan generated successfully using test adapters"
+      - "State files created in .test-state/"
+      - "No dependency on Firebase CLI"
+      - "Test adapters function identically to embedded versions"
+
+regression_tests:
+  existing_functionality:
+    name: "Ensure existing functionality preserved"
+    commands:
+      - "yarn test test/adapter-foundation.tap.js"
+    validation:
+      - "All existing tests pass"
+      - "No performance regression"
+      - "Function registry still works"
+      - "ExecutePlan integration still works"

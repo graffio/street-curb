@@ -35,4 +35,18 @@ const stringifyObject = o =>
         .replace(/{/g, '{ ') // add a space just inside starting braces
         .replace(/([^}])}/g, '$1 }') // add a space just inside closing braces
 
-export { prettierCode, stringifyObject }
+const stringifyObjectAsMultilineComment = o => {
+    const entries = Object.entries(o)
+    const maxKeyLen = Math.max(...entries.map(([k]) => k.length))
+
+    const header = '// {'
+    const body = entries.map(([k, v]) => {
+        const padded = k.padEnd(maxKeyLen, ' ')
+        return `//     ${padded}: ${JSON.stringify(v)}`
+    })
+    const footer = '// }'
+
+    return [header, ...body, footer].join('\n')
+}
+
+export { prettierCode, stringifyObject, stringifyObjectAsMultilineComment }

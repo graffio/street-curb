@@ -1,5 +1,5 @@
-import { prettierCode, stringifyObject } from './prettier-code.js'
 import Generator from './codegen-helpers/tagged-type-function-generators.js'
+import { prettierCode, stringifyObject, stringifyObjectAsMultilineComment } from './prettier-code.js'
 
 /*
  * Generate static tagged type (single constructor)
@@ -11,7 +11,7 @@ const generateStaticTaggedType = async typeDefinition => {
     const code = `
         // Auto-generated static tagged type: ${name}
         // Generated from: ${typeDefinition.relativePath}
-        // Fields: ${stringifyObject(typeDefinition.fields)}
+        ${stringifyObjectAsMultilineComment(typeDefinition.fields)}
         
         ${generateImportsSection(imports)}
         import * as R from '@graffio/types-runtime'
