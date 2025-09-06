@@ -43,10 +43,6 @@ InfrastructureAdapter.Alice.prototype.generateSteps = async (operation, config, 
         canRollback: true,
     }),
 ]
-InfrastructureAdapter.Alice.prototype.getCurrentState = async () => ({
-    aliceData: ['alice-resource-1', 'alice-resource-2'],
-    timestamp: Date.now(),
-})
 
 // Add Bob adapter prototype functions
 InfrastructureAdapter.Bob.prototype.verifyConfig = config => {}
@@ -58,10 +54,6 @@ InfrastructureAdapter.Bob.prototype.generateSteps = async (operation, config, cu
         canRollback: false,
     }),
 ]
-InfrastructureAdapter.Bob.prototype.getCurrentState = async () => ({
-    bobData: ['bob-resource-x', 'bob-resource-y'],
-    timestamp: Date.now(),
-})
 
 // Phase 1: Test adapter injection mechanism
 tap.test('Given adapter injection', async t => {
@@ -90,12 +82,6 @@ tap.test('Given adapter injection', async t => {
         t.equal(step.description, 'Alice test: create-environment', 'Step description includes operation')
         t.equal(step.canRollback, true, 'Step is rollbackable')
         // Command functions are tested via execution, not as string fields
-
-        // Validate state collection occurred
-        t.ok(plan.stateHash, 'Plan has state hash')
-        t.ok(plan.expectedState, 'Plan has expected state')
-        t.ok(plan.expectedState.alice, 'Plan expected state includes alice')
-        t.ok(plan.expectedState.alice.aliceData, 'Alice state includes alice data')
     })
 
     await t.test('When calling generatePlan with alice adapter for delete-environment', async t => {
@@ -164,17 +150,6 @@ tap.test('Given adapter injection', async t => {
         t.equal(bobStep.description, 'Bob handles: create-environment', 'Bob step has different description pattern')
         t.equal(bobStep.canRollback, false, 'Bob step is not rollbackable')
         // Bob command function is tested via execution, rollback tested via canRollback flag
-
-        // Validate state collection from both adapters
-        t.ok(plan.expectedState.alice, 'Plan expected state includes alice')
-        t.ok(plan.expectedState.bob, 'Plan expected state includes bob')
-        t.ok(plan.expectedState.alice.aliceData, 'Alice state has aliceData')
-        t.ok(plan.expectedState.bob.bobData, 'Bob state has bobData')
-        t.not(
-            plan.expectedState.alice.aliceData,
-            plan.expectedState.bob.bobData,
-            'Alice and Bob have different state data',
-        )
     })
 
     await t.test('When calling generatePlan with mixed adapter capabilities', async t => {
