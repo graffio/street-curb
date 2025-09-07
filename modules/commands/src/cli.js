@@ -135,7 +135,8 @@ yargs(hideBin(process.argv))
     .command(
         'plan <operation>',
         'Generate infrastructure plan',
-        yargs => yargs
+        yargs =>
+            yargs
                 .positional('operation', {
                     describe: 'Infrastructure operation to plan',
                     choices: ['create-environment', 'delete-environment'],

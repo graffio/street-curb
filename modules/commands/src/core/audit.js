@@ -52,7 +52,7 @@ export const logInfrastructureOperation = async (eventType, data) => {
         eventType,
         operator: data.operator || process.env.USER || 'unknown',
         ...data,
-        auditVersion: '1.0'
+        auditVersion: '1.0',
     }
 
     if (isTestContext()) {

@@ -1,7 +1,7 @@
 {
-    "name": "@graffio/infrastructure-management",
-    "version": "1.0.0",
-    "description": "Infrastructure management for Firebase, Sentry, Stripe, and other services",
+    "name": "@graffio/commands",
+    "version": "0.1.0",
+    "description": "Commands",
     "main": "src/index.js",
     "type": "module",
     "bin": {

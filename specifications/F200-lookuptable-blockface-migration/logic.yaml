@@ -1,5 +1,5 @@
 migration_specification:
-  spec_id: F116
+  spec_id: F200
   name: "LookupTable Blockface Migration"
   version: 1.0
   description: "Migrate Redux from flat curb structure to LookupTable<Blockface> architecture"
@@ -13,7 +13,7 @@ architecture:
       blockfaceId: 'some-id',
       isCollectionComplete: false
     }
-  
+
   target_state: |
     state.blockfaces = LookupTable([
       Blockface('id-1', geometry1, 'Main St', [Segment(...), Segment(...)]),
@@ -48,7 +48,7 @@ tasks:
       - "Default Blockface contains empty tagged Segments array"
       - "LookupTable operations work: state.blockfaces.get(id) returns Blockface"
     complexity:
-      - Replace curbInitialState with blockfaces LookupTable + ui state  
+      - Replace curbInitialState with blockfaces LookupTable + ui state
       - Import LookupTable and tagged types (Blockface, Segment)
       - Create initial Blockface with tagged Segments from existing curb data
 
@@ -135,13 +135,13 @@ tasks:
 execution_status:
   current_task: task_1_change_redux_state_structure
   completed_tasks: []
-  pending_tasks: 
+  pending_tasks:
     - task_1_change_redux_state_structure: NEXT
     - task_2_update_selectors: PENDING
     - task_3_update_action_handlers: PENDING
     - task_4_fix_tests: PENDING
   failed_tasks: []
   notes: |
-    F116 simplified to straightforward migration approach without unnecessary adapters or 
+    F200 simplified to straightforward migration approach without unnecessary adapters or 
     backward compatibility layers. Just change state structure, update selectors/handlers, fix tests.
     No runtime conversion needed - this is a one-time internal refactor.
