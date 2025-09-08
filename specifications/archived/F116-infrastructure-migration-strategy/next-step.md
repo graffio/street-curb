@@ -1,104 +1,77 @@
-# Next Step: Extend Adapter Foundation Failure Tests
+# Next Step: Complete Migration to Vanilla Command Pattern
 
 ## Developer Implementation Task
 
-Extend the existing `test/adapter-foundation.tap.js` with more sophisticated failure scenarios to systematically test every failure mode through increasing complexity.
+Implement the vanilla command executor functions to make `test/command-foundation.tap.js` tests pass, completing the migration from Tagged adapter pattern to simple JavaScript command objects.
 
 ## Context
-The test file already has basic failure testing:
-- Basic operation failures and missing commands
-- Rollback function failures  
-- Multi-adapter coordination (Alice succeeds → Bob fails → Alice rolls back)
-- Complete round-trip rollback scenarios
 
-We need to add more sophisticated failure scenarios to increase test coverage.
+The `test/command-foundation.tap.js` file defines the target API using vanilla JavaScript command objects with direct `execute()` and `rollback()` functions. The current executor still uses the old Tagged InfrastructureStep + adapter registry pattern.
 
 ## File Changes Required
 
-### test/adapter-foundation.tap.js
-Add the following new test sections after the existing tests:
-
-#### 1. Complex Multi-Step Failure Chains
-```javascript
-await t.test('Given three-adapter operation when second adapter fails then rollback occurs in reverse order', async t => {
-    // Given: Alice, Bob, Charlie adapters with Bob configured to fail
-    // When: executeSteps called with 3-step plan
-    // Then: Alice executes → Bob fails → Alice rolls back, Charlie never executes
-})
-
-await t.test('Given rollback failure when forward operation also failed then both failures are reported', async t => {
-    // Given: Adapter with failing command and failing rollback
-    // When: executeSteps called and both forward and rollback fail  
-    // Then: ExecutionResult contains both original error and rollback error
-})
+### 1. package.json
+Update module name:
+```json
+{
+  "name": "@graffio/infrastructure-orchestration",
+  "description": "Infrastructure orchestration with command pattern and audit logging"
+}
 ```
 
-#### 2. Timeout and Network Failure Simulation  
-```javascript
-await t.test('Given command with long execution time when timeout reached then operation fails gracefully', async t => {
-    // Given: Alice adapter with command that delays beyond timeout
-    // When: executeSteps called with short timeout
-    // Then: ExecutionResult shows timeout error, no system crash
-})
+### 2. src/core/executor.js
+Replace the existing Tagged/adapter implementation with vanilla command functions:
 
-await t.test('Given network failure during execution when command runs then failure is handled gracefully', async t => {
-    // Given: Alice adapter with command that simulates network error
-    // When: executeSteps called
-    // Then: ExecutionResult shows network error, system remains stable
-})
+```javascript
+// New functions to implement:
+export const executeCommands = async (commands) => {
+  // Sequential execution with fail-fast behavior
+  // Return array of { command, result, success, error?, executionTime }
+}
+
+export const rollbackCommands = async (executedCommands) => {
+  // Reverse-order rollback with error capture
+  // Return array of { command, result, success, error?, executionTime }
+}
+
+export const executePlan = async (commands, dependencies = {}) => {
+  // Orchestration with audit logging (if auditLogger provided)
+  // Execute commands, rollback on failure, return comprehensive result
+  // Return { success, executedCommands, rollbackCommands }
+}
 ```
 
-#### 3. Invalid Configuration Handling
-```javascript
-await t.test('Given malformed configuration when generatePlan called then plan generation fails with clear error', async t => {
-    // Given: Configuration with invalid structure/types
-    // When: generatePlan called with malformed config
-    // Then: Error thrown with descriptive message, no plan types
-})
+### 3. Remove old adapter files
+Delete or rename files that implement the old Tagged pattern:
+- Any files containing `InfrastructureStep`, `InfrastructureAdapter`, or adapter registry lookups
+- Keep migration files that will use the new pattern
 
-await t.test('Given missing required fields when generatePlan called then validation fails early', async t => {
-    // Given: Configuration missing required fields (e.g., no projectId)
-    // When: generatePlan called
-    // Then: Error thrown identifying missing fields, no plan types
-})
-```
+## Implementation Requirements
 
-#### 4. Resource Exhaustion Scenarios
-```javascript
-await t.test('Given memory-intensive operation when system under pressure then operation fails gracefully', async t => {
-    // Given: Alice adapter simulating high memory usage
-    // When: executeSteps called during simulated memory pressure
-    // Then: ExecutionResult shows resource exhaustion error
-})
-
-await t.test('Given multiple concurrent executions when system overloaded then appropriate limits enforced', async t => {
-    // Given: Multiple executeSteps calls running simultaneously
-    // When: Concurrent execution limit exceeded
-    // Then: Additional executions queued or rejected appropriately
-})
-```
-
-
-### Implementation Notes
-- Use the existing Alice/Bob adapter pattern for consistency
-- Each test should follow the existing pattern: setup → execute → validate results
-- Add appropriate error message assertions to validate failure modes
-- Ensure all tests use the existing `InfrastructureAdapter` and `LookupTable` patterns
-- Add timeout configurations where needed (use reasonable test timeouts like 100ms)
+1. **Sequential execution**: Commands execute in array order with fail-fast behavior
+2. **Reverse rollback**: Rollback occurs in reverse execution order
+3. **Error preservation**: Capture all error details including error codes and messages
+4. **Timing capture**: Record execution time for each command
+5. **Audit integration**: Log to `dependencies.auditLogger` if provided
+6. **Graceful failure**: Handle commands without rollback functions appropriately
 
 ## Validation Commands
+
 After implementation, run:
 ```bash
-cd /Users/Shared/projects/row-canvas/modules/infrastructure-management
-yarn test test/adapter-foundation.tap.js
+cd /Users/Shared/projects/graffio-monorepo/modules/commands
+yarn test test/command-foundation.tap.js
 ```
 
 ## Success Criteria
-- [ ] All existing tests continue to pass (143+ tests)
-- [ ] New failure scenario tests added and passing
-- [ ] Test coverage includes the 5 new categories listed above
-- [ ] No test execution time significantly increased (under 5 seconds total)
-- [ ] All new tests follow existing patterns and conventions
+
+- [ ] All 42 tests in `command-foundation.tap.js` pass
+- [ ] Package renamed to `@graffio/infrastructure-orchestration`  
+- [ ] Old adapter abstraction layer removed
+- [ ] New executor functions handle all test scenarios correctly
+- [ ] Error handling preserves all failure details
+- [ ] Audit logging integration works when dependencies provided
 
 ## Expected Outcome
-Enhanced test suite with comprehensive failure mode coverage, providing confidence that the infrastructure system handles edge cases and failure scenarios gracefully.
+
+Working vanilla command executor with ~20 lines of core logic plus error handling, audit integration, and comprehensive test coverage. The module handles infrastructure orchestration with proper audit trails while using the simple Command pattern internally.

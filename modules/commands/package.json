@@ -1,7 +1,7 @@
 {
-    "name": "@graffio/commands",
+    "name": "@graffio/infrastructure-orchestration",
     "version": "0.1.0",
-    "description": "Commands",
+    "description": "Infrastructure orchestration with command pattern and audit logging",
     "main": "src/index.js",
     "type": "module",
     "bin": {
