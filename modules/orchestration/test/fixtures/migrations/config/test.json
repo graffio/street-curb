@@ -1,0 +1,13 @@
+{
+    "projectId": "test-project-123",
+    "region": "us-central1",
+    "environment": "test",
+    "database": {
+        "host": "test-db.example.com",
+        "name": "test_database"
+    },
+    "features": {
+        "enableLogging": true,
+        "debugMode": true
+    }
+}

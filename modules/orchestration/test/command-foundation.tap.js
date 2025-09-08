@@ -6,15 +6,20 @@ const aliceCommand = {
     id: 'alice-test-cmd',
     description: 'Alice test command for create-environment',
     canRollback: true,
-    execute: async () => ({ status: 'success', output: 'Alice executed test-operation', duration: 30 }),
-    rollback: async forwardResult => ({ status: 'success', output: 'Alice rolled back test-operation', duration: 30 }),
+    execute: async () => ({ status: 'success', output: 'Alice executed test-operation', duration: 30, result: {} }),
+    rollback: async forwardResult => ({
+        status: 'success',
+        output: 'Alice rolled back test-operation',
+        duration: 30,
+        result: {},
+    }),
 }
 
 const bobCommand = {
     id: 'bob-test-cmd',
     description: 'Bob handles create-environment',
     canRollback: false,
-    execute: async () => ({ status: 'success', output: 'Bob executed bob-operation', duration: 75 }),
+    execute: async () => ({ status: 'success', output: 'Bob executed bob-operation', duration: 75, result: {} }),
     rollback: async forwardResult => {
         throw new Error('Bob operations cannot be rolled back')
     },
@@ -24,11 +29,17 @@ const charlieCommand = {
     id: 'charlie-test-cmd',
     description: 'Charlie handles create-environment',
     canRollback: true,
-    execute: async () => ({ status: 'success', output: 'Charlie executed charlie-operation', duration: 40 }),
+    execute: async () => ({
+        status: 'success',
+        output: 'Charlie executed charlie-operation',
+        duration: 40,
+        result: {},
+    }),
     rollback: async forwardResult => ({
         status: 'success',
         output: 'Charlie rolled back charlie-operation',
         duration: 25,
+        result: {},
     }),
 }
 
@@ -56,7 +67,7 @@ tap.test('Given command execution', async t => {
             'Alice command function returned expected output',
         )
         t.equal(executedCommand.result.duration, 30, 'Alice command function returned expected duration')
-        t.ok(executedCommand.result.executionTime >= 0, 'Execution time was measured')
+        t.ok(executedCommand.executionTime >= 0, 'Execution time was measured')
     })
 
     await t.test('When calling executeCommands with multiple commands', async t => {
@@ -85,7 +96,7 @@ tap.test('Given command execution', async t => {
 
         // Validate execution order (Alice executed first)
         t.ok(
-            aliceExecution.result.executionTime <= bobExecution.result.executionTime,
+            aliceExecution.executionTime <= bobExecution.executionTime,
             'Alice executed before Bob (sequential ordering)',
         )
     })
@@ -102,6 +113,7 @@ tap.test('Given command execution', async t => {
                 status: 'success',
                 output: 'Rollback succeeded despite forward failure',
                 duration: 15,
+                result: {},
             }),
         }
 
@@ -193,7 +205,7 @@ tap.test('Given rollback scenarios', async t => {
 
             // Validate Charlie rolled back before Alice (reverse execution order)
             t.ok(
-                charlieRollback.result.executionTime <= aliceRollback.result.executionTime,
+                charlieRollback.executionTime <= aliceRollback.executionTime,
                 'Charlie rolled back first (reverse order)',
             )
         },
@@ -238,10 +250,7 @@ tap.test('Given rollback scenarios', async t => {
             t.equal(bobRollback.success, false, 'Bob rollback failed due to capability')
 
             // Validate Bob rollback attempted in reverse order (Bob first, then Alice)
-            t.ok(
-                bobRollback.result.executionTime <= aliceRollback.result.executionTime,
-                'Rollback attempted in reverse order',
-            )
+            t.ok(bobRollback.executionTime <= aliceRollback.executionTime, 'Rollback attempted in reverse order')
         },
     )
 
@@ -250,7 +259,7 @@ tap.test('Given rollback scenarios', async t => {
             id: 'rollback-failing-cmd',
             description: 'Command with failing rollback',
             canRollback: true,
-            execute: async () => ({ status: 'success', output: 'Forward succeeded', duration: 20 }),
+            execute: async () => ({ status: 'success', output: 'Forward succeeded', duration: 20, result: {} }),
             rollback: async forwardResult => {
                 throw new Error('Rollback function failed')
             },
@@ -315,6 +324,7 @@ tap.test('Given executePlan integration', async t => {
                 status: 'success',
                 output: 'Rollback after plan failure',
                 duration: 10,
+                result: {},
             }),
         }
 
@@ -407,6 +417,7 @@ tap.test('Given complex failure scenarios', async t => {
                 status: 'success',
                 output: 'Middle command rollback succeeded',
                 duration: 15,
+                result: {},
             }),
         }
 

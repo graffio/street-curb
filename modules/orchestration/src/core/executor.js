@@ -23,10 +23,10 @@ const executeCommands = async commands => {
         try {
             const result = await command.execute()
             const executionTime = Date.now() - startTime
-            results.push({ command, result: { ...result, executionTime }, success: true })
+            results.push({ command, result, success: true, executionTime })
         } catch (error) {
             const executionTime = Date.now() - startTime
-            results.push({ command, result: { executionTime }, success: false, error })
+            results.push({ command, result: null, success: false, error, executionTime })
             break // Fail-fast: stop execution on first failure
         }
     }
@@ -53,10 +53,10 @@ const rollbackCommands = async executedCommands => {
             if (!command.canRollback) throw new Error(`${command.description} cannot be rolled back`)
             const result = await command.rollback(executedCommand.result)
             const executionTime = Date.now() - startTime
-            rollbackResults.push({ command, result: { ...result, executionTime }, success: true })
+            rollbackResults.push({ command, result, success: true, executionTime })
         } catch (error) {
             const executionTime = Date.now() - startTime
-            rollbackResults.push({ command, result: { executionTime }, success: false, error })
+            rollbackResults.push({ command, result: null, success: false, error, executionTime })
         }
     }
 
@@ -94,7 +94,7 @@ const executePlan = async (commands, dependencies = {}) => {
                 commandDescription: execution.command.description,
                 success: execution.success,
                 error: execution.error?.message,
-                duration: execution.result.executionTime,
+                duration: execution.executionTime,
                 timestamp: new Date().toISOString(),
                 ...(auditContext || {}),
             })
@@ -132,7 +132,7 @@ const executePlan = async (commands, dependencies = {}) => {
                         commandDescription: rollback.command.description,
                         success: rollback.success,
                         error: rollback.error?.message,
-                        duration: rollback.result.executionTime,
+                        duration: rollback.executionTime,
                         timestamp: new Date().toISOString(),
                         ...(auditContext || {}),
                     })

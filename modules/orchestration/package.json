@@ -5,7 +5,7 @@
     "main": "src/index.js",
     "type": "module",
     "bin": {
-        "curb-infra": "./src/cli.js"
+        "orchestrate": "./src/cli.js"
     },
     "scripts": {
         "test": "tap test/**/*.tap.js",

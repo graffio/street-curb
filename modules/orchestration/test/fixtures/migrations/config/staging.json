@@ -1,0 +1,13 @@
+{
+    "projectId": "staging-project-456", 
+    "region": "us-east1",
+    "environment": "staging",
+    "database": {
+        "host": "staging-db.example.com", 
+        "name": "staging_database"
+    },
+    "features": {
+        "enableLogging": true,
+        "debugMode": false
+    }
+}
