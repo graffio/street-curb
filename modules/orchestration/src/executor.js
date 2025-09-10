@@ -69,84 +69,54 @@ const rollbackCommands = async executedCommands => {
  */
 const executePlan = async (commands, dependencies = {}) => {
     const nullAuditLogger = () => {}
-    const { auditLogger = nullAuditLogger, auditContext } = dependencies
+    const { auditLogger = nullAuditLogger, auditContext, mode = 'execute' } = dependencies
 
-    // Log execution start if audit logger provided
+    const operationType = mode === 'rollback' ? 'rollback' : 'execution'
+
+    // Log operation start
     auditLogger({
-        type: 'execution',
+        type: operationType,
         phase: 'start',
         commandCount: commands.length,
         timestamp: new Date().toISOString(),
         ...(auditContext || {}),
     })
 
-    // Execute commands
-    const executedCommands = await executeCommands(commands)
+    // Execute or rollback commands based on mode
+    const results =
+        mode === 'rollback'
+            ? await rollbackCommands(commands.map(cmd => ({ command: cmd, success: true })))
+            : await executeCommands(commands)
 
-    // Log individual command executions
-    executedCommands.forEach(execution => {
+    // Log individual command results
+    results.forEach(result => {
         auditLogger({
-            type: 'execution',
-            phase: execution.success ? 'success' : 'failure',
-            commandId: execution.command.id,
-            commandDescription: execution.command.description,
-            success: execution.success,
-            error: execution.error?.message,
-            duration: execution.executionTime,
+            type: operationType,
+            phase: result.success ? 'success' : 'failure',
+            commandId: result.command.id,
+            commandDescription: result.command.description,
+            success: result.success,
+            error: result.error?.message,
+            duration: result.executionTime,
             timestamp: new Date().toISOString(),
             ...(auditContext || {}),
         })
     })
 
-    // Check if any command failed
-    const failedCommand = executedCommands.find(cmd => !cmd.success)
+    // Determine overall success (all commands succeeded)
+    const allSucceeded = results.every(result => result.success)
 
-    if (failedCommand) {
-        // Need to rollback successfully executed commands (excluding the failed one)
-        const successfulCommands = executedCommands.filter(cmd => cmd.success)
-
-        let rollbackResults = []
-        if (successfulCommands.length > 0) {
-            auditLogger({
-                type: 'rollback',
-                phase: 'start',
-                commandCount: successfulCommands.length,
-                timestamp: new Date().toISOString(),
-                ...(auditContext || {}),
-            })
-
-            rollbackResults = await rollbackCommands(successfulCommands)
-
-            // Log rollback results
-            rollbackResults.forEach(rollback => {
-                auditLogger({
-                    type: 'rollback',
-                    phase: rollback.success ? 'success' : 'failure',
-                    commandId: rollback.command.id,
-                    commandDescription: rollback.command.description,
-                    success: rollback.success,
-                    error: rollback.error?.message,
-                    duration: rollback.executionTime,
-                    timestamp: new Date().toISOString(),
-                    ...(auditContext || {}),
-                })
-            })
-        }
-
-        return { success: false, executedCommands, rollbackCommands: rollbackResults }
-    }
-
-    // All commands succeeded
+    // Log completion
     auditLogger({
-        type: 'execution',
+        type: operationType,
         phase: 'complete',
-        success: true,
-        commandCount: executedCommands.length,
+        success: allSucceeded,
+        commandCount: results.length,
         timestamp: new Date().toISOString(),
         ...(auditContext || {}),
     })
 
-    return { success: true, executedCommands, rollbackCommands: [] }
+    return { success: allSucceeded, results, mode }
 }
 
 export { executeCommands, rollbackCommands, executePlan }

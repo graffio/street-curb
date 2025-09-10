@@ -46,7 +46,7 @@ const writeAuditEntry = async logEntry => {
  *
  * @sig logInfrastructureOperation :: (String, Object) -> Promise<Void>
  */
-export const logInfrastructureOperation = async (eventType, data) => {
+const logInfrastructureOperation = async (eventType, data) => {
     const logEntry = {
         timestamp: new Date().toISOString(),
         eventType,
@@ -62,3 +62,5 @@ export const logInfrastructureOperation = async (eventType, data) => {
 
     await writeAuditEntry(logEntry)
 }
+
+export { logInfrastructureOperation }
