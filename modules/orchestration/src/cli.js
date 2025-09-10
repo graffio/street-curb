@@ -13,6 +13,7 @@
  *   orchestrate staging rollback 047 --apply
  */
 
+import { execSync } from 'child_process'
 /*
  * Type Definitions (for documentation only - no runtime validation):
  *
@@ -52,18 +53,19 @@ import { readdir, readFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import { executePlan } from './index.js'
+import { executePlan } from './core/executor.js'
 
 /**
  * Create audit logger for CLI operations
  * @sig createAuditLogger :: console|database -> AuditLogger
+ * AuditLogger = Object -> Void
  */
 const createAuditLogger = (auditLoggerType = 'console') => {
     // TODO: Implement SOC2-compliant database audit logger
     if (auditLoggerType === 'database')
         console.warn('Database audit logger not yet implemented, falling back to console')
 
-    return { log: entry => console.log(`[AUDIT] ${JSON.stringify(entry)}`) }
+    return entry => console.log(`[AUDIT] ${JSON.stringify(entry)}`)
 }
 
 /**
@@ -124,11 +126,13 @@ const validateCommands = commands => {
         
         const { id, description, canRollback, execute, rollback } = command
         
-        if (!id          || typeof id          !== 'string')   throw new Error(`at index ${index} must have a string id property`)
-        if (!description || typeof description !== 'string')   throw new Error(`at index ${index} must have a string description property`)
-        if (                typeof canRollback !== 'boolean')  throw new Error(`at index ${index} must have a boolean canRollback property`)
-        if (                typeof execute     !== 'function') throw new Error(`at index ${index} must have an execute function`)
-        if (canRollback  && typeof rollback    !== 'function') throw new Error(`at index ${index} must have a rollback function when canRollback is true`)
+        if (!id          || typeof id               !== 'string')   throw new Error(`at index ${index} must have a string id property`)
+        if (!description || typeof description      !== 'string')   throw new Error(`at index ${index} must have a string description property`)
+        if (                typeof canRollback      !== 'boolean')  throw new Error(`at index ${index} must have a boolean canRollback property`)
+        if (                typeof execute          !== 'function') throw new Error(`at index ${index} must have an execute function`)
+        if (                typeof execute.command  !== 'string')   throw new Error(`at index ${index} must have an execute.command value`)
+        if (canRollback  && typeof rollback         !== 'function') throw new Error(`at index ${index} must have a rollback function when canRollback is true`)
+        if (canRollback  && typeof rollback.command !== 'string')   throw new Error(`at index ${index} must have a rollback.command value`)
     }
 
     if (!Array.isArray(commands)) throw new Error('Migration function must return an array of commands')
@@ -165,26 +169,72 @@ const createAuditContext = (environment, action, migration, isApply, argv) => ({
  * @sig handleOrchestrateCommand :: Object -> Promise<Void>
  */
 const handleOrchestrateCommand = async argv => {
+    const logCommands = (isApply, action, migration, environment, commands) => {
+        console.log(
+            `\n${isApply ? 'RUNNING' : 'DRY RUN'}: ${action.toUpperCase()} for migration ${migration} in ${environment}`,
+        )
+
+        commands.forEach((command, i) => {
+            const executeCmd = action === 'execute' ? command.execute.command : command.rollback.command
+            console.log(`   ${command.id.padEnd(30)} → ${executeCmd}`)
+        })
+
+        console.log()
+    }
+
+    const logDryRun = (auditLogger, commands, auditContext) => {
+        console.log()
+        auditLogger({ type: 'dry-run', phase: 'complete', commandCount: commands.length, ...auditContext })
+    }
+
+    const run = async (commands, auditLogger, auditContext, migration, action) => {
+        const result = await executePlan(commands, { auditLogger, auditContext })
+
+        result.success
+            ? console.log(`✅ Migration ${migration} ${action} completed successfully`)
+            : console.error(`❌ Migration ${migration} ${action} failed`)
+
+        if (!result.success) process.exit(1)
+    }
+
+    const validateFirebaseAccounts = async () => {
+        const firebaseCommand = 'firebase login:list'
+        const gcpCommand = 'gcloud config get-value account'
+        const admin = /admin@curbmap.app/
+
+        try {
+            console.log('================================================================================')
+            process.stdout.write('  Current Firebase login: ')
+            const firebaseOutput = execSync(firebaseCommand, { encoding: 'utf-8' }).trim()
+            console.log(firebaseOutput)
+            if (!firebaseOutput.match(admin)) throw new Error('Not logged into Firebase with curbmap account')
+
+            process.stdout.write('  Current GCP login:      ')
+            const gcpOutput = execSync(gcpCommand, { encoding: 'utf-8' }).trim()
+            console.log(gcpOutput)
+            console.log('================================================================================')
+            if (!gcpOutput.match(admin)) throw new Error('Not logged into GCP with curbmap account')
+        } catch (error) {
+            console.error(`\n======== Exiting: ${error.message.trim()}`)
+            process.exit(1)
+        }
+    }
+
     try {
         // Check project structure
         checkMigrationsDirectory()
+
+        await validateFirebaseAccounts()
 
         const { environment, action, migration, apply, auditLogger: auditLoggerType } = argv
         const isApply = Boolean(apply)
 
         // Load environment configuration
-        console.log(`📋 Loading ${environment} configuration...`)
-        const config = await loadEnvironmentConfig(environment)
-
         // Load migration file
-        console.log(`📦 Loading migration ${migration}...`)
-        const migrationFunction = await loadMigrationFile(migration)
-
         // Execute migration function to get commands
-        console.log(`⚙️  Generating commands for ${action}...`)
+        const config = await loadEnvironmentConfig(environment)
+        const migrationFunction = await loadMigrationFile(migration)
         const commands = await migrationFunction(environment, config)
-
-        // Validate commands
         validateCommands(commands)
 
         // Create audit logger and context
@@ -192,33 +242,11 @@ const handleOrchestrateCommand = async argv => {
         const auditContext = createAuditContext(environment, action, migration, isApply, argv)
 
         // Show what we're about to do
-        if (isApply) {
-            console.log(`🚀 Executing ${action} for migration ${migration} in ${environment}`)
-            console.log(`   Commands to execute: ${commands.length}`)
-        } else {
-            console.log(`🔍 DRY RUN: ${action} for migration ${migration} in ${environment}`)
-            console.log(`   Commands that would execute: ${commands.length}`)
-            commands.forEach((command, i) => console.log(`   ${i + 1}. ${command.description} (id: ${command.id})`))
-        }
+        logCommands(isApply, action, migration, environment, commands)
 
         // Execute or dry-run the plan
-        if (isApply) {
-            const result = await executePlan(commands, { auditLogger, auditContext })
-
-            if (result.success) {
-                console.log(`✅ Migration ${migration} ${action} completed successfully`)
-                console.log(`   Executed commands: ${result.executedCommands.length}`)
-            } else {
-                console.error(`❌ Migration ${migration} ${action} failed`)
-                console.log(`   Executed commands: ${result.executedCommands.length}`)
-                console.log(`   Rollback commands: ${result.rollbackCommands.length}`)
-                process.exit(1)
-            }
-        } else {
-            console.log(`✅ Dry run completed - use --apply to execute for real`)
-            // Still log the dry run attempt
-            auditLogger.log({ type: 'dry-run', phase: 'complete', commandCount: commands.length, ...auditContext })
-        }
+        if (isApply) await run(commands, auditLogger, auditContext, migration, action)
+        else logDryRun(auditLogger, commands, auditContext)
 
         // Exit successfully
         process.exit(0)
