@@ -1,11 +1,11 @@
 {
-    "name": "@graffio/infrastructure-management",
-    "version": "1.0.0",
-    "description": "Infrastructure management for Firebase, Sentry, Stripe, and other services",
+    "name": "@graffio/infrastructure-orchestration",
+    "version": "0.1.0",
+    "description": "Infrastructure orchestration with command pattern and audit logging",
     "main": "src/index.js",
     "type": "module",
     "bin": {
-        "curb-infra": "./src/cli.js"
+        "orchestrate": "./src/cli.js"
     },
     "scripts": {
         "test": "tap test/**/*.tap.js",
@@ -22,10 +22,13 @@
         "@graffio/functional": "^0.1.0",
         "@paralleldrive/cuid2": "^2.2.2",
         "firebase-admin": "^13.5.0",
-        "yargs": "^18.0.0"
+        "firebase-tools": "^14.15.2"
     },
     "devDependencies": {
         "onchange": "^7.1.0",
-        "tap": "^21.1.0"
+        "string-width": "4.2.3",
+        "strip-ansi": "6.0.1",
+        "tap": "^21.1.0",
+        "wrap-ansi": "7.0.0"
     }
 }

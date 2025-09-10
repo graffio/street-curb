@@ -46,13 +46,13 @@ const writeAuditEntry = async logEntry => {
  *
  * @sig logInfrastructureOperation :: (String, Object) -> Promise<Void>
  */
-export const logInfrastructureOperation = async (eventType, data) => {
+const logInfrastructureOperation = async (eventType, data) => {
     const logEntry = {
         timestamp: new Date().toISOString(),
         eventType,
         operator: data.operator || process.env.USER || 'unknown',
         ...data,
-        auditVersion: '1.0'
+        auditVersion: '1.0',
     }
 
     if (isTestContext()) {
@@ -62,3 +62,5 @@ export const logInfrastructureOperation = async (eventType, data) => {
 
     await writeAuditEntry(logEntry)
 }
+
+export { logInfrastructureOperation }

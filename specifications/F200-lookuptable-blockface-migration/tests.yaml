@@ -1,7 +1,7 @@
 test_suite:
-  spec_id: F116
+  spec_id: F200
   name: "LookupTable Blockface Migration Tests"
-  description: "Validation test cases for straightforward F116 migration"
+  description: "Validation test cases for straightforward F200 migration"
 
 # Test Categories
 test_categories:
@@ -99,10 +99,10 @@ migration_validation:
     - correct_state_shape
     - lookuptable_operations_functional
     - current_blockface_accessible
-  
+
   functionality_preservation:
     - all_selectors_work_identically
-    - all_actions_work_identically  
+    - all_actions_work_identically
     - component_behavior_unchanged
 
   test_coverage:

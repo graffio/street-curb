@@ -1,4 +1,4 @@
-# LLM Loader for F116 – LookupTable Blockface Migration
+# LLM Loader for F200 – LookupTable Blockface Migration
 
 This specification migrates Redux state from flat curb structure to LookupTable<Blockface> architecture for proper database integration and multi-blockface support.
 
