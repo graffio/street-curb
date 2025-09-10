@@ -1,9 +1,9 @@
-import { createShellCommand } from '../src/core/shell.js'
+import { createShellCommand } from '../src/shell.js'
 
 // prettier-ignore
 const f = (environment, config) => {
-    const grant  = id => `resource-manager folders    add-iam-policy-binding ${id} --member=user:admin@curbmap.app --role=roles/resourcemanager.projectCreator`
-    const revoke = id => `resource-manager folders remove-iam-policy-binding ${id} --member=user:admin@curbmap.app --role=roles/resourcemanager.projectCreator`
+    const grant  = id => `gcloud resource-manager folders add-iam-policy-binding ${id} --member=user:admin@curbmap.app --role=roles/resourcemanager.projectCreator`
+    const revoke = id => `gcloud resource-manager folders remove-iam-policy-binding ${id} --member=user:admin@curbmap.app --role=roles/resourcemanager.projectCreator`
 
     return [
         {

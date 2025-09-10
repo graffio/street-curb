@@ -1,4 +1,4 @@
-import { createShellCommand } from '../src/core/shell.js'
+import { createShellCommand } from '../src/shell.js'
 
 // prettier-ignore
 const createCommand = config => {
