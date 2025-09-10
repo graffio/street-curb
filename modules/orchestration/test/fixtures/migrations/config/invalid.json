@@ -1,7 +1,0 @@
-{
-    "projectId": "invalid-project",
-    "region": "invalid-region"
-    "database": {
-        "missing": "comma above to make this invalid JSON"
-    }
-}

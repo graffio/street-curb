@@ -1,5 +1,5 @@
 import tap from 'tap'
-import { executeCommands, rollbackCommands, executePlan } from '../src/core/executor.js'
+import { executeCommands, executePlan, rollbackCommands } from '../src/core/executor.js'
 
 // Test command objects using vanilla JavaScript pattern
 const aliceCommand = {
@@ -281,18 +281,7 @@ tap.test('Given rollback scenarios', async t => {
 // Test executePlan integration
 tap.test('Given executePlan integration', async t => {
     await t.test('When calling executePlan with commands then execution and audit trail work', async t => {
-        const mockDependencies = {
-            auditLogger: {
-                log: entry => {
-                    // Mock audit logger that captures entries
-                    if (!mockDependencies.auditLogger.entries) {
-                        mockDependencies.auditLogger.entries = []
-                    }
-                    mockDependencies.auditLogger.entries.push(entry)
-                },
-                entries: [],
-            },
-        }
+        const mockDependencies = { auditLogger: entry => mockDependencies.entries.push(entry), entries: [] }
 
         const commands = [aliceCommand, charlieCommand]
 
@@ -304,7 +293,7 @@ tap.test('Given executePlan integration', async t => {
         t.equal(result.rollbackCommands.length, 0, 'No rollback needed for successful execution')
 
         // Validate audit logging occurred
-        const auditEntries = mockDependencies.auditLogger.entries
+        const auditEntries = mockDependencies.entries
         t.ok(auditEntries.length > 0, 'Audit entries were logged')
 
         // Check for execution start/success entries
