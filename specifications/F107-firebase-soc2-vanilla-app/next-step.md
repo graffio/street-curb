@@ -1,122 +1,88 @@
-# Next Step: Create CLI for Migration Execution
+# Next Step: Firebase Project Creation Migration
 
-## Developer Implementation Task
+## Goal
+Create a real migration that creates a Firebase project, then test rollback. This validates our orchestration system with actual infrastructure operations.
 
-Create the `orchestrate` CLI that executes migration files with environment-specific configuration and safe-by-default behavior.
+## Specific Implementation
 
-## Context
+### 1. Create Migration Directory
+```
+migrations/
+  config/
+    development.json    # Firebase config for dev environment
+  003-create-firebase-project.js  # Migration file
+```
 
-We need a CLI that loads JavaScript migration files from the current project directory, executes them with environment-specific configuration, and provides dry-run safety. The CLI uses the vanilla command executor we just implemented.
-
-## File Changes Required
-
-### 1. package.json
-Update CLI binary name:
+### 2. Development Config
+Create `migrations/config/development.json`:
 ```json
 {
-  "bin": {
-    "orchestrate": "./src/cli.js"
-  }
+  "projectId": "curb-map-test-temp",
+  "region": "us-central1",
+  "billing": false
 }
 ```
 
-### 2. src/cli.js
-Create CLI with yargs argument parsing:
+### 3. Firebase Migration
+Create `migrations/003-create-firebase-project.js` that returns ONE command:
 
 ```javascript
-#!/usr/bin/env node
+import { createShellCommand } from '../src/shell.js'
 
-// CLI signature: orchestrate <environment> <action> <migration> [--apply]
-// Examples:
-//   orchestrate prod execute 046           # dry-run (safe default)
-//   orchestrate prod execute 046 --apply  # actual execution  
-//   orchestrate staging rollback 047 --apply
-
-// Implementation requirements:
-// 1. Look for ./migrations/ in current directory
-// 2. Load ./migrations/config/{environment}.json
-// 3. Load ./migrations/{migration}-*.js via dynamic import
-// 4. Call migration function with (environment, config)
-// 5. Execute commands with dry-run unless --apply
-```
-
-### 3. Test Structure
-Create comprehensive tests covering the CLI behavior:
-
-#### test/cli-foundation.tap.js
-Test the CLI using the Given/When/Then format:
-
-**Given basic CLI functionality**
-- **When** calling orchestrate with valid environment and migration **Then** loads config and migration file correctly
-- **When** calling orchestrate without --apply flag **Then** performs dry-run by default
-- **When** calling orchestrate with --apply flag **Then** executes commands for real
-
-**Given migration file loading**
-- **When** migration file exports default function **Then** calls function with environment and config
-- **When** migration file returns command array **Then** passes commands to executePlan
-- **When** migration file does not exist **Then** shows clear error message
-
-**Given configuration handling**
-- **When** environment config file exists **Then** loads and passes to migration function
-- **When** environment config file missing **Then** shows clear error about missing config
-- **When** current directory has no migrations folder **Then** shows clear error about project structure
-
-**Given audit context**
-- **When** executing with --apply **Then** includes proper audit context (user, timestamp, CLI info)
-- **When** dry-run mode **Then** includes audit context showing dry-run status
-
-**Given error scenarios**
-- **When** migration function throws error **Then** shows clear error and exits cleanly
-- **When** migration returns invalid command objects **Then** validates and shows helpful error
-- **When** insufficient permissions for real execution **Then** shows clear permission error
-
-## Implementation Requirements
-
-1. **Safe by default**: Default to dry-run, require explicit `--apply` for real execution
-2. **Clear feedback**: Show what would happen (dry-run) vs what is happening (apply)  
-3. **Error handling**: Clear error messages for missing files, invalid configs, etc.
-4. **Audit logging**: Include CLI context in audit trail (user, command line, dry-run status)
-5. **Migration validation**: Validate that migration functions return proper command arrays
-6. **Directory detection**: Fail fast if not in a project with migrations/ directory
-
-## Test Migration Files
-
-Create test migration files in `test/fixtures/migrations/` for testing:
-
-```javascript
-// test/fixtures/migrations/001-test-migration.js
-export default async function(environment, config) {
-  return [
-    {
-      id: `test-${environment}`,
-      description: `Test migration for ${environment}`,
-      canRollback: true,
-      execute: async () => ({ status: 'success', output: 'Test executed' }),
-      rollback: async () => ({ status: 'success', output: 'Test rolled back' })
+export default function(environment, config) {
+  return [{
+    id: 'create-firebase-project',
+    description: 'Create and manage Firebase project',
+    canRollback: true,
+    execute: {
+      ...createShellCommand('firebase', ['projects:create', config.projectId], {
+        errorPatterns: ['Error:', 'permission', 'denied', 'failed']
+      })
+    },
+    rollback: {
+      ...createShellCommand('firebase', ['projects:delete', config.projectId, '--force'], {
+        errorPatterns: ['Error:', 'failed']
+      })
     }
-  ]
+  }]
 }
 ```
 
-## Validation Commands
+## Implementation Constraints
 
-After implementation, run:
+### What to Build
+- **ONE migration file** - don't create multiple migrations  
+- **Use centralized shell module** - `createShellCommand` handles all CLI interaction
+- **Smart error detection** - check output content, not just exit codes
+- **Complete output capture** - all stdout/stderr logged for debugging
+- **Real rollback test** - actually delete the project after creation
+
+### What NOT to Build  
+- ❌ Complex project templates or configurations
+- ❌ Multiple environment support (just development for now)
+- ❌ Database or Firestore setup (just project creation)
+- ❌ Authentication setup
+- ❌ Any additional Firebase services
+
+### Testing Approach
 ```bash
-cd /Users/Shared/projects/graffio-monorepo/modules/orchestration
-yarn test test/cli-foundation.tap.js
+# Test the migration system
+cd migrations-directory/
+orchestrate development execute 001           # dry-run first
+orchestrate development execute 001 --apply  # create project  
+orchestrate development rollback 001 --apply # delete project
 ```
 
 ## Success Criteria
+- [ ] Migration creates real Firebase project
+- [ ] Rollback successfully deletes the project
+- [ ] Console audit logging shows complete operation trail
+- [ ] Error handling works (project already exists, auth failures, etc.)
+- [ ] CLI shows clear feedback during operations
 
-- [ ] CLI accepts correct command line arguments
-- [ ] Default dry-run behavior works correctly
-- [ ] --apply flag enables real execution
-- [ ] Migration files load and execute properly
-- [ ] Environment configs load correctly
-- [ ] Clear error messages for all failure scenarios
-- [ ] Audit context includes CLI information
-- [ ] All tests pass with comprehensive coverage
+## Risk Management
+- **Use temporary project name** (like `curb-map-test-temp-YYYYMMDD`)
+- **Test in personal Firebase account first** (not production account)
+- **Include timeout handling** for slow Firebase operations
 
-## Expected Outcome
-
-Working CLI that safely executes infrastructure migrations with proper audit trails, clear feedback, and comprehensive error handling. The CLI integrates with the vanilla command executor while providing project-specific migration file loading.
+This task validates our orchestration system works with real infrastructure while staying focused on the core functionality.
