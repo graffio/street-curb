@@ -68,38 +68,35 @@ const rollbackCommands = async executedCommands => {
  * @sig executePlan :: (Array<Command>, Object?) -> Promise<ExecutionResult>
  */
 const executePlan = async (commands, dependencies = {}) => {
-    const { auditLogger, auditContext } = dependencies
+    const nullAuditLogger = () => {}
+    const { auditLogger = nullAuditLogger, auditContext } = dependencies
 
     // Log execution start if audit logger provided
-    if (auditLogger) {
-        auditLogger.log({
-            type: 'execution',
-            phase: 'start',
-            commandCount: commands.length,
-            timestamp: new Date().toISOString(),
-            ...(auditContext || {}),
-        })
-    }
+    auditLogger({
+        type: 'execution',
+        phase: 'start',
+        commandCount: commands.length,
+        timestamp: new Date().toISOString(),
+        ...(auditContext || {}),
+    })
 
     // Execute commands
     const executedCommands = await executeCommands(commands)
 
     // Log individual command executions
-    if (auditLogger) {
-        executedCommands.forEach(execution => {
-            auditLogger.log({
-                type: 'execution',
-                phase: execution.success ? 'success' : 'failure',
-                commandId: execution.command.id,
-                commandDescription: execution.command.description,
-                success: execution.success,
-                error: execution.error?.message,
-                duration: execution.executionTime,
-                timestamp: new Date().toISOString(),
-                ...(auditContext || {}),
-            })
+    executedCommands.forEach(execution => {
+        auditLogger({
+            type: 'execution',
+            phase: execution.success ? 'success' : 'failure',
+            commandId: execution.command.id,
+            commandDescription: execution.command.description,
+            success: execution.success,
+            error: execution.error?.message,
+            duration: execution.executionTime,
+            timestamp: new Date().toISOString(),
+            ...(auditContext || {}),
         })
-    }
+    })
 
     // Check if any command failed
     const failedCommand = executedCommands.find(cmd => !cmd.success)
@@ -110,50 +107,44 @@ const executePlan = async (commands, dependencies = {}) => {
 
         let rollbackResults = []
         if (successfulCommands.length > 0) {
-            if (auditLogger) {
-                auditLogger.log({
-                    type: 'rollback',
-                    phase: 'start',
-                    commandCount: successfulCommands.length,
-                    timestamp: new Date().toISOString(),
-                    ...(auditContext || {}),
-                })
-            }
+            auditLogger({
+                type: 'rollback',
+                phase: 'start',
+                commandCount: successfulCommands.length,
+                timestamp: new Date().toISOString(),
+                ...(auditContext || {}),
+            })
 
             rollbackResults = await rollbackCommands(successfulCommands)
 
             // Log rollback results
-            if (auditLogger) {
-                rollbackResults.forEach(rollback => {
-                    auditLogger.log({
-                        type: 'rollback',
-                        phase: rollback.success ? 'success' : 'failure',
-                        commandId: rollback.command.id,
-                        commandDescription: rollback.command.description,
-                        success: rollback.success,
-                        error: rollback.error?.message,
-                        duration: rollback.executionTime,
-                        timestamp: new Date().toISOString(),
-                        ...(auditContext || {}),
-                    })
+            rollbackResults.forEach(rollback => {
+                auditLogger({
+                    type: 'rollback',
+                    phase: rollback.success ? 'success' : 'failure',
+                    commandId: rollback.command.id,
+                    commandDescription: rollback.command.description,
+                    success: rollback.success,
+                    error: rollback.error?.message,
+                    duration: rollback.executionTime,
+                    timestamp: new Date().toISOString(),
+                    ...(auditContext || {}),
                 })
-            }
+            })
         }
 
         return { success: false, executedCommands, rollbackCommands: rollbackResults }
     }
 
     // All commands succeeded
-    if (auditLogger) {
-        auditLogger.log({
-            type: 'execution',
-            phase: 'complete',
-            success: true,
-            commandCount: executedCommands.length,
-            timestamp: new Date().toISOString(),
-            ...(auditContext || {}),
-        })
-    }
+    auditLogger({
+        type: 'execution',
+        phase: 'complete',
+        success: true,
+        commandCount: executedCommands.length,
+        timestamp: new Date().toISOString(),
+        ...(auditContext || {}),
+    })
 
     return { success: true, executedCommands, rollbackCommands: [] }
 }
