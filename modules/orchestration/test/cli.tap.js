@@ -32,8 +32,11 @@ const runCLI = async (args, cwd = process.cwd()) => {
 }
 
 tap.test('Given CLI integration', async t => {
+    const configPath = resolve(process.cwd(), 'test/cli.tap.config.js')
+    const migrationPath = resolve(process.cwd(), 'test/999-cli-tap-test.js')
+
     await t.test('When running dry-run (default behavior)', async t => {
-        const result = await runCLI(['cli-tap-test', '999'])
+        const result = await runCLI([configPath, migrationPath])
 
         t.equal(result.code, 0, 'Then CLI exits successfully')
         t.match(result.stdout, /DRY RUN/, 'Then shows dry run mode')
@@ -41,7 +44,7 @@ tap.test('Given CLI integration', async t => {
     })
 
     await t.test('When running with --apply flag', async t => {
-        const result = await runCLI(['cli-tap-test', '999', '--apply'])
+        const result = await runCLI([configPath, migrationPath, '--apply'])
 
         t.equal(result.code, 0, 'Then CLI executes successfully with --apply')
         t.match(result.stdout, /completed successfully/, 'Then reports successful completion')

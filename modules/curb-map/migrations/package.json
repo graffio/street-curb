@@ -1,0 +1,13 @@
+{
+    "name"           : "@graffio/curb-map-migrations",
+    "private"        : true,
+    "version"        : "0.1.0",
+    "type"           : "module",
+    "scripts"        : {
+    },
+    "devDependencies": {
+    },
+    "dependencies"   : {
+        "@graffio/orchestration": "0.1.0"
+    }
+}

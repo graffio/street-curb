@@ -4,13 +4,13 @@ import { spawn } from 'child_process'
  * Simple shell command executor for migration commands
  * @sig createShellCommand :: (String, Array<String>?, Object?) -> Function
  */
-const createShellCommand = (command, args = [], options = {}) => {
+const createShellCommand = (command, options = {}) => {
     // Handle string commands by splitting them
-    if (typeof command === 'string' && !args.length) {
-        const parts = command.split(/\s+/)
-        command = parts[0]
-        args = parts.slice(1)
-    }
+    if (typeof command !== 'string') throw new Error('command must be a string')
+
+    const parts = command.split(/\s+/)
+    command = parts[0]
+    const args = parts.slice(1)
 
     const { errorPatterns = [], successPattern = '' } = options
 
