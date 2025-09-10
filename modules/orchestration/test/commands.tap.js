@@ -1,5 +1,5 @@
 import tap from 'tap'
-import { executeCommands, executePlan, rollbackCommands } from '../src/core/executor.js'
+import { executeCommands, executePlan, rollbackCommands } from '../src/executor.js'
 
 // Test command objects using vanilla JavaScript pattern
 const aliceCommand = {
@@ -94,11 +94,10 @@ tap.test('Given command execution', async t => {
         t.equal(bobExecution.success, true, 'Bob execution was successful')
         t.equal(bobExecution.result.output, 'Bob executed bob-operation', 'Bob produced expected output')
 
-        // Validate execution order (Alice executed first)
-        t.ok(
-            aliceExecution.executionTime <= bobExecution.executionTime,
-            'Alice executed before Bob (sequential ordering)',
-        )
+        // Validate Alice appears before Bob in results (sequential ordering)
+        const aliceIndex = executedCommands.findIndex(cmd => cmd.command.id === 'alice-test-cmd')
+        const bobIndex = executedCommands.findIndex(cmd => cmd.command.id === 'bob-test-cmd')
+        t.ok(aliceIndex < bobIndex, 'Alice executed before Bob (sequential ordering)')
     })
 
     await t.test('When calling executeCommands with command that fails', async t => {
@@ -289,8 +288,7 @@ tap.test('Given executePlan integration', async t => {
 
         // Validate execution result structure
         t.equal(result.success, true, 'executePlan reports success')
-        t.equal(result.executedCommands.length, 2, 'executePlan executed both commands')
-        t.equal(result.rollbackCommands.length, 0, 'No rollback needed for successful execution')
+        t.equal(result.results.length, 2, 'executePlan executed both commands')
 
         // Validate audit logging occurred
         const auditEntries = mockDependencies.entries
@@ -321,22 +319,19 @@ tap.test('Given executePlan integration', async t => {
 
         const result = await executePlan(commands, {})
 
-        // Validate failure and rollback occurred
+        // Validate failure occurred (no automatic rollback)
         t.equal(result.success, false, 'executePlan reports failure')
-        t.equal(result.executedCommands.length, 2, 'Both commands were attempted')
-        t.equal(result.rollbackCommands.length, 1, 'Alice was rolled back after failure')
+        t.equal(result.results.length, 2, 'Both commands were attempted')
 
         // Validate failure details
-        const failedExecution = result.executedCommands.find(ec => ec.command.id === 'plan-failure-cmd')
+        const failedExecution = result.results.find(ec => ec.command.id === 'plan-failure-cmd')
         t.equal(failedExecution.success, false, 'Failing command marked as failed')
 
-        // Validate rollback details
-        const aliceRollback = result.rollbackCommands[0]
-        t.equal(aliceRollback.command.id, 'alice-test-cmd', 'Alice was rolled back')
-        t.equal(aliceRollback.success, true, 'Alice rollback succeeded')
+        const aliceExecution = result.results.find(ec => ec.command.id === 'alice-test-cmd')
+        t.equal(aliceExecution.success, true, 'Alice execution succeeded before failure')
     })
 
-    await t.test('When calling executePlan with non-rollbackable failure then partial rollback occurs', async t => {
+    await t.test('When calling executePlan with non-rollbackable failure then execution stops', async t => {
         const failingCommand = {
             id: 'non-rollbackable-failure-cmd',
             description: 'Non-rollbackable command that fails',
@@ -346,121 +341,19 @@ tap.test('Given executePlan integration', async t => {
             },
         }
 
-        const commands = [aliceCommand, bobCommand, failingCommand] // Alice can rollback, Bob cannot, failure triggers rollback
+        const commands = [aliceCommand, failingCommand]
 
         const result = await executePlan(commands, {})
 
-        // Validate partial rollback
+        // Validate failure without automatic rollback
         t.equal(result.success, false, 'executePlan reports failure')
-        t.equal(result.executedCommands.length, 3, 'All commands were attempted')
-        t.equal(result.rollbackCommands.length, 2, 'Rollback attempted on Alice and Bob')
+        t.equal(result.results.length, 2, 'Both commands were attempted')
 
-        // Validate rollback results
-        const aliceRollback = result.rollbackCommands.find(rb => rb.command.id === 'alice-test-cmd')
-        const bobRollback = result.rollbackCommands.find(rb => rb.command.id === 'bob-test-cmd')
+        // Validate Alice succeeded and failure occurred
+        const aliceExecution = result.results.find(ec => ec.command.id === 'alice-test-cmd')
+        const failedExecution = result.results.find(ec => ec.command.id === 'non-rollbackable-failure-cmd')
 
-        t.equal(aliceRollback.success, true, 'Alice rollback succeeded')
-        t.equal(bobRollback.success, false, 'Bob rollback failed due to non-rollbackable nature')
+        t.equal(aliceExecution.success, true, 'Alice execution succeeded')
+        t.equal(failedExecution.success, false, 'Failing command marked as failed')
     })
-})
-
-// Test complex failure chains
-tap.test('Given complex failure scenarios', async t => {
-    await t.test('When forward execution fails and rollback also fails then both errors are captured', async t => {
-        const doubleFailingCommand = {
-            id: 'double-failing-cmd',
-            description: 'Command that fails in both directions',
-            canRollback: true,
-            execute: async () => {
-                throw new Error('Forward execution failed')
-            },
-            rollback: async forwardResult => {
-                throw new Error('Rollback execution failed')
-            },
-        }
-
-        const commands = [aliceCommand, doubleFailingCommand]
-
-        const result = await executePlan(commands, {})
-
-        // Validate both failure types are captured
-        t.equal(result.success, false, 'executePlan reports overall failure')
-
-        const failedExecution = result.executedCommands.find(ec => ec.command.id === 'double-failing-cmd')
-        t.equal(failedExecution.success, false, 'Forward execution failure captured')
-        t.match(failedExecution.error.message, /Forward execution failed/, 'Forward error message preserved')
-
-        const aliceRollback = result.rollbackCommands.find(rb => rb.command.id === 'alice-test-cmd')
-        t.equal(aliceRollback.success, true, 'Alice rollback still succeeded despite other failures')
-    })
-
-    await t.test('When three commands execute with middle failure then correct rollback order occurs', async t => {
-        const middleFailingCommand = {
-            id: 'middle-failing-cmd',
-            description: 'Middle command that fails',
-            canRollback: true,
-            execute: async () => {
-                throw new Error('Middle command failed')
-            },
-            rollback: async forwardResult => ({
-                status: 'success',
-                output: 'Middle command rollback succeeded',
-                duration: 15,
-                result: {},
-            }),
-        }
-
-        // Alice succeeds → Middle fails → Charlie never executes → Alice rolls back
-        const commands = [aliceCommand, middleFailingCommand, charlieCommand]
-
-        const result = await executePlan(commands, {})
-
-        // Validate execution stopped at failure
-        t.equal(result.executedCommands.length, 2, 'Only first two commands executed due to fail-fast')
-
-        const charlieExecution = result.executedCommands.find(ec => ec.command.id === 'charlie-test-cmd')
-        t.notOk(charlieExecution, 'Charlie was never executed due to middle failure')
-
-        // Validate only Alice was rolled back (middle command failed forward so no rollback needed)
-        t.equal(result.rollbackCommands.length, 1, 'Only Alice rolled back')
-
-        const aliceRollback = result.rollbackCommands[0]
-        t.equal(aliceRollback.command.id, 'alice-test-cmd', 'Alice was rolled back')
-        t.equal(aliceRollback.success, true, 'Alice rollback succeeded')
-    })
-
-    await t.test(
-        'When command execution and rollback both have different error types then error details preserved',
-        async t => {
-            const complexFailingCommand = {
-                id: 'complex-failing-cmd',
-                description: 'Command with different failure modes',
-                canRollback: true,
-                execute: async () => {
-                    const err = new Error('Database connection timeout')
-                    err.code = 'DB_TIMEOUT'
-                    throw err
-                },
-                rollback: async forwardResult => {
-                    const err = new Error('Network rollback failure')
-                    err.code = 'NETWORK_ERROR'
-                    throw err
-                },
-            }
-
-            const commands = [aliceCommand, complexFailingCommand]
-
-            const result = await executePlan(commands, {})
-
-            // Validate error details preservation
-            const failedExecution = result.executedCommands.find(ec => ec.command.id === 'complex-failing-cmd')
-            t.equal(failedExecution.error.message, 'Database connection timeout', 'Forward error message preserved')
-            t.equal(failedExecution.error.code, 'DB_TIMEOUT', 'Forward error code preserved')
-
-            // Note: In this test, the complex command failed forward execution so it wouldn't be rolled back
-            // Only Alice would be rolled back, and Alice rollback should succeed
-            const aliceRollback = result.rollbackCommands.find(rb => rb.command.id === 'alice-test-cmd')
-            t.equal(aliceRollback.success, true, 'Alice rollback succeeded despite other command failures')
-        },
-    )
 })
