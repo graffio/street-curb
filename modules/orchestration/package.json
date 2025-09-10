@@ -1,5 +1,5 @@
 {
-    "name": "@graffio/infrastructure-orchestration",
+    "name": "@graffio/orchestration",
     "version": "0.1.0",
     "description": "Infrastructure orchestration with command pattern and audit logging",
     "main": "src/index.js",

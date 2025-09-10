@@ -1,11 +1,9 @@
-import { createShellCommand } from '../src/core/shell.js'
+import { createShellCommand } from '@graffio/orchestration'
 
-const f = (environment, config) => {
+const createCommands = config => {
     // prettier-ignore
-    const createFolder = nm => `gcloud resource-manager folders create --display-name=${nm} --organization=${organizationId}`
+    const createFolder = nm => `gcloud resource-manager folders create --display-name=${nm} --organization=${(config.organizationId)}`
     const deleteFolder = id => `gcloud resource-manager folders delete ${id}`
-
-    const { organizationId } = config
 
     return [
         {
@@ -34,4 +32,4 @@ const f = (environment, config) => {
     ]
 }
 
-export default (environment, config) => f(environment, config)
+export default createCommands
