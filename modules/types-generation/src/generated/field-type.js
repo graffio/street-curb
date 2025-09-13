@@ -10,8 +10,6 @@ import * as R from '@graffio/types-runtime'
 //
 // -------------------------------------------------------------------------------------------------------------
 const FieldType = {
-    '@@typeName': 'FieldType',
-    '@@tagNames': ['StringType', 'RegexType', 'ImportPlaceholder'],
     toString: () => 'FieldType',
     is: v => {
         if (typeof v !== 'object') return false

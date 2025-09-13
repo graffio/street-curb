@@ -10,8 +10,6 @@ import * as R from '@graffio/types-runtime'
 //
 // -------------------------------------------------------------------------------------------------------------
 const OperationDetails = {
-    '@@typeName': 'OperationDetails',
-    '@@tagNames': ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation'],
     toString: () => 'OperationDetails',
     is: v => {
         if (typeof v !== 'object') return false

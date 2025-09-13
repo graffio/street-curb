@@ -10,8 +10,6 @@ import * as R from '@graffio/types-runtime'
 //
 // -------------------------------------------------------------------------------------------------------------
 const TypeDefinition = {
-    '@@typeName': 'TypeDefinition',
-    '@@tagNames': ['Tagged', 'TaggedSum'],
     toString: () => 'TypeDefinition',
     is: v => {
         if (typeof v !== 'object') return false

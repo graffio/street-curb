@@ -95,8 +95,6 @@ const generateStaticTaggedSumType = async typeDefinition => {
         //
         // -------------------------------------------------------------------------------------------------------------
         const ${name} = {
-            '@@typeName': '${name}',
-            '@@tagNames': [${variantNames.map(v => `'${v}'`).join(', ')}],
             toString: () => '${name}',
             is: v => {
                 if (typeof v !== 'object') return false
