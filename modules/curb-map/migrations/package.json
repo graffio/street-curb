@@ -4,6 +4,8 @@
     "version"        : "0.1.0",
     "type"           : "module",
     "scripts"        : {
+        "tap": "../../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../../bash/run-tap.sh"
     },
     "devDependencies": {
     },

@@ -7,23 +7,28 @@
  * Core functions:
  * - executeCommands: Sequential execution with fail-fast
  * - rollbackCommands: Reverse-order rollback with error capture
- * - executePlan: Orchestration with audit logging integration
+ * - executeOrRollbackCommands: Orchestration with audit logging integration
  */
 
-/**
- * Execute commands sequentially with fail-fast behavior
- * @sig executeCommands :: Array<Command> -> Promise<Array<ExecutionResult>>
- */
-const executeCommands = async commands => {
+const executeCommands = async (commands, isRollback) => {
+    const prefix = command => commands.indexOf(command) + 1 + '.'
+
     const results = []
 
     for (const command of commands) {
+        // Show command description before execution for better dry-run flow
+        console.log(`${prefix(command)} ${command.id} → ${command.description}`)
+        console.log() // Add blank line after description
+
         const startTime = Date.now()
 
         try {
-            const result = await command.execute()
+            if (isRollback && !command.canRollback) throw new Error(`${command.description} cannot be rolled back`)
+
+            const result = isRollback ? await command.rollback() : await command.execute()
             const executionTime = Date.now() - startTime
             results.push({ command, result, success: true, executionTime })
+            console.log() // Add blank line after execution
         } catch (error) {
             const executionTime = Date.now() - startTime
             results.push({ command, result: null, success: false, error, executionTime })
@@ -35,88 +40,14 @@ const executeCommands = async commands => {
 }
 
 /**
- * Rollback executed commands in reverse order
- * @sig rollbackCommands :: Array<ExecutionResult> -> Promise<Array<RollbackResult>>
- */
-const rollbackCommands = async executedCommands => {
-    const rollbackResults = []
-
-    // Process in reverse order for rollback
-    const reversedCommands = [...executedCommands].reverse()
-
-    for (const executedCommand of reversedCommands) {
-        const { command } = executedCommand
-        const startTime = Date.now()
-
-        try {
-            // Check if command can be rolled back
-            if (!command.canRollback) throw new Error(`${command.description} cannot be rolled back`)
-            const result = await command.rollback(executedCommand.result)
-            const executionTime = Date.now() - startTime
-            rollbackResults.push({ command, result, success: true, executionTime })
-        } catch (error) {
-            const executionTime = Date.now() - startTime
-            rollbackResults.push({ command, result: null, success: false, error, executionTime })
-        }
-    }
-
-    return rollbackResults
-}
-
-/**
  * Execute plan with comprehensive orchestration and audit logging
- * @sig executePlan :: (Array<Command>, Object?) -> Promise<ExecutionResult>
+ * @sig executeOrRollbackCommands :: (Array<Command>, Object?) -> Promise<ExecutionResult>
  */
-const executePlan = async (commands, dependencies = {}) => {
-    const nullAuditLogger = () => {}
-    const { auditLogger = nullAuditLogger, auditContext, mode = 'execute' } = dependencies
-
-    const operationType = mode === 'rollback' ? 'rollback' : 'execution'
-
-    // Log operation start
-    auditLogger({
-        type: operationType,
-        phase: 'start',
-        commandCount: commands.length,
-        timestamp: new Date().toISOString(),
-        ...(auditContext || {}),
-    })
-
-    // Execute or rollback commands based on mode
+const executeOrRollbackCommands = async (commands, mode = 'execute') => {
     const results =
-        mode === 'rollback'
-            ? await rollbackCommands(commands.map(cmd => ({ command: cmd, success: true })))
-            : await executeCommands(commands)
-
-    // Log individual command results
-    results.forEach(result => {
-        auditLogger({
-            type: operationType,
-            phase: result.success ? 'success' : 'failure',
-            commandId: result.command.id,
-            commandDescription: result.command.description,
-            success: result.success,
-            error: result.error?.message,
-            duration: result.executionTime,
-            timestamp: new Date().toISOString(),
-            ...(auditContext || {}),
-        })
-    })
-
-    // Determine overall success (all commands succeeded)
+        mode === 'rollback' ? await executeCommands(commands.reverse(), true) : await executeCommands(commands, false)
     const allSucceeded = results.every(result => result.success)
-
-    // Log completion
-    auditLogger({
-        type: operationType,
-        phase: 'complete',
-        success: allSucceeded,
-        commandCount: results.length,
-        timestamp: new Date().toISOString(),
-        ...(auditContext || {}),
-    })
-
     return { success: allSucceeded, results, mode }
 }
 
-export { executeCommands, rollbackCommands, executePlan }
+export { executeOrRollbackCommands }

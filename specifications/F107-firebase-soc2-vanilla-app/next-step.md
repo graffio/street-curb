@@ -1,88 +1,100 @@
-# Next Step: Firebase Project Creation Migration
+# Next Step: Firebase Project Creation (002)
 
-## Goal
-Create a real migration that creates a Firebase project, then test rollback. This validates our orchestration system with actual infrastructure operations.
+## What We're Building
+Migration `002-create-firebase-project.js` using the enhanced orchestration core to create Firebase projects with proper ID management.
 
-## Specific Implementation
+## Context: Clean Break at 002
+**Decision**: Skip retrofitting 000/001 migrations and start the new config-as-output system at 002.
+- **000/001**: Legacy multi-environment folder creation (already complete)
+- **002+**: New single-environment approach with config-as-output
+- **Folder IDs**: Use existing hardcoded values from `organization.js`
 
-### 1. Create Migration Directory
+## Implementation Requirements
+
+### Firebase Project Migration
+- Creates GCP project with Firebase enabled in the appropriate folder
+- Returns `capturedIds` with the generated Firebase project ID
+- Updates config file automatically via enhanced orchestration
+- Includes corresponding test file for automatic verification
+
+### Expected Files
 ```
-migrations/
-  config/
-    development.json    # Firebase config for dev environment
-  003-create-firebase-project.js  # Migration file
+modules/curb-map/migrations/002-create-firebase-project.js
+modules/curb-map/migrations/002-create-firebase-project.tap.js  # Already written (TDD)
+modules/curb-map/shared/configs/dev.2025-09-11-143022.config.js
 ```
 
-### 2. Development Config
-Create `migrations/config/development.json`:
-```json
-{
-  "projectId": "curb-map-test-temp",
-  "region": "us-central1",
-  "billing": false
-}
-```
-
-### 3. Firebase Migration
-Create `migrations/003-create-firebase-project.js` that returns ONE command:
-
+### Migration Structure
 ```javascript
-import { createShellCommand } from '../src/shell.js'
-
-export default function(environment, config) {
-  return [{
-    id: 'create-firebase-project',
-    description: 'Create and manage Firebase project',
-    canRollback: true,
-    execute: {
-      ...createShellCommand('firebase', ['projects:create', config.projectId], {
-        errorPatterns: ['Error:', 'permission', 'denied', 'failed']
-      })
-    },
-    rollback: {
-      ...createShellCommand('firebase', ['projects:delete', config.projectId, '--force'], {
-        errorPatterns: ['Error:', 'failed']
-      })
-    }
-  }]
+// 002-create-firebase-project.js
+export default async function(config) {
+    return [{
+        id: 'create-gcp-project',
+        description: `Create GCP project ${config.firebaseProject.projectId}`,
+        canRollback: true,
+        execute: async () => {
+            const result = await createShellCommand(
+                `gcloud projects create ${config.firebaseProject.projectId} --name="${config.firebaseProject.displayName}" --folder=${config.developmentFolderId}`
+            )()
+            
+            // Migration captures the project ID it just created
+            return {
+                ...result,
+                capturedIds: { firebaseProjectId: config.firebaseProject.projectId }
+            }
+        },
+        rollback: createShellCommand(`gcloud projects delete ${config.firebaseProject.projectId} --quiet`)
+    }, {
+        id: 'add-firebase-to-project', 
+        description: 'Add Firebase to GCP project',
+        canRollback: false,
+        execute: createShellCommand(`firebase projects:addfirebase ${config.firebaseProject.projectId}`),
+        rollback: createShellCommand(`echo "Cannot rollback Firebase addition"`)
+    }]
 }
 ```
 
-## Implementation Constraints
-
-### What to Build
-- **ONE migration file** - don't create multiple migrations  
-- **Use centralized shell module** - `createShellCommand` handles all CLI interaction
-- **Smart error detection** - check output content, not just exit codes
-- **Complete output capture** - all stdout/stderr logged for debugging
-- **Real rollback test** - actually delete the project after creation
-
-### What NOT to Build  
-- ❌ Complex project templates or configurations
-- ❌ Multiple environment support (just development for now)
-- ❌ Database or Firestore setup (just project creation)
-- ❌ Authentication setup
-- ❌ Any additional Firebase services
-
-### Testing Approach
-```bash
-# Test the migration system
-cd migrations-directory/
-orchestrate development execute 001           # dry-run first
-orchestrate development execute 001 --apply  # create project  
-orchestrate development rollback 001 --apply # delete project
+### Config File Structure
+```javascript
+// dev.2025-09-11-143022.config.js (timestamped)
+export default {
+    organizationId: '404973578720',
+    developmentFolderId: '464059598701',  // From existing organization.js
+    firebaseProject: {
+        projectId: 'graffio-dev-2025-09-11-143022',  // Timestamped for uniqueness
+        displayName: 'Graffio Development'
+    }
+    // After migration runs, firebaseProjectId: 'graffio-dev-2025-09-11-143022' gets added
+}
 ```
+
+## Acceptance Tests
+
+### Given/When/Then
+**Given** I have a timestamped config file for the dev environment  
+**When** I run `orchestrate dev.2025-09-11-143022.config.js 002-create-firebase-project.js --apply`  
+**Then**:
+- [ ] GCP project is created in Development folder  
+- [ ] Firebase is added to the project
+- [ ] Config file is updated with `firebaseProjectId`
+- [ ] Test file runs automatically and passes
+- [ ] Can run migration again safely (idempotent)
+
+### Test Requirements (Already Implemented)
+**Tests written in TDD style** in `002-create-firebase-project.tap.js`:
+- ✅ Verify project doesn't exist before migration
+- ✅ Verify dry-run doesn't create project
+- ✅ Verify project creation with correct folder and Firebase integration
+- ✅ Verify config file gets updated with captured project ID
+- ✅ Verify idempotency (can run migration twice safely)
+- ✅ Verify rollback deletes the project
+- ✅ Uses timestamped project IDs for test isolation
 
 ## Success Criteria
-- [ ] Migration creates real Firebase project
-- [ ] Rollback successfully deletes the project
-- [ ] Console audit logging shows complete operation trail
-- [ ] Error handling works (project already exists, auth failures, etc.)
-- [ ] CLI shows clear feedback during operations
+- [ ] Migration creates Firebase project successfully
+- [ ] Config file gets updated with project ID automatically
+- [ ] Tests run automatically and verify infrastructure state  
+- [ ] Ready for subsequent migrations (003+) to use captured project ID
+- [ ] Can run on fresh environments using timestamped configs
 
-## Risk Management
-- **Use temporary project name** (like `curb-map-test-temp-YYYYMMDD`)
-- **Test in personal Firebase account first** (not production account)
-- **Include timeout handling** for slow Firebase operations
-
-This task validates our orchestration system works with real infrastructure while staying focused on the core functionality.
+**Next**: Once 002 works with config-as-output, implement 003 for Firestore setup that reads the captured Firebase project ID.
