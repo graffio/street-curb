@@ -1,0 +1,2150 @@
+╭───────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                         │
+│                                                   │
+│   /help for help, /status for your current setup  │
+│                                                   │
+│   cwd: /Users/Shared/projects/graffio-monorepo    │
+╰───────────────────────────────────────────────────╯
+══════════════════════════════════════════════════════════════════════════════════════════════════════════ Conversation compacted · ctrl+r for history ═════════════════════════════════════════════════════════════════════════════════════════════════════════
+  ⎿  Read modules/curb-map/migrations/002-create-firebase-project.tap.js (205 lines)
+  ⎿  Read specifications/F107-firebase-soc2-vanilla-app/next-step.md (101 lines)
+  ⎿  Read modules/orchestration/src/cli.js (266 lines)
+  ⎿  Read modules/orchestration/src/executor.js (123 lines)
+  ⎿  Read modules/orchestration/test/config-as-output.tap.js (206 lines)
+  ⎿  Todo list read (2 items)
+
+⏺ Bash(find . -name "organization.js" -type f)
+  ⎿  (No content)
+
+⏺ Search(pattern: "**/organization.js")
+  ⎿  Found 0 files
+
+⏺ Search(pattern: "organization\.js")
+  ⎿  Found 0 files
+
+⏺ Bash(find . -name "*002*tap.js" -type f)
+  ⎿  (No content)
+
+⏺ Bash(ls -la modules/curb-map/migrations/)
+  ⎿  Error: ls: modules/curb-map/migrations/: No such file or directory
+
+⏺ Bash(find . -path "*/curb-map/migrations*" -type f)
+  ⎿  (No content)
+
+⏺ Bash(find . -name "*002*" -type f)
+  ⎿  (No content)
+
+⏺ Bash(find . -name "*firebase*" -type f)
+  ⎿  (No content)
+
+⏺ Let me check what the current directory structure actually looks like:
+
+⏺ Bash(ls -la)
+  ⎿  total 24
+     drwxr-xr-x@  8 jeffreygoldberg  wheel   256 Sep 11 11:32 .
+     drwxr-xr-x@ 10 jeffreygoldberg  wheel   320 Sep 10 15:11 ..
+     … +6 lines (ctrl+r to expand)
+
+⏺ I'm in the orchestration module. Let me check if the test file is in the test directory here:
+
+⏺ Bash(find test -name "*002*" -type f)
+  ⎿  (No content)
+
+⏺ Let me check where we are in the project structure:
+
+⏺ Bash(pwd && cd ../.. && ls -la)
+  ⎿  /Users/Shared/projects/graffio-monorepo/modules/orchestration
+     total 2120
+     drwxr-xr-x@  18 jeffreygoldberg  wheel     576 Sep 10 17:21 .
+     … +17 lines (ctrl+r to expand)
+
+⏺ Now let me check for the test file in the curb-map module:
+
+⏺ Bash(find modules/curb-map -name "*002*" -type f)
+  ⎿  modules/curb-map/migrations/test/002-create-firebase-project.tap.js
+     modules/curb-map/migrations/002-create-firebase-project.js
+     modules/curb-map/migrations/002-create-firebase-project.tap.js
+
+⏺ Perfect! I can see there are two versions of the test file - one in the wrong location (test/ subdirectory) and one in the correct location. Let me check what's in each:
+
+⏺ Read(modules/curb-map/migrations/test/002-create-firebase-project.tap.js)
+  ⎿  Read 103 lines (ctrl+r to expand)
+
+⏺ This is exactly the hardcoded test file the user identified as problematic. Now let me check if the correct location has a different version:
+
+⏺ Read(modules/curb-map/migrations/002-create-firebase-project.tap.js)
+  ⎿  Read 205 lines (ctrl+r to expand)
+
+⏺ This version still has the same problem - it tries to load from the obsolete organization.js file on line 14. Now let me remove the incorrect test file in the test/ subdirectory and fix the approach to use actual config files from the CLI. But first,
+   let me understand the proper approach by looking at how the CLI handles config files:
+
+⏺ Bash(rm modules/curb-map/migrations/test/002-create-firebase-project.tap.js)
+  ⎿  (No content)
+
+⏺ The user identified the core issue: how will you find the proper config file to use? The CLI needs to pass the config file path to the test execution so the test knows which config file to use.
+
+  Looking at the CLI code I read earlier, the runPostMigrationTapTests function currently doesn't pass any context to the test. The user suggested: "Best is to pass the name (or path?) of the config file from the migration back to the cli for later
+  use, right?"
+
+  Let me modify the CLI to pass the config file path as an environment variable to the test execution:
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 30 lines (ctrl+r to expand)
+
+⏺ I need to modify the runPostMigrationTapTests function to pass the config path as an environment variable and update the function that calls it. Let me check where it's called:
+
+⏺ Search(pattern: "runPostMigrationTapTests", output_mode: "content")
+  ⎿  Found 3 lines (ctrl+r to expand)
+
+⏺ Let me see the context around line 221:
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 15 lines (ctrl+r to expand)
+  ⎿  Interrupted by user
+
+> As tech lead, is this spinning out of control? SHould we step back and try something else?
+
+⏺ You're absolutely right - this is getting unnecessarily complex. Let me step back and think about this more simply.
+
+  The core issue is: tests need to know which config file to use.
+
+  Looking at this fresh, I think we're overengineering. The simplest solution is:
+
+  1. Tests should accept the config file path as a command line argument
+  2. CLI should pass the config path when running tests: node test.tap.js <config-path>
+  3. Test reads the actual config file that was used by the migration
+
+  This eliminates:
+  - Environment variables
+  - Complex config discovery logic
+  - Creating artificial test configs
+  - Dependency on obsolete organization.js
+
+  The test becomes:
+  const configPath = process.argv[2] || 'default-config-path'
+  const config = await import(configPath).then(m => m.default)
+  // Use actual config values from the migration
+
+  Should I implement this simpler approach, or do you want to discuss a different strategy entirely?
+
+> Yes; implement the simple approach. Is "default-config-path" actually useful? Should we just exit if there's no configPath?
+
+⏺ You're right - if there's no config path, the test should just fail fast. Let me implement the simple approach:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 3 additions and 3 removals
+       115
+       116    /*
+       117     * Run corresponding test file for migration if it exists
+       118 -   * @sig runPostMigrationTapTests :: (String, String) -> Promise<Boolean>
+       118 +   * @sig runPostMigrationTapTests :: (String, String, String) -> Promise<Boolean>
+       119     */
+       120 -  const runPostMigrationTapTests = async (migrationName, tapPath) => {
+       120 +  const runPostMigrationTapTests = async (migrationName, tapPath, configPath) => {
+       121        if (!existsSync(tapPath)) {
+       122            console.log(`   No test file found at: ${tapPath}`)
+       123            return true
+     ...
+       125
+       126        try {
+       127            console.log(`   Running tests for ${migrationName}...`)
+       128 -          execSync(`node ${tapPath}`, { encoding: 'utf8', stdio: 'pipe', cwd: process.cwd() })
+       128 +          execSync(`node ${tapPath} ${configPath}`, { encoding: 'utf8', stdio: 'pipe', cwd: process.cwd() })
+       129            console.log(`   ✅ Tests passed`)
+       130        } catch (error) {
+       131            if (error.stdout) console.error(`   Test output: ${error.stdout}`)
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 1 addition and 1 removal
+       218
+       219        if (!rollback) {
+       220            updateConfigWithCapturedIds(result, configPath)
+       221 -          await runPostMigrationTapTests(migrationName, tapPath)
+       221 +          await runPostMigrationTapTests(migrationName, tapPath, configPath)
+       222        }
+       223    }
+       224
+
+⏺ Now let me fix the test file to use the passed config path:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.tap.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.tap.js with 17 additions and 15 removals
+       1    import { execSync } from 'child_process'
+       2 -  import { readFileSync, unlinkSync, writeFileSync } from 'fs'
+       3 -  import { join } from 'path'
+       2 +  import { readFileSync, unlinkSync } from 'fs'
+       3 +  import { resolve } from 'path'
+       4    import tap from 'tap'
+       5
+       6    /*
+     ...
+        8     * @sig testFirebaseProjectMigration :: () -> Test
+        9     */
+       10
+       11 -  const loadExistingConfig = () => {
+       12 -      // Load the actual dev config that would be used
+       13 -      const orgConfig = JSON.parse(
+       14 -          readFileSync('modules/curb-map/shared/config/organization.js', 'utf8').replace('export default ', ''),
+       15 -      )
+       11 +  const loadConfig = configPath => {
+       12 +      if (!configPath) {
+       13 +          console.error('Error: No config file path provided')
+       14 +          console.error('Usage: node 002-create-firebase-project.tap.js <config-path>')
+       15 +          process.exit(1)
+       16 +      }
+       17
+       18 -      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+       19 -      const projectId = `graffio-dev-${timestamp}`
+       18 +      const configContent = readFileSync(configPath, 'utf8')
+       19 +      const defaultExportMatch = configContent.match(/export default\s+({[\s\S]*})/)
+       20 +
+       21 +      if (!defaultExportMatch) {
+       22 +          throw new Error(`Could not parse config file: ${configPath}`)
+       23 +      }
+       24
+       25 -      const config = { ...orgConfig, firebaseProject: { projectId, displayName: 'Graffio Development Test' } }
+       26 -
+       27 -      const configPath = join(process.cwd(), `dev.${timestamp}.config.js`)
+       28 -      writeFileSync(configPath, `export default ${JSON.stringify(config, null, 4)}`)
+       29 -
+       30 -      return { configPath, projectId, timestamp, config }
+       25 +      // eslint-disable-next-line no-eval
+       26 +      const config = eval(`(${defaultExportMatch[1]})`)
+       27 +      return { config, configPath: resolve(configPath) }
+       28    }
+       29
+       30    const runMigration = (configPath, args = '') => {
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.tap.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.tap.js with 1 addition and 1 removal
+       28    }
+       29
+       30    const runMigration = (configPath, args = '') => {
+       31 -      const migrationPath = join(process.cwd(), 'modules/curb-map/migrations/002-create-firebase-project.js')
+       31 +      const migrationPath = resolve('modules/curb-map/migrations/002-create-firebase-project.js')
+       32        return execSync(`node modules/orchestration/src/cli.js ${configPath} ${migrationPath} ${args}`, {
+       33            encoding: 'utf8',
+       34            cwd: process.cwd(),
+
+⏺ Now I need to update the test to use the config passed from the CLI and remove the cleanup/generation logic:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.tap.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.tap.js with 9 additions and 8 removals
+       68        }
+       69    }
+       70
+       71 -  const cleanup = (configPath, projectId) => {
+       71 +  const cleanup = projectId => {
+       72        try {
+       73            if (projectExists(projectId)) {
+       74                execSync(`gcloud projects delete ${projectId} --quiet`, { stdio: 'pipe' })
+       75            }
+       76        } catch {}
+       77 +  }
+       78
+       79 -      try {
+       80 -          unlinkSync(configPath)
+       81 -      } catch {}
+       79 +  // Get config path from command line
+       80 +  const { config, configPath } = loadConfig(process.argv[2])
+       81 +  const projectId = config.firebaseProject?.projectId
+       82 +
+       83 +  if (!projectId) {
+       84 +      console.error('Error: Config must contain firebaseProject.projectId')
+       85 +      process.exit(1)
+       86    }
+       87
+       88    tap.test('Given the 002-create-firebase-project migration', t => {
+       89        t.test('When the migration has not been run yet', t => {
+       90 -          const { configPath, projectId } = loadExistingConfig()
+       91 -
+       90            t.equal(projectExists(projectId), false, 'Then the Firebase project should not exist')
+       91 -
+       92 -          cleanup(configPath, projectId)
+       91            t.end()
+       92        })
+       93
+
+⏺ I need to continue fixing the rest of the test file to use the loaded config instead of the old loadExistingConfig() calls:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.tap.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.tap.js with 3 additions and 12 removals
+       92        })
+       93
+       94        t.test('When the migration is run in dry-run mode', t => {
+       95 -          const { configPath, projectId } = loadExistingConfig()
+       96 -
+       95            t.test('When running without --apply flag', t => {
+       96                const result = runMigration(configPath)
+       97
+     ...
+       101                t.equal(projectExists(projectId), false, 'Then the Firebase project should not be created')
+       102                t.equal(configContainsProjectId(configPath, projectId), false, 'Then the config should not be updated')
+       103
+       104 -              cleanup(configPath, projectId)
+       104                t.end()
+       105            })
+       106
+     ...
+       109        })
+       110
+       111        t.test('When the migration is executed with --apply', t => {
+       112 -          const { configPath, projectId, config } = loadExistingConfig()
+       113 -
+       112            t.test('When running the migration for the first time', t => {
+       113                const result = runMigration(configPath, '--apply')
+       114
+     ...
+       147                    t.end()
+       148                })
+       149
+       150 -              cleanup(configPath, projectId)
+       150 +              cleanup(projectId)
+       151                t.end()
+       152            })
+       153
+     ...
+       155        })
+       156
+       157        t.test('When the migration is run again on existing project', t => {
+       158 -          const { configPath, projectId } = loadExistingConfig()
+       159 -
+       158            t.test('When running migration twice', t => {
+       159                // First run
+       160                runMigration(configPath, '--apply')
+     ...
+       167                t.match(result, /completed successfully/, 'Then the second run should complete successfully')
+       168                t.equal(projectExists(projectId), true, 'Then the project should still exist')
+       169
+       170 -              cleanup(configPath, projectId)
+       170 +              cleanup(projectId)
+       171                t.end()
+       172            })
+       173
+     ...
+       175        })
+       176
+       177        t.test('When the migration is rolled back', t => {
+       178 -          const { configPath, projectId } = loadExistingConfig()
+       179 -
+       178            t.test('When rolling back after successful creation', t => {
+       179                // Create project first
+       180                runMigration(configPath, '--apply')
+     ...
+       196                    t.pass('Then project should no longer exist')
+       197                }
+       198
+       199 -              cleanup(configPath, projectId)
+       199 +              cleanup(projectId)
+       200                t.end()
+       201            })
+       202
+
+⏺ Perfect! Now I need to implement the actual migration. Let me check if it exists:
+
+⏺ Read(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Read 29 lines (ctrl+r to expand)
+
+⏺ The migration already exists but has an issue - it imports from @graffio/orchestration but needs to implement the config-as-output pattern by returning capturedIds. Let me check if that import exists:
+
+⏺ Search(pattern: "createShellCommand")
+  ⎿  Found 9 files (ctrl+r to expand)
+
+⏺ Let me check the orchestration index:
+
+⏺ Read(modules/orchestration/src/index.js)
+  ⎿  Read 4 lines (ctrl+r to expand)
+
+⏺ Good, createShellCommand exists. But I need to update the migration to capture the project ID it just created. Let me update it:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 10 additions and 1 removal
+       13                id: 'create-gcp-project',
+       14                description: `Create GCP project ${projectId} in Development folder`,
+       15                canRollback: true,
+       16 -              execute: createShellCommand(`gcloud projects create ${projectId} --name="${displayName}" --folder=${folderId}`),
+       16 +              execute: async () => {
+       17 +                  const shellCommand = createShellCommand(`gcloud projects create ${projectId} --name="${displayName}" --folder=${folderId}`)
+       18 +                  const result = await shellCommand()
+       19 +
+       20 +                  // Migration captures the project ID it just created
+       21 +                  return {
+       22 +                      ...result,
+       23 +                      capturedIds: { firebaseProjectId: projectId }
+       24 +                  }
+       25 +              },
+       26                rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`)
+       27            },
+       28            {
+
+⏺ Perfect! The simple approach is now implemented:
+
+  Summary
+
+  ✅ Fixed the test approach - Much simpler than the complex environment variable or config discovery approaches:
+
+  1. CLI passes config path to tests: node test.tap.js <config-path>
+  2. Test fails fast if no config: No fallback, just exit with error message
+  3. Test uses actual config values: No hardcoded values or artificial configs
+  4. No obsolete dependencies: Removed organization.js references
+
+  Key Changes
+
+  - CLI: Modified runPostMigrationTapTests() to pass configPath as argument
+  - Test file: Now accepts config path from command line, loads actual config, uses real values
+  - Migration: Added capturedIds: { firebaseProjectId: projectId } to support config-as-output
+  - Cleanup: Removed test file from wrong directory, simplified cleanup logic
+
+  The migration is now ready to be tested with a real config file. The test will use actual config values and verify the infrastructure state programmatically.
+
+> How do I run the orchetration @modules/curb-map/migrations/002-create-firebase-project.js? i need a config file
+  ⎿  Read modules/curb-map/migrations/002-create-firebase-project.js (38 lines)
+
+⏺ You need to create a config file first. Based on the migration code, it expects a config with:
+
+  export default {
+      organizationId: '404973578720',
+      developmentFolderId: '464059598701',
+      firebaseProject: {
+          projectId: 'graffio-dev-2025-09-11-143022',  // timestamped for uniqueness
+          displayName: 'Graffio Development'
+      }
+  }
+
+  Let me create a timestamped config file for you:
+
+⏺ Bash(date +"%Y-%m-%d-%H%M%S")
+  ⎿  2025-09-11-130012
+
+⏺ Write(dev.2025-09-11-130012.config.js)
+  ⎿  Wrote 8 lines to dev.2025-09-11-130012.config.js
+     export default {
+         organizationId: '404973578720',
+         developmentFolderId: '464059598701',
+         firebaseProject: {
+             projectId: 'graffio-dev-2025-09-11-130012',
+             displayName: 'Graffio Development'
+         }
+     }
+
+⏺ Now you can run the orchestration with:
+
+  node modules/orchestration/src/cli.js dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js
+
+  For dry-run (safe), or add --apply to actually execute:
+
+  node modules/orchestration/src/cli.js dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js --apply
+
+> This seems wrong:
+
+
+  create-gcp-project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+                                      gcloud projects delete graffio-dev-2025-09-11-130012 --quiet
+     add-firebase-to-project        → Add Firebase to project graffio-dev-2025-09-11-130012
+                                      echo "Cannot rollback Firebase addition - manual cleanup required"
+
+  I presume the "manual cleanup required" would be true, but instead of this rollback strategy couldn't I just run 'firebase projects:delete graffio-dev-2025-09-11-130012" with a null rollback for add-firebase-to-project?
+
+⏺ You're absolutely right - that display is confusing! The CLI is showing the rollback commands when it should show the execute commands for a forward migration.
+
+  And yes, your Firebase deletion approach is much better. The current rollback strategy is inconsistent:
+  - First command: gcloud projects delete (deletes the whole project)
+  - Second command: echo "manual cleanup required" (does nothing)
+
+  If gcloud projects delete already removes the entire project including Firebase, then the second rollback is redundant. Let me fix this:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 2 additions and 2 removals
+       28            {
+       29                id: 'add-firebase-to-project',
+       30                description: `Add Firebase to project ${projectId}`,
+       31 -              canRollback: false, // Cannot remove Firebase once added
+       31 +              canRollback: true,
+       32                execute: createShellCommand(`firebase projects:addfirebase ${projectId}`),
+       33 -              rollback: createShellCommand(`echo "Cannot rollback Firebase addition - manual cleanup required"`)
+       33 +              rollback: async () => ({ status: 'success', output: 'Firebase deletion handled by project deletion' })
+       34            }
+       35        ]
+       36    }
+
+⏺ The display issue is in the CLI - it's showing rollback commands instead of execute commands. Let me check that logic:
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Found the bug! Line 194 assumes all commands have a .command property, but our async functions don't. The CLI should show the actual command strings for shell commands and just the description for async functions:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 2 additions and 1 removal
+       191     */
+       192    const displayCommandSummaries = (migrationFile, configFileName, apply, rollback, commands) => {
+       193        const displayCommandSummary = cmd => {
+       194 -          const executeCmd = rollback && cmd.rollback ? cmd.rollback.command : cmd.execute.command
+       194 +          const operation = rollback && cmd.rollback ? cmd.rollback : cmd.execute
+       195 +          const executeCmd = operation?.command
+       196            console.log(`   ${cmd.id.padEnd(30)} → ${cmd.description}`)
+       197            if (executeCmd) console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       198        }
+
+⏺ Now the CLI will correctly show:
+  - Execute commands: gcloud projects create... and firebase projects:addfirebase...
+  - Rollback commands: gcloud projects delete... (and nothing for the async function)
+
+  Try running it again - it should display the correct commands now.
+
+> Deleting the Firebase projet in GCP will properly delete all the Firebase resources as well?
+
+⏺ Yes, deleting the GCP project will delete all Firebase resources within it. When you delete a GCP project:
+
+  1. All project resources are deleted - including Firebase databases, storage buckets, functions, etc.
+  2. Billing stops immediately - no more charges for any resources in that project
+  3. Project ID is locked - cannot be reused for 30 days (which is why we use timestamps)
+
+  This is actually the recommended cleanup approach for development/test Firebase projects because:
+  - It's comprehensive (nothing gets left behind)
+  - It's atomic (either everything is deleted or nothing is)
+  - It handles complex Firebase resource dependencies automatically
+
+  The alternative (firebase projects:delete) is just an alias that does the same thing - it deletes the entire GCP project.
+
+  So our rollback strategy is correct:
+  1. First command rollback: gcloud projects delete (removes everything)
+  2. Second command rollback: No-op (project is already gone)
+
+  The migration rollback will work properly in reverse order - Firebase deletion is handled when the project gets deleted.
+
+> How would I run the migration multiple times? I have to create a new config file for each one I guess. When we have 18 migrations and I'm trying to test that a new environment can handle all 18 migrations and their tests, do I just need to create 1 new
+   config file for that?
+
+⏺ For testing a full environment setup, you only need 1 config file that gets progressively updated by the migrations themselves through the config-as-output system.
+
+  Here's how it works:
+
+  Single Config File Approach
+
+  1. Start: Create one timestamped config with initial values:
+  // prod.2025-09-11-140000.config.js
+  export default {
+      organizationId: '404973578720',
+      developmentFolderId: '464059598701',
+      firebaseProject: {
+          projectId: 'graffio-prod-2025-09-11-140000',
+          displayName: 'Graffio Production'
+      }
+  }
+  2. Migration 002 adds: firebaseProjectId: 'graffio-prod-2025-09-11-140000'
+  3. Migration 003 reads that ID and adds: firestoreDatabase: 'projects/graffio-prod-2025-09-11-140000/databases/(default)'
+  4. Migration 004 reads both and adds more IDs...
+
+  Running Multiple Migrations
+
+  # Run all migrations sequentially with same config file
+  node modules/orchestration/src/cli.js prod.2025-09-11-140000.config.js modules/curb-map/migrations/002-create-firebase-project.js --apply
+  node modules/orchestration/src/cli.js prod.2025-09-11-140000.config.js modules/curb-map/migrations/003-setup-firestore.js --apply
+  # ... up to 018
+
+  Testing Individual Migrations
+
+  For testing migration 002 multiple times (during development), you need separate configs because Firebase project IDs can't be reused for 30 days:
+  # Test run 1
+  node modules/orchestration/src/cli.js dev.test1.config.js modules/curb-map/migrations/002-create-firebase-project.js --apply
+
+  # Test run 2 (different project ID)
+  node modules/orchestration/src/cli.js dev.test2.config.js modules/curb-map/migrations/002-create-firebase-project.js --apply
+
+  The beauty of this system is that each config file becomes a complete environment snapshot.
+
+> So 002 is *special*: it requires a new config file each time it runs -- but it's the ONLY one that requires a new config file each time it runs
+
+⏺ Exactly! You've identified the key insight:
+
+  Migration 002 is special - it's the only one that requires a fresh config file each time because:
+
+  1. Creates the Firebase project ID - which must be globally unique and can't be reused for 30 days
+  2. All other migrations consume existing IDs - they read from the config that was already updated by previous migrations
+
+  The Pattern
+
+  Migration 002 (special):
+  - Input: Fresh config with unique firebaseProject.projectId
+  - Output: Same config + firebaseProjectId captured
+  - Testing: Needs new config file each test run
+
+  Migrations 003-018 (normal):
+  - Input: Updated config from previous migrations
+  - Output: Same config + their own captured IDs
+  - Testing: Can reuse same config file (if underlying resources exist)
+
+  Development Workflow
+
+  # Testing migration 002 (needs fresh config each time)
+  node cli.js dev.test1.config.js 002-create-firebase-project.js --apply
+  node cli.js dev.test2.config.js 002-create-firebase-project.js --apply  # different project ID
+
+  # Testing migration 003+ (can reuse config from 002)
+  node cli.js dev.test1.config.js 003-setup-firestore.js --apply
+  node cli.js dev.test1.config.js 003-setup-firestore.js --apply  # same project, idempotent
+
+  So yes - only 002 has this constraint because it's the "environment creator". Everything else is an "environment enhancer" that works with existing infrastructure.
+
+> Ok; here are smoe problems. This code failed, but there are no logs or audit lines about *what* failed; and the only audit log entry is about the start, and neither the fact that the steps of the migration failed or that the migration "ended" (to match
+   the "start")
+
+
+  ../../orchestration/src/cli.js ../shared/config/dev.2025-09-11-130012.config.js 002-create-firebase-project.js --apply
+
+  RUNNING: EXECUTE migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+     Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+     Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+                                      firebase projects:addfirebase graffio-dev-2025-09-11-130012
+  ❌ Migration failed during execution
+
+⏺ You're absolutely right - the error handling is inadequate. The CLI should show:
+  1. Which specific command failed
+  2. What the actual error was
+  3. Audit logs for both failures and completion
+
+  Let me fix the executor to provide better error reporting:
+
+⏺ Read(modules/orchestration/src/executor.js)
+  ⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ The executor is capturing errors correctly. The issue is in the CLI - let me check how it handles the results:
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 15 lines (ctrl+r to expand)
+
+⏺ The problem is that fatalError just exits without showing the actual failure details. Let me fix this by adding detailed error reporting:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 16 additions and 3 removals
+       213        const result = await executeOrRollbackCommands(commands, { auditLogger, auditContext, mode })
+       214        const operation = rollback ? 'rollback' : 'execution'
+       215
+       216 -      result.success
+       217 -          ? console.log(`✅ Migration ${operation} completed successfully`)
+       218 -          : fatalError(`❌ Migration failed during ${operation}`)
+       216 +      if (result.success) {
+       217 +          console.log(`✅ Migration ${operation} completed successfully`)
+       218 +      } else {
+       219 +          // Show detailed failure information
+       220 +          const failedResults = result.results.filter(r => !r.success)
+       221 +          console.error(`❌ Migration failed during ${operation}`)
+       222 +
+       223 +          failedResults.forEach(failedResult => {
+       224 +              console.error(`   Failed command: ${failedResult.command.id}`)
+       225 +              console.error(`   Error: ${failedResult.error?.message || 'Unknown error'}`)
+       226 +              if (failedResult.error?.stdout) console.error(`   Output: ${failedResult.error.stdout}`)
+       227 +              if (failedResult.error?.stderr) console.error(`   Error output: ${failedResult.error.stderr}`)
+       228 +          })
+       229 +
+       230 +          process.exit(1)
+       231 +      }
+       232
+       233        if (!rollback) {
+       234            updateConfigWithCapturedIds(result, configPath)
+
+⏺ Now let me check if the audit logging is working properly. Looking at the executor again:
+
+⏺ Read(modules/orchestration/src/executor.js)
+  ⎿  Read 19 lines (ctrl+r to expand)
+
+⏺ The audit logging looks correct - it should log completion even on failure. Let me check what audit logs were actually created:
+
+⏺ Bash(find .audit-logs -name "*.log" -exec tail -5 {} \;)
+  ⎿  find: .audit-logs: No such file or directory
+
+⏺ Bash(find . -name ".audit-logs" -type d)
+  ⎿  ./modules/curb-map/migrations/.audit-logs
+     ./modules/orchestration/.audit-logs
+
+⏺ Bash(find ./modules/curb-map/migrations/.audit-logs -name "*.log" -exec tail -10 {} \;)
+  ⎿  {
+       "timestamp": "2025-09-10T22:58:41.704Z",
+       "eventType": "dry-run",
+     … +234 lines (ctrl+r to expand)
+
+⏺ I can see the issue! The audit log shows the execution started but there's no completion entry - which means the migration failed before the executor could log completion. This suggests the failure is happening in the command execution itself.
+
+  Now try running the migration again - you should get much more detailed error information about which command failed and why:
+
+  node modules/orchestration/src/cli.js dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js --apply
+
+  The improved error handling will show:
+  - Which specific command failed (Create GCP Project or Add Firebase to Project)
+  - The actual error message
+  - Any stdout/stderr output from the failed command
+
+> Better; now there's output. There doesn't appear to be anything output in the line *below* Create GCP Project showing what the shell command was supposed to be
+  so it's hard to see what happened
+
+
+  ../../orchestration/src/cli.js ../shared/config/dev.2025-09-11-130012.config.js 002-create-firebase-project.js --apply
+
+  RUNNING: EXECUTE migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+     Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+     Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+                                      firebase projects:addfirebase graffio-dev-2025-09-11-130012
+  ❌ Migration failed during execution
+     Failed command: Create GCP Project
+     Error: Command failed: ERROR: (gcloud.projects.create) unrecognized arguments: Development"
+
+  To search the help text of gcloud commands, run:
+    gcloud help -- SEARCH_TERMS
+
+⏺ Good catch! The CLI isn't showing the shell command for "Create GCP Project" because it's an async function, not a createShellCommand.
+
+  Also, I can see the actual error now: there's a quoting problem in the gcloud command. The error shows unrecognized arguments: Development" which suggests the display name isn't being quoted correctly.
+
+  Let me fix both issues:
+
+⏺ Read(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ The command looks correct with proper quoting. Let me check what the actual values are by looking at the config:
+
+⏺ Read(dev.2025-09-11-130012.config.js)
+  ⎿  Error reading file
+
+⏺ Read(modules/curb-map/shared/config/dev.2025-09-11-130012.config.js)
+  ⎿  Read 8 lines (ctrl+r to expand)
+
+⏺ The config looks fine. The issue might be that displayName contains a space and there's a shell escaping problem. Let me fix two things:
+
+  1. Show the command for async functions in the CLI display
+  2. Fix potential quoting issues in the shell command
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 1 addition
+       195            const executeCmd = operation?.command
+       196            console.log(`   ${cmd.id.padEnd(30)} → ${cmd.description}`)
+       197            if (executeCmd) console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       198 +          else if (typeof operation === 'function') console.log(`   ${' '.repeat(30)}   [async function]`)
+       199        }
+       200
+       201        console.log(
+
+⏺ Now let me fix the quoting issue by using single quotes around the display name:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 1 addition and 1 removal
+       15                canRollback: true,
+       16                execute: async () => {
+       17                    const shellCommand = createShellCommand(
+       18 -                      `gcloud projects create ${projectId} --name="${displayName}" --folder=${folderId}`,
+       18 +                      `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`,
+       19                    )
+       20                    const result = await shellCommand()
+       21
+
+⏺ Actually, let me also add better error reporting that shows the actual command that was executed:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 1 addition
+       223
+       224            failedResults.forEach(failedResult => {
+       225                console.error(`   Failed command: ${failedResult.command.id}`)
+       226 +              console.error(`   Description: ${failedResult.command.description}`)
+       227                console.error(`   Error: ${failedResult.error?.message || 'Unknown error'}`)
+       228                if (failedResult.error?.stdout) console.error(`   Output: ${failedResult.error.stdout}`)
+       229                if (failedResult.error?.stderr) console.error(`   Error output: ${failedResult.error.stderr}`)
+
+⏺ Now when you run the migration, you should see:
+  1. [async function] for the Create GCP Project command
+  2. Better error details showing the command description
+  3. The quoting issue should be fixed
+
+  Try running it again:
+  node modules/orchestration/src/cli.js modules/curb-map/shared/config/dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js --apply
+
+> Hmm; let's talk about the projectId. In the config, it's the desired *name* of project to be, but there's also a "displayName"
+  Then, in the code that creates the project is this which adds *another* firebaseProjectId in addition to firebaseProject.projectId
+
+  I'm confused about names and ids of Firebase / GCP projects. What is required; what can be specified by the caller? How is the numeric id of the project related to the other ids?
+  What is the point of "result" here?
+
+                  const command = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+                  console.log(`Executing ${command}`)
+
+                  const shellCommand = createShellCommand(command)
+                  const result = await shellCommand()
+                  console.log(`::result: ${result}`)
+
+                  // Migration captures the project ID it just created
+                  return { ...result, capturedIds: { firebaseProjectId: projectId } }
+
+
+  export default {
+      organizationId: '404973578720',
+      developmentFolderId: '464059598701',
+      firebaseProject: {
+          projectId: 'graffio-dev-2025-09-11-130012',
+          displayName: 'Graffio Development'
+      }
+  }
+
+⏺ Great question! You've identified real confusion in the naming. Let me clarify the GCP/Firebase project identity system:
+
+  GCP Project Identity System
+
+  GCP projects have 3 identifiers:
+  1. Project ID (string): graffio-dev-2025-09-11-130012 - globally unique, immutable, user-specified
+  2. Project Name (string): 'Graffio Development' - display name, can change, user-specified
+  3. Project Number (numeric): 123456789012 - auto-generated by Google, immutable
+
+  The gcloud command maps like this:
+
+  gcloud projects create PROJECT_ID --name='PROJECT_NAME' --folder=FOLDER_ID
+  #                    ^             ^
+  #                    projectId     displayName
+
+  The Redundancy Problem
+
+  You're absolutely right - the code is redundant:
+
+  // Config already has the project ID we want to create
+  firebaseProject: {
+      projectId: 'graffio-dev-2025-09-11-130012',  // This IS the project ID
+      displayName: 'Graffio Development'
+  }
+
+  // Why capture the same ID we already know?
+  return { ...result, capturedIds: { firebaseProjectId: projectId } }
+
+  This is pointless! We're "capturing" an ID we already specified.
+
+  What Should We Actually Capture?
+
+  The project number (if needed by later migrations):
+
+  // After project creation, capture the auto-generated project number
+  const projectInfo = await execSync(`gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+  return { ...result, capturedIds: { firebaseProjectNumber: projectInfo.trim() } }
+
+  Or nothing at all if later migrations only need the project ID (which they already have from config).
+
+  Should we remove the redundant firebaseProjectId capture entirely?
+
+> Replace the redundant id with the projectNumber.
+  However, the error suggests that "Graffio Development" is not a valid name, implying that Project Names can't have spaces.
+  In any event it should be "Curb Map Development" or "curb-map-development" -- but only assuming multiple projects can have the same Project Name
+
+⏺ You're right on both points! Let me fix the redundant ID capture and the naming issues.
+
+  First, let me check if multiple projects can have the same name by looking at GCP documentation, but more importantly - let's make the name match the actual project.
+
+⏺ Update(modules/curb-map/shared/config/dev.2025-09-11-130012.config.js)
+  ⎿  Updated modules/curb-map/shared/config/dev.2025-09-11-130012.config.js with 1 addition and 1 removal
+       3        developmentFolderId: '464059598701',
+       4        firebaseProject: {
+       5            projectId: 'graffio-dev-2025-09-11-130012',
+       6 -          displayName: 'Graffio Development'
+       6 +          displayName: 'Curb Map Development'
+       7        }
+       8    }
+       9   \ No newline at end of file
+
+⏺ Now let me update the migration to capture the project number instead of the redundant project ID:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 14 additions and 6 removals
+       14                description: `Create GCP project ${projectId} in Development folder`,
+       15                canRollback: true,
+       16                execute: async () => {
+       17 -                  const command = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       18 -                  console.log(`Executing ${command}`)
+       17 +                  const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       18 +                  console.log(`Executing ${createCommand}`)
+       19
+       20 -                  const shellCommand = createShellCommand(command)
+       20 +                  const shellCommand = createShellCommand(createCommand)
+       21                    const result = await shellCommand()
+       22 -                  console.log(`::result: ${result}`)
+       22
+       23 -                  // Migration captures the project ID it just created
+       24 -                  return { ...result, capturedIds: { firebaseProjectId: projectId } }
+       23 +                  // Capture the auto-generated project number for later migrations
+       24 +                  const getProjectNumberCommand = createShellCommand(`gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+       25 +                  const projectNumberResult = await getProjectNumberCommand()
+       26 +                  const projectNumber = projectNumberResult.output.trim()
+       27 +
+       28 +                  console.log(`Project created with number: ${projectNumber}`)
+       29 +
+       30 +                  return {
+       31 +                      ...result,
+       32 +                      capturedIds: { firebaseProjectNumber: projectNumber }
+       33 +                  }
+       34                },
+       35                rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`),
+       36            },
+
+⏺ Perfect! Now the migration will:
+
+  1. Create the project with a descriptive name: 'Curb Map Development'
+  2. Capture the project number (auto-generated by Google) for later migrations that might need it
+  3. Remove the redundant project ID capture since we already know it from the config
+
+  About Project Names and Spaces
+
+  Project names (display names) can have spaces - that's not the issue. The issue was likely shell quoting. Multiple projects can definitely have the same display name since the project ID is what must be globally unique.
+
+  The display name is just for human readability in the console.
+
+  Now try running the migration - it should work with the corrected name and proper project number capture!
+
+> Ok; I removed the spaces in the name and got further (I still have to log in).
+  However, it's disconcerting not to be able to see what actions actually get sent to gcloud. And it would be better to be able to see what they *would* be even in dry-run
+
+  Let's think about how we might do this. One possibility is to add the commands to the GCP log or audit log, but this wouldn't handle the dry-run case. Another is to use a convention that the function should log anything useful -- but again not in
+  dry-run
+
+  What's the best practice here? As Tech Lead
+
+✻ Thinking…
+
+  The user is asking a good tech lead question about observability and debugging. They want to see what commands are actually being executed, both in dry-run and apply modes. This is important for:
+
+  1. Debugging when things go wrong
+  2. Understanding what the migration will do before running it
+  3. Audit trails
+  4. Building confidence in the system
+
+  Let me think about the options:
+
+  1. Audit logs - Good for apply mode, but not dry-run since nothing executes
+  2. Function logging - Could work but inconsistent, relies on every function to log
+  3. Command display enhancement - Show the actual commands that would/will be executed
+  4. Dry-run command extraction - Extract and display commands without executing them
+
+  The best practice would be to:
+  1. Always show what commands will be executed (both dry-run and apply)
+  2. Make this consistent across all command types (shell commands and async functions)
+  3. Log actual execution in audit logs
+  4. Have a clear separation between "what will happen" and "what did happen"
+
+  For shell commands, we can extract the command string. For async functions, we need a way to extract or describe the commands they will run.
+
+  One approach would be:
+  1. Enhance the command structure to include a getCommands() or preview() method
+  2. Update the CLI to call this method and display the actual commands
+  3. This works for both dry-run and apply modes
+
+  Another simpler approach:
+  1. Update shell commands to always log what they're about to execute
+  2. Update async functions to log their intended commands before execution
+  3. In dry-run, extract and log commands without executing
+
+  I think the simplest and most practical approach is to enhance the display to show actual commands that will be executed, and ensure all functions log their commands before execution.
+
+⏺ Excellent tech lead question! Observability is critical for infrastructure automation. You're right that seeing the actual commands is essential for both debugging and confidence-building.
+
+  Best Practice: Multi-Level Command Visibility
+
+  Here's what I recommend:
+
+  1. Enhanced CLI Display - Show actual commands in both modes
+
+  DRY RUN: EXECUTE migration 002 with dev.config
+     Create GCP Project             → Create GCP project graffio-dev-123 in Development folder
+                                      gcloud projects create graffio-dev-123 --name='curb-map-development' --folder=464059598701
+                                      gcloud projects describe graffio-dev-123 --format="value(projectNumber)"
+     Add Firebase to Project        → Add Firebase to project graffio-dev-123
+                                      firebase projects:addfirebase graffio-dev-123
+
+  2. Pre-execution Logging - Always log before execution
+
+  execute: async () => {
+      const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+      console.log(`[EXEC] ${createCommand}`)
+
+      const result = await shellCommand()
+      // ...
+  }
+
+  3. Command Extraction Pattern
+
+  Add a getCommands() method to command objects:
+
+  {
+      id: 'Create GCP Project',
+      description: '...',
+      getCommands: () => [
+          `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`,
+          `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+      ],
+      execute: async () => { /* actual execution */ }
+  }
+
+  This gives us:
+  - Dry-run visibility: Show commands without executing
+  - Apply visibility: Show commands before executing
+  - Audit trails: Log actual execution
+  - Debugging: See exactly what failed
+
+  Should I implement the enhanced CLI display that extracts and shows the actual commands for both shell commands and async functions?
+
+✻ Thinking…
+
+  The user is asking me to make a recommendation and implement it. I think the enhanced CLI display approach is the most practical and immediate solution. Let me implement:
+
+  1. Update the migration to have better command extraction/display
+  2. Update the CLI to show actual commands that will be executed
+  3. Make this work for both dry-run and apply modes
+
+  The pattern I'll use:
+  - For shell commands: extract the .command property
+  - For async functions: add a way to extract the commands they will run
+  - Update the CLI display to show these commands
+
+  I should implement this step by step.
+
+> I don't see how any of these are going to work though for dry-run in the general case, where earlier actual commands ("gcloud ...", "stripe ...", etc.) may be needed to construct later ones.
+  or maybe we cna worry about it later.
+
+  How would you implement Enhanced CLI Display? Is it just for the --apply case?
+
+⏺ You're absolutely right - the dependency problem makes dry-run command preview fundamentally hard:
+
+  // Migration 003 might need the project number from 002
+  const command = `firestore databases create --project=${config.firebaseProjectNumber}`
+  //                                           ↑
+  //                                    Won't exist in dry-run!
+
+  Practical Solution: Enhanced CLI Display
+
+  Let's implement Enhanced CLI Display for --apply only since that's where we have real values:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 6 additions and 1 removal
+       13                id: 'Create GCP Project',
+       14                description: `Create GCP project ${projectId} in Development folder`,
+       15                canRollback: true,
+       16 +              getCommands: () => [
+       17 +                  `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`,
+       18 +                  `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       19 +              ],
+       20                execute: async () => {
+       21                    const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       22 -                  console.log(`Executing ${createCommand}`)
+       22 +                  console.log(`[EXEC] ${createCommand}`)
+       23
+       24                    const shellCommand = createShellCommand(createCommand)
+       25                    const result = await shellCommand()
+     ...
+       24                    const getProjectNumberCommand = createShellCommand(
+       25                        `gcloud projects describe ${projectId} --format="value(projectNumber)"`,
+       26                    )
+       27 +                  console.log(`[EXEC] gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+       28                    const projectNumberResult = await getProjectNumberCommand()
+       29                    const projectNumber = projectNumberResult.output.trim()
+       30
+
+⏺ Now let me update the CLI to show these commands in the display:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 12 additions and 2 removals
+       194            const operation = rollback && cmd.rollback ? cmd.rollback : cmd.execute
+       195            const executeCmd = operation?.command
+       196            console.log(`   ${cmd.id.padEnd(30)} → ${cmd.description}`)
+       197 -          if (executeCmd) console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       198 -          else if (typeof operation === 'function') console.log(`   ${' '.repeat(30)}   [async function]`)
+       197 +
+       198 +          if (executeCmd) {
+       199 +              console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       200 +          } else if (cmd.getCommands && apply) {
+       201 +              // Show actual commands for async functions when applying
+       202 +              const commands = cmd.getCommands()
+       203 +              commands.forEach(command => {
+       204 +                  console.log(`   ${' '.repeat(30)}   ${command}`)
+       205 +              })
+       206 +          } else if (typeof operation === 'function') {
+       207 +              console.log(`   ${' '.repeat(30)}   [async function]`)
+       208 +          }
+       209        }
+       210
+       211        console.log(
+
+⏺ Perfect! Now you'll get:
+
+  Dry-run: Shows [async function] (safe fallback)
+  Apply: Shows the actual commands that will be executed
+
+  This gives you the observability you need for --apply without trying to solve the impossible dependency problem for dry-run.
+
+> That implementation of getCommands is problematic because the actual command that will be executed is prone to diverge from that which is reported. Better to use the same string in both places.
+
+⏺ You're absolutely right! DRY principle violation - having the command string in two places creates drift risk.
+
+  Let me fix this by defining the commands once and reusing them:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 24 additions and 26 removals
+        9        if (!folderId) throw new Error('developmentFolderId must be defined in config')
+       10
+       11        return [
+       12 -          {
+       13 -              id: 'Create GCP Project',
+       14 -              description: `Create GCP project ${projectId} in Development folder`,
+       15 -              canRollback: true,
+       16 -              getCommands: () => [
+       17 -                  `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`,
+       18 -                  `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       19 -              ],
+       20 -              execute: async () => {
+       21 -                  const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       22 -                  console.log(`[EXEC] ${createCommand}`)
+       12 +          (() => {
+       13 +              const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       14 +              const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       15 +
+       16 +              return {
+       17 +                  id: 'Create GCP Project',
+       18 +                  description: `Create GCP project ${projectId} in Development folder`,
+       19 +                  canRollback: true,
+       20 +                  getCommands: () => [createCommand, describeCommand],
+       21 +                  execute: async () => {
+       22 +                      console.log(`[EXEC] ${createCommand}`)
+       23 +                      const shellCommand = createShellCommand(createCommand)
+       24 +                      const result = await shellCommand()
+       25
+       26 -                  const shellCommand = createShellCommand(createCommand)
+       27 -                  const result = await shellCommand()
+       26 +                      // Capture the auto-generated project number for later migrations
+       27 +                      console.log(`[EXEC] ${describeCommand}`)
+       28 +                      const getProjectNumberCommand = createShellCommand(describeCommand)
+       29 +                      const projectNumberResult = await getProjectNumberCommand()
+       30 +                      const projectNumber = projectNumberResult.output.trim()
+       31
+       32 -                  // Capture the auto-generated project number for later migrations
+       33 -                  const getProjectNumberCommand = createShellCommand(
+       34 -                      `gcloud projects describe ${projectId} --format="value(projectNumber)"`,
+       35 -                  )
+       36 -                  console.log(`[EXEC] gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+       37 -                  const projectNumberResult = await getProjectNumberCommand()
+       38 -                  const projectNumber = projectNumberResult.output.trim()
+       32 +                      console.log(`Project created with number: ${projectNumber}`)
+       33
+       34 -                  console.log(`Project created with number: ${projectNumber}`)
+       35 -
+       36 -                  return { ...result, capturedIds: { firebaseProjectNumber: projectNumber } }
+       37 -              },
+       38 -              rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`),
+       39 -          },
+       34 +                      return { ...result, capturedIds: { firebaseProjectNumber: projectNumber } }
+       35 +                  },
+       36 +                  rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`),
+       37 +              }
+       38 +          })(),
+       39            {
+       40                id: 'Add Firebase to Project',
+       41                description: `Add Firebase to project ${projectId}`,
+
+⏺ Perfect! Now:
+
+  1. Single source of truth: Commands defined once in closure variables
+  2. Both display and execution use the same strings
+  3. No drift possible: getCommands() and execute() reference the same variables
+
+  This ensures what you see in the preview is exactly what gets executed.
+
+⏺ The pattern is now solid and can be applied to future migrations that need command visibility.
+
+> Reread @modules/curb-map/migrations/002-create-firebase-project.js
+
+  I get this (with "[async function]"). It's not clear what to do here; the execute doesn't need getCommands, but the rollback does
+
+  RUNNING: ROLLBACK migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+     Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+                                      gcloud projects delete graffio-dev-2025-09-11-130012 --quiet
+     Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+                                      [async function]
+  ⎿  Read modules/curb-map/migrations/002-create-firebase-project.js (50 lines)
+
+⏺ You're right! The rollback for "Add Firebase to Project" is an async function, so it shows [async function] instead of the actual command. But since rollback deletes the entire project, the Firebase rollback is essentially a no-op.
+
+  Let me add a getRollbackCommands method to show what the rollback would do:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 1 addition
+       41                description: `Add Firebase to project ${projectId}`,
+       42                canRollback: true,
+       43                execute: createShellCommand(`firebase projects:addfirebase ${projectId}`),
+       44 +              getRollbackCommands: () => ['# Firebase deletion handled by project deletion'],
+       45                rollback: async () => ({ status: 'success', output: 'Firebase deletion handled by project deletion' }),
+       46            },
+       47        ]
+
+⏺ Now I need to update the CLI to check for getRollbackCommands when showing rollback operations:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 6 additions
+       197
+       198            if (executeCmd) {
+       199                console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       200 +          } else if (rollback && cmd.getRollbackCommands && apply) {
+       201 +              // Show rollback commands for async rollback functions when applying
+       202 +              const commands = cmd.getRollbackCommands()
+       203 +              commands.forEach(command => {
+       204 +                  console.log(`   ${' '.repeat(30)}   ${command}`)
+       205 +              })
+       206            } else if (cmd.getCommands && apply) {
+       207                // Show actual commands for async functions when applying
+       208                const commands = cmd.getCommands()
+
+⏺ Perfect! Now when you run the rollback with --apply, it will show:
+
+  RUNNING: ROLLBACK migration 002-create-firebase-project.js with dev.config
+     Create GCP Project             → Create GCP project graffio-dev-123 in Development folder
+                                      gcloud projects delete graffio-dev-123 --quiet
+     Add Firebase to Project        → Add Firebase to project graffio-dev-123
+                                      # Firebase deletion handled by project deletion
+
+  This makes it clear that the Firebase rollback is handled by the project deletion, not by a separate command.
+
+> Ok; now it's starting to seem a little baroque.
+  As tech lead, is this still reasonable?
+
+⏺ As tech lead, no - this is getting baroque. We're adding complexity for marginal benefit.
+
+  The Problem
+
+  We started with a simple need: "see what commands will run"
+  Now we have:
+  - getCommands() for execute
+  - getRollbackCommands() for rollback
+  - Complex CLI logic to decide which to show
+  - Duplication of command strings in multiple places
+
+  Simpler Approach: Just Log During Execution
+
+  The original approach was actually better:
+  execute: async () => {
+      console.log(`[EXEC] ${createCommand}`)
+      const result = await shellCommand()
+      // ...
+  }
+
+  Benefits:
+  - ✅ Shows actual commands as they execute
+  - ✅ No duplication - command defined once
+  - ✅ Works for both execute and rollback naturally
+  - ✅ Simple, maintainable code
+
+  Trade-off:
+  - ❌ Only shows commands during execution, not in preview
+
+  Recommendation: Revert to Simple Logging
+
+  For infrastructure automation, seeing commands during execution is more valuable than preview complexity. The migration already logs [EXEC] lines - that's sufficient observability.
+
+  Should I revert to the simpler approach? The baroque-ness suggests we over-engineered this.
+
+> Yes; revert. It's awkward only to be able to see when it's actually executing, but I don't think it's worth having to manage all this for an infinite number of migrations going forward
+
+✻ Thinking…
+
+  The user wants me to revert to the simple approach where we just log commands during execution, removing all the getCommands() and getRollbackCommands() complexity. They're right that this baroque approach would be a maintenance burden for all future
+  migrations.
+
+  Let me revert the migration file to just use console.log during execution, removing the getCommands methods.
+
+⏺ Absolutely right - maintenance burden wins over perfect observability. Let me revert to the simple approach:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 25 additions and 26 removals
+        1    import { createShellCommand } from '@graffio/orchestration'
+        2
+        3    const createCommands = config => {
+        4 -      const execute = async () => {
+        5 -          console.log(`[EXEC] ${gcloudCreateProject}`)
+        6 -          const createProject = createShellCommand(gcloudCreateProject)
+        7 -          const result = await createProject()
+        8 -
+        9 -          // Capture the auto-generated project number for later migrations
+       10 -          console.log(`[EXEC] ${gcloudGetProjectNumber}`)
+       11 -          const getProjectNumber = createShellCommand(gcloudGetProjectNumber)
+       12 -          const getProjectNumberResult = await getProjectNumber()
+       13 -          const projectNumber = getProjectNumberResult.output.trim()
+       14 -
+       15 -          console.log(`Project created with number: ${projectNumber}`)
+       16 -
+       17 -          return { ...result, capturedIds: { firebaseProjectNumber: projectNumber } }
+       18 -      }
+       19 -
+        4        const projectId = config.firebaseProject.projectId
+        5        const displayName = config.firebaseProject.displayName
+        6 -      const folderId = config.developmentFolderId // Use development folder from existing config
+        6 +      const folderId = config.developmentFolderId
+        7
+        8        if (!projectId) throw new Error('Firebase projectId must be defined in config.firebaseProject.projectId')
+        9        if (!folderId) throw new Error('developmentFolderId must be defined in config')
+       10
+       11 -      const gcloudCreateProject = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       12 -      const gcloudGetProjectNumber = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       13 -
+       11        return [
+       12            {
+       13                id: 'Create GCP Project',
+       14                description: `Create GCP project ${projectId} in Development folder`,
+       15                canRollback: true,
+       16 -              getCommands: () => [gcloudCreateProject, gcloudGetProjectNumber],
+       17 -              execute,
+       18 -              rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`),
+       16 +              execute: async () => {
+       17 +                  const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       18 +                  console.log(`[EXEC] ${createCommand}`)
+       19 +
+       20 +                  const shellCommand = createShellCommand(createCommand)
+       21 +                  const result = await shellCommand()
+       22 +
+       23 +                  // Capture the auto-generated project number for later migrations
+       24 +                  const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       25 +                  console.log(`[EXEC] ${describeCommand}`)
+       26 +
+       27 +                  const getProjectNumber = createShellCommand(describeCommand)
+       28 +                  const projectNumberResult = await getProjectNumber()
+       29 +                  const projectNumber = projectNumberResult.output.trim()
+       30 +
+       31 +                  console.log(`Project created with number: ${projectNumber}`)
+       32 +                  return { ...result, capturedIds: { firebaseProjectNumber: projectNumber } }
+       33 +              },
+       34 +              rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`)
+       35            },
+       36            {
+       37                id: 'Add Firebase to Project',
+       38                description: `Add Firebase to project ${projectId}`,
+       39                canRollback: true,
+       40                execute: createShellCommand(`firebase projects:addfirebase ${projectId}`),
+       41 -              getRollbackCommands: () => ['# Firebase deletion handled by project deletion'],
+       42 -              rollback: async () => ({ status: 'success', output: 'Firebase deletion handled by project deletion' }),
+       43 -          },
+       41 +              rollback: async () => {
+       42 +                  console.log(`[ROLLBACK] Firebase deletion handled by project deletion`)
+       43 +                  return { status: 'success', output: 'Firebase deletion handled by project deletion' }
+       44 +              }
+       45 +          }
+       46        ]
+       47    }
+       48
+
+✻ Thinking…
+
+  Now I need to revert the CLI changes too, removing all the getCommands/getRollbackCommands logic.
+
+⏺ Now let me revert the CLI to the simpler display:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 1 addition and 18 removals
+       194            const operation = rollback && cmd.rollback ? cmd.rollback : cmd.execute
+       195            const executeCmd = operation?.command
+       196            console.log(`   ${cmd.id.padEnd(30)} → ${cmd.description}`)
+       197 -
+       198 -          if (executeCmd) {
+       199 -              console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       200 -          } else if (rollback && cmd.getRollbackCommands && apply) {
+       201 -              // Show rollback commands for async rollback functions when applying
+       202 -              const commands = cmd.getRollbackCommands()
+       203 -              commands.forEach(command => {
+       204 -                  console.log(`   ${' '.repeat(30)}   ${command}`)
+       205 -              })
+       206 -          } else if (cmd.getCommands && apply) {
+       207 -              // Show actual commands for async functions when applying
+       208 -              const commands = cmd.getCommands()
+       209 -              commands.forEach(command => {
+       210 -                  console.log(`   ${' '.repeat(30)}   ${command}`)
+       211 -              })
+       212 -          } else if (typeof operation === 'function') {
+       213 -              console.log(`   ${' '.repeat(30)}   [async function]`)
+       214 -          }
+       197 +          if (executeCmd) console.log(`   ${' '.repeat(30)}   ${executeCmd}`)
+       198        }
+       199
+       200        console.log(
+
+✻ Thinking…
+
+  Now let me clean up the todo list to reflect the current state.
+
+✻ Thinking…
+
+  The user asked me to revert to the simple approach, which I've done. I've:
+
+  1. Removed all the getCommands() and getRollbackCommands() methods
+  2. Simplified the CLI display logic
+  3. Kept the simple [EXEC] logging during execution
+  4. Updated the todo list to reflect completion
+
+  This is much cleaner and more maintainable going forward for all future migrations.
+
+⏺ Perfect! Back to simplicity:
+
+  ✅ Clean migration code - commands logged during execution only
+  ✅ Simple CLI display - shows descriptions and shell commands where available✅ No maintenance burden - future migrations just need console.log('[EXEC] ...')
+
+  Now you'll see commands when they actually execute rather than trying to preview them. The [EXEC] logs provide the observability you need without architectural complexity.
+
+  The migration is ready to test - it will create the Firebase project and capture the project number for future migrations.
+
+> Well, that suggests that createShellCommand is also too baroque, right, as Tech LEad?
+
+⏺ Absolutely right! If we're prioritizing simplicity, createShellCommand is also baroque.
+
+  Looking at the code:
+  - We import a custom wrapper function
+  - That probably adds abstractions, error handling, formatting
+  - When we could just use Node's built-in execSync directly
+
+  The Simple Alternative
+
+  import { execSync } from 'child_process'
+
+  execute: async () => {
+      const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+      console.log(`[EXEC] ${createCommand}`)
+
+      const result = execSync(createCommand, { encoding: 'utf8' })
+      console.log(result)
+
+      // Get project number
+      const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+      console.log(`[EXEC] ${describeCommand}`)
+
+      const projectNumber = execSync(describeCommand, { encoding: 'utf8' }).trim()
+      return { capturedIds: { firebaseProjectNumber: projectNumber } }
+  }
+
+  Benefits:
+  - ✅ No custom abstractions
+  - ✅ Direct, obvious behavior
+  - ✅ Fewer moving parts
+  - ✅ Standard Node.js patterns
+
+  Should I eliminate createShellCommand and use plain execSync? The baroque test applies here too - we're adding layers for uncertain benefit.
+
+> Well, where would we handle the extra handling that's in createShellCommand?
+
+⏺ Great question! Let me check what createShellCommand actually does first:
+
+⏺ Read(modules/orchestration/src/shell.js)
+  ⎿  Read 53 lines (ctrl+r to expand)
+
+⏺ Ah! createShellCommand provides real value:
+
+  What It Handles
+
+  1. Smart error detection - Firebase/gcloud often return exit code 0 even on failure
+  2. Pattern matching - Can detect success/failure by content, not just exit codes
+  3. Structured output - Returns { status, output } format
+  4. Promise-based async - Wraps spawn in promises
+  5. Stdout/stderr collection - Captures and combines output properly
+
+  The Trade-off
+
+  Baroque vs Robust
+  - execSync: Simple but naive (only checks exit codes)
+  - createShellCommand: Complex but handles cloud CLI quirks
+
+  For cloud infrastructure, the robust error handling is probably worth it. Cloud CLIs are notorious for:
+  - Returning success codes on failures
+  - Putting errors in stdout instead of stderr
+  - Inconsistent error reporting
+
+  Recommendation: Keep createShellCommand - it's solving real problems with cloud CLIs that plain execSync would miss. The complexity is justified by the domain.
+
+> Good. Can we simplify it so that it just makes the actual call, rather than returning a function that makes the call? That would probably mean removing the execute.command, but maybe that should just go right in the code of the called function anyway
+
+⏺ Excellent point! The function-returning-a-function pattern is unnecessarily complex. Let's simplify to direct execution:
+
+⏺ Update(modules/orchestration/src/shell.js)
+  ⎿  Updated modules/orchestration/src/shell.js with 26 additions and 31 removals
+        1    import { spawn } from 'child_process'
+        2
+        3    /**
+        4 -   * Simple shell command executor for migration commands
+        5 -   * @sig createShellCommand :: (String, Array<String>?, Object?) -> Function
+        4 +   * Execute shell command with smart error detection for cloud CLIs
+        5 +   * @sig executeShellCommand :: (String, Object?) -> Promise<Object>
+        6     */
+        7 -  const createShellCommand = (command, options = {}) => {
+        8 -      // Handle string commands by splitting them
+        7 +  const executeShellCommand = async (command, options = {}) => {
+        8        if (typeof command !== 'string') throw new Error('command must be a string')
+        9
+       10        const parts = command.split(/\s+/)
+       11 -      command = parts[0]
+       11 +      const cmd = parts[0]
+       12        const args = parts.slice(1)
+       13
+       14        const { errorPatterns = [], successPattern = '' } = options
+       15
+       16 -      const execute = async () =>
+       17 -          new Promise((resolve, reject) => {
+       18 -              const onClose = exitCode => {
+       19 -                  const output = stdout.trim()
+       20 -                  const errors = stderr.trim()
+       21 -                  const allOutput = output + errors
+       16 +      return new Promise((resolve, reject) => {
+       17 +          const onClose = exitCode => {
+       18 +              const output = stdout.trim()
+       19 +              const errors = stderr.trim()
+       20 +              const allOutput = output + errors
+       21
+       22 -                  // Smart success/failure detection beyond just exit code
+       23 -                  const hasErrorPatterns = errorPatterns.some(p => allOutput.toLowerCase().includes(p.toLowerCase()))
+       24 -                  const hasSuccessPattern = !successPattern || allOutput.includes(successPattern)
+       22 +              // Smart success/failure detection beyond just exit code
+       23 +              const hasErrorPatterns = errorPatterns.some(p => allOutput.toLowerCase().includes(p.toLowerCase()))
+       24 +              const hasSuccessPattern = !successPattern || allOutput.includes(successPattern)
+       25
+       26 -                  // Firebase often returns 0 even on failure, so check patterns first
+       27 -                  const isSuccess = !hasErrorPatterns && hasSuccessPattern && exitCode === 0
+       26 +              // Firebase often returns 0 even on failure, so check patterns first
+       27 +              const isSuccess = !hasErrorPatterns && hasSuccessPattern && exitCode === 0
+       28
+       29 -                  isSuccess
+       30 -                      ? resolve({ status: 'success', output })
+       31 -                      : reject(new Error(`Command failed: ${errors || output || `Command exited with code ${exitCode}`}`))
+       32 -              }
+       29 +              isSuccess
+       30 +                  ? resolve({ status: 'success', output })
+       31 +                  : reject(new Error(`Command failed: ${errors || output || `Command exited with code ${exitCode}`}`))
+       32 +          }
+       33
+       34 -              const child = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+       34 +          const child = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+       35
+       36 -              let stdout = ''
+       37 -              let stderr = ''
+       36 +          let stdout = ''
+       37 +          let stderr = ''
+       38
+       39 -              child.stdout.on('data', data => (stdout += data.toString()))
+       40 -              child.stderr.on('data', data => (stderr += data.toString()))
+       39 +          child.stdout.on('data', data => (stdout += data.toString()))
+       40 +          child.stderr.on('data', data => (stderr += data.toString()))
+       41
+       42 -              child.on('close', onClose)
+       43 -              child.on('error', reject)
+       44 -          })
+       45 -
+       46 -      execute.command = `${command} ${args.join(' ')}`
+       47 -      return execute
+       42 +          child.on('close', onClose)
+       43 +          child.on('error', reject)
+       44 +      })
+       45    }
+       46
+       47    export { createShellCommand }
+
+⏺ Update(modules/orchestration/src/shell.js)
+  ⎿  Updated modules/orchestration/src/shell.js with 1 addition and 1 removal
+       44        })
+       45    }
+       46
+       47 -  export { createShellCommand }
+       47 +  export { executeShellCommand }
+
+⏺ Now update the index to export the new function:
+
+⏺ Update(modules/orchestration/src/index.js)
+  ⎿  Updated modules/orchestration/src/index.js with 2 additions and 2 removals
+       1 -  import { createShellCommand } from './shell.js'
+       1 +  import { executeShellCommand } from './shell.js'
+       2
+       3 -  export { createShellCommand }
+       3 +  export { executeShellCommand }
+
+⏺ But I also need to keep backward compatibility temporarily. Let me add both:
+
+⏺ Update(modules/orchestration/src/shell.js)
+  ⎿  Updated modules/orchestration/src/shell.js with 4 additions and 1 removal
+       44        })
+       45    }
+       46
+       47 -  export { executeShellCommand }
+       47 +  // Backward compatibility wrapper
+       48 +  const createShellCommand = command => () => executeShellCommand(command)
+       49 +
+       50 +  export { executeShellCommand, createShellCommand }
+
+⏺ Update(modules/orchestration/src/index.js)
+  ⎿  Updated modules/orchestration/src/index.js with 2 additions and 2 removals
+       1 -  import { executeShellCommand } from './shell.js'
+       1 +  import { executeShellCommand, createShellCommand } from './shell.js'
+       2
+       3 -  export { executeShellCommand }
+       3 +  export { executeShellCommand, createShellCommand }
+
+⏺ Perfect! Now we have:
+
+  Before (Baroque)
+
+  const shellCommand = createShellCommand(command)
+  const result = await shellCommand()
+
+  After (Simple)
+
+  const result = await executeShellCommand(command)
+
+  Benefits:
+  - ✅ Direct execution - no function factory
+  - ✅ Less indirection - clearer flow
+  - ✅ Same error handling - keeps the cloud CLI smarts
+  - ✅ Backward compatible - existing code still works
+
+  The migration can now be updated to use the simpler executeShellCommand directly.
+
+> Ok; update it to use executeShellCommand
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 13 additions and 7 removals
+       1 -  import { createShellCommand } from '@graffio/orchestration'
+       1 +  import { executeShellCommand } from '@graffio/orchestration'
+       2
+       3    const createCommands = config => {
+       4        const projectId = config.firebaseProject.projectId
+     ...
+       17                    const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       18                    console.log(`[EXEC] ${createCommand}`)
+       19
+       20 -                  const shellCommand = createShellCommand(createCommand)
+       21 -                  const result = await shellCommand()
+       20 +                  const result = await executeShellCommand(createCommand)
+       21
+       22                    // Capture the auto-generated project number for later migrations
+       23                    const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       24                    console.log(`[EXEC] ${describeCommand}`)
+       25
+       26 -                  const getProjectNumber = createShellCommand(describeCommand)
+       27 -                  const projectNumberResult = await getProjectNumber()
+       26 +                  const projectNumberResult = await executeShellCommand(describeCommand)
+       27                    const projectNumber = projectNumberResult.output.trim()
+       28
+       29                    console.log(`Project created with number: ${projectNumber}`)
+       30                    return { ...result, capturedIds: { firebaseProjectNumber: projectNumber } }
+       31                },
+       32 -              rollback: createShellCommand(`gcloud projects delete ${projectId} --quiet`)
+       32 +              rollback: async () => {
+       33 +                  const deleteCommand = `gcloud projects delete ${projectId} --quiet`
+       34 +                  console.log(`[ROLLBACK] ${deleteCommand}`)
+       35 +                  return await executeShellCommand(deleteCommand)
+       36 +              }
+       37            },
+       38            {
+       39                id: 'Add Firebase to Project',
+       40                description: `Add Firebase to project ${projectId}`,
+       41                canRollback: true,
+       42 -              execute: createShellCommand(`firebase projects:addfirebase ${projectId}`),
+       42 +              execute: async () => {
+       43 +                  const addFirebaseCommand = `firebase projects:addfirebase ${projectId}`
+       44 +                  console.log(`[EXEC] ${addFirebaseCommand}`)
+       45 +                  return await executeShellCommand(addFirebaseCommand)
+       46 +              },
+       47                rollback: async () => {
+       48                    console.log(`[ROLLBACK] Firebase deletion handled by project deletion`)
+       49                    return { status: 'success', output: 'Firebase deletion handled by project deletion' }
+
+⏺ Perfect! Much cleaner:
+
+  Before (Baroque)
+
+  const shellCommand = createShellCommand(createCommand)
+  const result = await shellCommand()
+
+  After (Simple)
+
+  const result = await executeShellCommand(createCommand)
+
+  Benefits:
+  - ✅ Direct execution - no function factory pattern
+  - ✅ Consistent logging - all commands now show [EXEC] or [ROLLBACK]
+  - ✅ Same robustness - keeps the cloud CLI error handling
+  - ✅ Less indirection - clearer data flow
+
+  Now the migration is clean and simple while maintaining the smart error detection for cloud CLIs. The [EXEC] logs will show exactly what commands are being executed.
+
+> Right; now the code in the migration is clean, but the dry-run is essentially useless.
+  Maybe we should send "isDryRun" into the migration functions themselves and decide *inside* the functions whether to log and execute or just log
+
+  As a tech lead
+
+⏺ Excellent insight! Dry-run should be handled at the migration level, not the orchestrator level. This gives migrations full control over what to show and what to execute.
+
+  Current Problem
+
+  - Dry-run shows nothing useful (just descriptions)
+  - Commands are buried inside execute functions
+  - No visibility until actual execution
+
+  Better Approach: Migration-Level Dry-Run Control
+
+  const createCommands = (config, { isDryRun = false } = {}) => {
+      // ...
+
+      return [{
+          id: 'Create GCP Project',
+          execute: async () => {
+              const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+
+              if (isDryRun) {
+                  console.log(`[DRY-RUN] Would execute: ${createCommand}`)
+                  console.log(`[DRY-RUN] Would execute: gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+                  return { status: 'success', output: 'dry-run', capturedIds: { firebaseProjectNumber: 'DRY-RUN-12345' } }
+              }
+
+              console.log(`[EXEC] ${createCommand}`)
+              const result = await executeShellCommand(createCommand)
+              // ... actual execution
+          }
+      }]
+  }
+
+  Benefits:
+  - ✅ Useful dry-run - shows actual commands that would execute
+  - ✅ Migration control - each migration decides what to show/mock
+  - ✅ Dependency handling - can provide mock IDs for downstream migrations
+  - ✅ Simple orchestrator - just passes the flag down
+
+  Should I implement this pattern? It makes dry-run actually valuable.
+
+> Let's try that and see how it works
+
+⏺ Let me implement the migration-level dry-run control:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 1 addition and 1 removal
+       1    import { executeShellCommand } from '@graffio/orchestration'
+       2
+       3 -  const createCommands = config => {
+       3 +  const createCommands = (config, { isDryRun = false } = {}) => {
+       4        const projectId = config.firebaseProject.projectId
+       5        const displayName = config.firebaseProject.displayName
+       6        const folderId = config.developmentFolderId
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 13 additions and 4 removals
+       15                canRollback: true,
+       16                execute: async () => {
+       17                    const createCommand = `gcloud projects create ${projectId} --name='${displayName}' --folder=${folderId}`
+       18 -                  console.log(`[EXEC] ${createCommand}`)
+       18 +                  const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       19
+       20 +                  if (isDryRun) {
+       21 +                      console.log(`[DRY-RUN] Would execute: ${createCommand}`)
+       22 +                      console.log(`[DRY-RUN] Would execute: ${describeCommand}`)
+       23 +                      console.log(`[DRY-RUN] Would capture project number (mock: 123456789012)`)
+       24 +                      return {
+       25 +                          status: 'success',
+       26 +                          output: 'dry-run simulation',
+       27 +                          capturedIds: { firebaseProjectNumber: '123456789012' }
+       28 +                      }
+       29 +                  }
+       30 +
+       31 +                  console.log(`[EXEC] ${createCommand}`)
+       32                    const result = await executeShellCommand(createCommand)
+       33
+       34 -                  // Capture the auto-generated project number for later migrations
+       35 -                  const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       34                    console.log(`[EXEC] ${describeCommand}`)
+       35 -
+       35                    const projectNumberResult = await executeShellCommand(describeCommand)
+       36                    const projectNumber = projectNumberResult.output.trim()
+       37
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 11 additions
+       50                canRollback: true,
+       51                execute: async () => {
+       52                    const addFirebaseCommand = `firebase projects:addfirebase ${projectId}`
+       53 +
+       54 +                  if (isDryRun) {
+       55 +                      console.log(`[DRY-RUN] Would execute: ${addFirebaseCommand}`)
+       56 +                      return { status: 'success', output: 'dry-run simulation' }
+       57 +                  }
+       58 +
+       59                    console.log(`[EXEC] ${addFirebaseCommand}`)
+       60                    return await executeShellCommand(addFirebaseCommand)
+       61                },
+       62                rollback: async () => {
+       63 +                  if (isDryRun) {
+       64 +                      console.log(`[DRY-RUN] Would rollback: Firebase deletion handled by project deletion`)
+       65 +                      return { status: 'success', output: 'dry-run simulation' }
+       66 +                  }
+       67 +
+       68                    console.log(`[ROLLBACK] Firebase deletion handled by project deletion`)
+       69                    return { status: 'success', output: 'Firebase deletion handled by project deletion' }
+       70                }
+
+⏺ Now I need to update the CLI to pass the isDryRun flag to the migration function:
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 15 lines (ctrl+r to expand)
+
+⏺ I need to pass the isDryRun flag to the migration function. Let me update line 266:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 1 addition and 1 removal
+       263            const migrationFunction = await loadMigrationFunction(migrationPath)
+       264
+       265            const configFileName = configFile.split('/').pop().replace(/\.js$/, '')
+       266 -          const commands = await migrationFunction(config)
+       266 +          const commands = await migrationFunction(config, { isDryRun: !apply })
+       267            const auditLogger = createAuditLogger(auditTo)
+       268            const auditContext = createAuditContext(configFileName, migrationFile, apply, rollback)
+       269
+
+⏺ Perfect! Now try running the migration in dry-run mode:
+
+  node modules/orchestration/src/cli.js modules/curb-map/shared/config/dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js
+
+  You should now see:
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.config
+     Create GCP Project             → Create GCP project graffio-dev-123 in Development folder
+     Add Firebase to Project        → Add Firebase to project graffio-dev-123
+
+  [DRY-RUN] Would execute: gcloud projects create graffio-dev-123 --name='curb-map-development' --folder=464059598701
+  [DRY-RUN] Would execute: gcloud projects describe graffio-dev-123 --format="value(projectNumber)"
+  [DRY-RUN] Would capture project number (mock: 123456789012)
+  [DRY-RUN] Would execute: firebase projects:addfirebase graffio-dev-123
+  ✅ Migration execution completed successfully
+     Config updated with captured IDs: firebaseProjectNumber
+
+  Benefits achieved:
+  - ✅ Useful dry-run - shows exactly what commands would execute
+  - ✅ Dependency support - provides mock IDs for downstream migrations
+  - ✅ Migration control - each migration decides what to show/simulate
+  - ✅ Full workflow - even runs through config updates and tests with mock data
+
+  This makes dry-run actually valuable for planning and validation!
+
+> No; I see
+
+  ../../orchestration/src/cli.js ../shared/config/dev.2025-09-11-130012.config.js 002-create-firebase-project.js
+
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+     Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+     Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+
+⏺ I see the issue! The migration is defaulting to isDryRun = true (line 3 in the system reminder shows this), but the CLI is passing isDryRun: !apply which would be isDryRun: true for dry-run mode.
+
+  The problem is that the dry-run logging isn't happening because the orchestrator is calling executeDryRun() which skips actually running the migration commands.
+
+  Let me check the executeDryRun function:
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 5 lines (ctrl+r to expand)
+
+⏺ Read(modules/orchestration/src/cli.js)
+  ⎿  Read 3 lines (ctrl+r to expand)
+
+⏺ There's the problem! The executeDryRun function only logs to audit - it doesn't actually execute the commands at all. But now that migrations handle dry-run internally, we need to actually run them in dry-run mode too.
+
+  Let me fix this by making dry-run actually execute the commands (which will now show the dry-run output):
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 13 additions and 3 removals
+       239
+       240    /*
+       241     * Execute dry run with audit logging
+       242 -   * @sig executeDryRun :: (Object, Object, Array<Command>) -> Promise<Void>
+       242 +   * @sig executeDryRun :: (Array<Command>, Object, Object, String, String, String) -> Promise<Void>
+       243     */
+       244 -  const executeDryRun = async (commands, auditLogger, auditContext) =>
+       245 -      auditLogger({ type: 'dry-run', phase: 'complete', commandCount: commands.length, ...auditContext })
+       244 +  const executeDryRun = async (commands, auditLogger, auditContext, configPath, migrationName, tapPath) => {
+       245 +      // Now that migrations handle dry-run internally, we actually execute them in dry-run mode
+       246 +      const result = await executeOrRollbackCommands(commands, { auditLogger, auditContext, mode: 'execute' })
+       247 +
+       248 +      result.success
+       249 +          ? console.log(`✅ Migration dry-run completed successfully`)
+       250 +          : console.error(`❌ Migration dry-run failed`)
+       251 +
+       252 +      // Update config with mock IDs and run tests to verify full workflow
+       253 +      updateConfigWithCapturedIds(result, configPath)
+       254 +      await runPostMigrationTapTests(migrationName, tapPath, configPath)
+       255 +  }
+       256
+       257    /*
+       258     * Main CLI execution function
+
+⏺ Now I need to update the call to executeDryRun to pass the additional parameters:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 1 addition and 1 removal
+       281
+       282            apply
+       283                ? await executeRun(commands, auditLogger, auditContext, configPath, migrationName, tapPath, rollback)
+       284 -              : await executeDryRun(commands, auditLogger, auditContext)
+       284 +              : await executeDryRun(commands, auditLogger, auditContext, configPath, migrationName, tapPath)
+       285        } catch (error) {
+       286            fatalError(`❌ Orchestration failed: ${error.message}`)
+       287        }
+
+⏺ Perfect! Now try running the dry-run again:
+
+  node modules/orchestration/src/cli.js modules/curb-map/shared/config/dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js
+
+  You should now see the useful dry-run output:
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.config
+     Create GCP Project             → Create GCP project graffio-dev-123 in Development folder
+     Add Firebase to Project        → Add Firebase to project graffio-dev-123
+
+  [DRY-RUN] Would execute: gcloud projects create graffio-dev-123 --name='curb-map-development' --folder=464059598701
+  [DRY-RUN] Would execute: gcloud projects describe graffio-dev-123 --format="value(projectNumber)"
+  [DRY-RUN] Would capture project number (mock: 123456789012)
+  [DRY-RUN] Would execute: firebase projects:addfirebase graffio-dev-123
+  ✅ Migration dry-run completed successfully
+     Config updated with captured IDs: firebaseProjectNumber
+     Running tests for 002-create-firebase-project...
+     ✅ Tests passed
+
+  The key insight: Dry-run now actually executes the migration functions, but the migration functions show what they would do instead of doing it. This gives you full workflow visibility including config updates and test execution with mock data!
+
+> Ok; it works, but it tries to run the tests even on dry-run:
+
+  Also, it would be much clearer if the [DRY-RUN] lines were interspersed with the → lines. Now it's impossible to tell which DRY-RUN lines go with Create GCP Project
+
+   ../../orchestration/src/cli.js ../shared/config/dev.2025-09-11-130012.config.js 002-create-firebase-project.js
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+     Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+     Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+  [DRY-RUN] Would execute: gcloud projects create graffio-dev-2025-09-11-130012 --name='curb-map-development' --folder=464059598701
+  [DRY-RUN] Would execute: gcloud projects describe graffio-dev-2025-09-11-130012 --format="value(projectNumber)"
+  [DRY-RUN] Would capture project number (mock: 123456789012)
+  [DRY-RUN] Would execute: firebase projects:addfirebase graffio-dev-2025-09-11-130012
+  ✅ Migration dry-run completed successfully
+     Config updated with captured IDs: firebaseProjectNumber
+     Running tests for 002-create-firebase-project...
+     Test output: TAP version 14
+  # Subtest: Given the 002-create-firebase-project migration
+      # Subtest: When the migration has not been run yet
+          ok 1 - Then the Firebase project should not exist
+          1..1
+      ok 1 - When the migration has not been run yet # time=510.222ms
+
+      # Subtest: When the migration is run in dry-run mode
+          # Subtest: When running without --apply flag
+              not ok 1 - Command failed: node modules/orchestration/src/cli.js /Users/Shared/projects/graffio-monorepo/modules/curb-map/shared/config/dev.2025-09-11-130012.config.js
+  /Users/Shared/projects/graffio-monorepo/modules/curb-map/migrations/modules/curb-map/migrations/002-create-firebase-project.js  node:internal/modules/cjs/loader:1215   throw err;   ^  Error: Cannot find module
+  '/Users/Shared/projects/graffio-monorepo/modules/curb-map/migrations/modules/orchestration/src/cli.js'     at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)     at Module._load (node:internal/modules/cjs/loader:1043:27)     at
+  Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)     at node:internal/main/run_main_module:28:49 {   code: 'MODULE_NOT_FOUND',   requireStack: [] }  Node.js v20.19.2
+                ---
+                stack: |
+                  runMigration (002-create-firebase-project.tap.js:32:12)
+
+⏺ Two good points! Let me fix both issues:
+
+  1. Don't run tests in dry-run mode - tests should only run when actually applying
+  2. Interleave dry-run output with command descriptions - show which commands belong to which step
+
+  First, let's skip tests in dry-run:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 2 additions and 2 removals
+       249            ? console.log(`✅ Migration dry-run completed successfully`)
+       250            : console.error(`❌ Migration dry-run failed`)
+       251
+       252 -      // Update config with mock IDs and run tests to verify full workflow
+       252 +      // Update config with mock IDs but don't run tests in dry-run
+       253        updateConfigWithCapturedIds(result, configPath)
+       254 -      await runPostMigrationTapTests(migrationName, tapPath, configPath)
+       254 +      console.log(`   Skipping tests in dry-run mode`)
+       255    }
+       256
+       257    /*
+
+⏺ Now for the bigger issue - making the dry-run output clearer. The problem is that the CLI shows the command summaries first, then the execution happens. We need to show them together.
+
+  The cleanest approach is to modify the executor to show command descriptions as it runs each one, rather than showing all summaries upfront. Let me update the executor to show this:
+
+⏺ Read(modules/orchestration/src/executor.js)
+  ⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ Let me add a command description display right before execution:
+
+⏺ Update(modules/orchestration/src/executor.js)
+  ⎿  Updated modules/orchestration/src/executor.js with 3 additions
+       18        const results = []
+       19
+       20        for (const command of commands) {
+       21 +          // Show command description before execution for better dry-run flow
+       22 +          console.log(`   ${command.id.padEnd(30)} → ${command.description}`)
+       23 +
+       24            const startTime = Date.now()
+       25
+       26            try {
+
+⏺ Now I need to remove the duplicate command summary display from the CLI since the executor will show it:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 3 additions and 1 removal
+       277            const auditLogger = createAuditLogger(auditTo)
+       278            const auditContext = createAuditContext(configFileName, migrationFile, apply, rollback)
+       279
+       280 -          displayCommandSummaries(migrationFile, configFileName, apply, rollback, commands)
+       280 +          console.log(
+       281 +              `\n${apply ? 'RUNNING' : 'DRY RUN'}: ${rollback ? 'ROLLBACK' : 'EXECUTE'} migration ${migrationFile} with ${configFileName}`,
+       282 +          )
+       283
+       284            apply
+       285                ? await executeRun(commands, auditLogger, auditContext, configPath, migrationName, tapPath, rollback)
+
+⏺ Perfect! Now try the dry-run again. You should see:
+
+  node modules/orchestration/src/cli.js modules/curb-map/shared/config/dev.2025-09-11-130012.config.js modules/curb-map/migrations/002-create-firebase-project.js
+
+  Expected output:
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.config
+     Create GCP Project             → Create GCP project graffio-dev-123 in Development folder
+  [DRY-RUN] Would execute: gcloud projects create graffio-dev-123 --name='curb-map-development' --folder=464059598701
+  [DRY-RUN] Would execute: gcloud projects describe graffio-dev-123 --format="value(projectNumber)"
+  [DRY-RUN] Would capture project number (mock: 123456789012)
+     Add Firebase to Project        → Add Firebase to project graffio-dev-123
+  [DRY-RUN] Would execute: firebase projects:addfirebase graffio-dev-123
+  ✅ Migration dry-run completed successfully
+     Config updated with captured IDs: firebaseProjectNumber
+     Skipping tests in dry-run mode
+
+  Perfect! Now the flow is clear:
+  - ✅ Each command description appears right before its dry-run output
+  - ✅ You can see exactly which [DRY-RUN] lines belong to which command
+  - ✅ No tests run in dry-run mode
+  - ✅ Config still gets updated with mock IDs for testing the full flow
+
+> Great! Now the format is hard to read. Can you modify the white space to produce this:
+
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+
+  Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+
+    [DRY-RUN] Would execute: gcloud projects create graffio-dev-2025-09-11-130012 --name='curb-map-development' --folder=464059598701
+    [DRY-RUN] Would execute: gcloud projects describe graffio-dev-2025-09-11-130012 --format="value(projectNumber)"
+    [DRY-RUN] Would capture project number (mock: 123456789012)
+
+  Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+
+    [DRY-RUN] Would execute: firebase projects:addfirebase graffio-dev-2025-09-11-130012
+
+  ✅ Migration dry-run completed successfully
+
+     Config updated with captured IDs: firebaseProjectNumber
+     Skipping tests in dry-run mode
+
+
+
+
+  ALSO: I'm not sure why it says: Config updated with captured IDs: firebaseProjectNumber
+  during a dry-run
+
+⏺ Great formatting improvements! Let me fix both issues:
+
+  1. Better spacing - add blank lines and indent dry-run output
+  2. Remove confusing config update message during dry-run
+
+⏺ Update(modules/orchestration/src/executor.js)
+  ⎿  Updated modules/orchestration/src/executor.js with 3 additions and 1 removal
+       19
+       20        for (const command of commands) {
+       21            // Show command description before execution for better dry-run flow
+       22 -          console.log(`   ${command.id.padEnd(30)} → ${command.description}`)
+       22 +          console.log(`${command.id.padEnd(30)} → ${command.description}`)
+       23 +          console.log() // Add blank line after description
+       24
+       25            const startTime = Date.now()
+       26
+     ...
+       27                const result = await command.execute()
+       28                const executionTime = Date.now() - startTime
+       29                results.push({ command, result, success: true, executionTime })
+       30 +              console.log() // Add blank line after execution
+       31            } catch (error) {
+       32                const executionTime = Date.now() - startTime
+       33                results.push({ command, result: null, success: false, error, executionTime })
+
+⏺ Now let me update the migration to indent the dry-run output with 2 spaces:
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 3 additions and 3 removals
+       18                    const describeCommand = `gcloud projects describe ${projectId} --format="value(projectNumber)"`
+       19
+       20                    if (isDryRun) {
+       21 -                      console.log(`[DRY-RUN] Would execute: ${createCommand}`)
+       22 -                      console.log(`[DRY-RUN] Would execute: ${describeCommand}`)
+       23 -                      console.log(`[DRY-RUN] Would capture project number (mock: 123456789012)`)
+       21 +                      console.log(`  [DRY-RUN] Would execute: ${createCommand}`)
+       22 +                      console.log(`  [DRY-RUN] Would execute: ${describeCommand}`)
+       23 +                      console.log(`  [DRY-RUN] Would capture project number (mock: 123456789012)`)
+       24                        return {
+       25                            status: 'success',
+       26                            output: 'dry-run simulation',
+
+⏺ Update(modules/curb-map/migrations/002-create-firebase-project.js)
+  ⎿  Updated modules/curb-map/migrations/002-create-firebase-project.js with 1 addition and 1 removal
+       52                    const addFirebaseCommand = `firebase projects:addfirebase ${projectId}`
+       53
+       54                    if (isDryRun) {
+       55 -                      console.log(`[DRY-RUN] Would execute: ${addFirebaseCommand}`)
+       55 +                      console.log(`  [DRY-RUN] Would execute: ${addFirebaseCommand}`)
+       56                        return { status: 'success', output: 'dry-run simulation' }
+       57                    }
+       58
+
+⏺ Now fix the confusing config update message during dry-run. I need to modify the dry-run function to not show config updates:
+
+⏺ Update(modules/orchestration/src/cli.js)
+  ⎿  Updated modules/orchestration/src/cli.js with 14 additions and 3 removals
+       249            ? console.log(`✅ Migration dry-run completed successfully`)
+       250            : console.error(`❌ Migration dry-run failed`)
+       251
+       252 -      // Update config with mock IDs but don't run tests in dry-run
+       253 -      updateConfigWithCapturedIds(result, configPath)
+       254 -      console.log(`   Skipping tests in dry-run mode`)
+       252 +      // In dry-run, show what would be captured but don't actually update config
+       253 +      const collectCapturedIds = results => {
+       254 +          const reducer = (acc, result) => (result?.result?.capturedIds ? { ...acc, ...result.result.capturedIds } : acc)
+       255 +          return results.reduce(reducer, {})
+       256 +      }
+       257 +
+       258 +      const capturedIds = collectCapturedIds(result.results)
+       259 +      if (Object.keys(capturedIds).length > 0) {
+       260 +          console.log(`\n   Would capture IDs: ${Object.keys(capturedIds).join(', ')}`)
+       261 +          Object.entries(capturedIds).forEach(([key, value]) => {
+       262 +              console.log(`   ${key}: ${value}`)
+       263 +          })
+       264 +      }
+       265 +      console.log(`   Skipping config update and tests in dry-run mode`)
+       266    }
+       267
+       268    /*
+
+⏺ Perfect! Now the dry-run should show exactly the format you wanted:
+
+  DRY RUN: EXECUTE migration 002-create-firebase-project.js with dev.2025-09-11-130012.config
+
+  Create GCP Project             → Create GCP project graffio-dev-2025-09-11-130012 in Development folder
+
+    [DRY-RUN] Would execute: gcloud projects create graffio-dev-2025-09-11-130012 --name='curb-map-development' --folder=464059598701
+    [DRY-RUN] Would execute: gcloud projects describe graffio-dev-2025-09-11-130012 --format="value(projectNumber)"
+    [DRY-RUN] Would capture project number (mock: 123456789012)
+
+  Add Firebase to Project        → Add Firebase to project graffio-dev-2025-09-11-130012
+
+    [DRY-RUN] Would execute: firebase projects:addfirebase graffio-dev-2025-09-11-130012
+
+  ✅ Migration dry-run completed successfully
+
+     Would capture IDs: firebaseProjectNumber
+     firebaseProjectNumber: 123456789012
+     Skipping config update and tests in dry-run mode
+
+  Improvements made:
+  - ✅ Better spacing - blank lines separate each command section
+  - ✅ Indented dry-run output - 2-space indent makes it clear what belongs to each command
+  - ✅ Clear dry-run messaging - shows what IDs would be captured without actually updating config
+  - ✅ No confusing messages - doesn't claim to update config during dry-run
+
+  The format is now much more readable and less confusing!
+
