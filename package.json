@@ -8,6 +8,9 @@
         "modules/*/*"
     ],
     "scripts": {
+        "types:generate" : "node modules/types-generation/src/type-generation-cli/cli.js generate",
+        "types:generate-all" : "node modules/types-generation/src/type-generation-cli/cli.js generate-all",
+        "types:watch"    : "node modules/types-generation/src/type-generation-cli/cli.js watch",
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",
         "precommit": "lint-staged",
         "tap": "yarn workspaces run tap"

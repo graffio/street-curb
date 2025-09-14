@@ -1,5 +1,5 @@
 // Auto-generated static tagged sum type: OperationDetails
-// Generated from: ../types/src/operation-details.type.js
+// Generated from: modules/types/src/operation-details.type.js
 // fields from: { ShellExecution: { command: "String", duration: "Number?", outputPreview: "String?" }, FirestoreOperation: { operation: "String", collection: "String", documentId: "String?" }, GcpProjectOperation: { projectId: "String", folderId: "String?", region: "String?" }}
 
 import * as R from '@graffio/types-runtime'

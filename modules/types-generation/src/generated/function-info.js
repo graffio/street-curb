@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: FunctionInfo
-// Generated from: ./src/types/function-info.type.js
+// Generated from: modules/types-generation/src/types/function-info.type.js
 // {
 //     typeName    : "String"
 //     functionName: "String"

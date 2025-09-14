@@ -11,9 +11,7 @@
         "test": "tap test/**/*.tap.js",
         "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
         "tap:file": "../../bash/run-tap.sh",
-        "cli": "node src/cli.js",
-        "types:generate" : "find ../types/src -name \"*.type.js\" -exec ../../bash/generate-type-file.sh {} src/types \\; && ../types-generation/src/generate-index-file.js src/types",
-        "types:watch"    : "onchange  '../types/src/*.type.js' -- sh -c 'yarn types:generate'"
+        "cli": "node src/cli.js"
     },
     "dependencies": {
         "@google-cloud/iam": "^2.3.0",

@@ -3,19 +3,18 @@
     "version": "0.1.0",
     "description": "Build tools for compile-time type generation",
     "type": "module",
-    "main": "src/generate-type-file.js",
+    "main": "src/type-generation-cli/cli.js",
     "private": true,
     "dependencies": {
         "acorn": "^8.15.0",
         "escodegen": "^2.1.0",
         "estree-walker": "^3.0.3",
-        "@graffio/functional": "0.1.0"
+        "@graffio/functional": "0.1.0",
+        "chokidar": "^4.0.1"
     },
     "scripts": {
         "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
-        "tap:file": "../../bash/run-tap.sh",
-        "types:generate": "find . -name '*.type.js' -exec sh -c 'bash/generate-type-file.sh \"$1\"' _ {} \\; && node src/generate-index-file.js test/generated && node src/generate-index-file.js src/generated",
-        "types:watch": "onchange 'test/types/*.type.js' 'src/types/*.type.js' -- sh -c 'bash/generate-type-file.sh {{file}} && node src/generate-index-file.js test/generated && node src/generate-index-file.js src/generated'"
+        "tap:file": "../../bash/run-tap.sh"
 
     }
 }

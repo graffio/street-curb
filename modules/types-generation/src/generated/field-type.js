@@ -1,5 +1,5 @@
 // Auto-generated static tagged sum type: FieldType
-// Generated from: ./src/types/field-type.type.js
+// Generated from: modules/types-generation/src/types/field-type.type.js
 // fields from: { StringType: { value: "String" }, RegexType: { value: "RegExp" }, ImportPlaceholder: { __importPlaceholder: "Boolean", source: "String", localName: "String" }}
 
 import * as R from '@graffio/types-runtime'

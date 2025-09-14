@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: ImportInfo
-// Generated from: ./src/types/import-info.type.js
+// Generated from: modules/types-generation/src/types/import-info.type.js
 // {
 //     source    : "String"
 //     specifiers: "Array"

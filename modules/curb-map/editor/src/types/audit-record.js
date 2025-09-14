@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: AuditRecord
-// Generated from: ../../types/src/audit-record.type.js
+// Generated from: modules/types/src/audit-record.type.js
 // {
 //     timestamp       : "String"
 //     eventType       : "String"
