@@ -1,5 +1,5 @@
 // Auto-generated static tagged sum type: TypeDefinition
-// Generated from: ./src/types/type-definition.type.js
+// Generated from: modules/types-generation/src/types/type-definition.type.js
 // fields from: { Tagged: { name: "String", kind: "String", fields: "Object" }, TaggedSum: { name: "String", kind: "String", variants: "Object" }}
 
 import * as R from '@graffio/types-runtime'
@@ -10,8 +10,6 @@ import * as R from '@graffio/types-runtime'
 //
 // -------------------------------------------------------------------------------------------------------------
 const TypeDefinition = {
-    '@@typeName': 'TypeDefinition',
-    '@@tagNames': ['Tagged', 'TaggedSum'],
     toString: () => 'TypeDefinition',
     is: v => {
         if (typeof v !== 'object') return false

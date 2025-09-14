@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: Segment
-// Generated from: ../types/segment.type.js
+// Generated from: modules/curb-map/types/segment.type.js
 // {
 //     use   : "String"
 //     length: "Number"

@@ -11,9 +11,7 @@
         "build-storybook": "storybook build",
         "tap"            : "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
         "tap:file"       : "../../bash/run-tap.sh",
-        "validate-style" : "node ../style-validator/src/cli.js",
-        "types:generate" : "find ../types ../../types/src -name \"*.type.js\" -exec ../../../bash/generate-type-file.sh {} src/types \\; && ../../types-generation/src/generate-index-file.js src/types",
-        "types:watch"    : "onchange 'types/*.type.js' '../../types/src/*.type.js' -- sh -c 'yarn types:generate'"
+        "validate-style" : "node ../style-validator/src/cli.js"
     },
     "devDependencies": {
         "@chromatic-com/storybook": "^4.0.1",

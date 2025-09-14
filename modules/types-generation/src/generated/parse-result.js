@@ -1,5 +1,5 @@
 // Auto-generated static tagged type: ParseResult
-// Generated from: ./src/types/parse-result.type.js
+// Generated from: modules/types-generation/src/types/parse-result.type.js
 // {
 //     typeDefinition: "Object"
 //     imports       : "Array"
