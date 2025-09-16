@@ -7,10 +7,6 @@ import { spawn } from 'child_process'
 const executeShellCommand = async (command, options = {}) => {
     if (typeof command !== 'string') throw new Error('command must be a string')
 
-    const parts = command.split(/\s+/)
-    const cmd = parts[0]
-    const args = parts.slice(1)
-
     const { errorPatterns = [], successPattern = '' } = options
 
     return new Promise((resolve, reject) => {
@@ -31,8 +27,8 @@ const executeShellCommand = async (command, options = {}) => {
                 : reject(new Error(`Command failed: ${errors || output || `Command exited with code ${exitCode}`}`))
         }
 
-        console.log(`    [EXEC] ${cmd} ${args.join(' ')}`)
-        const child = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+        console.log(`    [EXEC] ${command}`)
+        const child = spawn(command, { shell: true, stdio: ['pipe', 'pipe', 'pipe'] })
 
         let stdout = ''
         let stderr = ''

@@ -13,7 +13,7 @@ const createCommands = (config, { isDryRun = true } = {}) => {
 
     // Get the project number from GCP
     const getGcpProjectNumber = async () =>
-        await shellBuilder(`gcloud projects describe ${projectId} --format=value(projectNumber)`)
+        await shellBuilder(`gcloud projects describe ${projectId} --format="value(projectNumber)"`)
             .forMigration(migrationId, 'get-existing-project-number')
             .dryRun(isDryRun)
             .run()
@@ -34,6 +34,7 @@ const createCommands = (config, { isDryRun = true } = {}) => {
                 const projectNumber = gcpResult.output.trim()
                 return { output: projectNumber }
             }
+
             return null
         } catch (error) {
             // If listing fails, assume project doesn't exist
@@ -77,7 +78,7 @@ const createCommands = (config, { isDryRun = true } = {}) => {
     const moveProjectToFolder = async () => {
         // Check if project is already in correct folder
         try {
-            const result = await shellBuilder(`gcloud projects describe ${projectId} --format=value(parent.id)`)
+            const result = await shellBuilder(`gcloud projects describe ${projectId} --format="value(parent.id)"`)
                 .forMigration(migrationId, 'check-current-folder')
                 .dryRun(isDryRun)
                 .run()
@@ -107,7 +108,7 @@ const createCommands = (config, { isDryRun = true } = {}) => {
         // Check if billing is already attached
         try {
             const result = await shellBuilder(
-                `gcloud billing projects describe ${projectId} --format=value(billingAccountName)`,
+                `gcloud billing projects describe ${projectId} --format="value(billingAccountName)"`,
             )
                 .forMigration(migrationId, 'check-billing-account')
                 .dryRun(isDryRun)
