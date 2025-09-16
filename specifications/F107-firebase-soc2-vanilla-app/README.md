@@ -42,14 +42,16 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 - **`architecture.md`** - Technical architecture and data model
 - **`roadmap.md`** - Detailed 6-week implementation sequence
 - **`decisions.md`** - All decisions made and remaining questions
-- **`phase1-infrastructure.md`** through **`phase6-billing.md`** - Implementation details
+- **`migration-testing-strategy.md`** - Temporary environment testing approach
+- **`phase2-events.md`** through **`phase6-billing.md`** - Implementation details
 
 ## Quick Start
 
 1. Read `architecture.md` for core patterns
 2. Follow `roadmap.md` for implementation sequence
 3. Check `decisions.md` for any remaining questions
-4. Start with `phase1-infrastructure.md`
+4. Review `migration-testing-strategy.md` for deployment approach
+5. Continue with `phase2-events.md` (infrastructure foundation complete)
 
 ## Success Criteria
 
