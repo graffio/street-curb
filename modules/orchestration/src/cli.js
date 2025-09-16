@@ -195,10 +195,24 @@ const executeMigration = async (commands, configPath, migrationName, tapPath, mo
         if (Object.keys(capturedIds).length)
             console.log(`⚠️ Would capture IDs: [${Object.keys(capturedIds).join(', ')}]`)
 
-        console.log(`⚠️ Skipping config update and tests in dry-run mode\n`)
+        console.log(`⚠️ Skipping config update and tests in dry-run mode`)
+        console.log(``)
+        console.log(`Next steps:`)
+        console.log(`  # Execute the migration:`)
+        console.log(`  ${process.argv.join(' ')} --apply`)
+        console.log(``)
     } else if (mode === 'execute') {
         updateConfigWithCapturedIds(result, configPath)
         await runPostMigrationTapTests(migrationName, tapPath, configPath)
+
+        console.log(``)
+        console.log(`Next steps:`)
+        console.log(`  # Verify results manually:`)
+        console.log(`  node ${tapPath.replace(process.cwd() + '/', '')} "${configPath}"`)
+        console.log(``)
+        console.log(`  # Test idempotency:`)
+        console.log(`  ${process.argv.join(' ')}`)
+        console.log(``)
     }
 }
 
@@ -215,7 +229,7 @@ const main = async () => {
         const configPath = resolve(configFile)
         const migrationPath = resolve(migrationFile)
         const migrationName = basename(migrationPath, '.js')
-        const tapPath = join(dirname(migrationPath), `${migrationName}.tap.js`)
+        const tapPath = join(dirname(migrationPath), `../test/${migrationName}.tap.js`)
 
         const config = await loadConfig(configPath)
         const migrationFunction = await loadMigrationFunction(migrationPath)
