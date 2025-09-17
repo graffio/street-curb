@@ -1,5 +1,5 @@
 import Generator from './codegen-helpers/tagged-type-function-generators.js'
-import { prettierCode, stringifyObject, stringifyObjectAsMultilineComment } from './prettier-code.js'
+import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
 
 /*
  * Generate static tagged type (single constructor)
@@ -9,9 +9,7 @@ const generateStaticTaggedType = async typeDefinition => {
     const { name, fields, imports = [], functions = [] } = typeDefinition
 
     const code = `
-        // Auto-generated static tagged type: ${name}
-        // Generated from: ${typeDefinition.relativePath}
-        ${stringifyObjectAsMultilineComment(typeDefinition.fields)}
+        ${stringifyObjectAsMultilineComment(typeDefinition.fields, typeDefinition.relativePath, name)}
         
         ${generateImportsSection(imports)}
         import * as R from '@graffio/types-runtime'
@@ -80,11 +78,8 @@ const generateStaticTaggedSumType = async typeDefinition => {
         .join('\n\n')
     const matchFunction = generateMatchFunction(variantNames)
 
-    const fields = stringifyObject(typeDefinition.variants)
     const code = `
-        // Auto-generated static tagged sum type: ${name}
-        // Generated from: ${typeDefinition.relativePath}
-        // fields from: ${fields}
+        ${stringifyObjectAsMultilineComment(typeDefinition.variants, typeDefinition.relativePath, name)}
         
         ${generateImportsSection(imports)}
         import * as R from '@graffio/types-runtime'

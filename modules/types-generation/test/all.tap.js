@@ -1425,3 +1425,37 @@ export { TestTransaction } from './test-transaction-unit.js'`
 
     t.end()
 })
+
+tap.test('Special handling for FieldTypes imports and FieldTypes.X field descriptors', t => {
+    t.test('When I examine the actual generated FieldTypesTest file', t => {
+        const generatedCode = fs.readFileSync('test/generated/field-types-test.js', 'utf8')
+
+        // Should automatically import FieldTypes
+        t.ok(
+            generatedCode.includes("import { FieldTypes } from '@graffio/types'"),
+            'Then FieldTypes import is automatically added',
+        )
+
+        // Should preserve FieldTypes.correlationId references (not inline)
+        t.ok(
+            generatedCode.includes('FieldTypes.correlationId'),
+            'Then FieldTypes references are preserved, not inlined',
+        )
+
+        // Should use validateRegex instead of validateTag for FieldTypes
+        t.ok(
+            generatedCode.includes('R.validateRegex') && generatedCode.includes('FieldTypes.correlationId'),
+            'Then uses validateRegex with FieldTypes reference',
+        )
+
+        // Should NOT use validateTag with FieldTypes strings (old broken behavior)
+        t.notOk(
+            generatedCode.includes('validateTag') && generatedCode.includes("'FieldTypes.correlationId'"),
+            'Then no longer uses broken validateTag with string literal',
+        )
+
+        t.end()
+    })
+
+    t.end()
+})

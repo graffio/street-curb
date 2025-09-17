@@ -148,6 +148,10 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
  */
 // prettier-ignore
 const generateTypeCheck = (constructorName, name, fieldType) => {
+    // Handle FieldTypes references specially
+    if (typeof fieldType === 'object' && fieldType.__fieldTypesReference)
+        return `R.validateRegex('${constructorName}', ${fieldType.fullReference}, '${name}', false, ${name})`
+    
     /*
      * Checking an array involves 2 separate tests: is the value an array to the proper arrayDepth
      * Does the first completely-nested element match the fieldType?
@@ -159,7 +163,7 @@ const generateTypeCheck = (constructorName, name, fieldType) => {
 
     const { baseType, optional, regex, arrayDepth, taggedType } = fieldType
     const containedTag = taggedType ? `"${taggedType}"` : undefined
-    
+
     if (baseType === 'Any')     return ''
     if (arrayDepth)             return `R.validateArray(  '${constructorName}', ${arrayDepth}, '${baseType}', ${containedTag}, '${name}', ${optional}, ${name})`
     if (regex)                  return `R.validateRegex(  '${constructorName}', ${regex},                                      '${name}', ${optional}, ${name})`
