@@ -1,60 +1,56 @@
-import { shellBuilder } from '@graffio/orchestration'
+import { executeShellCommand } from '@graffio/orchestration'
 
-const migrationId = '003-configure-authentication'
+const getAccessTokenForProject = async () => {
+    const result = await executeShellCommand('gcloud auth application-default print-access-token')
+    return result.output.trim()
+}
 
-// helper to hide thrown errors that just mean "isn't configured yet")
-const runShellCommandSwallowingThrow = async (command, operationName, isDryRun) => {
+const tryShellCommand = async (command, operationName) => {
     try {
-        const result = await shellBuilder(command).forMigration(migrationId, operationName).dryRun(isDryRun).run()
+        console.log(`    [EXEC] ${operationName}`)
+        const result = await executeShellCommand(command)
         return result.output
     } catch (error) {
-        console.error(error)
+        console.error(`    [ERROR] ${operationName} failed:`, error.message)
         return null
     }
 }
-const getAccessTokenForProject = async projectId => {
-    // Get token - quota project will be set via X-goog-user-project header in curl
-    const token = await shellBuilder(`gcloud auth application-default print-access-token`)
-        .forMigration(migrationId, 'get-auth-token')
-        .run()
-
-    return token.output.trim()
-}
 
 const enableMagicLink = async (projectId, isDryRun) => {
-    // Check current auth config using Admin v2 API
-    const accessToken = await getAccessTokenForProject(projectId)
+    console.log(`    [INFO] Starting magic link configuration for ${projectId}`)
+
+    const accessToken = await getAccessTokenForProject()
     const getConfigCommand = `curl -H "Authorization: Bearer ${accessToken}" -H "X-goog-user-project: ${projectId}" "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config"`
-    const addMagicLink = `curl -X PATCH -H "Authorization: Bearer ${accessToken}" -H "x-goog-user-project: ${projectId}" -H "Content-Type: application/json" -d '{"signIn":{"email":{"enabled":true,"passwordRequired":false}}}' "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config?updateMask=signIn.email.enabled,signIn.email.passwordRequired"`
 
-    const authConfigTest = await runShellCommandSwallowingThrow(getConfigCommand, 'check-auth-config', isDryRun)
+    const authConfigTest = await tryShellCommand(getConfigCommand, 'check-auth-config')
     if (!authConfigTest) throw new Error('Firebase authentication not initialized')
-
-    console.log(`    [DEBUG] Current auth config:`, authConfigTest)
 
     if (authConfigTest.includes('"email"') && authConfigTest.includes('"enableEmailLinkSignin":true')) {
         console.log(`    [SKIP] Email authentication already configured`)
         return { status: 'success', output: 'email auth already enabled' }
     }
 
-    await shellBuilder(addMagicLink).forMigration(migrationId, 'enable-magic-link-auth').dryRun(isDryRun).run()
+    const addMagicLink = `curl -X PATCH -H "Authorization: Bearer ${accessToken}" -H "x-goog-user-project: ${projectId}" -H "Content-Type: application/json" -d '{"signIn":{"email":{"enabled":true,"passwordRequired":false}}}' "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config?updateMask=signIn.email.enabled,signIn.email.passwordRequired"`
 
-    // Verify the configuration was actually set
-    const verifyCommand = `curl -H "Authorization: Bearer ${accessToken}" -H "X-goog-user-project: ${projectId}" "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config"`
-    const verifyResult = await runShellCommandSwallowingThrow(verifyCommand, 'verify-auth-config', isDryRun)
-    console.log(`    [DEBUG] Config after PATCH:`, verifyResult)
+    if (isDryRun) {
+        console.log(`    [DRY-RUN] ${addMagicLink}`)
+    } else {
+        console.log(`    [EXEC] enable-magic-link-auth`)
+        await executeShellCommand(addMagicLink)
+        console.log(`    [EXEC] Magic link authentication enabled`)
+    }
 
-    if (!isDryRun) console.log(`    [EXEC] Magic link authentication enabled`)
     return { status: 'success', output: 'magic link auth enabled' }
 }
 
 const configureAuthorizedDomains = async (projectId, isDryRun) => {
-    const authDomain = `${projectId}.firebaseapp.com`
-    const accessToken = await getAccessTokenForProject(projectId)
+    console.log(`    [INFO] Starting authorized domains configuration for ${projectId}`)
 
+    const authDomain = `${projectId}.firebaseapp.com`
+    const accessToken = await getAccessTokenForProject()
     const getConfigCommand = `curl -H "Authorization: Bearer ${accessToken}" -H "X-goog-user-project: ${projectId}" "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config"`
 
-    const currentConfig = await runShellCommandSwallowingThrow(getConfigCommand, 'check-authorized-domains', isDryRun)
+    const currentConfig = await tryShellCommand(getConfigCommand, 'check-authorized-domains')
     if (currentConfig && currentConfig.includes('localhost') && currentConfig.includes(authDomain)) {
         console.log(`    [SKIP] Authorized domains already configured`)
         return { status: 'success', output: 'auth domains already configured' }
@@ -62,9 +58,14 @@ const configureAuthorizedDomains = async (projectId, isDryRun) => {
 
     const patchCommand = `curl -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config" -H "Authorization: Bearer ${accessToken}" -H "X-goog-user-project: ${projectId}" -H "Content-Type: application/json" -d '{"authorizedDomains":["localhost","127.0.0.1","${authDomain}"]}'`
 
-    await shellBuilder(patchCommand).forMigration(migrationId, 'configure-authorized-domains').dryRun(isDryRun).run()
+    if (isDryRun) {
+        console.log(`    [DRY-RUN] ${patchCommand}`)
+    } else {
+        console.log(`    [EXEC] configure-authorized-domains`)
+        await executeShellCommand(patchCommand)
+        console.log(`    [EXEC] Authorized domains configured: localhost, 127.0.0.1, ${authDomain}`)
+    }
 
-    if (!isDryRun) console.log(`    [EXEC] Authorized domains configured: localhost, 127.0.0.1, ${authDomain}`)
     return { status: 'success', output: 'auth domains configured' }
 }
 

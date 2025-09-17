@@ -1,3 +1,3 @@
-import { shellBuilder } from './shell-builder.js'
+import { executeShellCommand } from './shell.js'
 
-export { shellBuilder }
+export { executeShellCommand }
