@@ -1,14 +1,16 @@
+import cuid2 from '@paralleldrive/cuid2'
 import tap from 'tap'
 
 import { logOrRunShellCommand } from '../src/audit.js'
 
+const cuid6 = cuid2.init({ length: 6 })
+
 const soc2Data = {
-    migrationId: 'test',
-    operation: 'operation',
-    sessionId: 'sessionId',
-    userId: 'userId',
+    correlationId: '003-configure-test:' + cuid6(),
+    userId: 'a@b.com',
     sourceIP: '127.0.0.1',
-    resource: 'resource',
+    environment: 'development',
+    resource: 'infrastructure',
 }
 
 tap.test('Given dry-run helper functions', async t => {

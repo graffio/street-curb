@@ -1,20 +1,21 @@
-// Auto-generated static tagged type: AuditRecord
-// Generated from: modules/types/src/audit-record.type.js
-// {
-//     timestamp       : "String"
-//     eventType       : "String"
-//     userId          : "String"
-//     resource        : "String"
-//     action          : "String"
-//     outcome         : "String"
-//     sourceIP        : "String"
-//     operationDetails: "OperationDetails?"
-//     errorMessage    : "String?"
-//     sessionId       : "String?"
-//     environment     : "String?"
-//     migrationId     : "String?"
-//     auditVersion    : "String"
-// }
+/*  AuditRecord generated from: modules/types/src/audit-record.type.js
+
+    timestamp       : FieldTypes.timestamp,
+    eventType       : FieldTypes.event,
+    userId          : FieldTypes.email,
+    resource        : FieldTypes.resourceName,
+    action          : FieldTypes.resourceName,
+    outcome         : /^(success|failure|pending)$/,
+    sourceIP        : FieldTypes.ipv4Type,
+    auditVersion    : FieldTypes.semanticVersion,
+    operationDetails: "OperationDetails",
+    errorMessage    : "String?",
+    correlationId   : FieldTypes.correlationId,
+    environment     : FieldTypes.environment
+
+*/
+
+import { FieldTypes } from '@graffio/types'
 
 import * as R from '@graffio/types-runtime'
 
@@ -31,91 +32,94 @@ const AuditRecord = function AuditRecord(
     action,
     outcome,
     sourceIP,
+    auditVersion,
     operationDetails,
     errorMessage,
-    sessionId,
+    correlationId,
     environment,
-    migrationId,
-    auditVersion,
 ) {
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.timestamp,
         'timestamp',
         false,
         timestamp,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.event,
         'eventType',
         false,
         eventType,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.email,
         'userId',
         false,
         userId,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.resourceName,
         'resource',
         false,
         resource,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.resourceName,
         'action',
         false,
         action,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        /^(success|failure|pending)$/,
         'outcome',
         false,
         outcome,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.ipv4Type,
         'sourceIP',
         false,
         sourceIP,
     )
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.semanticVersion,
+        'auditVersion',
+        false,
+        auditVersion,
+    )
     R.validateTag(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
         'OperationDetails',
         'operationDetails',
-        true,
+        false,
         operationDetails,
     )
     R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
         'errorMessage',
         true,
         errorMessage,
     )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
-        'sessionId',
-        true,
-        sessionId,
-    )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
-        'environment',
-        true,
-        environment,
-    )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
-        'migrationId',
-        true,
-        migrationId,
-    )
-    R.validateString(
-        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, operationDetails, errorMessage, sessionId, environment, migrationId, auditVersion)',
-        'auditVersion',
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.correlationId,
+        'correlationId',
         false,
-        auditVersion,
+        correlationId,
+    )
+    R.validateRegex(
+        'AuditRecord(timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
+        FieldTypes.environment,
+        'environment',
+        false,
+        environment,
     )
 
     const result = Object.create(prototype)
@@ -126,12 +130,11 @@ const AuditRecord = function AuditRecord(
     result.action = action
     result.outcome = outcome
     result.sourceIP = sourceIP
-    if (operationDetails != null) result.operationDetails = operationDetails
-    if (errorMessage != null) result.errorMessage = errorMessage
-    if (sessionId != null) result.sessionId = sessionId
-    if (environment != null) result.environment = environment
-    if (migrationId != null) result.migrationId = migrationId
     result.auditVersion = auditVersion
+    result.operationDetails = operationDetails
+    if (errorMessage != null) result.errorMessage = errorMessage
+    result.correlationId = correlationId
+    result.environment = environment
     return result
 }
 
@@ -142,7 +145,7 @@ const AuditRecord = function AuditRecord(
 // -------------------------------------------------------------------------------------------------------------
 const prototype = {
     toString: function () {
-        return `AuditRecord(${R._toString(this.timestamp)}, ${R._toString(this.eventType)}, ${R._toString(this.userId)}, ${R._toString(this.resource)}, ${R._toString(this.action)}, ${R._toString(this.outcome)}, ${R._toString(this.sourceIP)}, ${R._toString(this.operationDetails)}, ${R._toString(this.errorMessage)}, ${R._toString(this.sessionId)}, ${R._toString(this.environment)}, ${R._toString(this.migrationId)}, ${R._toString(this.auditVersion)})`
+        return `AuditRecord(${R._toString(this.timestamp)}, ${R._toString(this.eventType)}, ${R._toString(this.userId)}, ${R._toString(this.resource)}, ${R._toString(this.action)}, ${R._toString(this.outcome)}, ${R._toString(this.sourceIP)}, ${R._toString(this.auditVersion)}, ${R._toString(this.operationDetails)}, ${R._toString(this.errorMessage)}, ${R._toString(this.correlationId)}, ${R._toString(this.environment)})`
     },
     toJSON() {
         return this
@@ -170,12 +173,11 @@ AuditRecord.from = o =>
         o.action,
         o.outcome,
         o.sourceIP,
+        o.auditVersion,
         o.operationDetails,
         o.errorMessage,
-        o.sessionId,
+        o.correlationId,
         o.environment,
-        o.migrationId,
-        o.auditVersion,
     )
 
 export { AuditRecord }
