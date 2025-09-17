@@ -232,9 +232,18 @@ const resolveIdentifierValue = (node, imports) => {
  * @sig resolveMemberExpressionValue :: (ASTNode, [ImportInfo]) -> Any
  */
 const resolveMemberExpressionValue = (node, imports) => {
+    const fieldType = { __fieldTypesReference: true, source: '@graffio/types' }
+
     const object = resolvePropertyValue(node.object, imports)
     const property = node.property.name
-    return object?.[property] || `${object}.${property}`
+
+    // Special handling for FieldTypes.X; preserve FieldTypes.X in the output
+    if (node.object.name === 'FieldTypes') return { ...fieldType, property, fullReference: `FieldTypes.${property}` }
+
+    // special handling for A.B (eg. replace StringType.Id with the actual regex for UUID)
+    if (object) return object?.[property]
+
+    throw new Error(`Don't understand ${JSON.stringify(object)} node: ${JSON.stringify(node)}!`)
 }
 
 /*

@@ -35,18 +35,44 @@ const stringifyObject = o =>
         .replace(/{/g, '{ ') // add a space just inside starting braces
         .replace(/([^}])}/g, '$1 }') // add a space just inside closing braces
 
-const stringifyObjectAsMultilineComment = o => {
+const formatValueForComment = v => {
+    if (v && v.__fieldTypesReference) return v.fullReference
+    if (v instanceof RegExp) return v.toString()
+    return JSON.stringify(v)
+}
+
+const formatFieldLine = (key, value, maxKeyLen, indent, isLast) => {
+    const padded = key.padEnd(maxKeyLen, ' ')
+    const comma = isLast ? '' : ','
+    const spacing = '    '.repeat(indent)
+    return `${spacing}${padded}: ${formatValueForComment(value)}${comma}`
+}
+
+const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
+    const processTagged = () => {
+        const maxKeyLen = Math.max(...entries.map(([k]) => k.length))
+        const fieldCount = entries.length
+        const fieldLines = entries.map(([k, v], i) => formatFieldLine(k, v, maxKeyLen, 1, i === fieldCount - 1))
+        return [header, '', ...fieldLines, footer].join('\n')
+    }
+
+    const processTaggedSumVariant = ([variantName, fields]) => {
+        const fieldEntries = Object.entries(fields)
+        const fieldCount = fieldEntries.length
+        const maxKeyLen = Math.max(...fieldEntries.map(([k]) => k.length))
+        const fieldLines = fieldEntries.map(([k, v], i) => formatFieldLine(k, v, maxKeyLen, 2, i === fieldCount - 1))
+        return [`    ${variantName}`, ...fieldLines].join('\n')
+    }
+
+    const processTaggedSum = () => [header, '', ...entries.map(processTaggedSumVariant), footer].join('\n')
+
     const entries = Object.entries(o)
-    const maxKeyLen = Math.max(...entries.map(([k]) => k.length))
+    const header = `/*  ${typeName} generated from: ${generatedFrom}`
+    const footer = '\n*/'
 
-    const header = '// {'
-    const body = entries.map(([k, v]) => {
-        const padded = k.padEnd(maxKeyLen, ' ')
-        return `//     ${padded}: ${JSON.stringify(v)}`
-    })
-    const footer = '// }'
-
-    return [header, ...body, footer].join('\n')
+    return entries.length > 1 && entries.every(([k, v]) => typeof v === 'object' && v !== null)
+        ? processTaggedSum()
+        : processTagged()
 }
 
 export { prettierCode, stringifyObject, stringifyObjectAsMultilineComment }

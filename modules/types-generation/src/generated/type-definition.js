@@ -1,6 +1,15 @@
-// Auto-generated static tagged sum type: TypeDefinition
-// Generated from: modules/types-generation/src/types/type-definition.type.js
-// fields from: { Tagged: { name: "String", kind: "String", fields: "Object" }, TaggedSum: { name: "String", kind: "String", variants: "Object" }}
+/*  TypeDefinition generated from: ./src/types/type-definition.type.js
+
+    Tagged
+        name  : "String",
+        kind  : "String",
+        fields: "Object"
+    TaggedSum
+        name    : "String",
+        kind    : "String",
+        variants: "Object"
+
+*/
 
 import * as R from '@graffio/types-runtime'
 

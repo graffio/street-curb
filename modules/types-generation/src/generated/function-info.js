@@ -1,11 +1,11 @@
-// Auto-generated static tagged type: FunctionInfo
-// Generated from: modules/types-generation/src/types/function-info.type.js
-// {
-//     typeName    : "String"
-//     functionName: "String"
-//     node        : "Object"
-//     sourceCode  : "String"
-// }
+/*  FunctionInfo generated from: ./src/types/function-info.type.js
+
+    typeName    : "String",
+    functionName: "String",
+    node        : "Object",
+    sourceCode  : "String"
+
+*/
 
 import * as R from '@graffio/types-runtime'
 
