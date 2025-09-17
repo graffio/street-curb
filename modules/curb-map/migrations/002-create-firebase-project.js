@@ -1,31 +1,35 @@
-import { shellBuilder } from '@graffio/orchestration'
+import { executeShellCommand } from '@graffio/orchestration'
 
 const createCommands = (config, { isDryRun = true } = {}) => {
     const projectId = config.firebaseProject.projectId
     const displayName = config.firebaseProject.displayName
     const folderId = config.developmentFolderId
     const billingAccountId = config.billingAccountId
-    const migrationId = '002-create-firebase-project'
 
     if (!projectId) throw new Error('Firebase projectId must be defined in config.firebaseProject.projectId')
     if (!folderId) throw new Error('developmentFolderId must be defined in config')
     if (!billingAccountId) throw new Error('billingAccountId must be defined in config')
 
     // Get the project number from GCP
-    const getGcpProjectNumber = async () =>
-        await shellBuilder(`gcloud projects describe ${projectId} --format="value(projectNumber)"`)
-            .forMigration(migrationId, 'get-existing-project-number')
-            .dryRun(isDryRun)
-            .run()
+    const getGcpProjectNumber = async () => {
+        console.log(`    [EXEC] get-existing-project-number`)
+        if (isDryRun) {
+            console.log(`    [DRY-RUN] gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+            return { output: '123456789012' }
+        }
+        return await executeShellCommand(`gcloud projects describe ${projectId} --format="value(projectNumber)"`)
+    }
 
     const checkExistingProject = async () => {
         try {
-            const result = await shellBuilder(`firebase projects:list`)
-                .forMigration(migrationId, 'check-existing-firebase-project')
-                .dryRun(isDryRun)
-                .run()
+            console.log(`    [EXEC] check-existing-firebase-project`)
 
-            if (isDryRun) return null
+            if (isDryRun) {
+                console.log(`    [DRY-RUN] firebase projects:list`)
+                return null
+            }
+
+            const result = await executeShellCommand(`firebase projects:list`)
 
             // Check if our project ID appears in Firebase projects list
             const hasFirebase = result.output.includes(projectId)
@@ -78,13 +82,16 @@ const createCommands = (config, { isDryRun = true } = {}) => {
     const moveProjectToFolder = async () => {
         // Check if project is already in correct folder
         try {
-            const result = await shellBuilder(`gcloud projects describe ${projectId} --format="value(parent.id)"`)
-                .forMigration(migrationId, 'check-current-folder')
-                .dryRun(isDryRun)
-                .run()
+            console.log(`    [EXEC] check-current-folder`)
 
-            if (isDryRun) return { status: 'success', output: 'dry-run' }
+            if (isDryRun) {
+                console.log(`    [DRY-RUN] gcloud projects describe ${projectId} --format="value(parent.id)"`)
+                return { status: 'success', output: 'dry-run' }
+            }
 
+            const result = await executeShellCommand(
+                `gcloud projects describe ${projectId} --format="value(parent.id)"`,
+            )
             const currentFolder = result.output.trim()
             if (currentFolder === folderId) {
                 console.log(`    [SKIP] Project ${projectId} already in correct folder: ${folderId}`)
@@ -95,26 +102,32 @@ const createCommands = (config, { isDryRun = true } = {}) => {
         }
 
         // Move project to correct folder
-        await shellBuilder(`gcloud projects move ${projectId} --folder=${folderId}`)
-            .forMigration(migrationId, 'move-project-to-folder')
-            .dryRun(isDryRun)
-            .run()
+        console.log(`    [EXEC] move-project-to-folder`)
+        if (isDryRun) {
+            console.log(`    [DRY-RUN] gcloud projects move ${projectId} --folder=${folderId}`)
+        } else {
+            await executeShellCommand(`gcloud projects move ${projectId} --folder=${folderId}`)
+            console.log(`    [EXEC] Moved project ${projectId} to folder ${folderId}`)
+        }
 
-        console.log(`    [EXEC] Moved project ${projectId} to folder ${folderId}`)
         return { status: 'success', output: 'project moved to folder' }
     }
 
     const attachBillingAccount = async () => {
         // Check if billing is already attached
         try {
-            const result = await shellBuilder(
+            console.log(`    [EXEC] check-billing-account`)
+
+            if (isDryRun) {
+                console.log(
+                    `    [DRY-RUN] gcloud billing projects describe ${projectId} --format="value(billingAccountName)"`,
+                )
+                return { status: 'success', output: 'dry-run' }
+            }
+
+            const result = await executeShellCommand(
                 `gcloud billing projects describe ${projectId} --format="value(billingAccountName)"`,
             )
-                .forMigration(migrationId, 'check-billing-account')
-                .dryRun(isDryRun)
-                .run()
-
-            if (isDryRun) return { status: 'success', output: 'dry-run' }
 
             const currentBilling = result.output.trim()
             if (currentBilling && currentBilling.includes(billingAccountId)) {
@@ -126,12 +139,14 @@ const createCommands = (config, { isDryRun = true } = {}) => {
         }
 
         // Attach billing account
-        await shellBuilder(`gcloud billing projects link ${projectId} --billing-account=${billingAccountId}`)
-            .forMigration(migrationId, 'attach-billing-account')
-            .dryRun(isDryRun)
-            .run()
+        console.log(`    [EXEC] attach-billing-account`)
+        if (isDryRun) {
+            console.log(`    [DRY-RUN] gcloud billing projects link ${projectId} --billing-account=${billingAccountId}`)
+        } else {
+            await executeShellCommand(`gcloud billing projects link ${projectId} --billing-account=${billingAccountId}`)
+            console.log(`    [EXEC] Attached billing account ${billingAccountId} to project ${projectId}`)
+        }
 
-        console.log(`    [EXEC] Attached billing account ${billingAccountId} to project ${projectId}`)
         return { status: 'success', output: 'billing account attached' }
     }
 
@@ -148,22 +163,26 @@ const createCommands = (config, { isDryRun = true } = {}) => {
         return { status: 'success', output: result.output, capturedIds: { firebaseProjectNumber: projectNumber } }
     }
 
-    verifyOrConfigureFirebaseProject.rollback = async () =>
-        await shellBuilder(`gcloud projects delete ${projectId} --quiet`)
-            .forMigration(migrationId, 'rollback-delete-firebase-project')
-            .dryRun(isDryRun)
-            .run()
+    verifyOrConfigureFirebaseProject.rollback = async () => {
+        console.log(`    [EXEC] rollback-delete-firebase-project`)
+        if (isDryRun) {
+            console.log(`    [DRY-RUN] gcloud projects delete ${projectId} --quiet`)
+        } else {
+            await executeShellCommand(`gcloud projects delete ${projectId} --quiet`)
+        }
+    }
 
     const checkAPIEnabled = async apiName => {
         try {
+            console.log(`    [EXEC] check-${apiName}-enabled`)
             const command = `gcloud services list --enabled --filter="name:${apiName}" --format="value(name)" --project=${projectId}`
-            const result = await shellBuilder(command)
-                .forMigration(migrationId, `check-${apiName}-enabled`)
-                .dryRun(isDryRun)
-                .run()
 
-            if (isDryRun) return false
+            if (isDryRun) {
+                console.log(`    [DRY-RUN] ${command}`)
+                return false
+            }
 
+            const result = await executeShellCommand(command)
             return result.output.trim().includes(apiName)
         } catch (error) {
             return false
@@ -177,10 +196,12 @@ const createCommands = (config, { isDryRun = true } = {}) => {
 
         if (alreadyEnabled) return console.log(`    [SKIP] ${serviceName} already enabled`)
 
-        await shellBuilder(`gcloud services enable ${serviceName} --project=${projectId}`)
-            .forMigration(migrationId, 'enable-firebase-hosting-api')
-            .dryRun(isDryRun)
-            .run()
+        console.log(`    [EXEC] enable-${serviceName}-api`)
+        if (isDryRun) {
+            console.log(`    [DRY-RUN] gcloud services enable ${serviceName} --project=${projectId}`)
+        } else {
+            await executeShellCommand(`gcloud services enable ${serviceName} --project=${projectId}`)
+        }
     }
 
     const enableAdditionalAPIs = async () => {
