@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service cloud.firestore {
+    match /databases/{database}/documents {
+        // SOC2 Audit Collections - READ ONLY via service account
+        match /infrastructure-audit-logs/{document} {
+            // Block ALL client access - only service accounts can write
+            allow read, write: if false;
+        }
+      
+        match /user-audit-logs/{document} {
+            // Block ALL client access - only service accounts can write
+            allow read, write: if false;
+        }
+      
+        // Default: Deny all other collections
+        match /{document=**} {
+            allow read, write: if false;
+        }
+    }
+}
