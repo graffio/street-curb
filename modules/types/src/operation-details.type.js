@@ -25,3 +25,17 @@ export const OperationDetails = {
         }
     }
 }
+
+OperationDetails.toFirestore = o =>
+    o.match({
+        ShellExecution: _ => JSON.stringify(o),
+        FirestoreOperation: _ => JSON.stringify(o),
+        GcpProjectOperation: _ => JSON.stringify(o),
+    })
+
+OperationDetails.fromFirestore = o =>
+    o.match({
+        ShellExecution: _ => OperationDetails.from(o),
+        FirestoreOperation: _ => OperationDetails.from(o),
+        GcpProjectOperation: _ => OperationDetails.from(o),
+    })

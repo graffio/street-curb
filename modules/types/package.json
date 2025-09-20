@@ -5,8 +5,11 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
+      "tap": "echo 'no tests in types-runtime'",
     "test": "echo \"No tests yet\" && exit 0"
   },
   "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2"
+  }
 }

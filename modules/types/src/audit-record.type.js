@@ -1,3 +1,4 @@
+import { OperationDetails } from '@graffio/orchestration/src/types/index.js'
 import { FieldTypes } from '@graffio/types'
 
 /*
@@ -8,6 +9,8 @@ export const AuditRecord = {
     name: 'AuditRecord',
     kind: 'tagged',
     fields: {
+        id              : FieldTypes.auditRecordId,
+        
         // SOC2 Required Fields (with regex validation)
         timestamp       : FieldTypes.timestamp,
         eventType       : FieldTypes.event,
@@ -25,3 +28,14 @@ export const AuditRecord = {
         environment     : FieldTypes.environment,
     }
 }
+
+AuditRecord.toFirestore = auditRecord => ({
+    ...auditRecord,
+    operationDetails: OperationDetails.toFirestore(auditRecord.operationDetails),
+})
+
+AuditRecord.fromFirestore = auditRecord =>
+    AuditRecord.fromFirestore({
+        ...auditRecord,
+        operationDetails: OperationDetails.fromFirestore(auditRecord.operationDetails),
+    })

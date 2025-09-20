@@ -5,5 +5,3 @@
  */
 
 export { FieldTypes } from './field-types.js'
-export { AuditRecord } from './audit-record.type.js'
-export { OperationDetails } from './operation-details.type.js'
