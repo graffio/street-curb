@@ -19,7 +19,7 @@
 import { OperationDetails } from '@graffio/orchestration/src/types/index.js'
 import { FieldTypes } from '@graffio/types'
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -202,10 +202,9 @@ AuditRecord.toFirestore = auditRecord => ({
 })
 
 // Additional function: fromFirestore
-AuditRecord.fromFirestore = auditRecord =>
-    AuditRecord.fromFirestore({
-        ...auditRecord,
-        operationDetails: OperationDetails.fromFirestore(auditRecord.operationDetails),
-    })
+AuditRecord.fromFirestore = auditRecord => {
+    const operationDetails = OperationDetails.fromFirestore(JSON.parse(auditRecord.operationDetails))
+    return AuditRecord.from({ ...auditRecord, operationDetails })
+}
 
 export { AuditRecord }

@@ -1,25 +1,25 @@
 /*  AuditRecord generated from: modules/types/src/audit-record.type.js
- 
- id              : FieldTypes.auditRecordId,
- timestamp       : FieldTypes.timestamp,
- eventType       : FieldTypes.event,
- userId          : FieldTypes.email,
- resource        : FieldTypes.resourceName,
- action          : FieldTypes.resourceName,
- outcome         : /^(success|failure|pending)$/,
- sourceIP        : FieldTypes.ipv4Type,
- auditVersion    : FieldTypes.semanticVersion,
- operationDetails: "OperationDetails",
- errorMessage    : "String?",
- correlationId   : FieldTypes.correlationId,
- environment     : FieldTypes.environment
- 
- */
+
+    id              : FieldTypes.auditRecordId,
+    timestamp       : FieldTypes.timestamp,
+    eventType       : FieldTypes.event,
+    userId          : FieldTypes.email,
+    resource        : FieldTypes.resourceName,
+    action          : FieldTypes.resourceName,
+    outcome         : /^(success|failure|pending)$/,
+    sourceIP        : FieldTypes.ipv4Type,
+    auditVersion    : FieldTypes.semanticVersion,
+    operationDetails: "OperationDetails",
+    errorMessage    : "String?",
+    correlationId   : FieldTypes.correlationId,
+    environment     : FieldTypes.environment
+
+*/
 
 import { OperationDetails } from '@graffio/orchestration/src/types/index.js'
 import { FieldTypes } from '@graffio/types'
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

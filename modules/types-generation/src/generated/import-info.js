@@ -1,11 +1,11 @@
-/*  ImportInfo generated from: ./src/types/import-info.type.js
+/*  ImportInfo generated from: modules/types-generation/src/types/import-info.type.js
 
     source    : "String",
     specifiers: "Array"
 
 */
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

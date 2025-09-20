@@ -1,4 +1,4 @@
-/*  FunctionInfo generated from: ./src/types/function-info.type.js
+/*  FunctionInfo generated from: modules/types-generation/src/types/function-info.type.js
 
     typeName    : "String",
     functionName: "String",
@@ -7,7 +7,7 @@
 
 */
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

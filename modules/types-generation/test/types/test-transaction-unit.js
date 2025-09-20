@@ -2,7 +2,7 @@
 // Generated from: test/fixtures/TestTransaction.type.js
 // fields from: { Bank: { id: "Number", amount: "Number" }, Investment: { id: "Number", securityId: "Number?" }}
 
-import * as R from '@graffio/types-runtime'
+import * as R from 'modules/types-generation/index.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //

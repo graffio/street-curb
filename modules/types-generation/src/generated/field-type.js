@@ -1,4 +1,4 @@
-/*  FieldType generated from: ./src/types/field-type.type.js
+/*  FieldType generated from: modules/types-generation/src/types/field-type.type.js
 
     StringType
         value: "String"
@@ -11,7 +11,7 @@
 
 */
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

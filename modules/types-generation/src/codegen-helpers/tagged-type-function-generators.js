@@ -8,7 +8,7 @@
  * Generating Type Checks in the constructors
  * ==========================================
  *
- * To reduce the likelihood of type errors, we generate types-runtime checks in the constructors. For example:
+ * To reduce the likelihood of type errors, we generate types-generation checks in the constructors. For example:
  *
  *   generateTypeConstructor('Circle', { centre: 'Coord', radius: 'Number' }) =>
  *
@@ -220,7 +220,7 @@ const generateFrom = (protoName, typeName, fullName, fields) => {
  *      return `Bob(${_toString(this.num)}, ${_toString(this.s)}, ${_toString(this.o)}, ${_toString(this.a)})`
  *  }
  *
- * Where _toString is a predefined types-runtime function
+ * Where _toString is a predefined types-generation function
  */
 const generateToString = (fieldType, fields) => {
     const generateValueString = name => `\${R._toString(this.${name})}`

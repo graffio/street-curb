@@ -12,7 +12,7 @@ const generateStaticTaggedType = async typeDefinition => {
         ${stringifyObjectAsMultilineComment(typeDefinition.fields, typeDefinition.relativePath, name)}
         
         ${generateImportsSection(imports)}
-        import * as R from '@graffio/types-runtime'
+        import * as R from '@graffio/types-generation'
         
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -82,7 +82,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
         ${stringifyObjectAsMultilineComment(typeDefinition.variants, typeDefinition.relativePath, name)}
         
         ${generateImportsSection(imports)}
-        import * as R from '@graffio/types-runtime'
+        import * as R from '@graffio/types-generation'
 
         // -------------------------------------------------------------------------------------------------------------
         //

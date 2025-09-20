@@ -1,11 +1,11 @@
-// Auto-generated static tagged type: Segment
-// Generated from: modules/curb-map/types/segment.type.js
-// {
-//     use   : "String"
-//     length: "Number"
-// }
+/*  Segment generated from: modules/curb-map/types/segment.type.js
 
-import * as R from '@graffio/types-runtime'
+    use   : "String",
+    length: "Number"
+
+*/
+
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

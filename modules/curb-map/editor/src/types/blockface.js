@@ -1,17 +1,17 @@
-// Auto-generated static tagged type: Blockface
-// Generated from: modules/curb-map/types/blockface.type.js
-// {
-//     id        : "String"
-//     geometry  : "Object"
-//     streetName: "String"
-//     cnnId     : "String?"
-//     segments  : "[Segment]"
-// }
+/*  Blockface generated from: modules/curb-map/types/blockface.type.js
+
+    id        : "String",
+    geometry  : "Object",
+    streetName: "String",
+    cnnId     : "String?",
+    segments  : "[Segment]"
+
+*/
 
 import { length } from '@turf/length'
 import { Segment } from './segment.js'
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -1,4 +1,4 @@
-/*  ParseResult generated from: ./src/types/parse-result.type.js
+/*  ParseResult generated from: modules/types-generation/src/types/parse-result.type.js
 
     typeDefinition: "Object",
     imports       : "Array",
@@ -7,7 +7,7 @@
 
 */
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

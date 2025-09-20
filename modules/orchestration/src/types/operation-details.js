@@ -1,21 +1,21 @@
 /*  OperationDetails generated from: modules/types/src/operation-details.type.js
- 
- ShellExecution
- command      : "String",
- duration     : "Number?",
- outputPreview: "String?"
- FirestoreOperation
- operation : "String",
- collection: "String",
- documentId: "String?"
- GcpProjectOperation
- projectId: "String",
- folderId : "String?",
- region   : "String?"
- 
- */
 
-import * as R from '@graffio/types-runtime'
+    ShellExecution
+        command      : "String",
+        duration     : "Number?",
+        outputPreview: "String?"
+    FirestoreOperation
+        operation : "String",
+        collection: "String",
+        documentId: "String?"
+    GcpProjectOperation
+        projectId: "String",
+        folderId : "String?",
+        region   : "String?"
+
+*/
+
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -240,6 +240,11 @@ OperationDetails.toFirestore = o =>
     })
 
 // Additional function: fromFirestore
-OperationDetails.fromFirestore = o => OperationDetails[o['@@tagName']].from(o)
+OperationDetails.fromFirestore = o =>
+    o.match({
+        ShellExecution: _ => OperationDetails.from(o),
+        FirestoreOperation: _ => OperationDetails.from(o),
+        GcpProjectOperation: _ => OperationDetails.from(o),
+    })
 
 export { OperationDetails }

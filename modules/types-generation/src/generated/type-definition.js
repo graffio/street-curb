@@ -1,4 +1,4 @@
-/*  TypeDefinition generated from: ./src/types/type-definition.type.js
+/*  TypeDefinition generated from: modules/types-generation/src/types/type-definition.type.js
 
     Tagged
         name  : "String",
@@ -11,7 +11,7 @@
 
 */
 
-import * as R from '@graffio/types-runtime'
+import * as R from '@graffio/types-generation'
 
 // -------------------------------------------------------------------------------------------------------------
 //

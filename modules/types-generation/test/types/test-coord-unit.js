@@ -5,7 +5,7 @@
 //     y: "Number"
 // }
 
-import * as R from '@graffio/types-runtime'
+import * as R from 'modules/types-generation/index.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //

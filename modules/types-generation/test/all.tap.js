@@ -605,7 +605,7 @@ tap.test('Tagged Types Static Migration - Summary', t => {
             t.pass('Then ✅ All optional type handling migrated successfully')
             t.pass('Then ✅ All nested types migrated successfully')
             t.pass('Then ✅ All JSON serialization migrated successfully')
-            t.pass('Then ✅ Static types maintain 100% API compatibility with types-runtime types')
+            t.pass('Then ✅ Static types maintain 100% API compatibility with types-generation types')
             t.end()
         })
         t.end()

@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "Build tools for compile-time type generation",
     "type": "module",
-    "main": "src/type-generation-cli/cli.js",
+    "main": "index.js",
     "private": true,
     "dependencies": {
         "acorn": "^8.15.0",

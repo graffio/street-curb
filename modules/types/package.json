@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-      "tap": "echo 'no tests in types-runtime'",
+      "tap": "echo 'no tests in types-generation'",
     "test": "echo \"No tests yet\" && exit 0"
   },
   "devDependencies": {},
