@@ -1,5 +1,5 @@
 {
-    "name"           : "@graffio/right-of-way-editor",
+    "name"           : "@graffio/curb-map-editor",
     "private"        : true,
     "version"        : "0.1.0",
     "type"           : "module",
@@ -9,8 +9,8 @@
         "preview"        : "vite preview",
         "storybook"      : "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "tap"            : "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
-        "tap:file"       : "../../bash/run-tap.sh",
+        "tap"            : "../../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file"       : "../../../bash/run-tap.sh",
         "validate-style" : "node ../style-validator/src/cli.js"
     },
     "devDependencies": {
