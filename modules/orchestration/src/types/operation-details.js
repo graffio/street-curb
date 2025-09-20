@@ -1,6 +1,19 @@
-// Auto-generated static tagged sum type: OperationDetails
-// Generated from: modules/types/src/operation-details.type.js
-// fields from: { ShellExecution: { command: "String", duration: "Number?", outputPreview: "String?" }, FirestoreOperation: { operation: "String", collection: "String", documentId: "String?" }, GcpProjectOperation: { projectId: "String", folderId: "String?", region: "String?" }}
+/*  OperationDetails generated from: modules/types/src/operation-details.type.js
+ 
+ ShellExecution
+ command      : "String",
+ duration     : "Number?",
+ outputPreview: "String?"
+ FirestoreOperation
+ operation : "String",
+ collection: "String",
+ documentId: "String?"
+ GcpProjectOperation
+ projectId: "String",
+ folderId : "String?",
+ region   : "String?"
+ 
+ */
 
 import * as R from '@graffio/types-runtime'
 
@@ -214,5 +227,19 @@ GcpProjectOperationPrototype.constructor = GcpProjectOperationConstructor
 GcpProjectOperationConstructor.is = val => val && val.constructor === GcpProjectOperationConstructor
 GcpProjectOperationConstructor.toString = () => 'OperationDetails.GcpProjectOperation'
 GcpProjectOperationConstructor.from = o => OperationDetails.GcpProjectOperation(o.projectId, o.folderId, o.region)
+
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
+// Additional function: toFirestore
+OperationDetails.toFirestore = o =>
+    o.match({
+        ShellExecution: _ => JSON.stringify(o),
+        FirestoreOperation: _ => JSON.stringify(o),
+        GcpProjectOperation: _ => JSON.stringify(o),
+    })
+
+// Additional function: fromFirestore
+OperationDetails.fromFirestore = o => OperationDetails[o['@@tagName']].from(o)
 
 export { OperationDetails }
