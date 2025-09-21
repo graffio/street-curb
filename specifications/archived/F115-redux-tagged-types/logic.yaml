@@ -11,9 +11,9 @@ data_model:
         use: String  # 'parking', 'curb_cut', 'loading', etc.
         length: Number  # in feet, positive values only
       notes: "No position field - array index is position, no IDs - not independent entities"
-    
+
     blockface:
-      type: tagged_type  
+      type: tagged_type
       fields:
         id: String  # unique identifier
         geometry: Object  # GeoJSON LineString
@@ -26,16 +26,16 @@ data_model:
       blockfaces: "LookupTable([Blockface], Blockface) - for multi-blockface editing"
       current_blockface_id: "String - references active blockface being edited"
       computed_selectors: "unknownRemaining computed from blockface length - segment totals"
-    
+
     firestore_documents:
       pattern: "Single document per blockface with segments as JSON array"
       writes: "Via Firebase Functions only, replace entire document"
-      
+
   file_organization:
     approach: "Flat organization for discoverability"
     rationale: "Avoid cross-slice boundary confusion - single lookup location"
     structure:
-      - "store/actions.js - ALL actions"  
+      - "store/actions.js - ALL actions"
       - "store/selectors.js - ALL selectors"
       - "store/reducer.js - root reducer"
 
@@ -43,7 +43,7 @@ data_model:
 tasks:
   task_1_generate_segment_type:
     id: task_1_generate_segment_type
-    description: "Generate Segment tagged type using types-generation system"
+    description: "Generate Segment tagged type using cli-type-generator system"
     commands:
       - "Create modules/types/src/right-of-way/segment.type.js"
       - "Define Segment with use and length fields"
@@ -51,7 +51,7 @@ tasks:
       - "Export from modules/types/generated/right-of-way/index.js"
     files:
       - "modules/types/src/right-of-way/segment.type.js"
-      - "modules/types/generated/right-of-way/segment.js"  
+      - "modules/types/generated/right-of-way/segment.js"
       - "modules/types/generated/right-of-way/index.js"
     changes:
       - "Add Segment tagged type definition"
@@ -73,7 +73,7 @@ tasks:
       - "Remove action creators from curbStore.js"
     files:
       - "modules/right-of-way-editor/src/store/actions.js"
-      - "modules/right-of-way-editor/src/store/curbStore.js"  
+      - "modules/right-of-way-editor/src/store/curbStore.js"
       - "All component files that import actions"
     changes:
       - "Move ACTION_TYPES, initializeSegments, updateSegmentType, updateSegmentLength, addSegment, addSegmentLeft, replaceSegments"
@@ -86,7 +86,7 @@ tasks:
       - "Redux DevTools shows same action types"
 
   task_3_extract_selectors:
-    id: task_3_extract_selectors  
+    id: task_3_extract_selectors
     description: "Extract selectors and make unknownRemaining computed"
     commands:
       - "Create modules/right-of-way-editor/src/store/selectors.js"
@@ -119,7 +119,7 @@ tasks:
     files:
       - "modules/types/src/right-of-way/blockface.type.js"
       - "modules/types/generated/right-of-way/blockface.js"
-      - "modules/types/generated/right-of-way/index.js"  
+      - "modules/types/generated/right-of-way/index.js"
     changes:
       - "Add Blockface tagged type definition"
       - "Include segments as Array type"
@@ -168,9 +168,9 @@ execution_status:
   status: COMPLETED
   completion_date: "2025-01-28"
   current_task: null
-  completed_tasks: 
+  completed_tasks:
     - task_1_generate_segment_type: COMPLETED
-    - task_2_extract_actions: COMPLETED  
+    - task_2_extract_actions: COMPLETED
     - task_3_extract_selectors: COMPLETED
     - task_4_generate_blockface_type: COMPLETED
   skipped_tasks:

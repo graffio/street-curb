@@ -22,20 +22,21 @@ Service account authentication system for SOC2-compliant Firebase infrastructure
 ## Implementation Requirements
 
 ### Service Account Creation
+
 ```javascript
 // modules/curb-map/migrations/006-create-service-account.js
-import { executeShellCommand } from '@graffio/orchestration'
+import { executeShellCommand } from 'modules/cli-migrator'
 
 const createServiceAccount = async (projectId, isDryRun) => {
     console.log(`    [INFO] Creating Firebase infrastructure service account for ${projectId}`)
-
+    
     const serviceAccountName = 'firebase-infrastructure-sa'
     const displayName = 'Firebase Infrastructure Management'
     const serviceAccountEmail = `${serviceAccountName}@${projectId}.iam.gserviceaccount.com`
-
+    
     // Check if service account already exists
     const checkCommand = `gcloud iam service-accounts describe ${serviceAccountEmail} --project=${projectId}`
-
+    
     try {
         await executeShellCommand(checkCommand)
         console.log(`    [SKIP] Service account already exists: ${serviceAccountEmail}`)
@@ -43,7 +44,7 @@ const createServiceAccount = async (projectId, isDryRun) => {
     } catch (error) {
         // Service account doesn't exist - create it
     }
-
+    
     if (isDryRun) {
         console.log(`    [DRY-RUN] gcloud iam service-accounts create ${serviceAccountName} --display-name="${displayName}" --project=${projectId}`)
     } else {
@@ -51,15 +52,15 @@ const createServiceAccount = async (projectId, isDryRun) => {
         await executeShellCommand(`gcloud iam service-accounts create ${serviceAccountName} --display-name="${displayName}" --project=${projectId}`)
         console.log(`    [EXEC] Service account created: ${serviceAccountEmail}`)
     }
-
+    
     return { status: 'success', output: 'firebase service account created' }
 }
 
 const assignIAMRoles = async (projectId, isDryRun) => {
     console.log(`    [INFO] Assigning IAM roles for Firebase infrastructure management`)
-
+    
     const serviceAccountEmail = `firebase-infrastructure-sa@${projectId}.iam.gserviceaccount.com`
-
+    
     const requiredRoles = [
         'roles/firebase.admin',                    // Firebase Admin access
         'roles/datastore.owner',                   // Firestore database operations
@@ -67,7 +68,7 @@ const assignIAMRoles = async (projectId, isDryRun) => {
         'roles/cloudsql.admin',                    // Database administration
         'roles/storage.admin'                      // Cloud Storage access
     ]
-
+    
     for (const role of requiredRoles) {
         if (isDryRun) {
             console.log(`    [DRY-RUN] gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${serviceAccountEmail}" --role="${role}"`)
@@ -76,20 +77,20 @@ const assignIAMRoles = async (projectId, isDryRun) => {
             await executeShellCommand(`gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${serviceAccountEmail}" --role="${role}"`)
         }
     }
-
+    
     if (!isDryRun) {
         console.log(`    [EXEC] IAM roles assigned to service account`)
     }
-
+    
     return { status: 'success', output: 'iam roles assigned' }
 }
 
 const generateServiceAccountKey = async (projectId, isDryRun) => {
     console.log(`    [INFO] Generating service account key for automated authentication`)
-
+    
     const serviceAccountEmail = `firebase-infrastructure-sa@${projectId}.iam.gserviceaccount.com`
     const keyFilePath = `service-accounts/${projectId}-firebase-infrastructure-key.json`
-
+    
     if (isDryRun) {
         console.log(`    [DRY-RUN] mkdir -p service-accounts`)
         console.log(`    [DRY-RUN] gcloud iam service-accounts keys create ${keyFilePath} --iam-account=${serviceAccountEmail}`)
@@ -97,21 +98,21 @@ const generateServiceAccountKey = async (projectId, isDryRun) => {
     } else {
         console.log(`    [EXEC] create-service-account-directory`)
         await executeShellCommand(`mkdir -p service-accounts`)
-
+        
         console.log(`    [EXEC] generate-service-account-key`)
         await executeShellCommand(`gcloud iam service-accounts keys create ${keyFilePath} --iam-account=${serviceAccountEmail}`)
-
+        
         console.log(`    [EXEC] Service account key generated: ${keyFilePath}`)
         console.log(`    [INFO] IMPORTANT: Secure this key file - it provides full Firebase admin access`)
     }
-
+    
     return { status: 'success', output: `service account key: ${keyFilePath}` }
 }
 
 const createCommands = (config, { isDryRun = true } = {}) => {
     const projectId = config.firebaseProject.projectId
     if (!projectId) throw new Error('Firebase projectId must be defined')
-
+    
     return [
         {
             id: 'Create Firebase Service Account',
@@ -145,25 +146,26 @@ export default createCommands
 ```
 
 ### Authentication Integration
+
 ```javascript
 // modules/curb-map/shared/firebase-auth.js
-import { executeShellCommand } from '@graffio/orchestration'
+import { executeShellCommand } from 'modules/cli-migrator'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 export const authenticateWithServiceAccount = async (projectId) => {
     const keyFilePath = resolve(`service-accounts/${projectId}-firebase-infrastructure-key.json`)
-
+    
     try {
         // Verify key file exists
         readFileSync(keyFilePath, 'utf8')
-
+        
         // Activate service account
         await executeShellCommand(`gcloud auth activate-service-account --key-file=${keyFilePath}`)
-
+        
         // Set application default credentials
         process.env.GOOGLE_APPLICATION_CREDENTIALS = keyFilePath
-
+        
         console.log(`    [AUTH] Service account authentication active for ${projectId}`)
         return { status: 'success', keyFilePath }
     } catch (error) {

@@ -21,5 +21,5 @@ test-results
 .claude
 
 # don't save files generated in testing type-generation
-modules/types-generation/test/generated/*
+modules/cli-type-generator/test/generated/*
 

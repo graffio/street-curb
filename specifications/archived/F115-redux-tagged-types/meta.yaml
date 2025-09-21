@@ -12,8 +12,8 @@ files:
 
 dependencies:
   - A001-coding-standards: File naming and functional patterns
-  - types-generation: Tagged type generation system
-  
+  - cli-type-generator: Tagged type generation system
+
 scope:
   - Redux store refactoring
   - Tagged type creation for domain entities
@@ -22,6 +22,6 @@ scope:
 
 impact:
   - Improved type safety with runtime validation
-  - Better file organization for maintainability  
+  - Better file organization for maintainability
   - Cleaner separation of concerns
   - Preparation for database integration
