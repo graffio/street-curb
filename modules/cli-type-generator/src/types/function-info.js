@@ -15,11 +15,12 @@ import * as R from '@graffio/cli-type-generator'
 //
 // -------------------------------------------------------------------------------------------------------------
 const FunctionInfo = function FunctionInfo(typeName, functionName, node, sourceCode) {
-    R.validateArgumentLength('FunctionInfo(typeName, functionName, node, sourceCode)', 4, arguments)
-    R.validateString('FunctionInfo(typeName, functionName, node, sourceCode)', 'typeName', false, typeName)
-    R.validateString('FunctionInfo(typeName, functionName, node, sourceCode)', 'functionName', false, functionName)
-    R.validateObject('FunctionInfo(typeName, functionName, node, sourceCode)', 'node', false, node)
-    R.validateString('FunctionInfo(typeName, functionName, node, sourceCode)', 'sourceCode', false, sourceCode)
+    const constructorName = 'FunctionInfo(typeName, functionName, node, sourceCode)'
+    R.validateArgumentLength(constructorName, 4, arguments)
+    R.validateString(constructorName, 'typeName', false, typeName)
+    R.validateString(constructorName, 'functionName', false, functionName)
+    R.validateObject(constructorName, 'node', false, node)
+    R.validateString(constructorName, 'sourceCode', false, sourceCode)
 
     const result = Object.create(prototype)
     result.typeName = typeName

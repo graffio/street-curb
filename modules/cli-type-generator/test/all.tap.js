@@ -1421,7 +1421,7 @@ tap.test('Given static type generation system', t => {
         t.ok(generated.includes('toString'), 'Then should include toString method')
         t.ok(generated.includes('from'), 'Then should include from method')
         t.ok(
-            generated.includes("validateNumber('TestCoord(x, y)', 'x', false, x)"),
+            generated.includes("validateNumber(constructorName, 'x', false, x)"),
             'Then should include type validation',
         )
 

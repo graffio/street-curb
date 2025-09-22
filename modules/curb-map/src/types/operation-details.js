@@ -70,14 +70,11 @@ OperationDetails.prototype = OperationDetailsPrototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const ShellExecutionConstructor = function ShellExecution(command, duration, outputPreview) {
-    R.validateString('OperationDetails.ShellExecution(command, duration, outputPreview)', 'command', false, command)
-    R.validateNumber('OperationDetails.ShellExecution(command, duration, outputPreview)', 'duration', true, duration)
-    R.validateString(
-        'OperationDetails.ShellExecution(command, duration, outputPreview)',
-        'outputPreview',
-        true,
-        outputPreview,
-    )
+    const constructorName = 'OperationDetails.ShellExecution(command, duration, outputPreview)'
+
+    R.validateString(constructorName, 'command', false, command)
+    R.validateNumber(constructorName, 'duration', true, duration)
+    R.validateString(constructorName, 'outputPreview', true, outputPreview)
 
     const result = Object.create(ShellExecutionPrototype)
     result.command = command
@@ -123,24 +120,11 @@ ShellExecutionConstructor.from = o => OperationDetails.ShellExecution(o.command,
 //
 // -------------------------------------------------------------------------------------------------------------
 const FirestoreOperationConstructor = function FirestoreOperation(operation, collection, documentId) {
-    R.validateString(
-        'OperationDetails.FirestoreOperation(operation, collection, documentId)',
-        'operation',
-        false,
-        operation,
-    )
-    R.validateString(
-        'OperationDetails.FirestoreOperation(operation, collection, documentId)',
-        'collection',
-        false,
-        collection,
-    )
-    R.validateString(
-        'OperationDetails.FirestoreOperation(operation, collection, documentId)',
-        'documentId',
-        true,
-        documentId,
-    )
+    const constructorName = 'OperationDetails.FirestoreOperation(operation, collection, documentId)'
+
+    R.validateString(constructorName, 'operation', false, operation)
+    R.validateString(constructorName, 'collection', false, collection)
+    R.validateString(constructorName, 'documentId', true, documentId)
 
     const result = Object.create(FirestoreOperationPrototype)
     result.operation = operation
@@ -186,9 +170,11 @@ FirestoreOperationConstructor.from = o => OperationDetails.FirestoreOperation(o.
 //
 // -------------------------------------------------------------------------------------------------------------
 const GcpProjectOperationConstructor = function GcpProjectOperation(projectId, folderId, region) {
-    R.validateString('OperationDetails.GcpProjectOperation(projectId, folderId, region)', 'projectId', false, projectId)
-    R.validateString('OperationDetails.GcpProjectOperation(projectId, folderId, region)', 'folderId', true, folderId)
-    R.validateString('OperationDetails.GcpProjectOperation(projectId, folderId, region)', 'region', true, region)
+    const constructorName = 'OperationDetails.GcpProjectOperation(projectId, folderId, region)'
+
+    R.validateString(constructorName, 'projectId', false, projectId)
+    R.validateString(constructorName, 'folderId', true, folderId)
+    R.validateString(constructorName, 'region', true, region)
 
     const result = Object.create(GcpProjectOperationPrototype)
     result.projectId = projectId

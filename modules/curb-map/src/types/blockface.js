@@ -19,19 +19,13 @@ import * as R from '@graffio/cli-type-generator'
 //
 // -------------------------------------------------------------------------------------------------------------
 const Blockface = function Blockface(id, geometry, streetName, cnnId, segments) {
-    R.validateString('Blockface(id, geometry, streetName, cnnId, segments)', 'id', false, id)
-    R.validateObject('Blockface(id, geometry, streetName, cnnId, segments)', 'geometry', false, geometry)
-    R.validateString('Blockface(id, geometry, streetName, cnnId, segments)', 'streetName', false, streetName)
-    R.validateString('Blockface(id, geometry, streetName, cnnId, segments)', 'cnnId', true, cnnId)
-    R.validateArray(
-        'Blockface(id, geometry, streetName, cnnId, segments)',
-        1,
-        'Tagged',
-        'Segment',
-        'segments',
-        false,
-        segments,
-    )
+    const constructorName = 'Blockface(id, geometry, streetName, cnnId, segments)'
+
+    R.validateString(constructorName, 'id', false, id)
+    R.validateObject(constructorName, 'geometry', false, geometry)
+    R.validateString(constructorName, 'streetName', false, streetName)
+    R.validateString(constructorName, 'cnnId', true, cnnId)
+    R.validateArray(constructorName, 1, 'Tagged', 'Segment', 'segments', false, segments)
 
     const result = Object.create(prototype)
     result.id = id

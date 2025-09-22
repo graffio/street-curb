@@ -13,9 +13,10 @@ import * as R from '@graffio/cli-type-generator'
 //
 // -------------------------------------------------------------------------------------------------------------
 const ImportInfo = function ImportInfo(source, specifiers) {
-    R.validateArgumentLength('ImportInfo(source, specifiers)', 2, arguments)
-    R.validateString('ImportInfo(source, specifiers)', 'source', false, source)
-    R.validateTag('ImportInfo(source, specifiers)', 'Array', 'specifiers', false, specifiers)
+    const constructorName = 'ImportInfo(source, specifiers)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'source', false, source)
+    R.validateTag(constructorName, 'Array', 'specifiers', false, specifiers)
 
     const result = Object.create(prototype)
     result.source = source

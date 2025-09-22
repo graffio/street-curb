@@ -60,10 +60,11 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const TaggedConstructor = function Tagged(name, kind, fields) {
-    R.validateArgumentLength('TypeDefinition.Tagged(name, kind, fields)', 3, arguments)
-    R.validateString('TypeDefinition.Tagged(name, kind, fields)', 'name', false, name)
-    R.validateString('TypeDefinition.Tagged(name, kind, fields)', 'kind', false, kind)
-    R.validateObject('TypeDefinition.Tagged(name, kind, fields)', 'fields', false, fields)
+    const constructorName = 'TypeDefinition.Tagged(name, kind, fields)'
+    R.validateArgumentLength(constructorName, 3, arguments)
+    R.validateString(constructorName, 'name', false, name)
+    R.validateString(constructorName, 'kind', false, kind)
+    R.validateObject(constructorName, 'fields', false, fields)
 
     const result = Object.create(TaggedPrototype)
     result.name = name
@@ -109,10 +110,11 @@ TaggedConstructor.from = o => TypeDefinition.Tagged(o.name, o.kind, o.fields)
 //
 // -------------------------------------------------------------------------------------------------------------
 const TaggedSumConstructor = function TaggedSum(name, kind, variants) {
-    R.validateArgumentLength('TypeDefinition.TaggedSum(name, kind, variants)', 3, arguments)
-    R.validateString('TypeDefinition.TaggedSum(name, kind, variants)', 'name', false, name)
-    R.validateString('TypeDefinition.TaggedSum(name, kind, variants)', 'kind', false, kind)
-    R.validateObject('TypeDefinition.TaggedSum(name, kind, variants)', 'variants', false, variants)
+    const constructorName = 'TypeDefinition.TaggedSum(name, kind, variants)'
+    R.validateArgumentLength(constructorName, 3, arguments)
+    R.validateString(constructorName, 'name', false, name)
+    R.validateString(constructorName, 'kind', false, kind)
+    R.validateObject(constructorName, 'variants', false, variants)
 
     const result = Object.create(TaggedSumPrototype)
     result.name = name

@@ -15,27 +15,12 @@ import * as R from '@graffio/cli-type-generator'
 //
 // -------------------------------------------------------------------------------------------------------------
 const ParseResult = function ParseResult(typeDefinition, imports, functions, sourceContent) {
-    R.validateArgumentLength('ParseResult(typeDefinition, imports, functions, sourceContent)', 4, arguments)
-    R.validateObject(
-        'ParseResult(typeDefinition, imports, functions, sourceContent)',
-        'typeDefinition',
-        false,
-        typeDefinition,
-    )
-    R.validateTag('ParseResult(typeDefinition, imports, functions, sourceContent)', 'Array', 'imports', false, imports)
-    R.validateTag(
-        'ParseResult(typeDefinition, imports, functions, sourceContent)',
-        'Array',
-        'functions',
-        false,
-        functions,
-    )
-    R.validateString(
-        'ParseResult(typeDefinition, imports, functions, sourceContent)',
-        'sourceContent',
-        false,
-        sourceContent,
-    )
+    const constructorName = 'ParseResult(typeDefinition, imports, functions, sourceContent)'
+    R.validateArgumentLength(constructorName, 4, arguments)
+    R.validateObject(constructorName, 'typeDefinition', false, typeDefinition)
+    R.validateTag(constructorName, 'Array', 'imports', false, imports)
+    R.validateTag(constructorName, 'Array', 'functions', false, functions)
+    R.validateString(constructorName, 'sourceContent', false, sourceContent)
 
     const result = Object.create(prototype)
     result.typeDefinition = typeDefinition

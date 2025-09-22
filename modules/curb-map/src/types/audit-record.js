@@ -16,9 +16,10 @@
  *
  */
 
-import * as R from '@graffio/cli-type-generator'
 import { FieldTypes } from '@graffio/curb-map/type-definitions/field-types.js'
 import { OperationDetails } from './operation-details.js'
+
+import * as R from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -40,96 +41,22 @@ const AuditRecord = function AuditRecord(
     correlationId,
     environment,
 ) {
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.auditRecordId,
-        'id',
-        false,
-        id,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.timestamp,
-        'timestamp',
-        false,
-        timestamp,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.event,
-        'eventType',
-        false,
-        eventType,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.email,
-        'userId',
-        false,
-        userId,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.resourceName,
-        'resource',
-        false,
-        resource,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.resourceName,
-        'action',
-        false,
-        action,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        /^(success|failure|pending)$/,
-        'outcome',
-        false,
-        outcome,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.ipv4Type,
-        'sourceIP',
-        false,
-        sourceIP,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.semanticVersion,
-        'auditVersion',
-        false,
-        auditVersion,
-    )
-    R.validateTag(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        'OperationDetails',
-        'operationDetails',
-        false,
-        operationDetails,
-    )
-    R.validateString(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        'errorMessage',
-        true,
-        errorMessage,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.correlationId,
-        'correlationId',
-        false,
-        correlationId,
-    )
-    R.validateRegex(
-        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)',
-        FieldTypes.environment,
-        'environment',
-        false,
-        environment,
-    )
+    const constructorName =
+        'AuditRecord(id, timestamp, eventType, userId, resource, action, outcome, sourceIP, auditVersion, operationDetails, errorMessage, correlationId, environment)'
+
+    R.validateRegex(constructorName, FieldTypes.auditRecordId, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.timestamp, 'timestamp', false, timestamp)
+    R.validateRegex(constructorName, FieldTypes.event, 'eventType', false, eventType)
+    R.validateRegex(constructorName, FieldTypes.email, 'userId', false, userId)
+    R.validateRegex(constructorName, FieldTypes.resourceName, 'resource', false, resource)
+    R.validateRegex(constructorName, FieldTypes.resourceName, 'action', false, action)
+    R.validateRegex(constructorName, /^(success|failure|pending)$/, 'outcome', false, outcome)
+    R.validateRegex(constructorName, FieldTypes.ipv4Type, 'sourceIP', false, sourceIP)
+    R.validateRegex(constructorName, FieldTypes.semanticVersion, 'auditVersion', false, auditVersion)
+    R.validateTag(constructorName, 'OperationDetails', 'operationDetails', false, operationDetails)
+    R.validateString(constructorName, 'errorMessage', true, errorMessage)
+    R.validateRegex(constructorName, FieldTypes.correlationId, 'correlationId', false, correlationId)
+    R.validateRegex(constructorName, FieldTypes.environment, 'environment', false, environment)
 
     const result = Object.create(prototype)
     result.id = id

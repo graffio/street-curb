@@ -13,9 +13,10 @@ import * as R from '@graffio/cli-type-generator'
 //
 // -------------------------------------------------------------------------------------------------------------
 const Segment = function Segment(use, length) {
-    R.validateArgumentLength('Segment(use, length)', 2, arguments)
-    R.validateString('Segment(use, length)', 'use', false, use)
-    R.validateNumber('Segment(use, length)', 'length', false, length)
+    const constructorName = 'Segment(use, length)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'use', false, use)
+    R.validateNumber(constructorName, 'length', false, length)
 
     const result = Object.create(prototype)
     result.use = use

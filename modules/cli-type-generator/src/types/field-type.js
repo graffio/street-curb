@@ -64,8 +64,9 @@ FieldType.prototype = FieldTypePrototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const StringTypeConstructor = function StringType(value) {
-    R.validateArgumentLength('FieldType.StringType(value)', 1, arguments)
-    R.validateString('FieldType.StringType(value)', 'value', false, value)
+    const constructorName = 'FieldType.StringType(value)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'value', false, value)
 
     const result = Object.create(StringTypePrototype)
     result.value = value
@@ -109,8 +110,9 @@ StringTypeConstructor.from = o => FieldType.StringType(o.value)
 //
 // -------------------------------------------------------------------------------------------------------------
 const RegexTypeConstructor = function RegexType(value) {
-    R.validateArgumentLength('FieldType.RegexType(value)', 1, arguments)
-    R.validateTag('FieldType.RegexType(value)', 'RegExp', 'value', false, value)
+    const constructorName = 'FieldType.RegexType(value)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'RegExp', 'value', false, value)
 
     const result = Object.create(RegexTypePrototype)
     result.value = value
@@ -154,20 +156,11 @@ RegexTypeConstructor.from = o => FieldType.RegexType(o.value)
 //
 // -------------------------------------------------------------------------------------------------------------
 const ImportPlaceholderConstructor = function ImportPlaceholder(__importPlaceholder, source, localName) {
-    R.validateArgumentLength('FieldType.ImportPlaceholder(__importPlaceholder, source, localName)', 3, arguments)
-    R.validateBoolean(
-        'FieldType.ImportPlaceholder(__importPlaceholder, source, localName)',
-        '__importPlaceholder',
-        false,
-        __importPlaceholder,
-    )
-    R.validateString('FieldType.ImportPlaceholder(__importPlaceholder, source, localName)', 'source', false, source)
-    R.validateString(
-        'FieldType.ImportPlaceholder(__importPlaceholder, source, localName)',
-        'localName',
-        false,
-        localName,
-    )
+    const constructorName = 'FieldType.ImportPlaceholder(__importPlaceholder, source, localName)'
+    R.validateArgumentLength(constructorName, 3, arguments)
+    R.validateBoolean(constructorName, '__importPlaceholder', false, __importPlaceholder)
+    R.validateString(constructorName, 'source', false, source)
+    R.validateString(constructorName, 'localName', false, localName)
 
     const result = Object.create(ImportPlaceholderPrototype)
     result.__importPlaceholder = __importPlaceholder
