@@ -33,10 +33,11 @@ Task 4: Validate the Firestore audit logging system works end-to-end and establi
 Task 4 is **pure testing** - no infrastructure changes, just validation that our audit system works end-to-end.
 
 ### Integration Test: End-to-End Firestore Audit System
+
 ```javascript
 // modules/curb-map/test/audit-firestore-integration.tap.js
 import { FirebaseAudit } from '../editor/src/firestore/firestore-audit-record.js'
-import { AuditRecord, OperationDetails } from '@graffio/orchestration'
+import { AuditRecord, OperationDetails } from 'modules/cli-migrator'
 import { createAuditHelper } from '../shared/migration-audit-helper.js'
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
@@ -54,14 +55,14 @@ const loadConfig = configPath => {
         console.error('Usage: node audit-firestore-integration.tap.js <config-path>')
         process.exit(1)
     }
-
+    
     const configContent = readFileSync(configPath, 'utf8')
     const defaultExportMatch = configContent.match(/export default\\s+({[\\s\\S]*})/)
-
+    
     if (!defaultExportMatch) {
         throw new Error(`Could not parse config file: ${configPath}`)
     }
-
+    
     // eslint-disable-next-line no-eval
     const config = eval(`(${defaultExportMatch[1]})`)
     return { config, configPath: resolve(configPath) }
@@ -73,7 +74,7 @@ const validateAuditRecordStructure = (auditRecord) => {
         'outcome', 'sourceIP', 'auditVersion', 'operationDetails',
         'correlationId', 'environment'
     ]
-
+    
     return requiredFields.every(field => auditRecord.hasOwnProperty(field))
 }
 
@@ -96,7 +97,7 @@ tap.test('Given the AuditRecord Firestore system', t => {
     t.test('When writing and reading audit records directly', async t => {
         const app = initializeApp({ projectId })
         const db = getFirestore(app)
-
+        
         const testAuditRecord = AuditRecord.from({
             id: `AUD-${cuid12()}`,
             timestamp: new Date().toISOString(),
@@ -111,18 +112,18 @@ tap.test('Given the AuditRecord Firestore system', t => {
             correlationId: `test-direct:${cuid6()}`,
             environment: 'development'
         })
-
+        
         try {
             // Test write
             const writeResult = await FirebaseAudit.Infrastructure.write(db, testAuditRecord)
             t.equal(writeResult.auditId, testAuditRecord.id, 'Then write should return correct audit ID')
-
+            
             // Test read
             const readRecord = await FirebaseAudit.Infrastructure.read(db, testAuditRecord.id)
             t.ok(validateAuditRecordStructure(readRecord), 'Then read record should have valid structure')
             t.ok(validateAuditRecordId(readRecord), 'Then read record should have valid ID format')
             t.equal(readRecord.id, testAuditRecord.id, 'Then read record should have matching ID')
-
+            
             // Test query
             const queryResults = await FirebaseAudit.Infrastructure.query(db, [
                 ['correlationId', '>=', 'test-direct:'],
@@ -130,7 +131,7 @@ tap.test('Given the AuditRecord Firestore system', t => {
             ])
             t.ok(queryResults.length > 0, 'Then query should find test records')
             t.ok(queryResults.some(r => r.id === testAuditRecord.id), 'Then query should include our test record')
-
+        
         } catch (error) {
             // Test passes if we can validate our error handling works
             if (error.message && error.additionalData) {
@@ -141,26 +142,26 @@ tap.test('Given the AuditRecord Firestore system', t => {
         }
         t.end()
     })
-
+    
     t.test('When using audit helper for migration pattern', async t => {
         const testMigrationId = 'test-audit-helper'
-
+        
         try {
             const auditHelper = createAuditHelper(testMigrationId, projectId)
-
+            
             // Test complete migration audit pattern
             const startResult = await auditHelper.logStart()
             t.ok(startResult.auditId, 'Then start logging should return audit ID')
             t.match(startResult.auditId, /^AUD-[a-z0-9]{12}$/, 'Then start audit ID should have correct format')
-
+            
             const opResult = await auditHelper.logOperation('test_operation', 'success', 'Test operation details')
             t.ok(opResult.auditId, 'Then operation logging should return audit ID')
-
+            
             const completeResult = await auditHelper.logComplete('success')
             t.ok(completeResult.auditId, 'Then complete logging should return audit ID')
-
+            
             t.pass('Then audit helper pattern should work end-to-end')
-
+        
         } catch (error) {
             // Test passes if we can validate our error handling works
             if (error.message && error.additionalData) {
@@ -171,21 +172,21 @@ tap.test('Given the AuditRecord Firestore system', t => {
         }
         t.end()
     })
-
+    
     t.test('When validating SOC2 compliance requirements', async t => {
         // This test validates that our audit records meet SOC2 requirements
         const app = initializeApp({ projectId })
         const db = getFirestore(app)
-
+        
         try {
             const records = await FirebaseAudit.Infrastructure.query(db, [
                 ['eventType', '>=', 'infrastructure'],
                 ['eventType', '<', 'infrastructure\\uf8ff']
             ])
-
+            
             if (records.length > 0) {
                 const sampleRecord = records[0]
-
+                
                 // SOC2 requires: who, what, when, where, outcome
                 t.ok(sampleRecord.userId, 'Then audit records should identify WHO (userId)')
                 t.ok(sampleRecord.action && sampleRecord.resource, 'Then audit records should identify WHAT (action/resource)')
@@ -193,18 +194,18 @@ tap.test('Given the AuditRecord Firestore system', t => {
                 t.ok(sampleRecord.sourceIP, 'Then audit records should identify WHERE (sourceIP)')
                 t.ok(sampleRecord.outcome, 'Then audit records should identify OUTCOME')
                 t.ok(sampleRecord.correlationId, 'Then audit records should be traceable (correlationId)')
-
+                
                 t.pass('Then audit records should meet SOC2 compliance requirements')
             } else {
                 t.pass('Then SOC2 validation skipped - no audit records found (expected in clean environment)')
             }
-
+        
         } catch (error) {
             t.pass('Then SOC2 validation handled gracefully when Firestore unavailable')
         }
         t.end()
     })
-
+    
     t.end()
 })
 ```

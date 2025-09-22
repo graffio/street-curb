@@ -1,0 +1,20 @@
+{
+    "name": "@graffio/cli-type-generator",
+    "version": "0.1.0",
+    "description": "Build tools for compile-time type generation",
+    "type": "module",
+    "main": "index.js",
+    "private": true,
+    "dependencies": {
+        "@graffio/functional": "0.1.0",
+        "@paralleldrive/cuid2": "^2.2.2",
+        "acorn": "^8.15.0",
+        "chokidar": "^4.0.1",
+        "escodegen": "^2.1.0",
+        "estree-walker": "^3.0.3"
+    },
+    "scripts": {
+        "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh"
+    }
+}
