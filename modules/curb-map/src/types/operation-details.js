@@ -1,19 +1,19 @@
 /*  OperationDetails generated from: modules/curb-map/type-definitions/operation-details.type.js
-
-    ShellExecution
-        command      : "String",
-        duration     : "Number?",
-        outputPreview: "String?"
-    FirestoreOperation
-        operation : "String",
-        collection: "String",
-        documentId: "String?"
-    GcpProjectOperation
-        projectId: "String",
-        folderId : "String?",
-        region   : "String?"
-
-*/
+ *
+ *  ShellExecution
+ *      command      : "String",
+ *      duration     : "Number?",
+ *      outputPreview: "String?"
+ *  FirestoreOperation
+ *      operation : "String",
+ *      collection: "String",
+ *      documentId: "String?"
+ *  GcpProjectOperation
+ *      projectId: "String",
+ *      folderId : "String?",
+ *      region   : "String?"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

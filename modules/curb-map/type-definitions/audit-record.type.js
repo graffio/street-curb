@@ -1,5 +1,5 @@
-import { OperationDetails } from '@graffio/orchestration/src/types/index.js'
-import { FieldTypes } from 'modules/curb-map/type-definitions/index.js'
+import { FieldTypes } from '@graffio/curb-map/type-definitions/field-types.js'
+import { OperationDetails } from './operation-details.js'
 
 /*
  * AuditRecord represents a SOC2-compliant infrastructure audit log entry

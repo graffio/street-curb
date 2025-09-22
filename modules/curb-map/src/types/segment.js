@@ -1,9 +1,9 @@
 /*  Segment generated from: modules/curb-map/type-definitions/segment.type.js
-
-    use   : "String",
-    length: "Number"
-
-*/
+ *
+ *  use   : "String",
+ *  length: "Number"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

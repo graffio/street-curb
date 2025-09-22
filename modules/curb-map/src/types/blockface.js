@@ -1,12 +1,12 @@
 /*  Blockface generated from: modules/curb-map/type-definitions/blockface.type.js
-
-    id        : "String",
-    geometry  : "Object",
-    streetName: "String",
-    cnnId     : "String?",
-    segments  : "[Segment]"
-
-*/
+ *
+ *  id        : "String",
+ *  geometry  : "Object",
+ *  streetName: "String",
+ *  cnnId     : "String?",
+ *  segments  : "[Segment]"
+ *
+ */
 
 import { length } from '@turf/length'
 import { Segment } from './segment.js'

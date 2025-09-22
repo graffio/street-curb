@@ -1,25 +1,24 @@
 /*  AuditRecord generated from: modules/curb-map/type-definitions/audit-record.type.js
-
-    id              : FieldTypes.auditRecordId,
-    timestamp       : FieldTypes.timestamp,
-    eventType       : FieldTypes.event,
-    userId          : FieldTypes.email,
-    resource        : FieldTypes.resourceName,
-    action          : FieldTypes.resourceName,
-    outcome         : /^(success|failure|pending)$/,
-    sourceIP        : FieldTypes.ipv4Type,
-    auditVersion    : FieldTypes.semanticVersion,
-    operationDetails: "OperationDetails",
-    errorMessage    : "String?",
-    correlationId   : FieldTypes.correlationId,
-    environment     : FieldTypes.environment
-
-*/
-
-import { OperationDetails } from '@graffio/orchestration/src/types/index.js'
-import { FieldTypes } from 'modules/curb-map/type-definitions/index.js'
+ *
+ *  id              : FieldTypes.auditRecordId,
+ *  timestamp       : FieldTypes.timestamp,
+ *  eventType       : FieldTypes.event,
+ *  userId          : FieldTypes.email,
+ *  resource        : FieldTypes.resourceName,
+ *  action          : FieldTypes.resourceName,
+ *  outcome         : /^(success|failure|pending)$/,
+ *  sourceIP        : FieldTypes.ipv4Type,
+ *  auditVersion    : FieldTypes.semanticVersion,
+ *  operationDetails: "OperationDetails",
+ *  errorMessage    : "String?",
+ *  correlationId   : FieldTypes.correlationId,
+ *  environment     : FieldTypes.environment
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
+import { FieldTypes } from '@graffio/curb-map/type-definitions/field-types.js'
+import { OperationDetails } from './operation-details.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
