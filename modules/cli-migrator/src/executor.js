@@ -7,7 +7,7 @@
  * Core functions:
  * - executeCommands: Sequential execution with fail-fast
  * - rollbackCommands: Reverse-order rollback with error capture
- * - executeOrRollbackCommands: Orchestration with audit logging integration
+ * - executeOrRollbackCommands: Migration with audit logging integration
  */
 
 const executeCommands = async (commands, isRollback) => {
@@ -40,7 +40,7 @@ const executeCommands = async (commands, isRollback) => {
 }
 
 /**
- * Execute plan with comprehensive orchestration and audit logging
+ * Execute plan with comprehensive migration and audit logging
  * @sig executeOrRollbackCommands :: (Array<Command>, Object?) -> Promise<ExecutionResult>
  */
 const executeOrRollbackCommands = async (commands, mode = 'execute') => {

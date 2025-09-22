@@ -1,10 +1,10 @@
-import { FirestoreAdminAuditRecord } from '@graffio/orchestration/src/firestore/firestore-admin-audit-record.js'
-import { AuditRecord, OperationDetails } from '@graffio/orchestration/src/types/index.js'
 import admin from 'firebase-admin'
 import { readFileSync } from 'fs'
 import { FieldTypes } from 'modules/curb-map/type-definitions/index.js'
 import { resolve } from 'path'
 import tap from 'tap'
+import { FirestoreAdminAuditRecord } from '../../src/firestore/firestore-admin-audit-record.js'
+import { AuditRecord, OperationDetails } from '../../src/types'
 
 const loadConfig = configPath => {
     if (!configPath) {

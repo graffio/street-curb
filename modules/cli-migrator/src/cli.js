@@ -244,7 +244,7 @@ const main = async () => {
 
         await executeMigration(commands, configPath, migrationName, tapPath, mode, !apply)
     } catch (error) {
-        fatalError(`❌ Orchestration failed: ${error.message}`)
+        fatalError(`❌ Migration failed: ${error.message}`)
     }
 }
 
