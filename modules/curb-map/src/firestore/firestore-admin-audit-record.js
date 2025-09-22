@@ -1,4 +1,4 @@
-import { AuditRecord } from '../../../cli-migrator/src/types/index.js'
+import { AuditRecord } from '../types/index.js'
 import { _delete, _query, _read, _write } from './firestore-admin.js'
 import { CollectionPaths } from './firestore-shared.js'
 

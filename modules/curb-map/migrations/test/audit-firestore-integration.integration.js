@@ -1,10 +1,9 @@
 import admin from 'firebase-admin'
 import { readFileSync } from 'fs'
-import { FieldTypes } from 'modules/curb-map/type-definitions/index.js'
 import { resolve } from 'path'
 import tap from 'tap'
 import { FirestoreAdminAuditRecord } from '../../src/firestore/firestore-admin-audit-record.js'
-import { AuditRecord, OperationDetails } from '../../src/types'
+import { AuditRecord, FieldTypes, OperationDetails } from '../../src/types/index.js'
 
 const loadConfig = configPath => {
     if (!configPath) {

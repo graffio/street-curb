@@ -1,4 +1,4 @@
-import { FieldTypes } from '@graffio/curb-map/type-definitions/field-types.js'
+import { FieldTypes } from './field-types.js'
 import { OperationDetails } from './operation-details.js'
 
 /*

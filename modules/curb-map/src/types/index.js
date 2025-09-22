@@ -3,5 +3,6 @@
 
 export { AuditRecord } from './audit-record.js'
 export { Blockface } from './blockface.js'
+export { FieldTypes } from './field-types.js'
 export { OperationDetails } from './operation-details.js'
 export { Segment } from './segment.js'

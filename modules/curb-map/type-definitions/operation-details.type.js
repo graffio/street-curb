@@ -33,9 +33,10 @@ OperationDetails.toFirestore = o =>
         GcpProjectOperation: _ => JSON.stringify(o),
     })
 
-OperationDetails.fromFirestore = o =>
-    o.match({
-        ShellExecution: _ => OperationDetails.from(o),
-        FirestoreOperation: _ => OperationDetails.from(o),
-        GcpProjectOperation: _ => OperationDetails.from(o),
-    })
+OperationDetails.fromFirestore = o => {
+    if (o['@@tagName'] === 'ShellExecution') return OperationDetails.ShellExecution.from(o)
+    if (o['@@tagName'] === 'FirestoreOperation') return OperationDetails.FirestoreOperation.from(o)
+    if (o['@@tagName'] === 'GcpProjectOperation') return OperationDetails.GcpProjectOperation.from(o)
+
+    throw new Error(`Unrecognized operation detail ${o['@@tagName']}`)
+}
