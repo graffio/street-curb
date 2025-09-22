@@ -1,4 +1,4 @@
-import { executeShellCommand } from 'modules/cli-migrator/src/index.js'
+import { executeShellCommand } from '@graffio/cli-migrator'
 
 const enableFirestoreDatabase = async (projectId, isDryRun) => {
     console.log(`    [INFO] Starting Firestore database configuration for ${projectId}`)

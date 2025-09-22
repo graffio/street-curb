@@ -46,9 +46,10 @@ const getProjectInfo = projectId => {
 
 const isFirebaseEnabled = projectId => {
     try {
-        const output = execSync(`firebase projects:list`, { encoding: 'utf8' })
+        const output = execSync(`npx firebase projects:list`, { encoding: 'utf8' })
         return output.includes(projectId)
-    } catch {
+    } catch (e) {
+        console.error(e)
         return false
     }
 }

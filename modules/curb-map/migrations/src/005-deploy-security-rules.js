@@ -1,5 +1,5 @@
+import { executeShellCommand } from '@graffio/cli-migrator'
 import { readFileSync } from 'fs'
-import { executeShellCommand } from 'modules/cli-migrator/src/index.js'
 import { resolve } from 'path'
 
 const createFirebaseConfig = async (projectId, isDryRun) => {

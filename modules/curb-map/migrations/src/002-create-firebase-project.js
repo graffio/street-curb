@@ -1,4 +1,4 @@
-import { executeShellCommand } from 'modules/cli-migrator/src/index.js'
+import { executeShellCommand } from '@graffio/cli-migrator'
 
 const createCommands = (config, { isDryRun = true } = {}) => {
     const projectId = config.firebaseProject.projectId
