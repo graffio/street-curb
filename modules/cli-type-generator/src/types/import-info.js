@@ -1,9 +1,9 @@
 /*  ImportInfo generated from: modules/cli-type-generator/type-definitions/import-info.type.js
-
-    source    : "String",
-    specifiers: "Array"
-
-*/
+ *
+ *  source    : "String",
+ *  specifiers: "Array"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

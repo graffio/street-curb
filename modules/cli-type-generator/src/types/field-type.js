@@ -1,15 +1,15 @@
 /*  FieldType generated from: modules/cli-type-generator/type-definitions/field-type.type.js
-
-    StringType
-        value: "String"
-    RegexType
-        value: "RegExp"
-    ImportPlaceholder
-        __importPlaceholder: "Boolean",
-        source             : "String",
-        localName          : "String"
-
-*/
+ *
+ *  StringType
+ *      value: "String"
+ *  RegexType
+ *      value: "RegExp"
+ *  ImportPlaceholder
+ *      __importPlaceholder: "Boolean",
+ *      source             : "String",
+ *      localName          : "String"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

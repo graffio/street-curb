@@ -1,11 +1,11 @@
 /*  ParseResult generated from: modules/cli-type-generator/type-definitions/parse-result.type.js
-
-    typeDefinition: "Object",
-    imports       : "Array",
-    functions     : "Array",
-    sourceContent : "String"
-
-*/
+ *
+ *  typeDefinition: "Object",
+ *  imports       : "Array",
+ *  functions     : "Array",
+ *  sourceContent : "String"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

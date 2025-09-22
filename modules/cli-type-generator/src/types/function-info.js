@@ -1,11 +1,11 @@
 /*  FunctionInfo generated from: modules/cli-type-generator/type-definitions/function-info.type.js
-
-    typeName    : "String",
-    functionName: "String",
-    node        : "Object",
-    sourceCode  : "String"
-
-*/
+ *
+ *  typeName    : "String",
+ *  functionName: "String",
+ *  node        : "Object",
+ *  sourceCode  : "String"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

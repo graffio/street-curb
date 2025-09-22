@@ -1,15 +1,15 @@
 /*  TypeDefinition generated from: modules/cli-type-generator/type-definitions/type-definition.type.js
-
-    Tagged
-        name  : "String",
-        kind  : "String",
-        fields: "Object"
-    TaggedSum
-        name    : "String",
-        kind    : "String",
-        variants: "Object"
-
-*/
+ *
+ *  Tagged
+ *      name  : "String",
+ *      kind  : "String",
+ *      fields: "Object"
+ *  TaggedSum
+ *      name    : "String",
+ *      kind    : "String",
+ *      variants: "Object"
+ *
+ */
 
 import * as R from '@graffio/cli-type-generator'
 

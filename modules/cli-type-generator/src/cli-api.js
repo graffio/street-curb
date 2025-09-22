@@ -1,3 +1,4 @@
+import { uniq } from '@graffio/functional'
 import chokidar from 'chokidar'
 import fs from 'fs'
 import path, { dirname, resolve } from 'path'
@@ -80,16 +81,19 @@ const generateAll = async () => {
 
 const watch = async () => {
     const sourceFiles = Object.keys(typeMappings).map(file => resolve(REPO_ROOT, file))
-    console.log(`Watching ${sourceFiles.length} files`)
+    const targetDirectories = uniq(Object.values(typeMappings).flat().sort())
+
+    console.log(`\nWatching ${sourceFiles.length} files\n`)
     const watcher = chokidar.watch(sourceFiles, { ignored: /node_modules/, persistent: true })
 
-    watcher.on('change', async filePath => {
-        const relativeFile = filePath.replace(REPO_ROOT + '/', '')
-        console.log(`Changed: ${relativeFile}`)
-        await generate(relativeFile)
-    })
+    console.log('  source files')
+    sourceFiles.forEach(path => console.log(fs.existsSync(path) ? `    ✅  ${path}` : `    ❌  ${path}`))
 
-    console.log('Watching for changes...')
+    console.log('  target directories')
+    targetDirectories.forEach(path => console.log(fs.existsSync(path) ? `    ✅  ${path}` : `    ❌  ${path}`))
+
+    watcher.on('change', generate)
+
     return new Promise(() => {}) // Keep running
 }
 

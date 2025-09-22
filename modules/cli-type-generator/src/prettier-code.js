@@ -52,23 +52,27 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
     const processTagged = () => {
         const maxKeyLen = Math.max(...entries.map(([k]) => k.length))
         const fieldCount = entries.length
-        const fieldLines = entries.map(([k, v], i) => formatFieldLine(k, v, maxKeyLen, 1, i === fieldCount - 1))
-        return [header, '', ...fieldLines, footer].join('\n')
+        const fieldLines = entries.map(([k, v], i) =>
+            formatFieldLine(k, v, maxKeyLen, 1, i === fieldCount - 1).replace(/^ {2}/, ' *'),
+        )
+        return [header, ' *', ...fieldLines, footer].join('\n')
     }
 
     const processTaggedSumVariant = ([variantName, fields]) => {
         const fieldEntries = Object.entries(fields)
         const fieldCount = fieldEntries.length
         const maxKeyLen = Math.max(...fieldEntries.map(([k]) => k.length))
-        const fieldLines = fieldEntries.map(([k, v], i) => formatFieldLine(k, v, maxKeyLen, 2, i === fieldCount - 1))
-        return [`    ${variantName}`, ...fieldLines].join('\n')
+        const fieldLines = fieldEntries.map(([k, v], i) =>
+            formatFieldLine(k, v, maxKeyLen, 2, i === fieldCount - 1).replace(/^ {2}/, ' *'),
+        )
+        return [` *  ${variantName}`, ...fieldLines].join('\n')
     }
 
-    const processTaggedSum = () => [header, '', ...entries.map(processTaggedSumVariant), footer].join('\n')
+    const processTaggedSum = () => [header, ' *', ...entries.map(processTaggedSumVariant), footer].join('\n')
 
     const entries = Object.entries(o)
-    const header = `/*  ${typeName} generated from: ${generatedFrom}`
-    const footer = '\n*/'
+    const header = `/*  ${typeName} generated from: ${generatedFrom.replace(/.*modules/, 'modules')}`
+    const footer = ' *\n*/'
 
     return entries.length > 1 && entries.every(([k, v]) => typeof v === 'object' && v !== null)
         ? processTaggedSum()
