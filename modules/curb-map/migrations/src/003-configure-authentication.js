@@ -1,4 +1,4 @@
-import { executeShellCommand } from 'modules/cli-migrator/src/index.js'
+import { executeShellCommand } from '@graffio/cli-migrator'
 
 const getAccessTokenForProject = async () => {
     const result = await executeShellCommand('gcloud auth application-default print-access-token')
@@ -69,11 +69,51 @@ const configureAuthorizedDomains = async (projectId, isDryRun) => {
     return { status: 'success', output: 'auth domains configured' }
 }
 
+const initializeAuthentication = async (projectId, isDryRun) => {
+    console.log(`    [INFO] Checking if Firebase Authentication is initialized for ${projectId}`)
+
+    const accessToken = await getAccessTokenForProject()
+    const checkCommand = `curl -H "Authorization: Bearer ${accessToken}" -H "X-goog-user-project: ${projectId}" "https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config"`
+
+    const currentConfig = await tryShellCommand(checkCommand, 'check-auth-initialization')
+
+    if (currentConfig && currentConfig.includes('"signIn"')) {
+        console.log(`    [SKIP] Firebase Authentication already initialized`)
+        return { status: 'success', output: 'auth already initialized' }
+    }
+
+    // Authentication not initialized - provide manual instructions
+    console.log(`    [MANUAL ACTION REQUIRED] Firebase Authentication not initialized`)
+    console.log(``)
+    console.log(`    Please initialize Firebase Authentication manually:`)
+    console.log(`    1. Go to https://console.firebase.google.com/project/${projectId}/authentication`)
+    console.log(`    2. Click "Get Started"`)
+    console.log(`    3. Wait for initialization to complete`)
+    console.log(`    4. Re-run this migration to continue`)
+    console.log(``)
+
+    if (isDryRun) {
+        console.log(`    [DRY-RUN] Would require manual Authentication initialization`)
+        return { status: 'success', output: 'dry-run - manual init required' }
+    }
+
+    throw new Error(
+        `Manual Firebase Authentication initialization required. Visit: https://console.firebase.google.com/project/${projectId}/authentication`,
+    )
+}
+
 const createCommands = (config, { isDryRun = true } = {}) => {
     const projectId = config.firebaseProject.projectId
     if (!projectId) throw new Error('Firebase projectId must be defined in config.firebaseProject.projectId')
 
     return [
+        {
+            id: 'Initialize Firebase Authentication',
+            description: `Initialize Firebase Authentication service for ${projectId}`,
+            canRollback: false,
+            execute: async () => await initializeAuthentication(projectId, isDryRun),
+            rollback: () => ({ status: 'success', output: 'auth initialization rollback not supported' }),
+        },
         {
             id: 'Enable Magic Link Authentication',
             description: `Enable passwordless email link sign-in for ${projectId}`,
