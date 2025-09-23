@@ -38,6 +38,7 @@ Key implications for a mixed technical/non-technical audience:
 `GOOGLE_APPLICATION_CREDENTIALS` and `CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE` are recognized by the Google SDK:
 - `GOOGLE_APPLICATION_CREDENTIALS` tells Application Default Credentials (ADC) which JSON file to use.
 - `CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE` makes the `gcloud` CLI use that same file without modifying your global `gcloud auth` state.
+- `BOOTSTRAP_SA_KEY_PATH` points the migrations to the hardened key for the org-level bootstrap service account. The helper enforces `chmod 700` on its directory and `chmod 600` on the key file so the credential stays local-only.
 
 ### Application Default Credentials (ADC) vs. `gcloud` vs. Firebase auth
 
@@ -157,9 +158,15 @@ Running initial migrations
     export CONFIG=modules/curb-map/migrations/config/temporary-20250922-114452.config.js
     export PROJECT_ID=$(node -e "console.log(require('./$CONFIG').default.firebaseProject.projectId)")
 
+### Prepare the bootstrap service account key path
+    export BOOTSTRAP_SA_KEY_PATH="$HOME/.config/curbmap/bootstrap-service-account.json"
+
+### Run the bootstrap helper (creates the org-level service account)
+    node modules/cli-migrator/src/cli.js "$CONFIG" modules/curb-map/migrations/src/000-bootstrap-service-account.js --apply
+
 ### Activate the org-level bootstrap service account (for project creation + IAM setup)
-    export BOOTSTRAP_KEY=~/.graffio/keys/bootstrap-service-account.json
-    gcloud auth activate-service-account bootstrap-sa@YOUR-ORG.iam.gserviceaccount.com --key-file="$BOOTSTRAP_KEY"
+    export BOOTSTRAP_KEY="$BOOTSTRAP_SA_KEY_PATH"
+    gcloud auth activate-service-account bootstrap-migrator@curbmap-automation-admin.iam.gserviceaccount.com --key-file="$BOOTSTRAP_KEY"
     export GOOGLE_APPLICATION_CREDENTIALS="$BOOTSTRAP_KEY"
     export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$BOOTSTRAP_KEY"
 
