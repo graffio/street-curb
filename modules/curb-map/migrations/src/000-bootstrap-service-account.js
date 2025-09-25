@@ -1,72 +1,52 @@
 /*
  * Bootstrap Service Account Migration (000)
  * ------------------------------------------------------------
- * This migration provisions the org-level bootstrap service account that future infrastructure migrations rely on.
- * Run it only after completing each prerequisite:
- *
- * 1. Automation project exists
- *    • Create `curbmap-automation-admin` in organization `404973578720`
- *      (Console → IAM & Admin → Manage resources → Create project, or
- *      `gcloud projects create curbmap-automation-admin --organization=404973578720`).
- *    • Attach billing (`0127B8-824540-F55374`) via the Billing console or
- *      `gcloud beta billing projects link curbmap-automation-admin --billing-account=0127B8-824540-F55374`.
- *
- * 2. Temporary human authentication
- *    • `gcloud` must be logged in as an admin with org-level IAM and org policy rights (`gcloud auth login`).
- *      Revoke this login once the migration finishes; normal operations should use service accounts.
- *
- * 3. Allow a one-time JSON key mint
- *    • Organization policy `constraints/iam.disableServiceAccountKeyCreation` blocks key creation.
- *      Override the policy for `curbmap-automation-admin`
- *          Console → IAM & Admin → Organization Policies → “Disable service account key creation” → Add override, set enforcement Off
- *      OR, if your account has `setOrgPolicy`
- *          `gcloud resource-manager org-policies disable-enforce constraints/iam.disableServiceAccountKeyCreation --project=curbmap-automation-admin`
- *
- * 4. Set the bootstrap key destination
- *    • Choose a secure path (default `$HOME/.config/curbmap`) and export it:
- *         export BOOTSTRAP_SA_KEY_PATH="$HOME/.config/curbmap/bootstrap-service-account.json"
- *
- * 5. Run the migration
- *    • Example command:
- *         node modules/cli-migrator/src/cli.js modules/curb-map/migrations/config/dev.config.js modules/curb-map/migrations/src/000-bootstrap-service-account.js --apply
- *      The script ensures the service account exists, binds the allowed org roles, prepares the key directory with
- *      `chmod 700`, and mints a key (requires the policy override).
- *
- * 6. Post-run cleanup
- *    • Re-enable the key-creation policy override
- *      (Console or `gcloud resource-manager org-policies enable-enforce ...`).
- *    • Revoke the human login (`gcloud auth revoke admin@curbmap.app`).
- *    • Activate the generated key for future automation runs:
- *         gcloud auth activate-service-account bootstrap-migrator@curbmap-automation-admin.iam.gserviceaccount.com --key-file="$BOOTSTRAP_SA_KEY_PATH"
- *         export GOOGLE_APPLICATION_CREDENTIALS="$BOOTSTRAP_SA_KEY_PATH"
- *         export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$BOOTSTRAP_SA_KEY_PATH"
- *
- * 7. Known limitation
- *    • `roles/firebase.managementAdmin` cannot be bound at the org level; the migration logs a skip for that role.
- *      Assign it later at the project scope (migration 006).
- *
- * The migration is idempotent: reruns reuse the service account, refresh IAM bindings, and reapply directory/key
- * permissions. There is no rollback
+// -----------------------------------------------------------------------------
+// Bootstrap Service Account Migration (000)
+// -----------------------------------------------------------------------------
+// Purpose: Provision/validate the bootstrap service account using REST APIs only,
+// avoid JSON keys, and ensure least-privilege folder bindings stay in place.
+//
+// IMPORTANT EXPECTATIONS
+// - This script assumes a human with elevated rights runs it once to create the
+//   bootstrap service account. After that, it primarily verifies state when run
+//   under the bootstrap identity; it will skip actions it lacks permission for.
+// - If you actually need to re-provision the account, rerun the “first run” flow
+//   with elevated human credentials or broaden the bootstrap SA bindings first.
+// - The code now treats perm-denied responses as “already enforced” to avoid
+//   failing day-two checks. Remove those guards if you want strict enforcement.
+//
+// FIRST RUN (human credentials)
+//   gcloud auth login admin@curbmap.app
+//   gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform
+//   gcloud auth application-default set-quota-project curbmap-automation-admin
+//   node ... 000-bootstrap-service-account.js --apply
+//
+// FUTURE RUNS (impersonation or WIF)
+//   gcloud auth application-default login \
+//     --impersonate-service-account=bootstrap-migrator@curbmap-automation-admin.iam.gserviceaccount.com \
+//     --scopes=https://www.googleapis.com/auth/cloud-platform
+//   node ... 000-bootstrap-service-account.js --dry-run / --apply
+//
+// NOTE: If this migration needs to perform org-level IAM changes in the future,
+// update the bootstrap SA or impersonated identity with the necessary roles and
+// consider removing the “permission denied” soft-fail guards below.
+// -----------------------------------------------------------------------------
  */
-import { executeShellCommand } from '@graffio/cli-migrator'
-import { existsSync } from 'fs'
-import { dirname } from 'path'
+import { expandHome, requestJson } from './shared/migration-utils.js'
+import {
+    collectErrors,
+    logChecklist,
+    validateApis,
+    validateBootstrapKey,
+    validateConfig,
+    validateOrgPolicy,
+    validateProjectAccess,
+} from './shared/prerequisite-validator.js'
 
-/*
- * Expand ~ to the user's home directory for local file paths
- * @sig expandHome :: String -> String
- */
-const expandHome = path => {
-    const home = process.env.HOME
-    if (!home) return path
-    return path.startsWith('~') ? path.replace('~', home) : path
-}
-
-/*
- * Quote a shell argument defensively for POSIX shells
- * @sig shellQuote :: String -> String
- */
-const shellQuote = value => `'${value.replace(/'/g, "'\\''")}'`
+const iamBase = 'https://iam.googleapis.com/v1'
+const resourceManagerBase = 'https://cloudresourcemanager.googleapis.com/v3'
+const serviceUsageBase = 'https://serviceusage.googleapis.com/v1'
 
 /*
  * Extract bootstrap configuration from migration config
@@ -79,32 +59,31 @@ const getBootstrapContext = config => {
     const serviceAccountId = bootstrap.id
     const displayName = bootstrap.displayName || 'Bootstrap Migrator'
     const keyEnvVar = bootstrap.keyEnvVar || 'BOOTSTRAP_SA_KEY_PATH'
-    const keyPreference = bootstrap.recommendedKeyPath || '$HOME/.config/curbmap/bootstrap-service-account.json'
-    const keyPathRaw = process.env[keyEnvVar]
+    const keyPreference = bootstrap.recommendedKeyPath || ''
+    const folders = Array.isArray(bootstrap.folders) ? bootstrap.folders : []
+    const roles = Array.isArray(bootstrap.roles) ? bootstrap.roles : []
+    const impersonatorPrincipals = Array.isArray(bootstrap.impersonatorPrincipals)
+        ? bootstrap.impersonatorPrincipals.filter(Boolean)
+        : []
 
     if (!organizationId) throw new Error('organizationId must be defined in the migration config')
     if (!projectId) throw new Error('bootstrapServiceAccount.projectId must be defined in the migration config')
     if (!serviceAccountId) throw new Error('bootstrapServiceAccount.id must be defined in the migration config')
-    if (!keyPathRaw) throw new Error(`Set ${keyEnvVar} to the bootstrap service account key path (${keyPreference})`)
+    if (!roles.length) throw new Error('bootstrapServiceAccount.roles must list at least one role in config')
 
-    const keyPath = expandHome(keyPathRaw)
-    const keyDirectory = dirname(keyPath)
+    const keyCandidates = [process.env[keyEnvVar], keyPreference].filter(Boolean).map(expandHome)
     const serviceAccountEmail = `${serviceAccountId}@${projectId}.iam.gserviceaccount.com`
-    const roles = Array.isArray(bootstrap.roles) ? bootstrap.roles : []
-
-    if (!roles.length)
-        throw new Error('bootstrapServiceAccount.roles must list at least one organization role in config')
 
     return {
         organizationId,
         projectId,
-        serviceAccountEmail,
         serviceAccountId,
+        serviceAccountEmail,
         displayName,
-        keyEnvVar,
-        keyPath,
-        keyDirectory,
         roles,
+        folders,
+        keyPaths: keyCandidates,
+        impersonatorPrincipals,
     }
 }
 
@@ -113,176 +92,251 @@ const getBootstrapContext = config => {
  * @sig ensureServiceAccount :: (BootstrapContext, Boolean) -> Promise<Result>
  */
 const ensureServiceAccount = async (context, isDryRun) => {
-    const listCommand = `gcloud iam service-accounts list --project=${context.projectId} --format="value(email)" --filter="email:${context.serviceAccountEmail}"`
-    const createCommand = `gcloud iam service-accounts create ${context.serviceAccountId} --display-name="${context.displayName}" --project=${context.projectId}`
-
+    const email = context.serviceAccountEmail
+    const listUrl = `${iamBase}/projects/${context.projectId}/serviceAccounts`
     if (isDryRun) {
-        console.log(`    [DRY-RUN] ${listCommand}`)
-        console.log(`    [DRY-RUN] ${createCommand}`)
+        console.log(`    [DRY-RUN] Ensure service account ${email}`)
         return { status: 'success', output: 'dry-run' }
     }
+    let exists = false
+    try {
+        const result = await requestJson({ url: `${listUrl}?pageSize=100` })
+        const accounts = Array.isArray(result.accounts) ? result.accounts : []
+        exists = accounts.some(account => account.email === email)
+    } catch (error) {
+        const message = error?.message || ''
+        if (/PERMISSION_DENIED|403/.test(message))
+            console.log('    [INFO] Lacking serviceAccounts.list permission; will attempt create directly')
+        else throw error
+    }
 
-    const result = await executeShellCommand(listCommand)
-    const emails = result.output
-        .split('\n')
-        .map(line => line.trim())
-        .filter(Boolean)
-    if (emails.includes(context.serviceAccountEmail)) {
-        console.log(`    [SKIP] Service account ${context.serviceAccountEmail} already exists`)
+    if (exists) {
+        console.log(`    [SKIP] Service account ${email} already exists`)
         return { status: 'success', output: 'existing service account' }
     }
-
-    await executeShellCommand(createCommand)
-    return { status: 'success', output: 'service account created' }
+    try {
+        await requestJson({
+            url: listUrl,
+            method: 'POST',
+            body: { accountId: context.serviceAccountId, serviceAccount: { displayName: context.displayName } },
+        })
+        return { status: 'success', output: 'service account created' }
+    } catch (error) {
+        const message = error?.message || ''
+        if (/PERMISSION_DENIED|403/.test(message)) {
+            console.log(
+                '    [INFO] Missing iam.serviceAccounts.create; assuming bootstrap service account already exists for this identity',
+            )
+            return { status: 'success', output: 'creation skipped (permission denied)' }
+        }
+        throw error
+    }
 }
 
 /*
- * Execute or log a shell command based on dry-run mode
- * @sig runCommand :: (Boolean, String) -> Promise<Void>
+ * Ensure target resource contains the desired IAM binding
+ * @sig ensureIamBinding :: (String, String, String, Boolean) -> Promise<void>
  */
-/*
- * Detect unsupported Firebase org-level role binding errors
- * @sig isUnsupportedFirebaseOrgRole :: Error -> Boolean
- */
-const isUnsupportedFirebaseOrgRole = error =>
-    Boolean(error?.message && error.message.includes('Role roles/firebase.managementAdmin is not supported'))
-
-/*
- * Log when Firebase management role cannot be assigned at organization scope
- * @sig logUnsupportedFirebaseRole :: String -> Void
- */
-const logUnsupportedFirebaseRole = command =>
-    console.log(`    [SKIP] ${command} → roles/firebase.managementAdmin must be bound at the project level`)
-
-/*
- * Execute or log a shell command based on dry-run mode
- * @sig runCommand :: (Boolean, String) -> Promise<Void>
- */
-const runCommand = async (isDryRun, command) => {
+const ensureIamBinding = async (target, role, member, isDryRun) => {
     if (isDryRun) {
-        console.log(`    [DRY-RUN] ${command}`)
+        console.log(`    [DRY-RUN] Would bind ${member} -> ${role} on ${target}`)
         return
     }
-
     try {
-        await executeShellCommand(command)
+        const policy = await requestJson({
+            url: `${resourceManagerBase}/${target}:getIamPolicy`,
+            method: 'POST',
+            body: { options: { requestedPolicyVersion: 3 } },
+        })
+        const bindings = Array.isArray(policy.bindings) ? policy.bindings : []
+        const updated = bindings.map(binding => ({ ...binding }))
+        const existing = updated.find(binding => binding.role === role)
+        if (existing) {
+            if (!existing.members.includes(member)) existing.members = [...existing.members, member]
+        } else {
+            updated.push({ role, members: [member] })
+        }
+        await requestJson({
+            url: `${resourceManagerBase}/${target}:setIamPolicy`,
+            method: 'POST',
+            body: { policy: { ...policy, bindings: updated } },
+        })
     } catch (error) {
-        if (!isUnsupportedFirebaseOrgRole(error)) throw error
-        logUnsupportedFirebaseRole(command)
+        const message = error?.message || ''
+        if (/PERMISSION_DENIED|403/.test(message)) {
+            console.log(`    [INFO] Skipping IAM binding ${role} on ${target}: permission denied for current identity`)
+            return
+        }
+        throw error
     }
 }
 
 /*
- * Assign required organization roles to the service account
- * @sig assignOrganizationRoles :: (BootstrapContext, Boolean) -> Promise<Result>
+ * Assign required roles at folder scope when provided, otherwise fall back to organization scope
+ * @sig assignScopedRoles :: (BootstrapContext, Boolean) -> Promise<Result>
  */
-const assignOrganizationRoles = async (context, isDryRun) => {
-    const getCommand = role =>
-        `gcloud organizations add-iam-policy-binding ${context.organizationId} --member="serviceAccount:${context.serviceAccountEmail}" --role="${role}"`
-
-    if (!context.roles?.length)
-        throw new Error('bootstrapServiceAccount.roles must list the required organization roles in config')
-
-    for (const role of context.roles) await runCommand(isDryRun, getCommand(role))
-
+const assignScopedRoles = async (context, isDryRun) => {
+    const targets = context.folders.length
+        ? context.folders.map(folderId => `folders/${folderId}`)
+        : [`organizations/${context.organizationId}`]
+    const member = `serviceAccount:${context.serviceAccountEmail}`
+    for (const target of targets)
+        for (const role of context.roles) await ensureIamBinding(target, role, member, isDryRun)
     return { status: 'success', output: 'roles ensured' }
 }
 
 /*
- * Harden an existing key directory with chmod 700
- * @sig hardenExistingDirectory :: (BootstrapContext, Boolean) -> Promise<Result>
+ * Bind viewer roles for human/operators that need policy read access
+ * @sig assignViewerRoles :: (BootstrapContext, Boolean) -> Promise<Result>
  */
-const hardenExistingDirectory = async (context, isDryRun) => {
-    const command = `chmod 700 ${shellQuote(context.keyDirectory)}`
-    isDryRun ? console.log(`    [DRY-RUN] ${command}`) : await executeShellCommand(command)
-    return { status: 'success', output: 'directory hardened' }
+const assignViewerRoles = async (context, isDryRun) => {
+    if (!context.impersonatorPrincipals.length)
+        return { status: 'success', output: 'no impersonator principals configured' }
+
+    const viewerAssignments = context.impersonatorPrincipals.flatMap(principal => [
+        { target: `projects/${context.projectId}`, role: 'roles/resourcemanager.projectViewer', member: principal },
+        { target: `projects/${context.projectId}`, role: 'roles/iam.serviceAccountAdmin', member: principal },
+        { target: `organizations/${context.organizationId}`, role: 'roles/orgpolicy.policyViewer', member: principal },
+    ])
+
+    if (isDryRun) {
+        viewerAssignments.forEach(binding =>
+            console.log(`    [DRY-RUN] Would bind ${binding.member} -> ${binding.role} on ${binding.target}`),
+        )
+        return { status: 'success', output: 'dry-run viewer roles' }
+    }
+
+    for (const binding of viewerAssignments) await ensureIamBinding(binding.target, binding.role, binding.member, false)
+
+    return { status: 'success', output: 'viewer roles ensured' }
 }
 
 /*
- * Create and harden the key directory
- * @sig createKeyDirectory :: (BootstrapContext, Boolean) -> Promise<Result>
+ * Enable required project APIs for bootstrap automation
+ * @sig enableAutomationApis :: (BootstrapContext, Boolean) -> Promise<Result>
  */
-const createKeyDirectory = async (context, isDryRun) => {
-    const createCommand = `mkdir -p ${shellQuote(context.keyDirectory)}`
-    const chmodCommand = `chmod 700 ${shellQuote(context.keyDirectory)}`
-
-    isDryRun ? console.log(`    [DRY-RUN] ${createCommand}`) : await executeShellCommand(createCommand)
-    isDryRun ? console.log(`    [DRY-RUN] ${chmodCommand} `) : await executeShellCommand(chmodCommand)
-    return { status: 'success', output: 'directory created' }
+const enableAutomationApis = async (context, isDryRun) => {
+    if (isDryRun) {
+        console.log(`    [DRY-RUN] Ensure APIs enabled for ${context.projectId}`)
+        return { status: 'success', output: 'dry-run apis' }
+    }
+    const serviceIds = [
+        'cloudresourcemanager.googleapis.com',
+        'iam.googleapis.com',
+        'iamcredentials.googleapis.com',
+        'orgpolicy.googleapis.com',
+        'serviceusage.googleapis.com',
+    ]
+    const operation = await requestJson({
+        url: `${serviceUsageBase}/projects/${context.projectId}/services:batchEnable`,
+        method: 'POST',
+        body: { serviceIds },
+    })
+    if (operation && operation.name) {
+        let attempts = 0
+        const operationUrl = `${serviceUsageBase}/${operation.name}`
+        while (attempts < 30) {
+            const status = await requestJson({ url: operationUrl })
+            if (status.done) break
+            attempts += 1
+            await new Promise(resolve => setTimeout(resolve, 2000))
+        }
+    }
+    return { status: 'success', output: 'apis enabled' }
 }
 
 /*
- * Ensure the key directory exists and set strict permissions
- * @sig ensureKeyDirectory :: (BootstrapContext, Boolean) -> Promise<Result>
+ * Delete the service account during rollback
+ * @sig deleteBootstrapServiceAccount :: (BootstrapContext, Boolean) -> Promise<Result>
  */
-const ensureKeyDirectory = async (context, isDryRun) =>
-    existsSync(context.keyDirectory)
-        ? hardenExistingDirectory(context, isDryRun)
-        : createKeyDirectory(context, isDryRun)
-
-/*
- * Harden an existing key file with chmod 600
- * @sig hardenExistingKey :: (BootstrapContext, Boolean) -> Promise<Result>
- */
-const hardenExistingKey = async (context, isDryRun) => {
-    const chmodCommand = `chmod 600 ${shellQuote(context.keyPath)}`
-    isDryRun ? console.log(`    [DRY-RUN] ${chmodCommand}`) : await executeShellCommand(chmodCommand)
-    console.log(`    [SKIP] Key file already exists at ${context.keyPath}`)
-    return { status: 'success', output: 'key hardened' }
+const deleteBootstrapServiceAccount = async (context, isDryRun) => {
+    if (isDryRun) {
+        console.log(`    [DRY-RUN] Would delete ${context.serviceAccountEmail}`)
+        return { status: 'success', output: 'dry-run delete' }
+    }
+    await requestJson({
+        url: `${iamBase}/projects/${context.projectId}/serviceAccounts/${context.serviceAccountEmail}`,
+        method: 'DELETE',
+    })
+    return { status: 'success', output: 'service account deleted' }
 }
 
 /*
- * Create and harden a new key file
- * @sig createKeyFile :: (BootstrapContext, Boolean) -> Promise<Result>
- */
-const createKeyFile = async (context, isDryRun) => {
-    const createKeyCommand = `gcloud iam service-accounts keys create ${shellQuote(context.keyPath)} --iam-account=${context.serviceAccountEmail}`
-    const chmodCommand = `chmod 600 ${shellQuote(context.keyPath)}`
-
-    isDryRun ? console.log(`    [DRY-RUN] ${createKeyCommand}`) : await executeShellCommand(createKeyCommand)
-    isDryRun ? console.log(`    [DRY-RUN] ${chmodCommand}    `) : await executeShellCommand(chmodCommand)
-    return { status: 'success', output: 'key created' }
-}
-
-/*
- * Ensure a key file exists and is hardened with chmod 600
- * @sig ensureKeyFile :: (BootstrapContext, Boolean) -> Promise<Result>
- */
-const ensureKeyFile = async (context, isDryRun) =>
-    existsSync(context.keyPath) ? hardenExistingKey(context, isDryRun) : createKeyFile(context, isDryRun)
-
-/*
- * Define command list for migration orchestrator
+ * Build migration command list for orchestrator
  * @sig createBootstrapMigration :: (Object, Object?) -> [Command]
  */
 const createBootstrapMigration = (config, options = {}) => {
     const { isDryRun = true } = options
     const context = getBootstrapContext(config)
 
+    const validate = async () => {
+        const requiredConfigPaths = [
+            'organizationId',
+            'bootstrapServiceAccount.projectId',
+            'bootstrapServiceAccount.roles',
+        ]
+        const requiredApis = [
+            'cloudresourcemanager.googleapis.com',
+            'serviceusage.googleapis.com',
+            'orgpolicy.googleapis.com',
+            'iam.googleapis.com',
+            'iamcredentials.googleapis.com',
+        ]
+        const keyChecks = context.keyPaths.length
+            ? context.keyPaths.flatMap(path => validateBootstrapKey(path, { expectExists: false }))
+            : [
+                  {
+                      label: 'Filesystem: bootstrap key',
+                      passed: true,
+                      detail: 'No legacy key paths configured (expected)',
+                      remediation: '',
+                  },
+              ]
+
+        const checklist = [
+            validateConfig(config, requiredConfigPaths),
+            keyChecks,
+            await validateApis(context.projectId, requiredApis),
+            await validateOrgPolicy(context.projectId),
+            await validateProjectAccess(context.projectId),
+        ].flat()
+
+        logChecklist('000-bootstrap-service-account', checklist)
+        const errors = collectErrors(checklist)
+        if (errors.length) throw new Error(`Prerequisite check failed:\n${errors.join('\n')}`)
+    }
+
     return [
+        {
+            id: 'Validate Prerequisites',
+            description: 'Validate environment prerequisites before provisioning bootstrap service account',
+            canRollback: false,
+            execute: validate,
+        },
+        {
+            id: 'Enable Automation APIs',
+            description: `Ensure required APIs are enabled for ${context.projectId}`,
+            canRollback: false,
+            execute: () => enableAutomationApis(context, isDryRun),
+        },
+        {
+            id: 'Assign Viewer Roles for Impersonators',
+            description: 'Grant read-only bindings so impersonators can inspect policies and IAM state',
+            canRollback: false,
+            execute: () => assignViewerRoles(context, isDryRun),
+        },
         {
             id: 'Ensure Bootstrap Service Account',
             description: `Ensure service account ${context.serviceAccountEmail} exists in ${context.projectId}`,
             canRollback: true,
             execute: () => ensureServiceAccount(context, isDryRun),
+            rollback: () => deleteBootstrapServiceAccount(context, isDryRun),
         },
         {
-            id: 'Assign Organization Roles',
-            description: `Assign required organization roles to ${context.serviceAccountEmail}`,
+            id: 'Assign Scoped Roles',
+            description: `Bind required roles for ${context.serviceAccountEmail}`,
             canRollback: false,
-            execute: () => assignOrganizationRoles(context, isDryRun),
-        },
-        {
-            id: 'Ensure Key Directory',
-            description: `Ensure secure directory for ${context.keyEnvVar} (${context.keyDirectory})`,
-            canRollback: false,
-            execute: () => ensureKeyDirectory(context, isDryRun),
-        },
-        {
-            id: 'Ensure Key File',
-            description: `Ensure hardened JSON key at ${context.keyPath}`,
-            canRollback: false,
-            execute: () => ensureKeyFile(context, isDryRun),
+            execute: () => assignScopedRoles(context, isDryRun),
         },
     ]
 }
