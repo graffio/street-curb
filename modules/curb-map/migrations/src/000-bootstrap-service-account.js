@@ -1,37 +1,33 @@
 /*
  * Bootstrap Service Account Migration (000)
- * ------------------------------------------------------------
-// -----------------------------------------------------------------------------
-// Bootstrap Service Account Migration (000)
-// -----------------------------------------------------------------------------
-// Purpose: Provision/validate the bootstrap service account using REST APIs only,
-// avoid JSON keys, and ensure least-privilege folder bindings stay in place.
-//
-// IMPORTANT EXPECTATIONS
-// - This script assumes a human with elevated rights runs it once to create the
-//   bootstrap service account. After that, it primarily verifies state when run
-//   under the bootstrap identity; it will skip actions it lacks permission for.
-// - If you actually need to re-provision the account, rerun the “first run” flow
-//   with elevated human credentials or broaden the bootstrap SA bindings first.
-// - The code now treats perm-denied responses as “already enforced” to avoid
-//   failing day-two checks. Remove those guards if you want strict enforcement.
-//
-// FIRST RUN (human credentials)
-//   gcloud auth login admin@curbmap.app
-//   gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform
-//   gcloud auth application-default set-quota-project curbmap-automation-admin
-//   node ... 000-bootstrap-service-account.js --apply
-//
-// FUTURE RUNS (impersonation or WIF)
-//   gcloud auth application-default login \
-//     --impersonate-service-account=bootstrap-migrator@curbmap-automation-admin.iam.gserviceaccount.com \
-//     --scopes=https://www.googleapis.com/auth/cloud-platform
-//   node ... 000-bootstrap-service-account.js --dry-run / --apply
-//
-// NOTE: If this migration needs to perform org-level IAM changes in the future,
-// update the bootstrap SA or impersonated identity with the necessary roles and
-// consider removing the “permission denied” soft-fail guards below.
-// -----------------------------------------------------------------------------
+ * -----------------------------------------------------------------------------
+ * Purpose: Provision/validate the bootstrap service account using REST APIs only,
+ * avoid JSON keys, and ensure least-privilege folder bindings stay in place.
+ *
+ * IMPORTANT EXPECTATIONS
+ * - This script assumes a human with elevated rights runs it once to create the
+ *   bootstrap service account. After that, it primarily verifies state when run
+ *   under the bootstrap identity; it will skip actions it lacks permission for.
+ * - If you actually need to re-provision the account, rerun the “first run” flow
+ *   with elevated human credentials or broaden the bootstrap SA bindings first.
+ * - The code now treats perm-denied responses as “already enforced” to avoid
+ *   failing day-two checks. Remove those guards if you want strict enforcement.
+ *
+ * FIRST RUN (human credentials)
+ *   gcloud auth login admin@curbmap.app
+ *   gcloud auth application-default login --scopes=https://www.googleapis.com/auth/cloud-platform
+ *   gcloud auth application-default set-quota-project curbmap-automation-admin
+ *   node ... 000-bootstrap-service-account.js --apply
+ *
+ * FUTURE RUNS (impersonation or WIF)
+ *   gcloud auth application-default login \
+ *     --impersonate-service-account=bootstrap-migrator@curbmap-automation-admin.iam.gserviceaccount.com \
+ *     --scopes=https://www.googleapis.com/auth/cloud-platform
+ *   node ... 000-bootstrap-service-account.js --dry-run / --apply
+ *
+ * NOTE: If this migration needs to perform org-level IAM changes in the future,
+ * update the bootstrap SA or impersonated identity with the necessary roles and
+ * consider removing the “permission denied” soft-fail guards below.
  */
 import { expandHome, requestJson } from './shared/migration-utils.js'
 import {

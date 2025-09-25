@@ -34,7 +34,7 @@
 ## Commit & PR Expectations
 - Write imperative subjects under ~72 chars and expand context in the body with bullets when needed.
 - Reference touched workspaces inline (e.g., `modules/curb-map/migrations/...`) and cite spec IDs guiding choices.
-- Document validation steps (`yarn tap`, schema diffs) and describe any accepted `should`-level deviations.
+- Document validation steps (`yarn tap`, schema diffs) and description any accepted `should`-level deviations.
 - Attach screenshots or logs for UX or migration updates; list residual risks explicitly.
 
 ## Agent Playbook
