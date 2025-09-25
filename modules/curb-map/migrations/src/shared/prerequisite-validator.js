@@ -30,6 +30,7 @@ const orgPolicyBase = 'https://orgpolicy.googleapis.com/v2'
  */
 const listEnabledServices = async projectId => {
     const url = `${serviceUsageBase}/projects/${projectId}/services?filter=state:ENABLED`
+    console.log(`    [EXEC] Making API call: GET ${url}`)
     const result = await requestJson({ url })
     const services = Array.isArray(result.services) ? result.services : []
     return services.map(service => service.name)
@@ -42,6 +43,7 @@ const listEnabledServices = async projectId => {
 const fetchEffectivePolicy = async (projectId, constraint) => {
     const policyName = encodeURIComponent(constraint)
     const url = `${orgPolicyBase}/projects/${projectId}/policies/${policyName}:getEffectivePolicy`
+    console.log(`    [EXEC] Making API call: GET ${url}`)
     try {
         return await requestJson({ url })
     } catch (error) {
@@ -85,6 +87,7 @@ const isPolicyEnforced = policy => {
  */
 const fetchProjectIamPolicy = projectId => {
     const url = `${resourceManagerBase}/projects/${projectId}:getIamPolicy`
+    console.log(`    [EXEC] Making API call: POST ${url}`)
     return requestJson({ url, method: 'POST', body: {} })
 }
 

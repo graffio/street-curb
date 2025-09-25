@@ -80,7 +80,15 @@ const requestJson = async ({ url, method, body, headers = {}, description, dryRu
     }
 
     if (!description) throw new Error('description parameter is required for requestJson')
-    return runWithDryRun(description, _requestJson, dryRunConfig)
+
+    // In dry-run mode: allow GET requests (read operations), skip others (write operations)
+    const isReadOperation = method === 'GET'
+    const shouldSkipInDryRun = dryRunConfig.isDryRun && !isReadOperation
+
+    dryRunConfig.logger(`    [EXEC] ${method} ${url}`)
+
+    // Make the actual request (either read operation in dry-run, or any operation when not dry-run)
+    return shouldSkipInDryRun ? Success({ isDryRun: true }, 'exists', description) : await _requestJson()
 }
 
 export { requestJson, runWithDryRun }
