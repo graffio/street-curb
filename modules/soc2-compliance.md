@@ -39,6 +39,7 @@ Key implications for a mixed technical/non-technical audience:
 - `GOOGLE_APPLICATION_CREDENTIALS` tells Application Default Credentials (ADC) which JSON file to use.
 - `CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE` makes the `gcloud` CLI use that same file without modifying your global `gcloud auth` state.
 - `BOOTSTRAP_SA_KEY_PATH` points the migrations to the hardened key for the org-level bootstrap service account. The helper enforces `chmod 700` on its directory and `chmod 600` on the key file so the credential stays local-only.
+- `INFRA_SA_KEY_PATH` can be set to the per-project key emitted by migration 002; exporting it makes it easy to activate the infrastructure service account for migrations 003–005.
 
 ### Application Default Credentials (ADC) vs. `gcloud` vs. Firebase auth
 
@@ -76,7 +77,7 @@ Roles & Permissions Matrix
 |                               |    | Unlocks Bootstrap SA credentials when running project creation/teardown                                                                      | Must ensure activity is logged in Cloud Audit Logs                                            | Add dual approval before touching staging/production                                                        |
 | Bootstrap Service Account     | ✔️ | Org-scope service account                                                                                                                    | Enables automated environment creation while keeping console access limited                   | Tighten to custom role set once exact API calls are known                                                   |
 |                               |    | Roles:<br>- resourcemanager.projectCreator<br>- serviceusage.serviceUsageAdmin<br>- billing.projectManager<br>- firebase.managementAdmin<br> | Needs monitoring to satisfy auditors                                                          | Move credentials into Secret Manager and enforce rotation                                                   |
-| Infrastructure Engineer       | 👤 | Runs migrations 002–006 from a workstation                                                                                                   | Shows infrastructure is managed through repeatable scripts rather than ad-hoc console actions | Eventually migrate execution to controlled runner/CI while retaining read-only visibility                   |
+| Infrastructure Engineer       | 👤 | Runs migrations 000–005 from a workstation                                                                                                   | Shows infrastructure is managed through repeatable scripts rather than ad-hoc console actions | Eventually migrate execution to controlled runner/CI while retaining read-only visibility                   |
 |                               |    | Temporarily impersonates bootstrap SA, then activates per-project SA                                                                         |                                                                                               |                                                                                                             |
 | Per-project Infrastructure SA | ✔️ | Created by Phase 1c inside each project                                                                                                      | Provides least-privilege automation for Firebase Auth, Firestore, Hosting, etc.               | Add service-specific roles later (`storage.admin`, `cloudfunctions.developer`, `cloudsql.client` as needed) |
 |                               |    | Scoped roles:<br>- firebase.admin<br>- datastore.owner<br>- serviceusage.serviceUsageConsumer                                                | Supports audit trail requirements                                                             | Rotate keys regularly and store them securely                                                               |
@@ -96,30 +97,22 @@ Next Steps
 - Phase1c (the per-project infrastructure service account) is only a spec; no migration exists yet.
 - The bootstrap (org-level) service account doesn’t exist at all.
 
-If we leave things as-is and simply add migration006 after 005, we still depend on console clicks—bad for repeatability and SOC2. The better plan is to retrofit 002–005 so everything can run headless:
+Manual console clicks are incompatible with SOC2 repeatability. The staged plan is now:
 
-    1. Bootstrap Service Account
-       Create it once (manually or with a one-off script). It lives at the org level and has the big permissions: project creation, billing link, Firebase management. This SA never lives inside any Firebase project, so it can’t be provisioned by the existing migrations.
+    1. Bootstrap Service Account (migration 000)
+       Run once to create the org-level helper. It holds project creation, billing link, and Firebase management permissions so subsequent migrations can operate headlessly.
     2. Migration 002 rewrite
-       Instead of halting for manual project/Firebase creation, use the bootstrap SA to:
-        - Create the GCP project (gcloud projects create or Resource Manager API).
-        - Move it to the right folder.
-        - Link billing.
-        - Call the Firebase Management API (firebase.projects.addFirebase) so it shows up in Firebase—this replaces the console’s “Create project” flow.
-          With that in place, you no longer need to create the project by hand.
+       Use the bootstrap SA to create the GCP project, move it into the correct folder, attach billing, enable Firebase/APIs, create the per-project infrastructure service account, assign its roles, and mint the hardened key.
     3. Migration 003 (Auth)
-       Replace the “click Get Started” step with one Identity Toolkit Admin to fetch the config and a PATCH call to enable email/passwordless auth. Once the Firebase project exists (from 002), everything can be done by API. No console clicks required.
-    4. Phase 1c ⇒ Migration 006
-       Implement the spec as a real migration: create the per-project infrastructure service account, grant project-scoped roles, and write the JSON key. Run this immediately after 002 (or after 003–005 if convenient), then activate the key so later migrations can reuse it instead of a human token.
-    5. Migrations 004–005
-       Update them to activate the per-project SA before running any gcloud or firebase commands. That removes the dependency on the developer’s personal auth.
+       Keep the API-first approach: enable auth providers without console clicks, authenticated via the per-project SA generated in step 2.
+    4. Migrations 004–005
+       Ensure each migration activates the per-project SA before calling `gcloud` or `firebase`, eliminating human tokens for Firestore configuration and rules deployment.
 
-So:
+Sequence summary:
 
-    0. (One-time) Org admin creates the bootstrap service account/key.
-    1. Run migration 002 with that SA to create and Firebase-enable the project.
-    2. Run migration 006 (Phase 1c) to mint the project-level SA/key.
-    3. Switch to that SA and run migrations 003–005 (and beyond).
+    0. (One-time) Org admin runs migration 000 to mint the bootstrap SA key.
+    1. Run migration 002 with the bootstrap SA to create/configure the project and mint the per-project infrastructure SA key.
+    2. Activate the per-project key captured by migration 002 and run migrations 003–005 (and beyond).
 
 
 SOC2 Conformance Path
@@ -127,7 +120,7 @@ SOC2 Conformance Path
 
 ### Milestone 1 – Document & Bootstrap (in progress)
 
-- Adopt the two-service-account model (bootstrap + per-project) and capture their creation in migrations 002–006.
+- Adopt the two-service-account model (bootstrap + per-project) and capture their creation in migrations 000–002.
 - Enable Admin Activity Cloud Audit Logs at organization and project levels; verify they record every migration
   invocation.
 - Store bootstrap SA key in password-protected vault; require MFA for retrieval.
@@ -170,12 +163,11 @@ Running initial migrations
     export GOOGLE_APPLICATION_CREDENTIALS="$BOOTSTRAP_KEY"
     export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$BOOTSTRAP_KEY"
 
-### Run the bootstrap-stage migrations (project creation + service account minting)
+### Run the combined bootstrap migration (project creation + per-project SA)
     node modules/cli-migrator/src/cli.js "$CONFIG" modules/curb-map/migrations/src/002-create-firebase-project.js --apply
-    node modules/cli-migrator/src/cli.js "$CONFIG" modules/curb-map/migrations/src/006-create-service-account.js --apply
 
 ### Switch to the per-project infrastructure service account for day-to-day migrations
-    export INFRA_KEY="modules/curb-map/service-accounts/${PROJECT_ID}-firebase-infrastructure-key.json"
+    export INFRA_KEY=$(node -e "console.log(require('./$CONFIG').default.infrastructureServiceAccountKeyPath)")
     gcloud auth activate-service-account "firebase-infrastructure-sa@${PROJECT_ID}.iam.gserviceaccount.com" --key-file="$INFRA_KEY"
     export GOOGLE_APPLICATION_CREDENTIALS="$INFRA_KEY"
     export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="$INFRA_KEY"
