@@ -7,17 +7,52 @@
  * and safe-by-default behavior.
  *
  * Usage:
- *   orchestrate <config-file> <migration-file> [--apply] [--rollback] [--audit-to=console|firestore]
+ *   orchestrate <config-file> <migration-file> [--apply] [--rollback] [--audit-to=logger.firestore]
  *   orchestrate config/prod.js migrations/046-vpc.js                    # dry-run (safe default)
  *   orchestrate config/prod.js migrations/046-vpc.js --apply            # actual execution
  *   orchestrate config/prod.js migrations/047-cleanup.js --rollback --apply  # rollback execution
  *   orchestrate config/staging.js migrations/046-vpc.js --audit-to=firestore --apply  # with firestore audit
  */
 
-import { execSync } from 'child_process'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
-import { basename, dirname, join, resolve } from 'path'
-import { executeOrRollbackCommands } from './executor.js'
+import { existsSync } from 'fs'
+import { basename, relative, resolve } from 'path'
+import { fileURLToPath } from 'url'
+import { createLogger, getLogger } from './logger.js'
+
+/*
+ * Execute commands directly with immediate logging
+ * @sig executeCommands :: (Array<Command>, Boolean, Boolean) -> Promise<Void>
+ */
+const executeCommands = async (commands, isRollback, isDryRun = false) => {
+    const prefix = command => commands.indexOf(command) + 1 + '.'
+    const logger = getLogger()
+
+    for (const command of commands) {
+        // Show command description
+        logger.log(`${prefix(command)} ${command.id} → ${command.description}`)
+        logger.log() // Add blank line after description
+
+        if (isRollback && !command.canRollback) throw new Error(`${command.description} cannot be rolled back`)
+
+        // Execute the appropriate function
+        let result
+        // prettier-ignore
+        try {
+            if      (isRollback) result = await command.rollback()
+            else if ( isDryRun)  result = await command.dryRun()
+            else if (!isDryRun)  result = await command.execute()
+            else throw new Error('whoa!')
+        } catch (e) {
+            const s = `Command failed: '${command.description}'` + '\n    wrapped error:' + e.stack.replace('Error:', '')
+            throw new Error(s)
+        }
+
+        // Log success message from result
+        if (result && result.message) logger.log(`\n    ✅ ${result.message}`)
+
+        logger.log() // Add blank line after execution
+    }
+}
 
 /*
  * Parse command line arguments
@@ -26,9 +61,9 @@ import { executeOrRollbackCommands } from './executor.js'
 const parseArgs = () => {
     const args = process.argv.slice(2)
     if (args.length < 2) {
-        fatalError(
-            'Usage: orchestrate <config-file> <migration-file> [--apply] [--rollback] [--audit-to=console|firestore]',
-        )
+        const s = 'Usage: migrate <config-file> <migration-file> [--apply] [--rollback] [--audit-to=logger.firestore]'
+        getLogger.error(s)
+        process.exit(1)
     }
 
     const configFile = args[0]
@@ -43,102 +78,14 @@ const parseArgs = () => {
 }
 
 /*
- * Exit with error message
- * @sig fatalError :: String -> Void
- */
-const fatalError = message => {
-    console.error(message)
-    process.exit(1)
-}
-
-/*
- * Parse config file content to extract config object
- * @sig parseConfigFile :: String -> Object
- */
-const parseConfigFile = configPath => {
-    const configContent = readFileSync(configPath, 'utf8')
-    const defaultExportMatch = configContent.match(/export default\s+({[\s\S]*})/)
-
-    if (!defaultExportMatch) throw new Error(`Could not parse config file: ${configPath}`)
-
-    // eslint-disable-next-line no-eval
-    return eval(`(${defaultExportMatch[1]})`)
-}
-
-/*
- * Write updated config object back to file
- * @sig writeConfigFile :: (String, Object) -> Void
- */
-const writeConfigFile = (configPath, updatedConfig) => {
-    const updatedContent = `export default ${JSON.stringify(updatedConfig, null, 4)}`
-    writeFileSync(configPath, updatedContent)
-}
-
-/*
- * Update config file with captured IDs from migration results
- * @sig updateConfigWithCapturedIds :: (ExecutionPlan, String) -> Void
- */
-const updateConfigWithCapturedIds = (result, configPath) => {
-    const collectCapturedIds = results => {
-        const reducer = (acc, result) => (result?.result?.capturedIds ? { ...acc, ...result.result.capturedIds } : acc)
-        return results.reduce(reducer, {})
-    }
-
-    const capturedIds = collectCapturedIds(result.results)
-    if (Object.keys(capturedIds).length === 0) return
-
-    try {
-        const configObject = parseConfigFile(configPath)
-        const updatedConfig = { ...configObject, ...capturedIds }
-        writeConfigFile(configPath, updatedConfig)
-        console.log(`   Config updated with captured IDs: ${Object.keys(capturedIds).join(', ')}`)
-    } catch (error) {
-        console.warn(`   Warning: Could not update config file: ${error.message}`)
-    }
-}
-
-/*
- * Run corresponding test file for migration if it exists
- * @sig runPostMigrationTapTests :: (String, String, String) -> Promise<Boolean>
- */
-const runPostMigrationTapTests = async (migrationName, tapPath, configPath) => {
-    if (!existsSync(tapPath)) {
-        console.log(`   No test file found at: ${tapPath}`)
-        return true
-    }
-
-    try {
-        console.log(`   Running tests for ${migrationName}...`)
-        execSync(`node ${tapPath} ${configPath}`, { encoding: 'utf8', stdio: 'pipe', cwd: process.cwd() })
-        console.log(`   ✅ Tests passed`)
-    } catch (error) {
-        if (error.stdout) console.error(`   Test output: ${error.stdout}`)
-        if (error.stderr) console.error(`   Test error: ${error.stderr}`)
-        fatalError(`   ❌ Tests failed: ${error.message}`)
-    }
-}
-
-/*
- * Validate required files exist
- * @sig validateFiles :: (String, String) -> Void
- */
-const validateFiles = (configFile, migrationFile) => {
-    if (!existsSync(configFile)) throw new Error(`Config file not found: ${configFile}`)
-    if (!existsSync(migrationFile)) throw new Error(`Migration file not found: ${migrationFile}`)
-}
-
-/*
  * Load and validate config module
  * @sig loadConfig :: String -> Object
  */
 const loadConfig = async configPath => {
     const configModule = await import(configPath)
-    const config = configModule.default
-
-    if (!config || typeof config !== 'object')
-        throw new Error(`Config file must export a default object: ${configPath}`)
-
-    return config
+    const conf = configModule.default
+    if (!conf || typeof conf !== 'object') throw new Error(`Config file must export a default object: ${configPath}`)
+    return conf
 }
 
 /*
@@ -147,73 +94,9 @@ const loadConfig = async configPath => {
  */
 const loadMigrationFunction = async migrationPath => {
     const migrationModule = await import(migrationPath)
-    const migrationFunction = migrationModule.default
-
-    if (typeof migrationFunction !== 'function')
-        throw new Error(`Migration file must export a default function: ${migrationPath}`)
-
-    return migrationFunction
-}
-
-/*
- * Execute migration with optional config updates
- * @sig executeMigration :: (Array<Command>, String, String, String, String, Boolean) -> Promise<Void>
- */
-const executeMigration = async (commands, configPath, migrationName, tapPath, mode, isDryRun) => {
-    const result = await executeOrRollbackCommands(commands, mode)
-
-    let operation = mode === 'rollback' ? 'rollback' : 'execution'
-    if (isDryRun) operation = operation + ' dry-run'
-
-    if (result.success) {
-        console.log(`\n✅  Migration ${operation} completed successfully`)
-    } else {
-        // Show detailed failure information
-        const failedResults = result.results.filter(r => !r.success)
-        console.error(`\n❌  Migration failed during ${operation}`)
-
-        failedResults.forEach(failedResult => {
-            console.error(`   Failed command: ${failedResult.command.id}`)
-            console.error(`   Description: ${failedResult.command.description}`)
-            console.error(`   Error: ${failedResult.error?.message || 'Unknown error'}`)
-            if (failedResult.error?.stdout) console.error(`   Output: ${failedResult.error.stdout}`)
-            if (failedResult.error?.stderr) console.error(`   Error output: ${failedResult.error.stderr}`)
-        })
-
-        process.exit(1)
-    }
-
-    if (isDryRun) {
-        // In dry-run, show what would be captured but don't actually update config
-        const collectCapturedIds = results => {
-            const reducer = (acc, result) =>
-                result?.result?.capturedIds ? { ...acc, ...result.result.capturedIds } : acc
-            return results.reduce(reducer, {})
-        }
-
-        const capturedIds = collectCapturedIds(result.results)
-        if (Object.keys(capturedIds).length)
-            console.log(`⚠️ Would capture IDs: [${Object.keys(capturedIds).join(', ')}]`)
-
-        console.log(`⚠️ Skipping config update and tests in dry-run mode`)
-        console.log(``)
-        console.log(`Next steps:`)
-        console.log(`  # Execute the migration:`)
-        console.log(`  ${process.argv.join(' ')} --apply`)
-        console.log(``)
-    } else if (mode === 'execute') {
-        updateConfigWithCapturedIds(result, configPath)
-        await runPostMigrationTapTests(migrationName, tapPath, configPath)
-
-        console.log(``)
-        console.log(`Next steps:`)
-        console.log(`  # Verify results manually:`)
-        console.log(`  node ${tapPath.replace(process.cwd() + '/', '')} "${configPath}"`)
-        console.log(``)
-        console.log(`  # Test idempotency:`)
-        console.log(`  ${process.argv.join(' ')}`)
-        console.log(``)
-    }
+    const f = migrationModule.default
+    if (typeof f !== 'function') throw new Error(`Migration file must export a default function: ${migrationPath}`)
+    return f
 }
 
 /*
@@ -221,30 +104,43 @@ const executeMigration = async (commands, configPath, migrationName, tapPath, mo
  * @sig main :: () -> Promise<Void>
  */
 const main = async () => {
-    try {
-        const { configFile, migrationFile, apply, mode } = parseArgs()
+    const { configFile, migrationFile, apply, mode } = parseArgs()
+    const logger = createLogger()
 
-        validateFiles(configFile, migrationFile)
+    if (!existsSync(configFile)) throw new Error(`Config file not found: ${configFile}`)
+    if (!existsSync(migrationFile)) throw new Error(`Migration file not found: ${migrationFile}`)
 
-        const configPath = resolve(configFile)
-        const migrationPath = resolve(migrationFile)
-        const migrationName = basename(migrationPath, '.js')
-        const tapPath = join(dirname(migrationPath), `../test/${migrationName}.tap.js`)
+    // dynamically load config and migration function
+    const configPath = resolve(configFile)
+    const migrationPath = resolve(migrationFile)
+    const migrationName = basename(migrationPath, '.js')
+    const config = await loadConfig(configPath)
+    const migrationFunction = await loadMigrationFunction(migrationPath)
 
-        const config = await loadConfig(configPath)
-        const migrationFunction = await loadMigrationFunction(migrationPath)
+    const commands = await migrationFunction(config)
 
-        const commands = await migrationFunction(config, { isDryRun: !apply })
+    logger.log()
+    logger.log(`▶️ ${apply ? 'RUNNING' : 'DRY RUN'}: ${mode === 'rollback' ? 'rollback' : 'forward'} ${migrationName}`)
+    logger.log()
 
-        console.log()
-        console.log(
-            `▶️ ${apply ? 'RUNNING' : 'DRY RUN'}: ${mode === 'rollback' ? 'rollback' : 'forward'} ${migrationName}`,
-        )
-        console.log()
+    if (mode === 'rollback') await executeCommands(commands.reverse(), true, false)
+    else await executeCommands(commands, false, !apply)
 
-        await executeMigration(commands, configPath, migrationName, tapPath, mode, !apply)
-    } catch (error) {
-        fatalError(`❌ Migration failed: ${error.message}`)
+    let operation = mode === 'rollback' ? 'rollback' : 'execution'
+    if (!apply) operation = operation + ' dry-run'
+    logger.log(` ✅  Migration ${operation} completed successfully`)
+
+    const fullPath = fileURLToPath(import.meta.url)
+    const currentDir = process.cwd()
+    const relativeCliPath = relative(currentDir, fullPath)
+
+    if (!apply) {
+        logger.log(`⚠️ Skipping config update and tests in dry-run mode`)
+        logger.log(``)
+        logger.log(`Next steps:`)
+        logger.log(`${relativeCliPath} ${process.argv.slice(-2).join(' ')} --apply`)
+
+        logger.log(``)
     }
 }
 

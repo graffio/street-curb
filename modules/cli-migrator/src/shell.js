@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { getLogger } from './logger.js'
 
 /**
  * Execute shell command with smart error detection for cloud CLIs
@@ -6,14 +7,15 @@ import { spawn } from 'child_process'
  */
 const executeShellCommand = async (command, options = {}) => {
     if (typeof command !== 'string') throw new Error('command must be a string')
+    const logger = getLogger()
 
     const { errorPatterns = [], successPattern = '' } = options
 
     return new Promise((resolve, reject) => {
         const onClose = exitCode => {
-            const output = stdout.trim()
-            const errors = stderr.trim()
-            const allOutput = output + errors
+            const stdoutOutput = stdout.trim()
+            const stderrOutput = stderr.trim()
+            const allOutput = stdoutOutput + stderrOutput
 
             // Smart success/failure detection beyond just exit code
             const hasErrorPatterns = errorPatterns.some(p => allOutput.toLowerCase().includes(p.toLowerCase()))
@@ -22,12 +24,15 @@ const executeShellCommand = async (command, options = {}) => {
             // Firebase often returns 0 even on failure, so check patterns first
             const isSuccess = !hasErrorPatterns && hasSuccessPattern && exitCode === 0
 
-            isSuccess
-                ? resolve({ status: 'success', output })
-                : reject(new Error(`Command failed: ${errors || output || `Command exited with code ${exitCode}`}`))
+            if (isSuccess) return resolve({ status: 'success', output: stdoutOutput })
+
+            const error = new Error(`Command: '${command}' failed (see error.stdout and error.stderr for details)`)
+            error.stdout = stdoutOutput
+            error.stderr = stderrOutput
+            reject(error)
         }
 
-        console.log(`    [EXEC] ${command}`)
+        logger.log(`    ${command}`)
         const child = spawn(command, { shell: true, stdio: ['pipe', 'pipe', 'pipe'] })
 
         let stdout = ''
