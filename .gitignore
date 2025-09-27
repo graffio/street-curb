@@ -22,4 +22,4 @@ test-results
 
 # don't save files generated in testing type-generation
 modules/cli-type-generator/test/generated/*
-
+modules/curb-map/service-accounts/

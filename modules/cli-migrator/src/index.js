@@ -1,3 +1,4 @@
+import { createLogger } from './logger.js'
 import { executeShellCommand } from './shell.js'
 
-export { executeShellCommand }
+export { createLogger, executeShellCommand }

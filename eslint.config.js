@@ -10,6 +10,8 @@ const compat = new FlatCompat({ baseDirectory: path.resolve() })
 
 export default defineConfig([
     { ignores: ['**/dist/*.js', '**/docs/**/*.js'] },
+    ...compat.extends('standard'),
+    ...compat.extends('prettier'),
     {
         files: ['**/*.{js,jsx}'],
         languageOptions: { globals: { browser: true } },
@@ -20,12 +22,10 @@ export default defineConfig([
             'react/jsx-uses-vars': 'error',
             'object-shorthand': 'error',
             'prefer-promise-reject-errors': ['error', { allowEmptyReject: true }],
-            curly: ['error', 'multi-line', 'consistent'],
+            curly: ['error', 'multi', 'consistent'],
             'arrow-body-style': ['error', 'as-needed'],
             'prefer-const': 'error',
         },
     },
     { files: ['**/*.stories.{js,jsx}'], plugins: { storybook }, rules: { ...storybook.configs.recommended.rules } },
-    ...compat.extends('standard'),
-    ...compat.extends('prettier'),
 ])
