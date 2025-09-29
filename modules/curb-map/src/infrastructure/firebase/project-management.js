@@ -6,7 +6,7 @@ import { executeShellCommand } from '@graffio/cli-migrator'
 
 /*
  * Check if a Firebase project exists by listing all projects
- * @sig doesFirebaseProjectExist :: (String, String, Object) -> Boolean|throws
+ * @sig doesFirebaseProjectExist :: (String, Object?) -> Promise<Boolean>
  */
 const doesFirebaseProjectExist = async (projectId, logger) => {
     const listCommand = `npx firebase projects:list --json`
@@ -19,18 +19,12 @@ const doesFirebaseProjectExist = async (projectId, logger) => {
 
 /*
  * Create a Firebase project using Firebase CLI
- * @sig createFirebaseProject :: (String, String, String) -> Boolean|throws
+ * @sig createFirebaseProject :: (String, String, String, Object?) -> Promise<String>
  */
 const createFirebaseProject = async (projectId, displayName, folderId, logger) => {
-    try {
-        const command = `npx firebase projects:create ${projectId} --display-name "${displayName}" --folder ${folderId}`
-        const result = await executeShellCommand(command, logger)
-        return result.output
-    } catch (error) {
-        throw error.stdout.match('Failed to create project because there is already a project with ID')
-            ? new Error(`Firebase project ${projectId} unexpectedly already exists (perhaps it's deleted?)`)
-            : error
-    }
+    const command = `npx firebase projects:create ${projectId} --display-name "${displayName}" --folder ${folderId}`
+    const result = await executeShellCommand(command, logger)
+    return result.output
 }
 
 export { doesFirebaseProjectExist, createFirebaseProject }

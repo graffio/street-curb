@@ -9,10 +9,6 @@ import { getLogger } from '@graffio/cli-migrator/src/logger.js'
 import { path } from '@graffio/functional'
 import * as PM from '../../src/infrastructure/firebase/project-management.js'
 
-const throwError = e => {
-    throw new Error(e)
-}
-
 /*
  * Validate prerequisites before creating the Firebase project
  * @sig validatePrerequisites :: (Object) -> Promise<Void>
@@ -33,19 +29,14 @@ const validatePrerequisites = async config => {
  */
 const createFirebaseProject = async (projectId, displayName, folderId) => {
     const logger = getLogger()
+    const successLog = `    ✅ Firebase project ${projectId} created`
 
     const alreadyExists = await PM.doesFirebaseProjectExist(projectId)
     if (alreadyExists) return logger.log(`    ⚠️ Firebase ${projectId} already exists`)
 
-    // Create the Firebase project
     logger.log(`    Creating Firebase project ${projectId}`)
     await PM.createFirebaseProject(projectId, displayName, folderId)
-
-    // Verify creation succeeded
-    const nowExists = await PM.doesFirebaseProjectExist(projectId)
-    return nowExists
-        ? logger.log(`    ✅ Firebase project ${projectId} created and verified`)
-        : throwError(`Firebase project ${projectId} creation failed - project not found after creation`)
+    return logger.log(successLog)
 }
 
 /*
@@ -54,11 +45,8 @@ const createFirebaseProject = async (projectId, displayName, folderId) => {
  */
 const createFirebaseProjectDryRun = async projectId => {
     const projectAlreadyExists = await PM.doesFirebaseProjectExist(projectId)
-    getLogger().log(
-        projectAlreadyExists
-            ? `    ⚠️ Firebase ${projectId} already exists`
-            : `    ✅ Firebase ${projectId} would be created`,
-    )
+    const successLog = `    ✅ Firebase project ${projectId} created`
+    getLogger().log(projectAlreadyExists ? `    ⚠️ Firebase ${projectId} already exists` : `${successLog} (dry run)`)
 }
 
 /*
