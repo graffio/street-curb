@@ -1,188 +1,89 @@
 # Migration Testing Strategy
 
-**Single Temporary Environment Incremental Testing for Infrastructure Migrations**
+**Testing Configuration Changes on Real Firebase Projects**
 
 ## Overview
 
-To ensure migration reliability before touching real environments, we use a single temporary environment for incremental testing, then validate the complete sequence on a fresh environment.
+This strategy assumes Firebase projects are created manually in the console. Migrations configure services within existing projects using service account impersonation. Testing validates configuration changes, not project creation.
+
+## Prerequisites
+
+Before testing any migrations:
+
+1. ✅ Firebase projects created manually in console (`manual-setup.md`)
+2. ✅ Service accounts created with required roles (`phase1c-service-account.md`)
+3. ✅ Developer authenticated via impersonation (`next-step.md`)
 
 ## Core Strategy
 
-### 1. Incremental Migration Testing
-**After each new migration is written:**
-- Use existing temporary environment OR create new one if none exists
-- Apply the new migration to the existing temporary environment
-- TAP tests run automatically via orchestration CLI
-- Verify migration idempotency by running it again
-- Keep environment for next migration
+### 1. Test Against Development Project
+**Migrations configure services, not create projects:**
+- Test new configuration migrations directly against `curb-map-development`
+- Configuration changes are low-risk (security rules, indexes, etc.)
+- Easy to rollback (redeploy previous configuration)
+- TAP tests verify configuration is correct
+- Verify migration idempotency by running twice
 
-### 2. Complete Sequence Validation
-**After confirming new migration works incrementally:**
-- Create fresh temporary environment
-- Run ALL migrations from 002 onwards in sequence
-- Each migration's TAP tests must pass automatically
-- Clean up the older temporary environment
-- Keep the new one for future incremental testing
+### 2. Apply to Staging, Then Production
+**After development testing succeeds:**
+- Apply same migration to `curb-map-staging`
+- Verify staging configuration matches development
+- After staging validation, apply to `curb-map-production`
+- Each environment's TAP tests must pass
 
-**Why this approach?** Faster iteration on individual migrations while still catching integration issues before real deployments.
+**Why this approach?** Simpler workflow - no temporary project creation/deletion. Projects are stable, only configuration changes.
 
-## Environment Naming Convention
+## Real Environment Names
 
-**Temporary environments use the development GCP folder with timestamped names:**
+**All environments created manually in console:**
 
-```bash
-# All temporary environments follow this pattern:
-temporary-YYYYMMDD-HHMMSS           # e.g., temporary-20250915-143022
+```
+curb-map-development    # Dev environment, frequent changes
+curb-map-staging        # Pre-production validation
+curb-map-production     # Live customer data, SOC2-compliant
 ```
 
-**Protection Mechanisms**:
-- All temporary environments in development folder (cost control)
-- Clear naming prevents confusion with real environments
-- Timestamps ensure uniqueness and enable cleanup by age
-- Firebase project deletion has 30-day name lockout (use timestamps for uniqueness)
-- Scripts include confirmation prompts for destructive operations
+**No temporary environments needed** - configuration changes test directly against development.
 
-## Bash Scripts for Common Workflows
+## Testing Workflow
 
-**All scripts run from `modules/curb-map/` directory.** The orchestration CLI automatically runs TAP tests after successful migrations.
-
-### `bash/create-temporary-config.sh` - Create Temporary Environment Config
+### Test Migration on Development
 
 ```bash
-#!/bin/bash
-# Create a new temporary environment config file
-# Usage: bash/create-temporary-config.sh [timestamp]
-# Run from modules/curb-map directory
+# 1. Ensure impersonation is active
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com
 
-set -e
+# 2. Test migration (runs once)
+node ../orchestration/src/cli.js shared/config/dev.config.js migrations/003-configure-auth.js --apply
 
-TIMESTAMP="${1:-$(date +%Y%m%d-%H%M%S)}"
-CONFIG_FILE="shared/config/temporary-$TIMESTAMP.config.js"
+# 3. Verify idempotency (run again)
+node ../orchestration/src/cli.js shared/config/dev.config.js migrations/003-configure-auth.js --apply
 
-if [ -f "$CONFIG_FILE" ]; then
-    echo "❌ Config file already exists: $CONFIG_FILE"
-    exit 1
-fi
-
-echo "Creating temporary environment config: $CONFIG_FILE"
-cp shared/config/dev.config.js "$CONFIG_FILE"
-sed -i '' "s/curb-map-development/temporary-$TIMESTAMP/g" "$CONFIG_FILE"
-
-echo "✅ Created temporary environment config: $CONFIG_FILE"
-echo "   Project ID: temporary-$TIMESTAMP"
-echo ""
-echo "Next steps:"
-echo "   bash/test-migration.sh $CONFIG_FILE migrations/002-create-firebase-project.js"
+# 4. TAP tests run automatically after migration
+# ✅ If tests pass, migration is ready for staging
 ```
 
-### `bash/test-migration.sh` - Test Single Migration
+### Deploy to Staging
 
 ```bash
-#!/bin/bash
-# Test a migration with a specific config file
-# Usage: bash/test-migration.sh <config-file> <migration-file>
-# Run from modules/curb-map directory
+# 1. Switch to staging impersonation
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-staging.iam.gserviceaccount.com
 
-set -e
-
-CONFIG_FILE="$1"
-MIGRATION_FILE="$2"
-
-if [ -z "$CONFIG_FILE" ] || [ -z "$MIGRATION_FILE" ]; then
-    echo "Usage: $0 <config-file> <migration-file>"
-    echo "Example: $0 shared/config/temporary-20250915-143022.config.js migrations/002-create-firebase-project.js"
-    exit 1
-fi
-
-echo "Running migration: $MIGRATION_FILE"
-echo "Using config: $CONFIG_FILE"
-
-# Run the migration
-node ../orchestration/src/cli.js "$CONFIG_FILE" "$MIGRATION_FILE" --apply
-
-echo "Testing idempotency (running migration again)..."
-node ../orchestration/src/cli.js "$CONFIG_FILE" "$MIGRATION_FILE" --apply
-
-echo "✅ Migration test completed successfully"
+# 2. Apply migration to staging
+node ../orchestration/src/cli.js shared/config/staging.config.js migrations/003-configure-auth.js --apply
 ```
 
-### `bash/validate-full-sequence.sh` - Complete Sequence Validation
+### Deploy to Production
 
 ```bash
-#!/bin/bash
-# Validate complete migration sequence on fresh temporary environment
-# Usage: bash/validate-full-sequence.sh
-# Run from modules/curb-map directory
+# 1. Switch to production impersonation
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-production.iam.gserviceaccount.com
 
-set -e
-
-# Create fresh temporary environment
-echo "Creating fresh temporary environment..."
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-bash/create-temporary-config.sh "$TIMESTAMP"
-
-NEW_CONFIG="shared/config/temporary-$TIMESTAMP.config.js"
-
-echo "Running complete migration sequence..."
-# Run all migrations in sequence
-for migration in migrations/00*.js; do
-    echo "Running $migration..."
-    node ../orchestration/src/cli.js "$NEW_CONFIG" "$migration" --apply
-done
-
-# Clean up old temporary configs (keep the new one)
-OLD_CONFIGS=$(ls shared/config/temporary-*.config.js 2>/dev/null | grep -v "$NEW_CONFIG" || true)
-if [ -n "$OLD_CONFIGS" ]; then
-    echo "Cleaning up old temporary configs:"
-    echo "$OLD_CONFIGS"
-    read -p "Delete old temporary configs? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "$OLD_CONFIGS" | xargs rm
-        echo "✅ Old configs cleaned up"
-    fi
-fi
-
-echo "✅ Full sequence validation completed successfully"
-echo "New temporary environment ready for incremental testing: $NEW_CONFIG"
-```
-
-### `bash/cleanup-temporary-environments.sh` - Safe Environment Cleanup
-
-```bash
-#!/bin/bash
-# Safely clean up temporary environments with protection mechanisms
-# Usage: bash/cleanup-temporary-environments.sh [--older-than-days N]
-# Run from modules/curb-map directory
-
-set -e
-
-DAYS_OLD="${2:-1}"  # Default to 1 day old
-
-echo "Finding temporary projects older than $DAYS_OLD days..."
-
-# List temporary projects with safety checks
-TEMP_PROJECTS=$(gcloud projects list \
-    --filter="projectId:temporary-* AND createTime<$(date -v-${DAYS_OLD}d '+%Y-%m-%d')" \
-    --format="value(projectId)" || true)
-
-# Also clean up local config files for deleted projects
-echo "Checking for corresponding local config files..."
-for project in $TEMP_PROJECTS; do
-    config_file="shared/config/${project}.config.js"
-    if [ -f "$config_file" ]; then
-        echo "  Found: $config_file"
-    fi
-done
-
-# Safety confirmation required: Type 'DELETE' to confirm
-read -p "Type 'DELETE' to confirm permanent deletion: " -r
-if [ "$REPLY" != "DELETE" ]; then
-    echo "Cleanup cancelled"
-    exit 0
-fi
-
-echo "✅ Cleanup completed"
+# 2. Apply migration to production (after staging validation)
+node ../orchestration/src/cli.js shared/config/prod.config.js migrations/003-configure-auth.js --apply
 ```
 
 ## TAP Test Integration
@@ -191,37 +92,29 @@ echo "✅ Cleanup completed"
 Each migration MUST include a corresponding `.tap.js` file following Given/When/Then format:
 
 ```javascript
-// Example: 002-create-firebase-project.tap.js
+// Example: 003-configure-auth.tap.js
 import test from 'tap'
+import { execSync } from 'child_process'
 
 const configPath = process.argv[2]
 if (!configPath) {
-    console.error('Usage: node 002-create-firebase-project.tap.js <config-file>')
+    console.error('Usage: node 003-configure-auth.tap.js <config-file>')
     process.exit(1)
 }
 
-test('Given a Firebase project migration has completed', t => {
-    t.test('When the GCP project should exist', async t => {
+test('Given Firebase Auth configuration migration completed', t => {
+    t.test('When checking if Auth providers are enabled', async t => {
         const config = await import(configPath)
-        const projectExists = await checkProjectExists(config.default.firebaseProject.projectId)
-        t.ok(projectExists, 'Then the GCP project exists in Google Cloud')
-        t.end()
-    })
+        const projectId = config.default.firebaseProject.projectId
 
-    t.test('When checking Firebase integration', async t => {
-        const config = await import(configPath)
-        const firebaseEnabled = await checkFirebaseEnabled(config.default.firebaseProject.projectId)
-        t.ok(firebaseEnabled, 'Then Firebase is enabled on the project')
-        t.end()
-    })
+        // Check if email/password provider enabled
+        const emailEnabled = await checkAuthProvider(projectId, 'password')
+        t.ok(emailEnabled, 'Then email/password provider should be enabled')
 
-    t.test('When verifying project organization', async t => {
-        const config = await import(configPath)
-        const inCorrectFolder = await checkProjectFolder(
-            config.default.firebaseProject.projectId,
-            config.default.developmentFolderId
-        )
-        t.ok(inCorrectFolder, 'Then the project is in the development folder')
+        // Check if Google provider enabled
+        const googleEnabled = await checkAuthProvider(projectId, 'google.com')
+        t.ok(googleEnabled, 'Then Google sign-in provider should be enabled')
+
         t.end()
     })
 
@@ -230,219 +123,147 @@ test('Given a Firebase project migration has completed', t => {
 ```
 
 ### Automatic Test Execution
-The orchestration CLI automatically runs TAP tests after successful migration execution:
-
-```javascript
-// From orchestration/src/cli.js
-await runPostMigrationTapTests(migrationName, tapPath, configPath)
-```
-
-## Environment Cleanup
-
-### `bash/cleanup-temporary-environments.sh` - Safe Cleanup Script
-
-```bash
-#!/bin/bash
-# Safely clean up temporary environments with protection mechanisms
-# Usage: bash/cleanup-temporary-environments.sh [--older-than-days N]
-
-set -e
-
-DAYS_OLD="${2:-1}"  # Default to 1 day old
-FILTER_DATE="$(date -v-${DAYS_OLD}d '+%Y-%m-%d')"
-
-if [ "$1" = "--older-than-days" ] && [ -n "$2" ]; then
-    DAYS_OLD="$2"
-    FILTER_DATE="$(date -v-${DAYS_OLD}d '+%Y-%m-%d')"
-fi
-
-echo "Finding temporary projects older than $DAYS_OLD days (before $FILTER_DATE)..."
-
-# List temporary projects with safety checks
-TEMP_PROJECTS=$(gcloud projects list \
-    --filter="projectId:temporary-* AND createTime<$FILTER_DATE" \
-    --format="value(projectId)" || true)
-
-if [ -z "$TEMP_PROJECTS" ]; then
-    echo "No temporary projects found older than $DAYS_OLD days"
-    exit 0
-fi
-
-echo "Found temporary projects to clean up:"
-echo "$TEMP_PROJECTS"
-
-# Safety confirmation
-echo
-echo "⚠️  This will PERMANENTLY DELETE these projects and all their data!"
-echo "⚠️  Make sure none of these are environments you're still using!"
-echo
-read -p "Are you sure you want to delete these projects? Type 'DELETE' to confirm: " -r
-
-if [ "$REPLY" != "DELETE" ]; then
-    echo "Cleanup cancelled"
-    exit 0
-fi
-
-# Delete projects
-echo "$TEMP_PROJECTS" | while read -r project; do
-    echo "Deleting project: $project"
-    gcloud projects delete "$project" --quiet
-done
-
-echo "✅ Cleanup completed"
-```
-
-### Automatic Cleanup Strategy
-- **Successful validation**: Old temporary configs deleted after confirmation
-- **Failed tests**: Temporary environment preserved for debugging
-- **Config cleanup**: Handled by validation script with user confirmation
-- **Project cleanup**: Use safe cleanup script with age filters
+The orchestration CLI automatically runs TAP tests after successful migration execution.
 
 ## Failure Handling
 
-### Individual Migration Failure
-1. **Debug**: Temporary environment preserved for investigation
-2. **Fix**: Update migration code or dependencies
-3. **Retry**: Test fixed migration on fresh temporary environment
-4. **Clean**: Remove failed temporary environment after debugging
-
-### Sequential Migration Failure
-1. **Identify**: Which migration in sequence failed
-2. **Isolate**: Test that specific migration individually
-3. **Root Cause**: Check for dependency issues between migrations
-4. **Fix**: Update migration or add missing dependencies
-5. **Revalidate**: Run full sequence again
+### Configuration Migration Failure
+1. **Debug**: Check error message from orchestration CLI
+2. **Fix**: Update migration code or configuration files
+3. **Retry**: Run migration again (should be idempotent)
+4. **Rollback**: Deploy previous configuration if needed
 
 ### Common Issues & Solutions
 
-**GCP API Not Enabled**:
-```javascript
-// Add to migration dependencies
-await enableGCPAPI('firebase.googleapis.com')
-await enableGCPAPI('cloudresourcemanager.googleapis.com')
+**Permission Denied**:
+```bash
+# Verify impersonation is active
+gcloud auth application-default print-access-token
+
+# Re-authenticate if needed
+gcloud auth application-default login --impersonate-service-account=...
 ```
 
-**Resource Not Ready**:
-```javascript
-// Add timing buffers
-await new Promise(resolve => setTimeout(resolve, 30000)) // 30 second wait
+**Service Not Enabled**:
+```bash
+# Enable required Firebase services in console first
+# Or add to migration prerequisites
 ```
 
-**Permission Issues**:
+**Configuration Conflict**:
 ```javascript
-// Verify service account permissions in migration
-await verifyPermissions(['roles/firebase.admin', 'roles/resourcemanager.projectCreator'])
+// Make migrations idempotent - check before creating
+const exists = await checkConfigExists()
+if (exists) {
+  console.log('[SKIP] Already configured')
+  return
+}
 ```
 
-## Actionable Success Criteria
+## Success Criteria
 
 ### Individual Migration Validation
 ```bash
-# All commands run from modules/curb-map directory
-cd modules/curb-map
+# Run migration on development
+node ../orchestration/src/cli.js shared/config/dev.config.js migrations/003-configure-auth.js --apply
 
-# Step 1: Create temporary environment
-bash/create-temporary-config.sh
-
-# Step 2: Test migration
-bash/test-migration.sh shared/config/temporary-YYYYMMDD-HHMMSS.config.js migrations/003-new-migration.js
-
-# Verify these specific outcomes:
-# 1. Migration completed without shell command failures
+# Verify these outcomes:
+# 1. Migration completed without errors
 echo "✅ Migration executed successfully"
 
-# 2. TAP tests passed (orchestration CLI runs them automatically)
-echo "✅ TAP tests passed - infrastructure state verified"
+# 2. TAP tests passed (runs automatically)
+echo "✅ TAP tests passed - configuration verified"
 
-# 3. Idempotency verified (script runs migration twice)
+# 3. Idempotency verified (run again)
+node ../orchestration/src/cli.js shared/config/dev.config.js migrations/003-configure-auth.js --apply
 echo "✅ Migration is idempotent - safe to re-run"
-
-# 4. Config file updated with captured IDs
-grep "capturedId" shared/config/temporary-*.config.js
-echo "✅ Config file updated with new infrastructure IDs"
 ```
 
-### Complete Sequence Validation
+### Environment Promotion Checklist
 ```bash
-# Run from modules/curb-map directory
-cd modules/curb-map
-bash/validate-full-sequence.sh
-
-# Verify these specific outcomes:
-# 1. All migrations completed in order
-ls migrations/00*.js | wc -l  # Count of migrations
-echo "✅ All N migrations completed successfully"
-
-# 2. Final config contains all captured IDs from sequence
-cat shared/config/temporary-$(date +%Y%m%d)-*.config.js
-echo "✅ Config contains complete set of infrastructure IDs"
-
-# 3. Infrastructure matches architecture expectations
-# (Specific checks defined in each migration's TAP tests)
-echo "✅ Infrastructure state verified by TAP tests"
+# 1. ✅ Tested on development
+# 2. ✅ TAP tests pass
+# 3. ✅ Idempotency verified
+# 4. ✅ Applied to staging
+# 5. ✅ Staging tests pass
+# 6. ✅ Ready for production
 ```
 
-### Real Environment Deployment Readiness
-```bash
-# Run from modules/curb-map directory
-cd modules/curb-map
+## SOC2 Compliance
 
-# 1. Full sequence validated on temporary environment
-bash/validate-full-sequence.sh
-echo "✅ Complete migration sequence validated"
+### Audit Trail
+- **Git history**: All migration code version controlled
+- **Orchestration logs**: Complete execution logs with timestamps
+- **GCP audit logs**: Show user identity + impersonated service account
+- **TAP test results**: Verify configuration state after changes
 
-# 2. Real environment config prepared
-cp shared/config/dev.config.js shared/config/dev-backup.config.js
-echo "✅ Real environment config backed up"
+### Change Management
+1. **Development**: Test configuration changes freely
+2. **Staging**: Validate before production
+3. **Production**: Require approval + staging validation
+4. **Rollback**: Previous configurations in git history
 
-# 3. Ready to deploy to development environment
-node ../orchestration/src/cli.js shared/config/dev.config.js migrations/002-create-firebase-project.js --apply
-echo "✅ Ready for real environment deployment"
+### Access Control
+- **Service account impersonation**: Individual developer accountability
+- **MFA required**: User accounts have multi-factor authentication
+- **Short-lived tokens**: Credentials expire automatically (1-12 hours)
+- **Permission reviews**: Audit who has impersonation access
+
+## Migration Patterns
+
+### Pattern 1: Deploy Configuration Files
+```javascript
+// Deploy Firestore security rules
+const deployRules = async (projectId, isDryRun) => {
+  if (isDryRun) {
+    console.log('[DRY-RUN] firebase deploy --only firestore:rules')
+    return
+  }
+
+  await execShellCommand('npx firebase use ${projectId}')
+  await execShellCommand('npx firebase deploy --only firestore:rules')
+}
 ```
 
-## Real Environment Strategy
+### Pattern 2: Configure via Admin SDK
+```javascript
+// Enable Auth providers
+const configureAuth = async (projectId, isDryRun) => {
+  if (isDryRun) {
+    console.log('[DRY-RUN] Enable email/password and Google providers')
+    return
+  }
 
-### Development Environment Deployment
-```bash
-# After temporary environment validation succeeds:
-cd modules/curb-map
-
-# Run full sequence on real development environment
-for migration in migrations/00*.js; do
-    echo "Deploying $migration to development..."
-    node ../orchestration/src/cli.js shared/config/dev.config.js "$migration" --apply
-done
-
-echo "✅ Development environment ready"
+  const admin = await initializeAdmin(projectId)
+  await admin.auth().updateProviderConfig('password', { enabled: true })
+  await admin.auth().updateProviderConfig('google.com', { enabled: true })
+}
 ```
 
-### Future Environment Strategy
+### Pattern 3: Idempotency Check
+```javascript
+// Always check before creating
+const configureService = async (projectId, isDryRun) => {
+  const exists = await checkIfConfigured(projectId)
+  if (exists) {
+    console.log('[SKIP] Service already configured')
+    return { status: 'success', output: 'already configured' }
+  }
 
-**Until common baseline established:**
-- Run complete sequence from migration 002 on every new environment
-- Validate each environment with full TAP test suite
-
-**After development/test/staging/production reach common point:**
-- Only run new migrations incrementally on existing environments
-- Use temporary environments to validate new migration sequences
-
-### SOC2 Compliance
-- **Development/Staging**: Use temporary environment validation strategy
-- **Production**: All changes must go through temporary → development → staging → production
-- **Audit Trail**: Orchestration CLI provides complete audit logging automatically
+  // Proceed with configuration...
+}
+```
 
 ## Cost Management
 
-### Temporary Environment Economics
-- **Lifespan**: Minutes to hours per test cycle
-- **Resources**: Empty Firebase projects (minimal cost)
-- **Cleanup**: Automated scripts prevent cost accumulation
-- **GCP Folder**: All temporary projects in development folder
+### No Temporary Environments
+- **No cleanup needed**: Using real, stable environments
+- **Predictable costs**: Same 3 projects (dev, staging, prod)
+- **No waste**: No temporary project creation/deletion
 
-### Protection Mechanisms
-- Age-based cleanup scripts with safety confirmations
-- Timestamped naming prevents real environment confusion
-- Explicit "DELETE" confirmation required for bulk cleanup
-- Failed environments preserved for debugging
+### Configuration Testing is Cheap
+- Most configuration changes are free (security rules, indexes)
+- Cloud Functions deployments: Minimal cost
+- Storage: Negligible for configuration files
 
-This strategy ensures migration reliability with fast iteration cycles and strict cost control.
+This strategy balances development speed with production safety while maintaining SOC2 compliance.

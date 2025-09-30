@@ -220,10 +220,19 @@ exports.processUpdateQueue = functions.firestore
 - **Principle of least privilege**: Users can only create events they're authorized for
 - **Multi-project isolation**: Events scoped to specific organizationId/projectId
 
+### Developer Authentication & Infrastructure Access
+- **Service account impersonation**: No long-lived key files on developer laptops
+- **Short-lived tokens**: Automatically expire (1-12 hours), force re-authentication
+- **MFA protection**: Developer accounts require multi-factor authentication
+- **Individual accountability**: Audit logs show "user@company.com impersonating SA@project.iam"
+- **Easy revocation**: Remove IAM binding to instantly revoke access
+- **Separation of duties**: Infrastructure setup (manual) vs operations (scripted)
+
 ### Audit Logging (Events ARE the Audit Log)
 - **Complete audit trail**: Every event is an immutable audit record
 - **Perfect chronological order**: Events timestamped and ordered
 - **Actor tracking**: Every event records who performed the action
+- **Infrastructure operations**: GCP audit logs show user identity + impersonated service account
 - **Idempotency tracking**: Duplicate event creation prevented and logged
 - **Data lineage**: Full history of changes from event stream
 - **CCPA/GDPR compliance**: UserForgotten events provide "right to be forgotten"
@@ -251,20 +260,46 @@ exports.processUpdateQueue = functions.firestore
 
 ## Environment Configuration
 
+### Infrastructure Setup Philosophy
+**Manual Console (One-Time):**
+- Create Firebase projects in console (`curb-map-development`, `curb-map-staging`, `curb-map-production`)
+- Create service accounts per project
+- Grant developers impersonation permissions
+- Link billing accounts
+- Enable Firebase services
+
+**Scripted Operations (Ongoing):**
+- Deploy Firestore security rules
+- Configure Firebase Auth providers
+- Deploy Cloud Functions
+- Create Firestore indexes
+- Update storage CORS settings
+
+**Rationale:**
+- Manual setup: Stable, rarely changes, high-impact (create projects ~3x ever)
+- Scripted operations: Frequent, version-controlled, repeatable (deploy rules ~10x/week)
+- SOC2 compliant: Manual changes documented, scripted changes in git, all operations audited
+
 ### Development
-- **Emulator usage**: Local development with Firebase emulators
+- **Project**: `curb-map-development` (created manually)
+- **Authentication**: Service account impersonation for developers
+- **Emulator usage**: Local development with Firebase emulators when possible
 - **Minimal test data**: Small dataset for development
 - **Relaxed security**: Faster iteration capabilities
 
 ### Staging
+- **Project**: `curb-map-staging` (created manually)
+- **Authentication**: Service account impersonation for developers
 - **Synthetic data**: Generated test data, no real customer data
 - **Production mirror**: Same schema as production
 - **Impersonation feature**: Debug customer issues in production
 - **SOC2 excluded**: No real customer data, no audit burden
 
 ### Production
+- **Project**: `curb-map-production` (created manually)
+- **Authentication**: Service account impersonation for authorized personnel only
 - **Real customer data**: SOC2-compliant environment
-- **Comprehensive audit logging**: Every action recorded
+- **Comprehensive audit logging**: Every action recorded (both application events + GCP audit logs)
 - **Restricted access**: Admin approval required for changes
-- **MFA enforced**: Multi-factor authentication mandatory
+- **MFA enforced**: Multi-factor authentication mandatory for all users
 - **Backup verification**: Automated backup testing

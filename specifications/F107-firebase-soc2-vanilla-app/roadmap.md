@@ -9,7 +9,8 @@
 - ✅ Orchestration system with command pattern and rollback capability
 - ✅ Migration framework with TAP test integration
 - ✅ SOC2-compliant audit logging built into orchestration core
-- ✅ Firebase project creation migration (002) implemented and tested
+- ✅ Service account impersonation setup (no key files needed)
+- ✅ Firebase projects created manually in console (development, staging, production)
 
 ### Key Files
 - **`migration-testing-strategy.md`** - Temporary environment testing approach

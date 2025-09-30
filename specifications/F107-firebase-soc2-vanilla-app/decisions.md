@@ -29,6 +29,8 @@
 - **Data Isolation**: Complete isolation between organizations
 - **Access Control**: Role-based permissions with principle of least privilege
 - **CCPA/GDPR**: UserForgotten events provide "right to be forgotten"
+- **Developer Authentication**: Service account impersonation (no key files)
+- **Credential Management**: Short-lived tokens (1-12 hours), MFA-protected user accounts
 
 ### Staging Data Strategy
 - **Synthetic Data**: Staging contains only generated test data
@@ -66,8 +68,8 @@
 
 ### Infrastructure Automation
 - **Deployment Triggers**: Git-triggered deployment with manual production approval?
-- **Service Accounts**: Use service accounts for automated operations, human accounts for interactive work?
-- **Permission Strategy**: Predefined roles vs custom roles for exact permissions?
+- **Service Accounts**: ✅ DECIDED - Service account impersonation for developers, Workload Identity Federation for CI/CD
+- **Permission Strategy**: Predefined roles (simpler to maintain than custom roles)
 
 ## 📋 FUTURE CONSIDERATIONS
 
