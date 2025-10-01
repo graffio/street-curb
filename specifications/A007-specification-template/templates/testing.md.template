@@ -1,0 +1,121 @@
+# {{SPEC_NAME}} Testing Strategy
+
+## Testing Approach
+
+### Unit Testing
+- **Framework**: {{UNIT_TEST_FRAMEWORK}}
+- **Coverage Target**: {{COVERAGE_PERCENTAGE}}%
+- **Location**: `{{TEST_DIRECTORY}}/`
+
+### Integration Testing
+- **Framework**: {{INTEGRATION_TEST_FRAMEWORK}}
+- **Environment**: {{TEST_ENVIRONMENT}}
+- **Location**: `{{INTEGRATION_TEST_DIRECTORY}}/`
+
+### End-to-End Testing
+- **Framework**: {{E2E_TEST_FRAMEWORK}}
+- **Environment**: {{E2E_ENVIRONMENT}}
+- **Location**: `{{E2E_TEST_DIRECTORY}}/`
+
+## Test Structure
+
+### Unit Tests
+```javascript
+// {{TEST_FILE_EXAMPLE}}
+describe('{{COMPONENT_NAME}}', () => {
+  test('{{TEST_CASE_1}}', () => {
+    // {{TEST_IMPLEMENTATION_1}}
+  });
+  
+  test('{{TEST_CASE_2}}', () => {
+    // {{TEST_IMPLEMENTATION_2}}
+  });
+});
+```
+
+### Integration Tests
+```javascript
+// {{INTEGRATION_TEST_FILE_EXAMPLE}}
+describe('{{INTEGRATION_NAME}}', () => {
+  test('{{INTEGRATION_CASE_1}}', async () => {
+    // {{INTEGRATION_IMPLEMENTATION_1}}
+  });
+});
+```
+
+## Test Data
+
+### Fixtures
+- **Location**: `{{FIXTURE_DIRECTORY}}/`
+- **Format**: {{FIXTURE_FORMAT}}
+- **Management**: {{FIXTURE_MANAGEMENT_APPROACH}}
+
+### Test Database
+- **Setup**: {{DB_SETUP_APPROACH}}
+- **Cleanup**: {{DB_CLEANUP_APPROACH}}
+- **Isolation**: {{DB_ISOLATION_APPROACH}}
+
+## Continuous Integration
+
+### Pre-commit Hooks
+```bash
+# {{HOOK_1}}
+{{COMMAND_1}}
+
+# {{HOOK_2}}
+{{COMMAND_2}}
+```
+
+### CI Pipeline
+1. **Lint**: {{LINT_COMMAND}}
+2. **Unit Tests**: {{UNIT_TEST_COMMAND}}
+3. **Integration Tests**: {{INTEGRATION_TEST_COMMAND}}
+4. **E2E Tests**: {{E2E_TEST_COMMAND}}
+
+## Performance Testing
+
+### Load Testing
+- **Tool**: {{LOAD_TEST_TOOL}}
+- **Scenarios**: {{LOAD_TEST_SCENARIOS}}
+- **Metrics**: {{PERFORMANCE_METRICS}}
+
+### Stress Testing
+- **Tool**: {{STRESS_TEST_TOOL}}
+- **Scenarios**: {{STRESS_TEST_SCENARIOS}}
+- **Thresholds**: {{PERFORMANCE_THRESHOLDS}}
+
+## Security Testing
+
+### Static Analysis
+- **Tool**: {{STATIC_ANALYSIS_TOOL}}
+- **Rules**: {{SECURITY_RULES}}
+
+### Dynamic Analysis
+- **Tool**: {{DYNAMIC_ANALYSIS_TOOL}}
+- **Scenarios**: {{SECURITY_SCENARIOS}}
+
+## Test Environment
+
+### Local Development
+- **Setup**: {{LOCAL_SETUP_COMMANDS}}
+- **Data**: {{LOCAL_DATA_APPROACH}}
+
+### Staging Environment
+- **Setup**: {{STAGING_SETUP_COMMANDS}}
+- **Data**: {{STAGING_DATA_APPROACH}}
+
+### Production Testing
+- **Approach**: {{PROD_TEST_APPROACH}}
+- **Safety**: {{PROD_TEST_SAFETY_MEASURES}}
+
+## Reporting
+
+### Test Results
+- **Format**: {{RESULT_FORMAT}}
+- **Location**: {{RESULT_LOCATION}}
+- **Retention**: {{RESULT_RETENTION}}
+
+### Coverage Reports
+- **Format**: {{COVERAGE_FORMAT}}
+- **Location**: {{COVERAGE_LOCATION}}
+- **Thresholds**: {{COVERAGE_THRESHOLDS}}

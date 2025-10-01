@@ -1,0 +1,64 @@
+# {{SPEC_NAME}} Architecture
+
+## Core Pattern
+
+```
+{{ARCHITECTURE_DIAGRAM}}
+```
+
+**Benefits**: {{KEY_BENEFITS}}
+
+## Data Model
+
+### {{ENTITY_1}}
+```javascript
+// {{ENTITY_1_DESCRIPTION}}
+{{ENTITY_1}}: {
+  {{FIELD_1}}: "{{TYPE_1}}",
+  {{FIELD_2}}: "{{TYPE_2}}",
+  // ... additional fields
+}
+```
+
+### {{ENTITY_2}}
+```javascript
+// {{ENTITY_2_DESCRIPTION}}
+{{ENTITY_2}}: {
+  {{FIELD_1}}: "{{TYPE_1}}",
+  {{FIELD_2}}: "{{TYPE_2}}",
+  // ... additional fields
+}
+```
+
+## Security Architecture
+
+### {{SECURITY_ASPECT_1}}
+- **{{DECISION}}**: {{RATIONALE}}
+- **Implementation**: {{IMPLEMENTATION_DETAILS}}
+
+### {{SECURITY_ASPECT_2}}
+- **{{DECISION}}**: {{RATIONALE}}
+- **Implementation**: {{IMPLEMENTATION_DETAILS}}
+
+## Integration Points
+
+### {{INTEGRATION_1}}
+- **Purpose**: {{PURPOSE}}
+- **Interface**: {{INTERFACE_DESCRIPTION}}
+- **Dependencies**: {{DEPENDENCIES}}
+
+### {{INTEGRATION_2}}
+- **Purpose**: {{PURPOSE}}
+- **Interface**: {{INTERFACE_DESCRIPTION}}
+- **Dependencies**: {{DEPENDENCIES}}
+
+## Performance Considerations
+
+- **{{PERFORMANCE_ASPECT_1}}**: {{CONSIDERATION}}
+- **{{PERFORMANCE_ASPECT_2}}**: {{CONSIDERATION}}
+
+## References
+
+- **Architecture Decisions**: See `docs/architecture/{{RELEVANT_ARCH_DOC}}.md`
+- **Security Patterns**: See `docs/architecture/security.md`
+- **Deployment Architecture**: See `docs/architecture/deployment.md`

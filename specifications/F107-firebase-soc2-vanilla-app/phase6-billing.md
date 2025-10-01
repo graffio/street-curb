@@ -2,6 +2,10 @@
 
 **Goal**: Implement billing integration and data export capabilities
 
+## Architecture Reference
+
+- **Billing Integration Patterns**: See `docs/architecture/billing-integration.md` for billing and export architectural patterns
+
 ## Deliverables
 - [ ] Stripe integration for annual billing
 - [ ] Multi-format data export (JSON, CSV, CDS)

@@ -1,0 +1,54 @@
+current_task: "task_1_1_{{FIRST_TASK}}"
+status: "pending"
+
+tasks:
+  - id: "task_1_1_{{FIRST_TASK}}"
+    description: "{{TASK_DESCRIPTION}}"
+    status: "pending"
+    phase: "{{PHASE_1_NAME}}"
+    validation:
+      - "{{VALIDATION_1}}"
+      - "{{VALIDATION_2}}"
+      - "{{VALIDATION_3}}"
+    dependencies: []
+    estimated_hours: {{ESTIMATED_HOURS}}
+
+  - id: "task_1_2_{{SECOND_TASK}}"
+    description: "{{TASK_DESCRIPTION}}"
+    status: "pending"
+    phase: "{{PHASE_1_NAME}}"
+    validation:
+      - "{{VALIDATION_1}}"
+      - "{{VALIDATION_2}}"
+    dependencies: ["task_1_1_{{FIRST_TASK}}"]
+    estimated_hours: {{ESTIMATED_HOURS}}
+
+  - id: "task_2_1_{{THIRD_TASK}}"
+    description: "{{TASK_DESCRIPTION}}"
+    status: "pending"
+    phase: "{{PHASE_2_NAME}}"
+    validation:
+      - "{{VALIDATION_1}}"
+      - "{{VALIDATION_2}}"
+    dependencies: ["task_1_2_{{SECOND_TASK}}"]
+    estimated_hours: {{ESTIMATED_HOURS}}
+
+  - id: "task_2_2_{{FOURTH_TASK}}"
+    description: "{{TASK_DESCRIPTION}}"
+    status: "pending"
+    phase: "{{PHASE_2_NAME}}"
+    validation:
+      - "{{VALIDATION_1}}"
+      - "{{VALIDATION_2}}"
+    dependencies: ["task_2_1_{{THIRD_TASK}}"]
+    estimated_hours: {{ESTIMATED_HOURS}}
+
+completed: []
+
+notes: |
+  {{ADDITIONAL_NOTES_ABOUT_TASKS}}
+  
+  Task ID format: task_{phase}_{sequence}_{description}
+  Status values: pending, in_progress, completed, blocked, cancelled
+  Dependencies: List of task IDs that must be completed first
+  Validation: Specific criteria that must be met for task completion

@@ -1,0 +1,50 @@
+# {{SPEC_NAME}} Decisions & Questions
+
+## ✅ DECIDED
+
+### Core Architecture
+- **{{DECISION_1}}**: {{RATIONALE_1}}
+- **{{DECISION_2}}**: {{RATIONALE_2}}
+- **{{DECISION_3}}**: {{RATIONALE_3}}
+
+### Technical Stack
+- **{{TECH_DECISION_1}}**: {{RATIONALE_1}}
+- **{{TECH_DECISION_2}}**: {{RATIONALE_2}}
+- **{{TECH_DECISION_3}}**: {{RATIONALE_3}}
+
+### Data Model
+- **{{DATA_DECISION_1}}**: {{RATIONALE_1}}
+- **{{DATA_DECISION_2}}**: {{RATIONALE_2}}
+- **{{DATA_DECISION_3}}**: {{RATIONALE_3}}
+
+### Security & Compliance
+- **{{SECURITY_DECISION_1}}**: {{RATIONALE_1}}
+- **{{SECURITY_DECISION_2}}**: {{RATIONALE_2}}
+- **{{SECURITY_DECISION_3}}**: {{RATIONALE_3}}
+
+## 🔄 IMPLEMENTATION QUESTIONS
+
+### {{TOPIC_1}}
+- **{{QUESTION_1}}**: {{OPTIONS_AND_RATIONALE}}
+- **{{QUESTION_2}}**: {{OPTIONS_AND_RATIONALE}}
+
+### {{TOPIC_2}}
+- **{{QUESTION_1}}**: {{OPTIONS_AND_RATIONALE}}
+- **{{QUESTION_2}}**: {{OPTIONS_AND_RATIONALE}}
+
+## 📋 PENDING DECISIONS
+
+### {{PENDING_TOPIC_1}}
+- **{{QUESTION}}**: {{CONTEXT_AND_OPTIONS}}
+- **Impact**: {{IMPACT_IF_NOT_DECIDED}}
+- **Timeline**: {{WHEN_DECISION_NEEDED}}
+
+### {{PENDING_TOPIC_2}}
+- **{{QUESTION}}**: {{CONTEXT_AND_OPTIONS}}
+- **Impact**: {{IMPACT_IF_NOT_DECIDED}}
+- **Timeline**: {{WHEN_DECISION_NEEDED}}
+
+## References
+
+- **Architecture Context**: See `docs/architecture/{{RELEVANT_ARCH_DOC}}.md`
+- **Related Decisions**: See `docs/architecture/decisions.md`
