@@ -43,7 +43,7 @@ Use architectural patterns as guidance for implementation decisions:
 
 ## Ownership
 
-- **Primary Maintainer**: {{MAINTAINER_NAME}}
+- **Primary Maintainer**: graffio-monorepo maintainer
 - **Review Cycle**: Quarterly review to ensure patterns remain current
 - **Update Process**: Update when architectural decisions change or new patterns emerge
 
