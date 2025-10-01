@@ -2,6 +2,11 @@
 
 **Goal**: Implement offline-capable client operations with sync
 
+## Architecture Reference
+
+- **Offline-First Patterns**: See `docs/architecture/offline-first.md` for offline-first design patterns and principles
+- **Queue Mechanism Patterns**: See `docs/architecture/queue-mechanism.md` for queue processing patterns
+
 ## Deliverables
 - [ ] Client-side queue operations
 - [ ] Offline sync handling

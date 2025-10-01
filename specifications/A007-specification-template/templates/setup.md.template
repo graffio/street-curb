@@ -1,0 +1,76 @@
+# {{SPEC_NAME}} Setup Instructions
+
+## Prerequisites
+
+1. {{PREREQUISITE_1}}
+2. {{PREREQUISITE_2}}
+3. {{PREREQUISITE_3}}
+
+## Environment Setup
+
+### {{ENVIRONMENT_1}}
+```bash
+# {{STEP_DESCRIPTION_1}}
+{{COMMAND_1}}
+
+# {{STEP_DESCRIPTION_2}}
+{{COMMAND_2}}
+```
+
+### {{ENVIRONMENT_2}}
+```bash
+# {{STEP_DESCRIPTION_1}}
+{{COMMAND_1}}
+
+# {{STEP_DESCRIPTION_2}}
+{{COMMAND_2}}
+```
+
+## Configuration
+
+### {{CONFIG_SECTION_1}}
+```yaml
+# {{CONFIG_FILE_1}}
+{{CONFIG_CONTENT_1}}
+```
+
+### {{CONFIG_SECTION_2}}
+```yaml
+# {{CONFIG_FILE_2}}
+{{CONFIG_CONTENT_2}}
+```
+
+## Verification
+
+### Test Setup
+```bash
+# {{TEST_COMMAND_1}}
+{{COMMAND_1}}
+
+# {{TEST_COMMAND_2}}
+{{COMMAND_2}}
+```
+
+### Expected Output
+```
+{{EXPECTED_OUTPUT}}
+```
+
+## Troubleshooting
+
+### Common Issues
+- **{{ISSUE_1}}**: {{SOLUTION_1}}
+- **{{ISSUE_2}}**: {{SOLUTION_2}}
+- **{{ISSUE_3}}**: {{SOLUTION_3}}
+
+### Getting Help
+- Check logs: {{LOG_LOCATION}}
+- Documentation: {{DOC_LINK}}
+- Support: {{SUPPORT_CONTACT}}
+
+## Next Steps
+
+Once setup is complete:
+1. {{NEXT_STEP_1}}
+2. {{NEXT_STEP_2}}
+3. {{NEXT_STEP_3}}

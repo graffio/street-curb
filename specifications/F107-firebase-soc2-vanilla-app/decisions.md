@@ -23,24 +23,12 @@
 - **Event Sourcing**: All changes stored as immutable events, current state calculated
 - **Multi-Project**: Design for multiple projects per org, start with default project
 
-### Security & Compliance
-- **SOC2 Scope**: Production only, staging excluded (synthetic data)
-- **Audit Logging**: Events ARE the audit logs, no separate collection needed
-- **Data Isolation**: Complete isolation between organizations
-- **Access Control**: Role-based permissions with principle of least privilege
-- **CCPA/GDPR**: UserForgotten events provide "right to be forgotten"
+## Architecture References
 
-### Staging Data Strategy
-- **Synthetic Data**: Staging contains only generated test data
-- **Impersonation Feature**: Debug customer issues in production with proper audit logging
-- **No Real Data**: Never copy real customer data to non-production environments
-- **SOC2 Excluded**: Staging environment not in SOC2 compliance scope
-
-### Database Schema
-- **No Traditional Audit Fields**: Event sourcing provides complete audit trail
-- **Migration Strategy**: Event sourcing simplifies migrations (events immutable, new event types added)
-- **Schema Versioning**: Add `schemaVersion` field to events for clean migrations
-- **Backward Compatibility**: Event processors handle multiple versions
+- **Security & Compliance**: See `docs/architecture/security.md` for SOC2, audit logging, and compliance decisions
+- **Authentication**: See `docs/architecture/authentication.md` for passcode-only auth and service account impersonation
+- **Data Model**: See `docs/architecture/data-model.md` for event sourcing and data isolation patterns
+- **Deployment**: See `docs/architecture/deployment.md` for environment strategy and infrastructure decisions
 
 ## 🔄 IMPLEMENTATION QUESTIONS
 
@@ -66,8 +54,8 @@
 
 ### Infrastructure Automation
 - **Deployment Triggers**: Git-triggered deployment with manual production approval?
-- **Service Accounts**: Use service accounts for automated operations, human accounts for interactive work?
-- **Permission Strategy**: Predefined roles vs custom roles for exact permissions?
+- **Service Accounts**: ✅ DECIDED - Service account impersonation for developers, Workload Identity Federation for CI/CD
+- **Permission Strategy**: Predefined roles (simpler to maintain than custom roles)
 
 ## 📋 FUTURE CONSIDERATIONS
 

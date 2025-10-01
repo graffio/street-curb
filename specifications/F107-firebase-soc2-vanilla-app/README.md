@@ -4,8 +4,8 @@
 
 ## What We're Building
 
-**Target Customers**: Cities and municipalities  
-**Pricing**: Annual fixed fee (thousands/year, check payment)  
+**Target Customers**: Cities and municipalities
+**Pricing**: Annual fixed fee (thousands/year, check payment)
 **Core Use Case**: Field workers collect curb measurements using mobile web app, works offline, syncs when online
 
 ## Architecture Decisions (✅ DECIDED)
@@ -19,6 +19,8 @@
 - **CI/CD**: GitLab
 - **Billing**: Single account with project labels
 - **Terminology**: Organizations (not cities), Members (not users)
+- **Infrastructure Setup**: Manual console (one-time) + scripted operations (ongoing)
+- **Developer Auth**: Service account impersonation (no key files)
 
 ## Core Pattern
 
@@ -30,28 +32,48 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 
 ## Implementation Order
 
-1. **Week 1**: Infrastructure Foundation (`phase1-infrastructure.md`)
-2. **Week 2**: Event Sourcing Core (`phase2-events.md`)
-3. **Week 3**: Authentication System (`phase3-auth.md`)
-4. **Week 4**: Multi-Tenant Data Model (`phase4-multitenant.md`)
-5. **Week 5**: Offline Queue Architecture (`phase5-offline.md`)
-6. **Week 6**: Billing & Export (`phase6-billing.md`)
+### Infrastructure Setup (Manual, One-Time)
+1. Create Firebase projects in console (`manual-setup.md`)
+2. Create service accounts and grant impersonation permissions
+3. Developer authentication setup
+
+### Application Development (Scripted, Ongoing)
+1. **Week 2**: Event Sourcing Core (`phase2-events.md`)
+2. **Week 3**: Authentication System (`phase3-auth.md`)
+3. **Week 4**: Multi-Tenant Data Model (`phase4-multitenant.md`)
+4. **Week 5**: Offline Queue Architecture (`phase5-offline.md`)
+5. **Week 6**: Billing & Export (`phase6-billing.md`)
 
 ## Key Files
 
+### Getting Started
+- **`manual-setup.md`** - One-time console setup instructions (start here!)
+- **`next-step.md`** - Service account impersonation setup for developers
 - **`architecture.md`** - Technical architecture and data model
-- **`roadmap.md`** - Detailed 6-week implementation sequence
 - **`decisions.md`** - All decisions made and remaining questions
-- **`migration-testing-strategy.md`** - Temporary environment testing approach
-- **`phase2-events.md`** through **`phase6-billing.md`** - Implementation details
+
+### Implementation Guides
+- **`roadmap.md`** - Detailed 6-week implementation sequence
+- **`phase1b-firebase-services.md`** - Firebase service configuration (assumes project exists)
+- **`phase1c-service-account.md`** - Service account impersonation details
+- **`phase2-events.md`** through **`phase6-billing.md`** - Application implementation
+
+### Testing & Operations
+- **`migration-testing-strategy.md`** - Testing approach for configuration changes
 
 ## Quick Start
 
-1. Read `architecture.md` for core patterns
-2. Follow `roadmap.md` for implementation sequence
-3. Check `decisions.md` for any remaining questions
-4. Review `migration-testing-strategy.md` for deployment approach
-5. Continue with `phase2-events.md` (infrastructure foundation complete)
+### For New Developers
+1. Complete `manual-setup.md` (admin runs once per environment)
+2. Set up impersonation following `next-step.md` (developer runs once)
+3. Read `architecture.md` for core patterns
+4. Start with `phase2-events.md` (infrastructure already set up)
+
+### For Infrastructure Changes
+1. Check `decisions.md` for philosophy
+2. Manual changes: Update `manual-setup.md`
+3. Configuration changes: Create migration script
+4. Test following `migration-testing-strategy.md`
 
 ## Success Criteria
 
@@ -59,4 +81,21 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 
 **Business**: Annual billing support, usage tracking, export functionality, customer onboarding
 
-**Compliance**: SOC2-ready security controls, comprehensive audit trails, data encryption, access controls
+**Compliance**: SOC2-ready security controls, comprehensive audit trails, data encryption, access controls, service account impersonation with individual accountability
+
+## Security Architecture
+
+### Developer Authentication (SOC2-Enhanced)
+- **No long-lived credentials**: Service account impersonation eliminates key files
+- **Short-lived tokens**: Automatically expire (1-12 hours)
+- **MFA protection**: User accounts require multi-factor authentication
+- **Individual accountability**: Audit logs show "user@company.com impersonating SA@project"
+- **Easy revocation**: Remove IAM binding to instantly revoke access
+
+### Infrastructure Philosophy
+- **Setup**: Manual console (stable, rarely changes, high-impact)
+- **Operations**: Scripted migrations (frequent, version-controlled, repeatable)
+- **Documentation**: Infrastructure as documentation + executable scripts
+- **Compliance**: Manual changes documented, scripted changes in git
+
+See `phase1c-service-account.md` for detailed authentication setup.

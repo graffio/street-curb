@@ -2,6 +2,10 @@
 
 **Goal**: Implement core event sourcing pattern with queue processing
 
+## Architecture Reference
+
+- **Event Sourcing Patterns**: See `docs/architecture/event-sourcing.md` for architectural patterns and principles
+
 ## Deliverables
 - [ ] Firestore queue collection with proper rules
 - [ ] Giant function for event processing

@@ -2,6 +2,10 @@
 
 **Goal**: Implement organization + project hierarchy with data isolation
 
+## Architecture Reference
+
+- **Multi-Tenant Patterns**: See `docs/architecture/multi-tenant.md` for architectural patterns and principles
+
 ## Deliverables
 - [ ] Organization management (CRUD operations)
 - [ ] Project management (CRUD operations)
