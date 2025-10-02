@@ -1,0 +1,340 @@
+current_task: "task_1_1_organization_events"
+status: "pending"
+
+# Reference: See docs/architecture/multi-tenant.md for detailed organization/project patterns, data isolation rules, and role hierarchy
+
+tasks:
+  - id: "task_1_1_organization_events"
+    description: "Define organization event types and handlers"
+    status: "pending"
+    phase: "Organization Management"
+    dependencies: []
+    estimated_hours: 4
+    implementation: |
+        - Create `modules/curb-map/functions/src/events/organizationEvents.js` using patterns from "Organization Management" section in docs/architecture/multi-tenant.md.
+        - Define event types: OrganizationCreated, OrganizationUpdated, OrganizationDeleted per architecture patterns.
+        - Implement event handlers with proper data validation and business rules.
+        - Integrate with event sourcing system per F108 patterns.
+    validation:
+      - "Organization event types defined with proper schemas"
+      - "Event handlers validate business rules correctly"
+      - "Events integrate with event sourcing system"
+    tests:
+      - "modules/curb-map/functions/test/organization-events.tap.js (to be created)"
+
+  - id: "task_1_2_organization_api"
+    description: "Create organization CRUD API endpoints"
+    status: "pending"
+    phase: "Organization Management"
+    dependencies:
+      - "task_1_1_organization_events"
+    estimated_hours: 5
+    implementation: |
+        - Create `modules/curb-map/functions/src/api/organizations.js` following "Organization API" patterns in docs/architecture/multi-tenant.md.
+        - Implement CRUD endpoints: POST /organizations, GET /organizations/:id, PUT /organizations/:id, DELETE /organizations/:id.
+        - Add authorization checks using patterns from docs/architecture/authentication.md.
+        - Ensure all operations go through event sourcing queue per F108 patterns.
+    validation:
+      - "Organization CRUD API endpoints work correctly"
+      - "Authorization checks prevent unauthorized access"
+      - "All operations use event sourcing queue"
+    tests:
+      - "modules/curb-map/functions/test/organization-api.tap.js"
+
+  - id: "task_1_3_organization_validation"
+    description: "Implement organization validation and business rules"
+    status: "pending"
+    phase: "Organization Management"
+    dependencies:
+      - "task_1_2_organization_api"
+    estimated_hours: 3
+    implementation: |
+        - Implement organization validation per "Organization Management" section in docs/architecture/multi-tenant.md.
+        - Add validation for organization names, subscription tiers, and settings.
+        - Implement business rules for organization limits and constraints.
+        - Add validation error handling and user feedback.
+    validation:
+      - "Organization validation enforces business rules"
+      - "Validation errors provide clear feedback"
+      - "Business constraints are properly enforced"
+    tests:
+      - "modules/curb-map/functions/test/organization-validation.tap.js"
+
+  - id: "task_2_1_project_events"
+    description: "Define project event types and handlers"
+    status: "pending"
+    phase: "Project Management"
+    dependencies:
+      - "task_1_3_organization_validation"
+    estimated_hours: 4
+    implementation: |
+        - Create `modules/curb-map/functions/src/events/projectEvents.js` using patterns from "Project Management" section in docs/architecture/multi-tenant.md.
+        - Define event types: ProjectCreated, ProjectUpdated, ProjectDeleted per architecture patterns.
+        - Implement event handlers with organization scoping validation.
+        - Integrate with event sourcing system per F108 patterns.
+    validation:
+      - "Project event types defined with proper schemas"
+      - "Event handlers validate organization scoping"
+      - "Events integrate with event sourcing system"
+    tests:
+      - "modules/curb-map/functions/test/project-events.tap.js"
+
+  - id: "task_2_2_project_api"
+    description: "Create project CRUD API endpoints"
+    status: "pending"
+    phase: "Project Management"
+    dependencies:
+      - "task_2_1_project_events"
+    estimated_hours: 5
+    implementation: |
+        - Create `modules/curb-map/functions/src/api/projects.js` following "Project API" patterns in docs/architecture/multi-tenant.md.
+        - Implement CRUD endpoints: POST /organizations/:id/projects, GET /organizations/:id/projects, PUT /projects/:id, DELETE /projects/:id.
+        - Add organization-scoped authorization checks using patterns from docs/architecture/authentication.md.
+        - Ensure all operations go through event sourcing queue per F108 patterns.
+    validation:
+      - "Project CRUD API endpoints work correctly"
+      - "Organization-scoped authorization works"
+      - "All operations use event sourcing queue"
+    tests:
+      - "modules/curb-map/functions/test/project-api.tap.js"
+
+  - id: "task_2_3_project_validation"
+    description: "Implement project validation and business rules"
+    status: "pending"
+    phase: "Project Management"
+    dependencies:
+      - "task_2_2_project_api"
+    estimated_hours: 3
+    implementation: |
+        - Implement project validation per "Project Management" section in docs/architecture/multi-tenant.md.
+        - Add validation for project names, organization scoping, and limits.
+        - Implement business rules for project quotas and constraints.
+        - Add validation error handling and user feedback.
+    validation:
+      - "Project validation enforces business rules"
+      - "Organization scoping validation works"
+      - "Business constraints are properly enforced"
+    tests:
+      - "modules/curb-map/functions/test/project-validation.tap.js"
+
+  - id: "task_3_1_organization_views"
+    description: "Create organization materialized views"
+    status: "pending"
+    phase: "Materialized View Generation"
+    dependencies:
+      - "task_1_1_organization_events"
+      - "task_2_1_project_events"
+    estimated_hours: 4
+    implementation: |
+        - Create organization materialized views per "Materialized View Scoping" section in docs/architecture/multi-tenant.md.
+        - Implement views for organization roster, subscription status, and settings.
+        - Use event sourcing patterns from F108 for view generation.
+        - Add view update triggers and synchronization.
+    validation:
+      - "Organization materialized views created correctly"
+      - "Views stay synchronized with events"
+      - "View queries perform efficiently"
+    tests:
+      - "modules/curb-map/functions/test/organization-views.tap.js"
+
+  - id: "task_3_2_project_views"
+    description: "Create project materialized views"
+    status: "pending"
+    phase: "Materialized View Generation"
+    dependencies:
+      - "task_1_1_organization_events"
+      - "task_2_1_project_events"
+    estimated_hours: 4
+    implementation: |
+        - Create project materialized views per "Materialized View Scoping" section in docs/architecture/multi-tenant.md.
+        - Implement views for project lists, organization scoping, and project metadata.
+        - Use event sourcing patterns from F108 for view generation.
+        - Add view update triggers and synchronization.
+    validation:
+      - "Project materialized views created correctly"
+      - "Views stay synchronized with events"
+      - "Organization scoping works in views"
+    tests:
+      - "modules/curb-map/functions/test/project-views.tap.js"
+
+  - id: "task_3_3_view_sync"
+    description: "Implement view synchronization with events"
+    status: "pending"
+    phase: "Materialized View Generation"
+    dependencies:
+      - "task_3_2_project_views"
+    estimated_hours: 3
+    implementation: |
+        - Implement view synchronization per "View Synchronization" patterns in docs/architecture/multi-tenant.md.
+        - Add event triggers for organization and project view updates.
+        - Implement conflict resolution and consistency checks.
+        - Add monitoring for view synchronization performance.
+    validation:
+      - "View synchronization works correctly"
+      - "Conflict resolution handles edge cases"
+      - "Consistency checks pass"
+    tests:
+      - "modules/curb-map/functions/test/view-sync.tap.js"
+
+  - id: "task_4_1_isolation_middleware"
+    description: "Implement data isolation middleware"
+    status: "pending"
+    phase: "Data Isolation Middleware"
+    dependencies:
+      - "task_3_3_view_sync"
+    estimated_hours: 5
+    implementation: |
+        - Create data isolation middleware per "Data Isolation Implementation" section in docs/architecture/multi-tenant.md.
+        - Implement middleware to enforce organization/project scoping on all data access.
+        - Add automatic data scoping to all database queries.
+        - Integrate with authentication system per F109 patterns.
+    validation:
+      - "Data isolation middleware works correctly"
+      - "All queries are properly scoped"
+      - "Cross-tenant access is prevented"
+    tests:
+      - "modules/curb-map/functions/test/isolation-middleware.tap.js"
+
+  - id: "task_4_2_scoping_validation"
+    description: "Add data scoping validation"
+    status: "pending"
+    phase: "Data Isolation Middleware"
+    dependencies:
+      - "task_4_1_isolation_middleware"
+    estimated_hours: 3
+    implementation: |
+        - Implement data scoping validation per "Scoping Validation" patterns in docs/architecture/multi-tenant.md.
+        - Add validation for organization and project IDs in all requests.
+        - Implement scoping checks for data access patterns.
+        - Add error handling for scoping violations.
+    validation:
+      - "Data scoping validation works correctly"
+      - "Scoping violations are caught and handled"
+      - "Error messages are clear and actionable"
+    tests:
+      - "modules/curb-map/functions/test/scoping-validation.tap.js"
+
+  - id: "task_4_3_cross_tenant_protection"
+    description: "Prevent cross-tenant data access"
+    status: "pending"
+    phase: "Data Isolation Middleware"
+    dependencies:
+      - "task_4_2_scoping_validation"
+    estimated_hours: 4
+    implementation: |
+        - Implement cross-tenant protection per "Multi-Tenant Security" section in docs/architecture/multi-tenant.md.
+        - Add security rules to prevent data leakage between organizations.
+        - Implement audit logging for cross-tenant access attempts.
+        - Add monitoring and alerting for security violations.
+    validation:
+      - "Cross-tenant access is prevented"
+      - "Security violations are logged and alerted"
+      - "Audit trail captures all access attempts"
+    tests:
+      - "modules/curb-map/functions/test/cross-tenant-protection.tap.js"
+
+  - id: "task_5_1_permission_system"
+    description: "Implement role-based permissions"
+    status: "pending"
+    phase: "Role-Based Permissions System"
+    dependencies:
+      - "task_4_3_cross_tenant_protection"
+    estimated_hours: 5
+    implementation: |
+        - Implement role-based permissions per "Role-Based Access Control (RBAC)" section in docs/architecture/multi-tenant.md.
+        - Define permission matrix for organization and project operations.
+        - Implement permission checking utilities and middleware.
+        - Integrate with authentication system per F109 patterns.
+    validation:
+      - "Role-based permissions work correctly"
+      - "Permission matrix is properly enforced"
+      - "Permission checks integrate with authentication"
+    tests:
+      - "modules/curb-map/functions/test/permission-system.tap.js"
+
+  - id: "task_5_2_authorization_integration"
+    description: "Integrate with authentication system"
+    status: "pending"
+    phase: "Role-Based Permissions System"
+    dependencies:
+      - "task_5_1_permission_system"
+    estimated_hours: 4
+    implementation: |
+        - Integrate permission system with authentication per "Authorization Integration" patterns in docs/architecture/multi-tenant.md.
+        - Connect role-based permissions with custom claims from F109.
+        - Implement organization-scoped permission checking.
+        - Add permission inheritance and delegation patterns.
+    validation:
+      - "Permission system integrates with authentication"
+      - "Organization-scoped permissions work"
+      - "Permission inheritance functions correctly"
+    tests:
+      - "modules/curb-map/functions/test/authorization-integration.tap.js"
+
+  - id: "task_5_3_permission_testing"
+    description: "Test permission enforcement"
+    status: "pending"
+    phase: "Role-Based Permissions System"
+    dependencies:
+      - "task_5_2_authorization_integration"
+    estimated_hours: 3
+    implementation: |
+        - Test permission enforcement per "Permission Testing" guidance in docs/architecture/multi-tenant.md.
+        - Create test scenarios for all permission combinations.
+        - Test edge cases and boundary conditions.
+        - Validate permission enforcement across all API endpoints.
+    validation:
+      - "Permission enforcement works across all scenarios"
+      - "Edge cases are handled correctly"
+      - "All API endpoints enforce permissions"
+    tests:
+      - "modules/curb-map/functions/test/permission-enforcement.tap.js"
+
+  - id: "task_6_1_integration_testing"
+    description: "Validate end-to-end multi-tenant workflow"
+    status: "pending"
+    phase: "Testing and Validation"
+    dependencies:
+      - "task_5_3_permission_testing"
+    estimated_hours: 6
+    implementation: |
+        - Build TAP harness following "Multi-Tenant Testing" patterns in docs/architecture/multi-tenant.md.
+        - Create test harnesses: multi-tenant.integration.tap.js and multi-tenant.load.sh (to be created).
+        - Test complete workflow: organization creation → project creation → data isolation → permission enforcement.
+        - Add load testing for multi-tenant scenarios per "Performance Testing" guidance.
+        - Document manual validation steps in `docs/runbooks/multi-tenant.md`.
+    validation:
+      - "End-to-end multi-tenant workflow works correctly"
+      - "Data isolation maintained under load"
+      - "Permission enforcement works across all scenarios"
+    tests:
+      - "modules/curb-map/functions/test/multi-tenant.integration.tap.js"
+      - "modules/curb-map/functions/test/multi-tenant.load.sh"
+
+  - id: "task_6_2_isolation_testing"
+    description: "Test data isolation and security"
+    status: "pending"
+    phase: "Testing and Validation"
+    dependencies:
+      - "task_6_1_integration_testing"
+    estimated_hours: 4
+    implementation: |
+        - Test data isolation and security per "Security Testing" patterns in docs/architecture/multi-tenant.md.
+        - Create test scenarios for cross-tenant access attempts.
+        - Test data leakage prevention and audit logging.
+        - Validate SOC2 compliance controls for multi-tenancy.
+    validation:
+      - "Data isolation prevents cross-tenant access"
+      - "Security violations are detected and logged"
+      - "SOC2 compliance controls are operational"
+    tests:
+      - "modules/curb-map/functions/test/isolation-security.tap.js"
+
+completed: []
+
+notes: |
+    This specification implements the multi-tenant data model for CurbMap.
+    Task ID format: task_{phase}_{sequence}_{description}
+    Status values: pending, in_progress, completed, blocked, cancelled
+    Dependencies: List of task IDs that must be completed first
+    Validation: Specific criteria that must be met for task completion

@@ -40,7 +40,7 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 ### Application Development (Scripted, Ongoing)
 1. **Week 2**: Event Sourcing Core → See `specifications/F108-event-sourcing-core/` (all execution detail now lives in F108)
 2. **Week 3**: Authentication System → See `specifications/F109-authentication-system/` (all execution detail now lives in F109)
-3. **Week 4**: Multi-Tenant Data Model (`phase4-multitenant.md`)
+3. **Week 4**: Multi-Tenant Data Model → See `specifications/F110-multi-tenant-data-model/` (all execution detail now lives in F110)
 4. **Week 5**: Offline Queue Architecture (`phase5-offline.md`)
 5. **Week 6**: Billing & Export (`phase6-billing.md`)
 
@@ -56,6 +56,7 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 - **`roadmap.md`** - Detailed 6-week implementation sequence
 - **`specifications/F108-event-sourcing-core/`** - Week 2: Event Sourcing Core implementation
 - **`specifications/F109-authentication-system/`** - Week 3: Authentication System implementation
+- **`specifications/F110-multi-tenant-data-model/`** - Week 4: Multi-Tenant Data Model implementation
 
 ### Testing & Operations
 - **`migration-testing-strategy.md`** - Testing approach for configuration changes
