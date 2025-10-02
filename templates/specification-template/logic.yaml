@@ -1,21 +1,16 @@
 template_structure:
   required_files:
-    - README.md: "Overview and quick start"
-    - architecture.md: "Technical architecture (references docs/architecture/)"
-    - decisions.md: "Decision rationale"
-    - implementation.md: "Implementation phases"
-    - tasks.yaml: "Task breakdown"
+    - background.md: "Concise overview, references, and phase outline"
+    - tasks.yaml: "Executable task list with implementation, validation, tests"
   optional_files:
-    - setup.md: "Manual setup instructions"
-    - testing.md: "Testing strategy"
-    - migration.md: "Migration procedures"
+    - meta.yaml: "Specification metadata (only when automation requires it)"
+    - llm-loader.md: "Custom loader if extra context needed"
 
 template_usage:
-  - Copy templates/ directory to new specification
-  - Rename .template files to actual names
-  - Replace {{PLACEHOLDERS}} with real content
-  - Reference docs/architecture/ for architectural context
-  - Follow docs/standards/specification-format/ for structure
+  - Copy only the files you intend to fill (`background.md.template`, `tasks.yaml.template`)
+  - Rename them and replace {{PLACEHOLDERS}} with project-specific content
+  - Link to docs/architecture/ for deep technical detail; do not duplicate long snippets
+  - Capture implementation steps and validation directly inside `tasks.yaml`
 
 architecture_integration:
   - Reference docs/architecture/ files rather than embedding content

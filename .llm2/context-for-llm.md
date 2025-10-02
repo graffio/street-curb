@@ -21,7 +21,11 @@
 
 ### Specification Standards
 - `docs/standards/specification-format/`: Meta-standards for all specifications
-- `templates/specification-template/`: Template for creating new specifications
+- `templates/specification-template/`: Source for the current two-file spec template (`background.md` + `tasks.yaml`)
+- Specifications now carry:
+  - `background.md` — synopsis, canonical doc references, phase map
+  - `tasks.yaml` — actionable tasks with implementation steps, validation, and tests
+- Add optional `meta.yaml` / `llm-loader.md` only if automation or special context demands it
 - `specifications/F107-firebase-soc2-vanilla-app/`: CurbMap implementation specification
 
 ### Coding Standards Highlights

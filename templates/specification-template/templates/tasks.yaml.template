@@ -1,54 +1,44 @@
-current_task: "task_1_1_{{FIRST_TASK}}"
+current_task: "{{FIRST_TASK_ID}}"
 status: "pending"
 
+# Reference: See {{PRIMARY_REFERENCE}} for detailed patterns and decision log
+
 tasks:
-  - id: "task_1_1_{{FIRST_TASK}}"
-    description: "{{TASK_DESCRIPTION}}"
+  - id: "{{TASK_ID_1}}"
+    description: "{{TASK_DESCRIPTION_1}}"
     status: "pending"
-    phase: "{{PHASE_1_NAME}}"
-    validation:
-      - "{{VALIDATION_1}}"
-      - "{{VALIDATION_2}}"
-      - "{{VALIDATION_3}}"
+    phase: "{{PHASE_NAME_1}}"
     dependencies: []
-    estimated_hours: {{ESTIMATED_HOURS}}
-
-  - id: "task_1_2_{{SECOND_TASK}}"
-    description: "{{TASK_DESCRIPTION}}"
-    status: "pending"
-    phase: "{{PHASE_1_NAME}}"
+    estimated_hours: {{ESTIMATE_1}}
+    implementation: |
+        - Replace this list with concrete steps. Reference specific sections like "Section → Subsection" in the architecture docs.
+        - Keep instructions declarative and avoid long code blocks; link to canonical helpers instead.
+        - Mention required files or modules (e.g., `modules/foo/src/bar.js`).
     validation:
-      - "{{VALIDATION_1}}"
-      - "{{VALIDATION_2}}"
-    dependencies: ["task_1_1_{{FIRST_TASK}}"]
-    estimated_hours: {{ESTIMATED_HOURS}}
+      - "State measurable outcomes that prove the task is done"
+      - "Include edge cases or negative scenarios"
+    tests:
+      - "modules/<workspace>/test/{{task-id}}.tap.js"
 
-  - id: "task_2_1_{{THIRD_TASK}}"
-    description: "{{TASK_DESCRIPTION}}"
+  - id: "{{TASK_ID_2}}"
+    description: "{{TASK_DESCRIPTION_2}}"
     status: "pending"
-    phase: "{{PHASE_2_NAME}}"
+    phase: "{{PHASE_NAME_1}}"
+    dependencies:
+      - "{{TASK_ID_1}}"
+    estimated_hours: {{ESTIMATE_2}}
+    implementation: |
+        - Use bullet lists to outline required work.
+        - Reference reusable helpers/modules instead of duplicating code.
     validation:
-      - "{{VALIDATION_1}}"
-      - "{{VALIDATION_2}}"
-    dependencies: ["task_1_2_{{SECOND_TASK}}"]
-    estimated_hours: {{ESTIMATED_HOURS}}
+      - "List objective completion checks"
+    tests:
+      - "modules/<workspace>/test/{{task-id}}.tap.js"
 
-  - id: "task_2_2_{{FOURTH_TASK}}"
-    description: "{{TASK_DESCRIPTION}}"
-    status: "pending"
-    phase: "{{PHASE_2_NAME}}"
-    validation:
-      - "{{VALIDATION_1}}"
-      - "{{VALIDATION_2}}"
-    dependencies: ["task_2_1_{{THIRD_TASK}}"]
-    estimated_hours: {{ESTIMATED_HOURS}}
+  # Add more tasks following the same structure.
 
 completed: []
 
 notes: |
-  {{ADDITIONAL_NOTES_ABOUT_TASKS}}
-  
-  Task ID format: task_{phase}_{sequence}_{description}
-  Status values: pending, in_progress, completed, blocked, cancelled
-  Dependencies: List of task IDs that must be completed first
-  Validation: Specific criteria that must be met for task completion
+    Document any assumptions, glossary terms, or playbook reminders here.
+    Keep this section short; link to longer context in docs/.
