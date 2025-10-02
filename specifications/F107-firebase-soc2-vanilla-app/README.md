@@ -38,8 +38,8 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 3. Developer authentication setup
 
 ### Application Development (Scripted, Ongoing)
-1. **Week 2**: Event Sourcing Core (`phase2-events.md`)
-2. **Week 3**: Authentication System (`phase3-auth.md`)
+1. **Week 2**: Event Sourcing Core → See `specifications/F108-event-sourcing-core/` (all execution detail now lives in F108)
+2. **Week 3**: Authentication System → See `specifications/F109-authentication-system/` (all execution detail now lives in F109)
 3. **Week 4**: Multi-Tenant Data Model (`phase4-multitenant.md`)
 4. **Week 5**: Offline Queue Architecture (`phase5-offline.md`)
 5. **Week 6**: Billing & Export (`phase6-billing.md`)
@@ -54,9 +54,8 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 
 ### Implementation Guides
 - **`roadmap.md`** - Detailed 6-week implementation sequence
-- **`phase1b-firebase-services.md`** - Firebase service configuration (assumes project exists)
-- **`phase1c-service-account.md`** - Service account impersonation details
-- **`phase2-events.md`** through **`phase6-billing.md`** - Application implementation
+- **`specifications/F108-event-sourcing-core/`** - Week 2: Event Sourcing Core implementation
+- **`specifications/F109-authentication-system/`** - Week 3: Authentication System implementation
 
 ### Testing & Operations
 - **`migration-testing-strategy.md`** - Testing approach for configuration changes
@@ -67,7 +66,7 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 1. Complete `manual-setup.md` (admin runs once per environment)
 2. Set up impersonation following `next-step.md` (developer runs once)
 3. Read `architecture.md` for core patterns
-4. Start with `phase2-events.md` (infrastructure already set up)
+4. Start with `specifications/F108-event-sourcing-core/` (infrastructure already set up)
 
 ### For Infrastructure Changes
 1. Check `decisions.md` for philosophy
@@ -98,4 +97,4 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 - **Documentation**: Infrastructure as documentation + executable scripts
 - **Compliance**: Manual changes documented, scripted changes in git
 
-See `phase1c-service-account.md` for detailed authentication setup.
+See `manual-setup.md` for detailed authentication setup.
