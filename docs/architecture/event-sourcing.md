@@ -8,6 +8,23 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 
 **Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
 
+### System Snapshot
+- **Queue Contract**: Each document in `update_queue` carries `{queueItemId, eventType, payload, idempotencyKey, actor, timestamps, status}`; mutable fields (`status`, `error`, `processedAt`) track orchestration only.
+- **Processing Node**: A single-region Cloud Function subscribes to queue writes, enforces validation + authorization, and records audit metadata alongside results.
+- **Event Store**: Immutable `events` collection partitioned by `{organizationId, projectId}`; append-only semantics maintain SOC2 audit guarantees.
+- **Materialized Views**: Organization-scoped read models (Firestore collections or BigQuery exports) consume events idempotently and log last processed `eventId`.
+- **Idempotency**: UUID-based keys persisted in `processed_operations` avoid duplicate processing even under at-least-once delivery.
+
+### Decision Log
+
+| Decision                                     | Status   | Rationale                                                                            | Trade-offs                                                              |
+|----------------------------------------------|----------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Single giant function vs per-event functions | Accepted | Centralizes throttling, simplifies logging/metrics, one deployment surface           | Larger blast radius; mitigated via TAP + emulator regression suite      |
+| Firestore queue over Pub/Sub                 | Accepted | Keeps local dev simple, shares security model with app data, supports offline writes | Lacks managed dead-letter queue; compensated with retry/status tracking |
+| Event sourcing pattern                       | Accepted | Immutable audit trail, rebuildable views, aligns with SOC2 controls                  | Higher complexity than CRUD; requires strong tooling + docs             |
+| Idempotency via per-actor keys               | Accepted | Prevents accidental duplicate events, audit friendly                                 | Requires read-before-write and extra index costs                        |
+| Materialized views in Firestore (phase 1)    | Accepted | Fast app reads, minimal ops overhead initially                                       | May hit limits; plan migration to BigQuery for heavy analytics          |
+
 ## Event Sourcing Principles
 
 ### Immutable Events
@@ -15,22 +32,16 @@ Events are the source of truth and cannot be modified once created:
 
 ```javascript
 // Events collection - immutable audit trail
-events: {
+const events= {
   eventId: {
-    type: "UserCreated" | "UserUpdated" | "UserForgotten" | "RoleAssigned",
-    organizationId: "cuid2",
-    projectId: "cuid2",
-    actor: { 
-      type: "user" | "system" | "api",
-      id: "cuid2" 
-    },
-    subject: { 
-      type: "user" | "organization" | "project",
-      id: "cuid2" 
-    },
+    type: 'UserCreated' | 'UserUpdated' | 'UserForgotten' | 'RoleAssigned',
+    organizationId: 'cuid2',
+    projectId: 'cuid2',
+    actor:   { id: 'cuid2', type: 'user' | 'system' | 'api', },
+    subject: { id: 'cuid2', type: 'user' | 'organization' | 'project', },
     data: { /* event-specific data */ },
-    timestamp: "ISO string",
-    correlationId: "cuid2", // for client→server error tracking
+    timestamp: 'ISO string',
+    correlationId: 'cuid2', // for client→server error tracking
     schemaVersion: 1
   }
 }
@@ -44,6 +55,7 @@ events: {
 - **OrganizationCreated**: New organization setup
 - **ProjectCreated**: New project within organization
 
+
 ## Queue Processing Architecture
 
 ### Queue Structure
@@ -51,22 +63,22 @@ events: {
 // Firestore collection: update_queue
 {
   queueId: {
-    action: "createEvent",
-    eventType: "UserCreated",
+    action: 'createEvent',
+    eventType: 'UserCreated',
     data: {
-      organizationId: "cuid2",
-      projectId: "cuid2",
-      subject: { type: "user", id: "cuid2" },
-      email: "alice@sf.gov",
-      initialRole: "member"
+      organizationId: 'cuid2',
+      projectId: 'cuid2',
+      subject: { type: 'user', id: 'cuid2' },
+      email: 'alice@sf.gov',
+      initialRole: 'member'
     },
-    idempotencyKey: "uuid-v4",
-    userId: "firebase-uid",
-    timestamp: "serverTimestamp",
-    status: "pending" | "completed" | "failed",
-    result: { eventId: "cuid2" },
-    error: "error message",
-    processedAt: "serverTimestamp"
+    idempotencyKey: 'uuid-v4',
+    userId: 'firebase-uid',
+    timestamp: 'serverTimestamp',
+    status: 'pending' | 'completed' | 'failed',
+    result: { eventId: 'cuid2' },
+    error: 'error message',
+    processedAt: 'serverTimestamp'
   }
 }
 ```

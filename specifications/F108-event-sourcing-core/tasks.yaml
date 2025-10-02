@@ -1,0 +1,182 @@
+current_task: "task_1_1_create_queue_collection"
+status: "pending"
+
+# Reference: See docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
+
+tasks:
+  - id: "task_1_1_create_queue_collection"
+    description: "Create Firestore update_queue collection with security rules"
+    status: "pending"
+    phase: "Queue Collection Setup"
+    dependencies: []
+    estimated_hours: 4
+    implementation: |
+        - Align the collection schema with "Queue Structure" in docs/architecture/event-sourcing.md.
+        - Add security rules from "Queue Processing Architecture → Security Rules" to `firestore.rules`.
+        - Register composite indexes noted under "Queue Processing Architecture → Required Indexes".
+        - Validate behaviour locally with the Firebase emulator before deploying.
+    validation:
+      - "Queue collection exists with required fields and indexes"
+      - "Unauthorized writes/reads are rejected by emulator security tests"
+      - "Rule + index deployments logged in infrastructure runbook"
+    tests:
+      - "modules/curb-map/functions/test/update-queue-rules.tap.js"
+
+  - id: "task_1_2_queue_utilities"
+    description: "Implement queue management utilities and helper functions"
+    status: "pending"
+    phase: "Queue Collection Setup"
+    dependencies:
+      - "task_1_1_create_queue_collection"
+    estimated_hours: 3
+    implementation: |
+        - Create `modules/curb-map/functions/src/events/queue.js` exporting pure helpers listed in docs/architecture/event-sourcing.md ("Queue Helpers" section).
+        - Ensure helpers accept `(projectId, payload, actor)` and honor the dry-run flag by logging instead of writing.
+        - Use shared uuid/id helpers from `modules/functional` to generate `queueId` and `idempotencyKey`.
+        - Mirror logging fields shown under "Observability" in the architecture doc.
+    validation:
+      - "Helper returns deterministic structures matching the schema"
+      - "Dry-run mode emits structured logs without writes"
+      - "Invalid payloads trigger descriptive errors"
+    tests:
+      - "modules/curb-map/functions/test/queue-helpers.tap.js"
+
+  - id: "task_2_1_giant_function"
+    description: "Create main queue processing function with error handling"
+    status: "pending"
+    phase: "Function Implementation"
+    dependencies:
+      - "task_1_2_queue_utilities"
+    estimated_hours: 6
+    implementation: |
+        - Implement `modules/curb-map/functions/src/events/process-update-queue.js` using the flow in "Processing Flow".
+        - Inject validators and authorization hooks from the event registry (task_3_1/task_3_2) via dependency parameters to keep functions pure for testing.
+        - Persist status transitions (`pending → processing → completed/failed`) exactly as documented under "Queue Item Lifecycle".
+        - Emit structured logs (`queueItemId`, `eventType`, `attempt`, `durationMs`).
+    validation:
+      - "On-create trigger processes new queue items end-to-end in emulator"
+      - "Failures mark queue docs with status=failed and retain error context"
+      - "Idempotent replays leave queue item unchanged"
+    tests:
+      - "modules/curb-map/functions/test/process-update-queue.tap.js"
+      - "modules/curb-map/functions/test/process-update-queue.integration.sh"
+
+  - id: "task_2_2_idempotency"
+    description: "Implement idempotency checks to prevent duplicate processing"
+    status: "pending"
+    phase: "Function Implementation"
+    dependencies:
+      - "task_2_1_giant_function"
+    estimated_hours: 4
+    implementation: |
+        - Persist processed operations in the `processed_operations` store described in "Idempotency Pattern".
+        - Reuse helper signatures (`checkIdempotencyKey`, `storeIdempotencyResult`) from the architecture doc; keep them side-effect free for unit tests.
+        - Enforce uniqueness using Firestore doc IDs or unique indexes per idempotency key.
+        - Document retry escalation rules in the runbook.
+    validation:
+      - "Duplicate idempotency keys short-circuit without recreating events"
+      - "Processed operations contain actor, timestamp, result snapshot"
+      - "Manual replay procedures documented for operations team"
+    tests:
+      - "modules/curb-map/functions/test/idempotency.tap.js"
+
+  - id: "task_3_1_event_types"
+    description: "Define event types and validation schemas"
+    status: "pending"
+    phase: "Event Types and Validation"
+    dependencies:
+      - "task_2_2_idempotency"
+    estimated_hours: 3
+    implementation: |
+        - Establish the event registry API outlined under "Event Validation" (define schema, validator, sanitizer per event type).
+        - Store specifications in `modules/curb-map/functions/src/events/event-types.js` with pure data + helpers.
+        - Reference organization/project scoping rules from docs/architecture/multi-tenant.md.
+    validation:
+      - "Registry rejects malformed payloads with actionable messages"
+      - "Schema versions tracked for future migrations"
+      - "Unit tests cover UserCreated/UserUpdated/UserForgotten happy + sad paths"
+    tests:
+      - "modules/curb-map/functions/test/event-types.tap.js"
+
+  - id: "task_3_2_authorization"
+    description: "Implement authorization checks for event creation"
+    status: "pending"
+    phase: "Event Types and Validation"
+    dependencies:
+      - "task_3_1_event_types"
+    estimated_hours: 4
+    implementation: |
+        - Implement authorization helpers described in "Authorization Model" and reuse impersonation rules from docs/architecture/authentication.md.
+        - Ensure helpers accept `(userClaims, organizationId, eventType)` and return booleans; surface denial reasons for logging.
+        - Wire helpers into queue processing so unauthorized events fail before writes.
+    validation:
+      - "Admin/member roles grant permissions per decision table"
+      - "Unauthorized actors receive 403-equivalent errors recorded in queue item"
+      - "Audit trail captures acting user and required permission"
+    tests:
+      - "modules/curb-map/functions/test/event-authorization.tap.js"
+
+  - id: "task_4_1_materialized_views"
+    description: "Create materialized views for common queries"
+    status: "pending"
+    phase: "Materialized Views"
+    dependencies:
+      - "task_3_2_authorization"
+    estimated_hours: 5
+    implementation: |
+        - Follow "Materialized Views" guidance to choose initial views (organization roster, project summary).
+        - Persist derived state under `materialized_views/{tenant}/{view}` with last-processed event markers.
+        - Provide rebuild scripts aligning with "View Synchronization" notes.
+    validation:
+      - "Derived documents match expected snapshots for seed event fixtures"
+      - "Rebuild script can recreate views from event history"
+      - "View documents scoped to organization/project prefixes"
+    tests:
+      - "modules/curb-map/functions/test/materialized-views.tap.js"
+      - "modules/curb-map/functions/test/materialized-views.rebuild.sh"
+
+  - id: "task_4_2_view_sync"
+    description: "Ensure materialized views stay synchronized with events"
+    status: "pending"
+    phase: "Materialized Views"
+    dependencies:
+      - "task_4_1_materialized_views"
+    estimated_hours: 4
+    implementation: |
+        - Add Firestore onCreate triggers per "View Synchronization" to dispatch view updates.
+        - Handle conflict resolution exactly as documented (last-write-wins with audit logging).
+        - Capture metrics (lag, failure count) per the "Observability" section.
+    validation:
+      - "New events update relevant views within defined SLA"
+      - "Failure paths leave audit entries and retryable queue items"
+      - "Monitoring dashboard shows lag + failure metrics"
+    tests:
+      - "modules/curb-map/functions/test/view-sync.tap.js"
+
+  - id: "task_5_1_integration_testing"
+    description: "Validate end-to-end event sourcing workflow"
+    status: "pending"
+    phase: "Testing and Validation"
+    dependencies:
+      - "task_4_2_view_sync"
+    estimated_hours: 6
+    implementation: |
+        - Build TAP harness mirroring the flow in "Functional Testing" (enqueue → process → materialize).
+        - Add load test script following "Performance Testing" guidance to simulate burst workloads.
+        - Document manual validation steps in `docs/runbooks/event-sourcing.md`.
+    validation:
+      - "End-to-end TAP suite passes (enqueue → event → view)"
+      - "Performance target met for 95th percentile processing time"
+      - "Runbook callouts for on-call responders reviewed"
+    tests:
+      - "modules/curb-map/functions/test/event-sourcing.integration.tap.js"
+      - "modules/curb-map/functions/test/event-sourcing.load.sh"
+
+completed: []
+
+notes: |
+    This specification implements the core event sourcing pattern for CurbMap.
+    Task ID format: task_{phase}_{sequence}_{description}
+    Status values: pending, in_progress, completed, blocked, cancelled
+    Dependencies: List of task IDs that must be completed first
+    Validation: Specific criteria that must be met for task completion
