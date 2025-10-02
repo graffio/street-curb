@@ -9,7 +9,7 @@ import { checkFunctionDeclarationOrdering } from './rules/function-declaration-o
 import { parseCode } from './parser.js'
 
 /**
- * Check single file for A001 violations
+ * Check single file for coding standards violations
  * @sig checkFile :: String -> Promise<CheckResult>
  *     CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
  *     Violation = { type: String, line: Number, column: Number, message: String, rule: String }
@@ -31,7 +31,7 @@ const checkFile = async filePath => {
 }
 
 /**
- * Run all A001 violation rules on source code
+ * Run all coding standards violation rules on source code
  * @sig runAllRules :: (AST?, String, String) -> [Violation]
  */
 const runAllRules = (ast, sourceCode, filePath) => {

@@ -5,7 +5,7 @@
 The graffio-monorepo has three distinct approaches to LLM integration:
 
 1. **`.llm/`** - Human-driven daily workflow with templates and guardrails
-2. **`A006-specification-standards/`** - LLM-executable task management system
+2. **`docs/standards/specification-format/`** - LLM-executable task management system
 3. **`F107-firebase-soc2-vanilla-app/`** - Rich, human-readable specification with implementation details
 
 ## Key Findings
@@ -14,28 +14,28 @@ The graffio-monorepo has three distinct approaches to LLM integration:
 
 - **`.llm/`** aligns best with current solo developer practices (test-first, patch-sized changes, human control)
 - **`F107`** contains valuable architectural context and implementation guidance (~100KB of useful content)
-- **`A006`** provides good task granularity and status tracking concepts
+- **`docs/standards/specification-format/`** provides good task granularity and status tracking concepts
 
 ### What Doesn't Work
 
-- **`A006`** is over-engineered for solo developers (LLM-centric execution, complex YAML)
+- **`docs/standards/specification-format/`** is over-engineered for solo developers (LLM-centric execution, complex YAML)
 - **`F107`** lacks structured workflow for daily operations
 - **`.llm/`** lacks strategic context and task management
 
 ## Proposed Solution: Hybrid Three-Layer System
 
-### Layer 1: Specification Governance (A006 + A007)
+### Layer 1: Specification Governance (docs/standards/specification-format/ + templates/specification-template/)
 
 **Purpose**: Define standards for all specifications
 **Files**:
 
-- `A006-specification-standards/` - Meta-standard defining structure
-- `A007-specification-template/` - Templates for new specifications
+- `docs/standards/specification-format/` - Meta-standard defining structure
+- `templates/specification-template/` - Templates for new specifications
 
 **Structure**:
 
 ```yaml
-# A006/logic.yaml
+# docs/standards/specification-format/logic.yaml
 specification_structure:
   required_files:
     - README.md: "Overview and quick start"
@@ -73,8 +73,8 @@ specification_structure:
 
 ### Phase 1: Define Standards
 
-1. Update A006 to define specification structure
-2. Create A007 with templates
+1. Update docs/standards/specification-format/ to define specification structure
+2. Create templates/specification-template/ with templates
 3. Document the standard
 4. Establish ownership: Primary maintainer with quarterly review cycle
 
@@ -102,10 +102,10 @@ specification_structure:
 
 ## Key Principles
 
-1. **Human-driven execution** - A006's task structure, but humans control progression
+1. **Human-driven execution** - docs/standards/specification-format/'s task structure, but humans control progression
 2. **Context-aware operations** - `.llm/` templates that reference strategic context
 3. **Living documentation** - F107's narrative approach, but updated as work progresses
-4. **Test-first discipline** - `.llm/`'s guardrails with A006's validation patterns
+4. **Test-first discipline** - `.llm/`'s guardrails with docs/standards/specification-format/'s validation patterns
 5. **Minimal context** - Keep LLM context small while preserving human knowledge
 
 ## File Structure
@@ -119,8 +119,8 @@ docs/
 │   └── ...
 
 specifications/
-├── A006-specification-standards/    # Meta-standard
-├── A007-specification-template/     # Templates
+├── docs/standards/specification-format/    # Meta-standard
+├── templates/specification-template/     # Templates
 ├── F107-firebase-soc2-vanilla-app/ # Example (migrated)
 ├── F108-*/                          # Future specs (using standard)
 └── ...
@@ -165,7 +165,7 @@ specifications/
 **Mitigation**: Reorganize, don't compress; preserve all content
 
 **Risk**: Complex governance overhead
-**Mitigation**: Use F107 as example, keep A006 simple
+**Mitigation**: Use F107 as example, keep docs/standards/specification-format/ simple
 
 ## Next Steps
 
@@ -179,7 +179,7 @@ specifications/
 
 # Implementation Notes
 
-- **Ownership**: Primary maintainer with quarterly review cycle for A006/A007 standards
+- **Ownership**: Primary maintainer with quarterly review cycle for docs/standards/specification-format/ and templates/specification-template/ standards
 - **Architecture migration**: One file at a time with stubs/links in F107 and simple checklist tracking
 - **Transition approach**: Launch `.llm2/` and retire `.llm/` as soon as essentials are ready
 - **Rollback plan**: Restore `.llm/` from Git history if needed

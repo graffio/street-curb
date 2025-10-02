@@ -26,7 +26,7 @@ const findLastNonEmptyLine = lines => {
 const createLineIndexMap = lines => lines.map((line, index) => ({ line: line.trim(), index }))
 
 /**
- * Check for export placement violations (A001 standard: single export at bottom)
+ * Check for export placement violations (coding standards: single export at bottom)
  * @sig checkExportPlacement :: (AST?, String, String) -> [Violation]
  */
 const checkExportPlacement = (ast, sourceCode, filePath) => {

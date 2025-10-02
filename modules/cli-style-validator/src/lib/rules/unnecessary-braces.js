@@ -75,7 +75,7 @@ const checkNodeForViolations = (node, violations) => {
 }
 
 /**
- * Check for unnecessary braces on single-statement blocks (A001 standard)
+ * Check for unnecessary braces on single-statement blocks (coding standards)
  * @sig checkUnnecessaryBraces :: (AST?, String, String) -> [Violation]
  */
 const checkUnnecessaryBraces = (ast, sourceCode, filePath) => {

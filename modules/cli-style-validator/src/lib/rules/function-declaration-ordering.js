@@ -50,7 +50,7 @@ const isVariableWithFunctionExpression = node =>
     (node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression')
 
 /**
- * Check if function expression is single-line anonymous (allowed inline per A001)
+ * Check if function expression is single-line anonymous (allowed inline per coding standards)
  * Named function variables should always be treated as function declarations
  * Only truly anonymous inline functions (callbacks) are allowed to remain inline
  * @sig isSingleLineFunctionExpression :: ASTNode -> Boolean
@@ -196,7 +196,7 @@ const processBlockForViolations = (block, violations) => {
 }
 
 /**
- * Check for function declaration ordering violations (A001 standard)
+ * Check for function declaration ordering violations (coding standards)
  * @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
  */
 const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) => {

@@ -114,7 +114,7 @@
 
 ## Next Steps
 
-1. Test creating a new specification using A007 templates
+1. Test creating a new specification using templates/specification-template/
 2. Verify all references to architecture docs work correctly
 3. Update any other specifications that might reference F107 architectural content
 4. Consider extracting additional architectural patterns as they emerge

@@ -1,9 +1,9 @@
 # LLM Instructions & Guidelines
 
 ## Required Reading (In Order)
-1. **A001**: `specifications/A001-coding-standards/llm-loader.md` - Functional JavaScript patterns, testing
-2. **A006**: `specifications/A006-specification-standards/llm-loader.md` - Specification standards
-3. **A007**: `specifications/A007-specification-template/llm-loader.md` - Template for new specs
+1. **Coding Standards**: `docs/standards/coding-standards/llm-loader.md` - Functional JavaScript patterns, testing
+2. **Specification Format**: `docs/standards/specification-format/llm-loader.md` - Specification standards
+3. **Specification Template**: `templates/specification-template/llm-loader.md` - Template for new specs
 
 ## Daily Work Context
 For detailed project context, see `.llm2/context-for-llm.md`

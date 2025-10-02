@@ -198,7 +198,7 @@ const isIndentationStatement = node =>
     node.type === 'SwitchStatement'
 
 /**
- * Check if nesting is allowed for this node type per A001 standards
+ * Check if nesting is allowed for this node type per coding standards
  * @sig isAllowedNesting :: ASTNode -> Boolean
  */
 const isAllowedNesting = node =>
@@ -300,7 +300,7 @@ const checkFunctionNode = (node, processedNodes, violations) => {
 }
 
 /**
- * Check for single-level indentation violations (A001 standard)
+ * Check for single-level indentation violations (coding standards)
  * @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
  */
 const checkSingleLevelIndentation = (ast, sourceCode, filePath) => {
