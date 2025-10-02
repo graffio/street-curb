@@ -184,7 +184,7 @@ const traverseASTNodes = (node, ast, sourceCode, processedNodes, violations) => 
 }
 
 /**
- * Check for @sig documentation violations (A001 standard)
+ * Check for @sig documentation violations (coding standards)
  * @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
  */
 const checkSigDocumentation = (ast, sourceCode, filePath) => {

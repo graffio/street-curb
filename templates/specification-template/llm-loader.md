@@ -1,4 +1,4 @@
-# LLM Loader for A007 - Specification Template
+# LLM Loader for Specification Template
 
 This template provides the structure for creating new specifications.
 Use this template when creating new F### specifications.
@@ -23,7 +23,7 @@ Use this template when creating new F### specifications.
 2. Rename files from `.template` to actual names
 3. Replace `{{PLACEHOLDERS}}` with actual content
 4. Reference `docs/architecture/` for architectural context
-5. Follow A006 standards for structure
+5. Follow docs/standards/specification-format/ for structure
 
 ## Key Principles
 

@@ -9,7 +9,7 @@
     - Run the verification command for this task (e.g., `yarn workspace <module> tap`, a targeted TAP spec, or an
       integration shell script such as `bash/test-migration-002.sh --dry-run`).
     - Note the exact command + result in the prompt you're assembling.
-4. **Assemble context**: skim the relevant spec (`specifications/*`), A001 loader/logic, and any ADR tied to the work.
+4. **Assemble context**: skim the relevant spec (`specifications/*`), coding standards loader/logic, and any ADR tied to the work.
    - For architectural decisions, reference `docs/architecture/` patterns
    - For implementation details, reference specific specification phase files
 5. **Fill `.llm2/template-for-task-prompt.md`** with the summary, failing test path, scope, commands, and notes, then
@@ -63,7 +63,7 @@ For implementation details, reference the specific specification phase files (e.
 | File                                       | Primary Target | Purpose                                                                                                   |
 |--------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------|
 | `sop.md`                                   | Human          | Daily operating procedure for the patch loop and guardrails.                                              |
-| `context-for-llm.md`                       | LLM            | Context bundle to paste into prompts (repo snapshot, A001 highlights, tooling/testing defaults, backlog). |
+| `context-for-llm.md`                       | LLM            | Context bundle to paste into prompts (repo snapshot, coding standards highlights, tooling/testing defaults, backlog). |
 | `template-for-task-prompt.md`              | Human → LLM    | Form to fill before kicking off a patch-sized request.                                                    |
 | `template-for-design-discussion-prompt.md` | Human → LLM    | Form to fill when a change needs ADR-level discussion.                                                    |
 | `template-for-design-decision.md`          | Human          | Markdown skeleton for the final ADR you commit.                                                           |

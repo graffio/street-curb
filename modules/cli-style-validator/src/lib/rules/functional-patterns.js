@@ -72,7 +72,7 @@ const traverseAST = (node, visitor) => {
 }
 
 /**
- * Check for functional pattern violations (A001 standard)
+ * Check for functional pattern violations (coding standards)
  * @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
  */
 const checkFunctionalPatterns = (ast, sourceCode, filePath) => {

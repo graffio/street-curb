@@ -14,7 +14,7 @@ const processLineForLength = (line, index, violations) => {
 }
 
 /**
- * Check for line length violations (A001 standard: max 120 characters)
+ * Check for line length violations (coding standards: max 120 characters)
  * @sig checkLineLength :: (AST?, String, String) -> [Violation]
  */
 const checkLineLength = (ast, sourceCode, filePath) => {

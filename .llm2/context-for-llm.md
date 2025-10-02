@@ -5,7 +5,7 @@
 - `modules/curb-map`: migrations, infrastructure, and app logic -- the main, and currently only, app
 - `modules/cli-*`: internal tooling (`cli-migrator`, `cli-style-validator`, `cli-type-generator`).
 - `modules/types-generation`: code generator for Tagged and Tagged Sum types; backing for `yarn types:generate`)
-- Specs in `specifications/*` drive requirements (A001 coding standards, F107 Firebase plan, etc.).
+- Specs in `specifications/*` drive requirements (coding standards, F107 Firebase plan, etc.).
 
 ### Architecture Documentation
 - `docs/architecture/`: Reusable architectural patterns and design decisions
@@ -20,11 +20,11 @@
   - `deployment.md`: Deployment architecture, environments, infrastructure
 
 ### Specification Standards
-- `specifications/A006-specification-standards/`: Meta-standards for all specifications
-- `specifications/A007-specification-template/`: Template for creating new specifications
+- `docs/standards/specification-format/`: Meta-standards for all specifications
+- `templates/specification-template/`: Template for creating new specifications
 - `specifications/F107-firebase-soc2-vanilla-app/`: CurbMap implementation specification
 
-### Coding Standards (A001 Highlights)
+### Coding Standards Highlights
 - Pure functional JavaScript only: avoid `class`, `new`, mutation; rely on helpers from `@graffio/functional`.
 - One indentation level per function; extract helpers to the top of the current scope.
 - Functions ≥5 lines (and exports) require slightly relaxed Hindley–Milner `@sig` annotations (capitalized primitives).

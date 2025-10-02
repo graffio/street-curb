@@ -15,7 +15,7 @@ template_usage:
   - Rename .template files to actual names
   - Replace {{PLACEHOLDERS}} with real content
   - Reference docs/architecture/ for architectural context
-  - Follow A006 standards for structure
+  - Follow docs/standards/specification-format/ for structure
 
 architecture_integration:
   - Reference docs/architecture/ files rather than embedding content

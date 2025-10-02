@@ -1,4 +1,4 @@
-# LLM Loader for A001 – JavaScript Functional Coding Standards
+# LLM Loader for JavaScript Functional Coding Standards
 
 **CRITICAL**: Read and follow these coding standards before writing ANY code in this project.
 

@@ -11,7 +11,7 @@ import { checkFile } from './lib/api.js'
 const main = async () => {
     const argv = yargs(hideBin(process.argv))
         .usage('Usage: $0 <file>')
-        .command('$0 <file>', 'Check JavaScript file for A001 coding standards violations', yargs => {
+        .command('$0 <file>', 'Check JavaScript file for coding standards violations', yargs => {
             yargs.positional('file', { describe: 'Path to JavaScript file to check', type: 'string' })
         })
         .help().argv
