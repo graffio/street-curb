@@ -2,6 +2,15 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F107 - Firebase SOC2 Vanilla App (2025-01-29)
+**Purpose:** Complete Firebase-based application with SOC2 compliance
+
+- Implemented infrastructure foundation with orchestration system and migration framework
+- Created comprehensive architecture documentation covering event sourcing, authentication, multi-tenancy, offline-first, and billing
+- Extracted implementation phases into focused specifications: F108 (Event Sourcing Core), F109 (Authentication System), F110 (Multi-Tenant Data Model), F111 (Offline Queue Architecture), F112 (Billing & Export)
+- Established manual setup procedures, decision log, and testing strategies
+- All implementation details now live in individual F### specifications; see `docs/architecture/` for preserved architectural guidance
+
 ## F115 - Redux Tagged Types (2025-08-26)
 **Purpose:** Refactor Redux store architecture with tagged types
 

@@ -56,7 +56,7 @@ When working on architectural concerns, reference the appropriate `docs/architec
 - **Security**: `docs/architecture/security.md`
 - **Deployment**: `docs/architecture/deployment.md`
 
-For implementation details, reference each spec’s `background.md` and `tasks.yaml` (e.g., `specifications/F108-event-sourcing-core/background.md`). Tasks carry the execution steps, validation checks, and tests.
+For implementation details, reference each spec’s `background.md` and `tasks.yaml` (e.g., `specifications/F108-event-sourcing-core/background.md`). Tasks carry the execution steps, validation checks, and tests. Operational runbooks live under `docs/runbooks/`; migration-specific guidance lives in `docs/standards/migration-testing.md`.
 
 ## Templates & Context
 
