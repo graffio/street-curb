@@ -1,0 +1,338 @@
+current_task: "task_1_1_stripe_configuration"
+status: "pending"
+
+# Reference: See docs/architecture/billing-integration.md for detailed billing patterns and Stripe integration
+
+tasks:
+  - id: "task_1_1_stripe_configuration"
+    description: "Configure Stripe integration and customer management"
+    status: "pending"
+    phase: "Stripe Integration"
+    dependencies: []
+    estimated_hours: 4
+    implementation: |
+        - Create `modules/curb-map/functions/src/billing/stripe.js` using patterns from "Stripe Integration" section in docs/architecture/billing-integration.md.
+        - Implement Stripe customer creation and management functions per architecture patterns.
+        - Add Stripe configuration and environment setup.
+        - Integrate with event sourcing system for billing event logging per F108 patterns.
+    validation:
+      - "Stripe customer creation works correctly"
+      - "Customer management functions operate properly"
+      - "Billing events are logged to event sourcing system"
+    tests:
+      - "modules/curb-map/test/stripe-configuration.tap.js (to be created)"
+
+  - id: "task_1_2_subscription_management"
+    description: "Implement subscription and payment processing"
+    status: "pending"
+    phase: "Stripe Integration"
+    dependencies:
+      - "task_1_1_stripe_configuration"
+    estimated_hours: 6
+    implementation: |
+        - Implement subscription management per "Subscription Management" section in docs/architecture/billing-integration.md.
+        - Add payment processing and subscription lifecycle management.
+        - Implement annual billing cycles and renewal handling.
+        - Add subscription status tracking and updates.
+    validation:
+      - "Subscription creation and management works"
+      - "Payment processing functions correctly"
+      - "Annual billing cycles operate properly"
+    tests:
+      - "modules/curb-map/test/subscription-management.tap.js (to be created)"
+
+  - id: "task_1_3_webhook_handling"
+    description: "Create webhook handlers for billing events"
+    status: "pending"
+    phase: "Stripe Integration"
+    dependencies:
+      - "task_1_2_subscription_management"
+    estimated_hours: 4
+    implementation: |
+        - Implement webhook handling per "Webhook Processing" section in docs/architecture/billing-integration.md.
+        - Add Stripe webhook signature verification and event processing.
+        - Implement webhook event handlers for subscription events.
+        - Add webhook retry logic and error handling.
+    validation:
+      - "Webhook signature verification works"
+      - "Event processing handles all subscription events"
+      - "Retry logic and error handling function properly"
+    tests:
+      - "modules/curb-map/test/webhook-handling.tap.js (to be created)"
+
+  - id: "task_2_1_export_service"
+    description: "Implement data export service with multiple formats"
+    status: "pending"
+    phase: "Multi-Format Data Export"
+    dependencies:
+      - "task_1_3_webhook_handling"
+    estimated_hours: 5
+    implementation: |
+        - Create `modules/curb-map/functions/src/export/exportService.js` using patterns from "Data Export Service" section in docs/architecture/billing-integration.md.
+        - Implement export service with format detection and processing.
+        - Add export job management and status tracking.
+        - Integrate with multi-tenant data model per F110 patterns.
+    validation:
+      - "Export service processes data correctly"
+      - "Format detection works for all supported formats"
+      - "Export job management functions properly"
+    tests:
+      - "modules/curb-map/test/export-service.tap.js (to be created)"
+
+  - id: "task_2_2_export_formats"
+    description: "Support JSON, CSV, and CDS export formats"
+    status: "pending"
+    phase: "Multi-Format Data Export"
+    dependencies:
+      - "task_2_1_export_service"
+    estimated_hours: 6
+    implementation: |
+        - Implement export formats per "Export Format Support" section in docs/architecture/billing-integration.md.
+        - Add JSON, CSV, and CDS format processors.
+        - Implement format-specific data transformation and validation.
+        - Add format metadata and file naming conventions.
+    validation:
+      - "All export formats generate correct output"
+      - "Data transformation works for each format"
+      - "Format metadata and naming conventions function"
+    tests:
+      - "modules/curb-map/test/export-formats.tap.js (to be created)"
+
+  - id: "task_2_3_export_scheduling"
+    description: "Add scheduled and on-demand export capabilities"
+    status: "pending"
+    phase: "Multi-Format Data Export"
+    dependencies:
+      - "task_2_2_export_formats"
+    estimated_hours: 4
+    implementation: |
+        - Implement export scheduling per "Export Scheduling" patterns in docs/architecture/billing-integration.md.
+        - Add scheduled export jobs and cron-based processing.
+        - Implement on-demand export triggers and processing.
+        - Add export job queuing and priority management.
+    validation:
+      - "Scheduled exports run on correct schedule"
+      - "On-demand exports process immediately"
+      - "Export job queuing and priority management work"
+    tests:
+      - "modules/curb-map/test/export-scheduling.tap.js (to be created)"
+
+  - id: "task_3_1_usage_tracking"
+    description: "Implement usage tracking for billing metrics"
+    status: "pending"
+    phase: "Usage Tracking and Reporting"
+    dependencies:
+      - "task_2_3_export_scheduling"
+    estimated_hours: 5
+    implementation: |
+        - Implement usage tracking per "Usage Tracking" section in docs/architecture/billing-integration.md.
+        - Add usage metrics collection and aggregation.
+        - Implement usage event tracking and storage.
+        - Add usage data validation and cleanup processes.
+    validation:
+      - "Usage metrics are collected accurately"
+      - "Usage aggregation works correctly"
+      - "Usage data validation and cleanup function"
+    tests:
+      - "modules/curb-map/test/usage-tracking.tap.js (to be created)"
+
+  - id: "task_3_2_reporting_service"
+    description: "Create reporting service for usage analytics"
+    status: "pending"
+    phase: "Usage Tracking and Reporting"
+    dependencies:
+      - "task_3_1_usage_tracking"
+    estimated_hours: 6
+    implementation: |
+        - Implement reporting service per "Usage Reporting" section in docs/architecture/billing-integration.md.
+        - Add usage analytics and reporting generation.
+        - Implement report scheduling and delivery.
+        - Add report caching and performance optimization.
+    validation:
+      - "Usage analytics generate accurate reports"
+      - "Report scheduling and delivery work"
+      - "Report caching improves performance"
+    tests:
+      - "modules/curb-map/test/reporting-service.tap.js (to be created)"
+
+  - id: "task_3_3_usage_dashboard"
+    description: "Build usage dashboard for organizations"
+    status: "pending"
+    phase: "Usage Tracking and Reporting"
+    dependencies:
+      - "task_3_2_reporting_service"
+    estimated_hours: 5
+    implementation: |
+        - Implement usage dashboard per "Usage Dashboard" patterns in docs/architecture/billing-integration.md.
+        - Create dashboard UI components for usage visualization.
+        - Add real-time usage updates and notifications.
+        - Implement dashboard customization and preferences.
+    validation:
+      - "Usage dashboard displays data correctly"
+      - "Real-time updates work properly"
+      - "Dashboard customization functions"
+    tests:
+      - "modules/curb-map/test/usage-dashboard.tap.js (to be created)"
+
+  - id: "task_4_1_invoice_service"
+    description: "Implement invoice generation service"
+    status: "pending"
+    phase: "Invoice Generation"
+    dependencies:
+      - "task_3_3_usage_dashboard"
+    estimated_hours: 6
+    implementation: |
+        - Implement invoice service per "Invoice Generation" section in docs/architecture/billing-integration.md.
+        - Add invoice generation logic and template processing.
+        - Implement invoice data collection and validation.
+        - Add invoice numbering and reference management.
+    validation:
+      - "Invoice generation creates accurate invoices"
+      - "Template processing works correctly"
+      - "Invoice numbering and references function"
+    tests:
+      - "modules/curb-map/test/invoice-service.tap.js (to be created)"
+
+  - id: "task_4_2_invoice_templates"
+    description: "Create invoice templates and formatting"
+    status: "pending"
+    phase: "Invoice Generation"
+    dependencies:
+      - "task_4_1_invoice_service"
+    estimated_hours: 4
+    implementation: |
+        - Implement invoice templates per "Invoice Templates" patterns in docs/architecture/billing-integration.md.
+        - Create invoice template system with variable substitution.
+        - Add template customization and branding options.
+        - Implement template validation and error handling.
+    validation:
+      - "Invoice templates render correctly"
+      - "Variable substitution works properly"
+      - "Template customization and branding function"
+    tests:
+      - "modules/curb-map/test/invoice-templates.tap.js (to be created)"
+
+  - id: "task_4_3_invoice_delivery"
+    description: "Add invoice delivery and notification system"
+    status: "pending"
+    phase: "Invoice Generation"
+    dependencies:
+      - "task_4_2_invoice_templates"
+    estimated_hours: 4
+    implementation: |
+        - Implement invoice delivery per "Invoice Delivery" section in docs/architecture/billing-integration.md.
+        - Add email delivery system for invoices.
+        - Implement invoice notification and reminder system.
+        - Add delivery tracking and status management.
+    validation:
+      - "Invoice email delivery works correctly"
+      - "Notification and reminder system functions"
+      - "Delivery tracking and status management work"
+    tests:
+      - "modules/curb-map/test/invoice-delivery.tap.js (to be created)"
+
+  - id: "task_5_1_billing_api"
+    description: "Create billing API endpoints"
+    status: "pending"
+    phase: "Billing API Endpoints"
+    dependencies:
+      - "task_4_3_invoice_delivery"
+    estimated_hours: 5
+    implementation: |
+        - Implement billing API per "Billing API" section in docs/architecture/billing-integration.md.
+        - Add billing endpoint creation and routing.
+        - Implement API authentication and authorization per F109 patterns.
+        - Add API rate limiting and security measures.
+    validation:
+      - "Billing API endpoints work correctly"
+      - "Authentication and authorization function"
+      - "Rate limiting and security measures work"
+    tests:
+      - "modules/curb-map/test/billing-api.tap.js (to be created)"
+
+  - id: "task_5_2_payment_processing"
+    description: "Implement payment processing endpoints"
+    status: "pending"
+    phase: "Billing API Endpoints"
+    dependencies:
+      - "task_5_1_billing_api"
+    estimated_hours: 6
+    implementation: |
+        - Implement payment processing per "Payment Processing" patterns in docs/architecture/billing-integration.md.
+        - Add payment endpoint creation and processing logic.
+        - Implement payment validation and security checks.
+        - Add payment status tracking and updates.
+    validation:
+      - "Payment processing endpoints work correctly"
+      - "Payment validation and security checks function"
+      - "Payment status tracking operates properly"
+    tests:
+      - "modules/curb-map/test/payment-processing.tap.js (to be created)"
+
+  - id: "task_5_3_billing_webhooks"
+    description: "Add billing webhook endpoints"
+    status: "pending"
+    phase: "Billing API Endpoints"
+    dependencies:
+      - "task_5_2_payment_processing"
+    estimated_hours: 4
+    implementation: |
+        - Implement billing webhooks per "Billing Webhooks" section in docs/architecture/billing-integration.md.
+        - Add webhook endpoint creation and event handling.
+        - Implement webhook security and signature verification.
+        - Add webhook event processing and routing.
+    validation:
+      - "Billing webhook endpoints work correctly"
+      - "Webhook security and signature verification function"
+      - "Webhook event processing and routing work"
+    tests:
+      - "modules/curb-map/test/billing-webhooks.tap.js (to be created)"
+
+  - id: "task_6_1_integration_testing"
+    description: "Validate end-to-end billing workflow"
+    status: "pending"
+    phase: "Testing and Validation"
+    dependencies:
+      - "task_5_3_billing_webhooks"
+    estimated_hours: 6
+    implementation: |
+        - Build TAP harness following "Billing Testing" patterns in docs/architecture/billing-integration.md.
+        - Create test harnesses: billing-workflow.integration.tap.js and billing-workflow.load.sh (to be created).
+        - Test complete workflow: subscription → usage tracking → invoice generation → payment processing.
+        - Add load testing for billing scenarios per "Performance Testing" guidance.
+        - Document manual validation steps in `docs/runbooks/billing-integration.md`.
+    validation:
+      - "End-to-end billing workflow works correctly"
+      - "Usage tracking and invoice generation function properly"
+      - "Payment processing works under load"
+    tests:
+      - "modules/curb-map/test/billing-workflow.integration.tap.js (to be created)"
+      - "modules/curb-map/test/billing-workflow.load.sh (to be created)"
+
+  - id: "task_6_2_billing_testing"
+    description: "Test billing scenarios and edge cases"
+    status: "pending"
+    phase: "Testing and Validation"
+    dependencies:
+      - "task_6_1_integration_testing"
+    estimated_hours: 4
+    implementation: |
+        - Test billing scenarios per "Billing Edge Cases" patterns in docs/architecture/billing-integration.md.
+        - Create test scenarios for payment failures, subscription cancellations, and refunds.
+        - Test billing data consistency and audit trail integrity.
+        - Validate billing compliance and security requirements.
+    validation:
+      - "Billing edge cases are handled correctly"
+      - "Billing data consistency is maintained"
+      - "Billing compliance and security requirements are met"
+    tests:
+      - "modules/curb-map/test/billing-edge-cases.tap.js (to be created)"
+
+completed: []
+
+notes: |
+    This specification implements the billing integration and data export capabilities for CurbMap.
+    Task ID format: task_{phase}_{sequence}_{description}
+    Status values: pending, in_progress, completed, blocked, cancelled
+    Dependencies: List of task IDs that must be completed first
+    Validation: Specific criteria that must be met for task completion

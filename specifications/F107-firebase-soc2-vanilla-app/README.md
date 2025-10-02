@@ -42,7 +42,7 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 2. **Week 3**: Authentication System → See `specifications/F109-authentication-system/` (all execution detail now lives in F109)
 3. **Week 4**: Multi-Tenant Data Model → See `specifications/F110-multi-tenant-data-model/` (all execution detail now lives in F110)
 4. **Week 5**: Offline Queue Architecture → See `specifications/F111-offline-queue-architecture/` (all execution detail now lives in F111)
-5. **Week 6**: Billing & Export (`phase6-billing.md`)
+5. **Week 6**: Billing & Export → See `specifications/F112-billing-export/` (all execution detail now lives in F112)
 
 ## Key Files
 
@@ -58,6 +58,7 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 - **`specifications/F109-authentication-system/`** - Week 3: Authentication System implementation
 - **`specifications/F110-multi-tenant-data-model/`** - Week 4: Multi-Tenant Data Model implementation
 - **`specifications/F111-offline-queue-architecture/`** - Week 5: Offline Queue Architecture implementation
+- **`specifications/F112-billing-export/`** - Week 6: Billing & Export implementation
 
 ### Testing & Operations
 - **`migration-testing-strategy.md`** - Testing approach for configuration changes
