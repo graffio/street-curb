@@ -67,7 +67,7 @@ For implementation details, reference the specific specification phase files (e.
 | `template-for-task-prompt.md`              | Human → LLM    | Form to fill before kicking off a patch-sized request.                                                    |
 | `template-for-design-discussion-prompt.md` | Human → LLM    | Form to fill when a change needs ADR-level discussion.                                                    |
 | `template-for-design-decision.md`          | Human          | Markdown skeleton for the final ADR you commit.                                                           |
-| `template-for-commit.md`                   | Human          | Commit-message scaffold summarizing change, tests, and references.                                        |
+| `docs/standards/commit-format.md`          | Human          | Commit-message scaffold summarizing change, tests, and references.                                        |
 
 Keep this SOP synchronized with your actual practice; when the process changes, update Part A and mirror the change in
 Part B if the model needs to know.

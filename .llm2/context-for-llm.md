@@ -4,7 +4,7 @@
 - `modules/design-system`: design tokens + UI primitives package (`@graffio/design-system`)
 - `modules/curb-map`: migrations, infrastructure, and app logic -- the main, and currently only, app
 - `modules/cli-*`: internal tooling (`cli-migrator`, `cli-style-validator`, `cli-type-generator`).
-- `modules/types-generation`: code generator for Tagged and Tagged Sum types; backing for `yarn types:generate`)
+- `modules/types-generation`: code generator for Tagged and Tagged Sum types; backing for `yarn types:generate`
 - Specs in `specifications/*` drive requirements (coding standards, F107 Firebase plan, etc.).
 
 ### Architecture Documentation
