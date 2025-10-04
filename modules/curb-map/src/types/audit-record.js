@@ -1,3 +1,4 @@
+/** {@link module:AuditRecord} */
 /*  AuditRecord generated from: modules/curb-map/type-definitions/audit-record.type.js
  *
  *  id              : FieldTypes.auditRecordId,

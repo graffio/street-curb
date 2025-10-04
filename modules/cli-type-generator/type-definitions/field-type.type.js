@@ -1,3 +1,5 @@
+/** @module FieldType */
+
 // TaggedSum type for FieldType union
 // This represents the union of String | RegExp | ImportPlaceholder
 

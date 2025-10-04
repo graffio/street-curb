@@ -1,3 +1,4 @@
+/** {@link module:FunctionInfo} */
 /*  FunctionInfo generated from: modules/cli-type-generator/type-definitions/function-info.type.js
  *
  *  typeName    : "String",

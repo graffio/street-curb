@@ -1,3 +1,4 @@
+/** @module OperationDetails */
 /**
  * OperationDetails represents structured technical details for different types of infrastructure operations
  * @sig OperationDetails :: ShellExecution | FirestoreOperation | GcpProjectOperation

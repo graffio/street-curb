@@ -4,15 +4,17 @@
 
 ## Overview
 
-This specification implements the multi-tenant data model defined in `docs/architecture/multi-tenant.md`. The system uses organization + project hierarchy with event-sourced data isolation to provide secure, scalable multi-tenant architecture with proper data boundaries.
+This specification implements the multi-tenant data model defined in [multi-tenant]. The system uses organization +
+project hierarchy with event-sourced data isolation to provide secure, scalable multi-tenant architecture with proper
+data boundaries.
 
     `Organizations → Projects → Data Scoping → Event Isolation → Materialized Views`
 
 ## References
 
-- `docs/architecture/multi-tenant.md` — canonical organization/project patterns, data isolation rules, role hierarchy
-- `docs/architecture/event-sourcing.md` — event scoping and materialized view patterns
-- `docs/architecture/authentication.md` — role-based permissions and authorization
+- [multi-tenant] — Canonical organization/project patterns, data isolation rules, role hierarchy
+- [event-sourcing] — Event scoping and materialized view patterns
+- [authentication] — Role-based permissions and authorization
 
 ## Implementation Phases
 
@@ -50,3 +52,9 @@ This specification implements the multi-tenant data model defined in `docs/archi
 
 - **task_6_1_integration_testing**: Validate end-to-end multi-tenant workflow
 - **task_6_2_isolation_testing**: Test data isolation and security
+
+[multi-tenant]: ../../docs/architecture/multi-tenant.md
+
+[event-sourcing]: ../../docs/architecture/event-sourcing.md
+
+[authentication]: ../../docs/architecture/authentication.md

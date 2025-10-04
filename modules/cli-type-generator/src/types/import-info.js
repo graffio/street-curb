@@ -1,3 +1,4 @@
+/** {@link module:ImportInfo} */
 /*  ImportInfo generated from: modules/cli-type-generator/type-definitions/import-info.type.js
  *
  *  source    : "String",

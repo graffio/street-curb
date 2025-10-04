@@ -1,3 +1,4 @@
+/** {@link module:Blockface} */
 /*  Blockface generated from: modules/curb-map/type-definitions/blockface.type.js
  *
  *  id        : "String",

@@ -1,3 +1,5 @@
+/** @module Blockface */
+
 /**
  * Blockface represents a street segment with geometry, metadata, and curb segments
  * @sig Blockface :: { id: String, geometry: Object, streetName: String, cnnId: String?, segments: [Segment] }

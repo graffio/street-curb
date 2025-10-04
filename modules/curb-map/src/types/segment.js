@@ -1,3 +1,4 @@
+/** {@link module:Segment} */
 /*  Segment generated from: modules/curb-map/type-definitions/segment.type.js
  *
  *  use   : "String",

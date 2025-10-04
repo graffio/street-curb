@@ -1,3 +1,4 @@
+/** {@link module:ParseResult} */
 /*  ParseResult generated from: modules/cli-type-generator/type-definitions/parse-result.type.js
  *
  *  typeDefinition: "Object",
