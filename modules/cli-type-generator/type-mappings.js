@@ -21,18 +21,21 @@ const targets = {
 // prettier-ignore
 export const typeMappings = {
     // curb-map
-    [`${sources.curbMap}/blockface.type.js`]              : [targets.curbMap],
-    [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
+    [`${sources.curbMap}/action.type.js`]                 : [targets.curbMap],
     [`${sources.curbMap}/audit-record.type.js`]           : [targets.curbMap],
+    [`${sources.curbMap}/blockface.type.js`]              : [targets.curbMap],
     [`${sources.curbMap}/operation-details.type.js`]      : [targets.curbMap],
+    [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
+    [`${sources.curbMap}/queue-item.type.js`]             : [targets.curbMap],
+    
    
     // special case: source is just copied verbatim to target
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
     
     // for the cli-type-generator itself (all internal types)
     [`${sources.typesGeneration}/field-type.type.js`]     : [targets.typesGeneration],
+    [`${sources.typesGeneration}/function-info.type.js`]  : [targets.typesGeneration],
     [`${sources.typesGeneration}/import-info.type.js`]    : [targets.typesGeneration],
     [`${sources.typesGeneration}/parse-result.type.js`]   : [targets.typesGeneration],
     [`${sources.typesGeneration}/type-definition.type.js`]: [targets.typesGeneration],
-    [`${sources.typesGeneration}/function-info.type.js`]  : [targets.typesGeneration],
 }
