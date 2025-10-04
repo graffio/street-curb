@@ -1,3 +1,5 @@
+/** @module AuditRecord */
+
 import { FieldTypes } from './field-types.js'
 import { OperationDetails } from './operation-details.js'
 

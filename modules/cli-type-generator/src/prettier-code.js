@@ -55,7 +55,7 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
         const fieldLines = entries.map(([k, v], i) =>
             formatFieldLine(k, v, maxKeyLen, 1, i === fieldCount - 1).replace(/^ {2}/, ' *'),
         )
-        return [header, ' *', ...fieldLines, footer].join('\n')
+        return [link, header, ' *', ...fieldLines, footer].join('\n')
     }
 
     const processTaggedSumVariant = ([variantName, fields]) => {
@@ -71,6 +71,8 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
     const processTaggedSum = () => [header, ' *', ...entries.map(processTaggedSumVariant), footer].join('\n')
 
     const entries = Object.entries(o)
+
+    const link = `/** {@link module:${typeName}} */`
     const header = `/*  ${typeName} generated from: ${generatedFrom.replace(/.*modules/, 'modules')}`
     const footer = ' *\n*/'
 

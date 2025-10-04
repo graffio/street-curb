@@ -1,3 +1,5 @@
+/** @module ImportInfo */
+
 // Tagged type definition for ImportInfo
 export const ImportInfo = {
     name: 'ImportInfo',

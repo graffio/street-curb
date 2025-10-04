@@ -1,3 +1,5 @@
+/** @module FunctionInfo */
+
 // Tagged type definition for FunctionInfo
 export const FunctionInfo = {
     name: 'FunctionInfo',

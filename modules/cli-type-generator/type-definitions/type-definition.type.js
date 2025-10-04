@@ -1,3 +1,5 @@
+/** @module TypeDefinition */
+
 // TaggedSum type for TypeDefinition union
 // This represents the union of TaggedType | TaggedSumType
 

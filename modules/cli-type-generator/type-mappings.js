@@ -25,6 +25,9 @@ export const typeMappings = {
     [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
     [`${sources.curbMap}/audit-record.type.js`]           : [targets.curbMap],
     [`${sources.curbMap}/operation-details.type.js`]      : [targets.curbMap],
+   
+    // special case: source is just copied verbatim to target
+    [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
     
     // for the cli-type-generator itself (all internal types)
     [`${sources.typesGeneration}/field-type.type.js`]     : [targets.typesGeneration],

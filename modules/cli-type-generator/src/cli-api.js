@@ -11,11 +11,36 @@ import { generateStaticTaggedSumType, generateStaticTaggedType } from './tagged-
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '../../../../')
 
+const WRITABLE_MODE = 0o644
+const READ_ONLY_MODE = 0o444
+
+// chmod the file
+const setFileMode = (filePath, mode) => {
+    try {
+        if (fs.existsSync(filePath)) fs.chmodSync(filePath, mode)
+    } catch (error) {
+        if (error.code !== 'ENOENT') throw error
+    }
+}
+
+const makeWriteable = filePath => setFileMode(filePath, WRITABLE_MODE)
+const makeReadOnly = filePath => setFileMode(filePath, READ_ONLY_MODE)
+
 /*
  * Convert the type definition in the file at inputFile into the location at outputFile; return its name
  * @sig generateOne :: (String, String) ->Promise<String>
  */
 const generateOne = async (inputFile, outputFile) => {
+    const isTypeDefinition = inputFile.endsWith('.type.js')
+
+    // some files, FieldTypes.js need to be copied to the target folders, without any processing at all
+    if (!isTypeDefinition) {
+        const outputDir = path.dirname(outputFile)
+        fs.mkdirSync(outputDir, { recursive: true })
+        fs.copyFileSync(inputFile, outputFile)
+        return path.basename(outputFile, '.js')
+    }
+
     const generate = async () => {
         if (typeDefinition.kind === 'tagged') return await generateStaticTaggedType(typeDefinition)
         if (typeDefinition.kind === 'taggedSum') return await generateStaticTaggedSumType(typeDefinition)
@@ -38,7 +63,12 @@ const generateOne = async (inputFile, outputFile) => {
     // Ensure output directory exists and write the generated code
     const outputDir = path.dirname(outputFile)
     fs.mkdirSync(outputDir, { recursive: true })
+
+    // make the file read-only to prevent users trying to modify the .js file and not the type.js file
+    // we need makeWriteable here because the last round of generating this file made it read-only
+    makeWriteable(outputFile)
     fs.writeFileSync(outputFile, generatedCode, 'utf8')
+    makeReadOnly(outputFile)
 
     return typeDefinition.name
 }
@@ -126,9 +156,7 @@ const generateIndexFile = async outputDir => {
 
             // Extract the type name from the export line: export { TypeName }
             const exportMatch = content.match(/export\s+{\s*(\w+)\s*}/)
-            if (!exportMatch) {
-                throw new Error(`Could not find export in ${file}`)
-            }
+            if (!exportMatch) throw new Error(`Could not find export in ${file}`)
 
             const typeName = exportMatch[1]
             const fileName = path.basename(file, '.js')
@@ -145,7 +173,12 @@ ${exports}
 
     const formattedContent = await prettierCode(indexContent)
     const indexFile = path.join(outputDir, 'index.js')
+
+    // make the file read-only to prevent users trying to modify the .js file and not the type.js file
+    // we need makeWriteable here because the last round of generating this file made it read-only
+    makeWriteable(indexFile)
     fs.writeFileSync(indexFile, formattedContent, 'utf8')
+    makeReadOnly(indexFile)
 
     return files.length
 }
