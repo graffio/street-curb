@@ -4,15 +4,17 @@
 
 ## Overview
 
-This specification implements the billing integration architecture defined in `docs/architecture/billing-integration.md`. The system provides Stripe integration for annual billing, multi-format data export, usage tracking, and invoice generation for organizations.
+This specification implements the billing integration architecture defined in [billing-integration]. The system provides
+Stripe integration for annual billing, multi-format data export, usage tracking, and invoice generation for
+organizations.
 
     `Stripe Integration → Data Export → Usage Tracking → Invoice Generation → Billing API`
 
 ## References
 
-- `docs/architecture/billing-integration.md` — canonical billing patterns, Stripe integration, export formats
-- `docs/architecture/multi-tenant.md` — organization/project scoping rules for billing
-- `docs/architecture/event-sourcing.md` — event logging and audit trail patterns
+- [billing-integration] — Canonical billing patterns, Stripe integration, export formats
+- [multi-tenant] — Organization/project scoping rules for billing
+- [event-sourcing] — Event logging and audit trail patterns
 
 ## Implementation Phases
 
@@ -50,3 +52,9 @@ This specification implements the billing integration architecture defined in `d
 
 - **task_6_1_integration_testing**: Validate end-to-end billing workflow
 - **task_6_2_billing_testing**: Test billing scenarios and edge cases
+
+[billing-integration]: ../../docs/architecture/billing-integration.md
+
+[multi-tenant]: ../../docs/architecture/multi-tenant.md
+
+[event-sourcing]: ../../docs/architecture/event-sourcing.md

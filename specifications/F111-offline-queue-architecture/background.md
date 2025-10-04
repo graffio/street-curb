@@ -4,15 +4,17 @@
 
 ## Overview
 
-This specification implements the offline-first architecture defined in `docs/architecture/offline-first.md` and `docs/architecture/queue-mechanism.md`. The system provides offline-capable client operations with automatic sync, conflict resolution, and real-time status updates for field workers.
+This specification implements the offline-first architecture defined in [offline-first] and [queue-mechanism]. The
+system provides offline-capable client operations with automatic sync, conflict resolution, and real-time status updates
+for field workers.
 
     `Client Operations → Local Queue → Sync → Conflict Resolution → Real-Time Updates`
 
 ## References
 
-- `docs/architecture/offline-first.md` — canonical offline-first patterns, connection management, sync strategies
-- `docs/architecture/queue-mechanism.md` — queue processing patterns, conflict resolution, retry logic
-- `docs/architecture/event-sourcing.md` — event scoping and materialized view patterns
+- [offline-first] — Canonical offline-first patterns, connection management, sync strategies
+- [queue-mechanism] — Queue processing patterns, conflict resolution, retry logic
+- [event-sourcing] — Event scoping and materialized view patterns
 
 ## Implementation Phases
 
@@ -50,3 +52,9 @@ This specification implements the offline-first architecture defined in `docs/ar
 
 - **task_6_1_integration_testing**: Validate end-to-end offline workflow
 - **task_6_2_offline_testing**: Test offline scenarios and sync behavior
+
+[offline-first]: ../../docs/architecture/offline-first.md
+
+[queue-mechanism]: ../../docs/architecture/queue-mechanism.md
+
+[event-sourcing]: ../../docs/architecture/event-sourcing.md

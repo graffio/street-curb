@@ -4,15 +4,17 @@
 
 ## Overview
 
-This specification implements the authentication architecture defined in `docs/architecture/authentication.md`. The system uses phone number + SMS passcode authentication with organization-scoped custom claims to provide secure, field-worker-friendly authentication with support capabilities.
+This specification implements the authentication architecture defined in [authentication]. The system uses phone
+number + SMS passcode authentication with organization-scoped custom claims to provide secure, field-worker-friendly
+authentication with support capabilities.
 
     Phone Number → SMS Passcode → Firebase Auth → Custom Claims → API Access
 
 ## References
 
-- `docs/architecture/authentication.md` — canonical Firebase Auth patterns, custom claims structure, impersonation system
-- `docs/architecture/security.md` — authorization patterns, audit logging requirements
-- `docs/architecture/multi-tenant.md` — organization scoping and role hierarchy
+- [authentication] — Canonical Firebase Auth patterns, custom claims structure, impersonation system
+- [security] — Authorization patterns, audit logging requirements
+- [multi-tenant] — Organization scoping and role hierarchy
 
 ## Implementation Phases
 
@@ -41,3 +43,9 @@ This specification implements the authentication architecture defined in `docs/a
 
 - **task_5_1_integration_testing**: Validate end-to-end authentication workflow
 - **task_5_2_operational_safeguards**: Implement monitoring and alerting for authentication system
+
+[authentication]: ../../docs/architecture/authentication.md
+
+[security]: ../../docs/architecture/security.md
+
+[multi-tenant]: ../../docs/architecture/multi-tenant.md
