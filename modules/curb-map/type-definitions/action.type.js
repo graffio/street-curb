@@ -21,7 +21,7 @@ export const Action = {
     }
 }
 
-Action.toFirestore = action => JSON.stringify(action)
+Action.toFirestore = action => ({ ...action, '@@tagName': action['@@tagName'] })
 
 Action.fromFirestore = o => {
     if (o['@@tagName'] === 'UserAdded') return Action.UserAdded.from(o)

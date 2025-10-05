@@ -13,7 +13,6 @@
  *
  */
 
-import { dateToServerTimestamp, serverTimestampToDate } from '../firestore/firestore-client-timestamps.js'
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
 
@@ -93,13 +92,19 @@ QueueItem.from = o =>
 // -------------------------------------------------------------------------------------------------------------
 // Additional functions copied from type definition file
 // -------------------------------------------------------------------------------------------------------------
+// Additional function: timestampFields
+QueueItem.timestampFields = ['createdAt', 'processedAt']
+
 // Additional function: toFirestore
 QueueItem.toFirestore = queueItem => ({
     ...queueItem,
-    actor: { id: queueItem.actorId, type: 'user' },
+    actor: {
+        id: queueItem.actorId,
+        type: 'user',
+    },
     action: Action.toFirestore(queueItem.action),
-    createdAt: dateToServerTimestamp(queueItem.createdAt),
-    processedAt: dateToServerTimestamp(queueItem?.processedAt),
+    createdAt: queueItem.createdAt,
+    processedAt: queueItem?.processedAt,
 })
 
 // Additional function: fromFirestore
@@ -107,9 +112,9 @@ QueueItem.fromFirestore = queueItem =>
     QueueItem.from({
         ...queueItem,
         actorId: queueItem.actor.id,
-        action: Action.fromFirestore(JSON.parse(queueItem.action)),
-        createdAt: serverTimestampToDate(queueItem.createdAt),
-        processedAt: serverTimestampToDate(queueItem?.processedAt),
+        action: Action.fromFirestore(queueItem.action),
+        createdAt: queueItem.createdAt,
+        processedAt: queueItem?.processedAt,
     })
 
 export { QueueItem }

@@ -11,6 +11,8 @@
         "build-storybook": "storybook build",
         "tap": "../../bash/run-tap.sh ../test/*.tap.js test/**/*.tap.js",
         "tap:file": "../../bash/run-tap.sh",
+        "tap:firebase": "firebase emulators:exec --only firestore,auth,storage,functions \"../../bash/run-tap.sh test/**/*.firebase.js\"",
+        "emulators:start": "firebase emulators:start --only firestore,auth,storage,functions",
         "validate-style": "node ../style-validator/src/cli.js"
     },
     "devDependencies": {
@@ -36,6 +38,9 @@
         "tap-mocha-reporter": "^5.0.4",
         "vite": "^5.2.0",
         "vitest": "^3.2.4"
+    },
+    "resolutions": {
+        "strip-ansi": "6.0.1"
     },
     "dependencies": {
         "@graffio/functional": "0.1.0",

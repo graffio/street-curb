@@ -38,10 +38,9 @@
     },
     "lint-staged": {
         "**/*.{mjs,js,jsx}": [
-            "prettier --write",
+            "prettier --write --ignore-unknown",
             "eslint --fix"
-        ],
-        "docs/**/*.{mjs,js,jsx}": []
+        ]
     },
     "prettier": {
         "tabWidth": 4,

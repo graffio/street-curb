@@ -6,9 +6,6 @@ import { Action, FieldTypes, QueueItem } from '../src/types/index.js'
  * {@link module:QueueItem}
  */
 
-// Initialize Firebase Admin for testing (using a test project)
-if (!admin.apps || admin.apps.length === 0) admin.initializeApp({ projectId: 'test-project' })
-
 const idempotencyKey = FieldTypes.newIdempotencyKey()
 const organizationId = FieldTypes.newOrganizationId()
 const queueItemId = FieldTypes.newQueueItemId()
@@ -29,7 +26,8 @@ test('Given an Action.UserAdded is created', t => {
         const userAdded = Action.UserAdded.from({ organizationId, user: { id: actorId, email: 'john@example.com' } })
 
         const firestoreData = Action.toFirestore(userAdded)
-        t.ok(typeof firestoreData === 'string', 'Then a JSON string is returned')
+        const expected = { ...userAdded, '@@tagName': 'UserAdded' }
+        t.same(firestoreData, expected, 'Then the right data is written')
         t.end()
     })
 
@@ -37,7 +35,7 @@ test('Given an Action.UserAdded is created', t => {
         const userAdded = Action.UserAdded.from({ organizationId, user: { id: actorId, email: 'john@example.com' } })
 
         const firestoreData = Action.toFirestore(userAdded)
-        const parsedAction = Action.fromFirestore(JSON.parse(firestoreData))
+        const parsedAction = Action.fromFirestore(firestoreData)
 
         t.ok(Action.UserAdded.is(parsedAction), 'Then the UserAdded event is recreated correctly')
         t.equal(
