@@ -4,7 +4,6 @@
  * QueueItem represents a document in the Firestore update_queue collection
  * @sig QueueItem :: (String, Action, String, String, Object, String, Object?, String?, Object?)
  */
-import { dateToServerTimestamp, serverTimestampToDate } from '../firestore/firestore-client-timestamps.js'
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
 
@@ -27,19 +26,21 @@ export const QueueItem = {
     }
 }
 
+QueueItem.timestampFields = ['createdAt', 'processedAt']
+
 QueueItem.toFirestore = queueItem => ({
     ...queueItem,
     actor: { id: queueItem.actorId, type: 'user' },
     action: Action.toFirestore(queueItem.action),
-    createdAt: dateToServerTimestamp(queueItem.createdAt),
-    processedAt: dateToServerTimestamp(queueItem?.processedAt),
+    createdAt: queueItem.createdAt,
+    processedAt: queueItem?.processedAt,
 })
 
 QueueItem.fromFirestore = queueItem =>
     QueueItem.from({
         ...queueItem,
         actorId: queueItem.actor.id,
-        action: Action.fromFirestore(JSON.parse(queueItem.action)),
-        createdAt: serverTimestampToDate(queueItem.createdAt),
-        processedAt: serverTimestampToDate(queueItem?.processedAt),
+        action: Action.fromFirestore(queueItem.action),
+        createdAt: queueItem.createdAt,
+        processedAt: queueItem?.processedAt,
     })

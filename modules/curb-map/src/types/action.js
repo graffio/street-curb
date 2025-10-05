@@ -152,7 +152,10 @@ OrganizationAddedConstructor.from = o => Action.OrganizationAdded(o.organization
 // Additional functions copied from type definition file
 // -------------------------------------------------------------------------------------------------------------
 // Additional function: toFirestore
-Action.toFirestore = action => JSON.stringify(action)
+Action.toFirestore = action => ({
+    ...action,
+    '@@tagName': action['@@tagName'],
+})
 
 // Additional function: fromFirestore
 Action.fromFirestore = o => {
