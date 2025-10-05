@@ -30,7 +30,7 @@ export const onUserProjectsChange = functions.firestore
 
     const before = chg.before.exists ? chg.before.data().projects || [] : [];
     const after = chg.after.exists ? chg.after.data().projects || [] : [];
-    const added = after.filter((x) => !before.includes(x));
+    const added = after.filter((x) => !before.includes(x))export GCLOUD_PROJECT="$(firebase use --json | jq -r '.result')"
 
     await Promise.all(
       added.map((pid) =>
@@ -84,36 +84,35 @@ This assumes you have fixture images under `fixtures/u1.png` and `fixtures/u2.pn
 
 ```js
 // modules/curb-map/test/offline-queue.integration.tap.js
-import t from 'tap';
-import { db, doc } from '../test-utils/firestore.js';
-import { seed } from '../test-utils/seed.js';
+import t from 'tap'
+import { FirestoreAdminFacade, getDefaultAdminDb } from '../src/firestore-facade/firestore-admin-facade.js'
+import { QueueItem } from '../src/types/index.js'
+import { seed } from '../test-utils/seed.js'
 
-const ns = `tests/ns_${Date.now()}`;
+const ns = `tests/ns_${Date.now()}`
+const db = getDefaultAdminDb()
+let queueFacade
 
 t.before(async () => {
-    process.env.FS_BASE = ns;
-    process.env.DISABLE_TRIGGERS = '1';
-    await seed();
-    delete process.env.DISABLE_TRIGGERS;
-});
+    process.env.FS_BASE = ns
+    process.env.FIREBASE_TEST_MODE = '1'
+    process.env.DISABLE_TRIGGERS = '1'
+    await seed()
+    delete process.env.DISABLE_TRIGGERS
+    queueFacade = FirestoreAdminFacade(QueueItem, `${ns}/`, db)
+})
 
 t.after(async () => {
-    await db.recursiveDelete(db.collection(ns));
-});
+    await queueFacade.recursiveDelete()
+    delete process.env.FIREBASE_TEST_MODE
+})
 
-t.test('Given a project assignment When the client updates a user Then the trigger mirrors membership', async (t) => {
-    await doc('projects', 'p3').set({ name: 'Gamma', users: [] });
-    await doc('users', 'u1').update({ projects: ['p1', 'p2', 'p3'] });
-
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const user = (await doc('users', 'u1').get()).data();
-    const project = (await doc('projects', 'p3').get()).data();
-
-    t.match(user.projects, ['p1', 'p2', 'p3']);
-    t.ok(project.users.includes('u1'));
-    t.end();
-});
+t.test('Given queue items are seeded When we query the namespace Then the queued events are returned', async t => {
+    const items = await queueFacade.query([['status', '==', 'pending']])
+    t.ok(items.length > 0)
+    t.match(items[0].id, /^que_/)
+    t.end()
+})
 ```
 
 ---
@@ -164,7 +163,9 @@ When you want **one emulator boot** and **many tests with reseeding**, loop each
 // ci-round.mjs
 import { globby } from 'globby';
 import { spawn } from 'node:child_process';
-import { db } from './test-utils/firestore.js';
+import { getDefaultAdminDb } from './src/firestore-facade/firestore-admin-facade.js';
+
+const db = getDefaultAdminDb();
 import { seed } from './test-utils/seed.js';
 
 const tests = await globby(["tests/**/*.spec.mjs"]);

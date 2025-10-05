@@ -6,22 +6,22 @@ references:
   - name: "authentication"
     path: ../docs/architecture/authentication.md
 
-current_task: "task_1_1_create_tagged_types_and_helpers"
-status: "pending"
+current_task: "task_1_2_setup_integration_testing"
+status: "in_progress"
 
 # Reference: See ../../docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
 
 tasks:
   - id: "task_1_1_create_tagged_types_and_helpers"
     description: "Create QueueItem and Action tagged types with Firestore integration helpers"
-    status: "pending"
+    status: "completed"
     phase: "Foundation"
     dependencies: [ ]
     estimated_hours: 5
     implementation: |
         - Create QueueItem and Action (DomainEvent) in modules/curb-map/type-definitions/
-      - Add toFirestore/fromFirestore functions with Date/ServerTimestamp handling
-      - Create serverTimestampToDate and dateToServerTimestamp in firestore-client.js
+      - Add toFirestore/fromFirestore functions while leaving raw Date values on the tagged types
+      - Mark timestamp-bearing fields via `Type.timestampFields` so facades can handle conversion per runtime
       - Add comprehensive error handling and validation
       - Follow existing patterns from audit-record.js and operation-details.js
     validation:
@@ -36,7 +36,7 @@ tasks:
 
   - id: "task_1_2_setup_integration_testing"
     description: "Set up Firebase emulator integration testing infrastructure"
-    status: "pending"
+    status: "in_progress"
     phase: "Foundation"
     dependencies:
       - "task_1_1_create_tagged_types_and_helpers"
@@ -270,7 +270,7 @@ tasks:
       - "modules/curb-map-functions/test/event-sourcing.firebase.js"
       - "modules/curb-map-functions/test/event-sourcing.load.sh"
 
-completed: [ ]
+completed: [ "task_1_1_create_tagged_types_and_helpers" ]
 
 notes: |
   This specification implements the core event sourcing pattern for CurbMap.
