@@ -5,12 +5,12 @@
     "type": "module",
     "workspaces": [
         "modules/*",
-        "modules/*/*"
+        "modules/curb-map/functions"
     ],
     "scripts": {
-        "types:generate" : "node modules/cli-type-generator/src/cli.js generate",
-        "types:generate-all" : "node modules/cli-type-generator/src/cli.js generate-all",
-        "types:watch"    : "node modules/cli-type-generator/src/cli.js watch",
+        "types:generate": "node modules/cli-type-generator/src/cli.js generate",
+        "types:generate-all": "node modules/cli-type-generator/src/cli.js generate-all",
+        "types:watch": "node modules/cli-type-generator/src/cli.js watch",
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",
         "precommit": "lint-staged",
         "tap": "yarn workspaces run tap"
@@ -34,7 +34,6 @@
         "**/wrap-ansi": "7.0.0",
         "**/string-width": "4.2.3",
         "**/strip-ansi": "6.0.1"
-
     },
     "lint-staged": {
         "**/*.{mjs,js,jsx}": [

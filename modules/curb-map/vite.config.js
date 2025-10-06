@@ -12,6 +12,6 @@ export default defineConfig({
         open: true,
     },
     build: {
-        outDir: 'docs', // Set output directory to /docs
+        outDir: 'dist', // Set output directory to /dist
     },
 })
