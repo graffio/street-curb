@@ -1,97 +1,61 @@
 # Strategy for Running Firebase Integration Tests
 
-This document describes a recommended strategy for running integration tests with Firebase emulators using the TAP test runner. It emphasizes **data isolation**, **controlled seeding**, and **safe function triggers**.
+This document describes how to exercise Firebase workflows against emulators using TAP, with an emphasis on **data
+isolation**, **controlled seeding**, and **safe trigger handling**.
 
 ---
 
-## Key Concepts
+## Key Principles
 
-- **Namespacing**: All test data is written under `tests/{ns}` instead of production root collections. Each test run gets its own namespace (`ns`), ensuring isolation and easy cleanup.
-- **Seeding with triggers disabled**: Seed data with an environment variable (`DISABLE_TRIGGERS=1`). Functions that watch Firestore will return early while this is set, preventing unwanted side effects during seeding.
-- **Re-enable triggers for tests**: Once seeding is complete, clear `DISABLE_TRIGGERS` so Functions run normally during tests.
-- **Scoped cleanup**: Delete only the `tests/{ns}` subtree after each test suite, rather than wiping the entire emulator.
+- **Namespace all test data** under `tests/{ns}` so each run is isolated and easy to clean.
+- **Disable triggers while seeding** (`DISABLE_TRIGGERS=1`) to prevent functions from firing during setup.
+- **Re-enable triggers** before running assertions so functions behave normally.
+- **Scoped cleanup**: remove only the namespace you created, not the entire emulator dataset.
 
 ---
 
-## Firebase Function with Trigger Guard
+## Starting the Emulator Stack
 
-```js
-// functions/index.js
-import functions from 'firebase-functions';
-import admin from 'firebase-admin';
-
-if (!admin.apps.length) admin.initializeApp();
-const db = admin.firestore();
-
-export const onUserProjectsChange = functions.firestore
-  .document('users/{uid}')
-  .onWrite(async (chg, ctx) => {
-    if (process.env.DISABLE_TRIGGERS) return; // <-- guard for test seeding
-
-    const before = chg.before.exists ? chg.before.data().projects || [] : [];
-    const after = chg.after.exists ? chg.after.data().projects || [] : [];
-    const added = after.filter((x) => !before.includes(x))export GCLOUD_PROJECT="$(firebase use --json | jq -r '.result')"
-
-    await Promise.all(
-      added.map((pid) =>
-        db.doc(`projects/${pid}`).set(
-          { users: admin.firestore.FieldValue.arrayUnion(ctx.params.uid) },
-          { merge: true }
-        )
-      )
-    );
-  });
+```bash
+firebase emulators:start --only functions,firestore --project <projectId>
 ```
+- Keep the emulator running in its own terminal; tests will reuse the existing process.
 
 ---
 
-## Seeding Script (Firestore + Storage)
+## Seeding Data
 
-```js
-// seed.js
-import { db, doc } from './db.js';
-import { getStorage } from 'firebase-admin/storage';
-import fs from 'node:fs';
-
-export const seed = async () => {
-  const batch = db.batch();
-
-  // Create projects
-  batch.set(doc('projects', 'p1'), { name: 'Alpha', users: [] });
-  batch.set(doc('projects', 'p2'), { name: 'Beta', users: [] });
-
-  // Upload headshots to Storage and store references in User docs
-  const bucket = getStorage().bucket();
-  const users = [
-    { id: 'u1', name: 'Ada', projects: ['p1', 'p2'], headshot: 'headshots/u1.png' },
-    { id: 'u2', name: 'Lin', projects: ['p1', 'p2'], headshot: 'headshots/u2.png' },
-  ];
-
-  for (const u of users) {
-    await bucket.upload(`fixtures/${u.id}.png`, { destination: u.headshot });
-    batch.set(doc('users', u.id), u);
-  }
-
-  await batch.commit();
-};
-```
-
-This assumes you have fixture images under `fixtures/u1.png` and `fixtures/u2.png`.
+1. Set environment variables:
+   ```bash
+   export FIREBASE_TEST_MODE=1
+   export GCLOUD_PROJECT=<projectId>
+   export DISABLE_TRIGGERS=1
+   ```
+2. Run the seed helper:
+   ```bash
+   node modules/curb-map/test-utils/seed.js
+   ```
+3. Clear `DISABLE_TRIGGERS` once seeding completes.
 
 ---
 
-## Example TAP Test
+## Exercising Functions
+
+- **HTTP functions**: `curl http://localhost:5001/<projectId>/us-central1/<functionName>`
+- **Firestore triggers**: create queue items via `FirestoreAdminFacade` in the test harness.
+- Watch the emulator terminal for log output and errors.
+
+---
+
+## Example TAP Test Skeleton
 
 ```js
-// modules/curb-map/test/offline-queue.integration.tap.js
 import t from 'tap'
-import { FirestoreAdminFacade, getDefaultAdminDb } from '../src/firestore-facade/firestore-admin-facade.js'
+import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
 import { QueueItem } from '../src/types/index.js'
 import { seed } from '../test-utils/seed.js'
 
 const ns = `tests/ns_${Date.now()}`
-const db = getDefaultAdminDb()
-let queueFacade
 
 t.before(async () => {
     process.env.FS_BASE = ns
@@ -99,103 +63,77 @@ t.before(async () => {
     process.env.DISABLE_TRIGGERS = '1'
     await seed()
     delete process.env.DISABLE_TRIGGERS
-    queueFacade = FirestoreAdminFacade(QueueItem, `${ns}/`, db)
 })
 
 t.after(async () => {
-    await queueFacade.recursiveDelete()
+    const adminFacade = FirestoreAdminFacade(QueueItem, `${ns}/`)
+    await adminFacade.recursiveDelete()
     delete process.env.FIREBASE_TEST_MODE
 })
 
-t.test('Given queue items are seeded When we query the namespace Then the queued events are returned', async t => {
-    const items = await queueFacade.query([['status', '==', 'pending']])
+t.test('Given queue items exist When querying Then pending items are returned', async t => {
+    const adminFacade = FirestoreAdminFacade(QueueItem, `${ns}/`)
+    const items = await adminFacade.query([['status', '==', 'pending']])
     t.ok(items.length > 0)
-    t.match(items[0].id, /^que_/)
     t.end()
 })
 ```
 
 ---
 
-## Running Tests in CI/CD
-Run the emulator and TAP suite in one step with `firebase emulators:exec` and `yarn tap`:
+## CI/CD Integration
 
-```
-// package.json
-"scripts": {
-  "ci:test": "firebase emulators:exec --only firestore,auth,storage,functions \"node ci.mjs\""
-}
-```
-
-```js
-// ci.mjs
-import { seed } from './test-utils/seed.js';
-import { spawn } from 'node:child_process';
-
-const ns = `tests/ns_${Date.now()}`;
-process.env.FS_BASE = ns;
-
-// Seed with triggers disabled
-process.env.DISABLE_TRIGGERS = '1';
-await seed();
-delete process.env.DISABLE_TRIGGERS;
-
-// Run full test suite
-await new Promise((res, rej) => {
-  const p = spawn('yarn', ['tap'], { stdio: 'inherit', env: process.env });
-  p.on("exit", (code) => (code ? rej(code) : res()));
-});
-```
-
----
-
-## Many Tests with Reseeding Between Each
-
-When you want **one emulator boot** and **many tests with reseeding**, loop each spec file:
+Use `firebase emulators:exec` to run the suite in one shot:
 
 ```
 "scripts": {
-  "ci:round": "firebase emulators:exec --only firestore,auth,storage,functions \"node ci-round.mjs\""
+  "ci:test": "firebase emulators:exec --only functions,firestore \"yarn tap\""
 }
 ```
+
+If you need to reseed between test files:
 
 ```js
 // ci-round.mjs
-import { globby } from 'globby';
-import { spawn } from 'node:child_process';
-import { getDefaultAdminDb } from './src/firestore-facade/firestore-admin-facade.js';
+import { spawn } from 'node:child_process'
+import { seed } from './test-utils/seed.js'
 
-const db = getDefaultAdminDb();
-import { seed } from './test-utils/seed.js';
+const files = ['modules/curb-map/test/integration-testing.firebase.js']
 
-const tests = await globby(["tests/**/*.spec.mjs"]);
-
-for (const file of tests) {
-  const ns = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  process.env.FS_BASE = ns;
-
-  // Seed fresh state
-  process.env.DISABLE_TRIGGERS = '1';
-  await seed();
-  delete process.env.DISABLE_TRIGGERS;
-
-  // Run this one spec file
-  await new Promise((res, rej) => {
-    const p = spawn('yarn', ['tap', file], { stdio: 'inherit', env: process.env });
-    p.on("exit", (code) => (code ? rej(code) : res()));
-  });
-
-  // Cleanup after test
-  await db.recursiveDelete(db.collection(ns));
+for (const file of files) {
+    const ns = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    process.env.FS_BASE = ns
+    process.env.FIREBASE_TEST_MODE = '1'
+    process.env.DISABLE_TRIGGERS = '1'
+    await seed()
+    delete process.env.DISABLE_TRIGGERS
+    
+    await new Promise((resolve, reject) => {
+        const proc = spawn('yarn', ['tap', file], { stdio: 'inherit', env: process.env })
+        proc.on('exit', code => (code ? reject(new Error(`tap failed: ${file}`)) : resolve()))
+    })
 }
 ```
 
 ---
 
-## Benefits
+## Cleanup Checklist
 
-- **Isolation**: Each test run is scoped under its own namespace.  
-- **Storage + Firestore seeding**: Users can have associated files uploaded.  
-- **Speed**: Emulators boot once, data reseeded between tests.  
-- **Safety**: Functions won’t mutate seed data during setup.  
-- **Realism**: Functions re-enabled during actual test steps, validating real behavior.
+- Call `recursiveDelete` on the test namespace after each suite.
+- Stop the emulator process when done to free ports and resources.
+- Reset environment variables (`unset FIREBASE_TEST_MODE`, etc.).
+
+---
+
+## Troubleshooting
+
+- **PERMISSION_DENIED**: confirm emulator is using relaxed rules and the request targets the `tests/` path.
+- **Hanging tests**: ensure all Firebase app instances are deleted in `t.teardown`.
+- **Port conflicts**: use `firebase emulators:start --import/export` directories or manual port overrides.
+
+---
+
+## References
+
+- `docs/runbooks/running-firebase-integration-tests.md` for high-level entry point once populated.
+- `docs/runbooks/firebase-functions-deploy.md` for production deploy flow.

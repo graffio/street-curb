@@ -1,52 +1,24 @@
-# Deploying Firebase Functions in the Monorepo
+# Firebase Functions Build & Deploy Runbook
 
-## 1. Dedicated Functions Workspace
-Create a workspace (e.g., `modules/curb-map-functions`) with its own `package.json` that declares:
+## Prerequisites
 
-- Firebase dependencies (`firebase-functions`, `firebase-admin`, etc.)
-- Internal packages via workspace aliases, e.g.:
-  ```json
-  {
-      "dependencies": {
-          "@graffio/functional": "workspace:*",
-          "firebase-admin": "^12",
-          "firebase-functions": "^5"
-      }
-  }
-  ```
+- Authenticated Firebase CLI (`firebase login`).
+- Service account credentials or `.env` values available for dry-run and production environments.
 
-Point `firebase.json` to this workspace using the `functions.source` field.
+## Dry-Run Pipeline (Local)
 
-## 2. Bundle Before Deploy
-Add scripts that bundle the functions:
+1. `yarn tap`
+2. `yarn functions:build` (run from `modules/curb-map/`)
+3. Start emulators if necessary; if they're already started they'll pick up the changed functions
 
-```json
-{
-    "name": "@graffio/curb-map-functions",
-    "scripts": {
-        "build": "esbuild src/index.js --bundle --platform=node --outfile=dist/index.js",
-        "deploy": "yarn build && firebase deploy --only functions"
-    },
-    "dependencies": {
-        "@graffio/functional": "workspace:*",
-        "firebase-admin": "^12",
-        "firebase-functions": "^5"
-    }
-}
-```
+## Production Deploy Pipeline
 
-Example `firebase.json` snippet:
+1. Re-run dry-run checks (tests, build).
+2. `yarn functions:deploy --project <projectId>` (run from `modules/curb-map/`)
+3. Confirm functions appear in Firebase console and logs are clean.
+4. Roll back if necessary via `firebase functions:delete <name>` or prior release.
 
-```json
-{
-    "functions": {
-        "source": "modules/curb-map-functions/dist"
-    }
-}
-```
-
-## 3. CI/CD Workflow
-In CI, install dependencies and deploy from the workspace:
+## CI/CD Reference
 
 ```bash
 yarn install --frozen-lockfile
@@ -54,9 +26,15 @@ yarn workspace @graffio/curb-map-functions build
 yarn workspace @graffio/curb-map-functions deploy
 ```
 
-Because Yarn workspaces hoist internal packages, `@graffio/functional` is available during the build—no need to publish it externally or copy code manually.
+## Post-Deploy Verification
 
-## Summary
-- Keep functions in their own workspace.
-- Bundle everything (including internal workspaces) before deploying.
-- Use Firebase CLI to deploy the bundled output.
+- the emulator logs a line with a link to the function, and a button to debug it
+
+     `http function initialized (http://127.0.0.1:5001/temporary-20250926-163653/us-central1/helloWorld).`
+
+- Record deploy metadata (date, commit hash) per SOC2 change log expectations.
+
+## Notes
+
+- Functions workspace lives at `modules/curb-map/functions/` with its own `package.json` and scripts.
+- curb-map's `firebase.json` points `functions.source` at the workspace’s build output (`modules/curb-map-functions/dist`).

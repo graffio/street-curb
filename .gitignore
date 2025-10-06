@@ -23,3 +23,9 @@ test-results
 # don't save files generated in testing type-generation
 modules/cli-type-generator/test/generated/*
 modules/curb-map/service-accounts/
+
+# don't save config files for temporary Firebase projects
+modules/curb-map/migrations/config/temporary*
+
+# don't save built functions code
+modules/curb-map/functions/dist/
