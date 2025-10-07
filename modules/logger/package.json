@@ -1,0 +1,14 @@
+{
+    "name": "@graffio/logger",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "index.js",
+    "exports": {
+        ".": "./index.js"
+    },
+    "description": "Environment-aware structured logging for Graffio",
+    "keywords": ["logging", "structured-logging"],
+    "author": "Graffio",
+    "license": "UNLICENSED",
+    "private": true
+}
