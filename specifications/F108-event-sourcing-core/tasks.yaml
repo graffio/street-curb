@@ -6,8 +6,8 @@ references:
   - name: "authentication"
     path: ../docs/architecture/authentication.md
 
-current_task: "task_1_3_create_functions_workspace"
-status: "completed"
+current_task: "task_1_5_create_queue_collection"
+status: "in_progress"
 
 # Reference: See ../../docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
 
@@ -57,7 +57,7 @@ tasks:
 
   - id: "task_1_3_create_functions_workspace"
     description: "Create dedicated Firebase functions workspace following firebase-functions-deploy.md"
-    status: "pending"
+    status: "completed"
     phase: "Foundation"
     dependencies:
       - "task_1_1_create_tagged_types_and_helpers"
@@ -80,7 +80,7 @@ tasks:
 
   - id: "task_1_4_create_minimal_giant_function"
     description: "Create minimal queue processing function for integration testing"
-    status: "pending"
+    status: "completed"
     phase: "Foundation"
     dependencies:
       - "task_1_2_setup_integration_testing"
@@ -119,7 +119,7 @@ tasks:
       - "Rule + index deployments logged in infrastructure runbook"
     tests:
       - "modules/curb-map-functions/test/queue-collection.firebase.js"
-
+r
   - id: "task_2_1_queue_utilities"
     description: "Implement queue management utilities and helper functions"
     status: "pending"
@@ -270,7 +270,7 @@ tasks:
       - "modules/curb-map-functions/test/event-sourcing.firebase.js"
       - "modules/curb-map-functions/test/event-sourcing.load.sh"
 
-completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing" ]
+completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function" ]
 
 notes: |
   This specification implements the core event sourcing pattern for CurbMap.

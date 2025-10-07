@@ -43,9 +43,10 @@ const handleQueueItemAdded = async event => {
     if (!afterSnap?.exists) return
 
     // Create asyncLocalStorage values
+    const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')
     const localStore = {
         event,
-        logger: createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production'),
+        logger,
         queueItemId: event.params.queueItemId,
         namespace: `tests/${event.params.namespace}`,
         startTime: Date.now(),
@@ -54,9 +55,7 @@ const handleQueueItemAdded = async event => {
     // Check if triggers are disabled for this namespace
     return asyncLocalStorage.run(localStore, async () =>
         (await areTriggersDisabled(`tests/${event.params.namespace}`))
-            ? createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production', asyncLocalStorage).flowStop(
-                  'Queue item skipped - triggers disabled',
-              )
+            ? logger.flowStop('Queue item skipped - triggers disabled')
             : await processQueueItem(),
     )
 }
