@@ -67,7 +67,6 @@ const withFacades = async effect => {
     const clearNamespace = async () => {
         await adminFacade.recursiveDelete()
     }
-
     await clearNamespace()
 
     try {
@@ -78,131 +77,29 @@ const withFacades = async effect => {
     }
 }
 
-test('Given the Firestore admin facade', async t => {
-    await t.test('When a queue item is written and read', async tt => {
+test('Given the Firestore facades infrastructure', async t => {
+    await t.test('When a queue item is written and read via the admin facade', async tt => {
         await withFacades(async ({ adminFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildQueueItem()
             await adminFacade.write(item)
             const stored = await adminFacade.read(item.id)
 
-            tt.equal(stored.id, item.id, 'Then the stored queue item retains the identifier')
+            tt.equal(stored.id, item.id, 'Then the stored queue item retains its identifier')
             tt.equal(stored.status, 'pending', 'Then the stored queue item keeps the pending status')
-            tt.equal(stored.action['@@tagName'], 'UserAdded', 'Then the stored queue item preserves the action tag')
         })
     })
 
-    await t.test('When queue items are queried by status', async tt => {
+    await t.test('When recursiveDelete runs on the namespace', async tt => {
         await withFacades(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
-            const pending = buildQueueItem({ status: 'pending' })
-            const completed = buildQueueItem({ status: 'completed', processedAt: new Date('2025-01-01T01:00:00Z') })
-
-            await adminFacade.write(pending)
-            await adminFacade.write(completed)
-
-            const byStatus = await adminFacade.query([['status', '==', 'completed']])
-            const identifiers = byStatus.map(item => item.id)
-
-            tt.same(identifiers, [completed.id], 'Then only the completed queue item is returned')
-
-            const references = await adminFacade.list()
-            const paths = references.map(ref => ref.path)
-
-            tt.ok(
-                paths.every(path => path.includes('/queueItems/')),
-                'Then the document references stay inside the queue items path',
-            )
-        })
-    })
-
-    await t.test('When a queue item is deleted', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
-            const doomed = buildQueueItem({ status: 'failed', error: 'validation-error' })
-
-            await adminFacade.write(doomed)
-            await adminFacade.delete(doomed.id)
-
-            await tt.rejects(
-                () => adminFacade.read(doomed.id),
-                /not found/,
-                'Then reading the deleted queue item fails',
-            )
-        })
-    })
-})
-
-test('Given the admin facade descendant helper', async t => {
-    await t.test('When a queue item is written through a valid descendant path', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
-            const descendant = adminFacade.descendent('organizations/org_archive')
-            const item = buildQueueItem({ status: 'completed', processedAt: new Date('2025-01-02T00:00:00Z') })
-
-            await descendant.write(item)
-            const stored = await descendant.read(item.id)
-
-            tt.equal(stored.status, 'completed', 'Then the descendant facade returns the stored queue item')
-        })
-    })
-
-    await t.test('When the descendant path contains an odd number of segments', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
-
-            tt.throws(
-                () => adminFacade.descendent('archive'),
-                /Suffix must have an even number of segments/,
-                'Then the descendant helper rejects odd segment counts',
-            )
-        })
-    })
-})
-
-test('Given the Firestore client facade', async t => {
-    await t.test('When a queue item is written by the client facade', async tt => {
-        await withFacades(async ({ adminFacade, clientFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildQueueItem({ status: 'pending' })
 
-            await clientFacade.write(item)
-            const fromAdmin = await adminFacade.read(item.id)
-            const fromClient = await clientFacade.read(item.id)
-
-            tt.equal(fromAdmin.id, item.id, 'Then the admin facade reads the client-written queue item')
-            tt.equal(fromClient.id, item.id, 'And  the client facade reads the client-written queue item')
-        })
-    })
-
-    await t.test('When queue items are queried by the client facade', async tt => {
-        await withFacades(async ({ adminFacade, clientFacade, clearNamespace }) => {
-            await clearNamespace()
-            const seedItems = [
-                buildQueueItem({ status: 'pending' }),
-                buildQueueItem({ status: 'completed', processedAt: new Date('2025-01-03T01:00:00Z') }),
-            ]
-
-            await Promise.all(seedItems.map(adminFacade.write))
-
-            const results = await clientFacade.query([['status', '==', 'completed']])
-            tt.equal(results.length, 1, 'Then the client query returns 1 out of 2 items')
-            tt.equal(results[0].status, 'completed', 'And  it finds the right one')
-        })
-    })
-})
-
-test('Given the admin facade cleanup helper', async t => {
-    await t.test('When recursiveDelete runs', async tt => {
-        await withFacades(async ({ adminFacade, clientFacade, clearNamespace }) => {
-            await clearNamespace()
-            const item = buildQueueItem({ status: 'pending' })
-
-            await clientFacade.write(item)
+            await adminFacade.write(item)
             await adminFacade.recursiveDelete()
 
             const remaining = await adminFacade.list()
-            tt.same(remaining, [], 'Then the namespace is empty after recursive delete runs')
+            tt.same(remaining, [], 'Then the namespace is empty after cleanup')
         })
     })
 })

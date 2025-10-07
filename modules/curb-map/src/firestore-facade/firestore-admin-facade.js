@@ -166,10 +166,13 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         recursiveDelete,
         
         descendent,
+        
     }
 }
 
 FirestoreAdminFacade.timestampToDate = timestampToDate
 FirestoreAdminFacade.dateToTimestamp = dateToTimestamp
+FirestoreAdminFacade.serverTimestamp = () => admin.firestore.FieldValue.serverTimestamp()
+FirestoreAdminFacade.deleteField = () => admin.firestore.FieldValue.delete()
 
 export { FirestoreAdminFacade }

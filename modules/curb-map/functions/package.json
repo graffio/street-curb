@@ -2,7 +2,8 @@
     "name": "@graffio/curb-map-functions",
     "version": "0.1.0",
     "private": true,
-    "main": "dist/index.js",
+    "main": "index.js",
+    "type": "module",
     "engines": {
         "node": "20"
     },
