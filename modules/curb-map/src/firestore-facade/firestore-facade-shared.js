@@ -1,4 +1,4 @@
-import { Action, AuditRecord, Blockface, OperationDetails, QueueItem, Segment } from '../types/index.js'
+import { Action, AuditRecord, Blockface, OperationDetails, QueueItem, Segment, SystemFlags } from '../types/index.js'
 
 const collectionPaths = new Map()
 collectionPaths.set(Action, 'actions')
@@ -7,6 +7,7 @@ collectionPaths.set(Blockface, 'blockfaces')
 collectionPaths.set(OperationDetails, 'operationDetails')
 collectionPaths.set(QueueItem, 'queueItems')
 collectionPaths.set(Segment, 'segments')
+collectionPaths.set(SystemFlags, 'systemFlags')
 
 /*
  * Throw an error wrapping another error
