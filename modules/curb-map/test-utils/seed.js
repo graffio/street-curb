@@ -19,8 +19,6 @@ const actorId = 'usr_123456789abc'
 const subjectId = 'usr_123456789abc'
 const actionRequest1Id = 'acr_xmsvnmfk2n0e'
 const actionRequest2Id = 'acr_xmsvnmfk2n0f'
-const eventId1 = 'evt_xmsvnmfk2n0e'
-const eventId2 = 'evt_xmsvnmfk2n0f'
 const idempotencyKey1 = 'idm_123456789abc'
 const idempotencyKey2 = 'idm_123456789abd'
 const correlationId1 = 'cor_123456789abc'
@@ -41,7 +39,6 @@ const seed = async () => {
     const actionRequests = [
         ActionRequest.from({
             id: actionRequest1Id,
-            eventId: eventId1,
             actorId,
             subjectId,
             subjectType: 'user',
@@ -59,7 +56,6 @@ const seed = async () => {
         }),
         ActionRequest.from({
             id: actionRequest2Id,
-            eventId: eventId2,
             actorId,
             subjectId: organizationId,
             subjectType: 'organization',
@@ -73,7 +69,7 @@ const seed = async () => {
             correlationId: correlationId2,
             schemaVersion: 1,
             status: 'completed',
-            resultData: { eventId: eventId2 },
+            resultData: { id: actionRequest2Id },
             error: undefined,
             createdAt: new Date('2025-01-01T11:00:00Z'),
             processedAt: new Date('2025-01-01T11:05:00Z'),

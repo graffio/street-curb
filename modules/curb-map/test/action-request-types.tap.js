@@ -9,7 +9,6 @@ import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
 const idempotencyKey = FieldTypes.newIdempotencyKey()
 const organizationId = FieldTypes.newOrganizationId()
 const actionRequestId = FieldTypes.newActionRequestId()
-const eventId = FieldTypes.newEventId()
 const correlationId = FieldTypes.newCorrelationId()
 const actorId = FieldTypes.newUserId()
 const actorId1 = FieldTypes.newUserId()
@@ -59,7 +58,6 @@ test('Given an ActionRequest is created with pending status', t => {
 
         const actionRequest = ActionRequest.from({
             id: actionRequestId,
-            eventId,
             action: userAdded,
             actorId: actorId1,
             subjectId,
@@ -73,7 +71,6 @@ test('Given an ActionRequest is created with pending status', t => {
         })
 
         t.equal(actionRequest.id, actionRequestId, 'Then the action request ID is preserved')
-        t.equal(actionRequest.eventId, eventId, 'Then the event ID is preserved')
         t.ok(Action.UserAdded.is(actionRequest.action), 'Then the action is preserved')
         t.equal(actionRequest.idempotencyKey, idempotencyKey, 'Then the idempotency key is preserved')
         t.equal(actionRequest.actorId, actorId1, 'Then the actor ID is preserved')
@@ -97,7 +94,6 @@ test('Given an ActionRequest is created with pending status', t => {
 
         const validActionRequest = ActionRequest.from({
             id: actionRequestId,
-            eventId,
             action: userAdded,
             actorId: actorId1,
             subjectId,
@@ -123,7 +119,6 @@ test('Given an ActionRequest is created with pending status', t => {
 
         const actionRequest = ActionRequest.from({
             id: actionRequestId,
-            eventId,
             action: userAdded,
             actorId: actorId1,
             subjectId,
@@ -138,7 +133,6 @@ test('Given an ActionRequest is created with pending status', t => {
 
         const firestoreData = ActionRequest.toFirestore(actionRequest)
         t.ok(firestoreData.id, 'Then the action request ID is preserved')
-        t.ok(firestoreData.eventId, 'Then the event ID is preserved')
         t.ok(firestoreData.action, 'Then the action is preserved')
         t.ok(firestoreData.actor, 'Then the actor is preserved')
         t.ok(firestoreData.subject, 'Then the subject is preserved')
@@ -154,7 +148,6 @@ test('Given an ActionRequest is created with pending status', t => {
 
         const actionRequest = ActionRequest.from({
             id: actionRequestId,
-            eventId,
             action: userAdded,
             actorId: actorId1,
             subjectId,
@@ -171,7 +164,6 @@ test('Given an ActionRequest is created with pending status', t => {
         const parsedItem = ActionRequest.fromFirestore(firestoreData)
 
         t.equal(parsedItem.id, actionRequestId, 'Then the action request ID is recreated correctly')
-        t.equal(parsedItem.eventId, eventId, 'Then the event ID is recreated correctly')
         t.ok(Action.UserAdded.is(parsedItem.action), 'Then the action is recreated correctly')
         t.equal(parsedItem.status, 'pending', 'Then the status is recreated correctly')
         t.end()
@@ -188,7 +180,6 @@ test('Given an ActionRequest is created with completed status', t => {
 
         const actionRequest = ActionRequest.from({
             id: actionRequestId,
-            eventId,
             action: userAdded,
             actorId,
             subjectId,
@@ -199,13 +190,13 @@ test('Given an ActionRequest is created with completed status', t => {
             schemaVersion: 1,
             createdAt,
             status: 'completed',
-            resultData: { eventId: 'evt_xyz789' },
+            resultData: { id: actionRequestId },
             error: null,
             processedAt,
         })
 
         t.equal(actionRequest.status, 'completed', 'Then the status is completed')
-        t.same(actionRequest.resultData, { eventId: 'evt_xyz789' }, 'Then the result data is preserved')
+        t.same(actionRequest.resultData, { id: actionRequestId }, 'Then the result data is preserved')
         t.equal(actionRequest.error, undefined, 'Then the error is undefined')
         t.equal(actionRequest.processedAt, processedAt, 'Then the processed timestamp is preserved')
         t.end()
@@ -220,7 +211,6 @@ test('Given an ActionRequest is created with completed status', t => {
 
         const actionRequest = ActionRequest.from({
             id: actionRequestId,
-            eventId,
             action: userAdded,
             actorId,
             subjectId,
@@ -231,7 +221,7 @@ test('Given an ActionRequest is created with completed status', t => {
             schemaVersion: 1,
             createdAt,
             status: 'completed',
-            resultData: { eventId: 'evt_xyz789' },
+            resultData: { id: actionRequestId },
             error: null,
             processedAt,
         })

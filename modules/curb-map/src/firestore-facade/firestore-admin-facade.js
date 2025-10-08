@@ -50,10 +50,11 @@ const getDefaultAdminDb = () => {
     return admin.firestore()
 }
 
-const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminDb()) => {
+const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminDb(), collectionNameOverride = null) => {
     if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
 
-    const collectionPath = collectionPrefix + collectionPaths.get(Type)
+    const collectionName = collectionNameOverride || collectionPaths.get(Type)
+    const collectionPath = collectionPrefix + collectionName
     const collectionRef = db.collection(collectionPath)
 
     const _docRef = id => collectionRef.doc(id)
@@ -123,10 +124,17 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
     }
 
     /*
-     * List all document references in a collection
-     * @sig listDocuments :: String -> Promise [DocumentReference]
+     * List all documents in a collection
+     * @sig list :: () -> Promise [Type]
      */
-    const list = async () => await collectionRef.listDocuments()
+    const list = async () => {
+        try {
+            const querySnapshot = await collectionRef.get()
+            return querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+        } catch (e) {
+            throwWithOriginal(`Failed to list ${Type.toString()}: ${e.message}`, e)
+        }
+    }
 
     const descendent = suffix => {
         if (suffix[0] === '/') suffix = suffix.slice(1)
@@ -134,7 +142,12 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         const segments = suffix.split('/').filter(Boolean)
         if (segments.length % 2 !== 0) throw new Error(`Suffix must have an even number of segments; found ${suffix}`)
 
-        return FirestoreAdminFacade(Type, `${collectionPrefix}/${suffix}`.replaceAll(/\/\//g, '/'), db)
+        return FirestoreAdminFacade(
+            Type,
+            `${collectionPrefix}/${suffix}`.replaceAll(/\/\//g, '/'),
+            db,
+            collectionNameOverride,
+        )
     }
 
     /*

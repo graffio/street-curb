@@ -206,11 +206,12 @@ match /users/{userId} {
 ```javascript
 // All completed actions scoped to organization
 completedActions: {
-  eventId: {
-    type: "UserCreated",
-    organizationId: "cuid2", // Required for all events
-    projectId: "cuid2", // Optional, defaults to 'default'
-    // ... rest of event
+  id: {
+    id: "acr_<cuid12>",              // action request ID (used as document ID)
+    action: { '@@tagName': "UserAdded", /* ... */ },
+    organizationId: "org_<cuid12>",  // Required for all actions
+    projectId: "prj_<cuid12>",       // Optional, defaults to 'default'
+    // ... rest of action request
   }
 }
 ```

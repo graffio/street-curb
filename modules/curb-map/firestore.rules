@@ -2,13 +2,74 @@ rules_version = '2';
 
 service cloud.firestore {
     match /databases/{database}/documents {
+        // Helper functions for field validation
+        function isValidActionRequestId(id)    { return id is string && id.matches('^acr_[a-z0-9]{12,}$');                 }
+        function isValidCorrelationId(id)      { return id is string && id.matches('^cor_[a-z0-9]{12,}$');                 }
+        function isValidIdempotencyKey(id)     { return id is string && id.matches('^idm_[a-z0-9]{12,}$');                 }
+        function isValidOrganizationId(id)     { return id is string && id.matches('^org_[a-z0-9]{12,}$');                 }
+        function isValidUserId(id)             { return id is string && id.matches('^usr_[a-z0-9]{12,}$');                 }
+        function isValidSubjectId(id)          { return id is string && id.matches('^(usr|org|prj)_[a-z0-9]{12,}$');       }
+
+        function isValidProjectId(id)          { return id == null || (id is string && id.matches('^prj_[a-z0-9]{12,}$')); }
+        function isValidSchemaVersion(version) { return version is int && version == 1;                                    }
+        function isValidStatus(status)         { return status is string && status in ['pending', 'completed', 'failed'];  }
+        function isValidSubjectType(type)      { return type   is string && type   in ['user', 'organization', 'project']; }
+
+        // Action Request validation
+        function hasValidActionRequestFields(data) {
+            return data.keys().hasAll([
+                'id', 'action', 'actorId', 'subjectId', 'subjectType',
+                'organizationId', 'idempotencyKey', 'correlationId',
+                'schemaVersion', 'status', 'createdAt'
+            ]) &&
+            isValidActionRequestId(data.id) &&
+            data.action is map && data.action['@@tagName'] is string &&
+            isValidUserId(data.actorId) &&
+            isValidSubjectId(data.subjectId) &&
+            isValidSubjectType(data.subjectType) &&
+            isValidOrganizationId(data.organizationId) &&
+            isValidProjectId(data.projectId) &&
+            isValidIdempotencyKey(data.idempotencyKey) &&
+            isValidCorrelationId(data.correlationId) &&
+            isValidSchemaVersion(data.schemaVersion) &&
+            isValidStatus(data.status) &&
+            data.createdAt is timestamp &&
+            (data.status == 'pending'
+                ? ( !data.keys().hasAny(['resultData', 'error', 'processedAt']))
+                : true);
+        }
+
+        // Action Requests collection
         match /{path=**}/actionRequests/{actionRequestId} {
-            allow create, read: if true;
+            allow create: if
+                request.auth != null &&
+                isValidActionRequestId(actionRequestId) &&
+                hasValidActionRequestFields(request.resource.data) &&
+                request.resource.data.actorId == request.auth.uid &&
+                request.resource.data.status == 'pending';
+
+            allow read: if
+                request.auth != null &&
+                (resource.data.actorId == request.auth.uid ||
+                 request.auth.token.organizations[resource.data.organizationId] != null);
+
+            // Only Cloud Functions can update status
             allow update, delete: if false;
         }
 
-        // Default: Deny all other collections
-        match /{document=**} { allow read, write: if false; }
+        // Completed Actions collection (immutable audit trail)
+        match /{path=**}/completedActions/{id} {
+            allow read: if
+                request.auth != null &&
+                request.auth.token.organizations[resource.data.organizationId] != null;
 
+            // Only Cloud Functions can write (immutable)
+            allow create, update, delete: if false;
+        }
+
+        // Default: Deny all other collections
+        match /{document=**} {
+            allow read, write: if false;
+        }
     }
 }

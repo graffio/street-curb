@@ -17,12 +17,11 @@ Client (Online/Offline) → Firestore actionRequests → Giant Function → comp
 - **Status Tracking**: Real-time status updates for all action requests
 
 ### Action Request Structure
-```javascript
+```
 // Firestore collection: actionRequests
 {
-  actionRequestId: {
+  id: {
     id: "acr_<cuid12>",
-    eventId: "evt_<cuid12>",
     action: Action,
     actorId: "usr_<cuid12>",
     subjectId: "usr|org|prj_<cuid12>",
@@ -54,7 +53,6 @@ export const createActionRequest = async (action, actor) => {
 
   const actionRequest = ActionRequest.from({
     id: newActionRequestId(),
-    eventId: newEventId(),
     action,
     actorId: actor.id,
     subjectId: action.subject.id,

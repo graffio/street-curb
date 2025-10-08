@@ -3,7 +3,7 @@
 /**
  * ActionRequest represents a document in the Firestore actionRequests collection
  * and completedActions collection (immutable audit trail for SOC2 compliance)
- * @sig ActionRequest :: (String, String, Action, Object, Object, String, String?, String, String, String, String?, Object, Object?)
+ * @sig ActionRequest :: (String, Action, Object, Object, String, String?, String, String, String, String?, Object, Object?)
  */
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
@@ -15,7 +15,6 @@ export const ActionRequest = {
     fields: {
         // Identity
         id             : FieldTypes.actionRequestId,
-        eventId        : FieldTypes.eventId,
 
         // Domain payload
         action         : 'Action',
@@ -27,7 +26,8 @@ export const ActionRequest = {
 
         // Tenant scoping (SOC2)
         organizationId : FieldTypes.organizationId,
-        projectId      : FieldTypes.projectId + '?',
+        projectId        : '/^prj_[a-z0-9]{12,}$/?', // copied from FieldTypes.projectId for now due to bugs in generator
+        
         
         // Orchestration
         status         : /^(pending|completed|failed)$/,

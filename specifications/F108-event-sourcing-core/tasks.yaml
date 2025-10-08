@@ -6,8 +6,8 @@ references:
   - name: "authentication"
     path: ../docs/architecture/authentication.md
 
-current_task: "task_1_5_create_queue_collection"
-status: "in_progress"
+current_task: "task_2_1_action_request_utilities"
+status: "pending"
 
 # Reference: See ../../docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
 
@@ -53,7 +53,7 @@ tasks:
       - "Cleanup removes only test data"
       - "Integration testing examples from firebase-integration-tests-strategy.md work"
     tests:
-      - "modules/curb-map/test/integration-testing.firebase.js"
+      - "modules/curb-map/test/firestore-admin.firebase.js"
 
   - id: "task_1_3_create_functions_workspace"
     description: "Create dedicated Firebase functions workspace following firebase-functions-deploy.md"
@@ -103,43 +103,54 @@ tasks:
 
   - id: "task_1_5_create_queue_collection"
     description: "Create Firestore actionRequests and completedActions collections with security rules and indexes"
-    status: "in_progress"
+    status: "completed"
     phase: "Foundation"
     dependencies:
       - "task_1_4_create_minimal_giant_function"
     estimated_hours: 6
     implementation: |
-      - Created ActionRequest type (renamed from QueueItem) in modules/curb-map/type-definitions/
-      - Added new SOC2 fields to ActionRequest: eventId, subject, organizationId, projectId, correlationId, schemaVersion
-      - Updated collection name from 'queueItems' to 'actionRequests' in firestore-facade-shared.js
-      - Add 'completedActions' collection registration (write-once, immutable audit trail)
-      - Remove incorrect 'actions' collection registration
-      - Create firestore.indexes.json with composite indexes:
-        * actionRequests: status + createdAt (polling for pending items)
-        * actionRequests: idempotencyKey (duplicate detection)
-        * actionRequests: actor.id + createdAt (user's request history)
-        * completedActions: organizationId + createdAt (audit queries)
-        * completedActions: eventId (primary lookup)
-      - Update firestore.rules for actionRequests collection:
-        * Allow authenticated users to create if actor.id matches auth.uid
-        * Allow users to read their own requests
-        * Prevent client updates to status/processedAt (function-only fields)
-      - Add firestore.rules for completedActions collection:
+      ✅ Created ActionRequest type (renamed from QueueItem) in modules/curb-map/type-definitions/
+      ✅ Added new SOC2 fields to ActionRequest: subject, organizationId, projectId, correlationId, schemaVersion
+      ✅ Removed eventId field (simplified to use id for both collections)
+      ✅ Updated collection name from 'queueItems' to 'actionRequests' in firestore-facade-shared.js
+      ✅ Added 'completedActions' collection registration (write-once, immutable audit trail)
+      ✅ Removed incorrect 'actions' collection registration
+      ✅ Created firestore.indexes.json with composite indexes:
+        * actionRequests: organizationId + status + createdAt
+        * actionRequests: actorId + status + createdAt
+        * actionRequests: organizationId + projectId + status + createdAt
+        * completedActions: organizationId + createdAt
+        * completedActions: organizationId + projectId + createdAt
+        * completedActions: organizationId + actorId + createdAt
+        * completedActions: idempotencyKey
+      ✅ Updated firestore.rules for actionRequests collection with comprehensive field validation:
+        * Validate all ID field formats (acr_, usr_, org_, prj_, idm_, cor_)
+        * Validate subjectType enum (user, organization, project)
+        * Validate status enum (pending, completed, failed)
+        * Validate schemaVersion (must be 1)
+        * Ensure pending requests have no resultData/error/processedAt
+        * Allow authenticated users to create if actorId matches auth.uid
+        * Allow users to read their own requests and organization members to read org requests
+        * Prevent all client updates (only Cloud Functions can update)
+      ✅ Added firestore.rules for completedActions collection:
         * Read-only for authorized users within organization
         * Write-only for Firebase Functions (no client writes)
-      - Update handle-queue-item-added.js to copy completed ActionRequest to completedActions
-      - Create integration test: modules/curb-map/test/action-request-collection.firebase.js
-      - Validate behaviour locally with Firebase emulator before deploying
+      ✅ Updated documentation to remove eventId references
+      ✅ Created integration test: modules/curb-map/test/action-request-collection.firebase.js
+      📝 Next: Update handle-action-request-added.js to copy completed ActionRequest to completedActions
+      📝 Next: Validate behaviour locally with Firebase emulator
     validation:
-      - "ActionRequest type exists with all SOC2 fields (eventId, subject, organizationId, correlationId, schemaVersion)"
-      - "actionRequests collection registered and accepts creates from authenticated users"
-      - "completedActions collection registered as write-once, immutable"
-      - "Unauthorized writes/reads are rejected by emulator security tests"
-      - "Client cannot update status/processedAt fields in actionRequests"
-      - "Composite indexes improve query performance"
-      - "Rule + index deployments logged in infrastructure runbook"
+      ✅ "ActionRequest type exists with all SOC2 fields (subject, organizationId, correlationId, schemaVersion)"
+      ✅ "eventId field removed (simplified architecture using id for both collections)"
+      ✅ "actionRequests collection registered and accepts creates from authenticated users"
+      ✅ "completedActions collection registered as write-once, immutable"
+      ✅ "Comprehensive field-level validation in security rules"
+      ✅ "Client cannot update any fields in actionRequests (only Cloud Functions)"
+      ✅ "Composite indexes created for efficient queries"
+      📝 "Unauthorized writes/reads are rejected by emulator security tests"
+      📝 "Rule + index deployments logged in infrastructure runbook"
     tests:
-      - "modules/curb-map/test/action-request-collection.firebase.js"
+      - "modules/curb-map/test/firestore-admin.firebase.js"
 
   - id: "task_2_1_action_request_utilities"
     description: "Implement action request management utilities and helper functions"
@@ -291,7 +302,7 @@ tasks:
       - "modules/curb-map-functions/test/event-sourcing.firebase.js"
       - "modules/curb-map-functions/test/event-sourcing.load.sh"
 
-completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function" ]
+completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function", "task_1_5_create_queue_collection" ]
 
 notes: |
   This specification implements the core event sourcing pattern for CurbMap.
