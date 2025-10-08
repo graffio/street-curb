@@ -2,7 +2,6 @@
 /*  ActionRequest generated from: modules/curb-map/type-definitions/action-request.type.js
  *
  *  id            : FieldTypes.actionRequestId,
- *  eventId       : FieldTypes.eventId,
  *  action        : "Action",
  *  actorId       : FieldTypes.actorId,
  *  subjectId     : FieldTypes.subjectId,
@@ -32,7 +31,6 @@ import * as R from '@graffio/cli-type-generator'
 // -------------------------------------------------------------------------------------------------------------
 const ActionRequest = function ActionRequest(
     id,
-    eventId,
     action,
     actorId,
     subjectId,
@@ -49,10 +47,9 @@ const ActionRequest = function ActionRequest(
     processedAt,
 ) {
     const constructorName =
-        'ActionRequest(id, eventId, action, actorId, subjectId, subjectType, organizationId, projectId, status, idempotencyKey, resultData, error, correlationId, schemaVersion, createdAt, processedAt)'
+        'ActionRequest(id, action, actorId, subjectId, subjectType, organizationId, projectId, status, idempotencyKey, resultData, error, correlationId, schemaVersion, createdAt, processedAt)'
 
     R.validateRegex(constructorName, FieldTypes.actionRequestId, 'id', false, id)
-    R.validateRegex(constructorName, FieldTypes.eventId, 'eventId', false, eventId)
     R.validateTag(constructorName, 'Action', 'action', false, action)
     R.validateRegex(constructorName, FieldTypes.actorId, 'actorId', false, actorId)
     R.validateRegex(constructorName, FieldTypes.subjectId, 'subjectId', false, subjectId)
@@ -70,7 +67,6 @@ const ActionRequest = function ActionRequest(
 
     const result = Object.create(prototype)
     result.id = id
-    result.eventId = eventId
     result.action = action
     result.actorId = actorId
     result.subjectId = subjectId
@@ -95,7 +91,7 @@ const ActionRequest = function ActionRequest(
 // -------------------------------------------------------------------------------------------------------------
 const prototype = {
     toString: function () {
-        return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.eventId)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.status)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
+        return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.status)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
     },
     toJSON() {
         return this
@@ -117,7 +113,6 @@ ActionRequest.is = v => v && v['@@typeName'] === 'ActionRequest'
 ActionRequest.from = o =>
     ActionRequest(
         o.id,
-        o.eventId,
         o.action,
         o.actorId,
         o.subjectId,

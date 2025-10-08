@@ -17,7 +17,7 @@ Client (Online/Offline) → Firestore actionRequests → Giant Function → comp
 - **Status Tracking**: Real-time status updates for all action requests
 
 ### Action Request Structure
-```javascript
+```
 // Firestore collection: actionRequests
 {
   actionRequestId: {

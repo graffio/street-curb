@@ -34,7 +34,6 @@ const buildActionRequest = overrides => {
 
     return ActionRequest.from({
         id: overrides?.id || FieldTypes.newActionRequestId(),
-        eventId: overrides?.eventId || FieldTypes.newEventId(),
         actorId: overrides?.actorId || FieldTypes.newUserId(),
         subjectId,
         subjectType: overrides?.subjectType || 'user',

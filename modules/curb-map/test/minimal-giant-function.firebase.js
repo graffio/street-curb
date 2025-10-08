@@ -14,7 +14,6 @@ const subjectId = FieldTypes.newUserId()
 const defaultActionRequest = status =>
     ActionRequest.from({
         id: actionRequestId,
-        eventId: FieldTypes.newEventId(),
         actorId,
         subjectId,
         subjectType: 'user',
