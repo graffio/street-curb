@@ -3,7 +3,7 @@ import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
 import { FirestoreClientFacade } from '../src/firestore-facade/firestore-client-facade.js'
-import { Action, FieldTypes, QueueItem } from '../src/types/index.js'
+import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
 
 const envKeys = [
     'GCLOUD_PROJECT',
@@ -27,24 +27,32 @@ const restoreEnv = snapshot =>
         else process.env[key] = value
     })
 
-// @sig buildQueueItem :: Object -> QueueItem
-const buildQueueItem = overrides =>
-    QueueItem.from({
-        id: overrides?.id || FieldTypes.newQueueItemId(),
+// @sig buildActionRequest :: Object -> ActionRequest
+const buildActionRequest = overrides => {
+    const organizationId = overrides?.organizationId || FieldTypes.newOrganizationId()
+    const subjectId = overrides?.subjectId || FieldTypes.newUserId()
+
+    return ActionRequest.from({
+        id: overrides?.id || FieldTypes.newActionRequestId(),
+        eventId: overrides?.eventId || FieldTypes.newEventId(),
         actorId: overrides?.actorId || FieldTypes.newUserId(),
+        subjectId,
+        subjectType: overrides?.subjectType || 'user',
         action:
             overrides?.action ||
-            Action.UserAdded.from({
-                organizationId: FieldTypes.newOrganizationId(),
-                user: { id: FieldTypes.newUserId(), email: 'queue@example.com' },
-            }),
+            Action.UserAdded.from({ organizationId, user: { id: subjectId, email: 'action@example.com' } }),
+        organizationId,
+        projectId: overrides?.projectId,
         idempotencyKey: overrides?.idempotencyKey || FieldTypes.newIdempotencyKey(),
         status: overrides?.status || 'pending',
         resultData: overrides?.resultData,
         error: overrides?.error,
+        correlationId: overrides?.correlationId || FieldTypes.newCorrelationId(),
+        schemaVersion: overrides?.schemaVersion || 1,
         createdAt: overrides?.createdAt || new Date('2025-01-01T00:00:00Z'),
         processedAt: overrides?.processedAt,
     })
+}
 
 // @sig withFacades :: (Context -> Promise Any) -> Promise Void
 const withFacades = async effect => {
@@ -61,8 +69,8 @@ const withFacades = async effect => {
 
     restoreEnv(configuration)
 
-    const adminFacade = FirestoreAdminFacade(QueueItem, `${namespace}/`)
-    const clientFacade = FirestoreClientFacade(QueueItem, `${namespace}/`)
+    const adminFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
+    const clientFacade = FirestoreClientFacade(ActionRequest, `${namespace}/`)
 
     const clearNamespace = async () => {
         await adminFacade.recursiveDelete()
@@ -78,22 +86,22 @@ const withFacades = async effect => {
 }
 
 test('Given the Firestore facades infrastructure', async t => {
-    await t.test('When a queue item is written and read via the admin facade', async tt => {
+    await t.test('When an action request is written and read via the admin facade', async tt => {
         await withFacades(async ({ adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const item = buildQueueItem()
+            const item = buildActionRequest()
             await adminFacade.write(item)
             const stored = await adminFacade.read(item.id)
 
-            tt.equal(stored.id, item.id, 'Then the stored queue item retains its identifier')
-            tt.equal(stored.status, 'pending', 'Then the stored queue item keeps the pending status')
+            tt.equal(stored.id, item.id, 'Then the stored action request retains its identifier')
+            tt.equal(stored.status, 'pending', 'Then the stored action request keeps the pending status')
         })
     })
 
     await t.test('When recursiveDelete runs on the namespace', async tt => {
         await withFacades(async ({ adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const item = buildQueueItem({ status: 'pending' })
+            const item = buildActionRequest({ status: 'pending' })
 
             await adminFacade.write(item)
             await adminFacade.recursiveDelete()

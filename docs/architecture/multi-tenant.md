@@ -62,25 +62,29 @@ organizations: {
 ### Organization API Patterns
 ```javascript
 /**
- * Create organization via queue
- * @sig createOrganization :: (Object) -> Promise<String>
+ * Create organization via action request
+ * @sig createOrganization :: (Object, Object) -> Promise<String>
  */
-const createOrganization = async (organizationData) => {
-  return queueEvent('OrganizationCreated', {
-    subject: { type: 'organization', id: organizationData.organizationId },
-    name: organizationData.name,
-    subscription: {
-      tier: organizationData.tier || 'basic',
-      annualAmount: organizationData.annualAmount || 0,
-      startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    settings: {
-      ssoEnabled: organizationData.ssoEnabled || false,
-      ssoProvider: organizationData.ssoProvider,
-      auditLogRetention: 2555 // 7 years
+const createOrganization = async (organizationData, actor) => {
+  const action = Action.OrganizationCreated.from({
+    organizationId: organizationData.organizationId,
+    metadata: {
+      name: organizationData.name,
+      subscription: {
+        tier: organizationData.tier || 'basic',
+        annualAmount: organizationData.annualAmount || 0,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      settings: {
+        ssoEnabled: organizationData.ssoEnabled || false,
+        ssoProvider: organizationData.ssoProvider,
+        auditLogRetention: 2555 // 7 years
+      }
     }
   });
+
+  return createActionRequest(action, actor);
 };
 ```
 
@@ -200,8 +204,8 @@ match /users/{userId} {
 
 ### Event Scoping
 ```javascript
-// All events scoped to organization
-events: {
+// All completed actions scoped to organization
+completedActions: {
   eventId: {
     type: "UserCreated",
     organizationId: "cuid2", // Required for all events

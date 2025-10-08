@@ -9,7 +9,9 @@
     },
     "scripts": {
         "build": "esbuild src/index.js --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.js",
-        "deploy": "yarn build && firebase deploy --only functions"
+        "deploy": "yarn build && firebase deploy --only functions",
+        "tap": "../../../bash/run-tap.sh ../test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../../bash/run-tap.sh"
     },
     "dependencies": {
         "@graffio/logger": "0.1.0",

@@ -1,6 +1,5 @@
 import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
-import { FieldTypes } from '../src/types/field-types.js'
-import { Action, QueueItem } from '../src/types/index.js'
+import { Action, ActionRequest } from '../src/types/index.js'
 
 /*
  * Seed test data into Firestore
@@ -17,9 +16,15 @@ import { Action, QueueItem } from '../src/types/index.js'
 
 const organizationId = 'org_123456789abc'
 const actorId = 'usr_123456789abc'
-const queryItem1Id = 'que_xmsvnmfk2n0e'
-const queryItem2Id = 'que_xmsvnmfk2n0f'
-const idempotencyKey = 'idm_123456789abc'
+const subjectId = 'usr_123456789abc'
+const actionRequest1Id = 'acr_xmsvnmfk2n0e'
+const actionRequest2Id = 'acr_xmsvnmfk2n0f'
+const eventId1 = 'evt_xmsvnmfk2n0e'
+const eventId2 = 'evt_xmsvnmfk2n0f'
+const idempotencyKey1 = 'idm_123456789abc'
+const idempotencyKey2 = 'idm_123456789abd'
+const correlationId1 = 'cor_123456789abc'
+const correlationId2 = 'cor_123456789abd'
 
 const seed = async () => {
     if (!process.env.DISABLE_TRIGGERS)
@@ -31,39 +36,53 @@ const seed = async () => {
     const namespace = process.env.FS_BASE
     if (!namespace) throw new Error('FS_BASE environment variable must be set before seeding')
 
-    const queueFacade = FirestoreAdminFacade(QueueItem, `${namespace}/`)
+    const actionRequestFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
 
-    const queueItems = [
-        QueueItem.from({
-            id: queryItem1Id,
+    const actionRequests = [
+        ActionRequest.from({
+            id: actionRequest1Id,
+            eventId: eventId1,
             actorId,
+            subjectId,
+            subjectType: 'user',
             action: Action.UserAdded.from({ organizationId, user: { id: actorId, email: 'john@example.com' } }),
-            idempotencyKey,
+            organizationId,
+            projectId: undefined,
+            idempotencyKey: idempotencyKey1,
+            correlationId: correlationId1,
+            schemaVersion: 1,
             status: 'pending',
             resultData: undefined,
             error: undefined,
             createdAt: new Date('2025-01-01T10:00:00Z'),
             processedAt: undefined,
         }),
-        QueueItem.from({
-            id: queryItem2Id,
+        ActionRequest.from({
+            id: actionRequest2Id,
+            eventId: eventId2,
             actorId,
+            subjectId: organizationId,
+            subjectType: 'organization',
             action: Action.OrganizationAdded.from({
                 organizationId,
                 metadata: { name: 'Seed Org', createdBy: actorId },
             }),
-            idempotencyKey,
+            organizationId,
+            projectId: undefined,
+            idempotencyKey: idempotencyKey2,
+            correlationId: correlationId2,
+            schemaVersion: 1,
             status: 'completed',
-            resultData: { eventId: FieldTypes.newCorrelationId() },
+            resultData: { eventId: eventId2 },
             error: undefined,
             createdAt: new Date('2025-01-01T11:00:00Z'),
             processedAt: new Date('2025-01-01T11:05:00Z'),
         }),
     ]
 
-    for (const item of queueItems) await queueFacade.write(item)
+    for (const item of actionRequests) await actionRequestFacade.write(item)
 
-    return queueItems
+    return actionRequests
 }
 
 export { seed }

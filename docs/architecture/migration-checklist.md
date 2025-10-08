@@ -58,10 +58,10 @@
 - **Content**: Event sourcing patterns, queue processing, idempotency, validation
 - **Status**: ✅ Moved
 
-#### Queue Mechanism Patterns
+#### Action Request Architecture Patterns
 - **Source**: F107/phase5-offline.md
 - **Destination**: docs/architecture/queue-mechanism.md
-- **Content**: Offline queue processing, conflict resolution, retry logic, status tracking
+- **Content**: Offline action request processing, conflict resolution, retry logic, status tracking
 - **Status**: ✅ Moved
 
 #### Multi-Tenant Patterns

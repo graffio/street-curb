@@ -3,7 +3,7 @@
 ## Core Pattern: Always-Available Operations
 
 ```
-Client (Online/Offline) → Firestore Queue → Giant Function → Events → Materialized Views
+Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
 ```
 
 **Benefits**: Works offline, automatic sync, conflict resolution, reliable user experience
@@ -12,7 +12,7 @@ Client (Online/Offline) → Firestore Queue → Giant Function → Events → Ma
 
 ### Always Available Operations
 - **Immediate Response**: Operations work whether online or offline
-- **Queue-Based**: All operations queued for later processing
+- **Request-Based**: All operations create action requests for later processing
 - **Transparent Sync**: Users don't need to manage sync manually
 - **Conflict Resolution**: Automatic handling of concurrent changes
 
@@ -84,25 +84,25 @@ export const waitForConnection = () => {
 
 ## Offline Operations
 
-### Queue-Based Operations
+### Action Request-Based Operations
 ```javascript
 /**
- * Queue operation with offline support
- * @sig queueOperationOffline :: (String, Object) -> Promise<String>
+ * Create action request with offline support
+ * @sig createActionRequestOffline :: (Action, Actor) -> Promise<String>
  */
-export const queueOperationOffline = async (action, data) => {
+export const createActionRequestOffline = async (action, actor) => {
   try {
-    // Always queue the operation (works offline)
-    const queueId = await queueOperation(action, data);
-    
+    // Always create the action request (works offline)
+    const actionRequestId = await createActionRequest(action, actor);
+
     if (isOnline()) {
-      return queueId;
+      return actionRequestId;
     } else {
       await waitForConnection();
-      return queueId;
+      return actionRequestId;
     }
   } catch (error) {
-    console.error('Failed to queue operation:', error);
+    console.error('Failed to create action request:', error);
     throw error;
   }
 };
@@ -111,14 +111,14 @@ export const queueOperationOffline = async (action, data) => {
 ### Operation Status Tracking
 ```javascript
 /**
- * Queue operation with status feedback
- * @sig queueOperationWithFeedback :: (String, Object) -> Promise<Object>
+ * Create action request with status feedback
+ * @sig createActionRequestWithFeedback :: (Action, Actor) -> Promise<Object>
  */
-export const queueOperationWithFeedback = async (action, data) => {
-  const queueId = await queueOperationOffline(action, data);
-  
+export const createActionRequestWithFeedback = async (action, actor) => {
+  const actionRequestId = await createActionRequestOffline(action, actor);
+
   return new Promise((resolve, reject) => {
-    const unsubscribe = watchQueueStatus(queueId, (status, result, error) => {
+    const unsubscribe = watchActionRequestStatus(actionRequestId, (status, result, error) => {
       if (status === 'completed') {
         unsubscribe();
         resolve(result);
@@ -151,7 +151,7 @@ export const syncPendingOperations = async () => {
     
     // Get all pending operations
     const pendingQuery = query(
-      collection(db, 'update_queue'),
+      collection(db, 'actionRequests'),
       where('status', '==', 'pending'),
       orderBy('timestamp', 'asc')
     );
@@ -232,45 +232,45 @@ export const startBackgroundSync = () => {
 ### Conflict Detection
 ```javascript
 /**
- * Detect conflicts in queued operations
- * @sig detectConflicts :: (Object) -> Promise<Array>
+ * Detect conflicts in action requests
+ * @sig detectConflicts :: (ActionRequest) -> Promise<Array>
  */
-const detectConflicts = async (queueItem) => {
+const detectConflicts = async (actionRequest) => {
   const conflicts = [];
-  
+
   // Check for duplicate operations
   const duplicateQuery = await admin.firestore()
-    .collection('update_queue')
-    .where('idempotencyKey', '==', queueItem.idempotencyKey)
+    .collection('actionRequests')
+    .where('idempotencyKey', '==', actionRequest.idempotencyKey)
     .where('status', '==', 'pending')
     .get();
-  
+
   if (duplicateQuery.size > 1) {
     conflicts.push({
       type: 'duplicate',
-      message: 'Duplicate operation detected',
-      queueItems: duplicateQuery.docs.map(doc => doc.id)
+      message: 'Duplicate action request detected',
+      actionRequests: duplicateQuery.docs.map(doc => doc.id)
     });
   }
-  
+
   // Check for conflicting updates to same resource
-  if (queueItem.action === 'createEvent' && queueItem.data.eventType === 'UserUpdated') {
+  if (Action.is(actionRequest.action, 'UserUpdated')) {
     const conflictingUpdates = await admin.firestore()
-      .collection('update_queue')
-      .where('data.subject.id', '==', queueItem.data.data.subject.id)
-      .where('data.eventType', '==', 'UserUpdated')
+      .collection('actionRequests')
+      .where('subjectId', '==', actionRequest.subjectId)
+      .where('action.type', '==', 'UserUpdated')
       .where('status', '==', 'pending')
       .get();
-    
+
     if (conflictingUpdates.size > 1) {
       conflicts.push({
         type: 'concurrent_update',
         message: 'Concurrent updates to same user',
-        queueItems: conflictingUpdates.docs.map(doc => doc.id)
+        actionRequests: conflictingUpdates.docs.map(doc => doc.id)
       });
     }
   }
-  
+
   return conflicts;
 };
 ```
@@ -320,16 +320,16 @@ export const getCachedData = async (key) => {
  */
 export const incrementalSync = async (lastSyncTimestamp) => {
   const changesQuery = query(
-    collection(db, 'events'),
+    collection(db, 'completedActions'),
     where('timestamp', '>', lastSyncTimestamp),
     orderBy('timestamp', 'asc')
   );
-  
+
   const snapshot = await getDocs(changesQuery);
-  
+
   for (const doc of snapshot.docs) {
-    const event = doc.data();
-    await processEvent(event);
+    const completedAction = doc.data();
+    await processEvent(completedAction);
   }
   
   // Update last sync timestamp
@@ -386,12 +386,12 @@ export const showSyncProgress = (completed, total) => {
  */
 export const batchOperations = async (operations) => {
   const batch = writeBatch(db);
-  
+
   operations.forEach(operation => {
-    const docRef = doc(collection(db, 'update_queue'));
-    batch.set(docRef, operation);
+    const docRef = doc(collection(db, 'actionRequests'));
+    batch.set(docRef, ActionRequest.toFirestore(operation));
   });
-  
+
   await batch.commit();
 };
 ```
@@ -420,17 +420,17 @@ export const smartSync = async () => {
  * Retry failed operations with exponential backoff
  * @sig retryOperation :: (String, Number) -> Promise<Void>
  */
-export const retryOperation = async (queueId, maxRetries = 3) => {
-  const operation = await getQueueItem(queueId);
-  
-  if (operation.retryCount >= maxRetries) {
-    await markOperationFailed(queueId, 'Max retries exceeded');
+export const retryOperation = async (actionRequestId, maxRetries = 3) => {
+  const actionRequest = await getActionRequest(actionRequestId);
+
+  if (actionRequest.retryCount >= maxRetries) {
+    await markOperationFailed(actionRequestId, 'Max retries exceeded');
     return;
   }
-  
-  const delay = Math.pow(2, operation.retryCount) * 1000; // Exponential backoff
+
+  const delay = Math.pow(2, actionRequest.retryCount) * 1000; // Exponential backoff
   setTimeout(async () => {
-    await processOperation(queueId);
+    await processOperation(actionRequestId);
   }, delay);
 };
 ```
@@ -481,17 +481,19 @@ export const simulateOffline = () => {
  * @sig testSync :: () -> Promise<Void>
  */
 export const testSync = async () => {
-  // Create test operations
-  await queueOperation('test', { data: 'test' });
-  
+  // Create test action request
+  const action = Action.TestAction.from({ data: 'test' });
+  const actor = { id: 'usr_test', organizationId: 'org_test' };
+  await createActionRequest(action, actor);
+
   // Simulate offline
   simulateOffline();
-  
+
   // Simulate online
   simulateOnline();
-  
+
   // Verify sync
-  const pendingCount = await getPendingOperationCount();
+  const pendingCount = await getPendingActionRequestCount();
   console.assert(pendingCount === 0, 'Sync failed');
 };
 ```
@@ -499,6 +501,6 @@ export const testSync = async () => {
 ## References
 
 - **F107 Implementation**: See `specifications/F107-firebase-soc2-vanilla-app/phase5-offline.md`
-- **Queue Mechanism**: See `docs/architecture/queue-mechanism.md`
+- **Action Request Architecture**: See `docs/architecture/queue-mechanism.md`
 - **Event Sourcing**: See `docs/architecture/event-sourcing.md`
 - **Multi-Tenant**: See `docs/architecture/multi-tenant.md`

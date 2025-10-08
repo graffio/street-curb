@@ -3,7 +3,7 @@
 ## Core Pattern: Event-Driven Billing Integration
 
 ```
-Stripe Webhooks → Queue → Billing Events → Organization Updates → Audit Trail
+Stripe Webhooks → Action Requests → Billing Events → Organization Updates → Audit Trail
 ```
 
 **Benefits**: Reliable billing processing, audit compliance, multi-format exports, usage tracking
@@ -134,13 +134,16 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   
-  // Queue the webhook event for processing
-  await queueEvent('StripeWebhookReceived', {
+  // Create action request for webhook processing
+  const action = Action.StripeWebhookReceived.from({
     eventType: event.type,
     eventData: event.data,
     webhookId: event.id
   });
-  
+
+  const actor = { id: 'system', organizationId: event.data.object.metadata?.organizationId };
+  await createActionRequest(action, actor);
+
   res.json({ received: true });
 });
 ```
@@ -476,6 +479,6 @@ const testDataExport = async () => {
 
 - **F107 Implementation**: See `specifications/F107-firebase-soc2-vanilla-app/phase6-billing.md`
 - **Event Sourcing**: See `docs/architecture/event-sourcing.md`
-- **Queue Mechanism**: See `docs/architecture/queue-mechanism.md`
+- **Action Request Architecture**: See `docs/architecture/queue-mechanism.md`
 - **Multi-Tenant**: See `docs/architecture/multi-tenant.md`
 - **Security**: See `docs/architecture/security.md`

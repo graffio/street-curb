@@ -160,7 +160,11 @@ Blockface.replaceSegments = (blockface, segments) => {
 // Additional function: totalLength
 Blockface.totalLength = blockface => {
     if (!blockface?.geometry?.coordinates) return 240
-    const lengthKm = length({ type: 'Feature', geometry: blockface.geometry, properties: {} })
+    const lengthKm = length({
+        type: 'Feature',
+        geometry: blockface.geometry,
+        properties: {},
+    })
     return Math.round(lengthKm * 3280.84)
 }
 

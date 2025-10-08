@@ -27,7 +27,7 @@ export const typeMappings = {
     [`${sources.curbMap}/operation-details.type.js`]      : [targets.curbMap],
     [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
     [`${sources.curbMap}/system-flags.type.js`]           : [targets.curbMap],
-    [`${sources.curbMap}/queue-item.type.js`]             : [targets.curbMap],
+    [`${sources.curbMap}/action-request.type.js`]         : [targets.curbMap],
     
    
     // special case: source is just copied verbatim to target

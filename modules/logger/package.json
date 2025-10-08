@@ -6,6 +6,10 @@
     "exports": {
         ".": "./index.js"
     },
+    "scripts": {
+        "tap": "../../bash/run-tap.sh ../test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh"
+    },
     "description": "Environment-aware structured logging for Graffio",
     "keywords": ["logging", "structured-logging"],
     "author": "Graffio",

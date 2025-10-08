@@ -1,28 +1,28 @@
-# F111 - Offline Queue Architecture
+# F111 - Offline Action Request Architecture
 
 **Implement offline-capable client operations with sync for CurbMap**
 
 ## Overview
 
-This specification implements the offline-first architecture defined in [offline-first] and [queue-mechanism]. The
+This specification implements the offline-first architecture defined in [offline-first] and [action-request-architecture]. The
 system provides offline-capable client operations with automatic sync, conflict resolution, and real-time status updates
 for field workers.
 
-    `Client Operations → Local Queue → Sync → Conflict Resolution → Real-Time Updates`
+    `Client Operations → Local Action Requests → Sync → Conflict Resolution → Real-Time Updates`
 
 ## References
 
 - [offline-first] — Canonical offline-first patterns, connection management, sync strategies
-- [queue-mechanism] — Queue processing patterns, conflict resolution, retry logic
+- [action-request-architecture] — Action request processing patterns, conflict resolution, retry logic
 - [event-sourcing] — Event scoping and materialized view patterns
 
 ## Implementation Phases
 
-### Phase 1: Client-Side Queue Operations
+### Phase 1: Client-Side Action Request Operations
 
-- **task_1_1_queue_service**: Implement client-side queue service
+- **task_1_1_action_request_service**: Implement client-side action request service
 - **task_1_2_offline_storage**: Create offline storage mechanisms
-- **task_1_3_queue_validation**: Add queue operation validation
+- **task_1_3_action_request_validation**: Add action request operation validation
 
 ### Phase 2: Offline Sync Handling
 
@@ -55,6 +55,6 @@ for field workers.
 
 [offline-first]: ../../docs/architecture/offline-first.md
 
-[queue-mechanism]: ../../docs/architecture/queue-mechanism.md
+[action-request-architecture]: ../../docs/architecture/queue-mechanism.md
 
 [event-sourcing]: ../../docs/architecture/event-sourcing.md
