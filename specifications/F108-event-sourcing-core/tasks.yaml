@@ -6,8 +6,8 @@ references:
   - name: "authentication"
     path: ../docs/architecture/authentication.md
 
-current_task: "task_2_final_orchestration"
-status: "pending"
+current_task: null
+status: "completed"
 
 # Reference: See ../../docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
 
@@ -154,31 +154,32 @@ tasks:
 
   - id: "task_2_final_orchestration"
     description: "Add idempotency check and completedActions audit trail"
-    status: "pending"
+    status: "completed"
     phase: "Function Implementation"
     dependencies:
       - "task_1_5_create_queue_collection"
     estimated_hours: 1
     implementation: |
-      - Update `modules/curb-map/functions/src/handle-action-request-added.js`:
-        1. Add idempotency check: Query completedActions by idempotencyKey before processing
-        2. If found, return early with existing result (log replay attempt)
-        3. After successful completion, copy ActionRequest to completedActions collection
-      - This completes the core event sourcing infrastructure (actionRequests → completedActions audit trail)
-      - Authorization and domain handlers will be added in F109/F110
+      ✅ Updated `modules/curb-map/functions/src/handle-action-request-added.js`:
+        ✅ Added idempotency check via completedActions.list() + find by idempotencyKey
+        ✅ Duplicate requests marked as completed with resultData.duplicateOf reference
+        ✅ Successful completions copied to completedActions collection for SOC2 audit
+        ✅ Fixed areTriggersDisabled to handle missing flags (default enabled)
+      ✅ Core event sourcing infrastructure complete (actionRequests → completedActions)
+      📝 Authorization (F109) and domain handlers (F110) to be added in those specs
     validation:
-      - "Duplicate idempotency keys return early without reprocessing"
-      - "Completed action requests are copied to completedActions collection"
-      - "Idempotency check logged for audit trail"
+      ✅ "Duplicate idempotency keys return early without reprocessing"
+      ✅ "Completed action requests are copied to completedActions collection"
+      ✅ "Idempotency check logged for audit trail"
     tests:
-      - "modules/curb-map/test/minimal-giant-function.firebase.js (extend existing tests)"
+      ✅ "modules/curb-map/test/minimal-giant-function.firebase.js (extended with 2 new tests)"
     notes: |
       Collapsed from over-engineered task_2_2, task_2_3, task_3_1, task_5_1.
       - task_3_1 deleted: Action tagged types already provide validation
       - task_5_1 deleted: integration tests already exist (minimal-giant-function.firebase.js)
       - Authorization (F109) and domain handlers (F110) deferred to those specs
 
-completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function", "task_1_5_create_queue_collection" ]
+completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function", "task_1_5_create_queue_collection", "task_2_final_orchestration" ]
 
 deleted_as_overengineered:
   - "task_2_2_giant_function - collapsed into task_2_final_orchestration"
