@@ -152,31 +152,11 @@ tasks:
     tests:
       - "modules/curb-map/test/firestore-admin.firebase.js"
 
-  - id: "task_2_1_action_request_utilities"
-    description: "Implement action request management utilities and helper functions"
-    status: "pending"
-    phase: "Action Request Collection Setup"
-    dependencies:
-      - "task_1_5_create_queue_collection"
-    estimated_hours: 3
-    implementation: |
-      - Create `modules/curb-map/functions/src/events/action-request.js` exporting pure helpers listed in ../../docs/architecture/event-sourcing.md ("Action Request Helpers" section).
-      - Ensure helpers accept `(projectId, payload, actor)` and honor the dry-run flag by logging instead of writing.
-      - Use shared uuid/id helpers from `modules/functional` to generate `actionRequestId` and `idempotencyKey`.
-      - Mirror logging fields shown under "Observability" in the architecture doc.
-    validation:
-      - "Helper returns deterministic structures matching the schema"
-      - "Dry-run mode emits structured logs without writes"
-      - "Invalid payloads trigger descriptive errors"
-    tests:
-      - "modules/curb-map-functions/test/action-request-helpers.tap.js"
-
   - id: "task_2_2_giant_function"
     description: "Create main action request processing orchestrator (infrastructure only)"
     status: "pending"
     phase: "Function Implementation"
     dependencies:
-      - "task_2_1_action_request_utilities"
       - "task_2_3_idempotency"
       - "task_3_1_event_types"
       - "F109:task_4_2_authz_middleware"
@@ -284,6 +264,7 @@ notes: |
   - Domain logic: F110 (organization/project/user event handlers)
   - Materialized views: F110 task_3_1, task_3_2, task_3_3
   - Client-side queue: F111 (offline queue architecture)
+  - Action request helpers: F111 task_1_1 (client-side, deferred until Actions defined)
 
   Task ID format: task_{phase}_{sequence}_{description}
   Status values: pending, in_progress, completed, blocked, cancelled
