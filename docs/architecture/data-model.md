@@ -3,45 +3,53 @@
 ## Core Pattern: Event Sourcing + Materialized Views
 
 ```
-Client (Online/Offline) → Firestore Queue → Giant Function → Events → Materialized Views
+Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
 ```
 
 **Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
 
 ## Event Sourcing Pattern
 
-### Events (Source of Truth)
-Events are immutable and provide the complete audit trail:
+### Completed Actions (Source of Truth)
+Completed actions are immutable and provide the complete audit trail:
 
 ```javascript
-// Events collection - immutable audit trail
-events: {
+// completedActions collection - immutable audit trail
+completedActions: {
   eventId: {
-    type: "UserCreated" | "UserUpdated" | "UserForgotten" | "RoleAssigned",
-    organizationId: "cuid2",
-    projectId: "cuid2", // hidden from UI for now
-    actor: { 
+    id: "acr_<cuid12>",                // action request ID
+    eventId: "evt_<cuid12>",           // permanent audit ID
+    action: Action,                     // UserAdded | OrganizationAdded (tagged sum)
+    organizationId: "org_<cuid12>",
+    projectId: "prj_<cuid12>",         // optional
+    actor: {
       type: "user" | "system" | "api",
-      id: "cuid2" 
+      id: "usr_<cuid12>"
     },
-    subject: { 
+    subject: {
       type: "user" | "organization" | "project",
-      id: "cuid2" 
+      id: "usr|org|prj_<cuid12>"
     },
-    data: { /* event-specific data */ },
-    timestamp: "ISO string",
-    correlationId: "cuid2" // for client→server error tracking
+    status: "completed" | "failed",
+    error: "string"?,                   // error message if failed
+    idempotencyKey: "idm_<cuid12>",
+    correlationId: "cor_<cuid12>",     // for client→server error tracking
+    createdAt: "serverTimestamp",       // when request was created
+    processedAt: "serverTimestamp",     // when processing finished
+    schemaVersion: 1
   }
 }
 ```
 
-### Event Types
-- **UserCreated**: New user registration
+### Action Types
+Actions represent domain events that can be requested:
+
+- **UserAdded**: New user registration
 - **UserUpdated**: User profile changes
 - **UserForgotten**: GDPR/CCPA data deletion
 - **RoleAssigned**: Permission changes
-- **OrganizationCreated**: New organization setup
-- **ProjectCreated**: New project within organization
+- **OrganizationAdded**: New organization setup
+- **ProjectAdded**: New project within organization
 
 ## Materialized Views (Performance)
 
@@ -116,30 +124,39 @@ Organization
 - **Materialized View Scoping**: Views filtered by organization
 - **Security Rules**: Firestore rules enforce isolation
 
-## Queue Processing
+## Action Request Processing
 
-### Firestore Queue
+### Action Requests Collection
 ```javascript
-// Update queue for offline support
-update_queue: {
-  queueId: {
-    action: "create" | "update" | "delete",
-    data: { /* action-specific data */ },
-    userId: "cuid2",
-    organizationId: "cuid2",
-    idempotencyKey: "cuid2",
-    timestamp: "ISO string",
-    retryCount: 0,
-    status: "pending" | "processing" | "completed" | "failed"
+// actionRequests collection for offline support (mutable operational data)
+actionRequests: {
+  requestId: {
+    id: "acr_<cuid12>",                 // action request ID
+    eventId: "evt_<cuid12>",            // permanent audit ID (assigned on creation)
+    action: Action,                      // Action tagged sum (UserAdded | OrganizationAdded)
+    actorId: "usr_<cuid12>",
+    subjectId: "usr|org|prj_<cuid12>",
+    subjectType: "user" | "organization" | "project",
+    organizationId: "org_<cuid12>",
+    projectId: "prj_<cuid12>"?,
+    idempotencyKey: "idm_<cuid12>",
+    correlationId: "cor_<cuid12>",
+    status: "pending" | "completed" | "failed",
+    resultData: { /* success data like created entity IDs */ }?,
+    error: "string"?,
+    createdAt: "serverTimestamp",
+    processedAt: "serverTimestamp"?,
+    schemaVersion: 1
   }
 }
 ```
 
 ### Giant Function Processing
-- **Event Processing**: Convert queue items to events
-- **Idempotency**: Prevent duplicate processing
-- **Materialized View Updates**: Update cached views
-- **Error Handling**: Retry failed operations
+- **Action Processing**: Execute requested actions and create immutable audit records
+- **Idempotency**: Prevent duplicate processing using idempotencyKey
+- **Audit Recording**: Copy completed ActionRequest to completedActions collection (immutable)
+- **Materialized View Updates**: Update cached views from completed actions
+- **Error Handling**: Mark failed requests with error messages for forensics
 
 ## Schema Versioning
 
@@ -156,7 +173,7 @@ update_queue: {
 ```
 
 ### Migration Strategy
-- **Immutable Events**: Events never change once created
+- **Immutable Completed Actions**: Completed actions never change once created
 - **New Event Types**: Add new event types for schema changes
 - **Backward Compatibility**: Event processors handle multiple versions
 - **Migration Events**: Special events for data transformations
@@ -164,7 +181,7 @@ update_queue: {
 ## Data Consistency
 
 ### Eventual Consistency
-- **Queue Processing**: Asynchronous event processing
+- **Action Request Processing**: Asynchronous event processing
 - **Materialized Views**: Eventually consistent with events
 - **Client Updates**: Optimistic updates with conflict resolution
 
@@ -178,7 +195,7 @@ update_queue: {
 ### Indexing Strategy
 - **Event Queries**: Index on organizationId, timestamp, type
 - **Materialized Views**: Index on frequently queried fields
-- **Queue Processing**: Index on status, timestamp
+- **Action Request Processing**: Index on status, createdAt
 
 ### Caching
 - **Materialized Views**: Pre-computed for performance

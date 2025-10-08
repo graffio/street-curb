@@ -13,25 +13,25 @@ status: "in_progress"
 
 tasks:
   - id: "task_1_1_create_tagged_types_and_helpers"
-    description: "Create QueueItem and Action tagged types with Firestore integration helpers"
+    description: "Create ActionRequest and Action tagged types with Firestore integration helpers"
     status: "completed"
     phase: "Foundation"
     dependencies: [ ]
     estimated_hours: 5
     implementation: |
-        - Create QueueItem and Action (DomainEvent) in modules/curb-map/type-definitions/
+        - Create ActionRequest and Action (DomainEvent) in modules/curb-map/type-definitions/
       - Add toFirestore/fromFirestore functions while leaving raw Date values on the tagged types
       - Mark timestamp-bearing fields via `Type.timestampFields` so facades can handle conversion per runtime
       - Add comprehensive error handling and validation
       - Follow existing patterns from audit-record.js and operation-details.js
     validation:
-      - "Tagged types validate QueueItem structure correctly"
+      - "Tagged types validate ActionRequest structure correctly"
       - "toFirestore/fromFirestore functions handle Date/ServerTimestamp conversion"
       - "Date conversion functions work correctly in client context"
       - "Error handling covers edge cases"
       - "Types integrate with existing Firestore patterns"
     tests:
-      - "modules/curb-map/test/queue-types.tap.js"
+      - "modules/curb-map/test/action-request-types.tap.js"
       - "modules/curb-map/test/firestore-helpers.tap.js"
 
   - id: "task_1_2_setup_integration_testing"
@@ -91,7 +91,7 @@ tasks:
       - Implement trigger guard (DISABLE_TRIGGERS) for test seeding
       - Add structured logging and error handling
       - Focus on enabling integration tests, not full production features
-        - Use QueueItem and Action types from curb-map workspace
+        - Use ActionRequest and Action types from curb-map workspace
     validation:
       - "Function processes queue items and creates events"
       - "Trigger guard works correctly during test seeding"
@@ -109,9 +109,9 @@ tasks:
       - "task_1_4_create_minimal_giant_function"
     estimated_hours: 6
     implementation: |
-      - Rename QueueItem type to ActionRequest in modules/curb-map/type-definitions/
-      - Add new SOC2 fields to ActionRequest: eventId, subject, organizationId, projectId, correlationId, schemaVersion
-      - Update collection name from 'queueItems' to 'actionRequests' in firestore-facade-shared.js
+      - Created ActionRequest type (renamed from QueueItem) in modules/curb-map/type-definitions/
+      - Added new SOC2 fields to ActionRequest: eventId, subject, organizationId, projectId, correlationId, schemaVersion
+      - Updated collection name from 'queueItems' to 'actionRequests' in firestore-facade-shared.js
       - Add 'completedActions' collection registration (write-once, immutable audit trail)
       - Remove incorrect 'actions' collection registration
       - Create firestore.indexes.json with composite indexes:
@@ -140,45 +140,45 @@ tasks:
       - "Rule + index deployments logged in infrastructure runbook"
     tests:
       - "modules/curb-map/test/action-request-collection.firebase.js"
-r
-  - id: "task_2_1_queue_utilities"
-    description: "Implement queue management utilities and helper functions"
+
+  - id: "task_2_1_action_request_utilities"
+    description: "Implement action request management utilities and helper functions"
     status: "pending"
-    phase: "Queue Collection Setup"
+    phase: "Action Request Collection Setup"
     dependencies:
       - "task_1_5_create_queue_collection"
     estimated_hours: 3
     implementation: |
-      - Create `modules/curb-map/functions/src/events/queue.js` exporting pure helpers listed in ../../docs/architecture/event-sourcing.md ("Queue Helpers" section).
+      - Create `modules/curb-map/functions/src/events/action-request.js` exporting pure helpers listed in ../../docs/architecture/event-sourcing.md ("Action Request Helpers" section).
       - Ensure helpers accept `(projectId, payload, actor)` and honor the dry-run flag by logging instead of writing.
-      - Use shared uuid/id helpers from `modules/functional` to generate `queueId` and `idempotencyKey`.
+      - Use shared uuid/id helpers from `modules/functional` to generate `actionRequestId` and `idempotencyKey`.
       - Mirror logging fields shown under "Observability" in the architecture doc.
     validation:
       - "Helper returns deterministic structures matching the schema"
       - "Dry-run mode emits structured logs without writes"
       - "Invalid payloads trigger descriptive errors"
     tests:
-      - "modules/curb-map-functions/test/queue-helpers.tap.js"
+      - "modules/curb-map-functions/test/action-request-helpers.tap.js"
 
   - id: "task_2_2_giant_function"
-    description: "Create main queue processing function with error handling"
+    description: "Create main action request processing function with error handling"
     status: "pending"
     phase: "Function Implementation"
     dependencies:
-      - "task_2_1_queue_utilities"
+      - "task_2_1_action_request_utilities"
     estimated_hours: 6
     implementation: |
-      - Implement `modules/curb-map/functions/src/events/process-update-queue.js` using the flow in "Processing Flow".
+      - Implement `modules/curb-map/functions/src/events/process-action-requests.js` using the flow in "Processing Flow".
       - Inject validators and authorization hooks from the event registry (task_3_1/task_3_2) via dependency parameters to keep functions pure for testing.
-      - Persist status transitions (`pending → processing → completed/failed`) exactly as documented under "Queue Item Lifecycle".
-      - Emit structured logs (`queueItemId`, `eventType`, `attempt`, `durationMs`).
+      - Persist status transitions (`pending → processing → completed/failed`) exactly as documented under "Action Request Lifecycle".
+      - Emit structured logs (`actionRequestId`, `actionType`, `attempt`, `durationMs`).
     validation:
-      - "On-create trigger processes new queue items end-to-end in emulator"
-      - "Failures mark queue docs with status=failed and retain error context"
-      - "Idempotent replays leave queue item unchanged"
+      - "On-create trigger processes new action requests end-to-end in emulator"
+      - "Failures mark action request docs with status=failed and retain error context"
+      - "Idempotent replays leave action request unchanged"
     tests:
-      - "modules/curb-map-functions/test/process-update-queue.tap.js"
-      - "modules/curb-map-functions/test/process-update-queue.firebase.js"
+      - "modules/curb-map-functions/test/process-action-requests.tap.js"
+      - "modules/curb-map-functions/test/process-action-requests.firebase.js"
 
   - id: "task_2_3_idempotency"
     description: "Implement idempotency checks to prevent duplicate processing"

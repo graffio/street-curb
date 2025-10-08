@@ -62,17 +62,25 @@ viewer: {
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /update_queue/{queueId} {
-      allow create: if 
+    match /actionRequests/{actionRequestId} {
+      allow create: if
         request.auth != null &&
-        request.resource.data.keys().hasAll(['action', 'data', 'idempotencyKey', 'userId']) &&
-        request.resource.data.userId == request.auth.uid;
-      
-      allow read: if 
-        request.auth != null && 
-        resource.data.userId == request.auth.uid;
-      
-      allow update: if false; // Only server functions can update
+        request.resource.data.keys().hasAll(['action', 'actor', 'idempotencyKey', 'eventId']) &&
+        request.resource.data.actor.id == request.auth.uid;
+
+      allow read: if
+        request.auth != null &&
+        resource.data.actor.id == request.auth.uid;
+
+      allow update: if false; // Only server functions can update status
+    }
+
+    match /completedActions/{eventId} {
+      allow read: if
+        request.auth != null &&
+        request.auth.token.organizations[resource.data.organizationId] != null;
+
+      allow write: if false; // Only server functions can write (immutable audit trail)
     }
   }
 }

@@ -1,96 +1,106 @@
-# Queue Mechanism Architecture
+# Action Request Architecture
 
-## Core Pattern: Offline-First Queue Processing
+## Core Pattern: Offline-First Action Request Processing
 
 ```
-Client (Online/Offline) → Firestore Queue → Giant Function → Events → Materialized Views
+Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
 ```
 
 **Benefits**: Offline-first operations, reliable processing, conflict resolution, real-time status updates
 
-## Queue Architecture Principles
+## Action Request Architecture Principles
 
 ### Offline-First Design
 - **Always Available**: Operations work whether online or offline
-- **Immediate Feedback**: Users get immediate confirmation of queued operations
+- **Immediate Feedback**: Users get immediate confirmation of action requests
 - **Automatic Sync**: Operations process automatically when connection is restored
-- **Status Tracking**: Real-time status updates for all queued operations
+- **Status Tracking**: Real-time status updates for all action requests
 
-### Queue Structure
+### Action Request Structure
 ```javascript
-// Firestore collection: update_queue
+// Firestore collection: actionRequests
 {
-  queueId: {
-    action: "createEvent" | "updateUser" | "deleteProject",
-    data: { /* operation-specific data */ },
-    idempotencyKey: "uuid-v4",
-    userId: "firebase-uid",
-    organizationId: "cuid2",
-    timestamp: "serverTimestamp",
+  actionRequestId: {
+    id: "acr_<cuid12>",
+    eventId: "evt_<cuid12>",
+    action: Action,
+    actorId: "usr_<cuid12>",
+    subjectId: "usr|org|prj_<cuid12>",
+    subjectType: "user" | "organization" | "project",
+    organizationId: "org_<cuid12>",
+    projectId: "prj_<cuid12>"?,
+    idempotencyKey: "idm_<cuid12>",
+    correlationId: "cor_<cuid12>",
+    schemaVersion: 1,
     status: "pending" | "processing" | "completed" | "failed",
-    result: { /* operation result */ },
-    error: "error message",
-    processedAt: "serverTimestamp",
-    retryCount: 0
+    resultData: { /* operation result */ }?,
+    error: "error message"?,
+    createdAt: "serverTimestamp",
+    processedAt: "serverTimestamp"?
   }
 }
 ```
 
-## Client-Side Queue Operations
+## Client-Side Action Request Operations
 
-### Queue Service Pattern
+### Action Request Service Pattern
 ```javascript
 /**
- * Queue operation for processing
- * @sig queueOperation :: (String, Object) -> Promise<String>
+ * Create action request for processing
+ * @sig createActionRequest :: (Action, Object) -> Promise<String>
  */
-export const queueOperation = async (action, data) => {
+export const createActionRequest = async (action, actor) => {
   const idempotencyKey = crypto.randomUUID();
-  
-  const queueItem = {
+
+  const actionRequest = ActionRequest.from({
+    id: newActionRequestId(),
+    eventId: newEventId(),
     action,
-    data,
+    actorId: actor.id,
+    subjectId: action.subject.id,
+    subjectType: action.subject.type,
+    organizationId: actor.organizationId,
+    projectId: action.projectId,
     idempotencyKey,
-    userId: auth.currentUser.uid,
-    timestamp: serverTimestamp(),
-    status: 'pending'
-  };
-  
-  const docRef = await addDoc(collection(db, 'update_queue'), queueItem);
+    correlationId: newCorrelationId(),
+    schemaVersion: 1,
+    status: 'pending',
+    createdAt: serverTimestamp()
+  });
+
+  const docRef = await addDoc(collection(db, 'actionRequests'), ActionRequest.toFirestore(actionRequest));
   return docRef.id;
 };
 ```
 
-### Event Queueing
+### Event Action Request
 ```javascript
 /**
- * Queue event creation
- * @sig queueEvent :: (String, Object) -> Promise<String>
+ * Create action request for event creation
+ * @sig createActionEvent :: (String, Object, Object) -> Promise<String>
  */
-export const queueEvent = async (eventType, data) => {
-  return queueOperation('createEvent', {
-    eventType,
-    data
-  });
+export const createActionEvent = async (eventType, data, actor) => {
+  const action = Action.from({ eventType, data });
+  return createActionRequest(action, actor);
 };
 ```
 
 ### Status Monitoring
 ```javascript
 /**
- * Watch queue item status
- * @sig watchQueueStatus :: (String, Function) -> Function
+ * Watch action request status
+ * @sig watchActionRequestStatus :: (String, Function) -> Function
  */
-export const watchQueueStatus = (queueId, callback) => {
+export const watchActionRequestStatus = (actionRequestId, callback) => {
   return onSnapshot(
     query(
-      collection(db, 'update_queue'),
-      where('__name__', '==', queueId)
+      collection(db, 'actionRequests'),
+      where('__name__', '==', actionRequestId)
     ),
     (snapshot) => {
       if (!snapshot.empty) {
-        const item = snapshot.docs[0].data();
-        callback(item.status, item.result, item.error);
+        const item = ActionRequest.fromFirestore(snapshot.docs[0].data());
+        callback(item.status, item.resultData, item.error);
       }
     }
   );
@@ -126,25 +136,25 @@ export const monitorConnection = (onOnline, onOffline) => {
 };
 ```
 
-### Offline Queue Operations
+### Offline Action Request Operations
 ```javascript
 /**
- * Queue operation with offline support
- * @sig queueOperationOffline :: (String, Object) -> Promise<String>
+ * Create action request with offline support
+ * @sig createActionRequestOffline :: (Action, Object) -> Promise<String>
  */
-export const queueOperationOffline = async (action, data) => {
+export const createActionRequestOffline = async (action, actor) => {
   try {
-    // Always queue the operation (works offline)
-    const queueId = await queueOperation(action, data);
-    
+    // Always create the action request (works offline)
+    const actionRequestId = await createActionRequest(action, actor);
+
     if (isOnline()) {
-      return queueId;
+      return actionRequestId;
     } else {
       await waitForConnection();
-      return queueId;
+      return actionRequestId;
     }
   } catch (error) {
-    console.error('Failed to queue operation:', error);
+    console.error('Failed to create action request:', error);
     throw error;
   }
 };
@@ -197,17 +207,17 @@ export const checkConflicts = async (action, data) => {
  * Retry failed operations with exponential backoff
  * @sig retryOperation :: (String, Number) -> Promise<Void>
  */
-export const retryOperation = async (queueId, maxRetries = 3) => {
-  const operation = await getQueueItem(queueId);
-  
-  if (operation.retryCount >= maxRetries) {
-    await markOperationFailed(queueId, 'Max retries exceeded');
+export const retryOperation = async (actionRequestId, maxRetries = 3) => {
+  const actionRequest = await getActionRequest(actionRequestId);
+
+  if (actionRequest.retryCount >= maxRetries) {
+    await markOperationFailed(actionRequestId, 'Max retries exceeded');
     return;
   }
-  
-  const delay = Math.pow(2, operation.retryCount) * 1000; // Exponential backoff
+
+  const delay = Math.pow(2, actionRequest.retryCount) * 1000; // Exponential backoff
   setTimeout(async () => {
-    await processOperation(queueId);
+    await processOperation(actionRequestId);
   }, delay);
 };
 ```
@@ -223,21 +233,18 @@ export const retryOperation = async (queueId, maxRetries = 3) => {
 ### Status Tracking
 ```javascript
 /**
- * Watch all user's queue items
- * @sig watchUserQueue :: (Function) -> Function
+ * Watch all user's action requests
+ * @sig watchUserActionRequests :: (Function) -> Function
  */
-export const watchUserQueue = (callback) => {
+export const watchUserActionRequests = (callback) => {
   return onSnapshot(
     query(
-      collection(db, 'update_queue'),
-      where('userId', '==', auth.currentUser.uid),
-      orderBy('timestamp', 'desc')
+      collection(db, 'actionRequests'),
+      where('actorId', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc')
     ),
     (snapshot) => {
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const items = snapshot.docs.map(doc => ActionRequest.fromFirestore(doc.data()));
       callback(items);
     }
   );
@@ -245,46 +252,45 @@ export const watchUserQueue = (callback) => {
 ```
 
 ### Status States
-- **Pending**: Operation queued, waiting for processing
-- **Processing**: Operation currently being processed
-- **Completed**: Operation completed successfully
-- **Failed**: Operation failed with error
-- **Retrying**: Operation failed, retrying
+- **Pending**: Action request created, waiting for processing
+- **Processing**: Action request currently being processed
+- **Completed**: Action request completed successfully
+- **Failed**: Action request failed with error
 
 ## Performance Optimization
 
 ### Batch Processing
 - **Batch Operations**: Group related operations for efficiency
 - **Batch Size Limits**: Prevent overwhelming the processing system
-- **Priority Queuing**: Process high-priority operations first
+- **Priority Processing**: Process high-priority action requests first
 
-### Queue Management
-- **Queue Cleanup**: Remove completed operations after retention period
-- **Dead Letter Queue**: Move failed operations to separate queue
-- **Queue Monitoring**: Track queue depth and processing rates
+### Action Request Management
+- **Cleanup**: Archive completed action requests after retention period
+- **Failed Requests**: Track failed action requests for debugging
+- **Monitoring**: Track processing depth and rates
 
 ## Security Considerations
 
 ### Access Control
-- **User Scoping**: Users can only see their own queue items
-- **Organization Scoping**: Operations scoped to user's organizations
+- **User Scoping**: Users can only see their own action requests
+- **Organization Scoping**: Action requests scoped to user's organizations
 - **Permission Validation**: Verify permissions before processing
 
 ### Data Protection
-- **Input Validation**: Validate all queued data
+- **Input Validation**: Validate all action request data
 - **Sanitization**: Sanitize data before processing
-- **Audit Logging**: Log all queue operations for compliance
+- **Audit Logging**: Log all action requests for compliance
 
 ## Monitoring and Observability
 
 ### Metrics
-- **Queue Depth**: Number of pending operations
-- **Processing Rate**: Operations processed per minute
-- **Error Rate**: Percentage of failed operations
-- **Average Processing Time**: Time from queue to completion
+- **Pending Requests**: Number of pending action requests
+- **Processing Rate**: Action requests processed per minute
+- **Error Rate**: Percentage of failed action requests
+- **Average Processing Time**: Time from creation to completion
 
 ### Alerting
-- **Queue Backlog**: Alert when queue depth exceeds threshold
+- **Request Backlog**: Alert when pending requests exceeds threshold
 - **High Error Rate**: Alert when error rate exceeds threshold
 - **Processing Delays**: Alert when processing time exceeds threshold
 

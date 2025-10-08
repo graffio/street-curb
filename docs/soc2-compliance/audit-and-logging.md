@@ -194,17 +194,17 @@ Complete audit trail of business operations - separate from infrastructure opera
 ### Schema
 
 ```javascript
-events: {
+completedActions: {
     eventId: {
         type: "UserCreated" | "UserUpdated" | "UserForgotten" |...,
         organizationId: "cuid2",
             projectId:"cuid2",
             actor:{
-                type: "user" | "system" | "api", 
+                type: "user" | "system" | "api",
                 id:"cuid2"
             },
         subject: {
-            type: "user" | "organization" | "project", 
+            type: "user" | "organization" | "project",
             id:"cuid2"
         },
         data: { /* event-specific data */ },
@@ -228,9 +228,9 @@ events: {
 ### Access
 
 ```javascript
-// Query events for audit
-const events = await firestore
-    .collection('events')
+// Query completed actions for audit
+const completedActions = await firestore
+    .collection('completedActions')
     .where('actor.id', '==', userId)
     .where('timestamp', '>=', startDate)
     .where('timestamp', '<=', endDate)

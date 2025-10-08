@@ -35,7 +35,7 @@
 ### Stripe Integration
 - **Webhook Events**: Which Stripe events to handle? (`invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`)
 - **Failure Handling**: How to handle webhook failures and retries?
-- **Queue Integration**: How to integrate Stripe webhooks with queue pattern?
+- **Action Request Integration**: How to integrate Stripe webhooks with action request pattern?
 
 ### Email Service
 - **Provider**: SendGrid vs alternatives? (SendGrid has SOC2 compliance)

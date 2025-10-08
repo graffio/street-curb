@@ -7,7 +7,7 @@ This document summarizes the specifications that were previously archived in `sp
 
 - Implemented infrastructure foundation with orchestration system and migration framework
 - Created comprehensive architecture documentation covering event sourcing, authentication, multi-tenancy, offline-first, and billing
-- Extracted implementation phases into focused specifications: F108 (Event Sourcing Core), F109 (Authentication System), F110 (Multi-Tenant Data Model), F111 (Offline Queue Architecture), F112 (Billing & Export)
+- Extracted implementation phases into focused specifications: F108 (Event Sourcing Core), F109 (Authentication System), F110 (Multi-Tenant Data Model), F111 (Offline Action Request Architecture), F112 (Billing & Export)
 - Established manual setup procedures, decision log, and testing strategies
 - All implementation details now live in individual F### specifications; see `docs/architecture/` for preserved architectural guidance
 

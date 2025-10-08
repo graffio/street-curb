@@ -42,7 +42,7 @@ firebase emulators:start --only functions,firestore --project <projectId>
 ## Exercising Functions
 
 - **HTTP functions**: `curl http://localhost:5001/<projectId>/us-central1/<functionName>`
-- **Firestore triggers**: create queue items via `FirestoreAdminFacade` in the test harness.
+- **Firestore triggers**: create action requests via `FirestoreAdminFacade` in the test harness.
 - Watch the emulator terminal for log output and errors.
 
 ---
@@ -52,7 +52,7 @@ firebase emulators:start --only functions,firestore --project <projectId>
 ```js
 import t from 'tap'
 import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
-import { QueueItem } from '../src/types/index.js'
+import { ActionRequest } from '../src/types/index.js'
 import { seed } from '../test-utils/seed.js'
 
 const ns = `tests/ns_${Date.now()}`
@@ -66,13 +66,13 @@ t.before(async () => {
 })
 
 t.after(async () => {
-    const adminFacade = FirestoreAdminFacade(QueueItem, `${ns}/`)
+    const adminFacade = FirestoreAdminFacade(ActionRequest, `${ns}/`)
     await adminFacade.recursiveDelete()
     delete process.env.FIREBASE_TEST_MODE
 })
 
-t.test('Given queue items exist When querying Then pending items are returned', async t => {
-    const adminFacade = FirestoreAdminFacade(QueueItem, `${ns}/`)
+t.test('Given action requests exist When querying Then pending items are returned', async t => {
+    const adminFacade = FirestoreAdminFacade(ActionRequest, `${ns}/`)
     const items = await adminFacade.query([['status', '==', 'pending']])
     t.ok(items.length > 0)
     t.end()

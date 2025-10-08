@@ -101,19 +101,19 @@
 
 ---
 
-## Week 5: Offline Queue Architecture
+## Week 5: Offline Action Request Architecture
 **Goal**: Implement offline-capable client operations with sync
 
 ### Deliverables
-- [ ] Client-side queue operations
+- [ ] Client-side action request operations
 - [ ] Offline sync handling
 - [ ] Conflict resolution mechanisms
 - [ ] Real-time status updates
 - [ ] Error handling and retry logic
 
 ### Key Files
-- **`phase5-offline.md`** - Offline queue implementation
-- **`architecture.md`** - Queue processing patterns
+- **`phase5-offline.md`** - Offline action request implementation
+- **`architecture.md`** - Action request processing patterns
 
 ### Dependencies
 - Week 4 complete (multi-tenant data model)

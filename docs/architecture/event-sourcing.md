@@ -1,16 +1,16 @@
 # Event Sourcing Architecture
 
-## Core Pattern: Event Sourcing + Queue
+## Core Pattern: Event Sourcing + Action Requests
 
 ```
-Client (Online/Offline) → Firestore Queue → Giant Function → Completed Actions → Materialized Views
+Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
 ```
 
 **Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
 
 ### System Snapshot
 
-- **Queue Contract**: Each document in `actionRequests` carries
+- **Action Request Contract**: Each document in `actionRequests` carries
   `{id, eventId, action, idempotencyKey, actor, subject, organizationId, timestamps, status, outcome}`; mutable fields (`status`, `error`,
   `processedAt`) track orchestration state.
 - **Processing Node**: A single-region Cloud Function subscribes to queue writes, enforces validation + authorization,
@@ -53,7 +53,7 @@ const completedActions = {
         error: 'string'?,
         idempotencyKey: 'idm_<cuid12>',
         correlationId: 'cor_CUID2',             // for client→server error tracking
-        createdAt: 'serverTimestamp',       // when request was enqueued
+        createdAt: 'serverTimestamp',       // when request was created
         processedAt: 'serverTimestamp',     // when processing finished
         schemaVersion: 1
     }
@@ -71,7 +71,7 @@ Actions represent domain events that can be requested:
 - **OrganizationAdded**: New organization setup
 - **ProjectAdded**: New project within organization
 
-## Queue Processing Architecture
+## Action Request Processing Architecture
 
 ### Action Request Structure
 
@@ -110,7 +110,7 @@ Actions represent domain events that can be requested:
 | `status`         | pending/completed/failed                                         | Request processing state                                                           |
 | `error`          | Optional string                                                  | Error message when processing fails (including authorization failures)             |
 | `correlationId`  | `FieldTypes.correlationId` (`cor_<12>`)                          | Request tracing across client→server boundary                                      |
-| `createdAt`      | Stored as Firestore `serverTimestamp`                            | When the request was enqueued                                                      |
+| `createdAt`      | Stored as Firestore `serverTimestamp`                            | When the request was created                                                       |
 | `processedAt`    | Stored as Firestore `serverTimestamp`                            | When the processor finished (set on success/failure)                               |
 | `schemaVersion`  | Integer                                                          | Schema version for future migrations                                               |
 
@@ -331,7 +331,7 @@ const recordCompletedAction = async (actionRequest) => {
 ### Data Retention
 
 - **Completed Actions Retention**: 7 years for compliance
-- **Action Request Queue**: Can be purged after completion (operational data)
+- **Action Requests**: Can be purged after completion (operational data)
 - **User Forgotten**: Complete data removal via UserForgotten action
 - **Archive Strategy**: Long-term storage for compliance (Cloud Storage/BigQuery)
 
