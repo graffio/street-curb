@@ -11,14 +11,14 @@ Client (Online/Offline) → Firestore actionRequests → Giant Function → comp
 ### System Snapshot
 
 - **Action Request Contract**: Each document in `actionRequests` carries
-  `{id, eventId, action, idempotencyKey, actor, subject, organizationId, timestamps, status, outcome}`; mutable fields (`status`, `error`,
+  `{id, action, idempotencyKey, actor, subject, organizationId, timestamps, status, outcome}`; mutable fields (`status`, `error`,
   `processedAt`) track orchestration state.
 - **Processing Node**: A single-region Cloud Function subscribes to queue writes, enforces validation + authorization,
   and records audit metadata alongside results.
 - **Audit Store**: Immutable `completedActions` collection partitioned by `{organizationId, projectId}`; append-only semantics
   maintain SOC2 audit guarantees. Each completed ActionRequest is copied verbatim to this collection.
 - **Materialized Views**: Organization-scoped read models (Firestore collections or BigQuery exports) consume completed actions
-  idempotently and log last processed `eventId`.
+  idempotently and log last processed action request `id`.
 - **Idempotency**: CUID2-based keys persisted in `processed_operations` avoid duplicate processing even under
   at-least-once delivery.
 
@@ -41,9 +41,8 @@ Completed actions are the source of truth and cannot be modified once written:
 ```javascript
 // completedActions collection - immutable audit trail
 const completedActions = {
-    eventId: {
-        id: 'acr_<cuid12>',                // request ID
-        eventId: 'evt_<cuid12>',           // permanent audit ID
+    id: {
+        id: 'acr_<cuid12>',                // action request ID (used as document ID)
         action: Action,                     // UserAdded | OrganizationAdded (tagged sum)
         organizationId: 'org_CUID2',
         projectId: 'prj_CUID2',
@@ -78,9 +77,8 @@ Actions represent domain events that can be requested:
 ```
 // Firestore collection: actionRequests
 {
-  requestId: {
-    id: 'acr_<cuid12>',               // request ID
-    eventId: 'evt_<cuid12>',          // permanent audit ID (assigned on creation)
+  id: {
+    id: 'acr_<cuid12>',               // action request ID (used as document ID)
     actor: { id: 'usr_<cuid12>', type: 'user' },
     subject: { id: 'usr_<cuid12>', type: 'user' | 'organization' | 'project' },
     action: Action,                    // Action tagged sum (UserAdded | OrganizationAdded)
@@ -99,8 +97,7 @@ Actions represent domain events that can be requested:
 
 | Field            | Source Type / Definition                                         | Meaning                                                                            |
 |------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `id`             | `FieldTypes.actionRequestId` (`acr_<12>` )                       | Primary key for the request document                                               |
-| `eventId`        | `FieldTypes.eventId` (`evt_<12>`)                                | Permanent audit ID (assigned on creation, used in completedActions)                |
+| `id`             | `FieldTypes.actionRequestId` (`acr_<12>` )                       | Action request ID (used as document ID in both actionRequests and completedActions)|
 | `actor`          | Written by `ActionRequest.toFirestore` (`{ id, type }`)          | Who initiated the action (currently always `type: 'user'`; service IDs come later) |
 | `subject`        | `{ id, type }` object                                            | What entity is being affected by this action (SOC2 requirement)                    |
 | `action`         | `Action` tagged sum (`modules/curb-map/type-definitions/action`) | Domain event payload (e.g., `UserAdded`, `OrganizationAdded`)                      |
@@ -294,7 +291,7 @@ const recordCompletedAction = async (actionRequest) => {
     // Copy the ActionRequest verbatim to completedActions (immutable)
     await admin.firestore()
         .collection('completedActions')
-        .doc(actionRequest.eventId)
+        .doc(actionRequest.id)
         .set({
             ...actionRequest,
             schemaVersion: 1

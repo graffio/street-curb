@@ -16,9 +16,8 @@ Completed actions are immutable and provide the complete audit trail:
 ```javascript
 // completedActions collection - immutable audit trail
 completedActions: {
-  eventId: {
-    id: "acr_<cuid12>",                // action request ID
-    eventId: "evt_<cuid12>",           // permanent audit ID
+  id: {
+    id: "acr_<cuid12>",                // action request ID (used as document ID)
     action: Action,                     // UserAdded | OrganizationAdded (tagged sum)
     organizationId: "org_<cuid12>",
     projectId: "prj_<cuid12>",         // optional
@@ -130,9 +129,8 @@ Organization
 ```javascript
 // actionRequests collection for offline support (mutable operational data)
 actionRequests: {
-  requestId: {
-    id: "acr_<cuid12>",                 // action request ID
-    eventId: "evt_<cuid12>",            // permanent audit ID (assigned on creation)
+  id: {
+    id: "acr_<cuid12>",                 // action request ID (used as document ID)
     action: Action,                      // Action tagged sum (UserAdded | OrganizationAdded)
     actorId: "usr_<cuid12>",
     subjectId: "usr|org|prj_<cuid12>",
@@ -162,12 +160,12 @@ actionRequests: {
 
 ### Event Versioning
 ```javascript
-// Events include schema version for migrations
+// Completed actions include schema version for migrations
 {
-  eventId: {
-    type: "UserCreated",
-    schemaVersion: "1.0",
-    // ... rest of event
+  id: {
+    action: { '@@tagName': "UserAdded", /* ... */ },
+    schemaVersion: 1,
+    // ... rest of action request
   }
 }
 ```

@@ -195,21 +195,26 @@ Complete audit trail of business operations - separate from infrastructure opera
 
 ```javascript
 completedActions: {
-    eventId: {
-        type: "UserCreated" | "UserUpdated" | "UserForgotten" |...,
-        organizationId: "cuid2",
-            projectId:"cuid2",
-            actor:{
-                type: "user" | "system" | "api",
-                id:"cuid2"
-            },
+    id: {
+        id: "acr_<cuid12>",              // action request ID (used as document ID)
+        action: Action,                   // UserAdded | OrganizationAdded (tagged sum)
+        organizationId: "org_<cuid12>",
+        projectId: "prj_<cuid12>",
+        actor: {
+            type: "user" | "system" | "api",
+            id: "usr_<cuid12>"
+        },
         subject: {
             type: "user" | "organization" | "project",
-            id:"cuid2"
+            id: "usr|org|prj_<cuid12>"
         },
-        data: { /* event-specific data */ },
-        timestamp: "ISO string",
-        correlationId:"cuid2"
+        status: "completed" | "failed",
+        error: "string"?,
+        idempotencyKey: "idm_<cuid12>",
+        correlationId: "cor_<cuid12>",
+        createdAt: "serverTimestamp",
+        processedAt: "serverTimestamp",
+        schemaVersion: 1
     }
 }
 ```

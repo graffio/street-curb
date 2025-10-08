@@ -65,7 +65,7 @@ service cloud.firestore {
     match /actionRequests/{actionRequestId} {
       allow create: if
         request.auth != null &&
-        request.resource.data.keys().hasAll(['action', 'actor', 'idempotencyKey', 'eventId']) &&
+        request.resource.data.keys().hasAll(['action', 'actor', 'idempotencyKey']) &&
         request.resource.data.actor.id == request.auth.uid;
 
       allow read: if
@@ -75,7 +75,7 @@ service cloud.firestore {
       allow update: if false; // Only server functions can update status
     }
 
-    match /completedActions/{eventId} {
+    match /completedActions/{id} {
       allow read: if
         request.auth != null &&
         request.auth.token.organizations[resource.data.organizationId] != null;
