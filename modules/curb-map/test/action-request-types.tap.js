@@ -1,16 +1,19 @@
 import admin from 'firebase-admin'
 import { test } from 'tap'
-import { Action, FieldTypes, QueueItem } from '../src/types/index.js'
+import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
 
 /**
- * {@link module:QueueItem}
+ * {@link module:ActionRequest}
  */
 
 const idempotencyKey = FieldTypes.newIdempotencyKey()
 const organizationId = FieldTypes.newOrganizationId()
-const queueItemId = FieldTypes.newQueueItemId()
+const actionRequestId = FieldTypes.newActionRequestId()
+const eventId = FieldTypes.newEventId()
+const correlationId = FieldTypes.newCorrelationId()
 const actorId = FieldTypes.newUserId()
 const actorId1 = FieldTypes.newUserId()
+const subjectId = FieldTypes.newUserId()
 
 test('Given an Action.UserAdded is created', t => {
     t.test('When the UserAdded contains user data', t => {
@@ -48,30 +51,42 @@ test('Given an Action.UserAdded is created', t => {
     t.end()
 })
 
-test('Given a QueueItem is created with pending status', t => {
-    t.test('When the QueueItem contains all required fields', t => {
+test('Given an ActionRequest is created with pending status', t => {
+    t.test('When the ActionRequest contains all required fields', t => {
         const userAdded = Action.UserAdded.from({ organizationId, user: { id: actorId1, email: 'john@example.com' } })
 
         const createdAt = admin.firestore.FieldValue.serverTimestamp()
 
-        const queueItem = QueueItem.from({
-            id: queueItemId,
+        const actionRequest = ActionRequest.from({
+            id: actionRequestId,
+            eventId,
             action: userAdded,
-            idempotencyKey,
             actorId: actorId1,
+            subjectId,
+            subjectType: 'user',
+            organizationId,
+            idempotencyKey,
+            correlationId,
+            schemaVersion: 1,
             createdAt,
             status: 'pending',
         })
 
-        t.equal(queueItem.id, queueItemId, 'Then the queue ID is preserved')
-        t.ok(Action.UserAdded.is(queueItem.action), 'Then the action is preserved')
-        t.equal(queueItem.idempotencyKey, idempotencyKey, 'Then the idempotency key is preserved')
-        t.equal(queueItem.actorId, actorId1, 'Then the user ID is preserved')
-        t.equal(queueItem.createdAt, createdAt, 'Then the server createdAt is preserved')
-        t.equal(queueItem.status, 'pending', 'Then the status is preserved')
-        t.equal(queueItem.resultData, undefined, 'Then the result data is undefined by default')
-        t.equal(queueItem.error, undefined, 'Then the error is undefined by default')
-        t.equal(queueItem.processedAt, undefined, 'Then the processed createdAt is undefined by default')
+        t.equal(actionRequest.id, actionRequestId, 'Then the action request ID is preserved')
+        t.equal(actionRequest.eventId, eventId, 'Then the event ID is preserved')
+        t.ok(Action.UserAdded.is(actionRequest.action), 'Then the action is preserved')
+        t.equal(actionRequest.idempotencyKey, idempotencyKey, 'Then the idempotency key is preserved')
+        t.equal(actionRequest.actorId, actorId1, 'Then the actor ID is preserved')
+        t.equal(actionRequest.subjectId, subjectId, 'Then the subject ID is preserved')
+        t.equal(actionRequest.subjectType, 'user', 'Then the subject type is preserved')
+        t.equal(actionRequest.organizationId, organizationId, 'Then the organization ID is preserved')
+        t.equal(actionRequest.correlationId, correlationId, 'Then the correlation ID is preserved')
+        t.equal(actionRequest.schemaVersion, 1, 'Then the schema version is preserved')
+        t.equal(actionRequest.createdAt, createdAt, 'Then the server createdAt is preserved')
+        t.equal(actionRequest.status, 'pending', 'Then the status is preserved')
+        t.equal(actionRequest.resultData, undefined, 'Then the result data is undefined by default')
+        t.equal(actionRequest.error, undefined, 'Then the error is undefined by default')
+        t.equal(actionRequest.processedAt, undefined, 'Then the processed timestamp is undefined by default')
         t.end()
     })
 
@@ -80,61 +95,83 @@ test('Given a QueueItem is created with pending status', t => {
 
         const createdAt = admin.firestore.FieldValue.serverTimestamp()
 
-        const validQueueItem = QueueItem.from({
-            id: queueItemId,
+        const validActionRequest = ActionRequest.from({
+            id: actionRequestId,
+            eventId,
             action: userAdded,
-            idempotencyKey,
             actorId: actorId1,
+            subjectId,
+            subjectType: 'user',
+            organizationId,
+            idempotencyKey,
+            correlationId,
+            schemaVersion: 1,
             createdAt,
             status: 'pending',
         })
 
         t.throws(() => {
-            QueueItem.from({ ...validQueueItem, status: 'invalid_status' })
+            ActionRequest.from({ ...validActionRequest, status: 'invalid_status' })
         }, 'Then an error is thrown')
         t.end()
     })
 
-    t.test('When the QueueItem is converted to Firestore format', t => {
+    t.test('When the ActionRequest is converted to Firestore format', t => {
         const userAdded = Action.UserAdded.from({ organizationId, user: { id: actorId1, email: 'john@example.com' } })
 
         const createdAt = admin.firestore.FieldValue.serverTimestamp()
 
-        const queueItem = QueueItem.from({
-            id: queueItemId,
+        const actionRequest = ActionRequest.from({
+            id: actionRequestId,
+            eventId,
             action: userAdded,
-            idempotencyKey,
             actorId: actorId1,
+            subjectId,
+            subjectType: 'user',
+            organizationId,
+            idempotencyKey,
+            correlationId,
+            schemaVersion: 1,
             createdAt,
             status: 'pending',
         })
 
-        const firestoreData = QueueItem.toFirestore(queueItem)
-        t.ok(firestoreData.id, 'Then the queue ID is preserved')
+        const firestoreData = ActionRequest.toFirestore(actionRequest)
+        t.ok(firestoreData.id, 'Then the action request ID is preserved')
+        t.ok(firestoreData.eventId, 'Then the event ID is preserved')
         t.ok(firestoreData.action, 'Then the action is preserved')
+        t.ok(firestoreData.actor, 'Then the actor is preserved')
+        t.ok(firestoreData.subject, 'Then the subject is preserved')
         t.ok(firestoreData.createdAt, 'Then the createdAt is preserved')
         t.equal(firestoreData.status, 'pending', 'Then the status is preserved')
         t.end()
     })
 
-    t.test('When the QueueItem is converted to Firestore and back', t => {
+    t.test('When the ActionRequest is converted to Firestore and back', t => {
         const userAdded = Action.UserAdded.from({ organizationId, user: { id: actorId1, email: 'john@example.com' } })
 
         const createdAt = admin.firestore.FieldValue.serverTimestamp()
 
-        const queueItem = QueueItem.from({
-            id: queueItemId,
+        const actionRequest = ActionRequest.from({
+            id: actionRequestId,
+            eventId,
             action: userAdded,
-            idempotencyKey,
             actorId: actorId1,
+            subjectId,
+            subjectType: 'user',
+            organizationId,
+            idempotencyKey,
+            correlationId,
+            schemaVersion: 1,
             createdAt,
             status: 'pending',
         })
 
-        const firestoreData = QueueItem.toFirestore(queueItem)
-        const parsedItem = QueueItem.fromFirestore(firestoreData)
+        const firestoreData = ActionRequest.toFirestore(actionRequest)
+        const parsedItem = ActionRequest.fromFirestore(firestoreData)
 
-        t.equal(parsedItem.id, queueItemId, 'Then the queue ID is recreated correctly')
+        t.equal(parsedItem.id, actionRequestId, 'Then the action request ID is recreated correctly')
+        t.equal(parsedItem.eventId, eventId, 'Then the event ID is recreated correctly')
         t.ok(Action.UserAdded.is(parsedItem.action), 'Then the action is recreated correctly')
         t.equal(parsedItem.status, 'pending', 'Then the status is recreated correctly')
         t.end()
@@ -142,18 +179,24 @@ test('Given a QueueItem is created with pending status', t => {
     t.end()
 })
 
-test('Given a QueueItem is created with completed status', t => {
-    t.test('When the QueueItem includes optional result data', t => {
+test('Given an ActionRequest is created with completed status', t => {
+    t.test('When the ActionRequest includes optional result data', t => {
         const userAdded = Action.UserAdded.from({ organizationId, user: { id: actorId, email: 'john@example.com' } })
 
         const createdAt = admin.firestore.FieldValue.serverTimestamp()
         const processedAt = admin.firestore.FieldValue.serverTimestamp()
 
-        const queueItem = QueueItem.from({
-            id: queueItemId,
+        const actionRequest = ActionRequest.from({
+            id: actionRequestId,
+            eventId,
             action: userAdded,
-            idempotencyKey,
             actorId,
+            subjectId,
+            subjectType: 'user',
+            organizationId,
+            idempotencyKey,
+            correlationId,
+            schemaVersion: 1,
             createdAt,
             status: 'completed',
             resultData: { eventId: 'evt_xyz789' },
@@ -161,25 +204,31 @@ test('Given a QueueItem is created with completed status', t => {
             processedAt,
         })
 
-        t.equal(queueItem.status, 'completed', 'Then the status is completed')
-        t.same(queueItem.resultData, { eventId: 'evt_xyz789' }, 'Then the result data is preserved')
-        t.equal(queueItem.error, undefined, 'Then the error is undefined')
-        t.equal(queueItem.processedAt, processedAt, 'Then the processed createdAt is preserved')
+        t.equal(actionRequest.status, 'completed', 'Then the status is completed')
+        t.same(actionRequest.resultData, { eventId: 'evt_xyz789' }, 'Then the result data is preserved')
+        t.equal(actionRequest.error, undefined, 'Then the error is undefined')
+        t.equal(actionRequest.processedAt, processedAt, 'Then the processed timestamp is preserved')
         t.end()
     })
 
-    t.test('When the QueueItem is created with failed status and error message', t => {
+    t.test('When the ActionRequest is created with failed status and error message', t => {
         const user = { firstName: 'John', lastName: 'Doe' }
         const userAdded = Action.UserAdded.from({ organizationId, user })
 
         const createdAt = admin.firestore.FieldValue.serverTimestamp()
         const processedAt = admin.firestore.FieldValue.serverTimestamp()
 
-        const queueItem = QueueItem.from({
-            id: queueItemId,
+        const actionRequest = ActionRequest.from({
+            id: actionRequestId,
+            eventId,
             action: userAdded,
-            idempotencyKey,
             actorId,
+            subjectId,
+            subjectType: 'user',
+            organizationId,
+            idempotencyKey,
+            correlationId,
+            schemaVersion: 1,
             createdAt,
             status: 'completed',
             resultData: { eventId: 'evt_xyz789' },
@@ -187,8 +236,8 @@ test('Given a QueueItem is created with completed status', t => {
             processedAt,
         })
 
-        const failedItem = QueueItem.from({
-            ...queueItem,
+        const failedItem = ActionRequest.from({
+            ...actionRequest,
             status: 'failed',
             resultData: null,
             error: 'Validation failed: invalid email format',

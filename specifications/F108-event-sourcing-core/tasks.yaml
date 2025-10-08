@@ -102,23 +102,44 @@ tasks:
       - "modules/curb-map-functions/test/minimal-giant-function.firebase.js"
 
   - id: "task_1_5_create_queue_collection"
-    description: "Create Firestore update_queue collection with security rules and indexes"
-    status: "pending"
+    description: "Create Firestore actionRequests and completedActions collections with security rules and indexes"
+    status: "in_progress"
     phase: "Foundation"
     dependencies:
       - "task_1_4_create_minimal_giant_function"
-    estimated_hours: 4
+    estimated_hours: 6
     implementation: |
-      - Align the collection schema with "Queue Structure" in ../../docs/architecture/event-sourcing.md
-      - Add security rules from "Queue Processing Architecture → Security Rules" to firestore.rules
-      - Register composite indexes noted under "Queue Processing Architecture → Required Indexes"
-      - Validate behaviour locally with the Firebase emulator before deploying
+      - Rename QueueItem type to ActionRequest in modules/curb-map/type-definitions/
+      - Add new SOC2 fields to ActionRequest: eventId, subject, organizationId, projectId, correlationId, schemaVersion
+      - Update collection name from 'queueItems' to 'actionRequests' in firestore-facade-shared.js
+      - Add 'completedActions' collection registration (write-once, immutable audit trail)
+      - Remove incorrect 'actions' collection registration
+      - Create firestore.indexes.json with composite indexes:
+        * actionRequests: status + createdAt (polling for pending items)
+        * actionRequests: idempotencyKey (duplicate detection)
+        * actionRequests: actor.id + createdAt (user's request history)
+        * completedActions: organizationId + createdAt (audit queries)
+        * completedActions: eventId (primary lookup)
+      - Update firestore.rules for actionRequests collection:
+        * Allow authenticated users to create if actor.id matches auth.uid
+        * Allow users to read their own requests
+        * Prevent client updates to status/processedAt (function-only fields)
+      - Add firestore.rules for completedActions collection:
+        * Read-only for authorized users within organization
+        * Write-only for Firebase Functions (no client writes)
+      - Update handle-queue-item-added.js to copy completed ActionRequest to completedActions
+      - Create integration test: modules/curb-map/test/action-request-collection.firebase.js
+      - Validate behaviour locally with Firebase emulator before deploying
     validation:
-      - "Queue collection exists with required fields and indexes"
+      - "ActionRequest type exists with all SOC2 fields (eventId, subject, organizationId, correlationId, schemaVersion)"
+      - "actionRequests collection registered and accepts creates from authenticated users"
+      - "completedActions collection registered as write-once, immutable"
       - "Unauthorized writes/reads are rejected by emulator security tests"
+      - "Client cannot update status/processedAt fields in actionRequests"
+      - "Composite indexes improve query performance"
       - "Rule + index deployments logged in infrastructure runbook"
     tests:
-      - "modules/curb-map-functions/test/queue-collection.firebase.js"
+      - "modules/curb-map/test/action-request-collection.firebase.js"
 r
   - id: "task_2_1_queue_utilities"
     description: "Implement queue management utilities and helper functions"

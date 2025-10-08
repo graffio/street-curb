@@ -1,13 +1,16 @@
-import { Action, AuditRecord, Blockface, OperationDetails, QueueItem, Segment, SystemFlags } from '../types/index.js'
+import { ActionRequest, AuditRecord, Blockface, OperationDetails, Segment, SystemFlags } from '../types/index.js'
 
 const collectionPaths = new Map()
-collectionPaths.set(Action, 'actions')
+collectionPaths.set(ActionRequest, 'actionRequests')
 collectionPaths.set(AuditRecord, 'auditRecords')
 collectionPaths.set(Blockface, 'blockfaces')
 collectionPaths.set(OperationDetails, 'operationDetails')
-collectionPaths.set(QueueItem, 'queueItems')
 collectionPaths.set(Segment, 'segments')
 collectionPaths.set(SystemFlags, 'systemFlags')
+
+// completedActions uses the same type as actionRequests but is a separate collection
+// It's registered separately to allow different access patterns (write-once, immutable)
+const completedActionsCollection = 'completedActions'
 
 /*
  * Throw an error wrapping another error
@@ -22,4 +25,4 @@ const throwWithOriginal = (message, wrappedException, additionalData) => {
     throw e
 }
 
-export { collectionPaths, throwWithOriginal }
+export { collectionPaths, completedActionsCollection, throwWithOriginal }
