@@ -1,5 +1,11 @@
-current_task: "task_1_1_auth_config_setup"
-status: "pending"
+current_task: null
+status: "deferred"
+
+# DEFERRED: This specification is deferred until after F110 (Multi-Tenant Data Model) is complete.
+# Rationale: Cannot properly define authorization without first defining the domain model.
+#
+# Minimal test authentication helpers will be implemented in F110 to enable testing.
+# Full authentication and authorization system will be implemented after domain model exists.
 
 # Reference: See docs/architecture/authentication.md for detailed Firebase Auth patterns, custom claims structure, and impersonation system
 

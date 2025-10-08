@@ -241,7 +241,7 @@ tasks:
     implementation: |
         - Implement billing API per "Billing API" section in docs/architecture/billing-integration.md.
         - Add billing endpoint creation and routing.
-        - Implement API authentication and authorization per F109 patterns.
+        - Implement API authentication and authorization per F110.5 patterns.
         - Add API rate limiting and security measures.
     validation:
       - "Billing API endpoints work correctly"

@@ -87,9 +87,29 @@ service cloud.firestore {
 ```
 
 ### Organization Data Protection
+
+**Note**: Collection hierarchy:
+- Event source (actionRequests, completedActions): Flat with organizationId fields
+- Materialized views (organizations, users): Flat with organizationId fields
+- Projects & domain data: Nested under /organizations/{orgId}/projects/{projId}/...
+
 ```javascript
+// Materialized views - flat collections with organization scoping
 match /organizations/{organizationId} {
-  allow read, write: if 
+  allow read, write: if
+    request.auth != null &&
+    request.auth.token.organizations[organizationId] != null;
+}
+
+match /users/{userId} {
+  allow read, write: if
+    request.auth != null &&
+    request.auth.uid == userId;
+}
+
+// Projects & domain data - hierarchical collections
+match /organizations/{organizationId}/projects/{projectId}/{document=**} {
+  allow read, write: if
     request.auth != null &&
     request.auth.token.organizations[organizationId] != null;
 }

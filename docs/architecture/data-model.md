@@ -8,6 +8,18 @@ Client (Online/Offline) → Firestore actionRequests → Giant Function → comp
 
 **Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
 
+## Collection Hierarchy
+
+### Flat Collections (Event Source & Materialized Views)
+- **Event Source**: `/actionRequests/{id}`, `/completedActions/{id}` - flat with organizationId fields
+- **Materialized Views**: `/organizations/{id}`, `/users/{id}` - flat with organizationId fields
+- **Rationale**: SOC2 audit trail, cross-org queries, performance
+
+### Hierarchical Collections (Projects & Domain Data)
+- **Projects**: `/organizations/{orgId}/projects/{projId}` - hierarchical under organizations
+- **Domain Data**: `/organizations/{orgId}/projects/{projId}/surveys/{id}`, etc.
+- **Rationale**: Data isolation, cascade deletes, clearer ownership, simpler security rules
+
 ## Event Sourcing Pattern
 
 ### Completed Actions (Source of Truth)
