@@ -6,7 +6,7 @@ references:
   - name: "authentication"
     path: ../docs/architecture/authentication.md
 
-current_task: "task_2_1_action_request_utilities"
+current_task: "task_2_final_orchestration"
 status: "pending"
 
 # Reference: See ../../docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
@@ -152,102 +152,39 @@ tasks:
     tests:
       - "modules/curb-map/test/firestore-admin.firebase.js"
 
-  - id: "task_2_2_giant_function"
-    description: "Create main action request processing orchestrator (infrastructure only)"
+  - id: "task_2_final_orchestration"
+    description: "Add idempotency check and completedActions audit trail"
     status: "pending"
     phase: "Function Implementation"
     dependencies:
-      - "task_2_3_idempotency"
-      - "task_3_1_event_types"
-      - "F109:task_4_2_authz_middleware"
-    estimated_hours: 4
+      - "task_1_5_create_queue_collection"
+    estimated_hours: 1
     implementation: |
-      - Implement `modules/curb-map/functions/src/events/process-action-requests.js` as orchestration layer only.
-      - Process flow: validate structure (task_3_1) → check idempotency (task_2_3) → authorize (F109 task_4_2) → dispatch to domain handlers (F110) → copy to completedActions → mark completed/failed.
-      - DO NOT implement domain logic here (no UserAdded/OrganizationAdded handling) - domain handlers belong in F110.
-      - Persist status transitions (`pending → processing → completed/failed`) exactly as documented under "Action Request Lifecycle".
-      - Emit structured logs (`actionRequestId`, `actionType`, `attempt`, `durationMs`).
-      - Copy completed ActionRequest to completedActions collection for immutable audit trail.
+      - Update `modules/curb-map/functions/src/handle-action-request-added.js`:
+        1. Add idempotency check: Query completedActions by idempotencyKey before processing
+        2. If found, return early with existing result (log replay attempt)
+        3. After successful completion, copy ActionRequest to completedActions collection
+      - This completes the core event sourcing infrastructure (actionRequests → completedActions audit trail)
+      - Authorization and domain handlers will be added in F109/F110
     validation:
-      - "On-create trigger processes new action requests through orchestration flow"
-      - "Failures mark action request docs with status=failed and retain error context"
+      - "Duplicate idempotency keys return early without reprocessing"
       - "Completed action requests are copied to completedActions collection"
-      - "Idempotent replays leave action request unchanged"
+      - "Idempotency check logged for audit trail"
     tests:
-      - "modules/curb-map-functions/test/process-action-requests.tap.js"
-      - "modules/curb-map-functions/test/process-action-requests.firebase.js"
+      - "modules/curb-map/test/minimal-giant-function.firebase.js (extend existing tests)"
     notes: |
-      This is the orchestration layer only. Domain-specific event handlers (UserAdded, OrganizationAdded, etc.)
-      are implemented in F110 (Multi-Tenant Data Model). This function dispatches to those handlers.
-
-  - id: "task_2_3_idempotency"
-    description: "Implement idempotency checks to prevent duplicate processing"
-    status: "pending"
-    phase: "Function Implementation"
-    dependencies:
-      - "task_1_5_create_queue_collection"
-    estimated_hours: 4
-    implementation: |
-      - Persist processed operations in the `processed_operations` store described in "Idempotency Pattern".
-      - Reuse helper signatures (`checkIdempotencyKey`, `storeIdempotencyResult`) from the architecture doc; keep them side-effect free for unit tests.
-      - Enforce uniqueness using Firestore doc IDs or unique indexes per idempotency key.
-      - Document retry escalation rules in the runbook.
-    validation:
-      - "Duplicate idempotency keys short-circuit without recreating events"
-      - "Processed operations contain actor, timestamp, result snapshot"
-      - "Manual replay procedures documented for operations team"
-    tests:
-      - "modules/curb-map-functions/test/idempotency.tap.js"
-
-  - id: "task_3_1_event_types"
-    description: "Define event types and validation schemas"
-    status: "pending"
-    phase: "Event Types and Validation"
-    dependencies:
-      - "task_1_5_create_queue_collection"
-    estimated_hours: 3
-    implementation: |
-      - Establish the event registry API outlined under "Event Validation" (define schema, validator, sanitizer per event type).
-      - Store specifications in `modules/curb-map/functions/src/events/event-types.js` with pure data + helpers.
-      - Define Action type schemas (structure validation only, not domain logic).
-      - Reference organization/project scoping rules from ../../docs/architecture/multi-tenant.md.
-    validation:
-      - "Registry rejects malformed action payloads with actionable messages"
-      - "Schema versions tracked for future migrations"
-      - "Unit tests cover Action structure validation happy + sad paths"
-    tests:
-      - "modules/curb-map-functions/test/event-types.tap.js"
-    notes: |
-      This task defines Action TYPE schemas only (structure validation).
-      Authorization logic is in F109 task_4_2.
-      Domain event handlers are in F110 task_1_1, task_2_1.
-
-  - id: "task_5_1_integration_testing"
-    description: "Validate end-to-end event sourcing infrastructure workflow"
-    status: "pending"
-    phase: "Testing and Validation"
-    dependencies:
-      - "task_2_2_giant_function"
-    estimated_hours: 4
-    implementation: |
-      - Build TAP harness testing core infrastructure flow: enqueue → validate → check idempotency → authorize → copy to completedActions.
-      - Test orchestration layer only - use mock domain handlers (do not test actual domain logic here).
-      - Add load test script following "Performance Testing" guidance to simulate burst workloads.
-      - Document manual validation steps in `docs/runbooks/event-sourcing.md`.
-    validation:
-      - "End-to-end TAP suite passes (enqueue → validate → authorize → audit)"
-      - "Idempotency prevents duplicate processing"
-      - "Authorization integration works with F109 middleware"
-      - "CompletedActions audit trail is created correctly"
-      - "Performance target met for 95th percentile processing time"
-    tests:
-      - "modules/curb-map-functions/test/event-sourcing.firebase.js"
-      - "modules/curb-map-functions/test/event-sourcing.load.sh"
-    notes: |
-      This tests the event sourcing INFRASTRUCTURE only.
-      Domain-specific integration tests (organizations, projects, users) are in F110 task_6_1.
+      Collapsed from over-engineered task_2_2, task_2_3, task_3_1, task_5_1.
+      - task_3_1 deleted: Action tagged types already provide validation
+      - task_5_1 deleted: integration tests already exist (minimal-giant-function.firebase.js)
+      - Authorization (F109) and domain handlers (F110) deferred to those specs
 
 completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function", "task_1_5_create_queue_collection" ]
+
+deleted_as_overengineered:
+  - "task_2_2_giant_function - collapsed into task_2_final_orchestration"
+  - "task_2_3_idempotency - collapsed into task_2_final_orchestration"
+  - "task_3_1_event_types - Action tagged types already provide validation"
+  - "task_5_1_integration_testing - minimal-giant-function.firebase.js already exists"
 
 notes: |
   This specification implements the core event sourcing INFRASTRUCTURE for CurbMap.
