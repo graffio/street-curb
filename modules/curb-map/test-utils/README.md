@@ -14,12 +14,12 @@ This directory contains utilities for running Firebase integration tests with th
 ```javascript
 import { test } from 'tap'
 import { FirestoreAdminFacade, getDefaultAdminDb } from '@graffio/curb-map/src/firestore-facade/firestore-admin-facade.js'
-import { QueueItem } from '@graffio/curb-map/src/types/index.js'
+import { ActionRequest } from '@graffio/curb-map/src/types/index.js'
 import { seed } from '../test-utils/seed.js'
 
 const ns = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`
 const db = getDefaultAdminDb()
-let queueFacade
+let actionRequestFacade
 
 test('My integration test', t => {
     t.before(async () => {
@@ -28,16 +28,16 @@ test('My integration test', t => {
         process.env.DISABLE_TRIGGERS = '1'
         await seed()
         delete process.env.DISABLE_TRIGGERS
-        queueFacade = FirestoreAdminFacade(QueueItem, `${ns}/`, db)
+        actionRequestFacade = FirestoreAdminFacade(ActionRequest, `${ns}/`, db)
     })
 
     t.after(async () => {
-        await queueFacade.recursiveDelete()
+        await actionRequestFacade.recursiveDelete()
         delete process.env.FIREBASE_TEST_MODE
     })
 
     t.test('When something happens', async t => {
-        const items = await queueFacade.query([['status', '==', 'pending']])
+        const items = await actionRequestFacade.query([['status', '==', 'pending']])
         t.ok(items.length > 0)
         t.end()
     })

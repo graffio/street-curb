@@ -8,7 +8,7 @@
  *  subjectId     : FieldTypes.subjectId,
  *  subjectType   : /^(user|organization|project)$/,
  *  organizationId: FieldTypes.organizationId,
- *  projectId     : "String?",
+ *  projectId     : "/^prj_[a-z0-9]{12,}$/?",
  *  status        : /^(pending|completed|failed)$/,
  *  idempotencyKey: FieldTypes.idempotencyKey,
  *  resultData    : "Object?",
@@ -58,7 +58,7 @@ const ActionRequest = function ActionRequest(
     R.validateRegex(constructorName, FieldTypes.subjectId, 'subjectId', false, subjectId)
     R.validateRegex(constructorName, /^(user|organization|project)$/, 'subjectType', false, subjectType)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
-    R.validateString(constructorName, 'projectId', true, projectId)
+    R.validateRegex(constructorName, /^prj_[a-z0-9]{12,}$/, 'projectId', true, projectId)
     R.validateRegex(constructorName, /^(pending|completed|failed)$/, 'status', false, status)
     R.validateRegex(constructorName, FieldTypes.idempotencyKey, 'idempotencyKey', false, idempotencyKey)
     R.validateObject(constructorName, 'resultData', true, resultData)

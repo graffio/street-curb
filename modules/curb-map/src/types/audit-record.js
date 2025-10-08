@@ -131,7 +131,10 @@ AuditRecord.toFirestore = auditRecord => ({
 // Additional function: fromFirestore
 AuditRecord.fromFirestore = auditRecord => {
     const operationDetails = OperationDetails.fromFirestore(JSON.parse(auditRecord.operationDetails))
-    return AuditRecord.from({ ...auditRecord, operationDetails })
+    return AuditRecord.from({
+        ...auditRecord,
+        operationDetails,
+    })
 }
 
 export { AuditRecord }

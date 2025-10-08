@@ -27,8 +27,8 @@ export const ActionRequest = {
 
         // Tenant scoping (SOC2)
         organizationId : FieldTypes.organizationId,
-        projectId      : 'String?',
-
+        projectId      : FieldTypes.projectId + '?',
+        
         // Orchestration
         status         : /^(pending|completed|failed)$/,
         idempotencyKey : FieldTypes.idempotencyKey,

@@ -7,7 +7,7 @@
 This specification implements the event sourcing architecture defined in [event-sourcing]. The
 system uses this pattern to provide offline-first capability, SOC2-compliant audit trail, and scalable processing:
 
-    Firestore queue → Giant function → Events → Materialized views
+    Firestore actionRequests → Giant function → completedActions → Materialized views
 
 ## References
 
@@ -21,21 +21,21 @@ system uses this pattern to provide offline-first capability, SOC2-compliant aud
 
 ### Phase 1: Foundation
 
-- **task_1_1_create_tagged_types_and_helpers**: Create QueueItem and Action tagged types with Firestore
+- **task_1_1_create_tagged_types_and_helpers**: Create ActionRequest and Action tagged types with Firestore
   integration helpers
 - **task_1_2_setup_integration_testing**: Set up Firebase emulator integration testing infrastructure
 - **task_1_3_create_functions_workspace**: Create dedicated Firebase functions workspace following
   firebase-functions-deploy.md
-- **task_1_4_create_minimal_giant_function**: Create minimal queue processing function for integration testing
-- **task_1_5_create_queue_collection**: Create Firestore update_queue collection with security rules and indexes
+- **task_1_4_create_minimal_giant_function**: Create minimal action request processing function for integration testing
+- **task_1_5_create_queue_collection**: Create Firestore actionRequests collection with security rules and indexes
 
-### Phase 2: Queue Collection Setup
+### Phase 2: Action Request Collection Setup
 
-- **task_2_1_queue_utilities**: Implement queue management utilities and helper functions
+- **task_2_1_action_request_utilities**: Implement action request management utilities and helper functions
 
 ### Phase 3: Function Implementation
 
-- **task_2_2_giant_function**: Create main queue processing function with error handling
+- **task_2_2_giant_function**: Create main action request processing function with error handling
 - **task_2_3_idempotency**: Implement idempotency checks to prevent duplicate processing
 
 ### Phase 4: Event Types and Validation
