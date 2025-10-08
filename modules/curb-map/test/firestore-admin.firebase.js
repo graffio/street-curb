@@ -84,7 +84,7 @@ const withFacades = async effect => {
     }
 }
 
-test('Given the Firestore facades infrastructure', async t => {
+test('Given the Firestore admin facades', async t => {
     await t.test('When an action request is written and read via the admin facade', async tt => {
         await withFacades(async ({ adminFacade, clearNamespace }) => {
             await clearNamespace()
@@ -108,6 +108,26 @@ test('Given the Firestore facades infrastructure', async t => {
             const remaining = await adminFacade.list()
             tt.same(remaining, [], 'Then the namespace is empty after cleanup')
         })
+    })
+})
+
+test('Given the completedActions collection', async t => {
+    const namespace = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`, undefined, 'completedActions')
+
+    await t.test('When a completed action is written and read', async tt => {
+        const item = buildActionRequest({
+            status: 'completed',
+            resultData: { success: true },
+            processedAt: new Date('2025-01-01T00:01:00Z'),
+        })
+        await completedActionsFacade.write(item)
+        const stored = await completedActionsFacade.read(item.id)
+
+        tt.equal(stored.id, item.id, 'Then the completed action ID is preserved')
+        tt.equal(stored.status, 'completed', 'Then the status is completed')
+        tt.ok(stored.resultData, 'Then result data is preserved')
+        tt.ok(stored.processedAt, 'Then processedAt timestamp is preserved')
     })
 })
 
