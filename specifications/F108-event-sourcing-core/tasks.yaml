@@ -6,8 +6,8 @@ references:
   - name: "authentication"
     path: ../docs/architecture/authentication.md
 
-current_task: "task_2_1_action_request_utilities"
-status: "pending"
+current_task: null
+status: "completed"
 
 # Reference: See ../../docs/architecture/event-sourcing.md for detailed patterns, helper signatures, and decision log
 
@@ -152,160 +152,58 @@ tasks:
     tests:
       - "modules/curb-map/test/firestore-admin.firebase.js"
 
-  - id: "task_2_1_action_request_utilities"
-    description: "Implement action request management utilities and helper functions"
-    status: "pending"
-    phase: "Action Request Collection Setup"
+  - id: "task_2_final_orchestration"
+    description: "Add idempotency check and completedActions audit trail"
+    status: "completed"
+    phase: "Function Implementation"
     dependencies:
       - "task_1_5_create_queue_collection"
-    estimated_hours: 3
+    estimated_hours: 1
     implementation: |
-      - Create `modules/curb-map/functions/src/events/action-request.js` exporting pure helpers listed in ../../docs/architecture/event-sourcing.md ("Action Request Helpers" section).
-      - Ensure helpers accept `(projectId, payload, actor)` and honor the dry-run flag by logging instead of writing.
-      - Use shared uuid/id helpers from `modules/functional` to generate `actionRequestId` and `idempotencyKey`.
-      - Mirror logging fields shown under "Observability" in the architecture doc.
+      ✅ Updated `modules/curb-map/functions/src/handle-action-request-added.js`:
+        ✅ Added idempotency check via completedActions.list() + find by idempotencyKey
+        ✅ Duplicate requests marked as completed with resultData.duplicateOf reference
+        ✅ Successful completions copied to completedActions collection for SOC2 audit
+        ✅ Fixed areTriggersDisabled to handle missing flags (default enabled)
+      ✅ Core event sourcing infrastructure complete (actionRequests → completedActions)
+      📝 Authorization (F109) and domain handlers (F110) to be added in those specs
     validation:
-      - "Helper returns deterministic structures matching the schema"
-      - "Dry-run mode emits structured logs without writes"
-      - "Invalid payloads trigger descriptive errors"
+      ✅ "Duplicate idempotency keys return early without reprocessing"
+      ✅ "Completed action requests are copied to completedActions collection"
+      ✅ "Idempotency check logged for audit trail"
     tests:
-      - "modules/curb-map-functions/test/action-request-helpers.tap.js"
+      ✅ "modules/curb-map/test/minimal-giant-function.firebase.js (extended with 2 new tests)"
+    notes: |
+      Collapsed from over-engineered task_2_2, task_2_3, task_3_1, task_5_1.
+      - task_3_1 deleted: Action tagged types already provide validation
+      - task_5_1 deleted: integration tests already exist (minimal-giant-function.firebase.js)
+      - Authorization (F109) and domain handlers (F110) deferred to those specs
 
-  - id: "task_2_2_giant_function"
-    description: "Create main action request processing function with error handling"
-    status: "pending"
-    phase: "Function Implementation"
-    dependencies:
-      - "task_2_1_action_request_utilities"
-    estimated_hours: 6
-    implementation: |
-      - Implement `modules/curb-map/functions/src/events/process-action-requests.js` using the flow in "Processing Flow".
-      - Inject validators and authorization hooks from the event registry (task_3_1/task_3_2) via dependency parameters to keep functions pure for testing.
-      - Persist status transitions (`pending → processing → completed/failed`) exactly as documented under "Action Request Lifecycle".
-      - Emit structured logs (`actionRequestId`, `actionType`, `attempt`, `durationMs`).
-    validation:
-      - "On-create trigger processes new action requests end-to-end in emulator"
-      - "Failures mark action request docs with status=failed and retain error context"
-      - "Idempotent replays leave action request unchanged"
-    tests:
-      - "modules/curb-map-functions/test/process-action-requests.tap.js"
-      - "modules/curb-map-functions/test/process-action-requests.firebase.js"
+completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function", "task_1_5_create_queue_collection", "task_2_final_orchestration" ]
 
-  - id: "task_2_3_idempotency"
-    description: "Implement idempotency checks to prevent duplicate processing"
-    status: "pending"
-    phase: "Function Implementation"
-    dependencies:
-      - "task_2_2_giant_function"
-    estimated_hours: 4
-    implementation: |
-      - Persist processed operations in the `processed_operations` store described in "Idempotency Pattern".
-      - Reuse helper signatures (`checkIdempotencyKey`, `storeIdempotencyResult`) from the architecture doc; keep them side-effect free for unit tests.
-      - Enforce uniqueness using Firestore doc IDs or unique indexes per idempotency key.
-      - Document retry escalation rules in the runbook.
-    validation:
-      - "Duplicate idempotency keys short-circuit without recreating events"
-      - "Processed operations contain actor, timestamp, result snapshot"
-      - "Manual replay procedures documented for operations team"
-    tests:
-      - "modules/curb-map-functions/test/idempotency.tap.js"
-
-  - id: "task_3_1_event_types"
-    description: "Define event types and validation schemas"
-    status: "pending"
-    phase: "Event Types and Validation"
-    dependencies:
-      - "task_2_3_idempotency"
-    estimated_hours: 3
-    implementation: |
-      - Establish the event registry API outlined under "Event Validation" (define schema, validator, sanitizer per event type).
-      - Store specifications in `modules/curb-map/functions/src/events/event-types.js` with pure data + helpers.
-      - Reference organization/project scoping rules from ../../docs/architecture/multi-tenant.md.
-    validation:
-      - "Registry rejects malformed payloads with actionable messages"
-      - "Schema versions tracked for future migrations"
-      - "Unit tests cover UserCreated/UserUpdated/UserForgotten happy + sad paths"
-    tests:
-      - "modules/curb-map-functions/test/event-types.tap.js"
-
-  - id: "task_3_2_authorization"
-    description: "Implement authorization checks for event creation"
-    status: "pending"
-    phase: "Event Types and Validation"
-    dependencies:
-      - "task_3_1_event_types"
-    estimated_hours: 4
-    implementation: |
-      - Implement authorization helpers described in "Authorization Model" and reuse impersonation rules from ../../docs/architecture/authentication.md.
-      - Ensure helpers accept `(userClaims, organizationId, eventType)` and return booleans; surface denial reasons for logging.
-      - Wire helpers into queue processing so unauthorized events fail before writes.
-    validation:
-      - "Admin/member roles grant permissions per decision table"
-      - "Unauthorized actors receive 403-equivalent errors recorded in queue item"
-      - "Audit trail captures acting user and required permission"
-    tests:
-      - "modules/curb-map-functions/test/event-authorization.tap.js"
-
-  - id: "task_4_1_materialized_views"
-    description: "Create materialized views for common queries"
-    status: "pending"
-    phase: "Materialized Views"
-    dependencies:
-      - "task_3_2_authorization"
-    estimated_hours: 5
-    implementation: |
-      - Follow "Materialized Views" guidance to choose initial views (organization roster, project summary).
-      - Persist derived state under `materialized_views/{tenant}/{view}` with last-processed event markers.
-      - Provide rebuild scripts aligning with "View Synchronization" notes.
-    validation:
-      - "Derived documents match expected snapshots for seed event fixtures"
-      - "Rebuild script can recreate views from event history"
-      - "View documents scoped to organization/project prefixes"
-    tests:
-      - "modules/curb-map-functions/test/materialized-views.tap.js"
-      - "modules/curb-map-functions/test/materialized-views.rebuild.sh"
-
-  - id: "task_4_2_view_sync"
-    description: "Ensure materialized views stay synchronized with events"
-    status: "pending"
-    phase: "Materialized Views"
-    dependencies:
-      - "task_4_1_materialized_views"
-    estimated_hours: 4
-    implementation: |
-      - Add Firestore onCreate triggers per "View Synchronization" to dispatch view updates.
-      - Handle conflict resolution exactly as documented (last-write-wins with audit logging).
-      - Capture metrics (lag, failure count) per the "Observability" section.
-    validation:
-      - "New events update relevant views within defined SLA"
-      - "Failure paths leave audit entries and retryable queue items"
-      - "Monitoring dashboard shows lag + failure metrics"
-    tests:
-      - "modules/curb-map-functions/test/view-sync.tap.js"
-
-  - id: "task_5_1_integration_testing"
-    description: "Validate end-to-end event sourcing workflow"
-    status: "pending"
-    phase: "Testing and Validation"
-    dependencies:
-      - "task_4_2_view_sync"
-    estimated_hours: 6
-    implementation: |
-      - Build TAP harness mirroring the flow in "Functional Testing" (enqueue → process → materialize).
-      - Add load test script following "Performance Testing" guidance to simulate burst workloads.
-      - Document manual validation steps in `docs/runbooks/event-sourcing.md`.
-    validation:
-      - "End-to-end TAP suite passes (enqueue → event → view)"
-      - "Performance target met for 95th percentile processing time"
-      - "Runbook callouts for on-call responders reviewed"
-    tests:
-      - "modules/curb-map-functions/test/event-sourcing.firebase.js"
-      - "modules/curb-map-functions/test/event-sourcing.load.sh"
-
-completed: [ "task_1_1_create_tagged_types_and_helpers", "task_1_2_setup_integration_testing", "task_1_3_create_functions_workspace", "task_1_4_create_minimal_giant_function", "task_1_5_create_queue_collection" ]
+deleted_as_overengineered:
+  - "task_2_2_giant_function - collapsed into task_2_final_orchestration"
+  - "task_2_3_idempotency - collapsed into task_2_final_orchestration"
+  - "task_3_1_event_types - Action tagged types already provide validation"
+  - "task_5_1_integration_testing - minimal-giant-function.firebase.js already exists"
 
 notes: |
-  This specification implements the core event sourcing pattern for CurbMap.
+  This specification implements the core event sourcing INFRASTRUCTURE for CurbMap.
+
+  SCOPE: This spec covers infrastructure only:
+  - Action request queue processing (actionRequests → completedActions)
+  - Validation (structure checking)
+  - Idempotency (duplicate prevention)
+  - Orchestration (dispatch to domain handlers)
+  - Audit trail (completedActions collection)
+
+  OUT OF SCOPE (belongs in other specs):
+  - Authorization: F109 task_4_2 (authorization middleware)
+  - Domain logic: F110 (organization/project/user event handlers)
+  - Materialized views: F110 task_3_1, task_3_2, task_3_3
+  - Client-side queue: F111 (offline queue architecture)
+  - Action request helpers: F111 task_1_1 (client-side, deferred until Actions defined)
+
   Task ID format: task_{phase}_{sequence}_{description}
   Status values: pending, in_progress, completed, blocked, cancelled
   Dependencies: List of task IDs that must be completed first

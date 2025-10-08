@@ -8,19 +8,25 @@ tasks:
     description: "Define organization event types and handlers"
     status: "pending"
     phase: "Organization Management"
-    dependencies: []
+    dependencies:
+      - "F108:task_2_2_giant_function"
     estimated_hours: 4
     implementation: |
         - Create `modules/curb-map/functions/src/events/organizationEvents.js` using patterns from "Organization Management" section in docs/architecture/multi-tenant.md.
         - Define event types: OrganizationCreated, OrganizationUpdated, OrganizationDeleted per architecture patterns.
         - Implement event handlers with proper data validation and business rules.
-        - Integrate with event sourcing system per F108 patterns.
+        - Integrate with F108 event sourcing orchestrator - these handlers are dispatched from F108 task_2_2.
+        - Handlers process domain logic for organization management.
     validation:
       - "Organization event types defined with proper schemas"
       - "Event handlers validate business rules correctly"
-      - "Events integrate with event sourcing system"
+      - "Handlers integrate with F108 orchestration layer"
     tests:
       - "modules/curb-map/functions/test/organization-events.tap.js (to be created)"
+    notes: |
+      These are DOMAIN event handlers called by F108 orchestrator.
+      F108 handles infrastructure (validation, idempotency, authorization, audit).
+      This task implements organization-specific business logic.
 
   - id: "task_1_2_organization_api"
     description: "Create organization CRUD API endpoints"
@@ -66,18 +72,24 @@ tasks:
     phase: "Project Management"
     dependencies:
       - "task_1_3_organization_validation"
+      - "F108:task_2_2_giant_function"
     estimated_hours: 4
     implementation: |
         - Create `modules/curb-map/functions/src/events/projectEvents.js` using patterns from "Project Management" section in docs/architecture/multi-tenant.md.
         - Define event types: ProjectCreated, ProjectUpdated, ProjectDeleted per architecture patterns.
         - Implement event handlers with organization scoping validation.
-        - Integrate with event sourcing system per F108 patterns.
+        - Integrate with F108 event sourcing orchestrator - these handlers are dispatched from F108 task_2_2.
+        - Handlers process domain logic for project management.
     validation:
       - "Project event types defined with proper schemas"
       - "Event handlers validate organization scoping"
-      - "Events integrate with event sourcing system"
+      - "Handlers integrate with F108 orchestration layer"
     tests:
       - "modules/curb-map/functions/test/project-events.tap.js"
+    notes: |
+      These are DOMAIN event handlers called by F108 orchestrator.
+      F108 handles infrastructure (validation, idempotency, authorization, audit).
+      This task implements project-specific business logic with organization scoping.
 
   - id: "task_2_2_project_api"
     description: "Create project CRUD API endpoints"
@@ -128,14 +140,19 @@ tasks:
     implementation: |
         - Create organization materialized views per "Materialized View Scoping" section in docs/architecture/multi-tenant.md.
         - Implement views for organization roster, subscription status, and settings.
-        - Use event sourcing patterns from F108 for view generation.
-        - Add view update triggers and synchronization.
+        - Consume completed actions from F108 completedActions collection.
+        - Add view update triggers that listen to completedActions onCreate events.
+        - Implement idempotent view updates using lastProcessedActionId markers.
     validation:
       - "Organization materialized views created correctly"
-      - "Views stay synchronized with events"
+      - "Views stay synchronized with completedActions events from F108"
       - "View queries perform efficiently"
+      - "Idempotent updates prevent duplicate processing"
     tests:
       - "modules/curb-map/functions/test/organization-views.tap.js"
+    notes: |
+      These views consume events from F108 completedActions collection.
+      Views are organization-scoped and rebuilt from immutable audit trail.
 
   - id: "task_3_2_project_views"
     description: "Create project materialized views"
@@ -148,14 +165,19 @@ tasks:
     implementation: |
         - Create project materialized views per "Materialized View Scoping" section in docs/architecture/multi-tenant.md.
         - Implement views for project lists, organization scoping, and project metadata.
-        - Use event sourcing patterns from F108 for view generation.
-        - Add view update triggers and synchronization.
+        - Consume completed actions from F108 completedActions collection.
+        - Add view update triggers that listen to completedActions onCreate events.
+        - Implement idempotent view updates using lastProcessedActionId markers.
     validation:
       - "Project materialized views created correctly"
-      - "Views stay synchronized with events"
+      - "Views stay synchronized with completedActions events from F108"
       - "Organization scoping works in views"
+      - "Idempotent updates prevent duplicate processing"
     tests:
       - "modules/curb-map/functions/test/project-views.tap.js"
+    notes: |
+      These views consume events from F108 completedActions collection.
+      Views are organization/project-scoped and rebuilt from immutable audit trail.
 
   - id: "task_3_3_view_sync"
     description: "Implement view synchronization with events"
@@ -334,6 +356,22 @@ completed: []
 
 notes: |
     This specification implements the multi-tenant data model for CurbMap.
+
+    SCOPE: This spec covers domain logic for multi-tenancy:
+    - Organization event handlers (OrganizationAdded, OrganizationUpdated, etc.)
+    - Project event handlers (ProjectAdded, ProjectUpdated, etc.)
+    - User event handlers (UserAdded, UserUpdated, UserRemoved, etc.)
+    - Materialized views (organization roster, project lists, etc.)
+    - Data isolation middleware (organization/project scoping)
+    - Role-based permissions (RBAC within organizations)
+
+    DEPENDS ON:
+    - F108: Event sourcing infrastructure (orchestration, audit trail)
+    - F109: Authentication and authorization middleware
+
+    Domain event handlers in this spec are dispatched by F108 task_2_2 (giant function).
+    Materialized views consume events from F108 completedActions collection.
+
     Task ID format: task_{phase}_{sequence}_{description}
     Status values: pending, in_progress, completed, blocked, cancelled
     Dependencies: List of task IDs that must be completed first

@@ -4,6 +4,7 @@ import { Action, ActionRequest, FieldTypes, SystemFlags } from '../src/types/ind
 
 const namespace = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`
 const adminFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
+const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`, undefined, 'completedActions')
 const flagsFacade = FirestoreAdminFacade(SystemFlags, `${namespace}/`)
 
 const actionRequestId = FieldTypes.newActionRequestId()
@@ -70,6 +71,48 @@ test('Given the minimal giant function', t => {
 
         t.equal(stored.status, 'completed', 'Then the action request is marked completed')
         t.ok(stored.processedAt, 'Then processedAt timestamp is set')
+    })
+
+    t.test('When a pending action request is processed Then it is copied to completedActions', async t => {
+        const item = await writeActionRequest('pending')
+        await waitForActionRequestStatus(item.id)
+
+        await wait(500) // give time for completedActions write
+
+        const completedAction = await completedActionsFacade.read(item.id)
+        t.equal(completedAction.id, item.id, 'Then the completed action has the same ID')
+        t.equal(completedAction.status, 'completed', 'Then the completed action has completed status')
+        t.equal(completedAction.idempotencyKey, item.idempotencyKey, 'Then the idempotency key is preserved')
+        t.ok(completedAction.processedAt, 'Then processedAt is set in completedActions')
+    })
+
+    t.test('When a duplicate idempotency key is submitted Then it is marked as duplicate', async t => {
+        const item = await writeActionRequest('pending')
+        await waitForActionRequestStatus(item.id)
+
+        await wait(500) // ensure completedActions write completes
+
+        // submit a second action request with the same idempotency key but different ID
+        const duplicateId = FieldTypes.newActionRequestId()
+        const duplicate = ActionRequest.from({ ...item, id: duplicateId })
+        await adminFacade.write(duplicate)
+
+        const duplicateStored = await waitForActionRequestStatus(duplicateId)
+
+        t.equal(duplicateStored.status, 'completed', 'Then the duplicate request is marked completed')
+        t.ok(duplicateStored.processedAt, 'Then the duplicate request has processedAt timestamp')
+        t.ok(duplicateStored.resultData, 'Then the duplicate request has resultData')
+        t.equal(
+            duplicateStored.resultData.duplicateOf,
+            item.id,
+            'Then resultData references the original action request',
+        )
+
+        // verify only one entry in completedActions (duplicates are not copied)
+        const allCompleted = await completedActionsFacade.list()
+        const matchingIdempotencyKey = allCompleted.filter(ca => ca.idempotencyKey === item.idempotencyKey)
+        t.equal(matchingIdempotencyKey.length, 1, 'Then only one completedAction exists for this idempotency key')
+        t.equal(matchingIdempotencyKey[0].id, item.id, 'Then the original action request is in completedActions')
     })
 
     t.end()

@@ -8,19 +8,33 @@ tasks:
     description: "Implement client-side queue service"
     status: "pending"
     phase: "Client-Side Queue Operations"
-    dependencies: []
+    dependencies:
+      - "F110:task_1_1_organization_events"
+      - "F110:task_2_1_project_events"
     estimated_hours: 5
     implementation: |
         - Create `modules/curb-map/src/services/queueService.js` using patterns from "Client-Side Queue Operations" section in docs/architecture/queue-mechanism.md.
+        - Implement createActionRequest helper (deferred from F108 task_2_1):
+          * Simple 20-line function that creates ActionRequest from Action + actor
+          * Uses FieldTypes helpers to generate IDs
+          * Writes to Firestore actionRequests collection via FirestoreClientFacade
         - Implement queue operation functions: queueOperation, getQueueStatus, cancelOperation per architecture patterns.
         - Add offline storage integration using patterns from "Offline Operations" section in docs/architecture/offline-first.md.
         - Integrate with Firebase Firestore for queue persistence (client-side integration with server-side F108 event sourcing).
     validation:
       - "Queue service functions work correctly"
+      - "createActionRequest creates valid ActionRequests"
       - "Operations persist to offline storage"
       - "Queue status tracking works"
     tests:
       - "modules/curb-map/test/queue-service.tap.js (to be created)"
+    notes: |
+      createActionRequest helper was deferred from F108 task_2_1 because:
+      - Function is trivial (20 lines, no business logic)
+      - Actions weren't defined yet (F110 defines them)
+      - Client-side helpers belong in F111 where they're used
+
+      Implementation is straightforward once Actions are defined in F110.
 
   - id: "task_1_2_offline_storage"
     description: "Create offline storage mechanisms"
