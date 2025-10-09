@@ -95,7 +95,7 @@ organizations: {
 ```
 
 ### Users
-```javascript
+```
 // Users - cached from events
 users: {
   userId: {
