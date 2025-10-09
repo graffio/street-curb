@@ -4,226 +4,118 @@ status: "deferred"
 # DEFERRED: This specification is deferred until after F110 (Multi-Tenant Data Model) is complete.
 # Rationale: Cannot properly define authorization without first defining the domain model.
 #
-# Minimal test authentication helpers will be implemented in F110 to enable testing.
-# Full authentication and authorization system will be implemented after domain model exists.
+# Once F110 defines the domain model (Action types, event handlers), this spec will implement:
+# - Authentication system (passcode, custom claims)
+# - Authorization middleware (permission checking)
+# - CRUD APIs for organizations/projects/users
+# - Data isolation and security
 
 # Reference: See docs/architecture/authentication.md for detailed Firebase Auth patterns, custom claims structure, and impersonation system
 
 tasks:
-  - id: "task_1_1_auth_config_setup"
-    description: "Configure Firebase Auth for passcode-only authentication"
+  - id: "task_1_authentication"
+    description: "Implement Firebase Auth with custom claims"
     status: "pending"
-    phase: "Firebase Auth Configuration"
-    dependencies: []
-    estimated_hours: 2
-    implementation: |
-        - Configure Firebase Auth settings per "Passcode-Only Configuration" in docs/architecture/authentication.md.
-        - Disable email/password authentication and enable phone number authentication.
-        - Set SMS passcode settings (length, validity) as documented.
-        - Test configuration in Firebase emulator before deploying to development.
-    validation:
-      - "Firebase Auth console shows phone authentication enabled"
-      - "Email/password authentication disabled in Firebase console"
-      - "SMS passcode settings configured per architecture doc"
-    tests:
-      - "modules/curb-map/functions/test/auth-config.tap.js"
-
-  - id: "task_1_2_passcode_delivery"
-    description: "Implement SMS passcode delivery system"
-    status: "pending"
-    phase: "Firebase Auth Configuration"
+    phase: "Authentication"
     dependencies:
-      - "task_1_1_auth_config_setup"
-    estimated_hours: 3
+      - "F110:task_1_domain_events"
+    estimated_hours: 8
     implementation: |
-        - Create `modules/curb-map/functions/src/auth/passcodeDelivery.js` using patterns from "SMS Provider Integration" section.
-        - Implement rate limiting per "Rate Limiting" guidance in docs/architecture/authentication.md.
-        - Add error handling and validation for phone number format.
-        - Use Firebase Auth SMS service as documented in "SMS Provider Integration" section.
+        - Configure Firebase Auth for passcode authentication (manual setup, not code)
+        - Implement passcode verification and token generation
+        - Create custom claims system (organization roles and permissions)
+        - Integrate with F110 domain model (user/organization lookup)
+        - Log authentication events to F108 event sourcing
+        - Basic auth middleware (token verification, user context injection)
     validation:
-      - "Passcode request API endpoint accepts valid phone numbers"
-      - "Rate limiting prevents abuse (3 attempts per phone per hour)"
-      - "Invalid phone numbers return descriptive errors"
+      - "Passcode authentication works with Firebase Auth"
+      - "Custom claims include organization roles"
+      - "Auth middleware verifies tokens correctly"
     tests:
-      - "modules/curb-map/functions/test/passcode-delivery.tap.js"
+      - "modules/curb-map/functions/test/authentication.tap.js"
+    notes: |
+      Simplified from original F109 tasks (removed SMS delivery complexity, impersonation).
+      Focus on core auth needed for APIs.
 
-  - id: "task_1_3_passcode_verification"
-    description: "Implement passcode verification and token generation"
+  - id: "task_2_authorization"
+    description: "Implement authorization via Firestore security rules"
     status: "pending"
-    phase: "Firebase Auth Configuration"
+    phase: "Authorization"
     dependencies:
-      - "task_1_2_passcode_delivery"
-    estimated_hours: 4
-    implementation: |
-        - Create `modules/curb-map/functions/src/auth/passcodeVerification.js` following "Passcode Verification" patterns.
-        - Generate Firebase custom tokens with organization claims per "Custom Claims Management" section.
-        - Integrate with user organization lookup from docs/architecture/multi-tenant.md.
-        - Log authentication events per "Event Sourcing Integration" section in docs/architecture/authentication.md.
-        - Add session management and token refresh logic.
-    validation:
-      - "Valid passcodes generate Firebase tokens with correct claims"
-      - "Invalid passcodes return 401 errors"
-      - "Expired passcodes are rejected appropriately"
-    tests:
-      - "modules/curb-map/functions/test/passcode-verification.tap.js"
-
-  - id: "task_2_1_custom_claims"
-    description: "Implement organization-scoped custom claims system"
-    status: "pending"
-    phase: "Organization Roles"
-    dependencies:
-      - "task_1_3_passcode_verification"
-    estimated_hours: 4
-    implementation: |
-        - Create `modules/curb-map/functions/src/auth/customClaims.js` using "Custom Claims Management" patterns.
-        - Implement role assignment functions per organization scoping rules in docs/architecture/multi-tenant.md.
-        - Add permission checking utilities following "Authorization Model" in docs/architecture/authentication.md.
-        - Log role assignment events per "Event Sourcing Integration" section in docs/architecture/authentication.md.
-    validation:
-      - "Custom claims structure matches architecture doc schema"
-      - "Role assignment functions work correctly"
-      - "Permission checking utilities return correct results"
-    tests:
-      - "modules/curb-map/functions/test/custom-claims.tap.js"
-
-  - id: "task_2_2_user_management"
-    description: "Create user management API endpoints"
-    status: "pending"
-    phase: "Organization Roles"
-    dependencies:
-      - "task_2_1_custom_claims"
-    estimated_hours: 3
-    implementation: |
-        - Create user management endpoints per "User Management API" section in docs/architecture/authentication.md.
-        - Implement user listing, role assignment, and user removal endpoints.
-        - Add authorization checks using patterns from "Authorization Middleware" section.
-        - Ensure all endpoints respect organization scoping from docs/architecture/multi-tenant.md.
-    validation:
-      - "User listing endpoint returns organization-scoped users"
-      - "Role assignment endpoint enforces authorization"
-      - "User removal endpoint works with proper permissions"
-    tests:
-      - "modules/curb-map/functions/test/user-management.tap.js"
-
-  - id: "task_3_1_impersonation_api"
-    description: "Implement secure impersonation system"
-    status: "pending"
-    phase: "Impersonation Feature"
-    dependencies:
-      - "task_2_2_user_management"
-    estimated_hours: 5
-    implementation: |
-        - Create `modules/curb-map/functions/src/auth/impersonation.js` following "Impersonation System" patterns.
-        - Implement session creation, validation, and expiration per architecture doc.
-        - Add audit logging for all impersonation activities per "Audit Logging" requirements.
-        - Integrate with event sourcing to log impersonation events.
-    validation:
-      - "Impersonation session creation works with proper authorization"
-      - "Sessions expire automatically after 1 hour"
-      - "Audit logging captures all impersonation activities"
-    tests:
-      - "modules/curb-map/functions/test/impersonation-api.tap.js"
-
-  - id: "task_3_2_impersonation_middleware"
-    description: "Create impersonation middleware for API requests"
-    status: "pending"
-    phase: "Impersonation Feature"
-    dependencies:
-      - "task_3_1_impersonation_api"
-    estimated_hours: 4
-    implementation: |
-        - Create `modules/curb-map/functions/src/auth/impersonationMiddleware.js` per "Impersonation Middleware" patterns.
-        - Implement session validation and context switching logic.
-        - Add security controls and time limits per architecture doc.
-        - Ensure impersonated requests maintain audit trail.
-    validation:
-      - "Impersonation middleware validates sessions correctly"
-      - "Context switching works for impersonated requests"
-      - "Security controls prevent session hijacking"
-    tests:
-      - "modules/curb-map/functions/test/impersonation-middleware.tap.js"
-
-  - id: "task_4_1_auth_middleware"
-    description: "Implement authentication middleware"
-    status: "pending"
-    phase: "Security Middleware"
-    dependencies:
-      - "task_3_2_impersonation_middleware"
-    estimated_hours: 3
-    implementation: |
-        - Create `modules/curb-map/functions/src/auth/authMiddleware.js` using "Authentication Middleware" patterns.
-        - Implement token verification logic per Firebase Auth documentation.
-        - Add user context injection and error handling.
-        - Ensure middleware works with impersonation context.
-    validation:
-      - "Token verification middleware works correctly"
-      - "User context injection functions properly"
-      - "Error handling provides appropriate feedback"
-    tests:
-      - "modules/curb-map/functions/test/auth-middleware.tap.js"
-
-  - id: "task_4_2_authz_middleware"
-    description: "Implement authorization middleware"
-    status: "pending"
-    phase: "Security Middleware"
-    dependencies:
-      - "task_4_1_auth_middleware"
-    estimated_hours: 4
-    implementation: |
-        - Create `modules/curb-map/functions/src/auth/authorizationMiddleware.js` following "Security Middleware" patterns.
-        - Implement permission checking logic using custom claims.
-        - Add organization access control per docs/architecture/multi-tenant.md.
-        - Ensure role-based authorization works correctly.
-    validation:
-      - "Permission checking middleware works correctly"
-      - "Organization access control functions"
-      - "Role-based authorization enforces permissions"
-    tests:
-      - "modules/curb-map/functions/test/authz-middleware.tap.js"
-
-  - id: "task_5_1_integration_testing"
-    description: "Validate end-to-end authentication workflow"
-    status: "pending"
-    phase: "Testing and Validation"
-    dependencies:
-      - "task_4_2_authz_middleware"
+      - "task_1_authentication"
     estimated_hours: 6
     implementation: |
-        - Build TAP harness following "Authentication Flow" in docs/architecture/authentication.md.
-        - Test complete flow: passcode request → verification → token → API access.
-        - Add load testing for authentication endpoints per "Performance Testing" guidance.
-        - Document manual validation steps in `docs/runbooks/authentication.md`.
+        - Complete Firestore security rules for authorization (building on F108 task_1_5)
+        - Add rules for hierarchical collections (/organizations/{orgId}/projects/{projId})
+        - Implement permission checking using custom claims in security rules
+        - Add organization-scoped access control rules
+        - Ensure rules enforce role-based permissions (admin, member, guest)
+        - Test unauthorized access attempts are rejected
     validation:
-      - "End-to-end authentication flow works correctly"
-      - "Organization isolation maintained across users"
-      - "Impersonation works across all API endpoints"
+      - "Security rules enforce permissions correctly"
+      - "Organization-scoped access control works"
+      - "Role-based permissions enforced in rules"
+      - "Unauthorized access attempts rejected"
     tests:
-      - "modules/curb-map/functions/test/authentication.integration.tap.js"
-      - "modules/curb-map/functions/test/authentication.load.sh"
+      - "modules/curb-map/test/security-rules.firebase.js"
+      - "modules/curb-map/test/data-isolation.firebase.js"
+    notes: |
+      Authorization via Firestore security rules (not middleware).
+      Clients write ActionRequests directly to Firestore.
+      Rules check custom claims to enforce permissions.
 
-  - id: "task_5_2_operational_safeguards"
-    description: "Implement monitoring and alerting for authentication system"
+      CRUD APIs deferred to backlog (for webhooks/external integrations later).
+
+  - id: "task_3_integration_testing"
+    description: "End-to-end authentication and authorization testing"
     status: "pending"
-    phase: "Testing and Validation"
+    phase: "Integration"
     dependencies:
-      - "task_5_1_integration_testing"
+      - "task_2_authorization"
     estimated_hours: 4
     implementation: |
-        - Implement monitoring per "Operational Safeguards" section in docs/architecture/authentication.md.
-        - Add alerting for authentication failures and rate limit violations.
-        - Set up SOC2 compliance controls for audit logging and access monitoring.
-        - Document operational procedures in `docs/runbooks/authentication.md`.
+        - Test complete flow: auth → write ActionRequest → verify security rules → process event
+        - Test data isolation between organizations
+        - Test role-based access control via security rules
+        - Test unauthorized writes are rejected by Firestore rules
     validation:
-      - "Authentication failure monitoring works correctly"
-      - "Rate limit violation alerts trigger appropriately"
-      - "SOC2 compliance controls are operational"
+      - "End-to-end workflow works correctly"
+      - "Data isolation maintained across organizations"
+      - "Security rules enforce permissions correctly"
     tests:
-      - "modules/curb-map/functions/test/auth-monitoring.tap.js"
+      - "modules/curb-map/functions/test/auth-integration.firebase.js"
 
 completed: []
 
+deleted_as_overengineered:
+  - "Passcode delivery (task_1_2) - Firebase Auth handles SMS natively"
+  - "Impersonation (task_3_1, task_3_2) - defer to backlog (production support needs)"
+  - "Operational monitoring (task_5_2) - defer to backlog (production deployment)"
+  - "Load testing (part of task_5_1) - defer to backlog"
+
+moved_to_backlog:
+  - "CRUD APIs (organizations, projects, users) - needed for webhooks/external integrations but not MVP"
+  - "Authorization middleware - using Firestore security rules instead"
+
 notes: |
-    This specification implements the authentication system for CurbMap.
+    This specification implements authentication and authorization for CurbMap.
+
+    SCOPE:
+    - Firebase Auth integration (passcode authentication)
+    - Custom claims (organization roles and permissions)
+    - Basic auth middleware (token verification)
+    - Firestore security rules (authorization via rules, not middleware)
+    - Role-based permissions enforced in security rules
+
+    OUT OF SCOPE (moved to backlog):
+    - CRUD APIs (clients write ActionRequests directly for MVP)
+    - Authorization middleware (security rules sufficient)
+
+    DEPENDS ON:
+    - F110: Domain model definition (Action types, event handlers)
+
+    Total: 18 hours (simplified from 42 hours in original F109)
+
     Task ID format: task_{phase}_{sequence}_{description}
     Status values: pending, in_progress, completed, blocked, cancelled
     Dependencies: List of task IDs that must be completed first

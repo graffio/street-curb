@@ -1,60 +1,53 @@
 # F110 - Multi-Tenant Data Model
 
-**Implement organization + project hierarchy with data isolation for CurbMap**
+**Define the domain model for organizations, projects, and users**
 
 ## Overview
 
-This specification implements the multi-tenant data model defined in [multi-tenant]. The system uses organization +
-project hierarchy with event-sourced data isolation to provide secure, scalable multi-tenant architecture with proper
-data boundaries.
+This specification defines the domain model (Action types and event handlers) for CurbMap's multi-tenant architecture. The domain model follows the organization + project hierarchy pattern defined in [multi-tenant], with all domain events processed through F108's event sourcing infrastructure.
 
-    `Organizations → Projects → Data Scoping → Event Isolation → Materialized Views`
+    `Action Types → Event Handlers → Hierarchical Collections`
+
+This specification focuses solely on defining the domain model. APIs, authorization, materialized views, and data isolation belong in later specs (F110.5, F110.6, and backlog).
 
 ## References
 
-- [multi-tenant] — Canonical organization/project patterns, data isolation rules, role hierarchy
-- [event-sourcing] — Event scoping and materialized view patterns
-- [authentication] — Role-based permissions and authorization
+- [multi-tenant] — Organization/project patterns, data isolation rules
+- [event-sourcing] — Event sourcing patterns
+- F108 — Event sourcing infrastructure (completed)
 
-## Implementation Phases
+## Simplified Implementation
 
-### Phase 1: Organization Management
+### Single Task: Domain Model Definition
 
-- **task_1_1_organization_events**: Define organization event types and handlers
-- **task_1_2_organization_api**: Create organization CRUD API endpoints
-- **task_1_3_organization_validation**: Implement organization validation and business rules
+**task_1_domain_events** (12 hours)
+- Test auth helpers (minimal for testing only)
+- Action type definitions (OrganizationCreated, ProjectCreated, UserAdded, etc.)
+- Event handlers (organization, project, user domain logic)
+- F108 integration (dispatch from giant function)
+- Hierarchical Firestore collections
+- Basic integration tests
 
-### Phase 2: Project Management
+## Deferred to Later Specs
 
-- **task_2_1_project_events**: Define project event types and handlers
-- **task_2_2_project_api**: Create project CRUD API endpoints
-- **task_2_3_project_validation**: Implement project validation and business rules
+### F110.5 (Authentication & Authorization)
+- Organization/Project CRUD APIs
+- Authorization middleware
+- Role-based permissions
+- Data isolation middleware
+- Cross-tenant protection
 
-### Phase 3: Materialized View Generation
+### Backlog (Future Enhancements)
+- Materialized view optimization (F110.6 provides basic views)
+- CRUD API wrappers
+- Performance optimization
+- Load testing
 
-- **task_3_1_organization_views**: Create organization materialized views
-- **task_3_2_project_views**: Create project materialized views
-- **task_3_3_view_sync**: Implement view synchronization with events
+## Rationale
 
-### Phase 4: Data Isolation Middleware
+F110 defines the **domain model only** - what Actions exist and how they're processed. Authorization and APIs require a full auth system (F110.5), which can only be properly designed after the domain model is clear.
 
-- **task_4_1_isolation_middleware**: Implement data isolation middleware
-- **task_4_2_scoping_validation**: Add data scoping validation
-- **task_4_3_cross_tenant_protection**: Prevent cross-tenant data access
-
-### Phase 5: Role-Based Permissions System
-
-- **task_5_1_permission_system**: Implement role-based permissions
-- **task_5_2_authorization_integration**: Integrate with authentication system
-- **task_5_3_permission_testing**: Test permission enforcement
-
-### Phase 6: Testing and Validation
-
-- **task_6_1_integration_testing**: Validate end-to-end multi-tenant workflow
-- **task_6_2_isolation_testing**: Test data isolation and security
+By completing F110 first, we enable F110.5 to implement authorization rules that match the actual domain model rather than guessing what Actions will exist.
 
 [multi-tenant]: ../../docs/architecture/multi-tenant.md
-
 [event-sourcing]: ../../docs/architecture/event-sourcing.md
-
-[authentication]: ../../docs/architecture/authentication.md
