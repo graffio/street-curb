@@ -25,7 +25,7 @@ Client (Online/Offline) → Firestore actionRequests → Giant Function → comp
 ### Completed Actions (Source of Truth)
 Completed actions are immutable and provide the complete audit trail:
 
-```javascript
+```
 // completedActions collection - immutable audit trail
 completedActions: {
   id: {
@@ -55,12 +55,20 @@ completedActions: {
 ### Action Types
 Actions represent domain events that can be requested:
 
-- **UserAdded**: New user registration
+**Organization Actions (4)**:
+- **OrganizationCreated**: New organization setup
+- **OrganizationUpdated**: Organization name or status changes
+- **OrganizationSuspended**: Suspend organization (shorthand for status change)
+- **OrganizationDeleted**: Permanently delete organization
+
+**User Actions (5)**:
+- **UserCreated**: New user registration
 - **UserUpdated**: User profile changes
+- **UserDeleted**: Remove user from organization
 - **UserForgotten**: GDPR/CCPA data deletion
-- **RoleAssigned**: Permission changes
-- **OrganizationAdded**: New organization setup
-- **ProjectAdded**: New project within organization
+- **RoleAssigned**: Assign/change user role
+
+**Projects**: Each organization gets a default project with real CUID2 ID (CRUD actions deferred to backlog)
 
 ## Materialized Views (Performance)
 
@@ -70,16 +78,18 @@ Actions represent domain events that can be requested:
 organizations: {
   organizationId: {
     name: "City of San Francisco",
-    subscription: {
-      tier: "premium",
-      annualAmount: 50000,
-      startDate: "2025-01-01T00:00:00Z",
-      endDate: "2026-01-01T00:00:00Z"
-    },
-    settings: {
-      ssoEnabled: false,
-      auditLogRetention: 2555 // 7 years
-    }
+    status: "active" | "suspended",  // initialized to "active"
+    defaultProjectId: "prj_abc123",  // links to default project (real CUID2)
+    createdAt: timestamp,             // serverTimestamp
+    createdBy: "usr_456",             // from actionRequest.actorId
+    updatedAt: timestamp,             // serverTimestamp
+    updatedBy: "usr_456"              // from actionRequest.actorId
+
+    // Deferred to F112 (Billing):
+    // subscription: {tier, annualAmount, startDate, endDate}
+
+    // Deferred to backlog:
+    // settings: {ssoEnabled, ssoProvider, auditLogRetention}
   }
 }
 ```
@@ -91,30 +101,48 @@ users: {
   userId: {
     email: "alice@sf.gov",
     displayName: "Alice Johnson",
-    roles: {
-      organizationId: {
-        role: "admin" | "member",
-        permissions: ["read", "write", "admin"],
-        lastAccess: "2025-01-15T10:30:00Z"
-      }
+    organizations: {
+      "org_123": "admin",  // simple role enum: admin | member | viewer
+      "org_456": "member"
     },
-    lastLogin: "2025-01-15T09:00:00Z",
-    failedAttempts: 0
+    lastLogin: timestamp | null,  // for auth tracking (initialized null)
+    failedAttempts: 0,            // for brute force prevention
+    createdAt: timestamp,         // serverTimestamp
+    createdBy: "usr_456",         // from actionRequest.actorId
+    updatedAt: timestamp,         // serverTimestamp
+    updatedBy: "usr_456"          // from actionRequest.actorId
+
+    // Deferred to F110.5+ (granular permissions):
+    // permissions: ["organizations:read", "projects:write", "users:manage"]
+
+    // Deferred to backlog (analytics):
+    // lastAccess: {orgId: timestamp}
   }
 }
 ```
 
 ### Projects
 ```javascript
-// Projects - cached from events
+// Projects - default project per organization
+// Hierarchical structure: /organizations/{orgId}/projects/{projectId}/
+// Project CRUD actions deferred to backlog
+
 projects: {
-  projectId: {
-    organizationId: "cuid2",
-    name: "Downtown Curb Management",
-    status: "active",
-    createdBy: "userId"
+  "prj_abc123": {                  // Real CUID2 ID (not "default" magic string)
+    organizationId: "org_123",
+    name: "Default Project",
+    createdAt: timestamp,          // serverTimestamp
+    createdBy: "usr_456",          // from actionRequest.actorId
+    updatedAt: timestamp,          // serverTimestamp
+    updatedBy: "usr_456"           // from actionRequest.actorId
   }
 }
+
+// Found via: organization.defaultProjectId
+
+// When projects are added (backlog):
+// ProjectCreated, ProjectUpdated, ProjectArchived, ProjectDeleted actions
+// No migration needed - hierarchical structure already in place
 ```
 
 ## Multi-Tenant Data Model
