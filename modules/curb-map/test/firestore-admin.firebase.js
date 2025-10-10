@@ -39,7 +39,13 @@ const buildActionRequest = overrides => {
         subjectType: overrides?.subjectType || 'user',
         action:
             overrides?.action ||
-            Action.UserAdded.from({ organizationId, user: { id: subjectId, email: 'action@example.com' } }),
+            Action.UserCreated.from({
+                organizationId,
+                userId: FieldTypes.newUserId(),
+                email: 'action@example.com',
+                displayName: 'Action!',
+                role: 'admin',
+            }),
         organizationId,
         projectId: overrides?.projectId,
         idempotencyKey: overrides?.idempotencyKey || FieldTypes.newIdempotencyKey(),

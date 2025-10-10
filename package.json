@@ -10,7 +10,7 @@
     "scripts": {
         "types:generate": "node modules/cli-type-generator/src/cli.js generate",
         "types:generate-all": "node modules/cli-type-generator/src/cli.js generate-all",
-        "types:watch": "node modules/cli-type-generator/src/cli.js watch",
+        "types:watch": "yarn types:generate-all && while true; do node modules/cli-type-generator/src/cli.js watch || true; echo 'Restarting...'; sleep 2; done",
         "clean": "rm -rf node_modules && rm -rf modules/*/node_modules",
         "precommit": "lint-staged",
         "tap": "yarn workspaces run tap"

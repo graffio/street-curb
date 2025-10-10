@@ -1,6 +1,7 @@
 /**
  * Development logger - human-readable output with flow tracking
  */
+import isObject from '@graffio/functional/src/ramda-like/internal/is-object.js'
 import pickAWord from './words.js'
 
 const effect = v => `\x1b[` + v + `m`
@@ -35,20 +36,21 @@ const colorize = {
    underline     : s => effect(4)  + s + reset,
 }
 
-const formatLogValues = logValues => {
-    if (!logValues || Object.keys(logValues).length === 0) return ''
+const formatData = data => {
+    const logValue = value => (isObject(value) ? formatData(value) : value)
+    const logEntry = ([key, value]) => `${colorize.brightBlue(key)}=${logValue(value)}`
 
-    const keys = Object.keys(logValues)
-    const parts = keys.map(key => `${colorize.brightBlue(key)}=${logValues[key]}`).join(' ')
-    return ` [${parts}]`
+    if (!data || Object.keys(data).length === 0) return ''
+    const parts = Object.entries(data).map(logEntry).join(' ')
+    return `[${parts}]`
 }
 
-const log = (level, message, logValues, flowPrefix) => {
+const log = (level, message, data, flowPrefix) => {
     const emoji = { debug: '🔍', info: ' ️', warn: '⚠️', error: '❌' }[level] || '📝'
 
-    const logValuesAsString = formatLogValues(logValues)
+    const formattedData = formatData(data)
     const prefix = flowPrefix ? `${flowPrefix} ${emoji}` : emoji
-    const output = `${prefix} ${message.padEnd(40)}${logValuesAsString}`
+    const output = `${prefix} ${message.padEnd(40)} ${formattedData}`
 
     console[level](output)
 }
@@ -63,22 +65,22 @@ const createDevLogger = () => {
     let step = 0
 
     return {
-        flowStart: (message, logValues) => {
+        flowStart: (message, extraData) => {
             step = 0
-            log('info', message, logValues, `${colorize.brightGreen('▶')} ${fourLetterWord}`)
+            log('info', message, extraData, `${colorize.brightGreen('▶')} ${fourLetterWord}`)
         },
 
-        flowStep: (message, logValues) => {
+        flowStep: (message, extraData) => {
             step++
-            log('info', message, logValues, `${step} ${fourLetterWord}`)
+            log('info', message, extraData, `${step} ${fourLetterWord}`)
         },
 
-        flowStop: (message, logValues) => {
+        flowStop: (message, extraData) => {
             step = 0
-            log('info', message, logValues, `${colorize.brightRed(colorize.red('■'))} ${fourLetterWord}`)
+            log('info', message, extraData, `${colorize.brightRed(colorize.red('■'))} ${fourLetterWord}`)
         },
 
-        error: (message, logValues) => log('error', message, logValues, `${colorize.red('■')} ${fourLetterWord}`),
+        error: (message, extraData) => log('error', message, extraData, `${colorize.red('■')} ${fourLetterWord}`),
     }
 }
 

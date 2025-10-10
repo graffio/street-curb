@@ -163,4 +163,16 @@ ActionRequest.fromFirestore = actionRequest =>
         processedAt: actionRequest?.processedAt,
     })
 
+// Additional function: log
+ActionRequest.log = ({ id, action, actorId, organizationId, projectId, status, idempotencyKey, correlationId }) => ({
+    id,
+    action: Action.log(action),
+    actorId,
+    organizationId,
+    projectId,
+    status,
+    idempotencyKey,
+    correlationId,
+})
+
 export { ActionRequest }
