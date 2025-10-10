@@ -2,6 +2,7 @@
  *
  *  OrganizationCreated
  *      organizationId: FieldTypes.organizationId,
+ *      projectId     : FieldTypes.projectId,
  *      name          : "String"
  *  OrganizationUpdated
  *      organizationId: FieldTypes.organizationId,
@@ -116,14 +117,16 @@ Action.prototype = ActionPrototype
 // Variant Action.OrganizationCreated constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationCreatedConstructor = function OrganizationCreated(organizationId, name) {
-    const constructorName = 'Action.OrganizationCreated(organizationId, name)'
-    R.validateArgumentLength(constructorName, 2, arguments)
+const OrganizationCreatedConstructor = function OrganizationCreated(organizationId, projectId, name) {
+    const constructorName = 'Action.OrganizationCreated(organizationId, projectId, name)'
+    R.validateArgumentLength(constructorName, 3, arguments)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+    R.validateRegex(constructorName, FieldTypes.projectId, 'projectId', false, projectId)
     R.validateString(constructorName, 'name', false, name)
 
     const result = Object.create(OrganizationCreatedPrototype)
     result.organizationId = organizationId
+    result.projectId = projectId
     result.name = name
     return result
 }
@@ -140,7 +143,7 @@ Object.defineProperty(OrganizationCreatedPrototype, '@@tagName', { value: 'Organ
 Object.defineProperty(OrganizationCreatedPrototype, '@@typeName', { value: 'Action' })
 
 OrganizationCreatedPrototype.toString = function () {
-    return `Action.OrganizationCreated(${R._toString(this.organizationId)}, ${R._toString(this.name)})`
+    return `Action.OrganizationCreated(${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.name)})`
 }
 
 OrganizationCreatedPrototype.toJSON = function () {
@@ -157,7 +160,7 @@ OrganizationCreatedPrototype.constructor = OrganizationCreatedConstructor
 // -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
 OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
-OrganizationCreatedConstructor.from = o => Action.OrganizationCreated(o.organizationId, o.name)
+OrganizationCreatedConstructor.from = o => Action.OrganizationCreated(o.organizationId, o.projectId, o.name)
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -574,5 +577,42 @@ Action.fromFirestore = o => {
     if (tagName === 'UserUpdated') return Action.UserUpdated.from(o)
     throw new Error(`Unrecognized domain event ${tagName}`)
 }
+
+// Additional function: log
+Action.log = a =>
+    a.match({
+        OrganizationCreated: ({ name }) => ({
+            type: 'OrganizationCreated',
+            name,
+        }),
+        OrganizationUpdated: ({ name, status }) => ({
+            type: 'OrganizationUpdated',
+            name,
+            status,
+        }),
+        OrganizationDeleted: () => ({ type: 'OrganizationDeleted' }),
+        OrganizationSuspended: () => ({ type: 'OrganizationSuspended' }),
+        UserCreated: ({ email, displayName, role }) => ({
+            type: 'UserCreated',
+            email,
+            displayName,
+            role,
+        }),
+        UserUpdated: ({ email, displayName, role }) => ({
+            type: 'UserUpdated',
+            email,
+            displayName,
+            role,
+        }),
+        UserDeleted: () => ({ type: 'UserDeleted' }),
+        UserForgotten: ({ reason }) => ({
+            type: 'UserForgotten',
+            reason,
+        }),
+        RoleAssigned: ({ role }) => ({
+            type: 'RoleAssigned',
+            role,
+        }),
+    })
 
 export { Action }

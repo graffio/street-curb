@@ -20,15 +20,19 @@ const targets = {
 
 // prettier-ignore
 export const typeMappings = {
-    // curb-map
+    // curb-map infrastructure
+    [`${sources.curbMap}/system-flags.type.js`]           : [targets.curbMap],
     [`${sources.curbMap}/action.type.js`]                 : [targets.curbMap],
     [`${sources.curbMap}/action-request.type.js`]         : [targets.curbMap],
     [`${sources.curbMap}/audit-record.type.js`]           : [targets.curbMap],
-    [`${sources.curbMap}/blockface.type.js`]              : [targets.curbMap],
     [`${sources.curbMap}/operation-details.type.js`]      : [targets.curbMap],
-    [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
-    [`${sources.curbMap}/system-flags.type.js`]           : [targets.curbMap],
     
+    // curb-map domain
+    [`${sources.curbMap}/blockface.type.js`]              : [targets.curbMap],
+    [`${sources.curbMap}/organization.type.js`]           : [targets.curbMap],
+    [`${sources.curbMap}/project.type.js`]                : [targets.curbMap],
+    [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
+    [`${sources.curbMap}/user.type.js`]                   : [targets.curbMap],
    
     // special case: source is just copied verbatim to target
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],

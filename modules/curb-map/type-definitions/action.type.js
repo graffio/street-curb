@@ -4,8 +4,9 @@ import { FieldTypes } from './field-types.js'
 
 /**
  * Action represents the different domain events that can be queued
- * @sig Action :: UserAdded | OrganizationAdded | OrganizationCreated | OrganizationUpdated | OrganizationSuspended |
- *                OrganizationDeleted | UserCreated | UserUpdated | UserDeleted | UserForgotten | RoleAssigned
+ * @sig Action ::
+ *      OrganizationCreated | OrganizationUpdated | OrganizationDeleted | OrganizationSuspended |
+ *      UserCreated         | UserUpdated         | UserDeleted         | UserForgotten | RoleAssigned
  */
 
 // prettier-ignore
@@ -16,6 +17,7 @@ export const Action = {
         // Organization Actions
         OrganizationCreated: {
             organizationId: FieldTypes.organizationId,
+            projectId     : FieldTypes.projectId,
             name          : 'String',
         },
         OrganizationUpdated: {
@@ -85,3 +87,18 @@ Action.fromFirestore = o => {
 
     throw new Error(`Unrecognized domain event ${tagName}`)
 }
+
+// prettier-ignore
+Action.log = a =>
+    a.match({
+        OrganizationCreated  : ({ name })                     => ({ type: 'OrganizationCreated', name}),
+        OrganizationUpdated  : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
+        OrganizationDeleted  : ()                             => ({ type: 'OrganizationDeleted', }),
+        OrganizationSuspended: ()                             => ({ type: 'OrganizationSuspended', }),
+
+        UserCreated          : ({ email, displayName, role }) => ({ type: 'UserCreated', email, displayName, role }),
+        UserUpdated          : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
+        UserDeleted          : ()                             => ({ type: 'UserDeleted',  }),
+        UserForgotten        : ({ reason })                   => ({ type: 'UserForgotten', reason }),
+        RoleAssigned         : ({ role })                     => ({ type: 'RoleAssigned', role }),
+    })

@@ -198,14 +198,14 @@ This specification focuses solely on defining the **domain model** - what entiti
 - `updatedBy`: userId (from actionRequest.actorId, who last modified entity)
 
 **Added by handlers, NOT in Action payloads**:
-- Actions contain ONLY domain fields (e.g., `{organizationId, name}`)
+- Actions contain ONLY domain fields (e.g., `{organizationId, projectId, name}`)
 - Handlers add metadata from `actionRequest.actorId` and `serverTimestamp()`
 - Prevents spoofing: clients cannot claim to be someone else
 
 **Example**:
 ```javascript
 // Client sends Action (domain fields only):
-OrganizationCreated.from({organizationId: "org_xyz", name: "City of SF"})
+OrganizationCreated.from({organizationId: "org_xyz", projectId: "prj_abc123", name: "City of SF"})
 
 // Handler adds metadata:
 {

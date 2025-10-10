@@ -14,7 +14,7 @@ tasks:
         Define 9 Action tagged types in `modules/curb-map/type-definitions/action.type.js`:
 
         Organization Actions (4):
-        - OrganizationCreated: {organizationId, name}
+        - OrganizationCreated: {organizationId, projectId, name}
         - OrganizationUpdated: {organizationId, name?, status?}
         - OrganizationSuspended: {organizationId}
         - OrganizationDeleted: {organizationId}
@@ -47,7 +47,7 @@ tasks:
 
       Organization: {id, name, status, defaultProjectId, createdAt, createdBy, updatedAt, updatedBy}
       - status: "active" | "suspended" (initialized to "active")
-      - defaultProjectId: points to default project (generated via FieldTypes.newProjectId())
+      - defaultProjectId: points to default project (projectId from OrganizationCreated action)
       - Metadata fields added by giant function, not in Action payload
       - Deferred: subscription (F112), SSO settings (backlog)
 
