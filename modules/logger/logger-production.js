@@ -19,22 +19,22 @@ const createProductionLogger = () => {
     let step = 0
 
     return {
-        flowStart: (message, logValues) => {
+        flowStart: (message, extraData = {}) => {
             step = 0
-            log('info', message, { ...logValues, flowId: fourLetterWord, flowEvent: 'flowStart' })
+            log('info', message, { ...extraData, flowId: fourLetterWord, flowEvent: 'flowStart' })
         },
 
-        flowStep: (message, logValues) => {
+        flowStep: (message, extraData = {}) => {
             step++
-            log('info', message, { ...logValues, flowId: fourLetterWord, flowEvent: 'flowStep', flowStep: step })
+            log('info', message, { ...extraData, flowId: fourLetterWord, flowEvent: 'flowStep', flowStep: step })
         },
 
-        flowStop: (message, logValues) => {
+        flowStop: (message, extraData = {}) => {
             step = 0
-            log('info', message, { ...logValues, flowId: fourLetterWord, flowEvent: 'flowStop' })
+            log('info', message, { ...extraData, flowId: fourLetterWord, flowEvent: 'flowStop' })
         },
 
-        error: (message, logValues) => log('error', message, { ...logValues, flowId: fourLetterWord }),
+        error: (message, extraData = {}) => log('error', message, { ...extraData, flowId: fourLetterWord }),
     }
 }
 

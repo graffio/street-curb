@@ -1,51 +1,63 @@
-# F109 - Authentication System
+# F110.5 - Authentication & Authorization System
 
-**Implement passcode-only authentication with organization roles for CurbMap**
+**Implement authentication and authorization for CurbMap**
 
 ## Overview
 
-This specification implements the authentication architecture defined in [authentication]. The system uses phone
-number + SMS passcode authentication with organization-scoped custom claims to provide secure, field-worker-friendly
-authentication with support capabilities.
+This specification implements authentication (Firebase Auth) and authorization (Firestore security rules) for CurbMap. The system uses phone number + SMS passcode authentication with organization-scoped custom claims, secured via Firestore rules.
 
-    Phone Number → SMS Passcode → Firebase Auth → Custom Claims → API Access
+    Phone → Firebase Auth → Custom Claims → Security Rules → Data Access
+
+This specification is **deferred** until after F110 (domain model) is complete. Authorization rules cannot be properly defined without knowing what Actions exist.
 
 ## References
 
-- [authentication] — Canonical Firebase Auth patterns, custom claims structure, impersonation system
-- [security] — Authorization patterns, audit logging requirements
+- [authentication] — Firebase Auth patterns, custom claims structure
+- [security] — Authorization patterns, security rules
 - [multi-tenant] — Organization scoping and role hierarchy
+- F110 — Domain model (must be complete first)
 
-## Implementation Phases
+## Simplified Implementation
 
-### Phase 1: Firebase Auth Configuration
+### Three Tasks (18 hours total)
 
-- **task_1_1_auth_config_setup**: Configure Firebase Auth for passcode-only authentication
-- **task_1_2_passcode_delivery**: Implement SMS passcode delivery system
-- **task_1_3_passcode_verification**: Implement passcode verification and token generation
+**task_1_authentication** (8h)
+- Firebase Auth configuration (passcode authentication)
+- Custom claims system (organization roles and permissions)
+- Basic auth middleware (token verification)
+- Integration with F110 domain model
 
-### Phase 2: Organization Roles
+**task_2_authorization** (6h)
+- Firestore security rules (NOT middleware)
+- Authorization via rules (check custom claims)
+- Organization-scoped access control
+- Role-based permissions (admin, member, guest)
 
-- **task_2_1_custom_claims**: Implement organization-scoped custom claims system
-- **task_2_2_user_management**: Create user management API endpoints
+**task_3_integration_testing** (4h)
+- End-to-end testing
+- Data isolation verification
+- Permission enforcement testing
 
-### Phase 3: Impersonation Feature
+## Deferred to Backlog
 
-- **task_3_1_impersonation_api**: Implement secure impersonation system
-- **task_3_2_impersonation_middleware**: Create impersonation middleware for API requests
+### From Original F109
+- SMS delivery complexity (Firebase handles natively)
+- Impersonation system (production support feature)
+- Operational monitoring (production deployment)
+- Load testing (after MVP)
 
-### Phase 4: Security Middleware
+### CRUD APIs
+- Not needed for MVP (clients write ActionRequests directly)
+- Move to backlog for webhooks/external integrations later
 
-- **task_4_1_auth_middleware**: Implement authentication middleware
-- **task_4_2_authz_middleware**: Implement authorization middleware
+## Rationale
 
-### Phase 5: Testing and Validation
+**Why deferred until after F110**: Cannot define authorization rules without knowing what Actions exist in the domain model.
 
-- **task_5_1_integration_testing**: Validate end-to-end authentication workflow
-- **task_5_2_operational_safeguards**: Implement monitoring and alerting for authentication system
+**Why security rules over middleware**: Simpler, client writes directly to Firestore, rules enforce at database level.
+
+**Why no CRUD APIs**: For MVP, clients can write ActionRequests directly to Firestore. APIs only needed later for external integrations.
 
 [authentication]: ../../docs/architecture/authentication.md
-
 [security]: ../../docs/architecture/security.md
-
 [multi-tenant]: ../../docs/architecture/multi-tenant.md

@@ -74,8 +74,9 @@ const withFacades = async effect => {
 
     restoreEnv(configuration)
 
-    const adminFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
     const clientFacade = FirestoreClientFacade(ActionRequest, `${namespace}/`)
+    // Use admin facade for cleanup since client facade doesn't have recursiveDelete
+    const adminFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
 
     const clearNamespace = async () => {
         await adminFacade.recursiveDelete()
@@ -83,63 +84,72 @@ const withFacades = async effect => {
     await clearNamespace()
 
     try {
-        await effect({ adminFacade, clientFacade, namespace, clearNamespace })
+        await effect({ clientFacade, namespace, clearNamespace })
     } finally {
         await clearNamespace()
         restoreEnv(snapshot)
     }
 }
 
-test('Given the Firestore admin facades', async t => {
-    await t.test('When an action request is written and read via the admin facade', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+test('Given the Firestore client facade', async t => {
+    await t.test('When an action request is written and read via the client facade', async tt => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildActionRequest()
-            await adminFacade.write(item)
-            const stored = await adminFacade.read(item.id)
+            await clientFacade.write(item)
+            const stored = await clientFacade.read(item.id)
 
             tt.equal(stored.id, item.id, 'Then the stored action request retains its identifier')
             tt.equal(stored.status, 'pending', 'Then the stored action request keeps the pending status')
         })
     })
 
-    await t.test('When recursiveDelete runs on the namespace', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+    await t.test('When query is used to filter documents', async tt => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
-            const item = buildActionRequest({ status: 'pending' })
+            const orgId = FieldTypes.newOrganizationId()
+            const item1 = buildActionRequest({ organizationId: orgId, status: 'pending' })
+            const item2 = buildActionRequest({ organizationId: orgId, status: 'completed' })
+            const item3 = buildActionRequest({ status: 'pending' }) // different org
 
-            await adminFacade.write(item)
-            await adminFacade.recursiveDelete()
+            await clientFacade.write(item1)
+            await clientFacade.write(item2)
+            await clientFacade.write(item3)
 
-            const remaining = await adminFacade.list()
-            tt.same(remaining, [], 'Then the namespace is empty after cleanup')
+            const results = await clientFacade.query([['organizationId', '==', orgId]])
+
+            tt.equal(results.length, 2, 'Then only documents matching the query are returned')
+            tt.ok(
+                results.every(r => r.organizationId === orgId),
+                'Then all results match the organization ID',
+            )
         })
     })
 })
 
-test('Given the Firestore facade update method', async t => {
+test('Given the Firestore client facade update method', async t => {
     await t.test('When update is called with partial fields', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildActionRequest({ status: 'pending' })
-            await adminFacade.write(item)
+            await clientFacade.write(item)
 
             // Update only status field
-            await adminFacade.update(item.id, { status: 'completed' })
+            await clientFacade.update(item.id, { status: 'completed' })
 
-            const updated = await adminFacade.read(item.id)
+            const updated = await clientFacade.read(item.id)
             tt.equal(updated.status, 'completed', 'Then the status field is updated')
             tt.equal(updated.id, item.id, 'Then other fields remain unchanged')
         })
     })
 
     await t.test('When update is called on non-existent document', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const nonExistentId = FieldTypes.newActionRequestId()
 
             try {
-                await adminFacade.update(nonExistentId, { status: 'completed' })
+                await clientFacade.update(nonExistentId, { status: 'completed' })
                 tt.fail('Then update should throw an error')
             } catch (error) {
                 tt.match(error.message, /Failed to update/, 'Then error message indicates update failed')
@@ -148,14 +158,14 @@ test('Given the Firestore facade update method', async t => {
     })
 
     await t.test('When write is called with invalid status value', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildActionRequest({ status: 'pending' })
 
             // Try to create an ActionRequest with invalid status
             try {
                 const invalidItem = { ...item, status: 'invalid' }
-                await adminFacade.write(invalidItem)
+                await clientFacade.write(invalidItem)
                 tt.fail('Then write should throw a validation error')
             } catch (error) {
                 tt.match(error.message, /not of type/, 'Then error indicates type validation failed')
@@ -164,15 +174,15 @@ test('Given the Firestore facade update method', async t => {
     })
 })
 
-test('Given the Firestore facade listenToDocument method', async t => {
+test('Given the Firestore client facade listenToDocument method', async t => {
     await t.test('When listening to a document that gets created', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildActionRequest()
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = adminFacade.listenToDocument(item.id, (doc, error) => {
+                const unsubscribe = clientFacade.listenToDocument(item.id, (doc, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -189,21 +199,21 @@ test('Given the Firestore facade listenToDocument method', async t => {
                 })
 
                 // Write document after listener is set up
-                setTimeout(() => adminFacade.write(item), 100)
+                setTimeout(() => clientFacade.write(item), 100)
             })
         })
     })
 
     await t.test('When listening to a document that gets updated', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const item = buildActionRequest({ status: 'pending' })
-            await adminFacade.write(item)
+            await clientFacade.write(item)
 
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = adminFacade.listenToDocument(item.id, (doc, error) => {
+                const unsubscribe = clientFacade.listenToDocument(item.id, (doc, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -220,15 +230,15 @@ test('Given the Firestore facade listenToDocument method', async t => {
                 })
 
                 // Update document after listener is set up
-                setTimeout(() => adminFacade.update(item.id, { status: 'completed' }), 100)
+                setTimeout(() => clientFacade.update(item.id, { status: 'completed' }), 100)
             })
         })
     })
 })
 
-test('Given the Firestore facade listenToCollection method', async t => {
+test('Given the Firestore client facade listenToCollection method', async t => {
     await t.test('When listening to a collection with new documents added', async tt => {
-        await withFacades(async ({ adminFacade, clearNamespace }) => {
+        await withFacades(async ({ clientFacade, clearNamespace }) => {
             await clearNamespace()
             const orgId = FieldTypes.newOrganizationId()
             const item1 = buildActionRequest({ organizationId: orgId, status: 'pending' })
@@ -237,48 +247,31 @@ test('Given the Firestore facade listenToCollection method', async t => {
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = adminFacade.listenToCollection([['organizationId', '==', orgId]], (docs, error) => {
-                    if (error) {
-                        unsubscribe()
-                        reject(error)
-                        return
-                    }
-                    updates.push(docs)
+                const unsubscribe = clientFacade.listenToCollection(
+                    [['organizationId', '==', orgId]],
+                    (docs, error) => {
+                        if (error) {
+                            unsubscribe()
+                            reject(error)
+                            return
+                        }
+                        updates.push(docs)
 
-                    if (updates.length === 3) {
-                        unsubscribe()
-                        tt.equal(updates[0].length, 0, 'Then first callback has empty collection')
-                        tt.equal(updates[1].length, 1, 'Then second callback has one document')
-                        tt.equal(updates[2].length, 2, 'Then third callback has two documents')
-                        resolve()
-                    }
-                })
+                        if (updates.length === 3) {
+                            unsubscribe()
+                            tt.equal(updates[0].length, 0, 'Then first callback has empty collection')
+                            tt.equal(updates[1].length, 1, 'Then second callback has one document')
+                            tt.equal(updates[2].length, 2, 'Then third callback has two documents')
+                            resolve()
+                        }
+                    },
+                )
 
                 // Write documents after listener is set up
-                setTimeout(() => adminFacade.write(item1), 100)
-                setTimeout(() => adminFacade.write(item2), 200)
+                setTimeout(() => clientFacade.write(item1), 100)
+                setTimeout(() => clientFacade.write(item2), 200)
             })
         })
-    })
-})
-
-test('Given the completedActions collection', async t => {
-    const namespace = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`
-    const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`, undefined, 'completedActions')
-
-    await t.test('When a completed action is written and read', async tt => {
-        const item = buildActionRequest({
-            status: 'completed',
-            resultData: { success: true },
-            processedAt: new Date('2025-01-01T00:01:00Z'),
-        })
-        await completedActionsFacade.write(item)
-        const stored = await completedActionsFacade.read(item.id)
-
-        tt.equal(stored.id, item.id, 'Then the completed action ID is preserved')
-        tt.equal(stored.status, 'completed', 'Then the status is completed')
-        tt.ok(stored.resultData, 'Then result data is preserved')
-        tt.ok(stored.processedAt, 'Then processedAt timestamp is preserved')
     })
 })
 

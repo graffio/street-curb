@@ -1,390 +1,317 @@
-current_task: "task_1_1_organization_events"
+current_task: "task_1_action_types"
 status: "pending"
 
 # Reference: See docs/architecture/multi-tenant.md for detailed organization/project patterns, data isolation rules, and role hierarchy
 
 tasks:
-  - id: "task_1_1_organization_events"
-    description: "Define organization event types and handlers"
+  - id: "task_1_action_types"
+    description: "Define Action type variants for organizations and users"
     status: "pending"
-    phase: "Organization Management"
+    phase: "Domain Model"
     dependencies: []
-    estimated_hours: 5
+    estimated_hours: 3
     implementation: |
-        - Create test auth helpers in `modules/curb-map/test-utils/auth-helpers.js`:
-          * createTestUser(userId, organizationId, role) - for Firebase Auth emulator
-          * mockAuthContext(userId, claims) - inject auth context in tests
-          * clearTestUsers() - cleanup helper
-        - Use Firebase Auth emulator for integration tests (no production auth yet)
-        - Create `modules/curb-map/functions/src/events/organizationEvents.js` using patterns from "Organization Management" section in docs/architecture/multi-tenant.md.
-        - Define event types: OrganizationCreated, OrganizationUpdated, OrganizationDeleted per architecture patterns.
-        - Implement event handlers with proper data validation and business rules.
-        - Integrate with F108 event sourcing orchestrator (handle-action-request-added.js).
-        - Handlers process domain logic for organization management.
-        - Use hierarchical Firestore collections: /organizations/{orgId}/...
+        Define 9 Action tagged types in `modules/curb-map/type-definitions/action.type.js`:
+
+        Organization Actions (4):
+        - OrganizationCreated: {organizationId, projectId, name}
+        - OrganizationUpdated: {organizationId, name?, status?}
+        - OrganizationSuspended: {organizationId}
+        - OrganizationDeleted: {organizationId}
+
+        User Actions (5):
+        - UserCreated: {userId, email, displayName, organizationId, role}
+        - UserUpdated: {userId, email?, displayName?}
+        - UserDeleted: {userId, organizationId}
+        - UserForgotten: {userId, reason}
+        - RoleAssigned: {userId, organizationId, role}
+
+        IMPORTANT - Action Payloads Contain ONLY Domain Fields:
+        - NO createdBy/createdAt/updatedAt/updatedBy (giant function adds from actionRequest)
+        - NO status in OrganizationCreated (always initialized to "active")
+        - All IDs use FieldTypes: newOrganizationId(), newUserId(), newProjectId()
+
+        Implementation:
+        - Update Action.variants with all 9 types
+        - Implement Action.toFirestore() serialization
+        - Implement Action.fromFirestore() deserialization
+        - Handle all variants in fromFirestore switch
     validation:
-      - "Test auth helpers work with Firebase Auth emulator"
-      - "Organization event types defined with proper schemas"
-      - "Event handlers validate business rules correctly"
-      - "Handlers integrate with F108 orchestration layer"
+      - "All 9 Action variants defined with proper schemas"
+      - "toFirestore/fromFirestore handle all variants correctly"
+      - "Action.from() creates valid instances for each variant"
     tests:
-      - "modules/curb-map/test/auth-helpers.tap.js (to be created)"
-      - "modules/curb-map/functions/test/organization-events.tap.js (to be created)"
+      - "modules/curb-map/functions/test/action-types.tap.js"
     notes: |
-      These are DOMAIN event handlers called by F108 orchestrator.
-      F108 handles infrastructure (validation, idempotency, audit).
-      This task implements organization-specific business logic.
+      DOMAIN MODEL (Simplified for MVP):
 
-      Authorization deferred to F110.5 (after domain model is complete).
+      Organization: {id, name, status, defaultProjectId, createdAt, createdBy, updatedAt, updatedBy}
+      - status: "active" | "suspended" (initialized to "active")
+      - defaultProjectId: points to default project (projectId from OrganizationCreated action)
+      - Metadata fields added by giant function, not in Action payload
+      - Deferred: subscription (F112), SSO settings (backlog)
 
-  - id: "task_1_2_organization_api"
-    description: "Create organization CRUD API endpoints"
+      User: {id, email, displayName, organizations: {orgId: role}, lastLogin, failedAttempts, createdAt, createdBy, updatedAt, updatedBy}
+      - role: "admin" | "member" | "viewer" (simple enum)
+      - lastLogin: timestamp (for F110.5 auth tracking)
+      - failedAttempts: number (for F110.5 brute force prevention)
+      - Metadata fields added by giant function, not in Action payload
+      - Deferred: granular permissions (F110.5+), lastAccess analytics (backlog)
+
+      Project (default): {id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy}
+      - Each organization gets a default project with real CUID2 ID
+      - Hierarchical: /organizations/{orgId}/projects/{defaultProjectId}
+      - Found via: organization.defaultProjectId
+      - Project CRUD actions deferred to backlog
+      - No migration needed when projects added later
+
+  - id: "task_2_organization_handlers"
+    description: "Implement organization event handlers with validation"
     status: "pending"
-    phase: "Organization Management"
-    dependencies:
-      - "task_1_1_organization_events"
-    estimated_hours: 5
-    implementation: |
-        - Create `modules/curb-map/functions/src/api/organizations.js` following "Organization API" patterns in docs/architecture/multi-tenant.md.
-        - Implement CRUD endpoints: POST /organizations, GET /organizations/:id, PUT /organizations/:id, DELETE /organizations/:id.
-        - Add authorization checks using patterns from docs/architecture/authentication.md.
-        - Ensure all operations go through event sourcing queue per F108 patterns.
-    validation:
-      - "Organization CRUD API endpoints work correctly"
-      - "Authorization checks prevent unauthorized access"
-      - "All operations use event sourcing queue"
-    tests:
-      - "modules/curb-map/functions/test/organization-api.tap.js"
-
-  - id: "task_1_3_organization_validation"
-    description: "Implement organization validation and business rules"
-    status: "pending"
-    phase: "Organization Management"
-    dependencies:
-      - "task_1_2_organization_api"
+    phase: "Domain Model"
+    dependencies: ["task_1_action_types"]
     estimated_hours: 3
     implementation: |
-        - Implement organization validation per "Organization Management" section in docs/architecture/multi-tenant.md.
-        - Add validation for organization names, subscription tiers, and settings.
-        - Implement business rules for organization limits and constraints.
-        - Add validation error handling and user feedback.
-    validation:
-      - "Organization validation enforces business rules"
-      - "Validation errors provide clear feedback"
-      - "Business constraints are properly enforced"
-    tests:
-      - "modules/curb-map/functions/test/organization-validation.tap.js"
+        Create `modules/curb-map/functions/src/events/organizationHandlers.js`:
 
-  - id: "task_2_1_project_events"
-    description: "Define project event types and handlers"
-    status: "pending"
-    phase: "Project Management"
-    dependencies:
-      - "task_1_3_organization_validation"
-    estimated_hours: 4
-    implementation: |
-        - Create `modules/curb-map/functions/src/events/projectEvents.js` using patterns from "Project Management" section in docs/architecture/multi-tenant.md.
-        - Define event types: ProjectCreated, ProjectUpdated, ProjectDeleted per architecture patterns.
-        - Implement event handlers with organization scoping validation.
-        - Integrate with F108 event sourcing orchestrator (handle-action-request-added.js).
-        - Handlers process domain logic for project management.
-        - Use hierarchical Firestore collections: /organizations/{orgId}/projects/{projId}/...
+        Handlers:
+        - handleOrganizationCreated(actionRequest)
+          * Generate defaultProjectId = FieldTypes.newProjectId()
+          * Write to /organizations/{orgId}:
+            {id, name, status: "active", defaultProjectId, createdAt, createdBy, updatedAt, updatedBy}
+          * Create default project at /organizations/{orgId}/projects/{defaultProjectId}:
+            {id: defaultProjectId, organizationId, name: "Default Project", createdAt, createdBy, updatedAt, updatedBy}
+          * Metadata (createdAt/createdBy/updatedAt/updatedBy) from actionRequest.actorId and serverTimestamp
+          * Validation: name required (non-empty string)
+
+        - handleOrganizationUpdated(actionRequest)
+          * Update /organizations/{orgId}
+          * Update name and/or status fields
+          * Set updatedAt = serverTimestamp, updatedBy = actionRequest.actorId
+          * Validation: status must be "active" | "suspended"
+
+        - handleOrganizationSuspended(actionRequest)
+          * Update /organizations/{orgId} with status: "suspended"
+          * Set updatedAt/updatedBy
+          * Shorthand for OrganizationUpdated with status change
+
+        - handleOrganizationDeleted(actionRequest)
+          * Delete /organizations/{orgId} document
+          * Note: cascade deletion of projects/data deferred to later
+
+        Validation:
+        - Required fields (name)
+        - Status enum validation ("active" | "suspended")
+        - Basic structure validation
     validation:
-      - "Project event types defined with proper schemas"
-      - "Event handlers validate organization scoping"
-      - "Handlers integrate with F108 orchestration layer"
-      - "Hierarchical collections used correctly"
+      - "Organization handlers create/update documents correctly"
+      - "OrganizationCreated creates both organization and default project"
+      - "defaultProjectId properly links to created project"
+      - "Metadata fields (createdAt/createdBy/updatedAt/updatedBy) set correctly"
+      - "Validation rejects invalid data (missing name, invalid status)"
+      - "Status field properly managed (active/suspended)"
     tests:
-      - "modules/curb-map/functions/test/project-events.tap.js"
+      - "modules/curb-map/functions/test/organization-handlers.tap.js"
     notes: |
-      These are DOMAIN event handlers called by F108 orchestrator.
-      F108 handles infrastructure (validation, idempotency, audit).
-      This task implements project-specific business logic with organization scoping.
+      Writes to:
+      - Flat collection: /organizations/{orgId}
+      - Hierarchical collection: /organizations/{orgId}/projects/{defaultProjectId}
 
-      Authorization deferred to F110.5 (after domain model is complete).
+      Metadata Handling:
+      - createdAt/createdBy set from actionRequest.actorId and serverTimestamp
+      - updatedAt/updatedBy updated on every write
+      - NOT sent in Action payload (prevents spoofing)
 
-  - id: "task_2_2_project_api"
-    description: "Create project CRUD API endpoints"
+      OUT OF SCOPE:
+      - Subscription management (F112 billing)
+      - SSO configuration (backlog)
+      - Cascade deletion logic (defer until needed)
+
+  - id: "task_3_user_handlers"
+    description: "Implement user event handlers with role management"
     status: "pending"
-    phase: "Project Management"
-    dependencies:
-      - "task_2_1_project_events"
-    estimated_hours: 5
-    implementation: |
-        - Create `modules/curb-map/functions/src/api/projects.js` following "Project API" patterns in docs/architecture/multi-tenant.md.
-        - Implement CRUD endpoints: POST /organizations/:id/projects, GET /organizations/:id/projects, PUT /projects/:id, DELETE /projects/:id.
-        - Add organization-scoped authorization checks using patterns from docs/architecture/authentication.md.
-        - Ensure all operations go through event sourcing queue per F108 patterns.
-    validation:
-      - "Project CRUD API endpoints work correctly"
-      - "Organization-scoped authorization works"
-      - "All operations use event sourcing queue"
-    tests:
-      - "modules/curb-map/functions/test/project-api.tap.js"
-
-  - id: "task_2_3_project_validation"
-    description: "Implement project validation and business rules"
-    status: "pending"
-    phase: "Project Management"
-    dependencies:
-      - "task_2_2_project_api"
+    phase: "Domain Model"
+    dependencies: ["task_1_action_types"]
     estimated_hours: 3
     implementation: |
-        - Implement project validation per "Project Management" section in docs/architecture/multi-tenant.md.
-        - Add validation for project names, organization scoping, and limits.
-        - Implement business rules for project quotas and constraints.
-        - Add validation error handling and user feedback.
-    validation:
-      - "Project validation enforces business rules"
-      - "Organization scoping validation works"
-      - "Business constraints are properly enforced"
-    tests:
-      - "modules/curb-map/functions/test/project-validation.tap.js"
+        Create `modules/curb-map/functions/src/events/userHandlers.js`:
 
-  - id: "task_3_1_organization_views"
-    description: "Create organization materialized views"
-    status: "pending"
-    phase: "Materialized View Generation"
-    dependencies:
-      - "task_1_1_organization_events"
-      - "task_2_1_project_events"
-    estimated_hours: 4
-    implementation: |
-        - Create organization materialized views per "Materialized View Scoping" section in docs/architecture/multi-tenant.md.
-        - Implement views for organization roster, subscription status, and settings.
-        - Consume completed actions from F108 completedActions collection.
-        - Add view update triggers that listen to completedActions onCreate events.
-        - Implement idempotent view updates using lastProcessedActionId markers.
+        Handlers:
+        - handleUserCreated(actionRequest)
+          * Write to /users/{userId}:
+            {id, email, displayName, organizations: {orgId: role}, lastLogin: null, failedAttempts: 0, createdAt, createdBy, updatedAt, updatedBy}
+          * Metadata from actionRequest.actorId and serverTimestamp
+          * Validation: email format, role enum (admin|member|viewer)
+
+        - handleUserUpdated(actionRequest)
+          * Update /users/{userId} profile fields (email, displayName)
+          * Set updatedAt = serverTimestamp, updatedBy = actionRequest.actorId
+          * Validation: email format if provided
+
+        - handleUserDeleted(actionRequest)
+          * Remove organizationId from user.organizations map
+          * If last org removed, delete user document entirely
+          * Set updatedAt/updatedBy if updating (not deleting)
+
+        - handleUserForgotten(actionRequest)
+          * Delete /users/{userId} document (GDPR/CCPA compliance)
+          * Reason logged in audit trail (completedActions)
+
+        - handleRoleAssigned(actionRequest)
+          * Update user.organizations[orgId] = role
+          * Set updatedAt/updatedBy
+          * Validation: role enum (admin|member|viewer)
+
+        Validation:
+        - Email format validation (basic regex)
+        - Role enum validation (admin|member|viewer)
+        - Required fields (email, displayName, role)
     validation:
-      - "Organization materialized views created correctly"
-      - "Views stay synchronized with completedActions events from F108"
-      - "View queries perform efficiently"
-      - "Idempotent updates prevent duplicate processing"
+      - "User handlers create/update documents correctly"
+      - "Metadata fields (createdAt/createdBy/updatedAt/updatedBy) set correctly"
+      - "Role assignment updates organizations map"
+      - "Validation rejects invalid emails and roles"
+      - "UserDeleted properly removes org from map"
+      - "UserForgotten deletes user document"
     tests:
-      - "modules/curb-map/functions/test/organization-views.tap.js"
+      - "modules/curb-map/functions/test/user-handlers.tap.js"
     notes: |
-      These views consume events from F108 completedActions collection.
-      Views are organization-scoped and rebuilt from immutable audit trail.
+      Writes to flat collection: /users/{userId}
 
-  - id: "task_3_2_project_views"
-    description: "Create project materialized views"
+      Role meanings (authorization details in F110.5):
+      - admin: full access to organization
+      - member: read/write data
+      - viewer: read-only access
+
+      Auth tracking fields (lastLogin, failedAttempts):
+      - Initialized here (lastLogin=null, failedAttempts=0)
+      - Updated by F110.5 auth system
+
+      Metadata Handling:
+      - createdAt/createdBy set from actionRequest.actorId and serverTimestamp
+      - updatedAt/updatedBy updated on every write
+      - NOT sent in Action payload (prevents spoofing)
+
+      OUT OF SCOPE:
+      - Granular permissions (F110.5+)
+      - lastAccess analytics (backlog)
+
+  - id: "task_4_integration"
+    description: "Integrate handlers with F108 and create test utilities"
     status: "pending"
-    phase: "Materialized View Generation"
-    dependencies:
-      - "task_1_1_organization_events"
-      - "task_2_1_project_events"
-    estimated_hours: 4
+    phase: "Domain Model"
+    dependencies: ["task_2_organization_handlers", "task_3_user_handlers"]
+    estimated_hours: 3
     implementation: |
-        - Create project materialized views per "Materialized View Scoping" section in docs/architecture/multi-tenant.md.
-        - Implement views for project lists, organization scoping, and project metadata.
-        - Consume completed actions from F108 completedActions collection.
-        - Add view update triggers that listen to completedActions onCreate events.
-        - Implement idempotent view updates using lastProcessedActionId markers.
+        Part A: F108 Integration (2h)
+
+        Update `modules/curb-map/functions/src/handle-action-request-added.js`:
+        - Import organizationHandlers and userHandlers
+        - Add dispatch logic after idempotency check:
+          * Route by action['@@tagName'] to appropriate handler
+          * Pass actionRequest to handler
+          * Handlers write to collections directly
+          * Handlers add metadata (createdAt/createdBy/updatedAt/updatedBy) from actionRequest.actorId
+        - Preserve existing error handling and audit trail
+
+        Dispatch mapping:
+        - OrganizationCreated/Updated/Suspended/Deleted → organizationHandlers
+        - UserCreated/Updated/Deleted/Forgotten/RoleAssigned → userHandlers
+
+        Note: projectId normalization happens in handlers when accessing hierarchical data.
+        Default project lookup via: organization.defaultProjectId
+
+        Part B: Test Auth Helpers (1h)
+
+        Create `modules/curb-map/test-utils/auth-helpers.js`:
+        - createTestUser(userId, organizationId, role)
+          * Create user in Firebase Auth emulator
+          * Set custom claims: {organizations: {orgId: role}}
+        - mockAuthContext(userId, claims)
+          * Inject auth context for handler testing
+        - clearTestUsers()
+          * Cleanup helper for test isolation
+
+        Note: Minimal implementation for testing only. Full auth in F110.5.
     validation:
-      - "Project materialized views created correctly"
-      - "Views stay synchronized with completedActions events from F108"
-      - "Organization scoping works in views"
-      - "Idempotent updates prevent duplicate processing"
+      - "F108 giant function dispatches to handlers correctly"
+      - "All 9 Action types route to appropriate handlers"
+      - "Metadata fields (createdAt/createdBy/updatedAt/updatedBy) set correctly"
+      - "Default project created with real CUID2 ID"
+      - "organization.defaultProjectId properly links to project"
+      - "Auth helpers work with Firebase Auth emulator"
+      - "E2E flow: write ActionRequest → dispatch → handler → collection write"
     tests:
-      - "modules/curb-map/functions/test/project-views.tap.js"
+      - "modules/curb-map/test/auth-helpers.tap.js"
+      - "modules/curb-map/functions/test/domain-integration.firebase.js"
     notes: |
-      These views consume events from F108 completedActions collection.
-      Views are organization/project-scoped and rebuilt from immutable audit trail.
-
-  - id: "task_3_3_view_sync"
-    description: "Implement view synchronization with events"
-    status: "pending"
-    phase: "Materialized View Generation"
-    dependencies:
-      - "task_3_2_project_views"
-    estimated_hours: 3
-    implementation: |
-        - Implement view synchronization per "View Synchronization" patterns in docs/architecture/multi-tenant.md.
-        - Add event triggers for organization and project view updates.
-        - Implement conflict resolution and consistency checks.
-        - Add monitoring for view synchronization performance.
-    validation:
-      - "View synchronization works correctly"
-      - "Conflict resolution handles edge cases"
-      - "Consistency checks pass"
-    tests:
-      - "modules/curb-map/functions/test/view-sync.tap.js"
-
-  - id: "task_4_1_isolation_middleware"
-    description: "Implement data isolation middleware"
-    status: "pending"
-    phase: "Data Isolation Middleware"
-    dependencies:
-      - "task_3_3_view_sync"
-    estimated_hours: 5
-    implementation: |
-        - Create data isolation middleware per "Data Isolation Implementation" section in docs/architecture/multi-tenant.md.
-        - Implement middleware to enforce organization/project scoping on all data access.
-        - Add automatic data scoping to all database queries.
-        - Integrate with authentication system per F109 patterns.
-    validation:
-      - "Data isolation middleware works correctly"
-      - "All queries are properly scoped"
-      - "Cross-tenant access is prevented"
-    tests:
-      - "modules/curb-map/functions/test/isolation-middleware.tap.js"
-
-  - id: "task_4_2_scoping_validation"
-    description: "Add data scoping validation"
-    status: "pending"
-    phase: "Data Isolation Middleware"
-    dependencies:
-      - "task_4_1_isolation_middleware"
-    estimated_hours: 3
-    implementation: |
-        - Implement data scoping validation per "Scoping Validation" patterns in docs/architecture/multi-tenant.md.
-        - Add validation for organization and project IDs in all requests.
-        - Implement scoping checks for data access patterns.
-        - Add error handling for scoping violations.
-    validation:
-      - "Data scoping validation works correctly"
-      - "Scoping violations are caught and handled"
-      - "Error messages are clear and actionable"
-    tests:
-      - "modules/curb-map/functions/test/scoping-validation.tap.js"
-
-  - id: "task_4_3_cross_tenant_protection"
-    description: "Prevent cross-tenant data access"
-    status: "pending"
-    phase: "Data Isolation Middleware"
-    dependencies:
-      - "task_4_2_scoping_validation"
-    estimated_hours: 4
-    implementation: |
-        - Implement cross-tenant protection per "Multi-Tenant Security" section in docs/architecture/multi-tenant.md.
-        - Add security rules to prevent data leakage between organizations.
-        - Implement audit logging for cross-tenant access attempts.
-        - Add monitoring and alerting for security violations.
-    validation:
-      - "Cross-tenant access is prevented"
-      - "Security violations are logged and alerted"
-      - "Audit trail captures all access attempts"
-    tests:
-      - "modules/curb-map/functions/test/cross-tenant-protection.tap.js"
-
-  - id: "task_5_1_permission_system"
-    description: "Implement role-based permissions"
-    status: "pending"
-    phase: "Role-Based Permissions System"
-    dependencies:
-      - "task_4_3_cross_tenant_protection"
-    estimated_hours: 5
-    implementation: |
-        - Implement role-based permissions per "Role-Based Access Control (RBAC)" section in docs/architecture/multi-tenant.md.
-        - Define permission matrix for organization and project operations.
-        - Implement permission checking utilities and middleware.
-        - Integrate with authentication system per F109 patterns.
-    validation:
-      - "Role-based permissions work correctly"
-      - "Permission matrix is properly enforced"
-      - "Permission checks integrate with authentication"
-    tests:
-      - "modules/curb-map/functions/test/permission-system.tap.js"
-
-  - id: "task_5_2_authorization_integration"
-    description: "Integrate with authentication system"
-    status: "pending"
-    phase: "Role-Based Permissions System"
-    dependencies:
-      - "task_5_1_permission_system"
-    estimated_hours: 4
-    implementation: |
-        - Integrate permission system with authentication per "Authorization Integration" patterns in docs/architecture/multi-tenant.md.
-        - Connect role-based permissions with custom claims from F109.
-        - Implement organization-scoped permission checking.
-        - Add permission inheritance and delegation patterns.
-    validation:
-      - "Permission system integrates with authentication"
-      - "Organization-scoped permissions work"
-      - "Permission inheritance functions correctly"
-    tests:
-      - "modules/curb-map/functions/test/authorization-integration.tap.js"
-
-  - id: "task_5_3_permission_testing"
-    description: "Test permission enforcement"
-    status: "pending"
-    phase: "Role-Based Permissions System"
-    dependencies:
-      - "task_5_2_authorization_integration"
-    estimated_hours: 3
-    implementation: |
-        - Test permission enforcement per "Permission Testing" guidance in docs/architecture/multi-tenant.md.
-        - Create test scenarios for all permission combinations.
-        - Test edge cases and boundary conditions.
-        - Validate permission enforcement across all API endpoints.
-    validation:
-      - "Permission enforcement works across all scenarios"
-      - "Edge cases are handled correctly"
-      - "All API endpoints enforce permissions"
-    tests:
-      - "modules/curb-map/functions/test/permission-enforcement.tap.js"
-
-  - id: "task_6_1_integration_testing"
-    description: "Validate end-to-end multi-tenant workflow"
-    status: "pending"
-    phase: "Testing and Validation"
-    dependencies:
-      - "task_5_3_permission_testing"
-    estimated_hours: 6
-    implementation: |
-        - Build TAP harness following "Multi-Tenant Testing" patterns in docs/architecture/multi-tenant.md.
-        - Create test harnesses: multi-tenant.integration.tap.js and multi-tenant.load.sh (to be created).
-        - Test complete workflow: organization creation → project creation → data isolation → permission enforcement.
-        - Add load testing for multi-tenant scenarios per "Performance Testing" guidance.
-        - Document manual validation steps in `docs/runbooks/multi-tenant.md`.
-    validation:
-      - "End-to-end multi-tenant workflow works correctly"
-      - "Data isolation maintained under load"
-      - "Permission enforcement works across all scenarios"
-    tests:
-      - "modules/curb-map/functions/test/multi-tenant.integration.tap.js"
-      - "modules/curb-map/functions/test/multi-tenant.load.sh"
-
-  - id: "task_6_2_isolation_testing"
-    description: "Test data isolation and security"
-    status: "pending"
-    phase: "Testing and Validation"
-    dependencies:
-      - "task_6_1_integration_testing"
-    estimated_hours: 4
-    implementation: |
-        - Test data isolation and security per "Security Testing" patterns in docs/architecture/multi-tenant.md.
-        - Create test scenarios for cross-tenant access attempts.
-        - Test data leakage prevention and audit logging.
-        - Validate SOC2 compliance controls for multi-tenancy.
-    validation:
-      - "Data isolation prevents cross-tenant access"
-      - "Security violations are detected and logged"
-      - "SOC2 compliance controls are operational"
-    tests:
-      - "modules/curb-map/functions/test/isolation-security.tap.js"
+      E2E integration test should verify:
+      - All 9 Action types process correctly (OrganizationCreated/Updated/Suspended/Deleted, UserCreated/Updated/Deleted/Forgotten, RoleAssigned)
+      - Hierarchical collections work: /organizations/{orgId}/projects/{defaultProjectId}/...
+      - Flat collections work: /users/{id}, /organizations/{id}
+      - Metadata fields set correctly from actionRequest.actorId
+      - Default project has real CUID2 ID (not "default" string)
+      - Validation failures handled gracefully
+      - Idempotency preserved (from F108)
+      - Audit trail preserved (completedActions)
 
 completed: []
 
-notes: |
-    This specification implements the multi-tenant data model for CurbMap.
+deleted_as_overengineered:
+  - "Project actions (4): ProjectCreated/Updated/Archived/Deleted - deferred to backlog"
+  - "OrganizationReactivated - use OrganizationUpdated with status instead"
+  - "Subscription/SSO fields - deferred to F112 and backlog"
+  - "Granular permissions - deferred to F110.5+"
+  - "CRUD APIs - deferred to backlog (for webhooks/external integrations)"
+  - "Data isolation middleware - belongs in F110.5 with auth"
+  - "Materialized views - moved to F110.6"
+  - "Load testing and monitoring - moved to backlog"
 
-    SCOPE: This spec covers domain logic for multi-tenancy:
-    - Organization event handlers (OrganizationAdded, OrganizationUpdated, etc.)
-    - Project event handlers (ProjectAdded, ProjectUpdated, etc.)
-    - User event handlers (UserAdded, UserUpdated, UserRemoved, etc.)
-    - Materialized views (organization roster, project lists, etc.)
-    - Data isolation middleware (organization/project scoping)
-    - Role-based permissions (RBAC within organizations)
+notes: |
+    This specification implements the multi-tenant domain model for CurbMap.
+
+    SIMPLIFIED DOMAIN MODEL (9 Actions total):
+    - Organization Actions (4): OrganizationCreated, OrganizationUpdated, OrganizationSuspended, OrganizationDeleted
+    - User Actions (5): UserCreated, UserUpdated, UserDeleted, UserForgotten, RoleAssigned
+    - Projects: Each org gets default project with real CUID2 ID (CRUD deferred to backlog)
+
+    SCOPE: Domain model definition only
+    - Action type definitions (tagged types for 9 domain events)
+    - Event handlers for organization and user management
+    - F108 integration (dispatch from giant function to handlers)
+    - Hierarchical structure ready: /organizations/{orgId}/projects/default/...
+    - Flat collections: /users/{id}, /organizations/{id}
+    - Test auth helpers (minimal for testing only)
+
+    DEFERRED TO F110.5 (Authentication & Authorization):
+    - Granular permissions (resource-based access control)
+    - SSO configuration
+    - Authorization via Firestore security rules
+
+    DEFERRED TO F112 (Billing):
+    - Subscription management (tier, amounts, billing dates)
+
+    DEFERRED TO BACKLOG:
+    - Project CRUD actions (add when multi-project needed)
+    - CRUD APIs (for webhooks/external integrations)
+    - Analytics fields (lastAccess per org)
+    - Configurable audit retention
+
+    ARCHITECTURE DECISIONS:
+    - Hierarchical collections for projects (ready for future, no migration)
+    - Default project per org: real CUID2 ID, linked via organization.defaultProjectId
+    - Metadata in giant function: createdAt/createdBy/updatedAt/updatedBy from actionRequest.actorId
+    - Action payloads: domain fields ONLY (no metadata, prevents spoofing)
+    - Simple role enum (admin/member/viewer) for MVP
+    - Fields needed for F110.5 included now (status, lastLogin, failedAttempts)
+    - All IDs use FieldTypes: newOrganizationId(), newUserId(), newProjectId()
 
     DEPENDS ON:
-    - F108: Event sourcing infrastructure (orchestration, audit trail)
-    - F109: Authentication and authorization middleware
+    - F108: Event sourcing infrastructure (completed)
 
-    Domain event handlers in this spec are dispatched by F108 task_2_2 (giant function).
-    Materialized views consume events from F108 completedActions collection.
+    Total: 12 hours (4 tasks × 3 hours each)
 
-    Task ID format: task_{phase}_{sequence}_{description}
+    Task ID format: task_{sequence}_{description}
     Status values: pending, in_progress, completed, blocked, cancelled
     Dependencies: List of task IDs that must be completed first
     Validation: Specific criteria that must be met for task completion

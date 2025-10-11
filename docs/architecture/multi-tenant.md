@@ -35,29 +35,32 @@ Organization
 organizations: {
   organizationId: {
     name: "City of San Francisco",
-    subscription: {
-      tier: "premium",
-      annualAmount: 50000,
-      startDate: "2025-01-01T00:00:00Z",
-      endDate: "2026-01-01T00:00:00Z"
-    },
-    settings: {
-      ssoEnabled: false,
-      ssoProvider: null,
-      auditLogRetention: 2555 // 7 years
-    },
-    createdAt: "2025-01-01T00:00:00Z",
-    createdBy: "userId"
+    status: "active" | "suspended",  // initialized to "active"
+    defaultProjectId: "prj_abc123",  // links to default project (real CUID2)
+    createdAt: timestamp,             // serverTimestamp
+    createdBy: "userId",              // from actionRequest.actorId
+    updatedAt: timestamp,             // serverTimestamp
+    updatedBy: "userId"               // from actionRequest.actorId
+
+    // Deferred to F112 (Billing):
+    // subscription: {tier, annualAmount, startDate, endDate}
+
+    // Deferred to backlog (SSO not in MVP):
+    // settings: {ssoEnabled, ssoProvider, auditLogRetention}
   }
 }
+
+// Metadata fields (createdAt/createdBy/updatedAt/updatedBy) added by handlers from actionRequest.actorId
+// NOT sent in Action payloads (prevents spoofing)
 ```
 
 ### Organization Events
 - **OrganizationCreated**: New organization setup
-- **OrganizationUpdated**: Organization settings changes
-- **OrganizationDeleted**: Organization removal
-- **OrganizationSuspended**: Temporary suspension
-- **OrganizationReactivated**: Reactivation after suspension
+- **OrganizationUpdated**: Organization name or status changes
+- **OrganizationSuspended**: Suspend organization (shorthand for status change)
+- **OrganizationDeleted**: Permanently delete organization
+
+Note: OrganizationReactivated removed - use OrganizationUpdated with status="active" instead
 
 ### Organization API Patterns
 ```javascript
@@ -92,27 +95,36 @@ const createOrganization = async (organizationData, actor) => {
 
 ### Project Structure
 ```javascript
-// Projects - cached from events
+// Projects - default project per organization
+// Hierarchical structure: /organizations/{orgId}/projects/{projectId}/
+// Project CRUD actions deferred to backlog
+
 projects: {
-  projectId: {
-    organizationId: "cuid2",
-    name: "Downtown Curb Management",
-    status: "active" | "inactive" | "archived",
-    createdBy: "userId",
-    createdAt: "2025-01-01T00:00:00Z",
-    settings: {
-      dataRetention: 2555, // 7 years
-      exportFormat: ["json", "csv", "cds"]
-    }
+  "prj_abc123": {                  // Real CUID2 ID (not "default" magic string)
+    organizationId: "org_123",
+    name: "Default Project",
+    createdAt: timestamp,          // serverTimestamp
+    createdBy: "userId",           // from actionRequest.actorId
+    updatedAt: timestamp,          // serverTimestamp
+    updatedBy: "userId"            // from actionRequest.actorId
   }
 }
+
+// Found via: organization.defaultProjectId
+
+// When projects are added (backlog):
+// ProjectCreated, ProjectUpdated, ProjectArchived, ProjectDeleted actions
+// Fields: {id, organizationId, name, status, createdAt, createdBy, updatedAt, updatedBy, settings}
+// No migration needed - hierarchical structure already in place
 ```
 
-### Project Events
+### Project Events (Deferred to Backlog)
 - **ProjectCreated**: New project within organization
 - **ProjectUpdated**: Project settings changes
 - **ProjectArchived**: Project archival
 - **ProjectDeleted**: Project removal
+
+Note: Project CRUD actions deferred to backlog. Using internal "default" project for now.
 
 ### Project Scoping
 - **Default Project**: Each organization has a default project
@@ -122,58 +134,83 @@ projects: {
 
 ## Role-Based Access Control (RBAC)
 
-### Role Hierarchy
+### Role Hierarchy (Simplified for MVP)
 ```javascript
+// Simple role enum: "admin" | "member" | "viewer"
+// Granular permissions deferred to F110.5+
+
 const roles = {
   admin: {
-    permissions: ["read", "write", "admin", "impersonate"],
+    description: "Full access to organization (manage users, settings, data)",
     scope: "organization"
   },
   member: {
-    permissions: ["read", "write"],
-    scope: "project"
+    description: "Read/write data in organization",
+    scope: "organization"
   },
   viewer: {
-    permissions: ["read"],
-    scope: "project"
+    description: "Read-only access to data",
+    scope: "organization"
   }
 };
+
+// Deferred to F110.5+ (granular permissions):
+// permissions: ["organizations:read", "projects:write", "users:manage"]
 ```
 
-### Permission Model
+### Permission Model (Simplified for MVP)
 ```javascript
 // User roles within organizations
 users: {
   userId: {
     email: "alice@sf.gov",
     displayName: "Alice Johnson",
-    roles: {
-      organizationId: {
-        role: "admin" | "member" | "viewer",
-        permissions: ["read", "write", "admin"],
-        lastAccess: "2025-01-15T10:30:00Z"
-      }
+    organizations: {
+      "org_123": "admin",  // simple role enum: admin | member | viewer
+      "org_456": "member"
     },
-    lastLogin: "2025-01-15T09:00:00Z",
-    failedAttempts: 0
+    lastLogin: timestamp | null,  // for auth tracking (F110.5, initialized null)
+    failedAttempts: 0,            // for brute force prevention (F110.5)
+    createdAt: timestamp,         // serverTimestamp
+    createdBy: "userId",          // from actionRequest.actorId
+    updatedAt: timestamp,         // serverTimestamp
+    updatedBy: "userId"           // from actionRequest.actorId
+
+    // Deferred to F110.5+ (granular permissions):
+    // permissions: ["organizations:read", "projects:write", "users:manage"]
+
+    // Deferred to backlog (analytics):
+    // lastAccess: {orgId: timestamp}
   }
 }
+
+// Metadata fields (createdAt/createdBy/updatedAt/updatedBy) added by handlers from actionRequest.actorId
+// NOT sent in Action payloads (prevents spoofing)
 ```
 
-### Permission Checking
+### Permission Checking (Simplified for MVP)
 ```javascript
 /**
- * Check if user has permission for resource
- * @sig hasPermission :: (String, String, String) -> Promise<Boolean>
+ * Check if user has role in organization
+ * @sig hasRole :: (String, String, String) -> Promise<Boolean>
+ *
+ * Granular permission checking deferred to F110.5+
+ * For now, check role enum (admin | member | viewer)
  */
-const hasPermission = async (userId, organizationId, permission) => {
-  const userRoles = await getUserRoles(userId);
-  
-  return userRoles.some(role => 
-    role.organizationId === organizationId && 
-    role.permissions.includes(permission)
-  );
+const hasRole = async (userId, organizationId, requiredRole) => {
+  const user = await getUser(userId);
+  const userRole = user.organizations[organizationId];
+
+  // Simple role check
+  if (requiredRole === 'viewer') return ['viewer', 'member', 'admin'].includes(userRole);
+  if (requiredRole === 'member') return ['member', 'admin'].includes(userRole);
+  if (requiredRole === 'admin') return userRole === 'admin';
+
+  return false;
 };
+
+// F110.5+ will add granular permission checking:
+// hasPermission(userId, organizationId, "projects:write")
 ```
 
 ## Data Isolation Implementation

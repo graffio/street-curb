@@ -97,6 +97,16 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         }
     }
 
+    // @sig update :: (Id, Object) -> Promise Void
+    const update = async (id, fields) => {
+        try {
+            const firestoreData = encodeTimestamps(fields)
+            await F.updateDoc(_docRef(id), firestoreData)
+        } catch (e) {
+            throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
+        }
+    }
+
     // @sig read :: Id -> Promise Type
     const read = async id => {
         try {
@@ -123,6 +133,33 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         }
     }
 
+    // @sig listenToDocument :: (Id, (Type?, Error?) -> Void) -> (() -> Void)
+    const listenToDocument = (id, callback) => F.onSnapshot(
+            _docRef(id),
+            snapshot => {
+                const data = snapshot.exists() ? Type.fromFirestore(decodeTimestamps(snapshot.data())) : null
+                callback(data, null)
+            },
+            error => callback(null, error),
+        )
+
+    // @sig listenToCollection :: ([Condition], ([Type], Error?) -> Void) -> (() -> Void)
+    const listenToCollection = (whereConditions, callback) => {
+        let q = F.collection(db, collectionPath)
+        whereConditions.forEach(([field, operator, value]) => {
+            q = F.query(q, F.where(field, operator, value))
+        })
+
+        return F.onSnapshot(
+            q,
+            querySnapshot => {
+                const items = querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+                callback(items, null)
+            },
+            error => callback(null, error),
+        )
+    }
+
     const descendent = suffix => {
         if (suffix[0] === '/') suffix = suffix.slice(1)
 
@@ -132,7 +169,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         return FirestoreClientFacade(Type, `${collectionPrefix}/${suffix}`, db)
     }
 
-    return { write, read, query, descendent }
+    return { write, update, read, query, listenToDocument, listenToCollection, descendent }
 }
 
 FirestoreClientFacade.timestampToDate = timestampToDate

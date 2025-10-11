@@ -1,9 +1,9 @@
 import { createLogger } from '@graffio/logger'
-import { AsyncLocalStorage } from 'node:async_hooks'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { ActionRequest, SystemFlags } from '../../src/types/index.js'
-
-const asyncLocalStorage = new AsyncLocalStorage()
+import * as OH from './events/organization-handlers.js'
+import * as UH from './events/user-handlers.js'
+import { createFirestoreContext } from './firestore-context.js'
 
 const areTriggersDisabled = async namespace => {
     const flagsFacade = FirestoreAdminFacade(SystemFlags, `${namespace}/`)
@@ -16,59 +16,98 @@ const areTriggersDisabled = async namespace => {
     }
 }
 
-const processActionRequest = async () => {
-    const { logger, event, namespace, actionRequestId, startTime } = asyncLocalStorage.getStore()
+const processActionRequest = async (namespace, logger, event) => {
+    /*
+     * Wrap the logger so that it always includes data for the ActionRequest from the dispatched actions
+     */
+    // prettier-ignore
+    const createActionRequestLogger = () => {
+        const interesting = () => ActionRequest.toLog(actionRequest)
+        
+        return {
+            flowStart: (message, extraData = {}, pr = '├─ ') => logger.flowStart(pr + message, { ...interesting(), ...extraData }),
+            flowStep:  (message, extraData = {}, pr = '├─ ') => logger.flowStep( pr + message, { ...interesting(), ...extraData }),
+            flowStop:  (message, extraData = {}, pr = '├─ ') => logger.flowStop( pr + message, { ...interesting(), ...extraData }),
+            error:     (error,   extraData = {}           ) => logger.error(    error,        { ...interesting(), ...extraData }),
+        }
+    }
+
+    const dispatchAction = async () => {
+        // prettier-ignore
+        const handler = actionRequest.action.match({
+            OrganizationCreated:   () => OH.handleOrganizationCreated,
+            OrganizationUpdated:   () => OH.handleOrganizationUpdated,
+            OrganizationDeleted:   () => OH.handleOrganizationDeleted,
+            OrganizationSuspended: () => OH.handleOrganizationSuspended,
+            UserCreated:           () => UH.handleUserCreated,
+            UserUpdated:           () => UH.handleUserUpdated,
+            UserDeleted:           () => UH.handleUserDeleted,
+            UserForgotten:         () => UH.handleUserForgotten,
+            RoleAssigned:          () => UH.handleRoleAssigned,
+        })
+
+        actionRequestLogger.flowStep(`AR: Starting ${handler.name}`)
+        await handler(actionRequestLogger, fsContext, actionRequest)
+        actionRequestLogger.flowStep(`AR: Finished ${handler.name}`)
+    }
+
+    // mark this ActionRequest as duplicate by marking it as completed with a reference to the original
+    const markDuplicate = async (fsContext, duplicate) => {
+        const resultData = { duplicateOf: duplicate.id }
+        const processedAt = fsContext.serverTimestamp()
+        await afterSnap.ref.update({ status: 'completed', processedAt, resultData, error: fsContext.deleteField() })
+        return actionRequestLogger.flowStop('AR: skipped - duplicate idempotency key', resultData)
+    }
+
+    // update the status of the ActionRequest in actionRequests to 'completed'
+    // copy it to completedActions
+    // log
+    const markComplete = async () => {
+        const processedAt = fsContext.serverTimestamp()
+        const status = 'completed'
+
+        await afterSnap.ref.update({ status, processedAt, error: fsContext.deleteField() })
+        const completedAction = ActionRequest.from({ ...actionRequest, status, processedAt: new Date() })
+        await fsContext.completedActions.write(completedAction)
+        actionRequestLogger.flowStop('└─ AR: processing completed', { durationMs: Date.now() - startTime }, '')
+    }
+
+    const markFailed = async e => {
+        const processedAt = fsContext.serverTimestamp()
+        const status = 'failed'
+        const error = e?.message || 'unknown-error'
+
+        await afterSnap.ref.update({ status, processedAt, error })
+        const rawActionRequest = { ...afterSnap.data(), ...{ status, error } }
+        logger.error(e, { rawActionRequest, durationMs: Date.now() - startTime })
+    }
 
     const afterSnap = event.data.after
+    const rawActionRequest = event.data.after.data()
+    const startTime = Date.now()
+    const fsContext = createFirestoreContext(namespace, rawActionRequest.organizationId, rawActionRequest.projectId)
+    const actionRequestLogger = createActionRequestLogger()
+
+    let actionRequest
+
+    // nothing to do?
+    if (rawActionRequest.status !== 'pending') return logger.flowStop('AR: skipped - not pending', rawActionRequest, '')
 
     try {
-        const facade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
-        const completedActionsFacade = FirestoreAdminFacade(
-            ActionRequest,
-            `${namespace}/`,
-            undefined,
-            'completedActions',
-        )
+        logger.flowStart('┌─ AR: processing started', { ...rawActionRequest, namespace })
 
-        // read the ActionRequest
-        logger.flowStart('Processing action request started', { actionRequestId, namespace })
-        const actionRequest = await facade.read(actionRequestId)
-        logger.flowStep('Action request read successfully', { status: actionRequest.status })
-
-        // nothing to do?
-        if (actionRequest.status !== 'pending')
-            return logger.flowStop('Action request skipped - not pending', { status: actionRequest.status })
+        actionRequest = ActionRequest.fromFirestore(rawActionRequest)
 
         // check idempotency - has this been processed already?
-        const existingCompleted = await completedActionsFacade.list()
+        const existingCompleted = await fsContext.completedActions.list()
         const duplicate = existingCompleted.find(ca => ca.idempotencyKey === actionRequest.idempotencyKey)
-        if (duplicate) {
-            // mark this duplicate as completed with reference to original
-            await afterSnap.ref.update({
-                status: 'completed',
-                processedAt: FirestoreAdminFacade.serverTimestamp(),
-                resultData: { duplicateOf: duplicate.id },
-                error: FirestoreAdminFacade.deleteField(),
-            })
-            return logger.flowStop('Action request skipped - duplicate idempotency key', {
-                idempotencyKey: actionRequest.idempotencyKey,
-                existingActionRequestId: duplicate.id,
-            })
-        }
+        if (duplicate) return await markDuplicate(fsContext, duplicate)
 
-        // update status to 'completed'
-        const processedAt = FirestoreAdminFacade.serverTimestamp()
-        await afterSnap.ref.update({ status: 'completed', processedAt, error: FirestoreAdminFacade.deleteField() })
+        await dispatchAction()
 
-        // copy to completedActions for immutable audit trail
-        const completedAction = ActionRequest.from({ ...actionRequest, status: 'completed', processedAt: new Date() })
-        await completedActionsFacade.write(completedAction)
-        logger.flowStep('Action request copied to completedActions', { actionRequestId })
-
-        logger.flowStop('Action request completed', { status: 'completed', durationMs: Date.now() - startTime })
+        return await markComplete()
     } catch (error) {
-        logger.error('Failed to process action request', { error: error.message, durationMs: Date.now() - startTime })
-        await afterSnap.ref.update({ status: 'failed', error: error?.message || 'unknown-error' })
+        await markFailed(error)
     }
 }
 
@@ -76,22 +115,14 @@ const handleActionRequestAdded = async event => {
     const afterSnap = event.data?.after
     if (!afterSnap?.exists) return
 
-    // Create asyncLocalStorage values
+    // Extract context values
     const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')
-    const localStore = {
-        event,
-        logger,
-        actionRequestId: event.params.actionRequestId,
-        namespace: `tests/${event.params.namespace}`,
-        startTime: Date.now(),
-    }
+    const namespace = `tests/${event.params.namespace}`
 
     // Check if triggers are disabled for this namespace
-    return asyncLocalStorage.run(localStore, async () =>
-        (await areTriggersDisabled(`tests/${event.params.namespace}`))
-            ? logger.flowStop('Action request skipped - triggers disabled')
-            : await processActionRequest(),
-    )
+    if (await areTriggersDisabled(namespace)) return logger.flowStop('AR: skipped - triggers disabled')
+
+    return await processActionRequest(namespace, logger, event)
 }
 
 export { handleActionRequestAdded }

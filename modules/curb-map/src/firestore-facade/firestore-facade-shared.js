@@ -1,4 +1,14 @@
-import { ActionRequest, AuditRecord, Blockface, OperationDetails, Segment, SystemFlags } from '../types/index.js'
+import {
+    ActionRequest,
+    AuditRecord,
+    Blockface,
+    OperationDetails,
+    Organization,
+    Project,
+    Segment,
+    SystemFlags,
+    User,
+} from '../types/index.js'
 
 const collectionPaths = new Map()
 collectionPaths.set(ActionRequest, 'actionRequests')
@@ -7,6 +17,9 @@ collectionPaths.set(Blockface, 'blockfaces')
 collectionPaths.set(OperationDetails, 'operationDetails')
 collectionPaths.set(Segment, 'segments')
 collectionPaths.set(SystemFlags, 'systemFlags')
+collectionPaths.set(Project, 'projects')
+collectionPaths.set(Organization, 'organizations')
+collectionPaths.set(User, 'users')
 
 // completedActions uses the same type as actionRequests but is a separate collection
 // It's registered separately to allow different access patterns (write-once, immutable)

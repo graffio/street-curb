@@ -63,12 +63,20 @@ const completedActions = {
 
 Actions represent domain events that can be requested:
 
-- **UserAdded**: New user registration
+**Organization Actions (4)**:
+- **OrganizationCreated**: New organization setup (renamed from OrganizationAdded)
+- **OrganizationUpdated**: Organization name or status changes
+- **OrganizationSuspended**: Suspend organization (shorthand for status change)
+- **OrganizationDeleted**: Permanently delete organization
+
+**User Actions (5)**:
+- **UserCreated**: New user registration
 - **UserUpdated**: User profile changes
+- **UserDeleted**: Remove user from organization
 - **UserForgotten**: GDPR/CCPA data deletion
-- **RoleAssigned**: Permission changes
-- **OrganizationAdded**: New organization setup
-- **ProjectAdded**: New project within organization
+- **RoleAssigned**: Assign/change user role in organization
+
+**Projects**: Each organization gets a default project with real CUID2 ID (CRUD actions deferred to backlog)
 
 ## Action Request Processing Architecture
 
@@ -165,11 +173,13 @@ const storeIdempotencyResult = async (key, result) => {
 - **Type Validation**: Ensure correct data types
 - **Format Validation**: Validate email addresses, IDs, etc.
 
-### Business Rule Validation
+### Business Rule Validation (Simplified for MVP)
 
-- **Role Assignment**: Admin roles require justification
+- **Required Fields**: name (organizations), email/displayName (users)
+- **Enum Validation**: status ("active" | "suspended"), role ("admin" | "member" | "viewer")
+- **Email Format**: Basic regex validation for user emails
 - **Organization Scoping**: Events must be scoped to valid organization
-- **Permission Checks**: User must have permission to create event type
+- **Permission Checks**: Deferred to F110.5 (authorization via Firestore security rules)
 
 ### Action-Specific Validation
 

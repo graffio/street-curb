@@ -19,6 +19,7 @@
  *
  */
 
+import { pick } from '@graffio/functional'
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
 
@@ -162,5 +163,12 @@ ActionRequest.fromFirestore = actionRequest =>
         createdAt: actionRequest.createdAt,
         processedAt: actionRequest?.processedAt,
     })
+
+// Additional function: toLog
+ActionRequest.toLog = o => {
+    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'status', 'idempotencyKey', 'correlationId'], o)
+    r.action = Action.toLog(o.action)
+    return r
+}
 
 export { ActionRequest }
