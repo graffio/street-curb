@@ -578,8 +578,8 @@ Action.fromFirestore = o => {
     throw new Error(`Unrecognized domain event ${tagName}`)
 }
 
-// Additional function: log
-Action.log = a =>
+// Additional function: toLog
+Action.toLog = a =>
     a.match({
         OrganizationCreated: ({ name }) => ({
             type: 'OrganizationCreated',

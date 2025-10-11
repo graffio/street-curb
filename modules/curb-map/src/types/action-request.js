@@ -19,6 +19,7 @@
  *
  */
 
+import { pick } from '@graffio/functional'
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
 
@@ -163,16 +164,11 @@ ActionRequest.fromFirestore = actionRequest =>
         processedAt: actionRequest?.processedAt,
     })
 
-// Additional function: log
-ActionRequest.log = ({ id, action, actorId, organizationId, projectId, status, idempotencyKey, correlationId }) => ({
-    id,
-    action: Action.log(action),
-    actorId,
-    organizationId,
-    projectId,
-    status,
-    idempotencyKey,
-    correlationId,
-})
+// Additional function: toLog
+ActionRequest.toLog = o => {
+    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'status', 'idempotencyKey', 'correlationId'], o)
+    r.action = Action.toLog(o.action)
+    return r
+}
 
 export { ActionRequest }

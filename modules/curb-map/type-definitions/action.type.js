@@ -88,8 +88,12 @@ Action.fromFirestore = o => {
     throw new Error(`Unrecognized domain event ${tagName}`)
 }
 
+/*
+ * Return a subset of interesting fields to log
+ * @sig toLog = Action -> Object
+ */
 // prettier-ignore
-Action.log = a =>
+Action.toLog = a =>
     a.match({
         OrganizationCreated  : ({ name })                     => ({ type: 'OrganizationCreated', name}),
         OrganizationUpdated  : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),

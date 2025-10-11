@@ -1,5 +1,6 @@
 /** @module ActionRequest */
 
+import { pick } from '@graffio/functional'
 /**
  * ActionRequest represents a document in the Firestore actionRequests collection
  * and completedActions collection (immutable audit trail for SOC2 compliance)
@@ -67,13 +68,8 @@ ActionRequest.fromFirestore = actionRequest =>
         processedAt: actionRequest?.processedAt,
     })
 
-ActionRequest.log = ({ id, action, actorId, organizationId, projectId, status, idempotencyKey, correlationId }) => ({
-    id,
-    action: Action.log(action),
-    actorId,
-    organizationId,
-    projectId,
-    status,
-    idempotencyKey,
-    correlationId,
-})
+ActionRequest.toLog = o => {
+    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'status', 'idempotencyKey', 'correlationId'], o)
+    r.action = Action.toLog(o.action)
+    return r
+}
