@@ -81,10 +81,21 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
     // @sig write :: TaggedItem -> Promise Void
     const write = async record => {
         try {
+            if (!Type.is(record)) record = Type.from(record)
             const firestoreData = encodeTimestamps(Type.toFirestore(record))
             await _docRef(record.id).set(firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to write ${Type.toString()}: ${e.message}`, e, record)
+        }
+    }
+
+    // @sig update :: (Id, Object) -> Promise Void
+    const update = async (id, fields) => {
+        try {
+            const firestoreData = encodeTimestamps(fields)
+            await _docRef(id).update(firestoreData)
+        } catch (e) {
+            throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
         }
     }
 
@@ -136,6 +147,40 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         }
     }
 
+    // @sig listenToDocument :: (Id, (Type?, Error?) -> Void) -> (() -> Void)
+    const listenToDocument = (id, callback) =>
+        _docRef(id).onSnapshot(
+            snapshot => {
+                try {
+                    const data = snapshot.exists ? Type.fromFirestore(decodeTimestamps(snapshot.data())) : null
+                    callback(data, null)
+                } catch (error) {
+                    callback(null, error)
+                }
+            },
+            error => callback(null, error),
+        )
+
+    // @sig listenToCollection :: ([Condition], ([Type], Error?) -> Void) -> (() -> Void)
+    const listenToCollection = (whereConditions, callback) => {
+        let ref = db.collection(collectionPath)
+        whereConditions.forEach(([field, operator, value]) => {
+            ref = ref.where(field, operator, value)
+        })
+
+        return ref.onSnapshot(
+            querySnapshot => {
+                try {
+                    const items = querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+                    callback(items, null)
+                } catch (error) {
+                    callback(null, error)
+                }
+            },
+            error => callback(null, error),
+        )
+    }
+
     const descendent = suffix => {
         if (suffix[0] === '/') suffix = suffix.slice(1)
 
@@ -170,16 +215,21 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         read,
         query,
         list,
-        
+
         // write
         write,
-       
+        update,
+
+        // listen
+        listenToDocument,
+        listenToCollection,
+
         // delete
         delete: _delete,
         recursiveDelete,
-        
+
         descendent,
-        
+
     }
 }
 
