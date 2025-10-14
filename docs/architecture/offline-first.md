@@ -1,12 +1,20 @@
-# Offline-First Architecture
+# Offline-First Architecture [PARTIALLY DEFERRED]
 
-## Core Pattern: Always-Available Operations
+**Current Status**:
+- **Web app**: Online-only with graceful degradation (acceptable for desk workers)
+- **Mobile app**: Offline queue deferred to backlog (see `specifications/backlog.md`)
+
+**Note**: This document describes the eventual offline architecture for mobile field worker apps. Current web app implementation uses HTTP functions (F110.7) and is online-only.
+
+---
+
+## Original Pattern: Offline-Capable Operations (For Reference)
 
 ```
-Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
+Client (Online/Offline) → Queue locally → HTTP Function → completedActions + Domain Collections
 ```
 
-**Benefits**: Works offline, automatic sync, conflict resolution, reliable user experience
+**Benefits** (when implemented): Works offline, automatic sync, conflict resolution, reliable user experience
 
 ## Offline-First Principles
 

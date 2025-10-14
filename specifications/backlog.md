@@ -5,19 +5,21 @@ Items here should be reconsidered when the appropriate context exists.
 
 ## New Specification Order
 
-After simplification, the implementation order is:
+After HTTP architecture change, the implementation order is:
 1. **F108**: Event sourcing infrastructure ✅ (completed)
-2. **F110**: Domain model (Action types, event handlers) - 12h
-3. **F110.5**: Authentication & authorization - 18h
-4. **F110.6**: Materialized views - 8h (needed for F113 UI)
-5. **F113**: React/Redux UI ✅ (to be created after F110.6)
-6. **F112**: Billing & export
-7. **F111**: Offline infrastructure - **DEFERRED** (not needed until iOS/Android apps)
+2. **F110**: Domain model (Action types, event handlers) - Partially complete (Organization handlers done)
+3. **F110.7**: HTTP Action Submission - In progress (replaces Firestore triggers)
+4. **F110.5**: Authentication & authorization - Blocked by F110.7
+5. **F110.6**: Materialized views - **OBSOLETE** (F110 handlers already write to domain collections)
+6. **F113**: React/Redux UI (can start after F110.7 + F110.5)
+7. **F112**: Billing & export
+8. **F111**: Offline infrastructure - **DEFERRED** (see Mobile App Features section)
 
 **Key Decisions**:
-- **F110.6 before F113**: UI needs materialized views to read/display data
-- **F113 before F111**: UI is more pressing; building it will inform offline requirements
-- **F111 deferred**: Offline infrastructure not needed until mobile apps exist
+- **F110.7 replaces Firestore triggers**: HTTP validation before database write, better security
+- **F110.6 obsolete**: Handlers write directly to domain collections, which serve as views
+- **F113 online-only**: Web app doesn't need offline queue (desk workers have reliable internet)
+- **F111 deferred**: Offline queue only needed for mobile field workers
 
 ## Phase 2 Enhancements (After MVP, Before Production)
 
@@ -103,25 +105,31 @@ After simplification, the implementation order is:
 
 ## Mobile App Features (Deferred Until iOS/Android Apps)
 
-### Offline Infrastructure (F111)
-- **From**: F111 (entire spec - 66 hours)
-- **Why Deferred**: Not needed until mobile apps are built; web UI can write directly to Firestore
-- **When**: After F113 (React UI) is built and iOS/Android apps are started
-- **Complexity**: High (66 hours estimated)
-- **Description**:
-  - Client-side queue service (store ActionRequests locally)
-  - Offline storage mechanisms
-  - Sync service (sync offline operations when online)
-  - Connection detection and adaptive sync strategies
-  - Conflict detection and resolution (automatic + user-guided)
-  - Real-time status updates and notifications
-  - Error handling and retry logic with exponential backoff
-  - Integration testing for offline scenarios
+### Offline Action Queue (formerly F111)
+- **From**: F111 (entire spec - will need significant redesign)
+- **Why Deferred**: Not needed until mobile apps are built; web UI is online-only
+- **When**: When building iOS/Android mobile apps for field workers
+- **Complexity**: High (to be re-estimated after HTTP architecture is complete)
+- **Architecture Change**: Original F111 was designed for Firestore trigger-based submission. With F110.7's HTTP submission, the offline queue will need to:
+  - Queue HTTP function calls (not Firestore writes)
+  - Store authentication tokens securely
+  - Retry failed HTTP requests with exponential backoff
+  - Handle HTTP-specific errors (400, 401, 403, 500, etc.)
+  - Synchronize queue when connection restored
+- **Description** (to be redesigned):
+  - IndexedDB/localStorage queue for pending HTTP calls
+  - Network state detection (online/offline)
+  - Background sync when connection restored
+  - Conflict detection and resolution
+  - Progress indicators for sync status
+  - Error handling and retry logic
+  - Integration with mobile app authentication
 - **Notes**:
-  - F113 (web UI) writes ActionRequests directly to Firestore
-  - F111 adds offline capability for mobile field workers
-  - Building F113 first will inform F111 requirements
-  - UI integration tasks in F111 should be reconsidered after F113 exists
+  - Web UI (F113) is online-only - acceptable for desk workers
+  - Mobile field workers need offline capability (can't rely on cell service)
+  - Original F111 spec in `specifications/F111-offline-queue-architecture/` is now outdated
+  - Will need full redesign when mobile apps are started
+  - Building mobile apps first will inform actual requirements
 
 ## Future Capabilities (Nice-to-Have)
 

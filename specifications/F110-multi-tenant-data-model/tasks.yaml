@@ -1,12 +1,18 @@
-current_task: "task_1_action_types"
-status: "pending"
+current_task: "task_3_user_handlers"
+status: "blocked"
+blocked_by: ["F110.7"]
 
 # Reference: See docs/architecture/multi-tenant.md for detailed organization/project patterns, data isolation rules, and role hierarchy
+
+# IMPLEMENTATION NOTE: Architecture changed during implementation
+# - Originally: Firestore document triggers (onDocumentWritten)
+# - Current: HTTP functions (F110.7)
+# See: specifications/F110.7-http-action-submission/
 
 tasks:
   - id: "task_1_action_types"
     description: "Define Action type variants for organizations and users"
-    status: "pending"
+    status: "completed"
     phase: "Domain Model"
     dependencies: []
     estimated_hours: 3
@@ -67,10 +73,16 @@ tasks:
 
   - id: "task_2_organization_handlers"
     description: "Implement organization event handlers with validation"
-    status: "pending"
+    status: "completed"
     phase: "Domain Model"
     dependencies: ["task_1_action_types"]
     estimated_hours: 3
+    completed_with_changes: |
+      COMPLETED with architecture change:
+      - Implemented with HTTP submission (F110.7) instead of document trigger
+      - Handlers write directly to domain collections (/organizations/{id}, /projects/{id})
+      - These collections serve as both domain model AND queryable views
+      - F110.6 (Materialized Views) is obsolete - already done in handlers
     implementation: |
         Create `modules/curb-map/functions/src/events/organizationHandlers.js`:
 
@@ -131,8 +143,13 @@ tasks:
     description: "Implement user event handlers with role management"
     status: "pending"
     phase: "Domain Model"
-    dependencies: ["task_1_action_types"]
+    dependencies: ["task_1_action_types", "F110.7"]
+    blocked_by: ["F110.7"]
     estimated_hours: 3
+    deferred_reason: |
+      Blocked by F110.7 (HTTP Action Submission).
+      Will be implemented in HTTP style after F110.7 conversion is complete.
+      This avoids implementing in trigger style and then converting to HTTP.
     implementation: |
         Create `modules/curb-map/functions/src/events/userHandlers.js`:
 
@@ -197,11 +214,17 @@ tasks:
       - lastAccess analytics (backlog)
 
   - id: "task_4_integration"
-    description: "Integrate handlers with F108 and create test utilities"
+    description: "Integrate handlers with HTTP function dispatcher"
     status: "pending"
     phase: "Domain Model"
-    dependencies: ["task_2_organization_handlers", "task_3_user_handlers"]
+    dependencies: ["task_2_organization_handlers", "task_3_user_handlers", "F110.7"]
+    blocked_by: ["F110.7", "task_3_user_handlers"]
     estimated_hours: 3
+    implementation_changed: |
+      Updated for HTTP architecture:
+      - Integration with HTTP function dispatcher (not document trigger)
+      - Auth helpers for emulator testing (full auth in F110.5)
+      - E2E tests call HTTP endpoint instead of writing to Firestore
     implementation: |
         Part A: F108 Integration (2h)
 
@@ -255,7 +278,7 @@ tasks:
       - Idempotency preserved (from F108)
       - Audit trail preserved (completedActions)
 
-completed: []
+completed: ["task_1_action_types", "task_2_organization_handlers"]
 
 deleted_as_overengineered:
   - "Project actions (4): ProjectCreated/Updated/Archived/Deleted - deferred to backlog"

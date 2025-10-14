@@ -78,7 +78,11 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         return result
     }
 
-    // @sig write :: TaggedItem -> Promise Void
+    /*
+     * Upsert operation - creates document if it doesn't exist, overwrites if it does.
+     * Contrast with create() which fails if document exists, and update() which fails if it doesn't exist.
+     * @sig write :: TaggedItem -> Promise Void
+     */
     const write = async record => {
         try {
             if (!Type.is(record)) record = Type.from(record)
@@ -89,7 +93,27 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         }
     }
 
-    // @sig update :: (Id, Object) -> Promise Void
+    /*
+     * Create-only operation - atomically creates document, fails if it already exists.
+     * Use for idempotency patterns where duplicate detection is critical.
+     * Contrast with write() which overwrites existing documents, and update() which only modifies fields.
+     * @sig create :: TaggedItem -> Promise Void
+     */
+    const create = async record => {
+        try {
+            if (!Type.is(record)) record = Type.from(record)
+            const firestoreData = encodeTimestamps(Type.toFirestore(record))
+            await _docRef(record.id).create(firestoreData)
+        } catch (e) {
+            throwWithOriginal(`Failed to create ${Type.toString()}: ${e.message}`, e, record)
+        }
+    }
+
+    /*
+     * Partial update operation - updates specified fields only, fails if document doesn't exist.
+     * Contrast with write() which replaces entire document, and create() which only works for new documents.
+     * @sig update :: (Id, Object) -> Promise Void
+     */
     const update = async (id, fields) => {
         try {
             const firestoreData = encodeTimestamps(fields)
@@ -218,6 +242,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
 
         // write
         write,
+        create,
         update,
 
         // listen

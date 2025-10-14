@@ -6,7 +6,6 @@ import {
     Organization,
     Project,
     Segment,
-    SystemFlags,
     User,
 } from '../types/index.js'
 
@@ -16,7 +15,6 @@ collectionPaths.set(AuditRecord, 'auditRecords')
 collectionPaths.set(Blockface, 'blockfaces')
 collectionPaths.set(OperationDetails, 'operationDetails')
 collectionPaths.set(Segment, 'segments')
-collectionPaths.set(SystemFlags, 'systemFlags')
 collectionPaths.set(Project, 'projects')
 collectionPaths.set(Organization, 'organizations')
 collectionPaths.set(User, 'users')

@@ -1,0 +1,213 @@
+current_task: "task_1_http_function"
+status: "pending"
+
+tasks:
+  - id: "task_1_http_function"
+    description: "Create HTTP function for action request submission"
+    status: "pending"
+    phase: "HTTP Infrastructure"
+    dependencies: []
+    estimated_hours: 4
+    implementation: |
+        Create `modules/curb-map/functions/src/submit-action-request.js`:
+
+        HTTP Function:
+        - Import `onRequest` from firebase-functions/v2/https
+        - Accept JSON payload: {id, action, idempotencyKey, correlationId, projectId, actorId?}
+        - For emulator: Accept actorId in body (bypass auth)
+        - For production: Extract actorId from Firebase Auth token
+        - Return structured responses: {status, id} or {status, error}
+
+        Validation:
+        - Validate request body structure
+        - Use ActionRequest.from() for validation
+        - Return HTTP 400 for validation errors
+        - Return HTTP 409 for duplicate idempotency keys
+
+        Processing:
+        - Extract/create shared processing logic from handle-action-request-added.js
+        - Check idempotency (query completedActions)
+        - Dispatch to appropriate handler
+        - Write to completedActions
+        - Return success response
+
+        Error Handling:
+        - Catch validation errors → HTTP 400
+        - Catch processing errors → HTTP 500
+        - Include error details in response
+    validation:
+      - "HTTP function accepts POST requests with Action payload"
+      - "Validation errors return HTTP 400 with error message"
+      - "Successful processing returns HTTP 200 with completion status"
+      - "Duplicate idempotency keys return HTTP 409"
+      - "Emulator bypass allows testing without auth"
+    tests:
+      - "modules/curb-map/test/http-submit-action.firebase.js"
+    notes: |
+        Shared Processing Logic:
+        - Extract from handle-action-request-added.js
+        - Create process-action-core.js with reusable functions
+        - Both HTTP function and old trigger can use same logic temporarily
+
+        Auth Strategy:
+        - Emulator: Accept actorId in request body
+        - Production: Extract from Firebase Auth token (F110.5)
+
+  - id: "task_2_extract_shared_logic"
+    description: "Extract shared processing logic for reuse"
+    status: "pending"
+    phase: "HTTP Infrastructure"
+    dependencies: ["task_1_http_function"]
+    estimated_hours: 2
+    implementation: |
+        Create `modules/curb-map/functions/src/process-action-core.js`:
+
+        Shared Functions:
+        - validateAndEnrichActionRequest(rawRequest, auth) → ActionRequest
+        - checkIdempotency(idempotencyKey, completedActions) → duplicate?
+        - dispatchAction(actionRequest, fsContext) → void
+        - recordCompletion(actionRequest, completedActions) → void
+
+        These functions should be pure/testable and usable by:
+        - HTTP function (submitActionRequest)
+        - Old trigger function (temporarily, for migration)
+        - Future functions (webhooks, background jobs, etc.)
+    validation:
+      - "Core logic extracted into reusable functions"
+      - "Both HTTP and trigger can use same logic"
+      - "Functions are pure and testable"
+    tests:
+      - "modules/curb-map/test/process-action-core.tap.js"
+
+  - id: "task_3_update_tests"
+    description: "Update all tests to use HTTP submission"
+    status: "pending"
+    phase: "Testing"
+    dependencies: ["task_1_http_function"]
+    estimated_hours: 3
+    implementation: |
+        Create `modules/curb-map/test/helpers/http-submit-action.js`:
+        - Helper function to call HTTP endpoint in emulator
+        - Handle request/response formatting
+        - Wrap in promise-based API
+        - Include actorId in request for emulator mode
+
+        Update test files:
+        - test/organization-handlers.firebase.js
+        - test/minimal-giant-function.firebase.js
+        - Replace adminFacade.write(actionRequest) calls
+        - Use httpSubmitAction(action, actorId, namespace) instead
+        - Update assertions for HTTP responses
+
+        Remove waitForActionRequestStatus helper:
+        - HTTP is synchronous, no polling needed
+        - Response includes completion status immediately
+    validation:
+      - "All tests pass with HTTP submission"
+      - "No tests use old Firestore write approach"
+      - "HTTP helper provides clean API for tests"
+    tests:
+      - "All existing test files updated and passing"
+
+  - id: "task_4_remove_trigger"
+    description: "Remove Firestore trigger and actionRequests collection"
+    status: "pending"
+    phase: "Cleanup"
+    dependencies: ["task_3_update_tests"]
+    estimated_hours: 1
+    implementation: |
+        Remove trigger registration:
+        - Update functions/index.js
+        - Remove/comment out processActionRequests export
+        - Only export submitActionRequest HTTP function
+
+        Update Firestore security rules:
+        - Remove client write rules for actionRequests collection
+        - Keep completedActions read-only (server writes only)
+
+        Cleanup code:
+        - Remove actionRequests facade usage (if any)
+        - Update documentation comments
+        - Remove handle-action-request-added.js if no longer needed
+    validation:
+      - "Trigger no longer registered in functions/index.js"
+      - "Security rules don't allow actionRequests writes"
+      - "All tests still pass"
+    tests:
+      - "Verify no tests rely on trigger"
+
+  - id: "task_5_implement_user_handlers"
+    description: "Implement User action handlers in HTTP style"
+    status: "pending"
+    phase: "Domain Model Completion"
+    dependencies: ["task_4_remove_trigger"]
+    estimated_hours: 4
+    implementation: |
+        Create handlers in `modules/curb-map/functions/src/events/user-handlers.js`:
+
+        Handlers:
+        - handleUserCreated(logger, fsContext, actionRequest)
+          * Write to /users/{userId}
+          * Initialize lastLogin=null, failedAttempts=0
+          * Set organizations map: {orgId: role}
+
+        - handleUserUpdated(logger, fsContext, actionRequest)
+          * Update email and/or displayName fields
+          * Set updatedAt/updatedBy metadata
+
+        - handleUserDeleted(logger, fsContext, actionRequest)
+          * Remove organizationId from organizations map
+          * If last org removed, delete user document
+
+        - handleUserForgotten(logger, fsContext, actionRequest)
+          * Delete user document (GDPR/CCPA)
+          * Reason logged in completedActions
+
+        - handleRoleAssigned(logger, fsContext, actionRequest)
+          * Update organizations[orgId] = role
+
+        Integration:
+        - Add to dispatcher in submit-action-request.js
+        - Follow same pattern as organization handlers
+
+        Validation:
+        - Email format validation
+        - Role enum validation (admin|member|viewer)
+    validation:
+      - "All 5 user handlers implemented"
+      - "Handlers follow same pattern as organization handlers"
+      - "Integrated with HTTP function dispatcher"
+    tests:
+      - "modules/curb-map/test/user-handlers.firebase.js"
+
+completed: []
+
+notes: |
+    This specification converts ActionRequest submission from Firestore document triggers to HTTP functions.
+
+    BREAKING CHANGES:
+    - Removes actionRequests collection entirely
+    - Clients must call HTTP function instead of writing to Firestore
+    - Offline queue required for mobile apps (deferred to backlog)
+
+    SCOPE:
+    - HTTP function for action submission
+    - Validation before database write
+    - Synchronous error responses
+    - Integration with existing handlers
+    - User handlers (F110 task_3 completion)
+
+    OUT OF SCOPE:
+    - Full authentication (F110.5) - use emulator bypass for now
+    - Offline queue (backlog) - web app is online-only
+    - Mobile apps (future work)
+
+    DEPENDENCIES:
+    - F108: Event sourcing (completedActions audit trail)
+    - F110: Organization handlers (already implemented)
+
+    ENABLES:
+    - F110.5: Authentication (HTTP can validate tokens)
+    - F110 task_3: User handlers (implement in HTTP style)
+
+    Total: 14 hours (5 tasks)

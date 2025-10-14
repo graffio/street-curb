@@ -1,90 +1,53 @@
-current_task: "task_1_views"
-status: "pending"
+# F110.6 - Materialized Views [OBSOLETE]
 
-# Reference: See docs/architecture/event-sourcing.md for materialized view patterns
+status: "obsolete"
+obsoleted_date: "2025-01-15"
+obsoleted_reason: "F110 handlers write directly to domain collections, which serve as both domain model and queryable views"
+
+# This specification is no longer needed
+# See: specifications/F110-multi-tenant-data-model/ for actual implementation
+# See: specifications/F110.6-materialized-views/background.md for explanation
+
+current_task: null
 
 tasks:
   - id: "task_1_views"
     description: "Create materialized views for organizations, projects, and users"
-    status: "pending"
+    status: "obsolete"
     phase: "Materialized Views"
+    obsoleted_reason: |
+      F110 handlers already provide this functionality:
+      - OrganizationCreated/Updated/Suspended/Deleted handlers write to /organizations/{id}
+      - UserCreated/Updated/Deleted/Forgotten/RoleAssigned handlers write to /users/{id}
+      - OrganizationCreated handler writes default project to /organizations/{orgId}/projects/{id}
+
+      These collections include all necessary metadata (createdAt, createdBy, updatedAt, updatedBy)
+      and are immediately queryable. No separate view-building trigger needed.
     dependencies:
       - "F110:task_1_domain_events"
     estimated_hours: 8
-    implementation: |
-        - Create Cloud Function trigger listening to completedActions onCreate
-        - Implement view handlers in `modules/curb-map/functions/src/views/`:
-          * organizationViewHandler.js - update /organizations/{id}
-          * projectViewHandler.js - update /organizations/{orgId}/projects/{projId}
-          * userViewHandler.js - update /users/{id}
-        - Parse Action from completedActions and update appropriate view collection
-        - Implement idempotent updates:
-          * Track lastProcessedActionId in view documents
-          * Skip if action already processed
-        - Handle all Action types from F110:
-          * OrganizationCreated/Updated/Deleted
-          * ProjectCreated/Updated/Deleted
-          * UserAdded/Updated/Removed
-          * RoleAssigned
-        - Write to hierarchical collections for projects
-        - Write to flat collections for organizations and users
-        - Add basic error handling (log and continue on view update failures)
-    validation:
-      - "Triggers fire when completedActions are created"
-      - "Views update correctly for all Action types"
-      - "Idempotent updates prevent duplicate processing"
-      - "Hierarchical project collections work"
-      - "UI can query views (list orgs, get project, find users)"
-    tests:
-      - "modules/curb-map/functions/test/organization-view.tap.js"
-      - "modules/curb-map/functions/test/project-view.tap.js"
-      - "modules/curb-map/functions/test/user-view.tap.js"
-      - "modules/curb-map/functions/test/views-integration.firebase.js"
     notes: |
-      This creates the minimum views needed for F113's React UI.
+      Original plan was to:
+      - Listen to completedActions onCreate
+      - Build separate materialized view collections
+      - Track lastProcessedActionId for idempotency
 
-      SCOPE:
-      - completedActions onCreate triggers
-      - Basic view updates for all Action types
-      - Idempotent processing
-      - Hierarchical and flat collections
-      - Error handling
-
-      OUT OF SCOPE (defer to backlog):
-      - Complex aggregations
-      - View optimization
-      - Advanced querying
-      - Performance tuning
-
-      Views are eventually consistent - there may be a delay between
-      action completion and view updates. This is acceptable for MVP.
-
-      F111 (offline infrastructure) deferred until mobile apps are built.
+      Actual implementation:
+      - Handlers write final state directly to domain collections
+      - No lag between action completion and view availability
+      - Simpler architecture with fewer moving parts
 
 completed: []
 
 notes: |
-    This specification implements materialized views for CurbMap.
+    This specification is OBSOLETE.
 
-    SCOPE:
-    - completedActions onCreate triggers
-    - Organization, project, and user view handlers
-    - Idempotent view updates
-    - Basic querying support
+    Originally planned to create materialized views by listening to completedActions.
+    However, F110 implementation writes directly to domain collections, which serve
+    as both domain model storage and queryable views.
 
-    DEPENDS ON:
-    - F110: Domain model (Action types that generate events)
-    - F108: Event sourcing (completedActions collection)
+    SUPERSEDED BY:
+    - F110: Domain model (handlers write to /organizations, /users, /projects)
+    - F110.7: HTTP action submission (replaces Firestore triggers)
 
-    ENABLES:
-    - F113: React/Redux UI (needs views to display/query data)
-
-    DEFERRED:
-    - F111: Offline infrastructure (until mobile apps are built)
-
-    Total: 8 hours
-
-    Task ID format: task_{phase}_{sequence}_{description}
-    Status values: pending, in_progress, completed, blocked, cancelled
-    Dependencies: List of task IDs that must be completed first
-    Validation: Specific criteria that must be met for task completion
+    See background.md for detailed explanation and future considerations.

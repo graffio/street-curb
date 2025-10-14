@@ -158,7 +158,7 @@ test('Given the Firestore facade update method', async t => {
                 await adminFacade.write(invalidItem)
                 tt.fail('Then write should throw a validation error')
             } catch (error) {
-                tt.match(error.message, /not of type/, 'Then error indicates type validation failed')
+                tt.match(error.message, /expected status to match/, 'Then error indicates type validation failed')
             }
         })
     })

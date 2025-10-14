@@ -1,36 +1,35 @@
 # Event Sourcing Architecture
 
-## Core Pattern: Event Sourcing + Action Requests
+## Core Pattern: Event Sourcing + HTTP Action Submission
 
 ```
-Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
+Client (Online) → HTTP Function → Validates → completedActions + Domain Collections
 ```
 
-**Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
+**Benefits**: Server-side validation, synchronous error feedback, SOC2-compliant audit trail, scalable multi-tenant architecture
+
+**Note**: Offline queue for mobile apps deferred to backlog (see `specifications/backlog.md`)
 
 ### System Snapshot
 
-- **Action Request Contract**: Each document in `actionRequests` carries
-  `{id, action, idempotencyKey, actor, subject, organizationId, timestamps, status, outcome}`; mutable fields (`status`, `error`,
-  `processedAt`) track orchestration state.
-- **Processing Node**: A single-region Cloud Function subscribes to queue writes, enforces validation + authorization,
-  and records audit metadata alongside results.
-- **Audit Store**: Immutable `completedActions` collection partitioned by `{organizationId, projectId}`; append-only semantics
-  maintain SOC2 audit guarantees. Each completed ActionRequest is copied verbatim to this collection.
-- **Materialized Views**: Organization-scoped read models (Firestore collections or BigQuery exports) consume completed actions
-  idempotently and log last processed action request `id`.
-- **Idempotency**: CUID2-based keys persisted in `processed_operations` avoid duplicate processing even under
-  at-least-once delivery.
+- **HTTP Action Submission**: Clients call HTTP function with `{id, action, idempotencyKey, correlationId, projectId}` payload
+- **Server-Side Validation**: HTTP function validates before any database write; rejects malformed requests with HTTP 400
+- **Server-Side Enrichment**: HTTP function adds authoritative fields: `actorId` (from auth token), `subjectId`, `timestamps`
+- **Processing**: Synchronous processing - validates → dispatches to handler → writes to domain collections
+- **Audit Store**: Immutable `completedActions` collection with SOC2 audit trail; append-only semantics
+- **Domain Collections**: Handlers write directly to `/organizations/{id}`, `/users/{id}`, `/organizations/{orgId}/projects/{id}`
+- **No actionRequests Collection**: Removed - HTTP validates before write, cleaner audit trail
+- **Idempotency**: Check `completedActions` for duplicate `idempotencyKey` before processing
 
 ### Decision Log
 
 | Decision                                     | Status   | Rationale                                                                            | Trade-offs                                                              |
 |----------------------------------------------|----------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| Single giant function vs per-event functions | Accepted | Centralizes throttling, simplifies logging/metrics, one deployment surface           | Larger blast radius; mitigated via TAP + emulator regression suite      |
-| Firestore queue over Pub/Sub                 | Accepted | Keeps local dev simple, shares security model with app data, supports offline writes | Lacks managed dead-letter queue; compensated with retry/status tracking |
+| HTTP functions over Firestore triggers       | Accepted | Validation before write, synchronous errors, cleaner audit trail, better security    | Requires offline queue for mobile (deferred); web app online-only      |
+| Single handler dispatcher vs per-event functions | Accepted | Centralizes validation/auth, simplifies logging, one deployment surface           | Larger blast radius; mitigated via TAP + emulator regression suite      |
 | Event sourcing pattern                       | Accepted | Immutable audit trail, rebuildable views, aligns with SOC2 controls                  | Higher complexity than CRUD; requires strong tooling + docs             |
-| Idempotency via per-actor keys               | Accepted | Prevents accidental duplicate events, audit friendly                                 | Requires read-before-write and extra index costs                        |
-| Materialized views in Firestore (phase 1)    | Accepted | Fast app reads, minimal ops overhead initially                                       | May hit limits; plan migration to BigQuery for heavy analytics          |
+| Idempotency via completedActions lookup      | Accepted | Prevents duplicate processing, simpler than separate collection                      | Requires completedActions query before processing                       |
+| Handlers write to domain collections         | Accepted | Fast reads, no view-building lag, simpler architecture                               | Collections serve dual purpose (model + views); less separation         |
 
 ## Event Sourcing Principles
 
@@ -78,92 +77,104 @@ Actions represent domain events that can be requested:
 
 **Projects**: Each organization gets a default project with real CUID2 ID (CRUD actions deferred to backlog)
 
-## Action Request Processing Architecture
+## HTTP Action Submission Architecture
 
-### Action Request Structure
+### HTTP Request/Response
 
-```
-// Firestore collection: actionRequests
+**Client sends minimal payload**:
+```javascript
+POST /submitActionRequest
 {
-  id: {
-    id: 'acr_<cuid12>',               // action request ID (used as document ID)
-    actor: { id: 'usr_<cuid12>', type: 'user' },
-    subject: { id: 'usr_<cuid12>', type: 'user' | 'organization' | 'project' },
-    action: Action,                    // Action tagged sum (UserAdded | OrganizationAdded)
-    organizationId: 'org_<cuid12>',
-    projectId: 'prj_<cuid12>'?,
-    idempotencyKey: 'idm_<cuid12>',
-    status: 'pending' | 'completed' | 'failed',
-    error: 'Permission denied'?,
-    correlationId: 'cor_<cuid12>',
-    createdAt: 'serverTimestamp',
-    processedAt: 'serverTimestamp'?,
-    schemaVersion: 1
-  }
+  id: 'acr_<cuid12>',              // Client-generated
+  action: {
+    '@@tagName': 'OrganizationCreated',
+    organizationId: 'org_xyz',
+    projectId: 'prj_abc',
+    name: 'City of San Francisco'
+  },
+  idempotencyKey: 'idm_<cuid12>',  // Client-generated
+  correlationId: 'cor_<cuid12>',   // Client-generated
+  projectId: 'prj_abc'             // For context creation
 }
 ```
 
-| Field            | Source Type / Definition                                         | Meaning                                                                            |
-|------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `id`             | `FieldTypes.actionRequestId` (`acr_<12>` )                       | Action request ID (used as document ID in both actionRequests and completedActions)|
-| `actor`          | Written by `ActionRequest.toFirestore` (`{ id, type }`)          | Who initiated the action (currently always `type: 'user'`; service IDs come later) |
-| `subject`        | `{ id, type }` object                                            | What entity is being affected by this action (SOC2 requirement)                    |
-| `action`         | `Action` tagged sum (`modules/curb-map/type-definitions/action`) | Domain event payload (e.g., `UserAdded`, `OrganizationAdded`)                      |
-| `organizationId` | `FieldTypes.organizationId`                                      | Organization scope (multi-tenant isolation)                                        |
-| `projectId`      | `FieldTypes.projectId` (optional)                                | Project scope (optional sub-tenant)                                                |
-| `idempotencyKey` | `FieldTypes.idempotencyKey` (`idm_<12>`)                         | Prevents duplicate processing                                                      |
-| `status`         | pending/completed/failed                                         | Request processing state                                                           |
-| `error`          | Optional string                                                  | Error message when processing fails (including authorization failures)             |
-| `correlationId`  | `FieldTypes.correlationId` (`cor_<12>`)                          | Request tracing across client→server boundary                                      |
-| `createdAt`      | Stored as Firestore `serverTimestamp`                            | When the request was created                                                       |
-| `processedAt`    | Stored as Firestore `serverTimestamp`                            | When the processor finished (set on success/failure)                               |
-| `schemaVersion`  | Integer                                                          | Schema version for future migrations                                               |
+**Server enriches with authoritative fields**:
+```javascript
+{
+  id,
+  action,
+  actorId: auth.uid,                    // From Firebase Auth token
+  subjectId: action.organizationId,     // Derived from action
+  subjectType: 'organization',          // Derived from action type
+  organizationId: action.organizationId,
+  projectId,
+  idempotencyKey,
+  correlationId,
+  status: 'completed',
+  schemaVersion: 1,
+  createdAt: serverTimestamp(),
+  processedAt: serverTimestamp()
+}
+```
 
-`ActionRequest` in `modules/curb-map/type-definitions/action-request.type.js` mirrors this shape on the client/server. The generated runtime type converts fields into the Firestore representation above. The `Action` tagged sum (created from `modules/curb-map/type-definitions/action.type.js`) defines the domain payload that is embedded in each request.
+**Success response (HTTP 200)**:
+```javascript
+{
+  status: 'completed',
+  id: 'acr_xyz',
+  processedAt: '2025-01-15T10:30:00Z'
+}
+```
+
+**Error response (HTTP 400)**:
+```javascript
+{
+  status: 'validation-failed',
+  error: 'Invalid status: must be "active" or "suspended"',
+  field: 'action.status'
+}
+```
 
 ### Processing Flow
 
-1. **Idempotency Check**: Prevent duplicate processing
-2. **Input Validation**: Validate action data structure and business rules
-3. **Authorization Check**: Verify user permissions
-4. **Domain Processing**: Execute the action (create/update domain entities)
-5. **Audit Recording**: Copy ActionRequest to `completedActions` collection (immutable)
-6. **Materialized View Updates**: Update cached views
-7. **Completion**: Mark request as completed in `actionRequests`
+1. **HTTP Request**: Client calls submitActionRequest HTTP function
+2. **Authentication**: Validate Firebase Auth token (F110.5) or use emulator bypass
+3. **Validation**: Validate action data structure using `ActionRequest.from()`
+4. **Idempotency Check**: Query `completedActions` for duplicate `idempotencyKey`
+5. **Authorization Check**: Verify user permissions (F110.5)
+6. **Domain Processing**: Dispatch to handler → handler writes to domain collections
+7. **Audit Recording**: Write to `completedActions` (immutable)
+8. **HTTP Response**: Return success/failure synchronously
 
 ## Idempotency Pattern
 
 ### Idempotency Key
 
 - **Purpose**: Prevent duplicate event processing
-- **Format**: CUID2
-- **Storage**: `processed_operations` collection
+- **Format**: CUID2 (`idm_<12 chars>`)
+- **Storage**: `completedActions` collection (no separate collection needed)
 - **Lifetime**: Permanent (for audit trail)
 
 ### Implementation
 
 ```javascript
 // Check if operation already processed
-const checkIdempotencyKey = async (key) => {
-    const doc = await admin.firestore()
-        .collection('processed_operations')
-        .doc(key)
-        .get();
-    
-    return doc.exists ? doc.data().result : null;
+const checkIdempotency = async (idempotencyKey, completedActions) => {
+    const existing = await completedActions.list();
+    return existing.find(ca => ca.idempotencyKey === idempotencyKey);
 };
 
-// Store idempotency result
-const storeIdempotencyResult = async (key, result) => {
-    await admin.firestore()
-        .collection('processed_operations')
-        .doc(key)
-        .set({
-            result,
-            timestamp: admin.firestore.FieldValue.serverTimestamp()
-        });
-};
+// If duplicate found, return reference to original
+if (duplicate) {
+    return {
+        status: 'completed',
+        duplicateOf: duplicate.id,
+        message: 'Already processed'
+    };
+}
 ```
+
+**Note**: Idempotency check queries `completedActions` collection instead of maintaining separate `processed_operations` collection. This simplifies architecture and reuses existing audit trail.
 
 ## Event Validation
 
@@ -249,41 +260,55 @@ const checkActionAuthorization = async (userId, action, organizationId) => {
 };
 ```
 
-## Materialized Views
+## Domain Collections (Materialized Views)
 
 ### Purpose
 
-- **Performance**: Pre-computed views for fast queries
-- **Consistency**: Eventually consistent with completed actions
-- **Caching**: Avoid replaying action history for common queries
-- **UI Metadata**: Store created/updated timestamps and actors for domain entities
+Handlers write directly to domain collections, which serve dual purpose:
+1. **Domain Model Storage**: Source of truth for organizations, users, projects
+2. **Queryable Views**: UI can query these collections immediately
 
-### Update Pattern
+### Collections
+
+- `/organizations/{id}` - Written by Organization handlers
+- `/users/{id}` - Written by User handlers
+- `/organizations/{orgId}/projects/{id}` - Written by Organization handlers (default project)
+
+### Handler Pattern
 
 ```javascript
-const updateMaterializedViews = async (actionRequest) => {
-    const action = actionRequest.action;
-    const tagName = action['@@tagName'];
+const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
+    const { action } = actionRequest;
+    const { organizationId, projectId, name } = action;
 
-    switch (tagName) {
-    case 'UserAdded':
-        await createUserView(action, {
-            createdBy: actionRequest.actor.id,
-            createdAt: actionRequest.processedAt
-        });
-        break;
-    case 'UserUpdated':
-        await updateUserView(action, {
-            updatedBy: actionRequest.actor.id,
-            updatedAt: actionRequest.processedAt
-        });
-        break;
-    case 'UserForgotten':
-        await removeUserView(action);
-        break;
-    }
+    // Add metadata from actionRequest
+    const metadata = {
+        createdAt: fsContext.serverTimestamp(),
+        createdBy: actionRequest.actorId,
+        updatedAt: fsContext.serverTimestamp(),
+        updatedBy: actionRequest.actorId
+    };
+
+    // Write to domain collection
+    const organization = {
+        id: organizationId,
+        name,
+        status: 'active',
+        defaultProjectId: projectId,
+        ...metadata
+    };
+
+    await fsContext.organizations.write(organization);
 };
 ```
+
+**Benefits**:
+- No lag between action completion and view availability
+- Simpler architecture (no separate view-building trigger)
+- Metadata included (createdAt, createdBy, updatedAt, updatedBy)
+- Immediately queryable
+
+**Note**: F110.6 (Materialized Views) specification is obsolete - this functionality is already built into F110 handlers.
 
 ## Schema Versioning
 
@@ -337,10 +362,12 @@ const recordCompletedAction = async (actionRequest) => {
 
 ### Data Retention
 
-- **Completed Actions Retention**: 7 years for compliance
-- **Action Requests**: Can be purged after completion (operational data)
-- **User Forgotten**: Complete data removal via UserForgotten action
+- **Completed Actions Retention**: 7 years for SOC2 compliance
+- **Domain Collections**: Retain as long as entity exists (organizations, users, projects)
+- **User Forgotten**: Complete data removal via UserForgotten action (GDPR/CCPA)
 - **Archive Strategy**: Long-term storage for compliance (Cloud Storage/BigQuery)
+
+**Note**: No actionRequests collection to purge - HTTP validates before write.
 
 ## References
 

@@ -39,24 +39,6 @@ service cloud.firestore {
                 : true);
         }
 
-        // Action Requests collection
-        match /{path=**}/actionRequests/{actionRequestId} {
-            allow create: if
-                request.auth != null &&
-                isValidActionRequestId(actionRequestId) &&
-                hasValidActionRequestFields(request.resource.data) &&
-                request.resource.data.actorId == request.auth.uid &&
-                request.resource.data.status == 'pending';
-
-            allow read: if
-                request.auth != null &&
-                (resource.data.actorId == request.auth.uid ||
-                 request.auth.token.organizations[resource.data.organizationId] != null);
-
-            // Only Cloud Functions can update status
-            allow update, delete: if false;
-        }
-
         // Completed Actions collection (immutable audit trail)
         match /{path=**}/completedActions/{id} {
             allow read: if
@@ -65,6 +47,20 @@ service cloud.firestore {
 
             // Only Cloud Functions can write (immutable)
             allow create, update, delete: if false;
+        }
+
+        // Domain collections - temporary permissive rules for testing
+        // TODO (F110.5): Replace with proper auth-based rules
+        match /{path=**}/organizations/{orgId} {
+            allow read, write: if true;
+        }
+
+        match /{path=**}/users/{userId} {
+            allow read, write: if true;
+        }
+
+        match /{path=**}/projects/{projectId} {
+            allow read, write: if true;
         }
 
         // Default: Deny all other collections

@@ -1,3 +1,3 @@
 // 2
 
-export { handleActionRequestAdded } from './handle-action-request-added.js'
+export { submitActionRequest } from './submit-action-request.js'

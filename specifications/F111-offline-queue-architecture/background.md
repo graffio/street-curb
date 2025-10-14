@@ -1,8 +1,26 @@
-# F111 - Offline Action Request Architecture
+# F111 - Offline Action Queue Architecture [MOVED TO BACKLOG]
 
-**Implement offline-capable client operations with sync for CurbMap**
+**Status**: Deferred until mobile apps are implemented
+**See**: `specifications/backlog.md` → "Mobile App Features" section
 
-## Overview
+---
+
+## ⚠️ Important Notice
+
+This specification is **outdated** and will need significant redesign before implementation.
+
+**Why**: Originally designed for Firestore trigger-based ActionRequest submission. With F110.7's switch to HTTP functions, the offline queue architecture needs to change:
+
+- **Original design**: Queue Firestore writes → Auto-sync when online
+- **New requirement**: Queue HTTP calls → Retry with auth tokens → Handle HTTP errors
+
+**When to redesign**: When actually building mobile apps (iOS/Android). Building the mobile apps first will inform the actual offline requirements.
+
+**Current status**: Web app (F113) is online-only, which is acceptable for desk workers at computers with reliable internet.
+
+---
+
+## Original Overview (Archived for Reference)
 
 This specification implements the offline-first architecture defined in [offline-first] and [action-request-architecture]. The
 system provides offline-capable client operations with automatic sync, conflict resolution, and real-time status updates

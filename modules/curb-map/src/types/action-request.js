@@ -6,7 +6,7 @@
  *  actorId       : FieldTypes.actorId,
  *  subjectId     : FieldTypes.subjectId,
  *  subjectType   : /^(user|organization|project)$/,
- *  organizationId: FieldTypes.organizationId,
+ *  organizationId: "/^org_[a-z0-9]{12,}$/?",
  *  projectId     : "/^prj_[a-z0-9]{12,}$/?",
  *  status        : /^(pending|completed|failed)$/,
  *  idempotencyKey: FieldTypes.idempotencyKey,
@@ -55,7 +55,7 @@ const ActionRequest = function ActionRequest(
     R.validateRegex(constructorName, FieldTypes.actorId, 'actorId', false, actorId)
     R.validateRegex(constructorName, FieldTypes.subjectId, 'subjectId', false, subjectId)
     R.validateRegex(constructorName, /^(user|organization|project)$/, 'subjectType', false, subjectType)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+    R.validateRegex(constructorName, /^org_[a-z0-9]{12,}$/, 'organizationId', true, organizationId)
     R.validateRegex(constructorName, /^prj_[a-z0-9]{12,}$/, 'projectId', true, projectId)
     R.validateRegex(constructorName, /^(pending|completed|failed)$/, 'status', false, status)
     R.validateRegex(constructorName, FieldTypes.idempotencyKey, 'idempotencyKey', false, idempotencyKey)
@@ -72,7 +72,7 @@ const ActionRequest = function ActionRequest(
     result.actorId = actorId
     result.subjectId = subjectId
     result.subjectType = subjectType
-    result.organizationId = organizationId
+    if (organizationId != null) result.organizationId = organizationId
     if (projectId != null) result.projectId = projectId
     result.status = status
     result.idempotencyKey = idempotencyKey
