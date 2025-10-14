@@ -1,7 +1,12 @@
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
-import { rawHttpRequest, submitActionRequest, submitAndExpectSuccess } from './helpers/http-submit-action.js'
+import {
+    rawHttpRequest,
+    submitActionRequest,
+    submitAndExpectDuplicate,
+    submitAndExpectSuccess,
+} from './helpers/http-submit-action.js'
 
 const namespace = `tests/${new Date().toISOString().replace(/[:.]/g, '-')}`
 
@@ -42,12 +47,65 @@ test('Given the HTTP action submission endpoint', t => {
 
         t.ok(completedAction, 'Then a completed action exists with the idempotency key')
         t.equal(completedAction.status, 'completed', 'Then the completed action has completed status')
+        t.notEqual(completedAction.status, 'pending', 'Then status is never pending')
         t.equal(completedAction.idempotencyKey, idempotencyKey, 'Then the idempotency key is preserved')
         t.type(completedAction.processedAt, 'object', 'Then processedAt is set as a Date object in completedActions')
         t.ok(completedAction.processedAt.getTime(), 'Then processedAt is a valid Date')
     })
 
-    t.test('When a duplicate idempotency key is submitted Then it returns reference to original', async t => {
+    t.test('When an action is processed Then timestamps are server-authoritative', async t => {
+        const organizationId = FieldTypes.newOrganizationId()
+        const projectId = FieldTypes.newProjectId()
+        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+        const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+        console.log(`Test organizationId: ${organizationId}`)
+        await submitAndExpectSuccess({ action, namespace, idempotencyKey })
+
+        // Read from Firestore to check actual timestamps
+        const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
+        const completedAction = results[0]
+
+        // Verify timestamps are Firestore Timestamp objects (converted to Date by facade)
+        t.type(completedAction.createdAt, 'object', 'Then createdAt is a Date object')
+        t.type(completedAction.processedAt, 'object', 'Then processedAt is a Date object')
+        t.ok(completedAction.createdAt.getTime(), 'Then createdAt has valid timestamp')
+        t.ok(completedAction.processedAt.getTime(), 'Then processedAt has valid timestamp')
+
+        // Verify single write: createdAt ≈ processedAt (within 100ms)
+        const timeDiff = Math.abs(completedAction.processedAt.getTime() - completedAction.createdAt.getTime())
+        t.ok(timeDiff < 100, `Then createdAt ≈ processedAt (diff: ${timeDiff}ms < 100ms)`)
+    })
+
+    t.test('When an action is processed Then completedActions is immutable (no pending status)', async t => {
+        const organizationId = FieldTypes.newOrganizationId()
+        const projectId = FieldTypes.newProjectId()
+        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+        const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+        console.log(`Test organizationId: ${organizationId}`)
+        await submitAndExpectSuccess({ action, namespace, idempotencyKey })
+
+        // Query all records for this idempotency key
+        const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
+
+        t.equal(results.length, 1, 'Then exactly one record exists')
+        t.equal(results[0].status, 'completed', 'Then status is completed (never pending)')
+        t.ok(results[0].processedAt, 'Then processedAt is present immediately')
+
+        // Verify record doesn't change over time
+        const initialProcessedAt = results[0].processedAt.toISOString()
+        const initialStatus = results[0].status
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        const resultsAfter = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
+        t.equal(resultsAfter.length, 1, 'Then still exactly one record exists')
+        t.equal(resultsAfter[0].processedAt.toISOString(), initialProcessedAt, 'Then processedAt never changes')
+        t.equal(resultsAfter[0].status, initialStatus, 'Then status never changes')
+        t.equal(resultsAfter[0].status, 'completed', 'Then status remains completed')
+    })
+
+    t.test('When a duplicate idempotency key is submitted Then it returns HTTP 409 duplicate', async t => {
         const organizationId = FieldTypes.newOrganizationId()
         const projectId = FieldTypes.newProjectId()
         const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
@@ -55,21 +113,21 @@ test('Given the HTTP action submission endpoint', t => {
 
         console.log(`Test organizationId: ${organizationId}`)
         // Submit first request
-        await submitAndExpectSuccess({ action, namespace, idempotencyKey })
-
         // Submit duplicate with same idempotency key
-        const result2 = await submitAndExpectSuccess({
-            action,
-            namespace,
-            idempotencyKey, // same idempotency key
-        })
+        const result1 = await submitAndExpectSuccess({ action, namespace, idempotencyKey })
+        const result2 = await submitAndExpectDuplicate({ action, namespace, idempotencyKey })
 
-        t.equal(result2.status, 'completed', 'Then the duplicate request is marked completed')
-        t.equal(result2.duplicate, true, 'Then the duplicate flag is set')
+        t.equal(result2.status, 'duplicate', 'Then the response status is duplicate')
+        t.equal(result2.message, 'Already processed', 'Then message indicates already processed')
+        t.ok(result2.processedAt, 'Then processedAt timestamp is returned')
+        t.notOk(result2.duplicate, 'Then old duplicate:true flag is not present')
         t.notOk(result2.id, 'Then action request ID is not exposed to client')
         t.notOk(result2.duplicateOf, 'Then internal action request ID is not exposed')
 
-        // verify only one entry in completedActions
+        // Verify both responses have same processedAt (same record)
+        t.equal(result2.processedAt, result1.processedAt, 'Then duplicate returns same processedAt as original')
+
+        // Verify only one entry in completedActions
         const matchingResults = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
         t.equal(matchingResults.length, 1, 'Then only one completedAction exists for this idempotency key')
         t.equal(
@@ -79,28 +137,38 @@ test('Given the HTTP action submission endpoint', t => {
         )
     })
 
-    t.test('When two requests with the same idempotency key are sent concurrently Then only one processes', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
+    t.test(
+        'When two requests with the same idempotency key are sent concurrently Then one succeeds and one returns 409',
+        async t => {
+            const organizationId = FieldTypes.newOrganizationId()
+            const projectId = FieldTypes.newProjectId()
+            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+            const idempotencyKey = FieldTypes.newIdempotencyKey()
 
-        console.log(`Test organizationId: ${organizationId}`)
-        // Fire two requests in parallel with same idempotency key
-        const [result1, result2] = await Promise.all([
-            submitAndExpectSuccess({ action, namespace, idempotencyKey }),
-            submitAndExpectSuccess({ action, namespace, idempotencyKey }),
-        ])
+            console.log(`Test organizationId: ${organizationId}`)
+            // Fire two requests in parallel with same idempotency key
+            const [result1, result2] = await Promise.all([
+                submitActionRequest({ action, namespace, idempotencyKey }),
+                submitActionRequest({ action, namespace, idempotencyKey }),
+            ])
 
-        // One should be original, one should be duplicate
-        const duplicates = [result1, result2].filter(r => r.duplicate === true)
-        t.equal(duplicates.length, 1, 'Then exactly one request is marked as duplicate')
+            // One should succeed (200), one should be duplicate (409)
+            const statuses = [result1.status, result2.status].sort()
+            t.same(statuses, [200, 409], 'Then one request returns 200 and one returns 409')
 
-        // Verify only ONE completedAction exists
-        const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-        t.equal(results.length, 1, 'Then only one completedAction exists')
-        t.equal(results[0].status, 'completed', 'Then the completedAction has completed status')
-    })
+            const successResults = [result1, result2].filter(r => r.status === 200)
+            const duplicateResults = [result1, result2].filter(r => r.status === 409)
+
+            t.equal(successResults.length, 1, 'Then exactly one request succeeds')
+            t.equal(duplicateResults.length, 1, 'Then exactly one request is duplicate')
+            t.equal(duplicateResults[0].data.status, 'duplicate', 'Then duplicate has status: duplicate')
+
+            // Verify only ONE completedAction exists
+            const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
+            t.equal(results.length, 1, 'Then only one completedAction exists')
+            t.equal(results[0].status, 'completed', 'Then the completedAction has completed status')
+        },
+    )
 
     t.test('When required fields are missing Then validation error is returned', async t => {
         // Submit with only an ID, missing action, idempotencyKey, correlationId

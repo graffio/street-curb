@@ -132,6 +132,28 @@ const submitAndExpectValidationError = async params => {
 }
 
 /**
+ * Submit an action request and expect HTTP 409 duplicate response
+ * Used for testing idempotency - when the same idempotency key is submitted twice
+ *
+ * @sig submitAndExpectDuplicate :: ({
+ *   action: Action | Object | null,
+ *   idempotencyKey: String?,
+ *   correlationId: String?,
+ *   namespace: String?,
+ *   actorId: String?
+ * }) -> Promise<Object>
+ */
+const submitAndExpectDuplicate = async params => {
+    const result = await submitActionRequest(params)
+    if (result.status !== 409 || result.data.status !== 'duplicate') 
+        throw new Error(
+            `Expected duplicate (HTTP 409, status: 'duplicate') but got HTTP ${result.status}, status: ${result.data.status}`,
+        )
+    
+    return result.data
+}
+
+/**
  * Make a raw HTTP request to the submitActionRequest endpoint
  * Useful for testing HTTP-level behavior (methods, malformed requests, etc.)
  *
@@ -155,4 +177,10 @@ const rawHttpRequest = async ({ method = 'POST', body, rawBody = false } = {}) =
     return parseResponse(response)
 }
 
-export { rawHttpRequest, submitActionRequest, submitAndExpectSuccess, submitAndExpectValidationError }
+export {
+    rawHttpRequest,
+    submitActionRequest,
+    submitAndExpectSuccess,
+    submitAndExpectValidationError,
+    submitAndExpectDuplicate,
+}
