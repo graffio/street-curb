@@ -89,12 +89,43 @@ Action.fromFirestore = o => {
 }
 
 /*
- * Return a subset of interesting fields to log
- * @sig toLog = Action -> Object
+ * Returns list of PII field names for a given action type.
+ * These fields contain personally identifiable information and should be redacted in logs.
+ * This is the definitive security boundary - separate from toLog which controls relevance.
+ *
+ * IMPORTANT: Accepts raw data (plain object) because it's used when Action construction fails.
+ * Cannot use .match() since the Action may not be constructed yet.
+ *
+ * @sig piiFields :: Object -> [String]
  */
 // prettier-ignore
-Action.toLog = a =>
-    a.match({
+Action.piiFields = rawData => {
+    const tagName = rawData['@@tagName']
+    if (tagName === 'OrganizationCreated'  ) return []
+    if (tagName === 'OrganizationUpdated'  ) return []
+    if (tagName === 'OrganizationSuspended') return []
+    if (tagName === 'OrganizationDeleted'  ) return []
+    if (tagName === 'UserCreated'          ) return ['email', 'displayName']
+    if (tagName === 'UserUpdated'          ) return ['email', 'displayName']
+    if (tagName === 'UserDeleted'          ) return []
+    if (tagName === 'UserForgotten'        ) return []
+    if (tagName === 'RoleAssigned'         ) return []
+
+    return []  // Fallback for unrecognized types
+}
+
+/*
+ * Return a subset of interesting fields to log, with PII redacted.
+ * Automatically applies PII redaction as a security layer
+ * @sig toLog = Action -> Object
+ */
+Action.toLog = a => {
+    const redactField = field => {
+        if (result[field]) result[field] = `${field}: ${result[field].length}`
+    }
+
+    // prettier-ignore
+    const result = a.match({
         OrganizationCreated  : ({ name })                     => ({ type: 'OrganizationCreated', name}),
         OrganizationUpdated  : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
         OrganizationDeleted  : ()                             => ({ type: 'OrganizationDeleted', }),
@@ -105,4 +136,54 @@ Action.toLog = a =>
         UserDeleted          : ()                             => ({ type: 'UserDeleted',  }),
         UserForgotten        : ({ reason })                   => ({ type: 'UserForgotten', reason }),
         RoleAssigned         : ({ role })                     => ({ type: 'RoleAssigned', role }),
+    })
+
+    Action.piiFields(a).forEach(redactField)
+    return result
+}
+
+/*
+ * Redacts PII fields from raw action data for safe logging.
+ * Unlike omit(), this preserves field presence and structure for debugging.
+ *
+ * Examples:
+ *   email: "user@example.com" -> email: "[EMAIL:16chars]"
+ *   displayName: "John Doe" -> displayName: "[NAME:8chars]"
+ *
+ * @sig redactPii :: Object -> Object
+ */
+Action.redactPii = rawData => {
+    const redactField = field => {
+        if (result[field]) result[field] = `${field}: ${result[field].length}`
+    }
+
+    const piiFields = () => {
+        const tagName = rawData['@@tagName']
+
+        if (tagName === 'UserCreated') return ['email', 'displayName']
+        if (tagName === 'UserUpdated') return ['email', 'displayName']
+
+        return []
+    }
+
+    const result = { ...rawData }
+    piiFields().forEach(redactField)
+    return result
+}
+
+// Additional function: getSubject
+// Returns the subject (entity being acted upon) for an action
+// @sig getSubject :: Action -> { id: String, type: String }
+// prettier-ignore
+Action.getSubject = action =>
+    action.match({
+        OrganizationCreated:   a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationUpdated:   a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationSuspended: a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationDeleted:   a => ({ id: a.organizationId, type: 'organization' }),
+        UserCreated:           a => ({ id: a.userId,         type: 'user' }),
+        UserUpdated:           a => ({ id: a.userId,         type: 'user' }),
+        UserDeleted:           a => ({ id: a.userId,         type: 'user' }),
+        UserForgotten:         a => ({ id: a.userId,         type: 'user' }),
+        RoleAssigned:          a => ({ id: a.userId,         type: 'user' }),
     })

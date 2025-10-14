@@ -578,9 +578,27 @@ Action.fromFirestore = o => {
     throw new Error(`Unrecognized domain event ${tagName}`)
 }
 
+// Additional function: piiFields
+Action.piiFields = rawData => {
+    const tagName = rawData['@@tagName']
+    if (tagName === 'OrganizationCreated') return []
+    if (tagName === 'OrganizationUpdated') return []
+    if (tagName === 'OrganizationSuspended') return []
+    if (tagName === 'OrganizationDeleted') return []
+    if (tagName === 'UserCreated') return ['email', 'displayName']
+    if (tagName === 'UserUpdated') return ['email', 'displayName']
+    if (tagName === 'UserDeleted') return []
+    if (tagName === 'UserForgotten') return []
+    if (tagName === 'RoleAssigned') return []
+    return []
+}
+
 // Additional function: toLog
-Action.toLog = a =>
-    a.match({
+Action.toLog = a => {
+    const redactField = field => {
+        if (result[field]) result[field] = `${field}: ${result[field].length}`
+    }
+    const result = a.match({
         OrganizationCreated: ({ name }) => ({
             type: 'OrganizationCreated',
             name,
@@ -612,6 +630,66 @@ Action.toLog = a =>
         RoleAssigned: ({ role }) => ({
             type: 'RoleAssigned',
             role,
+        }),
+    })
+    Action.piiFields(a).forEach(redactField)
+    return result
+}
+
+// Additional function: redactPii
+Action.redactPii = rawData => {
+    const redactField = field => {
+        if (result[field]) result[field] = `${field}: ${result[field].length}`
+    }
+    const piiFields = () => {
+        const tagName = rawData['@@tagName']
+        if (tagName === 'UserCreated') return ['email', 'displayName']
+        if (tagName === 'UserUpdated') return ['email', 'displayName']
+        return []
+    }
+    const result = { ...rawData }
+    piiFields().forEach(redactField)
+    return result
+}
+
+// Additional function: getSubject
+Action.getSubject = action =>
+    action.match({
+        OrganizationCreated: a => ({
+            id: a.organizationId,
+            type: 'organization',
+        }),
+        OrganizationUpdated: a => ({
+            id: a.organizationId,
+            type: 'organization',
+        }),
+        OrganizationSuspended: a => ({
+            id: a.organizationId,
+            type: 'organization',
+        }),
+        OrganizationDeleted: a => ({
+            id: a.organizationId,
+            type: 'organization',
+        }),
+        UserCreated: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
+        UserUpdated: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
+        UserDeleted: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
+        UserForgotten: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
+        RoleAssigned: a => ({
+            id: a.userId,
+            type: 'user',
         }),
     })
 
