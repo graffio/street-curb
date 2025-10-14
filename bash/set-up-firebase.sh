@@ -6,14 +6,9 @@
 # Sets GCLOUD/GOOGLE project vars, gcloud default project, Firebase CLI target,
 # and the common emulator host variables.
 
-set -euo pipefail
+set -uo pipefail
 
-if [[ $# -lt 1 ]]; then
-    echo "Usage: source ${BASH_SOURCE[0]} <project-id> [firestore-port] [auth-port]" >&2
-    return 1
-fi
-
-project_id="$1"
+project_id="${1:-temporary-20250926-163653}"
 firestore_port="${2:-8080}"
 auth_port="${3:-9099}"
 
