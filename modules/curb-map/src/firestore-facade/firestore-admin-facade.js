@@ -60,18 +60,22 @@ const FirestoreAdminFacade = (
     const encodeTimestamps = data => {
         if (!timestampFields.length || data == null) return data
         const result = { ...data }
+
         timestampFields.forEach(field => {
             if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = dateToTimestamp(result[field])
         })
+
         return result
     }
 
     const decodeTimestamps = data => {
         if (!timestampFields.length || data == null) return data
+
         const result = { ...data }
         timestampFields.forEach(field => {
             if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = timestampToDate(result[field])
         })
+
         return result
     }
 
