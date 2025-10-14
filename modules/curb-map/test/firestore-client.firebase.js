@@ -3,7 +3,7 @@ import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
 import { FirestoreClientFacade } from '../src/firestore-facade/firestore-client-facade.js'
-import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
+import { Organization, FieldTypes } from '../src/types/index.js'
 
 const envKeys = [
     'GCLOUD_PROJECT',
@@ -27,35 +27,21 @@ const restoreEnv = snapshot =>
         else process.env[key] = value
     })
 
-// @sig buildActionRequest :: Object -> ActionRequest
-const buildActionRequest = overrides => {
-    const organizationId = overrides?.organizationId || FieldTypes.newOrganizationId()
-    const subjectId = overrides?.subjectId || FieldTypes.newUserId()
+// @sig buildOrganization :: Object -> Organization
+const buildOrganization = overrides => {
+    const organizationId = overrides?.id || FieldTypes.newOrganizationId()
+    const actorId = overrides?.createdBy || FieldTypes.newUserId()
 
-    return ActionRequest.from({
-        id: overrides?.id || FieldTypes.newActionRequestId(),
-        actorId: overrides?.actorId || FieldTypes.newUserId(),
-        subjectId,
-        subjectType: overrides?.subjectType || 'user',
-        action:
-            overrides?.action ||
-            Action.UserCreated.from({
-                organizationId,
-                userId: FieldTypes.newUserId(),
-                email: 'action@example.com',
-                displayName: 'Action!',
-                role: 'admin',
-            }),
-        organizationId,
-        projectId: overrides?.projectId,
-        idempotencyKey: overrides?.idempotencyKey || FieldTypes.newIdempotencyKey(),
-        status: overrides?.status || 'pending',
-        resultData: overrides?.resultData,
-        error: overrides?.error,
-        correlationId: overrides?.correlationId || FieldTypes.newCorrelationId(),
-        schemaVersion: overrides?.schemaVersion || 1,
+    return Organization.from({
+        id: organizationId,
+        name: overrides?.name || 'Test Organization',
+        status: overrides?.status || 'active',
+        defaultProjectId: overrides?.defaultProjectId || FieldTypes.newProjectId(),
+        createdBy: actorId,
         createdAt: overrides?.createdAt || new Date('2025-01-01T00:00:00Z'),
-        processedAt: overrides?.processedAt,
+        updatedBy: overrides?.updatedBy || actorId,
+        updatedAt: overrides?.updatedAt || new Date('2025-01-01T00:00:00Z'),
+        schemaVersion: overrides?.schemaVersion || 1,
     })
 }
 
@@ -74,9 +60,9 @@ const withFacades = async effect => {
 
     restoreEnv(configuration)
 
-    const clientFacade = FirestoreClientFacade(ActionRequest, `${namespace}/`)
-    // Use admin facade for cleanup since client facade doesn't have recursiveDelete
-    const adminFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
+    const clientFacade = FirestoreClientFacade(Organization, `${namespace}/`)
+    // Use admin facade for seeding and cleanup (client facade is read-only in HTTP architecture)
+    const adminFacade = FirestoreAdminFacade(Organization, `${namespace}/`)
 
     const clearNamespace = async () => {
         await adminFacade.recursiveDelete()
@@ -84,7 +70,7 @@ const withFacades = async effect => {
     await clearNamespace()
 
     try {
-        await effect({ clientFacade, namespace, clearNamespace })
+        await effect({ clientFacade, adminFacade, namespace, clearNamespace })
     } finally {
         await clearNamespace()
         restoreEnv(snapshot)
@@ -92,97 +78,50 @@ const withFacades = async effect => {
 }
 
 test('Given the Firestore client facade', async t => {
-    await t.test('When an action request is written and read via the client facade', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
+    await t.test('When reading an organization seeded by admin', async tt => {
+        await withFacades(async ({ clientFacade, adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const item = buildActionRequest()
-            await clientFacade.write(item)
-            const stored = await clientFacade.read(item.id)
+            const org = buildOrganization({ name: 'Test Org' })
+            await adminFacade.write(org)
+            const stored = await clientFacade.read(org.id)
 
-            tt.equal(stored.id, item.id, 'Then the stored action request retains its identifier')
-            tt.equal(stored.status, 'pending', 'Then the stored action request keeps the pending status')
+            tt.equal(stored.id, org.id, 'Then the client can read the organization')
+            tt.equal(stored.name, 'Test Org', 'Then the name is correct')
+            tt.equal(stored.status, 'active', 'Then the status is correct')
         })
     })
 
-    await t.test('When query is used to filter documents', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
+    await t.test('When query is used to filter organizations', async tt => {
+        await withFacades(async ({ clientFacade, adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const orgId = FieldTypes.newOrganizationId()
-            const item1 = buildActionRequest({ organizationId: orgId, status: 'pending' })
-            const item2 = buildActionRequest({ organizationId: orgId, status: 'completed' })
-            const item3 = buildActionRequest({ status: 'pending' }) // different org
+            const org1 = buildOrganization({ name: 'Active Org 1', status: 'active' })
+            const org2 = buildOrganization({ name: 'Active Org 2', status: 'active' })
+            const org3 = buildOrganization({ name: 'Suspended Org', status: 'suspended' })
 
-            await clientFacade.write(item1)
-            await clientFacade.write(item2)
-            await clientFacade.write(item3)
+            await adminFacade.write(org1)
+            await adminFacade.write(org2)
+            await adminFacade.write(org3)
 
-            const results = await clientFacade.query([['organizationId', '==', orgId]])
+            const results = await clientFacade.query([['status', '==', 'active']])
 
-            tt.equal(results.length, 2, 'Then only documents matching the query are returned')
+            tt.equal(results.length, 2, 'Then only active organizations are returned')
             tt.ok(
-                results.every(r => r.organizationId === orgId),
-                'Then all results match the organization ID',
+                results.every(r => r.status === 'active'),
+                'Then all results have active status',
             )
         })
     })
 })
 
-test('Given the Firestore client facade update method', async t => {
-    await t.test('When update is called with partial fields', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
-            await clearNamespace()
-            const item = buildActionRequest({ status: 'pending' })
-            await clientFacade.write(item)
-
-            // Update only status field
-            await clientFacade.update(item.id, { status: 'completed' })
-
-            const updated = await clientFacade.read(item.id)
-            tt.equal(updated.status, 'completed', 'Then the status field is updated')
-            tt.equal(updated.id, item.id, 'Then other fields remain unchanged')
-        })
-    })
-
-    await t.test('When update is called on non-existent document', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
-            await clearNamespace()
-            const nonExistentId = FieldTypes.newActionRequestId()
-
-            try {
-                await clientFacade.update(nonExistentId, { status: 'completed' })
-                tt.fail('Then update should throw an error')
-            } catch (error) {
-                tt.match(error.message, /Failed to update/, 'Then error message indicates update failed')
-            }
-        })
-    })
-
-    await t.test('When write is called with invalid status value', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
-            await clearNamespace()
-            const item = buildActionRequest({ status: 'pending' })
-
-            // Try to create an ActionRequest with invalid status
-            try {
-                const invalidItem = { ...item, status: 'invalid' }
-                await clientFacade.write(invalidItem)
-                tt.fail('Then write should throw a validation error')
-            } catch (error) {
-                tt.match(error.message, /not of type/, 'Then error indicates type validation failed')
-            }
-        })
-    })
-})
-
 test('Given the Firestore client facade listenToDocument method', async t => {
-    await t.test('When listening to a document that gets created', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
+    await t.test('When listening to an organization that gets created', async tt => {
+        await withFacades(async ({ clientFacade, adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const item = buildActionRequest()
+            const org = buildOrganization({ name: 'New Org' })
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = clientFacade.listenToDocument(item.id, (doc, error) => {
+                const unsubscribe = clientFacade.listenToDocument(org.id, (doc, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -193,27 +132,28 @@ test('Given the Firestore client facade listenToDocument method', async t => {
                     if (doc !== null) {
                         unsubscribe()
                         tt.equal(updates[0], null, 'Then first callback receives null (doc does not exist)')
-                        tt.equal(updates[1].id, item.id, 'Then second callback receives the created document')
+                        tt.equal(updates[1].id, org.id, 'Then second callback receives the created organization')
+                        tt.equal(updates[1].name, 'New Org', 'Then the organization name is correct')
                         resolve()
                     }
                 })
 
-                // Write document after listener is set up
-                setTimeout(() => clientFacade.write(item), 100)
+                // Write document via admin after listener is set up
+                setTimeout(() => adminFacade.write(org), 100)
             })
         })
     })
 
-    await t.test('When listening to a document that gets updated', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
+    await t.test('When listening to an organization that gets updated', async tt => {
+        await withFacades(async ({ clientFacade, adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const item = buildActionRequest({ status: 'pending' })
-            await clientFacade.write(item)
+            const org = buildOrganization({ name: 'Original Name', status: 'active' })
+            await adminFacade.write(org)
 
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = clientFacade.listenToDocument(item.id, (doc, error) => {
+                const unsubscribe = clientFacade.listenToDocument(org.id, (doc, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -223,53 +163,49 @@ test('Given the Firestore client facade listenToDocument method', async t => {
 
                     if (updates.length === 2) {
                         unsubscribe()
-                        tt.equal(updates[0].status, 'pending', 'Then first callback has pending status')
-                        tt.equal(updates[1].status, 'completed', 'Then second callback has updated status')
+                        tt.equal(updates[0].name, 'Original Name', 'Then first callback has original name')
+                        tt.equal(updates[1].name, 'Updated Name', 'Then second callback has updated name')
                         resolve()
                     }
                 })
 
-                // Update document after listener is set up
-                setTimeout(() => clientFacade.update(item.id, { status: 'completed' }), 100)
+                // Update document via admin after listener is set up
+                setTimeout(() => adminFacade.update(org.id, { name: 'Updated Name' }), 100)
             })
         })
     })
 })
 
 test('Given the Firestore client facade listenToCollection method', async t => {
-    await t.test('When listening to a collection with new documents added', async tt => {
-        await withFacades(async ({ clientFacade, clearNamespace }) => {
+    await t.test('When listening to organizations collection with new documents added', async tt => {
+        await withFacades(async ({ clientFacade, adminFacade, clearNamespace }) => {
             await clearNamespace()
-            const orgId = FieldTypes.newOrganizationId()
-            const item1 = buildActionRequest({ organizationId: orgId, status: 'pending' })
-            const item2 = buildActionRequest({ organizationId: orgId, status: 'pending' })
+            const org1 = buildOrganization({ name: 'Org 1', status: 'active' })
+            const org2 = buildOrganization({ name: 'Org 2', status: 'active' })
 
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = clientFacade.listenToCollection(
-                    [['organizationId', '==', orgId]],
-                    (docs, error) => {
-                        if (error) {
-                            unsubscribe()
-                            reject(error)
-                            return
-                        }
-                        updates.push(docs)
+                const unsubscribe = clientFacade.listenToCollection([['status', '==', 'active']], (docs, error) => {
+                    if (error) {
+                        unsubscribe()
+                        reject(error)
+                        return
+                    }
+                    updates.push(docs)
 
-                        if (updates.length === 3) {
-                            unsubscribe()
-                            tt.equal(updates[0].length, 0, 'Then first callback has empty collection')
-                            tt.equal(updates[1].length, 1, 'Then second callback has one document')
-                            tt.equal(updates[2].length, 2, 'Then third callback has two documents')
-                            resolve()
-                        }
-                    },
-                )
+                    if (updates.length === 3) {
+                        unsubscribe()
+                        tt.equal(updates[0].length, 0, 'Then first callback has empty collection')
+                        tt.equal(updates[1].length, 1, 'Then second callback has one organization')
+                        tt.equal(updates[2].length, 2, 'Then third callback has two organizations')
+                        resolve()
+                    }
+                })
 
-                // Write documents after listener is set up
-                setTimeout(() => clientFacade.write(item1), 100)
-                setTimeout(() => clientFacade.write(item2), 200)
+                // Write documents via admin after listener is set up
+                setTimeout(() => adminFacade.write(org1), 100)
+                setTimeout(() => adminFacade.write(org2), 200)
             })
         })
     })

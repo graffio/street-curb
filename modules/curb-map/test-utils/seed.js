@@ -1,84 +1,172 @@
-import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
-import { Action, ActionRequest } from '../src/types/index.js'
+import { createFirestoreContext } from '../functions/src/firestore-context.js'
+import { Action, ActionRequest, Organization, User, Project } from '../src/types/index.js'
 
 /*
- * Seed test data into Firestore
- * Should only be called with DISABLE_TRIGGERS=1 to prevent
- * Firebase functions from triggering during test data setup
- * @sig seed :: () -> Promise
+ * Seed test data into Firestore using the HTTP function architecture.
+ * Seeds both domain collections (organizations, users, projects) and
+ * completedActions audit trail to create a realistic test environment.
+ *
+ * @sig seed :: () -> Promise<Object>
  *
  * @example
  * process.env.FS_BASE = 'tests/ns_123'
- * process.env.DISABLE_TRIGGERS = '1'
- * await seed()
- * delete process.env.DISABLE_TRIGGERS
+ * const seededData = await seed()
+ * // Returns: { organizations: [...], users: [...], projects: [...], completedActions: [...] }
  */
 
+// Test data IDs
 const organizationId = 'org_123456789abc'
+const projectId = 'prj_123456789abc'
 const actorId = 'usr_123456789abc'
-const subjectId = 'usr_123456789abc'
-const actionRequest1Id = 'acr_xmsvnmfk2n0e'
-const actionRequest2Id = 'acr_xmsvnmfk2n0f'
-const idempotencyKey1 = 'idm_123456789abc'
-const idempotencyKey2 = 'idm_123456789abd'
-const correlationId1 = 'cor_123456789abc'
-const correlationId2 = 'cor_123456789abd'
+const userId2 = 'usr_234567890bcd'
 
 const seed = async () => {
-    if (!process.env.DISABLE_TRIGGERS)
-        console.warn(
-            'WARNING: seed() called without DISABLE_TRIGGERS set. ' +
-                'Firebase functions may trigger during seeding, causing unexpected side effects.',
-        )
-
     const namespace = process.env.FS_BASE
     if (!namespace) throw new Error('FS_BASE environment variable must be set before seeding')
 
-    const actionRequestFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
+    const fsContext = createFirestoreContext(namespace, organizationId, projectId)
 
-    const actionRequests = [
+    /*
+     * Seed domain collections (current state)
+     */
+
+    // Organization
+    const organization = Organization.from({
+        id: organizationId,
+        name: 'Seed Organization',
+        status: 'active',
+        defaultProjectId: projectId,
+        createdBy: actorId,
+        createdAt: new Date('2025-01-01T10:00:00Z'),
+        updatedBy: actorId,
+        updatedAt: new Date('2025-01-01T10:00:00Z'),
+        schemaVersion: 1,
+    })
+    await fsContext.organizations.write(organization)
+
+    // Default Project
+    const project = Project.from({
+        id: projectId,
+        organizationId,
+        name: 'Default Project',
+        createdBy: actorId,
+        createdAt: new Date('2025-01-01T10:00:00Z'),
+        updatedBy: actorId,
+        updatedAt: new Date('2025-01-01T10:00:00Z'),
+        schemaVersion: 1,
+    })
+    await fsContext.projects.write(project)
+
+    // Users
+    const user1 = User.from({
+        id: actorId,
+        organizationId,
+        email: 'actor@example.com',
+        displayName: 'Actor User',
+        role: 'admin',
+        createdBy: actorId,
+        createdAt: new Date('2025-01-01T10:00:00Z'),
+        updatedBy: actorId,
+        updatedAt: new Date('2025-01-01T10:00:00Z'),
+        schemaVersion: 1,
+    })
+    await fsContext.users.write(user1)
+
+    const user2 = User.from({
+        id: userId2,
+        organizationId,
+        email: 'member@example.com',
+        displayName: 'Member User',
+        role: 'member',
+        createdBy: actorId,
+        createdAt: new Date('2025-01-01T11:00:00Z'),
+        updatedBy: actorId,
+        updatedAt: new Date('2025-01-01T11:00:00Z'),
+        schemaVersion: 1,
+    })
+    await fsContext.users.write(user2)
+
+    /*
+     * Seed completedActions audit trail (history)
+     * These represent the actions that created the domain state above
+     */
+
+    const completedActions = [
+        // Action 1: OrganizationCreated
         ActionRequest.from({
-            id: actionRequest1Id,
-            actorId,
-            subjectId,
-            subjectType: 'user',
-            action: Action.UserAdded.from({ organizationId, user: { id: actorId, email: 'john@example.com' } }),
-            organizationId,
-            projectId: undefined,
-            idempotencyKey: idempotencyKey1,
-            correlationId: correlationId1,
-            schemaVersion: 1,
-            status: 'pending',
-            resultData: undefined,
-            error: undefined,
-            createdAt: new Date('2025-01-01T10:00:00Z'),
-            processedAt: undefined,
-        }),
-        ActionRequest.from({
-            id: actionRequest2Id,
+            id: 'acr_seed001',
             actorId,
             subjectId: organizationId,
             subjectType: 'organization',
-            action: Action.OrganizationAdded.from({
+            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Seed Organization' }),
+            organizationId,
+            projectId,
+            idempotencyKey: 'idm_seed001',
+            correlationId: 'cor_seed001',
+            status: 'completed',
+            resultData: undefined,
+            error: undefined,
+            schemaVersion: 1,
+            createdAt: new Date('2025-01-01T10:00:00Z'),
+            processedAt: new Date('2025-01-01T10:00:01Z'),
+        }),
+
+        // Action 2: UserCreated (actor)
+        ActionRequest.from({
+            id: 'acr_seed002',
+            actorId,
+            subjectId: actorId,
+            subjectType: 'user',
+            action: Action.UserCreated.from({
+                userId: actorId,
                 organizationId,
-                metadata: { name: 'Seed Org', createdBy: actorId },
+                email: 'actor@example.com',
+                displayName: 'Actor User',
+                role: 'admin',
             }),
             organizationId,
-            projectId: undefined,
-            idempotencyKey: idempotencyKey2,
-            correlationId: correlationId2,
-            schemaVersion: 1,
+            projectId,
+            idempotencyKey: 'idm_seed002',
+            correlationId: 'cor_seed002',
             status: 'completed',
-            resultData: { id: actionRequest2Id },
+            resultData: undefined,
             error: undefined,
+            schemaVersion: 1,
+            createdAt: new Date('2025-01-01T10:00:00Z'),
+            processedAt: new Date('2025-01-01T10:00:02Z'),
+        }),
+
+        // Action 3: UserCreated (member)
+        ActionRequest.from({
+            id: 'acr_seed003',
+            actorId,
+            subjectId: userId2,
+            subjectType: 'user',
+            action: Action.UserCreated.from({
+                userId: userId2,
+                organizationId,
+                email: 'member@example.com',
+                displayName: 'Member User',
+                role: 'member',
+            }),
+            organizationId,
+            projectId,
+            idempotencyKey: 'idm_seed003',
+            correlationId: 'cor_seed003',
+            status: 'completed',
+            resultData: undefined,
+            error: undefined,
+            schemaVersion: 1,
             createdAt: new Date('2025-01-01T11:00:00Z'),
-            processedAt: new Date('2025-01-01T11:05:00Z'),
+            processedAt: new Date('2025-01-01T11:00:01Z'),
         }),
     ]
 
-    for (const item of actionRequests) await actionRequestFacade.write(item)
+    for (const actionRequest of completedActions) 
+        await fsContext.completedActions.write(actionRequest)
+    
 
-    return actionRequests
+    return { organizations: [organization], users: [user1, user2], projects: [project], completedActions }
 }
 
 export { seed }
