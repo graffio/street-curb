@@ -50,83 +50,43 @@ const getDefaultAdminDb = () => {
     return admin.firestore()
 }
 
-const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminDb(), collectionNameOverride = null) => {
-    if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
-
-    const collectionName = collectionNameOverride || collectionPaths.get(Type)
-    const collectionPath = collectionPrefix + collectionName
-    const collectionRef = db.collection(collectionPath)
-
-    const _docRef = id => collectionRef.doc(id)
-    const timestampFields = Type.timestampFields || []
-
+const FirestoreAdminFacade = (
+    Type,
+    collectionPrefix = '',
+    db = getDefaultAdminDb(),
+    collectionNameOverride = null,
+    tx = null,
+) => {
     const encodeTimestamps = data => {
         if (!timestampFields.length || data == null) return data
         const result = { ...data }
+
         timestampFields.forEach(field => {
             if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = dateToTimestamp(result[field])
         })
+
         return result
     }
 
     const decodeTimestamps = data => {
         if (!timestampFields.length || data == null) return data
+
         const result = { ...data }
         timestampFields.forEach(field => {
             if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = timestampToDate(result[field])
         })
+
         return result
     }
 
-    /*
-     * Upsert operation - creates document if it doesn't exist, overwrites if it does.
-     * Contrast with create() which fails if document exists, and update() which fails if it doesn't exist.
-     * @sig write :: TaggedItem -> Promise Void
-     */
-    const write = async record => {
-        try {
-            if (!Type.is(record)) record = Type.from(record)
-            const firestoreData = encodeTimestamps(Type.toFirestore(record))
-            await _docRef(record.id).set(firestoreData)
-        } catch (e) {
-            throwWithOriginal(`Failed to write ${Type.toString()}: ${e.message}`, e, record)
-        }
-    }
-
-    /*
-     * Create-only operation - atomically creates document, fails if it already exists.
-     * Use for idempotency patterns where duplicate detection is critical.
-     * Contrast with write() which overwrites existing documents, and update() which only modifies fields.
-     * @sig create :: TaggedItem -> Promise Void
-     */
-    const create = async record => {
-        try {
-            if (!Type.is(record)) record = Type.from(record)
-            const firestoreData = encodeTimestamps(Type.toFirestore(record))
-            await _docRef(record.id).create(firestoreData)
-        } catch (e) {
-            throwWithOriginal(`Failed to create ${Type.toString()}: ${e.message}`, e, record)
-        }
-    }
-
-    /*
-     * Partial update operation - updates specified fields only, fails if document doesn't exist.
-     * Contrast with write() which replaces entire document, and create() which only works for new documents.
-     * @sig update :: (Id, Object) -> Promise Void
-     */
-    const update = async (id, fields) => {
-        try {
-            const firestoreData = encodeTimestamps(fields)
-            await _docRef(id).update(firestoreData)
-        } catch (e) {
-            throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
-        }
-    }
+    // -----------------------------------------------------------------------------------------------------------------
+    // READ
+    // -----------------------------------------------------------------------------------------------------------------
 
     // @sig read :: Id -> Promise Type
     const read = async id => {
         try {
-            const docSnap = await _docRef(id).get()
+            const docSnap = tx ? await tx.get(_docRef(id)) : await _docRef(id).get()
 
             if (!docSnap.exists) throw new Error(`${Type.toString()} not found: ${id}`)
             return Type.fromFirestore(decodeTimestamps(docSnap.data()))
@@ -142,21 +102,86 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
             let q = db.collection(collectionPath)
             whereConditions.forEach(([field, operator, value]) => (q = q.where(field, operator, value)))
 
-            const querySnapshot = await q.get()
+            const querySnapshot = tx ? await tx.get(q) : await q.get()
             return querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
         } catch (e) {
             throwWithOriginal(`Failed to query ${Type.toString()}: ${e.message}`, e, whereConditions)
         }
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // WRITE
+    // -----------------------------------------------------------------------------------------------------------------
+
+    /*
+     * Upsert operation - creates document if it doesn't exist, overwrites if it does.
+     * Contrast with create() which fails if document exists, and update() which fails if it doesn't exist.
+     * @sig write :: TaggedItem -> Promise Void
+     */
+    const write = async record => {
+        try {
+            if (!Type.is(record)) record = Type.from(record)
+            const firestoreData = encodeTimestamps(Type.toFirestore(record))
+            tx ? await tx.set(_docRef(record.id), firestoreData) : await _docRef(record.id).set(firestoreData)
+        } catch (e) {
+            throwWithOriginal(`Failed to write ${Type.toString()}: ${e.message}`, e, record)
+        }
+    }
+
+    /*
+     * Create-only operation - atomically creates document, fails if it already exists.
+     * Use for idempotency patterns where duplicate detection is critical.
+     * Contrast with write() which overwrites existing documents, and update() which only modifies fields.
+     * @sig create :: TaggedItem -> Promise Void
+     */
+    const create = async record => {
+        try {
+            if (!Type.is(record)) record = Type.from(record)
+            const firestoreData = encodeTimestamps(Type.toFirestore(record))
+            tx ? await tx.set(_docRef(record.id), firestoreData) : await _docRef(record.id).create(firestoreData)
+        } catch (e) {
+            throwWithOriginal(`Failed to create ${Type.toString()}: ${e.message}`, e, record)
+        }
+    }
+
+    /*
+     * Partial update operation - updates specified fields only, fails if document doesn't exist.
+     * Contrast with write() which replaces entire document, and create() which only works for new documents.
+     * @sig update :: (Id, Object) -> Promise Void
+     */
+    const update = async (id, fields) => {
+        try {
+            const firestoreData = encodeTimestamps(fields)
+            tx ? await tx.update(_docRef(id), firestoreData) : await _docRef(id).update(firestoreData)
+        } catch (e) {
+            throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
+        }
+    }
+
+    // @sig readOrNull :: Id -> Promise Type | null
+    const readOrNull = async id => {
+        try {
+            const docSnap = tx ? await tx.get(_docRef(id)) : await _docRef(id).get()
+
+            if (!docSnap.exists) return null
+            return Type.fromFirestore(decodeTimestamps(docSnap.data()))
+        } catch (e) {
+            throwWithOriginal(`Failed to readOrNull ${Type.toString()}: ${e.message}`, e, id)
+        }
+    }
+
     // @sig delete :: Id -> Promise Void
     const _delete = async id => {
         try {
-            await _docRef(id).delete()
+            tx ? await tx.delete(_docRef(id)) : await _docRef(id).delete()
         } catch (e) {
             throwWithOriginal(`Failed to delete ${Type.toString()}: ${e.message}`, e, id)
         }
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // LISTEN
+    // -----------------------------------------------------------------------------------------------------------------
 
     /*
      * List all documents in a collection
@@ -164,7 +189,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
      */
     const list = async () => {
         try {
-            const querySnapshot = await collectionRef.get()
+            const querySnapshot = tx ? await tx.get(collectionRef) : await collectionRef.get()
             return querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
         } catch (e) {
             throwWithOriginal(`Failed to list ${Type.toString()}: ${e.message}`, e)
@@ -205,19 +230,23 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         )
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // DESCENDENT
+    // -----------------------------------------------------------------------------------------------------------------
+
     const descendent = suffix => {
         if (suffix[0] === '/') suffix = suffix.slice(1)
 
         const segments = suffix.split('/').filter(Boolean)
         if (segments.length % 2 !== 0) throw new Error(`Suffix must have an even number of segments; found ${suffix}`)
 
-        return FirestoreAdminFacade(
-            Type,
-            `${collectionPrefix}/${suffix}`.replaceAll(/\/\//g, '/'),
-            db,
-            collectionNameOverride,
-        )
+        const collectionPrefix1 = `${collectionPrefix}/${suffix}`.replaceAll(/\/\//g, '/')
+        return FirestoreAdminFacade(Type, collectionPrefix1, db, collectionNameOverride, tx)
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // DANGEROUS DELETE
+    // -----------------------------------------------------------------------------------------------------------------
 
     /*
      * Delete all documents under a collection path
@@ -233,10 +262,20 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', db = getDefaultAdminD
         await db.recursiveDelete(collectionRef)
     }
 
+    if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
+
+    const collectionName = collectionNameOverride || collectionPaths.get(Type)
+    const collectionPath = collectionPrefix + collectionName
+    const collectionRef = db.collection(collectionPath)
+
+    const _docRef = id => collectionRef.doc(id)
+    const timestampFields = Type.timestampFields || []
+
     // prettier-ignore
     return {
         // read
         read,
+        readOrNull,
         query,
         list,
 

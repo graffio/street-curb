@@ -1,0 +1,196 @@
+current_task: "task_1_facade_transactions"
+status: "pending"
+
+tasks:
+  - id: "task_1_facade_transactions"
+    description: "Add transaction support to firestore-admin-facade.js"
+    status: "pending"
+    phase: "Infrastructure"
+    dependencies: []
+    estimated_hours: 3
+    implementation: |
+        Update `modules/curb-map/src/firestore-facade/firestore-admin-facade.js`:
+
+        - Add optional `tx` parameter (default null) to constructor
+        - All methods: if (tx) { tx.METHOD(...) } else { await docRef.METHOD(...) }
+        - Add readOrNull(id) method that returns null instead of throwing when document doesn't exist
+        - create() with tx: check existence via readOrNull(), then tx.set()
+        - Tagged type pattern: if (!Type.is(record)) record = Type.from(record)
+        - Apply to: write, read, readOrNull, create, update, delete, readAll
+    validation:
+      - "Facade accepts optional transaction parameter"
+      - "All methods work in both modes"
+      - "Tagged type pattern enforced"
+    tests:
+      - "modules/curb-map/test/firestore-facade-transactions.tap.js"
+
+  - id: "task_2_context_transactions"
+    description: "Update createFirestoreContext to accept transaction parameter"
+    status: "pending"
+    phase: "Infrastructure"
+    dependencies: ["task_1_facade_transactions"]
+    estimated_hours: 1
+    implementation: |
+        Update `modules/curb-map/functions/src/firestore-context.js`:
+
+        - Add optional `tx` parameter (default null)
+        - Pass tx to all FirestoreAdminFacade calls:
+          * completedActions: FirestoreAdminFacade(ActionRequest, namespace, db, 'completedActions', tx)
+          * organizations: FirestoreAdminFacade(Organization, namespace, db, null, tx)
+          * users, projects: same pattern
+    validation:
+      - "Context accepts optional tx parameter"
+      - "All facades receive tx correctly"
+    tests:
+      - "Covered by task_3 tests"
+
+  - id: "task_3_http_transactions"
+    description: "Update submit-action-request.js to ALWAYS use transactions"
+    status: "pending"
+    phase: "HTTP Function"
+    dependencies: ["task_2_context_transactions"]
+    estimated_hours: 2
+    implementation: |
+        Update `modules/curb-map/functions/src/submit-action-request.js`:
+
+        CRITICAL: Transaction returns result object; HTTP response AFTER transaction completes
+
+        Structure:
+        ```javascript
+        // actionRequest.id is document ID (idempotencyKey converted: idm_xxx → acr_xxx)
+        const result = await db.runTransaction(async (tx) => {
+          const txContext = createFirestoreContext(namespace, orgId, projectId, tx)
+
+          // Duplicate check
+          const existing = await txContext.completedActions.readOrNull(actionRequest.id)
+          if (existing) {
+            // Duplicate: return processedAt from existing record
+            return { duplicate: true, processedAt: existing.processedAt.toISOString() }
+          }
+
+          // Handler
+          await handler(logger, txContext, actionRequest)
+
+          // Single write with server timestamps
+          const serverTimestamp = FirestoreAdminFacade.serverTimestamp
+          await txContext.completedActions.create({
+            ...actionRequest,
+            status: 'completed',
+            createdAt: serverTimestamp(),
+            processedAt: serverTimestamp()
+          })
+
+          // Success: return nothing (processedAt read after commit)
+          return { duplicate: false }
+        })
+
+        // HTTP response AFTER transaction completes
+        if (result.duplicate) {
+          return res.status(409).json({ status: 'duplicate', message: 'Already processed', processedAt: result.processedAt })
+        }
+
+        // Create new non-transactional context to read (txContext is out of scope)
+        const fsContext = createFirestoreContext(namespace, orgId, projectId)
+        const completed = await fsContext.completedActions.read(actionRequest.id)
+        return res.status(200).json({ status: 'completed', processedAt: completed.processedAt.toISOString() })
+        ```
+
+        Remove ALL write-first code:
+        - Remove initial create with status: 'pending'
+        - Remove try/catch for error.code === 6
+        - Remove subsequent update() call
+
+        BREAKING CHANGES:
+        - Duplicate detection now returns HTTP 409 (was 200 + duplicate: true)
+        - Response body for duplicates: { status: 'duplicate', message: '...', processedAt: '...' }
+        - Clients expecting 200 + duplicate: true must update to handle 409
+    validation:
+      - "Single write as 'completed'"
+      - "No 'pending' state"
+      - "Duplicate detection atomic"
+      - "HTTP response happens AFTER transaction completes"
+      - "Breaking change documented"
+    tests:
+      - "modules/curb-map/test/organization-handlers-http.firebase.js"
+      - "modules/curb-map/test/minimal-http-function.firebase.js"
+
+  - id: "task_4_test_immutability"
+    description: "Add tests to verify completedActions immutability"
+    status: "pending"
+    phase: "Testing"
+    dependencies: ["task_3_http_transactions"]
+    estimated_hours: 2
+    implementation: |
+        Update `modules/curb-map/test/organization-handlers-http.firebase.js`:
+
+        Add tests:
+        - Verify status is 'completed' immediately (no 'pending')
+        - Verify duplicate returns HTTP 409 with { status: 'duplicate', message: 'Already processed', processedAt: '...' }
+        - Verify parallel submissions: one succeeds (200), one gets 409
+        - Verify createdAt and processedAt are server timestamps (Firestore Timestamp objects)
+        - Verify createdAt ≈ processedAt (single write, within ~100ms)
+        - Verify completedActions record never changes after write
+
+        BREAKING CHANGE - Update test helpers:
+        - Add new helper: submitAndExpectDuplicate(params) that expects 409 + status: 'duplicate'
+        - Keep submitAndExpectSuccess(params) for 200 responses only (do NOT modify to accept 409)
+        - Rationale: 200 (success) and 409 (duplicate) are semantically different outcomes
+        - Duplicate detection tests must use submitAndExpectDuplicate
+        - All other tests continue using submitAndExpectSuccess
+    validation:
+      - "No 'pending' status in completedActions"
+      - "All records have processedAt"
+      - "Duplicates handled correctly"
+      - "Race conditions handled"
+    tests:
+      - "modules/curb-map/test/organization-handlers-http.firebase.js"
+
+  - id: "task_5_update_docs"
+    description: "Update event-sourcing.md documentation"
+    status: "pending"
+    phase: "Documentation"
+    dependencies: ["task_4_test_immutability"]
+    estimated_hours: 1
+    implementation: |
+        Update `docs/architecture/event-sourcing.md`:
+
+        - Fix transaction example: use readOrNull() instead of read()
+        - Fix timestamps: use FirestoreAdminFacade.serverTimestamp() instead of new Date()
+        - Fix duplicate response: HTTP 409 instead of 200 with duplicate flag
+        - Fix authorization claim: Admin SDK bypasses security rules (auth in function, F110.5)
+        - Add readOrNull() method to facade code example
+        - Emphasize SOC2 requirement for server-authoritative timestamps
+    validation:
+      - "All code examples use serverTimestamp()"
+      - "readOrNull() method documented"
+      - "HTTP 409 for duplicates"
+      - "Admin SDK security rules claim corrected"
+    tests:
+      - "Manual review"
+
+completed: []
+
+notes: |
+    Migrates from write-first to transaction-based idempotency for SOC2 compliance.
+
+    KEY DECISIONS:
+    - Submit-action-request.js ALWAYS uses transactions (not optional)
+    - Facade accepts optional tx for flexibility elsewhere (tests, migrations)
+    - Use readOrNull() for duplicate check (returns null, not throw)
+    - Use serverTimestamp() for SOC2 audit trail integrity
+    - HTTP 409 for duplicates (semantically correct)
+    - Transaction returns result object; HTTP response happens AFTER transaction completes
+
+    BREAKING CHANGES:
+    - Duplicate requests now return HTTP 409 (was 200 + duplicate: true)
+    - Response body changed: { status: 'duplicate', message: '...', processedAt: '...' }
+    - Clients must update to handle 409 as idempotent success
+    - Test helpers must expect 409, not 200 + duplicate flag
+
+    SCOPE: Transaction support in facades + HTTP function + tests + docs
+    OUT OF SCOPE: Retry logic (Firestore handles), performance testing
+    DEPENDENCIES: F110.7 (HTTP Action Submission)
+
+    Total: 9 hours (5 tasks)
+
+    See docs/architecture/event-sourcing.md for architectural rationale.

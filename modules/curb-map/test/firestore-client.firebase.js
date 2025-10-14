@@ -47,7 +47,9 @@ const buildOrganization = overrides => {
 
 // @sig withFacades :: (Context -> Promise Any) -> Promise Void
 const withFacades = async effect => {
-    const namespace = `tests/ns_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const now = new Date()
+    const timestamp = now.toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
+    const namespace = `tests/ns_${timestamp}`
     const snapshot = captureEnv(envKeys)
 
     const configuration = {

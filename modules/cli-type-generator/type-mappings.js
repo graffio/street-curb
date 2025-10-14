@@ -21,7 +21,6 @@ const targets = {
 // prettier-ignore
 export const typeMappings = {
     // curb-map infrastructure
-    [`${sources.curbMap}/system-flags.type.js`]           : [targets.curbMap],
     [`${sources.curbMap}/action.type.js`]                 : [targets.curbMap],
     [`${sources.curbMap}/action-request.type.js`]         : [targets.curbMap],
     [`${sources.curbMap}/audit-record.type.js`]           : [targets.curbMap],

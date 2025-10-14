@@ -35,10 +35,14 @@ Client (Online) → HTTP Function → Validates → completedActions + Domain Co
 
 ### Immutable Audit Trail
 
-Completed actions are the source of truth and cannot be modified once written:
+**SOC2 Compliance Requirement**: Completed actions are the source of truth and **cannot be modified once written**. This immutability is critical for:
+- Audit log integrity (no tampering)
+- Regulatory compliance (SOC2 Type II)
+- Forensic investigation
+- Timestamp reliability
 
 ```javascript
-// completedActions collection - immutable audit trail
+// completedActions collection - immutable audit trail (write once)
 const completedActions = {
     id: {
         id: 'acr_<cuid12>',                // action request ID (used as document ID)
@@ -47,16 +51,18 @@ const completedActions = {
         projectId: 'prj_CUID2',
         actor: { id: 'usr_CUID2', type: 'user' | 'system' | 'api', },
         subject: { id: 'usr_CUID2', type: 'user' | 'organization' | 'project', },
-        status: 'completed' | 'failed',
+        status: 'completed' | 'failed',     // Written once - never mutated
         error: 'string'?,
         idempotencyKey: 'idm_<cuid12>',
         correlationId: 'cor_CUID2',             // for client→server error tracking
         createdAt: 'serverTimestamp',       // when request was created
-        processedAt: 'serverTimestamp',     // when processing finished
+        processedAt: 'serverTimestamp',     // when processing finished (same as createdAt for single write)
         schemaVersion: 1
     }
 }
 ```
+
+**Implementation**: Transaction-based processing ensures atomic duplicate detection and single write (see "Transaction-Based Idempotency" section below).
 
 ### Action Types
 
@@ -155,26 +161,141 @@ POST /submitActionRequest
 - **Storage**: `completedActions` collection (no separate collection needed)
 - **Lifetime**: Permanent (for audit trail)
 
-### Implementation
+### Transaction-Based Idempotency
+
+**Problem**: Simple check-then-write has race conditions. Writing "pending" then updating to "completed" violates immutability.
+
+**Solution**: Use Firestore transactions for atomic duplicate detection and single write as "completed".
 
 ```javascript
-// Check if operation already processed
-const checkIdempotency = async (idempotencyKey, completedActions) => {
-    const existing = await completedActions.list();
-    return existing.find(ca => ca.idempotencyKey === idempotencyKey);
-};
+// Transaction-based idempotency with single write
+// actionRequest.id is used as document ID (converted from idempotencyKey: idm_xxx → acr_xxx)
+const result = await db.runTransaction(async (tx) => {
+  // Create transaction-aware context (scoped to this transaction)
+  const txContext = createFirestoreContext(namespace, orgId, projectId, tx)
 
-// If duplicate found, return reference to original
-if (duplicate) {
+  // Check for duplicate within transaction (atomic)
+  // Use readOrNull() which returns null instead of throwing when document doesn't exist
+  const existing = await txContext.completedActions.readOrNull(actionRequest.id)
+  if (existing) {
+    // Duplicate path: return processedAt from existing record (Timestamp → Date → ISO string)
     return {
-        status: 'completed',
-        duplicateOf: duplicate.id,
-        message: 'Already processed'
-    };
+      duplicate: true,
+      processedAt: existing.processedAt.toISOString()
+    }
+  }
+
+  // Process action with transaction-aware facades
+  await handler(logger, txContext, actionRequest)
+
+  // Single write as "completed" (immutable) with server-authoritative timestamps
+  const serverTimestamp = FirestoreAdminFacade.serverTimestamp
+  const completedAction = ActionRequest.from({
+    ...actionRequest,
+    status: 'completed',
+    createdAt: serverTimestamp(),
+    processedAt: serverTimestamp()
+  })
+  await txContext.completedActions.create(completedAction)
+
+  // Success path: return nothing (processedAt must be read after transaction commits)
+  return { duplicate: false }
+})
+
+// Return appropriate HTTP response (AFTER transaction completes)
+if (result.duplicate) {
+  // HTTP 409 Conflict - duplicate idempotency key
+  // Breaking change: Previously returned 200 + duplicate: true
+  return res.status(409).json({
+    status: 'duplicate',
+    message: 'Already processed',
+    processedAt: result.processedAt  // ISO string from duplicate branch
+  })
+}
+
+// HTTP 200 Success - read completed action to get actual processedAt timestamp
+// Must create new non-transactional context (txContext is out of scope)
+const fsContext = createFirestoreContext(namespace, orgId, projectId)
+const completed = await fsContext.completedActions.read(actionRequest.id)
+return res.status(200).json({
+  status: 'completed',
+  processedAt: completed.processedAt.toISOString()  // Firestore Timestamp → Date → ISO string
+})
+```
+
+**Benefits**:
+- **Atomic**: Duplicate detection and write happen atomically
+- **Immutable**: Single write as "completed" - no mutations
+- **SOC2 Compliant**: Audit trail never modified after write
+- **Crash-Safe**: All or nothing - no partial states
+
+### Firestore Admin Facade Transaction Support
+
+The `firestore-admin-facade.js` accepts an optional transaction parameter, allowing handlers to work in both regular and transaction modes transparently:
+
+```javascript
+const FirestoreAdminFacade = (Type, prefix, db, collectionOverride, tx = null) => {
+  const write = async record => {
+    // Tagged type pattern: always instantiate from raw data
+    if (!Type.is(record)) record = Type.from(record)
+    const firestoreData = encodeTimestamps(Type.toFirestore(record))
+
+    if (tx) {
+      // Transaction mode - synchronous set
+      tx.set(_docRef(record.id), firestoreData)
+    } else {
+      // Regular mode - async set
+      await _docRef(record.id).set(firestoreData)
+    }
+  }
+
+  const read = async id => {
+    const docSnap = tx
+      ? await tx.get(_docRef(id))     // Transaction mode
+      : await _docRef(id).get()        // Regular mode
+
+    if (!docSnap.exists) throw new Error(`${Type.toString()} not found: ${id}`)
+
+    const rawData = docSnap.data()
+    const decoded = decodeTimestamps(rawData, Type.timestampFields)
+    return Type.fromFirestore(decoded)  // Tagged type pattern
+  }
+
+  const readOrNull = async id => {
+    const docSnap = tx
+      ? await tx.get(_docRef(id))     // Transaction mode
+      : await _docRef(id).get()        // Regular mode
+
+    if (!docSnap.exists) return null   // Return null instead of throwing
+
+    const rawData = docSnap.data()
+    const decoded = decodeTimestamps(rawData, Type.timestampFields)
+    return Type.fromFirestore(decoded)  // Tagged type pattern
+  }
+
+  // create, update, delete follow same pattern
+  return { write, read, create, update, delete, ... }
 }
 ```
 
-**Note**: Idempotency check queries `completedActions` collection instead of maintaining separate `processed_operations` collection. This simplifies architecture and reuses existing audit trail.
+**Tagged Type Pattern**: Always instantiate tagged types from raw data before use - never reuse raw data. This ensures validation runs consistently.
+
+### Context Creation
+
+```javascript
+const createFirestoreContext = (namespace, orgId, projectId, tx = null) => {
+  return {
+    completedActions: FirestoreAdminFacade(ActionRequest, namespace, db, 'completedActions', tx),
+    organizations: FirestoreAdminFacade(Organization, namespace, db, null, tx),
+    users: FirestoreAdminFacade(User, namespace, db, null, tx),
+    projects: FirestoreAdminFacade(Project, namespace, db, null, tx),
+  }
+}
+```
+
+Handlers receive the same interface regardless of transaction mode - no code changes needed.
+
+**Note**: Idempotency check uses `completedActions` collection instead of maintaining separate `processed_operations` collection. This simplifies architecture and reuses existing audit trail.
 
 ## Event Validation
 
@@ -190,7 +311,7 @@ if (duplicate) {
 - **Enum Validation**: status ("active" | "suspended"), role ("admin" | "member" | "viewer")
 - **Email Format**: Basic regex validation for user emails
 - **Organization Scoping**: Events must be scoped to valid organization
-- **Permission Checks**: Deferred to F110.5 (authorization via Firestore security rules)
+- **Permission Checks**: Deferred to F110.5 (authorization logic in HTTP function code; Admin SDK bypasses Firestore security rules)
 
 ### Action-Specific Validation
 
