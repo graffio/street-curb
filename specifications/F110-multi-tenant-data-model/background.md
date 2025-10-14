@@ -78,13 +78,68 @@ This specification focuses solely on defining the **domain model** - what entiti
 
 **Note**: Metadata fields (createdAt/createdBy/updatedAt/updatedBy) are added by handlers from actionRequest.actorId, NOT sent in Action payloads (prevents spoofing).
 
+## Architecture Change: HTTP Action Submission
+
+**Implementation Status**: Partially complete (Organization handlers done, User handlers pending)
+
+F110 was originally designed with Firestore document triggers (`onDocumentWritten`). During implementation, we switched to HTTP functions (F110.7) for better validation and security.
+
+### Original Design vs Current Implementation
+
+**Original**:
+```
+Client → writes ActionRequest to Firestore
+       → onDocumentWritten trigger fires
+       → Giant function validates & processes
+       → Marks as 'completed' or 'failed'
+```
+
+**Current** (F110.7):
+```
+Client → calls HTTP function
+       → HTTP function validates immediately
+       → Rejects malformed requests (HTTP 400)
+       → Processes valid requests
+       → Writes to completedActions only
+```
+
+### Key Changes
+
+**Removed**:
+- `/actionRequests/{id}` collection (no longer needed)
+- Document trigger registration
+
+**Benefits**:
+1. **Validation before database write** - Cleaner audit trail
+2. **Synchronous error responses** - Better client UX
+3. **Better security** - Server is gatekeeper
+4. **Simpler architecture** - One less collection
+
+**Trade-offs**:
+- Requires offline queue for mobile apps (deferred to backlog)
+- Web app is online-only (acceptable for desk workers)
+
+### Materialized Views Already Implemented
+
+Handlers write directly to domain collections:
+- `/organizations/{id}` - Organization documents
+- `/users/{id}` - User documents
+- `/organizations/{orgId}/projects/{id}` - Project documents
+
+These collections serve dual purpose:
+1. Domain model storage (source of truth)
+2. Queryable views for UI
+
+**Result**: F110.6 (Materialized Views) is obsolete - the functionality is already built into F110 handlers.
+
 ## References
 
 - [multi-tenant] — Organization/project patterns, data isolation rules
 - [event-sourcing] — Event sourcing patterns
 - F108 — Event sourcing infrastructure (completed)
-- F110.5 — Authentication & Authorization (depends on F110)
-- F110.6 — Materialized Views (depends on F110)
+- F110.5 — Authentication & Authorization (depends on F110, F110.7)
+- F110.6 — Materialized Views (OBSOLETE - already implemented in F110)
+- F110.7 — HTTP Action Submission (in progress - replaces Firestore triggers)
 
 ## Implementation: 4 Tasks (12 hours)
 
