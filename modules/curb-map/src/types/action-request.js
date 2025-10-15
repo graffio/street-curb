@@ -8,7 +8,6 @@
  *  subjectType   : /^(user|organization|project)$/,
  *  organizationId: "/^org_[a-z0-9]{12,}$/?",
  *  projectId     : "/^prj_[a-z0-9]{12,}$/?",
- *  status        : /^(pending|completed|failed)$/,
  *  idempotencyKey: FieldTypes.idempotencyKey,
  *  resultData    : "Object?",
  *  error         : "String?",
@@ -38,7 +37,6 @@ const ActionRequest = function ActionRequest(
     subjectType,
     organizationId,
     projectId,
-    status,
     idempotencyKey,
     resultData,
     error,
@@ -48,7 +46,7 @@ const ActionRequest = function ActionRequest(
     processedAt,
 ) {
     const constructorName =
-        'ActionRequest(id, action, actorId, subjectId, subjectType, organizationId, projectId, status, idempotencyKey, resultData, error, correlationId, schemaVersion, createdAt, processedAt)'
+        'ActionRequest(id, action, actorId, subjectId, subjectType, organizationId, projectId, idempotencyKey, resultData, error, correlationId, schemaVersion, createdAt, processedAt)'
 
     R.validateRegex(constructorName, FieldTypes.actionRequestId, 'id', false, id)
     R.validateTag(constructorName, 'Action', 'action', false, action)
@@ -57,7 +55,6 @@ const ActionRequest = function ActionRequest(
     R.validateRegex(constructorName, /^(user|organization|project)$/, 'subjectType', false, subjectType)
     R.validateRegex(constructorName, /^org_[a-z0-9]{12,}$/, 'organizationId', true, organizationId)
     R.validateRegex(constructorName, /^prj_[a-z0-9]{12,}$/, 'projectId', true, projectId)
-    R.validateRegex(constructorName, /^(pending|completed|failed)$/, 'status', false, status)
     R.validateRegex(constructorName, FieldTypes.idempotencyKey, 'idempotencyKey', false, idempotencyKey)
     R.validateObject(constructorName, 'resultData', true, resultData)
     R.validateString(constructorName, 'error', true, error)
@@ -74,7 +71,6 @@ const ActionRequest = function ActionRequest(
     result.subjectType = subjectType
     if (organizationId != null) result.organizationId = organizationId
     if (projectId != null) result.projectId = projectId
-    result.status = status
     result.idempotencyKey = idempotencyKey
     if (resultData != null) result.resultData = resultData
     if (error != null) result.error = error
@@ -92,7 +88,7 @@ const ActionRequest = function ActionRequest(
 // -------------------------------------------------------------------------------------------------------------
 const prototype = {
     toString: function () {
-        return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.status)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
+        return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
     },
     toJSON() {
         return this
@@ -120,7 +116,6 @@ ActionRequest.from = o =>
         o.subjectType,
         o.organizationId,
         o.projectId,
-        o.status,
         o.idempotencyKey,
         o.resultData,
         o.error,
@@ -166,7 +161,7 @@ ActionRequest.fromFirestore = actionRequest =>
 
 // Additional function: toLog
 ActionRequest.toLog = o => {
-    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'status', 'idempotencyKey', 'correlationId'], o)
+    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'idempotencyKey', 'correlationId'], o)
     r.action = Action.toLog(o.action)
     return r
 }
