@@ -21,19 +21,6 @@ Client (Online) → HTTP Function → Validates → completedActions + Domain Co
 - **No actionRequests Collection**: Removed - HTTP validates before write, cleaner audit trail
 - **Idempotency**: Check `completedActions` for duplicate `idempotencyKey` before processing
 
-### Decision Log
-
-| Decision                                     | Status   | Rationale                                                                            | Trade-offs                                                              |
-|----------------------------------------------|----------|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| HTTP functions over Firestore triggers       | Accepted | Validation before write, synchronous errors, cleaner audit trail, better security    | Requires offline queue for mobile (deferred); web app online-only      |
-| Single handler dispatcher vs per-event functions | Accepted | Centralizes validation/auth, simplifies logging, one deployment surface           | Larger blast radius; mitigated via TAP + emulator regression suite      |
-| Event sourcing pattern                       | Accepted | Immutable audit trail, rebuildable views, aligns with SOC2 controls                  | Higher complexity than CRUD; requires strong tooling + docs             |
-| Transaction-based idempotency                | Accepted | Atomic duplicate detection, immutable audit trail, SOC2 compliance                  | Requires Firestore transactions; more complex than simple check-then-write |
-| Handlers write to domain collections         | Accepted | Fast reads, no view-building lag, simpler architecture                               | Collections serve dual purpose (model + views); less separation         |
-| Server-authoritative timestamps              | Accepted | Audit integrity, SOC2 compliance, prevents client clock manipulation                | Requires server timestamp calls; more complex than client timestamps    |
-| HTTP 409 for duplicates                      | Accepted | Standard HTTP semantics, clear duplicate indication                                   | Breaking change from 200 + duplicate flag                              |
-| Status field removal                          | Accepted | Simplified architecture, immutable completedActions only                             | Breaking change; requires migration of existing code                     |
-
 ## Event Sourcing Principles
 
 ### Immutable Audit Trail

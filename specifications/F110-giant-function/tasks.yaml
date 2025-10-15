@@ -1,0 +1,356 @@
+current_task: "task_4_user_handlers"
+status: "in_progress"
+
+tasks:
+  - id: "task_1_action_types"
+    description: "Define 9 Action tagged type variants for organizations and users"
+    status: "completed"
+    phase: "Domain Model"
+    dependencies: []
+    estimated_hours: 3
+    implementation: |
+        Define 9 Action tagged types in `modules/curb-map/type-definitions/action.type.js`:
+
+        Organization Actions (4):
+        - OrganizationCreated: {organizationId, projectId, name}
+        - OrganizationUpdated: {organizationId, name?, status?}
+        - OrganizationSuspended: {organizationId}
+        - OrganizationDeleted: {organizationId}
+
+        User Actions (5):
+        - UserCreated: {userId, email, displayName, organizationId, role}
+        - UserUpdated: {userId, email?, displayName?}
+        - UserDeleted: {userId, organizationId}
+        - UserForgotten: {userId, reason}
+        - RoleAssigned: {userId, organizationId, role}
+
+        Implementation:
+        - Update Action.variants with all 9 types
+        - Implement Action.toFirestore() serialization
+        - Implement Action.fromFirestore() deserialization
+        - Handle all variants in fromFirestore switch
+    validation:
+      - "All 9 Action variants defined with proper schemas"
+      - "toFirestore/fromFirestore handle all variants correctly"
+      - "Action.from() creates valid instances for each variant"
+    tests:
+      - "modules/curb-map/functions/test/action-types.tap.js"
+
+  - id: "task_2_organization_handlers"
+    description: "Implement organization event handlers with validation"
+    status: "completed"
+    phase: "Domain Model"
+    dependencies: ["task_1_action_types"]
+    estimated_hours: 3
+    implementation: |
+        Create `modules/curb-map/functions/src/events/organization-handlers.js`:
+
+        Handlers:
+        - handleOrganizationCreated(actionRequest)
+          * Generate defaultProjectId = FieldTypes.newProjectId()
+          * Write to /organizations/{orgId}
+          * Create default project at /organizations/{orgId}/projects/{defaultProjectId}
+          * Metadata (createdAt/createdBy/updatedAt/updatedBy) from actionRequest.actorId
+
+        - handleOrganizationUpdated(actionRequest)
+          * Update /organizations/{orgId}
+          * Update name and/or status fields
+          * Set updatedAt/updatedBy
+
+        - handleOrganizationSuspended(actionRequest)
+          * Update /organizations/{orgId} with status: "suspended"
+
+        - handleOrganizationDeleted(actionRequest)
+          * Delete /organizations/{orgId} document
+
+        Validation:
+        - Required fields (name)
+        - Status enum validation ("active" | "suspended")
+    validation:
+      - "Organization handlers create/update documents correctly"
+      - "OrganizationCreated creates both organization and default project"
+      - "defaultProjectId properly links to created project"
+      - "Metadata fields set correctly"
+      - "Validation rejects invalid data"
+    tests:
+      - "modules/curb-map/functions/test/organization-handlers.tap.js"
+
+  - id: "task_2_5_http_handler"
+    description: "Implement HTTP request handler for action submission"
+    status: "completed"
+    phase: "HTTP Infrastructure"
+    dependencies: ["task_2_organization_handlers"]
+    estimated_hours: 4
+    implementation: |
+        Create HTTP function for action request submission (from F110.7):
+
+        HTTP Function:
+        - Import `onRequest` from firebase-functions/v2/https
+        - Accept JSON payload: {action, idempotencyKey, correlationId, actorId?}
+        - For emulator: Accept actorId in body (bypass auth)
+        - Return structured responses: {status, processedAt} or {status, error}
+
+        Validation:
+        - Validate request body structure
+        - Use ActionRequest.from() for validation
+        - Return HTTP 400 for validation errors
+        - Return HTTP 409 for duplicate idempotency keys
+
+        Processing:
+        - Check idempotency (query completedActions)
+        - Dispatch to appropriate handler
+        - Write to completedActions
+        - Return success response
+
+        Error Handling:
+        - Catch validation errors → HTTP 400
+        - Catch processing errors → HTTP 500
+        - Include error details in response
+
+        Test Updates:
+        - Update all tests to use HTTP submission
+        - Remove Firestore trigger and actionRequests collection
+    validation:
+      - "HTTP function accepts POST requests with Action payload"
+      - "Validation errors return HTTP 400 with error message"
+      - "Successful processing returns HTTP 200 with completion status"
+      - "Duplicate idempotency keys return HTTP 409"
+      - "All tests pass with HTTP submission"
+    tests:
+      - "modules/curb-map/test/http-submit-action.firebase.js"
+      - "modules/curb-map/test/organization-handlers-http.firebase.js"
+
+  - id: "task_3_transaction_infrastructure"
+    description: "Implement transaction-based idempotency infrastructure"
+    status: "completed"
+    phase: "Infrastructure"
+    dependencies: ["task_2_5_http_handler"]
+    estimated_hours: 8
+    implementation: |
+        Implement transaction-based idempotency (from F110.8):
+
+        Facade Transactions:
+        - Add optional `tx` parameter to FirestoreAdminFacade constructor
+        - All methods: if (tx) { tx.METHOD(...) } else { await docRef.METHOD(...) }
+        - Add readOrNull(id) method that returns null instead of throwing
+        - Apply to: write, read, readOrNull, create, update, delete, readAll
+
+        Context Updates:
+        - Add optional `tx` parameter to createFirestoreContext
+        - Pass tx to all FirestoreAdminFacade calls
+        - Support both transactional and non-transactional contexts
+
+        Transaction Implementation:
+        - Use Firestore transactions for atomic duplicate detection
+        - Single write as 'completed' with server timestamps
+        - HTTP response AFTER transaction completes
+        - Return HTTP 409 for duplicates (breaking change)
+
+        Status Field Removal:
+        - Remove status field from ActionRequest type definition
+        - Remove status validation from Firestore security rules
+        - Remove status-based indexes
+        - Update documentation
+
+        Test Updates:
+        - Write failing tests for transaction behavior
+        - Update tests to expect HTTP 409 for duplicates
+        - Add tests for serverTimestamp() usage
+        - Add tests for atomic duplicate detection
+    validation:
+      - "Facade accepts optional transaction parameter"
+      - "All methods work in both modes"
+      - "Transaction-based duplicate detection works atomically"
+      - "HTTP 409 for duplicates (breaking change)"
+      - "No status field in ActionRequest"
+      - "All tests pass with transaction behavior"
+    tests:
+      - "modules/curb-map/test/firestore-facade-transactions.tap.js"
+      - "modules/curb-map/test/organization-handlers-http.firebase.js"
+      - "modules/curb-map/test/minimal-http-function.firebase.js"
+
+  - id: "task_4_user_handlers"
+    description: "Implement user event handlers with role management"
+    status: "pending"
+    phase: "Domain Model"
+    dependencies: ["task_3_transaction_infrastructure"]
+    estimated_hours: 3
+    implementation: |
+        Create `modules/curb-map/functions/src/events/user-handlers.js`:
+
+        Handlers:
+        - handleUserCreated(actionRequest)
+          * Write to /users/{userId}
+          * Initialize lastLogin=null, failedAttempts=0
+          * Set organizations map: {orgId: role}
+          * Metadata from actionRequest.actorId
+
+        - handleUserUpdated(actionRequest)
+          * Update email and/or displayName fields
+          * Set updatedAt/updatedBy metadata
+
+        - handleUserDeleted(actionRequest)
+          * Remove organizationId from organizations map
+          * If last org removed, delete user document
+
+        - handleUserForgotten(actionRequest)
+          * Delete user document (GDPR/CCPA)
+          * Reason logged in completedActions
+
+        - handleRoleAssigned(actionRequest)
+          * Update organizations[orgId] = role
+
+        Validation:
+        - Email format validation
+        - Role enum validation (admin|member|viewer)
+        - Required fields (email, displayName, role)
+    validation:
+      - "User handlers create/update documents correctly"
+      - "Metadata fields set correctly"
+      - "Role assignment updates organizations map"
+      - "Validation rejects invalid emails and roles"
+      - "UserDeleted properly removes org from map"
+      - "UserForgotten deletes user document"
+    tests:
+      - "modules/curb-map/functions/test/user-handlers.tap.js"
+
+  - id: "task_5_authentication"
+    description: "Implement Firebase Auth with custom claims"
+    status: "pending"
+    phase: "Authentication"
+    dependencies: ["task_1_action_types"]
+    estimated_hours: 8
+    implementation: |
+        Implement Firebase Auth with custom claims (from F110.5):
+
+        Firebase Auth Configuration:
+        - Configure Firebase Auth for passcode authentication (manual setup, not code)
+        - Implement passcode verification and token generation
+        - Create custom claims system (organization roles and permissions)
+        - Integrate with F110 domain model (user/organization lookup)
+        - Log authentication events to F108 event sourcing
+        - Basic auth middleware (token verification, user context injection)
+
+        Custom Claims:
+        - Organization roles and permissions in Firebase Auth custom claims
+        - Role-based access control (admin, member, viewer)
+        - Organization-scoped permissions
+        - Token verification and user context injection
+
+        Integration:
+        - Integrate with F110 domain model for user/organization lookup
+        - Log authentication events to F108 event sourcing
+        - Basic auth middleware for HTTP functions
+    validation:
+      - "Passcode authentication works with Firebase Auth"
+      - "Custom claims include organization roles"
+      - "Auth middleware verifies tokens correctly"
+      - "Authentication events logged to F108 event sourcing"
+    tests:
+      - "modules/curb-map/functions/test/authentication.tap.js"
+    notes: |
+      Simplified from original F109 tasks (removed SMS delivery complexity, impersonation).
+      Focus on core auth needed for APIs.
+
+  - id: "task_6_authorization"
+    description: "Implement authorization via Firestore security rules"
+    status: "pending"
+    phase: "Authorization"
+    dependencies: ["task_5_authentication"]
+    estimated_hours: 6
+    implementation: |
+        Implement authorization via Firestore security rules (from F110.5):
+
+        Security Rules:
+        - Complete Firestore security rules for authorization (building on F108 task_1_5)
+        - Add rules for hierarchical collections (/organizations/{orgId}/projects/{projId})
+        - Implement permission checking using custom claims in security rules
+        - Add organization-scoped access control rules
+        - Ensure rules enforce role-based permissions (admin, member, guest)
+        - Test unauthorized access attempts are rejected
+
+        Permission Checking:
+        - Use custom claims in security rules for authorization
+        - Organization-scoped access control
+        - Role-based permissions (admin, member, viewer)
+        - Hierarchical collection access rules
+
+        Testing:
+        - Test unauthorized access attempts are rejected
+        - Test organization-scoped access control
+        - Test role-based permissions enforcement
+    validation:
+      - "Security rules enforce permissions correctly"
+      - "Organization-scoped access control works"
+      - "Role-based permissions enforced in rules"
+      - "Unauthorized access attempts rejected"
+      - "Hierarchical collections protected"
+    tests:
+      - "modules/curb-map/test/security-rules.firebase.js"
+      - "modules/curb-map/test/data-isolation.firebase.js"
+    notes: |
+      Authorization via Firestore security rules (not middleware).
+      Clients write ActionRequests directly to Firestore.
+      Rules check custom claims to enforce permissions.
+
+      CRUD APIs deferred to backlog (for webhooks/external integrations later).
+
+  - id: "task_7_integration_testing"
+    description: "End-to-end authentication and authorization testing"
+    status: "pending"
+    phase: "Integration"
+    dependencies: ["task_6_authorization"]
+    estimated_hours: 4
+    implementation: |
+        End-to-end authentication and authorization testing (from F110.5):
+
+        Complete Flow Testing:
+        - Test complete flow: auth → write ActionRequest → verify security rules → process event
+        - Test data isolation between organizations
+        - Test role-based access control via security rules
+        - Test unauthorized writes are rejected by Firestore rules
+
+        Integration Tests:
+        - Authentication flow with Firebase Auth
+        - Authorization via Firestore security rules
+        - ActionRequest processing with auth context
+        - Data isolation between organizations
+        - Role-based access control enforcement
+
+        Security Testing:
+        - Test unauthorized access attempts are rejected
+        - Test organization-scoped data isolation
+        - Test role-based permission enforcement
+        - Test hierarchical collection access control
+    validation:
+      - "End-to-end workflow works correctly"
+      - "Data isolation maintained across organizations"
+      - "Security rules enforce permissions correctly"
+      - "Authentication and authorization integrated"
+      - "Unauthorized access properly rejected"
+    tests:
+      - "modules/curb-map/functions/test/auth-integration.firebase.js"
+
+completed:
+  - "task_1_action_types"
+  - "task_2_organization_handlers"
+  - "task_2_5_http_handler"
+  - "task_3_transaction_infrastructure"
+
+notes: |
+    This specification consolidates the core multi-tenant data model tasks.
+
+    SCOPE: Multi-tenant data model implementation
+    - Action type definitions (9 domain events)
+    - Event handlers for organization and user management
+    - HTTP function infrastructure
+    - Transaction-based idempotency
+    - Authentication and authorization system
+
+    DEPENDS ON:
+    - F108: Event sourcing infrastructure (completed)
+
+    ENABLES:
+    - Production-ready multi-tenant system with auth/authorization
+
+    Total: 36 hours (4 completed tasks + 3 pending tasks)
