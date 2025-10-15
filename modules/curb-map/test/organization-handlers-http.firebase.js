@@ -1,7 +1,7 @@
 import t from 'tap'
 import { createFirestoreContext } from '../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../src/types/index.js'
-import { submitAndExpectSuccess } from './helpers/http-submit-action.js'
+import { submitAndExpectDuplicate, submitAndExpectSuccess } from './helpers/http-submit-action.js'
 
 const { test } = t
 
@@ -151,6 +151,96 @@ test('Given organization handlers are integrated with HTTP function', t => {
         } catch (error) {
             t.match(error.message, /not found/, 'Then organization is deleted')
         }
+
+        t.end()
+    })
+
+    t.end()
+})
+
+test('Given transaction-based idempotency (F110.8)', t => {
+    t.test('When duplicate action is submitted Then HTTP 409 is returned with duplicate status', async t => {
+        const organizationId = FieldTypes.newOrganizationId()
+        const projectId = FieldTypes.newProjectId()
+        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+        const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+        console.log(`Test organizationId: ${organizationId}`)
+
+        // First submission should succeed
+        const firstResult = await submitAndExpectSuccess({ action, namespace, idempotencyKey })
+        t.equal(firstResult.status, 'completed', 'Then first submission succeeds')
+
+        // Second submission with same idempotency key should return HTTP 409
+        try {
+            await submitAndExpectDuplicate({ action, namespace, idempotencyKey })
+            t.pass('Then duplicate submission returns HTTP 409')
+        } catch (error) {
+            // This test should FAIL until task 3 implementation
+            // Current implementation returns 200 + duplicate: true, not 409
+            t.fail(`Expected HTTP 409 but got: ${error.message}`)
+        }
+
+        t.end()
+    })
+
+    t.test('When action is processed Then server timestamps are used', async t => {
+        const organizationId = FieldTypes.newOrganizationId()
+        const projectId = FieldTypes.newProjectId()
+        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Server Timestamp Test' })
+        const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+        console.log(`Test organizationId: ${organizationId}`)
+        const result = await submitAndExpectSuccess({ action, namespace, idempotencyKey })
+
+        t.equal(result.status, 'completed', 'Then the action request is completed')
+        t.ok(result.processedAt, 'Then processedAt timestamp is set')
+
+        // Verify server timestamps are used by checking that timestamps are present
+        // (The tagged library converts Firestore Timestamps to Date objects, so we can't test the raw type)
+        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+        const results = await fsContext.completedActions.query([['idempotencyKey', '==', idempotencyKey]])
+        const completed = results[0]
+
+        t.ok(completed, 'Then completed action exists')
+        t.ok(completed.processedAt, 'Then processedAt is present')
+        t.ok(completed.createdAt, 'Then createdAt is present')
+
+        // Verify timestamps are reasonable (within last minute)
+        const now = new Date()
+        const timeDiff = Math.abs(now.getTime() - completed.processedAt.getTime())
+        t.ok(timeDiff < 60000, 'Then processedAt is recent (server timestamp)')
+
+        // Verify no status field exists (status field was removed)
+        t.notOk(completed.status, 'Then no status field exists (status field removed)')
+
+        t.end()
+    })
+
+    t.test('When parallel duplicate requests are submitted Then atomic duplicate detection works', async t => {
+        const organizationId = FieldTypes.newOrganizationId()
+        const projectId = FieldTypes.newProjectId()
+        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Atomic Test' })
+        const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+        console.log(`Test organizationId: ${organizationId}`)
+
+        // Submit two requests simultaneously with same idempotency key
+        const [result1, result2] = await Promise.allSettled([
+            submitAndExpectSuccess({ action, namespace, idempotencyKey }),
+            submitAndExpectDuplicate({ action, namespace, idempotencyKey }),
+        ])
+
+        // One should succeed (200), one should be duplicate (409)
+        const successCount = result1.status === 'fulfilled' ? 1 : 0
+        const duplicateCount = result2.status === 'fulfilled' ? 1 : 0
+
+        // This test should FAIL until task 3 implementation
+        // Current implementation may have race conditions
+        // New implementation should handle atomically
+        if (successCount === 1 && duplicateCount === 1)
+            t.pass('Then exactly one request succeeds and one is detected as duplicate')
+        else t.fail(`Expected 1 success + 1 duplicate, got ${successCount} success + ${duplicateCount} duplicate`)
 
         t.end()
     })

@@ -2,9 +2,9 @@
 
 import { pick } from '@graffio/functional'
 /**
- * ActionRequest represents a document in the Firestore actionRequests collection
- * and completedActions collection (immutable audit trail for SOC2 compliance)
- * @sig ActionRequest :: (String, Action, Object, Object, String, String?, String, String, String, String?, Object, Object?)
+ * ActionRequest represents a document in the completedActions collection
+ * (immutable audit trail for SOC2 compliance)
+ * @sig ActionRequest :: (String, Action, Object, Object, String, String?, String, String, String?, Object, Object?)
  */
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
@@ -31,7 +31,6 @@ export const ActionRequest = {
         
         
         // Orchestration
-        status         : /^(pending|completed|failed)$/,
         idempotencyKey : FieldTypes.idempotencyKey,
         resultData     : 'Object?',
         error          : 'String?',
@@ -69,7 +68,7 @@ ActionRequest.fromFirestore = actionRequest =>
     })
 
 ActionRequest.toLog = o => {
-    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'status', 'idempotencyKey', 'correlationId'], o)
+    const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'idempotencyKey', 'correlationId'], o)
     r.action = Action.toLog(o.action)
     return r
 }

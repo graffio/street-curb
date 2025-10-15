@@ -12,7 +12,6 @@ service cloud.firestore {
 
         function isValidProjectId(id)          { return id == null || (id is string && id.matches('^prj_[a-z0-9]{12,}$')); }
         function isValidSchemaVersion(version) { return version is int && version == 1;                                    }
-        function isValidStatus(status)         { return status is string && status in ['pending', 'completed', 'failed'];  }
         function isValidSubjectType(type)      { return type   is string && type   in ['user', 'organization', 'project']; }
 
         // Action Request validation
@@ -20,7 +19,7 @@ service cloud.firestore {
             return data.keys().hasAll([
                 'id', 'action', 'actorId', 'subjectId', 'subjectType',
                 'organizationId', 'idempotencyKey', 'correlationId',
-                'schemaVersion', 'status', 'createdAt'
+                'schemaVersion', 'createdAt'
             ]) &&
             isValidActionRequestId(data.id) &&
             data.action is map && data.action['@@tagName'] is string &&
@@ -32,11 +31,7 @@ service cloud.firestore {
             isValidIdempotencyKey(data.idempotencyKey) &&
             isValidCorrelationId(data.correlationId) &&
             isValidSchemaVersion(data.schemaVersion) &&
-            isValidStatus(data.status) &&
-            data.createdAt is timestamp &&
-            (data.status == 'pending'
-                ? ( !data.keys().hasAny(['resultData', 'error', 'processedAt']))
-                : true);
+            data.createdAt is timestamp;
         }
 
         // Completed Actions collection (immutable audit trail)

@@ -46,8 +46,6 @@ test('Given the HTTP action submission endpoint', t => {
         const completedAction = results[0]
 
         t.ok(completedAction, 'Then a completed action exists with the idempotency key')
-        t.equal(completedAction.status, 'completed', 'Then the completed action has completed status')
-        t.notEqual(completedAction.status, 'pending', 'Then status is never pending')
         t.equal(completedAction.idempotencyKey, idempotencyKey, 'Then the idempotency key is preserved')
         t.type(completedAction.processedAt, 'object', 'Then processedAt is set as a Date object in completedActions')
         t.ok(completedAction.processedAt.getTime(), 'Then processedAt is a valid Date')
@@ -90,19 +88,15 @@ test('Given the HTTP action submission endpoint', t => {
         const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
 
         t.equal(results.length, 1, 'Then exactly one record exists')
-        t.equal(results[0].status, 'completed', 'Then status is completed (never pending)')
         t.ok(results[0].processedAt, 'Then processedAt is present immediately')
 
         // Verify record doesn't change over time
         const initialProcessedAt = results[0].processedAt.toISOString()
-        const initialStatus = results[0].status
         await new Promise(resolve => setTimeout(resolve, 100))
 
         const resultsAfter = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
         t.equal(resultsAfter.length, 1, 'Then still exactly one record exists')
         t.equal(resultsAfter[0].processedAt.toISOString(), initialProcessedAt, 'Then processedAt never changes')
-        t.equal(resultsAfter[0].status, initialStatus, 'Then status never changes')
-        t.equal(resultsAfter[0].status, 'completed', 'Then status remains completed')
     })
 
     t.test('When a duplicate idempotency key is submitted Then it returns HTTP 409 duplicate', async t => {

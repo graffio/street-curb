@@ -1,10 +1,10 @@
-current_task: "task_1_facade_transactions"
-status: "pending"
+current_task: null
+status: "completed"
 
 tasks:
   - id: "task_1_facade_transactions"
     description: "Add transaction support to firestore-admin-facade.js"
-    status: "pending"
+    status: "completed"
     phase: "Infrastructure"
     dependencies: []
     estimated_hours: 3
@@ -24,35 +24,60 @@ tasks:
     tests:
       - "modules/curb-map/test/firestore-facade-transactions.tap.js"
 
-  - id: "task_2_context_transactions"
-    description: "Update createFirestoreContext to accept transaction parameter"
-    status: "pending"
-    phase: "Infrastructure"
+  - id: "task_2_write_failing_tests"
+    description: "Write failing tests for transaction-based HTTP function"
+    status: "completed"
+    phase: "Testing"
     dependencies: ["task_1_facade_transactions"]
-    estimated_hours: 1
+    estimated_hours: 2
     implementation: |
-        Update `modules/curb-map/functions/src/firestore-context.js`:
+        Update test files to expect new transaction behavior:
 
+        Update test files to expect new transaction behavior:
+
+        Update `modules/curb-map/test/organization-handlers-http.firebase.js`:
+        - Add tests expecting HTTP 409 for duplicate requests (not 200 + duplicate: true)
+        - Add tests for serverTimestamp() usage instead of client timestamps
+        - Add tests for atomic duplicate detection (parallel submissions)
+        - Add tests verifying no 'pending' status in completedActions
+        - Tests should FAIL until task 3 implementation
+
+        Note: `modules/curb-map/test/minimal-http-function.firebase.js` already has comprehensive tests for the same behavior:
+        - HTTP 409 for duplicates (lines 108-138)
+        - Server timestamps (lines 56-78) 
+        - No pending status (lines 80-106)
+        - Atomic duplicate detection (lines 140-171)
+        - These tests are already written correctly and will pass when task 3 is implemented
+
+        Test helpers already exist:
+        - submitAndExpectDuplicate(params) expects 409 + status: 'duplicate'
+        - submitAndExpectSuccess(params) expects 200 responses only
+    validation:
+      - "Tests exist and fail with current implementation"
+      - "Tests cover all transaction scenarios"
+      - "Breaking change tests included"
+      - "Test helpers distinguish between 200 and 409 responses"
+    tests:
+      - "modules/curb-map/test/organization-handlers-http.firebase.js"
+      - "modules/curb-map/test/minimal-http-function.firebase.js"
+
+  - id: "task_3_implement_transactions"
+    description: "Implement transaction-based HTTP function with context updates"
+    status: "completed"
+    phase: "Implementation"
+    dependencies: ["task_2_write_failing_tests"]
+    estimated_hours: 3
+    implementation: |
+        Update submit-action-request.js AND createFirestoreContext:
+
+        Update `modules/curb-map/functions/src/firestore-context.js`:
         - Add optional `tx` parameter (default null)
         - Pass tx to all FirestoreAdminFacade calls:
           * completedActions: FirestoreAdminFacade(ActionRequest, namespace, db, 'completedActions', tx)
           * organizations: FirestoreAdminFacade(Organization, namespace, db, null, tx)
           * users, projects: same pattern
-    validation:
-      - "Context accepts optional tx parameter"
-      - "All facades receive tx correctly"
-    tests:
-      - "Covered by task_3 tests"
 
-  - id: "task_3_http_transactions"
-    description: "Update submit-action-request.js to ALWAYS use transactions"
-    status: "pending"
-    phase: "HTTP Function"
-    dependencies: ["task_2_context_transactions"]
-    estimated_hours: 2
-    implementation: |
         Update `modules/curb-map/functions/src/submit-action-request.js`:
-
         CRITICAL: Transaction returns result object; HTTP response AFTER transaction completes
 
         Structure:
@@ -105,6 +130,7 @@ tasks:
         - Response body for duplicates: { status: 'duplicate', message: '...', processedAt: '...' }
         - Clients expecting 200 + duplicate: true must update to handle 409
     validation:
+      - "All tests from task 2 now pass"
       - "Single write as 'completed'"
       - "No 'pending' state"
       - "Duplicate detection atomic"
@@ -114,42 +140,50 @@ tasks:
       - "modules/curb-map/test/organization-handlers-http.firebase.js"
       - "modules/curb-map/test/minimal-http-function.firebase.js"
 
-  - id: "task_4_test_immutability"
-    description: "Add tests to verify completedActions immutability"
-    status: "pending"
-    phase: "Testing"
-    dependencies: ["task_3_http_transactions"]
+  - id: "task_5_remove_obsolete_status"
+    description: "Remove obsolete status field from ActionRequest type and related systems"
+    status: "completed"
+    phase: "Cleanup"
+    dependencies: ["task_3_implement_transactions"]
     estimated_hours: 2
     implementation: |
-        Update `modules/curb-map/test/organization-handlers-http.firebase.js`:
+        Remove status field from ActionRequest architecture:
 
-        Add tests:
-        - Verify status is 'completed' immediately (no 'pending')
-        - Verify duplicate returns HTTP 409 with { status: 'duplicate', message: 'Already processed', processedAt: '...' }
-        - Verify parallel submissions: one succeeds (200), one gets 409
-        - Verify createdAt and processedAt are server timestamps (Firestore Timestamp objects)
-        - Verify createdAt ≈ processedAt (single write, within ~100ms)
-        - Verify completedActions record never changes after write
+        Update `modules/curb-map/type-definitions/action-request.type.js`:
+        - Remove status field from ActionRequest type definition
+        - Update Hindley-Milner signature
 
-        BREAKING CHANGE - Update test helpers:
-        - Add new helper: submitAndExpectDuplicate(params) that expects 409 + status: 'duplicate'
-        - Keep submitAndExpectSuccess(params) for 200 responses only (do NOT modify to accept 409)
-        - Rationale: 200 (success) and 409 (duplicate) are semantically different outcomes
-        - Duplicate detection tests must use submitAndExpectDuplicate
-        - All other tests continue using submitAndExpectSuccess
+        Update `modules/curb-map/src/types/action-request.js`:
+        - Remove status parameter from constructor
+        - Remove status validation in constructor
+
+        Update `modules/curb-map/firestore.rules`:
+        - Remove status validation from hasValidActionRequestFields()
+        - Remove pending state business logic
+        - Remove isValidStatus() function
+
+        Update `modules/curb-map/firestore.indexes.json`:
+        - Remove status-based indexes (actionRequests collection indexes are obsolete)
+        - Keep only completedActions indexes
+
+        Update documentation:
+        - Remove status field references from data-model.md
+        - Update architecture docs to reflect status-less design
     validation:
-      - "No 'pending' status in completedActions"
-      - "All records have processedAt"
-      - "Duplicates handled correctly"
-      - "Race conditions handled"
+      - "ActionRequest constructor no longer requires status"
+      - "Firestore rules no longer validate status"
+      - "No status-based indexes remain"
+      - "Documentation updated"
+      - "All tests pass without status field"
     tests:
       - "modules/curb-map/test/organization-handlers-http.firebase.js"
+      - "modules/curb-map/test/minimal-http-function.firebase.js"
 
-  - id: "task_5_update_docs"
+  - id: "task_4_update_docs"
     description: "Update event-sourcing.md documentation"
-    status: "pending"
+    status: "completed"
     phase: "Documentation"
-    dependencies: ["task_4_test_immutability"]
+    dependencies: ["task_5_remove_obsolete_status"]
     estimated_hours: 1
     implementation: |
         Update `docs/architecture/event-sourcing.md`:
@@ -160,15 +194,22 @@ tasks:
         - Fix authorization claim: Admin SDK bypasses security rules (auth in function, F110.5)
         - Add readOrNull() method to facade code example
         - Emphasize SOC2 requirement for server-authoritative timestamps
+        - Remove status field references (now obsolete)
     validation:
       - "All code examples use serverTimestamp()"
       - "readOrNull() method documented"
       - "HTTP 409 for duplicates"
       - "Admin SDK security rules claim corrected"
+      - "No status field references remain"
     tests:
       - "Manual review"
 
-completed: []
+completed:
+  - "task_1_facade_transactions"
+  - "task_2_write_failing_tests"
+  - "task_3_implement_transactions"
+  - "task_4_update_docs"
+  - "task_5_remove_obsolete_status"
 
 notes: |
     Migrates from write-first to transaction-based idempotency for SOC2 compliance.
@@ -191,6 +232,6 @@ notes: |
     OUT OF SCOPE: Retry logic (Firestore handles), performance testing
     DEPENDENCIES: F110.7 (HTTP Action Submission)
 
-    Total: 9 hours (5 tasks)
+    Total: 8 hours (5 tasks)
 
     See docs/architecture/event-sourcing.md for architectural rationale.
