@@ -1,5 +1,7 @@
 import { createLogger } from '@graffio/logger'
+import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
+import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest } from '../../src/types/index.js'
 import * as OH from './events/organization-handlers.js'
 import * as UH from './events/user-handlers.js'
@@ -19,7 +21,11 @@ import { createFirestoreContext } from './firestore-context.js'
  * Success response (200):
  *   - status: 'completed'
  *   - processedAt: String (ISO timestamp)
- *   - duplicate: Boolean (optional) - true if duplicate request detected
+ *
+ * Duplicate response (409):
+ *   - status: 'duplicate'
+ *   - message: 'Already processed'
+ *   - processedAt: String (ISO timestamp from original request)
  *
  * Error responses:
  *   - 400: Validation failed
@@ -34,16 +40,19 @@ import { createFirestoreContext } from './firestore-context.js'
  *   - Converts idempotencyKey to document ID (idm_ -> acr_)
  *
  * Idempotency:
- *   Uses Write-First pattern with atomic create() to detect duplicates.
+ *   Uses Transaction-based pattern with atomic duplicate detection.
  *   IdempotencyKey becomes document ID, ensuring exactly-once processing.
- *   Concurrent duplicate requests fail atomically on create() with error code 6.
+ *   duplicate requests return HTTP 409 with processedAt from original request.
  *
  * Authentication:
  *   Firebase Auth token validation will be implemented in F110.5.
  *   Currently uses emulator bypass for development.
  */
 
-// @sig sendJson :: (Response, Number, Object) -> Void
+// ---------------------------------------------------------------------------------------------------------------------
+// HTTP responses
+// ---------------------------------------------------------------------------------------------------------------------
+
 const sendJson = (res, statusCode, payload) => res.status(statusCode).json(payload)
 
 /*
@@ -51,40 +60,37 @@ const sendJson = (res, statusCode, payload) => res.status(statusCode).json(paylo
  * All responses follow consistent JSON format with status field
  */
 
-// @sig sendValidationFailed :: (Response, String, String?) -> Void
 const sendValidationFailed = (res, error, field) => {
     const payload = { status: 'validation-failed', error }
     if (field) payload.field = field
     return sendJson(res, 400, payload)
 }
 
-// @sig sendMethodNotAllowed :: (Response, String) -> Void
 const sendMethodNotAllowed = (res, error) => sendJson(res, 405, { status: 'method-not-allowed', error })
 
-// @sig sendCompleted :: (Response, String, Boolean?) -> Void
-const sendCompleted = (res, processedAt, duplicate) => {
+const sendCompleted = (res, processedAt) => {
     const payload = { status: 'completed', processedAt }
-    if (duplicate) payload.duplicate = true
     return sendJson(res, 200, payload)
 }
 
-// @sig sendFailed :: (Response, String) -> Void
-const sendFailed = (res, error) => sendJson(res, 500, { status: 'failed', error })
+const sendFailed = (res, errorMessage, handlerName = null) => {
+    const response = { status: 'error', message: 'Action processing failed', error: errorMessage }
+    if (handlerName) response.handler = handlerName
+    return sendJson(res, 500, response)
+}
 
-/*
- * Validation functions - return error message or null
- * Called during request validation phase
- */
+const sendDuplicate = (res, result) =>
+    sendJson(res, 409, { status: 'duplicate', message: 'Already processed', processedAt: result.processedAt })
 
-// @sig validateRequiredFields :: Object -> String?
+// ---------------------------------------------------------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------------------------------------------------------
+
 const validateRequiredFields = body =>
     body.action && body.idempotencyKey && body.correlationId
         ? null
         : 'Missing required fields: action, idempotencyKey, correlationId'
 
-// @sig validateNamespace :: Object -> String?
-
-// @sig validateAction :: (Object, Logger) -> String?
 const validateAction = (plainAction, logger) => {
     try {
         Action.fromFirestore(plainAction)
@@ -96,7 +102,6 @@ const validateAction = (plainAction, logger) => {
     }
 }
 
-// @sig validateRequest :: (Request, Response, Logger) -> Boolean
 const validateRequest = (req, res, logger) => {
     let error = req.method === 'POST' ? null : 'Only POST requests are allowed'
     if (error) {
@@ -133,23 +138,7 @@ const validateRequest = (req, res, logger) => {
     return true
 }
 
-/*
- * Extraction functions - only called after validation passes
- * Extract values from validated request
- */
-
-// @sig getActorId :: (Request) -> String
-const getActorId = req =>
-    // TODO (F110.5): Extract from Firebase Auth token
-    // const token = req.headers.authorization?.split('Bearer ')[1]
-    // const decodedToken = await admin.auth().verifyIdToken(token)
-    // return decodedToken.uid
-
-    // Emulator bypass
-    req.body.actorId || 'usr_emulatorbypass'
-
-// @sig validateActionRequest :: (Object, Logger) -> { actionRequest: ActionRequest } | { error: String, field: String }
-const validateActionRequest = (rawActionRequest, logger) => {
+const convertToActionRequest = (rawActionRequest, logger) => {
     try {
         return { actionRequest: ActionRequest.from(rawActionRequest) }
     } catch (error) {
@@ -160,7 +149,24 @@ const validateActionRequest = (rawActionRequest, logger) => {
     }
 }
 
-// @sig createActionRequestLogger :: (Logger, ActionRequest) -> Object
+// ---------------------------------------------------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------------------------------------------------
+
+/*
+ * Extraction functions - only called after validation passes
+ * Extract values from validated request
+ */
+
+const getActorId = req =>
+    // TODO (F110.5): Extract from Firebase Auth token
+    // const token = req.headers.authorization?.split('Bearer ')[1]
+    // const decodedToken = await admin.auth().verifyIdToken(token)
+    // return decodedToken.uid
+
+    // Emulator bypass
+    req.body.actorId || 'usr_emulatorbypass'
+
 // prettier-ignore
 const createActionRequestLogger = (logger, actionRequest) => {
     const interesting = () => ActionRequest.toLog(actionRequest)
@@ -174,10 +180,7 @@ const createActionRequestLogger = (logger, actionRequest) => {
 }
 
 /*
- * Maps action types to their corresponding handler functions.
- * Each handler applies the action's side effects to the system.
- * Uses taggedSum pattern matching for type-safe dispatch.
- * @sig dispatchToHandler :: (ActionRequest) -> Function
+ * Handler dispatch - maps Action types to handler functions
  */
 // prettier-ignore
 const dispatchToHandler = actionRequest =>
@@ -193,7 +196,72 @@ const dispatchToHandler = actionRequest =>
         RoleAssigned:          () => UH.handleRoleAssigned,
     })
 
-// @sig submitActionRequestHandler :: (Request, Response) -> Promise<Void>
+// @sig parseActionRequest :: Request -> { namespace: String, actorId: String, action: Action, organizationId: String?, projectId: String?, subjectId: String, subjectType: String, idempotencyKey: String, correlationId: String }
+const parseActionRequest = req => {
+    const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
+    const actorId = getActorId(req)
+    const action = Action.fromFirestore(req.body.action)
+    const { organizationId, projectId } = action
+    const { id: subjectId, type: subjectType } = Action.getSubject(action)
+    const { idempotencyKey, correlationId } = req.body
+
+    return {
+        namespace,
+        actorId,
+        action,
+        organizationId,
+        projectId,
+        subjectId,
+        subjectType,
+        idempotencyKey,
+        correlationId,
+    }
+}
+
+/*
+ * Send the ActionRequest to a handler
+ * @sig handleInTransaction :: (ActionRequest, FirestoreContext, Logger) -> Promise<Result>
+ *  Result = {
+ *      isDuplicate : Boolean,  // IFF idempotentId was already used
+ *      processedAt : String?,  // IFF isDuplicate
+ *      errorMessage: String?,  // IFF error
+ *      handlerName : String?   // IFF error
+ *  }
+ *
+ */
+const handleInTransaction = async (actionRequest, txContext, logger) => {
+    const actionRequestLogger = createActionRequestLogger(logger, actionRequest)
+
+    // isDuplicate check using readOrNull
+    const existing = await txContext.completedActions.readOrNull(actionRequest.id)
+    if (existing) {
+        actionRequestLogger.flowStop('Processing skipped - duplicate idempotency key')
+        return { isDuplicate: true, processedAt: existing.processedAt.toISOString() }
+    }
+
+    // Dispatch to handler
+    const handler = dispatchToHandler(actionRequest)
+    actionRequestLogger.flowStep(`Starting ${handler.name}`)
+
+    try {
+        await handler(actionRequestLogger, txContext, actionRequest)
+        actionRequestLogger.flowStep(`Finished ${handler.name}`)
+    } catch (error) {
+        // Handler failed - transaction will roll back automatically
+        actionRequestLogger.error(error, { handlerName: handler.name })
+        actionRequestLogger.flowStop(`Handler ${handler.name} failed`)
+
+        // Return error info for HTTP response
+        return { errorMessage: error.message, handlerName: handler.name }
+    }
+
+    // Single write with server timestamps
+    await txContext.completedActions.create(actionRequest)
+
+    // Success: return nothing (processedAt read after commit)
+    return { isDuplicate: false }
+}
+
 const submitActionRequestHandler = async (req, res) => {
     const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')
     const startTime = Date.now()
@@ -202,85 +270,38 @@ const submitActionRequestHandler = async (req, res) => {
         // Validate all inputs first
         if (!validateRequest(req, res, logger)) return
 
-        // Extract validated values
-        const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
-        const actorId = getActorId(req)
-        const action = Action.fromFirestore(req.body.action)
-        const organizationId = action.organizationId || null
-        const projectId = action.projectId || null
+        // create a raw object by enriching our parameters
+        const params = parseActionRequest(req)
+        const { idempotencyKey, namespace, organizationId, projectId } = params
+        const createdAt = FirestoreAdminFacade.serverTimestamp()
+        const id = idempotencyKey.replace(/^idm_/, 'acr_')
+        const rawActionRequest = { ...params, id, schemaVersion: 1, createdAt, processedAt: createdAt }
 
-        // Build and validate ActionRequest
-        const { id: subjectId, type: subjectType } = Action.getSubject(action)
-        const { idempotencyKey, correlationId } = req.body
+        // create an ActionRequest (or die) from the raw data
+        const wrapper = convertToActionRequest(rawActionRequest, logger)
+        if (wrapper.error) return sendValidationFailed(res, wrapper.error, wrapper.field)
+        const actionRequest = wrapper.actionRequest
 
-        // Use idempotencyKey as document ID (convert idm_ prefix to acr_)
-        const actionRequestId = idempotencyKey.replace(/^idm_/, 'acr_')
+        logger.flowStart('┌─ Processing action request', { ...ActionRequest.toLog(actionRequest), namespace }, '')
 
-        const rawActionRequest = {
-            id: actionRequestId,
-            action,
-            actorId,
-            subjectId,
-            subjectType,
-            organizationId,
-            projectId,
-            idempotencyKey,
-            correlationId,
-            status: 'pending',
-            createdAt: new Date(),
-            schemaVersion: 1,
-        }
+        // call the handler in a transaction
+        const result = await admin.firestore().runTransaction(async tx => {
+            const txContext = createFirestoreContext(namespace, organizationId, projectId, tx)
+            return await handleInTransaction(actionRequest, txContext, logger)
+        })
 
-        const actionRequestResult = validateActionRequest(rawActionRequest, logger)
-        if (actionRequestResult.error)
-            return sendValidationFailed(res, actionRequestResult.error, actionRequestResult.field)
+        if (result.isDuplicate) return sendDuplicate(res, result)
+        if (result.error) return sendFailed(res, result.message, result.handlerName)
 
-        const actionRequest = actionRequestResult.actionRequest
-        logger.flowStart('┌─ Processing action request', { ...ActionRequest.toLog(actionRequest), namespace })
-
-        // Create Firestore context and logger
+        // write our SOC2 record
         const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const actionRequestLogger = createActionRequestLogger(logger, actionRequest)
+        const completed = await fsContext.completedActions.read(actionRequest.id)
 
-        /*
-         * Write-First idempotency pattern:
-         * Atomically create pending action record using idempotencyKey as document ID.
-         * If create() fails (error code 6), another request with same key already exists.
-         * This ensures exactly-once processing even with concurrent duplicate requests.
-         */
-        const completedAction = ActionRequest.from({ ...actionRequest, status: 'pending', createdAt: new Date() })
-
-        try {
-            await fsContext.completedActions.create(completedAction)
-        } catch (error) {
-            // Duplicate detected - document already exists (another request used this idempotency key)
-            if (error.code === 6 || error.message?.includes('already exists')) {
-                const existing = await fsContext.completedActions.read(actionRequest.id)
-                actionRequestLogger.flowStop('Processing skipped - duplicate idempotency key')
-                return sendCompleted(res, existing.processedAt.toISOString(), true)
-            }
-            throw error
-        }
-
-        // Dispatch to handler (we won the race)
-        const handler = dispatchToHandler(actionRequest)
-        actionRequestLogger.flowStep(`Starting ${handler.name}`)
-        await handler(actionRequestLogger, fsContext, actionRequest)
-        actionRequestLogger.flowStep(`Finished ${handler.name}`)
-
-        // Update to completed
-        const processedAt = new Date()
-        await fsContext.completedActions.update(actionRequest.id, { status: 'completed', processedAt })
-
-        const durationMs = Date.now() - startTime
-        actionRequestLogger.flowStop('└─ Processing completed', { durationMs }, '')
-
-        // Return success
-        return sendCompleted(res, processedAt.toISOString())
+        logger.flowStop('└─ Processing completed', { durationMs: Date.now() - startTime }, '')
+        return sendCompleted(res, completed.processedAt.toISOString())
     } catch (error) {
         const durationMs = Date.now() - startTime
         logger.error(error, { durationMs })
-
         return sendFailed(res, error.message || 'Internal server error')
     }
 }
