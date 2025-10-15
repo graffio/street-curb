@@ -1,18 +1,18 @@
 # Data Model Architecture
 
-## Core Pattern: Event Sourcing + Materialized Views
+## Core Pattern: Event Sourcing + HTTP Action Submission
 
 ```
-Client (Online/Offline) → Firestore actionRequests → Giant Function → completedActions → Materialized Views
+Client → HTTP Function → Validates → completedActions + Domain Collections
 ```
 
-**Benefits**: Offline-first, SOC2-compliant audit trail, scalable multi-tenant architecture
+**Benefits**: Server-side validation, synchronous error feedback, SOC2-compliant audit trail, scalable multi-tenant architecture
 
 ## Collection Hierarchy
 
-### Flat Collections (Event Source & Materialized Views)
-- **Event Source**: `/actionRequests/{id}`, `/completedActions/{id}` - flat with organizationId fields
-- **Materialized Views**: `/organizations/{id}`, `/users/{id}` - flat with organizationId fields
+### Flat Collections (Event Source & Domain Collections)
+- **Event Source**: `/completedActions/{id}` - flat with organizationId fields
+- **Domain Collections**: `/organizations/{id}`, `/users/{id}` - flat with organizationId fields
 - **Rationale**: SOC2 audit trail, cross-org queries, performance
 
 ### Hierarchical Collections (Projects & Domain Data)
@@ -41,8 +41,7 @@ completedActions: {
       type: "user" | "organization" | "project",
       id: "usr|org|prj_<cuid12>"
     },
-    status: "completed" | "failed",
-    error: "string"?,                   // error message if failed
+    // No status field - all completedActions are completed
     idempotencyKey: "idm_<cuid12>",
     correlationId: "cor_<cuid12>",     // for client→server error tracking
     createdAt: "serverTimestamp",       // when request was created
@@ -70,20 +69,21 @@ Actions represent domain events that can be requested:
 
 **Projects**: Each organization gets a default project with real CUID2 ID (CRUD actions deferred to backlog)
 
-## Materialized Views (Performance)
+## Domain Collections (Current State)
 
 ### Organizations
 ```javascript
-// Organizations - cached from events
+// Organizations - written directly by handlers
 organizations: {
   organizationId: {
+    id: "org_xyz",                       // FieldTypes.newOrganizationId()
     name: "City of San Francisco",
-    status: "active" | "suspended",  // initialized to "active"
-    defaultProjectId: "prj_abc123",  // links to default project (real CUID2)
-    createdAt: timestamp,             // serverTimestamp
-    createdBy: "usr_456",             // from actionRequest.actorId
-    updatedAt: timestamp,             // serverTimestamp
-    updatedBy: "usr_456"              // from actionRequest.actorId
+    status: "active" | "suspended",      // initialized to "active"
+    defaultProjectId: "prj_abc123",      // links to default project (real CUID2)
+    createdAt: timestamp,                // serverTimestamp
+    createdBy: "usr_abc",                // from actionRequest.actorId
+    updatedAt: timestamp,                // serverTimestamp
+    updatedBy: "usr_abc"                 // from actionRequest.actorId
 
     // Deferred to F112 (Billing):
     // subscription: {tier, annualAmount, startDate, endDate}
@@ -95,22 +95,22 @@ organizations: {
 ```
 
 ### Users
-```
-// Users - cached from events
+```javascript
+// Users - written directly by handlers
 users: {
   userId: {
+    id: "usr_abc",                       // FieldTypes.newUserId()
     email: "alice@sf.gov",
     displayName: "Alice Johnson",
     organizations: {
-      "org_123": "admin",  // simple role enum: admin | member | viewer
-      "org_456": "member"
+      "org_xyz": "admin"                 // simple role enum: admin | member | viewer
     },
-    lastLogin: timestamp | null,  // for auth tracking (initialized null)
-    failedAttempts: 0,            // for brute force prevention
-    createdAt: timestamp,         // serverTimestamp
-    createdBy: "usr_456",         // from actionRequest.actorId
-    updatedAt: timestamp,         // serverTimestamp
-    updatedBy: "usr_456"          // from actionRequest.actorId
+    lastLogin: timestamp | null,         // for F110.5 auth tracking (initialized null)
+    failedAttempts: 0,                   // for F110.5 brute force prevention
+    createdAt: timestamp,                // serverTimestamp
+    createdBy: "usr_abc",                // from actionRequest.actorId
+    updatedAt: timestamp,                // serverTimestamp
+    updatedBy: "usr_abc"                 // from actionRequest.actorId
 
     // Deferred to F110.5+ (granular permissions):
     // permissions: ["organizations:read", "projects:write", "users:manage"]
@@ -129,12 +129,13 @@ users: {
 
 projects: {
   "prj_abc123": {                  // Real CUID2 ID (not "default" magic string)
-    organizationId: "org_123",
+    id: "prj_abc123",              // FieldTypes.newProjectId() - real CUID2
+    organizationId: "org_xyz",
     name: "Default Project",
     createdAt: timestamp,          // serverTimestamp
-    createdBy: "usr_456",          // from actionRequest.actorId
+    createdBy: "usr_abc",          // from actionRequest.actorId
     updatedAt: timestamp,          // serverTimestamp
-    updatedBy: "usr_456"           // from actionRequest.actorId
+    updatedBy: "usr_abc"           // from actionRequest.actorId
   }
 }
 
@@ -163,38 +164,22 @@ Organization
 - **Materialized View Scoping**: Views filtered by organization
 - **Security Rules**: Firestore rules enforce isolation
 
-## Action Request Processing
+## HTTP Action Processing
 
-### Action Requests Collection
-```javascript
-// actionRequests collection for offline support (mutable operational data)
-actionRequests: {
-  id: {
-    id: "acr_<cuid12>",                 // action request ID (used as document ID)
-    action: Action,                      // Action tagged sum (UserAdded | OrganizationAdded)
-    actorId: "usr_<cuid12>",
-    subjectId: "usr|org|prj_<cuid12>",
-    subjectType: "user" | "organization" | "project",
-    organizationId: "org_<cuid12>",
-    projectId: "prj_<cuid12>"?,
-    idempotencyKey: "idm_<cuid12>",
-    correlationId: "cor_<cuid12>",
-    status: "pending" | "completed" | "failed",
-    resultData: { /* success data like created entity IDs */ }?,
-    error: "string"?,
-    createdAt: "serverTimestamp",
-    processedAt: "serverTimestamp"?,
-    schemaVersion: 1
-  }
-}
-```
+### Processing Flow
+1. **HTTP Request**: Client calls submitActionRequest HTTP function
+2. **Authentication**: Validate Firebase Auth token (F110.5) or use emulator bypass
+3. **Validation**: Validate action data structure using `ActionRequest.from()`
+4. **Transaction-Based Processing**: Use Firestore transaction for atomic duplicate detection and processing
+5. **Authorization Check**: Verify user permissions (F110.5)
+6. **Domain Processing**: Dispatch to handler → handler writes to domain collections
+7. **Audit Recording**: Write to `completedActions` (immutable) with server timestamps
+8. **HTTP Response**: Return success/failure synchronously
 
-### Giant Function Processing
-- **Action Processing**: Execute requested actions and create immutable audit records
-- **Idempotency**: Prevent duplicate processing using idempotencyKey
-- **Audit Recording**: Copy completed ActionRequest to completedActions collection (immutable)
-- **Materialized View Updates**: Update cached views from completed actions
-- **Error Handling**: Mark failed requests with error messages for forensics
+### Idempotency
+- **Duplicate Detection**: Check `completedActions` for existing `idempotencyKey` before processing
+- **Atomic Processing**: Use Firestore transactions to prevent race conditions
+- **HTTP 409 Response**: Return HTTP 409 for duplicate requests (breaking change from HTTP 200 + duplicate flag)
 
 ## Schema Versioning
 
@@ -218,25 +203,15 @@ actionRequests: {
 
 ## Data Consistency
 
-### Eventual Consistency
-- **Action Request Processing**: Asynchronous event processing
-- **Materialized Views**: Eventually consistent with events
-- **Client Updates**: Optimistic updates with conflict resolution
-
-### Conflict Resolution
-- **Last Writer Wins**: For simple conflicts
-- **Event Ordering**: Timestamp-based ordering
-- **Manual Resolution**: Complex conflicts require human intervention
-
 ## Performance Considerations
 
 ### Indexing Strategy
 - **Event Queries**: Index on organizationId, timestamp, type
-- **Materialized Views**: Index on frequently queried fields
-- **Action Request Processing**: Index on status, createdAt
+- **Domain Collections**: Index on frequently queried fields
+- **Completed Actions**: Index on idempotencyKey, organizationId, createdAt
 
 ### Caching
-- **Materialized Views**: Pre-computed for performance
+- **Domain Collections**: Written directly by handlers for immediate availability
 - **User Sessions**: Cached authentication state
 - **Organization Data**: Cached for quick access
 
@@ -250,8 +225,10 @@ actionRequests: {
 
 ### Data Retention
 - **Event Retention**: 7 years for compliance
-- **User Forgotten**: Complete data removal via events
+- **User Forgotten**: Complete data removal via UserForgotten action (GDPR/CCPA)
 - **Archive Strategy**: Long-term storage for compliance
+
+**Note**: No actionRequests collection to purge - HTTP validates before write.
 
 ## References
 

@@ -27,7 +27,53 @@ Organization
 - **Materialized View Scoping**: Views filtered by organization
 - **Security Rules**: Firestore rules enforce isolation
 
-## Organization Management
+## Default Project Pattern
+
+### Real CUID2 Default Projects
+Each organization gets a default project with a real CUID2 ID (not a magic string):
+
+```javascript
+// Organization document
+organizations: {
+  "org_xyz": {
+    name: "City of San Francisco",
+    defaultProjectId: "prj_abc123",  // Real CUID2 ID
+    // ... other fields
+  }
+}
+
+// Default project document
+projects: {
+  "prj_abc123": {
+    id: "prj_abc123",              // FieldTypes.newProjectId() - real CUID2
+    organizationId: "org_xyz",
+    name: "Default Project",
+    // ... other fields
+  }
+}
+```
+
+### Benefits
+- **No Migration Needed**: Hierarchical structure ready for additional projects
+- **Consistent IDs**: All projects use real CUID2 IDs
+- **Future-Proof**: When ProjectCreated/Updated/Deleted actions are added, no data migration required
+
+### Usage Pattern
+```javascript
+// Find default project for organization
+const org = await getOrganization(orgId)
+const defaultProjectId = org.defaultProjectId
+
+// Access project data
+const project = await getProject(orgId, defaultProjectId)
+```
+
+### Future Project Management
+When additional projects are needed:
+1. **ProjectCreated** action creates new project with real CUID2
+2. **ProjectUpdated** action modifies project details
+3. **ProjectDeleted** action removes project
+4. **No migration required** - hierarchical structure already in place
 
 ### Organization Structure
 ```javascript
