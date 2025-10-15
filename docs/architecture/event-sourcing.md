@@ -28,8 +28,11 @@ Client (Online) → HTTP Function → Validates → completedActions + Domain Co
 | HTTP functions over Firestore triggers       | Accepted | Validation before write, synchronous errors, cleaner audit trail, better security    | Requires offline queue for mobile (deferred); web app online-only      |
 | Single handler dispatcher vs per-event functions | Accepted | Centralizes validation/auth, simplifies logging, one deployment surface           | Larger blast radius; mitigated via TAP + emulator regression suite      |
 | Event sourcing pattern                       | Accepted | Immutable audit trail, rebuildable views, aligns with SOC2 controls                  | Higher complexity than CRUD; requires strong tooling + docs             |
-| Idempotency via completedActions lookup      | Accepted | Prevents duplicate processing, simpler than separate collection                      | Requires completedActions query before processing                       |
+| Transaction-based idempotency                | Accepted | Atomic duplicate detection, immutable audit trail, SOC2 compliance                  | Requires Firestore transactions; more complex than simple check-then-write |
 | Handlers write to domain collections         | Accepted | Fast reads, no view-building lag, simpler architecture                               | Collections serve dual purpose (model + views); less separation         |
+| Server-authoritative timestamps              | Accepted | Audit integrity, SOC2 compliance, prevents client clock manipulation                | Requires server timestamp calls; more complex than client timestamps    |
+| HTTP 409 for duplicates                      | Accepted | Standard HTTP semantics, clear duplicate indication                                   | Breaking change from 200 + duplicate flag                              |
+| Status field removal                          | Accepted | Simplified architecture, immutable completedActions only                             | Breaking change; requires migration of existing code                     |
 
 ## Event Sourcing Principles
 
@@ -51,12 +54,11 @@ const completedActions = {
         projectId: 'prj_CUID2',
         actor: { id: 'usr_CUID2', type: 'user' | 'system' | 'api', },
         subject: { id: 'usr_CUID2', type: 'user' | 'organization' | 'project', },
-        status: 'completed' | 'failed',     // Written once - never mutated
-        error: 'string'?,
         idempotencyKey: 'idm_<cuid12>',
+        error: 'string'?,
         correlationId: 'cor_CUID2',             // for client→server error tracking
-        createdAt: 'serverTimestamp',       // when request was created
-        processedAt: 'serverTimestamp',     // when processing finished (same as createdAt for single write)
+        createdAt: 'serverTimestamp',       // when request was created (server-authoritative)
+        processedAt: 'serverTimestamp',     // when processing finished (server-authoritative)
         schemaVersion: 1
     }
 }
@@ -116,10 +118,9 @@ POST /submitActionRequest
   projectId,
   idempotencyKey,
   correlationId,
-  status: 'completed',
   schemaVersion: 1,
-  createdAt: serverTimestamp(),
-  processedAt: serverTimestamp()
+  createdAt: serverTimestamp(),        // Server-authoritative timestamp
+  processedAt: serverTimestamp()       // Server-authoritative timestamp
 }
 ```
 
@@ -128,6 +129,15 @@ POST /submitActionRequest
 {
   status: 'completed',
   id: 'acr_xyz',
+  processedAt: '2025-01-15T10:30:00Z'
+}
+```
+
+**Duplicate response (HTTP 409)**:
+```javascript
+{
+  status: 'duplicate',
+  message: 'Already processed',
   processedAt: '2025-01-15T10:30:00Z'
 }
 ```
@@ -141,15 +151,25 @@ POST /submitActionRequest
 }
 ```
 
+**Handler error response (HTTP 500)**:
+```javascript
+{
+  status: 'error',
+  message: 'Action processing failed',
+  error: 'Simulated handler failure',
+  handler: 'handleOrganizationCreated'
+}
+```
+
 ### Processing Flow
 
 1. **HTTP Request**: Client calls submitActionRequest HTTP function
 2. **Authentication**: Validate Firebase Auth token (F110.5) or use emulator bypass
 3. **Validation**: Validate action data structure using `ActionRequest.from()`
-4. **Idempotency Check**: Query `completedActions` for duplicate `idempotencyKey`
+4. **Transaction-Based Processing**: Use Firestore transaction for atomic duplicate detection and processing
 5. **Authorization Check**: Verify user permissions (F110.5)
 6. **Domain Processing**: Dispatch to handler → handler writes to domain collections
-7. **Audit Recording**: Write to `completedActions` (immutable)
+7. **Audit Recording**: Write to `completedActions` (immutable) with server timestamps
 8. **HTTP Response**: Return success/failure synchronously
 
 ## Idempotency Pattern
@@ -188,15 +208,13 @@ const result = await db.runTransaction(async (tx) => {
   // Process action with transaction-aware facades
   await handler(logger, txContext, actionRequest)
 
-  // Single write as "completed" (immutable) with server-authoritative timestamps
+  // Single write as completed action (immutable) with server-authoritative timestamps
   const serverTimestamp = FirestoreAdminFacade.serverTimestamp
-  const completedAction = ActionRequest.from({
+  await txContext.completedActions.create({
     ...actionRequest,
-    status: 'completed',
     createdAt: serverTimestamp(),
     processedAt: serverTimestamp()
   })
-  await txContext.completedActions.create(completedAction)
 
   // Success path: return nothing (processedAt must be read after transaction commits)
   return { duplicate: false }
@@ -225,9 +243,10 @@ return res.status(200).json({
 
 **Benefits**:
 - **Atomic**: Duplicate detection and write happen atomically
-- **Immutable**: Single write as "completed" - no mutations
+- **Immutable**: Single write as completed action - no mutations
 - **SOC2 Compliant**: Audit trail never modified after write
 - **Crash-Safe**: All or nothing - no partial states
+- **Server Timestamps**: All timestamps are server-authoritative for audit integrity
 
 ### Firestore Admin Facade Transaction Support
 
