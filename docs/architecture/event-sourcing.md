@@ -1,503 +1,472 @@
+---
+summary: "HTTP-based event sourcing with immutable audit trail for SOC2-compliant multi-tenant curb data management"
+keywords: ["event-sourcing", "http", "transactions", "idempotency", "soc2", "audit-trail", "multi-tenant"]
+last_updated: "2025-01-15"
+---
+
 # Event Sourcing Architecture
 
-## Core Pattern: Event Sourcing + HTTP Action Submission
+## Table of Contents
+- [1. Overview](#1-overview)
+  - [1.1 Architecture Map](#11-architecture-map)
+  - [1.2 Why This Architecture](#12-why-this-architecture)
+  - [1.3 Key Components](#13-key-components)
+  - [1.4 Trade-offs Summary](#14-trade-offs-summary)
+  - [1.5 Current Implementation Status](#15-current-implementation-status)
+  - [1.6 Key Design Decisions](#16-key-design-decisions)
+- [2. Problem & Context](#2-problem--context)
+  - [2.1 Requirements](#21-requirements)
+  - [2.2 Constraints](#22-constraints)
+- [3. Architecture Details](#3-architecture-details)
+  - [3.1 Data Flow](#31-data-flow)
+  - [3.2 Component Connections](#32-component-connections)
+  - [3.3 Facade Transaction Support](#33-facade-transaction-support)
+  - [3.4 Handler Pattern](#34-handler-pattern)
+- [4. Implementation Guide](#4-implementation-guide)
+  - [4.1 Quick Start: Adding a New Action Type](#41-quick-start-adding-a-new-action-type)
+  - [4.2 Code Locations](#42-code-locations)
+  - [4.3 Adding a New Action Type (Detailed)](#43-adding-a-new-action-type-detailed)
+  - [4.4 Configuration](#44-configuration)
+  - [4.5 Testing](#45-testing)
+- [5. Consequences & Trade-offs](#5-consequences--trade-offs)
+  - [5.1 What This Enables](#51-what-this-enables)
+  - [5.2 What This Constrains](#52-what-this-constrains)
+  - [5.3 Future Considerations](#53-future-considerations)
+- [6. References](#6-references)
+- [7. Decision History](#7-decision-history)
+
+---
+
+## 1. Overview
+
+CurbMap uses event sourcing with HTTP-based action submission to maintain a SOC2-compliant audit trail while managing multi-tenant curb data for municipal clients. Every change to curb data—adding a user, updating organization details, modifying regulations—is recorded as an immutable event with full actor attribution and server-authoritative timestamps.
+
+### 1.1 Architecture Map
 
 ```
-Client (Online) → HTTP Function → Validates → completedActions + Domain Collections
+┌─────────────────────────────────────────────────────┐
+│ Client Application                                  │
+│ • Generates idempotencyKey, correlationId           │
+│ • Attaches Firebase Auth token                      │
+└────────────────┬────────────────────────────────────┘
+                 │ POST /submitActionRequest
+                 │ {action, idempotencyKey, correlationId}
+                 ↓
+┌─────────────────────────────────────────────────────┐
+│ HTTP Function                                       │
+│ submit-action-request.js                            │
+│ • Validates payload structure                       │
+│ • Extracts actorId from auth token                  │
+│ • Creates transaction-scoped context                │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ↓
+┌─────────────────────────────────────────────────────┐
+│ Firestore Transaction (atomic)                      │
+│                                                     │
+│  ┌────────────────────────────────────────────┐    │
+│  │ 1. Check Duplicate                         │    │
+│  │    completedActions.readOrNull(id)         │    │
+│  │    ├─ Found → return processedAt (409)     │    │
+│  │    └─ Not found → continue                 │    │
+│  └────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌────────────────────────────────────────────┐    │
+│  │ 2. Process Action                          │    │
+│  │    handler(logger, txContext, request)     │    │
+│  │    └─ Writes to domain collections:        │    │
+│  │       /organizations/{id}                  │    │
+│  │       /users/{id}                          │    │
+│  │       /projects/{id}                       │    │
+│  └────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌────────────────────────────────────────────┐    │
+│  │ 3. Write Audit Record                      │    │
+│  │    completedActions.create({               │    │
+│  │      status: 'completed',                  │    │
+│  │      createdAt: serverTimestamp(),         │    │
+│  │      processedAt: serverTimestamp()        │    │
+│  │    })                                      │    │
+│  └────────────────────────────────────────────┘    │
+│                                                     │
+│  ⚠️ Why Transaction?                                │
+│  Without: Race condition if 2 requests check       │
+│           before either writes (both succeed)      │
+│  With: Only ONE transaction can write same ID      │
+│        Firestore guarantees atomicity              │
+└────────────────┬────────────────────────────────────┘
+                 │ All writes atomic (all or nothing)
+                 ↓
+┌─────────────────────────────────────────────────────┐
+│ HTTP Response                                       │
+│ • 200: {status: 'completed', processedAt}           │
+│ • 409: {status: 'duplicate', processedAt}           │
+│ • 400: {status: 'validation-failed', error}         │
+│ • 500: {status: 'error', error, handler}            │
+└─────────────────────────────────────────────────────┘
 ```
 
-**Benefits**: Server-side validation, synchronous error feedback, SOC2-compliant audit trail, scalable multi-tenant architecture
+### 1.2 Why This Architecture
 
-**Note**: Offline queue for mobile apps deferred to backlog (see `specifications/backlog.md`)
+**Problem**: CurbMap manages critical municipal curb regulation data for multiple cities (San Francisco, Los Angeles, etc.). Traditional CRUD doesn't provide immutable audit logs, allows client timestamp manipulation, and can't easily reconstruct "who changed what when" for compliance audits. See [Requirements](#requirements) for complete details.
 
-### System Snapshot
+**Solution**: Event sourcing writes every change as an immutable event to `completedActions` collection. HTTP functions validate before writing (not Firestore triggers which write first, validate later). Firestore transactions ensure atomic duplicate detection using client-provided `idempotencyKey` to prevent race conditions. Action handlers write to queryable domain collections so the UI doesn't rebuild state from events on every read.
 
-- **HTTP Action Submission**: Clients call HTTP function with `{id, action, idempotencyKey, correlationId, projectId}` payload
-- **Server-Side Validation**: HTTP function validates before any database write; rejects malformed requests with HTTP 400
-- **Server-Side Enrichment**: HTTP function adds authoritative fields: `actorId` (from auth token), `subjectId`, `timestamps`
-- **Processing**: Synchronous processing - validates → dispatches to handler → writes to domain collections
-- **Audit Store**: Immutable `completedActions` collection with SOC2 audit trail; append-only semantics
-- **Domain Collections**: Handlers write directly to `/organizations/{id}`, `/users/{id}`, `/organizations/{orgId}/projects/{id}`
-- **No actionRequests Collection**: Removed - HTTP validates before write, cleaner audit trail
-- **Idempotency**: Check `completedActions` for duplicate `idempotencyKey` before processing
+### 1.3 Key Components
 
-## Event Sourcing Principles
+**`completedActions/{id}`** (Firestore collection):
+- Immutable audit trail storing every processed action
+- Written once as `status: 'completed'`, never mutated
+- Contains: action payload, actor ID, server timestamps, organization/project scope
+- 7-year retention for SOC2 compliance
+- Type: `ActionRequest` (see `action-request.type.js`)
 
-### Immutable Audit Trail
+**HTTP Function** (`submit-action-request.js`):
+- Entry point for all client actions
+- Validates payload structure using `ActionRequest.from()`
+- Extracts `actorId` from Firebase Auth token
+- Orchestrates: transaction → duplicate check → handler → audit write → response
 
-**SOC2 Compliance Requirement**: Completed actions are the source of truth and **cannot be modified once written**. This immutability is critical for:
-- Audit log integrity (no tampering)
-- Regulatory compliance (SOC2 Type II)
-- Forensic investigation
-- Timestamp reliability
+**Firestore Facades** (`firestore-admin-facade.js`, `firestore-context.js`):
+- Transaction-aware CRUD operations
+- Optional `tx` parameter: when provided, all operations use transaction; when absent, use regular Firestore
+- Provides `readOrNull()` method for atomic duplicate checks (returns null instead of throwing)
+- Created per-request via `createFirestoreContext(namespace, orgId, projectId, tx)`
 
-```javascript
-// completedActions collection - immutable audit trail (write once)
-const completedActions = {
-    id: {
-        id: 'acr_<cuid12>',                // action request ID (used as document ID)
-        action: Action,                     // UserAdded | OrganizationAdded (tagged sum)
-        organizationId: 'org_CUID2',
-        projectId: 'prj_CUID2',
-        actor: { id: 'usr_CUID2', type: 'user' | 'system' | 'api', },
-        subject: { id: 'usr_CUID2', type: 'user' | 'organization' | 'project', },
-        idempotencyKey: 'idm_<cuid12>',
-        error: 'string'?,
-        correlationId: 'cor_CUID2',             // for client→server error tracking
-        createdAt: 'serverTimestamp',       // when request was created (server-authoritative)
-        processedAt: 'serverTimestamp',     // when processing finished (server-authoritative)
-        schemaVersion: 1
-    }
-}
+**Action Handlers** (`organization-handlers.js`, future: `user-handlers.js`):
+- Domain logic for each action type (OrganizationCreated, UserUpdated, etc.)
+- Writes to domain collections (organizations, users, projects)
+- Transaction-agnostic: same interface whether in transaction or not
+- Pattern: `handleActionName(logger, fsContext, actionRequest)`
+
+**Domain Collections** (Firestore):
+- `/organizations/{id}`: Organization records (queryable, current state)
+- `/users/{id}`: User records (queryable, current state)
+- `/organizations/{orgId}/projects/{id}`: Project records (subcollection)
+- These are "materialized views" - immediately queryable, no event replay needed
+
+**Idempotency Keys** (`idm_<cuid12>`):
+- Client-generated unique IDs (CUID2 format)
+- Prevent duplicate processing when clients retry failed requests
+- Checked atomically within transaction
+- If duplicate found: return original `processedAt` (HTTP 409)
+
+### 1.4 Trade-offs Summary
+
+- **Increased complexity** for SOC2 compliance value ($10K+ annual savings vs manual audit trail)
+- **Higher storage costs** ($50-100/month) for immutable 7-year audit trail
+- **Online-only web app** to ship faster (90% of users are desktop inspectors with reliable wifi)
+- **Single HTTP function** for simpler deployment/monitoring (2-3 person team)
+
+See [Consequences & Trade-offs](#consequences--trade-offs) for detailed analysis and business impact.
+
+### 1.5 Current Implementation Status
+
+- ✅ **Implemented** (production since 2025-09-15):
+  - HTTP action submission with validation
+  - Transaction-based idempotency (atomic duplicate detection)
+  - Organization actions: OrganizationCreated, OrganizationUpdated, OrganizationSuspended, OrganizationDeleted
+  - User actions: UserCreated, UserUpdated, UserDeleted, UserForgotten, RoleAssigned
+  - Server-authoritative timestamps (`serverTimestamp()`)
+  - Firestore facade with optional transaction parameter
+
+- 📋 **Deferred to Backlog**:
+  - Project CRUD actions (organizations get default project; manual management deferred)
+  - Audit log export to BigQuery (revisit when Firestore costs exceed $500/month)
+
+**Future: Mobile Offline Support** (iOS/Android native apps):
+- Client-side queue (Core Data/Realm/SQLite) stores pending ActionRequests locally
+- Background sync service monitors network state, processes queue when online
+- Same HTTP endpoint (`/submitActionRequest`) handles both online and synced offline requests
+- Idempotency keys prevent duplicates when offline queue syncs (server returns HTTP 409 for already-processed requests)
+- Architecture designed to support this pattern - no server changes needed, only native client implementation
+
+### 1.6 Key Design Decisions
+
+**HTTP Functions, Not Triggers**: Triggers activate *after* a write (reactive validation). HTTP functions validate *before* write (proactive). This prevents bad data from entering Firestore. [Details in decisions.md](../decisions.md#http-functions-over-triggers)
+
+**Transactions Always**: All HTTP submissions use Firestore transactions (not optional). Atomic duplicate detection prevents race conditions when concurrent requests use same idempotency key. [Details in decisions.md](../decisions.md#transaction-based-idempotency)
+
+**HTTP 409 for Duplicates** (breaking change 2025-01-15): Semantically correct - "this operation already succeeded". Clients handle as idempotent success. [Details in decisions.md](../decisions.md#http-409-for-duplicates)
+
+**Server Timestamps Only**: All timestamps use `serverTimestamp()`, not client `new Date()`. SOC2 requires tamper-proof timestamps. [Details in decisions.md](../decisions.md#server-timestamps-only)
+
+**Single Write as "completed"**: Actions written directly with `status: 'completed'`, never mutated to avoid violating audit log immutability. [Details in decisions.md](../decisions.md#single-write-as-completed)
+
+---
+
+## 2. Problem & Context
+
+### 2.1 Requirements
+
+**SOC2 Type II Compliance**:
+- Immutable audit trail (no modifications after write)
+- Actor attribution (every change tied to authenticated user or system)
+- 7-year retention (queryable for compliance audits)
+- Server-authoritative timestamps (prevent client clock manipulation)
+
+**Multi-Tenant Data Isolation**:
+- Organizations (cities) cannot see each other's data
+- Namespace-based isolation: `{namespace}/organizations/{id}`
+- Event scoping: all actions scoped to `organizationId` and `projectId`
+
+**Data Integrity**:
+- Server-side validation before any write
+- Synchronous error feedback (HTTP 400 for validation failures)
+- No invalid data in database (e.g., malformed coordinates, invalid regulation types)
+
+**Idempotency**:
+- Clients retry failed requests (network timeouts, server errors)
+- Same action submitted twice should process once
+- Duplicate detection must be atomic (no race conditions)
+
+**Queryable Current State**:
+- UI queries current organization/user/project data directly
+- No rebuilding from events on every read (performance)
+
+### 2.2 Constraints
+
+- **SOC2 Compliance**: Immutable audit logs, server timestamps, 7-year retention (non-negotiable for enterprise customers)
+- **Firestore as Primary Database**: No PostgreSQL, no separate event store (keep infrastructure simple for 2-3 person team)
+- **Cost Conscious**: Optimize for Firestore free tier ($50-100/month budget for production)
+- **Small Team**: 2-3 developers - prioritize simplicity over microservices
+- **No Anonymous Users**: All actions require authenticated users (passcode-only auth)
+
+---
+
+## 3. Architecture Details
+
+### 3.1 Data Flow
+
+**1. Client Submits Action**
+- Client generates: `idempotencyKey` (prevents duplicate processing), `correlationId` (error tracking)
+- POSTs to `/submitActionRequest` with Firebase Auth token
+- Payload: `{id, action, idempotencyKey, correlationId, projectId}`
+
+**2. HTTP Function Validates**
+- Extracts `actorId` from Firebase Auth token (who is making this change)
+- Validates payload structure: `ActionRequest.from()` (tagged type validation)
+- Checks required fields, action-specific validation
+- Rejects with HTTP 400 if validation fails
+
+**3. Transaction Processes** (see Architecture Map diagram for complete flow)
+
+**4. HTTP Response** (see Architecture Map diagram for response codes)
+
+### 3.2 Component Connections
+
+```
+Client
+  ↓ fetch('/submitActionRequest')
+submit-action-request.js (HTTP function)
+  ↓ createFirestoreContext(namespace, orgId, projectId, tx)
+firestore-context.js
+  ↓ returns { completedActions, organizations, users, projects }
+  ↓ each facade: FirestoreAdminFacade(Type, prefix, db, collection, tx)
+firestore-admin-facade.js
+  ↓ provides: read, readOrNull, write, create, update, delete
+  ↓ uses: tx.get() / tx.set() if tx provided, else regular Firestore ops
+
+Handler dispatch:
+submit-action-request.js
+  ↓ handlers[action.tagName](logger, fsContext, actionRequest)
+organization-handlers.js (or user-handlers.js, etc.)
+  ↓ fsContext.organizations.write({...})
+firestore-admin-facade.js
+  ↓ writes to Firestore (within transaction if tx provided)
 ```
 
-**Implementation**: Transaction-based processing ensures atomic duplicate detection and single write (see "Transaction-Based Idempotency" section below).
+### 3.3 Facade Transaction Support
 
-### Action Types
+The facade accepts optional `tx` parameter enabling transaction-aware operations. When `tx` is provided, all CRUD operations (`read`, `write`, `create`, `update`, `delete`) use Firestore transaction methods (`tx.get()`, `tx.set()`). When `tx` is absent, operations use regular Firestore methods.
 
-Actions represent domain events that can be requested:
+This design allows handlers to be transaction-agnostic - they use the same facade interface whether in a transaction or not.
 
-**Organization Actions (4)**:
-- **OrganizationCreated**: New organization setup (renamed from OrganizationAdded)
-- **OrganizationUpdated**: Organization name or status changes
-- **OrganizationSuspended**: Suspend organization (shorthand for status change)
-- **OrganizationDeleted**: Permanently delete organization
+**Implementation**: See `firestore-admin-facade.js` for complete pattern.
 
-**User Actions (5)**:
-- **UserCreated**: New user registration
-- **UserUpdated**: User profile changes
-- **UserDeleted**: Remove user from organization
-- **UserForgotten**: GDPR/CCPA data deletion
-- **RoleAssigned**: Assign/change user role in organization
+### 3.4 Handler Pattern
 
-**Projects**: Each organization gets a default project with real CUID2 ID (CRUD actions deferred to backlog)
+Handlers receive `(logger, fsContext, actionRequest)` and write to domain collections atomically. For example, `handleOrganizationCreated` extracts organization details from the action payload and writes to `fsContext.organizations` with metadata (createdAt, createdBy, updatedAt, updatedBy).
 
-## HTTP Action Submission Architecture
+Domain collections are updated atomically with the audit write (same transaction), making them immediately queryable without event replay.
 
-### HTTP Request/Response
+**Implementation**: See `organization-handlers.js` for complete examples.
 
-**Client sends minimal payload**:
-```javascript
-POST /submitActionRequest
-{
-  id: 'acr_<cuid12>',              // Client-generated
-  action: {
-    '@@tagName': 'OrganizationCreated',
-    organizationId: 'org_xyz',
-    projectId: 'prj_abc',
-    name: 'City of San Francisco'
-  },
-  idempotencyKey: 'idm_<cuid12>',  // Client-generated
-  correlationId: 'cor_<cuid12>',   // Client-generated
-  projectId: 'prj_abc'             // For context creation
-}
+---
+
+## 4. Implementation Guide
+
+### 4.1 Quick Start: Adding a New Action Type
+
+**Need to add a new action type quickly?** Follow these 4 steps (detailed instructions in section 4.2):
+
+1. **Define** action type in `modules/curb-map/src/types/action.js`
+2. **Implement** handler in `modules/curb-map/functions/src/*-handlers.js`
+3. **Register** handler in `submit-action-request.js` handlers object
+4. **Test** in `modules/curb-map/test/*.firebase.js`
+
+See section 4.2 for complete step-by-step instructions with code examples.
+
+### 4.2 Code Locations
+
+**HTTP Function**:
+- `modules/curb-map/functions/src/submit-action-request.js` - Main endpoint
+- `modules/curb-map/functions/src/index.js` - Function export
+
+**Firestore Facades**:
+- `modules/curb-map/src/firestore-facade/firestore-admin-facade.js` - Transaction support, CRUD operations
+- `modules/curb-map/functions/src/firestore-context.js` - Context creation with facades
+
+**Action Handlers**:
+- `modules/curb-map/functions/src/organization-handlers.js` - Organization event handlers
+- Future: `user-handlers.js`, `project-handlers.js`
+
+**Types**:
+- `modules/curb-map/src/types/action-request.js` - ActionRequest tagged type
+- `modules/curb-map/src/types/action.js` - Action tagged sum type
+- `modules/curb-map/type-definitions/action-request.type.js` - Type definition
+- `modules/curb-map/type-definitions/action.type.js` - Action type definition
+
+**Tests**:
+- `modules/curb-map/test/minimal-http-function.firebase.js` - HTTP integration tests
+- `modules/curb-map/test/organization-handlers-http.firebase.js` - Handler tests
+- `modules/curb-map/test/helpers/http-submit-action.js` - Test helpers
+
+### 4.3 Adding a New Action Type (Detailed)
+
+**1. Define Action Type** in `modules/curb-map/src/types/action.js`:
+- Use `Action.define('ActionName', ['field1', 'field2', ...])`
+- See existing definitions for OrganizationCreated, UserUpdated, etc.
+
+**2. Add Handler** in new or existing handler file (e.g., `project-handlers.js`):
+- Pattern: `handleActionName(logger, fsContext, actionRequest)`
+- Extract fields from `actionRequest.action`
+- Write to appropriate facade: `fsContext.organizations.write({...})`
+- See `organization-handlers.js` for complete examples
+
+**3. Register Handler** in `modules/curb-map/functions/src/submit-action-request.js`:
+- Add to `handlers` object: `ActionName: handleActionName`
+
+**4. Write Tests** in `modules/curb-map/test/`:
+- Create action: `Action.ActionName.from({ ... })`
+- Submit: `submitAndExpectSuccess({ action, namespace })`
+- Verify status: `t.equal(result.status, 'completed')`
+- See `minimal-http-function.firebase.js` for test patterns
+
+### 4.4 Configuration
+
+**Environment Variables**:
+- `GCLOUD_PROJECT` - GCP project ID
+- `FIRESTORE_EMULATOR_HOST` - Emulator host (tests only)
+
+**Firebase Functions**:
+- Region: `us-central1`
+- Memory: 256MB
+- Timeout: 60s
+
+### 4.5 Testing
+
+**Run Integration Tests**:
+```bash
+npm test -- modules/curb-map/test/minimal-http-function.firebase.js
 ```
 
-**Server enriches with authoritative fields**:
-```javascript
-{
-  id,
-  action,
-  actorId: auth.uid,                    // From Firebase Auth token
-  subjectId: action.organizationId,     // Derived from action
-  subjectType: 'organization',          // Derived from action type
-  organizationId: action.organizationId,
-  projectId,
-  idempotencyKey,
-  correlationId,
-  schemaVersion: 1,
-  createdAt: serverTimestamp(),        // Server-authoritative timestamp
-  processedAt: serverTimestamp()       // Server-authoritative timestamp
-}
-```
-
-**Success response (HTTP 200)**:
-```javascript
-{
-  status: 'completed',
-  id: 'acr_xyz',
-  processedAt: '2025-01-15T10:30:00Z'
-}
-```
-
-**Duplicate response (HTTP 409)**:
-```javascript
-{
-  status: 'duplicate',
-  message: 'Already processed',
-  processedAt: '2025-01-15T10:30:00Z'
-}
-```
-
-**Error response (HTTP 400)**:
-```javascript
-{
-  status: 'validation-failed',
-  error: 'Invalid status: must be "active" or "suspended"',
-  field: 'action.status'
-}
-```
-
-**Handler error response (HTTP 500)**:
-```javascript
-{
-  status: 'error',
-  message: 'Action processing failed',
-  error: 'Simulated handler failure',
-  handler: 'handleOrganizationCreated'
-}
-```
-
-### Processing Flow
-
-1. **HTTP Request**: Client calls submitActionRequest HTTP function
-2. **Authentication**: Validate Firebase Auth token (F110.5) or use emulator bypass
-3. **Validation**: Validate action data structure using `ActionRequest.from()`
-4. **Transaction-Based Processing**: Use Firestore transaction for atomic duplicate detection and processing
-5. **Authorization Check**: Verify user permissions (F110.5)
-6. **Domain Processing**: Dispatch to handler → handler writes to domain collections
-7. **Audit Recording**: Write to `completedActions` (immutable) with server timestamps
-8. **HTTP Response**: Return success/failure synchronously
-
-## Idempotency Pattern
-
-### Idempotency Key
-
-- **Purpose**: Prevent duplicate event processing
-- **Format**: CUID2 (`idm_<12 chars>`)
-- **Storage**: `completedActions` collection (no separate collection needed)
-- **Lifetime**: Permanent (for audit trail)
-
-### Transaction-Based Idempotency
-
-**Problem**: Simple check-then-write has race conditions. Writing "pending" then updating to "completed" violates immutability.
-
-**Solution**: Use Firestore transactions for atomic duplicate detection and single write as "completed".
-
-```javascript
-// Transaction-based idempotency with single write
-// actionRequest.id is used as document ID (converted from idempotencyKey: idm_xxx → acr_xxx)
-const result = await db.runTransaction(async (tx) => {
-  // Create transaction-aware context (scoped to this transaction)
-  const txContext = createFirestoreContext(namespace, orgId, projectId, tx)
-
-  // Check for duplicate within transaction (atomic)
-  // Use readOrNull() which returns null instead of throwing when document doesn't exist
-  const existing = await txContext.completedActions.readOrNull(actionRequest.id)
-  if (existing) {
-    // Duplicate path: return processedAt from existing record (Timestamp → Date → ISO string)
-    return {
-      duplicate: true,
-      processedAt: existing.processedAt.toISOString()
-    }
-  }
-
-  // Process action with transaction-aware facades
-  await handler(logger, txContext, actionRequest)
-
-  // Single write as completed action (immutable) with server-authoritative timestamps
-  const serverTimestamp = FirestoreAdminFacade.serverTimestamp
-  await txContext.completedActions.create({
-    ...actionRequest,
-    createdAt: serverTimestamp(),
-    processedAt: serverTimestamp()
-  })
-
-  // Success path: return nothing (processedAt must be read after transaction commits)
-  return { duplicate: false }
-})
-
-// Return appropriate HTTP response (AFTER transaction completes)
-if (result.duplicate) {
-  // HTTP 409 Conflict - duplicate idempotency key
-  // Breaking change: Previously returned 200 + duplicate: true
-  return res.status(409).json({
-    status: 'duplicate',
-    message: 'Already processed',
-    processedAt: result.processedAt  // ISO string from duplicate branch
-  })
-}
-
-// HTTP 200 Success - read completed action to get actual processedAt timestamp
-// Must create new non-transactional context (txContext is out of scope)
-const fsContext = createFirestoreContext(namespace, orgId, projectId)
-const completed = await fsContext.completedActions.read(actionRequest.id)
-return res.status(200).json({
-  status: 'completed',
-  processedAt: completed.processedAt.toISOString()  // Firestore Timestamp → Date → ISO string
-})
-```
-
-**Benefits**:
-- **Atomic**: Duplicate detection and write happen atomically
-- **Immutable**: Single write as completed action - no mutations
-- **SOC2 Compliant**: Audit trail never modified after write
-- **Crash-Safe**: All or nothing - no partial states
-- **Server Timestamps**: All timestamps are server-authoritative for audit integrity
-
-### Firestore Admin Facade Transaction Support
-
-The `firestore-admin-facade.js` accepts an optional transaction parameter, allowing handlers to work in both regular and transaction modes transparently:
-
-```javascript
-const FirestoreAdminFacade = (Type, prefix, db, collectionOverride, tx = null) => {
-  const write = async record => {
-    // Tagged type pattern: always instantiate from raw data
-    if (!Type.is(record)) record = Type.from(record)
-    const firestoreData = encodeTimestamps(Type.toFirestore(record))
-
-    if (tx) {
-      // Transaction mode - synchronous set
-      tx.set(_docRef(record.id), firestoreData)
-    } else {
-      // Regular mode - async set
-      await _docRef(record.id).set(firestoreData)
-    }
-  }
-
-  const read = async id => {
-    const docSnap = tx
-      ? await tx.get(_docRef(id))     // Transaction mode
-      : await _docRef(id).get()        // Regular mode
-
-    if (!docSnap.exists) throw new Error(`${Type.toString()} not found: ${id}`)
-
-    const rawData = docSnap.data()
-    const decoded = decodeTimestamps(rawData, Type.timestampFields)
-    return Type.fromFirestore(decoded)  // Tagged type pattern
-  }
-
-  const readOrNull = async id => {
-    const docSnap = tx
-      ? await tx.get(_docRef(id))     // Transaction mode
-      : await _docRef(id).get()        // Regular mode
-
-    if (!docSnap.exists) return null   // Return null instead of throwing
-
-    const rawData = docSnap.data()
-    const decoded = decodeTimestamps(rawData, Type.timestampFields)
-    return Type.fromFirestore(decoded)  // Tagged type pattern
-  }
-
-  // create, update, delete follow same pattern
-  return { write, read, create, update, delete, ... }
-}
-```
-
-**Tagged Type Pattern**: Always instantiate tagged types from raw data before use - never reuse raw data. This ensures validation runs consistently.
-
-### Context Creation
-
-```javascript
-const createFirestoreContext = (namespace, orgId, projectId, tx = null) => {
-  return {
-    completedActions: FirestoreAdminFacade(ActionRequest, namespace, db, 'completedActions', tx),
-    organizations: FirestoreAdminFacade(Organization, namespace, db, null, tx),
-    users: FirestoreAdminFacade(User, namespace, db, null, tx),
-    projects: FirestoreAdminFacade(Project, namespace, db, null, tx),
-  }
-}
-```
-
-Handlers receive the same interface regardless of transaction mode - no code changes needed.
-
-**Note**: Idempotency check uses `completedActions` collection instead of maintaining separate `processed_operations` collection. This simplifies architecture and reuses existing audit trail.
-
-## Event Validation
-
-### Structure Validation
-
-- **Required Fields**: Validate all required fields are present
-- **Type Validation**: Ensure correct data types
-- **Format Validation**: Validate email addresses, IDs, etc.
-
-### Business Rule Validation (Simplified for MVP)
-
-- **Required Fields**: name (organizations), email/displayName (users)
-- **Enum Validation**: status ("active" | "suspended"), role ("admin" | "member" | "viewer")
-- **Email Format**: Basic regex validation for user emails
-- **Organization Scoping**: Events must be scoped to valid organization
-- **Permission Checks**: Deferred to F110.5 (authorization logic in HTTP function code; Admin SDK bypasses Firestore security rules)
-
-### Action-Specific Validation
-
-```javascript
-const validateActionData = (action) => {
-    const tagName = action['@@tagName'];
-
-    switch (tagName) {
-    case 'UserAdded':
-        if (!action.user?.email || !isValidEmail(action.user.email)) {
-            return { valid: false, error: 'Invalid email address' };
-        }
-        if (!action.organizationId || typeof action.organizationId !== 'string') {
-            return { valid: false, error: 'Valid organization ID required' };
-        }
-        break;
-
-    case 'UserUpdated':
-        if (!action.changes || typeof action.changes !== 'object') {
-            return { valid: false, error: 'Changes object required' };
-        }
-        break;
-
-    case 'UserForgotten':
-        if (!action.reason || !['CCPA_request', 'GDPR_request'].includes(action.reason)) {
-            return { valid: false, error: 'Valid reason required' };
-        }
-        break;
-    }
-
-    return { valid: true };
-};
-```
-
-## Authorization Model
-
-### Action Authorization
-
-Actions require authorization before processing:
-
-```javascript
-const checkActionAuthorization = async (userId, action, organizationId) => {
-    const userRoles = await getUserRoles(userId);
-    const tagName = action['@@tagName'];
-
-    switch (tagName) {
-    case 'UserAdded':
-        return userRoles.some(role =>
-            role.organizationId === organizationId &&
-            (role.role === 'admin' || role.permissions.includes('manage_users'))
-        );
-
-    case 'UserUpdated':
-        return userRoles.some(role =>
-            role.organizationId === organizationId &&
-            (role.role === 'admin' || role.permissions.includes('manage_users'))
-        );
-
-    case 'UserForgotten':
-        return userRoles.some(role =>
-            role.organizationId === organizationId &&
-            role.role === 'admin'
-        );
-    }
-
-    return false;
-};
-```
-
-## Domain Collections (Materialized Views)
-
-### Purpose
-
-Handlers write directly to domain collections, which serve dual purpose:
-1. **Domain Model Storage**: Source of truth for organizations, users, projects
-2. **Queryable Views**: UI can query these collections immediately
-
-### Collections
-
-- `/organizations/{id}` - Written by Organization handlers
-- `/users/{id}` - Written by User handlers
-- `/organizations/{orgId}/projects/{id}` - Written by Organization handlers (default project)
-
-### Handler Pattern
-
-```javascript
-const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
-    const { action } = actionRequest;
-    const { organizationId, projectId, name } = action;
-
-    // Add metadata from actionRequest
-    const metadata = {
-        createdAt: fsContext.serverTimestamp(),
-        createdBy: actionRequest.actorId,
-        updatedAt: fsContext.serverTimestamp(),
-        updatedBy: actionRequest.actorId
-    };
-
-    // Write to domain collection
-    const organization = {
-        id: organizationId,
-        name,
-        status: 'active',
-        defaultProjectId: projectId,
-        ...metadata
-    };
-
-    await fsContext.organizations.write(organization);
-};
-```
-
-**Benefits**:
-- No lag between action completion and view availability
-- Simpler architecture (no separate view-building trigger)
-- Metadata included (createdAt, createdBy, updatedAt, updatedBy)
-- Immediately queryable
-
-**Note**: F110.6 (Materialized Views) specification is obsolete - this functionality is already built into F110 handlers.
-
-## Schema Versioning
-
-### Version Management
-
-- **Schema Version**: Add `schemaVersion` field to events
-- **Backward Compatibility**: Event processors handle multiple versions
-- **Migration Events**: Special events for data transformations
-- **Deprecation**: Mark old versions deprecated, remove support after reasonable period
-
-### Implementation
-
-```javascript
-const recordCompletedAction = async (actionRequest) => {
-    // Copy the ActionRequest verbatim to completedActions (immutable)
-    await admin.firestore()
-        .collection('completedActions')
-        .doc(actionRequest.id)
-        .set({
-            ...actionRequest,
-            schemaVersion: 1
-        });
-
-    return actionRequest;
-};
-```
-
-## Performance Considerations
-
-### Event Compaction
-
-- **Archive Old Events**: After creating snapshots
-- **Snapshot Events**: Periodic snapshots to avoid replaying from beginning
-- **Lazy Loading**: Only calculate from events when cache miss occurs
-
-### Query Optimization
-
-- **Indexes**: Index on organizationId, createdAt, status, action.@@tagName
-- **Pagination**: Limit action queries to reasonable page sizes
-- **Caching**: Cache frequently accessed materialized views
-
-## Compliance Features
-
-### Audit Trail
-
-- **Complete History**: All changes tracked via completedActions collection
-- **Immutable Log**: Completed actions cannot be modified (write-once)
-- **User Attribution**: All actions tied to specific actors (users/systems/APIs)
-- **Authorization Tracking**: Failed authorization attempts logged for forensics
-- **SOC2 Compliance**: Meets enterprise audit requirements with actor, subject, timestamps, and correlation IDs
-
-### Data Retention
-
-- **Completed Actions Retention**: 7 years for SOC2 compliance
-- **Domain Collections**: Retain as long as entity exists (organizations, users, projects)
-- **User Forgotten**: Complete data removal via UserForgotten action (GDPR/CCPA)
-- **Archive Strategy**: Long-term storage for compliance (Cloud Storage/BigQuery)
-
-**Note**: No actionRequests collection to purge - HTTP validates before write.
-
-## References
-
-- [Data Model](./data-model.md)
-- [Security](./security.md)
-- [Multi-Tenant](docs/architecture/multi-tenant.md)
+**Test Helpers** (in `test/helpers/http-submit-action.js`):
+- `submitAndExpectSuccess({ action, namespace })` - Expect HTTP 200
+- `submitAndExpectDuplicate({ action, namespace, idempotencyKey })` - Expect HTTP 409
+- `submitAndExpectValidationError({ action, ... })` - Expect HTTP 400
+
+---
+
+## 5. Consequences & Trade-offs
+
+### 5.1 What This Enables
+
+**SOC2 Compliance**: Immutable audit trail with 7-year retention, actor attribution, server timestamps. Passes SOC2 Type II audits without manual log reconstruction.
+
+**Multi-Tenant Data Isolation**: Namespace-based isolation ensures cities can't see each other's data. Audit logs scoped per organization.
+
+**Data Integrity**: Server-side validation prevents bad data from entering Firestore. Clients get immediate HTTP 400 feedback.
+
+**Idempotent Requests**: Clients can safely retry failed requests. Same idempotency key → same result (HTTP 409 with original `processedAt`).
+
+**Queryable Current State**: Domain collections immediately reflect current state. UI queries directly, no event replay needed.
+
+**Future Offline Sync**: Architecture supports offline queue (deferred to backlog). Events can be queued locally, submitted when online.
+
+### 5.2 What This Constrains
+
+**Online-Only Web App**:
+- Current implementation requires HTTP connection
+- Offline queue deferred means mobile field inspectors must have wifi/cellular
+- **When this matters**: Field workers in tunnels, parking garages, remote areas
+- **Mitigation**: Prioritized for backlog when >10% of users request mobile app
+
+**No Real-Time Collaboration**:
+- Events process synchronously via HTTP (not real-time event stream)
+- **When this matters**: Multiple users editing same organization simultaneously
+- **Why acceptable**: Low collision rate for curb management (different cities, different projects)
+
+**Firestore Storage Costs**:
+- `completedActions` grows indefinitely (7-year retention)
+- ~$50-100/month at 1000 actions/day
+- **When this matters**: Costs exceed $500/month
+- **Mitigation**: Export to BigQuery for cold storage, query recent events from Firestore
+
+**Handler Complexity**:
+- Each action type requires handler code (10-50 lines)
+- More complex than simple CRUD
+- **When this matters**: Slows feature development by ~1-2 days per new entity type
+- **Why acceptable**: SOC2 compliance value outweighs development overhead
+- **Mitigation**: Code generation templates if >20 entity types
+
+**No Time Travel Queries**:
+- Can't easily answer "what was the organization name on January 1st?" without replaying events
+- **When this matters**: Audit investigations, compliance reports
+- **Why acceptable**: Use case rare enough to handle manually
+- **Mitigation**: Build specialized time-travel query tool if >5 requests/month
+
+### 5.3 Future Considerations
+
+**When to Revisit**:
+- Firestore costs > $500/month → migrate audit logs to BigQuery
+- Offline mobile apps become priority → implement offline queue
+- Real-time collaboration needed → add WebSocket/SSE event stream
+- Team grows beyond 8 developers → split into microservices
+
+**What Would Trigger Redesign**:
+- SOC2 audit failure (immutability violated, timestamps manipulated)
+- Data corruption from race conditions (transaction logic broken)
+- Customer demand for offline support (>25% of customers request mobile app)
+
+---
+
+## 6. References
+
+**Related Architecture**:
+- [Data Model](./data-model.md) - Collection schemas, multi-tenant isolation
+- [Security](./security.md) - Authorization model, SOC2 controls
+- [Multi-Tenant Architecture](./multi-tenant.md) - Namespace isolation
+- [Authentication](./authentication.md) - Passcode auth, actor attribution
+
+**SOC2 Compliance**:
+- [SOC2 Audit & Logging](../soc2-compliance/audit-and-logging.md) - Compliance requirements
+
+**Decisions**:
+- [decisions.md](../decisions.md) - Decision history and alternatives
+
+**Runbooks**:
+- [Firebase Functions Deployment](../runbooks/firebase-functions-deploy.md)
+- [Running Firebase Integration Tests](../runbooks/running-firebase-integration-tests.md)
+- [Firebase Manual Setup](../runbooks/firebase-manual-setup.md)
+
+## 7. Decision History
+
+This architecture was established through 4 key decisions made between 2024-12 and 2025-01-15:
+
+- Event Sourcing Over CRUD (SOC2 requirement)
+- HTTP Functions Over Triggers (validation before write)
+- Transaction-Based Idempotency (atomic duplicate detection)
+- HTTP 409 for Duplicates (semantic correctness)
+
+For complete decision rationale, alternatives considered, and trade-off analysis, see [decisions.md](../decisions.md).

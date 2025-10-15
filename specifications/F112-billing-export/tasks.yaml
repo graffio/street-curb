@@ -1,7 +1,9 @@
 current_task: "task_1_1_stripe_configuration"
 status: "pending"
 
-# Reference: See docs/architecture/billing-integration.md for detailed billing patterns and Stripe integration
+# References:
+# - docs/architecture/billing-integration.md - Billing architecture, component connections, design decisions
+# - background.md (this directory) - Implementation patterns and code examples for all tasks
 
 tasks:
   - id: "task_1_1_stripe_configuration"
@@ -11,10 +13,11 @@ tasks:
     dependencies: []
     estimated_hours: 4
     implementation: |
-        - Create `modules/curb-map/functions/src/billing/stripe.js` using patterns from "Stripe Integration" section in docs/architecture/billing-integration.md.
-        - Implement Stripe customer creation and management functions per architecture patterns.
-        - Add Stripe configuration and environment setup.
-        - Integrate with event sourcing system for billing event logging per F108 patterns.
+        - Create `modules/curb-map/functions/src/billing/stripe.js` using patterns from "Stripe Integration Patterns" section in background.md.
+        - Implement customer creation pattern (createStripeCustomer) and subscription management pattern (createAnnualSubscription).
+        - Add Stripe configuration and environment setup (API keys, webhook secrets).
+        - Integrate with event sourcing system for billing event logging (StripeCustomerCreated, SubscriptionCreated).
+        - See docs/architecture/billing-integration.md for architecture context and component connections.
     validation:
       - "Stripe customer creation works correctly"
       - "Customer management functions operate properly"
@@ -30,10 +33,11 @@ tasks:
       - "task_1_1_stripe_configuration"
     estimated_hours: 6
     implementation: |
-        - Implement subscription management per "Subscription Management" section in docs/architecture/billing-integration.md.
-        - Add payment processing and subscription lifecycle management.
-        - Implement annual billing cycles and renewal handling.
-        - Add subscription status tracking and updates.
+        - Implement subscription management pattern from background.md (createAnnualSubscription, getStripePriceId).
+        - Add payment processing and subscription lifecycle management (active → suspended → cancelled).
+        - Implement annual billing cycles and renewal handling (update organization.nextBillingDate).
+        - Add subscription status tracking and updates (organization.subscriptionStatus).
+        - See docs/architecture/billing-integration.md section 3.3 for subscription lifecycle state diagram.
     validation:
       - "Subscription creation and management works"
       - "Payment processing functions correctly"
@@ -49,10 +53,11 @@ tasks:
       - "task_1_2_subscription_management"
     estimated_hours: 4
     implementation: |
-        - Implement webhook handling per "Webhook Processing" section in docs/architecture/billing-integration.md.
-        - Add Stripe webhook signature verification and event processing.
-        - Implement webhook event handlers for subscription events.
-        - Add webhook retry logic and error handling.
+        - Implement webhook patterns from background.md (handleStripeWebhook, processStripeWebhook, handlePaymentSucceeded).
+        - Add Stripe webhook signature verification (stripe.webhooks.constructEvent with req.rawBody).
+        - Implement event routing to handlers (invoice.payment_succeeded, invoice.payment_failed, subscription.updated/deleted).
+        - Add webhook retry logic (return 200 immediately, let Stripe retry on errors).
+        - See docs/architecture/billing-integration.md section 3.5 for webhook processing flow diagram.
     validation:
       - "Webhook signature verification works"
       - "Event processing handles all subscription events"
@@ -68,10 +73,11 @@ tasks:
       - "task_1_3_webhook_handling"
     estimated_hours: 5
     implementation: |
-        - Create `modules/curb-map/functions/src/export/exportService.js` using patterns from "Data Export Service" section in docs/architecture/billing-integration.md.
-        - Implement export service with format detection and processing.
-        - Add export job management and status tracking.
-        - Integrate with multi-tenant data model per F110 patterns.
+        - Create `modules/curb-map/functions/src/export/export-service.js` using multi-format export pattern from background.md.
+        - Implement exportData function with format routing (JSON, CSV, CDS, incremental).
+        - Add export event logging (ExportRequested, ExportCompleted, ExportFailed) for audit trail.
+        - Integrate with multi-tenant data model (all queries scoped by organizationId).
+        - See docs/architecture/billing-integration.md section 3.4 for data export architecture diagram.
     validation:
       - "Export service processes data correctly"
       - "Format detection works for all supported formats"
@@ -87,10 +93,12 @@ tasks:
       - "task_2_1_export_service"
     estimated_hours: 6
     implementation: |
-        - Implement export formats per "Export Format Support" section in docs/architecture/billing-integration.md.
-        - Add JSON, CSV, and CDS format processors.
-        - Implement format-specific data transformation and validation.
-        - Add format metadata and file naming conventions.
+        - Implement format-specific exporters from background.md (exportAsJSON, exportAsCSV, exportAsCDS, exportIncremental).
+        - Create JSON exporter (nested structure: organization → projects → surveys).
+        - Create CSV exporter (flat tabular structure with proper escaping for quotes/commas/newlines).
+        - Create CDS exporter (Microsoft Common Data Service schema with entities, attributes, relationships).
+        - Create incremental exporter (delta exports based on updatedAt timestamp).
+        - See docs/architecture/billing-integration.md section 3.4 for format descriptions and use cases.
     validation:
       - "All export formats generate correct output"
       - "Data transformation works for each format"
@@ -106,10 +114,11 @@ tasks:
       - "task_2_2_export_formats"
     estimated_hours: 4
     implementation: |
-        - Implement export scheduling per "Export Scheduling" patterns in docs/architecture/billing-integration.md.
-        - Add scheduled export jobs and cron-based processing.
-        - Implement on-demand export triggers and processing.
-        - Add export job queuing and priority management.
+        - Implement export scheduling using Cloud Scheduler + HTTP Cloud Functions.
+        - Add scheduled export jobs (cron-based processing: daily, weekly, monthly).
+        - Implement on-demand export triggers (user-initiated via API).
+        - Add export job tracking (exportId generation, status tracking).
+        - See docs/architecture/billing-integration.md section 2.1 for export requirements (scheduled vs on-demand).
     validation:
       - "Scheduled exports run on correct schedule"
       - "On-demand exports process immediately"
@@ -125,10 +134,11 @@ tasks:
       - "task_2_3_export_scheduling"
     estimated_hours: 5
     implementation: |
-        - Implement usage tracking per "Usage Tracking" section in docs/architecture/billing-integration.md.
-        - Add usage metrics collection and aggregation.
-        - Implement usage event tracking and storage.
-        - Add usage data validation and cleanup processes.
+        - Implement usage tracking patterns from background.md (trackUsage, aggregateUsage).
+        - Add usage metrics collection (api_calls, data_storage, active_users, feature_usage).
+        - Implement UsageTracked event logging (decouple tracking from aggregation).
+        - Add usage aggregation by metric type and date range (query completedActions for UsageTracked events).
+        - See docs/architecture/billing-integration.md section 2.1 for usage tracking requirements.
     validation:
       - "Usage metrics are collected accurately"
       - "Usage aggregation works correctly"
@@ -144,10 +154,11 @@ tasks:
       - "task_3_1_usage_tracking"
     estimated_hours: 6
     implementation: |
-        - Implement reporting service per "Usage Reporting" section in docs/architecture/billing-integration.md.
-        - Add usage analytics and reporting generation.
-        - Implement report scheduling and delivery.
-        - Add report caching and performance optimization.
+        - Create `modules/curb-map/functions/src/usage/reporting-service.js` for usage analytics.
+        - Implement usage report generation (aggregate usage metrics by organization and period).
+        - Add report scheduling and delivery (email/dashboard).
+        - Add report caching for performance (cache aggregated results, invalidate on new UsageTracked events).
+        - See docs/architecture/billing-integration.md for usage analytics requirements.
     validation:
       - "Usage analytics generate accurate reports"
       - "Report scheduling and delivery work"
@@ -163,10 +174,11 @@ tasks:
       - "task_3_2_reporting_service"
     estimated_hours: 5
     implementation: |
-        - Implement usage dashboard per "Usage Dashboard" patterns in docs/architecture/billing-integration.md.
-        - Create dashboard UI components for usage visualization.
-        - Add real-time usage updates and notifications.
-        - Implement dashboard customization and preferences.
+        - Create usage dashboard UI components (charts, metrics cards, trend graphs).
+        - Add real-time usage updates (poll reporting service API, display current metrics).
+        - Implement dashboard customization (metric selection, date ranges, chart types).
+        - Add usage alerts and notifications (threshold-based alerts for quota warnings).
+        - See docs/architecture/billing-integration.md for usage dashboard requirements.
     validation:
       - "Usage dashboard displays data correctly"
       - "Real-time updates work properly"
@@ -182,10 +194,12 @@ tasks:
       - "task_3_3_usage_dashboard"
     estimated_hours: 6
     implementation: |
-        - Implement invoice service per "Invoice Generation" section in docs/architecture/billing-integration.md.
-        - Add invoice generation logic and template processing.
-        - Implement invoice data collection and validation.
-        - Add invoice numbering and reference management.
+        - Implement invoice generation pattern from background.md (generateInvoice).
+        - Add invoice data collection (organization subscription + usage metrics aggregation).
+        - Implement line items for subscription and usage charges.
+        - Log InvoiceGenerated event for audit trail.
+        - Add invoice numbering and reference management (sequential invoice numbers per organization).
+        - See docs/architecture/billing-integration.md for invoice generation requirements.
     validation:
       - "Invoice generation creates accurate invoices"
       - "Template processing works correctly"
@@ -201,10 +215,11 @@ tasks:
       - "task_4_1_invoice_service"
     estimated_hours: 4
     implementation: |
-        - Implement invoice templates per "Invoice Templates" patterns in docs/architecture/billing-integration.md.
-        - Create invoice template system with variable substitution.
-        - Add template customization and branding options.
-        - Implement template validation and error handling.
+        - Create invoice template system (HTML/PDF templates with variable substitution).
+        - Implement template rendering (organization name, invoice number, line items, totals).
+        - Add template customization and branding options (organization logo, custom colors).
+        - Implement template validation and error handling (missing variables, invalid formats).
+        - Support PDF generation (using libraries like puppeteer or pdfkit).
     validation:
       - "Invoice templates render correctly"
       - "Variable substitution works properly"
@@ -220,10 +235,11 @@ tasks:
       - "task_4_2_invoice_templates"
     estimated_hours: 4
     implementation: |
-        - Implement invoice delivery per "Invoice Delivery" section in docs/architecture/billing-integration.md.
-        - Add email delivery system for invoices.
-        - Implement invoice notification and reminder system.
-        - Add delivery tracking and status management.
+        - Implement email delivery system for invoices (SendGrid or Firebase Extensions for email).
+        - Add invoice notification emails (invoice ready, payment reminder, payment overdue).
+        - Implement delivery tracking and status management (sent, opened, clicked, failed).
+        - Add invoice download links (Cloud Storage URLs with expiration).
+        - Log invoice delivery events for audit trail.
     validation:
       - "Invoice email delivery works correctly"
       - "Notification and reminder system functions"
@@ -239,10 +255,11 @@ tasks:
       - "task_4_3_invoice_delivery"
     estimated_hours: 5
     implementation: |
-        - Implement billing API per "Billing API" section in docs/architecture/billing-integration.md.
-        - Add billing endpoint creation and routing.
-        - Implement API authentication and authorization per F110.5 patterns.
-        - Add API rate limiting and security measures.
+        - Create HTTP Cloud Functions for billing API endpoints (GET /billing/subscription, POST /billing/subscription/update).
+        - Implement API authentication and authorization (Firebase Auth token validation, permission checking).
+        - Add organization-scoped endpoints (verify user has access to organizationId in request).
+        - Add API rate limiting and security measures (Cloud Armor, API quotas).
+        - See docs/architecture/billing-integration.md section 4 for API patterns.
     validation:
       - "Billing API endpoints work correctly"
       - "Authentication and authorization function"
@@ -258,10 +275,11 @@ tasks:
       - "task_5_1_billing_api"
     estimated_hours: 6
     implementation: |
-        - Implement payment processing per "Payment Processing" patterns in docs/architecture/billing-integration.md.
-        - Add payment endpoint creation and processing logic.
-        - Implement payment validation and security checks.
-        - Add payment status tracking and updates.
+        - Create payment endpoints (POST /billing/payment-method, POST /billing/retry-payment).
+        - Implement payment method management (add/update/remove payment methods via Stripe API).
+        - Add payment validation and security checks (PCI compliance - use Stripe Elements, no card data stored).
+        - Implement payment status tracking and updates (update organization.subscriptionStatus on payment success/failure).
+        - See docs/architecture/billing-integration.md section 3.1 for payment flows.
     validation:
       - "Payment processing endpoints work correctly"
       - "Payment validation and security checks function"
@@ -277,10 +295,11 @@ tasks:
       - "task_5_2_payment_processing"
     estimated_hours: 4
     implementation: |
-        - Implement billing webhooks per "Billing Webhooks" section in docs/architecture/billing-integration.md.
-        - Add webhook endpoint creation and event handling.
-        - Implement webhook security and signature verification.
-        - Add webhook event processing and routing.
+        - Expose Stripe webhook HTTP function (POST /stripeWebhook) already implemented in task_1_3.
+        - Configure webhook endpoint in Stripe dashboard (point to Cloud Function URL).
+        - Verify webhook signature verification is working (test with Stripe CLI).
+        - Add webhook monitoring and alerting (log webhook failures, alert on retry exhaustion).
+        - See docs/architecture/billing-integration.md section 3.5 for webhook processing pattern.
     validation:
       - "Billing webhook endpoints work correctly"
       - "Webhook security and signature verification function"
@@ -296,11 +315,13 @@ tasks:
       - "task_5_3_billing_webhooks"
     estimated_hours: 6
     implementation: |
-        - Build TAP harness following "Billing Testing" patterns in docs/architecture/billing-integration.md.
-        - Create test harnesses: billing-workflow.integration.tap.js and billing-workflow.load.sh (to be created).
-        - Test complete workflow: subscription → usage tracking → invoice generation → payment processing.
-        - Add load testing for billing scenarios per "Performance Testing" guidance.
-        - Document manual validation steps in `docs/runbooks/billing-integration.md`.
+        - Create integration test harness: modules/curb-map/test/billing-workflow.integration.firebase.js.
+        - Test complete workflow: organization creation → subscription creation → payment webhook → status update → usage tracking → invoice generation.
+        - Test webhook processing with Stripe test mode (trigger test webhooks, verify organization updates).
+        - Test export formats (JSON, CSV, CDS, incremental) with organization scoping verification.
+        - Add load testing script: modules/curb-map/test/billing-workflow.load.sh (concurrent webhook processing).
+        - Document manual validation steps in docs/runbooks/billing-integration.md (to be created).
+        - See docs/architecture/billing-integration.md section 4.4 for testing approach.
     validation:
       - "End-to-end billing workflow works correctly"
       - "Usage tracking and invoice generation function properly"
@@ -317,10 +338,14 @@ tasks:
       - "task_6_1_integration_testing"
     estimated_hours: 4
     implementation: |
-        - Test billing scenarios per "Billing Edge Cases" patterns in docs/architecture/billing-integration.md.
-        - Create test scenarios for payment failures, subscription cancellations, and refunds.
-        - Test billing data consistency and audit trail integrity.
-        - Validate billing compliance and security requirements.
+        - Create edge case test suite: modules/curb-map/test/billing-edge-cases.firebase.js.
+        - Test payment failure scenarios (insufficient funds, expired card, declined payment).
+        - Test subscription cancellations and reactivations (status transitions: active → suspended → active).
+        - Test webhook retry logic (simulated failures, verify exponential backoff).
+        - Test duplicate webhook processing (verify idempotency using webhook event ID).
+        - Test billing data consistency and audit trail integrity (verify all billing events logged to completedActions).
+        - Validate billing compliance requirements (SOC2 audit trail, PCI compliance - no card data stored).
+        - See docs/architecture/billing-integration.md section 5 for edge case scenarios.
     validation:
       - "Billing edge cases are handled correctly"
       - "Billing data consistency is maintained"
