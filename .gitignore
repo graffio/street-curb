@@ -18,7 +18,9 @@ playwright-report
 test-results
 
 # Claude Code settings
-.claude
+.claude/settings.local.json
+.claude/developer-output.md
+.claude/agent-context/
 
 # don't save files generated in testing type-generation
 modules/cli-type-generator/test/generated/*
