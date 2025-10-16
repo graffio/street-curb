@@ -197,7 +197,7 @@ tasks:
           * Delete user document (GDPR/CCPA)
           * Reason logged in completedActions
 
-        - handleRoleAssigned(actionRequest)
+        - handleRoleAssigned(actionRequest
           * Update organizations[orgId] = role
 
         Validation:

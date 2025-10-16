@@ -106,16 +106,11 @@ Execute this workflow initialization:
    updated_at: "2024-01-15T10:00:00Z"
    agent_outputs: {}
    ```
-9. **Read agent definition**: Read `.claude/agents/tech-lead.md` to understand:
-   - Agent's core responsibilities
-   - Expected workflow process
-   - Output requirements and format
-10. **Create task context file**: Write `specifications/{spec_folder}/agent-context/{task_id}/task-context.md` with task details
-11. **Invoke tech-lead agent**: `Task(description="Review task for architecture alignment and overengineering", subagent_type="tech-lead")`
-    - Agent reads task-context.md
-    - Agent writes tech-lead-review.md
-12. **Update status.yaml** with `current_agent: "tech-lead-review"` and `waiting_for: "human-approval"`
-13. **Present results** to user as 5-15 bullet points summarizing tech-lead findings
+9. **Present summary** to user:
+   - "Workflow initialized for {spec_folder}/{task_id}"
+   - "Ready to start with tech-lead review"
+   - "Use `/workflow approve {spec_folder}/{task_id}` to begin"
+10. **STOP and wait for human approval**
 
 ### `/workflow approve [spec_folder]/[task_id]`
 Execute this approval:
@@ -123,13 +118,16 @@ Execute this approval:
 1. **Find task context directory** using `specifications/{spec_folder}/agent-context/{task_id}/`
 2. **Read status.yaml**: If file doesn't exist, stop and report error
 3. **Check if waiting for human approval**: If not, stop and report "No pending approval"
-4. **Mark current agent as completed**: Add current_agent to `completed_agents` array
-5. **Determine next agent** from workflow sequence
-6. **Update status.yaml** with new state (current_agent = next_agent, updated_at with current ISO 8601 UTC timestamp)
-7. **Read next agent definition**: Read `.claude/agents/{next_agent}.md` to understand agent requirements
-8. **Invoke next agent**: Use `Task(description="...", subagent_type="{next_agent}")` with appropriate description
-9. **Update status.yaml** with `waiting_for: "human-approval"`
-10. **Present results** to user as 5-15 bullet points summarizing agent output
+4. **Read current agent definition**: Read `.claude/agents/{current_agent}.md` to understand agent requirements (note: agent name comes from removing "-review"/"-plan"/"-validate"/"-implement"/"-verify" suffix from current_agent state)
+5. **Invoke agent**: Use `Task(description="...", subagent_type="{agent_name}")` with appropriate description based on current_agent state
+6. **Wait for agent completion**: Agent writes its output file
+7. **Update status.yaml**:
+   - Add current_agent to `completed_agents` array
+   - Add output file to `agent_outputs` mapping
+   - Update `updated_at` timestamp
+   - Keep `waiting_for: "human-approval"`
+8. **Present results** to user as 5-15 bullet points summarizing agent output
+9. **Prompt for next action**: "Use `/workflow approve` to continue or `/workflow reject` to provide feedback"
 
 ### `/workflow reject [spec_folder]/[task_id]`
 Execute this rejection:
@@ -163,7 +161,6 @@ Execute this status check:
 ```
 specifications/{spec_folder}/agent-context/{task_id}/
 ├── status.yaml                    # Workflow state tracking
-├── task-context.md               # Current task details
 ├── tech-lead-review.md           # Architecture review output
 ├── writer-update.md              # Documentation updates
 ├── test-plan.md                  # Test plan from tester
@@ -176,34 +173,7 @@ specifications/{spec_folder}/agent-context/{task_id}/
 
 **Directory Naming**: Use underscores matching task IDs (e.g., `task_4_user_handlers/` not `task-4/`)
 
-### Task Context File Format
-```markdown
-# Task Context: {task_id}
-
-## Task Details
-- **ID**: {task_id}
-- **Description**: {description}
-- **Phase**: {phase}
-- **Dependencies**: {dependencies}
-- **Estimated Hours**: {estimated_hours}
-
-## Implementation Requirements
-{implementation}
-
-## Validation Criteria
-{validation}
-
-## Test Requirements
-{tests}
-
-## Previous Agent Outputs
-- tech-lead-review.md: Architecture review results
-- test-plan.md: Test plan from tester
-- plan-validation.md: Test plan validation
-- user-handlers.tap.js: TAP test files
-- implementation-summary.md: Developer implementation
-- code-review.md: Code review results
-```
+**Note**: Agents read task details directly from `specifications/{spec_folder}/tasks.yaml` - no separate task-context.md file is created.
 
 ### Agent File Format
 ```yaml
@@ -243,16 +213,15 @@ You are a senior Infrastructure Architect and Tech Lead specializing in strategi
 ### How Agents Are Invoked
 Agents are invoked using the Claude Code subagent system:
 
-1. **Create task context file**: `specifications/{spec_folder}/agent-context/{task_id}/task-context.md`
-2. **Invoke agent**: `Task(description="[specific task description]", subagent_type="[agent-name]")`
-3. **Agent execution**: Agent runs in its own context window
-4. **File access**: Agent reads input files and writes output files
-5. **Status update**: Update status.yaml with results
+1. **Invoke agent**: `Task(description="[specific task description]", subagent_type="[agent-name]")`
+2. **Agent execution**: Agent runs in its own context window
+3. **File access**: Agent reads input files and writes output files
+4. **Status update**: Update status.yaml with results
 
 ### Context Passing
 Input context is passed via file system:
 
-- **Agent reads**: Input files from task context directory
+- **Agent reads**: Task details from `specifications/{spec_folder}/tasks.yaml` and previous agent outputs from task context directory
 - **Agent writes**: Output files to task context directory
 - **Status tracking**: status.yaml tracks which files are available for each agent
 - **File naming**: Each agent has specific input/output file names
@@ -321,6 +290,96 @@ Input context is passed via file system:
 - **Invocation**: `Task(description="Verify integration and end-to-end functionality", subagent_type="integrator")`
 - **Next States**: `complete`
 
+## Agent Output Format Guidelines
+
+### General Philosophy
+
+**Be concise by default.** Agents should produce lean, actionable output for straightforward work. Use verbose formats only when raising concerns or explaining complex decisions.
+
+### Tech-Lead Review Format
+
+**Lean Format** (default for approvals and proven patterns):
+
+```markdown
+# Tech Lead Review: {task_id}
+
+**Status**: APPROVED | APPROVED WITH RECOMMENDATIONS | REJECTED
+**Risk**: LOW | MEDIUM | HIGH
+**Estimate**: X-Y hours
+**Reference**: [proven pattern reference if applicable]
+
+## Architecture Alignment
+
+✓ **Event Sourcing** - follows proven pattern from task_X
+✓ **Data Model** - flat collection with appropriate fields
+✓ **Security** - server-only writes, proper validation
+✓ **No Overengineering** - appropriately scoped
+
+## Issues Found
+
+### 1. Issue Title (REQUIRED | RECOMMENDED | OPTIONAL)
+Brief description (2-3 sentences)
+Code example if needed (keep under 20 lines)
+
+### 2. Another Issue (if any)
+...
+
+## Pre-Implementation Checklist
+- [ ] Action items before starting
+
+## Implementation
+- [ ] Core implementation steps
+
+## Testing
+- [ ] Test requirements
+
+**Next Step**: Brief next action
+```
+
+**Target**: ~100 lines for straightforward approvals
+
+**Verbose Format** (exception - only for concerns):
+- Use when: Major architectural concerns, breaking changes, complex tradeoffs, first task in new pattern
+- Include: Detailed analysis, alternatives, comprehensive rationale, supporting evidence
+- Target: As long as needed to explain concerns
+
+### Tester Plan Format
+
+**Lean bullet-point format**:
+
+```markdown
+# Test Plan: {task_id}
+
+## Test Categories
+
+### Category 1: Handler Tests
+- Test case 1 description
+- Test case 2 description
+- Test case 3 description
+
+### Category 2: Integration Tests
+- Test case description
+- ...
+
+### Category 3: Edge Cases
+- Test case description
+- ...
+
+## Test Data Requirements
+- Data setup needed
+
+## Expected Outcomes
+- What should pass/fail
+```
+
+**Target**: 30-50 lines for straightforward handlers
+
+### Other Agent Formats
+
+**Reviewer**: Focus on actual issues found, not on praising good code
+**Integrator**: List integration points checked, flag issues only
+**Developer**: Brief summary of what was implemented, link to files
+
 ## Error Recovery
 
 ### Agent Failure Handling
@@ -382,77 +441,30 @@ If agent file doesn't exist:
 /workflow start F110-giant-function/task_4_user_handlers
 
 1. Parse: spec_folder="F110-giant-function", task_id="task_4_user_handlers"
-2. Validate: specifications/F110-giant-function/ exists
-3. Validate: specifications/F110-giant-function/tasks.yaml contains task_4_user_handlers
-4. Check: No existing workflow at specifications/F110-giant-function/agent-context/task_4_user_handlers/
+2. Validate: specifications/F110-giant-function/ exists ✓
+3. Validate: specifications/F110-giant-function/tasks.yaml contains task_4_user_handlers ✓
+4. Check: No existing workflow at specifications/F110-giant-function/agent-context/task_4_user_handlers/ ✓
 5. Check: Dependencies task_3_transaction_infrastructure has status="completed" ✓
 6. Create: specifications/F110-giant-function/agent-context/task_4_user_handlers/
-7. Read: specifications/F110-giant-function/tasks.yaml
+7. Read: specifications/F110-giant-function/tasks.yaml for task details
 8. Initialize: status.yaml with current_agent="tech-lead-review", ISO 8601 timestamps
-9. Read: .claude/agents/tech-lead.md to understand agent requirements
-10. Create: task-context.md with task details
-11. Invoke: Task(description="Review task for architecture alignment and overengineering", subagent_type="tech-lead")
-12. Agent reads: task-context.md
-13. Agent writes: tech-lead-review.md
-14. Update: status.yaml with waiting_for="human-approval"
-15. Present: 5-15 bullet points summarizing tech-lead findings
+9. Present: "Workflow initialized. Ready for tech-lead review. Use `/workflow approve` to begin."
+10. STOP and wait
 
-Human: /workflow approve
+H: /workflow approve F110-giant-function/task_4_user_handlers
 
 1. Find: specifications/F110-giant-function/agent-context/task_4_user_handlers/
 2. Read: status.yaml
-3. Check: waiting_fclaude="human-approval" ✓
-4. Mark completed: completed_agents=["tech-lead-review"]
-5. Determine next: next_agent="tester-plan"
-6. Update: status.yaml with current_agent="tester-plan", updated ISO 8601 timestamp
-7. Read: .claude/agents/tester.md to understand agent requirements
-8. Invoke: Task(description="Create test plan for the task", subagent_type="tester")
-9. Agent reads: task-context.md
-10. Agent writes: test-plan.md
-11. Update: status.yaml with waiting_for="human-approval"
-12. Present: 5-15 bullet points summarizing test plan
+3. Check: waiting_for="human-approval" ✓
+4. Read: .claude/agents/tech-lead.md
+5. Invoke: Task(description="Review task_4_user_handlers for architecture alignment", subagent_type="tech-lead")
+6. Agent reads: specifications/F110-giant-function/tasks.yaml (task_4_user_handlers)
+7. Agent writes: tech-lead-review.md
+8. Update: status.yaml (completed_agents=["tech-lead-review"], agent_outputs, updated_at)
+9. Present: 5-15 bullet points summarizing tech-lead findings
+10. Prompt: "Use `/workflow approve` to continue or `/workflow reject` to provide feedback"
 
-Human: /workflow approve
-... (continues through all agents)
-```
-
-## Example Workflow Runs
-
-### Example 1: Successful Workflow
-```
-/workflow start F110-giant-function/task_4_user_handlers
-→ Tech Lead reviews task, finds no issues
-→ Human: /workflow approve
-→ Workflow automatically proceeds to tester-plan
-→ Tester creates test plan
-→ Human: /workflow approve
-→ Workflow automatically proceeds to tech-lead-validate
-→ Tech Lead validates test plan
-→ Human: /workflow approve
-→ Workflow automatically proceeds to tester-implement
-→ Tester implements TAP tests
-→ Human: /workflow approve
-→ Workflow automatically proceeds to developer-implement
-→ Developer implements task
-→ Human: /workflow approve
-→ Workflow automatically proceeds to reviewer-review
-→ Reviewer reviews code
-→ Human: /workflow approve
-→ Workflow automatically proceeds to integrator-verify
-→ Integrator verifies integration
-→ Human: /workflow approve
-→ Workflow complete
-```
-
-### Example 2: Rejection and Feedback
-```
-/workflow start F110-giant-function/task_4_user_handlers
-→ Tech Lead reviews task, finds overengineering
-→ Human: /workflow reject
-→ Human provides feedback: "Simplify the role management approach"
-→ Tech Lead re-reviews with feedback
-→ Human: /workflow approve
-→ Workflow continues...
+... (continues for each agent in sequence)
 ```
 
 ## General Error Handling Policy

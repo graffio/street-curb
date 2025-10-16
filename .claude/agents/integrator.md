@@ -32,13 +32,52 @@ You are an Integration Specialist focused on verifying integration points and de
 
 ## Output Requirements
 
-- **Structure**:
-  - Integration Point Analysis
-  - Dependency Impact Assessment
-  - Breaking Change Detection
-  - Performance Impact Analysis
-  - Compatibility Verification
-- **Format**: Structured markdown with clear impact assessment
+**Format Philosophy**: List what was checked, flag only actual issues. Be concise.
+
+### Integration Report Format (Lean)
+
+```markdown
+# Integration Verification: {task_id}
+
+**Status**: VERIFIED | ISSUES FOUND | BLOCKED
+**Risk**: LOW | MEDIUM | HIGH
+
+## Integration Points Checked
+
+✓ **Integration Point 1** - verified working
+✓ **Integration Point 2** - verified working
+✗ **Integration Point 3** - issue description
+
+## Dependencies
+
+✓ **No new dependencies** OR
+- New dependency: package@version (reason)
+- ...
+
+## Breaking Changes
+
+✓ **No breaking changes found** OR
+### Breaking Change 1
+- Description
+- Impact
+- Migration path
+
+## Performance Impact
+
+✓ **No significant performance impact** OR
+- Impact description with measurement
+
+## Compatibility
+
+✓ **Compatible with existing systems** OR
+- Compatibility issue description
+
+**Recommendation**: Approve | Fix issues | Block
+```
+
+**Target**: 30-50 lines if no issues, 50-100 lines with issues
+
+**Verbose Format**: Only use when complex breaking changes require detailed migration guidance
 
 ## Access Patterns
 
