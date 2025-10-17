@@ -169,11 +169,105 @@ tasks:
       - "modules/curb-map/test/organization-handlers-http.firebase.js"
       - "modules/curb-map/test/minimal-http-function.firebase.js"
 
-  - id: "task_4_user_handlers"
-    description: "Implement user event handlers with role management"
+  - id: "task_3_5_organization_members"
+    description: "Add organization members map to data model"
     status: "pending"
     phase: "Domain Model"
     dependencies: ["task_3_transaction_infrastructure"]
+    estimated_hours: 2
+    implementation: |
+        Update data model to support organization member visibility and audit trail with soft delete:
+
+        Type Definitions:
+        - Update `organization.type.js`: Add `members` field as Object (map of userId → member data)
+          ```
+          members: {
+            "usr_alice": {
+              displayName: "Alice Chen",
+              role: "admin",
+              addedAt: serverTimestamp(),
+              addedBy: "usr_admin",
+              removedAt: null,  // null = active, timestamp = soft deleted
+              removedBy: null   // null if active, userId if removed
+            }
+          }
+          ```
+
+        - Update `action.type.js`: Rename actions for clearer semantics
+          * Rename `UserDeleted` → `MemberRemoved` (removes user from org, doesn't delete user)
+          * Rename `RoleAssigned` → `RoleChanged` (changes existing role)
+          * Add `MemberAdded` (adds existing user to another org)
+
+        - Run type generator to regenerate `src/types/*.js`
+
+        Handler Implementation Details:
+
+        **handleMemberAdded(actionRequest)**:
+        - Read organization to check if member exists
+        - Validate:
+          * If member exists with removedAt === null → REJECT (member already active)
+          * If member exists with removedAt !== null → re-activation case
+        - If existing member (was removed):
+          * Update org.members[userId]: clear removedAt/removedBy, update role/displayName, new addedAt/addedBy
+          * Update user.organizations[orgId] = role
+        - If new member:
+          * Create org.members[userId] with displayName, role, addedAt, addedBy, removedAt=null, removedBy=null
+          * Update user.organizations[orgId] = role
+
+        **handleMemberRemoved(actionRequest)**:
+        - Validate:
+          * If member doesn't exist → REJECT (cannot remove non-existent member)
+          * If member already removed (removedAt !== null) → REJECT (already removed)
+        - Set org.members[userId].removedAt = serverTimestamp() (soft delete)
+        - Set org.members[userId].removedBy = actionRequest.actorId
+        - Remove user.organizations[orgId] (dual write)
+        - User document stays intact (may be in other orgs)
+
+        **handleRoleChanged(actionRequest)**:
+        - Validate:
+          * If member doesn't exist → REJECT (cannot change role of non-existent member)
+          * If member removed (removedAt !== null) → REJECT (must re-add member first)
+        - Update org.members[userId].role = newRole
+        - Update user.organizations[orgId] = newRole (dual write)
+
+        **handleUserForgotten(actionRequest)** (GDPR):
+        - Read user document to get all organizations: user.organizations = {"org_sf": "admin", "org_la": "member"}
+        - For each orgId in user.organizations:
+          * Set organizations[orgId].members[userId].removedAt = serverTimestamp()
+          * Set organizations[orgId].members[userId].removedBy = actionRequest.actorId
+        - Delete user document completely
+        - Note: Uses eventual consistency for multi-org updates (transaction scope per org)
+
+        **Orphaned Users**:
+        - If user.organizations map becomes empty (all orgs removed), keep user document
+        - UI will prompt user to create/join organization
+
+        Documentation Updates:
+        - Update `docs/architecture/data-model.md`: Add members map with removedAt field
+        - Update `docs/architecture/security.md`: All members can read, only admins can manage
+        - Update `docs/decisions.md`: Add soft delete and GDPR handling
+        - Update `specifications/F110-giant-function/background.md`: Domain model section
+
+        Benefits:
+        - All org members can read member list (O(1) lookup, not query)
+        - Soft delete preserves names for UI history display ("Sam Chen edited...")
+        - GDPR compliant: UserForgotten deletes user doc but preserves org.members entries
+        - Fits municipal scale (50-500 members, well under 1MB Firestore limit)
+
+    validation:
+      - "Organization type includes members map field"
+      - "Action types renamed for correct semantics"
+      - "MemberAdded action type defined"
+      - "Documentation updated with members map"
+      - "Type generator produces updated types"
+    tests:
+      - "modules/curb-map/test/organization-type.tap.js"
+
+  - id: "task_4_user_handlers"
+    description: "Implement user and member event handlers"
+    status: "pending"
+    phase: "Domain Model"
+    dependencies: ["task_3_5_organization_members"]
     estimated_hours: 3
     implementation: |
         Create `modules/curb-map/functions/src/events/user-handlers.js`:
@@ -197,7 +291,7 @@ tasks:
           * Delete user document (GDPR/CCPA)
           * Reason logged in completedActions
 
-        - handleRoleAssigned(actionRequest)
+        - handleRoleAssigned(actionRequest
           * Update organizations[orgId] = role
 
         Validation:
