@@ -29,12 +29,16 @@ Agent State → Human Decision → Next State
 **Human Decisions:**
 - `approve` → Move forward to next agent
 - `reject` → Stay in current state, retry with feedback
+- `fix` → Apply fixes via developer, re-run current reviewer
 
 **Agent Sequence:**
 1. `tech-lead-review` → human → (approve) → `tester-plan` → human → (approve) → `tech-lead-validate` → human → (approve) → `tester-implement` → human → (approve) → `developer-implement` → human → (approve) → `reviewer-review` → human → (approve) → `integrator-verify` → human → (approve) → `complete`
 
 **With Document Changes:**
 - `tech-lead-review` → human → (approve) → `writer-update` → human → (approve) → `tech-lead-review` (cycle)
+
+**With Review Fixes:**
+- `reviewer-review` → human → (approve review) → (fix) → `developer-fix` → `reviewer-review` (verify) → human → (approve) → `integrator-verify`
 
 ## File Formats
 
@@ -119,7 +123,11 @@ Execute this approval:
 2. **Read status.yaml**: If file doesn't exist, stop and report error
 3. **Check if waiting for human approval**: If not, stop and report "No pending approval"
 4. **Read current agent definition**: Read `.claude/agents/{current_agent}.md` to understand agent requirements (note: agent name comes from removing "-review"/"-plan"/"-validate"/"-implement"/"-verify" suffix from current_agent state)
-5. **Invoke agent**: Use `Task(description="...", subagent_type="{agent_name}")` with appropriate description based on current_agent state
+5. **Invoke agent**: Use `Task(description="...", subagent_type="{agent_name}")` with prompt structured as:
+   - **Line 1**: Brief task description (what to verify/review/implement)
+   - **Line 2**: Explicit length limit from agent definition (e.g., "Output 10-15 lines maximum.")
+   - **Line 3**: Format requirements (e.g., "Skip preamble. Write only: YAML frontmatter + 2-3 bullet points on X + 1-2 bullets on Y.")
+   - **CRITICAL**: Based on Anthropic docs, repeating constraints in the prompt itself is more effective than just referencing them
 6. **Wait for agent completion**: Agent writes its output file
 7. **Update status.yaml**:
    - Add current_agent to `completed_agents` array
@@ -141,6 +149,23 @@ Execute this rejection:
 7. **Re-invoke current agent** with feedback: `Task(description="[task description] - Address feedback: {feedback}", subagent_type="{current_agent}")`
 8. **Update status.yaml** with `waiting_for: "human-approval"`
 9. **Present results** to user as 5-15 bullet points showing how feedback was addressed
+
+### `/workflow fix [spec_folder]/[task_id]`
+Execute this fix workflow (for "approved review, but need to fix things" scenario):
+
+1. **Find task context directory** using `specifications/{spec_folder}/agent-context/{task_id}/`
+2. **Read status.yaml**: If file doesn't exist, stop and report error
+3. **Check current_agent**: Must be at a review stage (reviewer-review, tech-lead-review, or tech-lead-validate)
+   - If not at review stage: Stop and report "Fix workflow only valid after a review stage"
+4. **Read review output**: Read the most recent review file (code-review.md, tech-lead-review.md, or plan-validation.md)
+5. **Invoke developer** with review feedback: `Task(description="Address feedback from {review_agent}: {summarize key points}", subagent_type="developer")`
+6. **Wait for developer completion**: Developer fixes issues and writes summary
+7. **Re-run reviewer**: Invoke the same review agent again to verify fixes
+8. **Check reviewer status**:
+   - If APPROVED: Update status.yaml to next agent in sequence
+   - If still has issues: Keep current_agent as reviewer, wait for human decision
+9. **Update status.yaml** with results
+10. **Present results**: Summary of fixes + re-review outcome
 
 ### `/workflow status [spec_folder]/[task_id]`
 Execute this status check:
@@ -432,7 +457,11 @@ If agent file doesn't exist:
 
 6. **"No pending approval"**
    - **Cause**: Trying to approve/reject when not waiting for approval
-   - **Solution**: Use `/workflow next` to proceed to next agent
+   - **Solution**: Check workflow status first
+
+7. **"Review has suggestions, need to apply fixes"**
+   - **Cause**: Reviewer approved but found suggestions/issues to fix
+   - **Solution**: Use `/workflow fix` to apply fixes and re-verify
 
 ## Implementation Example
 

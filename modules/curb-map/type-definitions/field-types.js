@@ -9,6 +9,7 @@ const FieldTypes = {
     event            : /^[a-z]+(\.[a-z]+)*\.[a-z_]+$/, // Hierarchical event type: infrastructure.shell.execute
     ipv4Type         : /^(\d{1,3}\.){3}\d{1,3}$/, // IPv4 address format
     resourceName     : /^[a-z_]+$/, // snake-case identifier
+    role             : /^(admin|member|viewer)$/, // Organization member role
     semanticVersion  : /^\d+\.\d+$/, // Semantic version format: 2.0
     timestamp        : /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/, // ISO 8601 timestamp format
     

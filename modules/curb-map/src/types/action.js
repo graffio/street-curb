@@ -4,34 +4,39 @@
  *      organizationId: FieldTypes.organizationId,
  *      projectId     : FieldTypes.projectId,
  *      name          : "String"
+ *  OrganizationDeleted
+ *      organizationId: FieldTypes.organizationId
+ *  OrganizationSuspended
+ *      organizationId: FieldTypes.organizationId
  *  OrganizationUpdated
  *      organizationId: FieldTypes.organizationId,
  *      name          : "String?",
  *      status        : "/^(active|suspended)$/?"
- *  OrganizationSuspended
+ *  MemberAdded
+ *      userId        : FieldTypes.userId,
+ *      organizationId: FieldTypes.organizationId,
+ *      displayName   : "String",
+ *      role          : FieldTypes.role
+ *  MemberRemoved
+ *      userId        : FieldTypes.userId,
  *      organizationId: FieldTypes.organizationId
- *  OrganizationDeleted
- *      organizationId: FieldTypes.organizationId
+ *  RoleChanged
+ *      userId        : FieldTypes.userId,
+ *      organizationId: FieldTypes.organizationId,
+ *      role          : FieldTypes.role
  *  UserCreated
  *      userId        : FieldTypes.userId,
  *      organizationId: FieldTypes.organizationId,
  *      email         : FieldTypes.email,
  *      displayName   : "String",
- *      role          : /^(admin|member|viewer)$/
+ *      role          : FieldTypes.role
+ *  UserForgotten
+ *      userId: FieldTypes.userId,
+ *      reason: "String"
  *  UserUpdated
  *      userId     : FieldTypes.userId,
  *      email      : "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/?",
  *      displayName: "String?"
- *  UserDeleted
- *      userId        : FieldTypes.userId,
- *      organizationId: FieldTypes.organizationId
- *  UserForgotten
- *      userId: FieldTypes.userId,
- *      reason: "String"
- *  RoleAssigned
- *      userId        : FieldTypes.userId,
- *      organizationId: FieldTypes.organizationId,
- *      role          : /^(admin|member|viewer)$/
  *
  */
 
@@ -51,14 +56,15 @@ const Action = {
         const constructor = Object.getPrototypeOf(v).constructor
         return (
             constructor === Action.OrganizationCreated ||
-            constructor === Action.OrganizationUpdated ||
-            constructor === Action.OrganizationSuspended ||
             constructor === Action.OrganizationDeleted ||
+            constructor === Action.OrganizationSuspended ||
+            constructor === Action.OrganizationUpdated ||
+            constructor === Action.MemberAdded ||
+            constructor === Action.MemberRemoved ||
+            constructor === Action.RoleChanged ||
             constructor === Action.UserCreated ||
-            constructor === Action.UserUpdated ||
-            constructor === Action.UserDeleted ||
             constructor === Action.UserForgotten ||
-            constructor === Action.RoleAssigned
+            constructor === Action.UserUpdated
         )
     },
 }
@@ -74,14 +80,15 @@ const ActionPrototype = {
         // Validate all variants are handled
         const requiredVariants = [
             'OrganizationCreated',
-            'OrganizationUpdated',
-            'OrganizationSuspended',
             'OrganizationDeleted',
+            'OrganizationSuspended',
+            'OrganizationUpdated',
+            'MemberAdded',
+            'MemberRemoved',
+            'RoleChanged',
             'UserCreated',
-            'UserUpdated',
-            'UserDeleted',
             'UserForgotten',
-            'RoleAssigned',
+            'UserUpdated',
         ]
         requiredVariants.map(variant => {
             if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
@@ -98,14 +105,15 @@ Object.defineProperty(Action, '@@typeName', { value: 'Action' })
 Object.defineProperty(Action, '@@tagNames', {
     value: [
         'OrganizationCreated',
-        'OrganizationUpdated',
-        'OrganizationSuspended',
         'OrganizationDeleted',
+        'OrganizationSuspended',
+        'OrganizationUpdated',
+        'MemberAdded',
+        'MemberRemoved',
+        'RoleChanged',
         'UserCreated',
-        'UserUpdated',
-        'UserDeleted',
         'UserForgotten',
-        'RoleAssigned',
+        'UserUpdated',
     ],
 })
 
@@ -164,6 +172,98 @@ OrganizationCreatedConstructor.from = o => Action.OrganizationCreated(o.organiza
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// Variant Action.OrganizationDeleted constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationDeletedConstructor = function OrganizationDeleted(organizationId) {
+    const constructorName = 'Action.OrganizationDeleted(organizationId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+
+    const result = Object.create(OrganizationDeletedPrototype)
+    result.organizationId = organizationId
+    return result
+}
+
+Action.OrganizationDeleted = OrganizationDeletedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant Action.OrganizationDeleted prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationDeletedPrototype = Object.create(ActionPrototype)
+Object.defineProperty(OrganizationDeletedPrototype, '@@tagName', { value: 'OrganizationDeleted' })
+Object.defineProperty(OrganizationDeletedPrototype, '@@typeName', { value: 'Action' })
+
+OrganizationDeletedPrototype.toString = function () {
+    return `Action.OrganizationDeleted(${R._toString(this.organizationId)})`
+}
+
+OrganizationDeletedPrototype.toJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
+OrganizationDeletedPrototype.constructor = OrganizationDeletedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.OrganizationDeleted: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
+OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
+OrganizationDeletedConstructor.from = o => Action.OrganizationDeleted(o.organizationId)
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.OrganizationSuspended constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationSuspendedConstructor = function OrganizationSuspended(organizationId) {
+    const constructorName = 'Action.OrganizationSuspended(organizationId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+
+    const result = Object.create(OrganizationSuspendedPrototype)
+    result.organizationId = organizationId
+    return result
+}
+
+Action.OrganizationSuspended = OrganizationSuspendedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant Action.OrganizationSuspended prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationSuspendedPrototype = Object.create(ActionPrototype)
+Object.defineProperty(OrganizationSuspendedPrototype, '@@tagName', { value: 'OrganizationSuspended' })
+Object.defineProperty(OrganizationSuspendedPrototype, '@@typeName', { value: 'Action' })
+
+OrganizationSuspendedPrototype.toString = function () {
+    return `Action.OrganizationSuspended(${R._toString(this.organizationId)})`
+}
+
+OrganizationSuspendedPrototype.toJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
+OrganizationSuspendedPrototype.constructor = OrganizationSuspendedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.OrganizationSuspended: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+OrganizationSuspendedConstructor.is = val => val && val.constructor === OrganizationSuspendedConstructor
+OrganizationSuspendedConstructor.toString = () => 'Action.OrganizationSuspended'
+OrganizationSuspendedConstructor.from = o => Action.OrganizationSuspended(o.organizationId)
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // Variant Action.OrganizationUpdated constructor
 //
 // -------------------------------------------------------------------------------------------------------------
@@ -214,95 +314,153 @@ OrganizationUpdatedConstructor.from = o => Action.OrganizationUpdated(o.organiza
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationSuspended constructor
+// Variant Action.MemberAdded constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationSuspendedConstructor = function OrganizationSuspended(organizationId) {
-    const constructorName = 'Action.OrganizationSuspended(organizationId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
+const MemberAddedConstructor = function MemberAdded(userId, organizationId, displayName, role) {
+    const constructorName = 'Action.MemberAdded(userId, organizationId, displayName, role)'
+    R.validateArgumentLength(constructorName, 4, arguments)
+    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
+    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+    R.validateString(constructorName, 'displayName', false, displayName)
+    R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
+
+    const result = Object.create(MemberAddedPrototype)
+    result.userId = userId
+    result.organizationId = organizationId
+    result.displayName = displayName
+    result.role = role
+    return result
+}
+
+Action.MemberAdded = MemberAddedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant Action.MemberAdded prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const MemberAddedPrototype = Object.create(ActionPrototype)
+Object.defineProperty(MemberAddedPrototype, '@@tagName', { value: 'MemberAdded' })
+Object.defineProperty(MemberAddedPrototype, '@@typeName', { value: 'Action' })
+
+MemberAddedPrototype.toString = function () {
+    return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.displayName)}, ${R._toString(this.role)})`
+}
+
+MemberAddedPrototype.toJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+MemberAddedConstructor.prototype = MemberAddedPrototype
+MemberAddedPrototype.constructor = MemberAddedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.MemberAdded: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
+MemberAddedConstructor.toString = () => 'Action.MemberAdded'
+MemberAddedConstructor.from = o => Action.MemberAdded(o.userId, o.organizationId, o.displayName, o.role)
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.MemberRemoved constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const MemberRemovedConstructor = function MemberRemoved(userId, organizationId) {
+    const constructorName = 'Action.MemberRemoved(userId, organizationId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
 
-    const result = Object.create(OrganizationSuspendedPrototype)
+    const result = Object.create(MemberRemovedPrototype)
+    result.userId = userId
     result.organizationId = organizationId
     return result
 }
 
-Action.OrganizationSuspended = OrganizationSuspendedConstructor
+Action.MemberRemoved = MemberRemovedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Set up Variant Action.OrganizationSuspended prototype
+// Set up Variant Action.MemberRemoved prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationSuspendedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(OrganizationSuspendedPrototype, '@@tagName', { value: 'OrganizationSuspended' })
-Object.defineProperty(OrganizationSuspendedPrototype, '@@typeName', { value: 'Action' })
+const MemberRemovedPrototype = Object.create(ActionPrototype)
+Object.defineProperty(MemberRemovedPrototype, '@@tagName', { value: 'MemberRemoved' })
+Object.defineProperty(MemberRemovedPrototype, '@@typeName', { value: 'Action' })
 
-OrganizationSuspendedPrototype.toString = function () {
-    return `Action.OrganizationSuspended(${R._toString(this.organizationId)})`
+MemberRemovedPrototype.toString = function () {
+    return `Action.MemberRemoved(${R._toString(this.userId)}, ${R._toString(this.organizationId)})`
 }
 
-OrganizationSuspendedPrototype.toJSON = function () {
+MemberRemovedPrototype.toJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
-OrganizationSuspendedPrototype.constructor = OrganizationSuspendedConstructor
+MemberRemovedConstructor.prototype = MemberRemovedPrototype
+MemberRemovedPrototype.constructor = MemberRemovedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationSuspended: static functions:
+// Variant Action.MemberRemoved: static functions:
 //
 // -------------------------------------------------------------------------------------------------------------
-OrganizationSuspendedConstructor.is = val => val && val.constructor === OrganizationSuspendedConstructor
-OrganizationSuspendedConstructor.toString = () => 'Action.OrganizationSuspended'
-OrganizationSuspendedConstructor.from = o => Action.OrganizationSuspended(o.organizationId)
+MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
+MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
+MemberRemovedConstructor.from = o => Action.MemberRemoved(o.userId, o.organizationId)
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationDeleted constructor
+// Variant Action.RoleChanged constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationDeletedConstructor = function OrganizationDeleted(organizationId) {
-    const constructorName = 'Action.OrganizationDeleted(organizationId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
+const RoleChangedConstructor = function RoleChanged(userId, organizationId, role) {
+    const constructorName = 'Action.RoleChanged(userId, organizationId, role)'
+    R.validateArgumentLength(constructorName, 3, arguments)
+    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+    R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
 
-    const result = Object.create(OrganizationDeletedPrototype)
+    const result = Object.create(RoleChangedPrototype)
+    result.userId = userId
     result.organizationId = organizationId
+    result.role = role
     return result
 }
 
-Action.OrganizationDeleted = OrganizationDeletedConstructor
+Action.RoleChanged = RoleChangedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Set up Variant Action.OrganizationDeleted prototype
+// Set up Variant Action.RoleChanged prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationDeletedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(OrganizationDeletedPrototype, '@@tagName', { value: 'OrganizationDeleted' })
-Object.defineProperty(OrganizationDeletedPrototype, '@@typeName', { value: 'Action' })
+const RoleChangedPrototype = Object.create(ActionPrototype)
+Object.defineProperty(RoleChangedPrototype, '@@tagName', { value: 'RoleChanged' })
+Object.defineProperty(RoleChangedPrototype, '@@typeName', { value: 'Action' })
 
-OrganizationDeletedPrototype.toString = function () {
-    return `Action.OrganizationDeleted(${R._toString(this.organizationId)})`
+RoleChangedPrototype.toString = function () {
+    return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.role)})`
 }
 
-OrganizationDeletedPrototype.toJSON = function () {
+RoleChangedPrototype.toJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
-OrganizationDeletedPrototype.constructor = OrganizationDeletedConstructor
+RoleChangedConstructor.prototype = RoleChangedPrototype
+RoleChangedPrototype.constructor = RoleChangedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationDeleted: static functions:
+// Variant Action.RoleChanged: static functions:
 //
 // -------------------------------------------------------------------------------------------------------------
-OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
-OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
-OrganizationDeletedConstructor.from = o => Action.OrganizationDeleted(o.organizationId)
+RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
+RoleChangedConstructor.toString = () => 'Action.RoleChanged'
+RoleChangedConstructor.from = o => Action.RoleChanged(o.userId, o.organizationId, o.role)
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -316,7 +474,7 @@ const UserCreatedConstructor = function UserCreated(userId, organizationId, emai
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
     R.validateString(constructorName, 'displayName', false, displayName)
-    R.validateRegex(constructorName, /^(admin|member|viewer)$/, 'role', false, role)
+    R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
 
     const result = Object.create(UserCreatedPrototype)
     result.userId = userId
@@ -357,6 +515,54 @@ UserCreatedPrototype.constructor = UserCreatedConstructor
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
 UserCreatedConstructor.from = o => Action.UserCreated(o.userId, o.organizationId, o.email, o.displayName, o.role)
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.UserForgotten constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const UserForgottenConstructor = function UserForgotten(userId, reason) {
+    const constructorName = 'Action.UserForgotten(userId, reason)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
+    R.validateString(constructorName, 'reason', false, reason)
+
+    const result = Object.create(UserForgottenPrototype)
+    result.userId = userId
+    result.reason = reason
+    return result
+}
+
+Action.UserForgotten = UserForgottenConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant Action.UserForgotten prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const UserForgottenPrototype = Object.create(ActionPrototype)
+Object.defineProperty(UserForgottenPrototype, '@@tagName', { value: 'UserForgotten' })
+Object.defineProperty(UserForgottenPrototype, '@@typeName', { value: 'Action' })
+
+UserForgottenPrototype.toString = function () {
+    return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
+}
+
+UserForgottenPrototype.toJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+UserForgottenConstructor.prototype = UserForgottenPrototype
+UserForgottenPrototype.constructor = UserForgottenConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.UserForgotten: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
+UserForgottenConstructor.toString = () => 'Action.UserForgotten'
+UserForgottenConstructor.from = o => Action.UserForgotten(o.userId, o.reason)
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -409,152 +615,6 @@ UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
 UserUpdatedConstructor.from = o => Action.UserUpdated(o.userId, o.email, o.displayName)
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserDeleted constructor
-//
-// -------------------------------------------------------------------------------------------------------------
-const UserDeletedConstructor = function UserDeleted(userId, organizationId) {
-    const constructorName = 'Action.UserDeleted(userId, organizationId)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
-
-    const result = Object.create(UserDeletedPrototype)
-    result.userId = userId
-    result.organizationId = organizationId
-    return result
-}
-
-Action.UserDeleted = UserDeletedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UserDeleted prototype
-//
-// -------------------------------------------------------------------------------------------------------------
-const UserDeletedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(UserDeletedPrototype, '@@tagName', { value: 'UserDeleted' })
-Object.defineProperty(UserDeletedPrototype, '@@typeName', { value: 'Action' })
-
-UserDeletedPrototype.toString = function () {
-    return `Action.UserDeleted(${R._toString(this.userId)}, ${R._toString(this.organizationId)})`
-}
-
-UserDeletedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-UserDeletedConstructor.prototype = UserDeletedPrototype
-UserDeletedPrototype.constructor = UserDeletedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserDeleted: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
-UserDeletedConstructor.is = val => val && val.constructor === UserDeletedConstructor
-UserDeletedConstructor.toString = () => 'Action.UserDeleted'
-UserDeletedConstructor.from = o => Action.UserDeleted(o.userId, o.organizationId)
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserForgotten constructor
-//
-// -------------------------------------------------------------------------------------------------------------
-const UserForgottenConstructor = function UserForgotten(userId, reason) {
-    const constructorName = 'Action.UserForgotten(userId, reason)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateString(constructorName, 'reason', false, reason)
-
-    const result = Object.create(UserForgottenPrototype)
-    result.userId = userId
-    result.reason = reason
-    return result
-}
-
-Action.UserForgotten = UserForgottenConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UserForgotten prototype
-//
-// -------------------------------------------------------------------------------------------------------------
-const UserForgottenPrototype = Object.create(ActionPrototype)
-Object.defineProperty(UserForgottenPrototype, '@@tagName', { value: 'UserForgotten' })
-Object.defineProperty(UserForgottenPrototype, '@@typeName', { value: 'Action' })
-
-UserForgottenPrototype.toString = function () {
-    return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
-}
-
-UserForgottenPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-UserForgottenConstructor.prototype = UserForgottenPrototype
-UserForgottenPrototype.constructor = UserForgottenConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserForgotten: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
-UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
-UserForgottenConstructor.toString = () => 'Action.UserForgotten'
-UserForgottenConstructor.from = o => Action.UserForgotten(o.userId, o.reason)
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.RoleAssigned constructor
-//
-// -------------------------------------------------------------------------------------------------------------
-const RoleAssignedConstructor = function RoleAssigned(userId, organizationId, role) {
-    const constructorName = 'Action.RoleAssigned(userId, organizationId, role)'
-    R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
-    R.validateRegex(constructorName, /^(admin|member|viewer)$/, 'role', false, role)
-
-    const result = Object.create(RoleAssignedPrototype)
-    result.userId = userId
-    result.organizationId = organizationId
-    result.role = role
-    return result
-}
-
-Action.RoleAssigned = RoleAssignedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.RoleAssigned prototype
-//
-// -------------------------------------------------------------------------------------------------------------
-const RoleAssignedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(RoleAssignedPrototype, '@@tagName', { value: 'RoleAssigned' })
-Object.defineProperty(RoleAssignedPrototype, '@@typeName', { value: 'Action' })
-
-RoleAssignedPrototype.toString = function () {
-    return `Action.RoleAssigned(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.role)})`
-}
-
-RoleAssignedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-RoleAssignedConstructor.prototype = RoleAssignedPrototype
-RoleAssignedPrototype.constructor = RoleAssignedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.RoleAssigned: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
-RoleAssignedConstructor.is = val => val && val.constructor === RoleAssignedConstructor
-RoleAssignedConstructor.toString = () => 'Action.RoleAssigned'
-RoleAssignedConstructor.from = o => Action.RoleAssigned(o.userId, o.organizationId, o.role)
-
-// -------------------------------------------------------------------------------------------------------------
 // Additional functions copied from type definition file
 // -------------------------------------------------------------------------------------------------------------
 // Additional function: toFirestore
@@ -570,9 +630,10 @@ Action.fromFirestore = o => {
     if (tagName === 'OrganizationDeleted') return Action.OrganizationDeleted.from(o)
     if (tagName === 'OrganizationSuspended') return Action.OrganizationSuspended.from(o)
     if (tagName === 'OrganizationUpdated') return Action.OrganizationUpdated.from(o)
-    if (tagName === 'RoleAssigned') return Action.RoleAssigned.from(o)
+    if (tagName === 'MemberAdded') return Action.MemberAdded.from(o)
+    if (tagName === 'MemberRemoved') return Action.MemberRemoved.from(o)
+    if (tagName === 'RoleChanged') return Action.RoleChanged.from(o)
     if (tagName === 'UserCreated') return Action.UserCreated.from(o)
-    if (tagName === 'UserDeleted') return Action.UserDeleted.from(o)
     if (tagName === 'UserForgotten') return Action.UserForgotten.from(o)
     if (tagName === 'UserUpdated') return Action.UserUpdated.from(o)
     throw new Error(`Unrecognized domain event ${tagName}`)
@@ -582,14 +643,15 @@ Action.fromFirestore = o => {
 Action.piiFields = rawData => {
     const tagName = rawData['@@tagName']
     if (tagName === 'OrganizationCreated') return []
-    if (tagName === 'OrganizationUpdated') return []
-    if (tagName === 'OrganizationSuspended') return []
     if (tagName === 'OrganizationDeleted') return []
+    if (tagName === 'OrganizationSuspended') return []
+    if (tagName === 'OrganizationUpdated') return []
+    if (tagName === 'MemberAdded') return ['displayName']
+    if (tagName === 'MemberRemoved') return []
+    if (tagName === 'RoleChanged') return []
     if (tagName === 'UserCreated') return ['email', 'displayName']
-    if (tagName === 'UserUpdated') return ['email', 'displayName']
-    if (tagName === 'UserDeleted') return []
     if (tagName === 'UserForgotten') return []
-    if (tagName === 'RoleAssigned') return []
+    if (tagName === 'UserUpdated') return ['email', 'displayName']
     return []
 }
 
@@ -603,32 +665,37 @@ Action.toLog = a => {
             type: 'OrganizationCreated',
             name,
         }),
+        OrganizationDeleted: () => ({ type: 'OrganizationDeleted' }),
+        OrganizationSuspended: () => ({ type: 'OrganizationSuspended' }),
         OrganizationUpdated: ({ name, status }) => ({
             type: 'OrganizationUpdated',
             name,
             status,
         }),
-        OrganizationDeleted: () => ({ type: 'OrganizationDeleted' }),
-        OrganizationSuspended: () => ({ type: 'OrganizationSuspended' }),
+        MemberAdded: ({ displayName, role }) => ({
+            type: 'MemberAdded',
+            displayName,
+            role,
+        }),
+        MemberRemoved: () => ({ type: 'MemberRemoved' }),
+        RoleChanged: ({ role }) => ({
+            type: 'RoleChanged',
+            role,
+        }),
         UserCreated: ({ email, displayName, role }) => ({
             type: 'UserCreated',
             email,
             displayName,
             role,
         }),
-        UserUpdated: ({ email, displayName, role }) => ({
-            type: 'UserUpdated',
-            email,
-            displayName,
-            role,
-        }),
-        UserDeleted: () => ({ type: 'UserDeleted' }),
         UserForgotten: ({ reason }) => ({
             type: 'UserForgotten',
             reason,
         }),
-        RoleAssigned: ({ role }) => ({
-            type: 'RoleAssigned',
+        UserUpdated: ({ email, displayName, role }) => ({
+            type: 'UserUpdated',
+            email,
+            displayName,
             role,
         }),
     })
@@ -659,7 +726,7 @@ Action.getSubject = action =>
             id: a.organizationId,
             type: 'organization',
         }),
-        OrganizationUpdated: a => ({
+        OrganizationDeleted: a => ({
             id: a.organizationId,
             type: 'organization',
         }),
@@ -667,19 +734,23 @@ Action.getSubject = action =>
             id: a.organizationId,
             type: 'organization',
         }),
-        OrganizationDeleted: a => ({
+        OrganizationUpdated: a => ({
             id: a.organizationId,
             type: 'organization',
         }),
+        MemberAdded: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
+        MemberRemoved: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
+        RoleChanged: a => ({
+            id: a.userId,
+            type: 'user',
+        }),
         UserCreated: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        UserUpdated: a => ({
-            id: a.userId,
-            type: 'user',
-        }),
-        UserDeleted: a => ({
             id: a.userId,
             type: 'user',
         }),
@@ -687,7 +758,7 @@ Action.getSubject = action =>
             id: a.userId,
             type: 'user',
         }),
-        RoleAssigned: a => ({
+        UserUpdated: a => ({
             id: a.userId,
             type: 'user',
         }),
