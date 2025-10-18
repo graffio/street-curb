@@ -22,6 +22,9 @@ test-results
 .claude/developer-output.md
 .claude/agent-context/
 
+# Multi-agent workflow scratch work (ephemeral)
+specifications/*/agent-context/
+
 # don't save files generated in testing type-generation
 modules/cli-type-generator/test/generated/*
 modules/curb-map/service-accounts/

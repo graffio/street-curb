@@ -2,8 +2,7 @@
 import { FieldTypes } from './field-types.js'
 
 /**
- * Organization represents a portion of a blockface with specific use
- * @sig Organization :: { use: String, length: Number }
+ * Organization represents a collection of users working on projects
  */
 
 // prettier-ignore
@@ -15,7 +14,8 @@ export const Organization = {
         name            : "String",
         status          : /active|suspended/,
         defaultProjectId: FieldTypes.projectId,
-        
+        members         : 'Object?', // Map of userId -> {displayName, role, addedAt, addedBy, removedAt, removedBy}
+
         createdAt       : 'Object', // Date
         createdBy       : FieldTypes.userId,
         updatedAt       : 'Object', // Date

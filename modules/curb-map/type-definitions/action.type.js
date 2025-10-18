@@ -5,8 +5,22 @@ import { FieldTypes } from './field-types.js'
 /**
  * Action represents the different domain events that can be queued
  * @sig Action ::
- *      OrganizationCreated | OrganizationUpdated | OrganizationDeleted | OrganizationSuspended |
- *      UserCreated         | UserUpdated         | UserDeleted         | UserForgotten | RoleAssigned
+ *
+ *      // organization
+ *      OrganizationCreated
+ *      OrganizationDeleted
+ *      OrganizationSuspended
+ *      OrganizationUpdated
+ *
+ *      // organization member
+ *      MemberAdded
+ *      MemberRemoved
+ *      RoleChanged
+ *
+ *      // user
+ *      UserCreated
+ *      UserForgotten
+ *      UserUpdated
  */
 
 // prettier-ignore
@@ -20,16 +34,33 @@ export const Action = {
             projectId     : FieldTypes.projectId,
             name          : 'String',
         },
+        OrganizationDeleted: {
+            organizationId: FieldTypes.organizationId,
+        },
+        OrganizationSuspended: {
+            organizationId: FieldTypes.organizationId,
+        },
         OrganizationUpdated: {
             organizationId: FieldTypes.organizationId,
             name          : 'String?',
             status        : '/^(active|suspended)$/?',
         },
-        OrganizationSuspended: {
+        
+        // Organization Member Actions
+        MemberAdded: {
+            userId        : FieldTypes.userId,
+            organizationId: FieldTypes.organizationId,
+            displayName   : 'String',
+            role          : FieldTypes.role,
+        },
+        MemberRemoved: {
+            userId        : FieldTypes.userId,
             organizationId: FieldTypes.organizationId,
         },
-        OrganizationDeleted: {
+        RoleChanged: {
+            userId        : FieldTypes.userId,
             organizationId: FieldTypes.organizationId,
+            role          : FieldTypes.role,
         },
 
         // User Actions
@@ -38,26 +69,18 @@ export const Action = {
             organizationId: FieldTypes.organizationId,
             email         : FieldTypes.email,
             displayName   : 'String',
-            role          : /^(admin|member|viewer)$/,
+            role          : FieldTypes.role,
+        },
+        UserForgotten: {
+            userId        : FieldTypes.userId,
+            reason        : 'String',
         },
         UserUpdated: {
             userId        : FieldTypes.userId,
             email         : '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/?', // email address format: a@b.com
             displayName   : 'String?',
         },
-        UserDeleted: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-        },
-        UserForgotten: {
-            userId        : FieldTypes.userId,
-            reason        : 'String',
-        },
-        RoleAssigned: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-            role          : /^(admin|member|viewer)$/,
-        }
+
     }
 }
 
@@ -75,16 +98,22 @@ Action.toFirestore = action => ({ ...action, '@@tagName': action['@@tagName'] })
 Action.fromFirestore = o => {
     const tagName = o['@@tagName']
 
+    // organization
     if (tagName === 'OrganizationCreated'  ) return Action.OrganizationCreated.from(o)
     if (tagName === 'OrganizationDeleted'  ) return Action.OrganizationDeleted.from(o)
     if (tagName === 'OrganizationSuspended') return Action.OrganizationSuspended.from(o)
     if (tagName === 'OrganizationUpdated'  ) return Action.OrganizationUpdated.from(o)
-    if (tagName === 'RoleAssigned'         ) return Action.RoleAssigned.from(o)
+    
+    // organization member
+    if (tagName === 'MemberAdded'          ) return Action.MemberAdded.from(o)
+    if (tagName === 'MemberRemoved'        ) return Action.MemberRemoved.from(o)
+    if (tagName === 'RoleChanged'          ) return Action.RoleChanged.from(o)
+    
+    // user
     if (tagName === 'UserCreated'          ) return Action.UserCreated.from(o)
-    if (tagName === 'UserDeleted'          ) return Action.UserDeleted.from(o)
     if (tagName === 'UserForgotten'        ) return Action.UserForgotten.from(o)
     if (tagName === 'UserUpdated'          ) return Action.UserUpdated.from(o)
-
+    
     throw new Error(`Unrecognized domain event ${tagName}`)
 }
 
@@ -101,15 +130,22 @@ Action.fromFirestore = o => {
 // prettier-ignore
 Action.piiFields = rawData => {
     const tagName = rawData['@@tagName']
+    
+    // organization
     if (tagName === 'OrganizationCreated'  ) return []
-    if (tagName === 'OrganizationUpdated'  ) return []
-    if (tagName === 'OrganizationSuspended') return []
     if (tagName === 'OrganizationDeleted'  ) return []
+    if (tagName === 'OrganizationSuspended') return []
+    if (tagName === 'OrganizationUpdated'  ) return []
+    
+    // organization member
+    if (tagName === 'MemberAdded'          ) return ['displayName']
+    if (tagName === 'MemberRemoved'        ) return []
+    if (tagName === 'RoleChanged'          ) return []
+   
+    // user
     if (tagName === 'UserCreated'          ) return ['email', 'displayName']
-    if (tagName === 'UserUpdated'          ) return ['email', 'displayName']
-    if (tagName === 'UserDeleted'          ) return []
     if (tagName === 'UserForgotten'        ) return []
-    if (tagName === 'RoleAssigned'         ) return []
+    if (tagName === 'UserUpdated'          ) return ['email', 'displayName']
 
     return []  // Fallback for unrecognized types
 }
@@ -126,16 +162,21 @@ Action.toLog = a => {
 
     // prettier-ignore
     const result = a.match({
+        // organization
         OrganizationCreated  : ({ name })                     => ({ type: 'OrganizationCreated', name}),
-        OrganizationUpdated  : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
         OrganizationDeleted  : ()                             => ({ type: 'OrganizationDeleted', }),
         OrganizationSuspended: ()                             => ({ type: 'OrganizationSuspended', }),
+        OrganizationUpdated  : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
+       
+        // member
+        MemberAdded          : ({ displayName, role })        => ({ type: 'MemberAdded', displayName, role }),
+        MemberRemoved        : ()                             => ({ type: 'MemberRemoved' }),
+        RoleChanged          : ({ role })                     => ({ type: 'RoleChanged', role }),
 
+        // user
         UserCreated          : ({ email, displayName, role }) => ({ type: 'UserCreated', email, displayName, role }),
-        UserUpdated          : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
-        UserDeleted          : ()                             => ({ type: 'UserDeleted',  }),
         UserForgotten        : ({ reason })                   => ({ type: 'UserForgotten', reason }),
-        RoleAssigned         : ({ role })                     => ({ type: 'RoleAssigned', role }),
+        UserUpdated          : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
     })
 
     Action.piiFields(a).forEach(redactField)
@@ -177,13 +218,19 @@ Action.redactPii = rawData => {
 // prettier-ignore
 Action.getSubject = action =>
     action.match({
+        // organization
         OrganizationCreated:   a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationUpdated:   a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationSuspended: a => ({ id: a.organizationId, type: 'organization' }),
         OrganizationDeleted:   a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationSuspended: a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationUpdated:   a => ({ id: a.organizationId, type: 'organization' }),
+        
+        // organization member
+        MemberAdded:           a => ({ id: a.userId,         type: 'user' }),
+        MemberRemoved:         a => ({ id: a.userId,         type: 'user' }),
+        RoleChanged:           a => ({ id: a.userId,         type: 'user' }),
+        
+        // user
         UserCreated:           a => ({ id: a.userId,         type: 'user' }),
-        UserUpdated:           a => ({ id: a.userId,         type: 'user' }),
-        UserDeleted:           a => ({ id: a.userId,         type: 'user' }),
         UserForgotten:         a => ({ id: a.userId,         type: 'user' }),
-        RoleAssigned:          a => ({ id: a.userId,         type: 'user' }),
+        UserUpdated:           a => ({ id: a.userId,         type: 'user' }),
     })
