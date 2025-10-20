@@ -36,7 +36,7 @@ This specification consolidates the multi-tenant data model tasks from the origi
 - Remove obsolete status field from ActionRequest type and related systems
 - Update event-sourcing.md documentation
 
-### **task_3_5_organization_members** ❌ **PENDING** *(new)*
+### **task_3_5_organization_members** ✅ **COMPLETED** *(new)*
 
 - Add organization members map to data model with soft delete
 - Update type definitions (organization.type.js, action.type.js)
@@ -73,8 +73,8 @@ This specification consolidates the multi-tenant data model tasks from the origi
 
 ## Status
 
-**Completed**: 4/8 tasks
-**Remaining**: Organization members + User handlers + Authentication/Authorization (~20 hours)
+**Completed**: 5/8 tasks
+**Remaining**: User handlers + Authentication/Authorization (~18 hours)
 
 ## References
 

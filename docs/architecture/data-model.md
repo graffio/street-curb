@@ -138,7 +138,8 @@ See [Consequences & Trade-offs](#5-consequences--trade-offs) for detailed analys
     - Hierarchical projects under organizations
     - Default project auto-creation with real CUID2
     - Organization actions: OrganizationCreated/Updated/Suspended/Deleted
-    - User actions: UserCreated/Updated/Deleted/Forgotten, RoleAssigned
+    - User actions: UserCreated (user only), UserUpdated, UserForgotten
+    - Member actions: MemberAdded, MemberRemoved, RoleChanged
 
 - 📋 **Deferred to Backlog**:
     - Project CRUD actions (ProjectCreated/Updated/Archived/Deleted)
@@ -163,6 +164,8 @@ Server-authoritative timestamps, prevents spoofing. [Details in decisions.md](..
 **RBAC Scoped Per Organization**: User can have different roles in different organizations. Stored in
 users.organizations map and Firebase Auth custom
 claims. [Details in decisions.md](../decisions.md#organization-scoped-rbac)
+
+**Two-Step User Creation**: UserCreated creates user with empty organizations map, MemberAdded adds to org. Supports users without org membership, multi-org users. [Details in decisions.md](../decisions.md#user-creation-pattern)
 
 ---
 
@@ -333,6 +336,12 @@ See [decisions.md](../decisions.md#organization-members-map) for rationale.
 }
 ```
 
+**Two-Step User Creation**:
+- `UserCreated` action creates user with `organizations: {}` (empty map)
+- `MemberAdded` action adds user to organization with role
+- Benefits: Supports users without org membership, multi-org users, cleaner separation of concerns
+- Migration note: Changed from original single-step UserCreated (with organizationId/role) to two-step pattern
+
 **Projects**:
 
 ```
@@ -483,7 +492,7 @@ Never edit generated files directly - always edit the `.type.js` source and rege
 **Event Handlers**:
 
 - `modules/curb-map/functions/src/events/organization-handlers.js` - Organization CRUD
-- `modules/curb-map/functions/src/events/user-handlers.js` - User CRUD
+- `modules/curb-map/functions/src/events/user-handlers.js` - User CRUD and member management
 - Future: `project-handlers.js` (when ProjectCreated actions added)
 
 **Action Types**:
@@ -497,6 +506,8 @@ Never edit generated files directly - always edit the `.type.js` source and rege
 **Tests**:
 
 - `modules/curb-map/test/organization-handlers-http.firebase.js` - Organization tests
+- `modules/curb-map/test/user-handlers.firebase.js` - User tests
+- `modules/curb-map/test/member-handlers.firebase.js` - Member management tests
 - `modules/curb-map/test/firestore-admin.firebase.js` - Facade tests
 
 ### 4.3 Configuration
@@ -530,6 +541,8 @@ Never edit generated files directly - always edit the `.type.js` source and rege
 
 **Cross-Org Admin Queries**: Flat collections enable support staff to query across organizations (with proper
 permissions).
+
+**Flexible User Membership**: Two-step user creation allows users without org membership, supports multi-org scenarios.
 
 ### 5.2 What This Constrains
 
@@ -568,6 +581,13 @@ permissions).
 - **Why acceptable**: Use case rare enough to handle manually
 - **Mitigation**: Build specialized time-travel query tool if >5 requests/month
 
+**Two-Step User Onboarding**:
+
+- Requires two actions (UserCreated + MemberAdded) to fully onboard user
+- **When this matters**: Adds latency (~200ms extra) to user creation flow
+- **Why acceptable**: Cleaner separation, supports multi-org users, no breaking change for greenfield
+- **Mitigation**: Batch submit both actions in sequence from client
+
 ### 5.3 Future Considerations
 
 **When to Revisit**:
@@ -597,6 +617,7 @@ permissions).
 **Implementation**:
 
 - Event handlers: `modules/curb-map/functions/src/events/organization-handlers.js`
+- Event handlers: `modules/curb-map/functions/src/events/user-handlers.js`
 - Type definitions: `modules/curb-map/type-definitions/*.type.js`
 - Generated types: `modules/curb-map/src/types/*.js` (auto-generated from type-definitions)
 
@@ -612,12 +633,13 @@ permissions).
 
 ## 7. Decision History
 
-This architecture was established through 5 key decisions made between 2024-11 and 2025-01-15:
+This architecture was established through 6 key decisions made between 2024-11 and 2025-01-15:
 
 - Hybrid Collection Strategy (flat for events/users/orgs, hierarchical for projects/data)
 - Default Project Pattern (auto-create with real CUID2, no migration needed)
 - Flat Event Source (completedActions with organizationId field for cross-org queries)
 - Organization-Scoped RBAC (user can have different roles in different orgs)
 - Metadata on Every Document (server-authoritative timestamps prevent spoofing)
+- Two-Step User Creation (UserCreated + MemberAdded for flexible membership)
 
 For complete decision rationale, alternatives considered, and trade-off analysis, see [decisions.md](../decisions.md).
