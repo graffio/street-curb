@@ -13,7 +13,7 @@ const updatedMetadata = (fsContext, actionRequest) => ({
 /**
  * Handle OrganizationCreated action
  * Creates organization document and default project
- * @sig handleOrganizationCreated :: (Logger, ActionRequest, FirestoreContext) -> Promise<void>
+ * @sig handleOrganizationCreated :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
     const { action } = actionRequest

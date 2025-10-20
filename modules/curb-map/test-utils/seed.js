@@ -36,6 +36,7 @@ const seed = async () => {
         name: 'Seed Organization',
         status: 'active',
         defaultProjectId: projectId,
+        members: {},
         createdBy: actorId,
         createdAt: new Date('2025-01-01T10:00:00Z'),
         updatedBy: actorId,
@@ -162,9 +163,7 @@ const seed = async () => {
         }),
     ]
 
-    for (const actionRequest of completedActions) 
-        await fsContext.completedActions.write(actionRequest)
-    
+    for (const actionRequest of completedActions) await fsContext.completedActions.write(actionRequest)
 
     return { organizations: [organization], users: [user1, user2], projects: [project], completedActions }
 }

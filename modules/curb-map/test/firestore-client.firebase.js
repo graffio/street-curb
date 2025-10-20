@@ -37,6 +37,7 @@ const buildOrganization = overrides => {
         name: overrides?.name || 'Test Organization',
         status: overrides?.status || 'active',
         defaultProjectId: overrides?.defaultProjectId || FieldTypes.newProjectId(),
+        members: overrides?.members || {},
         createdBy: actorId,
         createdAt: overrides?.createdAt || new Date('2025-01-01T00:00:00Z'),
         updatedBy: overrides?.updatedBy || actorId,

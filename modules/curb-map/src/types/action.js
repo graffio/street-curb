@@ -25,11 +25,9 @@
  *      organizationId: FieldTypes.organizationId,
  *      role          : FieldTypes.role
  *  UserCreated
- *      userId        : FieldTypes.userId,
- *      organizationId: FieldTypes.organizationId,
- *      email         : FieldTypes.email,
- *      displayName   : "String",
- *      role          : FieldTypes.role
+ *      userId     : FieldTypes.userId,
+ *      email      : FieldTypes.email,
+ *      displayName: "String"
  *  UserForgotten
  *      userId: FieldTypes.userId,
  *      reason: "String"
@@ -467,21 +465,17 @@ RoleChangedConstructor.from = o => Action.RoleChanged(o.userId, o.organizationId
 // Variant Action.UserCreated constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserCreatedConstructor = function UserCreated(userId, organizationId, email, displayName, role) {
-    const constructorName = 'Action.UserCreated(userId, organizationId, email, displayName, role)'
-    R.validateArgumentLength(constructorName, 5, arguments)
+const UserCreatedConstructor = function UserCreated(userId, email, displayName) {
+    const constructorName = 'Action.UserCreated(userId, email, displayName)'
+    R.validateArgumentLength(constructorName, 3, arguments)
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
     R.validateString(constructorName, 'displayName', false, displayName)
-    R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
 
     const result = Object.create(UserCreatedPrototype)
     result.userId = userId
-    result.organizationId = organizationId
     result.email = email
     result.displayName = displayName
-    result.role = role
     return result
 }
 
@@ -497,7 +491,7 @@ Object.defineProperty(UserCreatedPrototype, '@@tagName', { value: 'UserCreated' 
 Object.defineProperty(UserCreatedPrototype, '@@typeName', { value: 'Action' })
 
 UserCreatedPrototype.toString = function () {
-    return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.role)})`
+    return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)})`
 }
 
 UserCreatedPrototype.toJSON = function () {
@@ -514,7 +508,7 @@ UserCreatedPrototype.constructor = UserCreatedConstructor
 // -------------------------------------------------------------------------------------------------------------
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
-UserCreatedConstructor.from = o => Action.UserCreated(o.userId, o.organizationId, o.email, o.displayName, o.role)
+UserCreatedConstructor.from = o => Action.UserCreated(o.userId, o.email, o.displayName)
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -682,11 +676,10 @@ Action.toLog = a => {
             type: 'RoleChanged',
             role,
         }),
-        UserCreated: ({ email, displayName, role }) => ({
+        UserCreated: ({ email, displayName }) => ({
             type: 'UserCreated',
             email,
             displayName,
-            role,
         }),
         UserForgotten: ({ reason }) => ({
             type: 'UserForgotten',

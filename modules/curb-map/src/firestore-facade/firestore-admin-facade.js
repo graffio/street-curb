@@ -166,7 +166,7 @@ const FirestoreAdminFacade = (
             if (!docSnap.exists) return null
             return Type.fromFirestore(decodeTimestamps(docSnap.data()))
         } catch (e) {
-            throwWithOriginal(`Failed to readOrNull ${Type.toString()}: ${e.message}`, e, id)
+            throwWithOriginal(`Failed to read ${Type.toString()}: ${e.message}`, e, id)
         }
     }
 

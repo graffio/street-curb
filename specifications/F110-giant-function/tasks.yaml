@@ -223,7 +223,7 @@ tasks:
 
   - id: "task_4_user_handlers"
     description: "Implement user and member event handlers"
-    status: "pending"
+    status: "completed"
     phase: "Domain Model"
     dependencies: ["task_3_5_organization_members"]
     estimated_hours: 4
@@ -231,53 +231,62 @@ tasks:
         Create `modules/curb-map/functions/src/events/user-handlers.js`:
 
         Handlers:
-        - handleUserCreated(actionRequest)
+        - handleUserCreated(logger, fsContext, actionRequest)
+          * Action payload: {userId, email, displayName} - NO organizationId/role
           * Write to /users/{userId}
+          * Initialize organizations: {} (empty map)
           * Initialize lastLogin=null, failedAttempts=0
-          * Set organizations map: {orgId: role}
           * Metadata from actionRequest.actorId
+          * Note: Use MemberAdded separately to add user to organization
 
-        - handleUserUpdated(actionRequest)
+        - handleUserUpdated(logger, fsContext, actionRequest)
           * Update email and/or displayName fields
           * Set updatedAt/updatedBy metadata
 
-        - handleMemberAdded(actionRequest)
+        - handleMemberAdded(logger, fsContext, actionRequest)
           * Read org to check if member exists
           * Validate: member with removedAt===null → REJECT (already active)
           * If member exists with removedAt !== null → re-activation: clear removedAt/removedBy, update role/displayName, new addedAt/addedBy
           * If new member → create org.members[userId] with all fields
-          * Dual write: user.organizations[orgId] = role
+          * Transaction: Update org.members[userId] AND user.organizations[orgId] atomically using fsContext
 
-        - handleMemberRemoved(actionRequest)
+        - handleMemberRemoved(logger, fsContext, actionRequest)
           * Validate: member exists and not already removed
-          * Set org.members[userId].removedAt = serverTimestamp()
-          * Set org.members[userId].removedBy = actorId
-          * Dual write: delete user.organizations[orgId]
+          * Transaction: Set org.members[userId].removedAt/removedBy AND delete user.organizations[orgId] atomically
           * User doc stays (may be in other orgs)
 
-        - handleRoleChanged(actionRequest)
+        - handleRoleChanged(logger, fsContext, actionRequest)
           * Validate: member exists and not removed
-          * Update org.members[userId].role = newRole
-          * Dual write: user.organizations[orgId] = newRole
+          * Transaction: Update org.members[userId].role AND user.organizations[orgId] atomically using fsContext
 
-        - handleUserForgotten(actionRequest) [GDPR]
+        - handleUserForgotten(logger, fsContext, actionRequest) [GDPR]
           * Read user.organizations map
           * For each orgId: set org.members[userId].removedAt/removedBy
           * Delete /users/{userId} completely
           * Note: Eventual consistency (transaction scope per org)
+
+        Pattern Reference:
+        - Follow organization-handlers.js pattern for atomic writes
+        - Use fsContext.users.write(), fsContext.organizations.update() within same transaction
+        - All handlers receive (logger, fsContext, actionRequest) parameters
+
+        Two-Step User Creation Pattern:
+        - Step 1: UserCreated {userId, email, displayName}
+        - Step 2: MemberAdded {userId, organizationId, role, displayName}
+        - Benefits: Users can exist without org membership, supports multi-org users
 
         Validation:
         - Email format, role enum (admin|member|viewer)
         - Required fields
         - Member state transitions
     validation:
-      - "All handlers implemented with dual writes"
+      - "All handlers use atomic transaction pattern for multi-collection writes"
       - "Member validation enforces state transitions"
       - "UserForgotten sets removedAt in all orgs, then deletes /users/{id}"
       - "Soft delete preserves member data for audit"
     tests:
-      - "modules/curb-map/functions/test/user-handlers.tap.js"
-      - "modules/curb-map/functions/test/member-handlers.tap.js"
+      - "modules/curb-map/test/user-handlers.firebase.js"
+      - "modules/curb-map/test/member-handlers.firebase.js"
 
   - id: "task_5_authentication"
     description: "Implement Firebase Auth with custom claims"
@@ -402,6 +411,7 @@ completed:
   - "task_2_5_http_handler"
   - "task_3_transaction_infrastructure"
   - "task_3_5_organization_members"
+  - "task_4_user_handlers"
 
 notes: |
     This specification consolidates the core multi-tenant data model tasks.
