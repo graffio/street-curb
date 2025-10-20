@@ -160,7 +160,7 @@ test('Given the HTTP action submission endpoint', t => {
             // Verify only ONE completedAction exists
             const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
             t.equal(results.length, 1, 'Then only one completedAction exists')
-            t.equal(results[0].status, 'completed', 'Then the completedAction has completed status')
+            t.ok(results[0].processedAt, 'Then the completedAction has processedAt timestamp')
         },
     )
 
