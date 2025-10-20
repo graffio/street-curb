@@ -191,9 +191,10 @@ const dispatchToHandler = actionRequest =>
         OrganizationSuspended: () => OH.handleOrganizationSuspended,
         UserCreated:           () => UH.handleUserCreated,
         UserUpdated:           () => UH.handleUserUpdated,
-        UserDeleted:           () => UH.handleUserDeleted,
         UserForgotten:         () => UH.handleUserForgotten,
-        RoleAssigned:          () => UH.handleRoleAssigned,
+        MemberAdded:           () => UH.handleMemberAdded,
+        MemberRemoved:         () => UH.handleMemberRemoved,
+        RoleChanged:           () => UH.handleRoleChanged,
     })
 
 // @sig parseActionRequest :: Request -> { namespace: String, actorId: String, action: Action, organizationId: String?, projectId: String?, subjectId: String, subjectType: String, idempotencyKey: String, correlationId: String }
@@ -291,11 +292,17 @@ const submitActionRequestHandler = async (req, res) => {
         })
 
         if (result.isDuplicate) return sendDuplicate(res, result)
-        if (result.error) return sendFailed(res, result.message, result.handlerName)
+        if (result.errorMessage) return sendFailed(res, result.errorMessage, result.handlerName)
 
         // write our SOC2 record
         const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const completed = await fsContext.completedActions.read(actionRequest.id)
+        const completed = await fsContext.completedActions.readOrNull(actionRequest.id)
+
+        // If null, transaction failed/rolled back - return error
+        if (!completed) {
+            logger.error(new Error('Transaction completed but action request not found'))
+            return sendFailed(res, 'Transaction failed - action request not persisted')
+        }
 
         logger.flowStop('└─ Processing completed', { durationMs: Date.now() - startTime }, '')
         return sendCompleted(res, completed.processedAt.toISOString())
