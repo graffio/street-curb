@@ -66,10 +66,8 @@ export const Action = {
         // User Actions
         UserCreated: {
             userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
             email         : FieldTypes.email,
             displayName   : 'String',
-            role          : FieldTypes.role,
         },
         UserForgotten: {
             userId        : FieldTypes.userId,
@@ -174,7 +172,7 @@ Action.toLog = a => {
         RoleChanged          : ({ role })                     => ({ type: 'RoleChanged', role }),
 
         // user
-        UserCreated          : ({ email, displayName, role }) => ({ type: 'UserCreated', email, displayName, role }),
+        UserCreated          : ({ email, displayName })       => ({ type: 'UserCreated', email, displayName }),
         UserForgotten        : ({ reason })                   => ({ type: 'UserForgotten', reason }),
         UserUpdated          : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
     })
