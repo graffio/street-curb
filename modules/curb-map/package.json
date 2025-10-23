@@ -13,8 +13,8 @@
         "tap:file": "../../bash/run-tap.sh",
         "tap:firebase": "firebase emulators:exec --only firestore,auth,storage,functions \"../../bash/run-tap.sh test/**/*.firebase.js\"",
         "emulators:kill": "pkill -f 'firebase emulators:start' || echo '' ",
-        "emulators:debug": "yarn emulators:kill ; firebase emulators:start --inspect-functions --only firestore,functions",
-        "emulators:start": "yarn emulators:kill ; firebase emulators:start --only firestore,functions",
+        "emulators:debug": "yarn emulators:kill ; firebase emulators:start --inspect-functions --only firestore,functions,auth",
+        "emulators:start": "yarn emulators:kill ; firebase emulators:start --only firestore,functions,auth",
         "validate-style": "node ../style-validator/src/cli.js",
         "functions:build": "yarn workspace @graffio/curb-map-functions build",
         "functions:deploy": "yarn workspace @graffio/curb-map-functions deploy"
