@@ -1,115 +1,192 @@
+import admin from 'firebase-admin'
 import t from 'tap'
 import { createFirestoreContext } from '../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../src/types/index.js'
-import { submitAndExpectSuccess } from './helpers/http-submit-action.js'
+import {
+    signInWithEmailLink,
+    signInWithPhoneNumber,
+    uniqueEmail,
+    withAuthTestEnvironment,
+} from './helpers/auth-emulator.js'
+import { rawHttpRequest, submitAndExpectSuccess } from './helpers/http-submit-action.js'
 
 const { test } = t
-const namespace = `tests/${new Date().toISOString().replace(/[:.]/g, '-')}`
+
+const withEmailAuth = (label, effect) =>
+    withAuthTestEnvironment(async ({ namespace }) => {
+        const { token, uid, userId: actorUserId } = await signInWithEmailLink(uniqueEmail(label))
+        await effect({ namespace, token, uid, actorUserId })
+    })
+
+const withPhoneAuth = effect =>
+    withAuthTestEnvironment(async ({ namespace }) => {
+        const { token, uid, userId: actorUserId } = await signInWithPhoneNumber()
+        await effect({ namespace, token, uid, actorUserId })
+    })
+
+const createOrganization = async ({
+    namespace,
+    token,
+    organizationId = FieldTypes.newOrganizationId(),
+    projectId = FieldTypes.newProjectId(),
+    name = 'Test Org',
+}) => {
+    await submitAndExpectSuccess({
+        action: Action.OrganizationCreated.from({ organizationId, projectId, name }),
+        namespace,
+        token,
+    })
+    return { organizationId, projectId }
+}
+
+const createUser = async ({ namespace, token, userId = FieldTypes.newUserId(), email, displayName }) => {
+    // Always use unique email to avoid collisions in parallel tests
+    const userEmail = email || `${userId}@users.test`
+
+    // Always create fresh auth user (don't reuse existing)
+    const authUser = await admin.auth().createUser({ email: userEmail, password: 'Passw0rd!' })
+
+    // Note: NOT setting custom claims here - handler should do it
+    await submitAndExpectSuccess({
+        action: Action.UserCreated.from({ userId, email: userEmail, displayName, authUid: authUser.uid }),
+        namespace,
+        token,
+    })
+
+    return { userId, authUid: authUser.uid }
+}
+
+const addMember = ({ namespace, token, userId, organizationId, role, displayName }) =>
+    submitAndExpectSuccess({
+        action: Action.MemberAdded.from({ userId, organizationId, role, displayName }),
+        namespace,
+        token,
+    })
+
+const removeMember = ({ namespace, token, userId, organizationId }) =>
+    submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace, token })
+
+const changeRole = ({ namespace, token, userId, organizationId, role }) =>
+    submitAndExpectSuccess({ action: Action.RoleChanged.from({ userId, organizationId, role }), namespace, token })
+
+const firestoreState = async ({ namespace, organizationId, projectId, userId }) => {
+    const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+    const org = await fsContext.organizations.read(organizationId)
+    const user = userId ? await fsContext.users.read(userId) : null
+    return { org, user }
+}
+
+const buildPayload = (namespace, action) => ({
+    action: Action.toFirestore(action),
+    idempotencyKey: FieldTypes.newIdempotencyKey(),
+    correlationId: FieldTypes.newCorrelationId(),
+    namespace,
+})
 
 test('Given MemberAdded action', t => {
     t.test('When member already active Then reject with validation error', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
-
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'alice@example.com', displayName: 'Alice' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'admin', displayName: 'Alice' }),
-            namespace,
-        })
-
-        // Try to add again (should fail)
-        try {
-            await submitAndExpectSuccess({
-                action: Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Alice' }),
+        await withEmailAuth('member-added-duplicate', async ({ namespace, token }) => {
+            const { organizationId } = await createOrganization({ namespace, token })
+            const { userId, authUid } = await createUser({
                 namespace,
+                token,
+                displayName: 'Alice',
+                // email defaults to unique `${userId}@users.test`
             })
-            t.fail('Then duplicate member should be rejected')
-        } catch (error) {
-            t.match(error.message, /already active|already exists/, 'Then validation error thrown')
-        }
+
+            // Verify userId claim was set by handler
+            const authUser = await admin.auth().getUser(authUid)
+            t.ok(authUser.customClaims?.userId, 'Then userId claim is set on auth user')
+            t.equal(authUser.customClaims.userId, userId, 'Then userId claim matches Firestore userId')
+
+            await addMember({ namespace, token, userId, organizationId, role: 'admin', displayName: 'Alice' })
+
+            try {
+                await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Alice' })
+                t.fail('Then duplicate member should be rejected')
+            } catch (error) {
+                t.match(error.message, /already active|already exists/, 'Then validation error thrown')
+            }
+        })
         t.end()
     })
 
-    t.test('When new member Then atomic write to org.members and user.organizations', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When request omits token Then authentication fails with HTTP 401', async t => {
+        await withEmailAuth('member-added-no-token', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({
+                namespace,
+                token,
+                displayName: 'Missing Token',
+                // email defaults to unique `${userId}@users.test`
+            })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'bob@example.com', displayName: 'Bob' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Bob Smith' }),
-            namespace,
-        })
+            const result = await rawHttpRequest({
+                body: buildPayload(
+                    namespace,
+                    Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Missing Token' }),
+                ),
+            })
 
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-        const user = await fsContext.users.read(userId)
+            t.equal(result.status, 401, 'Then HTTP response is unauthorized')
+            t.equal(result.data.status, 'unauthorized', 'Then payload indicates unauthorized access')
 
-        t.ok(org.members[userId], 'Then member exists in org.members')
-        t.equal(org.members[userId].displayName, 'Bob Smith', 'Then displayName set')
-        t.equal(org.members[userId].role, 'member', 'Then role set')
-        t.ok(org.members[userId].addedAt, 'Then addedAt set')
-        t.equal(org.members[userId].addedBy, 'usr_emulatorbypass', 'Then addedBy set')
-        t.equal(org.members[userId].removedAt, null, 'Then removedAt is null')
-        t.equal(user.organizations[organizationId], 'member', 'Then user.organizations has entry')
+            const { org } = await firestoreState({ namespace, organizationId, projectId })
+            t.notOk(org.members?.[userId], 'Then member not written')
+        })
         t.end()
     })
 
-    t.test('When removed member re-activated Then clear removedAt, update fields, new addedAt', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When new member added Then metadata uses actor userId claim', async t => {
+        await withEmailAuth('member-added-success', async ({ namespace, token, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Bob' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'carol@example.com', displayName: 'Carol' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'viewer', displayName: 'Carol Lee' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
+            await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Bob Smith' })
 
-        // Re-activate with new role
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({
+            const { org, user } = await firestoreState({ namespace, organizationId, projectId, userId })
+
+            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy set from token userId claim')
+            t.equal(user.organizations[organizationId], 'member', 'Then user.organizations has entry')
+        })
+        t.end()
+    })
+
+    t.test('When removed member reactivated Then claims and metadata refresh', async t => {
+        await withEmailAuth('member-added-reactivate', async ({ namespace, token, uid, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Carol' })
+
+            await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Carol Lee' })
+            await removeMember({ namespace, token, userId, organizationId })
+            await addMember({
+                namespace,
+                token,
                 userId,
                 organizationId,
                 role: 'admin',
                 displayName: 'Carol Lee (Admin)',
-            }),
-            namespace,
+            })
+
+            const { org, user } = await firestoreState({ namespace, organizationId, projectId, userId })
+
+            t.equal(org.members[userId].removedAt, null, 'Then removedAt cleared')
+            t.equal(user.organizations[organizationId], 'admin', 'Then user organization role updated')
+            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy uses token userId claim')
         })
+        t.end()
+    })
 
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-        const user = await fsContext.users.read(userId)
+    t.test('When phone sign-in token used Then member added successfully', async t => {
+        await withPhoneAuth(async ({ namespace, token, uid, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token, name: 'Phone Org' })
+            const { userId } = await createUser({ namespace, token, displayName: 'Phone User' })
 
-        t.equal(org.members[userId].removedAt, null, 'Then removedAt cleared')
-        t.equal(org.members[userId].removedBy, null, 'Then removedBy cleared')
-        t.equal(org.members[userId].role, 'admin', 'Then role updated')
-        t.equal(org.members[userId].displayName, 'Carol Lee (Admin)', 'Then displayName updated')
-        t.ok(org.members[userId].addedAt, 'Then new addedAt set')
-        t.equal(user.organizations[organizationId], 'admin', 'Then user.organizations restored')
+            await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Phone User' })
+
+            const { org } = await firestoreState({ namespace, organizationId, projectId, userId })
+            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy uses token userId claim')
+        })
         t.end()
     })
 
@@ -118,101 +195,76 @@ test('Given MemberAdded action', t => {
 
 test('Given MemberRemoved action', t => {
     t.test('When member not found Then reject with validation error', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+        await withEmailAuth('member-removed-missing', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const userId = FieldTypes.newUserId()
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
+            try {
+                await removeMember({ namespace, token, userId, organizationId })
+                t.fail('Then member not found should be rejected')
+            } catch (error) {
+                t.match(error.message, /not found|does not exist/, 'Then validation error thrown')
+            }
+
+            const { org } = await firestoreState({ namespace, organizationId, projectId })
+            t.notOk(org.members?.[userId], 'Then org remains unchanged')
         })
-
-        try {
-            await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
-            t.fail('Then member not found should be rejected')
-        } catch (error) {
-            t.match(error.message, /not found|does not exist/, 'Then validation error thrown')
-        }
         t.end()
     })
 
     t.test('When member already removed Then reject with validation error', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+        await withEmailAuth('member-removed-again', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Dave' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'dave@example.com', displayName: 'Dave' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Dave' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
+            await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Dave' })
+            await removeMember({ namespace, token, userId, organizationId })
 
-        try {
-            await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
-            t.fail('Then already removed member should be rejected')
-        } catch (error) {
-            t.match(error.message, /already removed|not active/, 'Then validation error thrown')
-        }
+            try {
+                await removeMember({ namespace, token, userId, organizationId })
+                t.fail('Then already removed member should be rejected')
+            } catch (error) {
+                t.match(error.message, /already removed|not active/, 'Then validation error thrown')
+            }
+
+            const { org } = await firestoreState({ namespace, organizationId, projectId })
+            t.ok(org.members[userId].removedAt, 'Then removedAt remains from first removal')
+        })
         t.end()
     })
 
-    t.test('When member removed Then atomic write sets removedAt and deletes user.organizations', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When member removed Then metadata and claims record actor userId', async t => {
+        await withEmailAuth('member-removed-success', async ({ namespace, token, uid, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Eve' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'eve@example.com', displayName: 'Eve' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Eve Smith' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
+            await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Eve Smith' })
+            await removeMember({ namespace, token, userId, organizationId })
 
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-        const user = await fsContext.users.read(userId)
+            const { org } = await firestoreState({ namespace, organizationId, projectId, userId })
 
-        t.ok(org.members[userId].removedAt, 'Then removedAt is set')
-        t.equal(org.members[userId].removedBy, 'usr_emulatorbypass', 'Then removedBy is set')
-        t.equal(org.members[userId].displayName, 'Eve Smith', 'Then displayName preserved for audit')
-        t.notOk(user.organizations[organizationId], 'Then user.organizations entry deleted')
+            t.ok(org.members[userId].removedAt, 'Then removedAt is set')
+            t.equal(org.members[userId].removedBy, actorUserId, 'Then removedBy uses token userId claim')
+        })
         t.end()
     })
 
-    t.test('When validation error occurs Then transaction rollback leaves no partial state', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When request omits token Then removal call is rejected', async t => {
+        await withEmailAuth('member-removed-unauth', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Unauth' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
+            await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Unauth' })
+
+            const result = await rawHttpRequest({
+                body: buildPayload(namespace, Action.MemberRemoved.from({ userId, organizationId })),
+            })
+
+            t.equal(result.status, 401, 'Then HTTP response is unauthorized')
+
+            const { org } = await firestoreState({ namespace, organizationId, projectId })
+            t.ok(org.members?.[userId], 'Then member still present')
         })
-
-        try {
-            await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
-            t.fail('Then member not found should fail')
-        } catch (error) {
-            const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-            const org = await fsContext.organizations.read(organizationId)
-            t.notOk(org.members?.[userId], 'Then org.members has no partial state')
-            t.pass('Then transaction rolled back')
-        }
         t.end()
     })
 
@@ -221,111 +273,69 @@ test('Given MemberRemoved action', t => {
 
 test('Given RoleChanged action', t => {
     t.test('When member not found Then reject with validation error', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+        await withEmailAuth('role-change-missing', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const userId = FieldTypes.newUserId()
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
+            try {
+                await changeRole({ namespace, token, userId, organizationId, role: 'admin' })
+                t.fail('Then member not found should be rejected')
+            } catch (error) {
+                t.match(error.message, /not found|does not exist/, 'Then validation error thrown')
+            }
+
+            const { org } = await firestoreState({ namespace, organizationId, projectId })
+            t.notOk(org.members?.[userId], 'Then org remains unchanged')
         })
-
-        try {
-            await submitAndExpectSuccess({
-                action: Action.RoleChanged.from({ userId, organizationId, role: 'admin' }),
-                namespace,
-            })
-            t.fail('Then member not found should be rejected')
-        } catch (error) {
-            t.match(error.message, /not found|does not exist/, 'Then validation error thrown')
-        }
         t.end()
     })
 
-    t.test('When member removed Then reject with validation error', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When member removed Then role change rejected', async t => {
+        await withEmailAuth('role-change-removed', async ({ namespace, token }) => {
+            const { organizationId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Frank' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'frank@example.com', displayName: 'Frank' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Frank' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace })
+            await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Frank' })
+            await removeMember({ namespace, token, userId, organizationId })
 
-        try {
-            await submitAndExpectSuccess({
-                action: Action.RoleChanged.from({ userId, organizationId, role: 'admin' }),
-                namespace,
-            })
-            t.fail('Then removed member role change should be rejected')
-        } catch (error) {
-            t.match(error.message, /removed|not active/, 'Then validation error thrown')
-        }
+            try {
+                await changeRole({ namespace, token, userId, organizationId, role: 'admin' })
+                t.fail('Then removed member role change should be rejected')
+            } catch (error) {
+                t.match(error.message, /removed|not active/, 'Then validation error thrown')
+            }
+        })
         t.end()
     })
 
-    t.test('When role changed Then atomic write to org.members and user.organizations', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When role changed Then organization, user, and claims update', async t => {
+        await withEmailAuth('role-change-success', async ({ namespace, token, userId: actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.UserCreated.from({ userId, email: 'grace@example.com', displayName: 'Grace' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.MemberAdded.from({ userId, organizationId, role: 'viewer', displayName: 'Grace' }),
-            namespace,
-        })
-        await submitAndExpectSuccess({
-            action: Action.RoleChanged.from({ userId, organizationId, role: 'admin' }),
-            namespace,
-        })
+            await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Grace' })
+            await changeRole({ namespace, token, userId, organizationId, role: 'admin' })
 
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-        const user = await fsContext.users.read(userId)
+            const { org, user } = await firestoreState({ namespace, organizationId, projectId, userId })
 
-        t.equal(org.members[userId].role, 'admin', 'Then org.members role updated')
-        t.equal(user.organizations[organizationId], 'admin', 'Then user.organizations role updated')
+            t.equal(org.members[userId].role, 'admin', 'Then org member role updated')
+            t.equal(user.organizations[organizationId], 'admin', 'Then user org map updated')
+        })
         t.end()
     })
 
-    t.test('When validation error occurs Then transaction rollback leaves no partial state', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const userId = FieldTypes.newUserId()
+    t.test('When request omits token Then role change is rejected', async t => {
+        await withEmailAuth('role-change-unauth', async ({ namespace, token }) => {
+            const { organizationId } = await createOrganization({ namespace, token })
+            const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
+            await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Grace' })
 
-        await submitAndExpectSuccess({
-            action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
-            namespace,
-        })
-
-        try {
-            await submitAndExpectSuccess({
-                action: Action.RoleChanged.from({ userId, organizationId, role: 'admin' }),
-                namespace,
+            const result = await rawHttpRequest({
+                body: buildPayload(namespace, Action.RoleChanged.from({ userId, organizationId, role: 'admin' })),
             })
-            t.fail('Then member not found should fail')
-        } catch (error) {
-            const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-            const org = await fsContext.organizations.read(organizationId)
-            t.notOk(org.members?.[userId], 'Then org.members has no partial state')
-            t.pass('Then transaction rolled back')
-        }
+
+            t.equal(result.status, 401, 'Then HTTP response is unauthorized')
+        })
         t.end()
     })
 

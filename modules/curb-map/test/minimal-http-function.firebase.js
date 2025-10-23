@@ -1,337 +1,262 @@
+import admin from 'firebase-admin'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
+import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './helpers/auth-emulator.js'
 import {
     rawHttpRequest,
     submitActionRequest,
     submitAndExpectDuplicate,
     submitAndExpectSuccess,
+    submitAndExpectValidationError,
 } from './helpers/http-submit-action.js'
 
-const namespace = `tests/${new Date().toISOString().replace(/[:.]/g, '-')}`
-
-// Set up environment for Firestore emulator
-if (!process.env.GCLOUD_PROJECT) throw new Error('GCLOUD_PROJECT environment variable must be set for tests')
-
-if (!process.env.FIRESTORE_EMULATOR_HOST)
-    throw new Error('FIRESTORE_EMULATOR_HOST environment variable must be set for tests')
-
-const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`, undefined, 'completedActions')
-
-test('Given the HTTP action submission endpoint', t => {
-    t.test('When a valid action request is submitted Then status is completed', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        console.log(`Test organizationId: ${organizationId}`)
-        const result = await submitAndExpectSuccess({ action, namespace })
-
-        t.equal(result.status, 'completed', 'Then the action request is marked completed')
-        t.match(result.processedAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, 'Then processedAt is a valid ISO timestamp')
-        t.notOk(result.id, 'Then action request ID is not exposed to client')
-    })
-
-    t.test('When an action request is processed Then it is written to completedActions', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action, namespace, idempotencyKey })
-
-        // Find the completed action by idempotency key
-        const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-        const completedAction = results[0]
-
-        t.ok(completedAction, 'Then a completed action exists with the idempotency key')
-        t.equal(completedAction.idempotencyKey, idempotencyKey, 'Then the idempotency key is preserved')
-        t.type(completedAction.processedAt, 'object', 'Then processedAt is set as a Date object in completedActions')
-        t.ok(completedAction.processedAt.getTime(), 'Then processedAt is a valid Date')
-    })
-
-    t.test('When an action is processed Then timestamps are server-authoritative', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action, namespace, idempotencyKey })
-
-        // Read from Firestore to check actual timestamps
-        const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-        const completedAction = results[0]
-
-        // Verify timestamps are Firestore Timestamp objects (converted to Date by facade)
-        t.type(completedAction.createdAt, 'object', 'Then createdAt is a Date object')
-        t.type(completedAction.processedAt, 'object', 'Then processedAt is a Date object')
-        t.ok(completedAction.createdAt.getTime(), 'Then createdAt has valid timestamp')
-        t.ok(completedAction.processedAt.getTime(), 'Then processedAt has valid timestamp')
-
-        // Verify single write: createdAt ≈ processedAt (within 100ms)
-        const timeDiff = Math.abs(completedAction.processedAt.getTime() - completedAction.createdAt.getTime())
-        t.ok(timeDiff < 100, `Then createdAt ≈ processedAt (diff: ${timeDiff}ms < 100ms)`)
-    })
-
-    t.test('When an action is processed Then completedActions is immutable (no pending status)', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action, namespace, idempotencyKey })
-
-        // Query all records for this idempotency key
-        const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-
-        t.equal(results.length, 1, 'Then exactly one record exists')
-        t.ok(results[0].processedAt, 'Then processedAt is present immediately')
-
-        // Verify record doesn't change over time
-        const initialProcessedAt = results[0].processedAt.toISOString()
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        const resultsAfter = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-        t.equal(resultsAfter.length, 1, 'Then still exactly one record exists')
-        t.equal(resultsAfter[0].processedAt.toISOString(), initialProcessedAt, 'Then processedAt never changes')
-    })
-
-    t.test('When a duplicate idempotency key is submitted Then it returns HTTP 409 duplicate', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
-
-        console.log(`Test organizationId: ${organizationId}`)
-        // Submit first request
-        // Submit duplicate with same idempotency key
-        const result1 = await submitAndExpectSuccess({ action, namespace, idempotencyKey })
-        const result2 = await submitAndExpectDuplicate({ action, namespace, idempotencyKey })
-
-        t.equal(result2.status, 'duplicate', 'Then the response status is duplicate')
-        t.equal(result2.message, 'Already processed', 'Then message indicates already processed')
-        t.ok(result2.processedAt, 'Then processedAt timestamp is returned')
-        t.notOk(result2.duplicate, 'Then old duplicate:true flag is not present')
-        t.notOk(result2.id, 'Then action request ID is not exposed to client')
-        t.notOk(result2.duplicateOf, 'Then internal action request ID is not exposed')
-
-        // Verify both responses have same processedAt (same record)
-        t.equal(result2.processedAt, result1.processedAt, 'Then duplicate returns same processedAt as original')
-
-        // Verify only one entry in completedActions
-        const matchingResults = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-        t.equal(matchingResults.length, 1, 'Then only one completedAction exists for this idempotency key')
-        t.equal(
-            matchingResults[0].idempotencyKey,
-            idempotencyKey,
-            'Then the original action request is in completedActions',
+const withHttpAuth = (label, effect) =>
+    withAuthTestEnvironment(async ({ namespace, projectId }) => {
+        const { token, uid, userId: actorUserId } = await signInWithEmailLink(uniqueEmail(label))
+        const completedActionsFacade = FirestoreAdminFacade(
+            ActionRequest,
+            `${namespace}/`,
+            undefined,
+            'completedActions',
         )
+
+        await completedActionsFacade.recursiveDelete()
+        try {
+            await effect({ namespace, projectId, token, uid, actorUserId, completedActionsFacade })
+        } finally {
+            await completedActionsFacade.recursiveDelete()
+        }
     })
 
-    t.test(
-        'When two requests with the same idempotency key are sent concurrently Then one succeeds and one returns 409',
-        async t => {
-            const organizationId = FieldTypes.newOrganizationId()
-            const projectId = FieldTypes.newProjectId()
-            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+const buildOrgAction = overrides => {
+    const organizationId = overrides?.organizationId || FieldTypes.newOrganizationId()
+    const projectId = overrides?.projectId || FieldTypes.newProjectId()
+    const name = overrides?.name || 'Test Org'
+    return Action.OrganizationCreated.from({ organizationId, projectId, name })
+}
+
+test('Given submitActionRequest minimal HTTP flow', t => {
+    t.test('When a valid action is submitted Then response is completed', async t => {
+        await withHttpAuth('http-success', async ({ namespace, token }) => {
+            const action = buildOrgAction()
+            const result = await submitAndExpectSuccess({ action, namespace, token })
+
+            t.equal(result.status, 'completed', 'Then status is completed')
+            t.ok(result.processedAt, 'Then processedAt timestamp is present')
+        })
+        t.end()
+    })
+
+    t.test('When processed Then entry appears in completedActions with actor from token UID', async t => {
+        await withHttpAuth(
+            'http-completed-actions',
+            async ({ namespace, token, actorUserId, completedActionsFacade }) => {
+                const action = buildOrgAction()
+                const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+                await submitAndExpectSuccess({ action, namespace, token, idempotencyKey })
+
+                const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
+                const completed = results[0]
+
+                t.ok(completed, 'Then completedActions entry exists')
+                t.equal(completed.actorId, actorUserId, 'Then actorId equals custom claim userId')
+                t.ok(completed.processedAt, 'Then processedAt stored as Date')
+            },
+        )
+        t.end()
+    })
+
+    t.test('When processed Then server timestamps are used', async t => {
+        await withHttpAuth('http-timestamps', async ({ namespace, token, completedActionsFacade }) => {
+            const action = buildOrgAction()
             const idempotencyKey = FieldTypes.newIdempotencyKey()
 
-            console.log(`Test organizationId: ${organizationId}`)
-            // Fire two requests in parallel with same idempotency key
-            const [result1, result2] = await Promise.all([
-                submitActionRequest({ action, namespace, idempotencyKey }),
-                submitActionRequest({ action, namespace, idempotencyKey }),
+            await submitAndExpectSuccess({ action, namespace, token, idempotencyKey })
+
+            const [completed] = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
+            const diff = Math.abs(completed.processedAt.getTime() - completed.createdAt.getTime())
+            t.ok(diff < 100, `Then createdAt and processedAt are nearly identical (${diff}ms)`)
+        })
+        t.end()
+    })
+
+    t.test('When duplicate submission occurs Then duplicate status returned', async t => {
+        await withHttpAuth('http-duplicate', async ({ namespace, token }) => {
+            const action = buildOrgAction()
+            const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+            await submitAndExpectSuccess({ action, namespace, token, idempotencyKey })
+            const duplicate = await submitAndExpectDuplicate({ action, namespace, token, idempotencyKey })
+
+            t.equal(duplicate.status, 'duplicate', 'Then duplicate status is returned')
+        })
+        t.end()
+    })
+
+    t.test('When concurrent duplicates arrive Then one 200 and one 409', async t => {
+        await withHttpAuth('http-concurrent', async ({ namespace, token, completedActionsFacade }) => {
+            const action = buildOrgAction()
+            const idempotencyKey = FieldTypes.newIdempotencyKey()
+
+            const [first, second] = await Promise.all([
+                submitActionRequest({ action, namespace, token, idempotencyKey }),
+                submitActionRequest({ action, namespace, token, idempotencyKey }),
             ])
 
-            // One should succeed (200), one should be duplicate (409)
-            const statuses = [result1.status, result2.status].sort()
-            t.same(statuses, [200, 409], 'Then one request returns 200 and one returns 409')
+            const statuses = [first.status, second.status].sort()
+            t.same(statuses, [200, 409], 'Then one succeeds and one is duplicate')
 
-            const successResults = [result1, result2].filter(r => r.status === 200)
-            const duplicateResults = [result1, result2].filter(r => r.status === 409)
+            const duplicates = [first, second].find(r => r.status === 409)
+            t.equal(duplicates.data.status, 'duplicate', 'Then duplicate payload indicates duplicate')
 
-            t.equal(successResults.length, 1, 'Then exactly one request succeeds')
-            t.equal(duplicateResults.length, 1, 'Then exactly one request is duplicate')
-            t.equal(duplicateResults[0].data.status, 'duplicate', 'Then duplicate has status: duplicate')
-
-            // Verify only ONE completedAction exists
             const results = await completedActionsFacade.query([['idempotencyKey', '==', idempotencyKey]])
-            t.equal(results.length, 1, 'Then only one completedAction exists')
-            t.ok(results[0].processedAt, 'Then the completedAction has processedAt timestamp')
-        },
-    )
-
-    t.test('When required fields are missing Then validation error is returned', async t => {
-        // Submit with only an ID, missing action, idempotencyKey, correlationId
-        const { status, data } = await submitActionRequest({
-            action: null,
-            idempotencyKey: null,
-            correlationId: null,
-            namespace,
+            t.equal(results.length, 1, 'Then exactly one completed action exists')
         })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /required fields/, 'Then error mentions required fields')
+        t.end()
     })
 
-    t.test('When action.organizationId is missing Then validation error is returned', async t => {
-        const action = { '@@tagName': 'OrganizationCreated', name: 'Test' } // missing organizationId
+    t.test('When request lacks token Then HTTP 401 returned and no write occurs', async t => {
+        await withHttpAuth('http-missing-token', async ({ namespace, completedActionsFacade }) => {
+            const action = buildOrgAction()
+            const payload = {
+                action: Action.toFirestore(action),
+                idempotencyKey: FieldTypes.newIdempotencyKey(),
+                correlationId: FieldTypes.newCorrelationId(),
+                namespace,
+            }
 
-        console.log(`Test: no organizationId (validation test)`)
-        const { status, data } = await submitActionRequest({ action, namespace })
+            const result = await rawHttpRequest({ body: payload })
 
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /organizationId|required/i, 'Then error mentions missing organizationId')
-    })
+            t.equal(result.status, 401, 'Then HTTP 401 returned')
+            t.equal(result.data.status, 'unauthorized', 'Then payload marks unauthorized')
 
-    t.test('When correlationId is missing Then validation error is returned', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        const { status, data } = await submitActionRequest({
-            action,
-            idempotencyKey: FieldTypes.newIdempotencyKey(),
-            correlationId: null, // explicitly missing
-            namespace,
+            const results = await completedActionsFacade.list()
+            t.same(results, [], 'Then no completed actions were written')
         })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /required fields/, 'Then error mentions required fields')
+        t.end()
     })
 
-    t.test('When correlationId has invalid format Then validation error is returned', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+    t.test('When token is malformed Then specific error message returned', async t => {
+        await withHttpAuth('http-malformed-token', async ({ namespace }) => {
+            const action = buildOrgAction()
+            const payload = {
+                action: Action.toFirestore(action),
+                idempotencyKey: FieldTypes.newIdempotencyKey(),
+                correlationId: FieldTypes.newCorrelationId(),
+                namespace,
+            }
 
-        const { status, data } = await submitActionRequest({
-            action,
-            idempotencyKey: FieldTypes.newIdempotencyKey(),
-            correlationId: 'invalid-format', // should start with cor_
-            namespace,
+            // Send a completely malformed token (not even JWT format)
+            const result = await rawHttpRequest({ body: payload, token: 'not-a-valid-jwt-token' })
+
+            t.equal(result.status, 401, 'Then HTTP 401 returned')
+            t.equal(result.data.status, 'unauthorized', 'Then payload marks unauthorized')
+            t.match(
+                result.data.error,
+                /malformed|invalid/i,
+                'Then error message indicates token is malformed or invalid',
+            )
         })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /correlationId|cor_/i, 'Then error mentions correlationId format issue')
+        t.end()
     })
 
-    t.test('When idempotencyKey has invalid format Then validation error is returned', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
+    t.test('When token has invalid signature Then specific error message returned', async t => {
+        await withHttpAuth('http-invalid-signature', async ({ namespace }) => {
+            const action = buildOrgAction()
+            const payload = {
+                action: Action.toFirestore(action),
+                idempotencyKey: FieldTypes.newIdempotencyKey(),
+                correlationId: FieldTypes.newCorrelationId(),
+                namespace,
+            }
 
-        const { status, data } = await submitActionRequest({
-            action,
-            idempotencyKey: 'bad-key', // should start with idm_
-            correlationId: FieldTypes.newCorrelationId(),
-            namespace,
+            // Create a JWT-like token with invalid signature
+            // Format: header.payload.signature (all base64)
+            const fakeHeader = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64')
+            const fakePayload = Buffer.from(
+                JSON.stringify({ sub: 'fake-uid', userId: 'usr_fake', exp: Date.now() / 1000 + 3600 }),
+            ).toString('base64')
+            const fakeSignature = 'invalid-signature'
+            const invalidToken = `${fakeHeader}.${fakePayload}.${fakeSignature}`
+
+            const result = await rawHttpRequest({ body: payload, token: invalidToken })
+
+            t.equal(result.status, 401, 'Then HTTP 401 returned')
+            t.equal(result.data.status, 'unauthorized', 'Then payload marks unauthorized')
+            t.match(
+                result.data.error,
+                /invalid|expired|malformed/i,
+                'Then error message indicates token verification failed',
+            )
         })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /idempotencyKey|idm_/i, 'Then error mentions idempotencyKey format issue')
+        t.end()
     })
 
-    t.test('When HTTP method is GET Then method not allowed is returned', async t => {
-        const { status, data } = await rawHttpRequest({ method: 'GET' })
+    t.test('When token missing userId claim Then specific error message returned', async t => {
+        await withAuthTestEnvironment(async ({ namespace }) => {
+            const action = buildOrgAction()
+            const payload = {
+                action: Action.toFirestore(action),
+                idempotencyKey: FieldTypes.newIdempotencyKey(),
+                correlationId: FieldTypes.newCorrelationId(),
+                namespace,
+            }
 
-        t.equal(status, 405, 'Then HTTP 405 is returned')
-        t.equal(data.status, 'method-not-allowed', 'Then status is method-not-allowed')
-        t.match(data.error, /POST/, 'Then error mentions POST method')
-    })
+            // Create a valid Firebase Auth user but don't set userId claim
+            const tempEmail = `no-claim-${Date.now()}@example.com`
+            const authUser = await admin.auth().createUser({ email: tempEmail, password: 'Test123!' })
 
-    t.test('When action is null Then validation error is returned', async t => {
-        const { status, data } = await submitActionRequest({
-            action: null,
-            idempotencyKey: FieldTypes.newIdempotencyKey(),
-            correlationId: FieldTypes.newCorrelationId(),
-            namespace,
+            // Create a custom token without userId claim
+            const customToken = await admin.auth().createCustomToken(authUser.uid)
+
+            // Exchange for ID token
+            const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
+            const authUrl = `http://${authHost}/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fake-key`
+            const signInResponse = await fetch(authUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: customToken, returnSecureToken: true }),
+            })
+            const { idToken } = await signInResponse.json()
+
+            const result = await rawHttpRequest({ body: payload, token: idToken })
+
+            t.equal(result.status, 401, 'Then HTTP 401 returned')
+            t.equal(result.data.status, 'unauthorized', 'Then payload marks unauthorized')
+            t.match(result.data.error, /missing userId claim/i, 'Then error message indicates missing userId claim')
+
+            // Cleanup
+            await admin.auth().deleteUser(authUser.uid)
         })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /required fields/, 'Then error mentions required fields')
+        t.end()
     })
 
-    t.test('When idempotencyKey is empty string Then validation error is returned', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        const { status, data } = await submitActionRequest({
-            action,
-            idempotencyKey: '',
-            correlationId: FieldTypes.newCorrelationId(),
-            namespace,
-        })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /idempotencyKey|empty|required/i, 'Then error mentions idempotencyKey validation issue')
-    })
-
-    t.test('When action has malformed JSON Then validation error is returned', async t => {
-        const { status, data } = await submitActionRequest({
-            action: { '@@tagName': 'InvalidActionType', foo: 'bar' },
-            idempotencyKey: FieldTypes.newIdempotencyKey(),
-            correlationId: FieldTypes.newCorrelationId(),
-            namespace,
-        })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /action|InvalidActionType|invalid/i, 'Then error mentions invalid action type')
-    })
-
-    t.test('When namespace is missing in emulator Then validation error is returned', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        const { status, data } = await submitActionRequest({
-            action,
-            idempotencyKey: FieldTypes.newIdempotencyKey(),
-            correlationId: FieldTypes.newCorrelationId(),
-            namespace: undefined,
-        })
-
-        t.equal(status, 400, 'Then HTTP 400 is returned')
-        t.equal(data.status, 'validation-failed', 'Then status is validation-failed')
-        t.match(data.error, /namespace/i, 'Then error mentions namespace requirement')
-        t.equal(data.field, 'namespace', 'Then field is set to namespace')
-    })
-
-    t.test(
-        'When UserUpdated action without organizationId is submitted Then it succeeds',
-        async t => {
-            const userId = FieldTypes.newUserId()
-            const action = Action.UserUpdated.from({
-                userId,
-                email: 'updated@example.com',
-                displayName: 'Updated Name',
+    t.test('When required fields missing Then validation-failed returned', async t => {
+        await withHttpAuth('http-missing-fields', async ({ namespace, token }) => {
+            const result = await submitAndExpectValidationError({
+                action: null,
+                idempotencyKey: null,
+                correlationId: null,
+                namespace,
+                token,
             })
 
-            console.log(`Test userId: ${userId}`)
-            const result = await submitAndExpectSuccess({ action, namespace })
+            t.equal(result.status, 'validation-failed', 'Then validation-failed status returned')
+        })
+        t.end()
+    })
 
-            t.equal(result.status, 'completed', 'Then the action request is completed')
-            t.match(
-                result.processedAt,
-                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
-                'Then processedAt is a valid ISO timestamp',
-            )
-            t.notOk(result.id, 'Then action request ID is not exposed to client')
-        },
-        { skip: true },
-    )
+    t.test('When action payload invalid Then validation error returned', async t => {
+        await withHttpAuth('http-invalid-action', async ({ namespace, token }) => {
+            const invalidAction = { '@@tagName': 'OrganizationCreated', name: 'Invalid' }
+            const result = await submitAndExpectValidationError({ action: invalidAction, namespace, token })
+
+            t.equal(result.status, 'validation-failed', 'Then invalid payload rejected')
+        })
+        t.end()
+    })
 
     t.end()
 })

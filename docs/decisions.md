@@ -456,7 +456,7 @@ HTTP Function → Validates → Processes → Writes to domain collections + com
 
 **Solution**:
 
-- **Authentication**: Firebase Auth with passcode authentication
+- **Authentication**: Firebase Auth with token verification
 - **Authorization**: Firestore security rules (not middleware)
 
 **Benefits**:
@@ -464,7 +464,7 @@ HTTP Function → Validates → Processes → Writes to domain collections + com
 - Simpler architecture - Security rules handle authorization
 - Better performance - No middleware overhead
 - Firebase native - Leverages Firebase's security model
-- Organization-scoped - Rules can check custom claims
+- Organization-scoped - Rules read user doc for membership
 
 **Trade-offs**:
 
@@ -477,6 +477,129 @@ HTTP Function → Validates → Processes → Writes to domain collections + com
 - Authorization middleware - Rejected for complexity
 - API Gateway - Rejected for over-engineering
 - Custom auth system - Rejected for maintenance burden
+
+**Note**: Custom claims for org roles removed Oct 2025 - see [Authentication Claims Simplification](#auth-claims-simplification)
+
+---
+
+<a id="auth-claims-simplification"></a>
+
+#### Authentication Claims Simplification
+
+**Decision**: Remove organization-role custom claims; security rules read user doc instead.
+
+**Date**: October 2025
+**Status**: Implemented (F110.5)
+
+**Problem**: Original design synced org roles to custom claims, requiring `authUid` in every action, client-provided authUid (security risk), and 3 extra Firestore reads per member operation.
+
+**Solution**:
+- Only `userId` in custom claims (links token to Firestore)
+- Security rules read `users/{userId}.organizations` map
+- authUid only in UserCreated action (for claim bootstrap - see [userId Claim Synchronization](#userid-claim-sync))
+- No authUid in member operations (MemberAdded, MemberRemoved, RoleChanged)
+
+**Benefits**:
+- Simpler: -45 LOC, no org-role sync logic
+- More secure: authUid limited to account creation only
+- Always fresh: No stale claims for authorization
+- Better performance: -3 reads per member op, +1 per auth check (net win)
+
+**Trade-offs**:
+- +1 Firestore read per auth check
+- Rules more complex (doc reads vs claim checks)
+- authUid still needed in UserCreated (see below)
+
+**Alternatives Considered**:
+- Sync on sign-in only - Rejected (stale for hours)
+- Email-based lookup - Rejected (extra lookup, not unique, race conditions)
+
+---
+
+<a id="userid-claim-sync"></a>
+
+#### userId Claim Synchronization
+
+**Decision**: Set userId custom claim in PasscodeVerified action; UserCreated handler is safety net.
+
+**Date**: October 2025
+**Status**: Partial (F110.5 complete, F121 PasscodeVerified deferred)
+
+**Problem**: How to set userId custom claim on Firebase Auth user? Claim must exist before first request to avoid 401 deadlock.
+
+**Solution (Two-Phase):**
+
+**Phase 1 (F121 - Deferred)**: PasscodeVerified action sets claim at authentication time
+```javascript
+// Action.PasscodeVerified handler (F121)
+Action.PasscodeVerified.from({
+    phoneNumber: '+14155551234',
+    passcode: '123456',
+    userId: 'usr_abc123',  // Server-generated
+})
+
+// handlePasscodeVerified
+const authUser = await verifyPasscodeViaFirebaseAuth(phoneNumber, passcode)
+await admin.auth().setCustomUserClaims(authUser.uid, { userId })
+return { userId, authUid: authUser.uid, token }  // Client receives these
+```
+
+**Phase 2 (F110.5 - Implemented)**: UserCreated includes authUid as safety net
+```javascript
+Action.UserCreated.from({
+    userId: 'usr_abc123',
+    email: 'user@example.com',
+    displayName: 'Alice',
+    authUid: 'firebase-auth-uid-xyz',  // From PasscodeVerified response
+})
+
+// handleUserCreated sets claim (redundant but harmless safety net)
+await admin.auth().setCustomUserClaims(authUid, { userId })
+```
+
+**Complete Flow (Future F121)**:
+1. Client: `POST /submitActionRequest` with Action.PasscodeRequested
+2. Server: Sends SMS with passcode
+3. Client: `POST /submitActionRequest` with Action.PasscodeVerified
+4. Handler: Verifies passcode, **sets userId claim**, returns `{userId, authUid, token}`
+5. Client: `POST /submitActionRequest` with Action.UserCreated (token has claim → passes auth)
+6. Handler: Creates user doc, sets claim again (safety net)
+7. All subsequent requests succeed (claim exists)
+
+**Why PasscodeVerified Must Be An Action**:
+- ✅ Audit trail: Authentication events in completedActions (SOC2 requirement)
+- ✅ Consistency: All state changes go through giant function
+- ✅ Testability: Same test infrastructure as other actions
+- ✅ Architecture: Event sourcing for auth = single source of truth
+
+**Current State (Oct 2025)**:
+- ✅ UserCreated handler sets claim (implemented)
+- ✅ Tests pass (pre-populate claim, simulating PasscodeVerified)
+- ⚠️ Production blocked until PasscodeVerified implemented (F121)
+- ⚠️ Deadlock: Token needs claim to call UserCreated, but UserCreated sets claim
+
+**Benefits**:
+- ✅ No deadlock (claim set at authentication time, before UserCreated)
+- ✅ First request succeeds immediately
+- ✅ Testable with existing auth emulator infrastructure
+- ✅ Server generates userId (not client-provided)
+- ✅ Complete audit trail of authentication flow
+
+**Trade-offs**:
+- ❌ authUid in UserCreated action (Firebase implementation detail leaks)
+- ⚠️ Requires F121 implementation to unblock production use
+- ⚠️ Claim set twice (PasscodeVerified + UserCreated) but harmless
+
+**Alternatives Rejected**:
+- **beforeSignIn trigger + email lookup**: Deadlocks, fragile email uniqueness, untestable
+- **Middleware fallback**: Would need authUid stored in user doc, adds complexity
+- **UserCreated without PasscodeVerified**: Deadlocks (token needs claim to submit action)
+
+**Why This Is Acceptable**:
+- authUid is one-time bootstrap data (like idempotencyKey), not a persistent domain concept
+- Claim set at authentication time (correct architecture)
+- UserCreated's claim-setting is redundant safety net (defense in depth)
+- All authentication events go through event sourcing (SOC2 compliance)
 
 ---
 
@@ -522,6 +645,8 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | Handlers write to domain collections       | Jan 2025 | Accepted | Fast reads, no view-building lag, simpler architecture             |
 | Firestore security rules for authorization | Jan 2025 | Accepted | Simpler than middleware, Firebase native                           |
 | Organization members map                   | Oct 2025 | Accepted | Org admins can see members, audit trail preserves names            |
+| Authentication claims simplification       | Oct 2025 | Accepted | Rules read user doc, only userId claim, simpler and more secure    |
+| userId claim synchronization               | Oct 2025 | Accepted | authUid in UserCreated for claim bootstrap, avoids deadlock        |
 
 ---
 
