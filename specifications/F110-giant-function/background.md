@@ -43,26 +43,49 @@ This specification consolidates the multi-tenant data model tasks from the origi
 - Rename actions: UserDeleted→MemberRemoved, RoleAssigned→RoleChanged, add MemberAdded
 - Document handler logic for member operations with validation
 
-### **task_4_user_handlers** ❌ **PENDING** *(from F110-multi-tenant-data-model)*
+### **task_4_user_handlers** ✅ **COMPLETED** *(from F110-multi-tenant-data-model)*
 
 - Implement 5 user event handlers
 - Write to flat collection: `/users/{userId}`
 - Validation: email format, role enum
 - Unit tests for handlers
 
-### **task_5_authentication** ❌ **PENDING** *(from F110.5)*
+### **task_5_authentication** 🟡 **PARTIAL (~90%, F121 PasscodeVerified deferred)** *(from F110.5)*
 
-- Implement Firebase Auth with custom claims
-- Configure passcode authentication
-- Create custom claims system (organization roles and permissions)
-- Basic auth middleware (token verification, user context injection)
+**Completed:**
+- ✅ Token verification middleware with specific error messages
+- ✅ User context injection from verified tokens
+- ✅ Auth emulator test infrastructure
+- ✅ Comprehensive HTTP 401 test coverage
+- ✅ userId claim synchronization in UserCreated handler (safety net)
+- ✅ authUid field added to UserCreated action
 
-### **task_6_authorization** ❌ **PENDING** *(from F110.5)*
+**Deferred to F121 (Authentication Actions):**
+- ⏸️ Action.PasscodeRequested (sends SMS with passcode)
+- ⏸️ Action.PasscodeVerified (verifies code, **sets userId claim**, returns token)
+- ⏸️ SMS delivery infrastructure
+- ⏸️ Auth event logging to F108 (not immediate priority)
 
-- Implement authorization via Firestore security rules
-- Add rules for hierarchical collections
-- Implement permission checking using custom claims
-- Add organization-scoped access control rules
+**PRODUCTION BLOCKER:**
+- ⚠️ **Deadlock**: Token needs userId claim to submit UserCreated, but UserCreated sets the claim
+- ⚠️ **Fix**: PasscodeVerified action (F121) must set claim BEFORE UserCreated is submitted
+- ⚠️ Flow: PasscodeVerified sets claim → Client gets token with claim → UserCreated succeeds
+- ✅ Tests pass (pre-populate claim, simulating PasscodeVerified's behavior)
+- ❌ Production blocked until F121 implements PasscodeVerified action
+
+**Architectural Decisions:**
+- ❌ Custom claims for organization roles **REMOVED**
+- ✅ Security rules read user doc instead of claims
+- ✅ Only userId claim needed (set by PasscodeVerified, re-set by UserCreated as safety net)
+- ✅ Authentication actions go through giant function (event sourcing for SOC2 audit trail)
+- **Rationale**: See [docs/decisions.md#auth-claims-simplification](../../docs/decisions.md#auth-claims-simplification) and [docs/decisions.md#userid-claim-sync](../../docs/decisions.md#userid-claim-sync)
+
+### **task_6_authorization** ✅ **COMPLETED** *(from F110.5)*
+
+- ✅ Firestore security rules enforce organization membership
+- ✅ Users can only read their own user doc
+- ✅ All writes restricted to Cloud Functions only
+- ✅ Rules use user doc as source of truth (not custom claims)
 
 ### **task_7_integration_testing** ❌ **PENDING** *(from F110.5)*
 
@@ -73,8 +96,18 @@ This specification consolidates the multi-tenant data model tasks from the origi
 
 ## Status
 
-**Completed**: 5/8 tasks
-**Remaining**: User handlers + Authentication/Authorization (~18 hours)
+**Completed**: 6.5/8 tasks
+- ✅ task_1 through task_4 fully complete
+- 🚧 task_5 (auth) ~85% complete - token verification done, userId claim sync in progress, passcode/logging deferred
+- ✅ task_6 (authorization) complete
+- ❌ task_7 (integration testing) pending
+
+**In Progress**:
+- userId claim synchronization via UserCreated handler (~1 hour remaining)
+
+**Remaining**:
+- Integration testing (~4 hours)
+- Deferred: Passcode delivery (blocked on F121), F108 logging
 
 ## References
 
