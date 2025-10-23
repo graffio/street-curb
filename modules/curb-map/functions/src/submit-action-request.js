@@ -2,7 +2,7 @@ import { createLogger } from '@graffio/logger'
 import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
-import { Action, ActionRequest } from '../../src/types/index.js'
+import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
 import * as OH from './events/organization-handlers.js'
 import * as UH from './events/user-handlers.js'
 import { createFirestoreContext } from './firestore-context.js'
@@ -82,6 +82,8 @@ const sendFailed = (res, errorMessage, handlerName = null) => {
 const sendDuplicate = (res, result) =>
     sendJson(res, 409, { status: 'duplicate', message: 'Already processed', processedAt: result.processedAt })
 
+const sendUnauthorized = (res, error) => sendJson(res, 401, { status: 'unauthorized', error })
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------------------------------------------------
@@ -154,18 +156,37 @@ const convertToActionRequest = (rawActionRequest, logger) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /*
- * Extraction functions - only called after validation passes
- * Extract values from validated request
+ * The authorization header includes a `bearer: token` which we use to identify the sender of the ActionRequest
+ * From that Auth user, we get the userId buried in its custom claims
+ * @sig readUserIdFromAuthCustomClaims :: (HttpRequest, Logger) -> { userId: UserId } | { error: String }
  */
+const readUserIdFromAuthCustomClaims = async (req, logger) => {
+    const getAuthErrorMessage = error => {
+        if (error.code === 'auth/id-token-expired') return 'Authorization token has expired'
+        if (error.code === 'auth/argument-error') return 'Authorization token is malformed'
+        if (error.code === 'auth/invalid-id-token') return 'Authorization token is invalid'
+        if (error.code === 'auth/id-token-revoked') return 'Authorization token has been revoked'
+        return 'Invalid or expired Authorization token'
+    }
 
-const getActorId = req =>
-    // TODO (F110.5): Extract from Firebase Auth token
-    // const token = req.headers.authorization?.split('Bearer ')[1]
-    // const decodedToken = await admin.auth().verifyIdToken(token)
-    // return decodedToken.uid
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return { error: 'Missing or invalid Authorization header' }
 
-    // Emulator bypass
-    req.body.actorId || 'usr_emulatorbypass'
+    const token = authHeader.slice('Bearer '.length).trim()
+    if (!token) return { error: 'Authorization token is required' }
+
+    try {
+        const decoded = await admin.auth().verifyIdToken(token)
+        const { userId } = decoded
+
+        if (!userId || !FieldTypes.userId.test(userId)) return { error: 'Authorization token missing userId claim' }
+        return { userId }
+    } catch (error) {
+        const message = getAuthErrorMessage(error)
+        logger.error(new Error(message), { originalError: error.message, code: error.code })
+        return { error: message }
+    }
+}
 
 // prettier-ignore
 const createActionRequestLogger = (logger, actionRequest) => {
@@ -197,26 +218,28 @@ const dispatchToHandler = actionRequest =>
         RoleChanged:           () => UH.handleRoleChanged,
     })
 
-// @sig parseActionRequest :: Request -> { namespace: String, actorId: String, action: Action, organizationId: String?, projectId: String?, subjectId: String, subjectType: String, idempotencyKey: String, correlationId: String }
-const parseActionRequest = req => {
+/*
+ * @sig enrichActionRequest :: Request -> {
+ *      namespace: String,
+ *      action: Action,
+ *      organizationId: String?,
+ *      projectId: String?,
+ *
+ *      // SOC2 fields
+ *      subjectId: String,
+ *      subjectType: String,
+ *      idempotencyKey: String,
+ *      correlationId: String
+ * }
+ */
+const enrichActionRequest = req => {
     const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
-    const actorId = getActorId(req)
     const action = Action.fromFirestore(req.body.action)
     const { organizationId, projectId } = action
     const { id: subjectId, type: subjectType } = Action.getSubject(action)
     const { idempotencyKey, correlationId } = req.body
 
-    return {
-        namespace,
-        actorId,
-        action,
-        organizationId,
-        projectId,
-        subjectId,
-        subjectType,
-        idempotencyKey,
-        correlationId,
-    }
+    return { namespace, action, organizationId, projectId, subjectId, subjectType, idempotencyKey, correlationId }
 }
 
 /*
@@ -268,15 +291,19 @@ const submitActionRequestHandler = async (req, res) => {
     const startTime = Date.now()
 
     try {
+        // Authentication first – reject missing/invalid tokens before other validation
+        const { userId: actorId, error } = await readUserIdFromAuthCustomClaims(req, logger)
+        if (error) return sendUnauthorized(res, error)
+
         // Validate all inputs first
         if (!validateRequest(req, res, logger)) return
 
         // create a raw object by enriching our parameters
-        const params = parseActionRequest(req)
+        const params = enrichActionRequest(req)
         const { idempotencyKey, namespace, organizationId, projectId } = params
         const createdAt = FirestoreAdminFacade.serverTimestamp()
         const id = idempotencyKey.replace(/^idm_/, 'acr_')
-        const rawActionRequest = { ...params, id, schemaVersion: 1, createdAt, processedAt: createdAt }
+        const rawActionRequest = { ...params, id, actorId, schemaVersion: 1, createdAt, processedAt: createdAt }
 
         // create an ActionRequest (or die) from the raw data
         const wrapper = convertToActionRequest(rawActionRequest, logger)
