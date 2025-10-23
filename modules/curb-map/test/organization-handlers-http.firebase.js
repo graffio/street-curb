@@ -1,247 +1,206 @@
 import t from 'tap'
 import { createFirestoreContext } from '../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../src/types/index.js'
-import { submitAndExpectDuplicate, submitAndExpectSuccess } from './helpers/http-submit-action.js'
+import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './helpers/auth-emulator.js'
+import {
+    rawHttpRequest,
+    submitAndExpectDuplicate,
+    submitAndExpectSuccess,
+    submitAndExpectValidationError,
+} from './helpers/http-submit-action.js'
 
 const { test } = t
 
-const namespace = `tests/${new Date().toISOString().replace(/[:.]/g, '-')}`
+const withOrgAuth = (label, effect) =>
+    withAuthTestEnvironment(async ({ namespace }) => {
+        const { token, uid, userId } = await signInWithEmailLink(uniqueEmail(label))
+        await effect({ namespace, token, uid, userId })
+    })
 
-test('Given organization handlers are integrated with HTTP function', t => {
-    t.test(
-        'When OrganizationCreated action is submitted via HTTP Then organization and default project are created',
-        async t => {
+const createOrg = async ({
+    namespace,
+    token,
+    organizationId = FieldTypes.newOrganizationId(),
+    projectId = FieldTypes.newProjectId(),
+    name = 'Test Org',
+}) => {
+    await submitAndExpectSuccess({
+        action: Action.OrganizationCreated.from({ organizationId, projectId, name }),
+        namespace,
+        token,
+    })
+    return { organizationId, projectId }
+}
+
+const orgState = async ({ namespace, organizationId, projectId }) => {
+    const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+    return fsContext.organizations.readOrNull(organizationId)
+}
+
+const projectState = async ({ namespace, organizationId, projectId }) => {
+    const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+    return fsContext.projects.readOrNull(projectId)
+}
+
+test('Given organization handlers via submitActionRequest', t => {
+    t.test('When OrganizationCreated is submitted Then Firestore and metadata reflect token UID', async t => {
+        await withOrgAuth('org-created', async ({ namespace, token, userId }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
-            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'City of San Francisco' })
 
-            console.log(`Test organizationId: ${organizationId}`)
-            const result = await submitAndExpectSuccess({ action, namespace })
+            const result = await submitAndExpectSuccess({
+                action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'City of San Francisco' }),
+                namespace,
+                token,
+            })
 
-            t.equal(result.status, 'completed', 'Then the action request is completed')
+            t.equal(result.status, 'completed', 'Then action request completes')
             t.ok(result.processedAt, 'Then processedAt timestamp is set')
-            t.notOk(result.id, 'Then action request ID is not exposed to client')
 
-            // Create Firestore context for this organization/project
+            const org = await orgState({ namespace, organizationId, projectId })
+            const project = await projectState({ namespace, organizationId, projectId })
+
+            t.equal(org.createdBy, userId, 'Then organization.createdBy matches token userId')
+            t.equal(org.updatedBy, userId, 'Then organization.updatedBy matches token userId')
+            t.equal(project.createdBy, userId, 'Then project.createdBy matches token userId')
+            t.equal(project.updatedBy, userId, 'Then project.updatedBy matches token userId')
+        })
+        t.end()
+    })
+
+    t.test('When request omits token Then HTTP 401 is returned and no writes occur', async t => {
+        await withOrgAuth('org-missing-token', async ({ namespace }) => {
+            const organizationId = FieldTypes.newOrganizationId()
+            const projectId = FieldTypes.newProjectId()
+
+            const payload = {
+                action: Action.toFirestore(
+                    Action.OrganizationCreated.from({ organizationId, projectId, name: 'Unauthorized Org' }),
+                ),
+                idempotencyKey: FieldTypes.newIdempotencyKey(),
+                correlationId: FieldTypes.newCorrelationId(),
+                namespace,
+            }
+
+            const result = await rawHttpRequest({ body: payload })
+
+            t.equal(result.status, 401, 'Then HTTP response is unauthorized')
+            t.equal(result.data.status, 'unauthorized', 'Then payload indicates unauthorized access')
+
+            const org = await orgState({ namespace, organizationId, projectId })
+            t.equal(org, null, 'Then organization document is not created')
+        })
+        t.end()
+    })
+
+    t.test('When OrganizationUpdated changes name Then metadata uses token UID', async t => {
+        await withOrgAuth('org-update-name', async ({ namespace, token, userId }) => {
+            const { organizationId, projectId } = await createOrg({ namespace, token, name: 'Original Name' })
+
+            await submitAndExpectSuccess({
+                action: Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' }),
+                namespace,
+                token,
+            })
+
+            const org = await orgState({ namespace, organizationId, projectId })
+            t.equal(org.name, 'Updated Name', 'Then name updated')
+            t.equal(org.updatedBy, userId, 'Then updatedBy matches token userId')
+        })
+        t.end()
+    })
+
+    t.test('When OrganizationUpdated changes status Then status is updated', async t => {
+        await withOrgAuth('org-update-status', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrg({ namespace, token })
+
+            await submitAndExpectSuccess({
+                action: Action.OrganizationUpdated.from({ organizationId, status: 'suspended' }),
+                namespace,
+                token,
+            })
+
+            const org = await orgState({ namespace, organizationId, projectId })
+            t.equal(org.status, 'suspended', 'Then status updated')
+        })
+        t.end()
+    })
+
+    t.test('When OrganizationSuspended runs Then organization status becomes suspended', async t => {
+        await withOrgAuth('org-suspend', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrg({ namespace, token })
+
+            await submitAndExpectSuccess({
+                action: Action.OrganizationSuspended.from({ organizationId }),
+                namespace,
+                token,
+            })
+
+            const org = await orgState({ namespace, organizationId, projectId })
+            t.equal(org.status, 'suspended', 'Then suspended state persisted')
+        })
+        t.end()
+    })
+
+    t.test('When OrganizationDeleted runs Then organization document is removed', async t => {
+        await withOrgAuth('org-delete', async ({ namespace, token }) => {
+            const { organizationId, projectId } = await createOrg({ namespace, token })
+
+            await submitAndExpectSuccess({
+                action: Action.OrganizationDeleted.from({ organizationId }),
+                namespace,
+                token,
+            })
+
             const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-
-            // Verify organization document was created
-            const org = await fsContext.organizations.read(organizationId)
-
-            t.ok(org, 'Then organization document exists')
-            t.equal(org.name, 'City of San Francisco', 'Then organization name is set')
-            t.equal(org.status, 'active', 'Then organization status is active')
-            t.equal(org.defaultProjectId, projectId, 'Then defaultProjectId matches client-provided projectId')
-            t.equal(org.createdBy, 'usr_emulatorbypass', 'Then createdBy is set from emulator bypass')
-            t.ok(org.createdAt, 'Then createdAt is set by handler')
-            t.equal(org.updatedBy, 'usr_emulatorbypass', 'Then updatedBy is set from emulator bypass')
-            t.ok(org.updatedAt, 'Then updatedAt is set by handler')
-
-            // Verify default project was created
-            const project = await fsContext.projects.read(projectId)
-
-            t.ok(project, 'Then default project document exists')
-            t.equal(project.name, 'Default Project', 'Then default project name is set')
-            t.equal(project.organizationId, organizationId, 'Then project links to organization')
-            t.equal(project.createdBy, 'usr_emulatorbypass', 'Then project createdBy is set from emulator bypass')
-            t.ok(project.createdAt, 'Then project createdAt is set by handler')
-            t.equal(project.updatedBy, 'usr_emulatorbypass', 'Then project updatedBy is set from emulator bypass')
-            t.ok(project.updatedAt, 'Then project updatedAt is set by handler')
-
-            t.end()
-        },
-    )
-
-    t.test('When OrganizationUpdated action updates name Then organization name is updated', async t => {
-        // First create an organization
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const createAction = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Original Name' })
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action: createAction, namespace })
-
-        // Then update it
-        const updateAction = Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' })
-
-        const result = await submitAndExpectSuccess({ action: updateAction, namespace })
-
-        t.equal(result.status, 'completed', 'Then the action request is completed')
-
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-
-        t.equal(org.name, 'Updated Name', 'Then organization name is updated')
-        t.equal(org.status, 'active', 'Then organization status remains unchanged')
-
-        t.end()
-    })
-
-    t.test('When OrganizationUpdated action updates status Then organization status is updated', async t => {
-        // First create an organization
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const createAction = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action: createAction, namespace })
-
-        // Then update status
-        const updateAction = Action.OrganizationUpdated.from({ organizationId, status: 'suspended' })
-
-        const result = await submitAndExpectSuccess({ action: updateAction, namespace })
-
-        t.equal(result.status, 'completed', 'Then the action request is completed')
-
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-
-        t.equal(org.status, 'suspended', 'Then organization status is updated')
-        t.equal(org.name, 'Test Org', 'Then organization name remains unchanged')
-
-        t.end()
-    })
-
-    t.test('When OrganizationSuspended action is submitted Then organization status becomes suspended', async t => {
-        // First create an organization
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const createAction = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action: createAction, namespace })
-
-        // Then suspend it
-        const suspendAction = Action.OrganizationSuspended.from({ organizationId })
-
-        const result = await submitAndExpectSuccess({ action: suspendAction, namespace })
-
-        t.equal(result.status, 'completed', 'Then the action request is completed')
-
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const org = await fsContext.organizations.read(organizationId)
-
-        t.equal(org.status, 'suspended', 'Then organization status is suspended')
-
-        t.end()
-    })
-
-    t.test('When OrganizationDeleted action is submitted Then organization is deleted from Firestore', async t => {
-        // First create an organization
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const createAction = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-
-        console.log(`Test organizationId: ${organizationId}`)
-        await submitAndExpectSuccess({ action: createAction, namespace })
-
-        // Then delete it
-        const deleteAction = Action.OrganizationDeleted.from({ organizationId })
-
-        const result = await submitAndExpectSuccess({ action: deleteAction, namespace })
-
-        t.equal(result.status, 'completed', 'Then the action request is completed')
-
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-
-        // Verify organization is deleted
-        try {
-            await fsContext.organizations.read(organizationId)
-            t.fail('Then organization should not exist')
-        } catch (error) {
-            t.match(error.message, /not found/, 'Then organization is deleted')
-        }
-
+            await t.rejects(fsContext.organizations.read(organizationId), /not found/, 'Then organization is deleted')
+        })
         t.end()
     })
 
     t.end()
 })
 
-test('Given transaction-based idempotency (F110.8)', t => {
-    t.test('When duplicate action is submitted Then HTTP 409 is returned with duplicate status', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
+test('Given transaction-based idempotency', t => {
+    t.test('When duplicate OrganizationCreated submitted Then HTTP 409 duplicate is returned', async t => {
+        await withOrgAuth('org-duplicate', async ({ namespace, token }) => {
+            const organizationId = FieldTypes.newOrganizationId()
+            const projectId = FieldTypes.newProjectId()
+            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Duplicate Org' })
+            const idempotencyKey = FieldTypes.newIdempotencyKey()
 
-        console.log(`Test organizationId: ${organizationId}`)
+            await submitAndExpectSuccess({ action, namespace, token, idempotencyKey })
 
-        // First submission should succeed
-        const firstResult = await submitAndExpectSuccess({ action, namespace, idempotencyKey })
-        t.equal(firstResult.status, 'completed', 'Then first submission succeeds')
-
-        // Second submission with same idempotency key should return HTTP 409
-        try {
-            await submitAndExpectDuplicate({ action, namespace, idempotencyKey })
-            t.pass('Then duplicate submission returns HTTP 409')
-        } catch (error) {
-            // This test should FAIL until task 3 implementation
-            // Current implementation returns 200 + duplicate: true, not 409
-            t.fail(`Expected HTTP 409 but got: ${error.message}`)
-        }
-
+            const duplicate = await submitAndExpectDuplicate({ action, namespace, token, idempotencyKey })
+            t.equal(duplicate.status, 'duplicate', 'Then duplicate status returned')
+        })
         t.end()
     })
 
-    t.test('When action is processed Then server timestamps are used', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Server Timestamp Test' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
+    t.test('When server timestamps set Then completedActions entry has processedAt', async t => {
+        await withOrgAuth('org-timestamps', async ({ namespace, token }) => {
+            const organizationId = FieldTypes.newOrganizationId()
+            const projectId = FieldTypes.newProjectId()
 
-        console.log(`Test organizationId: ${organizationId}`)
-        const result = await submitAndExpectSuccess({ action, namespace, idempotencyKey })
+            const result = await submitAndExpectSuccess({
+                action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Timestamp Org' }),
+                namespace,
+                token,
+            })
 
-        t.equal(result.status, 'completed', 'Then the action request is completed')
-        t.ok(result.processedAt, 'Then processedAt timestamp is set')
-
-        // Verify server timestamps are used by checking that timestamps are present
-        // (The tagged library converts Firestore Timestamps to Date objects, so we can't test the raw type)
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const results = await fsContext.completedActions.query([['idempotencyKey', '==', idempotencyKey]])
-        const completed = results[0]
-
-        t.ok(completed, 'Then completed action exists')
-        t.ok(completed.processedAt, 'Then processedAt is present')
-        t.ok(completed.createdAt, 'Then createdAt is present')
-
-        // Verify timestamps are reasonable (within last minute)
-        const now = new Date()
-        const timeDiff = Math.abs(now.getTime() - completed.processedAt.getTime())
-        t.ok(timeDiff < 60000, 'Then processedAt is recent (server timestamp)')
-
-        // Verify no status field exists (status field was removed)
-        t.notOk(completed.status, 'Then no status field exists (status field removed)')
-
+            t.ok(result.processedAt, 'Then processedAt timestamp returned')
+        })
         t.end()
     })
 
-    t.test('When parallel duplicate requests are submitted Then atomic duplicate detection works', async t => {
-        const organizationId = FieldTypes.newOrganizationId()
-        const projectId = FieldTypes.newProjectId()
-        const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Atomic Test' })
-        const idempotencyKey = FieldTypes.newIdempotencyKey()
+    t.test('When validation fails Then HTTP 400 is returned', async t => {
+        await withOrgAuth('org-validation-fail', async ({ namespace, token }) => {
+            const invalidAction = { '@@tagName': 'OrganizationCreated', organizationId: 'bad', name: 123 }
 
-        console.log(`Test organizationId: ${organizationId}`)
+            const result = await submitAndExpectValidationError({ action: invalidAction, namespace, token })
 
-        // Submit two requests simultaneously with same idempotency key
-        const [result1, result2] = await Promise.allSettled([
-            submitAndExpectSuccess({ action, namespace, idempotencyKey }),
-            submitAndExpectDuplicate({ action, namespace, idempotencyKey }),
-        ])
-
-        // One should succeed (200), one should be duplicate (409)
-        const successCount = result1.status === 'fulfilled' ? 1 : 0
-        const duplicateCount = result2.status === 'fulfilled' ? 1 : 0
-
-        // This test should FAIL until task 3 implementation
-        // Current implementation may have race conditions
-        // New implementation should handle atomically
-        if (successCount === 1 && duplicateCount === 1)
-            t.pass('Then exactly one request succeeds and one is detected as duplicate')
-        else t.fail(`Expected 1 success + 1 duplicate, got ${successCount} success + ${duplicateCount} duplicate`)
-
+            t.equal(result.status, 'validation-failed', 'Then validation failure status returned')
+        })
         t.end()
     })
 

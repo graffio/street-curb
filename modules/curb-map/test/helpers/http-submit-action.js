@@ -1,21 +1,31 @@
 import { Action, FieldTypes } from '../../src/types/index.js'
 
 /**
- * HTTP client for submitting action requests to the Firebase Functions emulator
+ * Shared HTTP helpers for exercising submitActionRequest in integration tests.
+ * All helpers require a Firebase Auth ID token and automatically attach it to requests.
  */
 
-if (!process.env.GCLOUD_PROJECT) throw new Error('GCLOUD_PROJECT environment variable must be set for HTTP tests')
+const resolveProjectId = () => {
+    const projectId = process.env.GCLOUD_PROJECT
+    if (!projectId)
+        throw new Error('GCLOUD_PROJECT environment variable must be set (use withAuthTestEnvironment in tests)')
+    return projectId
+}
 
-const FUNCTIONS_EMULATOR_HOST = 'http://127.0.0.1:5001'
-const PROJECT_ID = process.env.GCLOUD_PROJECT
-const REGION = 'us-central1'
+const resolveFunctionsOrigin = () => {
+    const origin = process.env.FUNCTIONS_EMULATOR_ORIGIN || 'http://127.0.0.1:5001'
+    return origin.startsWith('http') ? origin : `http://${origin}`
+}
 
-// -------------------------------------------------------------------------------------------------------------
-// Helper functions
-// -------------------------------------------------------------------------------------------------------------
+const resolveRegion = () => process.env.FIREBASE_FUNCTIONS_REGION || 'us-central1'
 
 // @sig buildUrl :: () -> String
-const buildUrl = () => `${FUNCTIONS_EMULATOR_HOST}/${PROJECT_ID}/${REGION}/submitActionRequest`
+const buildUrl = () => {
+    const projectId = resolveProjectId()
+    const origin = resolveFunctionsOrigin()
+    const region = resolveRegion()
+    return `${origin}/${projectId}/${region}/submitActionRequest`
+}
 
 // @sig convertActionToPlain :: (Action | Object | null) -> Object | null
 const convertActionToPlain = action => (action && Action.is(action) ? Action.toFirestore(action) : action)
@@ -27,17 +37,24 @@ const buildPayload = (plainAction, idempotencyKey, correlationId) => ({
     correlationId,
 })
 
-// @sig addOptionalFields :: (Object, String?, String?) -> Object
-const addOptionalFields = (payload, namespace, actorId) => {
+// @sig addOptionalFields :: (Object, String?) -> Object
+const addOptionalFields = (payload, namespace) => {
     const result = { ...payload }
     if (namespace) result.namespace = namespace
-    if (actorId) result.actorId = actorId
     return result
 }
 
-// @sig makeHttpRequest :: (String, String, Object) -> Promise<Response>
-const makeHttpRequest = (url, method, body) =>
-    fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+const assertTokenPresent = token => {
+    if (!token) throw new Error('Authorization token is required for submitActionRequest')
+    return token
+}
+
+// @sig makeHttpRequest :: (String, String, Object, String?) -> Promise<Response>
+const makeHttpRequest = (url, method, body, token) => {
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers.Authorization = `Bearer ${token}`
+    return fetch(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+}
 
 // @sig parseResponse :: Response -> Promise<{ status: Number, ok: Boolean, data: Object }>
 const parseResponse = async response => {
@@ -70,43 +87,29 @@ const validateFailure = ({ ok, data }) => {
 // -------------------------------------------------------------------------------------------------------------
 
 /**
- * Submit an action request via HTTP function
- *
- * @sig submitActionRequest :: ({
- *   action: Action | Object | null,
- *   idempotencyKey: String?,
- *   correlationId: String?,
- *   namespace: String?,
- *   actorId: String?
- * }) -> Promise<{ status: Number, ok: Boolean, data: Object }>
+ * Submit an action request via HTTP function.
+ * @sig submitActionRequest :: ({ action: Any, idempotencyKey?: String, correlationId?: String, namespace?: String, token: String }) -> Promise<{ status: Number, ok: Boolean, data: Object }>
  */
 const submitActionRequest = async ({
     action,
     idempotencyKey = FieldTypes.newIdempotencyKey(),
     correlationId = FieldTypes.newCorrelationId(),
     namespace,
-    actorId,
+    token,
 }) => {
     const url = buildUrl()
+    const bearer = assertTokenPresent(token)
     const plainAction = convertActionToPlain(action)
     const payload = buildPayload(plainAction, idempotencyKey, correlationId)
-    const fullPayload = addOptionalFields(payload, namespace, actorId)
-    const response = await makeHttpRequest(url, 'POST', fullPayload)
+    const fullPayload = addOptionalFields(payload, namespace)
+    const response = await makeHttpRequest(url, 'POST', fullPayload, bearer)
 
     return parseResponse(response)
 }
 
 /**
- * Submit an action request and wait for successful completion
- * Throws if the request fails
- *
- * @sig submitAndExpectSuccess :: ({
- *   action: Action | Object | null,
- *   idempotencyKey: String?,
- *   correlationId: String?,
- *   namespace: String?,
- *   actorId: String?
- * }) -> Promise<Object>
+ * Submit an action request and wait for successful completion.
+ * @sig submitAndExpectSuccess :: ({ action: Any, idempotencyKey?: String, correlationId?: String, namespace?: String, token: String }) -> Promise<Object>
  */
 const submitAndExpectSuccess = async params => {
     const result = await submitActionRequest(params)
@@ -115,15 +118,8 @@ const submitAndExpectSuccess = async params => {
 }
 
 /**
- * Submit an action request and expect it to fail with validation error
- *
- * @sig submitAndExpectValidationError :: ({
- *   action: Action | Object | null,
- *   idempotencyKey: String?,
- *   correlationId: String?,
- *   namespace: String?,
- *   actorId: String?
- * }) -> Promise<Object>
+ * Submit an action request and expect validation failure.
+ * @sig submitAndExpectValidationError :: ({ action: Any, idempotencyKey?: String, correlationId?: String, namespace?: String, token: String }) -> Promise<Object>
  */
 const submitAndExpectValidationError = async params => {
     const result = await submitActionRequest(params)
@@ -132,45 +128,35 @@ const submitAndExpectValidationError = async params => {
 }
 
 /**
- * Submit an action request and expect HTTP 409 duplicate response
- * Used for testing idempotency - when the same idempotency key is submitted twice
- *
- * @sig submitAndExpectDuplicate :: ({
- *   action: Action | Object | null,
- *   idempotencyKey: String?,
- *   correlationId: String?,
- *   namespace: String?,
- *   actorId: String?
- * }) -> Promise<Object>
+ * Submit an action request and expect HTTP 409 duplicate response.
+ * @sig submitAndExpectDuplicate :: ({ action: Any, idempotencyKey?: String, correlationId?: String, namespace?: String, token: String }) -> Promise<Object>
  */
 const submitAndExpectDuplicate = async params => {
     const result = await submitActionRequest(params)
-    if (result.status !== 409 || result.data.status !== 'duplicate') 
+    if (result.status !== 409 || result.data.status !== 'duplicate')
         throw new Error(
             `Expected duplicate (HTTP 409, status: 'duplicate') but got HTTP ${result.status}, status: ${result.data.status}`,
         )
-    
+
     return result.data
 }
 
 /**
- * Make a raw HTTP request to the submitActionRequest endpoint
- * Useful for testing HTTP-level behavior (methods, malformed requests, etc.)
- *
- * @sig rawHttpRequest :: ({
- *   method: String?,
- *   body: Any?,
- *   rawBody: Boolean?
- * }) -> Promise<{ status: Number, ok: Boolean, data: Object }>
+ * Make a raw HTTP request to the submitActionRequest endpoint.
+ * @sig rawHttpRequest :: ({ method?: String, body?: Any, rawBody?: Boolean, token?: String }) -> Promise<{ status: Number, ok: Boolean, data: Object }>
  */
-const rawHttpRequest = async ({ method = 'POST', body, rawBody = false } = {}) => {
+const rawHttpRequest = async ({ method = 'POST', body, rawBody = false, token } = {}) => {
     const url = buildUrl()
     const options = { method }
 
     if (body !== undefined) {
         options.headers = { 'Content-Type': 'application/json' }
-        // For testing malformed requests, send raw body without JSON encoding
         options.body = rawBody ? body : JSON.stringify(body)
+    }
+
+    if (token) {
+        options.headers = options.headers || {}
+        options.headers.Authorization = `Bearer ${token}`
     }
 
     const response = await fetch(url, options)
