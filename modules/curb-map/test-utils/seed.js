@@ -61,29 +61,25 @@ const seed = async () => {
     // Users
     const user1 = User.from({
         id: actorId,
-        organizationId,
         email: 'actor@example.com',
         displayName: 'Actor User',
-        role: 'admin',
+        organizations: { [organizationId]: 'admin' },
         createdBy: actorId,
         createdAt: new Date('2025-01-01T10:00:00Z'),
         updatedBy: actorId,
         updatedAt: new Date('2025-01-01T10:00:00Z'),
-        schemaVersion: 1,
     })
     await fsContext.users.write(user1)
 
     const user2 = User.from({
         id: userId2,
-        organizationId,
         email: 'member@example.com',
         displayName: 'Member User',
-        role: 'member',
+        organizations: { [organizationId]: 'member' },
         createdBy: actorId,
         createdAt: new Date('2025-01-01T11:00:00Z'),
         updatedBy: actorId,
         updatedAt: new Date('2025-01-01T11:00:00Z'),
-        schemaVersion: 1,
     })
     await fsContext.users.write(user2)
 
@@ -120,10 +116,9 @@ const seed = async () => {
             subjectType: 'user',
             action: Action.UserCreated.from({
                 userId: actorId,
-                organizationId,
                 email: 'actor@example.com',
                 displayName: 'Actor User',
-                role: 'admin',
+                authUid: 'auth_seed_actor', // Seed data - not processed
             }),
             organizationId,
             projectId,
@@ -145,10 +140,9 @@ const seed = async () => {
             subjectType: 'user',
             action: Action.UserCreated.from({
                 userId: userId2,
-                organizationId,
                 email: 'member@example.com',
                 displayName: 'Member User',
-                role: 'member',
+                authUid: 'auth_seed_member', // Seed data - not processed
             }),
             organizationId,
             projectId,

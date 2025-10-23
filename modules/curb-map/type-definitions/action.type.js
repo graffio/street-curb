@@ -21,6 +21,10 @@ import { FieldTypes } from './field-types.js'
  *      UserCreated
  *      UserForgotten
  *      UserUpdated
+ *
+ *      // authentication (F121 - deferred)
+ *      PasscodeRequested
+ *      PasscodeVerified
  */
 
 // prettier-ignore
@@ -68,6 +72,7 @@ export const Action = {
             userId        : FieldTypes.userId,
             email         : FieldTypes.email,
             displayName   : 'String',
+            authUid       : 'String',  // Firebase Auth UID (for userId claim sync)
         },
         UserForgotten: {
             userId        : FieldTypes.userId,
@@ -78,6 +83,19 @@ export const Action = {
             email         : '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/?', // email address format: a@b.com
             displayName   : 'String?',
         },
+
+        // Authentication Actions (F121 - Deferred)
+        // IMPORTANT: PasscodeVerified must set userId claim BEFORE returning token
+        // See docs/decisions.md#userid-claim-sync for architecture
+        //
+        // PasscodeRequested: {
+        //     phoneNumber   : 'String',  // E.164 format: +14155551234
+        // },
+        // PasscodeVerified: {
+        //     phoneNumber   : 'String',  // E.164 format: +14155551234
+        //     passcode      : 'String',  // 6-digit code
+        //     userId        : FieldTypes.userId,  // Server-generated, not client-provided
+        // },
 
     }
 }

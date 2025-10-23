@@ -27,7 +27,8 @@
  *  UserCreated
  *      userId     : FieldTypes.userId,
  *      email      : FieldTypes.email,
- *      displayName: "String"
+ *      displayName: "String",
+ *      authUid    : "String"
  *  UserForgotten
  *      userId: FieldTypes.userId,
  *      reason: "String"
@@ -465,17 +466,19 @@ RoleChangedConstructor.from = o => Action.RoleChanged(o.userId, o.organizationId
 // Variant Action.UserCreated constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserCreatedConstructor = function UserCreated(userId, email, displayName) {
-    const constructorName = 'Action.UserCreated(userId, email, displayName)'
-    R.validateArgumentLength(constructorName, 3, arguments)
+const UserCreatedConstructor = function UserCreated(userId, email, displayName, authUid) {
+    const constructorName = 'Action.UserCreated(userId, email, displayName, authUid)'
+    R.validateArgumentLength(constructorName, 4, arguments)
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
     R.validateString(constructorName, 'displayName', false, displayName)
+    R.validateString(constructorName, 'authUid', false, authUid)
 
     const result = Object.create(UserCreatedPrototype)
     result.userId = userId
     result.email = email
     result.displayName = displayName
+    result.authUid = authUid
     return result
 }
 
@@ -491,7 +494,7 @@ Object.defineProperty(UserCreatedPrototype, '@@tagName', { value: 'UserCreated' 
 Object.defineProperty(UserCreatedPrototype, '@@typeName', { value: 'Action' })
 
 UserCreatedPrototype.toString = function () {
-    return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)})`
+    return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.authUid)})`
 }
 
 UserCreatedPrototype.toJSON = function () {
@@ -508,7 +511,7 @@ UserCreatedPrototype.constructor = UserCreatedConstructor
 // -------------------------------------------------------------------------------------------------------------
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
-UserCreatedConstructor.from = o => Action.UserCreated(o.userId, o.email, o.displayName)
+UserCreatedConstructor.from = o => Action.UserCreated(o.userId, o.email, o.displayName, o.authUid)
 
 // -------------------------------------------------------------------------------------------------------------
 //
