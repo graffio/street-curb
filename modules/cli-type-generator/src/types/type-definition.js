@@ -33,8 +33,10 @@ const TypeDefinition = {
 //
 // -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
-const TypeDefinitionPrototype = {
-    match(variants) {
+const TypeDefinitionPrototype = {}
+
+Object.defineProperty(TypeDefinitionPrototype, 'match', {
+    value: function (variants) {
         // Validate all variants are handled
         const requiredVariants = ['Tagged', 'TaggedSum']
         requiredVariants.map(variant => {
@@ -45,13 +47,20 @@ const TypeDefinitionPrototype = {
         const variant = variants[this['@@tagName']]
         return variant.call(variants, this)
     },
-}
+    enumerable: false,
+})
+
+Object.defineProperty(TypeDefinitionPrototype, 'constructor', {
+    value: TypeDefinition,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+})
 
 // Add hidden properties
-Object.defineProperty(TypeDefinition, '@@typeName', { value: 'TypeDefinition' })
-Object.defineProperty(TypeDefinition, '@@tagNames', { value: ['Tagged', 'TaggedSum'] })
+Object.defineProperty(TypeDefinition, '@@typeName', { value: 'TypeDefinition', enumerable: false })
+Object.defineProperty(TypeDefinition, '@@tagNames', { value: ['Tagged', 'TaggedSum'], enumerable: false })
 
-TypeDefinitionPrototype.constructor = TypeDefinition
 TypeDefinition.prototype = TypeDefinitionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
@@ -80,20 +89,34 @@ TypeDefinition.Tagged = TaggedConstructor
 // Set up Variant TypeDefinition.Tagged prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const TaggedPrototype = Object.create(TypeDefinitionPrototype)
-Object.defineProperty(TaggedPrototype, '@@tagName', { value: 'Tagged' })
-Object.defineProperty(TaggedPrototype, '@@typeName', { value: 'TypeDefinition' })
 
-TaggedPrototype.toString = function () {
-    return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})`
-}
+const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
+    '@@tagName': { value: 'Tagged', enumerable: false },
+    '@@typeName': { value: 'TypeDefinition', enumerable: false },
 
-TaggedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: TaggedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 TaggedConstructor.prototype = TaggedPrototype
-TaggedPrototype.constructor = TaggedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -130,20 +153,34 @@ TypeDefinition.TaggedSum = TaggedSumConstructor
 // Set up Variant TypeDefinition.TaggedSum prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const TaggedSumPrototype = Object.create(TypeDefinitionPrototype)
-Object.defineProperty(TaggedSumPrototype, '@@tagName', { value: 'TaggedSum' })
-Object.defineProperty(TaggedSumPrototype, '@@typeName', { value: 'TypeDefinition' })
 
-TaggedSumPrototype.toString = function () {
-    return `TypeDefinition.TaggedSum(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.variants)})`
-}
+const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
+    '@@tagName': { value: 'TaggedSum', enumerable: false },
+    '@@typeName': { value: 'TypeDefinition', enumerable: false },
 
-TaggedSumPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `TypeDefinition.TaggedSum(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.variants)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: TaggedSumConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 TaggedSumConstructor.prototype = TaggedSumPrototype
-TaggedSumPrototype.constructor = TaggedSumConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //

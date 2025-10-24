@@ -41,8 +41,10 @@ const OperationDetails = {
 //
 // -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
-const OperationDetailsPrototype = {
-    match(variants) {
+const OperationDetailsPrototype = {}
+
+Object.defineProperty(OperationDetailsPrototype, 'match', {
+    value: function (variants) {
         // Validate all variants are handled
         const requiredVariants = ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation']
         requiredVariants.map(variant => {
@@ -53,15 +55,23 @@ const OperationDetailsPrototype = {
         const variant = variants[this['@@tagName']]
         return variant.call(variants, this)
     },
-}
-
-// Add hidden properties
-Object.defineProperty(OperationDetails, '@@typeName', { value: 'OperationDetails' })
-Object.defineProperty(OperationDetails, '@@tagNames', {
-    value: ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation'],
+    enumerable: false,
 })
 
-OperationDetailsPrototype.constructor = OperationDetails
+Object.defineProperty(OperationDetailsPrototype, 'constructor', {
+    value: OperationDetails,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+})
+
+// Add hidden properties
+Object.defineProperty(OperationDetails, '@@typeName', { value: 'OperationDetails', enumerable: false })
+Object.defineProperty(OperationDetails, '@@tagNames', {
+    value: ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation'],
+    enumerable: false,
+})
+
 OperationDetails.prototype = OperationDetailsPrototype
 
 // -------------------------------------------------------------------------------------------------------------
@@ -90,20 +100,34 @@ OperationDetails.ShellExecution = ShellExecutionConstructor
 // Set up Variant OperationDetails.ShellExecution prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const ShellExecutionPrototype = Object.create(OperationDetailsPrototype)
-Object.defineProperty(ShellExecutionPrototype, '@@tagName', { value: 'ShellExecution' })
-Object.defineProperty(ShellExecutionPrototype, '@@typeName', { value: 'OperationDetails' })
 
-ShellExecutionPrototype.toString = function () {
-    return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})`
-}
+const ShellExecutionPrototype = Object.create(OperationDetailsPrototype, {
+    '@@tagName': { value: 'ShellExecution', enumerable: false },
+    '@@typeName': { value: 'OperationDetails', enumerable: false },
 
-ShellExecutionPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: ShellExecutionConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 ShellExecutionConstructor.prototype = ShellExecutionPrototype
-ShellExecutionPrototype.constructor = ShellExecutionConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -140,20 +164,34 @@ OperationDetails.FirestoreOperation = FirestoreOperationConstructor
 // Set up Variant OperationDetails.FirestoreOperation prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const FirestoreOperationPrototype = Object.create(OperationDetailsPrototype)
-Object.defineProperty(FirestoreOperationPrototype, '@@tagName', { value: 'FirestoreOperation' })
-Object.defineProperty(FirestoreOperationPrototype, '@@typeName', { value: 'OperationDetails' })
 
-FirestoreOperationPrototype.toString = function () {
-    return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})`
-}
+const FirestoreOperationPrototype = Object.create(OperationDetailsPrototype, {
+    '@@tagName': { value: 'FirestoreOperation', enumerable: false },
+    '@@typeName': { value: 'OperationDetails', enumerable: false },
 
-FirestoreOperationPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: FirestoreOperationConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 FirestoreOperationConstructor.prototype = FirestoreOperationPrototype
-FirestoreOperationPrototype.constructor = FirestoreOperationConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -190,20 +228,34 @@ OperationDetails.GcpProjectOperation = GcpProjectOperationConstructor
 // Set up Variant OperationDetails.GcpProjectOperation prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const GcpProjectOperationPrototype = Object.create(OperationDetailsPrototype)
-Object.defineProperty(GcpProjectOperationPrototype, '@@tagName', { value: 'GcpProjectOperation' })
-Object.defineProperty(GcpProjectOperationPrototype, '@@typeName', { value: 'OperationDetails' })
 
-GcpProjectOperationPrototype.toString = function () {
-    return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)}, ${R._toString(this.folderId)}, ${R._toString(this.region)})`
-}
+const GcpProjectOperationPrototype = Object.create(OperationDetailsPrototype, {
+    '@@tagName': { value: 'GcpProjectOperation', enumerable: false },
+    '@@typeName': { value: 'OperationDetails', enumerable: false },
 
-GcpProjectOperationPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)}, ${R._toString(this.folderId)}, ${R._toString(this.region)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: GcpProjectOperationConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 GcpProjectOperationConstructor.prototype = GcpProjectOperationPrototype
-GcpProjectOperationPrototype.constructor = GcpProjectOperationConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //

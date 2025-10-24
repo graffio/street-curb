@@ -74,8 +74,10 @@ const Action = {
 //
 // -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
-const ActionPrototype = {
-    match(variants) {
+const ActionPrototype = {}
+
+Object.defineProperty(ActionPrototype, 'match', {
+    value: function (variants) {
         // Validate all variants are handled
         const requiredVariants = [
             'OrganizationCreated',
@@ -97,10 +99,18 @@ const ActionPrototype = {
         const variant = variants[this['@@tagName']]
         return variant.call(variants, this)
     },
-}
+    enumerable: false,
+})
+
+Object.defineProperty(ActionPrototype, 'constructor', {
+    value: Action,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+})
 
 // Add hidden properties
-Object.defineProperty(Action, '@@typeName', { value: 'Action' })
+Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
 Object.defineProperty(Action, '@@tagNames', {
     value: [
         'OrganizationCreated',
@@ -114,9 +124,9 @@ Object.defineProperty(Action, '@@tagNames', {
         'UserForgotten',
         'UserUpdated',
     ],
+    enumerable: false,
 })
 
-ActionPrototype.constructor = Action
 Action.prototype = ActionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
@@ -145,20 +155,34 @@ Action.OrganizationCreated = OrganizationCreatedConstructor
 // Set up Variant Action.OrganizationCreated prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationCreatedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(OrganizationCreatedPrototype, '@@tagName', { value: 'OrganizationCreated' })
-Object.defineProperty(OrganizationCreatedPrototype, '@@typeName', { value: 'Action' })
 
-OrganizationCreatedPrototype.toString = function () {
-    return `Action.OrganizationCreated(${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.name)})`
-}
+const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationCreated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-OrganizationCreatedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.OrganizationCreated(${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.name)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: OrganizationCreatedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
-OrganizationCreatedPrototype.constructor = OrganizationCreatedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -191,20 +215,34 @@ Action.OrganizationDeleted = OrganizationDeletedConstructor
 // Set up Variant Action.OrganizationDeleted prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationDeletedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(OrganizationDeletedPrototype, '@@tagName', { value: 'OrganizationDeleted' })
-Object.defineProperty(OrganizationDeletedPrototype, '@@typeName', { value: 'Action' })
 
-OrganizationDeletedPrototype.toString = function () {
-    return `Action.OrganizationDeleted(${R._toString(this.organizationId)})`
-}
+const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationDeleted', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-OrganizationDeletedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.OrganizationDeleted(${R._toString(this.organizationId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: OrganizationDeletedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
-OrganizationDeletedPrototype.constructor = OrganizationDeletedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -237,20 +275,34 @@ Action.OrganizationSuspended = OrganizationSuspendedConstructor
 // Set up Variant Action.OrganizationSuspended prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationSuspendedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(OrganizationSuspendedPrototype, '@@tagName', { value: 'OrganizationSuspended' })
-Object.defineProperty(OrganizationSuspendedPrototype, '@@typeName', { value: 'Action' })
 
-OrganizationSuspendedPrototype.toString = function () {
-    return `Action.OrganizationSuspended(${R._toString(this.organizationId)})`
-}
+const OrganizationSuspendedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationSuspended', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-OrganizationSuspendedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.OrganizationSuspended(${R._toString(this.organizationId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: OrganizationSuspendedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
-OrganizationSuspendedPrototype.constructor = OrganizationSuspendedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -287,20 +339,34 @@ Action.OrganizationUpdated = OrganizationUpdatedConstructor
 // Set up Variant Action.OrganizationUpdated prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationUpdatedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(OrganizationUpdatedPrototype, '@@tagName', { value: 'OrganizationUpdated' })
-Object.defineProperty(OrganizationUpdatedPrototype, '@@typeName', { value: 'Action' })
 
-OrganizationUpdatedPrototype.toString = function () {
-    return `Action.OrganizationUpdated(${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.status)})`
-}
+const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationUpdated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-OrganizationUpdatedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.OrganizationUpdated(${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.status)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: OrganizationUpdatedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
-OrganizationUpdatedPrototype.constructor = OrganizationUpdatedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -339,20 +405,34 @@ Action.MemberAdded = MemberAddedConstructor
 // Set up Variant Action.MemberAdded prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const MemberAddedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(MemberAddedPrototype, '@@tagName', { value: 'MemberAdded' })
-Object.defineProperty(MemberAddedPrototype, '@@typeName', { value: 'Action' })
 
-MemberAddedPrototype.toString = function () {
-    return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.displayName)}, ${R._toString(this.role)})`
-}
+const MemberAddedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MemberAdded', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-MemberAddedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.displayName)}, ${R._toString(this.role)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: MemberAddedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 MemberAddedConstructor.prototype = MemberAddedPrototype
-MemberAddedPrototype.constructor = MemberAddedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -387,20 +467,34 @@ Action.MemberRemoved = MemberRemovedConstructor
 // Set up Variant Action.MemberRemoved prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const MemberRemovedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(MemberRemovedPrototype, '@@tagName', { value: 'MemberRemoved' })
-Object.defineProperty(MemberRemovedPrototype, '@@typeName', { value: 'Action' })
 
-MemberRemovedPrototype.toString = function () {
-    return `Action.MemberRemoved(${R._toString(this.userId)}, ${R._toString(this.organizationId)})`
-}
+const MemberRemovedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MemberRemoved', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-MemberRemovedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.MemberRemoved(${R._toString(this.userId)}, ${R._toString(this.organizationId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: MemberRemovedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 MemberRemovedConstructor.prototype = MemberRemovedPrototype
-MemberRemovedPrototype.constructor = MemberRemovedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -437,20 +531,34 @@ Action.RoleChanged = RoleChangedConstructor
 // Set up Variant Action.RoleChanged prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const RoleChangedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(RoleChangedPrototype, '@@tagName', { value: 'RoleChanged' })
-Object.defineProperty(RoleChangedPrototype, '@@typeName', { value: 'Action' })
 
-RoleChangedPrototype.toString = function () {
-    return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.role)})`
-}
+const RoleChangedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'RoleChanged', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-RoleChangedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.role)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: RoleChangedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 RoleChangedConstructor.prototype = RoleChangedPrototype
-RoleChangedPrototype.constructor = RoleChangedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -489,20 +597,34 @@ Action.UserCreated = UserCreatedConstructor
 // Set up Variant Action.UserCreated prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserCreatedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(UserCreatedPrototype, '@@tagName', { value: 'UserCreated' })
-Object.defineProperty(UserCreatedPrototype, '@@typeName', { value: 'Action' })
 
-UserCreatedPrototype.toString = function () {
-    return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.authUid)})`
-}
+const UserCreatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserCreated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-UserCreatedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.authUid)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: UserCreatedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 UserCreatedConstructor.prototype = UserCreatedPrototype
-UserCreatedPrototype.constructor = UserCreatedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -537,20 +659,34 @@ Action.UserForgotten = UserForgottenConstructor
 // Set up Variant Action.UserForgotten prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserForgottenPrototype = Object.create(ActionPrototype)
-Object.defineProperty(UserForgottenPrototype, '@@tagName', { value: 'UserForgotten' })
-Object.defineProperty(UserForgottenPrototype, '@@typeName', { value: 'Action' })
 
-UserForgottenPrototype.toString = function () {
-    return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
-}
+const UserForgottenPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserForgotten', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-UserForgottenPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: UserForgottenConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 UserForgottenConstructor.prototype = UserForgottenPrototype
-UserForgottenPrototype.constructor = UserForgottenConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -587,20 +723,34 @@ Action.UserUpdated = UserUpdatedConstructor
 // Set up Variant Action.UserUpdated prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserUpdatedPrototype = Object.create(ActionPrototype)
-Object.defineProperty(UserUpdatedPrototype, '@@tagName', { value: 'UserUpdated' })
-Object.defineProperty(UserUpdatedPrototype, '@@typeName', { value: 'Action' })
 
-UserUpdatedPrototype.toString = function () {
-    return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)})`
-}
+const UserUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserUpdated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
 
-UserUpdatedPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: UserUpdatedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 UserUpdatedConstructor.prototype = UserUpdatedPrototype
-UserUpdatedPrototype.constructor = UserUpdatedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -36,19 +36,32 @@ const ParseResult = function ParseResult(typeDefinition, imports, functions, sou
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `ParseResult(${R._toString(this.typeDefinition)}, ${R._toString(this.imports)}, ${R._toString(this.functions)}, ${R._toString(this.sourceContent)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'ParseResult', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `ParseResult(${R._toString(this.typeDefinition)}, ${R._toString(this.imports)}, ${R._toString(this.functions)}, ${R._toString(this.sourceContent)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: ParseResult,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 ParseResult.prototype = prototype
-prototype.constructor = ParseResult
-
-Object.defineProperty(prototype, '@@typeName', { value: 'ParseResult' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

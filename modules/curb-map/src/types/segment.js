@@ -30,19 +30,32 @@ const Segment = function Segment(use, length) {
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `Segment(${R._toString(this.use)}, ${R._toString(this.length)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Segment', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Segment(${R._toString(this.use)}, ${R._toString(this.length)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: Segment,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 Segment.prototype = prototype
-prototype.constructor = Segment
-
-Object.defineProperty(prototype, '@@typeName', { value: 'Segment' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

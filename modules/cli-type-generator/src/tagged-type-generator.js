@@ -26,15 +26,28 @@ const generateStaticTaggedType = async typeDefinition => {
         // prototype
         //
         // -------------------------------------------------------------------------------------------------------------
-        const prototype = {
-            toString: ${Generator.generateToString(name, fields)},
-            toJSON() { return this }
-        }
+        const prototype = Object.create(Object.prototype, {
+            '@@typeName': { value: '${name}', enumerable: false },
+            
+            toString: {
+                value: ${Generator.generateToString(name, fields)},
+                enumerable: false
+            },
+            
+            toJSON: {
+                value: function() { return this },
+                enumerable: false
+            },
+            
+            constructor: {
+                value: ${name},
+                enumerable: false,
+                writable: true,
+                configurable: true
+            }
+        })
         
         ${name}.prototype = prototype
-        prototype.constructor = ${name}
-        
-        Object.defineProperty(prototype, '@@typeName', { value: '${name}' }) // Add hidden @@typeName property
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -104,15 +117,24 @@ const generateStaticTaggedSumType = async typeDefinition => {
         //
         // -------------------------------------------------------------------------------------------------------------
         // Type prototype with match method
-        const ${name}Prototype = {
-            ${matchFunction}
-        }
+        const ${name}Prototype = {}
+
+        Object.defineProperty(${name}Prototype, 'match', {
+            value: ${matchFunction},
+            enumerable: false
+        })
+
+        Object.defineProperty(${name}Prototype, 'constructor', {
+            value: ${name},
+            enumerable: false,
+            writable: true,
+            configurable: true
+       })
 
         // Add hidden properties
-        Object.defineProperty(${name}, '@@typeName', { value: '${name}' })
-        Object.defineProperty(${name}, '@@tagNames', { value: [${variantNames.map(v => `'${v}'`).join(', ')}] })
+        Object.defineProperty(${name}, '@@typeName', { value: '${name}', enumerable: false }, )
+        Object.defineProperty(${name}, '@@tagNames', { value: [${variantNames.map(v => `'${v}'`).join(', ')}], enumerable: false })
 
-        ${name}Prototype.constructor = ${name}
         ${name}.prototype = ${name}Prototype
 
         ${variantConstructors}
@@ -151,18 +173,30 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
         // Set up Variant ${typeName}.${variantName} prototype
         //
         // -------------------------------------------------------------------------------------------------------------
-        const ${variantName}Prototype = Object.create(${typeName}Prototype)
-        Object.defineProperty(${variantName}Prototype, '@@tagName', { value: '${variantName}' })
-        Object.defineProperty(${variantName}Prototype, '@@typeName', { value: '${typeName}' })
-
-        ${variantName}Prototype.toString = ${toStringCode}
-        ${variantName}Prototype.toJSON = function() {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        }
+        
+        const ${variantName}Prototype = Object.create(${typeName}Prototype, {
+            '@@tagName' : { value: '${variantName}', enumerable: false },
+            '@@typeName': { value: '${typeName}', enumerable: false    },
+            
+            toString: {
+                value: ${toStringCode},
+                enumerable: false
+            },
+            
+            toJSON: {
+                value: function() { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+                enumerable: false
+            },
+            
+            constructor: {
+                value: ${variantName}Constructor,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            }
+        })
 
         ${variantName}Constructor.prototype = ${variantName}Prototype
-        ${variantName}Prototype.constructor = ${variantName}Constructor
-        
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -211,7 +245,7 @@ const generateUnitVariant = (typeName, variantName) => {
  * @sig generateMatchFunction :: [String] -> String
  */
 const generateMatchFunction = variantNames => `
-    match(variants) {
+    function(variants) {
         // Validate all variants are handled
         const requiredVariants = [${variantNames.map(v => `'${v}'`).join(', ')}]
         requiredVariants.map(variant => {
@@ -239,13 +273,9 @@ const generateImportsSection = imports => {
         .map(imp => {
             const specifiers = imp.specifiers
                 .map(spec => {
-                    if (spec.type === 'ImportDefaultSpecifier') {
-                        return spec.local
-                    } else if (spec.type === 'ImportNamespaceSpecifier') {
-                        return `* as ${spec.local}`
-                    } else {
-                        return spec.imported === spec.local ? spec.imported : `${spec.imported} as ${spec.local}`
-                    }
+                    if (spec.type === 'ImportDefaultSpecifier') return spec.local
+                    else if (spec.type === 'ImportNamespaceSpecifier') return `* as ${spec.local}`
+                    else return spec.imported === spec.local ? spec.imported : `${spec.imported} as ${spec.local}`
                 })
                 .join(', ')
 

@@ -743,7 +743,11 @@ tap.test('Given Shape as a taggedSum with Square and Circle constructors', t => 
         t.same(Shape['@@typeName'], 'Shape', "Shape's '@@typeName' is 'Shape'")
         t.same(Shape['@@tagNames'], ['Square', 'Circle'], "Shape's '@@tagNames' are ['Square', 'Circle']")
         t.same(typeof Shape.Square, 'function', 'Shape.Square is a function')
-        t.same(Object.keys(Shape.prototype), ['match', 'constructor'], 'Shape.prototype defines match and constructor')
+
+        t.ok(typeof Shape.prototype.match === 'function', 'Shape.prototype.match is a function')
+        t.ok(typeof Shape.prototype.constructor === 'object', 'Shape.prototype.constructor exists')
+        t.same(Object.keys(Shape.prototype), [], 'Shape.prototype has no enumerable properties')
+
         t.same(Shape.Square.toString(), `Shape.Square`, 'Shape.Square.toString() returns "Shape.Square"')
         t.notOk(Shape.Square.is({}), 'Shape.Square.is({}) correctly returns false')
         t.end()

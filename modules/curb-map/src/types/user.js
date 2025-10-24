@@ -50,19 +50,32 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `User(${R._toString(this.id)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.organizations)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'User', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `User(${R._toString(this.id)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.organizations)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: User,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 User.prototype = prototype
-prototype.constructor = User
-
-Object.defineProperty(prototype, '@@typeName', { value: 'User' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -64,19 +64,32 @@ const Organization = function Organization(
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `Organization(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.status)}, ${R._toString(this.defaultProjectId)}, ${R._toString(this.members)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Organization', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Organization(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.status)}, ${R._toString(this.defaultProjectId)}, ${R._toString(this.members)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: Organization,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 Organization.prototype = prototype
-prototype.constructor = Organization
-
-Object.defineProperty(prototype, '@@typeName', { value: 'Organization' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

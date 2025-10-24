@@ -47,19 +47,32 @@ const Project = function Project(id, organizationId, name, createdAt, createdBy,
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `Project(${R._toString(this.id)}, ${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Project', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Project(${R._toString(this.id)}, ${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: Project,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 Project.prototype = prototype
-prototype.constructor = Project
-
-Object.defineProperty(prototype, '@@typeName', { value: 'Project' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

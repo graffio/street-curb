@@ -5,7 +5,7 @@
  * @memberOf R
  * @since v0.1.0
  * @sig [String] -> {String: *} -> {String: *}
- * @param {Array} keys an array of String property keys to omit from the new object
+ * @param {Array|String} keys an array of String property keys to omit from the new object
  * @param {Object} o The object to copy from
  * @return {Object} A new object with properties from `keys` not on it.
  * @see R.pick
@@ -24,9 +24,7 @@ const omit = (keys, o) => {
     for (let i = 0; i < keys.length; i++) ignore[keys[i]] = 1
 
     // copy everything NOT marked in ignore
-    for (const prop in o) {
-        if (!Object.prototype.hasOwnProperty.call(ignore, prop)) result[prop] = o[prop]
-    }
+    for (const prop in o) if (!Object.prototype.hasOwnProperty.call(ignore, prop)) result[prop] = o[prop]
 
     return result
 }

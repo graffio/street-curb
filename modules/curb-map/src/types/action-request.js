@@ -86,19 +86,32 @@ const ActionRequest = function ActionRequest(
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'ActionRequest', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: ActionRequest,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 ActionRequest.prototype = prototype
-prototype.constructor = ActionRequest
-
-Object.defineProperty(prototype, '@@typeName', { value: 'ActionRequest' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

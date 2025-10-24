@@ -42,19 +42,32 @@ const Blockface = function Blockface(id, geometry, streetName, cnnId, segments) 
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `Blockface(${R._toString(this.id)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.cnnId)}, ${R._toString(this.segments)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Blockface', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Blockface(${R._toString(this.id)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.cnnId)}, ${R._toString(this.segments)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: Blockface,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 Blockface.prototype = prototype
-prototype.constructor = Blockface
-
-Object.defineProperty(prototype, '@@typeName', { value: 'Blockface' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //
