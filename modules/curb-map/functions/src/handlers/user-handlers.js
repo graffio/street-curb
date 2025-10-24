@@ -1,16 +1,5 @@
 import admin from 'firebase-admin'
-
-const generateMetadata = (fsContext, actionRequest) => ({
-    createdAt: fsContext.serverTimestamp(),
-    createdBy: actionRequest.actorId,
-    updatedAt: fsContext.serverTimestamp(),
-    updatedBy: actionRequest.actorId,
-})
-
-const updatedMetadata = (fsContext, actionRequest) => ({
-    updatedAt: fsContext.serverTimestamp(),
-    updatedBy: actionRequest.actorId,
-})
+import { generateMetadata, updatedMetadata } from '../shared.js'
 
 /**
  * Handle UserCreated action
@@ -29,11 +18,9 @@ const handleUserCreated = async (logger, fsContext, actionRequest) => {
     const metadata = generateMetadata(fsContext, actionRequest)
 
     const user = { id: userId, email, displayName, organizations: {}, ...metadata }
-
     await fsContext.users.write(user)
 
     // Set userId custom claim to link Firebase Auth token to Firestore user doc
-    // Safety net: PasscodeVerified (F121) should already set this, but defense in depth
     await admin.auth().setCustomUserClaims(authUid, { userId })
 
     logger.flowStep('User created')
@@ -73,8 +60,9 @@ const handleMemberAdded = async (logger, fsContext, actionRequest) => {
     if (existingMember && existingMember.removedAt === null)
         throw new Error(`Member ${userId} is already active in organization ${organizationId}`)
 
-    const metadata = { addedAt: fsContext.serverTimestamp(), addedBy: actionRequest.actorId }
-    const memberData = { displayName, role, ...metadata, removedAt: null, removedBy: null }
+    const addedAt = fsContext.serverTimestamp()
+    const addedBy = actionRequest.actorId
+    const memberData = { displayName, role, addedAt, addedBy, removedAt: null, removedBy: null }
 
     // Atomic update: org.members[userId] and user.organizations[orgId]
     await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })

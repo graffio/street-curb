@@ -1,14 +1,5 @@
-const generateMetadata = (fsContext, actionRequest) => ({
-    createdAt: fsContext.serverTimestamp(),
-    createdBy: actionRequest.actorId,
-    updatedAt: fsContext.serverTimestamp(),
-    updatedBy: actionRequest.actorId,
-})
-
-const updatedMetadata = (fsContext, actionRequest) => ({
-    updatedAt: fsContext.serverTimestamp(),
-    updatedBy: actionRequest.actorId,
-})
+import { omit, removeNilValues } from '@graffio/functional'
+import { generateMetadata, updatedMetadata } from '../shared.js'
 
 /**
  * Handle OrganizationCreated action
@@ -36,15 +27,12 @@ const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
  * @sig handleOrganizationUpdated :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleOrganizationUpdated = async (logger, fsContext, actionRequest) => {
-    const { action } = actionRequest
+    const { action, organizationId } = actionRequest
     const metadata = updatedMetadata(fsContext, actionRequest)
+    const o = omit('organizationId', action)
+    const changes = removeNilValues(o)
 
-    // Read existing organization
-    const organization = await fsContext.organizations.read(action.organizationId)
-    const { name = organization.name, status = organization.status } = action
-
-    // Update fields
-    await fsContext.organizations.update(organization.id, { ...{ name, status }, ...metadata })
+    await fsContext.organizations.update(organizationId, { ...changes, ...metadata })
     logger.flowStep('Organization updated')
 }
 

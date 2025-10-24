@@ -3,9 +3,9 @@ import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
-import * as OH from './events/organization-handlers.js'
-import * as UH from './events/user-handlers.js'
 import { createFirestoreContext } from './firestore-context.js'
+import * as OH from './handlers/organization-handlers.js'
+import * as UH from './handlers/user-handlers.js'
 
 /*
  * HTTP endpoint for submitting action requests.
