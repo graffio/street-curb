@@ -7,10 +7,10 @@ import { ActionRequest, Organization, Project, User } from '../../src/types/inde
  * @sig createFirestoreContext :: (String, String, String?, Transaction?) -> FirestoreContext
  */
 const createFirestoreContext = (namespace, organizationId, projectId, tx = null) => {
-    const completedActions = FirestoreAdminFacade(ActionRequest, `${namespace}/`, undefined, 'completedActions', tx)
-    const organizations = FirestoreAdminFacade(Organization, `${namespace}/`, undefined, null, tx)
-    const users = FirestoreAdminFacade(User, `${namespace}/`, undefined, null, tx)
-    const projects = FirestoreAdminFacade(Project, `${namespace}/organizations/${organizationId}/`, undefined, null, tx)
+    const completedActions = FirestoreAdminFacade(ActionRequest, `${namespace}/`, tx)
+    const organizations = FirestoreAdminFacade(Organization, `${namespace}/`, tx)
+    const users = FirestoreAdminFacade(User, `${namespace}/`, tx)
+    const projects = FirestoreAdminFacade(Project, `${namespace}/organizations/${organizationId}/`, tx)
 
     return {
         completedActions,

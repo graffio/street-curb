@@ -8,7 +8,7 @@ import path from 'path'
 const compat = new FlatCompat({ baseDirectory: path.resolve() })
 
 export default defineConfig([
-    { ignores: ['**/dist/*.js', '**/docs/**/*.js'] },
+    { ignores: ['**/dist/*.js', '**/docs/**/*.js', '**/src/types/*.js'] },
     ...compat.extends('standard'),
     ...compat.extends('prettier'),
     {

@@ -258,13 +258,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             tt.ok(facadeWithoutTx, 'Then facade is created without transaction parameter')
 
             // Test facade creation with null transaction
-            const facadeWithNullTx = FirestoreAdminFacade(
-                Organization,
-                'tests/transaction-test/',
-                undefined,
-                undefined,
-                null,
-            )
+            const facadeWithNullTx = FirestoreAdminFacade(Organization, 'tests/transaction-test/')
             tt.ok(facadeWithNullTx, 'Then facade is created with null transaction parameter')
 
             tt.same(Object.keys(facadeWithoutTx), Object.keys(facadeWithNullTx), 'Then both facades have same methods')
@@ -285,7 +279,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             // Test with transaction
             const db = adminFacade.db || admin.firestore()
             await db.runTransaction(async tx => {
-                const txFacade = FirestoreAdminFacade(Organization, namespace, db, undefined, tx)
+                const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
 
                 // Read first (to check current state)
                 const txReadResult = await txFacade.read(org.id)
@@ -317,7 +311,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             // Test with transaction
             const db = adminFacade.db || admin.firestore()
             await db.runTransaction(async tx => {
-                const txFacade = FirestoreAdminFacade(Organization, namespace, db, undefined, tx)
+                const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
                 const resultWithTx = await txFacade.readOrNull(nonExistentId)
                 tt.equal(resultWithTx, null, 'Then readOrNull returns null for non-existent document with transaction')
             })
@@ -332,7 +326,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             // Test successful transaction
             const db = adminFacade.db || admin.firestore()
             await db.runTransaction(async tx => {
-                const txFacade = FirestoreAdminFacade(Organization, namespace, db, undefined, tx)
+                const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
 
                 // Check document doesn't exist (READ FIRST)
                 const existing = await txFacade.readOrNull(atomicTestId)
@@ -357,7 +351,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             try {
                 const db = adminFacade.db || admin.firestore()
                 await db.runTransaction(async tx => {
-                    const txFacade = FirestoreAdminFacade(Organization, namespace, db, undefined, tx)
+                    const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
 
                     // Create document
                     await txFacade.create(buildOrganization({ id: rollbackTestId, name: 'Should Rollback' }))

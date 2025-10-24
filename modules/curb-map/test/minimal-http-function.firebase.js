@@ -14,12 +14,7 @@ import {
 const withHttpAuth = (label, effect) =>
     withAuthTestEnvironment(async ({ namespace, projectId }) => {
         const { token, uid, userId: actorUserId } = await signInWithEmailLink(uniqueEmail(label))
-        const completedActionsFacade = FirestoreAdminFacade(
-            ActionRequest,
-            `${namespace}/`,
-            undefined,
-            'completedActions',
-        )
+        const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
 
         await completedActionsFacade.recursiveDelete()
         try {

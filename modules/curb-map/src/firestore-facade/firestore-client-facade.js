@@ -134,7 +134,8 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
     }
 
     // @sig listenToDocument :: (Id, (Type?, Error?) -> Void) -> (() -> Void)
-    const listenToDocument = (id, callback) => F.onSnapshot(
+    const listenToDocument = (id, callback) =>
+        F.onSnapshot(
             _docRef(id),
             snapshot => {
                 const data = snapshot.exists() ? Type.fromFirestore(decodeTimestamps(snapshot.data())) : null
@@ -160,13 +161,13 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         )
     }
 
-    const descendent = suffix => {
+    const descendent = (DescendentType, suffix) => {
         if (suffix[0] === '/') suffix = suffix.slice(1)
 
         const segments = suffix.split('/').filter(Boolean)
         if (segments.length % 2 !== 0) throw new Error(`Suffix must have an even number of segments; found ${suffix}`)
 
-        return FirestoreClientFacade(Type, `${collectionPrefix}/${suffix}`, db)
+        return FirestoreClientFacade(DescendentType, `${collectionPrefix}/${suffix}`, db)
     }
 
     return { write, update, read, query, listenToDocument, listenToCollection, descendent }

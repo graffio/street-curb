@@ -50,13 +50,12 @@ const getDefaultAdminDb = () => {
     return admin.firestore()
 }
 
-const FirestoreAdminFacade = (
-    Type,
-    collectionPrefix = '',
-    db = getDefaultAdminDb(),
-    collectionNameOverride = null,
-    tx = null,
-) => {
+/*
+ *
+ * @sig FirestoreAdminFacade :: (Type, String, FirestoreTransaction?, Firestore?)) -> Facade
+ *  Facade = { [functionName]: Function }
+ */
+const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDefaultAdminDb()) => {
     const encodeTimestamps = data => {
         if (!timestampFields.length || data == null) return data
         const result = { ...data }
@@ -234,14 +233,14 @@ const FirestoreAdminFacade = (
     // DESCENDENT
     // -----------------------------------------------------------------------------------------------------------------
 
-    const descendent = suffix => {
+    const descendent = (DescendentType, suffix) => {
         if (suffix[0] === '/') suffix = suffix.slice(1)
 
         const segments = suffix.split('/').filter(Boolean)
         if (segments.length % 2 !== 0) throw new Error(`Suffix must have an even number of segments; found ${suffix}`)
 
         const collectionPrefix1 = `${collectionPrefix}/${suffix}`.replaceAll(/\/\//g, '/')
-        return FirestoreAdminFacade(Type, collectionPrefix1, db, collectionNameOverride, tx)
+        return FirestoreAdminFacade(DescendentType, collectionPrefix1, tx, db)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -264,7 +263,7 @@ const FirestoreAdminFacade = (
 
     if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
 
-    const collectionName = collectionNameOverride || collectionPaths.get(Type)
+    const collectionName = collectionPaths.get(Type)
     const collectionPath = collectionPrefix + collectionName
     const collectionRef = db.collection(collectionPath)
 
