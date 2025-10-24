@@ -5,9 +5,9 @@
  *  email        : FieldTypes.email,
  *  displayName  : "String",
  *  organizations: "Object",
- *  createdAt    : "Object",
+ *  createdAt    : "Date",
  *  createdBy    : FieldTypes.userId,
- *  updatedAt    : "Object",
+ *  updatedAt    : "Date",
  *  updatedBy    : FieldTypes.userId
  *
  */
@@ -28,9 +28,9 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
     R.validateString(constructorName, 'displayName', false, displayName)
     R.validateObject(constructorName, 'organizations', false, organizations)
-    R.validateObject(constructorName, 'createdAt', false, createdAt)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
-    R.validateObject(constructorName, 'updatedAt', false, updatedAt)
+    R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
 
     const result = Object.create(prototype)
@@ -87,11 +87,13 @@ User.is = v => v && v['@@typeName'] === 'User'
 User.from = o => User(o.id, o.email, o.displayName, o.organizations, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// timestamp fields
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: timestampFields
 User.timestampFields = ['createdAt', 'updatedAt']
 
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
 // Additional function: fromFirestore
 User.fromFirestore = User.from
 

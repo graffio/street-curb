@@ -13,8 +13,8 @@
  *  error         : "String?",
  *  correlationId : FieldTypes.correlationId,
  *  schemaVersion : "Number",
- *  createdAt     : "Object",
- *  processedAt   : "Object?"
+ *  createdAt     : "Date",
+ *  processedAt   : "Date?"
  *
  */
 
@@ -60,8 +60,8 @@ const ActionRequest = function ActionRequest(
     R.validateString(constructorName, 'error', true, error)
     R.validateRegex(constructorName, FieldTypes.correlationId, 'correlationId', false, correlationId)
     R.validateNumber(constructorName, 'schemaVersion', false, schemaVersion)
-    R.validateObject(constructorName, 'createdAt', false, createdAt)
-    R.validateObject(constructorName, 'processedAt', true, processedAt)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
+    R.validateDate(constructorName, 'processedAt', true, processedAt)
 
     const result = Object.create(prototype)
     result.id = id
@@ -139,11 +139,13 @@ ActionRequest.from = o =>
     )
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// timestamp fields
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: timestampFields
 ActionRequest.timestampFields = ['createdAt', 'processedAt']
 
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
 // Additional function: toFirestore
 ActionRequest.toFirestore = actionRequest => ({
     ...actionRequest,

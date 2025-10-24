@@ -4,9 +4,9 @@
  *  id            : FieldTypes.projectId,
  *  organizationId: FieldTypes.organizationId,
  *  name          : "String",
- *  createdAt     : "Object",
+ *  createdAt     : "Date",
  *  createdBy     : FieldTypes.userId,
- *  updatedAt     : "Object",
+ *  updatedAt     : "Date",
  *  updatedBy     : FieldTypes.userId
  *
  */
@@ -26,9 +26,9 @@ const Project = function Project(id, organizationId, name, createdAt, createdBy,
     R.validateRegex(constructorName, FieldTypes.projectId, 'id', false, id)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateString(constructorName, 'name', false, name)
-    R.validateObject(constructorName, 'createdAt', false, createdAt)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
-    R.validateObject(constructorName, 'updatedAt', false, updatedAt)
+    R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
 
     const result = Object.create(prototype)
@@ -84,11 +84,13 @@ Project.is = v => v && v['@@typeName'] === 'Project'
 Project.from = o => Project(o.id, o.organizationId, o.name, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// timestamp fields
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: timestampFields
 Project.timestampFields = ['createdAt', 'updatedAt']
 
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
 // Additional function: fromFirestore
 Project.fromFirestore = Project.from
 

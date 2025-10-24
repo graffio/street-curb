@@ -16,13 +16,12 @@ export const User = {
         displayName     : "String",
         organizations   : "Object",
         
-        createdAt       : 'Object', // Date
+        createdAt       : 'Date',
         createdBy       : FieldTypes.userId,
-        updatedAt       : 'Object', // Date
+        updatedAt       : 'Date',
         updatedBy       : FieldTypes.userId,
     }
 }
 
-User.timestampFields = ['createdAt', 'updatedAt']
 User.fromFirestore = User.from
 User.toFirestore = o => ({ ...o })

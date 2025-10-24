@@ -1,5 +1,56 @@
 import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
+import TaggedFieldType from './tagged-field-type.js'
 import Generator from './tagged-type-function-generators.js'
+
+/*
+ * Validate that no fields use [Date] arrays, which are not supported by Firestore facade
+ * @sig validateNoDateArrays :: (String, FieldMap) -> void
+ */
+const validateNoDateArrays = (typeName, fields) => {
+    const dateArrayFields = Object.entries(fields)
+        .filter(([_, fieldType]) => {
+            const parsedType = TaggedFieldType.fromString(fieldType.toString())
+            return parsedType.baseType === 'Date' && parsedType.arrayDepth > 0
+        })
+        .map(([fieldName, fieldType]) => `${fieldName}: ${fieldType}`)
+
+    if (dateArrayFields.length > 0) 
+        throw new Error(
+            `Type '${typeName}' has Date array fields which are not supported by Firestore facade:\n  ${dateArrayFields.join('\n  ')}\n\n` +
+                `The timestampFields property is used by FirestoreAdminFacade to convert between Date and Firestore Timestamp,\n` +
+                `but it only handles individual Date values, not arrays.\n\n` +
+                `Please use a different approach for storing arrays of dates (e.g., store as milliseconds: [Number]).`,
+        )
+    
+}
+
+/*
+ * Extract field names that have Date type (Date or Date? only, not arrays)
+ * @sig getDateFields :: FieldMap -> [String]
+ */
+const getDateFields = fields =>
+    Object.entries(fields)
+        .filter(([_, fieldType]) => {
+            const parsedType = TaggedFieldType.fromString(fieldType.toString())
+            return parsedType.baseType === 'Date' && parsedType.arrayDepth === 0
+        })
+        .map(([fieldName, _]) => fieldName)
+
+/*
+ * Generate timestampFields static property if type has Date fields
+ * @sig generateTimestampFieldsSection :: (String, FieldMap) -> String
+ */
+const generateTimestampFieldsSection = (typeName, fields) => {
+    const dateFields = getDateFields(fields)
+    if (dateFields.length === 0) return ''
+
+    return `
+        // -------------------------------------------------------------------------------------------------------------
+        // timestamp fields
+        // -------------------------------------------------------------------------------------------------------------
+        ${typeName}.timestampFields = [${dateFields.map(f => `'${f}'`).join(', ')}]
+    `
+}
 
 /*
  * Generate static tagged type (single constructor)
@@ -7,6 +58,11 @@ import Generator from './tagged-type-function-generators.js'
  */
 const generateStaticTaggedType = async typeDefinition => {
     const { name, fields, imports = [], functions = [] } = typeDefinition
+
+    // Validate no [Date] arrays since Firestore facade can't handle them
+    validateNoDateArrays(name, fields)
+
+    const timestampFieldsSection = generateTimestampFieldsSection(name, fields)
 
     const code = `
         ${stringifyObjectAsMultilineComment(typeDefinition.fields, typeDefinition.relativePath, name)}
@@ -58,6 +114,8 @@ const generateStaticTaggedType = async typeDefinition => {
         ${name}.is = v => v && v['@@typeName'] === '${name}'
         ${name}.from = ${Generator.generateFrom('prototype', name, name, fields)}
 
+        ${timestampFieldsSection}
+
         ${generateFunctionsSection(functions)}
 
         export { ${name} }
@@ -93,7 +151,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
     const code = `
         ${stringifyObjectAsMultilineComment(typeDefinition.variants, typeDefinition.relativePath, name)}
-        
+
         ${generateImportsSection(imports)}
         import * as R from '@graffio/cli-type-generator'
 
@@ -154,9 +212,13 @@ const generateStaticTaggedSumType = async typeDefinition => {
 const generateVariantConstructor = (typeName, variantName, fields) => {
     const fullName = `${typeName}.${variantName}`
 
+    // Validate no [Date] arrays since Firestore facade can't handle them
+    validateNoDateArrays(fullName, fields)
+
     const constructorCode = Generator.generateTypeConstructor(variantName, fullName, fields)
     const toStringCode = Generator.generateToString(fullName, fields)
     const fromCode = Generator.generateFrom('prototype', variantName, fullName, fields)
+    const timestampFieldsSection = generateTimestampFieldsSection(`${variantName}Constructor`, fields)
 
     return `
         // -------------------------------------------------------------------------------------------------------------
@@ -165,7 +227,7 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
         //
         // -------------------------------------------------------------------------------------------------------------
         const ${variantName}Constructor = ${constructorCode.replace('prototype', `${variantName}Prototype`)}
-        
+
         ${typeName}.${variantName} = ${variantName}Constructor
 
         // -------------------------------------------------------------------------------------------------------------
@@ -173,21 +235,21 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
         // Set up Variant ${typeName}.${variantName} prototype
         //
         // -------------------------------------------------------------------------------------------------------------
-        
+
         const ${variantName}Prototype = Object.create(${typeName}Prototype, {
             '@@tagName' : { value: '${variantName}', enumerable: false },
             '@@typeName': { value: '${typeName}', enumerable: false    },
-            
+
             toString: {
                 value: ${toStringCode},
                 enumerable: false
             },
-            
+
             toJSON: {
                 value: function() { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
                 enumerable: false
             },
-            
+
             constructor: {
                 value: ${variantName}Constructor,
                 enumerable: false,
@@ -207,6 +269,7 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
         ${variantName}Constructor.toString = () => '${fullName}'
         ${variantName}Constructor.from = ${fromCode}
 
+        ${timestampFieldsSection}
     `
 }
 

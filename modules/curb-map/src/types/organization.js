@@ -6,9 +6,9 @@
  *  status          : /active|suspended/,
  *  defaultProjectId: FieldTypes.projectId,
  *  members         : "Object?",
- *  createdAt       : "Object",
+ *  createdAt       : "Date",
  *  createdBy       : FieldTypes.userId,
- *  updatedAt       : "Object",
+ *  updatedAt       : "Date",
  *  updatedBy       : FieldTypes.userId
  *
  */
@@ -41,9 +41,9 @@ const Organization = function Organization(
     R.validateRegex(constructorName, /active|suspended/, 'status', false, status)
     R.validateRegex(constructorName, FieldTypes.projectId, 'defaultProjectId', false, defaultProjectId)
     R.validateObject(constructorName, 'members', true, members)
-    R.validateObject(constructorName, 'createdAt', false, createdAt)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
-    R.validateObject(constructorName, 'updatedAt', false, updatedAt)
+    R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
 
     const result = Object.create(prototype)
@@ -112,11 +112,13 @@ Organization.from = o =>
     )
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// timestamp fields
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: timestampFields
 Organization.timestampFields = ['createdAt', 'updatedAt']
 
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
 // Additional function: fromFirestore
 Organization.fromFirestore = Organization.from
 

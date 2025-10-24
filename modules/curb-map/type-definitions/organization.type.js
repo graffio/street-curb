@@ -16,13 +16,12 @@ export const Organization = {
         defaultProjectId: FieldTypes.projectId,
         members         : 'Object?', // Map of userId -> {displayName, role, addedAt, addedBy, removedAt, removedBy}
 
-        createdAt       : 'Object', // Date
+        createdAt       : 'Date',
         createdBy       : FieldTypes.userId,
-        updatedAt       : 'Object', // Date
+        updatedAt       : 'Date',
         updatedBy       : FieldTypes.userId,
     }
 }
 
-Organization.timestampFields = ['createdAt', 'updatedAt']
 Organization.fromFirestore = Organization.from
 Organization.toFirestore = o => ({ ...o })
