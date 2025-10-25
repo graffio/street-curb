@@ -12,14 +12,7 @@ const createFirestoreContext = (namespace, organizationId, projectId, tx = null)
     const users = FirestoreAdminFacade(User, `${namespace}/`, tx)
     const projects = FirestoreAdminFacade(Project, `${namespace}/organizations/${organizationId}/`, tx)
 
-    return {
-        completedActions,
-        organizations,
-        users,
-        projects,
-        serverTimestamp: FirestoreAdminFacade.serverTimestamp,
-        deleteField: FirestoreAdminFacade.deleteField,
-    }
+    return { completedActions, organizations, users, projects, deleteField: FirestoreAdminFacade.deleteField }
 }
 
 export { createFirestoreContext }

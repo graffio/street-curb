@@ -39,7 +39,6 @@ export const ActionRequest = {
         correlationId  : FieldTypes.correlationId,
         schemaVersion  : 'Number',
 
-        // Timestamps (stored as serverTimestamp in Firestore; Date objects here)
         createdAt      : 'Date',
         processedAt    : 'Date?'
     }

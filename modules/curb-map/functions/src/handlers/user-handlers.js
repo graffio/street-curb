@@ -60,7 +60,7 @@ const handleMemberAdded = async (logger, fsContext, actionRequest) => {
     if (existingMember && existingMember.removedAt === null)
         throw new Error(`Member ${userId} is already active in organization ${organizationId}`)
 
-    const addedAt = fsContext.serverTimestamp()
+    const addedAt = new Date()
     const addedBy = actionRequest.actorId
     const memberData = { displayName, role, addedAt, addedBy, removedAt: null, removedBy: null }
 
@@ -90,7 +90,7 @@ const handleMemberRemoved = async (logger, fsContext, actionRequest) => {
         throw new Error(`Member ${userId} is already removed from organization ${organizationId}`)
 
     const removed = {
-        [`members.${userId}.removedAt`]: fsContext.serverTimestamp(),
+        [`members.${userId}.removedAt`]: new Date(),
         [`members.${userId}.removedBy`]: actionRequest.actorId,
     }
 
@@ -153,7 +153,7 @@ const handleUserForgotten = async (logger, fsContext, actionRequest) => {
     await fsContext.users.delete(userId)
     for (const orgId of orgsToUpdate)
         await fsContext.organizations.update(orgId, {
-            [`members.${userId}.removedAt`]: fsContext.serverTimestamp(),
+            [`members.${userId}.removedAt`]: new Date(),
             [`members.${userId}.removedBy`]: actionRequest.actorId,
         })
 

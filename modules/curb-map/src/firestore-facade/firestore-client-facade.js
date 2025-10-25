@@ -2,46 +2,6 @@ import { getApps, initializeApp } from 'firebase/app'
 import * as F from 'firebase/firestore'
 import { collectionPaths, throwWithOriginal } from './firestore-facade-shared.js'
 
-// @sig isServerTimestampPlaceholder :: Any -> Boolean
-const isServerTimestampPlaceholder = value =>
-    value?._methodName === 'serverTimestamp' ||
-    value?._delegate != null ||
-    (typeof value === 'object' && value != null && Object.keys(value).length === 0)
-
-// @sig timestampToDate :: Any -> Date
-const timestampToDate = value => {
-    if (value == null) return null
-    if (value instanceof Date) return value
-    if (value instanceof F.Timestamp) return value.toDate()
-    if (typeof value?.toDate === 'function') return value.toDate()
-
-    if (typeof value === 'string') {
-        const parsed = new Date(value)
-        if (!Number.isNaN(parsed.getTime())) return parsed
-    }
-
-    if (isServerTimestampPlaceholder(value)) return new Date()
-
-    throw new Error(`Invalid timestamp format: ${JSON.stringify(value)}`)
-}
-
-// @sig dateToTimestamp :: Any -> Object
-const dateToTimestamp = value => {
-    if (value == null) return null
-    if (value instanceof Date) return F.Timestamp.fromDate(value)
-    if (value instanceof F.Timestamp) return value
-    if (isServerTimestampPlaceholder(value)) return value
-
-    if (typeof value?.toDate === 'function') return F.Timestamp.fromDate(value.toDate())
-
-    if (typeof value === 'string') {
-        const parsed = new Date(value)
-        if (!Number.isNaN(parsed.getTime())) return F.Timestamp.fromDate(parsed)
-    }
-
-    throw new Error(`Invalid date format: ${JSON.stringify(value)}`)
-}
-
 const getDefaultClientDb = () => {
     if (!getApps().length) {
         const projectId = process.env.GCLOUD_PROJECT || 'test-project'
@@ -73,7 +33,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         if (!timestampFields.length || data == null) return data
         const result = { ...data }
         timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = dateToTimestamp(result[field])
+            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = F.Timestamp.fromDate(result[field])
         })
         return result
     }
@@ -82,7 +42,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         if (!timestampFields.length || data == null) return data
         const result = { ...data }
         timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = timestampToDate(result[field])
+            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = result[field].toDate()
         })
         return result
     }
@@ -172,8 +132,5 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
 
     return { write, update, read, query, listenToDocument, listenToCollection, descendent }
 }
-
-FirestoreClientFacade.timestampToDate = timestampToDate
-FirestoreClientFacade.dateToTimestamp = dateToTimestamp
 
 export { FirestoreClientFacade }

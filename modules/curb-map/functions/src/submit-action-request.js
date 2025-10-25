@@ -1,7 +1,6 @@
 import { createLogger } from '@graffio/logger'
 import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
-import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
 import { createFirestoreContext } from './firestore-context.js'
 import * as OH from './handlers/organization-handlers.js'
@@ -301,7 +300,7 @@ const submitActionRequestHandler = async (req, res) => {
         // create a raw object by enriching our parameters
         const params = enrichActionRequest(req)
         const { idempotencyKey, namespace, organizationId, projectId } = params
-        const createdAt = FirestoreAdminFacade.serverTimestamp()
+        const createdAt = new Date()
         const id = idempotencyKey.replace(/^idm_/, 'acr_')
         const rawActionRequest = { ...params, id, actorId, schemaVersion: 1, createdAt, processedAt: createdAt }
 

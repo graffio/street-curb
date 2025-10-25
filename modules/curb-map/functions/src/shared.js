@@ -1,13 +1,10 @@
 const generateMetadata = (fsContext, actionRequest) => ({
-    createdAt: fsContext.serverTimestamp(),
+    createdAt: new Date(),
     createdBy: actionRequest.actorId,
-    updatedAt: fsContext.serverTimestamp(),
+    updatedAt: new Date(),
     updatedBy: actionRequest.actorId,
 })
 
-const updatedMetadata = (fsContext, actionRequest) => ({
-    updatedAt: fsContext.serverTimestamp(),
-    updatedBy: actionRequest.actorId,
-})
+const updatedMetadata = (fsContext, actionRequest) => ({ updatedAt: new Date(), updatedBy: actionRequest.actorId })
 
 export { generateMetadata, updatedMetadata }
