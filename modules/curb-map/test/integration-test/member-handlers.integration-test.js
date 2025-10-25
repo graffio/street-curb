@@ -1,14 +1,9 @@
 import admin from 'firebase-admin'
 import t from 'tap'
-import { createFirestoreContext } from '../functions/src/firestore-context.js'
-import { Action, FieldTypes } from '../src/types/index.js'
-import {
-    signInWithEmailLink,
-    signInWithPhoneNumber,
-    uniqueEmail,
-    withAuthTestEnvironment,
-} from './helpers/auth-emulator.js'
-import { rawHttpRequest, submitAndExpectSuccess } from './helpers/http-submit-action.js'
+import { createFirestoreContext } from '../../functions/src/firestore-context.js'
+import { Action, FieldTypes } from '../../src/types/index.js'
+import { signInWithEmailLink, signInWithPhoneNumber, uniqueEmail, withAuthTestEnvironment } from './auth-emulator.js'
+import { rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
 

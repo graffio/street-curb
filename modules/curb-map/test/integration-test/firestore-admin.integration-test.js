@@ -1,9 +1,9 @@
 import admin from 'firebase-admin'
 import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
-import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
-import { FirestoreClientFacade } from '../src/firestore-facade/firestore-client-facade.js'
-import { FieldTypes, Organization } from '../src/types/index.js'
+import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
+import { FirestoreClientFacade } from '../../src/firestore-facade/firestore-client-facade.js'
+import { FieldTypes, Organization } from '../../src/types/index.js'
 
 const envKeys = [
     'GCLOUD_PROJECT',

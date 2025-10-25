@@ -1,15 +1,15 @@
 import admin from 'firebase-admin'
 import { test } from 'tap'
-import { FirestoreAdminFacade } from '../src/firestore-facade/firestore-admin-facade.js'
-import { Action, ActionRequest, FieldTypes } from '../src/types/index.js'
-import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './helpers/auth-emulator.js'
+import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
+import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
+import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './auth-emulator.js'
 import {
     rawHttpRequest,
     submitActionRequest,
     submitAndExpectDuplicate,
     submitAndExpectSuccess,
     submitAndExpectValidationError,
-} from './helpers/http-submit-action.js'
+} from './http-submit-action.js'
 
 const withHttpAuth = (label, effect) =>
     withAuthTestEnvironment(async ({ namespace, projectId }) => {
