@@ -17,35 +17,13 @@ const ensureProjectId = () => {
     return projectId
 }
 
-const resolveHost = () => {
-    const host = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
-    return host.startsWith('http') ? host : `http://${host}`
-}
+const host = 'http://127.0.0.1:9099'
 
 const API_KEY = 'fake-key'
-
-const envKeys = [
-    'GCLOUD_PROJECT',
-    'GOOGLE_CLOUD_PROJECT',
-    'FIRESTORE_EMULATOR_HOST',
-    'FIREBASE_AUTH_EMULATOR_HOST',
-    'FIREBASE_TEST_MODE',
-    'FUNCTIONS_EMULATOR',
-]
-
-const captureEnv = keys => keys.reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {})
-
-const restoreEnv = snapshot =>
-    Object.entries(snapshot).forEach(([key, value]) => {
-        if (value === undefined) delete process.env[key]
-        else process.env[key] = value
-    })
-
 const headers = { 'Content-Type': 'application/json' }
 
 const buildEndpoints = () => {
-    const projectId = process.env.GCLOUD_PROJECT || process.env.TEST_GCLOUD_PROJECT || ensureProjectId()
-    const host = resolveHost()
+    const projectId = ensureProjectId()
     const authBase = `${host}/identitytoolkit.googleapis.com/v1`
     const emulatorBase = `${host}/emulator/v1/projects/${projectId}`
 
@@ -129,36 +107,29 @@ const signInWithPhoneNumber = async (phoneNumber = '+15551234567') => {
 const uniqueEmail = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`
 
 /**
- * Temporarily configures emulator env vars and yields a unique namespace for each integration test.
+ * Configures emulator env vars and yields a unique namespace for each integration test.
  * @sig withAuthTestEnvironment :: (Context -> Promise<void>, Object?) -> Promise<void>
  * Context = { namespace: String, projectId: String }
  */
 const withAuthTestEnvironment = async (effect, overrides = {}) => {
-    const snapshot = captureEnv(envKeys)
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
     const namespace = `tests/ns_${timestamp}`
 
-    const projectId =
-        overrides.projectId || process.env.GCLOUD_PROJECT || process.env.TEST_GCLOUD_PROJECT || 'local-curb-map-tests'
-    const firestoreHost = overrides.firestoreHost || process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080'
-    const authHost = overrides.authHost || process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
+    // Read project ID from environment (must be set externally)
+    const projectId = overrides.projectId || ensureProjectId()
+    if (!projectId) throw new Error('GCLOUD_PROJECT must be set')
 
-    restoreEnv({
-        GCLOUD_PROJECT: projectId,
-        GOOGLE_CLOUD_PROJECT: projectId,
-        FIRESTORE_EMULATOR_HOST: firestoreHost,
-        FIREBASE_AUTH_EMULATOR_HOST: authHost,
-        FIREBASE_TEST_MODE: '1',
-        FUNCTIONS_EMULATOR: '1',
-    })
+    // Ensure emulator configuration (idempotent, hardcoded ports)
+    process.env.GCLOUD_PROJECT ||= projectId
+    process.env.GOOGLE_CLOUD_PROJECT ||= projectId
+    process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
+    process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+    process.env.FIREBASE_TEST_MODE ||= '1'
+    process.env.FUNCTIONS_EMULATOR ||= '1'
 
     ensureAdminInitialized(projectId)
 
-    try {
-        await effect({ namespace, projectId })
-    } finally {
-        restoreEnv(snapshot)
-    }
+    await effect({ namespace, projectId })
 }
 
 export { signInWithEmailLink, signInWithPhoneNumber, uniqueEmail, withAuthTestEnvironment }

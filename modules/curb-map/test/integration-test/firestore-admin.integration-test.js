@@ -5,28 +5,6 @@ import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin
 import { FirestoreClientFacade } from '../../src/firestore-facade/firestore-client-facade.js'
 import { FieldTypes, Organization } from '../../src/types/index.js'
 
-const envKeys = [
-    'GCLOUD_PROJECT',
-    'GOOGLE_CLOUD_PROJECT',
-    'FIRESTORE_EMULATOR_HOST',
-    'FIREBASE_AUTH_EMULATOR_HOST',
-    'FIREBASE_TEST_MODE',
-]
-
-const defaultProjectId = 'local-curb-map-tests'
-const defaultFirestoreHost = '127.0.0.1:8080'
-const defaultAuthHost = '127.0.0.1:9099'
-
-// @sig captureEnv :: [String] -> Object
-const captureEnv = keys => keys.reduce((snapshot, key) => ({ ...snapshot, [key]: process.env[key] }), {})
-
-// @sig restoreEnv :: Object -> Void
-const restoreEnv = snapshot =>
-    Object.entries(snapshot).forEach(([key, value]) => {
-        if (value === undefined) delete process.env[key]
-        else process.env[key] = value
-    })
-
 // @sig buildOrganization :: Object -> Organization
 const buildOrganization = overrides => {
     const now = new Date('2025-01-01T00:00:00Z')
@@ -48,17 +26,16 @@ const withTestEnvironment = async effect => {
     const now = new Date()
     const timestamp = now.toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
     const namespace = `tests/ns_${timestamp}`
-    const snapshot = captureEnv(envKeys)
 
-    const configuration = {
-        GCLOUD_PROJECT: process.env.GCLOUD_PROJECT || defaultProjectId,
-        GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT || defaultProjectId,
-        FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || defaultFirestoreHost,
-        FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST || defaultAuthHost,
-        FIREBASE_TEST_MODE: '1',
-    }
+    // Read project ID from environment (must be set externally)
+    const projectId = process.env.GCLOUD_PROJECT || process.env.TEST_GCLOUD_PROJECT || 'local-curb-map-tests'
 
-    restoreEnv(configuration)
+    // Ensure emulator configuration (idempotent, hardcoded ports)
+    process.env.GCLOUD_PROJECT ||= projectId
+    process.env.GOOGLE_CLOUD_PROJECT ||= projectId
+    process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
+    process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+    process.env.FIREBASE_TEST_MODE ||= '1'
 
     const adminFacade = FirestoreAdminFacade(Organization, `${namespace}/`)
     const clientFacade = FirestoreClientFacade(Organization, `${namespace}/`)
@@ -72,7 +49,6 @@ const withTestEnvironment = async effect => {
         await effect({ adminFacade, clientFacade, namespace, clearNamespace })
     } finally {
         await clearNamespace()
-        restoreEnv(snapshot)
     }
 }
 
