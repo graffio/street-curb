@@ -2,63 +2,42 @@ import admin from 'firebase-admin'
 import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
-import { FirestoreClientFacade } from '../../src/firestore-facade/firestore-client-facade.js'
 import { FieldTypes, Organization } from '../../src/types/index.js'
 
-// @sig buildOrganization :: Object -> Organization
-const buildOrganization = overrides => {
-    const now = new Date('2025-01-01T00:00:00Z')
-    return Organization.from({
-        id: overrides?.id || FieldTypes.newOrganizationId(),
-        name: overrides?.name || 'Test Organization',
-        status: overrides?.status || 'active',
-        defaultProjectId: overrides?.defaultProjectId || FieldTypes.newProjectId(),
-        members: overrides?.members || {},
-        createdAt: overrides?.createdAt || now,
-        createdBy: overrides?.createdBy || FieldTypes.newUserId(),
-        updatedAt: overrides?.updatedAt || now,
-        updatedBy: overrides?.updatedBy || FieldTypes.newUserId(),
-    })
-}
+// Read project ID from environment (must be set externally)
+process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
+process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+process.env.FIREBASE_TEST_MODE ||= '1'
 
-// @sig withTestEnvironment :: (Context -> Promise Any) -> Promise Void
-const withTestEnvironment = async effect => {
+// @sig buildOrganization :: Object -> Organization
+const buildOrganization = ({ id = FieldTypes.newOrganizationId(), status = 'active', name = 'Test Organization' }) =>
+    Organization.from({
+        id,
+        name,
+        status,
+        defaultProjectId: FieldTypes.newProjectId(),
+        members: {},
+        createdAt: new Date('2025-01-01T00:00:00Z'),
+        updatedAt: new Date('2025-01-01T00:00:00Z'),
+        createdBy: FieldTypes.newUserId(),
+        updatedBy: FieldTypes.newUserId(),
+    })
+
+// @sig inNamespacedCollection :: (Context -> Promise Any) -> Promise Void
+const inNamespacedCollection = async effect => {
     const now = new Date()
     const timestamp = now.toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
     const namespace = `tests/ns_${timestamp}`
 
-    // Read project ID from environment (must be set externally)
-    const projectId = process.env.GCLOUD_PROJECT || process.env.TEST_GCLOUD_PROJECT || 'local-curb-map-tests'
-
-    // Ensure emulator configuration (idempotent, hardcoded ports)
-    process.env.GCLOUD_PROJECT ||= projectId
-    process.env.GOOGLE_CLOUD_PROJECT ||= projectId
-    process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
-    process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
-    process.env.FIREBASE_TEST_MODE ||= '1'
-
-    const adminFacade = FirestoreAdminFacade(Organization, `${namespace}/`)
-    const clientFacade = FirestoreClientFacade(Organization, `${namespace}/`)
-
-    const clearNamespace = async () => {
-        await adminFacade.recursiveDelete()
-    }
-    await clearNamespace()
-
-    try {
-        await effect({ adminFacade, clientFacade, namespace, clearNamespace })
-    } finally {
-        await clearNamespace()
-    }
+    await effect({ fsOrganizations: FirestoreAdminFacade(Organization, `${namespace}/`), namespace })
 }
 
 test('Given the Firestore admin facades', async t => {
     await t.test('When an organization is written and read via the admin facade', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const item = buildOrganization({ name: 'Test Org' })
-            await adminFacade.write(item)
-            const stored = await adminFacade.read(item.id)
+            await fsOrganizations.write(item)
+            const stored = await fsOrganizations.read(item.id)
 
             tt.equal(stored.id, item.id, 'Then the stored organization retains its identifier')
             tt.equal(stored.name, 'Test Org', 'Then the stored organization keeps the correct name')
@@ -66,14 +45,13 @@ test('Given the Firestore admin facades', async t => {
     })
 
     await t.test('When recursiveDelete runs on the namespace', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const item = buildOrganization({ name: 'Test Org' })
 
-            await adminFacade.write(item)
-            await adminFacade.recursiveDelete()
+            await fsOrganizations.write(item)
+            await fsOrganizations.recursiveDelete()
 
-            const remaining = await adminFacade.list()
+            const remaining = await fsOrganizations.list()
             tt.same(remaining, [], 'Then the namespace is empty after cleanup')
         })
     })
@@ -81,27 +59,25 @@ test('Given the Firestore admin facades', async t => {
 
 test('Given the Firestore facade update method', async t => {
     await t.test('When update is called with partial fields', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const item = buildOrganization({ name: 'Original Name' })
-            await adminFacade.write(item)
+            await fsOrganizations.write(item)
 
             // Update only name field
-            await adminFacade.update(item.id, { name: 'Updated Name' })
+            await fsOrganizations.update(item.id, { name: 'Updated Name' })
 
-            const updated = await adminFacade.read(item.id)
+            const updated = await fsOrganizations.read(item.id)
             tt.equal(updated.name, 'Updated Name', 'Then the name field is updated')
             tt.equal(updated.id, item.id, 'Then other fields remain unchanged')
         })
     })
 
     await t.test('When update is called on non-existent document', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const nonExistentId = FieldTypes.newOrganizationId()
 
             try {
-                await adminFacade.update(nonExistentId, { name: 'Updated Name' })
+                await fsOrganizations.update(nonExistentId, { name: 'Updated Name' })
                 tt.fail('Then update should throw an error')
             } catch (error) {
                 tt.match(error.message, /Failed to update/, 'Then error message indicates update failed')
@@ -110,14 +86,13 @@ test('Given the Firestore facade update method', async t => {
     })
 
     await t.test('When write is called with invalid status value', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const item = buildOrganization({ status: 'active' })
 
             // Try to create an Organization with invalid status
             try {
                 const invalidItem = { ...item, status: 'invalid' }
-                await adminFacade.write(invalidItem)
+                await fsOrganizations.write(invalidItem)
                 tt.fail('Then write should throw a validation error')
             } catch (error) {
                 tt.match(error.message, /expected status to match/, 'Then error indicates type validation failed')
@@ -128,13 +103,12 @@ test('Given the Firestore facade update method', async t => {
 
 test('Given the Firestore facade listenToDocument method', async t => {
     await t.test('When listening to a document that gets created', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const item = buildOrganization({ name: 'New Org' })
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = adminFacade.listenToDocument(item.id, (doc, error) => {
+                const unsubscribe = fsOrganizations.listenToDocument(item.id, (doc, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -151,21 +125,20 @@ test('Given the Firestore facade listenToDocument method', async t => {
                 })
 
                 // Write document after listener is set up
-                setTimeout(() => adminFacade.write(item), 100)
+                setTimeout(() => fsOrganizations.write(item), 100)
             })
         })
     })
 
     await t.test('When listening to a document that gets updated', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
             const item = buildOrganization({ name: 'Original Name', status: 'active' })
-            await adminFacade.write(item)
+            await fsOrganizations.write(item)
 
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = adminFacade.listenToDocument(item.id, (doc, error) => {
+                const unsubscribe = fsOrganizations.listenToDocument(item.id, (doc, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -182,7 +155,7 @@ test('Given the Firestore facade listenToDocument method', async t => {
                 })
 
                 // Update document after listener is set up
-                setTimeout(() => adminFacade.update(item.id, { name: 'Updated Name' }), 100)
+                setTimeout(() => fsOrganizations.update(item.id, { name: 'Updated Name' }), 100)
             })
         })
     })
@@ -190,16 +163,14 @@ test('Given the Firestore facade listenToDocument method', async t => {
 
 test('Given the Firestore facade listenToCollection method', async t => {
     await t.test('When listening to a collection with new documents added', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
-            const orgId = FieldTypes.newOrganizationId()
-            const item1 = buildOrganization({ organizationId: orgId, name: 'Org 1', status: 'active' })
-            const item2 = buildOrganization({ organizationId: orgId, name: 'Org 2', status: 'active' })
+        await inNamespacedCollection(async ({ fsOrganizations }) => {
+            const item1 = buildOrganization({ name: 'Org 1', status: 'active' })
+            const item2 = buildOrganization({ name: 'Org 2', status: 'active' })
 
             const updates = []
 
             return new Promise((resolve, reject) => {
-                const unsubscribe = adminFacade.listenToCollection([['status', '==', 'active']], (docs, error) => {
+                const unsubscribe = fsOrganizations.listenToCollection([['status', '==', 'active']], (docs, error) => {
                     if (error) {
                         unsubscribe()
                         reject(error)
@@ -217,8 +188,8 @@ test('Given the Firestore facade listenToCollection method', async t => {
                 })
 
                 // Write documents after listener is set up
-                setTimeout(() => adminFacade.write(item1), 100)
-                setTimeout(() => adminFacade.write(item2), 200)
+                setTimeout(() => fsOrganizations.write(item1), 100)
+                setTimeout(() => fsOrganizations.write(item2), 200)
             })
         })
     })
@@ -226,9 +197,7 @@ test('Given the Firestore facade listenToCollection method', async t => {
 
 test('Given the FirestoreAdminFacade with transaction support', async t => {
     await t.test('When facade is created with optional transaction parameter', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace }) => {
-            await clearNamespace()
-
+        await inNamespacedCollection(async () => {
             // Test facade creation without transaction
             const facadeWithoutTx = FirestoreAdminFacade(Organization, 'tests/transaction-test/')
             tt.ok(facadeWithoutTx, 'Then facade is created without transaction parameter')
@@ -242,18 +211,17 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
     })
 
     await t.test('When operations are performed with and without transactions', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace, namespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations, namespace }) => {
             const org = buildOrganization({ name: 'Test Org' })
 
             // Test without transaction
-            await adminFacade.write(org)
-            const readResult = await adminFacade.read(org.id)
+            await fsOrganizations.write(org)
+            const readResult = await fsOrganizations.read(org.id)
             tt.ok(readResult, 'Then document is read successfully without transaction')
             tt.equal(readResult.name, 'Test Org', 'Then document data is correct')
 
             // Test with transaction
-            const db = adminFacade.db || admin.firestore()
+            const db = fsOrganizations.db || admin.firestore()
             await db.runTransaction(async tx => {
                 const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
 
@@ -266,18 +234,17 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             })
 
             // Verify transaction was committed
-            const finalResult = await adminFacade.read(org.id)
+            const finalResult = await fsOrganizations.read(org.id)
             tt.equal(finalResult.name, 'Updated Org', 'Then transaction changes persisted')
         })
     })
 
     await t.test('When readOrNull is called on non-existent document', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace, namespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations, namespace }) => {
             const nonExistentId = FieldTypes.newOrganizationId()
 
             // Test without transaction
-            const resultWithoutTx = await adminFacade.readOrNull(nonExistentId)
+            const resultWithoutTx = await fsOrganizations.readOrNull(nonExistentId)
             tt.equal(
                 resultWithoutTx,
                 null,
@@ -285,7 +252,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             )
 
             // Test with transaction
-            const db = adminFacade.db || admin.firestore()
+            const db = fsOrganizations.db || admin.firestore()
             await db.runTransaction(async tx => {
                 const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
                 const resultWithTx = await txFacade.readOrNull(nonExistentId)
@@ -295,12 +262,11 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
     })
 
     await t.test('When transaction operations are atomic', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace, namespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations, namespace }) => {
             const atomicTestId = FieldTypes.newOrganizationId()
 
             // Test successful transaction
-            const db = adminFacade.db || admin.firestore()
+            const db = fsOrganizations.db || admin.firestore()
             await db.runTransaction(async tx => {
                 const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
 
@@ -313,19 +279,18 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             })
 
             // Verify transaction was committed (read outside transaction)
-            const finalResult = await adminFacade.read(atomicTestId)
+            const finalResult = await fsOrganizations.read(atomicTestId)
             tt.equal(finalResult.name, 'Atomic Test Org', 'Then transaction changes committed successfully')
         })
     })
 
     await t.test('When transaction rolls back on error', async tt => {
-        await withTestEnvironment(async ({ adminFacade, clearNamespace, namespace }) => {
-            await clearNamespace()
+        await inNamespacedCollection(async ({ fsOrganizations, namespace }) => {
             const rollbackTestId = FieldTypes.newOrganizationId()
 
             // Test transaction that should rollback
             try {
-                const db = adminFacade.db || admin.firestore()
+                const db = fsOrganizations.db || admin.firestore()
                 await db.runTransaction(async tx => {
                     const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
 
@@ -340,7 +305,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
             }
 
             // Verify document was not created due to rollback
-            const result = await adminFacade.readOrNull(rollbackTestId)
+            const result = await fsOrganizations.readOrNull(rollbackTestId)
             tt.equal(result, null, 'Then document was not created due to transaction rollback')
         })
     })

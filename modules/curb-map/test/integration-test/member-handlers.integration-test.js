@@ -2,22 +2,10 @@ import admin from 'firebase-admin'
 import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
-import { signInWithEmailLink, signInWithPhoneNumber, uniqueEmail, withAuthTestEnvironment } from './auth-emulator.js'
+import { asSignedInUser } from './auth-emulator.js'
 import { rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
-
-const withEmailAuth = (label, effect) =>
-    withAuthTestEnvironment(async ({ namespace }) => {
-        const { token, uid, userId: actorUserId } = await signInWithEmailLink(uniqueEmail(label))
-        await effect({ namespace, token, uid, actorUserId })
-    })
-
-const withPhoneAuth = effect =>
-    withAuthTestEnvironment(async ({ namespace }) => {
-        const { token, uid, userId: actorUserId } = await signInWithPhoneNumber()
-        await effect({ namespace, token, uid, actorUserId })
-    })
 
 const createOrganization = async ({
     namespace,
@@ -80,14 +68,9 @@ const buildPayload = (namespace, action) => ({
 
 test('Given MemberAdded action', t => {
     t.test('When member already active Then reject with validation error', async t => {
-        await withEmailAuth('member-added-duplicate', async ({ namespace, token }) => {
+        await asSignedInUser('member-added-duplicate', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token })
-            const { userId, authUid } = await createUser({
-                namespace,
-                token,
-                displayName: 'Alice',
-                // email defaults to unique `${userId}@users.test`
-            })
+            const { userId, authUid } = await createUser({ namespace, token, displayName: 'Alice' })
 
             // Verify userId claim was set by handler
             const authUser = await admin.auth().getUser(authUid)
@@ -107,14 +90,9 @@ test('Given MemberAdded action', t => {
     })
 
     t.test('When request omits token Then authentication fails with HTTP 401', async t => {
-        await withEmailAuth('member-added-no-token', async ({ namespace, token }) => {
+        await asSignedInUser('member-added-no-token', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
-            const { userId } = await createUser({
-                namespace,
-                token,
-                displayName: 'Missing Token',
-                // email defaults to unique `${userId}@users.test`
-            })
+            const { userId } = await createUser({ namespace, token, displayName: 'Missing Token' })
 
             const result = await rawHttpRequest({
                 body: buildPayload(
@@ -133,7 +111,7 @@ test('Given MemberAdded action', t => {
     })
 
     t.test('When new member added Then metadata uses actor userId claim', async t => {
-        await withEmailAuth('member-added-success', async ({ namespace, token, actorUserId }) => {
+        await asSignedInUser('member-added-success', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Bob' })
 
@@ -148,7 +126,7 @@ test('Given MemberAdded action', t => {
     })
 
     t.test('When removed member reactivated Then claims and metadata refresh', async t => {
-        await withEmailAuth('member-added-reactivate', async ({ namespace, token, uid, actorUserId }) => {
+        await asSignedInUser('member-added-reactivate', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Carol' })
 
@@ -173,7 +151,7 @@ test('Given MemberAdded action', t => {
     })
 
     t.test('When phone sign-in token used Then member added successfully', async t => {
-        await withPhoneAuth(async ({ namespace, token, uid, actorUserId }) => {
+        await asSignedInUser({ signInMethod: 'phone' }, async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token, name: 'Phone Org' })
             const { userId } = await createUser({ namespace, token, displayName: 'Phone User' })
 
@@ -190,7 +168,7 @@ test('Given MemberAdded action', t => {
 
 test('Given MemberRemoved action', t => {
     t.test('When member not found Then reject with validation error', async t => {
-        await withEmailAuth('member-removed-missing', async ({ namespace, token }) => {
+        await asSignedInUser('member-removed-missing', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const userId = FieldTypes.newUserId()
 
@@ -208,7 +186,7 @@ test('Given MemberRemoved action', t => {
     })
 
     t.test('When member already removed Then reject with validation error', async t => {
-        await withEmailAuth('member-removed-again', async ({ namespace, token }) => {
+        await asSignedInUser('member-removed-again', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Dave' })
 
@@ -229,7 +207,7 @@ test('Given MemberRemoved action', t => {
     })
 
     t.test('When member removed Then metadata and claims record actor userId', async t => {
-        await withEmailAuth('member-removed-success', async ({ namespace, token, uid, actorUserId }) => {
+        await asSignedInUser('member-removed-success', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Eve' })
 
@@ -245,7 +223,7 @@ test('Given MemberRemoved action', t => {
     })
 
     t.test('When request omits token Then removal call is rejected', async t => {
-        await withEmailAuth('member-removed-unauth', async ({ namespace, token }) => {
+        await asSignedInUser('member-removed-unauth', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Unauth' })
 
@@ -268,7 +246,7 @@ test('Given MemberRemoved action', t => {
 
 test('Given RoleChanged action', t => {
     t.test('When member not found Then reject with validation error', async t => {
-        await withEmailAuth('role-change-missing', async ({ namespace, token }) => {
+        await asSignedInUser('role-change-missing', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const userId = FieldTypes.newUserId()
 
@@ -286,7 +264,7 @@ test('Given RoleChanged action', t => {
     })
 
     t.test('When member removed Then role change rejected', async t => {
-        await withEmailAuth('role-change-removed', async ({ namespace, token }) => {
+        await asSignedInUser('role-change-removed', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Frank' })
 
@@ -304,7 +282,7 @@ test('Given RoleChanged action', t => {
     })
 
     t.test('When role changed Then organization, user, and claims update', async t => {
-        await withEmailAuth('role-change-success', async ({ namespace, token, userId: actorUserId }) => {
+        await asSignedInUser('role-change-success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
 
@@ -320,7 +298,7 @@ test('Given RoleChanged action', t => {
     })
 
     t.test('When request omits token Then role change is rejected', async t => {
-        await withEmailAuth('role-change-unauth', async ({ namespace, token }) => {
+        await asSignedInUser('role-change-unauth', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
             await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Grace' })

@@ -2,16 +2,15 @@ import admin from 'firebase-admin'
 import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
-import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './auth-emulator.js'
+import { asSignedInUser, uniqueEmail } from './auth-emulator.js'
 import { rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
 test('Given UserCreated action', t => {
     t.test('When user is created Then user doc has empty organizations map', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('user-created', async ({ namespace, token, actorUserId }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const userId = FieldTypes.newUserId()
-            const { token, userId: actorUserId } = await signInWithEmailLink(uniqueEmail('user-created'))
 
             // Create separate Firebase Auth user for the target user
             const targetEmail = uniqueEmail('alice')
@@ -44,7 +43,7 @@ test('Given UserCreated action', t => {
     })
 
     t.test('When request omits token Then authentication fails with HTTP 401', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('missing-token', async ({ namespace }) => {
             const userId = FieldTypes.newUserId()
             const organizationId = FieldTypes.newOrganizationId()
             const missingTokenEmail = `missing-token-${FieldTypes.newUserId()}@example.com`
@@ -83,11 +82,10 @@ test('Given UserCreated action', t => {
 
 test('Given UserUpdated action', t => {
     t.test('When user email is updated Then email changes and organizations unchanged', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('user-updated-email', async ({ namespace, token, actorUserId }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
             const userId = FieldTypes.newUserId()
-            const { token, userId: actorUserId } = await signInWithEmailLink(uniqueEmail('user-updated-email'))
 
             await submitAndExpectSuccess({
                 action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
@@ -133,11 +131,10 @@ test('Given UserUpdated action', t => {
     })
 
     t.test('When displayName is updated Then displayName changes and organizations unchanged', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('user-updated-display', async ({ namespace, token, actorUserId }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
             const userId = FieldTypes.newUserId()
-            const { token, userId: actorUserId } = await signInWithEmailLink(uniqueEmail('user-updated-display'))
 
             await submitAndExpectSuccess({
                 action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Test Org' }),
@@ -187,12 +184,11 @@ test('Given UserUpdated action', t => {
 
 test('Given UserForgotten action (GDPR)', t => {
     t.test('When user is forgotten Then removedAt set in all orgs and user deleted', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('user-forgotten', async ({ namespace, token, actorUserId }) => {
             const org1 = FieldTypes.newOrganizationId()
             const org2 = FieldTypes.newOrganizationId()
             const userId = FieldTypes.newUserId()
             const projectId = FieldTypes.newProjectId()
-            const { token, userId: actorUserId } = await signInWithEmailLink(uniqueEmail('user-forgotten'))
 
             // Create organizations
             await submitAndExpectSuccess({
@@ -263,9 +259,8 @@ test('Given UserForgotten action (GDPR)', t => {
     })
 
     t.test('When user not found Then GDPR action handles gracefully', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('user-forgotten-missing', async ({ namespace, token }) => {
             const userId = FieldTypes.newUserId()
-            const { token } = await signInWithEmailLink(uniqueEmail('user-forgotten-missing'))
             await submitAndExpectSuccess({
                 action: Action.UserForgotten.from({ userId, reason: 'User does not exist' }),
                 namespace,
@@ -277,10 +272,9 @@ test('Given UserForgotten action (GDPR)', t => {
     })
 
     t.test('When user has no organizations Then GDPR deletes user only', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('user-forgotten-orphan', async ({ namespace, token }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const userId = FieldTypes.newUserId()
-            const { token } = await signInWithEmailLink(uniqueEmail('user-forgotten-orphan'))
             const orphanEmail = `orphan-${FieldTypes.newUserId()}@example.com`
             const authUser = await admin.auth().createUser({ email: orphanEmail, password: 'Passw0rd!' })
             await submitAndExpectSuccess({

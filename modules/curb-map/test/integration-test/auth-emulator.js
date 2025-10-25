@@ -17,8 +17,15 @@ const ensureProjectId = () => {
     return projectId
 }
 
-const host = 'http://127.0.0.1:9099'
+const firebaseProjectId = ensureProjectId()
+process.env.GCLOUD_PROJECT ||= firebaseProjectId
+process.env.GOOGLE_CLOUD_PROJECT ||= firebaseProjectId
+process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
+process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+process.env.FIREBASE_TEST_MODE ||= '1'
+process.env.FUNCTIONS_EMULATOR ||= '1'
 
+const host = 'http://127.0.0.1:9099'
 const API_KEY = 'fake-key'
 const headers = { 'Content-Type': 'application/json' }
 
@@ -107,29 +114,22 @@ const signInWithPhoneNumber = async (phoneNumber = '+15551234567') => {
 const uniqueEmail = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`
 
 /**
- * Configures emulator env vars and yields a unique namespace for each integration test.
- * @sig withAuthTestEnvironment :: (Context -> Promise<void>, Object?) -> Promise<void>
- * Context = { namespace: String, projectId: String }
+ * Unified integration test wrapper with authentication
+ * Supports both email and phone sign-in methods
+ * @sig asSignedInUser :: (String | Object, Function) -> Promise<void>
  */
-const withAuthTestEnvironment = async (effect, overrides = {}) => {
+const asSignedInUser = async (options, effect) => {
+    if (!firebaseProjectId) throw new Error('GCLOUD_PROJECT must be set')
+    ensureAdminInitialized(firebaseProjectId)
+
+    const { label = 'test', signInMethod = 'email' } = typeof options === 'string' ? { label: options } : options
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
     const namespace = `tests/ns_${timestamp}`
 
-    // Read project ID from environment (must be set externally)
-    const projectId = overrides.projectId || ensureProjectId()
-    if (!projectId) throw new Error('GCLOUD_PROJECT must be set')
+    const { token, uid, userId } =
+        signInMethod === 'phone' ? await signInWithPhoneNumber() : await signInWithEmailLink(uniqueEmail(label))
 
-    // Ensure emulator configuration (idempotent, hardcoded ports)
-    process.env.GCLOUD_PROJECT ||= projectId
-    process.env.GOOGLE_CLOUD_PROJECT ||= projectId
-    process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
-    process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
-    process.env.FIREBASE_TEST_MODE ||= '1'
-    process.env.FUNCTIONS_EMULATOR ||= '1'
-
-    ensureAdminInitialized(projectId)
-
-    await effect({ namespace, projectId })
+    return await effect({ namespace, token, uid, actorUserId: userId })
 }
 
-export { signInWithEmailLink, signInWithPhoneNumber, uniqueEmail, withAuthTestEnvironment }
+export { uniqueEmail, asSignedInUser }

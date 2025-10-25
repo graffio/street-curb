@@ -1,7 +1,7 @@
 import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
-import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './auth-emulator.js'
+import { asSignedInUser } from './auth-emulator.js'
 import {
     rawHttpRequest,
     submitAndExpectDuplicate,
@@ -10,12 +10,6 @@ import {
 } from './http-submit-action.js'
 
 const { test } = t
-
-const withOrgAuth = (label, effect) =>
-    withAuthTestEnvironment(async ({ namespace }) => {
-        const { token, uid, userId } = await signInWithEmailLink(uniqueEmail(label))
-        await effect({ namespace, token, uid, userId })
-    })
 
 const createOrg = async ({
     namespace,
@@ -44,7 +38,7 @@ const projectState = async ({ namespace, organizationId, projectId }) => {
 
 test('Given organization handlers via submitActionRequest', t => {
     t.test('When OrganizationCreated is submitted Then Firestore and metadata reflect token UID', async t => {
-        await withOrgAuth('org-created', async ({ namespace, token, userId }) => {
+        await asSignedInUser('org-created', async ({ namespace, token, actorUserId }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
 
@@ -60,16 +54,16 @@ test('Given organization handlers via submitActionRequest', t => {
             const org = await orgState({ namespace, organizationId, projectId })
             const project = await projectState({ namespace, organizationId, projectId })
 
-            t.equal(org.createdBy, userId, 'Then organization.createdBy matches token userId')
-            t.equal(org.updatedBy, userId, 'Then organization.updatedBy matches token userId')
-            t.equal(project.createdBy, userId, 'Then project.createdBy matches token userId')
-            t.equal(project.updatedBy, userId, 'Then project.updatedBy matches token userId')
+            t.equal(org.createdBy, actorUserId, 'Then organization.createdBy matches token userId')
+            t.equal(org.updatedBy, actorUserId, 'Then organization.updatedBy matches token userId')
+            t.equal(project.createdBy, actorUserId, 'Then project.createdBy matches token userId')
+            t.equal(project.updatedBy, actorUserId, 'Then project.updatedBy matches token userId')
         })
         t.end()
     })
 
     t.test('When request omits token Then HTTP 401 is returned and no writes occur', async t => {
-        await withOrgAuth('org-missing-token', async ({ namespace }) => {
+        await asSignedInUser('org-missing-token', async ({ namespace }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
 
@@ -94,7 +88,7 @@ test('Given organization handlers via submitActionRequest', t => {
     })
 
     t.test('When OrganizationUpdated changes name Then metadata uses token UID', async t => {
-        await withOrgAuth('org-update-name', async ({ namespace, token, userId }) => {
+        await asSignedInUser('org-update-name', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token, name: 'Original Name' })
 
             await submitAndExpectSuccess({
@@ -105,13 +99,13 @@ test('Given organization handlers via submitActionRequest', t => {
 
             const org = await orgState({ namespace, organizationId, projectId })
             t.equal(org.name, 'Updated Name', 'Then name updated')
-            t.equal(org.updatedBy, userId, 'Then updatedBy matches token userId')
+            t.equal(org.updatedBy, actorUserId, 'Then updatedBy matches token userId')
         })
         t.end()
     })
 
     t.test('When OrganizationUpdated changes status Then status is updated', async t => {
-        await withOrgAuth('org-update-status', async ({ namespace, token }) => {
+        await asSignedInUser('org-update-status', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token })
 
             await submitAndExpectSuccess({
@@ -127,7 +121,7 @@ test('Given organization handlers via submitActionRequest', t => {
     })
 
     t.test('When OrganizationSuspended runs Then organization status becomes suspended', async t => {
-        await withOrgAuth('org-suspend', async ({ namespace, token }) => {
+        await asSignedInUser('org-suspend', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token })
 
             await submitAndExpectSuccess({
@@ -143,7 +137,7 @@ test('Given organization handlers via submitActionRequest', t => {
     })
 
     t.test('When OrganizationDeleted runs Then organization document is removed', async t => {
-        await withOrgAuth('org-delete', async ({ namespace, token }) => {
+        await asSignedInUser('org-delete', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token })
 
             await submitAndExpectSuccess({
@@ -163,7 +157,7 @@ test('Given organization handlers via submitActionRequest', t => {
 
 test('Given transaction-based idempotency', t => {
     t.test('When duplicate OrganizationCreated submitted Then HTTP 409 duplicate is returned', async t => {
-        await withOrgAuth('org-duplicate', async ({ namespace, token }) => {
+        await asSignedInUser('org-duplicate', async ({ namespace, token }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
             const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Duplicate Org' })
@@ -178,7 +172,7 @@ test('Given transaction-based idempotency', t => {
     })
 
     t.test('When server timestamps set Then completedActions entry has processedAt', async t => {
-        await withOrgAuth('org-timestamps', async ({ namespace, token }) => {
+        await asSignedInUser('org-timestamps', async ({ namespace, token }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
 
@@ -194,7 +188,7 @@ test('Given transaction-based idempotency', t => {
     })
 
     t.test('When validation fails Then HTTP 400 is returned', async t => {
-        await withOrgAuth('org-validation-fail', async ({ namespace, token }) => {
+        await asSignedInUser('org-validation-fail', async ({ namespace, token }) => {
             const invalidAction = { '@@tagName': 'OrganizationCreated', organizationId: 'bad', name: 123 }
 
             const result = await submitAndExpectValidationError({ action: invalidAction, namespace, token })

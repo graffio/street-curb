@@ -2,7 +2,7 @@ import admin from 'firebase-admin'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
-import { signInWithEmailLink, uniqueEmail, withAuthTestEnvironment } from './auth-emulator.js'
+import { asSignedInUser } from './auth-emulator.js'
 import {
     rawHttpRequest,
     submitActionRequest,
@@ -12,8 +12,7 @@ import {
 } from './http-submit-action.js'
 
 const withHttpAuth = (label, effect) =>
-    withAuthTestEnvironment(async ({ namespace, projectId }) => {
-        const { token, uid, userId: actorUserId } = await signInWithEmailLink(uniqueEmail(label))
+    asSignedInUser(label, async ({ namespace, projectId, token, uid, actorUserId }) => {
         const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
 
         await completedActionsFacade.recursiveDelete()
@@ -190,7 +189,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
     })
 
     t.test('When token missing userId claim Then specific error message returned', async t => {
-        await withAuthTestEnvironment(async ({ namespace }) => {
+        await asSignedInUser('missing-userId', async ({ namespace }) => {
             const action = buildOrgAction()
             const payload = {
                 action: Action.toFirestore(action),
