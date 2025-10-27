@@ -1,46 +1,6 @@
 import admin from 'firebase-admin'
 import { collectionPaths, throwWithOriginal } from './firestore-facade-shared.js'
 
-// @sig isServerTimestampPlaceholder :: Any -> Boolean
-const isServerTimestampPlaceholder = value =>
-    value?._methodName === 'serverTimestamp' ||
-    value?._delegate != null ||
-    (typeof value === 'object' && value != null && Object.keys(value).length === 0)
-
-// @sig timestampToDate :: Any -> Date
-const timestampToDate = value => {
-    if (value == null) return null
-    if (value instanceof Date) return value
-    if (value instanceof admin.firestore.Timestamp) return value.toDate()
-    if (typeof value?.toDate === 'function') return value.toDate()
-
-    if (typeof value === 'string') {
-        const parsed = new Date(value)
-        if (!Number.isNaN(parsed.getTime())) return parsed
-    }
-
-    if (isServerTimestampPlaceholder(value)) return new Date()
-
-    throw new Error(`Invalid timestamp format: ${JSON.stringify(value)}`)
-}
-
-// @sig dateToTimestamp :: Any -> admin.firestore.Timestamp | Object
-const dateToTimestamp = value => {
-    if (value == null) return null
-    if (value instanceof Date) return admin.firestore.Timestamp.fromDate(value)
-    if (value instanceof admin.firestore.Timestamp) return value
-    if (isServerTimestampPlaceholder(value)) return value
-
-    if (typeof value?.toDate === 'function') return admin.firestore.Timestamp.fromDate(value.toDate())
-
-    if (typeof value === 'string') {
-        const parsed = new Date(value)
-        if (!Number.isNaN(parsed.getTime())) return admin.firestore.Timestamp.fromDate(parsed)
-    }
-
-    throw new Error(`Invalid date format: ${JSON.stringify(value)}`)
-}
-
 const getDefaultAdminDb = () => {
     if (!admin.apps || admin.apps.length === 0) {
         const projectId = process.env.GCLOUD_PROJECT
@@ -50,19 +10,19 @@ const getDefaultAdminDb = () => {
     return admin.firestore()
 }
 
-const FirestoreAdminFacade = (
-    Type,
-    collectionPrefix = '',
-    db = getDefaultAdminDb(),
-    collectionNameOverride = null,
-    tx = null,
-) => {
+/*
+ *
+ * @sig FirestoreAdminFacade :: (Type, String, FirestoreTransaction?, Firestore?)) -> Facade
+ *  Facade = { [functionName]: Function }
+ */
+const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDefaultAdminDb()) => {
     const encodeTimestamps = data => {
         if (!timestampFields.length || data == null) return data
-        const result = { ...data }
 
+        const fromDate = admin.firestore.Timestamp.fromDate
+        const result = { ...data }
         timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = dateToTimestamp(result[field])
+            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = fromDate(result[field])
         })
 
         return result
@@ -73,7 +33,7 @@ const FirestoreAdminFacade = (
 
         const result = { ...data }
         timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = timestampToDate(result[field])
+            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = result[field].toDate()
         })
 
         return result
@@ -231,20 +191,6 @@ const FirestoreAdminFacade = (
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // DESCENDENT
-    // -----------------------------------------------------------------------------------------------------------------
-
-    const descendent = suffix => {
-        if (suffix[0] === '/') suffix = suffix.slice(1)
-
-        const segments = suffix.split('/').filter(Boolean)
-        if (segments.length % 2 !== 0) throw new Error(`Suffix must have an even number of segments; found ${suffix}`)
-
-        const collectionPrefix1 = `${collectionPrefix}/${suffix}`.replaceAll(/\/\//g, '/')
-        return FirestoreAdminFacade(Type, collectionPrefix1, db, collectionNameOverride, tx)
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
     // DANGEROUS DELETE
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -264,7 +210,7 @@ const FirestoreAdminFacade = (
 
     if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
 
-    const collectionName = collectionNameOverride || collectionPaths.get(Type)
+    const collectionName = collectionPaths.get(Type)
     const collectionPath = collectionPrefix + collectionName
     const collectionRef = db.collection(collectionPath)
 
@@ -291,15 +237,9 @@ const FirestoreAdminFacade = (
         // delete
         delete: _delete,
         recursiveDelete,
-
-        descendent,
-
     }
 }
 
-FirestoreAdminFacade.timestampToDate = timestampToDate
-FirestoreAdminFacade.dateToTimestamp = dateToTimestamp
-FirestoreAdminFacade.serverTimestamp = () => admin.firestore.FieldValue.serverTimestamp()
 FirestoreAdminFacade.deleteField = () => admin.firestore.FieldValue.delete()
 
 export { FirestoreAdminFacade }

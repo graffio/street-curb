@@ -7,6 +7,7 @@ const _toString = value => {
     if (value['@@typeName']) return value.toString()
     if (Array.isArray(value)) return '[' + value.map(item => _toString(item)).join(', ') + ']'
     if (typeof value === 'string') return '"' + value + '"'
+    if (value instanceof Date) return value.toISOString()
     if (value instanceof RegExp) return value.toString()
     if (typeof value === 'object') return JSON.stringify(value)
 
@@ -89,6 +90,20 @@ const validateObject = (constructorName, field, optional, o) => {
 }
 
 /*
+ * Validate that a field is a Date
+ * @sig validateDate :: (String, String, Boolean, Any) -> void
+ */
+const validateDate = (constructorName, field, optional, d) => {
+    if (optional && d == null) return
+    if (d instanceof Date) return
+
+    // eslint-disable-next-line no-debugger
+    debugger
+    const message = `In constructor ${constructorName}: expected ${field} to have type Date; found ${_toString(d)})`
+    throw new TypeError(message)
+}
+
+/*
  * Validate that a field is a boolean
  * @sig validateBoolean :: (String, String, Boolean, Any) -> void
  */
@@ -147,6 +162,9 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
             throw new TypeError(message)
         }
 
+        // Empty arrays are always valid regardless of declared element type
+        if (o.length === 0) return
+
         o = o[0]
         d++
     } while (d < arrayDepth)
@@ -154,6 +172,7 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
     if (baseType === 'String' && typeof o === 'string') return
     if (baseType === 'Number' && typeof o === 'number') return
     if (baseType === 'Object' && typeof o === 'object') return
+    if (baseType === 'Date' && o instanceof Date) return
     if (baseType === 'Any') return
     if (baseType === 'Tagged' && o?.['@@typeName'] === taggedType) return
 
@@ -168,6 +187,7 @@ export {
     validateArgumentLength,
     validateArray,
     validateBoolean,
+    validateDate,
     validateNumber,
     validateObject,
     validateString,

@@ -7,11 +7,12 @@
  *  'String?'   <=> { baseType: 'String', optional: true }
  *  '/abc/'     <=> { baseType: 'String', regex: /abc/ }
  *  '[String]'  <=> { baseType: 'String', arrayDepth: 1 }
+ *  'Date'      <=> { baseType: 'Date' }
  *  'Coord'     <=> { baseType: 'Tagged', taggedType: 'Coord' }
  *
  * Required:
  *
- *   baseType   : String = String|Number|Boolean|Object|Any|Tagged
+ *   baseType   : String = String|Number|Boolean|Object|Date|Any|Tagged
  *
  * Optional
  *   taggedType : String    name of the Tagged Type expected for this field, eg.: 'Coord'
@@ -66,6 +67,12 @@ const objectToString = ({ optional, arrayDepth }) => {
     return wrapOptional(root, optional)
 }
 
+const dateToString = ({ optional, arrayDepth }) => {
+    let root = 'Date'
+    root = wrapArray(root, arrayDepth)
+    return wrapOptional(root, optional)
+}
+
 const anyToString = ({ optional, arrayDepth }) => {
     let root = 'Any'
     root = wrapArray(root, arrayDepth)
@@ -89,6 +96,8 @@ const toString = fieldType => {
             return booleanToString(fieldType)
         case 'Object':
             return objectToString(fieldType)
+        case 'Date':
+            return dateToString(fieldType)
         case 'Any':
             return anyToString(fieldType)
         case 'Tagged':
@@ -155,6 +164,13 @@ const _fromObject = s => {
     return { baseType: 'Object', optional, arrayDepth, regex: false }
 }
 
+const _fromDate = s => {
+    let arrayDepth, optional
+    ;[s, optional] = checkOptional(s)
+    ;[s, arrayDepth] = checkArray(s)
+    return { baseType: 'Date', optional, arrayDepth, regex: false }
+}
+
 const _fromAny = s => {
     let arrayDepth, optional
     ;[s, optional] = checkOptional(s)
@@ -180,6 +196,7 @@ const fromString = s => {
     if (s.match(/Number/)) return _fromNumber(s)
     if (s.match(/Boolean/)) return _fromBoolean(s)
     if (s.match(/Object/)) return _fromObject(s)
+    if (s.match(/Date/)) return _fromDate(s)
     if (s.match(/Any/)) return _fromAny(s)
 
     return _fromTagged(s)

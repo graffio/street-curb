@@ -193,7 +193,7 @@ Complete audit trail of business operations - separate from infrastructure opera
 
 ### Schema
 
-```javascript
+```
 completedActions: {
     id: {
         id: "acr_<cuid12>",              // action request ID (used as document ID)

@@ -5,9 +5,9 @@
  *  email        : FieldTypes.email,
  *  displayName  : "String",
  *  organizations: "Object",
- *  createdAt    : "Object",
+ *  createdAt    : "Date",
  *  createdBy    : FieldTypes.userId,
- *  updatedAt    : "Object",
+ *  updatedAt    : "Date",
  *  updatedBy    : FieldTypes.userId
  *
  */
@@ -28,9 +28,9 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
     R.validateString(constructorName, 'displayName', false, displayName)
     R.validateObject(constructorName, 'organizations', false, organizations)
-    R.validateObject(constructorName, 'createdAt', false, createdAt)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
-    R.validateObject(constructorName, 'updatedAt', false, updatedAt)
+    R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
 
     const result = Object.create(prototype)
@@ -50,19 +50,32 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `User(${R._toString(this.id)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.organizations)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'User', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `User(${R._toString(this.id)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.organizations)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: User,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 User.prototype = prototype
-prototype.constructor = User
-
-Object.defineProperty(prototype, '@@typeName', { value: 'User' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -74,11 +87,13 @@ User.is = v => v && v['@@typeName'] === 'User'
 User.from = o => User(o.id, o.email, o.displayName, o.organizations, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// timestamp fields
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: timestampFields
 User.timestampFields = ['createdAt', 'updatedAt']
 
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
 // Additional function: fromFirestore
 User.fromFirestore = User.from
 

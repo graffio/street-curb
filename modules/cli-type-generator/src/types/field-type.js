@@ -37,8 +37,10 @@ const FieldType = {
 //
 // -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
-const FieldTypePrototype = {
-    match(variants) {
+const FieldTypePrototype = {}
+
+Object.defineProperty(FieldTypePrototype, 'match', {
+    value: function (variants) {
         // Validate all variants are handled
         const requiredVariants = ['StringType', 'RegexType', 'ImportPlaceholder']
         requiredVariants.map(variant => {
@@ -49,13 +51,23 @@ const FieldTypePrototype = {
         const variant = variants[this['@@tagName']]
         return variant.call(variants, this)
     },
-}
+    enumerable: false,
+})
+
+Object.defineProperty(FieldTypePrototype, 'constructor', {
+    value: FieldType,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+})
 
 // Add hidden properties
-Object.defineProperty(FieldType, '@@typeName', { value: 'FieldType' })
-Object.defineProperty(FieldType, '@@tagNames', { value: ['StringType', 'RegexType', 'ImportPlaceholder'] })
+Object.defineProperty(FieldType, '@@typeName', { value: 'FieldType', enumerable: false })
+Object.defineProperty(FieldType, '@@tagNames', {
+    value: ['StringType', 'RegexType', 'ImportPlaceholder'],
+    enumerable: false,
+})
 
-FieldTypePrototype.constructor = FieldType
 FieldType.prototype = FieldTypePrototype
 
 // -------------------------------------------------------------------------------------------------------------
@@ -80,20 +92,34 @@ FieldType.StringType = StringTypeConstructor
 // Set up Variant FieldType.StringType prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const StringTypePrototype = Object.create(FieldTypePrototype)
-Object.defineProperty(StringTypePrototype, '@@tagName', { value: 'StringType' })
-Object.defineProperty(StringTypePrototype, '@@typeName', { value: 'FieldType' })
 
-StringTypePrototype.toString = function () {
-    return `FieldType.StringType(${R._toString(this.value)})`
-}
+const StringTypePrototype = Object.create(FieldTypePrototype, {
+    '@@tagName': { value: 'StringType', enumerable: false },
+    '@@typeName': { value: 'FieldType', enumerable: false },
 
-StringTypePrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `FieldType.StringType(${R._toString(this.value)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: StringTypeConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 StringTypeConstructor.prototype = StringTypePrototype
-StringTypePrototype.constructor = StringTypeConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -126,20 +152,34 @@ FieldType.RegexType = RegexTypeConstructor
 // Set up Variant FieldType.RegexType prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const RegexTypePrototype = Object.create(FieldTypePrototype)
-Object.defineProperty(RegexTypePrototype, '@@tagName', { value: 'RegexType' })
-Object.defineProperty(RegexTypePrototype, '@@typeName', { value: 'FieldType' })
 
-RegexTypePrototype.toString = function () {
-    return `FieldType.RegexType(${R._toString(this.value)})`
-}
+const RegexTypePrototype = Object.create(FieldTypePrototype, {
+    '@@tagName': { value: 'RegexType', enumerable: false },
+    '@@typeName': { value: 'FieldType', enumerable: false },
 
-RegexTypePrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `FieldType.RegexType(${R._toString(this.value)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: RegexTypeConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 RegexTypeConstructor.prototype = RegexTypePrototype
-RegexTypePrototype.constructor = RegexTypeConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -176,20 +216,34 @@ FieldType.ImportPlaceholder = ImportPlaceholderConstructor
 // Set up Variant FieldType.ImportPlaceholder prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const ImportPlaceholderPrototype = Object.create(FieldTypePrototype)
-Object.defineProperty(ImportPlaceholderPrototype, '@@tagName', { value: 'ImportPlaceholder' })
-Object.defineProperty(ImportPlaceholderPrototype, '@@typeName', { value: 'FieldType' })
 
-ImportPlaceholderPrototype.toString = function () {
-    return `FieldType.ImportPlaceholder(${R._toString(this.__importPlaceholder)}, ${R._toString(this.source)}, ${R._toString(this.localName)})`
-}
+const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
+    '@@tagName': { value: 'ImportPlaceholder', enumerable: false },
+    '@@typeName': { value: 'FieldType', enumerable: false },
 
-ImportPlaceholderPrototype.toJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+    toString: {
+        value: function () {
+            return `FieldType.ImportPlaceholder(${R._toString(this.__importPlaceholder)}, ${R._toString(this.source)}, ${R._toString(this.localName)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: ImportPlaceholderConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
-ImportPlaceholderPrototype.constructor = ImportPlaceholderConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //

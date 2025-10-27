@@ -39,13 +39,10 @@ export const ActionRequest = {
         correlationId  : FieldTypes.correlationId,
         schemaVersion  : 'Number',
 
-        // Timestamps (stored as serverTimestamp in Firestore; Date objects here)
-        createdAt      : 'Object',  // Date
-        processedAt    : 'Object?'  // Date
+        createdAt      : 'Date',
+        processedAt    : 'Date?'
     }
 }
-
-ActionRequest.timestampFields = ['createdAt', 'processedAt']
 
 ActionRequest.toFirestore = actionRequest => ({
     ...actionRequest,

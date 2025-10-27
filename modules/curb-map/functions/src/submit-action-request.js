@@ -1,11 +1,18 @@
 import { createLogger } from '@graffio/logger'
 import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
-import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
-import * as OH from './events/organization-handlers.js'
-import * as UH from './events/user-handlers.js'
 import { createFirestoreContext } from './firestore-context.js'
+import handleOrganizationCreated from './handlers/handle-organization-created.js'
+import handleOrganizationUpdated from './handlers/handle-organization-updated.js'
+import handleOrganizationSuspended from './handlers/handle-organization-suspended.js'
+import handleOrganizationDeleted from './handlers/handle-organization-deleted.js'
+import handleUserCreated from './handlers/handle-user-created.js'
+import handleUserUpdated from './handlers/handle-user-updated.js'
+import handleUserForgotten from './handlers/handle-user-forgotten.js'
+import handleMemberAdded from './handlers/handle-member-added.js'
+import handleMemberRemoved from './handlers/handle-member-removed.js'
+import handleRoleChanged from './handlers/handle-role-changed.js'
 
 /*
  * HTTP endpoint for submitting action requests.
@@ -206,16 +213,16 @@ const createActionRequestLogger = (logger, actionRequest) => {
 // prettier-ignore
 const dispatchToHandler = actionRequest =>
     actionRequest.action.match({
-        OrganizationCreated:   () => OH.handleOrganizationCreated,
-        OrganizationUpdated:   () => OH.handleOrganizationUpdated,
-        OrganizationDeleted:   () => OH.handleOrganizationDeleted,
-        OrganizationSuspended: () => OH.handleOrganizationSuspended,
-        UserCreated:           () => UH.handleUserCreated,
-        UserUpdated:           () => UH.handleUserUpdated,
-        UserForgotten:         () => UH.handleUserForgotten,
-        MemberAdded:           () => UH.handleMemberAdded,
-        MemberRemoved:         () => UH.handleMemberRemoved,
-        RoleChanged:           () => UH.handleRoleChanged,
+        OrganizationCreated:   () => handleOrganizationCreated,
+        OrganizationUpdated:   () => handleOrganizationUpdated,
+        OrganizationDeleted:   () => handleOrganizationDeleted,
+        OrganizationSuspended: () => handleOrganizationSuspended,
+        UserCreated:           () => handleUserCreated,
+        UserUpdated:           () => handleUserUpdated,
+        UserForgotten:         () => handleUserForgotten,
+        MemberAdded:           () => handleMemberAdded,
+        MemberRemoved:         () => handleMemberRemoved,
+        RoleChanged:           () => handleRoleChanged,
     })
 
 /*
@@ -301,7 +308,7 @@ const submitActionRequestHandler = async (req, res) => {
         // create a raw object by enriching our parameters
         const params = enrichActionRequest(req)
         const { idempotencyKey, namespace, organizationId, projectId } = params
-        const createdAt = FirestoreAdminFacade.serverTimestamp()
+        const createdAt = new Date()
         const id = idempotencyKey.replace(/^idm_/, 'acr_')
         const rawActionRequest = { ...params, id, actorId, schemaVersion: 1, createdAt, processedAt: createdAt }
 

@@ -84,8 +84,8 @@ CurbMap uses event sourcing with HTTP-based action submission to maintain a SOC2
 │  │ 3. Write Audit Record                      │    │
 │  │    completedActions.create({               │    │
 │  │      status: 'completed',                  │    │
-│  │      createdAt: serverTimestamp(),         │    │
-│  │      processedAt: serverTimestamp()        │    │
+│  │      createdAt: new Date(),         │    │
+│  │      processedAt: new Date()        │    │
 │  │    })                                      │    │
 │  └────────────────────────────────────────────┘    │
 │                                                     │
@@ -167,7 +167,7 @@ See [Consequences & Trade-offs](#consequences--trade-offs) for detailed analysis
   - Transaction-based idempotency (atomic duplicate detection)
   - Organization actions: OrganizationCreated, OrganizationUpdated, OrganizationSuspended, OrganizationDeleted
   - User actions: UserCreated, UserUpdated, UserDeleted, UserForgotten, RoleAssigned
-  - Server-authoritative timestamps (`serverTimestamp()`)
+  - Server-authoritative timestamps (`new Date()`)
   - Firestore facade with optional transaction parameter
 
 - 📋 **Deferred to Backlog**:
@@ -189,7 +189,7 @@ See [Consequences & Trade-offs](#consequences--trade-offs) for detailed analysis
 
 **HTTP 409 for Duplicates** (breaking change 2025-01-15): Semantically correct - "this operation already succeeded". Clients handle as idempotent success. [Details in decisions.md](../decisions.md#http-409-for-duplicates)
 
-**Server Timestamps Only**: All timestamps use `serverTimestamp()`, not client `new Date()`. SOC2 requires tamper-proof timestamps. [Details in decisions.md](../decisions.md#server-timestamps-only)
+**Server Timestamps Only**: All timestamps use `new Date()`, not client `new Date()`. SOC2 requires tamper-proof timestamps. [Details in decisions.md](../decisions.md#server-timestamps-only)
 
 **Single Write as "completed"**: Actions written directly with `status: 'completed'`, never mutated to avoid violating audit log immutability. [Details in decisions.md](../decisions.md#single-write-as-completed)
 

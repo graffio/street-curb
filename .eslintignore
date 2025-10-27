@@ -1,3 +1,0 @@
-# Skip generated types and doc scripts
-modules/**/src/types/*.js
-docs/**/*.js

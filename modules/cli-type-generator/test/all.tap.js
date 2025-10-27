@@ -17,6 +17,7 @@ const generateTypes = async () => {
             'carol',
             'coord',
             'double-nested-array',
+            'event',
             'field-types-test',
             'has-id',
             'has-id-enhanced',
@@ -24,6 +25,7 @@ const generateTypes = async () => {
             'middle',
             'middle-type-enum',
             'nested-array',
+            'notification',
             'optional-coord',
             'optional-number',
             'optional-string',
@@ -60,12 +62,14 @@ const {
     Carol,
     Coord,
     DoubleNestedArray,
+    Event,
     HasId,
     HasIdEnhanced,
     LinkedList,
     Middle,
     MiddleTypeEnum,
     NestedArray,
+    Notification,
     OptionalCoord,
     OptionalNumber,
     OptionalString,
@@ -533,6 +537,76 @@ tap.test('Tagged Types Static Migration - Complex Type Validation', t => {
     t.end()
 })
 
+tap.test('Tagged Types Static Migration - Date Type Validation', t => {
+    t.test('Given Event type with Date fields', t => {
+        t.test('When I test required Date field', t => {
+            const now = new Date()
+            const event = Event('Conference', now, undefined)
+            t.equal(event.name, 'Conference', 'Then Event.name is correct')
+            t.equal(event.occurredAt, now, 'Then Event.occurredAt accepts Date')
+            t.equal(event.scheduledFor, undefined, 'Then optional Date can be undefined')
+            t.end()
+        })
+
+        t.test('When I test Date validation rejects non-Date values', t => {
+            t.throws(
+                () => Event('Meeting', 'not a date', undefined),
+                /expected occurredAt to have type Date/,
+                'Then Event rejects string for required Date field',
+            )
+            t.throws(
+                () => Event('Meeting', 12345, undefined),
+                /expected occurredAt to have type Date/,
+                'Then Event rejects number for required Date field',
+            )
+            t.throws(
+                () => Event('Meeting', { year: 2024 }, undefined),
+                /expected occurredAt to have type Date/,
+                'Then Event rejects object for required Date field',
+            )
+            t.end()
+        })
+
+        t.test('When I test optional Date field', t => {
+            const now = new Date()
+            const future = new Date(Date.now() + 86400000)
+
+            const eventWithSchedule = Event('Workshop', now, future)
+            t.equal(eventWithSchedule.scheduledFor, future, 'Then optional Date accepts Date value')
+
+            const eventWithoutSchedule = Event('Workshop', now, undefined)
+            t.equal(eventWithoutSchedule.scheduledFor, undefined, 'Then optional Date accepts undefined')
+
+            t.throws(
+                () => Event('Workshop', now, 'tomorrow'),
+                /expected scheduledFor to have type Date/,
+                'Then optional Date rejects non-Date values',
+            )
+            t.end()
+        })
+
+        t.test('When I test Event toString with Dates', t => {
+            const date = new Date('2024-01-15T10:30:00.000Z')
+            const event = Event('Launch', date, undefined)
+            t.ok(event.toString().includes('Launch'), 'Then toString includes event name')
+            t.ok(event.toString().includes('2024-01-15T10:30:00.000Z'), 'Then toString includes ISO date string')
+            t.end()
+        })
+
+        t.test('When I check timestampFields property', t => {
+            t.same(
+                Event.timestampFields,
+                ['occurredAt', 'scheduledFor'],
+                'Then Event.timestampFields includes Date and Date? fields',
+            )
+            t.end()
+        })
+
+        t.end()
+    })
+    t.end()
+})
+
 tap.test('Tagged Types Static Migration - Array Types', t => {
     t.test('Given array type handling', t => {
         t.test('When I test nested arrays', t => {
@@ -743,7 +817,11 @@ tap.test('Given Shape as a taggedSum with Square and Circle constructors', t => 
         t.same(Shape['@@typeName'], 'Shape', "Shape's '@@typeName' is 'Shape'")
         t.same(Shape['@@tagNames'], ['Square', 'Circle'], "Shape's '@@tagNames' are ['Square', 'Circle']")
         t.same(typeof Shape.Square, 'function', 'Shape.Square is a function')
-        t.same(Object.keys(Shape.prototype), ['match', 'constructor'], 'Shape.prototype defines match and constructor')
+
+        t.ok(typeof Shape.prototype.match === 'function', 'Shape.prototype.match is a function')
+        t.ok(typeof Shape.prototype.constructor === 'object', 'Shape.prototype.constructor exists')
+        t.same(Object.keys(Shape.prototype), [], 'Shape.prototype has no enumerable properties')
+
         t.same(Shape.Square.toString(), `Shape.Square`, 'Shape.Square.toString() returns "Shape.Square"')
         t.notOk(Shape.Square.is({}), 'Shape.Square.is({}) correctly returns false')
         t.end()
@@ -1041,6 +1119,43 @@ tap.test('Type Checking', t => {
         t.test('When I try to create a = Carol(Tuple("a", "b"))', t => {
             const expected = new Error('In constructor Carol(p): expected p to have type Coord; found Tuple("a", "b")')
             t.throws(() => Carol(Tuple('a', 'b')), expected, `It should throw because p is not a Coord`)
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.test("Given Event = tagged('Event', { name: 'String', occurredAt: 'Date', scheduledFor: 'Date?' })", t => {
+        t.test('When I try to create an Event with a valid Date', t => {
+            const date = new Date('2024-01-15T10:30:00.000Z')
+            const event = Event('Launch', date, undefined)
+            t.ok(Event.is(event), 'Then Event.is(event) is true')
+            t.equal(event.name, 'Launch', 'Then event.name is correct')
+            t.equal(event.occurredAt, date, 'Then event.occurredAt is the Date object')
+            t.end()
+        })
+
+        t.test('When I try to create an Event with a string instead of Date', t => {
+            const expected = new Error(
+                'In constructor Event(name, occurredAt, scheduledFor): expected occurredAt to have type Date; found "2024-01-15"',
+            )
+            t.throws(
+                () => Event('Launch', '2024-01-15', undefined),
+                expected,
+                'It should throw because occurredAt is not a Date',
+            )
+            t.end()
+        })
+
+        t.test('When I try to create an Event with a number instead of Date', t => {
+            const expected = new Error(
+                'In constructor Event(name, occurredAt, scheduledFor): expected occurredAt to have type Date; found 1705315800000',
+            )
+            t.throws(
+                () => Event('Launch', 1705315800000, undefined),
+                expected,
+                'It should throw because occurredAt is not a Date object',
+            )
             t.end()
         })
 
@@ -1453,6 +1568,149 @@ tap.test('Given static type generation system', t => {
         fs.mkdirSync(outputDir, { recursive: true })
         const outputFile = path.join(outputDir, 'test-transaction-unit.js')
         fs.writeFileSync(outputFile, generated)
+    })
+
+    t.end()
+})
+
+tap.test('Tagged sum type with Date fields and timestampFields generation', t => {
+    t.test('Given Notification type with Date fields in variants', t => {
+        t.test('When I create a Scheduled notification', t => {
+            const scheduledDate = new Date('2025-01-15T10:00:00Z')
+            const scheduled = Notification.Scheduled('Reminder', scheduledDate)
+
+            t.equal(scheduled.message, 'Reminder', 'Then message is set correctly')
+            t.equal(scheduled.scheduledFor, scheduledDate, 'Then scheduledFor Date is set correctly')
+            t.ok(scheduled.scheduledFor instanceof Date, 'Then scheduledFor is a Date instance')
+            t.end()
+        })
+
+        t.test('When I create a Sent notification', t => {
+            const sentDate = new Date('2025-01-15T10:05:00Z')
+            const deliveredDate = new Date('2025-01-15T10:06:00Z')
+            const sent = Notification.Sent('Alert', sentDate, deliveredDate)
+
+            t.equal(sent.message, 'Alert', 'Then message is set correctly')
+            t.equal(sent.sentAt, sentDate, 'Then sentAt Date is set correctly')
+            t.equal(sent.deliveredAt, deliveredDate, 'Then deliveredAt Date is set correctly')
+            t.end()
+        })
+
+        t.test('When I create a Sent notification with optional deliveredAt as undefined', t => {
+            const sentDate = new Date('2025-01-15T10:05:00Z')
+            const sent = Notification.Sent('Alert', sentDate, undefined)
+
+            t.equal(sent.sentAt, sentDate, 'Then sentAt Date is set correctly')
+            t.notOk(sent.deliveredAt, 'Then deliveredAt is undefined')
+            t.end()
+        })
+
+        t.test('When I create an Expired notification', t => {
+            const expiredDate = new Date('2025-01-10T00:00:00Z')
+            const expired = Notification.Expired('Old reminder', expiredDate)
+
+            t.equal(expired.message, 'Old reminder', 'Then message is set correctly')
+            t.equal(expired.expiredAt, expiredDate, 'Then expiredAt Date is set correctly')
+            t.end()
+        })
+
+        t.test('When I try to create with invalid Date values', t => {
+            t.throws(
+                () => Notification.Scheduled('Test', 'not a date'),
+                /expected scheduledFor to have type Date/,
+                'Then Scheduled rejects string for Date field',
+            )
+
+            t.throws(
+                () => Notification.Sent('Test', 123456789, undefined),
+                /expected sentAt to have type Date/,
+                'Then Sent rejects number for Date field',
+            )
+
+            t.throws(
+                () => Notification.Expired('Test', { date: '2025-01-15' }),
+                /expected expiredAt to have type Date/,
+                'Then Expired rejects object for Date field',
+            )
+
+            t.end()
+        })
+
+        t.test('When I check timestampFields properties', t => {
+            t.same(
+                Notification.Scheduled.timestampFields,
+                ['scheduledFor'],
+                'Then Scheduled has correct timestampFields',
+            )
+
+            t.same(
+                Notification.Sent.timestampFields,
+                ['sentAt', 'deliveredAt'],
+                'Then Sent has correct timestampFields including optional Date',
+            )
+
+            t.same(Notification.Expired.timestampFields, ['expiredAt'], 'Then Expired has correct timestampFields')
+
+            t.end()
+        })
+
+        t.test('When I check toString with Dates', t => {
+            const scheduledDate = new Date('2025-01-15T10:00:00Z')
+            const scheduled = Notification.Scheduled('Test', scheduledDate)
+
+            const str = scheduled.toString()
+            t.ok(str.includes('Notification.Scheduled'), 'Then toString includes variant name')
+            t.ok(str.includes('2025-01-15T10:00:00.000Z'), 'Then toString includes ISO date string')
+
+            t.end()
+        })
+
+        t.end()
+    })
+
+    t.end()
+})
+
+tap.test('Date array validation throws error during type generation', t => {
+    t.test('When I try to generate a type with [Date] field', async t => {
+        const typeDefWithDateArray = {
+            name: 'EventWithDateArray',
+            kind: 'tagged',
+            fields: { name: 'String', milestones: '[Date]' },
+            relativePath: 'test/fixtures/EventWithDateArray.type.js',
+        }
+
+        try {
+            await generateStaticTaggedType(typeDefWithDateArray)
+            t.fail('Should have thrown an error for [Date] field')
+        } catch (error) {
+            t.ok(error.message.includes('EventWithDateArray'), 'Then error message includes type name')
+            t.ok(error.message.includes('milestones: [Date]'), 'Then error message includes problematic field')
+            t.ok(error.message.includes('not supported by Firestore facade'), 'Then error message explains why')
+            t.ok(error.message.includes('store as milliseconds'), 'Then error message suggests alternative')
+        }
+        t.end()
+    })
+
+    t.test('When I try to generate a tagged sum type with [Date] field in variant', async t => {
+        const typeDefWithDateArray = {
+            name: 'NotificationWithDateArray',
+            kind: 'taggedSum',
+            variants: { Scheduled: { message: 'String', reminders: '[Date]' } },
+            relativePath: 'test/fixtures/NotificationWithDateArray.type.js',
+        }
+
+        try {
+            await generateStaticTaggedSumType(typeDefWithDateArray)
+            t.fail('Should have thrown an error for [Date] field in variant')
+        } catch (error) {
+            t.ok(
+                error.message.includes('NotificationWithDateArray.Scheduled'),
+                'Then error message includes variant name',
+            )
+            t.ok(error.message.includes('reminders: [Date]'), 'Then error message includes problematic field')
+        }
+        t.end()
     })
 
     t.end()

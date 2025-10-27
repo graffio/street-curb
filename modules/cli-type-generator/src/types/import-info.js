@@ -30,19 +30,32 @@ const ImportInfo = function ImportInfo(source, specifiers) {
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `ImportInfo(${R._toString(this.source)}, ${R._toString(this.specifiers)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'ImportInfo', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `ImportInfo(${R._toString(this.source)}, ${R._toString(this.specifiers)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: ImportInfo,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 ImportInfo.prototype = prototype
-prototype.constructor = ImportInfo
-
-Object.defineProperty(prototype, '@@typeName', { value: 'ImportInfo' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

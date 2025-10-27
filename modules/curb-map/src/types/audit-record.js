@@ -81,19 +81,32 @@ const AuditRecord = function AuditRecord(
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `AuditRecord(${R._toString(this.id)}, ${R._toString(this.timestamp)}, ${R._toString(this.eventType)}, ${R._toString(this.userId)}, ${R._toString(this.resource)}, ${R._toString(this.action)}, ${R._toString(this.outcome)}, ${R._toString(this.sourceIP)}, ${R._toString(this.auditVersion)}, ${R._toString(this.operationDetails)}, ${R._toString(this.errorMessage)}, ${R._toString(this.correlationId)}, ${R._toString(this.environment)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'AuditRecord', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `AuditRecord(${R._toString(this.id)}, ${R._toString(this.timestamp)}, ${R._toString(this.eventType)}, ${R._toString(this.userId)}, ${R._toString(this.resource)}, ${R._toString(this.action)}, ${R._toString(this.outcome)}, ${R._toString(this.sourceIP)}, ${R._toString(this.auditVersion)}, ${R._toString(this.operationDetails)}, ${R._toString(this.errorMessage)}, ${R._toString(this.correlationId)}, ${R._toString(this.environment)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: AuditRecord,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 AuditRecord.prototype = prototype
-prototype.constructor = AuditRecord
-
-Object.defineProperty(prototype, '@@typeName', { value: 'AuditRecord' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

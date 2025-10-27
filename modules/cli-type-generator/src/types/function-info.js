@@ -36,19 +36,32 @@ const FunctionInfo = function FunctionInfo(typeName, functionName, node, sourceC
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `FunctionInfo(${R._toString(this.typeName)}, ${R._toString(this.functionName)}, ${R._toString(this.node)}, ${R._toString(this.sourceCode)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'FunctionInfo', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `FunctionInfo(${R._toString(this.typeName)}, ${R._toString(this.functionName)}, ${R._toString(this.node)}, ${R._toString(this.sourceCode)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: FunctionInfo,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 FunctionInfo.prototype = prototype
-prototype.constructor = FunctionInfo
-
-Object.defineProperty(prototype, '@@typeName', { value: 'FunctionInfo' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -289,8 +289,8 @@ Users can have different roles in different organizations (e.g., admin in org_sf
         "org_sf": "admin",
         "org_la": "member"
     },
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    createdAt: new Date(),
+    updatedAt: new Date()
 }
 ```
 

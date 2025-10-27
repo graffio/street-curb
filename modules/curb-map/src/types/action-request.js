@@ -13,8 +13,8 @@
  *  error         : "String?",
  *  correlationId : FieldTypes.correlationId,
  *  schemaVersion : "Number",
- *  createdAt     : "Object",
- *  processedAt   : "Object?"
+ *  createdAt     : "Date",
+ *  processedAt   : "Date?"
  *
  */
 
@@ -60,8 +60,8 @@ const ActionRequest = function ActionRequest(
     R.validateString(constructorName, 'error', true, error)
     R.validateRegex(constructorName, FieldTypes.correlationId, 'correlationId', false, correlationId)
     R.validateNumber(constructorName, 'schemaVersion', false, schemaVersion)
-    R.validateObject(constructorName, 'createdAt', false, createdAt)
-    R.validateObject(constructorName, 'processedAt', true, processedAt)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
+    R.validateDate(constructorName, 'processedAt', true, processedAt)
 
     const result = Object.create(prototype)
     result.id = id
@@ -86,19 +86,32 @@ const ActionRequest = function ActionRequest(
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
-const prototype = {
-    toString: function () {
-        return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'ActionRequest', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
+        },
+        enumerable: false,
     },
-    toJSON() {
-        return this
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
     },
-}
+
+    constructor: {
+        value: ActionRequest,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
 
 ActionRequest.prototype = prototype
-prototype.constructor = ActionRequest
-
-Object.defineProperty(prototype, '@@typeName', { value: 'ActionRequest' }) // Add hidden @@typeName property
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -126,11 +139,13 @@ ActionRequest.from = o =>
     )
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// timestamp fields
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: timestampFields
 ActionRequest.timestampFields = ['createdAt', 'processedAt']
 
+// -------------------------------------------------------------------------------------------------------------
+// Additional functions copied from type definition file
+// -------------------------------------------------------------------------------------------------------------
 // Additional function: toFirestore
 ActionRequest.toFirestore = actionRequest => ({
     ...actionRequest,

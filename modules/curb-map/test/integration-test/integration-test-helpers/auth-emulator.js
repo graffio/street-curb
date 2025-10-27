@@ -1,5 +1,6 @@
 import admin from 'firebase-admin'
-import { FieldTypes } from '../../src/types/index.js'
+import { FieldTypes } from '../../../src/types/index.js'
+import { buildNamespace } from './build-namespace.js'
 
 /*
  * Helper utilities that drive the Firebase Auth emulator’s email-link and phone sign-in endpoints end-to-end.
@@ -17,35 +18,20 @@ const ensureProjectId = () => {
     return projectId
 }
 
-const resolveHost = () => {
-    const host = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
-    return host.startsWith('http') ? host : `http://${host}`
-}
+const firebaseProjectId = ensureProjectId()
+process.env.GCLOUD_PROJECT ||= firebaseProjectId
+process.env.GOOGLE_CLOUD_PROJECT ||= firebaseProjectId
+process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
+process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
+process.env.FIREBASE_TEST_MODE ||= '1'
+process.env.FUNCTIONS_EMULATOR ||= '1'
 
+const host = 'http://127.0.0.1:9099'
 const API_KEY = 'fake-key'
-
-const envKeys = [
-    'GCLOUD_PROJECT',
-    'GOOGLE_CLOUD_PROJECT',
-    'FIRESTORE_EMULATOR_HOST',
-    'FIREBASE_AUTH_EMULATOR_HOST',
-    'FIREBASE_TEST_MODE',
-    'FUNCTIONS_EMULATOR',
-]
-
-const captureEnv = keys => keys.reduce((acc, key) => ({ ...acc, [key]: process.env[key] }), {})
-
-const restoreEnv = snapshot =>
-    Object.entries(snapshot).forEach(([key, value]) => {
-        if (value === undefined) delete process.env[key]
-        else process.env[key] = value
-    })
-
 const headers = { 'Content-Type': 'application/json' }
 
 const buildEndpoints = () => {
-    const projectId = process.env.GCLOUD_PROJECT || process.env.TEST_GCLOUD_PROJECT || ensureProjectId()
-    const host = resolveHost()
+    const projectId = ensureProjectId()
     const authBase = `${host}/identitytoolkit.googleapis.com/v1`
     const emulatorBase = `${host}/emulator/v1/projects/${projectId}`
 
@@ -129,36 +115,21 @@ const signInWithPhoneNumber = async (phoneNumber = '+15551234567') => {
 const uniqueEmail = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`
 
 /**
- * Temporarily configures emulator env vars and yields a unique namespace for each integration test.
- * @sig withAuthTestEnvironment :: (Context -> Promise<void>, Object?) -> Promise<void>
- * Context = { namespace: String, projectId: String }
+ * Unified integration test wrapper with authentication
+ * Supports both email and phone sign-in methods
+ * @sig asSignedInUser :: (String | Object, Function) -> Promise<void>
  */
-const withAuthTestEnvironment = async (effect, overrides = {}) => {
-    const snapshot = captureEnv(envKeys)
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
-    const namespace = `tests/ns_${timestamp}`
+const asSignedInUser = async (options, effect) => {
+    if (!firebaseProjectId) throw new Error('GCLOUD_PROJECT must be set')
+    ensureAdminInitialized(firebaseProjectId)
 
-    const projectId =
-        overrides.projectId || process.env.GCLOUD_PROJECT || process.env.TEST_GCLOUD_PROJECT || 'local-curb-map-tests'
-    const firestoreHost = overrides.firestoreHost || process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080'
-    const authHost = overrides.authHost || process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
+    const { label = 'test', signInMethod = 'email' } = typeof options === 'string' ? { label: options } : options
+    const namespace = buildNamespace()
 
-    restoreEnv({
-        GCLOUD_PROJECT: projectId,
-        GOOGLE_CLOUD_PROJECT: projectId,
-        FIRESTORE_EMULATOR_HOST: firestoreHost,
-        FIREBASE_AUTH_EMULATOR_HOST: authHost,
-        FIREBASE_TEST_MODE: '1',
-        FUNCTIONS_EMULATOR: '1',
-    })
+    const { token, uid, userId } =
+        signInMethod === 'phone' ? await signInWithPhoneNumber() : await signInWithEmailLink(uniqueEmail(label))
 
-    ensureAdminInitialized(projectId)
-
-    try {
-        await effect({ namespace, projectId })
-    } finally {
-        restoreEnv(snapshot)
-    }
+    return await effect({ namespace, token, uid, actorUserId: userId })
 }
 
-export { signInWithEmailLink, signInWithPhoneNumber, uniqueEmail, withAuthTestEnvironment }
+export { uniqueEmail, asSignedInUser }

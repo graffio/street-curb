@@ -172,6 +172,7 @@ const generateTypeCheck = (constructorName, name, fieldType) => {
     if (baseType === 'Number')  return `R.validateNumber(constructorName, '${name}', ${optional}, ${name})`
     if (baseType === 'Boolean') return `R.validateBoolean(constructorName, '${name}', ${optional}, ${name})`
     if (baseType === 'Object')  return `R.validateObject(constructorName, '${name}', ${optional}, ${name})`
+    if (baseType === 'Date')    return `R.validateDate(constructorName, '${name}', ${optional}, ${name})`
     if (baseType === 'Tagged')  return `R.validateTag(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
 }
 

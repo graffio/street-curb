@@ -1,4 +1,4 @@
-import { Action, FieldTypes } from '../../src/types/index.js'
+import { Action, FieldTypes } from '../../../src/types/index.js'
 
 /**
  * Shared HTTP helpers for exercising submitActionRequest in integration tests.
@@ -163,7 +163,38 @@ const rawHttpRequest = async ({ method = 'POST', body, rawBody = false, token } 
     return parseResponse(response)
 }
 
+/**
+ * Build a payload for rawHttpRequest from an action.
+ * Helper to reduce boilerplate when testing unauthorized requests or custom scenarios.
+ *
+ * @sig buildActionPayload :: (String, Action, { idempotencyKey?: String, correlationId?: String }) -> Object
+ */
+const buildActionPayload = (namespace, action, { idempotencyKey, correlationId } = {}) => ({
+    action: Action.toFirestore(action),
+    idempotencyKey: idempotencyKey || FieldTypes.newIdempotencyKey(),
+    correlationId: correlationId || FieldTypes.newCorrelationId(),
+    namespace,
+})
+
+/**
+ * Assert that an async function throws an error with a message matching a pattern.
+ * Helper to reduce try-catch boilerplate in tests.
+ *
+ * @sig expectError :: (TAP, Function, RegExp, String?) -> Promise<Error>
+ */
+const expectError = async (t, fn, pattern, message) => {
+    try {
+        await fn()
+        t.fail(message || 'Expected error to be thrown')
+    } catch (error) {
+        t.match(error.message, pattern, message)
+        return error
+    }
+}
+
 export {
+    buildActionPayload,
+    expectError,
     rawHttpRequest,
     submitActionRequest,
     submitAndExpectSuccess,

@@ -14,13 +14,12 @@ export const Project = {
         id            : FieldTypes.projectId,
         organizationId: FieldTypes.organizationId,
         name          : "String",
-        createdAt     : 'Object', // Date
+        createdAt     : 'Date',
         createdBy     : FieldTypes.userId,
-        updatedAt     : 'Object', // Date
+        updatedAt     : 'Date',
         updatedBy     : FieldTypes.userId,
     }
 }
 
-Project.timestampFields = ['createdAt', 'updatedAt']
 Project.fromFirestore = Project.from
 Project.toFirestore = o => ({ ...o })
