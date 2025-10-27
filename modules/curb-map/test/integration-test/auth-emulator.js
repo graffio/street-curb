@@ -1,5 +1,6 @@
 import admin from 'firebase-admin'
 import { FieldTypes } from '../../src/types/index.js'
+import { buildNamespace } from './namespace-prefix.js'
 
 /*
  * Helper utilities that drive the Firebase Auth emulator’s email-link and phone sign-in endpoints end-to-end.
@@ -123,8 +124,7 @@ const asSignedInUser = async (options, effect) => {
     ensureAdminInitialized(firebaseProjectId)
 
     const { label = 'test', signInMethod = 'email' } = typeof options === 'string' ? { label: options } : options
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '-').replace('Z', '')
-    const namespace = `tests/ns_${timestamp}`
+    const namespace = buildNamespace()
 
     const { token, uid, userId } =
         signInMethod === 'phone' ? await signInWithPhoneNumber() : await signInWithEmailLink(uniqueEmail(label))
