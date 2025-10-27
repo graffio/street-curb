@@ -3,7 +3,7 @@ import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser, uniqueEmail } from './auth-emulator.js'
-import { buildActionPayload, rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
+import { buildActionPayload, expectError, rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
 test('Given UserCreated action', t => {
@@ -62,12 +62,8 @@ test('Given UserCreated action', t => {
             t.equal(result.data.status, 'unauthorized', 'Then payload indicates unauthorized access')
 
             const fsContext = createFirestoreContext(namespace, organizationId, null)
-            try {
-                await fsContext.users.read(userId)
-                t.fail('Then user doc should not be created')
-            } catch (error) {
-                t.match(error.message, /not found/, 'Then missing-user error is returned')
-            }
+            const fn = () => fsContext.users.read(userId)
+            await expectError(t, fn, /not found/, 'Then missing-user error is returned')
         })
         t.end()
     })
@@ -242,12 +238,7 @@ test('Given UserForgotten action (GDPR)', t => {
             t.equal(orgDoc1.members[userId].removedBy, actorUserId, 'Then removedBy set from token userId in org1')
 
             // Verify user deleted
-            try {
-                await fsContext.users.read(userId)
-                t.fail('Then user doc should be deleted')
-            } catch (error) {
-                t.match(error.message, /not found/, 'Then user doc is deleted')
-            }
+            await expectError(t, () => fsContext.users.read(userId), /not found/, 'Then user doc is deleted')
         })
         t.end()
     })
@@ -283,12 +274,7 @@ test('Given UserForgotten action (GDPR)', t => {
             await submitAndExpectSuccess({ action: action1, namespace, token })
 
             const fsContext = createFirestoreContext(namespace, organizationId, null)
-            try {
-                await fsContext.users.read(userId)
-                t.fail('Then user should be deleted')
-            } catch (error) {
-                t.match(error.message, /not found/, 'Then user is deleted')
-            }
+            await expectError(t, () => fsContext.users.read(userId), /not found/, 'Then user is deleted')
         })
         t.end()
     })

@@ -176,8 +176,25 @@ const buildActionPayload = (namespace, action, { idempotencyKey, correlationId }
     namespace,
 })
 
+/**
+ * Assert that an async function throws an error with a message matching a pattern.
+ * Helper to reduce try-catch boilerplate in tests.
+ *
+ * @sig expectError :: (TAP, Function, RegExp, String?) -> Promise<Error>
+ */
+const expectError = async (t, fn, pattern, message) => {
+    try {
+        await fn()
+        t.fail(message || 'Expected error to be thrown')
+    } catch (error) {
+        t.match(error.message, pattern, message)
+        return error
+    }
+}
+
 export {
     buildActionPayload,
+    expectError,
     rawHttpRequest,
     submitActionRequest,
     submitAndExpectSuccess,

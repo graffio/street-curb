@@ -3,7 +3,7 @@ import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser } from './auth-emulator.js'
-import { buildActionPayload, rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
+import { buildActionPayload, expectError, rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
 
@@ -55,21 +55,18 @@ test('Given MemberAdded action', t => {
     t.test('When member already active Then reject with validation error', async t => {
         await asSignedInUser('member-added-duplicate', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token })
-            const { userId, authUid } = await createUser({ namespace, token, displayName: 'Alice' })
+            const displayName = 'Alice'
+            const { userId, authUid } = await createUser({ namespace, token, displayName })
 
             // Verify userId claim was set by handler
             const authUser = await admin.auth().getUser(authUid)
             t.ok(authUser.customClaims?.userId, 'Then userId claim is set on auth user')
             t.equal(authUser.customClaims.userId, userId, 'Then userId claim matches Firestore userId')
 
-            await addMember({ namespace, token, userId, organizationId, role: 'admin', displayName: 'Alice' })
+            await addMember({ namespace, token, userId, organizationId, role: 'admin', displayName })
 
-            try {
-                await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Alice' })
-                t.fail('Then duplicate member should be rejected')
-            } catch (error) {
-                t.match(error.message, /already active|already exists/, 'Then validation error thrown')
-            }
+            const fn = () => addMember({ namespace, token, userId, organizationId, role: 'member', displayName })
+            await expectError(t, fn, /already active|already exists/, 'Then validation error thrown')
         })
         t.end()
     })
@@ -157,12 +154,8 @@ test('Given MemberRemoved action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const userId = FieldTypes.newUserId()
 
-            try {
-                await removeMember({ namespace, token, userId, organizationId })
-                t.fail('Then member not found should be rejected')
-            } catch (error) {
-                t.match(error.message, /not found|does not exist/, 'Then validation error thrown')
-            }
+            const fn = () => removeMember({ namespace, token, userId, organizationId })
+            await expectError(t, fn, /not found|does not exist/, 'Then validation error thrown')
 
             const { org } = await firestoreState({ namespace, organizationId, projectId })
             t.notOk(org.members?.[userId], 'Then org remains unchanged')
@@ -178,12 +171,8 @@ test('Given MemberRemoved action', t => {
             await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Dave' })
             await removeMember({ namespace, token, userId, organizationId })
 
-            try {
-                await removeMember({ namespace, token, userId, organizationId })
-                t.fail('Then already removed member should be rejected')
-            } catch (error) {
-                t.match(error.message, /already removed|not active/, 'Then validation error thrown')
-            }
+            const fn = () => removeMember({ namespace, token, userId, organizationId })
+            await expectError(t, fn, /already removed|not active/, 'Then validation error thrown')
 
             const { org } = await firestoreState({ namespace, organizationId, projectId })
             t.ok(org.members[userId].removedAt, 'Then removedAt remains from first removal')
@@ -235,12 +224,8 @@ test('Given RoleChanged action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const userId = FieldTypes.newUserId()
 
-            try {
-                await changeRole({ namespace, token, userId, organizationId, role: 'admin' })
-                t.fail('Then member not found should be rejected')
-            } catch (error) {
-                t.match(error.message, /not found|does not exist/, 'Then validation error thrown')
-            }
+            const fn = () => changeRole({ namespace, token, userId, organizationId, role: 'admin' })
+            await expectError(t, fn, /not found|does not exist/, 'Then validation error thrown')
 
             const { org } = await firestoreState({ namespace, organizationId, projectId })
             t.notOk(org.members?.[userId], 'Then org remains unchanged')
@@ -256,12 +241,8 @@ test('Given RoleChanged action', t => {
             await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Frank' })
             await removeMember({ namespace, token, userId, organizationId })
 
-            try {
-                await changeRole({ namespace, token, userId, organizationId, role: 'admin' })
-                t.fail('Then removed member role change should be rejected')
-            } catch (error) {
-                t.match(error.message, /removed|not active/, 'Then validation error thrown')
-            }
+            const fn = () => changeRole({ namespace, token, userId, organizationId, role: 'admin' })
+            await expectError(t, fn, /removed|not active/, 'Then validation error thrown')
         })
         t.end()
     })
