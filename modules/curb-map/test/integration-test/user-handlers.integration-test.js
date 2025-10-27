@@ -3,7 +3,7 @@ import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser, uniqueEmail } from './auth-emulator.js'
-import { rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
+import { buildActionPayload, rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
 test('Given UserCreated action', t => {
@@ -55,14 +55,8 @@ test('Given UserCreated action', t => {
                 displayName: 'Missing Token',
                 authUid: authUser.uid,
             })
-            const payload = {
-                action: Action.toFirestore(action),
-                idempotencyKey: FieldTypes.newIdempotencyKey(),
-                correlationId: FieldTypes.newCorrelationId(),
-                namespace,
-            }
 
-            const result = await rawHttpRequest({ body: payload })
+            const result = await rawHttpRequest({ body: buildActionPayload(namespace, action) })
 
             t.equal(result.status, 401, 'Then HTTP response is unauthorized')
             t.equal(result.data.status, 'unauthorized', 'Then payload indicates unauthorized access')
@@ -277,22 +271,16 @@ test('Given UserForgotten action (GDPR)', t => {
             const userId = FieldTypes.newUserId()
             const orphanEmail = `orphan-${FieldTypes.newUserId()}@example.com`
             const authUser = await admin.auth().createUser({ email: orphanEmail, password: 'Passw0rd!' })
-            await submitAndExpectSuccess({
-                action: Action.UserCreated.from({
-                    userId,
-                    email: orphanEmail,
-                    displayName: 'Orphan',
-                    authUid: authUser.uid,
-                }),
-                namespace,
-                token,
+            const action = Action.UserCreated.from({
+                userId,
+                email: orphanEmail,
+                displayName: 'Orphan',
+                authUid: authUser.uid,
             })
+            await submitAndExpectSuccess({ action, namespace, token })
 
-            await submitAndExpectSuccess({
-                action: Action.UserForgotten.from({ userId, reason: 'GDPR' }),
-                namespace,
-                token,
-            })
+            const action1 = Action.UserForgotten.from({ userId, reason: 'GDPR' })
+            await submitAndExpectSuccess({ action: action1, namespace, token })
 
             const fsContext = createFirestoreContext(namespace, organizationId, null)
             try {

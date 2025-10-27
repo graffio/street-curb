@@ -163,7 +163,21 @@ const rawHttpRequest = async ({ method = 'POST', body, rawBody = false, token } 
     return parseResponse(response)
 }
 
+/**
+ * Build a payload for rawHttpRequest from an action.
+ * Helper to reduce boilerplate when testing unauthorized requests or custom scenarios.
+ *
+ * @sig buildActionPayload :: (String, Action, { idempotencyKey?: String, correlationId?: String }) -> Object
+ */
+const buildActionPayload = (namespace, action, { idempotencyKey, correlationId } = {}) => ({
+    action: Action.toFirestore(action),
+    idempotencyKey: idempotencyKey || FieldTypes.newIdempotencyKey(),
+    correlationId: correlationId || FieldTypes.newCorrelationId(),
+    namespace,
+})
+
 export {
+    buildActionPayload,
     rawHttpRequest,
     submitActionRequest,
     submitAndExpectSuccess,

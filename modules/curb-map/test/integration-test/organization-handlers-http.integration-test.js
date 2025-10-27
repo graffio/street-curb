@@ -3,6 +3,7 @@ import { createFirestoreContext } from '../../functions/src/firestore-context.js
 import { Action, FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser } from './auth-emulator.js'
 import {
+    buildActionPayload,
     rawHttpRequest,
     submitAndExpectDuplicate,
     submitAndExpectSuccess,
@@ -18,11 +19,8 @@ const createOrg = async ({
     projectId = FieldTypes.newProjectId(),
     name = 'Test Org',
 }) => {
-    await submitAndExpectSuccess({
-        action: Action.OrganizationCreated.from({ organizationId, projectId, name }),
-        namespace,
-        token,
-    })
+    const action = Action.OrganizationCreated.from({ organizationId, projectId, name })
+    await submitAndExpectSuccess({ action, namespace, token })
     return { organizationId, projectId }
 }
 
@@ -42,11 +40,8 @@ test('Given organization handlers via submitActionRequest', t => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
 
-            const result = await submitAndExpectSuccess({
-                action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'City of San Francisco' }),
-                namespace,
-                token,
-            })
+            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'City of San Francisco' })
+            const result = await submitAndExpectSuccess({ action, namespace, token })
 
             t.equal(result.status, 'completed', 'Then action request completes')
             t.ok(result.processedAt, 'Then processedAt timestamp is set')
@@ -67,16 +62,8 @@ test('Given organization handlers via submitActionRequest', t => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
 
-            const payload = {
-                action: Action.toFirestore(
-                    Action.OrganizationCreated.from({ organizationId, projectId, name: 'Unauthorized Org' }),
-                ),
-                idempotencyKey: FieldTypes.newIdempotencyKey(),
-                correlationId: FieldTypes.newCorrelationId(),
-                namespace,
-            }
-
-            const result = await rawHttpRequest({ body: payload })
+            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Unauthorized Org' })
+            const result = await rawHttpRequest({ body: buildActionPayload(namespace, action) })
 
             t.equal(result.status, 401, 'Then HTTP response is unauthorized')
             t.equal(result.data.status, 'unauthorized', 'Then payload indicates unauthorized access')
@@ -91,11 +78,8 @@ test('Given organization handlers via submitActionRequest', t => {
         await asSignedInUser('org-update-name', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token, name: 'Original Name' })
 
-            await submitAndExpectSuccess({
-                action: Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' }),
-                namespace,
-                token,
-            })
+            const action = Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' })
+            await submitAndExpectSuccess({ action, namespace, token })
 
             const org = await orgState({ namespace, organizationId, projectId })
             t.equal(org.name, 'Updated Name', 'Then name updated')
@@ -108,11 +92,8 @@ test('Given organization handlers via submitActionRequest', t => {
         await asSignedInUser('org-update-status', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token })
 
-            await submitAndExpectSuccess({
-                action: Action.OrganizationUpdated.from({ organizationId, status: 'suspended' }),
-                namespace,
-                token,
-            })
+            const action = Action.OrganizationUpdated.from({ organizationId, status: 'suspended' })
+            await submitAndExpectSuccess({ action, namespace, token })
 
             const org = await orgState({ namespace, organizationId, projectId })
             t.equal(org.status, 'suspended', 'Then status updated')
@@ -124,11 +105,8 @@ test('Given organization handlers via submitActionRequest', t => {
         await asSignedInUser('org-suspend', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token })
 
-            await submitAndExpectSuccess({
-                action: Action.OrganizationSuspended.from({ organizationId }),
-                namespace,
-                token,
-            })
+            const action = Action.OrganizationSuspended.from({ organizationId })
+            await submitAndExpectSuccess({ action, namespace, token })
 
             const org = await orgState({ namespace, organizationId, projectId })
             t.equal(org.status, 'suspended', 'Then suspended state persisted')
@@ -140,11 +118,8 @@ test('Given organization handlers via submitActionRequest', t => {
         await asSignedInUser('org-delete', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrg({ namespace, token })
 
-            await submitAndExpectSuccess({
-                action: Action.OrganizationDeleted.from({ organizationId }),
-                namespace,
-                token,
-            })
+            const action = Action.OrganizationDeleted.from({ organizationId })
+            await submitAndExpectSuccess({ action, namespace, token })
 
             const fsContext = createFirestoreContext(namespace, organizationId, projectId)
             await t.rejects(fsContext.organizations.read(organizationId), /not found/, 'Then organization is deleted')
@@ -160,9 +135,9 @@ test('Given transaction-based idempotency', t => {
         await asSignedInUser('org-duplicate', async ({ namespace, token }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
+
             const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Duplicate Org' })
             const idempotencyKey = FieldTypes.newIdempotencyKey()
-
             await submitAndExpectSuccess({ action, namespace, token, idempotencyKey })
 
             const duplicate = await submitAndExpectDuplicate({ action, namespace, token, idempotencyKey })
@@ -176,11 +151,8 @@ test('Given transaction-based idempotency', t => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
 
-            const result = await submitAndExpectSuccess({
-                action: Action.OrganizationCreated.from({ organizationId, projectId, name: 'Timestamp Org' }),
-                namespace,
-                token,
-            })
+            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Timestamp Org' })
+            const result = await submitAndExpectSuccess({ action, namespace, token })
 
             t.ok(result.processedAt, 'Then processedAt timestamp returned')
         })

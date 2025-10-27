@@ -3,7 +3,7 @@ import t from 'tap'
 import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser } from './auth-emulator.js'
-import { rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
+import { buildActionPayload, rawHttpRequest, submitAndExpectSuccess } from './http-submit-action.js'
 
 const { test } = t
 
@@ -14,11 +14,8 @@ const createOrganization = async ({
     projectId = FieldTypes.newProjectId(),
     name = 'Test Org',
 }) => {
-    await submitAndExpectSuccess({
-        action: Action.OrganizationCreated.from({ organizationId, projectId, name }),
-        namespace,
-        token,
-    })
+    const action = Action.OrganizationCreated.from({ organizationId, projectId, name })
+    await submitAndExpectSuccess({ action, namespace, token })
     return { organizationId, projectId }
 }
 
@@ -30,21 +27,16 @@ const createUser = async ({ namespace, token, userId = FieldTypes.newUserId(), e
     const authUser = await admin.auth().createUser({ email: userEmail, password: 'Passw0rd!' })
 
     // Note: NOT setting custom claims here - handler should do it
-    await submitAndExpectSuccess({
-        action: Action.UserCreated.from({ userId, email: userEmail, displayName, authUid: authUser.uid }),
-        namespace,
-        token,
-    })
+    const action = Action.UserCreated.from({ userId, email: userEmail, displayName, authUid: authUser.uid })
+    await submitAndExpectSuccess({ action, namespace, token })
 
     return { userId, authUid: authUser.uid }
 }
 
-const addMember = ({ namespace, token, userId, organizationId, role, displayName }) =>
-    submitAndExpectSuccess({
-        action: Action.MemberAdded.from({ userId, organizationId, role, displayName }),
-        namespace,
-        token,
-    })
+const addMember = ({ namespace, token, userId, organizationId, role, displayName }) => {
+    const action = Action.MemberAdded.from({ userId, organizationId, role, displayName })
+    return submitAndExpectSuccess({ action, namespace, token })
+}
 
 const removeMember = ({ namespace, token, userId, organizationId }) =>
     submitAndExpectSuccess({ action: Action.MemberRemoved.from({ userId, organizationId }), namespace, token })
@@ -58,13 +50,6 @@ const firestoreState = async ({ namespace, organizationId, projectId, userId }) 
     const user = userId ? await fsContext.users.read(userId) : null
     return { org, user }
 }
-
-const buildPayload = (namespace, action) => ({
-    action: Action.toFirestore(action),
-    idempotencyKey: FieldTypes.newIdempotencyKey(),
-    correlationId: FieldTypes.newCorrelationId(),
-    namespace,
-})
 
 test('Given MemberAdded action', t => {
     t.test('When member already active Then reject with validation error', async t => {
@@ -95,7 +80,7 @@ test('Given MemberAdded action', t => {
             const { userId } = await createUser({ namespace, token, displayName: 'Missing Token' })
 
             const result = await rawHttpRequest({
-                body: buildPayload(
+                body: buildActionPayload(
                     namespace,
                     Action.MemberAdded.from({ userId, organizationId, role: 'member', displayName: 'Missing Token' }),
                 ),
@@ -230,7 +215,7 @@ test('Given MemberRemoved action', t => {
             await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Unauth' })
 
             const result = await rawHttpRequest({
-                body: buildPayload(namespace, Action.MemberRemoved.from({ userId, organizationId })),
+                body: buildActionPayload(namespace, Action.MemberRemoved.from({ userId, organizationId })),
             })
 
             t.equal(result.status, 401, 'Then HTTP response is unauthorized')
@@ -304,7 +289,7 @@ test('Given RoleChanged action', t => {
             await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Grace' })
 
             const result = await rawHttpRequest({
-                body: buildPayload(namespace, Action.RoleChanged.from({ userId, organizationId, role: 'admin' })),
+                body: buildActionPayload(namespace, Action.RoleChanged.from({ userId, organizationId, role: 'admin' })),
             })
 
             t.equal(result.status, 401, 'Then HTTP response is unauthorized')
