@@ -1,9 +1,9 @@
 import t from 'tap'
-import { createFirestoreContext } from '../../functions/src/firestore-context.js'
-import { Action, FieldTypes } from '../../src/types/index.js'
-import { asSignedInUser, uniqueEmail } from './auth-emulator.js'
-import { expectError, submitAndExpectSuccess } from './http-submit-action.js'
-import { addMember, createOrganization, createUser } from './test-helpers.js'
+import { createFirestoreContext } from '../../../functions/src/firestore-context.js'
+import { Action, FieldTypes } from '../../../src/types/index.js'
+import { asSignedInUser, uniqueEmail } from '../integration-test-helpers/auth-emulator.js'
+import { expectError, submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
+import { addMember, createOrganization, createUser } from '../integration-test-helpers/test-helpers.js'
 
 const { test } = t
 

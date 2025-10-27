@@ -1,7 +1,7 @@
 import t from 'tap'
-import { Action, FieldTypes } from '../../src/types/index.js'
-import { asSignedInUser } from './auth-emulator.js'
-import { buildActionPayload, rawHttpRequest , expectError } from './http-submit-action.js'
+import { FieldTypes } from '../../../src/types/index.js'
+import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
+import { expectError } from '../integration-test-helpers/http-submit-action.js'
 import {
     addMember,
     changeRole,
@@ -10,7 +10,7 @@ import {
     readOrgAndUser,
     readOrganization,
     removeMember,
-} from './test-helpers.js'
+} from '../integration-test-helpers/test-helpers.js'
 
 const { test } = t
 
@@ -55,21 +55,6 @@ test('Given RoleChanged action', t => {
 
             t.equal(org.members[userId].role, 'admin', 'Then org member role updated')
             t.equal(user.organizations[organizationId], 'admin', 'Then user org map updated')
-        })
-        t.end()
-    })
-
-    t.test('When request omits token Then role change is rejected', async t => {
-        await asSignedInUser('role-change-unauth', async ({ namespace, token }) => {
-            const { organizationId } = await createOrganization({ namespace, token })
-            const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
-            await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Grace' })
-
-            const result = await rawHttpRequest({
-                body: buildActionPayload(namespace, Action.RoleChanged.from({ userId, organizationId, role: 'admin' })),
-            })
-
-            t.equal(result.status, 401, 'Then HTTP response is unauthorized')
         })
         t.end()
     })

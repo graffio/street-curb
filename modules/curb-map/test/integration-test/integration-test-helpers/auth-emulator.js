@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
-import { FieldTypes } from '../../src/types/index.js'
-import { buildNamespace } from './namespace-prefix.js'
+import { FieldTypes } from '../../../src/types/index.js'
+import { buildNamespace } from './build-namespace.js'
 
 /*
  * Helper utilities that drive the Firebase Auth emulator’s email-link and phone sign-in endpoints end-to-end.

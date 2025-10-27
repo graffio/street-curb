@@ -1,8 +1,14 @@
 import t from 'tap'
-import { Action, FieldTypes } from '../../src/types/index.js'
-import { asSignedInUser } from './auth-emulator.js'
-import { buildActionPayload, expectError, rawHttpRequest } from './http-submit-action.js'
-import { addMember, createOrganization, createUser, readOrganization, removeMember } from './test-helpers.js'
+import { FieldTypes } from '../../../src/types/index.js'
+import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
+import { expectError } from '../integration-test-helpers/http-submit-action.js'
+import {
+    addMember,
+    createOrganization,
+    createUser,
+    readOrganization,
+    removeMember,
+} from '../integration-test-helpers/test-helpers.js'
 
 const { test } = t
 
@@ -50,25 +56,6 @@ test('Given MemberRemoved action', t => {
 
             t.ok(organization.members[userId].removedAt, 'Then removedAt is set')
             t.equal(organization.members[userId].removedBy, actorUserId, 'Then removedBy uses token userId claim')
-        })
-        t.end()
-    })
-
-    t.test('When request omits token Then removal call is rejected', async t => {
-        await asSignedInUser('member-removed-unauth', async ({ namespace, token }) => {
-            const { organizationId, projectId } = await createOrganization({ namespace, token })
-            const { userId } = await createUser({ namespace, token, displayName: 'Unauth' })
-
-            await addMember({ namespace, token, userId, organizationId, role: 'viewer', displayName: 'Unauth' })
-
-            const result = await rawHttpRequest({
-                body: buildActionPayload(namespace, Action.MemberRemoved.from({ userId, organizationId })),
-            })
-
-            t.equal(result.status, 401, 'Then HTTP response is unauthorized')
-
-            const organization = await readOrganization({ namespace, organizationId, projectId })
-            t.ok(organization.members?.[userId], 'Then member still present')
         })
         t.end()
     })

@@ -2,14 +2,14 @@ import admin from 'firebase-admin'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
-import { asSignedInUser } from './auth-emulator.js'
+import { asSignedInUser } from './integration-test-helpers/auth-emulator.js'
 import {
     rawHttpRequest,
     submitActionRequest,
     submitAndExpectDuplicate,
     submitAndExpectSuccess,
     submitAndExpectValidationError,
-} from './http-submit-action.js'
+} from './integration-test-helpers/http-submit-action.js'
 
 const withHttpAuth = (label, effect) =>
     asSignedInUser(label, async ({ namespace, projectId, token, uid, actorUserId }) => {
