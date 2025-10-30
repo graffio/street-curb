@@ -13,21 +13,22 @@ const { test } = t
 
 test('Given MemberAdded action', t => {
     t.test('When member already active Then reject with validation error', async t => {
-        await asSignedInUser('member-added-duplicate', async ({ namespace, token }) => {
+        await asSignedInUser('duplicate', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token })
             const displayName = 'Alice'
             const { userId } = await createUser({ namespace, token, displayName })
 
             await addMember({ namespace, token, userId, organizationId, role: 'admin', displayName })
 
-            const fn = () => addMember({ namespace, token, userId, organizationId, role: 'member', displayName })
+            const fn = async () =>
+                await addMember({ namespace, token, userId, organizationId, role: 'member', displayName })
             await expectError(t, fn, /already active|already exists/, 'Then validation error thrown')
         })
         t.end()
     })
 
     t.test('When new member added Then metadata uses actor userId claim', async t => {
-        await asSignedInUser('member-added-success', async ({ namespace, token, actorUserId }) => {
+        await asSignedInUser('success', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Bob' })
 
@@ -42,7 +43,7 @@ test('Given MemberAdded action', t => {
     })
 
     t.test('When removed member reactivated Then claims and metadata refresh', async t => {
-        await asSignedInUser('member-added-reactivate', async ({ namespace, token, actorUserId }) => {
+        await asSignedInUser('reactivate', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Carol' })
 
@@ -59,7 +60,7 @@ test('Given MemberAdded action', t => {
 
             const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId })
 
-            t.equal(org.members[userId].removedAt, null, 'Then removedAt cleared')
+            t.equal(org.members[userId].removedAt, undefined, 'Then removedAt cleared')
             t.equal(user.organizations[organizationId], 'admin', 'Then user organization role updated')
             t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy uses token userId claim')
         })

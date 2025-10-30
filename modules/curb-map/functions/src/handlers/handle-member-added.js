@@ -1,3 +1,5 @@
+import { Member } from '../../../src/types/index.js'
+
 /**
  * Handle MemberAdded action
  * Adds or reactivates member in organization
@@ -11,12 +13,11 @@ const handleMemberAdded = async (logger, fsContext, actionRequest) => {
     const existingMember = org.members?.[userId]
 
     // Validate: if member exists and is active, reject
-    if (existingMember && existingMember.removedAt === null)
+    if (existingMember && !existingMember.removedAt)
         throw new Error(`Member ${userId} is already active in organization ${organizationId}`)
 
-    const addedAt = new Date()
     const addedBy = actionRequest.actorId
-    const memberData = { displayName, role, addedAt, addedBy, removedAt: null, removedBy: null }
+    const memberData = fsContext.encodeTimestamps(Member, { userId, displayName, role, addedAt: new Date(), addedBy })
 
     // Atomic update: org.members[userId] and user.organizations[orgId]
     await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })

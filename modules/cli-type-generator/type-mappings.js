@@ -28,6 +28,7 @@ export const typeMappings = {
     
     // curb-map domain
     [`${sources.curbMap}/blockface.type.js`]              : [targets.curbMap],
+    [`${sources.curbMap}/member.type.js`]                 : [targets.curbMap],
     [`${sources.curbMap}/organization.type.js`]           : [targets.curbMap],
     [`${sources.curbMap}/project.type.js`]                : [targets.curbMap],
     [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],

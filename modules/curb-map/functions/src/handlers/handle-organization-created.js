@@ -11,7 +11,8 @@ const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
     const metadata = generateMetadata(fsContext, actionRequest)
 
     // Write to Firestore collections
-    const organization = { id: organizationId, name, status: 'active', defaultProjectId: projectId, ...metadata }
+    const status = 'active'
+    const organization = { id: organizationId, name, status, defaultProjectId: projectId, members: [], ...metadata }
     await fsContext.organizations.write(organization)
     logger.flowStep('Organization created')
 

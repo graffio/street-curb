@@ -10,7 +10,7 @@ const normalizeTestName = filepath =>
         .replace(/\.integration-test\.js$/, '')
         .replace(/\W+/g, '-')
 
-const documentName = () => {
+const documentName = (label = 'test') => {
     const d = new Date()
 
     const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -20,7 +20,8 @@ const documentName = () => {
     const second = String(d.getSeconds()).padStart(2, '0')
     const milliseconds = String(d.getMilliseconds()).padStart(3, '0')
 
-    return [month, day].join('-') + '^' + [hour, minute, second, milliseconds].join(':')
+    const timestamp = [month, day].join('') + '^' + [hour, minute, second, milliseconds].join('|')
+    return `${label}^${timestamp}`
 }
 
 const collectionName = () => {
@@ -39,6 +40,6 @@ const collectionName = () => {
     return mapReturningFirst(isIntegrationTestRow, stack) || normalizeTestName(helperFilename)
 }
 
-const buildNamespace = () => `${collectionName()}/${documentName()}`
+const buildNamespace = (label = 'test') => `${collectionName()}/${documentName(label)}`
 
 export { buildNamespace }

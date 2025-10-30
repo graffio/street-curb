@@ -17,7 +17,7 @@ const buildOrganization = ({ id = FieldTypes.newOrganizationId(), status = 'acti
         name,
         status,
         defaultProjectId: FieldTypes.newProjectId(),
-        members: {},
+        members: [],
         createdAt: new Date('2025-01-01T00:00:00Z'),
         updatedAt: new Date('2025-01-01T00:00:00Z'),
         createdBy: FieldTypes.newUserId(),

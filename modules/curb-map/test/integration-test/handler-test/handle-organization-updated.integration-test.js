@@ -8,7 +8,7 @@ const { test } = t
 
 test('Given OrganizationUpdated action', t => {
     t.test('When OrganizationUpdated changes name Then name is updated', async t => {
-        await asSignedInUser('org-update-name', async ({ namespace, token }) => {
+        await asSignedInUser('name', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token, name: 'Original Name' })
 
             const action = Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' })
@@ -21,7 +21,7 @@ test('Given OrganizationUpdated action', t => {
     })
 
     t.test('When OrganizationUpdated changes status Then status is updated', async t => {
-        await asSignedInUser('org-update-status', async ({ namespace, token }) => {
+        await asSignedInUser('status', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const action = Action.OrganizationUpdated.from({ organizationId, status: 'suspended' })

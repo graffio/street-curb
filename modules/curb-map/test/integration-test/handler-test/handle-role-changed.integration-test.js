@@ -16,7 +16,7 @@ const { test } = t
 
 test('Given RoleChanged action', t => {
     t.test('When member not found Then reject with validation error', async t => {
-        await asSignedInUser('role-change-missing', async ({ namespace, token }) => {
+        await asSignedInUser('missing', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const userId = FieldTypes.newUserId()
 
@@ -30,7 +30,7 @@ test('Given RoleChanged action', t => {
     })
 
     t.test('When member removed Then role change rejected', async t => {
-        await asSignedInUser('role-change-removed', async ({ namespace, token }) => {
+        await asSignedInUser('removed', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Frank' })
 
@@ -44,7 +44,7 @@ test('Given RoleChanged action', t => {
     })
 
     t.test('When role changed Then organization, user, and claims update', async t => {
-        await asSignedInUser('role-change-success', async ({ namespace, token }) => {
+        await asSignedInUser('success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
 

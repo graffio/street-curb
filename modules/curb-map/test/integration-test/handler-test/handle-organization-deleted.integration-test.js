@@ -9,7 +9,7 @@ const { test } = t
 
 test('Given OrganizationDeleted action', t => {
     t.test('When OrganizationDeleted runs Then organization document is removed', async t => {
-        await asSignedInUser('org-delete', async ({ namespace, token }) => {
+        await asSignedInUser('success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const action = Action.OrganizationDeleted.from({ organizationId })

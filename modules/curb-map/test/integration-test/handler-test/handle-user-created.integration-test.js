@@ -9,7 +9,7 @@ const { test } = t
 
 test('Given UserCreated action', t => {
     t.test('When user is created Then user doc has empty organizations map and auth claim set', async t => {
-        await asSignedInUser('user-created', async ({ namespace, token }) => {
+        await asSignedInUser('success', async ({ namespace, token }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const userId = FieldTypes.newUserId()
 
