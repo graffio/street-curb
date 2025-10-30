@@ -1,5 +1,5 @@
 import admin from 'firebase-admin'
-import { FieldTypes } from '../../../src/types/index.js'
+import { FieldTypes } from '../../src/types/index.js'
 import { buildNamespace } from './build-namespace.js'
 
 /*

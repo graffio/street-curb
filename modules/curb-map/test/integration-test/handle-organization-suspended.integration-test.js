@@ -1,5 +1,5 @@
 import t from 'tap'
-import { Action } from '../../../src/types/index.js'
+import { Action } from '../../src/types/index.js'
 import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
 import { createOrganization, readOrganization } from '../integration-test-helpers/test-helpers.js'

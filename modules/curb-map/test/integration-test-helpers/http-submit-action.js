@@ -1,4 +1,4 @@
-import { Action, FieldTypes } from '../../../src/types/index.js'
+import { Action, FieldTypes } from '../../src/types/index.js'
 
 /**
  * Shared HTTP helpers for exercising submitActionRequest in integration tests.

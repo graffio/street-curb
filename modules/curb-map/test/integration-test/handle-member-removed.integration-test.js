@@ -1,5 +1,5 @@
 import t from 'tap'
-import { FieldTypes } from '../../../src/types/index.js'
+import { FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
 import { expectError } from '../integration-test-helpers/http-submit-action.js'
 import {

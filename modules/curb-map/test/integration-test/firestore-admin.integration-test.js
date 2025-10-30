@@ -3,7 +3,7 @@ import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { FieldTypes, Organization } from '../../src/types/index.js'
-import { buildNamespace } from './integration-test-helpers/build-namespace.js'
+import { buildNamespace } from '../integration-test-helpers/build-namespace.js'
 
 // Read project ID from environment (must be set externally)
 process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080'
