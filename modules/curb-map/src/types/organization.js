@@ -5,7 +5,7 @@
  *  name            : "String",
  *  status          : /active|suspended/,
  *  defaultProjectId: FieldTypes.projectId,
- *  members         : "Object?",
+ *  members         : "[Member]",
  *  createdAt       : "Date",
  *  createdBy       : FieldTypes.userId,
  *  updatedAt       : "Date",
@@ -13,6 +13,8 @@
  *
  */
 
+import { assoc, LookupTable } from '@graffio/functional'
+import { Member } from '../types/index.js'
 import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
@@ -35,12 +37,12 @@ const Organization = function Organization(
 ) {
     const constructorName =
         'Organization(id, name, status, defaultProjectId, members, createdAt, createdBy, updatedAt, updatedBy)'
-
+    R.validateArgumentLength(constructorName, 9, arguments)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateRegex(constructorName, /active|suspended/, 'status', false, status)
     R.validateRegex(constructorName, FieldTypes.projectId, 'defaultProjectId', false, defaultProjectId)
-    R.validateObject(constructorName, 'members', true, members)
+    R.validateArray(constructorName, 1, 'Tagged', 'Member', 'members', false, members)
     R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
     R.validateDate(constructorName, 'updatedAt', false, updatedAt)
@@ -51,7 +53,7 @@ const Organization = function Organization(
     result.name = name
     result.status = status
     result.defaultProjectId = defaultProjectId
-    if (members != null) result.members = members
+    result.members = members
     result.createdAt = createdAt
     result.createdBy = createdBy
     result.updatedAt = updatedAt
@@ -120,9 +122,30 @@ Organization.timestampFields = ['createdAt', 'updatedAt']
 // Additional functions copied from type definition file
 // -------------------------------------------------------------------------------------------------------------
 // Additional function: fromFirestore
-Organization.fromFirestore = Organization.from
+Organization.fromFirestore = (data, decodeTimestamps) => {
+    const memberFromFirestore = ([userId, memberData]) => {
+        const decoded = decodeTimestamps(Member, memberData)
+        return Member.fromFirestore(decoded, decodeTimestamps)
+    }
+    const memberEntries = data.members ? Object.entries(data.members) : []
+    const members = memberEntries.map(memberFromFirestore)
+    return Organization.from({
+        ...data,
+        members: LookupTable(members, Member, 'userId'),
+    })
+}
 
 // Additional function: toFirestore
-Organization.toFirestore = o => ({ ...o })
+Organization.toFirestore = (data, encodeTimestamps) => {
+    const reducer = (acc, member) => {
+        const encoded = encodeTimestamps(Member, member)
+        const memberData = Member.toFirestore(encoded, encodeTimestamps)
+        return assoc(member.userId, memberData, acc)
+    }
+    return {
+        ...data,
+        members: data.members.reduce(reducer, {}),
+    }
+}
 
 export { Organization }

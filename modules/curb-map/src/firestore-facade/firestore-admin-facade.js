@@ -10,34 +10,38 @@ const getDefaultAdminDb = () => {
     return admin.firestore()
 }
 
+const encodeTimestamps = (Type, data) => {
+    const timestampFields = Type.timestampFields || []
+    if (!timestampFields.length || data == null) return data
+
+    const result = { ...data }
+    timestampFields.forEach(field => {
+        if (result[field]) result[field] = admin.firestore.Timestamp.fromDate(result[field])
+    })
+
+    return result
+}
+
+const decodeTimestamps = (Type, data) => {
+    const timestampFields = Type.timestampFields || []
+    if (!timestampFields.length || data == null) return data
+
+    const result = { ...data }
+    timestampFields.forEach(field => {
+        if (result[field]) result[field] = result[field].toDate()
+    })
+
+    return result
+}
+
 /*
  *
  * @sig FirestoreAdminFacade :: (Type, String, FirestoreTransaction?, Firestore?)) -> Facade
  *  Facade = { [functionName]: Function }
  */
 const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDefaultAdminDb()) => {
-    const encodeTimestamps = data => {
-        if (!timestampFields.length || data == null) return data
-
-        const fromDate = admin.firestore.Timestamp.fromDate
-        const result = { ...data }
-        timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = fromDate(result[field])
-        })
-
-        return result
-    }
-
-    const decodeTimestamps = data => {
-        if (!timestampFields.length || data == null) return data
-
-        const result = { ...data }
-        timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = result[field].toDate()
-        })
-
-        return result
-    }
+    const fromFirestore = (Type, data) => Type.fromFirestore(decodeTimestamps(Type, data), decodeTimestamps)
+    const toFirestore = (Type, data) => Type.toFirestore(encodeTimestamps(Type, data), encodeTimestamps)
 
     // -----------------------------------------------------------------------------------------------------------------
     // READ
@@ -49,7 +53,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
             const docSnap = tx ? await tx.get(_docRef(id)) : await _docRef(id).get()
 
             if (!docSnap.exists) throw new Error(`${Type.toString()} not found: ${id}`)
-            return Type.fromFirestore(decodeTimestamps(docSnap.data()))
+            return fromFirestore(Type, docSnap.data())
         } catch (e) {
             throwWithOriginal(`Failed to read ${Type.toString()}: ${e.message}`, e, id)
         }
@@ -63,7 +67,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
             whereConditions.forEach(([field, operator, value]) => (q = q.where(field, operator, value)))
 
             const querySnapshot = tx ? await tx.get(q) : await q.get()
-            return querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+            return querySnapshot.docs.map(doc => fromFirestore(Type, doc.data()))
         } catch (e) {
             throwWithOriginal(`Failed to query ${Type.toString()}: ${e.message}`, e, whereConditions)
         }
@@ -81,7 +85,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
     const write = async record => {
         try {
             if (!Type.is(record)) record = Type.from(record)
-            const firestoreData = encodeTimestamps(Type.toFirestore(record))
+            const firestoreData = toFirestore(Type, record)
             tx ? await tx.set(_docRef(record.id), firestoreData) : await _docRef(record.id).set(firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to write ${Type.toString()}: ${e.message}`, e, record)
@@ -97,7 +101,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
     const create = async record => {
         try {
             if (!Type.is(record)) record = Type.from(record)
-            const firestoreData = encodeTimestamps(Type.toFirestore(record))
+            const firestoreData = toFirestore(Type, record)
             tx ? await tx.set(_docRef(record.id), firestoreData) : await _docRef(record.id).create(firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to create ${Type.toString()}: ${e.message}`, e, record)
@@ -111,7 +115,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
      */
     const update = async (id, fields) => {
         try {
-            const firestoreData = encodeTimestamps(fields)
+            const firestoreData = encodeTimestamps(Type, fields)
             tx ? await tx.update(_docRef(id), firestoreData) : await _docRef(id).update(firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
@@ -124,7 +128,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
             const docSnap = tx ? await tx.get(_docRef(id)) : await _docRef(id).get()
 
             if (!docSnap.exists) return null
-            return Type.fromFirestore(decodeTimestamps(docSnap.data()))
+            return fromFirestore(Type, docSnap.data())
         } catch (e) {
             throwWithOriginal(`Failed to read ${Type.toString()}: ${e.message}`, e, id)
         }
@@ -150,7 +154,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
     const list = async () => {
         try {
             const querySnapshot = tx ? await tx.get(collectionRef) : await collectionRef.get()
-            return querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+            return querySnapshot.docs.map(doc => fromFirestore(Type, doc.data()))
         } catch (e) {
             throwWithOriginal(`Failed to list ${Type.toString()}: ${e.message}`, e)
         }
@@ -161,7 +165,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
         _docRef(id).onSnapshot(
             snapshot => {
                 try {
-                    const data = snapshot.exists ? Type.fromFirestore(decodeTimestamps(snapshot.data())) : null
+                    const data = snapshot.exists ? fromFirestore(Type, snapshot.data()) : null
                     callback(data, null)
                 } catch (error) {
                     callback(null, error)
@@ -180,7 +184,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
         return ref.onSnapshot(
             querySnapshot => {
                 try {
-                    const items = querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+                    const items = querySnapshot.docs.map(doc => fromFirestore(Type, doc.data()))
                     callback(items, null)
                 } catch (error) {
                     callback(null, error)
@@ -215,7 +219,6 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
     const collectionRef = db.collection(collectionPath)
 
     const _docRef = id => collectionRef.doc(id)
-    const timestampFields = Type.timestampFields || []
 
     // prettier-ignore
     return {
@@ -241,5 +244,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
 }
 
 FirestoreAdminFacade.deleteField = () => admin.firestore.FieldValue.delete()
+FirestoreAdminFacade.encodeTimestamps = encodeTimestamps
+FirestoreAdminFacade.decodeTimestamps = decodeTimestamps
 
 export { FirestoreAdminFacade }

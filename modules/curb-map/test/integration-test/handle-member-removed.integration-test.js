@@ -1,5 +1,5 @@
 import t from 'tap'
-import { FieldTypes } from '../../../src/types/index.js'
+import { FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
 import { expectError } from '../integration-test-helpers/http-submit-action.js'
 import {
@@ -14,7 +14,7 @@ const { test } = t
 
 test('Given MemberRemoved action', t => {
     t.test('When member not found Then reject with validation error', async t => {
-        await asSignedInUser('member-removed-missing', async ({ namespace, token }) => {
+        await asSignedInUser('missing', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const userId = FieldTypes.newUserId()
 
@@ -28,7 +28,7 @@ test('Given MemberRemoved action', t => {
     })
 
     t.test('When member already removed Then reject with validation error', async t => {
-        await asSignedInUser('member-removed-again', async ({ namespace, token }) => {
+        await asSignedInUser('already-removed', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Dave' })
 
@@ -45,7 +45,7 @@ test('Given MemberRemoved action', t => {
     })
 
     t.test('When member removed Then metadata and claims record actor userId', async t => {
-        await asSignedInUser('member-removed-success', async ({ namespace, token, actorUserId }) => {
+        await asSignedInUser('success', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Eve' })
 

@@ -1,6 +1,6 @@
 import t from 'tap'
-import { createFirestoreContext } from '../../../functions/src/firestore-context.js'
-import { Action } from '../../../src/types/index.js'
+import { createFirestoreContext } from '../../functions/src/firestore-context.js'
+import { Action } from '../../src/types/index.js'
 import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
 import { createOrganization } from '../integration-test-helpers/test-helpers.js'
@@ -9,7 +9,7 @@ const { test } = t
 
 test('Given OrganizationDeleted action', t => {
     t.test('When OrganizationDeleted runs Then organization document is removed', async t => {
-        await asSignedInUser('org-delete', async ({ namespace, token }) => {
+        await asSignedInUser('success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const action = Action.OrganizationDeleted.from({ organizationId })

@@ -1,5 +1,8 @@
+import { LookupTable } from '@graffio/functional'
 import { test } from 'tap'
-import { Action, Organization, FieldTypes } from '../src/types/index.js'
+import { Action, FieldTypes, Member, Organization } from '../src/types/index.js'
+
+const now = new Date()
 
 test('Given Organization type with members field', t => {
     t.test('When creating organization with members map Then members field is validated', t => {
@@ -8,24 +11,16 @@ test('Given Organization type with members field', t => {
         const userId = FieldTypes.newUserId()
         const adminId = FieldTypes.newUserId()
 
+        const member = Member.from({ userId, displayName: 'Alice Chen', role: 'admin', addedAt: now, addedBy: adminId })
         const orgData = {
             id: orgId,
             name: 'Test Organization',
             status: 'active',
             defaultProjectId: projectId,
-            members: {
-                [userId]: {
-                    displayName: 'Alice Chen',
-                    role: 'admin',
-                    addedAt: new Date(),
-                    addedBy: adminId,
-                    removedAt: null,
-                    removedBy: null,
-                },
-            },
-            createdAt: new Date(),
+            members: LookupTable([member], Member, 'userId'),
+            createdAt: now,
             createdBy: adminId,
-            updatedAt: new Date(),
+            updatedAt: now,
             updatedBy: adminId,
         }
 
@@ -45,32 +40,26 @@ test('Given Organization type with members field', t => {
         const userId = FieldTypes.newUserId()
         const adminId = FieldTypes.newUserId()
 
+        const displayName = 'Bob Smith'
+        const member0 = Member.from({ userId, displayName, role: 'member', addedAt: now, addedBy: adminId })
+
         const orgData = {
             id: orgId,
             name: 'Test Organization',
             status: 'active',
             defaultProjectId: projectId,
-            members: {
-                [userId]: {
-                    displayName: 'Bob Smith',
-                    role: 'member',
-                    addedAt: new Date(),
-                    addedBy: adminId,
-                    removedAt: null,
-                    removedBy: null,
-                },
-            },
-            createdAt: new Date(),
+            members: LookupTable([member0], Member, 'userId'),
+            createdAt: now,
             createdBy: adminId,
-            updatedAt: new Date(),
+            updatedAt: now,
             updatedBy: adminId,
         }
 
         const org = Organization.from(orgData)
         const member = org.members[userId]
 
-        t.equal(member.removedAt, null, 'Then removedAt is null for active member')
-        t.equal(member.removedBy, null, 'Then removedBy is null for active member')
+        t.notOk(member.removedAt, 'Then removedAt is undefined for active member')
+        t.notOk(member.removedBy, 'Then removedBy is undefined for active member')
 
         t.end()
     })
@@ -81,24 +70,24 @@ test('Given Organization type with members field', t => {
         const userId = FieldTypes.newUserId()
         const adminId = FieldTypes.newUserId()
 
+        const member0 = Member.from({
+            userId,
+            displayName: 'Charlie Davis',
+            role: 'viewer',
+            addedAt: new Date('2024-01-01'),
+            addedBy: adminId,
+            removedAt: new Date('2024-06-01'),
+            removedBy: adminId,
+        })
         const orgData = {
             id: orgId,
             name: 'Test Organization',
             status: 'active',
             defaultProjectId: projectId,
-            members: {
-                [userId]: {
-                    displayName: 'Charlie Davis',
-                    role: 'viewer',
-                    addedAt: new Date('2024-01-01'),
-                    addedBy: adminId,
-                    removedAt: new Date('2024-06-01'),
-                    removedBy: adminId,
-                },
-            },
-            createdAt: new Date(),
+            members: LookupTable([member0], Member, 'userId'),
+            createdAt: now,
             createdBy: adminId,
-            updatedAt: new Date(),
+            updatedAt: now,
             updatedBy: adminId,
         }
 
@@ -118,32 +107,20 @@ test('Given Organization type with members field', t => {
         const bobId = FieldTypes.newUserId()
         const adminId = FieldTypes.newUserId()
 
+        const members = [
+            Member.from({ userId: aliceId, displayName: 'Alice Chen', role: 'admin', addedAt: now, addedBy: adminId }),
+            Member.from({ userId: bobId, displayName: 'Bob Smith', role: 'member', addedAt: now, addedBy: adminId }),
+        ]
+
         const orgData = {
             id: orgId,
             name: 'Test Organization',
             status: 'active',
             defaultProjectId: projectId,
-            members: {
-                [aliceId]: {
-                    displayName: 'Alice Chen',
-                    role: 'admin',
-                    addedAt: new Date(),
-                    addedBy: adminId,
-                    removedAt: null,
-                    removedBy: null,
-                },
-                [bobId]: {
-                    displayName: 'Bob Smith',
-                    role: 'member',
-                    addedAt: new Date(),
-                    addedBy: adminId,
-                    removedAt: null,
-                    removedBy: null,
-                },
-            },
-            createdAt: new Date(),
+            members: LookupTable(members, Member, 'userId'),
+            createdAt: now,
             createdBy: adminId,
-            updatedAt: new Date(),
+            updatedAt: now,
             updatedBy: adminId,
         }
 

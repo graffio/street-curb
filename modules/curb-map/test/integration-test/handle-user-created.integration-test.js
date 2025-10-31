@@ -1,7 +1,7 @@
 import admin from 'firebase-admin'
 import t from 'tap'
-import { createFirestoreContext } from '../../../functions/src/firestore-context.js'
-import { Action, FieldTypes } from '../../../src/types/index.js'
+import { createFirestoreContext } from '../../functions/src/firestore-context.js'
+import { Action, FieldTypes } from '../../src/types/index.js'
 import { asSignedInUser, uniqueEmail } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
 
@@ -9,7 +9,7 @@ const { test } = t
 
 test('Given UserCreated action', t => {
     t.test('When user is created Then user doc has empty organizations map and auth claim set', async t => {
-        await asSignedInUser('user-created', async ({ namespace, token }) => {
+        await asSignedInUser('success', async ({ namespace, token }) => {
             const organizationId = FieldTypes.newOrganizationId()
             const userId = FieldTypes.newUserId()
 

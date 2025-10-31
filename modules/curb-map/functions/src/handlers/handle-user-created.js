@@ -17,8 +17,7 @@ const handleUserCreated = async (logger, fsContext, actionRequest) => {
     const { userId, email, displayName, authUid } = action
     const metadata = generateMetadata(fsContext, actionRequest)
 
-    const user = { id: userId, email, displayName, organizations: {}, ...metadata }
-    await fsContext.users.write(user)
+    await fsContext.users.write({ id: userId, email, displayName, organizations: {}, ...metadata })
 
     // Set userId custom claim to link Firebase Auth token to Firestore user doc
     await admin.auth().setCustomUserClaims(authUid, { userId })

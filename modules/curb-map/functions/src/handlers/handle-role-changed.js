@@ -1,3 +1,5 @@
+import { Member } from '../../../src/types/index.js'
+
 /**
  * Handle RoleChanged action
  * Updates member role in organization
@@ -7,15 +9,18 @@ const handleRoleChanged = async (logger, fsContext, actionRequest) => {
     const { action } = actionRequest
     const { userId, organizationId, role } = action
 
-    const org = await fsContext.organizations.read(organizationId)
-    const member = org.members?.[userId]
+    const oorganization = await fsContext.organizations.read(organizationId)
+    const member = oorganization.members?.[userId]
 
     // Validate: member must exist and not be removed
     if (!member) throw new Error(`Member ${userId} does not exist in organization ${organizationId}`)
-    if (member.removedAt !== null) throw new Error(`Member ${userId} is removed from organization ${organizationId}`)
+    if (member.removedAt) throw new Error(`Member ${userId} is removed from organization ${organizationId}`)
 
-    // Atomic update: org.members[userId].role and user.organizations[orgId]
-    await fsContext.organizations.update(organizationId, { [`members.${userId}.role`]: role })
+    // Update member with new role
+    const memberData = fsContext.encodeTimestamps(Member, { ...member, role })
+
+    // Atomic update: write whole member object and update user.organizations[orgId]
+    await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })
     await fsContext.users.update(userId, { [`organizations.${organizationId}`]: role })
 
     logger.flowStep('Role changed')

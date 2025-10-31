@@ -1,5 +1,5 @@
 import t from 'tap'
-import { Action } from '../../../src/types/index.js'
+import { Action } from '../../src/types/index.js'
 import { asSignedInUser, uniqueEmail } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
 import { addMember, createOrganization, createUser, readUser } from '../integration-test-helpers/test-helpers.js'
@@ -8,14 +8,9 @@ const { test } = t
 
 test('Given UserUpdated action', t => {
     t.test('When user email is updated Then email changes and organizations unchanged', async t => {
-        await asSignedInUser('user-updated-email', async ({ namespace, token }) => {
+        await asSignedInUser('email', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token, name: 'Test Org' })
-            const { userId } = await createUser({
-                namespace,
-                token,
-                email: uniqueEmail('user-updated-email-old'),
-                displayName: 'Alice',
-            })
+            const { userId } = await createUser({ namespace, token, email: uniqueEmail('email'), displayName: 'Alice' })
             await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Alice' })
 
             await submitAndExpectSuccess({
@@ -34,9 +29,9 @@ test('Given UserUpdated action', t => {
     })
 
     t.test('When displayName is updated Then displayName changes and organizations unchanged', async t => {
-        await asSignedInUser('user-updated-display', async ({ namespace, token }) => {
+        await asSignedInUser('display-name', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token, name: 'Test Org' })
-            const originalEmail = uniqueEmail('user-updated-display-old')
+            const originalEmail = uniqueEmail('display-name')
             const { userId } = await createUser({ namespace, token, email: originalEmail, displayName: 'Old Name' })
             await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Old Name' })
 

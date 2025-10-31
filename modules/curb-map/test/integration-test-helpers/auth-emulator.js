@@ -1,5 +1,5 @@
 import admin from 'firebase-admin'
-import { FieldTypes } from '../../../src/types/index.js'
+import { FieldTypes } from '../../src/types/index.js'
 import { buildNamespace } from './build-namespace.js'
 
 /*
@@ -124,7 +124,7 @@ const asSignedInUser = async (options, effect) => {
     ensureAdminInitialized(firebaseProjectId)
 
     const { label = 'test', signInMethod = 'email' } = typeof options === 'string' ? { label: options } : options
-    const namespace = buildNamespace()
+    const namespace = buildNamespace(label)
 
     const { token, uid, userId } =
         signInMethod === 'phone' ? await signInWithPhoneNumber() : await signInWithEmailLink(uniqueEmail(label))
