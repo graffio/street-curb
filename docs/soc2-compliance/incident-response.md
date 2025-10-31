@@ -58,308 +58,85 @@ gcloud logging read '
 
 ### 1. Compromised Developer Account
 
-**Indicators:**
+| Phase | Timeline | Actions |
+|-------|----------|---------|
+| **Detection** | Real-time | Unusual audit activity, user reports suspicious logins, failed MFA, unusual locations |
+| **Immediate** | < 5 min | Revoke impersonation permissions (all projects), verify revocation |
+| **Investigation** | < 1 hour | Query audit logs (7 days), identify what was accessed/modified |
+| **Recovery** | < 4 hours | Reset password, verify MFA, review changes, rollback if needed, document incident |
+| **Restoration** | After verification | Re-grant access once account secure |
 
-- Unusual activity in audit logs
-- User reports suspicious emails/logins
-- Failed MFA attempts
-- Access from unusual locations
-
-**Immediate Actions (< 5 minutes):**
-
-```bash
-# 1. Revoke impersonation permissions immediately
-for project in curb-map-{development,staging,production}; do
-  gcloud iam service-accounts remove-iam-policy-binding \
-    firebase-infrastructure-sa@${project}.iam.gserviceaccount.com \
-    --member="user:compromised@company.com" \
-    --role="roles/iam.serviceAccountTokenCreator" \
-    --project=$project
-done
-
-# 2. Verify revocation
-gcloud iam service-accounts get-iam-policy \
-  firebase-infrastructure-sa@curb-map-production.iam.gserviceaccount.com
-```
-
-**Investigation (< 1 hour):**
-
-```bash
-# 3. Query audit logs for all actions by compromised account
-gcloud logging read '
-  protoPayload.authenticationInfo.principalEmail="compromised@company.com"
-  AND timestamp>="'$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)'"
-' --format=json > incident-logs-$(date +%Y-%m-%d).json
-
-# 4. Review what was accessed/modified
-cat incident-logs-*.json | jq '.[] | {
-  timestamp: .timestamp,
-  method: .protoPayload.methodName,
-  resource: .protoPayload.resourceName,
-  result: .protoPayload.status.code
-}'
-```
-
-**Recovery Actions:**
-
-1. Reset user password (Google Workspace)
-2. Verify MFA enrollment still active
-3. Review changes made during compromise period
-4. Rollback unauthorized changes if any
-5. Document incident with timeline
-6. Re-grant access after verification user account is secure
-
-**Recovery Time:** Access revoked < 5 min, full investigation < 4 hours
+**Critical Commands**: See [Executive Summary](#executive-summary) for revocation script.
 
 ---
 
 ### 2. Unauthorized Access Attempt
 
-**Indicators:**
-
-- Permission denied errors for unfamiliar users
-- Failed impersonation attempts
-- Unexpected IAM policy changes
-
-**Immediate Actions:**
-
-```bash
-# 1. Check who attempted access
-gcloud logging read '
-  protoPayload.status.code!=0
-  AND protoPayload.methodName:"generateAccessToken"
-' --limit 100
-
-# 2. Verify IAM policies haven't been modified
-gcloud logging read '
-  protoPayload.methodName:"SetIamPolicy"
-  AND timestamp>="'$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)'"
-'
-```
-
-**Investigation:**
-
-1. Identify user attempting access
-2. Check if legitimate (new employee, misconfiguration)
-3. If illegitimate: Investigate how they attempted access
-4. Review org-wide IAM policies for misconfigurations
-
-**Recovery Actions:**
-
-- If legitimate: Grant proper permissions
-- If illegitimate: Alert security team, investigate breach vector
-
-**Recovery Time:** Investigation < 2 hours
+| Phase | Timeline | Actions |
+|-------|----------|---------|
+| **Detection** | Real-time | Permission denied for unfamiliar users, failed impersonation, unexpected IAM changes |
+| **Immediate** | < 15 min | Query failed access attempts, verify IAM policies unchanged |
+| **Investigation** | < 2 hours | Identify user, check if legitimate (new employee vs breach), review org IAM policies |
+| **Recovery** | Same day | If legitimate: grant access. If illegitimate: alert security, investigate breach vector |
 
 ---
 
 ### 3. Suspicious Production Activity
 
-**Indicators:**
-
-- After-hours deployments without justification
-- Unusual resource modifications
-- Multiple rapid deployments
-- Deployment by unauthorized user
-
-**Immediate Actions:**
-
-```bash
-# 1. Query production audit logs for recent activity
-gcloud logging read '
-  resource.labels.project_id="curb-map-production"
-  AND timestamp>="'$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ)'"
-' --format=json
-
-# 2. Identify who made changes
-jq -r '.[] | .protoPayload.authenticationInfo.principalEmail' | sort -u
-
-# 3. Review what was changed
-jq '.[] | {user: .protoPayload.authenticationInfo.principalEmail, method: .protoPayload.methodName, resource: .protoPayload.resourceName}'
-```
-
-**Investigation:**
-
-1. Contact user who made changes
-2. Verify authorization for changes
-3. Check change management tickets/approvals
-4. Review changes for correctness/safety
-
-**Recovery Actions:**
-
-- If authorized: Document justification
-- If unauthorized: Rollback changes, revoke access, investigate
-
-**Recovery Time:** Contact user < 15 min, investigation < 1 hour
+| Phase | Timeline | Actions |
+|-------|----------|---------|
+| **Detection** | < 1 hour | After-hours deployments, unusual modifications, rapid deployments, unauthorized user |
+| **Immediate** | < 15 min | Query production audit logs, identify who made changes, review what changed |
+| **Investigation** | < 1 hour | Contact user, verify authorization, check change management tickets, review safety |
+| **Recovery** | Same day | If authorized: document. If unauthorized: rollback, revoke access, investigate |
 
 ---
 
 ### 4. Employee Departure
 
-**Indicators:**
+| Phase | Timeline | Actions |
+|-------|----------|---------|
+| **Detection** | Same day | HR notification (termination or resignation) |
+| **Immediate** | < 30 min | Revoke all access (dev/staging/production), verify revocation |
+| **Follow-up** | Same day | Review recent activity (30 days), archive audit logs to compliance/offboarding/ |
+| **Documentation** | Same day | Date, environments, admin who revoked, work transfer notes |
 
-- HR notification of termination
-- Planned resignation
-
-**Immediate Actions (Same Day):**
-
-```bash
-EMAIL="departing@company.com"
-
-# 1. Revoke all access
-for project in curb-map-{development,staging,production}; do
-  echo "Revoking access from $project..."
-  gcloud iam service-accounts remove-iam-policy-binding \
-    firebase-infrastructure-sa@${project}.iam.gserviceaccount.com \
-    --member="user:$EMAIL" \
-    --role="roles/iam.serviceAccountTokenCreator" \
-    --project=$project
-done
-
-# 2. Verify revocation
-for project in curb-map-{development,staging,production}; do
-  gcloud iam service-accounts get-iam-policy \
-    firebase-infrastructure-sa@${project}.iam.gserviceaccount.com \
-    --project=$project | grep "$EMAIL" && echo "WARNING: Still has access to $project" || echo "✓ No access to $project"
-done
-```
-
-**Follow-up Actions:**
-
-```bash
-# 3. Review recent activity (last 30 days)
-gcloud logging read '
-  protoPayload.authenticationInfo.principalEmail="departing@company.com"
-  AND timestamp>="'$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)'"
-' --format=json > departing-user-activity-$(date +%Y-%m-%d).json
-
-# 4. Archive for records
-mv departing-user-activity-*.json compliance/offboarding/
-```
-
-**Documentation:**
-
-- Date of departure
-- Access revoked from which environments
-- Admin who revoked
-- Any outstanding work transferred to other team members
-
-**Recovery Time:** Access revoked < 30 min, review complete same day
+**Critical Commands**: See [Executive Summary](#executive-summary) for multi-project revocation script.
 
 ---
 
 ### 5. Security Policy Violation
 
-**Examples:**
+| Severity | Examples | Timeline | Actions |
+|----------|----------|----------|---------|
+| **Minor** | Unintentional policy breach | < 24 hours | Document with evidence, contact user, warning, security training |
+| **Major** | Key creation attempts, unauthorized prod access | < 1 hour | Document, contact user, revoke access, manager notification, HR escalation |
+| **Repeated** | Multiple violations after warning | Immediate | Revoke access, HR escalation, termination |
 
-- Attempting to create service account keys
-- Sharing credentials
-- Accessing production without justification
-- Modifying production without approval
-
-**Immediate Actions:**
-
-1. Document violation with evidence (audit logs)
-2. Contact user to explain violation
-3. Revoke access if severe or repeated violation
-4. Manager notification for policy violations
-
-**Investigation:**
-
-```bash
-# Check for service account key creation attempts
-gcloud logging read '
-  protoPayload.methodName="google.iam.admin.v1.CreateServiceAccountKey"
-  AND protoPayload.status.code!=0
-' --format=json
-
-# Review user's recent activity
-gcloud logging read '
-  protoPayload.authenticationInfo.principalEmail="violator@company.com"
-  AND timestamp>="'$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)'"
-'
-```
-
-**Recovery Actions:**
-
-- **Minor violation:** Warning, security training
-- **Major violation:** Immediate access revocation, HR escalation
-- **Repeated violations:** Termination
+**Investigation**: Query audit logs for key creation attempts, review user's recent activity (7 days).
 
 ---
 
 ## Incident Response Workflow
 
-### 1. Detection
+| Phase | Timeline | Activities | Outputs |
+|-------|----------|------------|---------|
+| **1. Detection** | Real-time or periodic | Automated alerts (after-hours prod deployment, new prod user, failed permissions, IAM changes)<br>Manual detection (access reviews, user reports, manager notices) | Alert/notification |
+| **2. Triage** | < 5 min to < 24 hr | Assign priority (P0/P1/P2/P3), assign Incident Commander (CTO or security lead) | Priority level, IC assigned |
+| **3. Response** | Per priority level | Revoke access if needed, query audit logs, assess damage, implement fixes<br>Communication: notify users, update management, document | Access revoked, logs exported, stakeholders notified |
+| **4. Recovery** | Immediate to long-term | Immediate (< 5 min): Revoke access<br>Short-term (< 4 hr): Investigate, rollback changes<br>Long-term: Root cause analysis, improve detection, update procedures | System restored, procedures updated |
+| **5. Post-Incident** | Within 1 week | Document timeline/actions/damage/root cause/prevention<br>Review: What worked? What to improve?<br>Update runbooks, share lessons learned | Incident report, updated runbooks, training |
 
-**Automated Alerts:**
+**Priority Levels**:
 
-- After-hours production deployment
-- New user accessing production
-- Multiple failed permission attempts
-- IAM policy changes
+| Priority | Response Time | Examples |
+|----------|--------------|----------|
+| **P0** | < 5 min | Compromised account with prod access, unauthorized data access, active breach |
+| **P1** | < 1 hour | Suspicious prod activity, unauthorized config changes, failed breach attempt |
+| **P2** | < 4 hours | Policy violations, after-hours deployments without justification, unusual access |
+| **P3** | < 24 hours | Access review findings, cleanup old permissions, documentation updates |
 
-**Manual Detection:**
-
-- Quarterly access review finds anomalies
-- User reports suspicious activity
-- Manager notices unauthorized changes
-
-### 2. Triage
-
-**Priority Levels:**
-
-- **P0 (< 5 min):** Compromised account with production access, unauthorized data access, active security breach
-- **P1 (< 1 hour):** Suspicious production activity, unauthorized configuration changes, failed breach attempt
-- **P2 (< 4 hours):** Policy violations, after-hours deployments without justification, unusual access patterns
-- **P3 (< 24 hours):** Access review findings, cleanup of old permissions, documentation updates
-
-### 3. Response
-
-**Incident Commander:** CTO or designated security lead
-**Authority:** Revoke access immediately, coordinate investigation, communicate with stakeholders
-
-**Technical Response:**
-
-- Revoke access as needed
-- Query audit logs
-- Assess damage
-- Implement fixes
-
-**Communication:**
-
-- Notify affected users
-- Update management
-- Document in incident tracker
-- Post-incident review
-
-### 4. Recovery
-
-**Immediate (< 5 min):** Revoke compromised access, verify revocation effective
-
-**Short-term (< 4 hours):** Investigate full scope, rollback unauthorized changes, restore to known good state
-
-**Long-term:** Root cause analysis, improve detection/prevention, update procedures, security training
-
-### 5. Post-Incident
-
-**Documentation:**
-
-- Incident timeline
-- Actions taken
-- Damage assessment
-- Root cause
-- Prevention measures
-
-**Review:**
-
-- What worked well?
-- What could be improved?
-- Update runbooks
-- Share lessons learned
-
-**Evidence Retention:** Audit log exports, incident documentation, communication records (retain 7 years for SOC2
-compliance)
+**Evidence Retention**: Audit log exports, incident documentation, communication records (7 years for SOC2).
 
 ---
 
