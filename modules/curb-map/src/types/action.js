@@ -34,7 +34,6 @@
  *      reason: "String"
  *  UserUpdated
  *      userId     : FieldTypes.userId,
- *      email      : "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/?",
  *      displayName: "String?"
  *
  */
@@ -702,16 +701,14 @@ UserForgottenConstructor.from = o => Action.UserForgotten(o.userId, o.reason)
 // Variant Action.UserUpdated constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserUpdatedConstructor = function UserUpdated(userId, email, displayName) {
-    const constructorName = 'Action.UserUpdated(userId, email, displayName)'
+const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
+    const constructorName = 'Action.UserUpdated(userId, displayName)'
 
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/, 'email', true, email)
     R.validateString(constructorName, 'displayName', true, displayName)
 
     const result = Object.create(UserUpdatedPrototype)
     result.userId = userId
-    if (email != null) result.email = email
     if (displayName != null) result.displayName = displayName
     return result
 }
@@ -730,7 +727,7 @@ const UserUpdatedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.email)}, ${R._toString(this.displayName)})`
+            return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})`
         },
         enumerable: false,
     },
@@ -759,7 +756,7 @@ UserUpdatedConstructor.prototype = UserUpdatedPrototype
 // -------------------------------------------------------------------------------------------------------------
 UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
 UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
-UserUpdatedConstructor.from = o => Action.UserUpdated(o.userId, o.email, o.displayName)
+UserUpdatedConstructor.from = o => Action.UserUpdated(o.userId, o.displayName)
 
 // -------------------------------------------------------------------------------------------------------------
 // Additional functions copied from type definition file
@@ -798,7 +795,7 @@ Action.piiFields = rawData => {
     if (tagName === 'RoleChanged') return []
     if (tagName === 'UserCreated') return ['email', 'displayName']
     if (tagName === 'UserForgotten') return []
-    if (tagName === 'UserUpdated') return ['email', 'displayName']
+    if (tagName === 'UserUpdated') return ['displayName']
     return []
 }
 
@@ -908,6 +905,21 @@ Action.getSubject = action =>
             id: a.userId,
             type: 'user',
         }),
+    })
+
+// Additional function: mayI
+Action.mayI = (action, actorRole) =>
+    action.match({
+        MemberAdded: () => ['admin'].includes(actorRole),
+        MemberRemoved: () => ['admin'].includes(actorRole),
+        OrganizationCreated: () => ['admin'].includes(actorRole),
+        OrganizationDeleted: () => ['admin'].includes(actorRole),
+        OrganizationSuspended: () => ['admin'].includes(actorRole),
+        OrganizationUpdated: () => ['admin'].includes(actorRole),
+        RoleChanged: () => ['admin'].includes(actorRole),
+        UserCreated: () => ['admin'].includes(actorRole),
+        UserForgotten: () => ['admin'].includes(actorRole),
+        UserUpdated: () => ['admin'].includes(actorRole),
     })
 
 export { Action }

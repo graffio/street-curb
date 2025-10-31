@@ -520,86 +520,91 @@ HTTP Function → Validates → Processes → Writes to domain collections + com
 
 #### userId Claim Synchronization
 
-**Decision**: Set userId custom claim in PasscodeVerified action; UserCreated handler is safety net.
+**Decision**: Set userId custom claim in PasscodeVerified handler; UserCreated handler provides safety net.
 
 **Date**: October 2025
 **Status**: Partial (F110.5 complete, F121 PasscodeVerified deferred)
 
-**Problem**: How to set userId custom claim on Firebase Auth user? Claim must exist before first request to avoid 401 deadlock.
+**Problem**: Claim must exist before first request to avoid 401 deadlock.
 
-**Solution (Two-Phase):**
+**Solution**: Two-phase claim setting avoids deadlock.
 
-**Phase 1 (F121 - Deferred)**: PasscodeVerified action sets claim at authentication time
-```javascript
-// Action.PasscodeVerified handler (F121)
-Action.PasscodeVerified.from({
-    phoneNumber: '+14155551234',
-    passcode: '123456',
-    userId: 'usr_abc123',  // Server-generated
-})
+| Phase | When | Who Sets Claim | Status |
+|-------|------|---------------|--------|
+| **1 (F121)** | PasscodeVerified handler (at authentication) | handlePasscodeVerified | Deferred |
+| **2 (F110.5)** | UserCreated handler (safety net) | handleUserCreated | Implemented |
 
-// handlePasscodeVerified
-const authUser = await verifyPasscodeViaFirebaseAuth(phoneNumber, passcode)
-await admin.auth().setCustomUserClaims(authUser.uid, { userId })
-return { userId, authUid: authUser.uid, token }  // Client receives these
-```
+**Authentication Flow**:
+1. PasscodeRequested → SMS sent
+2. PasscodeVerified → **Sets userId claim**, returns `{userId, authUid, token}`
+3. UserCreated → Creates user doc, sets claim again (redundant safety net)
+4. Subsequent requests succeed (claim exists)
 
-**Phase 2 (F110.5 - Implemented)**: UserCreated includes authUid as safety net
-```javascript
-Action.UserCreated.from({
-    userId: 'usr_abc123',
-    email: 'user@example.com',
-    displayName: 'Alice',
-    authUid: 'firebase-auth-uid-xyz',  // From PasscodeVerified response
-})
+**Current State**:
 
-// handleUserCreated sets claim (redundant but harmless safety net)
-await admin.auth().setCustomUserClaims(authUid, { userId })
-```
-
-**Complete Flow (Future F121)**:
-1. Client: `POST /submitActionRequest` with Action.PasscodeRequested
-2. Server: Sends SMS with passcode
-3. Client: `POST /submitActionRequest` with Action.PasscodeVerified
-4. Handler: Verifies passcode, **sets userId claim**, returns `{userId, authUid, token}`
-5. Client: `POST /submitActionRequest` with Action.UserCreated (token has claim → passes auth)
-6. Handler: Creates user doc, sets claim again (safety net)
-7. All subsequent requests succeed (claim exists)
-
-**Why PasscodeVerified Must Be An Action**:
-- ✅ Audit trail: Authentication events in completedActions (SOC2 requirement)
-- ✅ Consistency: All state changes go through giant function
-- ✅ Testability: Same test infrastructure as other actions
-- ✅ Architecture: Event sourcing for auth = single source of truth
-
-**Current State (Oct 2025)**:
-- ✅ UserCreated handler sets claim (implemented)
-- ✅ Tests pass (pre-populate claim, simulating PasscodeVerified)
-- ⚠️ Production blocked until PasscodeVerified implemented (F121)
-- ⚠️ Deadlock: Token needs claim to call UserCreated, but UserCreated sets claim
+| Component | Status | Note |
+|-----------|--------|------|
+| UserCreated sets claim | ✅ Implemented | Works in tests (claim pre-populated) |
+| PasscodeVerified sets claim | ⚠️ Deferred (F121) | Blocks production use |
+| authUid in UserCreated action | ✅ Implemented | Bootstrap data from PasscodeVerified |
 
 **Benefits**:
-- ✅ No deadlock (claim set at authentication time, before UserCreated)
-- ✅ First request succeeds immediately
-- ✅ Testable with existing auth emulator infrastructure
+- ✅ No deadlock (claim set at auth time, before UserCreated)
 - ✅ Server generates userId (not client-provided)
-- ✅ Complete audit trail of authentication flow
+- ✅ Defense in depth (claim set twice)
 
 **Trade-offs**:
-- ❌ authUid in UserCreated action (Firebase implementation detail leaks)
-- ⚠️ Requires F121 implementation to unblock production use
-- ⚠️ Claim set twice (PasscodeVerified + UserCreated) but harmless
+- authUid in UserCreated action (Firebase implementation detail leaks into domain)
+- Claim set twice (acceptable overhead for safety)
 
 **Alternatives Rejected**:
-- **beforeSignIn trigger + email lookup**: Deadlocks, fragile email uniqueness, untestable
-- **Middleware fallback**: Would need authUid stored in user doc, adds complexity
-- **UserCreated without PasscodeVerified**: Deadlocks (token needs claim to submit action)
+1. beforeSignIn trigger - Deadlocks, untestable
+2. Middleware fallback - Adds complexity
+3. UserCreated only - Deadlocks (needs claim to submit)
 
-**Why This Is Acceptable**:
-- authUid is one-time bootstrap data (like idempotencyKey), not a persistent domain concept
-- Claim set at authentication time (correct architecture)
-- UserCreated's claim-setting is redundant safety net (defense in depth)
-- All authentication events go through event sourcing (SOC2 compliance)
+**Details**: See [Passcode Authentication via Action Pattern](#passcode-auth-action-pattern) and [F121](../specifications/F121-authentication-middleware/background.md)
+
+---
+
+<a id="passcode-auth-action-pattern"></a>
+
+#### Passcode Authentication via Action Pattern
+
+**Decision**: Implement passcode authentication as two Actions (PasscodeRequested, PasscodeVerified) instead of separate HTTP endpoints.
+
+**Date**: October 2025
+**Status**: Architecture defined, implementation pending (F121)
+
+**Problem**: Need SMS-based passcode authentication while maintaining SOC2 compliance and architectural consistency.
+
+**Solution**: Two-action flow using event sourcing (PasscodeRequested → PasscodeVerified). Session metadata stored in completedActions (no separate collection).
+
+| Aspect | Implementation |
+|--------|---------------|
+| **Passcode Format** | 6-digit random number (100000-999999) |
+| **Hashing** | bcrypt with cost factor 10 |
+| **Expiration** | 10 minutes |
+| **Brute Force** | 3 attempts per session |
+| **Session Storage** | completedActions metadata (hashedPasscode, expiresAt, attemptsRemaining) |
+| **Data Retention** | 90 days Firestore → BigQuery (SHA256-hashed phone numbers) |
+| **Rate Limiting** | 5 PasscodeRequested/phone/hour, 20/IP/hour (F122) |
+
+**Benefits**:
+- ✅ SOC2 audit trail (CC6.1, CC6.7, CC7.2, CC7.3)
+- ✅ Architectural consistency (same validation, idempotency, transactions as other Actions)
+- ✅ No separate session store (reuses completedActions)
+- ✅ Brute force detection via completedActions queries
+
+**Trade-offs**:
+- More complex than HTTP endpoints (worth it for audit trail)
+- Client makes 3 calls instead of 2 (PasscodeRequested → PasscodeVerified → UserCreated)
+
+**Alternatives Rejected**:
+1. Separate HTTP endpoints - No audit trail, separate session store
+2. Single PasscodeAuth action - Can't track failed attempts separately
+3. Separate passcodeSessions collection - Duplicates completedActions metadata
+
+**Details**: See [F121 specification](../specifications/F121-authentication-middleware/background.md), [authentication-model.md](soc2-compliance/authentication-model.md), [soc2-controls.md](soc2-compliance/soc2-controls.md)
 
 ---
 
@@ -647,6 +652,7 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | Organization members map                   | Oct 2025 | Accepted | Org admins can see members, audit trail preserves names            |
 | Authentication claims simplification       | Oct 2025 | Accepted | Rules read user doc, only userId claim, simpler and more secure    |
 | userId claim synchronization               | Oct 2025 | Accepted | authUid in UserCreated for claim bootstrap, avoids deadlock        |
+| Passcode auth via Action pattern           | Oct 2025 | Accepted | SOC2 audit trail, architectural consistency, no separate sessions  |
 
 ---
 

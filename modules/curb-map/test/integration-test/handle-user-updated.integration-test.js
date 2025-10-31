@@ -2,32 +2,17 @@ import t from 'tap'
 import { Action } from '../../src/types/index.js'
 import { asSignedInUser, uniqueEmail } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
-import { addMember, createOrganization, createUser, readUser } from '../integration-test-helpers/test-helpers.js'
+import {
+    addMember,
+    createOrganization,
+    createUser,
+    readOrganization,
+    readUser,
+} from '../integration-test-helpers/test-helpers.js'
 
 const { test } = t
 
 test('Given UserUpdated action', t => {
-    t.test('When user email is updated Then email changes and organizations unchanged', async t => {
-        await asSignedInUser('email', async ({ namespace, token }) => {
-            const { organizationId } = await createOrganization({ namespace, token, name: 'Test Org' })
-            const { userId } = await createUser({ namespace, token, email: uniqueEmail('email'), displayName: 'Alice' })
-            await addMember({ namespace, token, userId, organizationId, role: 'member', displayName: 'Alice' })
-
-            await submitAndExpectSuccess({
-                action: Action.UserUpdated.from({ userId, email: 'new@example.com' }),
-                namespace,
-                token,
-            })
-
-            const user = await readUser({ namespace, organizationId, userId })
-
-            t.equal(user.email, 'new@example.com', 'Then email is updated')
-            t.equal(user.displayName, 'Alice', 'Then displayName unchanged')
-            t.ok(user.organizations[organizationId], 'Then organizations map unchanged')
-        })
-        t.end()
-    })
-
     t.test('When displayName is updated Then displayName changes and organizations unchanged', async t => {
         await asSignedInUser('display-name', async ({ namespace, token }) => {
             const { organizationId } = await createOrganization({ namespace, token, name: 'Test Org' })
@@ -46,6 +31,10 @@ test('Given UserUpdated action', t => {
             t.equal(user.displayName, 'New Name', 'Then displayName is updated')
             t.equal(user.email, originalEmail, 'Then email unchanged')
             t.ok(user.organizations[organizationId], 'Then organizations map unchanged')
+
+            // organization member should show new displayName
+            const org = await readOrganization({ namespace, organizationId })
+            t.equal(org.members[userId].displayName, 'New Name', 'Then member displayName synced in organization')
         })
         t.end()
     })

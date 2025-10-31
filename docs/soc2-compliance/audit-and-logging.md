@@ -56,6 +56,7 @@ gcloud logging read 'timestamp>="2025-01-01T00:00:00Z"' \
 | **Impersonation used**      | GCP Cloud Audit Logs | 400 days             | CC6.2, CC7.2 |
 | **Security rules deployed** | GCP Audit Logs + Git | 400 days + permanent | CC6.3, CC7.2 |
 | **Function deployed**       | GCP Audit Logs + Git | 400 days + permanent | CC6.3, CC7.2 |
+| **User authentication**     | Firestore + BigQuery | 90 days + indefinite | CC6.1, CC6.7, CC7.2 |
 | **User action**             | Firestore events     | 7 years              | CC7.2, CC7.3 |
 | **Config code change**      | Git history          | Permanent            | CC6.3, CC7.2 |
 
@@ -242,6 +243,242 @@ const completedActions = await firestore
     .orderBy('timestamp', 'desc')
     .get()
 ```
+
+---
+
+## Authentication Event Logging
+
+### Purpose
+
+Complete audit trail of user authentication attempts for SOC2 compliance and security incident response.
+
+### Events Logged
+
+All authentication actions are logged to `completedActions` collection:
+
+1. **PasscodeRequested** - User requests authentication passcode via SMS
+2. **PasscodeVerified** - User submits passcode for verification (success or failure)
+
+### Schema
+
+**PasscodeRequested (Successful)**:
+
+```javascript
+{
+  id: "acr_abc123def456",
+  action: {
+    type: "PasscodeRequested",
+    phoneNumber: "+14155551234"
+  },
+  actorId: "anonymous",  // No authentication required to request passcode
+  subjectId: "+14155551234",
+  subjectType: "phoneNumber",
+  status: "completed",
+  idempotencyKey: "idm_abc123def456",
+  correlationId: "cor_xyz789",
+  createdAt: Timestamp("2025-10-31T10:00:00Z"),
+  processedAt: Timestamp("2025-10-31T10:00:01Z"),
+  schemaVersion: 1,
+  metadata: {
+    hashedPasscode: "$2b$10$N9qo8uLOickgx2ZrVzZDOuSjSWXsEhq.dSOUCL",  // bcrypt hash
+    expiresAt: Timestamp("2025-10-31T10:10:00Z"),  // 10-minute TTL
+    attemptsRemaining: 3
+  }
+}
+```
+
+**PasscodeVerified (Successful)**:
+
+```javascript
+{
+  id: "acr_def456ghi789",
+  action: {
+    type: "PasscodeVerified",
+    phoneNumber: "+14155551234",
+    passcode: "123456"  // Plain text in action, NOT stored in completedActions
+  },
+  actorId: "anonymous",  // Authenticated after verification succeeds
+  subjectId: "usr_newuser123",  // Created or existing user
+  subjectType: "user",
+  status: "completed",
+  idempotencyKey: "idm_def456ghi789",
+  correlationId: "cor_xyz789",  // Same correlationId as PasscodeRequested
+  createdAt: Timestamp("2025-10-31T10:00:30Z"),
+  processedAt: Timestamp("2025-10-31T10:00:31Z"),
+  schemaVersion: 1,
+  metadata: {
+    customToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."  // Firebase token for client
+  }
+}
+```
+
+**PasscodeVerified (Failed - Invalid Passcode)**:
+
+```javascript
+{
+  id: "acr_ghi789jkl012",
+  action: {
+    type: "PasscodeVerified",
+    phoneNumber: "+14155551234",
+    passcode: "999999"  // Incorrect passcode
+  },
+  actorId: "anonymous",
+  subjectId: "+14155551234",
+  subjectType: "phoneNumber",
+  status: "failed",
+  error: "Invalid passcode",  // Error message logged
+  idempotencyKey: "idm_ghi789jkl012",
+  correlationId: "cor_xyz789",
+  createdAt: Timestamp("2025-10-31T10:00:45Z"),
+  processedAt: Timestamp("2025-10-31T10:00:45Z"),
+  schemaVersion: 1
+}
+```
+
+### SOC2 Control Mappings
+
+| Control | Implementation | Evidence |
+|---------|---------------|----------|
+| **CC6.1** | All authentication attempts logged with timestamps | completedActions PasscodeRequested/PasscodeVerified |
+| **CC6.7** | Passcodes hashed with bcrypt before storage | metadata.hashedPasscode field |
+| **CC7.2** | Failed attempts tracked for brute force detection | status='failed' events, query by phoneNumber |
+| **CC7.3** | Complete event timeline for incident investigation | Query completedActions by phone/time range |
+
+### Common Security Queries
+
+**Detect Brute Force Attacks (Multiple Failed Attempts)**:
+
+```javascript
+// Find phone numbers with >5 failed PasscodeVerified in last hour
+const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+const failedAttempts = await firestore
+  .collection('completedActions')
+  .where('action.type', '==', 'PasscodeVerified')
+  .where('status', '==', 'failed')
+  .where('createdAt', '>=', oneHourAgo)
+  .get();
+
+const attemptsByPhone = {};
+failedAttempts.docs.forEach(doc => {
+  const phone = doc.data().action.phoneNumber;
+  attemptsByPhone[phone] = (attemptsByPhone[phone] || 0) + 1;
+});
+
+const underAttack = Object.entries(attemptsByPhone)
+  .filter(([phone, count]) => count > 5)
+  .map(([phone, count]) => ({ phone, failedAttempts: count }));
+
+console.log('Potential brute force attacks:', underAttack);
+```
+
+**Audit Successful Logins for Specific User**:
+
+```javascript
+// Find all successful PasscodeVerified for a user
+const user = await firestore.collection('users').doc('usr_abc123').get();
+const phoneNumber = user.data().phoneNumber;
+
+const successfulLogins = await firestore
+  .collection('completedActions')
+  .where('action.type', '==', 'PasscodeVerified')
+  .where('action.phoneNumber', '==', phoneNumber)
+  .where('status', '==', 'completed')
+  .orderBy('createdAt', 'desc')
+  .limit(20)
+  .get();
+
+successfulLogins.docs.forEach(doc => {
+  const data = doc.data();
+  console.log(`Login: ${data.createdAt.toDate().toISOString()}, User: ${data.subjectId}`);
+});
+```
+
+**Detect Delayed Verification (Suspicious Timing)**:
+
+```javascript
+// Find PasscodeVerified >9 minutes after PasscodeRequested (near expiration)
+const recentVerifications = await firestore
+  .collection('completedActions')
+  .where('action.type', '==', 'PasscodeVerified')
+  .where('createdAt', '>=', new Date(Date.now() - 24 * 60 * 60 * 1000))  // Last 24 hours
+  .get();
+
+const suspicious = [];
+for (const verifiedDoc of recentVerifications.docs) {
+  const verified = verifiedDoc.data();
+  const phoneNumber = verified.action.phoneNumber;
+
+  // Find corresponding PasscodeRequested
+  const requested = await firestore
+    .collection('completedActions')
+    .where('action.type', '==', 'PasscodeRequested')
+    .where('action.phoneNumber', '==', phoneNumber)
+    .where('createdAt', '<', verified.createdAt)
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get();
+
+  if (!requested.empty) {
+    const requestedTime = requested.docs[0].data().createdAt.toMillis();
+    const verifiedTime = verified.createdAt.toMillis();
+    const delayMinutes = (verifiedTime - requestedTime) / (60 * 1000);
+
+    if (delayMinutes > 9) {
+      suspicious.push({
+        phoneNumber,
+        delayMinutes: delayMinutes.toFixed(2),
+        requestedAt: new Date(requestedTime).toISOString(),
+        verifiedAt: new Date(verifiedTime).toISOString()
+      });
+    }
+  }
+}
+
+console.log('Suspicious delayed verifications:', suspicious);
+```
+
+**Enumerate PasscodeRequested Rate Limiting**:
+
+```javascript
+// Count PasscodeRequested per phone number in last hour
+const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+const requests = await firestore
+  .collection('completedActions')
+  .where('action.type', '==', 'PasscodeRequested')
+  .where('createdAt', '>=', oneHourAgo)
+  .get();
+
+const requestsByPhone = {};
+requests.docs.forEach(doc => {
+  const phone = doc.data().action.phoneNumber;
+  requestsByPhone[phone] = (requestsByPhone[phone] || 0) + 1;
+});
+
+const overLimit = Object.entries(requestsByPhone)
+  .filter(([phone, count]) => count > 5)  // Rate limit: 5 per hour
+  .map(([phone, count]) => ({ phone, requests: count }));
+
+console.log('Phone numbers exceeding rate limit:', overLimit);
+```
+
+### Retention Strategy
+
+| Storage | Duration | Purpose | Cost | Archival |
+|---------|----------|---------|------|----------|
+| **Firestore** | 90 days | Fast queries for recent incidents | Higher (read/write) | Daily at 2am UTC |
+| **BigQuery** | Indefinite | Long-term SOC2 compliance, annual audits | Lower (storage) | Phone numbers SHA256-hashed |
+
+**Archival Process**: Scheduled function exports PasscodeRequested/PasscodeVerified >90 days to BigQuery, deletes from Firestore. See [F121](../../specifications/F121-authentication-middleware/background.md#8-data-retention-and-archival).
+
+### Privacy Considerations
+
+| Data | Firestore (90d) | BigQuery (indefinite) | Rationale |
+|------|----------------|----------------------|-----------|
+| **Phone Numbers** | Plain text | SHA256 hash | Operational queries need plain, long-term queries use hash |
+| **Passcodes** | bcrypt hash only | N/A (not archived) | Never stored in plaintext, exist in memory only |
+| **Failed Attempts** | Logged without correct passcode | Logged without correct passcode | Security analysis without exposing secrets |
 
 ---
 

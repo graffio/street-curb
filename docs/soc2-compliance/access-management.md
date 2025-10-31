@@ -44,62 +44,19 @@ gcloud iam service-accounts get-iam-policy \
 
 ## Granting Access
 
-### Development Access
+| Environment | Approver(s) | Timeline | Review Frequency | Requirements |
+|-------------|------------|----------|------------------|--------------|
+| **Development** | Infrastructure Admin or Tech Lead | Same day | Quarterly | Request (email/ticket), verify MFA, send setup docs |
+| **Staging** | Tech Lead + Engineering Manager | 1-2 days | Quarterly | Justification (why not just dev), typically senior developers only |
+| **Production** | Engineering Manager + CTO (dual) | 2-5 days | Monthly + 90-day auto-expiration | Formal request (business justification, specific tasks, duration), manager approval, document grant with expiration date |
 
-**Approver:** Infrastructure Admin, Tech Lead
-**Timeline:** Same day
-**Review Frequency:** Quarterly
-
-**Process:**
-
-1. Developer requests access (email/ticket)
-2. Admin grants permission (see Quick Reference above)
-3. Document the grant (date, user, environment, approver, reason)
-4. Send setup instructions to developer (`specifications/F107-firebase-soc2-vanilla-app/next-step.md`)
-5. Verify MFA enabled on user account
-
-### Staging Access
-
-**Approver:** Tech Lead, Engineering Manager
-**Timeline:** 1-2 business days
-**Review Frequency:** Quarterly
-
-**Additional Requirements:**
-
-- Justification for why staging access needed (not just dev)
-- Typically granted to senior developers only
-
-### Production Access
-
-**Approver:** Engineering Manager + CTO (dual approval)
-**Timeline:** 2-5 business days
-**Review Frequency:** Monthly + 90-day automatic expiration
-
-**Process:**
-
-1. **Formal request** with:
-    - Business justification
-    - Specific tasks requiring production access
-    - Expected duration
-2. **Manager approval** (review justification, verify authorization, sign off)
-3. **Admin grants permission:**
-   ```bash
-   gcloud iam service-accounts add-iam-policy-binding \
-     firebase-infrastructure-sa@curb-map-production.iam.gserviceaccount.com \
-     --member="user:operator@company.com" \
-     --role="roles/iam.serviceAccountTokenCreator" \
-     --project=curb-map-production
-   ```
-4. **Document the grant:**
-   ```yaml
-   grant_date: 2025-09-30
-   user: operator@company.com
-   environment: production
-   approver: manager@company.com + cto@company.com
-   reason: Production deployment support
-   expiration: 2025-12-30  # 90 days
-   ```
-5. **Schedule automatic review** (calendar reminder for 90-day expiration)
+**Grant Process**:
+1. User requests access (email/ticket with justification)
+2. Approver(s) review and approve
+3. Admin grants permission (see [Executive Summary](#executive-summary) for command)
+4. Document grant (date, user, environment, approver, reason, expiration if prod)
+5. For dev: Send setup instructions (`specifications/F107-firebase-soc2-vanilla-app/next-step.md`)
+6. For prod: Schedule 90-day review (calendar reminder)
 
 ---
 
@@ -155,56 +112,16 @@ Save to: `access-logs/revocations/2025-12-15-former-employee.yaml`
 
 ## Access Review Process
 
-### Quarterly Review (Development/Staging)
+| Review Type | Environments | Schedule | Process |
+|-------------|--------------|----------|---------|
+| **Quarterly** | Development, Staging | Q1 (Jan), Q2 (Apr), Q3 (Jul), Q4 (Oct) | Export current access, check actual usage (90 days), compare granted vs used, revoke unnecessary, document & manager sign-off |
+| **Monthly** | Production | First week of month | Same as quarterly + review audit logs for unusual activity, verify change management, check after-hours deployments |
+| **Auto-Expiration** | Production | 90 days from grant | Calendar reminder 2 weeks before, user requests renewal (justification + manager approval), auto-revoke if not renewed |
 
-**Schedule:** Q1 (Jan), Q2 (Apr), Q3 (Jul), Q4 (Oct)
-
-**Process:**
-
-1. **Export current access:**
-   ```bash
-   gcloud iam service-accounts get-iam-policy \
-     firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com \
-     --format=json > review-dev-2025-Q4.json
-   ```
-
-2. **Check actual usage (last 90 days):**
-   ```bash
-   gcloud logging read '
-     protoPayload.authenticationInfo.serviceAccountDelegationInfo.principalSubject:"firebase-infrastructure-sa@curb-map-development"
-     AND timestamp>="'$(date -d '90 days ago' -I)'T00:00:00Z"
-   ' --format=json | jq -r '.[] | .protoPayload.authenticationInfo.principalEmail' | sort -u
-   ```
-
-3. **Compare granted vs. used:**
-    - Anyone with access who never used it? → Consider revoking
-    - Anyone who left the team? → Revoke immediately
-
-4. **Update access:** Revoke unnecessary, grant new if needed
-
-5. **Document:** Save review results, manager signs off, store for audit
-
-### Monthly Review (Production)
-
-**Schedule:** First week of each month
-
-**Process:** Same as quarterly, but for production only
-
-**Additional:**
-
-- Review audit logs for unusual activity
-- Verify change management process followed
-- Check for after-hours deployments (should have justification)
-
-### Automatic Expiration (Production)
-
-**Rule:** Production access expires after 90 days
-
-**Process:**
-
-1. Calendar reminder 2 weeks before expiration
-2. Operator requests renewal (updated justification, manager re-approval)
-3. If not renewed: Access automatically revoked on expiration date with notification
+**Review Outputs**:
+- Access to revoke (unused, team departures)
+- Access to grant (new team members, role changes)
+- Audit documentation (manager sign-off, stored for SOC2)
 
 ---
 

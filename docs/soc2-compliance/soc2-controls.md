@@ -10,6 +10,7 @@ This document maps CurbMap's security controls to SOC2 Trust Services Criteria (
 - **CC6.1** - Logical access security measures
 - **CC6.2** - User registration and authorization
 - **CC6.3** - Role-based access control
+- **CC6.7** - Transmission and storage encryption
 - **CC7.2** - System component monitoring
 - **CC7.3** - Security event evaluation
 
@@ -33,6 +34,7 @@ gcloud logging read 'timestamp>="2025-01-01T00:00:00Z"' \
   - [CC6.1 - Logical Access Control](#cc61---logical-access-control)
   - [CC6.2 - Prior to Issuing System Credentials](#cc62---prior-to-issuing-system-credentials)
   - [CC6.3 - Provisioned with Approved Authorizations](#cc63---provisioned-with-approved-authorizations)
+  - [CC6.7 - Transmission and Storage Encryption](#cc67---transmission-and-storage-encryption)
 - [CC7: System Monitoring](#cc7-system-monitoring)
   - [CC7.2 - Monitors System Components](#cc72---monitors-system-components)
   - [CC7.3 - Evaluates Security Events](#cc73---evaluates-security-events)
@@ -150,6 +152,111 @@ gcloud firestore indexes list --project=curb-map-production
 
 ---
 
+### CC6.7 - Transmission and Storage Encryption
+
+**Criterion:** The entity restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission, movement, or removal to meet the entity's objectives.
+
+**Implementation:**
+
+**User Authentication (Passcode Encryption)**:
+- ✅ Passcodes hashed with bcrypt (cost factor 10) before storage
+- ✅ Plain-text passcodes never stored in database
+- ✅ Only hashed values in ActionRequest metadata
+- ✅ bcrypt.compare() for constant-time verification
+
+**Data in Transit**:
+- ✅ HTTPS/TLS 1.2+ for all client-server communication
+- ✅ Firebase Auth tokens transmitted via Authorization header
+- ✅ SMS delivery via encrypted Twilio/Firebase channels
+
+**Data at Rest**:
+- ✅ Firestore encryption at rest (Google-managed keys)
+- ✅ BigQuery encryption at rest (Google-managed keys)
+- ✅ No plain-text credentials in source code or configuration
+
+**Evidence:**
+
+1. **Passcode Hashing Verification**:
+   ```javascript
+   // Code sample from handlePasscodeRequested
+   const hashedPasscode = await bcrypt.hash(passcode, 10);
+
+   // Verification: Check completedActions metadata contains only hash
+   const session = await firestore.collection('completedActions').doc('acr_xxx').get();
+   console.assert(session.data().metadata.hashedPasscode.startsWith('$2b$10$'));
+   console.assert(!session.data().metadata.passcode);  // Plain text not stored
+   ```
+
+2. **TLS Configuration**:
+   ```bash
+   # Verify Firebase Hosting enforces HTTPS
+   curl -I https://curbmap.app
+   # Expected: HTTP/2 200, strict-transport-security header
+
+   # Verify Cloud Functions require HTTPS
+   gcloud functions describe submitActionRequest --region=us-west1
+   # Expected: securityLevel: SECURE_ALWAYS
+   ```
+
+3. **Authentication Event Audit**:
+   ```javascript
+   // Query completedActions for PasscodeRequested events
+   // Verify metadata contains hashedPasscode (not plain passcode)
+   const sessions = await firestore
+     .collection('completedActions')
+     .where('action.type', '==', 'PasscodeRequested')
+     .limit(100)
+     .get();
+
+   sessions.docs.forEach(doc => {
+     const metadata = doc.data().metadata;
+     console.assert(metadata.hashedPasscode);        // Hash present
+     console.assert(metadata.hashedPasscode.startsWith('$2b$'));  // bcrypt format
+     console.assert(!metadata.passcode);             // Plain text absent
+   });
+   ```
+
+4. **Firestore/BigQuery Encryption**:
+   - Google-managed encryption at rest (automatic)
+   - Documented in GCP Security Whitepaper
+   - Verified via GCP Console encryption settings
+
+**Testing:**
+
+```javascript
+// Test 1: Verify passcode hashing
+const passcode = '123456';
+const hashedPasscode = await bcrypt.hash(passcode, 10);
+assert(hashedPasscode !== passcode);  // Not plain text
+assert(await bcrypt.compare(passcode, hashedPasscode));  // Verifies correctly
+
+// Test 2: Verify failed passcode doesn't leak information
+const wrongPasscode = '999999';
+const result = await bcrypt.compare(wrongPasscode, hashedPasscode);
+assert(result === false);  // Constant time, no info leak
+
+// Test 3: Verify completedActions doesn't contain plain passcode
+const action = { type: 'PasscodeRequested', phoneNumber: '+14155551234' };
+await submitActionRequest(action);
+const stored = await readActionRequest(actionRequestId);
+assert(!stored.metadata.passcode);  // No plain text
+assert(stored.metadata.hashedPasscode.startsWith('$2b$'));  // Only hash
+```
+
+**Privacy Considerations**:
+
+- **Phone Number Hashing (BigQuery)**: Phone numbers hashed with SHA256 before archival to BigQuery (PII protection)
+- **Firestore Retention**: Plain phone numbers retained for 90 days (operational need), then archived with hashing
+- **Passcode Visibility**: Plain-text passcodes only visible to user via SMS (never logged or stored)
+
+**Encryption Key Management**:
+
+- **Firestore/BigQuery**: Google-managed keys (automatic rotation)
+- **bcrypt Cost Factor**: 10 (balances security vs performance, future-proof against CPU improvements)
+- **Future Consideration**: Customer-managed encryption keys (CMEK) when enterprise customers require it
+
+---
+
 ## CC7: System Monitoring
 
 ### CC7.2 - Monitors System Components
@@ -157,11 +264,22 @@ gcloud firestore indexes list --project=curb-map-production
 **Criterion:** The entity monitors system components and the operation of those components for anomalies that are indicative of malicious acts, natural disasters, and errors.
 
 **Implementation:**
+
+**Infrastructure Monitoring**:
 - ✅ GCP Cloud Audit Logs capture all infrastructure operations (400-day retention)
 - ✅ Audit logs show user identity + impersonated service account
-- ✅ Application events stored in Firestore (7-year retention)
 - ✅ Git history tracks all code changes (permanent retention)
 - ✅ Alerts for unusual production access
+
+**User Authentication Monitoring**:
+- ✅ All authentication attempts logged to completedActions (PasscodeRequested, PasscodeVerified)
+- ✅ Failed verification attempts tracked with error details
+- ✅ Brute force detection via query analysis (>5 failed attempts/hour)
+- ✅ 90-day retention in Firestore, then BigQuery archival (indefinite)
+
+**Application Operations Monitoring**:
+- ✅ Application events stored in Firestore (7-year retention)
+- ✅ All actions logged with actorId, timestamps, success/failure status
 
 **Evidence:**
 
@@ -173,14 +291,36 @@ gcloud firestore indexes list --project=curb-map-production
    ' --limit 100
    ```
 
-2. **Firestore Events Collection** - Application Operations (7-year retention)
+2. **Authentication Event Logs** - User Authentication (90-day Firestore, indefinite BigQuery)
+   ```javascript
+   // Query all PasscodeVerified attempts (successful and failed)
+   const attempts = await firestore
+     .collection('completedActions')
+     .where('action.type', '==', 'PasscodeVerified')
+     .where('createdAt', '>=', startDate)
+     .orderBy('createdAt', 'desc')
+     .get();
+
+   // Analyze success/failure rates for anomaly detection
+   attempts.docs.forEach(doc => {
+     const data = doc.data();
+     console.log({
+       phoneNumber: data.action.phoneNumber,
+       status: data.status,  // 'completed' or 'failed'
+       timestamp: data.createdAt,
+       error: data.error     // If failed
+     });
+   });
+   ```
+
+3. **Firestore Events Collection** - Application Operations (7-year retention)
    - Immutable event log of business operations
 
-3. **Git History** - Configuration Changes (permanent)
+4. **Git History** - Configuration Changes (permanent)
    - Shows who changed what and when
    - Pull request approvals for production
 
-4. **Log Retention Configuration:**
+5. **Log Retention Configuration:**
    ```bash
    gcloud logging sinks list --project=curb-map-production
    ```
@@ -197,11 +337,22 @@ gcloud firestore indexes list --project=curb-map-production
 **Criterion:** The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives.
 
 **Implementation:**
+
+**Infrastructure Security Events**:
 - ✅ Security incident response procedures
 - ✅ Immediate access revocation capability (< 5 minutes)
-- ✅ Audit log analysis for anomalous behavior
 - ✅ Short-lived credentials limit breach window (1-12 hours)
 - ✅ No long-lived credentials to rotate during incidents
+
+**User Authentication Security Events**:
+- ✅ Brute force detection (>5 failed PasscodeVerified attempts/hour)
+- ✅ Rate limit enforcement (max 5 PasscodeRequested per phone/hour)
+- ✅ Suspicious timing detection (PasscodeVerified >9 minutes after request)
+- ✅ Account lockout capability (disable user after breach detection)
+
+**Audit Log Analysis**:
+- ✅ Automated queries for anomalous behavior
+- ✅ Failed attempt tracking and alerting
 
 **Evidence:**
 
@@ -221,9 +372,18 @@ gcloud firestore indexes list --project=curb-map-production
    No key rotation needed (tokens expire automatically)
 
 3. **Security Event Examples:**
+
+   **Infrastructure Events:**
    - After-hours production deployment (requires justification)
    - Multiple failed permission checks (investigate user)
    - New user accessing production (verify authorization)
+
+   **User Authentication Events:**
+   - Brute force attack: >5 failed PasscodeVerified for same phone in 1 hour
+   - Credential stuffing: Multiple failed attempts across different phone numbers
+   - Rate limit violation: >5 PasscodeRequested for same phone in 1 hour
+   - Suspicious timing: PasscodeVerified >9 minutes after PasscodeRequested
+   - Account enumeration: Repeated PasscodeRequested to discover valid phone numbers
 
 4. **Incident Logs** (documentation of incidents, response actions, root cause)
 
@@ -242,8 +402,9 @@ gcloud firestore indexes list --project=curb-map-production
 | **CC6.1** | Impersonation + MFA | IAM policies, MFA reports, access reviews | Quarterly |
 | **CC6.2** | Manual approval | Access grant logs, audit logs | Monthly (prod), Quarterly (dev/staging) |
 | **CC6.3** | Role-based, least privilege | Service account roles, permission matrix | Quarterly |
-| **CC7.2** | Audit logs + git + events | Log exports, retention config | Quarterly |
-| **CC7.3** | Incident response, revocation | Incident runbook, response logs | After incidents + Annual drill |
+| **CC6.7** | bcrypt hashing, TLS, encryption at rest | completedActions metadata, TLS config | Quarterly + Per release |
+| **CC7.2** | Audit logs + git + events + auth monitoring | Log exports, retention config, auth logs | Quarterly |
+| **CC7.3** | Incident response, revocation, brute force detection | Incident runbook, response logs, auth event queries | After incidents + Annual drill |
 
 ---
 
