@@ -80,7 +80,6 @@ export const Action = {
         },
         UserUpdated: {
             userId        : FieldTypes.userId,
-            email         : '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/?', // email address format: a@b.com
             displayName   : 'String?',
         },
 
@@ -161,7 +160,7 @@ Action.piiFields = rawData => {
     // user
     if (tagName === 'UserCreated'          ) return ['email', 'displayName']
     if (tagName === 'UserForgotten'        ) return []
-    if (tagName === 'UserUpdated'          ) return ['email', 'displayName']
+    if (tagName === 'UserUpdated'          ) return ['displayName']
 
     return []  // Fallback for unrecognized types
 }
@@ -249,4 +248,19 @@ Action.getSubject = action =>
         UserCreated:           a => ({ id: a.userId,         type: 'user' }),
         UserForgotten:         a => ({ id: a.userId,         type: 'user' }),
         UserUpdated:           a => ({ id: a.userId,         type: 'user' }),
+    })
+
+// prettier-ignore
+Action.mayI = (action, actorRole) =>
+    action.match({
+        MemberAdded          : () => ['admin'].includes(actorRole),
+        MemberRemoved        : () => ['admin'].includes(actorRole),
+        OrganizationCreated  : () => ['admin'].includes(actorRole),
+        OrganizationDeleted  : () => ['admin'].includes(actorRole),
+        OrganizationSuspended: () => ['admin'].includes(actorRole),
+        OrganizationUpdated  : () => ['admin'].includes(actorRole),
+        RoleChanged          : () => ['admin'].includes(actorRole),
+        UserCreated          : () => ['admin'].includes(actorRole),
+        UserForgotten        : () => ['admin'].includes(actorRole),
+        UserUpdated          : () => ['admin'].includes(actorRole),
     })

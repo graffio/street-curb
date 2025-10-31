@@ -1,6 +1,7 @@
 import admin from 'firebase-admin'
-import { FieldTypes } from '../../src/types/index.js'
+import { Action, FieldTypes } from '../../src/types/index.js'
 import { buildNamespace } from './build-namespace.js'
+import { submitAndExpectSuccess } from './http-submit-action.js'
 
 /*
  * Helper utilities that drive the Firebase Auth emulator’s email-link and phone sign-in endpoints end-to-end.
@@ -128,6 +129,12 @@ const asSignedInUser = async (options, effect) => {
 
     const { token, uid, userId } =
         signInMethod === 'phone' ? await signInWithPhoneNumber() : await signInWithEmailLink(uniqueEmail(label))
+
+    // Create User document for the signed-in actor (mirrors real signup flow)
+    const email = uniqueEmail(label)
+    const displayName = `Test Actor ${label}`
+    const action = Action.UserCreated.from({ userId, email, displayName, authUid: uid })
+    await submitAndExpectSuccess({ action, namespace, token })
 
     return await effect({ namespace, token, uid, actorUserId: userId })
 }

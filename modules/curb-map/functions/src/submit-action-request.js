@@ -3,16 +3,16 @@ import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
 import { createFirestoreContext } from './firestore-context.js'
-import handleOrganizationCreated from './handlers/handle-organization-created.js'
-import handleOrganizationUpdated from './handlers/handle-organization-updated.js'
-import handleOrganizationSuspended from './handlers/handle-organization-suspended.js'
-import handleOrganizationDeleted from './handlers/handle-organization-deleted.js'
-import handleUserCreated from './handlers/handle-user-created.js'
-import handleUserUpdated from './handlers/handle-user-updated.js'
-import handleUserForgotten from './handlers/handle-user-forgotten.js'
 import handleMemberAdded from './handlers/handle-member-added.js'
 import handleMemberRemoved from './handlers/handle-member-removed.js'
+import handleOrganizationCreated from './handlers/handle-organization-created.js'
+import handleOrganizationDeleted from './handlers/handle-organization-deleted.js'
+import handleOrganizationSuspended from './handlers/handle-organization-suspended.js'
+import handleOrganizationUpdated from './handlers/handle-organization-updated.js'
 import handleRoleChanged from './handlers/handle-role-changed.js'
+import handleUserCreated from './handlers/handle-user-created.js'
+import handleUserForgotten from './handlers/handle-user-forgotten.js'
+import handleUserUpdated from './handlers/handle-user-updated.js'
 
 /*
  * HTTP endpoint for submitting action requests.
@@ -294,6 +294,25 @@ const handleInTransaction = async (actionRequest, txContext, logger) => {
 }
 
 const submitActionRequestHandler = async (req, res) => {
+    const checkRole = async (fsContext, actionRequest) => {
+        const { organizationId, action, actorId } = actionRequest
+
+        // hack: allow anybody to create an Organization or User
+        if (Action.OrganizationCreated.is(action)) return
+        if (Action.UserCreated.is(action)) return
+        if (Action.UserUpdated.is(action)) return
+        if (Action.UserForgotten.is(action)) return
+        const organization = await fsContext.organizations.read(organizationId)
+
+        const actorAsMember = organization.members[actorId]
+        if (!actorAsMember) return `The actor ${actorId} is not a member of organization ${organizationId}`
+        if (actorAsMember.removedAt) return `The actor ${actorId} was removed from organization ${organizationId}`
+
+        if (Action.mayI(action, actorAsMember.role)) return
+
+        return `${actorId} with role ${actorAsMember.role} may not call handler ${actionRequest.toString()}`
+    }
+
     const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')
     const startTime = Date.now()
 
@@ -316,6 +335,9 @@ const submitActionRequestHandler = async (req, res) => {
         const wrapper = convertToActionRequest(rawActionRequest, logger)
         if (wrapper.error) return sendValidationFailed(res, wrapper.error, wrapper.field)
         const actionRequest = wrapper.actionRequest
+
+        const roleError = await checkRole(createFirestoreContext(namespace, organizationId, projectId), actionRequest)
+        if (roleError) return sendUnauthorized(res, roleError)
 
         logger.flowStart('┌─ Processing action request', { ...ActionRequest.toLog(actionRequest), namespace }, '')
 

@@ -20,6 +20,11 @@ const createFirestoreContext = (namespace, organizationId, projectId, tx = null)
         deleteField: FirestoreAdminFacade.deleteField,
         encodeTimestamps: FirestoreAdminFacade.encodeTimestamps,
         decodeTimestamps: FirestoreAdminFacade.decodeTimestamps,
+
+        // Scoped context factories - preserve transaction and namespace
+        forOrganization: newOrgId => createFirestoreContext(namespace, newOrgId, null, tx),
+        forProject: (newOrgId, newProjectId) => createFirestoreContext(namespace, newOrgId, newProjectId, tx),
+        forUser: () => createFirestoreContext(namespace, null, null, tx),
     }
 }
 
