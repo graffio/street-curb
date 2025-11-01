@@ -60,5 +60,41 @@ test('Given MemberRemoved action', t => {
         t.end()
     })
 
+    t.test('RBAC: When trying to remove last admin Then returns error', async t => {
+        await asSignedInUser('last-admin-removal-denied', async ({ namespace, token, actorUserId }) => {
+            const { organizationId } = await createOrganization({ namespace, token })
+
+            // Try to remove the only admin (actorUserId is the creator and only admin)
+            const fn = () => removeMember({ namespace, token, userId: actorUserId, organizationId })
+            await expectError(t, fn, /last admin|Cannot remove.*last admin/, 'Then error prevents removing last admin')
+        })
+        t.end()
+    })
+
+    t.test('RBAC: When removing admin with multiple admins Then succeeds', async t => {
+        await asSignedInUser('multi-admin-removal', async ({ namespace, token, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+
+            // Add another admin
+            const { userId: secondAdminId } = await createUser({ namespace, token, displayName: 'Second Admin' })
+            await addMember({
+                namespace,
+                token,
+                userId: secondAdminId,
+                organizationId,
+                role: 'admin',
+                displayName: 'Second Admin',
+            })
+
+            // Now remove the first admin (should succeed because there's still one admin left)
+            await removeMember({ namespace, token, userId: actorUserId, organizationId })
+
+            const organization = await readOrganization({ namespace, organizationId, projectId })
+            t.ok(organization.members[actorUserId].removedAt, 'Then first admin removed successfully')
+            t.notOk(organization.members[secondAdminId].removedAt, 'Then second admin remains active')
+        })
+        t.end()
+    })
+
     t.end()
 })

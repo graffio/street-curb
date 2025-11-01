@@ -59,5 +59,60 @@ test('Given RoleChanged action', t => {
         t.end()
     })
 
+    t.test('RBAC: When trying to downgrade last admin Then returns error', async t => {
+        await asSignedInUser('last-admin-downgrade-denied', async ({ namespace, token, actorUserId }) => {
+            const { organizationId } = await createOrganization({ namespace, token })
+
+            // Try to downgrade the only admin (actorUserId is the creator and only admin)
+            const fn = () => changeRole({ namespace, token, userId: actorUserId, organizationId, role: 'member' })
+            await expectError(
+                t,
+                fn,
+                /last admin|Cannot change role.*last admin/,
+                'Then error prevents downgrading last admin',
+            )
+        })
+        t.end()
+    })
+
+    t.test('RBAC: When downgrading admin with multiple admins Then succeeds', async t => {
+        await asSignedInUser('multi-admin-downgrade', async ({ namespace, token, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+
+            // Add another admin
+            const { userId: secondAdminId } = await createUser({ namespace, token, displayName: 'Second Admin' })
+            await addMember({
+                namespace,
+                token,
+                userId: secondAdminId,
+                organizationId,
+                role: 'admin',
+                displayName: 'Second Admin',
+            })
+
+            // Now downgrade the first admin (should succeed because there's still one admin left)
+            await changeRole({ namespace, token, userId: actorUserId, organizationId, role: 'member' })
+
+            const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId: actorUserId })
+            t.equal(org.members[actorUserId].role, 'member', 'Then first admin downgraded successfully')
+            t.equal(user.organizations[organizationId], 'member', 'Then user org map updated')
+            t.equal(org.members[secondAdminId].role, 'admin', 'Then second admin remains admin')
+        })
+        t.end()
+    })
+
+    t.test('RBAC: When upgrading last admin to admin again Then succeeds', async t => {
+        await asSignedInUser('upgrade-to-admin', async ({ namespace, token, actorUserId }) => {
+            const { organizationId, projectId } = await createOrganization({ namespace, token })
+
+            // This should succeed - we're not downgrading from admin
+            await changeRole({ namespace, token, userId: actorUserId, organizationId, role: 'admin' })
+
+            const organization = await readOrganization({ namespace, organizationId, projectId })
+            t.equal(organization.members[actorUserId].role, 'admin', 'Then role change to admin succeeds')
+        })
+        t.end()
+    })
+
     t.end()
 })

@@ -15,36 +15,28 @@
 // 🚫 DOES NOT MATCH (left untouched):
 //   at /Users/.../foo.js:10:5          ← already absolute
 //   at node:internal/modules/...       ← Node internals
-//   at file:///Users/.../foo.js:10:5   ← file: URL
 
 const PWD = process.cwd().replace(/\/$/, '')
 
 // Matches “something.js:line:col)” even if color codes surround it.
-const FILE_RE = /(?<file>(?:\.{0,2}\/)?(?:[\w.-]+\/)*[\w.-]+\.(?:js|jsx)):(?<line>\d+):(?<col>\d+)\)?/g
+const STACK_TRACE_LINE = /(?<=\n)(.*?)(js|jsx):(?<line>\d+):(?<col>\d+)\)?/g
 
 process.stdin.setEncoding('utf8')
-// process.stdin.on('data', chunk => {
-//     const out = chunk.replace(FILE_RE, (match, _file, _line, _col, offset, src) => {
-//         // Peek just before the match; skip absolute or URL-like prefixes
-//         const pre = src.slice(Math.max(0, offset - 6), offset)
-//
-//         const skipPrepend = /(^|[^\w:])(?:\/|node:|file:)$/.test(pre)
-//         return skipPrepend ? match : `${PWD}/${match}`
-//     })
-//
-//     process.stdout.write(out)
-// })
 process.stdin.on('data', chunk => {
-    const out = chunk.replace(FILE_RE, (match, _file, _line, _col, offset, src) => {
-        // Find the start of this stack-trace line
-        const lineStart = src.lastIndexOf('\n', offset) + 1
-        const pre = src.slice(lineStart, offset)
+    const out = chunk.replace(STACK_TRACE_LINE, (match, _file, _line, _col, offset, src) => {
+        // the relative path is preceded by a space, paren or colon and ends in js(x):number:number
+        const regex = /[ (:][a-zA-Z_/.-]*(js|jsx):(?<line>\d+):(?<col>\d+)/
+        const [submatch] = regex.exec(match)
 
-        // Skip already-absolute or URL-like paths
-        if (/at\s+(?:\/|node:|file:)/.test(pre)) return match
+        // the replacement puts PWD between the space, paren or color and the path
+        const initialCharacter = submatch[0]
+        const path = submatch.slice(1)
+        const replacement = `${initialCharacter}${PWD}/${path}`
 
-        // Otherwise prefix relative path with $PWD
-        return `${PWD}/${match}`
+        // 1. substitute the submatch we found with the replacement that includes PWD
+        // 2. substitute `async file:<absolute-path>` => `async foo (absolute-path)` -- who knows why this is necessary?
+        const result = match.replace(submatch, replacement)
+        return result.replace(/file:(.*)$/, 'foo ($1)')
     })
 
     process.stdout.write(out)
