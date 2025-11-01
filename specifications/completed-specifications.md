@@ -2,6 +2,45 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F110 - Multi-Tenant Data Model (2025-10-31)
+**Purpose:** Core multi-tenant infrastructure with organizations, users, and RBAC
+
+- Implemented 10 Action types (OrganizationCreated/Updated/Suspended/Deleted, UserCreated/Updated/Forgotten, MemberAdded/Removed, RoleChanged)
+- Built event handlers for all organization and user operations
+- HTTP action submission endpoint with validation and idempotency
+- Transaction-based atomic operations across multiple collections
+- Organization members map with soft-delete audit trail
+- Firebase Auth token verification and userId claim management
+- Firestore security rules for multi-tenant data isolation
+- RBAC with three-tier role hierarchy (admin > member > viewer)
+- Self-modification authorization for UserUpdated/UserForgotten
+- Last-admin protection for MemberRemoved/RoleChanged
+- Comprehensive integration test coverage for all handlers and RBAC scenarios
+
+## F124 - Permission Checking (2025-10-31)
+**Purpose:** Role-based access control (RBAC) for multi-tenant authorization
+
+- Implemented three-tier role hierarchy (admin > member > viewer)
+- Created Action.mayI() for action-level permission checks
+- Built checkRole() authorization validator in submit-action-request
+- Organization-scoped permissions verified per action
+- Self-modification pattern for UserUpdated/UserForgotten
+- Last-admin protection for MemberRemoved/RoleChanged
+- Integration tests for all RBAC scenarios
+- Permission checking logic inline (extraction to reusable module deferred to backlog)
+
+## F108 - Event Sourcing Core (2025-10-31)
+**Purpose:** Implement core event sourcing infrastructure for CurbMap
+
+- Created ActionRequest and Action tagged types with Firestore integration helpers
+- Set up Firebase emulator integration testing infrastructure with namespaced isolation
+- Created dedicated Firebase functions workspace with esbuild bundling
+- Implemented queue processing function with trigger guards and structured logging
+- Created actionRequests and completedActions collections with comprehensive security rules and composite indexes
+- Implemented idempotency checking via completedActions audit trail
+- Established write-once, immutable audit trail for SOC2 compliance
+- Built foundation for authorization (F110.5) and domain handlers (F110)
+
 ## F107 - Firebase SOC2 Vanilla App (2025-01-29)
 **Purpose:** Complete Firebase-based application with SOC2 compliance
 

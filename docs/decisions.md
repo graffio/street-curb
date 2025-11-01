@@ -301,7 +301,7 @@ claims.
 **Date**: January 2025
 **Specification**: F110.7 - HTTP Action Submission
 
-**Problem**: Original F108/F110 design used Firestore document triggers where client writes ActionRequest to Firestore,
+**Problem**: Original design used Firestore document triggers where client writes ActionRequest to Firestore,
 then onDocumentWritten trigger fires. Issues:
 
 - Malformed data can be written to database

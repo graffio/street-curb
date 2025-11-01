@@ -103,6 +103,44 @@ After HTTP architecture change, the implementation order is:
   - Performance regression testing
 - **Notes**: Integrate with CI/CD pipeline
 
+### Authentication Rate Limiting
+- **From**: F121 (authentication middleware)
+- **Why Deferred**: Manual abuse handling acceptable for MVP
+- **When**: Before public launch (abuse prevention)
+- **Complexity**: Medium (4-6 hours)
+- **Description**:
+  - Rate limit PasscodeRequested per phone number (e.g., 5 per hour)
+  - Rate limit PasscodeRequested per IP address (e.g., 20 per hour)
+  - Rate limit PasscodeVerified attempts (already 3 per session)
+  - Integrate with Firebase Functions quota system
+  - Alert on rate limit violations
+- **Notes**: SOC2 CC7.2 requirement for production
+
+### Authentication Audit Data Archival
+- **From**: F121 (authentication middleware)
+- **Why Deferred**: 90-day Firestore retention sufficient for MVP
+- **When**: Before production launch (long-term audit requirements)
+- **Complexity**: Medium (5-7 hours)
+- **Description**:
+  - Scheduled function to archive old PasscodeRequested/PasscodeVerified to BigQuery
+  - 90-day Firestore retention + indefinite BigQuery archival
+  - Hash phone numbers for privacy in BigQuery
+  - Query templates for SOC2 audit reports
+  - Monthly authentication stats dashboard
+- **Notes**: SOC2 CC6.1 compliance for long-term audit trail
+
+### Authentication Middleware Extraction
+- **From**: F121 (authentication middleware)
+- **Why Deferred**: Inline implementation works, extraction is refactoring
+- **When**: When adding more HTTP endpoints beyond submitActionRequest
+- **Complexity**: Low (2-3 hours)
+- **Description**:
+  - Extract token validation to `modules/curb-map/functions/src/middleware/auth.js`
+  - Create reusable `authenticateUser` middleware
+  - Create `authorizeOrganization(role)` middleware
+  - Update all HTTP functions to use middleware
+- **Notes**: Code cleanup, not user-facing functionality
+
 ## Mobile App Features (Deferred Until iOS/Android Apps)
 
 ### Offline Action Queue (formerly F111)
