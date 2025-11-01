@@ -297,20 +297,42 @@ const submitActionRequestHandler = async (req, res) => {
     const checkRole = async (fsContext, actionRequest) => {
         const { organizationId, action, actorId } = actionRequest
 
-        // hack: allow anybody to create an Organization or User
-        if (Action.OrganizationCreated.is(action)) return
-        if (Action.UserCreated.is(action)) return
-        if (Action.UserUpdated.is(action)) return
-        if (Action.UserForgotten.is(action)) return
-        const organization = await fsContext.organizations.read(organizationId)
+        // an actor can update or forget *only* themselves
+        if (Action.UserUpdated.is(action))
+            return actorId === action.userId ? undefined : `User ${actorId} trying to update user ${action.userId}`
+        if (Action.UserForgotten.is(action))
+            return actorId === action.userId ? undefined : `User ${actorId} trying to forget user ${action.userId}`
 
+        // UserCreated: Allow system actor (PasscodeVerified handler) or emulator mode (tests)
+        // Real-life flow: Client → PasscodeVerified → handlePasscodeVerified → UserCreated
+        // PasscodeVerified sets actorId='system' when creating new users
+        if (Action.UserCreated.is(action)) {
+            const isSystemActor = actorId === 'system'
+            const isEmulator = process.env.FUNCTIONS_EMULATOR
+
+            if (isSystemActor || isEmulator) return
+            return `UserCreated disallowed for ${actorId}`
+        }
+
+        // OrganizationCreated: Check one-org-per-user limit
+        if (Action.OrganizationCreated.is(action)) {
+            const user = await fsContext.users.read(actorId)
+            const existingOrgs = Object.keys(user.organizations || {})
+
+            // two allowed
+            return existingOrgs.length < 2 ? undefined : `User ${actorId} can't create another organization`
+        }
+
+        // All other actions require org membership
+        if (!organizationId) return `Action ${action['@@tagName']} requires an organizationId`
+
+        const organization = await fsContext.organizations.read(organizationId)
         const actorAsMember = organization.members[actorId]
         if (!actorAsMember) return `The actor ${actorId} is not a member of organization ${organizationId}`
         if (actorAsMember.removedAt) return `The actor ${actorId} was removed from organization ${organizationId}`
 
-        if (Action.mayI(action, actorAsMember.role)) return
-
-        return `${actorId} with role ${actorAsMember.role} may not call handler ${actionRequest.toString()}`
+        if (!Action.mayI(action, actorAsMember.role, actorId))
+            return `${actorId} with role ${actorAsMember.role} may not perform ${action['@@tagName']}`
     }
 
     const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')

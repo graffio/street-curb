@@ -16,6 +16,11 @@ const handleMemberRemoved = async (logger, fsContext, actionRequest) => {
     if (!member) throw new Error(`Member ${userId} does not exist in organization ${organizationId}`)
     if (member.removedAt) throw new Error(`Member ${userId} is already removed from organization ${organizationId}`)
 
+    // After existing validation, before writing
+    const activeAdmins = org.members.filter(m => !m.removedAt && m.role === 'admin')
+    if (activeAdmins.length === 1 && activeAdmins[0].userId === userId)
+        throw new Error(`Cannot remove ${userId} from ${organizationId} - they're the last admin `)
+
     // Update member with removedAt/removedBy fields
     const memberData = fsContext.encodeTimestamps(Member, { ...member, removedAt: new Date(), removedBy: actorId })
 

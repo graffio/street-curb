@@ -908,7 +908,7 @@ Action.getSubject = action =>
     })
 
 // Additional function: mayI
-Action.mayI = (action, actorRole) =>
+Action.mayI = (action, actorRole, actorId) =>
     action.match({
         MemberAdded: () => ['admin'].includes(actorRole),
         MemberRemoved: () => ['admin'].includes(actorRole),
@@ -918,8 +918,8 @@ Action.mayI = (action, actorRole) =>
         OrganizationUpdated: () => ['admin'].includes(actorRole),
         RoleChanged: () => ['admin'].includes(actorRole),
         UserCreated: () => ['admin'].includes(actorRole),
-        UserForgotten: () => ['admin'].includes(actorRole),
-        UserUpdated: () => ['admin'].includes(actorRole),
+        UserForgotten: a => a.userId === actorId,
+        UserUpdated: a => a.userId === actorId,
     })
 
 export { Action }
