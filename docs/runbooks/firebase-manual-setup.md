@@ -21,6 +21,5 @@ Admin checklist for provisioning a new Firebase project/environment used by Curb
 9. **Capture manual steps** in change log per SOC2 controls and notify engineering before running migrations
 
 ## References
-- Specifications F108–F112 for scripted follow-up work
 - `docs/architecture/billing-integration.md` for billing dependencies
 - SOC2 process documents for approval matrices

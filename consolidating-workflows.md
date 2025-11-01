@@ -122,7 +122,6 @@ specifications/
 ├── docs/standards/specification-format/    # Meta-standard
 ├── templates/specification-template/     # Templates
 ├── F107-firebase-soc2-vanilla-app/ # Example (migrated)
-├── F108-*/                          # Future specs (using standard)
 └── ...
 
 .llm2/                               # Daily workflow (replaces .llm/)

@@ -2,6 +2,18 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F108 - Event Sourcing Core (2025-10-31)
+**Purpose:** Implement core event sourcing infrastructure for CurbMap
+
+- Created ActionRequest and Action tagged types with Firestore integration helpers
+- Set up Firebase emulator integration testing infrastructure with namespaced isolation
+- Created dedicated Firebase functions workspace with esbuild bundling
+- Implemented queue processing function with trigger guards and structured logging
+- Created actionRequests and completedActions collections with comprehensive security rules and composite indexes
+- Implemented idempotency checking via completedActions audit trail
+- Established write-once, immutable audit trail for SOC2 compliance
+- Built foundation for authorization (F110.5) and domain handlers (F110)
+
 ## F107 - Firebase SOC2 Vanilla App (2025-01-29)
 **Purpose:** Complete Firebase-based application with SOC2 compliance
 

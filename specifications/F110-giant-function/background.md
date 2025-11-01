@@ -64,7 +64,7 @@ This specification consolidates the multi-tenant data model tasks from the origi
 - ⏸️ Action.PasscodeRequested (sends SMS with passcode)
 - ⏸️ Action.PasscodeVerified (verifies code, **sets userId claim**, returns token)
 - ⏸️ SMS delivery infrastructure
-- ⏸️ Auth event logging to F108 (not immediate priority)
+- ⏸️ Auth event logging (not immediate priority)
 
 **PRODUCTION BLOCKER:**
 - ⚠️ **Deadlock**: Token needs userId claim to submit UserCreated, but UserCreated sets the claim
@@ -107,7 +107,7 @@ This specification consolidates the multi-tenant data model tasks from the origi
 
 **Remaining**:
 - Integration testing (~4 hours)
-- Deferred: Passcode delivery (blocked on F121), F108 logging
+- Deferred: Passcode delivery (blocked on F121)
 
 ## References
 
