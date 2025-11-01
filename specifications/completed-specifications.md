@@ -2,6 +2,33 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F110 - Multi-Tenant Data Model (2025-10-31)
+**Purpose:** Core multi-tenant infrastructure with organizations, users, and RBAC
+
+- Implemented 10 Action types (OrganizationCreated/Updated/Suspended/Deleted, UserCreated/Updated/Forgotten, MemberAdded/Removed, RoleChanged)
+- Built event handlers for all organization and user operations
+- HTTP action submission endpoint with validation and idempotency
+- Transaction-based atomic operations across multiple collections
+- Organization members map with soft-delete audit trail
+- Firebase Auth token verification and userId claim management
+- Firestore security rules for multi-tenant data isolation
+- RBAC with three-tier role hierarchy (admin > member > viewer)
+- Self-modification authorization for UserUpdated/UserForgotten
+- Last-admin protection for MemberRemoved/RoleChanged
+- Comprehensive integration test coverage for all handlers and RBAC scenarios
+
+## F124 - Permission Checking (2025-10-31)
+**Purpose:** Role-based access control (RBAC) for multi-tenant authorization
+
+- Implemented three-tier role hierarchy (admin > member > viewer)
+- Created Action.mayI() for action-level permission checks
+- Built checkRole() authorization validator in submit-action-request
+- Organization-scoped permissions verified per action
+- Self-modification pattern for UserUpdated/UserForgotten
+- Last-admin protection for MemberRemoved/RoleChanged
+- Integration tests for all RBAC scenarios
+- Permission checking logic inline (extraction to reusable module deferred to backlog)
+
 ## F108 - Event Sourcing Core (2025-10-31)
 **Purpose:** Implement core event sourcing infrastructure for CurbMap
 
