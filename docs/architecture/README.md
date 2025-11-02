@@ -2,315 +2,273 @@
 
 ## Purpose
 
-Architecture documents explain **connections over code** - how components relate, why decisions were made, and what trade-offs exist. They are **evergreen** references that remain stable even as implementation details change.
+Architecture documents explain **connections over code** - how components relate, why decisions were made, and what trade-offs exist. They remain stable as implementation details change.
+
+## For LLM Assistants
+
+- Read only what you need (don't read files "just in case")
+- Keep docs short - target 200-300 lines max
+- Every doc MUST have at least one diagram
+- Reference code files by path (easy to Read tool)
+- When updating code, check if architecture docs need updates
 
 ## Core Principle: Connections Over Code
 
-**Architecture docs describe patterns, not implementations.**
+Architecture docs describe **patterns**, not **implementations**.
 
 - ✅ Explain WHAT components do and HOW they connect
 - ✅ Show WHERE implementation lives (file paths)
-- ✅ Link to specifications for detailed implementation
-- ❌ Don't copy/paste actual JavaScript from the codebase
+- ✅ Show data structures (contracts, not code)
+- ✅ Show configuration (Firestore rules, environment variables)
+- ❌ Don't copy/paste implementation code
 - ❌ Don't include pseudocode (becomes stale, confuses readers)
+- ❌ Don't reference specification folders (they're ephemeral)
 
-## What Goes In Architecture Docs
+## Document Structure
 
-### ✅ DO Include
+**Required**:
+1. **Overview**
+   - ASCII diagram (vertical or horizontal flow)
+   - Why this architecture (1 paragraph: problem → solution)
+   - Key components (what they do, where they live)
 
-**Component Descriptions**:
-- What each component does (purpose, responsibilities)
-- Where components live (file paths, collection names)
-- How components connect (data flow, dependencies)
-- Component interfaces (inputs, outputs, not implementation)
+2. **Trade-offs**
+   - What this enables
+   - What this constrains (with business context: "when this matters", "why acceptable")
+   - When to revisit
 
-**Architecture Diagrams**:
-- ASCII diagrams showing flow and connections
-- Component maps with arrows showing data flow
-- Sequence diagrams for key workflows
+**Optional** (include only if Overview doesn't cover it):
+- **Architecture Details** - Data structures, configuration, or complex connection patterns not clear from diagram
+- **Problem & Context** - Requirements/constraints if not obvious from Overview
+- **Decision History** - 1 paragraph linking to decisions.md
 
-**Data Structures** (contracts, not code):
-- Firestore schemas, JSON payloads
-- Custom claims structure
-- Collection document shapes
-- Action/Event type definitions
+**Never include**:
+- "Implementation Guide" sections (belong in runbooks)
+- "References" sections (use inline links)
+- Pseudocode or implementation functions
 
-**Configuration** (defines behavior):
-- Firestore security rules
-- Environment variables
-- Firebase Functions config
-- Command-line operations (gcloud, npm)
+## What Code Can Appear
 
-**Decision Context**:
-- Requirements driving decisions
-- Constraints limiting options
-- Trade-offs accepted
-- When to revisit decisions
-
-**References to Code**:
-- File paths where implementation lives
-- Links to specifications with detailed implementation
-- "See X for implementation" pointers
-
-### ❌ DO NOT Include
-
-**Actual Implementation Code**:
-- Real JavaScript/TypeScript from the codebase
-- Copy-pasted functions or classes
-- Detailed CRUD operations
-- Algorithm implementations
-
-**Pseudocode**:
-- "Fake" code showing how something might work
-- Pseudocode becomes stale as implementation evolves
-- Readers can't tell what's real vs. hypothetical
-
-**Low-Level Details**:
-- Exact API signatures that change frequently
-- Step-by-step code walkthroughs
-- Implementation-specific quirks
-- Error handling minutiae
-
-## Why No Pseudocode?
-
-**Problem**: Pseudocode in architecture docs creates maintenance burden and confusion.
-
-1. **Becomes Stale**: Implementation evolves, pseudocode doesn't get updated
-2. **Confusing**: Readers can't tell what's real vs. hypothetical
-3. **Wrong Abstraction**: Architecture describes patterns, not code flow
-4. **Wrong Place**: Implementation details belong in specifications (F107, F109, etc.)
-
-**Instead**:
-- Describe the pattern conceptually
-- Reference actual code locations for implementation
-- Link to specifications for step-by-step guides
-- Show data structures (contracts, not code)
-
-## Code Examples: When and How
-
-### When Code is Acceptable
-
-**Data Structures** (defines contracts):
-```javascript
-// Firebase Auth token custom claims
-{
-  uid: "usr_abc123",
-  phoneNumber: "+14155551234",
-  organizations: {
-    "org_sf": { role: "admin", joinedAt: "2025-01-15T10:00:00Z" }
-  }
-}
+**✅ Data Structures** (defines contracts):
 ```
-✅ Acceptable - shows structure, not implementation
-
-**Configuration** (defines behavior):
-```javascript
-// Firestore security rules
-match /organizations/{organizationId} {
-  allow read: if
-    request.auth != null &&
-    request.auth.token.organizations[organizationId] != null;
-
-  allow write: if false; // Only server functions can write
-}
-```
-✅ Acceptable - configuration defining access control
-
-**Command-Line Operations**:
-```bash
-gcloud iam service-accounts create firebase-dev --project=curbmap-prod
-```
-✅ Acceptable - these rarely change
-
-### When Code is NOT Acceptable
-
-**Implementation Logic**:
-```javascript
-// ❌ BAD - Don't include actual implementation
-const hasPermission = (decodedToken, organizationId, requiredRole) => {
-  const userRole = decodedToken.organizations?.[organizationId]?.role;
-  if (!userRole) return false;
-  // ... implementation details
-};
-```
-
-**Better Approach** (conceptual description):
-```markdown
-**Permission Checking**:
-- Server extracts user role from `decodedToken.organizations[orgId].role`
-- Compares against required role using hierarchy (admin > member > viewer)
-- Returns true if user has sufficient permissions
-
-Implementation: `modules/curb-map/functions/src/submit-action-request.js:getActorId()`
-```
-
-## Document Template
-
-All architecture documents follow the 7-section format:
-
-```markdown
----
-summary: "One-sentence description"
-keywords: ["key", "terms", "for", "search"]
-last_updated: "YYYY-MM-DD"
----
-
-# [Topic] Architecture
-
-## Table of Contents
-- [1. Overview](#1-overview)
-  - [1.1 Architecture Map](#11-architecture-map)
-  - [1.2 Why This Architecture](#12-why-this-architecture)
-  - [1.3 Key Components](#13-key-components)
-  - [1.4 Trade-offs Summary](#14-trade-offs-summary)
-  - [1.5 Current Implementation Status](#15-current-implementation-status)
-  - [1.6 Key Design Decisions](#16-key-design-decisions)
-- [2. Problem & Context](#2-problem--context)
-  - [2.1 Requirements](#21-requirements)
-  - [2.2 Constraints](#22-constraints)
-- [3. Architecture Details](#3-architecture-details)
-  - [3.X Component Connections](#3x-component-connections)
-- [4. Implementation Guide](#4-implementation-guide)
-  - [4.1 Quick Start](#41-quick-start)
-  - [4.2 Code Locations](#42-code-locations)
-  - [4.3 Configuration](#43-configuration)
-  - [4.4 Testing](#44-testing)
-- [5. Consequences & Trade-offs](#5-consequences--trade-offs)
-  - [5.1 What This Enables](#51-what-this-enables)
-  - [5.2 What This Constrains](#52-what-this-constrains)
-  - [5.3 Future Considerations](#53-future-considerations)
-- [6. References](#6-references)
-- [7. Decision History](#7-decision-history)
-```
-
-### Section Guidelines
-
-**1. Overview** (connections at a glance):
-- Architecture Map: ASCII diagram showing component flow
-- Why This Architecture: Problem → Solution (1 paragraph, not requirements dump)
-- Key Components: What they do, where they live (NOT how they're implemented)
-- Trade-offs Summary: 3-5 bullets highlighting major trade-offs
-- Current Implementation Status: What's done, what's deferred
-- Key Design Decisions: Inline links to decisions.md
-
-**2. Problem & Context** (why this exists):
-- Requirements: Business/technical needs driving design
-- Constraints: What limits our options
-
-**3. Architecture Details** (how components connect):
-- Data Flow: Describe the journey through the system
-- Component Connections: How pieces relate (conceptual, not code)
-- Patterns Used: Event sourcing, CQRS, etc.
-- Data Structures: Schemas, contracts
-
-**4. Implementation Guide** (where code lives):
-- Quick Start: 4-step guide to implementing key feature
-- Code Locations: File paths with brief descriptions
-- Configuration: Environment variables, Firestore rules
-- Testing: How to verify implementation
-
-**5. Consequences & Trade-offs** (business impact):
-- What This Enables: Benefits gained
-- What This Constrains: Limitations accepted, with:
-  - When this matters (business context)
-  - Why acceptable (rationale)
-  - Mitigation strategy
-- Future Considerations: When to revisit decisions
-
-**6. References**:
-- Related Architecture: Links to other architecture docs
-- Implementation Specifications: Links to F107, F109, etc.
-- Decisions: Link to decisions.md
-- Runbooks: Links to operational guides
-
-**7. Decision History** (condensed):
-- One paragraph summarizing 3-5 key decisions
-- Link to decisions.md for complete rationale
-
-## Example: Good vs Bad
-
-### ❌ BAD (implementation code)
-
-```markdown
-### Permission Checking
-
-const hasPermission = (decodedToken, organizationId, requiredRole) => {
-  const userRole = decodedToken.organizations?.[organizationId]?.role;
-  if (!userRole) return false;
-
-  if (requiredRole === 'viewer') return ['viewer', 'member', 'admin'].includes(userRole);
-  if (requiredRole === 'member') return ['member', 'admin'].includes(userRole);
-  if (requiredRole === 'admin') return userRole === 'admin';
-
-  return false;
-};
-```
-
-### ✅ GOOD (conceptual description + file reference)
-
-```markdown
-### Authorization Model
-
-**Role Hierarchy**: admin > member > viewer (three roles, scoped per organization)
-
-**Permission Checking Flow**:
-1. Extract user role from Firebase Auth token custom claims (`token.organizations[orgId].role`)
-2. Compare against required role using hierarchy
-3. Return true if user has sufficient permissions (e.g., admin can do member actions)
-
-**Custom Claims Structure** (contract):
-```
+// Firestore user document
 {
   organizations: {
-    "org_sf": { role: "admin", joinedAt: "2025-01-15T10:00:00Z" }
+    "org_sf": "admin",
+    "org_la": "member"
   }
 }
 ```
 
-**Implementation**: `modules/curb-map/functions/src/submit-action-request.js`
+**✅ Configuration** (defines behavior):
+```
+// firestore.rules
+match /organizations/{orgId} {
+  allow read: if isMemberOfOrganization(orgId);
+  allow write: if false;  // Server functions only
+}
 ```
 
-## Revising Existing Docs
+**❌ Implementation Logic**:
+Don't copy functions. Describe the pattern + reference file location.
 
-When updating architecture documents to meet these standards:
+**Wrong**:
+```javascript
+const checkPermission = (token, orgId, role) => {
+  // 20 lines of implementation
+};
+```
 
-1. **Remove implementation code** → replace with conceptual descriptions
-2. **Remove pseudocode** → describe pattern + reference actual code location
-3. **Keep data structures** (Firestore schemas, JSON payloads, custom claims)
-4. **Keep configuration** (Firestore rules, environment variables, gcloud commands)
-5. **Add file path references** for where implementation lives
-6. **Link to specifications** for detailed step-by-step guides
+**Right**:
+```markdown
+Permission checking extracts role from token.organizations[orgId], compares
+against hierarchy (admin > member > viewer). Returns true if sufficient.
 
-## File Organization
+Implementation: modules/curb-map/functions/src/submit-action-request.js:297
+```
 
-**Current Architecture Docs**:
-- `event-sourcing.md` - HTTP action submission, transaction-based idempotency, audit trail
-- `security.md` - Authentication, authorization, RBAC, Firestore rules
-- `data-model.md` - Collections, multi-tenancy, event scoping
+## Reference Stable Resources
 
-## Related Documents
+**✅ Always safe to reference**:
+- Code files: `modules/curb-map/functions/src/submit-action-request.js`
+- Type definitions: `type-definitions/action.type.js`
+- decisions.md: Permanent decision archive
+- Firestore collections: `/organizations/{id}`, `/users/{id}`
 
-**Specifications** (`specifications/`):
-- Detailed implementation guides with step-by-step code examples
-- F107, F109, F110, etc. - feature specifications with actual code
+**❌ Don't reference specifications folders**:
+- Specification folders are ephemeral (they move to completed-specifications.md when done)
+- Reference **code files** instead of **specification folders**
+- If you must explain implementation, describe the pattern inline
 
-**Runbooks** (`docs/runbooks/`):
-- Step-by-step operational procedures
-- Deployment, testing, troubleshooting
+**Why**: Specifications are temporary work documents. Architecture docs are permanent reference.
 
-**Decisions** (`docs/decisions.md`):
-- Complete decision rationale, alternatives considered, trade-off analysis
-- Architecture docs link to decisions.md for full context
+## When Repetition Is OK
 
-**Project Standards** (`CLAUDE.md`):
-- Project-wide standards and workflows
-- References this architecture standards document
+Don't consolidate just to reduce duplication. Ask: "Does this context help understanding HERE?"
+
+**Multi-tenant isolation** might appear in:
+
+- event-sourcing.md (audit trail scoping)
+- data-model.md (collection structure)
+- security.md (Firestore rules)
+
+This is **good** - each doc needs that context for its narrative. Consolidating would force readers to jump between documents.
+
+## ASCII Diagrams Are Essential
+
+Architecture diagrams show connections at a glance. They're the most valuable part of architecture docs.
+
+**Good diagram shows**:
+- Component flow (Client → Server → Database)
+- Data transformations (ActionRequest → completedActions)
+- Decision points (if duplicate, return 409)
+- Multiple layers (HTTP → Transaction → Firestore)
+
+**Horizontal flow** (sequence over time):
+```
+Client                    Server                     Firestore
+  │                         │                            │
+  ├─ POST /submitAction ───→│                            │
+  │                         ├─ verify token              │
+  │                         ├─ start transaction ───────→│
+  │                         ├─ check duplicate ←─────────┤
+  │                         ├─ process action ──────────→│
+  │                         ├─ write completedActions ──→│
+  │                         ├─ commit ←──────────────────┤
+  │←─ 200 {processedAt} ────┤                            │
+```
+
+**Vertical flow** (layers or steps):
+```
+┌─────────────────────────────────────┐
+│ Client Application                  │
+│ • Generates idempotencyKey          │
+│ • Attaches Firebase Auth token      │
+└────────────┬────────────────────────┘
+             ↓ POST /submitActionRequest
+┌─────────────────────────────────────┐
+│ HTTP Function                       │
+│ • Validates payload                 │
+│ • Extracts actorId from token       │
+└────────────┬────────────────────────┘
+             ↓
+┌─────────────────────────────────────┐
+│ Firestore Transaction               │
+│ 1. Check duplicate                  │
+│ 2. Process action                   │
+│ 3. Write audit record               │
+└────────────┬────────────────────────┘
+             ↓
+┌─────────────────────────────────────┐
+│ HTTP Response                       │
+│ • 200: success                      │
+│ • 409: duplicate                    │
+└─────────────────────────────────────┘
+```
+
+Use horizontal for sequences, vertical for layered architecture. Diagrams > prose.
+
+## Tables for Structured Information
+
+Use tables when comparing options, showing field definitions, or listing configurations.
+
+**Example - Role Capabilities**:
+
+| Role   | View Data | Edit Data | Manage Users |
+|--------|-----------|-----------|--------------|
+| admin  | ✓         | ✓         | ✓            |
+| member | ✓         | ✓         | ✗            |
+| viewer | ✓         | ✗         | ✗            |
+
+Tables make structure scannable.
+
+## Example: Real Architecture Diagram
+
+**Vertical flow with decision points** (from event-sourcing.md):
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Client Application                                  │
+│ • Generates idempotencyKey, correlationId           │
+│ • Attaches Firebase Auth token                      │
+└────────────────┬────────────────────────────────────┘
+                 │ POST /submitActionRequest
+                 │ {action, idempotencyKey, correlationId}
+                 ↓
+┌─────────────────────────────────────────────────────┐
+│ HTTP Function                                       │
+│ submit-action-request.js                            │
+│ • Validates payload structure                       │
+│ • Extracts actorId from auth token                  │
+│ • Creates transaction-scoped context                │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ↓
+┌─────────────────────────────────────────────────────┐
+│ Firestore Transaction (atomic)                      │
+│                                                     │
+│  ┌────────────────────────────────────────────┐    │
+│  │ 1. Check Duplicate                         │    │
+│  │    completedActions.readOrNull(id)         │    │
+│  │    ├─ Found → return processedAt (409)     │    │
+│  │    └─ Not found → continue                 │    │
+│  └────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌────────────────────────────────────────────┐    │
+│  │ 2. Process Action                          │    │
+│  │    handler(logger, txContext, request)     │    │
+│  │    └─ Writes to domain collections:        │    │
+│  │       /organizations/{id}                  │    │
+│  │       /users/{id}                          │    │
+│  │       /projects/{id}                       │    │
+│  └────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌────────────────────────────────────────────┐    │
+│  │ 3. Write Audit Record                      │    │
+│  │    completedActions.create({               │    │
+│  │      status: 'completed',                  │    │
+│  │      createdAt: new Date(),         │    │
+│  │      processedAt: new Date()        │    │
+│  │    })                                      │    │
+│  └────────────────────────────────────────────┘    │
+│                                                     │
+│  ⚠️ Why Transaction?                                │
+│  Without: Race condition if 2 requests check       │
+│           before either writes (both succeed)      │
+│  With: Only ONE transaction can write same ID      │
+│        Firestore guarantees atomicity              │
+└────────────────┬────────────────────────────────────┘
+                 │ All writes atomic (all or nothing)
+                 ↓
+┌─────────────────────────────────────────────────────┐
+│ HTTP Response                                       │
+│ • 200: {status: 'completed', processedAt}           │
+│ • 409: {status: 'duplicate', processedAt}           │
+│ • 400: {status: 'validation-failed', error}         │
+│ • 500: {status: 'error', error, handler}            │
+└─────────────────────────────────────────────────────┘
+```
+
+**What makes this exemplary**:
+- Shows full flow with layers
+- Includes decision points (duplicate check logic)
+- Explains "why" inline (⚠️ Why Transaction?)
+- Shows both success and failure paths
+- References actual files (submit-action-request.js)
+
+## Pre-Commit Checklist
+
+Before committing architecture doc:
+- ✓ Has at least one ASCII diagram
+- ✓ No implementation code (only data structures/config)
+- ✓ No references to specification folders
+- ✓ File paths reference actual code
+- ✓ Trade-offs include "when this matters" context
 
 ## When to Update This Standard
 
-Revisit this document when:
+Revisit when:
 - Architecture docs feel inconsistent or confusing
 - New team members struggle to understand architecture
-- Implementation specs duplicate architecture content
-- Major architectural patterns change (event sourcing → CQRS, etc.)
-- More than 3 PRs in 6 months debate what belongs in architecture docs
+- More than 3 discussions about what belongs in architecture docs
+- Major architectural patterns change
