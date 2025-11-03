@@ -20,8 +20,8 @@ Shared guidance for validating infrastructure and Firebase migrations before app
 
 ## Automation Hooks
 - Integrate critical migrations into CI when feasible (`yarn workspace <module> tap`).
-- For long-running scripts, document manual invocation in `.llm2/template-for-task-prompt.md` records with the exact command.
+- For long-running scripts, document manual invocation with the exact command.
 
 ## References
-- `.llm2/sop.md` for the daily patch loop (always start from a failing check)
+- `CLAUDE.md` for workflow guidance (test-first always)
 - `templates/specification-template/` for the new spec format embedding implementation + validation steps
