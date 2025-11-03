@@ -83,18 +83,13 @@ export const Action = {
             displayName   : 'String?',
         },
 
-        // Authentication Actions (F121 - Deferred)
-        // IMPORTANT: PasscodeVerified must set userId claim BEFORE returning token
-        // See docs/decisions.md#userid-claim-sync for architecture
-        //
-        // PasscodeRequested: {
-        //     phoneNumber   : 'String',  // E.164 format: +14155551234
-        // },
-        // PasscodeVerified: {
-        //     phoneNumber   : 'String',  // E.164 format: +14155551234
-        //     passcode      : 'String',  // 6-digit code
-        //     userId        : FieldTypes.userId,  // Server-generated, not client-provided
-        // },
+        
+        // Firebase Auth
+        AuthenticationCompleted: {
+            email         : FieldTypes.email,
+            displayName   : 'String',
+            // phoneNumber extracted from verified Firebase token (not client input)
+        },
 
     }
 }
@@ -147,20 +142,23 @@ Action.piiFields = rawData => {
     const tagName = rawData['@@tagName']
     
     // organization
-    if (tagName === 'OrganizationCreated'  ) return []
-    if (tagName === 'OrganizationDeleted'  ) return []
-    if (tagName === 'OrganizationSuspended') return []
-    if (tagName === 'OrganizationUpdated'  ) return []
+    if (tagName === 'OrganizationCreated'    ) return []
+    if (tagName === 'OrganizationDeleted'    ) return []
+    if (tagName === 'OrganizationSuspended'  ) return []
+    if (tagName === 'OrganizationUpdated'    ) return []
     
     // organization member
-    if (tagName === 'MemberAdded'          ) return ['displayName']
-    if (tagName === 'MemberRemoved'        ) return []
-    if (tagName === 'RoleChanged'          ) return []
-   
+    if (tagName === 'MemberAdded'            ) return ['displayName']
+    if (tagName === 'MemberRemoved'          ) return []
+    if (tagName === 'RoleChanged'            ) return []
+    
     // user
-    if (tagName === 'UserCreated'          ) return ['email', 'displayName']
-    if (tagName === 'UserForgotten'        ) return []
-    if (tagName === 'UserUpdated'          ) return ['displayName']
+    if (tagName === 'UserCreated'            ) return ['email', 'displayName']
+    if (tagName === 'UserForgotten'          ) return []
+    if (tagName === 'UserUpdated'            ) return ['displayName']
+    
+    // Auth
+    if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
     return []  // Fallback for unrecognized types
 }
@@ -178,20 +176,23 @@ Action.toLog = a => {
     // prettier-ignore
     const result = a.match({
         // organization
-        OrganizationCreated  : ({ name })                     => ({ type: 'OrganizationCreated', name}),
-        OrganizationDeleted  : ()                             => ({ type: 'OrganizationDeleted', }),
-        OrganizationSuspended: ()                             => ({ type: 'OrganizationSuspended', }),
-        OrganizationUpdated  : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
-       
+        OrganizationCreated    : ({ name })                     => ({ type: 'OrganizationCreated', name}),
+        OrganizationDeleted    : ()                             => ({ type: 'OrganizationDeleted', }),
+        OrganizationSuspended  : ()                             => ({ type: 'OrganizationSuspended', }),
+        OrganizationUpdated    : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
+        
         // member
-        MemberAdded          : ({ displayName, role })        => ({ type: 'MemberAdded', displayName, role }),
-        MemberRemoved        : ()                             => ({ type: 'MemberRemoved' }),
-        RoleChanged          : ({ role })                     => ({ type: 'RoleChanged', role }),
-
+        MemberAdded            : ({ displayName, role })        => ({ type: 'MemberAdded', displayName, role }),
+        MemberRemoved          : ()                             => ({ type: 'MemberRemoved' }),
+        RoleChanged            : ({ role })                     => ({ type: 'RoleChanged', role }),
+        
         // user
-        UserCreated          : ({ email, displayName })       => ({ type: 'UserCreated', email, displayName }),
-        UserForgotten        : ({ reason })                   => ({ type: 'UserForgotten', reason }),
-        UserUpdated          : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
+        UserCreated            : ({ email, displayName })       => ({ type: 'UserCreated', email, displayName }),
+        UserForgotten          : ({ reason })                   => ({ type: 'UserForgotten', reason }),
+        UserUpdated            : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
+       
+        // Auth
+        AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
     })
 
     Action.piiFields(a).forEach(redactField)
@@ -218,6 +219,7 @@ Action.redactPii = rawData => {
 
         if (tagName === 'UserCreated') return ['email', 'displayName']
         if (tagName === 'UserUpdated') return ['email', 'displayName']
+        if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
         return []
     }
@@ -234,35 +236,41 @@ Action.redactPii = rawData => {
 Action.getSubject = action =>
     action.match({
         // organization
-        OrganizationCreated:   a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationDeleted:   a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationSuspended: a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationUpdated:   a => ({ id: a.organizationId, type: 'organization' }),
-        
+        OrganizationCreated    : a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationDeleted    : a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationSuspended  : a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationUpdated    : a => ({ id: a.organizationId, type: 'organization' }),
+
         // organization member
-        MemberAdded:           a => ({ id: a.userId,         type: 'user' }),
-        MemberRemoved:         a => ({ id: a.userId,         type: 'user' }),
-        RoleChanged:           a => ({ id: a.userId,         type: 'user' }),
-        
+        MemberAdded            : a => ({ id: a.userId,         type: 'user' }),
+        MemberRemoved          : a => ({ id: a.userId,         type: 'user' }),
+        RoleChanged            : a => ({ id: a.userId,         type: 'user' }),
+
         // user
-        UserCreated:           a => ({ id: a.userId,         type: 'user' }),
-        UserForgotten:         a => ({ id: a.userId,         type: 'user' }),
-        UserUpdated:           a => ({ id: a.userId,         type: 'user' }),
+        UserCreated            : a => ({ id: a.userId,         type: 'user' }),
+        UserForgotten          : a => ({ id: a.userId,         type: 'user' }),
+        UserUpdated            : a => ({ id: a.userId,         type: 'user' }),
+
+        // Auth
+        AuthenticationCompleted: a => ({ id: a.email,          type: 'user' }),
     })
 
 // prettier-ignore
 Action.mayI = (action, actorRole, actorId) =>
     action.match({
-        MemberAdded          : () => ['admin'].includes(actorRole),
-        MemberRemoved        : () => ['admin'].includes(actorRole),
-        OrganizationCreated  : () => ['admin'].includes(actorRole),
-        OrganizationDeleted  : () => ['admin'].includes(actorRole),
-        OrganizationSuspended: () => ['admin'].includes(actorRole),
-        OrganizationUpdated  : () => ['admin'].includes(actorRole),
-        RoleChanged          : () => ['admin'].includes(actorRole),
-        UserCreated          : () => ['admin'].includes(actorRole),
+        MemberAdded            : () => ['admin'].includes(actorRole),
+        MemberRemoved          : () => ['admin'].includes(actorRole),
+        OrganizationCreated    : () => ['admin'].includes(actorRole),
+        OrganizationDeleted    : () => ['admin'].includes(actorRole),
+        OrganizationSuspended  : () => ['admin'].includes(actorRole),
+        OrganizationUpdated    : () => ['admin'].includes(actorRole),
+        RoleChanged            : () => ['admin'].includes(actorRole),
+        UserCreated            : () => ['admin'].includes(actorRole),
         
         // Self-modification support
-        UserForgotten        : a => a.userId === actorId,
-        UserUpdated          : a => a.userId === actorId,
+        UserForgotten          : a => a.userId === actorId,
+        UserUpdated            : a => a.userId === actorId,
+        
+        // Auth
+        AuthenticationCompleted: () => true,
     })
