@@ -2,6 +2,18 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F121 - Phone Authentication (2025-11-03)
+**Purpose:** SMS-based passwordless authentication using Firebase Auth client SDK
+
+- Implemented AuthenticationCompleted action type with email and displayName fields
+- Created authentication handler for user creation/lookup and custom claims management
+- Updated token validation to support first-time authentication without userId claim
+- Firebase Auth handles passcode generation, SMS delivery, verification, and rate limiting
+- Server handles User document creation, userId custom claim setting, and audit trail
+- Client stores email/displayName in memory during SMS verification flow
+- Updated security architecture documentation with correct Firebase Auth flow
+- No PII storage (phoneNumber not persisted in User document)
+
 ## F110 - Multi-Tenant Data Model (2025-10-31)
 **Purpose:** Core multi-tenant infrastructure with organizations, users, and RBAC
 
