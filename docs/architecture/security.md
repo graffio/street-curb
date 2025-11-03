@@ -16,29 +16,33 @@ isolation ensures organizations cannot access each other's data.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ Client Application                                  │
-│ • Requests passcode via phone number               │
-│ • Submits passcode for verification                │
-│ • Receives Firebase Auth token with userId claim   │
+│ Client Application (Firebase SDK)                  │
+│ • Collects email, displayName, phoneNumber         │
+│ • signInWithPhoneNumber() → Firebase sends SMS     │
+│ • confirmationResult.confirm(passcode)             │
+│ • getIdToken() → receives token with uid           │
 └────────────────┬────────────────────────────────────┘
-                 │ POST /verifyPasscode
-                 │ {phoneNumber, passcode}
+                 │ POST /submitActionRequest
+                 │ Authorization: Bearer <firebase-token>
+                 │ Body: AuthenticationCompleted action
                  ↓
 ┌─────────────────────────────────────────────────────┐
-│ Firebase Auth                                       │
-│ • Verifies passcode                                 │
-│ • Creates/updates user in Firestore                │
-│ • Sets userId claim (links token to user doc)      │
+│ HTTP Function (submit-action-request.js)            │
+│ • Verifies Firebase token → extracts uid, phone    │
+│ • Creates/looks up User document                   │
+│ • Sets userId custom claim on Firebase Auth user   │
+│ • Logs AuthenticationCompleted action              │
 └────────────────┬────────────────────────────────────┘
-                 │ Returns ID token with userId claim
+                 │ Returns success
                  ↓
 ┌─────────────────────────────────────────────────────┐
-│ Client Stores Token                                 │
+│ Client Refreshes Token                              │
+│ • getIdToken(true) → receives userId claim         │
 │ • Attaches token to all subsequent requests        │
 │ • Authorization: Bearer <token>                     │
 └────────────────┬────────────────────────────────────┘
                  │ POST /submitActionRequest
-                 │ Authorization: Bearer <token>
+                 │ Authorization: Bearer <token-with-userId>
                  ↓
 ┌─────────────────────────────────────────────────────┐
 │ HTTP Function (submit-action-request.js)            │

@@ -35,6 +35,9 @@
  *  UserUpdated
  *      userId     : FieldTypes.userId,
  *      displayName: "String?"
+ *  AuthenticationCompleted
+ *      email      : FieldTypes.email,
+ *      displayName: "String"
  *
  */
 
@@ -62,7 +65,8 @@ const Action = {
             constructor === Action.RoleChanged ||
             constructor === Action.UserCreated ||
             constructor === Action.UserForgotten ||
-            constructor === Action.UserUpdated
+            constructor === Action.UserUpdated ||
+            constructor === Action.AuthenticationCompleted
         )
     },
 }
@@ -89,6 +93,7 @@ Object.defineProperty(ActionPrototype, 'match', {
             'UserCreated',
             'UserForgotten',
             'UserUpdated',
+            'AuthenticationCompleted',
         ]
         requiredVariants.map(variant => {
             if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
@@ -122,6 +127,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'UserCreated',
         'UserForgotten',
         'UserUpdated',
+        'AuthenticationCompleted',
     ],
     enumerable: false,
 })
@@ -759,6 +765,68 @@ UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
 UserUpdatedConstructor.from = o => Action.UserUpdated(o.userId, o.displayName)
 
 // -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.AuthenticationCompleted constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const AuthenticationCompletedConstructor = function AuthenticationCompleted(email, displayName) {
+    const constructorName = 'Action.AuthenticationCompleted(email, displayName)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
+    R.validateString(constructorName, 'displayName', false, displayName)
+
+    const result = Object.create(AuthenticationCompletedPrototype)
+    result.email = email
+    result.displayName = displayName
+    return result
+}
+
+Action.AuthenticationCompleted = AuthenticationCompletedConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant Action.AuthenticationCompleted prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+
+const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'AuthenticationCompleted', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: AuthenticationCompletedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.AuthenticationCompleted: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
+AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
+AuthenticationCompletedConstructor.from = o => Action.AuthenticationCompleted(o.email, o.displayName)
+
+// -------------------------------------------------------------------------------------------------------------
 // Additional functions copied from type definition file
 // -------------------------------------------------------------------------------------------------------------
 // Additional function: toFirestore
@@ -796,6 +864,7 @@ Action.piiFields = rawData => {
     if (tagName === 'UserCreated') return ['email', 'displayName']
     if (tagName === 'UserForgotten') return []
     if (tagName === 'UserUpdated') return ['displayName']
+    if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
     return []
 }
 
@@ -841,6 +910,11 @@ Action.toLog = a => {
             displayName,
             role,
         }),
+        AuthenticationCompleted: ({ email, displayName }) => ({
+            type: 'AuthenticationCompleted',
+            email,
+            displayName,
+        }),
     })
     Action.piiFields(a).forEach(redactField)
     return result
@@ -855,6 +929,7 @@ Action.redactPii = rawData => {
         const tagName = rawData['@@tagName']
         if (tagName === 'UserCreated') return ['email', 'displayName']
         if (tagName === 'UserUpdated') return ['email', 'displayName']
+        if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
         return []
     }
     const result = { ...rawData }
@@ -905,6 +980,10 @@ Action.getSubject = action =>
             id: a.userId,
             type: 'user',
         }),
+        AuthenticationCompleted: a => ({
+            id: a.email,
+            type: 'user',
+        }),
     })
 
 // Additional function: mayI
@@ -920,6 +999,7 @@ Action.mayI = (action, actorRole, actorId) =>
         UserCreated: () => ['admin'].includes(actorRole),
         UserForgotten: a => a.userId === actorId,
         UserUpdated: a => a.userId === actorId,
+        AuthenticationCompleted: () => true,
     })
 
 export { Action }

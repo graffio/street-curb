@@ -3,6 +3,7 @@ import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
 import { createFirestoreContext } from './firestore-context.js'
+import handleAuthenticationCompleted from './handlers/handle-authentication-completed.js'
 import handleMemberAdded from './handlers/handle-member-added.js'
 import handleMemberRemoved from './handlers/handle-member-removed.js'
 import handleOrganizationCreated from './handlers/handle-organization-created.js'
@@ -165,9 +166,9 @@ const convertToActionRequest = (rawActionRequest, logger) => {
 /*
  * The authorization header includes a `bearer: token` which we use to identify the sender of the ActionRequest
  * From that Auth user, we get the userId buried in its custom claims
- * @sig readUserIdFromAuthCustomClaims :: (HttpRequest, Logger) -> { userId: UserId } | { error: String }
+ * @sig readUserIdFromAuthCustomClaims :: (HttpRequest, Logger, Boolean) -> { userId: UserId } | { error: String }
  */
-const readUserIdFromAuthCustomClaims = async (req, logger) => {
+const readUserIdFromAuthCustomClaims = async (req, logger, isAuthenticationCompleted) => {
     const getAuthErrorMessage = error => {
         if (error.code === 'auth/id-token-expired') return 'Authorization token has expired'
         if (error.code === 'auth/argument-error') return 'Authorization token is malformed'
@@ -186,8 +187,13 @@ const readUserIdFromAuthCustomClaims = async (req, logger) => {
         const decoded = await admin.auth().verifyIdToken(token)
         const { userId } = decoded
 
-        if (!userId || !FieldTypes.userId.test(userId)) return { error: 'Authorization token missing userId claim' }
-        return { userId }
+        // AuthenticationCompleted works without userId claim (first-time auth)
+        if (isAuthenticationCompleted)
+            return decoded.uid ? { decodedToken: decoded } : { error: 'Authorization token missing uid' }
+
+        return !userId || !FieldTypes.userId.test(userId)
+            ? { error: 'Authorization token missing userId claim' }
+            : { userId }
     } catch (error) {
         const message = getAuthErrorMessage(error)
         logger.error(new Error(message), { originalError: error.message, code: error.code })
@@ -213,16 +219,17 @@ const createActionRequestLogger = (logger, actionRequest) => {
 // prettier-ignore
 const dispatchToHandler = actionRequest =>
     actionRequest.action.match({
-        OrganizationCreated:   () => handleOrganizationCreated,
-        OrganizationUpdated:   () => handleOrganizationUpdated,
-        OrganizationDeleted:   () => handleOrganizationDeleted,
-        OrganizationSuspended: () => handleOrganizationSuspended,
-        UserCreated:           () => handleUserCreated,
-        UserUpdated:           () => handleUserUpdated,
-        UserForgotten:         () => handleUserForgotten,
-        MemberAdded:           () => handleMemberAdded,
-        MemberRemoved:         () => handleMemberRemoved,
-        RoleChanged:           () => handleRoleChanged,
+        OrganizationCreated    : () => handleOrganizationCreated,
+        OrganizationUpdated    : () => handleOrganizationUpdated,
+        OrganizationDeleted    : () => handleOrganizationDeleted,
+        OrganizationSuspended  : () => handleOrganizationSuspended,
+        UserCreated            : () => handleUserCreated,
+        UserUpdated            : () => handleUserUpdated,
+        UserForgotten          : () => handleUserForgotten,
+        MemberAdded            : () => handleMemberAdded,
+        MemberRemoved          : () => handleMemberRemoved,
+        RoleChanged            : () => handleRoleChanged,
+        AuthenticationCompleted: () => handleAuthenticationCompleted,
     })
 
 /*
@@ -339,12 +346,13 @@ const submitActionRequestHandler = async (req, res) => {
     const startTime = Date.now()
 
     try {
-        // Authentication first – reject missing/invalid tokens before other validation
-        const { userId: actorId, error } = await readUserIdFromAuthCustomClaims(req, logger)
-        if (error) return sendUnauthorized(res, error)
-
         // Validate all inputs first
         if (!validateRequest(req, res, logger)) return
+
+        // Authentication first – reject missing/invalid tokens before other validation
+        const isAuthenticationCompleted = req.body.action['@@tagName'] === 'AuthenticationCompleted'
+        const { userId: actorId, error } = await readUserIdFromAuthCustomClaims(req, logger, isAuthenticationCompleted)
+        if (error) return sendUnauthorized(res, error)
 
         // create a raw object by enriching our parameters
         const params = enrichActionRequest(req)
