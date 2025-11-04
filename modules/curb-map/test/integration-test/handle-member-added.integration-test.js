@@ -37,7 +37,7 @@ test('Given MemberAdded action', t => {
             const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId })
 
             t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy set from token userId claim')
-            t.equal(user.organizations[organizationId], 'member', 'Then user.organizations has entry')
+            t.equal(user.organizations[organizationId].role, 'member', 'Then user.organizations has entry')
         })
         t.end()
     })
@@ -61,7 +61,7 @@ test('Given MemberAdded action', t => {
             const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId })
 
             t.equal(org.members[userId].removedAt, undefined, 'Then removedAt cleared')
-            t.equal(user.organizations[organizationId], 'admin', 'Then user organization role updated')
+            t.equal(user.organizations[organizationId].role, 'admin', 'Then user organization role updated')
             t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy uses token userId claim')
         })
         t.end()

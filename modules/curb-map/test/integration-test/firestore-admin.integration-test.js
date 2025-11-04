@@ -1,8 +1,9 @@
 import admin from 'firebase-admin'
 import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
+import { LookupTable } from '@graffio/functional'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
-import { FieldTypes, Organization } from '../../src/types/index.js'
+import { FieldTypes, Organization, Member } from '../../src/types/index.js'
 import { buildNamespace } from '../integration-test-helpers/build-namespace.js'
 
 // Read project ID from environment (must be set externally)
@@ -17,7 +18,7 @@ const buildOrganization = ({ id = FieldTypes.newOrganizationId(), status = 'acti
         name,
         status,
         defaultProjectId: FieldTypes.newProjectId(),
-        members: [],
+        members: LookupTable([], Member, 'userId'),
         createdAt: new Date('2025-01-01T00:00:00Z'),
         updatedAt: new Date('2025-01-01T00:00:00Z'),
         createdBy: FieldTypes.newUserId(),
@@ -37,6 +38,25 @@ test('Given the Firestore admin facades', async t => {
 
         tt.equal(stored.id, item.id, 'Then the stored organization retains its identifier')
         tt.equal(stored.name, 'Test Org', 'Then the stored organization keeps the correct name')
+    })
+
+    await t.test('When an organization with Date fields is written and read', async tt => {
+        const namespace = buildNamespace()
+
+        const fsOrganizations = FirestoreAdminFacade(Organization, `${namespace}/`)
+        const testDate = new Date('2025-01-15T10:30:00Z')
+        const item = buildOrganization({ name: 'Date Test Org' })
+        // Override dates with specific test dates
+        item.createdAt = testDate
+        item.updatedAt = testDate
+
+        await fsOrganizations.write(item)
+        const stored = await fsOrganizations.read(item.id)
+
+        tt.ok(stored.createdAt instanceof Date, 'Then createdAt is deserialized as Date')
+        tt.ok(stored.updatedAt instanceof Date, 'Then updatedAt is deserialized as Date')
+        tt.equal(stored.createdAt.getTime(), testDate.getTime(), 'Then createdAt timestamp is preserved')
+        tt.equal(stored.updatedAt.getTime(), testDate.getTime(), 'Then updatedAt timestamp is preserved')
     })
 
     await t.test('When recursiveDelete runs on the namespace', async tt => {
@@ -80,6 +100,27 @@ test('Given the Firestore facade update method', async t => {
             tt.fail('Then update should throw an error')
         } catch (error) {
             tt.match(error.message, /Failed to update/, 'Then error message indicates update failed')
+        }
+    })
+
+    await t.test('When update is called with LookupTable field (unsupported)', async tt => {
+        const namespace = buildNamespace()
+
+        const fsOrganizations = FirestoreAdminFacade(Organization, `${namespace}/`)
+        const item = buildOrganization({ name: 'Original Name' })
+        await fsOrganizations.write(item)
+
+        // Try to partially update members field (LookupTable)
+        const newMembers = LookupTable([], Member, 'userId')
+        try {
+            await fsOrganizations.update(item.id, { members: newMembers })
+            tt.fail('Then update should throw an error for LookupTable fields')
+        } catch (error) {
+            tt.match(
+                error.message,
+                /Partial update of LookupTable field 'members' not supported/,
+                'Then error explains LookupTable not supported in partial updates',
+            )
         }
     })
 

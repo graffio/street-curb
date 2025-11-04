@@ -1,5 +1,6 @@
+import { LookupTable } from '@graffio/functional'
 import admin from 'firebase-admin'
-import { Action, FieldTypes } from '../../src/types/index.js'
+import { Action, FieldTypes, OrganizationMember } from '../../src/types/index.js'
 import { buildNamespace } from './build-namespace.js'
 import { submitAndExpectSuccess } from './http-submit-action.js'
 
@@ -133,7 +134,8 @@ const asSignedInUser = async (options, effect) => {
     // Create User document for the signed-in actor (mirrors real signup flow)
     const email = uniqueEmail(label)
     const displayName = `Test Actor ${label}`
-    const action = Action.UserCreated.from({ userId, email, displayName, authUid: uid })
+    const organizations = LookupTable([], OrganizationMember, 'organizationId')
+    const action = Action.UserCreated.from({ userId, email, displayName, organizations, authUid: uid })
     await submitAndExpectSuccess({ action, namespace, token })
 
     return await effect({ namespace, token, uid, actorUserId: userId })

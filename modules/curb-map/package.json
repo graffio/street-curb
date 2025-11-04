@@ -9,7 +9,7 @@
         "preview": "vite preview",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "tap": "../../bash/run-tap.sh ../test/*.tap.js test/**/*.tap.js",
+        "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
         "tap:file": "../../bash/run-tap.sh",
         "tap:integration": "yarn tap:file test/**/*.integration-test.js test/**/**/*.integration-test.js",
         "tap:firebase": "firebase emulators:exec --only firestore,auth,storage,functions \"../../bash/run-tap.sh test/**/*.firebase.js\"",

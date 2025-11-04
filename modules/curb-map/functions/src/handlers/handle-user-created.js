@@ -1,4 +1,6 @@
+import { LookupTable } from '@graffio/functional'
 import admin from 'firebase-admin'
+import { OrganizationMember } from '../../../src/types/index.js'
 import { generateMetadata } from '../shared.js'
 
 /**
@@ -17,7 +19,8 @@ const handleUserCreated = async (logger, fsContext, actionRequest) => {
     const { userId, email, displayName, authUid } = action
     const metadata = generateMetadata(fsContext, actionRequest)
 
-    await fsContext.users.write({ id: userId, email, displayName, organizations: {}, ...metadata })
+    const organizations = LookupTable([], OrganizationMember, 'organizationId')
+    await fsContext.users.write({ id: userId, email, displayName, organizations, ...metadata })
 
     // Set userId custom claim to link Firebase Auth token to Firestore user doc
     await admin.auth().setCustomUserClaims(authUid, { userId })

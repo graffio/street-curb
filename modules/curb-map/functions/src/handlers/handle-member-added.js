@@ -17,11 +17,16 @@ const handleMemberAdded = async (logger, fsContext, actionRequest) => {
         throw new Error(`Member ${userId} is already active in organization ${organizationId}`)
 
     const addedBy = actionRequest.actorId
-    const memberData = fsContext.encodeTimestamps(Member, { userId, displayName, role, addedAt: new Date(), addedBy })
+    const memberData = Member.toFirestore(
+        { userId, displayName, role, addedAt: new Date(), addedBy },
+        fsContext.encodeTimestamp,
+    )
 
     // Atomic update: org.members[userId] and user.organizations[orgId]
     await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })
-    await fsContext.users.update(userId, { [`organizations.${organizationId}`]: role })
+
+    const orgMember = { organizationId, role }
+    await fsContext.users.update(userId, { [`organizations.${organizationId}`]: orgMember })
 
     logger.flowStep('Member added')
 }

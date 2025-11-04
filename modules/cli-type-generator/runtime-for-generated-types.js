@@ -1,3 +1,20 @@
+import { LookupTable } from '@graffio/functional'
+
+/*
+ * Create a match function for TaggedSum types
+ * @sig match :: [String] -> (Object -> Any)
+ */
+const match = tagNames =>
+    function (variants) {
+        // Validate all variants are handled
+        for (const variant of tagNames)
+            if (!variants[variant]) throw new TypeError(`Constructors given to match didn't include: ${variant}`)
+
+        // Call the appropriate variant handler
+        const variant = variants[this['@@tagName']]
+        return variant.call(variants, this)
+    }
+
 /*
  * Convert any value to a readable string representation for error messages
  * @sig _toString :: Any -> String
@@ -13,6 +30,16 @@ const _toString = value => {
 
     return value
 }
+
+const lookupTableToFirestore = (Type, idField, encodeTimestamps, lookupTable) =>
+    Object.fromEntries(lookupTable.map(item => [item[idField], Type.toFirestore(item, encodeTimestamps)]))
+
+const lookupTableFromFirestore = (Type, idField, decodeTimestamps, o) =>
+    LookupTable(
+        Object.values(o || {}).map(item => Type.fromFirestore(item, decodeTimestamps)),
+        Type,
+        idField,
+    )
 
 /*
  * Validate that a constructor was called with the correct number of arguments
@@ -183,6 +210,34 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
     throw new TypeError(message)
 }
 
+/*
+ * Validate that a field is a LookupTable with specific item type
+ * @sig validateLookupTable :: (String, String, String, Boolean, Any) -> void
+ */
+const validateLookupTable = (constructorName, expectedItemType, field, optional, lt) => {
+    if (optional && lt == null) return
+
+    // Check if it's a LookupTable (has idField property)
+    if (!lt || typeof lt !== 'object' || !lt.idField) {
+        // eslint-disable-next-line no-debugger
+        debugger
+        const message = `In constructor ${constructorName}: expected ${field} to be a LookupTable; found ${_toString(lt)}`
+        throw new TypeError(message)
+    }
+
+    // If LookupTable is empty, that's valid
+    if (lt.length === 0) return
+
+    // Check the first item's type
+    const firstItem = lt[0]
+    if (firstItem?.['@@typeName'] === expectedItemType) return
+
+    // eslint-disable-next-line no-debugger
+    debugger
+    const message = `In constructor ${constructorName}: expected ${field} to be a LookupTable<${expectedItemType}>; found LookupTable<${firstItem?.['@@typeName'] || 'unknown'}>`
+    throw new TypeError(message)
+}
+
 export {
     validateArgumentLength,
     validateArray,
@@ -193,5 +248,9 @@ export {
     validateString,
     validateTag,
     validateRegex,
+    validateLookupTable,
+    lookupTableToFirestore,
+    lookupTableFromFirestore,
+    match,
     _toString,
 }

@@ -167,6 +167,10 @@ const generateTypeCheck = (constructorName, name, fieldType) => {
 
     if (baseType === 'Any')     return ''
     if (arrayDepth)             return `R.validateArray(constructorName, ${arrayDepth}, '${baseType}', ${containedTag}, '${name}', ${optional}, ${name})`
+
+    // Check for LookupTable before other checks
+    if (baseType === 'LookupTable') return `R.validateLookupTable(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
+
     if (regex)                  return `R.validateRegex(constructorName, ${regex}, '${name}', ${optional}, ${name})`
     if (baseType === 'String')  return `R.validateString(constructorName, '${name}', ${optional}, ${name})`
     if (baseType === 'Number')  return `R.validateNumber(constructorName, '${name}', ${optional}, ${name})`
@@ -175,19 +179,6 @@ const generateTypeCheck = (constructorName, name, fieldType) => {
     if (baseType === 'Date')    return `R.validateDate(constructorName, '${name}', ${optional}, ${name})`
     if (baseType === 'Tagged')  return `R.validateTag(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
 }
-
-/*
- * Generate a Type Constructor function for a "Unit Type" like Nil in a LinkedList. Only one instance of Nil
- * will ever be created and all LinkedLists will end by pointing at that one Nil object. There are no fields
- * for a Unit Type so the function is very simple.
- *
- * Note: we generate this function ONLY so that we can give the generated object a name that's visible in
- * debuggers. The "name" of an object (actually the name of its constructor) is read-only and assigned
- * using a complicated set of rules that are hard to follow when generating code.
- *
- * By generating a function with the proper name we guarantee the Unit object will get the proper name. See taggedSum.
- */
-const generateUnitConstructor = (protoName, typeName) => `(function ${typeName}() {})`
 
 /*
  * Generate a TypeConstructor.from function given the prototype to use, the name of the Type Constructor and the fields
@@ -235,6 +226,6 @@ const generateToString = (fieldType, fields) => {
     `
 }
 
-const Generator = { generateToString, generateFrom, generateTypeConstructor, generateUnitConstructor }
+const Generator = { generateToString, generateFrom, generateTypeConstructor }
 
 export default Generator
