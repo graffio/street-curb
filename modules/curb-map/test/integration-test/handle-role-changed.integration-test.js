@@ -54,7 +54,7 @@ test('Given RoleChanged action', t => {
             const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId })
 
             t.equal(org.members[userId].role, 'admin', 'Then org member role updated')
-            t.equal(user.organizations[organizationId], 'admin', 'Then user org map updated')
+            t.equal(user.organizations[organizationId].role, 'admin', 'Then user org map updated')
         })
         t.end()
     })
@@ -95,7 +95,7 @@ test('Given RoleChanged action', t => {
 
             const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId: actorUserId })
             t.equal(org.members[actorUserId].role, 'member', 'Then first admin downgraded successfully')
-            t.equal(user.organizations[organizationId], 'member', 'Then user org map updated')
+            t.equal(user.organizations[organizationId].role, 'member', 'Then user org map updated')
             t.equal(org.members[secondAdminId].role, 'admin', 'Then second admin remains admin')
         })
         t.end()

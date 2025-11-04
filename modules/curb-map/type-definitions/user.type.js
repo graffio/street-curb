@@ -14,7 +14,7 @@ export const User = {
         id              : FieldTypes.userId,
         email           : FieldTypes.email,
         displayName     : "String",
-        organizations   : "Object",
+        organizations   : "{OrganizationMember:organizationId}",
         
         createdAt       : 'Date',
         createdBy       : FieldTypes.userId,
@@ -22,6 +22,3 @@ export const User = {
         updatedBy       : FieldTypes.userId,
     }
 }
-
-User.fromFirestore = User.from
-User.toFirestore = o => ({ ...o })

@@ -20,6 +20,3 @@ export const Project = {
         updatedBy     : FieldTypes.userId,
     }
 }
-
-Project.fromFirestore = Project.from
-Project.toFirestore = o => ({ ...o })

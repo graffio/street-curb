@@ -22,7 +22,10 @@ const handleMemberRemoved = async (logger, fsContext, actionRequest) => {
         throw new Error(`Cannot remove ${userId} from ${organizationId} - they're the last admin `)
 
     // Update member with removedAt/removedBy fields
-    const memberData = fsContext.encodeTimestamps(Member, { ...member, removedAt: new Date(), removedBy: actorId })
+    const memberData = Member.toFirestore(
+        { ...member, removedAt: new Date(), removedBy: actorId },
+        fsContext.encodeTimestamp,
+    )
 
     // Atomic update: write whole member object and delete user.organizations[orgId]
     await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })

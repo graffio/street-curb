@@ -1,5 +1,12 @@
+import admin from 'firebase-admin'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
 import { ActionRequest, Organization, Project, User } from '../../src/types/index.js'
+
+/**
+ * Single-date encoder for Firestore serialization
+ * @sig encodeTimestamp :: Date -> Timestamp
+ */
+const encodeTimestamp = date => admin.firestore.Timestamp.fromDate(date)
 
 /**
  * Creates a Firestore context for a specific organization/project scope
@@ -18,8 +25,7 @@ const createFirestoreContext = (namespace, organizationId, projectId, tx = null)
         users,
         projects,
         deleteField: FirestoreAdminFacade.deleteField,
-        encodeTimestamps: FirestoreAdminFacade.encodeTimestamps,
-        decodeTimestamps: FirestoreAdminFacade.decodeTimestamps,
+        encodeTimestamp,
 
         // Scoped context factories - preserve transaction and namespace
         forOrganization: newOrgId => createFirestoreContext(namespace, newOrgId, null, tx),

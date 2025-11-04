@@ -22,35 +22,50 @@ const getDefaultClientDb = () => {
     return db
 }
 
+/*
+ * Encode a single Date to Firestore Timestamp
+ * @sig encodeTimestamp :: Date -> Timestamp
+ */
+const encodeTimestamp = date => F.Timestamp.fromDate(date)
+
+/*
+ * Decode a single Firestore Timestamp to Date
+ * Handles both Timestamp instances and plain objects from emulator
+ * @sig decodeTimestamp :: Timestamp | Object -> Date
+ */
+const decodeTimestamp = timestamp => {
+    if (timestamp.toDate) return timestamp.toDate()
+    if (timestamp._seconds != null) return new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000)
+    throw new Error(`Cannot decode timestamp: ${JSON.stringify(timestamp)}`)
+}
+
 const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClientDb()) => {
     if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
 
     const collectionPath = collectionPrefix + collectionPaths.get(Type)
     const _docRef = id => F.doc(db, collectionPath, id)
-    const timestampFields = Type.timestampFields || []
 
-    const encodeTimestamps = data => {
-        if (!timestampFields.length || data == null) return data
-        const result = { ...data }
-        timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = F.Timestamp.fromDate(result[field])
-        })
-        return result
-    }
+    const fromFirestore = data => Type.fromFirestore(data, decodeTimestamp)
+    const toFirestore = data => Type.toFirestore(data, encodeTimestamp)
 
-    const decodeTimestamps = data => {
-        if (!timestampFields.length || data == null) return data
-        const result = { ...data }
-        timestampFields.forEach(field => {
-            if (Object.prototype.hasOwnProperty.call(result, field)) result[field] = result[field].toDate()
-        })
-        return result
+    // For partial updates, encode only Date fields (nested types not supported in partial updates)
+    const toFirestorePartial = fields => {
+        const encoded = {}
+        for (const [key, value] of Object.entries(fields))
+            if (value instanceof Date) encoded[key] = encodeTimestamp(value)
+            else if (value && typeof value === 'object' && value.idField)
+                throw new Error(
+                    `Partial update of LookupTable field '${key}' not supported. Use write() with full object instead.`,
+                )
+            else encoded[key] = value
+
+        return encoded
     }
 
     // @sig write :: TaggedItem -> Promise Void
     const write = async record => {
         try {
-            const firestoreData = encodeTimestamps(Type.toFirestore(record))
+            const firestoreData = toFirestore(record)
             await F.setDoc(_docRef(record.id), firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to write ${Type.toString()} ${e.message}`, e, record)
@@ -58,9 +73,10 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
     }
 
     // @sig update :: (Id, Object) -> Promise Void
+    // Note: Does not support partial updates of nested types (LookupTable, Tagged). Use write() for those.
     const update = async (id, fields) => {
         try {
-            const firestoreData = encodeTimestamps(fields)
+            const firestoreData = toFirestorePartial(fields)
             await F.updateDoc(_docRef(id), firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
@@ -72,8 +88,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         try {
             const docSnap = await F.getDoc(_docRef(id))
             if (!docSnap.exists()) throw new Error(`${Type.toString()} not found: ${id}`)
-            const data = docSnap.data()
-            return Type.fromFirestore(decodeTimestamps(data))
+            return fromFirestore(docSnap.data())
         } catch (e) {
             throwWithOriginal(`Failed to read ${Type.toString()}: ${e.message}`, e, id)
         }
@@ -87,7 +102,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
             whereConditions.forEach(([field, operator, value]) => (q = F.query(q, F.where(field, operator, value))))
 
             const querySnapshot = await F.getDocs(q)
-            return querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+            return querySnapshot.docs.map(doc => fromFirestore(doc.data()))
         } catch (e) {
             throwWithOriginal(`Failed to query ${Type.toString()}: ${e.message}`, e, whereConditions)
         }
@@ -98,7 +113,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         F.onSnapshot(
             _docRef(id),
             snapshot => {
-                const data = snapshot.exists() ? Type.fromFirestore(decodeTimestamps(snapshot.data())) : null
+                const data = snapshot.exists() ? fromFirestore(snapshot.data()) : null
                 callback(data, null)
             },
             error => callback(null, error),
@@ -114,7 +129,7 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         return F.onSnapshot(
             q,
             querySnapshot => {
-                const items = querySnapshot.docs.map(doc => Type.fromFirestore(decodeTimestamps(doc.data())))
+                const items = querySnapshot.docs.map(doc => fromFirestore(doc.data()))
                 callback(items, null)
             },
             error => callback(null, error),

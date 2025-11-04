@@ -2,6 +2,18 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F122 - Type Generator Enhancements (2025-01-04)
+**Purpose:** Auto-generate Firestore serialization with LookupTable support
+
+- Added LookupTable field syntax '{Type:idField}' for type-safe collection fields
+- Generated toFirestore/fromFirestore methods with encode/decode timestamp parameters
+- Implemented underscore primitive pattern for overridable generated functions
+- LookupTables serialize to Firestore as object maps (key=ID, value=full object) for efficient lookups and atomic updates
+- Automatic nested serialization for Date fields and Tagged types
+- Updated facades to pass timestamp conversion functions to serialization methods
+- Eliminated manual timestampFields arrays - type information embedded in generated code
+- Fixed handlers to write full objects instead of scalar values to LookupTable fields
+
 ## F121 - Phone Authentication (2025-11-03)
 **Purpose:** SMS-based passwordless authentication using Firebase Auth client SDK
 
@@ -13,6 +25,18 @@ This document summarizes the specifications that were previously archived in `sp
 - Client stores email/displayName in memory during SMS verification flow
 - Updated security architecture documentation with correct Firebase Auth flow
 - No PII storage (phoneNumber not persisted in User document)
+
+## F122 - Type Generator Enhancements (2025-01-04)
+**Purpose:** Auto-generate Firestore serialization with LookupTable support
+
+- Added LookupTable field syntax '{Type:idField}' for type-safe collection fields
+- Generated toFirestore/fromFirestore methods with encode/decode timestamp parameters
+- Implemented underscore primitive pattern for overridable generated functions
+- LookupTables serialize to Firestore as object maps (key=ID, value=full object) for efficient lookups and atomic updates
+- Automatic nested serialization for Date fields and Tagged types
+- Updated facades to pass timestamp conversion functions to serialization methods
+- Eliminated manual timestampFields arrays - type information embedded in generated code
+- Fixed handlers to write full objects instead of scalar values to LookupTable fields
 
 ## F110 - Multi-Tenant Data Model (2025-10-31)
 **Purpose:** Core multi-tenant infrastructure with organizations, users, and RBAC

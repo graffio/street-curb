@@ -1,12 +1,19 @@
-/** {@link module:FunctionInfo} */
-/*  FunctionInfo generated from: modules/cli-type-generator/type-definitions/function-info.type.js
+/*  OrganizationMember generated from: modules/curb-map/type-definitions/organization-member.type.js
  *
- *  typeName    : "String",
- *  functionName: "String",
- *  node        : "Object",
- *  sourceCode  : "String"
+ *  organizationId
+ *      __fieldTypesReference: true,
+ *      source               : "@graffio/types",
+ *      property             : "organizationId",
+ *      fullReference        : "FieldTypes.organizationId"
+ *  role
+ *      __fieldTypesReference: true,
+ *      source               : "@graffio/types",
+ *      property             : "role",
+ *      fullReference        : "FieldTypes.role"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -15,19 +22,15 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const FunctionInfo = function FunctionInfo(typeName, functionName, node, sourceCode) {
-    const constructorName = 'FunctionInfo(typeName, functionName, node, sourceCode)'
-    R.validateArgumentLength(constructorName, 4, arguments)
-    R.validateString(constructorName, 'typeName', false, typeName)
-    R.validateString(constructorName, 'functionName', false, functionName)
-    R.validateObject(constructorName, 'node', false, node)
-    R.validateString(constructorName, 'sourceCode', false, sourceCode)
+const OrganizationMember = function OrganizationMember(organizationId, role) {
+    const constructorName = 'OrganizationMember(organizationId, role)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+    R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
 
     const result = Object.create(prototype)
-    result.typeName = typeName
-    result.functionName = functionName
-    result.node = node
-    result.sourceCode = sourceCode
+    result.organizationId = organizationId
+    result.role = role
     return result
 }
 
@@ -37,11 +40,11 @@ const FunctionInfo = function FunctionInfo(typeName, functionName, node, sourceC
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'FunctionInfo', enumerable: false },
+    '@@typeName': { value: 'OrganizationMember', enumerable: false },
 
     toString: {
         value: function () {
-            return `FunctionInfo(${R._toString(this.typeName)}, ${R._toString(this.functionName)}, ${R._toString(this.node)}, ${R._toString(this.sourceCode)})`
+            return `OrganizationMember(${R._toString(this.organizationId)}, ${R._toString(this.role)})`
         },
         enumerable: false,
     },
@@ -54,38 +57,38 @@ const prototype = Object.create(Object.prototype, {
     },
 
     constructor: {
-        value: FunctionInfo,
+        value: OrganizationMember,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-FunctionInfo.prototype = prototype
+OrganizationMember.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-FunctionInfo.toString = () => 'FunctionInfo'
-FunctionInfo.is = v => v && v['@@typeName'] === 'FunctionInfo'
+OrganizationMember.toString = () => 'OrganizationMember'
+OrganizationMember.is = v => v && v['@@typeName'] === 'OrganizationMember'
 
-FunctionInfo._from = o => FunctionInfo(o.typeName, o.functionName, o.node, o.sourceCode)
-FunctionInfo.from = FunctionInfo._from
+OrganizationMember._from = o => OrganizationMember(o.organizationId, o.role)
+OrganizationMember.from = OrganizationMember._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Firestore serialization
 //
 // -------------------------------------------------------------------------------------------------------------
-FunctionInfo._toFirestore = (o, encodeTimestamps) => ({ ...o })
+OrganizationMember._toFirestore = (o, encodeTimestamps) => ({ ...o })
 
-FunctionInfo._fromFirestore = (doc, decodeTimestamps) => FunctionInfo._from(doc)
+OrganizationMember._fromFirestore = (doc, decodeTimestamps) => OrganizationMember._from(doc)
 
 // Public aliases (override if necessary)
-FunctionInfo.toFirestore = FunctionInfo._toFirestore
-FunctionInfo.fromFirestore = FunctionInfo._fromFirestore
+OrganizationMember.toFirestore = OrganizationMember._toFirestore
+OrganizationMember.fromFirestore = OrganizationMember._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -93,4 +96,4 @@ FunctionInfo.fromFirestore = FunctionInfo._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { FunctionInfo }
+export { OrganizationMember }

@@ -95,39 +95,6 @@ export const Action = {
 }
 
 /*
- * Serialize action to Firestore format
- * @sig toFirestore :: Action -> Object
- */
-Action.toFirestore = action => ({ ...action, '@@tagName': action['@@tagName'] })
-
-/*
- * Deserialize action from Firestore format
- * @sig fromFirestore :: Object -> Action
- */
-// prettier-ignore
-Action.fromFirestore = o => {
-    const tagName = o['@@tagName']
-
-    // organization
-    if (tagName === 'OrganizationCreated'  ) return Action.OrganizationCreated.from(o)
-    if (tagName === 'OrganizationDeleted'  ) return Action.OrganizationDeleted.from(o)
-    if (tagName === 'OrganizationSuspended') return Action.OrganizationSuspended.from(o)
-    if (tagName === 'OrganizationUpdated'  ) return Action.OrganizationUpdated.from(o)
-    
-    // organization member
-    if (tagName === 'MemberAdded'          ) return Action.MemberAdded.from(o)
-    if (tagName === 'MemberRemoved'        ) return Action.MemberRemoved.from(o)
-    if (tagName === 'RoleChanged'          ) return Action.RoleChanged.from(o)
-    
-    // user
-    if (tagName === 'UserCreated'          ) return Action.UserCreated.from(o)
-    if (tagName === 'UserForgotten'        ) return Action.UserForgotten.from(o)
-    if (tagName === 'UserUpdated'          ) return Action.UserUpdated.from(o)
-    
-    throw new Error(`Unrecognized domain event ${tagName}`)
-}
-
-/*
  * Returns list of PII field names for a given action type.
  * These fields contain personally identifiable information and should be redacted in logs.
  * This is the definitive security boundary - separate from toLog which controls relevance.

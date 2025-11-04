@@ -71,48 +71,6 @@ const Action = {
     },
 }
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Action's prototype as ActionPrototype
-//
-// -------------------------------------------------------------------------------------------------------------
-// Type prototype with match method
-const ActionPrototype = {}
-
-Object.defineProperty(ActionPrototype, 'match', {
-    value: function (variants) {
-        // Validate all variants are handled
-        const requiredVariants = [
-            'OrganizationCreated',
-            'OrganizationDeleted',
-            'OrganizationSuspended',
-            'OrganizationUpdated',
-            'MemberAdded',
-            'MemberRemoved',
-            'RoleChanged',
-            'UserCreated',
-            'UserForgotten',
-            'UserUpdated',
-            'AuthenticationCompleted',
-        ]
-        requiredVariants.map(variant => {
-            if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
-            return variant
-        })
-
-        const variant = variants[this['@@tagName']]
-        return variant.call(variants, this)
-    },
-    enumerable: false,
-})
-
-Object.defineProperty(ActionPrototype, 'constructor', {
-    value: Action,
-    enumerable: false,
-    writable: true,
-    configurable: true,
-})
-
 // Add hidden properties
 Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
 Object.defineProperty(Action, '@@tagNames', {
@@ -130,6 +88,26 @@ Object.defineProperty(Action, '@@tagNames', {
         'AuthenticationCompleted',
     ],
     enumerable: false,
+})
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Action's prototype as ActionPrototype
+//
+// -------------------------------------------------------------------------------------------------------------
+// Type prototype with match method
+const ActionPrototype = {}
+
+Object.defineProperty(ActionPrototype, 'match', {
+    value: R.match(Action['@@tagNames']),
+    enumerable: false,
+})
+
+Object.defineProperty(ActionPrototype, 'constructor', {
+    value: Action,
+    enumerable: false,
+    writable: true,
+    configurable: true,
 })
 
 Action.prototype = ActionPrototype
@@ -196,7 +174,8 @@ OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
 // -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
 OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
-OrganizationCreatedConstructor.from = o => Action.OrganizationCreated(o.organizationId, o.projectId, o.name)
+OrganizationCreatedConstructor._from = o => Action.OrganizationCreated(o.organizationId, o.projectId, o.name)
+OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -256,7 +235,8 @@ OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
 // -------------------------------------------------------------------------------------------------------------
 OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
 OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
-OrganizationDeletedConstructor.from = o => Action.OrganizationDeleted(o.organizationId)
+OrganizationDeletedConstructor._from = o => Action.OrganizationDeleted(o.organizationId)
+OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -316,7 +296,8 @@ OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
 // -------------------------------------------------------------------------------------------------------------
 OrganizationSuspendedConstructor.is = val => val && val.constructor === OrganizationSuspendedConstructor
 OrganizationSuspendedConstructor.toString = () => 'Action.OrganizationSuspended'
-OrganizationSuspendedConstructor.from = o => Action.OrganizationSuspended(o.organizationId)
+OrganizationSuspendedConstructor._from = o => Action.OrganizationSuspended(o.organizationId)
+OrganizationSuspendedConstructor.from = OrganizationSuspendedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -380,7 +361,8 @@ OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
 // -------------------------------------------------------------------------------------------------------------
 OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
 OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
-OrganizationUpdatedConstructor.from = o => Action.OrganizationUpdated(o.organizationId, o.name, o.status)
+OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.organizationId, o.name, o.status)
+OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -446,7 +428,8 @@ MemberAddedConstructor.prototype = MemberAddedPrototype
 // -------------------------------------------------------------------------------------------------------------
 MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
 MemberAddedConstructor.toString = () => 'Action.MemberAdded'
-MemberAddedConstructor.from = o => Action.MemberAdded(o.userId, o.organizationId, o.displayName, o.role)
+MemberAddedConstructor._from = o => Action.MemberAdded(o.userId, o.organizationId, o.displayName, o.role)
+MemberAddedConstructor.from = MemberAddedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -508,7 +491,8 @@ MemberRemovedConstructor.prototype = MemberRemovedPrototype
 // -------------------------------------------------------------------------------------------------------------
 MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
 MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
-MemberRemovedConstructor.from = o => Action.MemberRemoved(o.userId, o.organizationId)
+MemberRemovedConstructor._from = o => Action.MemberRemoved(o.userId, o.organizationId)
+MemberRemovedConstructor.from = MemberRemovedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -572,7 +556,8 @@ RoleChangedConstructor.prototype = RoleChangedPrototype
 // -------------------------------------------------------------------------------------------------------------
 RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
 RoleChangedConstructor.toString = () => 'Action.RoleChanged'
-RoleChangedConstructor.from = o => Action.RoleChanged(o.userId, o.organizationId, o.role)
+RoleChangedConstructor._from = o => Action.RoleChanged(o.userId, o.organizationId, o.role)
+RoleChangedConstructor.from = RoleChangedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -638,7 +623,8 @@ UserCreatedConstructor.prototype = UserCreatedPrototype
 // -------------------------------------------------------------------------------------------------------------
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
-UserCreatedConstructor.from = o => Action.UserCreated(o.userId, o.email, o.displayName, o.authUid)
+UserCreatedConstructor._from = o => Action.UserCreated(o.userId, o.email, o.displayName, o.authUid)
+UserCreatedConstructor.from = UserCreatedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -700,7 +686,8 @@ UserForgottenConstructor.prototype = UserForgottenPrototype
 // -------------------------------------------------------------------------------------------------------------
 UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
 UserForgottenConstructor.toString = () => 'Action.UserForgotten'
-UserForgottenConstructor.from = o => Action.UserForgotten(o.userId, o.reason)
+UserForgottenConstructor._from = o => Action.UserForgotten(o.userId, o.reason)
+UserForgottenConstructor.from = UserForgottenConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -762,7 +749,8 @@ UserUpdatedConstructor.prototype = UserUpdatedPrototype
 // -------------------------------------------------------------------------------------------------------------
 UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
 UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
-UserUpdatedConstructor.from = o => Action.UserUpdated(o.userId, o.displayName)
+UserUpdatedConstructor._from = o => Action.UserUpdated(o.userId, o.displayName)
+UserUpdatedConstructor.from = UserUpdatedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -824,34 +812,80 @@ AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
 // -------------------------------------------------------------------------------------------------------------
 AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
 AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
-AuthenticationCompletedConstructor.from = o => Action.AuthenticationCompleted(o.email, o.displayName)
+AuthenticationCompletedConstructor._from = o => Action.AuthenticationCompleted(o.email, o.displayName)
+AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// Firestore serialization
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: toFirestore
-Action.toFirestore = action => ({
-    ...action,
-    '@@tagName': action['@@tagName'],
-})
-
-// Additional function: fromFirestore
-Action.fromFirestore = o => {
+Action._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
-    if (tagName === 'OrganizationCreated') return Action.OrganizationCreated.from(o)
-    if (tagName === 'OrganizationDeleted') return Action.OrganizationDeleted.from(o)
-    if (tagName === 'OrganizationSuspended') return Action.OrganizationSuspended.from(o)
-    if (tagName === 'OrganizationUpdated') return Action.OrganizationUpdated.from(o)
-    if (tagName === 'MemberAdded') return Action.MemberAdded.from(o)
-    if (tagName === 'MemberRemoved') return Action.MemberRemoved.from(o)
-    if (tagName === 'RoleChanged') return Action.RoleChanged.from(o)
-    if (tagName === 'UserCreated') return Action.UserCreated.from(o)
-    if (tagName === 'UserForgotten') return Action.UserForgotten.from(o)
-    if (tagName === 'UserUpdated') return Action.UserUpdated.from(o)
-    throw new Error(`Unrecognized domain event ${tagName}`)
+    const variant = Action[tagName]
+    if (variant && variant.toFirestore) {
+        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
+    }
+    return { ...o, '@@tagName': tagName }
 }
 
-// Additional function: piiFields
+Action._fromFirestore = (doc, decodeTimestamps) => {
+    const tagName = doc['@@tagName']
+    if (tagName === 'OrganizationCreated')
+        return Action.OrganizationCreated.fromFirestore
+            ? Action.OrganizationCreated.fromFirestore(doc, decodeTimestamps)
+            : Action.OrganizationCreated.from(doc)
+    if (tagName === 'OrganizationDeleted')
+        return Action.OrganizationDeleted.fromFirestore
+            ? Action.OrganizationDeleted.fromFirestore(doc, decodeTimestamps)
+            : Action.OrganizationDeleted.from(doc)
+    if (tagName === 'OrganizationSuspended')
+        return Action.OrganizationSuspended.fromFirestore
+            ? Action.OrganizationSuspended.fromFirestore(doc, decodeTimestamps)
+            : Action.OrganizationSuspended.from(doc)
+    if (tagName === 'OrganizationUpdated')
+        return Action.OrganizationUpdated.fromFirestore
+            ? Action.OrganizationUpdated.fromFirestore(doc, decodeTimestamps)
+            : Action.OrganizationUpdated.from(doc)
+    if (tagName === 'MemberAdded')
+        return Action.MemberAdded.fromFirestore
+            ? Action.MemberAdded.fromFirestore(doc, decodeTimestamps)
+            : Action.MemberAdded.from(doc)
+    if (tagName === 'MemberRemoved')
+        return Action.MemberRemoved.fromFirestore
+            ? Action.MemberRemoved.fromFirestore(doc, decodeTimestamps)
+            : Action.MemberRemoved.from(doc)
+    if (tagName === 'RoleChanged')
+        return Action.RoleChanged.fromFirestore
+            ? Action.RoleChanged.fromFirestore(doc, decodeTimestamps)
+            : Action.RoleChanged.from(doc)
+    if (tagName === 'UserCreated')
+        return Action.UserCreated.fromFirestore
+            ? Action.UserCreated.fromFirestore(doc, decodeTimestamps)
+            : Action.UserCreated.from(doc)
+    if (tagName === 'UserForgotten')
+        return Action.UserForgotten.fromFirestore
+            ? Action.UserForgotten.fromFirestore(doc, decodeTimestamps)
+            : Action.UserForgotten.from(doc)
+    if (tagName === 'UserUpdated')
+        return Action.UserUpdated.fromFirestore
+            ? Action.UserUpdated.fromFirestore(doc, decodeTimestamps)
+            : Action.UserUpdated.from(doc)
+    if (tagName === 'AuthenticationCompleted')
+        return Action.AuthenticationCompleted.fromFirestore
+            ? Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
+            : Action.AuthenticationCompleted.from(doc)
+    throw new Error(`Unrecognized Action variant: ${tagName}`)
+}
+
+// Public aliases (can be overridden)
+Action.toFirestore = Action._toFirestore
+Action.fromFirestore = Action._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
 Action.piiFields = rawData => {
     const tagName = rawData['@@tagName']
     if (tagName === 'OrganizationCreated') return []
@@ -868,7 +902,6 @@ Action.piiFields = rawData => {
     return []
 }
 
-// Additional function: toLog
 Action.toLog = a => {
     const redactField = field => {
         if (result[field]) result[field] = `${field}: ${result[field].length}`
@@ -920,7 +953,6 @@ Action.toLog = a => {
     return result
 }
 
-// Additional function: redactPii
 Action.redactPii = rawData => {
     const redactField = field => {
         if (result[field]) result[field] = `${field}: ${result[field].length}`
@@ -937,7 +969,6 @@ Action.redactPii = rawData => {
     return result
 }
 
-// Additional function: getSubject
 Action.getSubject = action =>
     action.match({
         OrganizationCreated: a => ({
@@ -986,7 +1017,6 @@ Action.getSubject = action =>
         }),
     })
 
-// Additional function: mayI
 Action.mayI = (action, actorRole, actorId) =>
     action.match({
         MemberAdded: () => ['admin'].includes(actorRole),

@@ -15,8 +15,7 @@ const handleUserForgotten = async (logger, fsContext, actionRequest) => {
         return
     }
 
-    const organizations = user.organizations || {}
-    const orgIds = Object.keys(organizations)
+    const orgIds = user.organizations.map(orgMember => orgMember.organizationId)
 
     // Phase 1: Read
     const organizationsToUpdate = []
@@ -31,7 +30,7 @@ const handleUserForgotten = async (logger, fsContext, actionRequest) => {
 
     await fsContext.users.delete(userId)
     for (const { orgId, member } of organizationsToUpdate) {
-        const memberData = fsContext.encodeTimestamps(Member, { ...member, removedAt, removedBy: actorId })
+        const memberData = Member.toFirestore({ ...member, removedAt, removedBy: actorId }, fsContext.encodeTimestamp)
         await fsContext.organizations.update(orgId, { [`members.${userId}`]: memberData })
     }
 

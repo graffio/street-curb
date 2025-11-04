@@ -16,7 +16,7 @@ const handleUserUpdated = async (logger, fsContext, actionRequest) => {
 
     // Read user to find all their organizations
     const user = await fsContext.users.read(userId)
-    const organizationIds = Object.keys(user.organizations)
+    const organizationIds = user.organizations.map(orgMember => orgMember.organizationId)
 
     const metadata = updatedMetadata(fsContext, actionRequest)
     await fsContext.users.update(userId, { displayName, ...metadata })

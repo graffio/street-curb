@@ -8,6 +8,8 @@
 
 import * as R from '@graffio/cli-type-generator'
 
+import { Array } from './array.js'
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // main constructor
@@ -64,6 +66,40 @@ ImportInfo.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 ImportInfo.toString = () => 'ImportInfo'
 ImportInfo.is = v => v && v['@@typeName'] === 'ImportInfo'
-ImportInfo.from = o => ImportInfo(o.source, o.specifiers)
+
+ImportInfo._from = o => ImportInfo(o.source, o.specifiers)
+ImportInfo.from = ImportInfo._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+ImportInfo._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        source: o.source,
+        specifiers: Array.toFirestore(o.specifiers, encodeTimestamps),
+    }
+
+    return result
+}
+
+ImportInfo._fromFirestore = (doc, decodeTimestamps) =>
+    ImportInfo._from({
+        source: doc.source,
+        specifiers: Array.fromFirestore
+            ? Array.fromFirestore(doc.specifiers, decodeTimestamps)
+            : Array.from(doc.specifiers),
+    })
+
+// Public aliases (override if necessary)
+ImportInfo.toFirestore = ImportInfo._toFirestore
+ImportInfo.fromFirestore = ImportInfo._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
 
 export { ImportInfo }

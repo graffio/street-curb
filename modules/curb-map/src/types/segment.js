@@ -64,12 +64,29 @@ Segment.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 Segment.toString = () => 'Segment'
 Segment.is = v => v && v['@@typeName'] === 'Segment'
-Segment.from = o => Segment(o.use, o.length)
+
+Segment._from = o => Segment(o.use, o.length)
+Segment.from = Segment._from
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: updateUse
+Segment._toFirestore = (o, encodeTimestamps) => ({ ...o })
+
+Segment._fromFirestore = (doc, decodeTimestamps) => Segment._from(doc)
+
+// Public aliases (override if necessary)
+Segment.toFirestore = Segment._toFirestore
+Segment.fromFirestore = Segment._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
 Segment.updateUse = (segment, use) => Segment(use, segment.length)
 
 export { Segment }

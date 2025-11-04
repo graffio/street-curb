@@ -1,3 +1,4 @@
+import { LookupTable } from '@graffio/functional'
 import { Member } from '../../../src/types/index.js'
 import { generateMetadata } from '../shared.js'
 
@@ -16,7 +17,14 @@ const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
 
     // Write to Firestore collections
     const status = 'active'
-    const organization = { id: organizationId, name, status, defaultProjectId: projectId, members: [], ...metadata }
+    const organization = {
+        id: organizationId,
+        name,
+        status,
+        defaultProjectId: projectId,
+        members: LookupTable([], Member, 'userId'),
+        ...metadata,
+    }
     await fsContext.organizations.write(organization)
     logger.flowStep('Organization created')
 
@@ -24,16 +32,15 @@ const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
     await fsContext.projects.write(project)
     logger.flowStep('Project created')
 
-    const memberData = fsContext.encodeTimestamps(Member, {
-        userId: actorId,
-        displayName: actor.displayName,
-        role: 'admin',
-        addedAt: new Date(),
-        addedBy: actorId,
-    })
+    const memberData = Member.toFirestore(
+        { userId: actorId, displayName: actor.displayName, role: 'admin', addedAt: new Date(), addedBy: actorId },
+        fsContext.encodeTimestamp,
+    )
 
     await fsContext.organizations.update(organizationId, { [`members.${actorId}`]: memberData })
-    await fsContext.users.update(actorId, { [`organizations.${organizationId}`]: 'admin' })
+
+    const orgMember = { organizationId, role: 'admin' }
+    await fsContext.users.update(actorId, { [`organizations.${organizationId}`]: orgMember })
     logger.flowStep('Creator added as admin')
 }
 

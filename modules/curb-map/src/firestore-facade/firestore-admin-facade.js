@@ -10,28 +10,28 @@ const getDefaultAdminDb = () => {
     return admin.firestore()
 }
 
-const encodeTimestamps = (Type, data) => {
-    const timestampFields = Type.timestampFields || []
-    if (!timestampFields.length || data == null) return data
+/*
+ * Encode a single Date to Firestore Timestamp
+ * @sig encodeTimestamp :: Date -> Timestamp
+ */
+const encodeTimestamp = date => admin.firestore.Timestamp.fromDate(date)
 
-    const result = { ...data }
-    timestampFields.forEach(field => {
-        if (result[field]) result[field] = admin.firestore.Timestamp.fromDate(result[field])
-    })
-
-    return result
-}
-
-const decodeTimestamps = (Type, data) => {
-    const timestampFields = Type.timestampFields || []
-    if (!timestampFields.length || data == null) return data
-
-    const result = { ...data }
-    timestampFields.forEach(field => {
-        if (result[field]) result[field] = result[field].toDate()
-    })
-
-    return result
+/*
+ * Decode a single Firestore Timestamp to Date
+ * @sig decodeTimestamp :: Timestamp -> Date
+ */
+const decodeTimestamp = timestamp => {
+    if (!timestamp || typeof timestamp.toDate !== 'function') {
+        console.error('decodeTimestamp received invalid timestamp:', {
+            type: typeof timestamp,
+            constructor: timestamp?.constructor?.name,
+            hasToDate: 'toDate' in timestamp,
+            toDateType: typeof timestamp?.toDate,
+            value: timestamp,
+        })
+        throw new Error(`Expected Firestore Timestamp with toDate() method, got: ${JSON.stringify(timestamp)}`)
+    }
+    return timestamp.toDate()
 }
 
 /*
@@ -40,8 +40,22 @@ const decodeTimestamps = (Type, data) => {
  *  Facade = { [functionName]: Function }
  */
 const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDefaultAdminDb()) => {
-    const fromFirestore = (Type, data) => Type.fromFirestore(decodeTimestamps(Type, data), decodeTimestamps)
-    const toFirestore = (Type, data) => Type.toFirestore(encodeTimestamps(Type, data), encodeTimestamps)
+    const fromFirestore = (Type, data) => Type.fromFirestore(data, decodeTimestamp)
+    const toFirestore = (Type, data) => Type.toFirestore(data, encodeTimestamp)
+
+    // For partial updates, encode only Date fields (nested types not supported in partial updates)
+    const toFirestorePartial = fields => {
+        const encoded = {}
+        for (const [key, value] of Object.entries(fields))
+            if (value instanceof Date) encoded[key] = encodeTimestamp(value)
+            else if (value && typeof value === 'object' && value.idField)
+                throw new Error(
+                    `Partial update of LookupTable field '${key}' not supported. Use write() with full object instead.`,
+                )
+            else encoded[key] = value
+
+        return encoded
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
     // READ
@@ -102,6 +116,7 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
         try {
             if (!Type.is(record)) record = Type.from(record)
             const firestoreData = toFirestore(Type, record)
+
             tx ? await tx.set(_docRef(record.id), firestoreData) : await _docRef(record.id).create(firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to create ${Type.toString()}: ${e.message}`, e, record)
@@ -111,11 +126,12 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
     /*
      * Partial update operation - updates specified fields only, fails if document doesn't exist.
      * Contrast with write() which replaces entire document, and create() which only works for new documents.
+     * Note: Does not support partial updates of nested types (LookupTable, Tagged). Use write() for those.
      * @sig update :: (Id, Object) -> Promise Void
      */
     const update = async (id, fields) => {
         try {
-            const firestoreData = encodeTimestamps(Type, fields)
+            const firestoreData = toFirestorePartial(fields)
             tx ? await tx.update(_docRef(id), firestoreData) : await _docRef(id).update(firestoreData)
         } catch (e) {
             throwWithOriginal(`Failed to update ${Type.toString()}: ${e.message}`, e, { id, fields })
@@ -244,7 +260,5 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
 }
 
 FirestoreAdminFacade.deleteField = () => admin.firestore.FieldValue.delete()
-FirestoreAdminFacade.encodeTimestamps = encodeTimestamps
-FirestoreAdminFacade.decodeTimestamps = decodeTimestamps
 
 export { FirestoreAdminFacade }

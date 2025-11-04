@@ -30,7 +30,8 @@ test('Given UserCreated action', t => {
             const user = await fsContext.users.read(userId)
 
             t.ok(user.organizations, 'Then organizations map exists')
-            t.same(user.organizations, {}, 'Then organizations map is empty')
+            t.same(user.organizations, [], 'Then organizations is an empty LookupTable')
+            t.same(user.organizations.idField, 'organizationId', 'Then organizations is an empty LookupTable')
 
             // Verify userId claim was set on target user's Firebase Auth record
             const authUser = await admin.auth().getUser(targetAuthUser.uid)

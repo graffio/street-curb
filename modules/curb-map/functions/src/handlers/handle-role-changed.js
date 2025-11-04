@@ -25,11 +25,13 @@ const handleRoleChanged = async (logger, fsContext, actionRequest) => {
     }
 
     // Update member with new role
-    const memberData = fsContext.encodeTimestamps(Member, { ...member, role })
+    const memberData = Member.toFirestore({ ...member, role }, fsContext.encodeTimestamp)
 
     // Atomic update: write whole member object and update user.organizations[orgId]
     await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })
-    await fsContext.users.update(userId, { [`organizations.${organizationId}`]: role })
+
+    const orgMember = { organizationId, role }
+    await fsContext.users.update(userId, { [`organizations.${organizationId}`]: orgMember })
 
     logger.flowStep('Role changed')
 }

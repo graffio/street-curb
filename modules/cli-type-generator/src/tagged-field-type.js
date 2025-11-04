@@ -84,6 +84,11 @@ const taggedToString = ({ taggedType, optional, arrayDepth }) => {
     return wrapOptional(taggedType, optional)
 }
 
+const lookupTableToString = ({ taggedType, idField, optional }) => {
+    const root = `{${taggedType}:${idField}}`
+    return wrapOptional(root, optional)
+}
+
 const toString = fieldType => {
     const { baseType } = fieldType
 
@@ -102,6 +107,8 @@ const toString = fieldType => {
             return anyToString(fieldType)
         case 'Tagged':
             return taggedToString(fieldType)
+        case 'LookupTable':
+            return lookupTableToString(fieldType)
         default:
             throw new Error(`Don't understand type ${baseType}`)
     }
@@ -199,7 +206,43 @@ const fromString = s => {
     if (s.match(/Date/)) return _fromDate(s)
     if (s.match(/Any/)) return _fromAny(s)
 
+    // Check for LookupTable syntax before falling through to tagged types
+    if (s.match(/^\{/)) return _fromLookupTable(s)
+
     return _fromTagged(s)
+}
+
+/*
+ * Check if string matches LookupTable syntax: '{TypeName:idField}'
+ * @sig checkLookupTable :: String -> { typeName: String, idField: String } | false
+ */
+const checkLookupTable = s => {
+    const match = s.match(/^\{([A-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\}$/)
+    if (!match) return false
+
+    const [, typeName, idField] = match
+    return { typeName, idField }
+}
+
+/*
+ * Parse LookupTable field type from string
+ * @sig _fromLookupTable :: String -> FieldType
+ */
+const _fromLookupTable = s => {
+    let optional
+    ;[s, optional] = checkOptional(s)
+
+    const lookupTable = checkLookupTable(s)
+    if (!lookupTable) throw new Error(`Invalid LookupTable syntax: ${s}`)
+
+    return {
+        baseType: 'LookupTable',
+        taggedType: lookupTable.typeName,
+        idField: lookupTable.idField,
+        optional,
+        arrayDepth: 0,
+        regex: false,
+    }
 }
 
 const assoc = (k, v, o) => Object.assign({}, o, { [k]: v })

@@ -253,9 +253,8 @@ const resolveMemberExpressionValue = (node, imports) => {
 const resolveObjectExpressionValue = (node, imports) => {
     const result = {}
     node.properties.map(prop => {
-        if (prop.type === 'Property') {
-            result[prop.key.name] = resolvePropertyValue(prop.value, imports)
-        }
+        if (prop.type === 'Property') result[prop.key.name] = resolvePropertyValue(prop.value, imports)
+
         return prop
     })
     return result
@@ -322,4 +321,29 @@ const parseTypeDefinitionFile = filePath => {
     }
 }
 
-export { parseTypeDefinitionFile }
+/*
+ * Check if a function name is a "standard" generated function
+ * @sig isStandardFunction :: String -> Boolean
+ */
+const isStandardFunction = functionName => {
+    const standardFunctions = [
+        'from',
+        'is',
+        'toString',
+        'toFirestore',
+        'fromFirestore',
+        '_from',
+        '_toFirestore',
+        '_fromFirestore',
+    ]
+    return standardFunctions.includes(functionName)
+}
+
+/*
+ * Get list of standard functions that exist in the type definition
+ * @sig getExistingStandardFunctions :: [FunctionInfo] -> [String]
+ */
+const getExistingStandardFunctions = functions =>
+    functions.filter(fn => isStandardFunction(fn.functionName)).map(fn => fn.functionName)
+
+export { parseTypeDefinitionFile, getExistingStandardFunctions }
