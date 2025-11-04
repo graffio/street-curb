@@ -120,7 +120,8 @@ ActionRequest.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 ActionRequest.toString = () => 'ActionRequest'
 ActionRequest.is = v => v && v['@@typeName'] === 'ActionRequest'
-ActionRequest.from = o =>
+
+ActionRequest._from = o =>
     ActionRequest(
         o.id,
         o.action,
@@ -137,44 +138,67 @@ ActionRequest.from = o =>
         o.createdAt,
         o.processedAt,
     )
+ActionRequest.from = ActionRequest._from
 
 // -------------------------------------------------------------------------------------------------------------
-// timestamp fields
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-ActionRequest.timestampFields = ['createdAt', 'processedAt']
+ActionRequest._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        id: o.id,
+        action: Action.toFirestore(o.action, encodeTimestamps),
+        actorId: o.actorId,
+        subjectId: o.subjectId,
+        subjectType: o.subjectType,
+        idempotencyKey: o.idempotencyKey,
+        correlationId: o.correlationId,
+        schemaVersion: o.schemaVersion,
+        createdAt: encodeTimestamps(o.createdAt),
+    }
 
-// -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
-// -------------------------------------------------------------------------------------------------------------
-// Additional function: toFirestore
-ActionRequest.toFirestore = actionRequest => ({
-    ...actionRequest,
-    actor: {
-        id: actionRequest.actorId,
-        type: 'user',
-    },
-    subject: {
-        id: actionRequest.subjectId,
-        type: actionRequest.subjectType,
-    },
-    action: Action.toFirestore(actionRequest.action),
-    createdAt: actionRequest.createdAt,
-    processedAt: actionRequest?.processedAt,
-})
+    if (o.organizationId != null) result.organizationId = o.organizationId
 
-// Additional function: fromFirestore
-ActionRequest.fromFirestore = actionRequest =>
-    ActionRequest.from({
-        ...actionRequest,
-        actorId: actionRequest.actor.id,
-        subjectId: actionRequest.subject.id,
-        subjectType: actionRequest.subject.type,
-        action: Action.fromFirestore(actionRequest.action),
-        createdAt: actionRequest.createdAt,
-        processedAt: actionRequest?.processedAt,
+    if (o.projectId != null) result.projectId = o.projectId
+
+    if (o.resultData != null) result.resultData = o.resultData
+
+    if (o.error != null) result.error = o.error
+
+    if (o.processedAt != null) result.processedAt = encodeTimestamps(o.processedAt)
+
+    return result
+}
+
+ActionRequest._fromFirestore = (doc, decodeTimestamps) =>
+    ActionRequest._from({
+        id: doc.id,
+        action: Action.fromFirestore ? Action.fromFirestore(doc.action, decodeTimestamps) : Action.from(doc.action),
+        actorId: doc.actorId,
+        subjectId: doc.subjectId,
+        subjectType: doc.subjectType,
+        organizationId: doc.organizationId,
+        projectId: doc.projectId,
+        idempotencyKey: doc.idempotencyKey,
+        resultData: doc.resultData,
+        error: doc.error,
+        correlationId: doc.correlationId,
+        schemaVersion: doc.schemaVersion,
+        createdAt: decodeTimestamps(doc.createdAt),
+        processedAt: doc.processedAt != null ? decodeTimestamps(doc.processedAt) : undefined,
     })
 
-// Additional function: toLog
+// Public aliases (override if necessary)
+ActionRequest.toFirestore = ActionRequest._toFirestore
+ActionRequest.fromFirestore = ActionRequest._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
 ActionRequest.toLog = o => {
     const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'idempotencyKey', 'correlationId'], o)
     r.action = Action.toLog(o.action)

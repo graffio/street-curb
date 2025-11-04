@@ -81,20 +81,48 @@ Project.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 Project.toString = () => 'Project'
 Project.is = v => v && v['@@typeName'] === 'Project'
-Project.from = o => Project(o.id, o.organizationId, o.name, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
+
+Project._from = o => Project(o.id, o.organizationId, o.name, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
+Project.from = Project._from
 
 // -------------------------------------------------------------------------------------------------------------
-// timestamp fields
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-Project.timestampFields = ['createdAt', 'updatedAt']
+Project._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        id: o.id,
+        organizationId: o.organizationId,
+        name: o.name,
+        createdAt: encodeTimestamps(o.createdAt),
+        createdBy: o.createdBy,
+        updatedAt: encodeTimestamps(o.updatedAt),
+        updatedBy: o.updatedBy,
+    }
+
+    return result
+}
+
+Project._fromFirestore = (doc, decodeTimestamps) =>
+    Project._from({
+        id: doc.id,
+        organizationId: doc.organizationId,
+        name: doc.name,
+        createdAt: decodeTimestamps(doc.createdAt),
+        createdBy: doc.createdBy,
+        updatedAt: decodeTimestamps(doc.updatedAt),
+        updatedBy: doc.updatedBy,
+    })
+
+// Public aliases (override if necessary)
+Project.toFirestore = Project._toFirestore
+Project.fromFirestore = Project._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
+//
 // Additional functions copied from type definition file
+//
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: fromFirestore
-Project.fromFirestore = Project.from
-
-// Additional function: toFirestore
-Project.toFirestore = o => ({ ...o })
 
 export { Project }

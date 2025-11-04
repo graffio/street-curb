@@ -35,6 +35,13 @@ const OperationDetails = {
     },
 }
 
+// Add hidden properties
+Object.defineProperty(OperationDetails, '@@typeName', { value: 'OperationDetails', enumerable: false })
+Object.defineProperty(OperationDetails, '@@tagNames', {
+    value: ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation'],
+    enumerable: false,
+})
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Set up OperationDetails's prototype as OperationDetailsPrototype
@@ -44,17 +51,7 @@ const OperationDetails = {
 const OperationDetailsPrototype = {}
 
 Object.defineProperty(OperationDetailsPrototype, 'match', {
-    value: function (variants) {
-        // Validate all variants are handled
-        const requiredVariants = ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation']
-        requiredVariants.map(variant => {
-            if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
-            return variant
-        })
-
-        const variant = variants[this['@@tagName']]
-        return variant.call(variants, this)
-    },
+    value: R.match(OperationDetails['@@tagNames']),
     enumerable: false,
 })
 
@@ -63,13 +60,6 @@ Object.defineProperty(OperationDetailsPrototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
-})
-
-// Add hidden properties
-Object.defineProperty(OperationDetails, '@@typeName', { value: 'OperationDetails', enumerable: false })
-Object.defineProperty(OperationDetails, '@@tagNames', {
-    value: ['ShellExecution', 'FirestoreOperation', 'GcpProjectOperation'],
-    enumerable: false,
 })
 
 OperationDetails.prototype = OperationDetailsPrototype
@@ -136,7 +126,8 @@ ShellExecutionConstructor.prototype = ShellExecutionPrototype
 // -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor.is = val => val && val.constructor === ShellExecutionConstructor
 ShellExecutionConstructor.toString = () => 'OperationDetails.ShellExecution'
-ShellExecutionConstructor.from = o => OperationDetails.ShellExecution(o.command, o.duration, o.outputPreview)
+ShellExecutionConstructor._from = o => OperationDetails.ShellExecution(o.command, o.duration, o.outputPreview)
+ShellExecutionConstructor.from = ShellExecutionConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -200,7 +191,8 @@ FirestoreOperationConstructor.prototype = FirestoreOperationPrototype
 // -------------------------------------------------------------------------------------------------------------
 FirestoreOperationConstructor.is = val => val && val.constructor === FirestoreOperationConstructor
 FirestoreOperationConstructor.toString = () => 'OperationDetails.FirestoreOperation'
-FirestoreOperationConstructor.from = o => OperationDetails.FirestoreOperation(o.operation, o.collection, o.documentId)
+FirestoreOperationConstructor._from = o => OperationDetails.FirestoreOperation(o.operation, o.collection, o.documentId)
+FirestoreOperationConstructor.from = FirestoreOperationConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -264,25 +256,46 @@ GcpProjectOperationConstructor.prototype = GcpProjectOperationPrototype
 // -------------------------------------------------------------------------------------------------------------
 GcpProjectOperationConstructor.is = val => val && val.constructor === GcpProjectOperationConstructor
 GcpProjectOperationConstructor.toString = () => 'OperationDetails.GcpProjectOperation'
-GcpProjectOperationConstructor.from = o => OperationDetails.GcpProjectOperation(o.projectId, o.folderId, o.region)
+GcpProjectOperationConstructor._from = o => OperationDetails.GcpProjectOperation(o.projectId, o.folderId, o.region)
+GcpProjectOperationConstructor.from = GcpProjectOperationConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+// Firestore serialization
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: toFirestore
-OperationDetails.toFirestore = o =>
-    o.match({
-        ShellExecution: _ => JSON.stringify(o),
-        FirestoreOperation: _ => JSON.stringify(o),
-        GcpProjectOperation: _ => JSON.stringify(o),
-    })
-
-// Additional function: fromFirestore
-OperationDetails.fromFirestore = o => {
-    if (o['@@tagName'] === 'ShellExecution') return OperationDetails.ShellExecution.from(o)
-    if (o['@@tagName'] === 'FirestoreOperation') return OperationDetails.FirestoreOperation.from(o)
-    if (o['@@tagName'] === 'GcpProjectOperation') return OperationDetails.GcpProjectOperation.from(o)
-    throw new Error(`Unrecognized operation detail ${o['@@tagName']}`)
+OperationDetails._toFirestore = (o, encodeTimestamps) => {
+    const tagName = o['@@tagName']
+    const variant = OperationDetails[tagName]
+    if (variant && variant.toFirestore) {
+        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
+    }
+    return { ...o, '@@tagName': tagName }
 }
+
+OperationDetails._fromFirestore = (doc, decodeTimestamps) => {
+    const tagName = doc['@@tagName']
+    if (tagName === 'ShellExecution')
+        return OperationDetails.ShellExecution.fromFirestore
+            ? OperationDetails.ShellExecution.fromFirestore(doc, decodeTimestamps)
+            : OperationDetails.ShellExecution.from(doc)
+    if (tagName === 'FirestoreOperation')
+        return OperationDetails.FirestoreOperation.fromFirestore
+            ? OperationDetails.FirestoreOperation.fromFirestore(doc, decodeTimestamps)
+            : OperationDetails.FirestoreOperation.from(doc)
+    if (tagName === 'GcpProjectOperation')
+        return OperationDetails.GcpProjectOperation.fromFirestore
+            ? OperationDetails.GcpProjectOperation.fromFirestore(doc, decodeTimestamps)
+            : OperationDetails.GcpProjectOperation.from(doc)
+    throw new Error(`Unrecognized OperationDetails variant: ${tagName}`)
+}
+
+// Public aliases (can be overridden)
+OperationDetails.toFirestore = OperationDetails._toFirestore
+OperationDetails.fromFirestore = OperationDetails._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
 
 export { OperationDetails }

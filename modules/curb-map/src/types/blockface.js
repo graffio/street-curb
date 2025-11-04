@@ -76,26 +76,60 @@ Blockface.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 Blockface.toString = () => 'Blockface'
 Blockface.is = v => v && v['@@typeName'] === 'Blockface'
-Blockface.from = o => Blockface(o.id, o.geometry, o.streetName, o.cnnId, o.segments)
+
+Blockface._from = o => Blockface(o.id, o.geometry, o.streetName, o.cnnId, o.segments)
+Blockface.from = Blockface._from
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: _roundToPrecision
+Blockface._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        id: o.id,
+        geometry: o.geometry,
+        streetName: o.streetName,
+        segments: o.segments.map(item1 => Segment.toFirestore(item1, encodeTimestamps)),
+    }
+
+    if (o.cnnId != null) result.cnnId = o.cnnId
+
+    return result
+}
+
+Blockface._fromFirestore = (doc, decodeTimestamps) =>
+    Blockface._from({
+        id: doc.id,
+        geometry: doc.geometry,
+        streetName: doc.streetName,
+        cnnId: doc.cnnId,
+        segments: doc.segments.map(item1 =>
+            Segment.fromFirestore ? Segment.fromFirestore(item1, decodeTimestamps) : Segment.from(item1),
+        ),
+    })
+
+// Public aliases (override if necessary)
+Blockface.toFirestore = Blockface._toFirestore
+Blockface.fromFirestore = Blockface._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
 Blockface._roundToPrecision = value => Math.round(value * 10) / 10
 
-// Additional function: setSegments
 Blockface.setSegments = (blockface, segments) =>
     Blockface(blockface.id, blockface.geometry, blockface.streetName, blockface.cnnId, segments)
 
-// Additional function: updateSegmentUse
 Blockface.updateSegmentUse = (blockface, index, use) => {
     if (!blockface?.segments[index]) return blockface
     const segments = blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment))
     return Blockface.setSegments(blockface, segments)
 }
 
-// Additional function: updateSegmentLength
 Blockface.updateSegmentLength = (blockface, index, newLength) => {
     if (!blockface) return blockface
     if (!blockface.segments[index]) return blockface
@@ -124,7 +158,6 @@ Blockface.updateSegmentLength = (blockface, index, newLength) => {
     return Blockface.setSegments(blockface, newSegments)
 }
 
-// Additional function: addSegment
 Blockface.addSegment = (blockface, targetIndex) => {
     if (!blockface) return blockface
     const blockfaceLength = Blockface.totalLength(blockface)
@@ -139,7 +172,6 @@ Blockface.addSegment = (blockface, targetIndex) => {
     return Blockface.setSegments(blockface, newSegments)
 }
 
-// Additional function: addSegmentLeft
 Blockface.addSegmentLeft = (blockface, index, desiredLength = 10) => {
     const calculateSplitLengths = (targetLength, desired) =>
         targetLength >= desired
@@ -163,14 +195,12 @@ Blockface.addSegmentLeft = (blockface, index, desiredLength = 10) => {
     return Blockface.setSegments(blockface, newSegments)
 }
 
-// Additional function: replaceSegments
 Blockface.replaceSegments = (blockface, segments) => {
     if (!blockface) return blockface
     const newTaggedSegments = segments.map(seg => Segment(seg.use, seg.length))
     return Blockface.setSegments(blockface, newTaggedSegments)
 }
 
-// Additional function: totalLength
 Blockface.totalLength = blockface => {
     if (!blockface?.geometry?.coordinates) return 240
     const lengthKm = length({
@@ -181,22 +211,18 @@ Blockface.totalLength = blockface => {
     return Math.round(lengthKm * 3280.84)
 }
 
-// Additional function: totalOfSegments
 Blockface.totalOfSegments = blockface => blockface.segments.reduce((sum, segment) => sum + segment.length, 0)
 
-// Additional function: unknownRemaining
 Blockface.unknownRemaining = blockface => {
     if (!blockface) return 0
     return Blockface.totalLength(blockface) - Blockface.totalOfSegments(blockface)
 }
 
-// Additional function: isComplete
 Blockface.isComplete = blockface => {
     if (!blockface) return false
     return Math.abs(Blockface.unknownRemaining(blockface)) < 0.01
 }
 
-// Additional function: cumulativePositions
 Blockface.cumulativePositions = blockface => {
     const addCumulative = (acc, segment) => [...acc, acc[acc.length - 1] + segment.length]
     if (!blockface) return []
@@ -210,7 +236,6 @@ Blockface.cumulativePositions = blockface => {
     return segmentTicks
 }
 
-// Additional function: startPositions
 Blockface.startPositions = blockface => {
     const addStartPosition = segment => {
         const start = position
@@ -222,7 +247,6 @@ Blockface.startPositions = blockface => {
     return blockface.segments.map(addStartPosition)
 }
 
-// Additional function: visualPercentages
 Blockface.visualPercentages = blockface => {
     if (!blockface) return []
     const blockfaceLength = Blockface.totalLength(blockface)

@@ -44,26 +44,6 @@ export const ActionRequest = {
     }
 }
 
-ActionRequest.toFirestore = actionRequest => ({
-    ...actionRequest,
-    actor: { id: actionRequest.actorId, type: 'user' },
-    subject: { id: actionRequest.subjectId, type: actionRequest.subjectType },
-    action: Action.toFirestore(actionRequest.action),
-    createdAt: actionRequest.createdAt,
-    processedAt: actionRequest?.processedAt,
-})
-
-ActionRequest.fromFirestore = actionRequest =>
-    ActionRequest.from({
-        ...actionRequest,
-        actorId: actionRequest.actor.id,
-        subjectId: actionRequest.subject.id,
-        subjectType: actionRequest.subject.type,
-        action: Action.fromFirestore(actionRequest.action),
-        createdAt: actionRequest.createdAt,
-        processedAt: actionRequest?.processedAt,
-    })
-
 ActionRequest.toLog = o => {
     const r = pick(['id', 'actorId', 'organizationId', 'projectId', 'idempotencyKey', 'correlationId'], o)
     r.action = Action.toLog(o.action)

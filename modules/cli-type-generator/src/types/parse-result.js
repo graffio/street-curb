@@ -10,6 +10,8 @@
 
 import * as R from '@graffio/cli-type-generator'
 
+import { Array } from './array.js'
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // main constructor
@@ -70,6 +72,44 @@ ParseResult.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 ParseResult.toString = () => 'ParseResult'
 ParseResult.is = v => v && v['@@typeName'] === 'ParseResult'
-ParseResult.from = o => ParseResult(o.typeDefinition, o.imports, o.functions, o.sourceContent)
+
+ParseResult._from = o => ParseResult(o.typeDefinition, o.imports, o.functions, o.sourceContent)
+ParseResult.from = ParseResult._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+ParseResult._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        typeDefinition: o.typeDefinition,
+        imports: Array.toFirestore(o.imports, encodeTimestamps),
+        functions: Array.toFirestore(o.functions, encodeTimestamps),
+        sourceContent: o.sourceContent,
+    }
+
+    return result
+}
+
+ParseResult._fromFirestore = (doc, decodeTimestamps) =>
+    ParseResult._from({
+        typeDefinition: doc.typeDefinition,
+        imports: Array.fromFirestore ? Array.fromFirestore(doc.imports, decodeTimestamps) : Array.from(doc.imports),
+        functions: Array.fromFirestore
+            ? Array.fromFirestore(doc.functions, decodeTimestamps)
+            : Array.from(doc.functions),
+        sourceContent: doc.sourceContent,
+    })
+
+// Public aliases (override if necessary)
+ParseResult.toFirestore = ParseResult._toFirestore
+ParseResult.fromFirestore = ParseResult._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
 
 export { ParseResult }

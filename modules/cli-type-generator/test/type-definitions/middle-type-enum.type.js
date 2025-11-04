@@ -2,5 +2,5 @@
 export const MiddleTypeEnum = {
     name: 'MiddleTypeEnum',
     kind: 'taggedSum',
-    variants: { MiddleTypeEnumA: {}, MiddleTypeEnumB: {} },
+    variants: { MiddleTypeEnumA: { a: 'String' } },
 }

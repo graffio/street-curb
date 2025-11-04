@@ -4,7 +4,7 @@
  *  id           : FieldTypes.userId,
  *  email        : FieldTypes.email,
  *  displayName  : "String",
- *  organizations: "Object",
+ *  organizations: "{OrganizationMember:organizationId}",
  *  createdAt    : "Date",
  *  createdBy    : FieldTypes.userId,
  *  updatedAt    : "Date",
@@ -15,6 +15,8 @@
 import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
+import { LookupTable } from '@graffio/functional'
+import { OrganizationMember } from './organization-member.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -27,7 +29,7 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
     R.validateRegex(constructorName, FieldTypes.userId, 'id', false, id)
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
     R.validateString(constructorName, 'displayName', false, displayName)
-    R.validateObject(constructorName, 'organizations', false, organizations)
+    R.validateLookupTable(constructorName, 'OrganizationMember', 'organizations', false, organizations)
     R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
     R.validateDate(constructorName, 'updatedAt', false, updatedAt)
@@ -84,20 +86,61 @@ User.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 User.toString = () => 'User'
 User.is = v => v && v['@@typeName'] === 'User'
-User.from = o => User(o.id, o.email, o.displayName, o.organizations, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
+
+User._from = o =>
+    User(o.id, o.email, o.displayName, o.organizations, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
+User.from = User._from
 
 // -------------------------------------------------------------------------------------------------------------
-// timestamp fields
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-User.timestampFields = ['createdAt', 'updatedAt']
+User._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        id: o.id,
+        email: o.email,
+        displayName: o.displayName,
+        organizations: R.lookupTableToFirestore(
+            OrganizationMember,
+            'organizationId',
+            encodeTimestamps,
+            o.organizations,
+        ),
+        createdAt: encodeTimestamps(o.createdAt),
+        createdBy: o.createdBy,
+        updatedAt: encodeTimestamps(o.updatedAt),
+        updatedBy: o.updatedBy,
+    }
+
+    return result
+}
+
+User._fromFirestore = (doc, decodeTimestamps) =>
+    User._from({
+        id: doc.id,
+        email: doc.email,
+        displayName: doc.displayName,
+        organizations: R.lookupTableFromFirestore(
+            OrganizationMember,
+            'organizationId',
+            decodeTimestamps,
+            doc.organizations,
+        ),
+        createdAt: decodeTimestamps(doc.createdAt),
+        createdBy: doc.createdBy,
+        updatedAt: decodeTimestamps(doc.updatedAt),
+        updatedBy: doc.updatedBy,
+    })
+
+// Public aliases (override if necessary)
+User.toFirestore = User._toFirestore
+User.fromFirestore = User._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
+//
 // Additional functions copied from type definition file
+//
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: fromFirestore
-User.fromFirestore = User.from
-
-// Additional function: toFirestore
-User.toFirestore = o => ({ ...o })
 
 export { User }

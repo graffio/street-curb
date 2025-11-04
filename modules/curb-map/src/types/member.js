@@ -81,20 +81,50 @@ Member.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 Member.toString = () => 'Member'
 Member.is = v => v && v['@@typeName'] === 'Member'
-Member.from = o => Member(o.userId, o.displayName, o.role, o.addedAt, o.addedBy, o.removedAt, o.removedBy)
+
+Member._from = o => Member(o.userId, o.displayName, o.role, o.addedAt, o.addedBy, o.removedAt, o.removedBy)
+Member.from = Member._from
 
 // -------------------------------------------------------------------------------------------------------------
-// timestamp fields
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-Member.timestampFields = ['addedAt', 'removedAt']
+Member._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        userId: o.userId,
+        displayName: o.displayName,
+        role: o.role,
+        addedAt: encodeTimestamps(o.addedAt),
+        addedBy: o.addedBy,
+    }
+
+    if (o.removedAt != null) result.removedAt = encodeTimestamps(o.removedAt)
+
+    if (o.removedBy != null) result.removedBy = o.removedBy
+
+    return result
+}
+
+Member._fromFirestore = (doc, decodeTimestamps) =>
+    Member._from({
+        userId: doc.userId,
+        displayName: doc.displayName,
+        role: doc.role,
+        addedAt: decodeTimestamps(doc.addedAt),
+        addedBy: doc.addedBy,
+        removedAt: doc.removedAt != null ? decodeTimestamps(doc.removedAt) : undefined,
+        removedBy: doc.removedBy,
+    })
+
+// Public aliases (override if necessary)
+Member.toFirestore = Member._toFirestore
+Member.fromFirestore = Member._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
+//
 // Additional functions copied from type definition file
+//
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: fromFirestore
-Member.fromFirestore = data => Member.from(data)
-
-// Additional function: toFirestore
-Member.toFirestore = data => ({ ...data })
 
 export { Member }

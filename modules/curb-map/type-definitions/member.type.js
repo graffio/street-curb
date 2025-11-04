@@ -20,6 +20,4 @@ export const Member = {
     },
 }
 
-// Member must accept converter for recursive pattern (even though it has no nested types)
-Member.fromFirestore = data => Member.from(data)
-Member.toFirestore = data => ({ ...data })
+// Manual serialization DELETED - now auto-generated with proper Date handling!

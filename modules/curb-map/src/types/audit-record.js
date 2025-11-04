@@ -18,9 +18,10 @@
  */
 
 import { FieldTypes } from './field-types.js'
-import { OperationDetails } from './operation-details.js'
 
 import * as R from '@graffio/cli-type-generator'
+
+import { OperationDetails } from './operation-details.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -115,7 +116,8 @@ AuditRecord.prototype = prototype
 // -------------------------------------------------------------------------------------------------------------
 AuditRecord.toString = () => 'AuditRecord'
 AuditRecord.is = v => v && v['@@typeName'] === 'AuditRecord'
-AuditRecord.from = o =>
+
+AuditRecord._from = o =>
     AuditRecord(
         o.id,
         o.timestamp,
@@ -131,23 +133,61 @@ AuditRecord.from = o =>
         o.correlationId,
         o.environment,
     )
+AuditRecord.from = AuditRecord._from
 
 // -------------------------------------------------------------------------------------------------------------
-// Additional functions copied from type definition file
+//
+// Firestore serialization
+//
 // -------------------------------------------------------------------------------------------------------------
-// Additional function: toFirestore
-AuditRecord.toFirestore = auditRecord => ({
-    ...auditRecord,
-    operationDetails: OperationDetails.toFirestore(auditRecord.operationDetails),
-})
+AuditRecord._toFirestore = (o, encodeTimestamps) => {
+    const result = {
+        id: o.id,
+        timestamp: o.timestamp,
+        eventType: o.eventType,
+        userId: o.userId,
+        resource: o.resource,
+        action: o.action,
+        outcome: o.outcome,
+        sourceIP: o.sourceIP,
+        auditVersion: o.auditVersion,
+        operationDetails: OperationDetails.toFirestore(o.operationDetails, encodeTimestamps),
+        correlationId: o.correlationId,
+        environment: o.environment,
+    }
 
-// Additional function: fromFirestore
-AuditRecord.fromFirestore = auditRecord => {
-    const operationDetails = OperationDetails.fromFirestore(JSON.parse(auditRecord.operationDetails))
-    return AuditRecord.from({
-        ...auditRecord,
-        operationDetails,
-    })
+    if (o.errorMessage != null) result.errorMessage = o.errorMessage
+
+    return result
 }
+
+AuditRecord._fromFirestore = (doc, decodeTimestamps) =>
+    AuditRecord._from({
+        id: doc.id,
+        timestamp: doc.timestamp,
+        eventType: doc.eventType,
+        userId: doc.userId,
+        resource: doc.resource,
+        action: doc.action,
+        outcome: doc.outcome,
+        sourceIP: doc.sourceIP,
+        auditVersion: doc.auditVersion,
+        operationDetails: OperationDetails.fromFirestore
+            ? OperationDetails.fromFirestore(doc.operationDetails, decodeTimestamps)
+            : OperationDetails.from(doc.operationDetails),
+        errorMessage: doc.errorMessage,
+        correlationId: doc.correlationId,
+        environment: doc.environment,
+    })
+
+// Public aliases (override if necessary)
+AuditRecord.toFirestore = AuditRecord._toFirestore
+AuditRecord.fromFirestore = AuditRecord._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
 
 export { AuditRecord }

@@ -27,6 +27,10 @@ const TypeDefinition = {
     },
 }
 
+// Add hidden properties
+Object.defineProperty(TypeDefinition, '@@typeName', { value: 'TypeDefinition', enumerable: false })
+Object.defineProperty(TypeDefinition, '@@tagNames', { value: ['Tagged', 'TaggedSum'], enumerable: false })
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Set up TypeDefinition's prototype as TypeDefinitionPrototype
@@ -36,17 +40,7 @@ const TypeDefinition = {
 const TypeDefinitionPrototype = {}
 
 Object.defineProperty(TypeDefinitionPrototype, 'match', {
-    value: function (variants) {
-        // Validate all variants are handled
-        const requiredVariants = ['Tagged', 'TaggedSum']
-        requiredVariants.map(variant => {
-            if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
-            return variant
-        })
-
-        const variant = variants[this['@@tagName']]
-        return variant.call(variants, this)
-    },
+    value: R.match(TypeDefinition['@@tagNames']),
     enumerable: false,
 })
 
@@ -56,10 +50,6 @@ Object.defineProperty(TypeDefinitionPrototype, 'constructor', {
     writable: true,
     configurable: true,
 })
-
-// Add hidden properties
-Object.defineProperty(TypeDefinition, '@@typeName', { value: 'TypeDefinition', enumerable: false })
-Object.defineProperty(TypeDefinition, '@@tagNames', { value: ['Tagged', 'TaggedSum'], enumerable: false })
 
 TypeDefinition.prototype = TypeDefinitionPrototype
 
@@ -125,7 +115,8 @@ TaggedConstructor.prototype = TaggedPrototype
 // -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
 TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
-TaggedConstructor.from = o => TypeDefinition.Tagged(o.name, o.kind, o.fields)
+TaggedConstructor._from = o => TypeDefinition.Tagged(o.name, o.kind, o.fields)
+TaggedConstructor.from = TaggedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -189,6 +180,42 @@ TaggedSumConstructor.prototype = TaggedSumPrototype
 // -------------------------------------------------------------------------------------------------------------
 TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
 TaggedSumConstructor.toString = () => 'TypeDefinition.TaggedSum'
-TaggedSumConstructor.from = o => TypeDefinition.TaggedSum(o.name, o.kind, o.variants)
+TaggedSumConstructor._from = o => TypeDefinition.TaggedSum(o.name, o.kind, o.variants)
+TaggedSumConstructor.from = TaggedSumConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+// Firestore serialization
+// -------------------------------------------------------------------------------------------------------------
+TypeDefinition._toFirestore = (o, encodeTimestamps) => {
+    const tagName = o['@@tagName']
+    const variant = TypeDefinition[tagName]
+    if (variant && variant.toFirestore) {
+        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
+    }
+    return { ...o, '@@tagName': tagName }
+}
+
+TypeDefinition._fromFirestore = (doc, decodeTimestamps) => {
+    const tagName = doc['@@tagName']
+    if (tagName === 'Tagged')
+        return TypeDefinition.Tagged.fromFirestore
+            ? TypeDefinition.Tagged.fromFirestore(doc, decodeTimestamps)
+            : TypeDefinition.Tagged.from(doc)
+    if (tagName === 'TaggedSum')
+        return TypeDefinition.TaggedSum.fromFirestore
+            ? TypeDefinition.TaggedSum.fromFirestore(doc, decodeTimestamps)
+            : TypeDefinition.TaggedSum.from(doc)
+    throw new Error(`Unrecognized TypeDefinition variant: ${tagName}`)
+}
+
+// Public aliases (can be overridden)
+TypeDefinition.toFirestore = TypeDefinition._toFirestore
+TypeDefinition.fromFirestore = TypeDefinition._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
 
 export { TypeDefinition }

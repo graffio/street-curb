@@ -1,7 +1,6 @@
 /** @module AuditRecord */
 
 import { FieldTypes } from './field-types.js'
-import { OperationDetails } from './operation-details.js'
 
 /*
  * AuditRecord represents a SOC2-compliant infrastructure audit log entry
@@ -29,14 +28,4 @@ export const AuditRecord = {
         correlationId   : FieldTypes.correlationId,
         environment     : FieldTypes.environment,
     }
-}
-
-AuditRecord.toFirestore = auditRecord => ({
-    ...auditRecord,
-    operationDetails: OperationDetails.toFirestore(auditRecord.operationDetails),
-})
-
-AuditRecord.fromFirestore = auditRecord => {
-    const operationDetails = OperationDetails.fromFirestore(JSON.parse(auditRecord.operationDetails))
-    return AuditRecord.from({ ...auditRecord, operationDetails })
 }

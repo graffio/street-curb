@@ -2,5 +2,5 @@
 export const Middle = {
     name: 'Middle',
     kind: 'taggedSum',
-    variants: { E: { name: 'String', middleEnum: 'MiddleTypeEnum' }, F: {} },
+    variants: { E: { name: 'String', middleEnum: 'MiddleTypeEnum' }, F: { foo: 'String' } },
 }

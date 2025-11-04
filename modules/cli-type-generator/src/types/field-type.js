@@ -31,6 +31,13 @@ const FieldType = {
     },
 }
 
+// Add hidden properties
+Object.defineProperty(FieldType, '@@typeName', { value: 'FieldType', enumerable: false })
+Object.defineProperty(FieldType, '@@tagNames', {
+    value: ['StringType', 'RegexType', 'ImportPlaceholder'],
+    enumerable: false,
+})
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Set up FieldType's prototype as FieldTypePrototype
@@ -40,17 +47,7 @@ const FieldType = {
 const FieldTypePrototype = {}
 
 Object.defineProperty(FieldTypePrototype, 'match', {
-    value: function (variants) {
-        // Validate all variants are handled
-        const requiredVariants = ['StringType', 'RegexType', 'ImportPlaceholder']
-        requiredVariants.map(variant => {
-            if (!variants[variant]) throw new TypeError("Constructors given to match didn't include: " + variant)
-            return variant
-        })
-
-        const variant = variants[this['@@tagName']]
-        return variant.call(variants, this)
-    },
+    value: R.match(FieldType['@@tagNames']),
     enumerable: false,
 })
 
@@ -59,13 +56,6 @@ Object.defineProperty(FieldTypePrototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
-})
-
-// Add hidden properties
-Object.defineProperty(FieldType, '@@typeName', { value: 'FieldType', enumerable: false })
-Object.defineProperty(FieldType, '@@tagNames', {
-    value: ['StringType', 'RegexType', 'ImportPlaceholder'],
-    enumerable: false,
 })
 
 FieldType.prototype = FieldTypePrototype
@@ -128,7 +118,8 @@ StringTypeConstructor.prototype = StringTypePrototype
 // -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor.is = val => val && val.constructor === StringTypeConstructor
 StringTypeConstructor.toString = () => 'FieldType.StringType'
-StringTypeConstructor.from = o => FieldType.StringType(o.value)
+StringTypeConstructor._from = o => FieldType.StringType(o.value)
+StringTypeConstructor.from = StringTypeConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -188,7 +179,24 @@ RegexTypeConstructor.prototype = RegexTypePrototype
 // -------------------------------------------------------------------------------------------------------------
 RegexTypeConstructor.is = val => val && val.constructor === RegexTypeConstructor
 RegexTypeConstructor.toString = () => 'FieldType.RegexType'
-RegexTypeConstructor.from = o => FieldType.RegexType(o.value)
+RegexTypeConstructor._from = o => FieldType.RegexType(o.value)
+RegexTypeConstructor.from = RegexTypeConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+// Firestore serialization
+// -------------------------------------------------------------------------------------------------------------
+RegexTypeConstructor._toFirestore = (o, encodeTimestamps) => ({
+    value: RegExp.toFirestore(o.value, encodeTimestamps),
+})
+
+RegexTypeConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    RegexTypeConstructor._from({
+        value: RegExp.fromFirestore ? RegExp.fromFirestore(doc.value, decodeTimestamps) : RegExp.from(doc.value),
+    })
+
+// Public aliases (can be overridden)
+RegexTypeConstructor.toFirestore = RegexTypeConstructor._toFirestore
+RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -252,6 +260,46 @@ ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
 // -------------------------------------------------------------------------------------------------------------
 ImportPlaceholderConstructor.is = val => val && val.constructor === ImportPlaceholderConstructor
 ImportPlaceholderConstructor.toString = () => 'FieldType.ImportPlaceholder'
-ImportPlaceholderConstructor.from = o => FieldType.ImportPlaceholder(o.__importPlaceholder, o.source, o.localName)
+ImportPlaceholderConstructor._from = o => FieldType.ImportPlaceholder(o.__importPlaceholder, o.source, o.localName)
+ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+// Firestore serialization
+// -------------------------------------------------------------------------------------------------------------
+FieldType._toFirestore = (o, encodeTimestamps) => {
+    const tagName = o['@@tagName']
+    const variant = FieldType[tagName]
+    if (variant && variant.toFirestore) {
+        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
+    }
+    return { ...o, '@@tagName': tagName }
+}
+
+FieldType._fromFirestore = (doc, decodeTimestamps) => {
+    const tagName = doc['@@tagName']
+    if (tagName === 'StringType')
+        return FieldType.StringType.fromFirestore
+            ? FieldType.StringType.fromFirestore(doc, decodeTimestamps)
+            : FieldType.StringType.from(doc)
+    if (tagName === 'RegexType')
+        return FieldType.RegexType.fromFirestore
+            ? FieldType.RegexType.fromFirestore(doc, decodeTimestamps)
+            : FieldType.RegexType.from(doc)
+    if (tagName === 'ImportPlaceholder')
+        return FieldType.ImportPlaceholder.fromFirestore
+            ? FieldType.ImportPlaceholder.fromFirestore(doc, decodeTimestamps)
+            : FieldType.ImportPlaceholder.from(doc)
+    throw new Error(`Unrecognized FieldType variant: ${tagName}`)
+}
+
+// Public aliases (can be overridden)
+FieldType.toFirestore = FieldType._toFirestore
+FieldType.fromFirestore = FieldType._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
 
 export { FieldType }
