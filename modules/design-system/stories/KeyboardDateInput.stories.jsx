@@ -7,8 +7,8 @@
 
 import { Card, Flex, Text } from '@radix-ui/themes'
 import React, { useState } from 'react'
-import { MainTheme } from '../../themes/theme.jsx'
-import { KeyboardDateInput } from './KeyboardDateInput'
+import { KeyboardDateInput } from '../src/components/KeyboardDateInput.jsx'
+import { MainTheme } from '../src/themes/theme.jsx'
 
 export default {
     title: 'KeyboardDateInput',

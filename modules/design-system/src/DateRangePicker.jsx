@@ -21,7 +21,7 @@ import { endOfDay } from '@graffio/functional'
 import { Flex, Select, Text } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef, useState } from 'react'
-import { KeyboardDateInput } from './components/KeyboardDateInput/KeyboardDateInput.jsx'
+import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
 import { calculateDateRange, DATE_RANGES } from './utils/date-range-utils.js'
 
 /*

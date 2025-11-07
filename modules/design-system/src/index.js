@@ -29,7 +29,7 @@ import {
 import { createChannel, layoutChannel, useChannel } from './channels/index.js'
 import { CategorySelector } from './components/CategorySelector.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
-import { KeyboardDateInput } from './components/KeyboardDateInput/KeyboardDateInput.jsx'
+import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
 import { VirtualTable } from './components/VirtualTable/VirtualTable.jsx'
