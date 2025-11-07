@@ -32,7 +32,7 @@ import { Dialog } from './components/Dialog/Dialog.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
-import { VirtualTable } from './components/VirtualTable/VirtualTable.jsx'
+import { VirtualTable } from './components/VirtualTable.jsx'
 import { DateRangePicker } from './DateRangePicker.jsx'
 import { MainTheme } from './themes/theme.jsx'
 
