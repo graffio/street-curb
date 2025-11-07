@@ -43,10 +43,11 @@
  *     ScrollCallback = ({ scrollTop: Number, direction: up|down }) -> void
  *     RowMountCallback = (Number, Element) -> void
  */
+import { Box } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React from 'react'
+import { tokens } from '../../themes/tokens.css.js'
 import useVirtualScroll from './useVirtualScroll'
-import * as styles from './VirtualScroller.css'
 
 const VirtualScroller = React.forwardRef(
     (
@@ -75,15 +76,23 @@ const VirtualScroller = React.forwardRef(
                 handleRowMount(vRow.index, el)
             }
 
-            const zebraClass = vRow.index % 2 === 0 ? styles.virtualRowEven : styles.virtualRowOdd
             const isHighlighted = vRow.index === highlightedRow
-            const className = `${styles.virtualRowBase} ${zebraClass}`
-            const style = { height: rowHeight, transform: `translateY(${vRow.start}px)` }
+            const isEven = vRow.index % 2 === 0
+            const backgroundColor = isEven ? `rgba(from ${tokens.colors.accent} r g b)` : tokens.colors.background
+
+            const style = {
+                transform: `translateY(${vRow.start}px)`,
+                willChange: 'transform',
+                backfaceVisibility: 'hidden',
+                background: backgroundColor,
+            }
+
+            const props = { position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }
 
             return (
-                <div key={vRow.key} ref={onMountOrUnmount} className={className} style={style}>
+                <Box key={vRow.key} ref={onMountOrUnmount} {...props} style={style}>
                     {renderRow ? renderRow(vRow.index, { isHighlighted }) : `Row ${vRow.index}`}
-                </div>
+                </Box>
             )
         }
 
@@ -102,13 +111,18 @@ const VirtualScroller = React.forwardRef(
         )
 
         return (
-            <div className={styles.root} style={{ height }}>
-                <div ref={scrollRef} className={styles.scrollContainer} tabIndex={0} data-testid="virtual-scroller">
-                    <div className={styles.virtualContainer} style={{ height: totalHeight }}>
+            <Box style={{ height }}>
+                <Box
+                    ref={scrollRef}
+                    style={{ height: '100%', overflow: 'auto', outline: 'none' }}
+                    tabIndex={0}
+                    data-testid="virtual-scroller"
+                >
+                    <Box style={{ width: '100%', position: 'relative', height: totalHeight }}>
                         {virtualItems.map(renderVirtualRow)}
-                    </div>
-                </div>
-            </div>
+                    </Box>
+                </Box>
+            </Box>
         )
     },
 )
