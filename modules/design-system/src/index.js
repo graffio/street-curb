@@ -32,8 +32,6 @@ import { DateRangePicker } from './components/DateRangePicker/DateRangePicker.js
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput/KeyboardDateInput.jsx'
 import { MainLayout } from './components/layout/MainLayout.jsx'
-import { Sidebar } from './components/layout/Sidebar.jsx'
-import { TopBar } from './components/layout/TopBar.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle/TitleAndSubtitle.jsx'
 import { VirtualTable } from './components/VirtualTable/VirtualTable.jsx'
 import { MainTheme } from './themes/theme.jsx'
@@ -61,8 +59,6 @@ export {
     ScrollArea,
     Select,
     MainLayout,
-    TopBar,
-    Sidebar,
     TitleAndSubtitle,
     VirtualTable,
     KeyboardDateInput,
