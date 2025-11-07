@@ -1,8 +1,8 @@
 import { Box, Button, Flex, Grid, Heading, Link } from '@radix-ui/themes'
 import React from 'react'
-import { layoutChannel, useChannel } from '../../channels/index.js'
-import { tokens } from '../../themes/tokens.css.js'
-import { TitleAndSubtitle } from '../TitleAndSubtitle/TitleAndSubtitle.jsx'
+import { layoutChannel, useChannel } from '../channels/index.js'
+import { tokens } from '../themes/tokens.css.js'
+import { TitleAndSubtitle } from './TitleAndSubtitle.jsx'
 
 const { borderRadius, colors, layout, space } = tokens
 

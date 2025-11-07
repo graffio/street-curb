@@ -8,12 +8,12 @@
 import { Card, Flex, Text } from '@radix-ui/themes'
 import React, { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import { layoutChannel } from '../../channels/index.js'
-import { MainTheme } from '../../themes/theme.jsx'
-import { MainLayout } from './MainLayout.jsx'
+import { layoutChannel } from '../src/channels/index.js'
+import { MainLayout } from '../src/components/MainLayout.jsx'
+import { MainTheme } from '../src/themes/theme.jsx'
 
 export default {
-    title: 'Layout/MainLayout',
+    title: 'MainLayout',
     component: MainLayout,
     decorators: [
         Story => (

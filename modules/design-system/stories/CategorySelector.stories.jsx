@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { MainTheme } from '../../themes/theme.jsx'
-import { CategorySelector } from './CategorySelector.jsx'
+import { CategorySelector } from '../src/components/CategorySelector.jsx'
+import { MainTheme } from '../src/themes/theme.jsx'
 
 export default {
-    title: 'Components/CategorySelector',
+    title: 'CategorySelector',
     component: CategorySelector,
     parameters: { layout: 'padded' },
     decorators: [
@@ -89,17 +89,6 @@ const InteractiveCategorySelector = ({ categories = SAMPLE_CATEGORIES, initialSe
  * Default story - empty selector with sample categories
  */
 export const Default = { render: () => <InteractiveCategorySelector /> }
-
-/*
- * Story with some categories pre-selected
- */
-export const WithSelectedCategories = {
-    render: () => (
-        <InteractiveCategorySelector
-            initialSelected={['Food:Restaurant', 'Transportation:Gas', 'Entertainment:Movies']}
-        />
-    ),
-}
 
 /*
  * Story with a large number of categories to test performance and scrolling
