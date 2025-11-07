@@ -1,5 +1,4 @@
-import { Dialog } from '@graffio/design-system'
-import { Box, Button, Grid, Text } from '@radix-ui/themes'
+import { Box, Button, Dialog, Grid, Text } from '@graffio/design-system'
 import { useCallback, useEffect, useState } from 'react'
 
 /**
@@ -53,23 +52,35 @@ const processBackspaceInput = currentInput => {
 }
 
 /**
- * Handles key press with input validation
- * @sig processKeyPress :: (String, String, Number, Number, Function) -> Void
+ * Gets button variant based on key type
+ * @sig getButtonVariant :: String -> String
  */
-const processKeyPress = (key, currentInput, min, max, setInput) => {
-    let newInput = currentInput
+const getButtonVariant = key => {
+    if (key === 'enter') return 'solid'
+    if (key === 'cancel') return 'soft'
+    return 'surface'
+}
 
-    if (key === 'backspace') {
-        newInput = processBackspaceInput(currentInput)
-    } else if (key === 'clear') {
-        newInput = '0'
-    } else if (key === '.') {
-        newInput = processDecimalInput(currentInput)
-    } else if (key >= '0' && key <= '9') {
-        newInput = processNumberInput(currentInput, key)
-    }
+/**
+ * Gets button color based on key type
+ * @sig getButtonColor :: String -> String
+ */
+const getButtonColor = key => {
+    if (key === 'enter') return 'green'
+    if (key === 'cancel') return 'red'
+    return 'gray'
+}
 
-    setInput(newInput)
+/**
+ * Gets button text/icon based on key type
+ * @sig getButtonText :: String -> String
+ */
+const getButtonText = key => {
+    if (key === 'enter') return '✓'
+    if (key === 'cancel') return '✗'
+    if (key === 'backspace') return '←'
+    if (key === 'clear') return 'C'
+    return key
 }
 
 /**
@@ -103,31 +114,7 @@ const renderNumberButton = (key, onKeyPress) => {
  */
 const renderFunctionButton = (key, onKeyPress, currentInput, isValid) => {
     const isEnter = key === 'enter'
-    const isCancel = key === 'cancel'
-    const isBackspace = key === 'backspace'
-    const isClear = key === 'clear'
-
-    const getVariant = () => {
-        if (isEnter) return 'solid'
-        if (isCancel) return 'soft'
-        return 'surface'
-    }
-
-    const getColor = () => {
-        if (isEnter) return 'green'
-        if (isCancel) return 'red'
-        return 'gray'
-    }
-
     const disabled = isEnter && !isValid
-
-    const getButtonText = () => {
-        if (isEnter) return '✓'
-        if (isCancel) return '✗'
-        if (isBackspace) return '←'
-        if (isClear) return 'C'
-        return key
-    }
 
     const functionButtonStyle = {
         aspectRatio: '1',
@@ -144,14 +131,14 @@ const renderFunctionButton = (key, onKeyPress, currentInput, isValid) => {
     return (
         <Button
             key={key}
-            variant={getVariant()}
-            color={getColor()}
+            variant={getButtonVariant(key)}
+            color={getButtonColor(key)}
             size="4"
             onClick={() => onKeyPress(key)}
             disabled={disabled}
             style={functionButtonStyle}
         >
-            {getButtonText()}
+            {getButtonText(key)}
         </Button>
     )
 }
@@ -221,14 +208,14 @@ const NumberPad = ({ value, min = 0, max = 999, onSave, onCancel, label = 'Value
     }, [onCancel, handleEscapeKey])
 
     const handleKeyPress = useCallback(
+        // prettier-ignore
         key => {
-            if (key === 'enter' && isValid) {
-                onSave(parseFloat(input))
-            } else if (key === 'cancel') {
-                onCancel()
-            } else {
-                processKeyPress(key, input, min, max, setInput)
-            }
+            if (key === 'enter' && isValid) onSave(parseFloat(input))
+            if (key === 'cancel')           onCancel()
+            if (key === 'backspace')        setInput(processBackspaceInput(input))
+            if (key === 'clear')            setInput('0')
+            if (key === '.')                setInput(processDecimalInput(input))
+            if (key >= '0' && key <= '9')   setInput(processNumberInput(input, key))
         },
         [input, isValid, onSave, onCancel, min, max],
     )
