@@ -18,53 +18,40 @@
  */
 
 import { endOfDay } from '@graffio/functional'
-import { Select, Text } from '@radix-ui/themes'
+import { Flex, Select, Text } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef, useState } from 'react'
-import { calculateDateRange, DATE_RANGES } from '../../utils/date-range-utils.js'
-import { KeyboardDateInput } from '../KeyboardDateInput/KeyboardDateInput.jsx'
-import * as styles from './DateRangePicker.css.js'
+import { KeyboardDateInput } from './components/KeyboardDateInput/KeyboardDateInput.jsx'
+import { calculateDateRange, DATE_RANGES } from './utils/date-range-utils.js'
 
 /*
  * Handle custom dates selection mode
  * @sig handleCustomDatesMode :: Object -> void
  */
-const handleCustomDatesMode = ({ activeStartDate, activeEndDate, onChange }) => {
-    if (!activeStartDate || !activeEndDate) {
-        onChange?.(null)
-        return
-    }
-
-    const dateRange = { start: activeStartDate, end: endOfDay(activeEndDate) }
-    onChange?.(dateRange)
-}
+const handleCustomDatesMode = ({ activeStartDate, activeEndDate, onChange }) =>
+    activeStartDate && activeEndDate
+        ? onChange?.({ start: activeStartDate, end: endOfDay(activeEndDate) })
+        : onChange?.(null)
 
 /*
  * Handle predefined range selection mode
  * @sig handlePredefinedRangeMode :: (String, Object) -> void
  */
-const handlePredefinedRangeMode = (selectedValue, { onChange }) => {
-    const dateRange = calculateDateRange(selectedValue)
-    onChange?.(dateRange)
-}
+const handlePredefinedRangeMode = (selectedValue, { onChange }) => onChange?.(calculateDateRange(selectedValue))
 
 /*
  * Update current start date
  * @sig updateCurrentStartDate :: (Date?, Object) -> void
  */
-const updateCurrentStartDate = (newStartDate, { onCurrentStartDateChange, setInternalCurrentStartDate }) => {
-    if (onCurrentStartDateChange) return onCurrentStartDateChange(newStartDate)
-    return setInternalCurrentStartDate(newStartDate)
-}
+const updateCurrentStartDate = (newStartDate, { onCurrentStartDateChange, setInternalCurrentStartDate }) =>
+    onCurrentStartDateChange ? onCurrentStartDateChange(newStartDate) : setInternalCurrentStartDate(newStartDate)
 
 /*
  * Update current end date
  * @sig updateCurrentEndDate :: (Date?, Object) -> void
  */
-const updateCurrentEndDate = (newEndDate, { onCurrentEndDateChange, setInternalCurrentEndDate }) => {
-    if (onCurrentEndDateChange) return onCurrentEndDateChange(newEndDate)
-    return setInternalCurrentEndDate(newEndDate)
-}
+const updateCurrentEndDate = (newEndDate, { onCurrentEndDateChange, setInternalCurrentEndDate }) =>
+    onCurrentEndDateChange ? onCurrentEndDateChange(newEndDate) : setInternalCurrentEndDate(newEndDate)
 
 /*
  * Update date range when in custom dates mode
@@ -73,16 +60,88 @@ const updateCurrentEndDate = (newEndDate, { onCurrentEndDateChange, setInternalC
 const updateRangeIfCustomMode = (value, startDate, endDate, { onChange }) => {
     if (value !== 'customDates') return
 
-    if (!startDate || !endDate) {
-        onChange?.(null)
-        return
+    startDate && endDate
+        ? onChange?.({
+              start: startDate,
+              end: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999),
+          })
+        : onChange?.(null)
+}
+
+/*
+ * CustomDateInputs - Start and end date input fields
+ * @sig CustomDateInputs :: Props -> ReactElement
+ *     Props = {
+ *         startDate: Date?,
+ *         endDate: Date?,
+ *         onStartDateChange: (Date?) -> void,
+ *         onEndDateChange: (Date?) -> void,
+ *         disabled: Boolean?
+ *     }
+ */
+const CustomDateInputs = ({ startDate, endDate, onStartDateChange, onEndDateChange, disabled = false }) => {
+    const startDateRef = useRef(null)
+    const endDateRef = useRef(null)
+
+    return (
+        <Flex direction="column" gap="2" mt="2">
+            <Flex direction="column" gap="1">
+                <Text size="1" color="gray" weight="medium">
+                    Start Date
+                </Text>
+                <KeyboardDateInput
+                    ref={startDateRef}
+                    value={startDate}
+                    onChange={onStartDateChange}
+                    disabled={disabled}
+                    placeholder="MM/DD/YYYY"
+                    onTabOut={() => endDateRef?.current?.focus('month')}
+                    onShiftTabOut={() => endDateRef?.current?.focus('year')}
+                />
+            </Flex>
+            <Flex direction="column" gap="1">
+                <Text size="1" color="gray" weight="medium">
+                    End Date
+                </Text>
+                <KeyboardDateInput
+                    ref={endDateRef}
+                    value={endDate}
+                    onChange={onEndDateChange}
+                    disabled={disabled}
+                    placeholder="MM/DD/YYYY"
+                    onTabOut={() => startDateRef?.current?.focus('month')}
+                    onShiftTabOut={() => startDateRef?.current?.focus('year')}
+                />
+            </Flex>
+        </Flex>
+    )
+}
+
+/*
+ * DateRangeSelect - Dropdown for selecting predefined date ranges
+ * @sig DateRangeSelect :: Props -> ReactElement
+ *     Props = {
+ *         value: String,
+ *         onValueChange: (String) -> void,
+ *         disabled: Boolean?
+ *     }
+ */
+const DateRangeSelect = ({ value, onValueChange, disabled = false }) => {
+    const renderDateRangeOption = ([key, label]) => {
+        if (key.startsWith('separator')) return <Select.Separator key={key} />
+        return (
+            <Select.Item key={key} value={key}>
+                {label}
+            </Select.Item>
+        )
     }
 
-    const dateRange = {
-        start: startDate,
-        end: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999),
-    }
-    onChange?.(dateRange)
+    return (
+        <Select.Root value={value} onValueChange={onValueChange} disabled={disabled}>
+            <Select.Trigger placeholder="Select date range..." />
+            <Select.Content position="popper">{Object.entries(DATE_RANGES).map(renderDateRangeOption)}</Select.Content>
+        </Select.Root>
+    )
 }
 
 /*
@@ -139,9 +198,6 @@ const DateRangePicker = ({
         }
     }
 
-    /*
-     * Handle selection change for both predefined ranges and custom dates
-     */
     const handleSelectionChange = selectedValue => {
         const context = { activeStartDate: activeCurrentStartDate, activeEndDate: activeCurrentEndDate, onChange }
 
@@ -165,55 +221,10 @@ const DateRangePicker = ({
         updateRangeIfCustomMode(value, activeCurrentStartDate, newEndDate, context)
     }
 
-    const renderCustomDateInputs = () => (
-        <div className={styles.customDateContainer}>
-            <div className={styles.dateFieldContainer}>
-                <Text size="1" color="gray" className={styles.dateFieldLabel}>
-                    Start Date
-                </Text>
-                <KeyboardDateInput
-                    ref={startDateRef}
-                    value={activeCurrentStartDate}
-                    onChange={handleCurrentStartDateChange}
-                    disabled={disabled}
-                    placeholder="MM/DD/YYYY"
-                    onTabOut={() => endDateRef?.current?.focus('month')} // tab tab tab date year goes to end date month
-                    onShiftTabOut={() => endDateRef?.current?.focus('year')} // Shift-tab from start date month goes to end date year (complete reverse cycle)
-                />
-            </div>
-            <div className={styles.dateFieldContainer}>
-                <Text size="1" color="gray" className={styles.dateFieldLabel}>
-                    End Date
-                </Text>
-                <KeyboardDateInput
-                    ref={endDateRef}
-                    value={activeCurrentEndDate}
-                    onChange={handleCurrentEndDateChange}
-                    disabled={disabled}
-                    placeholder="MM/DD/YYYY"
-                    onTabOut={() => startDateRef?.current?.focus('month')} // Tab (right) from end date year wraps to start date month
-                    onShiftTabOut={() => startDateRef?.current?.focus('year')} // Shift-tab (left) from end date month goes to start date year
-                />
-            </div>
-        </div>
-    )
-
-    const renderDateRangeOption = ([key, label]) => {
-        if (key.startsWith('separator')) return <Select.Separator key={key} />
-        return (
-            <Select.Item key={key} value={key}>
-                {label}
-            </Select.Item>
-        )
-    }
-
     const [internalCurrentStartDate, setInternalCurrentStartDate] = useState(initialStartDate)
     const [internalCurrentEndDate, setInternalCurrentEndDate] = useState(initialEndDate)
     const [previousSelection, setPreviousSelection] = useState(null)
     const [previousDateRange, setPreviousDateRange] = useState(null)
-
-    const startDateRef = useRef(null)
-    const endDateRef = useRef(null)
 
     // Use provided current dates or internal state
     const activeCurrentStartDate = currentStartDate !== null ? currentStartDate : internalCurrentStartDate
@@ -247,19 +258,19 @@ const DateRangePicker = ({
     ])
 
     return (
-        <div className={styles.filterContainer}>
-            <Text size="2" weight="medium" color="gray" className={styles.filterLabel}>
-                Date Range
-            </Text>
-            <Select.Root value={value} onValueChange={handleSelectionChange} disabled={disabled}>
-                <Select.Trigger placeholder="Select date range..." />
-                <Select.Content position="popper">
-                    {Object.entries(DATE_RANGES).map(renderDateRangeOption)}
-                </Select.Content>
-            </Select.Root>
+        <Flex direction="column" gap="2">
+            <DateRangeSelect value={value} onValueChange={handleSelectionChange} disabled={disabled} />
 
-            {value === 'customDates' && renderCustomDateInputs()}
-        </div>
+            {value === 'customDates' && (
+                <CustomDateInputs
+                    startDate={activeCurrentStartDate}
+                    endDate={activeCurrentEndDate}
+                    onStartDateChange={handleCurrentStartDateChange}
+                    onEndDateChange={handleCurrentEndDateChange}
+                    disabled={disabled}
+                />
+            )}
+        </Flex>
     )
 }
 

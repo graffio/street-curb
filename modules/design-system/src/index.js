@@ -28,12 +28,12 @@ import {
 // Channel system
 import { createChannel, layoutChannel, useChannel } from './channels/index.js'
 import { CategorySelector } from './components/CategorySelector.jsx'
-import { DateRangePicker } from './components/DateRangePicker/DateRangePicker.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput/KeyboardDateInput.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
 import { VirtualTable } from './components/VirtualTable/VirtualTable.jsx'
+import { DateRangePicker } from './DateRangePicker.jsx'
 import { MainTheme } from './themes/theme.jsx'
 
 export {
