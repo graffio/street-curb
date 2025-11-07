@@ -8,103 +8,51 @@
 import { Badge, Box, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef, useState } from 'react'
-import {
-    badgeContainer,
-    dropdown,
-    dropdownContainer,
-    dropdownItem,
-    dropdownItemHighlighted,
-    moreItemsIndicator,
-} from './CategorySelector.css.js'
 
-/*
- * Filter categories by search text (incremental search)
- *
- * @sig filterCategories :: ([String], String) -> [String]
- */
 const filterCategories = (categories, searchText) => {
     if (!searchText.trim()) return categories
-
     const searchLower = searchText.toLowerCase()
     return categories.filter(category => category.toLowerCase().includes(searchLower))
 }
 
-/*
- * CategorySelector component for hierarchical category filtering
- *
- * Provides:
- * - Incremental text filtering of categories as you type
- * - Dropdown with all matching categories
- * - Return key to select highlighted category
- * - Display of selected categories as removable badges
- * - Support for hierarchical category matching
- *
- * @sig CategorySelector :: (CategorySelectorProps) -> ReactElement
- *     CategorySelectorProps = {
- *         categories: [String],
- *         selectedCategories: [String],
- *         onCategoryAdd: String -> (),
- *         onCategoryRemove: String -> ()
- *     }
+/**
+ * Displays selected categories as removable badges
+ * @sig SelectedCategories :: ({ selectedCategories: [String], onCategoryRemoved: String -> () }) -> ReactElement
  */
-const CategorySelector = ({ categories = [], selectedCategories = [], onCategoryAdd, onCategoryRemove }) => {
-    /*
-     * Reset highlighted index when available categories change
-     *
-     * @sig resetHighlightedIndex :: () -> ()
-     */
-    const resetHighlightedIndex = () => setHighlightedIndex(0)
+const SelectedCategories = ({ selectedCategories, onCategoryRemoved }) => {
+    const handleBadgeClick = category => () => onCategoryRemoved(category)
 
-    /*
-     * Handle input blur with delay to allow clicks on dropdown items
-     *
-     * @sig handleInputBlur :: () -> ()
-     */
-    const handleInputBlur = () => setTimeout(() => setIsOpen(false), 150)
-
-    /*
-     * Handle clicking on a category in the dropdown
-     *
-     * @sig handleCategoryClick :: String -> ()
-     */
-    const handleCategoryClick = category => {
-        onCategoryAdd(category)
-        setSearchText('')
-        setIsOpen(false)
-        setHighlightedIndex(0)
-        textFieldRef.current?.focus()
-    }
-
-    /*
-     * Handle mouse enter on category item
-     *
-     * @sig handleCategoryMouseEnter :: Number -> ()
-     */
-    const handleCategoryMouseEnter = index => setHighlightedIndex(index)
-
-    /*
-     * Handle badge click to remove category
-     *
-     * @sig handleBadgeClick :: String -> ()
-     */
-    const handleBadgeClick = category => () => onCategoryRemove(category)
-
-    /*
-     * Render a category badge
-     *
-     * @sig renderCategoryBadge :: String -> ReactElement
-     */
     const renderCategoryBadge = category => (
         <Badge key={category} variant="soft" style={{ cursor: 'pointer' }} onClick={handleBadgeClick(category)}>
             {category} ×
         </Badge>
     )
 
-    /*
-     * Handle escape key to close dropdown
-     *
-     * @sig handleEscapeKey :: Event -> ()
-     */
+    if (selectedCategories.length === 0) return null
+
+    return (
+        <Flex wrap="wrap" gap="1">
+            {selectedCategories.map(renderCategoryBadge)}
+        </Flex>
+    )
+}
+
+/**
+ * Category dropdown with search and keyboard navigation
+ * @sig CategoryDropdown :: ({ categories: [String], selectedCategories: [String], onCategoryAdded: String -> () }) -> ReactElement
+ */
+const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) => {
+    const resetHighlightedIndex = () => setHighlightedIndex(0)
+    const handleInputBlur = () => setTimeout(() => setIsOpen(false), 150)
+    const handleCategoryClick = category => {
+        onCategoryAdded(category)
+        setSearchText('')
+        setIsOpen(false)
+        setHighlightedIndex(0)
+        textFieldRef.current?.focus()
+    }
+
+    const handleCategoryMouseEnter = index => setHighlightedIndex(index)
     const handleEscapeKey = event => {
         event.preventDefault()
         setSearchText('')
@@ -112,27 +60,6 @@ const CategorySelector = ({ categories = [], selectedCategories = [], onCategory
         setHighlightedIndex(0)
     }
 
-    /*
-     * Render a category dropdown item
-     *
-     * @sig renderCategoryItem :: (String, Number) -> ReactElement
-     */
-    const renderCategoryItem = (category, index) => (
-        <Box
-            key={category}
-            className={`${dropdownItem} ${index === highlightedIndex ? dropdownItemHighlighted : ''}`}
-            onClick={() => handleCategoryClick(category)}
-            onMouseEnter={() => handleCategoryMouseEnter(index)}
-        >
-            <Text size="2">{category}</Text>
-        </Box>
-    )
-
-    /*
-     * Handle opening dropdown when closed
-     *
-     * @sig handleOpenDropdown :: Event -> ()
-     */
     const handleOpenDropdown = event => {
         if ((event.key === 'ArrowDown' || event.key === 'Enter') && availableCategories.length > 0) {
             setIsOpen(true)
@@ -140,47 +67,27 @@ const CategorySelector = ({ categories = [], selectedCategories = [], onCategory
         }
     }
 
-    /*
-     * Handle arrow down navigation
-     *
-     * @sig handleArrowDown :: Event -> ()
-     */
     const handleArrowDown = event => {
         event.preventDefault()
         setHighlightedIndex(prev => (prev < availableCategories.length - 1 ? prev + 1 : 0))
     }
 
-    /*
-     * Handle arrow up navigation
-     *
-     * @sig handleArrowUp :: Event -> ()
-     */
     const handleArrowUp = event => {
         event.preventDefault()
         setHighlightedIndex(prev => (prev > 0 ? prev - 1 : availableCategories.length - 1))
     }
 
-    /*
-     * Handle enter key selection
-     *
-     * @sig handleEnterKey :: Event -> ()
-     */
     const handleEnterKey = event => {
         event.preventDefault()
         if (availableCategories.length === 0) return
 
         const selectedCategory = availableCategories[highlightedIndex]
-        onCategoryAdd(selectedCategory)
+        onCategoryAdded(selectedCategory)
         setSearchText('')
         setIsOpen(false)
         setHighlightedIndex(0)
     }
 
-    /*
-     * Handle keyboard navigation in dropdown
-     *
-     * @sig handleKeyDown :: Event -> ()
-     */
     const handleKeyDown = event => {
         if (!isOpen) return handleOpenDropdown(event)
         if (event.key === 'ArrowDown') return handleArrowDown(event)
@@ -200,14 +107,27 @@ const CategorySelector = ({ categories = [], selectedCategories = [], onCategory
         setIsOpen(availableCategories.length > 0)
     }
 
-    /*
-     * Handle input focus - always show dropdown if there are available categories
-     *
-     * @sig handleInputFocus :: () -> ()
-     */
-    const handleInputFocus = () => {
-        if (availableCategories.length > 0) setIsOpen(true)
-    }
+    const handleInputFocus = () => availableCategories.length > 0 && setIsOpen(true)
+
+    const getDropdownItemStyle = (isHighlighted, isLast) => ({
+        padding: 'var(--space-2)',
+        cursor: 'pointer',
+        borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
+        backgroundColor: isHighlighted ? 'var(--gray-3)' : 'transparent',
+    })
+
+    const renderCategoryItem = (category, index) => (
+        <Box
+            key={category}
+            style={getDropdownItemStyle(index === highlightedIndex, index === availableCategories.length - 1)}
+            onClick={() => handleCategoryClick(category)}
+            onMouseEnter={() => handleCategoryMouseEnter(index)}
+        >
+            <Text size="2">{category}</Text>
+        </Box>
+    )
+
+    const scrollAreaStyle = { border: '1px solid var(--gray-6)', zIndex: 1000, height: '200px' }
 
     const [searchText, setSearchText] = useState('')
     const [isOpen, setIsOpen] = useState(false)
@@ -224,19 +144,8 @@ const CategorySelector = ({ categories = [], selectedCategories = [], onCategory
     useEffect(resetHighlightedIndex, [availableCategories.length])
 
     return (
-        <Flex direction="column" gap="2">
-            <Text size="2" weight="medium" color="gray">
-                Categories
-            </Text>
-
-            {/* Selected categories as badges */}
-
-            {selectedCategories.length > 0 && (
-                <Box className={badgeContainer}>{selectedCategories.map(renderCategoryBadge)}</Box>
-            )}
-
-            {/* Search input */}
-            <Box className={dropdownContainer}>
+        <>
+            <Box style={{ position: 'relative' }}>
                 <TextField.Root
                     ref={textFieldRef}
                     placeholder="Type to filter categories or press ↓ to browse..."
@@ -250,17 +159,7 @@ const CategorySelector = ({ categories = [], selectedCategories = [], onCategory
                 {/* Dropdown list */}
 
                 {isOpen && availableCategories.length > 0 && (
-                    <ScrollArea className={dropdown}>
-                        {availableCategories.slice(0, 100).map(renderCategoryItem)}
-
-                        {availableCategories.length > 100 && (
-                            <Box className={moreItemsIndicator}>
-                                <Text size="1" color="gray">
-                                    ... and {availableCategories.length - 100} more (keep typing to filter)
-                                </Text>
-                            </Box>
-                        )}
-                    </ScrollArea>
+                    <ScrollArea style={scrollAreaStyle}>{availableCategories.map(renderCategoryItem)}</ScrollArea>
                 )}
             </Box>
 
@@ -275,15 +174,31 @@ const CategorySelector = ({ categories = [], selectedCategories = [], onCategory
                     All categories selected
                 </Text>
             )}
-        </Flex>
+        </>
     )
 }
 
+/**
+ * CategorySelector component for hierarchical category filtering
+ * @sig CategorySelector :: ({ categories: [String], selectedCategories: [String], onCategoryAdded: String -> (), onCategoryRemoved: String -> () }) -> ReactElement
+ */
+const CategorySelector = ({ categories, selectedCategories, onCategoryAdded, onCategoryRemoved, style = {} }) => (
+    <Flex direction="column" gap="2" style={{ ...style }}>
+        <SelectedCategories selectedCategories={selectedCategories} onCategoryRemoved={onCategoryRemoved} />
+        <CategoryDropdown
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onCategoryAdded={onCategoryAdded}
+        />
+    </Flex>
+)
+
 CategorySelector.propTypes = {
-    categories: PropTypes.arrayOf(PropTypes.string),
-    selectedCategories: PropTypes.arrayOf(PropTypes.string),
-    onCategoryAdd: PropTypes.func.isRequired,
-    onCategoryRemove: PropTypes.func.isRequired,
+    categories: PropTypes.arrayOf(PropTypes.string).isRequired,
+    selectedCategories: PropTypes.arrayOf(PropTypes.string).isRequired,
+    onCategoryAdded: PropTypes.func.isRequired,
+    onCategoryRemoved: PropTypes.func.isRequired,
+    style: PropTypes.object, // style properties applied to top-level Flex
 }
 
 export { CategorySelector }

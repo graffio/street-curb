@@ -71,15 +71,16 @@ const SAMPLE_CATEGORIES = [
 const InteractiveCategorySelector = ({ categories = SAMPLE_CATEGORIES, initialSelected = [] }) => {
     const [selectedCategories, setSelectedCategories] = useState(initialSelected)
 
-    const handleCategoryAdd = category => setSelectedCategories(prev => [...prev, category])
-    const handleCategoryRemove = category => setSelectedCategories(prev => prev.filter(c => c !== category))
+    const handleCategoryAdded = category => setSelectedCategories(prev => [...prev, category])
+    const handleCategoryRemoved = category => setSelectedCategories(prev => prev.filter(c => c !== category))
 
     return (
         <CategorySelector
             categories={categories}
             selectedCategories={selectedCategories}
-            onCategoryAdd={handleCategoryAdd}
-            onCategoryRemove={handleCategoryRemove}
+            onCategoryAdded={handleCategoryAdded}
+            onCategoryRemoved={handleCategoryRemoved}
+            style={{ position: 'relative', left: '50%' }}
         />
     )
 }
