@@ -348,18 +348,15 @@ const CurbTable = () => {
     // Action dispatchers with memoization
     const changeSegmentType = useCallback(
         (index, newType) => {
-            if (Object.keys(COLORS).includes(newType)) {
-                dispatch(updateSegmentUse(index, newType))
-            }
+            if (Object.keys(COLORS).includes(newType)) dispatch(updateSegmentUse(index, newType))
         },
         [dispatch],
     )
 
     const changeSegmentLength = useCallback(
         (index, newLength) => {
-            if (typeof newLength === 'number' && !isNaN(newLength) && newLength >= 1) {
+            if (typeof newLength === 'number' && !isNaN(newLength) && newLength >= 1)
                 dispatch(updateSegmentLength(index, newLength))
-            }
         },
         [dispatch],
     )
@@ -394,9 +391,9 @@ const CurbTable = () => {
             const { editingIndex } = numberPadState
             if (editingIndex === null) return
 
-            if (typeof newValue === 'number' && !isNaN(newValue) && newValue >= 1) {
+            if (typeof newValue === 'number' && !isNaN(newValue) && newValue >= 1)
                 changeSegmentLength(editingIndex, newValue)
-            }
+
             setNumberPadState({ isOpen: false, editingIndex: null, originalValue: 0 })
         },
         [numberPadState, changeSegmentLength],
@@ -476,7 +473,6 @@ const CurbTable = () => {
                         max={reduxBlockfaceLength}
                         onSave={handleNumberPadSave}
                         onCancel={handleNumberPadCancel}
-                        label="Length"
                     />
                 )}
             </div>
