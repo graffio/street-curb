@@ -208,7 +208,7 @@ const processUsers = (users, config) => {
 - **Context**: Avoid
 
 ### UI Library
-Radix UI with Radix Themes, Vanilla Extract
+Radix UI with Radix Themes
 
 ### Logic Separation
 Extract calculatable UI logic to pure functions (prefer testable functions over JSX-embedded logic)

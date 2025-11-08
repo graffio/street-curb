@@ -485,7 +485,6 @@ VirtualTable is a compound component system for creating high-performance virtua
 - Automatic height distribution (no manual body height calculations)
 - Row snapping for aligned scrolling
 - Keyboard navigation support
-- Custom styling with Vanilla Extract
 - Callback support for scroll and row mounting events
 
 **Components:**

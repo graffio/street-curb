@@ -162,6 +162,7 @@ const NumberPad = ({ value, min = 0, max = 999, onSave, onCancel }) => {
         <Dialog.Root open={true}>
             <Dialog.Portal>
                 <Dialog.Overlay style={dialogOverlayStyle} />
+                <Dialog.Title>SegmentLength</Dialog.Title>
                 <Dialog.Content style={dialogContentStyle}>
                     <Dialog.Description style={dialogDescriptionStyle}>Number input dialog</Dialog.Description>
                     <Content {...{ value, min, max, onSave, onCancel }} />

@@ -1,10 +1,7 @@
 import { Box, Button, Flex, Grid, Heading, Link } from '@radix-ui/themes'
 import React from 'react'
 import { layoutChannel, useChannel } from '../channels/index.js'
-import { tokens } from '../themes/tokens.css.js'
 import { TitleAndSubtitle } from './TitleAndSubtitle.jsx'
-
-const { borderRadius, colors, layout, space } = tokens
 
 const renderTopBarAction = (action, index) => (
     <Button key={index} size="2">
@@ -19,7 +16,7 @@ const TopBar = () => {
     topBarActions ||= []
 
     return (
-        <Flex height="100%" align="center" p={`0 ${space.md}`} style={{ borderBottom: `1px solid ${colors.accent}` }}>
+        <Flex height="100%" align="center" px="4" style={{ borderBottom: '1px solid var(--accent-3)' }}>
             <TitleAndSubtitle gap="tight">
                 <TitleAndSubtitle.Title size="lg">{title}</TitleAndSubtitle.Title>
                 {subtitle && <TitleAndSubtitle.Subtitle size="xs">{subtitle}</TitleAndSubtitle.Subtitle>}
@@ -32,15 +29,8 @@ const TopBar = () => {
     )
 }
 
-// Reusable design system tokens for interactive elements
-const interactiveElement = {
-    padding: `${space.sm} ${space.md}`,
-    borderRadius: borderRadius.sm,
-    transition: 'background-color 0.2s ease',
-}
-
 const renderSidebarItem = (item, i) => (
-    <Button key={i} variant="soft" size="2" asChild style={{ justifyContent: 'flex-start', ...interactiveElement }}>
+    <Button key={i} variant="soft" size="2" asChild style={{ justifyContent: 'flex-start' }}>
         <Link href={item.href} underline="none" weight="medium">
             {item.label}
         </Link>
@@ -48,8 +38,8 @@ const renderSidebarItem = (item, i) => (
 )
 
 const renderSidebarSection = (sectionData, i) => (
-    <Box key={i} style={{ marginBottom: space.lg }}>
-        <Heading as="h3" size="3" ml={space.md} mt={space.md} color="plum">
+    <Box key={i} mb="4">
+        <Heading as="h3" size="3" ml="3" mt="3" color="plum">
             {sectionData.title}
         </Heading>
         <Flex direction="column">{sectionData.items.map(renderSidebarItem)}</Flex>
@@ -66,7 +56,7 @@ const Sidebar = () => {
     sidebarItems ||= []
 
     return (
-        <Flex direction="column" gap={space.xs} height="100%" style={{ backgroundColor: 'var(--gray-1)' }}>
+        <Flex direction="column" gap="1" height="100%" style={{ backgroundColor: 'var(--gray-1)' }}>
             {sidebarItems.map(renderSidebarSection)}
         </Flex>
     )
@@ -74,8 +64,8 @@ const Sidebar = () => {
 
 const MainLayout = ({ children }) => {
     const mainLayoutGridProperties = {
-        columns: `${layout.sidebarWidth} 1fr`,
-        rows: `${layout.topBarHeight} 1fr`,
+        columns: '240px 1fr',
+        rows: '60px 1fr',
         areas: `
             "topbar topbar"
             "sidebar main"

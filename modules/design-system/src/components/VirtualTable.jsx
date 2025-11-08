@@ -23,10 +23,7 @@
 import { Box, Flex } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React from 'react'
-import { tokens } from '../themes/tokens.css.js'
 import { VirtualScroller } from './VirtualScroller/VirtualScroller.jsx'
-
-const { space, colors } = tokens
 
 /*
  * Root container for virtual table
@@ -56,10 +53,10 @@ const Root = React.forwardRef(({ height = 1600, children, style = {} }, ref) => 
  * Fixed header container
  */
 const Header = ({ children, style }) => {
-    const headerStyle = { backgroundColor: colors.primary, color: 'var(--accent-contrast)', ...style }
+    const headerStyle = { backgroundColor: 'var(--accent-9)', color: 'var(--accent-contrast)', ...style }
 
     return (
-        <Flex align="center" gap="2" p={`${space.sm} ${space.md}`} style={headerStyle}>
+        <Flex align="center" gap="2" p="2" style={headerStyle}>
             {children}
         </Flex>
     )
@@ -127,7 +124,7 @@ const Body = React.forwardRef(({ rowHeight = 40, renderRow, ...virtualScrollerPr
  * Row component for table
  */
 const Row = ({ children, style = {} }) => (
-    <Flex align="center" p={`${space.sm} ${space.md}`} gap="2" style={style}>
+    <Flex align="center" p="2" gap="2" style={style}>
         {children}
     </Flex>
 )
@@ -137,7 +134,7 @@ const Row = ({ children, style = {} }) => (
  */
 const Cell = ({ width, flex, textAlign = 'left', children, style = {} }) => {
     const cellStyle = {
-        color: colors.muted,
+        color: 'var(--gray-11)',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',

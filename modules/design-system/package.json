@@ -21,9 +21,6 @@
         "@radix-ui/react-slot": "^1.0.2",
         "@radix-ui/themes": "^3.0.0",
         "@tanstack/react-virtual": "^3.13.12",
-        "@vanilla-extract/css": "^1.14.0",
-        "@vanilla-extract/recipes": "^0.5.7",
-        "@vanilla-extract/vite-plugin": "^4.0.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.8.1"

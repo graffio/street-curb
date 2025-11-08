@@ -10,18 +10,15 @@ import React, { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { layoutChannel } from '../src/channels/index.js'
 import { MainLayout } from '../src/components/MainLayout.jsx'
-import { MainTheme } from '../src/themes/theme.jsx'
 
 export default {
     title: 'MainLayout',
     component: MainLayout,
     decorators: [
         Story => (
-            <MainTheme>
-                <BrowserRouter>
-                    <Story />
-                </BrowserRouter>
-            </MainTheme>
+            <BrowserRouter>
+                <Story />
+            </BrowserRouter>
         ),
     ],
     parameters: {
@@ -54,7 +51,7 @@ export const WithCustomNavigation = () => {
         layoutChannel.setState({
             title: 'Custom Navigation',
             subtitle: 'Via layoutChannel',
-            topBarActions: [{ label: 'Alpha' }, { label: 'Alpha' }, { label: 'Alpha' }],
+            topBarActions: [{ label: 'Alpha' }, { label: 'Beta' }, { label: 'Gamma' }],
             sidebarItems: [
                 { title: 'Section 1', items: [{ href: '/page1', label: 'Page 1', active: true }] },
                 {

@@ -46,7 +46,6 @@
 import { Box } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React from 'react'
-import { tokens } from '../../themes/tokens.css.js'
 import useVirtualScroll from './useVirtualScroll'
 
 const VirtualScroller = React.forwardRef(
@@ -78,7 +77,7 @@ const VirtualScroller = React.forwardRef(
 
             const isHighlighted = vRow.index === highlightedRow
             const isEven = vRow.index % 2 === 0
-            const backgroundColor = isEven ? `rgba(from ${tokens.colors.accent} r g b)` : tokens.colors.background
+            const backgroundColor = isEven ? 'var(--accent-3)' : 'var(--color-background)'
 
             const style = {
                 transform: `translateY(${vRow.start}px)`,

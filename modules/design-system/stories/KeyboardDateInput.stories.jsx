@@ -1,25 +1,17 @@
 /*
  * KeyboardDateInput.stories.jsx - Storybook stories for KeyboardDateInput component
  *
- * This file demonstrates the keyboard-driven date input functionality with arrow key navigation.
  * Users can navigate between date parts and increment/decrement values using only the keyboard.
  */
 
 import { Card, Flex, Text } from '@radix-ui/themes'
 import React, { useState } from 'react'
 import { KeyboardDateInput } from '../src/components/KeyboardDateInput.jsx'
-import { MainTheme } from '../src/themes/theme.jsx'
 
 export default {
     title: 'KeyboardDateInput',
     component: KeyboardDateInput,
-    decorators: [
-        Story => (
-            <MainTheme>
-                <Story />
-            </MainTheme>
-        ),
-    ],
+    decorators: [Story => <Story />],
     parameters: {
         docs: {
             description: {

@@ -1,21 +1,7 @@
 import React, { useState } from 'react'
-import { CategorySelector } from '../src/components/CategorySelector.jsx'
-import { MainTheme } from '../src/themes/theme.jsx'
+import { CategorySelector } from '../src/index.js'
 
-export default {
-    title: 'CategorySelector',
-    component: CategorySelector,
-    parameters: { layout: 'padded' },
-    decorators: [
-        Story => (
-            <MainTheme>
-                <div style={{ width: '400px' }}>
-                    <Story />
-                </div>
-            </MainTheme>
-        ),
-    ],
-}
+export default { title: 'CategorySelector', component: CategorySelector, parameters: { layout: 'padded' } }
 
 const SAMPLE_CATEGORIES = [
     'Banking',
@@ -80,7 +66,6 @@ const InteractiveCategorySelector = ({ categories = SAMPLE_CATEGORIES, initialSe
             selectedCategories={selectedCategories}
             onCategoryAdded={handleCategoryAdded}
             onCategoryRemoved={handleCategoryRemoved}
-            style={{ position: 'relative', left: '50%' }}
         />
     )
 }

@@ -34,7 +34,6 @@ import { MainLayout } from './components/MainLayout.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
 import { VirtualTable } from './components/VirtualTable.jsx'
 import { DateRangePicker } from './DateRangePicker.jsx'
-import { MainTheme } from './themes/theme.jsx'
 
 export {
     Button,
@@ -65,7 +64,6 @@ export {
     DateRangePicker,
     CategorySelector,
     Dialog,
-    MainTheme,
     createChannel,
     useChannel,
     layoutChannel,

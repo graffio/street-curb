@@ -1,4 +1,3 @@
-import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import NumberPad from '../components/NumberPad.jsx'
 
@@ -9,17 +8,7 @@ import NumberPad from '../components/NumberPad.jsx'
  * during field data collection, replacing the device keyboard.
  */
 
-export default {
-    title: 'SegmentedCurbEditor/NumberPad',
-    component: NumberPad,
-    decorators: [
-        Story => (
-            <MainTheme>
-                <Story />
-            </MainTheme>
-        ),
-    ],
-}
+export default { title: 'SegmentedCurbEditor/NumberPad', component: NumberPad, decorators: [Story => <Story />] }
 
 /**
  * Basic NumberPad with default value

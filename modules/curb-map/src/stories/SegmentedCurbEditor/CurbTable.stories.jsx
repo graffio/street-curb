@@ -1,11 +1,9 @@
-import { MainTheme } from '@graffio/design-system'
 import { Provider } from 'react-redux'
 import { createStoreWithScenario } from '../../../test/test-store.js'
 import CurbTable from '../../components/CurbTable/CurbTable.jsx'
 
 /**
  * Storybook stories for CurbTable component
- * Uses MainTheme wrapper for design system consistency
  */
 
 /**
@@ -14,9 +12,7 @@ import CurbTable from '../../components/CurbTable/CurbTable.jsx'
  */
 const StoryWrapper = ({ children, store }) => (
     <Provider store={store}>
-        <MainTheme>
-            <div style={{ padding: '20px', background: 'var(--color-background)', minHeight: '100vh' }}>{children}</div>
-        </MainTheme>
+        <div style={{ padding: '20px', background: 'var(--color-background)', minHeight: '100vh' }}>{children}</div>
     </Provider>
 )
 
@@ -197,13 +193,7 @@ const FeatureShowcase = {
                         </h3>
                         <ul style={{ color: 'var(--gray-11)', fontSize: '14px', lineHeight: '1.6' }}>
                             <li>
-                                <strong>Design System:</strong> Uses Radix Themes with MainTheme integration
-                            </li>
-                            <li>
                                 <strong>State Management:</strong> Redux with optimized selectors and memoization
-                            </li>
-                            <li>
-                                <strong>Styling:</strong> Vanilla Extract CSS-in-JS with design tokens
                             </li>
                             <li>
                                 <strong>Performance:</strong> Proper React memoization and efficient re-renders

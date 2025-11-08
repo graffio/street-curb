@@ -34,7 +34,6 @@ import { datePartsToDate, dateToDateParts, formatDateString } from '@graffio/fun
 import { Box, Flex, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { tokens } from '../themes/tokens.css.js'
 import { parseDateString, toDisplayDateString, updateDatePartWithValidation } from '../utils/date-input-utils.js'
 
 /*
@@ -209,11 +208,11 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         const isActive = activePart === partName
 
         const partStyle = {
-            padding: '2px 4px', // too small for tokens.space
-            borderRadius: tokens.borderRadius.sm,
+            padding: '2px 4px',
+            borderRadius: 'var(--radius-2)',
             textAlign: 'center',
             display: 'inline-block',
-            ...(isActive && { backgroundColor: tokens.colors.accent, color: tokens.colors.primary }),
+            ...(isActive && { backgroundColor: 'var(--accent-3)', color: 'var(--accent-9)' }),
         }
 
         return (
@@ -236,7 +235,7 @@ const KeyboardDateInput = forwardRef((props, ref) => {
                 if (!part.startsWith('{{') || !part.endsWith('}}')) return part
 
                 return (
-                    <Text key={index} as="span" style={{ color: tokens.colors.primary }}>
+                    <Text key={index} as="span" style={{ color: 'var(--accent-9)' }}>
                         {part.slice(2, -2)}
                     </Text>
                 )
@@ -249,13 +248,10 @@ const KeyboardDateInput = forwardRef((props, ref) => {
             return parts.map(interpolateBraces)
         }
 
-        const keyboardDisplayStyle = {
-            border: `2px solid ${tokens.colors.border}`,
-            borderRadius: tokens.borderRadius.sm,
-        }
+        const keyboardDisplayStyle = { border: '2px solid var(--gray-6)', borderRadius: 'var(--radius-2)' }
         return (
             <Box style={style}>
-                <Flex p={tokens.space.sm} align="center" style={keyboardDisplayStyle}>
+                <Flex p="1" align="center" style={keyboardDisplayStyle}>
                     {renderPart(0)}
                     {renderSlash()}
                     {renderPart(1)}
