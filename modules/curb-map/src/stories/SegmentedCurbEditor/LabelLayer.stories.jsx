@@ -1,4 +1,3 @@
-import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { LabelLayer } from '../../components/SegmentedCurbEditor/LabelLayer.jsx'
@@ -149,11 +148,9 @@ const StoryContent = args => {
  * @sig ShowcaseRender :: (Object) -> JSXElement
  */
 const ShowcaseRender = args => (
-    <MainTheme>
-        <Provider store={store}>
-            <StoryContent {...args} />
-        </Provider>
-    </MainTheme>
+    <Provider store={store}>
+        <StoryContent {...args} />
+    </Provider>
 )
 
 // Mock data for demonstration

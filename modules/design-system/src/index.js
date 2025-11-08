@@ -27,16 +27,13 @@ import {
 
 // Channel system
 import { createChannel, layoutChannel, useChannel } from './channels/index.js'
-import { CategorySelector } from './components/CategorySelector/CategorySelector.jsx'
-import { DateRangePicker } from './components/DateRangePicker/DateRangePicker.jsx'
+import { CategorySelector } from './components/CategorySelector.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
-import { KeyboardDateInput } from './components/KeyboardDateInput/KeyboardDateInput.jsx'
-import { MainLayout } from './components/layout/MainLayout.jsx'
-import { Sidebar } from './components/layout/Sidebar.jsx'
-import { TopBar } from './components/layout/TopBar.jsx'
-import { TitleAndSubtitle } from './components/TitleAndSubtitle/TitleAndSubtitle.jsx'
-import { VirtualTable } from './components/VirtualTable/VirtualTable.jsx'
-import { MainTheme } from './themes/theme.jsx'
+import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
+import { MainLayout } from './components/MainLayout.jsx'
+import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
+import { VirtualTable } from './components/VirtualTable.jsx'
+import { DateRangePicker } from './DateRangePicker.jsx'
 
 export {
     Button,
@@ -61,15 +58,12 @@ export {
     ScrollArea,
     Select,
     MainLayout,
-    TopBar,
-    Sidebar,
     TitleAndSubtitle,
     VirtualTable,
     KeyboardDateInput,
     DateRangePicker,
     CategorySelector,
     Dialog,
-    MainTheme,
     createChannel,
     useChannel,
     layoutChannel,

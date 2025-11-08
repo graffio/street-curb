@@ -29,7 +29,7 @@
  * - WithScrollToRow: For programmatic scrolling to specific rows
  */
 import React, { useRef, useState } from 'react'
-import { VirtualTable } from './VirtualTable'
+import { VirtualTable } from '../src/index.js'
 
 const { Root, Body, Row, Header, HeaderCell, Cell } = VirtualTable
 
@@ -78,19 +78,6 @@ const renderSampleRow = data => index => {
 
 const sampleData = generateSampleData(10000)
 const sampleRenderRow = renderSampleRow(sampleData)
-
-/*
- * Column definitions for automatic header generation
- *
- * @sig sampleColumns :: [Column]
- *     Column = { width: String?, flex: Number?, title: String, textAlign: 'left'|'center'|'right'? }
- */
-const sampleColumns = [
-    { width: '80px', title: 'ID' },
-    { flex: 1, title: 'Name' },
-    { width: '100px', title: 'Value', textAlign: 'right' },
-    { width: '100px', title: 'Status', textAlign: 'center' },
-]
 
 /*
  * Callback functions for demonstration
@@ -294,29 +281,13 @@ const WithRowMountCallback = () => (
     </div>
 )
 
-// columns: Use for dynamic tables from API schemas or when headers need to be configurable
-const WithColumns = () => (
-    <div>
-        <h3>Column Definitions - Headers generated automatically from data schema</h3>
-        <p>Use when: building dynamic tables from API responses, user-configurable columns, admin interfaces</p>
-        <Root height={400} columns={sampleColumns}>
-            <Header />
-            <Body rowCount={sampleData.length} renderRow={sampleRenderRow} />
-        </Root>
-    </div>
-)
-
-// className/style: Use for design system integration and custom theming
+// style: Use for design system integration and custom theming
 const CustomStyling = () => (
     <div>
         <h3>Custom Styling - Design system integration</h3>
         <p>Use for: brand theming, design system integration, custom borders/shadows</p>
-        <Root
-            height={400}
-            className="custom-table"
-            style={{ border: '2px solid var(--violet-9)', borderRadius: 'var(--radius-3)' }}
-        >
-            <Header className="custom-header" style={{ backgroundColor: 'var(--violet-9)', color: 'white' }}>
+        <Root height={400} style={{ border: '2px solid var(--violet-9)', borderRadius: 'var(--radius-3)' }}>
+            <Header style={{ backgroundColor: 'var(--violet-9)', color: 'white' }}>
                 <HeaderCell width="80px">ID</HeaderCell>
                 <HeaderCell flex={1}>Name</HeaderCell>
                 <HeaderCell width="100px" textAlign="right">
@@ -514,7 +485,6 @@ VirtualTable is a compound component system for creating high-performance virtua
 - Automatic height distribution (no manual body height calculations)
 - Row snapping for aligned scrolling
 - Keyboard navigation support
-- Custom styling with Vanilla Extract
 - Callback support for scroll and row mounting events
 
 **Components:**
@@ -538,7 +508,6 @@ export {
     CustomHeight,
     WithScrollCallback,
     WithRowMountCallback,
-    WithColumns,
     CustomStyling,
     WithScrollToRow,
 }

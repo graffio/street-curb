@@ -1,5 +1,5 @@
 import React from 'react'
-import { TitleAndSubtitle } from './TitleAndSubtitle.jsx'
+import { TitleAndSubtitle } from '../src/components/TitleAndSubtitle.jsx'
 
 export default {
     title: 'TitleAndSubtitle',
@@ -168,29 +168,4 @@ export const AllVariations = {
         )
     },
     parameters: { controls: { disable: true } },
-}
-
-// Interactive playground
-export const Playground = {
-    render: ({ gap, titleSize, subtitleSize, titleText, subtitleText, showSubtitle }) => (
-        <TitleAndSubtitle gap={gap}>
-            <TitleAndSubtitle.Title size={titleSize}>{titleText}</TitleAndSubtitle.Title>
-            {showSubtitle && <TitleAndSubtitle.Subtitle size={subtitleSize}>{subtitleText}</TitleAndSubtitle.Subtitle>}
-        </TitleAndSubtitle>
-    ),
-    args: {
-        gap: 'normal',
-        titleSize: 'lg',
-        subtitleSize: 'xs',
-        titleText: 'Interactive Title',
-        subtitleText: 'Interactive Subtitle',
-        showSubtitle: true,
-    },
-    argTypes: {
-        titleSize: { control: { type: 'select' }, options: ['md', 'lg', 'xl'] },
-        subtitleSize: { control: { type: 'select' }, options: ['xs', 'sm', 'md'] },
-        titleText: { control: { type: 'text' } },
-        subtitleText: { control: { type: 'text' } },
-        showSubtitle: { control: { type: 'boolean' } },
-    },
 }

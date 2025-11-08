@@ -1,4 +1,4 @@
-import { VirtualScroller } from './VirtualScroller'
+import { VirtualScroller } from '../src/components/VirtualScroller/VirtualScroller.jsx'
 
 const defaultRenderRow = i => `Row ${i} - Content with details and information`
 

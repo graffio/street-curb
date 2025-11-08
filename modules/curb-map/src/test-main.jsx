@@ -1,4 +1,3 @@
-import { MainTheme } from '@graffio/design-system'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
@@ -11,11 +10,9 @@ import './index.css'
  * Provides isolated test environment with scenario switching
  */
 const TestApp = () => (
-    <MainTheme>
-        <Provider store={store}>
-            <TestAppComponent />
-        </Provider>
-    </MainTheme>
+    <Provider store={store}>
+        <TestAppComponent />
+    </Provider>
 )
 
 ReactDOM.createRoot(document.getElementById('root')).render(

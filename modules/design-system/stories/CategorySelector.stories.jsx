@@ -1,21 +1,7 @@
 import React, { useState } from 'react'
-import { MainTheme } from '../../themes/theme.jsx'
-import { CategorySelector } from './CategorySelector.jsx'
+import { CategorySelector } from '../src/index.js'
 
-export default {
-    title: 'Components/CategorySelector',
-    component: CategorySelector,
-    parameters: { layout: 'padded' },
-    decorators: [
-        Story => (
-            <MainTheme>
-                <div style={{ width: '400px' }}>
-                    <Story />
-                </div>
-            </MainTheme>
-        ),
-    ],
-}
+export default { title: 'CategorySelector', component: CategorySelector, parameters: { layout: 'padded' } }
 
 const SAMPLE_CATEGORIES = [
     'Banking',
@@ -71,15 +57,15 @@ const SAMPLE_CATEGORIES = [
 const InteractiveCategorySelector = ({ categories = SAMPLE_CATEGORIES, initialSelected = [] }) => {
     const [selectedCategories, setSelectedCategories] = useState(initialSelected)
 
-    const handleCategoryAdd = category => setSelectedCategories(prev => [...prev, category])
-    const handleCategoryRemove = category => setSelectedCategories(prev => prev.filter(c => c !== category))
+    const handleCategoryAdded = category => setSelectedCategories(prev => [...prev, category])
+    const handleCategoryRemoved = category => setSelectedCategories(prev => prev.filter(c => c !== category))
 
     return (
         <CategorySelector
             categories={categories}
             selectedCategories={selectedCategories}
-            onCategoryAdd={handleCategoryAdd}
-            onCategoryRemove={handleCategoryRemove}
+            onCategoryAdded={handleCategoryAdded}
+            onCategoryRemoved={handleCategoryRemoved}
         />
     )
 }
@@ -88,17 +74,6 @@ const InteractiveCategorySelector = ({ categories = SAMPLE_CATEGORIES, initialSe
  * Default story - empty selector with sample categories
  */
 export const Default = { render: () => <InteractiveCategorySelector /> }
-
-/*
- * Story with some categories pre-selected
- */
-export const WithSelectedCategories = {
-    render: () => (
-        <InteractiveCategorySelector
-            initialSelected={['Food:Restaurant', 'Transportation:Gas', 'Entertainment:Movies']}
-        />
-    ),
-}
 
 /*
  * Story with a large number of categories to test performance and scrolling

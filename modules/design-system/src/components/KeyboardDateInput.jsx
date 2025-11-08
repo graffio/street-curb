@@ -31,11 +31,10 @@
  */
 
 import { datePartsToDate, dateToDateParts, formatDateString } from '@graffio/functional'
-import { Box, Text, TextField } from '@radix-ui/themes'
+import { Box, Flex, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { parseDateString, toDisplayDateString, updateDatePartWithValidation } from '../../utils/date-input-utils.js'
-import * as styles from './KeyboardDateInput.css.js'
+import { parseDateString, toDisplayDateString, updateDatePartWithValidation } from '../utils/date-input-utils.js'
 
 /*
  * KeyboardDateInput component
@@ -207,56 +206,82 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         const partNames = ['month', 'day', 'year']
         const partName = partNames[partIndex]
         const isActive = activePart === partName
-        const className = isYear ? styles.yearPart : styles.datePart
+
+        const partStyle = {
+            padding: '2px 4px',
+            borderRadius: 'var(--radius-2)',
+            textAlign: 'center',
+            display: 'inline-block',
+            ...(isActive && { backgroundColor: 'var(--accent-3)', color: 'var(--accent-9)' }),
+        }
 
         return (
-            <span className={className} data-active={isActive}>
+            <Text as="span" style={partStyle}>
                 {getPartDisplay(partIndex)}
-            </span>
+            </Text>
         )
     }
 
-    const renderKeyboardMode = () => (
-        <Box className={styles.keyboardContainer} style={style}>
-            <div className={`${styles.keyboardDisplay} ${styles.focusRing}`}>
-                {renderPart(0)}
-                <span className={styles.separator}>/</span>
-                {renderPart(1)}
-                <span className={styles.separator}>/</span>
-                {renderPart(2, true)}
-            </div>
-            <Text className={styles.helpText}>
-                {typingBuffer ? (
-                    <span className={styles.typingIndicator}>
-                        Type: {typingBuffer} • Backspace to clear • Navigate with arrow/tab keys
-                    </span>
-                ) : (
-                    <>
-                        <span className={styles.keyHighlight}>↑↓</span> change field •{' '}
-                        <span className={styles.keyHighlight}>←→</span>/<span className={styles.keyHighlight}>Tab</span>{' '}
-                        navigate fields • <span className={styles.keyHighlight}>0-9</span> type •{' '}
-                        <span className={styles.keyHighlight}>t</span> today •{' '}
-                        <span className={styles.keyHighlight}>[</span>/<span className={styles.keyHighlight}>]</span>{' '}
-                        +/- day • <span className={styles.keyHighlight}>Enter</span>/click away to exit
-                    </>
-                )}
-            </Text>
-        </Box>
+    const renderSlash = () => (
+        <Text as="span" style={{ margin: '0 2px' }}>
+            /
+        </Text>
     )
 
-    const renderKeyboardModeWrapper = () => (
-        <Box className={styles.responsiveContainer}>
-            <input
-                ref={inputRef}
-                type="text"
-                className={styles.hiddenInput}
-                onKeyDown={handleKeyDown}
-                onBlur={handleBlur}
-                autoFocus
-            />
-            {renderKeyboardMode()}
-        </Box>
-    )
+    const renderKeyboardMode = () => {
+        // Parse help text with {{key}} syntax for highlighted keys
+        const helpText = () => {
+            const interpolateBraces = (part, index) => {
+                if (!part.startsWith('{{') || !part.endsWith('}}')) return part
+
+                return (
+                    <Text key={index} as="span" style={{ color: 'var(--accent-9)' }}>
+                        {part.slice(2, -2)}
+                    </Text>
+                )
+            }
+
+            if (typingBuffer) return ''
+            const text =
+                '{{↑↓}} change field • {{←→}}/{{Tab}} navigate fields • {{0-9}} type • {{t}} today • {{[}}/{{]}} +/- day • {{Enter}}/click away to exit'
+            const parts = text.split(/(\{\{.*?\}\})/)
+            return parts.map(interpolateBraces)
+        }
+
+        const keyboardDisplayStyle = { border: '2px solid var(--gray-6)', borderRadius: 'var(--radius-2)' }
+        return (
+            <Box style={style}>
+                <Flex p="1" align="center" style={keyboardDisplayStyle}>
+                    {renderPart(0)}
+                    {renderSlash()}
+                    {renderPart(1)}
+                    {renderSlash()}
+                    {renderPart(2, true)}
+                </Flex>
+                <Text size="1" color="gray" mt="1" style={{ textAlign: 'center', lineHeight: 1.3, maxWidth: '280px' }}>
+                    {helpText()}
+                </Text>
+            </Box>
+        )
+    }
+
+    const renderKeyboardModeWrapper = () => {
+        const hiddenInputStyle = { opacity: 0, position: 'absolute', left: '-9999px', width: '1px', height: '1px' }
+
+        return (
+            <Box>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    style={hiddenInputStyle}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleBlur}
+                    autoFocus
+                />
+                {renderKeyboardMode()}
+            </Box>
+        )
+    }
 
     const renderTextMode = () => {
         // Convert Date to string for display in regular input mode
@@ -271,7 +296,6 @@ const KeyboardDateInput = forwardRef((props, ref) => {
                 onFocus={handleFocus}
                 disabled={disabled}
                 placeholder={placeholder}
-                className={styles.regularInput}
                 style={style}
                 {...restProps}
             />
