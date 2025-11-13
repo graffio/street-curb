@@ -439,7 +439,7 @@ const CurbTable = () => {
                             {hasAnySegments ? (
                                 segments.map((segment, index) => (
                                     <CurbSegmentRow
-                                        key={segment.id}
+                                        key={segment.id || index}
                                         segment={segment}
                                         index={index}
                                         startPosition={startPositions[index]}
