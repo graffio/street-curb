@@ -1,0 +1,111 @@
+test_suite:
+  spec_id: F200
+  name: "LookupTable Blockface Migration Tests"
+  description: "Validation test cases for straightforward F200 migration"
+
+# Test Categories
+test_categories:
+  state_structure_tests:
+    - redux_state_shape_correct
+    - lookuptable_operations_work
+    - initial_blockface_created
+
+  selector_compatibility_tests:
+    - existing_selectors_work
+    - data_types_unchanged
+    - memoization_preserved
+
+  action_handler_tests:
+    - segment_operations_work
+    - blockface_updates_correctly
+    - tagged_types_created
+
+  regression_tests:
+    - all_existing_tests_pass
+    - functionality_identical
+    - no_console_errors
+
+# Specific Test Cases
+test_cases:
+  state_structure_correct:
+    description: "Redux state has correct LookupTable<Blockface> structure"
+    test: "state.blockfaces is LookupTable && state.ui.currentBlockfaceId exists"
+    expected: "New state structure matches target architecture"
+    task: task_1_change_redux_state_structure
+
+  initial_blockface_created:
+    description: "Default Blockface exists and is accessible"
+    test: "state.blockfaces.get(state.ui.currentBlockfaceId) returns valid Blockface"
+    expected: "Current blockface accessible via LookupTable"
+    task: task_1_change_redux_state_structure
+
+  selector_api_preserved:
+    description: "Existing selectors return same data types"
+    test: "selectSegments(state) returns Array, selectBlockfaceLength(state) returns Number"
+    expected: "Component APIs unchanged"
+    task: task_2_update_selectors
+
+  segments_from_current_blockface:
+    description: "selectSegments gets segments from current blockface"
+    test: "selectSegments(state) === selectCurrentBlockface(state).segments"
+    expected: "Segments come from current blockface, not old curb state"
+    task: task_2_update_selectors
+
+  unknown_remaining_calculation:
+    description: "Unknown remaining calculation still works"
+    test: "selectUnknownRemaining(state) === blockfaceLength - segmentsTotal"
+    expected: "Mathematical invariant preserved with new state"
+    task: task_2_update_selectors
+
+  add_segment_creates_tagged_type:
+    description: "Adding segment creates tagged Segment in current Blockface"
+    test: "dispatch(addSegment(0)); Segment.is(currentBlockface.segments[0]) === true"
+    expected: "New segments are tagged types within blockface"
+    task: task_3_update_action_handlers
+
+  segment_update_modifies_blockface:
+    description: "Segment updates modify Blockface in LookupTable"
+    test: "dispatch(updateSegmentLength(0, 100)); blockface.segments[0].length === 100"
+    expected: "Segment changes propagate to Blockface in LookupTable"
+    task: task_3_update_action_handlers
+
+  blockface_replacement_immutable:
+    description: "Blockface updates are immutable in LookupTable"
+    test: "oldBlockface !== newBlockface after segment update"
+    expected: "LookupTable contains new Blockface instance after updates"
+    task: task_3_update_action_handlers
+
+  all_tests_pass:
+    description: "Full test suite passes with new state structure"
+    test: "yarn tap shows 0 failures"
+    expected: "All 170+ tests pass"
+    task: task_4_fix_tests
+
+  test_scenarios_work:
+    description: "Test store scenarios create proper Blockface state"
+    test: "createStoreWithScenario('single') creates state with one Blockface"
+    expected: "Test utilities work with new state structure"
+    task: task_4_fix_tests
+
+  mathematical_invariants_preserved:
+    description: "Mathematical invariant tests still pass"
+    test: "segmentsTotal + unknownRemaining === blockfaceLength for all test states"
+    expected: "Core business logic unchanged"
+    task: task_4_fix_tests
+
+# Migration Validation Matrix
+migration_validation:
+  state_integrity:
+    - correct_state_shape
+    - lookuptable_operations_functional
+    - current_blockface_accessible
+
+  functionality_preservation:
+    - all_selectors_work_identically
+    - all_actions_work_identically
+    - component_behavior_unchanged
+
+  test_coverage:
+    - existing_tests_all_pass
+    - test_utilities_updated
+    - no_functionality_regressions

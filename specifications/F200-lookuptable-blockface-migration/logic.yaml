@@ -1,0 +1,147 @@
+migration_specification:
+  spec_id: F200
+  name: "LookupTable Blockface Migration"
+  version: 1.0
+  description: "Migrate Redux from flat curb structure to LookupTable<Blockface> architecture"
+
+# Architecture Overview
+architecture:
+  current_state: |
+    state.curb = {
+      segments: [plainObject, plainObject, ...],
+      blockfaceLength: 240,
+      blockfaceId: 'some-id',
+      isCollectionComplete: false
+    }
+
+  target_state: |
+    state.blockfaces = LookupTable([
+      Blockface('id-1', geometry1, 'Main St', [Segment(...), Segment(...)]),
+    ], Blockface, 'id')
+    state.ui = {
+      currentBlockfaceId: 'id-1'
+    }
+
+  dependencies:
+    - "@graffio/types/generated/right-of-way" # Blockface and Segment tagged types
+    - "@modules/functional/src/lookup-table.js" # Existing LookupTable implementation
+
+# Task Definitions
+tasks:
+  task_1_change_redux_state_structure:
+    id: task_1_change_redux_state_structure
+    description: "Change Redux state structure to LookupTable<Blockface> + UI state"
+    commands:
+      - "Update reducer.js initial state structure"
+      - "Import LookupTable and tagged types"
+      - "Create initial Blockface with tagged Segments from existing data"
+    files:
+      - "modules/right-of-way-editor/src/store/reducer.js"
+    changes:
+      - "Import LookupTable from @modules/functional/src/lookup-table.js"
+      - "Import Blockface, Segment from @graffio/types/generated/right-of-way"
+      - "Replace curbInitialState with rootInitialState containing blockfaces LookupTable and ui state"
+      - "Create default Blockface with empty tagged Segments array"
+      - "Set ui.currentBlockfaceId to point to default blockface"
+    validation:
+      - "State structure matches target: state.blockfaces is LookupTable, state.ui.currentBlockfaceId exists"
+      - "Default Blockface contains empty tagged Segments array"
+      - "LookupTable operations work: state.blockfaces.get(id) returns Blockface"
+    complexity:
+      - Replace curbInitialState with blockfaces LookupTable + ui state
+      - Import LookupTable and tagged types (Blockface, Segment)
+      - Create initial Blockface with tagged Segments from existing curb data
+
+  task_2_update_selectors:
+    id: task_2_update_selectors
+    description: "Update existing selectors to work with new Blockface-centric state"
+    commands:
+      - "Update selectSegments to get current blockface's segments"
+      - "Update selectBlockfaceLength to get current blockface's geometry/length"
+      - "Update all other selectors for new state shape"
+      - "Preserve selector API compatibility for components"
+    files:
+      - "modules/right-of-way-editor/src/store/selectors.js"
+    changes:
+      - "Add selectCurrentBlockface(state) helper using currentBlockfaceId"
+      - "selectSegments -> selectCurrentBlockface(state)?.segments || []"
+      - "selectBlockfaceLength -> selectCurrentBlockface(state)?.geometry?.length || 240"
+      - "selectBlockfaceId -> selectCurrentBlockface(state)?.id"
+      - "Update memoization dependencies for new state shape"
+      - "Keep all existing selector names for component compatibility"
+    validation:
+      - "All existing selectors return same data types as before"
+      - "selectSegments returns array of tagged Segments from current blockface"
+      - "selectUnknownRemaining calculation still works correctly"
+      - "Memoization prevents unnecessary re-renders"
+    complexity:
+      - Change selectSegments to get current blockface's segments
+      - Change selectBlockfaceLength to get current blockface's geometry/length
+      - Update memoization dependencies for new state shape
+
+  task_3_update_action_handlers:
+    id: task_3_update_action_handlers
+    description: "Update action handlers to work with Blockface objects in LookupTable"
+    commands:
+      - "Update handleAddSegment to add tagged Segment to current Blockface"
+      - "Update handleUpdateSegmentLength to work with tagged Segments"
+      - "Update all handlers to use LookupTable operations"
+      - "Ensure immutable updates replace Blockface in LookupTable"
+    files:
+      - "modules/right-of-way-editor/src/store/reducer.js"
+    changes:
+      - "handleAddSegment: get current blockface, add tagged Segment, replace in LookupTable"
+      - "handleUpdateSegmentLength: modify segment within blockface, replace blockface"
+      - "handleUpdateSegmentType: modify segment within blockface, replace blockface"
+      - "All handlers use LookupTable.addItemWithId() to replace modified Blockface"
+      - "Convert plain segments to tagged Segments using Segment() constructor"
+    validation:
+      - "Adding segments creates tagged Segment objects within current Blockface"
+      - "Segment length/type updates modify correct Segment within Blockface"
+      - "LookupTable contains updated Blockface after each action"
+      - "All existing functionality (add, edit, delete segments) works"
+    complexity:
+      - Modify handleAddSegment to add Segment to current Blockface's segments array
+      - Update handleUpdateSegmentLength to work with tagged Segments within Blockface
+      - Replace Blockface in LookupTable after modifying its segments
+
+  task_4_fix_tests:
+    id: task_4_fix_tests
+    description: "Update tests to work with new LookupTable<Blockface> state structure"
+    commands:
+      - "Update test store creation to use new state structure"
+      - "Fix selector tests expecting old state shape"
+      - "Run full test suite and fix any failures"
+      - "Ensure all existing functionality preserved"
+    files:
+      - "modules/right-of-way-editor/test/test-store.js"
+      - "All test files as needed"
+    changes:
+      - "Update createStoreWithScenario to create Blockface-based state"
+      - "createMockState functions need to create blockfaces + ui structure"
+      - "Fix any tests directly accessing state.curb properties"
+      - "Update any hardcoded state expectations in tests"
+    validation:
+      - "All 170+ tests pass: yarn tap shows 0 failures"
+      - "Test store scenarios (empty, single, multiple) work with Blockfaces"
+      - "Mathematical invariant tests still pass"
+      - "Component integration tests work with new state"
+    complexity:
+      - Update test store creation to use new state structure
+      - Fix any selector tests expecting old state shape
+      - Ensure all 170+ tests pass with new LookupTable<Blockface> structure
+
+# Execution Status
+execution_status:
+  current_task: task_1_change_redux_state_structure
+  completed_tasks: []
+  pending_tasks:
+    - task_1_change_redux_state_structure: NEXT
+    - task_2_update_selectors: PENDING
+    - task_3_update_action_handlers: PENDING
+    - task_4_fix_tests: PENDING
+  failed_tasks: []
+  notes: |
+    F200 simplified to straightforward migration approach without unnecessary adapters or 
+    backward compatibility layers. Just change state structure, update selectors/handlers, fix tests.
+    No runtime conversion needed - this is a one-time internal refactor.

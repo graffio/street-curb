@@ -1,0 +1,44 @@
+current_task: "{{FIRST_TASK_ID}}"
+status: "pending"
+
+# Reference: See {{PRIMARY_REFERENCE}} for detailed patterns and decision log
+
+tasks:
+  - id: "{{TASK_ID_1}}"
+    description: "{{TASK_DESCRIPTION_1}}"
+    status: "pending"
+    phase: "{{PHASE_NAME_1}}"
+    dependencies: []
+    estimated_hours: {{ESTIMATE_1}}
+    implementation: |
+        - Replace this list with concrete steps. Reference specific sections like "Section → Subsection" in the architecture docs.
+        - Keep instructions declarative and avoid long code blocks; link to canonical helpers instead.
+        - Mention required files or modules (e.g., `modules/foo/src/bar.js`).
+    validation:
+      - "State measurable outcomes that prove the task is done"
+      - "Include edge cases or negative scenarios"
+    tests:
+      - "modules/<workspace>/test/{{task-id}}.tap.js"
+
+  - id: "{{TASK_ID_2}}"
+    description: "{{TASK_DESCRIPTION_2}}"
+    status: "pending"
+    phase: "{{PHASE_NAME_1}}"
+    dependencies:
+      - "{{TASK_ID_1}}"
+    estimated_hours: {{ESTIMATE_2}}
+    implementation: |
+        - Use bullet lists to outline required work.
+        - Reference reusable helpers/modules instead of duplicating code.
+    validation:
+      - "List objective completion checks"
+    tests:
+      - "modules/<workspace>/test/{{task-id}}.tap.js"
+
+  # Add more tasks following the same structure.
+
+completed: []
+
+notes: |
+    Document any assumptions, glossary terms, or playbook reminders here.
+    Keep this section short; link to longer context in docs/.

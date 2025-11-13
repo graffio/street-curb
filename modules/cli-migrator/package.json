@@ -1,0 +1,20 @@
+{
+    "name": "@graffio/cli-migrator",
+    "version": "0.1.0",
+    "description": "Infrastructure orchestration with command pattern and audit logging",
+    "main": "src/index.js",
+    "type": "module",
+    "bin": {
+        "orchestrate": "./src/cli.js"
+    },
+    "scripts": {
+        "test": "tap test/**/*.tap.js",
+        "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh",
+        "cli": "node src/cli.js"
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+    }
+}

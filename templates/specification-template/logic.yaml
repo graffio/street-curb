@@ -1,0 +1,25 @@
+template_structure:
+  required_files:
+    - background.md: "Concise overview, references, and phase outline"
+    - tasks.yaml: "Executable task list with implementation, validation, tests"
+  optional_files:
+    - meta.yaml: "Specification metadata (only when automation requires it)"
+    - llm-loader.md: "Custom loader if extra context needed"
+
+template_usage:
+  - Copy only the files you intend to fill (`background.md.template`, `tasks.yaml.template`)
+  - Rename them and replace {{PLACEHOLDERS}} with project-specific content
+  - Link to docs/architecture/ for deep technical detail; do not duplicate long snippets
+  - Capture implementation steps and validation directly inside `tasks.yaml`
+
+architecture_integration:
+  - Reference docs/architecture/ files rather than embedding content
+  - Link to specific architectural decisions
+  - Keep implementation-focused content in specification
+  - Maintain separation of concerns
+
+task_management:
+  - Break work into specific, executable tasks
+  - Include validation criteria for each task
+  - Track dependencies between tasks
+  - Use human-readable task descriptions

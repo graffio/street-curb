@@ -1,0 +1,36 @@
+*.log
+.DS_Store
+.idea
+.nyc_output
+.tap
+node_modules
+
+*storybook.log
+storybook-static
+
+# Vite build files
+*.timestamp-*.mjs
+vite.config.js.timestamp-*
+dist
+
+.last-run.json
+playwright-report
+test-results
+
+# Claude Code settings
+.claude/settings.local.json
+.claude/developer-output.md
+.claude/agent-context/
+
+# Multi-agent workflow scratch work (ephemeral)
+specifications/*/agent-context/
+
+# don't save files generated in testing type-generation
+modules/cli-type-generator/test/generated/*
+modules/curb-map/service-accounts/
+
+# don't save config files for temporary Firebase projects
+modules/curb-map/migrations/config/temporary*
+
+# don't save built functions code
+modules/curb-map/functions/dist/

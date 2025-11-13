@@ -1,0 +1,398 @@
+# Authentication Model
+
+**Two-Layer Authentication: End Users + Infrastructure**
+
+## Executive Summary
+
+CurbMap uses two distinct authentication systems:
+
+1. **User Authentication (Passcode)**: SMS-based passcode verification for end users (city employees)
+2. **Infrastructure Authentication (Impersonation)**: Service account impersonation for developers and support staff
+
+Both systems enforce SOC2 compliance with complete audit trails and MFA protection.
+
+### User Authentication
+
+End users authenticate via SMS passcode with complete audit logging to `completedActions`. All authentication events are logged for SOC2 compliance and security incident response.
+
+**Key Features:**
+- ✅ SMS-based passcode (6-digit random code)
+- ✅ Passcodes hashed with bcrypt before storage
+- ✅ 10-minute expiration with 3-attempt limit
+- ✅ All attempts logged (successful and failed)
+- ✅ 90-day retention, then BigQuery archival
+
+### Infrastructure Authentication
+
+Developers and support staff authenticate with personal Google accounts (MFA-protected), then impersonate service accounts to perform infrastructure operations. All actions are logged with individual user identity.
+
+**Key Benefits:**
+
+- ✅ No service account keys on laptops
+- ✅ Short-lived tokens (1-12 hours, auto-expire)
+- ✅ Individual accountability in audit logs
+- ✅ Instant revocation (< 5 minutes)
+- ✅ MFA protection on all human access
+
+**Quick Start Commands:**
+
+```bash
+# 1. Admin grants developer impersonation access to the service account (one-time)
+gcloud iam service-accounts add-iam-policy-binding \
+  firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com \
+  --member="user:developer@company.com" \
+  --role="roles/iam.serviceAccountTokenCreator"
+
+# 2. Developer configures impersonation (one-time)
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com
+
+# 3. Use normally - all commands now use impersonated credentials
+npx firebase deploy --only firestore:rules
+gcloud firestore indexes list
+```
+
+---
+
+## User Authentication (Passcode Flow)
+
+**SMS-Based Passcode Authentication for End Users**
+
+### Overview
+
+End-user authentication uses SMS-based passcode verification with complete SOC2 audit trail. Unlike infrastructure authentication (service account impersonation), user authentication creates domain events logged to `completedActions`.
+
+### Two-Action Flow
+
+1. **PasscodeRequested** - User requests login code
+2. **PasscodeVerified** - User submits code, receives Firebase Auth token
+
+### Complete Authentication Flow
+
+```
+User enters phone number in app
+    ↓
+Client: POST /submitActionRequest with PasscodeRequested
+    ↓
+Server: Generate 6-digit passcode, hash with bcrypt
+        Store hashed passcode in completedActions metadata
+        Send SMS via Twilio/Firebase
+        Return HTTP 200
+    ↓
+User receives SMS with passcode
+    ↓
+User enters passcode in app
+    ↓
+Client: POST /submitActionRequest with PasscodeVerified
+    ↓
+Server: Lookup PasscodeRequested by phone number
+        Verify passcode with bcrypt.compare()
+        Generate Firebase custom token with userId claim
+        Return HTTP 200 with token
+    ↓
+Client stores token, authenticated
+    ↓
+All subsequent requests include token in Authorization header
+```
+
+### Security Properties
+
+| Property | Implementation | SOC2 Control |
+|----------|---------------|--------------|
+| **Passcode Hashing** | bcrypt (cost 10), never stored in plaintext | CC6.7 |
+| **Brute Force Protection** | 3 attempts/session, 10-min expiration, rate limiting (5/phone/hour) | CC7.2 |
+| **Audit Trail** | Both actions logged to completedActions, 90-day retention → BigQuery | CC6.1 |
+| **Replay Prevention** | New random code per request, 10-min TTL, session consumed on success | CC7.3 |
+| **PII Protection** | Phone numbers SHA256-hashed before BigQuery archival | CC6.7 |
+
+### Session Storage
+
+Uses `completedActions` metadata instead of separate session collection:
+
+```javascript
+// completedActions/{acr_xxx} for PasscodeRequested
+{
+  id: 'acr_xxx',
+  action: { type: 'PasscodeRequested', phoneNumber: '+14155551234' },
+  actorId: 'anonymous',  // No auth required to request passcode
+  status: 'completed',
+  metadata: {
+    hashedPasscode: '$2b$10$N9qo8uLOickgx2ZrVzZDOuSjSWXsEhq.dSOUCL',
+    expiresAt: Timestamp,  // 10-minute TTL
+    attemptsRemaining: 3
+  }
+}
+```
+
+### SOC2 Compliance
+
+| Control | Evidence | Location |
+|---------|----------|----------|
+| **CC6.1** | All auth attempts logged with timestamps | completedActions collection |
+| **CC6.7** | Passcodes bcrypt-hashed, never plaintext | ActionRequest.metadata.hashedPasscode |
+| **CC7.2** | Failed attempts tracked, rate limiting | completedActions status='failed' |
+| **CC7.3** | Complete event timeline for investigation | Query completedActions by phoneNumber |
+
+### Token Management
+
+**Firebase Custom Token**:
+- Generated by PasscodeVerified handler after successful verification
+- Contains userId claim linking token to Firestore user document
+- 1-hour expiration (Firebase Auth default)
+- Client refreshes token automatically
+
+**Token Structure**:
+```javascript
+{
+  uid: 'usr_abc123',      // Firebase Auth UID = Firestore userId
+  userId: 'usr_abc123',   // Custom claim for authorization
+  iss: 'firebase-adminsdk@curb-map-production.iam.gserviceaccount.com',
+  exp: 1730400000         // 1 hour from issuance
+}
+```
+
+**Authorization Flow**:
+```
+Client includes token in Authorization header
+    ↓
+submitActionRequest extracts userId from token.customClaims
+    ↓
+Firestore security rules verify user has access to organization
+    ↓
+Action handler executes with verified actorId
+```
+
+### vs. Infrastructure Authentication
+
+| Aspect            | User Auth (Passcode)        | Infrastructure Auth (Impersonation) |
+|-------------------|-----------------------------|-------------------------------------|
+| **Who**           | End users (city employees)  | Developers, support staff           |
+| **Method**        | SMS passcode                | Google account + impersonation      |
+| **Events Logged** | completedActions            | GCP Cloud Audit Logs                |
+| **Token Type**    | Firebase custom token       | Short-lived access token            |
+| **MFA**           | SMS (phone possession)      | Google account MFA                  |
+| **Purpose**       | Application access          | Infrastructure operations           |
+| **Audit Control** | CC6.1, CC6.7, CC7.2, CC7.3  | CC6.1, CC7.2                        |
+
+### Incident Response Queries
+
+**Detect Brute Force Attacks**:
+```javascript
+// Find phone numbers with >5 failed PasscodeVerified in last hour
+const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+const failedAttempts = await firestore
+  .collection('completedActions')
+  .where('action.type', '==', 'PasscodeVerified')
+  .where('status', '==', 'failed')
+  .where('createdAt', '>=', oneHourAgo)
+  .get();
+
+// Group by phone number, identify targets
+```
+
+**Audit User Login History**:
+```javascript
+// Find all successful logins for a user
+const user = await firestore.collection('users').doc('usr_abc123').get();
+const phoneNumber = user.data().phoneNumber;
+
+const successfulLogins = await firestore
+  .collection('completedActions')
+  .where('action.type', '==', 'PasscodeVerified')
+  .where('action.phoneNumber', '==', phoneNumber)
+  .where('status', '==', 'completed')
+  .orderBy('createdAt', 'desc')
+  .limit(20)
+  .get();
+```
+
+### Implementation Status
+
+**Status**: Architecture defined, implementation pending (F121)
+
+**Specification**: See `specifications/F121-authentication-middleware/background.md`
+
+**Handlers**: handlePasscodeRequested, handlePasscodeVerified (pending)
+
+**Action Definitions**: PasscodeRequested, PasscodeVerified (pending)
+
+**Testing**: Integration tests for passcode flow (pending)
+
+---
+
+## Table of Contents
+
+- [User Authentication (Passcode Flow)](#user-authentication-passcode-flow)
+- [How It Works](#how-it-works)
+- [Security Benefits](#security-benefits)
+- [Switching Environments](#switching-environments)
+- [Troubleshooting](#troubleshooting)
+- [Best Practices](#best-practices)
+
+---
+
+## How It Works
+
+### One-Time Setup
+
+1. **Developer authenticates:** `gcloud auth login`
+2. **Admin grants impersonation permission** (see Quick Start above)
+3. **Developer configures impersonation** (see Quick Start above)
+
+### Daily Usage
+
+**No daily setup needed!** Once configured, all Firebase and GCP commands automatically use impersonated credentials:
+
+```bash
+npx firebase deploy --only firestore:rules
+gcloud firestore indexes list --project=curb-map-development
+node migrations/deploy-functions.js
+```
+
+Tokens automatically refresh when expired (typically 1-hour lifetime).
+
+### Credential Flow
+
+```
+Personal Google Account (MFA)
+    ↓
+Has permission to impersonate service account
+    ↓
+Generates short-lived token (1-12 hours)
+    ↓
+Token stored in ~/.config/gcloud/application_default_credentials.json
+    ↓
+All API calls use token (auto-refresh)
+```
+
+---
+
+## Security Benefits
+
+### vs. Service Account Keys
+
+| Aspect          | Keys (OLD)          | Impersonation (NEW)          |
+|-----------------|---------------------|------------------------------|
+| **Lifetime**    | Permanent           | 1-12 hours (auto-expire)     |
+| **Storage**     | JSON file on laptop | No files                     |
+| **Audit Trail** | SA only             | User + SA identity           |
+| **Theft Risk**  | Full access         | Token expires                |
+| **Revocation**  | Find/delete key     | Remove IAM binding (instant) |
+| **MFA**         | No                  | Yes                          |
+| **Rotation**    | Manual (90 days)    | Automatic                    |
+
+### SOC2 Advantages
+
+**Individual Accountability:** Audit logs show `developer@company.com impersonated firebase-infrastructure-sa@...` -
+every action traced to a person.
+
+**Easy Access Reviews:** Query IAM policies to see who can impersonate, generate quarterly reports, simple revocation.
+
+**Fast Incident Response:** Compromised account? Remove IAM binding (< 5 min). No key rotation needed.
+
+---
+
+## Switching Environments
+
+Each environment has its own service account. Switch by re-running impersonation setup:
+
+```bash
+# Development
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com
+
+# Staging
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-staging.iam.gserviceaccount.com
+
+# Production (requires separate permission grant)
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-production.iam.gserviceaccount.com
+```
+
+---
+
+## Troubleshooting
+
+### Check Current Impersonation
+
+```bash
+# Print access token (shows which SA is impersonated)
+gcloud auth application-default print-access-token
+
+# See who can impersonate a service account
+gcloud iam service-accounts get-iam-policy \
+  firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com
+```
+
+### Permission Denied Error
+
+**Cause:** You don't have permission to impersonate the service account
+**Solution:** Ask admin to grant you impersonation access (see Quick Start commands)
+
+### Token Expired
+
+Tokens auto-refresh, but if issues persist:
+
+```bash
+gcloud auth application-default login \
+  --impersonate-service-account=firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com
+```
+
+### Stop Impersonation
+
+```bash
+# Revoke temporarily
+gcloud auth application-default revoke
+
+# Admin permanently removes access
+gcloud iam service-accounts remove-iam-policy-binding \
+  firebase-infrastructure-sa@curb-map-development.iam.gserviceaccount.com \
+  --member="user:developer@company.com" \
+  --role="roles/iam.serviceAccountTokenCreator"
+```
+
+---
+
+## Best Practices
+
+### Developers
+
+✅ **Do:**
+
+- Use MFA on Google account
+- Revoke impersonation when leaving project
+- Report suspicious permission requests
+- Keep gcloud SDK updated
+
+❌ **Don't:**
+
+- Create service account keys
+- Share impersonation commands (everyone sets up individually)
+- Use production unless necessary
+- Export `GOOGLE_APPLICATION_CREDENTIALS` with key files
+
+### Administrators
+
+✅ **Do:**
+
+- Grant impersonation individually per developer
+- Restrict production access to authorized personnel
+- Review impersonation permissions quarterly
+- Document all permission grants
+
+❌ **Don't:**
+
+- Create service account keys
+- Grant organization-wide impersonation
+- Skip MFA enforcement
+- Grant production access casually
+
+---
+
+## References
+
+- **Setup Guide:** `specifications/F107-firebase-soc2-vanilla-app/next-step.md`
+- **Access Management:** [access-management.md](access-management.md)
+- **Audit Logs:** [audit-and-logging.md](audit-and-logging.md)

@@ -1,0 +1,22 @@
+spec_format:
+  required_files:
+    - meta.yaml
+    - llm-loader.md
+    - logic.yaml
+
+files:
+  meta.yaml: "Spec metadata (spec_id, name, description, file roles)"
+  llm-loader.md: "Quick loader instructions (keep brief, reference this logic)"
+  logic.yaml: "Structure and rules"
+
+spec_rules:
+  - Specs must list required files in meta.yaml with their roles
+  - Specs must be loadable without external context
+  - Tasks must have IDs following task_X_Y_description pattern
+  - Task-level specs must include an execution_status section (current/pending/completed)
+  - Changes should be small, independent, and rollback-friendly
+  - Reference docs/architecture/ for reusable patterns rather than duplicating architecture
+
+notes:
+  - templates/specification-template/ provides a copy-ready template that satisfies these rules
+  - Additional validation (tests) can be defined by individual specs if needed
