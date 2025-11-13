@@ -20,9 +20,8 @@ const splitEvery = function splitEvery(n, list) {
 
     const result = []
     let i = 0
-    while (i < list.length) {
-        result.push(list.slice(i, (i += n)))
-    }
+    while (i < list.length) result.push(list.slice(i, (i += n)))
+
     return result
 }
 

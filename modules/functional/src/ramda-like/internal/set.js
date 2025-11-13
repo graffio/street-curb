@@ -40,16 +40,15 @@ function hasOrAdd(item, shouldAdd, set) {
         case 'string':
         case 'number':
             // distinguish between +0 and -0
-            if (item === 0 && 1 / item === -Infinity) {
+            if (item === 0 && 1 / item === -Infinity)
                 if (set._items['-0']) {
                     return true
                 } else {
-                    if (shouldAdd) {
-                        set._items['-0'] = true
-                    }
+                    if (shouldAdd) set._items['-0'] = true
+
                     return false
                 }
-            }
+
             // these types can all utilise the native Set
             if (set._nativeSet !== null) {
                 if (shouldAdd) {
@@ -60,21 +59,18 @@ function hasOrAdd(item, shouldAdd, set) {
                 } else {
                     return set._nativeSet.has(item)
                 }
-            } else {
-                if (!(type in set._items)) {
-                    if (shouldAdd) {
-                        set._items[type] = {}
-                        set._items[type][item] = true
-                    }
-                    return false
-                } else if (item in set._items[type]) {
-                    return true
-                } else {
-                    if (shouldAdd) {
-                        set._items[type][item] = true
-                    }
-                    return false
+            } else if (!(type in set._items)) {
+                if (shouldAdd) {
+                    set._items[type] = {}
+                    set._items[type][item] = true
                 }
+                return false
+            } else if (item in set._items[type]) {
+                return true
+            } else {
+                if (shouldAdd) set._items[type][item] = true
+
+                return false
             }
 
         case 'boolean':
@@ -85,15 +81,13 @@ function hasOrAdd(item, shouldAdd, set) {
                 if (set._items[type][bIdx]) {
                     return true
                 } else {
-                    if (shouldAdd) {
-                        set._items[type][bIdx] = true
-                    }
+                    if (shouldAdd) set._items[type][bIdx] = true
+
                     return false
                 }
             } else {
-                if (shouldAdd) {
-                    set._items[type] = item ? [false, true] : [true, false]
-                }
+                if (shouldAdd) set._items[type] = item ? [false, true] : [true, false]
+
                 return false
             }
 
@@ -110,15 +104,13 @@ function hasOrAdd(item, shouldAdd, set) {
                 }
             } else {
                 if (!(type in set._items)) {
-                    if (shouldAdd) {
-                        set._items[type] = [item]
-                    }
+                    if (shouldAdd) set._items[type] = [item]
+
                     return false
                 }
                 if (!_includes(item, set._items[type])) {
-                    if (shouldAdd) {
-                        set._items[type].push(item)
-                    }
+                    if (shouldAdd) set._items[type].push(item)
+
                     return false
                 }
                 return true
@@ -128,18 +120,16 @@ function hasOrAdd(item, shouldAdd, set) {
             if (set._items[type]) {
                 return true
             } else {
-                if (shouldAdd) {
-                    set._items[type] = true
-                }
+                if (shouldAdd) set._items[type] = true
+
                 return false
             }
 
         case 'object':
             if (item === null) {
                 if (!set._items.null) {
-                    if (shouldAdd) {
-                        set._items.null = true
-                    }
+                    if (shouldAdd) set._items.null = true
+
                     return false
                 }
                 return true
@@ -150,16 +140,14 @@ function hasOrAdd(item, shouldAdd, set) {
             // for each type.
             type = Object.prototype.toString.call(item)
             if (!(type in set._items)) {
-                if (shouldAdd) {
-                    set._items[type] = [item]
-                }
+                if (shouldAdd) set._items[type] = [item]
+
                 return false
             }
             // scan through all previously applied items
             if (!_includes(item, set._items[type])) {
-                if (shouldAdd) {
-                    set._items[type].push(item)
-                }
+                if (shouldAdd) set._items[type].push(item)
+
                 return false
             }
             return true

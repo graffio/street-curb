@@ -19,6 +19,7 @@ import {
     Separator,
     Slider,
     Switch,
+    Table as RadixTable,
     Tabs,
     Text,
     TextField,
@@ -31,40 +32,52 @@ import { CategorySelector } from './components/CategorySelector.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
+import { Table } from './components/Table.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
 import { VirtualTable } from './components/VirtualTable.jsx'
 import { DateRangePicker } from './DateRangePicker.jsx'
+import { lookupTablePropType } from './prop-types/lookup-table-prop-type.js'
 
 export {
+    // facade for Radix Themes
+    Avatar,
+    Badge,
+    Box,
     Button,
     Card,
-    Text,
-    Heading,
-    TextField,
-    Badge,
-    Avatar,
-    Separator,
-    Box,
+    Checkbox,
+    Container,
     Flex,
     Grid,
-    Container,
-    Section,
-    Tooltip,
+    Heading,
     Progress,
-    Switch,
-    Checkbox,
-    Slider,
-    Tabs,
+    RadixTable,
     ScrollArea,
+    Section,
     Select,
+    Separator,
+    Slider,
+    Switch,
+    Table,
+    Tabs,
+    Text,
+    TextField,
+    Tooltip,
+
+    // ours
+    CategorySelector,
+    DateRangePicker,
+    Dialog,
+    KeyboardDateInput,
     MainLayout,
     TitleAndSubtitle,
     VirtualTable,
-    KeyboardDateInput,
-    DateRangePicker,
-    CategorySelector,
-    Dialog,
+
+    // channel
     createChannel,
     useChannel,
     layoutChannel,
+
+    // PropTypes
+    lookupTablePropType,
 }

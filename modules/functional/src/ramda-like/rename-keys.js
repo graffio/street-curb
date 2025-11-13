@@ -17,7 +17,7 @@
 const renameKeys = (replacements, o) => {
     const result = {}
 
-    for (const k in o) {
+    for (const k in o)
         if (Array.isArray(replacements[k])) {
             const [replacementKey, f] = replacements[k]
             result[replacementKey] = f(o)
@@ -25,7 +25,6 @@ const renameKeys = (replacements, o) => {
             const replacementKey = replacements[k] || k
             result[replacementKey] = o[k]
         }
-    }
 
     return result
 }

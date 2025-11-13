@@ -27,9 +27,8 @@ const uniqBy = fn => list => {
     while (idx < list.length) {
         item = list[idx]
         appliedItem = fn(item)
-        if (set.add(appliedItem)) {
-            result.push(item)
-        }
+        if (set.add(appliedItem)) result.push(item)
+
         idx += 1
     }
     return result

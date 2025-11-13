@@ -2,6 +2,20 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F125 - User Management UI (2025-11-13)
+**Purpose:** User management interface for viewing and managing organization members with role-based access control
+
+- Created generic sortable Table component in design-system wrapping Radix Themes Table
+- Implemented LookupTable PropTypes validator with `.of(Type)` for type-specific validation
+- Built UserTable component with role dropdown for admins and date formatting for removed users
+- Created UserManagementPage with tabs (active/removed), search filter, role filter, and column sorting
+- Added mock member data fixtures for testing
+- Built comprehensive Storybook stories demonstrating all component states
+- Established controlled component pattern with parent-managed sort state
+- Fixed table layout with stable column widths using `table-layout: fixed`
+- Dimmed sort indicators for sortable-but-inactive columns (UX affordance)
+- Phase 2 features deferred: app routing, Firestore integration, toast notifications, error dialogs, invitation system
+
 ## F122 - Type Generator Enhancements (2025-01-04)
 **Purpose:** Auto-generate Firestore serialization with LookupTable support
 

@@ -10,9 +10,8 @@ export default function _indexOf(list, a, idx) {
                 inf = 1 / a
                 while (idx < list.length) {
                     item = list[idx]
-                    if (item === 0 && 1 / item === inf) {
-                        return idx
-                    }
+                    if (item === 0 && 1 / item === inf) return idx
+
                     idx += 1
                 }
                 return -1
@@ -25,9 +24,8 @@ export default function _indexOf(list, a, idx) {
                     item = list[idx]
 
                     // eslint-disable-next-line no-self-compare
-                    if (typeof item === 'number' && item !== item) {
-                        return idx
-                    }
+                    if (typeof item === 'number' && item !== item) return idx
+
                     idx += 1
                 }
                 return -1

@@ -198,12 +198,11 @@ test('performance characteristics', t => {
             let otherCalls = 0
 
             // Add many subscribers to count
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 100; i++)
                 channel.subscribe(
                     state => state.count,
                     () => countCalls++,
                 )
-            }
 
             // Add one subscriber to other
             channel.subscribe(

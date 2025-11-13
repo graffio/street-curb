@@ -7,10 +7,10 @@
 
 import { test } from 'tap'
 import {
-    DATE_RANGES,
     calculateDateRange,
     createDateRangeFromStrings,
     createDateRangeIfComplete,
+    DATE_RANGES,
 } from '../src/utils/date-range-utils.js'
 
 test('calculateDateRange', t => {
@@ -18,11 +18,9 @@ test('calculateDateRange', t => {
     const OriginalDate = global.Date
     global.Date = class extends OriginalDate {
         constructor(...args) {
-            if (args.length === 0) {
+            if (args.length === 0)
                 super(2025, 6, 8, 12, 0, 0, 0) // July 8, 2025 at noon
-            } else {
-                super(...args)
-            }
+            else super(...args)
         }
 
         static now() {

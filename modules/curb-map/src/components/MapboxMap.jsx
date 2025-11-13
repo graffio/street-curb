@@ -313,9 +313,8 @@ const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockf
     if (!source) return
 
     if (blockfaceFeature && currentSegments?.length) {
-        if (!blockfaceLength) {
-            throw new Error('blockfaceLength is required for segmented highlight')
-        }
+        if (!blockfaceLength) throw new Error('blockfaceLength is required for segmented highlight')
+
         const segmentedData = createSegmentedHighlight(blockfaceFeature, currentSegments, blockfaceLength)
         source.setData(segmentedData)
         removeExistingHighlight(map)

@@ -24,14 +24,10 @@ const canSplitSegment = (segments, index, desiredLength) => {
  * @sig performSegmentSplit :: ([Segment], Number, Number) -> { success: Boolean, segments: [Segment]?, error: String? }
  */
 const performSegmentSplit = (segments, index, desiredLength) => {
-    if (index < 0 || index >= segments.length) {
-        return { success: false, error: 'Invalid segment index' }
-    }
+    if (index < 0 || index >= segments.length) return { success: false, error: 'Invalid segment index' }
 
     const fromSegment = segments[index]
-    if (!fromSegment) {
-        return { success: false, error: 'Invalid segment index' }
-    }
+    if (!fromSegment) return { success: false, error: 'Invalid segment index' }
 
     const canSplitCurrent = canSplitSegment(segments, index, desiredLength)
     if (canSplitCurrent) {

@@ -122,9 +122,9 @@ function _equals(a, b, stackA, stackB) {
                     a.sticky === b.sticky &&
                     a.unicode === b.unicode
                 )
-            ) {
+            )
                 return false
-            }
+
             break
     }
 

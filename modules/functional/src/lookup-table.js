@@ -230,4 +230,9 @@ LookupTablePrototype.moveElement = function (fromIndex, toIndex) {
     newArray.splice(toIndex, 0, item) // add in at the new position
     return LookupTable(newArray, this.ItemType, this.idField)
 }
+
+LookupTablePrototype.idForItem = function (item) {
+    return item[this.idField]
+}
+
 export default LookupTable

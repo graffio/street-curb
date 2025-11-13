@@ -20,9 +20,8 @@ const clone = o => {
     // Object
     if (o instanceof Object) {
         const copy = {}
-        for (const attr in o) {
-            if (Object.prototype.hasOwnProperty.call(o, attr)) copy[attr] = clone(o[attr])
-        }
+        for (const attr in o) if (Object.prototype.hasOwnProperty.call(o, attr)) copy[attr] = clone(o[attr])
+
         return copy
     }
 }
