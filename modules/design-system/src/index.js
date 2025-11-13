@@ -31,6 +31,7 @@ import { createChannel, layoutChannel, useChannel } from './channels/index.js'
 import { CategorySelector } from './components/CategorySelector.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
+import { LoadingSpinner } from './components/LoadingSpinner.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
 import { Table } from './components/Table.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
@@ -69,6 +70,7 @@ export {
     DateRangePicker,
     Dialog,
     KeyboardDateInput,
+    LoadingSpinner,
     MainLayout,
     TitleAndSubtitle,
     VirtualTable,

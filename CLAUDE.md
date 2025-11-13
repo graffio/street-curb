@@ -211,6 +211,15 @@ YOU MUST follow this debugging framework for ANY technical issue:
 
 **Specifications**: `specifications/*` drive requirements
 
+#### Specification Documents
+
+- Requirements should be 1-2 pages maximum
+- Focus on WHAT and WHY, not HOW
+- No code examples unless absolutely necessary
+- No task breakdowns (those go in task files)
+- If you're writing more than 100 lines, STOP and ask Jeff
+- A specification is ephemeral and will be deleted once work is done. Permanent choices, decisions and changes need to be documented elsewhere.
+
 **Architecture**: `docs/architecture/` — Reusable patterns
 
 ## Common Anti-Patterns to Avoid

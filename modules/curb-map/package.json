@@ -22,6 +22,7 @@
     },
     "devDependencies": {
         "@chromatic-com/storybook": "^4.0.1",
+        "@graffio/curb-map-functions": "0.1.0",
         "@ngrok/ngrok": "^1.5.1",
         "@playwright/test": "^1.54.1",
         "@storybook/addon-a11y": "^9.0.18",
@@ -42,8 +43,7 @@
         "tap": "^21.1.0",
         "tap-mocha-reporter": "^5.0.4",
         "vite": "^5.2.0",
-        "vitest": "^3.2.4",
-        "@graffio/curb-map-functions": "0.1.0"
+        "vitest": "^3.2.4"
     },
     "resolutions": {
         "strip-ansi": "6.0.1"
@@ -52,6 +52,8 @@
         "@graffio/functional": "0.1.0",
         "@paralleldrive/cuid2": "^2.2.2",
         "@reduxjs/toolkit": "^2.8.2",
+        "@tanstack/react-router": "^1.135.2",
+        "@tanstack/router-devtools": "^1.135.2",
         "@turf/along": "^7.2.0",
         "@turf/length": "^7.2.0",
         "@turf/line-slice": "^7.2.0",
