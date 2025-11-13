@@ -2,6 +2,25 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F126 - Application Routing (2025-11-13)
+**Purpose:** Add TanStack Router with MainLayout shell and lazy-loaded route components
+
+- Installed TanStack Router for client-side routing
+- Created LoadingSpinner component in design-system for Suspense fallback
+- Extracted MapPage component with MapComponent for map UI logic
+- Created AdminUsersPage placeholder for user management route
+- Configured router with root route wrapping MainLayout and Suspense
+- Established route structure: `/` redirects to `/map`, `/map` for map interface, `/admin/users` for user management
+- Integrated MainLayout as application shell with TopBar and Sidebar navigation
+- Removed global CSS (index.css) in favor of Radix Themes styling
+- Separated page components (route metadata) from UI components (rendering logic)
+- Fixed layoutChannel API usage (setState instead of send)
+- Extracted EditorPanel component with Radix Themes components (Box, Flex, Heading, Button, Checkbox, Separator)
+- Removed unnecessary useCallback wrappers from event handlers
+- Moved showCurbTable state into EditorPanel component where it belongs
+- Always-mounted EditorPanel with isVisible controlling slide animation
+- Deferred features: active route highlighting, route-level auth guards, breadcrumb navigation
+
 ## F125 - User Management UI (2025-11-13)
 **Purpose:** User management interface for viewing and managing organization members with role-based access control
 
