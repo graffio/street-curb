@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Grid, Heading, Link } from '@radix-ui/themes'
+import { Box, Button, Flex, Grid } from '@radix-ui/themes'
 import React from 'react'
 import { layoutChannel, useChannel } from '../channels/index.js'
 import { TitleAndSubtitle } from './TitleAndSubtitle.jsx'
@@ -8,6 +8,7 @@ const renderTopBarAction = (action, index) => (
         {action.label}
     </Button>
 )
+
 /**
  * TopBar component provides the application header
  */
@@ -29,40 +30,19 @@ const TopBar = () => {
     )
 }
 
-const renderSidebarItem = (LinkComponent, item, i) => (
-    <Button key={i} variant="soft" size="2" asChild style={{ justifyContent: 'flex-start' }}>
-        <LinkComponent to={item.to} href={item.href} underline="none" weight="medium">
-            {item.label}
-        </LinkComponent>
-    </Button>
-)
-
-const renderSidebarSection = (LinkComponent, sectionData, i) => (
-    <Box key={i} mb="4">
-        <Heading as="h3" size="3" ml="3" mt="3" color="plum">
-            {sectionData.title}
-        </Heading>
-        <Flex direction="column">{sectionData.items.map((item, i) => renderSidebarItem(LinkComponent, item, i))}</Flex>
-    </Box>
+/**
+ * Sidebar slot component - renders children in sidebar area
+ */
+const Sidebar = ({ children }) => (
+    <Flex direction="column" gap="1" height="100%" style={{ backgroundColor: 'var(--gray-1)' }}>
+        {children}
+    </Flex>
 )
 
 /**
- * Sidebar component provides navigation for the application
- *
- * @sig Sidebar :: () -> ReactElement
+ * MainLayout provides grid structure for application layout
+ * Use as compound component with MainLayout.TopBar and MainLayout.Sidebar
  */
-const Sidebar = () => {
-    let [{ sidebarItems, LinkComponent }] = useChannel(layoutChannel, ['sidebarItems', 'LinkComponent'])
-    sidebarItems ||= []
-    LinkComponent ||= Link
-
-    return (
-        <Flex direction="column" gap="1" height="100%" style={{ backgroundColor: 'var(--gray-1)' }}>
-            {sidebarItems.map((section, i) => renderSidebarSection(LinkComponent, section, i))}
-        </Flex>
-    )
-}
-
 const MainLayout = ({ children }) => {
     const mainLayoutGridProperties = {
         columns: '240px 1fr',
@@ -73,17 +53,21 @@ const MainLayout = ({ children }) => {
         `,
     }
 
+    const childrenArray = React.Children.toArray(children)
+    const topbar = childrenArray.find(child => child.type === TopBar) || <TopBar />
+    const sidebar = childrenArray.find(child => child.type === Sidebar)
+    const main = childrenArray.filter(child => child.type !== TopBar && child.type !== Sidebar)
+
     return (
         <Grid {...mainLayoutGridProperties} style={{ height: '100vh', width: '100vw' }}>
-            <Box gridArea="topbar">
-                <TopBar />
-            </Box>
-            <Box gridArea="sidebar">
-                <Sidebar />
-            </Box>
-            <Box gridArea="main">{children}</Box>
+            <Box gridArea="topbar">{topbar}</Box>
+            <Box gridArea="sidebar">{sidebar}</Box>
+            <Box gridArea="main">{main}</Box>
         </Grid>
     )
 }
+
+MainLayout.TopBar = TopBar
+MainLayout.Sidebar = Sidebar
 
 export { MainLayout }
