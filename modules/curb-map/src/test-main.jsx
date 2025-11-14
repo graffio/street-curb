@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import TestAppComponent from './components/TestAppComponent.jsx'
-import store from './store/index.js'
+import { store } from './store/index.js'
 import './index.css'
 
 /**

@@ -12,4 +12,6 @@ const store = createStore(
     window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
 )
 
-export default store
+const post = action => store.dispatch({ type: action.constructor.toString(), payload: action })
+
+export { store, post }

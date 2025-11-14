@@ -2,7 +2,7 @@ import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { LabelLayer } from '../../components/SegmentedCurbEditor/LabelLayer.jsx'
 import { addSegment, createBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
-import store from '../../store/index.js'
+import { store } from '../../store/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 import '../../index.css'
 

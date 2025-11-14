@@ -2,7 +2,7 @@ import React from 'react'
 import { Provider, useDispatch } from 'react-redux'
 import { SegmentedCurbEditor } from '../../components/SegmentedCurbEditor/SegmentedCurbEditor.jsx'
 import { addSegment, selectBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
-import store from '../../store/index.js'
+import { store } from '../../store/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 import '../../index.css'
 
