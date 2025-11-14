@@ -38,6 +38,9 @@
  *  AuthenticationCompleted
  *      email      : FieldTypes.email,
  *      displayName: "String"
+ *  LoadAllInitialData
+ *      currentUser        : "User",
+ *      currentOrganization: "Organization"
  *
  */
 
@@ -66,7 +69,8 @@ const Action = {
             constructor === Action.UserCreated ||
             constructor === Action.UserForgotten ||
             constructor === Action.UserUpdated ||
-            constructor === Action.AuthenticationCompleted
+            constructor === Action.AuthenticationCompleted ||
+            constructor === Action.LoadAllInitialData
         )
     },
 }
@@ -86,6 +90,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'UserForgotten',
         'UserUpdated',
         'AuthenticationCompleted',
+        'LoadAllInitialData',
     ],
     enumerable: false,
 })
@@ -816,6 +821,91 @@ AuthenticationCompletedConstructor._from = o => Action.AuthenticationCompleted(o
 AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.LoadAllInitialData constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const LoadAllInitialDataConstructor = function LoadAllInitialData(currentUser, currentOrganization) {
+    const constructorName = 'Action.LoadAllInitialData(currentUser, currentOrganization)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateTag(constructorName, 'User', 'currentUser', false, currentUser)
+    R.validateTag(constructorName, 'Organization', 'currentOrganization', false, currentOrganization)
+
+    const result = Object.create(LoadAllInitialDataPrototype)
+    result.currentUser = currentUser
+    result.currentOrganization = currentOrganization
+    return result
+}
+
+Action.LoadAllInitialData = LoadAllInitialDataConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Set up Variant Action.LoadAllInitialData prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+
+const LoadAllInitialDataPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'LoadAllInitialData', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.LoadAllInitialData(${R._toString(this.currentUser)}, ${R._toString(this.currentOrganization)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: LoadAllInitialDataConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+LoadAllInitialDataConstructor.prototype = LoadAllInitialDataPrototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.LoadAllInitialData: static functions:
+//
+// -------------------------------------------------------------------------------------------------------------
+LoadAllInitialDataConstructor.is = val => val && val.constructor === LoadAllInitialDataConstructor
+LoadAllInitialDataConstructor.toString = () => 'Action.LoadAllInitialData'
+LoadAllInitialDataConstructor._from = o => Action.LoadAllInitialData(o.currentUser, o.currentOrganization)
+LoadAllInitialDataConstructor.from = LoadAllInitialDataConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+// Firestore serialization
+// -------------------------------------------------------------------------------------------------------------
+LoadAllInitialDataConstructor._toFirestore = (o, encodeTimestamps) => ({
+    currentUser: User.toFirestore(o.currentUser, encodeTimestamps),
+    currentOrganization: Organization.toFirestore(o.currentOrganization, encodeTimestamps),
+})
+
+LoadAllInitialDataConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    LoadAllInitialDataConstructor._from({
+        currentUser: User.fromFirestore
+            ? User.fromFirestore(doc.currentUser, decodeTimestamps)
+            : User.from(doc.currentUser),
+        currentOrganization: Organization.fromFirestore
+            ? Organization.fromFirestore(doc.currentOrganization, decodeTimestamps)
+            : Organization.from(doc.currentOrganization),
+    })
+
+// Public aliases (can be overridden)
+LoadAllInitialDataConstructor.toFirestore = LoadAllInitialDataConstructor._toFirestore
+LoadAllInitialDataConstructor.fromFirestore = LoadAllInitialDataConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
 // Firestore serialization
 // -------------------------------------------------------------------------------------------------------------
 Action._toFirestore = (o, encodeTimestamps) => {
@@ -873,6 +963,10 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         return Action.AuthenticationCompleted.fromFirestore
             ? Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
             : Action.AuthenticationCompleted.from(doc)
+    if (tagName === 'LoadAllInitialData')
+        return Action.LoadAllInitialData.fromFirestore
+            ? Action.LoadAllInitialData.fromFirestore(doc, decodeTimestamps)
+            : Action.LoadAllInitialData.from(doc)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 
@@ -899,6 +993,7 @@ Action.piiFields = rawData => {
     if (tagName === 'UserForgotten') return []
     if (tagName === 'UserUpdated') return ['displayName']
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
+    if (tagName === 'LoadAllInitialData') return []
     return []
 }
 
@@ -948,6 +1043,7 @@ Action.toLog = a => {
             email,
             displayName,
         }),
+        LoadAllInitialData: () => ({ type: 'LoadAllInitialData' }),
     })
     Action.piiFields(a).forEach(redactField)
     return result
@@ -1015,6 +1111,10 @@ Action.getSubject = action =>
             id: a.email,
             type: 'user',
         }),
+        LoadAllInitialData: a => ({
+            id: a.currentUser.id,
+            type: 'user',
+        }),
     })
 
 Action.mayI = (action, actorRole, actorId) =>
@@ -1030,6 +1130,7 @@ Action.mayI = (action, actorRole, actorId) =>
         UserForgotten: a => a.userId === actorId,
         UserUpdated: a => a.userId === actorId,
         AuthenticationCompleted: () => true,
+        LoadAllInitialData: () => true,
     })
 
 export { Action }

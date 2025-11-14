@@ -44,30 +44,73 @@ const submitActionRequest = async action => {
 }
 
 /**
- * Capture current state for potential rollback
- * Returns a snapshot of the state that can be used to restore if persistence fails
+ * Capture state snapshot for potential rollback (action-specific)
+ * Returns empty object for actions that don't need rollback
  *
- * @sig captureStateSnapshot :: () -> Object
+ * @sig captureStateSnapshot :: (Action, State) -> Object
  */
-const captureStateSnapshot = () => {
-    const state = store.getState()
-    return {
-        currentOrganization: state.currentOrganization,
-        // Add other state slices as needed when more commands are added
-    }
-}
+const captureStateSnapshot = (action, state) =>
+    action.match({
+        // Organization member actions snapshot currentOrganization
+        RoleChanged: () => ({ currentOrganization: state.currentOrganization }),
+        MemberAdded: () => ({ currentOrganization: state.currentOrganization }),
+        MemberRemoved: () => ({ currentOrganization: state.currentOrganization }),
+        OrganizationUpdated: () => ({ currentOrganization: state.currentOrganization }),
+
+        // User actions snapshot currentUser
+        UserUpdated: () => ({ currentUser: state.currentUser }),
+
+        // These don't need rollback (no optimistic update or local-only)
+        OrganizationCreated: () => ({}),
+        OrganizationDeleted: () => ({}),
+        OrganizationSuspended: () => ({}),
+        UserCreated: () => ({}),
+        UserForgotten: () => ({}),
+        AuthenticationCompleted: () => ({}),
+
+        // Data loading doesn't need rollback (initialization only)
+        LoadAllInitialData: () => ({}),
+    })
 
 /**
  * Restore state from snapshot (rollback)
- * Dispatches actions to restore previous state
+ * Only dispatches if snapshot is non-empty
  *
  * @sig rollbackState :: Object -> void
  */
 const rollbackState = snapshot => {
-    // For now, just dispatch a redux action to restore the organization
-    // In the future, this could be more sophisticated
+    if (!snapshot || Object.keys(snapshot).length === 0) return
     store.dispatch({ type: 'ROLLBACK_STATE', payload: snapshot })
 }
+
+/**
+ * Get persistence strategy for action
+ * Returns null if action is local-only (Redux only)
+ *
+ * @sig getPersistenceStrategy :: Action -> (Action -> Promise<void>)?
+ */
+const getPersistenceStrategy = action =>
+    action.match({
+        // Organization actions persist to Firestore
+        RoleChanged: () => submitActionRequest,
+        MemberAdded: () => submitActionRequest,
+        MemberRemoved: () => submitActionRequest,
+        OrganizationCreated: () => submitActionRequest,
+        OrganizationDeleted: () => submitActionRequest,
+        OrganizationSuspended: () => submitActionRequest,
+        OrganizationUpdated: () => submitActionRequest,
+
+        // User actions persist to Firestore
+        UserCreated: () => submitActionRequest,
+        UserForgotten: () => submitActionRequest,
+        UserUpdated: () => submitActionRequest,
+
+        // Auth is local-only (already persisted by Firebase Auth)
+        AuthenticationCompleted: () => null,
+
+        // Data loading is local-only (Redux initialization)
+        LoadAllInitialData: () => null,
+    })
 
 /**
  * Post a domain Action: authorize, update Redux, persist to Firestore
@@ -83,35 +126,45 @@ const rollbackState = snapshot => {
  * @throws {Error} If authorization fails or user/organization not loaded
  */
 const post = action => {
-    const handleSubmitActionError = error => {
-        console.error('Failed to persist action to Firestore:', Action.toLog(action), error)
+    const handlePersistenceFailure = error => {
+        console.error('Failed to persist action:', Action.toLog(action), error)
 
         // Phase 5: Rollback Redux state
         rollbackState(snapshot)
 
-        // TODO: Show toast notification to user
-        // For now, just alert (replace with proper toast system later)
+        // TODO: Replace with proper toast notification
         // eslint-disable-next-line no-undef
         alert(`Failed to save changes: ${error.message}`)
     }
 
+    const checkAuthorization = () => {
+        if (!state.currentUser) throw new Error('Cannot execute command: currentUser not loaded')
+        if (!state.currentOrganization) throw new Error('Cannot execute command: currentOrganization not loaded')
+
+        const actorRole = Organization.role(state.currentOrganization, state.currentUser.id)
+
+        // Authorization check
+        if (!Action.mayI(action, actorRole, state.currentUser.id))
+            throw new Error(`Unauthorized: ${action.constructor.toString()}`)
+    }
+
+    if (!Action.is(action)) throw new Error('post requires an Action; found: ' + action)
+
+    // Phase 1: Get current state and validate
     const state = store.getState()
-    const currentUser = state.currentUser
-    const currentOrganization = state.currentOrganization
 
-    if (!currentUser) throw new Error('Cannot execute command: currentUser not loaded')
-    if (!currentOrganization) throw new Error('Cannot execute command: currentOrganization not loaded')
-    if (!Action.is(action)) throw new Error('post requires a Action; found: ' + action)
+    // LoadAllInitialData bootstraps currentUser/currentOrganization, so skip validation for it
+    if (!Action.LoadAllInitialData.is(action)) checkAuthorization()
 
-    const actorRole = Organization.role(currentOrganization, currentUser.id)
+    // Phase 2: Capture state snapshot for rollback
+    const snapshot = captureStateSnapshot(action, state)
 
-    // Authorization check
-    if (!Action.mayI(action, actorRole, currentUser.id))
-        throw new Error(`Unauthorized: ${action.constructor.toString()}`)
-
-    const snapshot = captureStateSnapshot()
+    // Phase 3: Optimistic Redux update (always happens)
     store.dispatch({ type: action.constructor.toString(), payload: action })
-    submitActionRequest(action).catch(handleSubmitActionError)
+
+    // Phase 4: Persist to backend (async, may fail)
+    const persistenceStrategy = getPersistenceStrategy(action)
+    if (persistenceStrategy) persistenceStrategy(action).catch(handlePersistenceFailure)
 }
 
 export { post }

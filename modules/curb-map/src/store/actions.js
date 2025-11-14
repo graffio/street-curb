@@ -58,9 +58,6 @@ const ACTION_TYPES = {
     // New blockface actions
     SELECT_BLOCKFACE: 'SELECT_BLOCKFACE',
     CREATE_BLOCKFACE: 'CREATE_BLOCKFACE',
-
-    // Data loading
-    LOAD_ALL_INITIAL_DATA: 'LOAD_ALL_INITIAL_DATA',
 }
 
 /**
@@ -81,22 +78,12 @@ const createBlockface = (id, geometry = {}, streetName = '', cnnId = undefined) 
     payload: { id, geometry, streetName, cnnId },
 })
 
-/**
- * Load all initial data (currentUser, currentOrganization, members)
- * @sig loadAllInitialData :: (User, Organization, LookupTable<Member>) -> Action
- */
-const loadAllInitialData = (currentUser, currentOrganization) => ({
-    type: ACTION_TYPES.LOAD_ALL_INITIAL_DATA,
-    payload: { currentUser, currentOrganization },
-})
-
 export {
     ACTION_TYPES,
     addSegment,
     addSegmentLeft,
     createBlockface,
     initializeSegments,
-    loadAllInitialData,
     replaceSegments,
     selectBlockface,
     updateSegmentLength,

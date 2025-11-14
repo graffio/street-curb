@@ -91,6 +91,12 @@ export const Action = {
             // phoneNumber extracted from verified Firebase token (not client input)
         },
 
+        // Data Loading
+        LoadAllInitialData: {
+            currentUser        : 'User',
+            currentOrganization: 'Organization',
+        },
+
     }
 }
 
@@ -127,6 +133,9 @@ Action.piiFields = rawData => {
     // Auth
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
+    // Data Loading
+    if (tagName === 'LoadAllInitialData'     ) return []
+
     return []  // Fallback for unrecognized types
 }
 
@@ -160,6 +169,9 @@ Action.toLog = a => {
        
         // Auth
         AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
+
+        // Data Loading
+        LoadAllInitialData     : ()                             => ({ type: 'LoadAllInitialData' }),
     })
 
     Action.piiFields(a).forEach(redactField)
@@ -220,6 +232,9 @@ Action.getSubject = action =>
 
         // Auth
         AuthenticationCompleted: a => ({ id: a.email,          type: 'user' }),
+
+        // Data Loading
+        LoadAllInitialData     : a => ({ id: a.currentUser.id, type: 'user' }),
     })
 
 // prettier-ignore
@@ -240,4 +255,7 @@ Action.mayI = (action, actorRole, actorId) =>
         
         // Auth
         AuthenticationCompleted: () => true,
+
+        // Data Loading
+        LoadAllInitialData     : () => true,
     })

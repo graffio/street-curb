@@ -8,12 +8,12 @@ import { getAuth } from 'firebase/auth'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
+import { post } from './commands/index.js'
 import { possiblyAutoLogin } from './config/index.js'
 import { FirestoreClientFacade } from './firestore-facade/firestore-client-facade.js'
 import { router } from './router.jsx'
-import { loadAllInitialData } from './store/actions.js'
 import { store } from './store/index.js'
-import { Organization, User } from './types/index.js'
+import { Action, Organization, User } from './types/index.js'
 
 // Hard-coded IDs from seed data
 
@@ -38,7 +38,7 @@ const App = () => {
 
             const currentOrganization = await organizationsFacade.read(organizationId)
 
-            store.dispatch(loadAllInitialData(currentUser, currentOrganization))
+            post(Action.LoadAllInitialData(currentUser, currentOrganization))
             setDataLoaded(true)
         }
 

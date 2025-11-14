@@ -226,6 +226,7 @@ const dispatchToHandler = actionRequest =>
         MemberRemoved          : () => handleMemberRemoved,
         RoleChanged            : () => handleRoleChanged,
         AuthenticationCompleted: () => handleAuthenticationCompleted,
+        LoadAllInitialData     : () => { throw new Error('LoadAllInitialData should never reach server (local-only action)') },
     })
 
 /*
