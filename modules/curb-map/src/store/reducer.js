@@ -1,11 +1,20 @@
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { Blockface } from '../types/index.js'
+import { Blockface, Member } from '../types/index.js'
 import { ACTION_TYPES } from './actions.js'
 
 /**
  * Initial state for the application
  */
-const initialState = { blockfaces: LookupTable([], Blockface, 'id'), currentBlockfaceId: null }
+const initialState = {
+    // UI
+    currentBlockfaceId: null,
+    currentUser: null,
+    currentOrganization: null,
+
+    // from Firestore
+    blockfaces: LookupTable([], Blockface, 'id'),
+    members: LookupTable([], Member, 'id'),
+}
 
 /*
  * Add the new or modified blockface to the blockfaces; leaves state unchanged in Blockface is undefined
@@ -102,6 +111,15 @@ const selectBlockface = (state, action) => {
 }
 
 /**
+ * Load all initial data action handler
+ * @sig loadAllInitialData :: (State, Action) -> State
+ */
+const loadAllInitialData = (state, action) => {
+    const { currentUser, currentOrganization, members } = action.payload
+    return { ...state, currentUser, currentOrganization, members }
+}
+
+/**
  * Root reducer handling all actions
  * @sig rootReducer :: (State, Action) -> State
  */
@@ -113,6 +131,7 @@ const rootReducer = (state = initialState, action) => {
     if (action.type === ACTION_TYPES.ADD_SEGMENT) return addSegment(state, action)
     if (action.type === ACTION_TYPES.ADD_SEGMENT_LEFT) return addSegmentLeft(state, action)
     if (action.type === ACTION_TYPES.REPLACE_SEGMENTS) return replaceSegments(state, action)
+    if (action.type === ACTION_TYPES.LOAD_ALL_INITIAL_DATA) return loadAllInitialData(state, action)
     return state
 }
 

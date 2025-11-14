@@ -1,15 +1,30 @@
-// ABOUTME: Admin users page placeholder
-// ABOUTME: Will be replaced with UserManagementPage integration
+// ABOUTME: Admin users page
+// ABOUTME: Connects UserManagementPage to Redux state
 
-import { Box, layoutChannel } from '@graffio/design-system'
+import { layoutChannel } from '@graffio/design-system'
 import { useEffect } from 'react'
+import { useSelector } from 'react-redux'
+import { UserManagementPage } from '../components/UserManagementPage.jsx'
 
 const AdminUsersPage = () => {
+    // should be selectors
+    const members = useSelector(state => state.members)
+    const currentUser = useSelector(state => state.currentUser)
+    const currentOrganization = useSelector(state => state.currentOrganization)
+    const isAdmin = currentOrganization?.members?.[currentUser?.id]?.role === 'admin'
+
     useEffect(() => {
         layoutChannel.setState({ title: 'User Management' })
     }, [])
 
-    return <Box p="4">User Management - Coming Soon</Box>
+    return (
+        <UserManagementPage
+            members={members}
+            currentUserId={currentUser?.id}
+            isAdmin={isAdmin}
+            onRoleChange={undefined}
+        />
+    )
 }
 
 export default AdminUsersPage

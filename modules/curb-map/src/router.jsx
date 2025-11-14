@@ -4,6 +4,7 @@
 import { LoadingSpinner, MainLayout } from '@graffio/design-system'
 import { createRootRoute, createRoute, createRouter, Outlet, redirect } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
+import { Sidebar } from './components/Sidebar.jsx'
 
 const MapPage = lazy(() => import('./pages/MapPage.jsx'))
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage.jsx'))
@@ -15,6 +16,9 @@ const redirectToDefaultRoute = () => {
 
 const mainLayout = (
     <MainLayout>
+        <MainLayout.Sidebar>
+            <Sidebar />
+        </MainLayout.Sidebar>
         <Suspense fallback={<LoadingSpinner />}>
             <Outlet />
         </Suspense>

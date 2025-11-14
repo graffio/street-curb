@@ -4,14 +4,15 @@ import { collectionPaths, throwWithOriginal } from './firestore-facade-shared.js
 
 const getDefaultClientDb = () => {
     if (!getApps().length) {
-        const projectId = process.env.GCLOUD_PROJECT || 'test-project'
+        const projectId = import.meta.env.VITE_GCLOUD_PROJECT || 'test-project'
         initializeApp({ projectId, apiKey: 'local-development', appId: `${projectId}-app` })
     }
 
     const db = F.getFirestore()
 
-    if (process.env.FIRESTORE_EMULATOR_HOST) {
-        const [host, port] = process.env.FIRESTORE_EMULATOR_HOST.split(':')
+    const emulatorHost = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST
+    if (emulatorHost) {
+        const [host, port] = emulatorHost.split(':')
         try {
             F.connectFirestoreEmulator(db, host, Number(port))
         } catch (error) {
@@ -42,7 +43,11 @@ const decodeTimestamp = timestamp => {
 const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClientDb()) => {
     if (collectionPrefix && collectionPrefix.at(-1) !== '/') collectionPrefix += '/'
 
-    const collectionPath = collectionPrefix + collectionPaths.get(Type)
+    const collectionName = collectionPaths.get(Type)
+    if (!collectionName) 
+        throw new Error(`No collection path registered for type: ${Type.toString ? Type.toString() : Type}`)
+    
+    const collectionPath = collectionPrefix + collectionName
     const _docRef = id => F.doc(db, collectionPath, id)
 
     const fromFirestore = data => Type.fromFirestore(data, decodeTimestamp)

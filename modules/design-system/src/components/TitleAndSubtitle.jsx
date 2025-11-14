@@ -28,44 +28,24 @@ const getSubtitleFontSize = size => {
 }
 
 /**
- * Compound TitleAndSubtitle component with variants for sizes and gaps
- * @sig TitleAndSubtitle :: ({ gap: String?, children: ReactNode }) -> ReactElement
+ * TitleAndSubtitle component displays title with optional subtitle
+ * @sig TitleAndSubtitle :: ({ title: String, subtitle: String?, gap: String?, titleSize: String?, subtitleSize: String? }) -> ReactElement
  */
-const TitleAndSubtitle = ({ gap = 'normal', children }) => {
-    const containerStyle = {
-        display: 'grid',
-        gridTemplateRows: 'auto auto',
-        alignContent: 'center',
-        gap: getGapValue(gap),
-    }
+const TitleAndSubtitle = ({ title, subtitle, gap = 'normal', titleSize = 'lg', subtitleSize = 'xs' }) => {
+    const titleFontSize = getTitleFontSize(titleSize)
+    const subtitleFontSize = getSubtitleFontSize(subtitleSize)
 
-    return <div style={containerStyle}>{children}</div>
-}
+    const gridTemplateRows = subtitle ? 'auto auto' : 'auto'
+    const containerStyle = { display: 'grid', gridTemplateRows, alignContent: 'center', gap: getGapValue(gap) }
+    const titleStyle = { fontWeight: '700', color: 'var(--gray-12)', lineHeight: 1, margin: 0, fontSize: titleFontSize }
+    const subtitleStyle = { color: 'var(--gray-12)', lineHeight: 1, margin: 0, fontSize: subtitleFontSize }
 
-/**
- * Title subcomponent
- * @sig Title :: ({ size: String?, children: ReactNode }) -> ReactElement
- */
-TitleAndSubtitle.Title = ({ size = 'lg', children }) => {
-    const titleStyle = {
-        fontWeight: '700',
-        color: 'var(--gray-12)',
-        lineHeight: 1,
-        margin: 0,
-        fontSize: getTitleFontSize(size),
-    }
-
-    return <div style={titleStyle}>{children}</div>
-}
-
-/**
- * Subtitle subcomponent
- * @sig Subtitle :: ({ size: String?, children: ReactNode }) -> ReactElement
- */
-TitleAndSubtitle.Subtitle = ({ size = 'xs', children }) => {
-    const subtitleStyle = { color: 'var(--gray-12)', lineHeight: 1, margin: 0, fontSize: getSubtitleFontSize(size) }
-
-    return <div style={subtitleStyle}>{children}</div>
+    return (
+        <div style={containerStyle}>
+            <div style={titleStyle}>{title}</div>
+            {subtitle && <div style={subtitleStyle}>{subtitle}</div>}
+        </div>
+    )
 }
 
 export { TitleAndSubtitle }
