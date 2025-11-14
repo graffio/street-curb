@@ -18,10 +18,7 @@ const TopBar = () => {
 
     return (
         <Flex height="100%" align="center" px="4" style={{ borderBottom: '1px solid var(--accent-3)' }}>
-            <TitleAndSubtitle gap="tight">
-                <TitleAndSubtitle.Title size="lg">{title}</TitleAndSubtitle.Title>
-                {subtitle && <TitleAndSubtitle.Subtitle size="xs">{subtitle}</TitleAndSubtitle.Subtitle>}
-            </TitleAndSubtitle>
+            <TitleAndSubtitle title={title} subtitle={subtitle} gap="tight" titleSize="lg" subtitleSize="xs" />
 
             <Flex gap="2" ml="auto">
                 {topBarActions.map(renderTopBarAction)}
