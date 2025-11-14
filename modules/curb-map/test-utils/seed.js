@@ -41,40 +41,34 @@ const aliceId = 'usr_alice0000000'
 const actorId = aliceId // Alice is the current user / actor
 const date = new Date('2025-01-01T10:00:00Z')
 
-const createAuthUsers = async members => {
-    const createAuthUser = async member => {
-        await admin.auth().createUser({
-            uid: member.userId,
-            email: `${member.userId}@example.com`,
-            displayName: member.displayName,
-            password: 'password123', // Development only
-        })
-        console.log('Created Auth user for ' + member.userId)
-    }
-
-    // Create Auth user for Alice (triggers still disabled)
-    for (const member of members) await createAuthUser(member)
-}
-
 const createUsers = async (fsContext, members) => {
     const createUser = async member => {
-        const items = member.removedAt ? [] : [OrganizationMember.from({ organizationId, role: member.role })]
+        const { displayName, userId: id, removedAt, role } = member
+        const email = `${id}@example.com`
+
+        const items = removedAt ? [] : [OrganizationMember.from({ organizationId, role })]
         const organizations = LookupTable(items, OrganizationMember, 'organizationId')
 
-        const user = User.from({
-            id: member.userId,
-            email: `${member.userId}@example.com`,
-            displayName: member.displayName,
+        const authUser = { uid: id, email, displayName, password: 'password123', emailVerified: true }
+        const firestoreUser = {
+            id,
+            email,
+            displayName,
             organizations,
-            createdBy: member.userId,
+            createdBy: id,
             createdAt: date,
-            updatedBy: member.userId,
+            updatedBy: id,
             updatedAt: date,
-        })
+        }
 
-        console.log('Created User ' + member.userId)
+        // write
+        const user = User.from(firestoreUser)
         await fsContext.users.write(user)
+        await admin.auth().createUser(authUser)
+        await admin.auth().setCustomUserClaims(id, { userId: id })
         users.push(user)
+
+        console.log('Created User ' + id)
     }
 
     const users = []
@@ -148,7 +142,6 @@ const seed = async () => {
 
     const users = await createUsers(fsContext, members)
     const { organizations, projects } = await createOrganizationsAndProjects(fsContext, members)
-    await createAuthUsers(members)
 
     // Re-enable Cloud Functions triggers after all seeding is complete
     await enableTriggers()

@@ -3,10 +3,12 @@
 
 import { layoutChannel, LoadingSpinner } from '@graffio/design-system'
 import { Theme } from '@radix-ui/themes'
-import { RouterProvider } from '@tanstack/react-router'
+import { Link, RouterProvider } from '@tanstack/react-router'
+import { getAuth } from 'firebase/auth'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
+import { possiblyAutoLogin } from './config/index.js'
 import { FirestoreClientFacade } from './firestore-facade/firestore-client-facade.js'
 import { router } from './router.jsx'
 import { loadAllInitialData } from './store/actions.js'
@@ -16,36 +18,45 @@ import { Organization, User } from './types/index.js'
 // Configure sidebar navigation
 // prettier-ignore
 layoutChannel.setState({
+    LinkComponent: Link,
     sidebarItems: [
         {
             title: 'Navigation',
             items: [
-                { label: 'Map',        href: '/map' },
+                { label: 'Map',        to: '/map' },
             ],
         },
         {
             title: 'Admin',
             items: [
-                { label: 'User Admin', href: '/admin/users' },
+                { label: 'User Admin', to: '/admin/users' },
             ],
         },
     ],
 })
 
 // Hard-coded IDs from seed data
-const ALICE_ID = 'usr_alice0000000'
 
 const App = () => {
     const [dataLoaded, setDataLoaded] = useState(false)
 
     useEffect(() => {
         const loadData = async () => {
+            await possiblyAutoLogin()
+
+            // Get userId from authenticated user's custom claims
+            const { currentUser: authUser } = getAuth()
+            if (!authUser) throw new Error('No authenticated user')
+
+            const idTokenResult = await authUser.getIdTokenResult()
+            const userId = idTokenResult.claims.userId
+
             const usersFacade = FirestoreClientFacade(User)
             const organizationsFacade = FirestoreClientFacade(Organization)
 
-            const currentUser = await usersFacade.read(ALICE_ID)
+            const currentUser = await usersFacade.read(userId)
             const organizationId = currentUser.organizations?.[0].organizationId // load 1st organization for now
-            if (!organizationId) setDataLoaded(true)
+            if (!organizationId) throw new Error('No organization ID')
 
             const currentOrganization = await organizationsFacade.read(organizationId)
             const members = currentOrganization.members

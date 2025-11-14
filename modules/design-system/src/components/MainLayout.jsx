@@ -29,20 +29,20 @@ const TopBar = () => {
     )
 }
 
-const renderSidebarItem = (item, i) => (
+const renderSidebarItem = (LinkComponent, item, i) => (
     <Button key={i} variant="soft" size="2" asChild style={{ justifyContent: 'flex-start' }}>
-        <Link href={item.href} underline="none" weight="medium">
+        <LinkComponent to={item.to} href={item.href} underline="none" weight="medium">
             {item.label}
-        </Link>
+        </LinkComponent>
     </Button>
 )
 
-const renderSidebarSection = (sectionData, i) => (
+const renderSidebarSection = (LinkComponent, sectionData, i) => (
     <Box key={i} mb="4">
         <Heading as="h3" size="3" ml="3" mt="3" color="plum">
             {sectionData.title}
         </Heading>
-        <Flex direction="column">{sectionData.items.map(renderSidebarItem)}</Flex>
+        <Flex direction="column">{sectionData.items.map((item, i) => renderSidebarItem(LinkComponent, item, i))}</Flex>
     </Box>
 )
 
@@ -52,12 +52,13 @@ const renderSidebarSection = (sectionData, i) => (
  * @sig Sidebar :: () -> ReactElement
  */
 const Sidebar = () => {
-    let [sidebarItems] = useChannel(layoutChannel, 'sidebarItems')
+    let [{ sidebarItems, LinkComponent }] = useChannel(layoutChannel, ['sidebarItems', 'LinkComponent'])
     sidebarItems ||= []
+    LinkComponent ||= Link
 
     return (
         <Flex direction="column" gap="1" height="100%" style={{ backgroundColor: 'var(--gray-1)' }}>
-            {sidebarItems.map(renderSidebarSection)}
+            {sidebarItems.map((section, i) => renderSidebarSection(LinkComponent, section, i))}
         </Flex>
     )
 }
