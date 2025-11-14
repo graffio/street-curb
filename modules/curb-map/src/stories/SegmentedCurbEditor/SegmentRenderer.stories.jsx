@@ -1,11 +1,12 @@
 import React from 'react'
-import { Provider, useDispatch } from 'react-redux'
+import { Provider } from 'react-redux'
+import { post } from '../../commands/index.js'
 import { SegmentRenderer } from '../../components/SegmentedCurbEditor/SegmentRenderer.jsx'
-import { addSegment, createBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import { store } from '../../store/index.js'
+import { mockOrganization, mockUser } from '../../test-data/mock-auth.js'
 import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
+import { Action } from '../../types/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
-import '../../index.css'
 
 /**
  * SegmentRenderer Component Showcase
@@ -29,23 +30,22 @@ const mockDragDropHandler = {
  * @sig useTestData :: () -> Void
  */
 const useTestData = () => {
-    const dispatch = useDispatch()
-
     React.useEffect(() => {
-        dispatch(createBlockface('segment-showcase', DEFAULT_STORY_GEOMETRY, 'Showcase Street'))
-        dispatch(addSegment(-1))
-        dispatch(updateSegmentLength(0, 80))
-        dispatch(updateSegmentUse(0, 'Parking'))
-        dispatch(addSegment(0))
-        dispatch(updateSegmentLength(1, 60))
-        dispatch(updateSegmentUse(1, 'Loading'))
-        dispatch(addSegment(1))
-        dispatch(updateSegmentLength(2, 40))
-        dispatch(updateSegmentUse(2, 'Bus Stop'))
-        dispatch(addSegment(2))
-        dispatch(updateSegmentLength(3, 30))
-        dispatch(updateSegmentUse(3, 'Disabled'))
-    }, [dispatch])
+        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.CreateBlockface('segment-showcase', DEFAULT_STORY_GEOMETRY, 'Showcase Street'))
+        post(Action.AddSegment(-1))
+        post(Action.UpdateSegmentLength(0, 80))
+        post(Action.UpdateSegmentUse(0, 'Parking'))
+        post(Action.AddSegment(0))
+        post(Action.UpdateSegmentLength(1, 60))
+        post(Action.UpdateSegmentUse(1, 'Loading'))
+        post(Action.AddSegment(1))
+        post(Action.UpdateSegmentLength(2, 40))
+        post(Action.UpdateSegmentUse(2, 'Bus Stop'))
+        post(Action.AddSegment(2))
+        post(Action.UpdateSegmentLength(3, 30))
+        post(Action.UpdateSegmentUse(3, 'Disabled'))
+    }, [])
 }
 
 /**

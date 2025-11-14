@@ -1,10 +1,10 @@
 import React from 'react'
-import { Provider, useDispatch } from 'react-redux'
+import { Provider } from 'react-redux'
+import { post } from '../../commands/index.js'
 import { LabelLayer } from '../../components/SegmentedCurbEditor/LabelLayer.jsx'
-import { addSegment, createBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import { store } from '../../store/index.js'
+import { Action } from '../../types/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
-import '../../index.css'
 
 /**
  * LabelLayer Component Showcase
@@ -45,23 +45,21 @@ const SegmentVisualizer = ({ segments, total }) => (
  * @sig useTestData :: () -> Void
  */
 const useTestData = () => {
-    const dispatch = useDispatch()
-
     React.useEffect(() => {
-        dispatch(createBlockface('label-showcase', {}, 'Label Street'))
-        dispatch(addSegment(-1))
-        dispatch(updateSegmentLength(0, 60))
-        dispatch(updateSegmentUse(0, 'Parking'))
-        dispatch(addSegment(0))
-        dispatch(updateSegmentLength(1, 40))
-        dispatch(updateSegmentUse(1, 'Loading'))
-        dispatch(addSegment(1))
-        dispatch(updateSegmentLength(2, 50))
-        dispatch(updateSegmentUse(2, 'Bus Stop'))
-        dispatch(addSegment(2))
-        dispatch(updateSegmentLength(3, 30))
-        dispatch(updateSegmentUse(3, 'Disabled'))
-    }, [dispatch])
+        post(Action.CreateBlockface('label-showcase', {}, 'Label Street'))
+        post(Action.AddSegment(-1))
+        post(Action.UpdateSegmentLength(0, 60))
+        post(Action.UpdateSegmentUse(0, 'Parking'))
+        post(Action.AddSegment(0))
+        post(Action.UpdateSegmentLength(1, 40))
+        post(Action.UpdateSegmentUse(1, 'Loading'))
+        post(Action.AddSegment(1))
+        post(Action.UpdateSegmentLength(2, 50))
+        post(Action.UpdateSegmentUse(2, 'Bus Stop'))
+        post(Action.AddSegment(2))
+        post(Action.UpdateSegmentLength(3, 30))
+        post(Action.UpdateSegmentUse(3, 'Disabled'))
+    }, [])
 }
 
 /**

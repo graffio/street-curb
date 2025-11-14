@@ -1,10 +1,10 @@
 import { Box, Button, Flex, Text } from '@radix-ui/themes'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { post } from '../../commands/index.js'
 import { COLORS } from '../../constants.js'
-import { addSegment, addSegmentLeft, replaceSegments, updateSegmentLength } from '../../store/actions.js'
 import * as S from '../../store/selectors.js'
-import { Blockface } from '../../types/index.js'
+import { Action, Blockface } from '../../types/index.js'
 import { addUnifiedEventListener, createDragManager, getPrimaryCoordinate } from '../../utils/event-utils.js'
 import { formatLength, roundToPrecision } from '../../utils/formatting.js'
 import { DividerLayer } from './DividerLayer.jsx'
@@ -33,13 +33,10 @@ import { SegmentRenderer } from './SegmentRenderer.jsx'
 const SegmentedCurbEditor = () => {
     /**
      * Creates handler for changing segment type through label dropdown
-     * @sig buildChangeTypeHandler :: (Function, SetStateFn) -> (Number, String) -> Void
+     * @sig buildChangeTypeHandler :: (Number, String) -> Void
      */
-    const buildChangeTypeHandler = (updateRedux, setEditingIndex) => (index, newType) => {
-        const next = [...segments]
-        next[index] = { ...next[index], use: newType }
-        updateRedux(next)
-        setEditingIndex(null)
+    const buildChangeTypeHandler = (index, newType) => {
+        post(Action.UpdateSegmentUse(index, newType))
     }
 
     /**
@@ -124,9 +121,9 @@ const SegmentedCurbEditor = () => {
 
     /**
      * Handles drag move events with length adjustment (unified touch/mouse) - uses local state for smooth updates
-     * @sig createDragMoveHandler :: (Number, Number, Function, Number, Number) -> (Event) -> Void
+     * @sig createDragMoveHandler :: (Number, Number, Number) -> (Event) -> Void
      */
-    const createDragMoveHandler = (index, total, dispatch, unknownRemaining) => moveEvent => {
+    const createDragMoveHandler = (index, total, unknownRemaining) => moveEvent => {
         if (!dragState.current.isDragging) return
 
         const currentCoord = getPrimaryCoordinate(moveEvent)
@@ -142,7 +139,7 @@ const SegmentedCurbEditor = () => {
         if (newLength < 0.1) {
             // For zero snap, still need to sync to Redux immediately
             try {
-                dispatch(updateSegmentLength(index, dragState.current.startLength + unknownRemaining))
+                post(Action.UpdateSegmentLength(index, dragState.current.startLength + unknownRemaining))
             } catch (error) {
                 console.warn('Invalid segment adjustment:', error.message)
             }
@@ -150,7 +147,7 @@ const SegmentedCurbEditor = () => {
         }
 
         try {
-            dispatch(updateSegmentLength(index, newLength))
+            post(Action.UpdateSegmentLength(index, newLength))
         } catch (error) {
             console.warn('Invalid segment adjustment:', error.message)
         }
@@ -183,28 +180,28 @@ const SegmentedCurbEditor = () => {
         dragState.current = { isDragging: true, startCoord, startLength: segment.length, index }
 
         const dragManager = createDragManager()
-        const handleMove = createDragMoveHandler(index, total, dispatch, unknownRemaining)
+        const handleMove = createDragMoveHandler(index, total, unknownRemaining)
 
         dragManager.startDrag(handleMove, handleEnd)
     }
 
     /**
      * Bottom controls component for segment creation and remaining space display
-     * @sig BottomControls :: ({ unknownRemaining: Number, segmentsLength: Number, dispatch: Function }) -> JSXElement
+     * @sig BottomControls :: ({ unknownRemaining: Number, segmentsLength: Number }) -> JSXElement
      */
-    const BottomControls = ({ unknownRemaining, segmentsLength, dispatch }) => (
+    const BottomControls = ({ unknownRemaining, segmentsLength }) => (
         <Flex direction="column" gap="2" style={{ marginTop: '16px' }}>
             <Text size="2" color="gray" align="center">
                 Remaining: {formatLength(unknownRemaining)} ft
             </Text>
             <Flex gap="2" justify="center">
                 {segmentsLength === 0 && unknownRemaining > 0 && (
-                    <Button size="2" variant="soft" onClick={() => dispatch(addSegment(0))}>
+                    <Button size="2" variant="soft" onClick={() => post(Action.AddSegment(0))}>
                         + Add First Segment
                     </Button>
                 )}
                 {segmentsLength > 0 && unknownRemaining > 0 && (
-                    <Button size="2" variant="soft" onClick={() => dispatch(addSegment(segmentsLength))}>
+                    <Button size="2" variant="soft" onClick={() => post(Action.AddSegment(segmentsLength))}>
                         + Add Segment
                     </Button>
                 )}
@@ -212,7 +209,6 @@ const SegmentedCurbEditor = () => {
         </Flex>
     )
 
-    const dispatch = useDispatch()
     const blockface = useSelector(S.currentBlockface)
 
     if (!blockface) return <div>Loading...</div>
@@ -232,7 +228,7 @@ const SegmentedCurbEditor = () => {
     // Drag and drop handler
     const dragDropHandler = DragDropHandler({
         segments,
-        onSwap: newSegments => dispatch(replaceSegments(newSegments)),
+        onSwap: newSegments => post(Action.ReplaceSegments(newSegments)),
         draggingIndex: segmentDragState?.segmentIndex ?? null,
         setDraggingIndex: index =>
             setSegmentDragState(
@@ -251,13 +247,10 @@ const SegmentedCurbEditor = () => {
     // Direct drag implementation without DraggableDivider
     const dragState = useRef({ isDragging: false, startCoord: null, startLength: null, index: null })
 
-    const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, dispatch, unknownRemaining])
-    const handleChangeType = buildChangeTypeHandler(
-        newSegments => dispatch(replaceSegments(newSegments)),
-        () => {}, // setEditingIndex not needed since we removed it
-    )
+    const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, unknownRemaining])
+    const handleChangeType = buildChangeTypeHandler
 
-    const handleAddLeft = useCallback(index => dispatch(addSegmentLeft(index)), [dispatch])
+    const handleAddLeft = useCallback(index => post(Action.AddSegmentLeft(index)), [])
     const tickPoints = Blockface.cumulativePositions(blockface)
 
     // Redux handles blockface initialization and segment management
@@ -317,11 +310,7 @@ const SegmentedCurbEditor = () => {
                     ))}
                 </Box>
 
-                <BottomControls
-                    unknownRemaining={unknownRemaining}
-                    segmentsLength={segments.length}
-                    dispatch={dispatch}
-                />
+                <BottomControls unknownRemaining={unknownRemaining} segmentsLength={segments.length} />
             </Box>
         </>
     )

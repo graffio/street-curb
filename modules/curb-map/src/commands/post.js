@@ -70,6 +70,17 @@ const captureStateSnapshot = (action, state) =>
 
         // Data loading doesn't need rollback (initialization only)
         LoadAllInitialData: () => ({}),
+
+        // Blockface actions snapshot currentBlockfaceId for rollback
+        CreateBlockface: () => ({ currentBlockfaceId: state.currentBlockfaceId, blockfaces: state.blockfaces }),
+        SelectBlockface: () => ({ currentBlockfaceId: state.currentBlockfaceId }),
+
+        // Segment actions snapshot the current blockface for rollback
+        UpdateSegmentUse: () => ({ blockfaces: state.blockfaces }),
+        UpdateSegmentLength: () => ({ blockfaces: state.blockfaces }),
+        AddSegment: () => ({ blockfaces: state.blockfaces }),
+        AddSegmentLeft: () => ({ blockfaces: state.blockfaces }),
+        ReplaceSegments: () => ({ blockfaces: state.blockfaces }),
     })
 
 /**
@@ -110,6 +121,15 @@ const getPersistenceStrategy = action =>
 
         // Data loading is local-only (Redux initialization)
         LoadAllInitialData: () => null,
+
+        // Blockface/Segment actions are local-only (no Firestore persistence yet)
+        CreateBlockface: () => null,
+        SelectBlockface: () => null,
+        UpdateSegmentUse: () => null,
+        UpdateSegmentLength: () => null,
+        AddSegment: () => null,
+        AddSegmentLeft: () => null,
+        ReplaceSegments: () => null,
     })
 
 /**
@@ -153,7 +173,9 @@ const post = action => {
     // Phase 1: Get current state and validate
     const state = store.getState()
 
-    // LoadAllInitialData bootstraps currentUser/currentOrganization, so skip validation for it
+    // LoadAllInitialData is the ONLY action that bypasses authorization
+    // It runs before currentUser/currentOrganization exist (it loads them)
+    // All other actions MUST have currentUser loaded for authorization
     if (!Action.LoadAllInitialData.is(action)) checkAuthorization()
 
     // Phase 2: Capture state snapshot for rollback

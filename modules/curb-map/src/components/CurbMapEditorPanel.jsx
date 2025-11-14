@@ -3,9 +3,10 @@
 
 import { Box, Button, Checkbox, Flex, Heading } from '@graffio/design-system'
 import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { selectBlockface } from '../store/actions.js'
+import { useSelector } from 'react-redux'
+import { post } from '../commands/index.js'
 import * as S from '../store/selectors.js'
+import { Action } from '../types/index.js'
 import CurbTable from './CurbTable/index.js'
 import MapboxMap from './MapboxMap.jsx'
 import SegmentedCurbEditor from './SegmentedCurbEditor/index.js'
@@ -63,10 +64,9 @@ const CurbMapEditorPanel = () => {
 
         // Initialize Redux store with new blockface
         const geometry = blockfaceData.feature?.geometry || blockfaceData.geometry
-        dispatch(selectBlockface(blockfaceData.id, geometry, blockfaceData.streetName, blockfaceData.cnnId))
+        post(Action.SelectBlockface(blockfaceData.id, geometry, blockfaceData.streetName, blockfaceData.cnnId))
     }
 
-    const dispatch = useDispatch()
     const blockface = useSelector(S.currentBlockface)
     const segments = blockface?.segments || []
 

@@ -1,10 +1,10 @@
 import React from 'react'
-import { Provider, useDispatch } from 'react-redux'
+import { Provider } from 'react-redux'
+import { post } from '../../commands/index.js'
 import { SegmentedCurbEditor } from '../../components/SegmentedCurbEditor/SegmentedCurbEditor.jsx'
-import { addSegment, selectBlockface, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import { store } from '../../store/index.js'
+import { Action } from '../../types/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
-import '../../index.css'
 
 /**
  * SegmentedCurbEditor Component Showcase
@@ -18,23 +18,21 @@ import '../../index.css'
  * @sig useTestData :: () -> Void
  */
 const useTestData = () => {
-    const dispatch = useDispatch()
-
     React.useEffect(() => {
-        dispatch(selectBlockface('editor-showcase', {}, 'Editor Street'))
-        dispatch(addSegment(-1))
-        dispatch(updateSegmentLength(0, 80))
-        dispatch(updateSegmentUse(0, 'Parking'))
-        dispatch(addSegment(0))
-        dispatch(updateSegmentLength(1, 60))
-        dispatch(updateSegmentUse(1, 'Loading'))
-        dispatch(addSegment(1))
-        dispatch(updateSegmentLength(2, 50))
-        dispatch(updateSegmentUse(2, 'Bus Stop'))
-        dispatch(addSegment(2))
-        dispatch(updateSegmentLength(3, 50))
-        dispatch(updateSegmentUse(3, 'Parking'))
-    }, [dispatch])
+        post(Action.SelectBlockface('editor-showcase', {}, 'Editor Street'))
+        post(Action.AddSegment(-1))
+        post(Action.UpdateSegmentLength(0, 80))
+        post(Action.UpdateSegmentUse(0, 'Parking'))
+        post(Action.AddSegment(0))
+        post(Action.UpdateSegmentLength(1, 60))
+        post(Action.UpdateSegmentUse(1, 'Loading'))
+        post(Action.AddSegment(1))
+        post(Action.UpdateSegmentLength(2, 50))
+        post(Action.UpdateSegmentUse(2, 'Bus Stop'))
+        post(Action.AddSegment(2))
+        post(Action.UpdateSegmentLength(3, 50))
+        post(Action.UpdateSegmentUse(3, 'Parking'))
+    }, [])
 }
 
 /**
