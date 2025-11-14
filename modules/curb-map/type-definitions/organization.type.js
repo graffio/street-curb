@@ -34,4 +34,5 @@ Organization.roleChanged = (organization, action) => {
     return Organization.from({ ...organization, members })
 }
 
-Organization.isAdmin = (organization, userId) => organization?.members?.[userId]?.role === 'admin'
+Organization.role = (organization, userId) => organization?.members?.[userId]?.role
+Organization.isAdmin = (organization, userId) => Organization.role(organization, userId) === 'admin'

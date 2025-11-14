@@ -132,11 +132,7 @@ const validateRequest = (req, res, logger) => {
     }
 
     // Namespace (emulator only)
-    error = process.env.FUNCTIONS_EMULATOR && !req.body.namespace ? 'namespace is required' : null
-    if (error) {
-        sendValidationFailed(res, error, 'namespace')
-        return false
-    }
+    if (typeof process.env.FUNCTIONS_EMULATOR && !req.body.namespace) req.body.namespace = ''
 
     // well-formed action
     error = validateAction(req.body.action, logger)

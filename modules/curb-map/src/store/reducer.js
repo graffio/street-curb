@@ -143,6 +143,12 @@ const reduceAction = (state, { payload: action }) =>
     })
 
 /**
+ * Rollback state from snapshot (for command failure handling)
+ * @sig rollbackState :: (State, Action) -> State
+ */
+const rollbackState = (state, action) => ({ ...state, ...action.payload })
+
+/**
  * Root reducer handling all actions
  * @sig rootReducer :: (State, Action) -> State
  */
@@ -155,6 +161,7 @@ const rootReducer = (state = initialState, action) => {
     if (action.type === ACTION_TYPES.ADD_SEGMENT_LEFT) return addSegmentLeft(state, action)
     if (action.type === ACTION_TYPES.REPLACE_SEGMENTS) return replaceSegments(state, action)
     if (action.type === ACTION_TYPES.LOAD_ALL_INITIAL_DATA) return loadAllInitialData(state, action)
+    if (action.type === 'ROLLBACK_STATE') return rollbackState(state, action)
 
     if (Action.is(action.payload)) return reduceAction(state, action)
     return state

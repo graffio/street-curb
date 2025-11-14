@@ -173,6 +173,8 @@ Organization.roleChanged = (organization, action) => {
     })
 }
 
-Organization.isAdmin = (organization, userId) => organization?.members?.[userId]?.role === 'admin'
+Organization.role = (organization, userId) => organization?.members?.[userId]?.role
+
+Organization.isAdmin = (organization, userId) => Organization.role(organization, userId) === 'admin'
 
 export { Organization }

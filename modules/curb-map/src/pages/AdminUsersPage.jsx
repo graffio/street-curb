@@ -4,8 +4,8 @@
 import { layoutChannel } from '@graffio/design-system'
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { post } from '../commands/index.js'
 import { UserManagementPage } from '../components/UserManagementPage.jsx'
-import { post } from '../store/index.js'
 import { Action, Organization } from '../types/index.js'
 
 const AdminUsersPage = () => {

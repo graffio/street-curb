@@ -14,4 +14,14 @@ const app = initializeApp({
 
 const possiblyAutoLogin = async () => {}
 
-export { app, possiblyAutoLogin }
+/**
+ * Build URL for Cloud Function in production
+ * @sig functionsUrl :: String -> String
+ */
+const functionsUrl = functionName => {
+    const projectId = app.options.projectId
+    const region = 'us-central1' // Default region, override if needed
+    return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`
+}
+
+export { app, possiblyAutoLogin, functionsUrl }
