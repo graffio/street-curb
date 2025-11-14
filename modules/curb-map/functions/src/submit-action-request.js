@@ -132,11 +132,7 @@ const validateRequest = (req, res, logger) => {
     }
 
     // Namespace (emulator only)
-    error = process.env.FUNCTIONS_EMULATOR && !req.body.namespace ? 'namespace is required' : null
-    if (error) {
-        sendValidationFailed(res, error, 'namespace')
-        return false
-    }
+    if (typeof process.env.FUNCTIONS_EMULATOR && !req.body.namespace) req.body.namespace = ''
 
     // well-formed action
     error = validateAction(req.body.action, logger)
@@ -230,6 +226,14 @@ const dispatchToHandler = actionRequest =>
         MemberRemoved          : () => handleMemberRemoved,
         RoleChanged            : () => handleRoleChanged,
         AuthenticationCompleted: () => handleAuthenticationCompleted,
+        LoadAllInitialData     : () => { throw new Error('LoadAllInitialData should never reach server (local-only action)') },
+        CreateBlockface        : () => { throw new Error('CreateBlockface should never reach server (local-only action)') },
+        SelectBlockface        : () => { throw new Error('SelectBlockface should never reach server (local-only action)') },
+        UpdateSegmentUse       : () => { throw new Error('UpdateSegmentUse should never reach server (local-only action)') },
+        UpdateSegmentLength    : () => { throw new Error('UpdateSegmentLength should never reach server (local-only action)') },
+        AddSegment             : () => { throw new Error('AddSegment should never reach server (local-only action)') },
+        AddSegmentLeft         : () => { throw new Error('AddSegmentLeft should never reach server (local-only action)') },
+        ReplaceSegments        : () => { throw new Error('ReplaceSegments should never reach server (local-only action)') },
     })
 
 /*

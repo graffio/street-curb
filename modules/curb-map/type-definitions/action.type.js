@@ -91,6 +91,46 @@ export const Action = {
             // phoneNumber extracted from verified Firebase token (not client input)
         },
 
+        // Data Loading
+        LoadAllInitialData: {
+            currentUser        : 'User',
+            currentOrganization: 'Organization',
+        },
+
+        // Blockface Actions
+        CreateBlockface: {
+            id        : 'String',
+            geometry  : 'Object',
+            streetName: 'String',
+            cnnId     : 'String?',
+        },
+        SelectBlockface: {
+            id         : 'String',
+            geometry   : 'Object',
+            streetName : 'String',
+            cnnId      : 'String?',
+        },
+
+        // Segment Actions
+        UpdateSegmentUse: {
+            index: 'Number',
+            use  : 'String',
+        },
+        UpdateSegmentLength: {
+            index    : 'Number',
+            newLength: 'Number',
+        },
+        AddSegment: {
+            targetIndex: 'Number',
+        },
+        AddSegmentLeft: {
+            index        : 'Number',
+            desiredLength: 'Number',
+        },
+        ReplaceSegments: {
+            segments: '[Segment]',
+        },
+
     }
 }
 
@@ -127,6 +167,20 @@ Action.piiFields = rawData => {
     // Auth
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
+    // Data Loading
+    if (tagName === 'LoadAllInitialData'     ) return []
+
+    // Blockface Actions
+    if (tagName === 'CreateBlockface'        ) return []
+    if (tagName === 'SelectBlockface'        ) return []
+
+    // Segment Actions
+    if (tagName === 'UpdateSegmentUse'       ) return []
+    if (tagName === 'UpdateSegmentLength'    ) return []
+    if (tagName === 'AddSegment'             ) return []
+    if (tagName === 'AddSegmentLeft'         ) return []
+    if (tagName === 'ReplaceSegments'        ) return []
+
     return []  // Fallback for unrecognized types
 }
 
@@ -160,6 +214,20 @@ Action.toLog = a => {
        
         // Auth
         AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
+
+        // Data Loading
+        LoadAllInitialData     : ()                             => ({ type: 'LoadAllInitialData' }),
+
+        // Blockface Actions
+        CreateBlockface        : ({ id })                       => ({ type: 'CreateBlockface', id }),
+        SelectBlockface        : ({ id })                       => ({ type: 'SelectBlockface', id }),
+
+        // Segment Actions
+        UpdateSegmentUse       : ({ index, use })               => ({ type: 'UpdateSegmentUse', index, use }),
+        UpdateSegmentLength    : ({ index, newLength })         => ({ type: 'UpdateSegmentLength', index, newLength }),
+        AddSegment             : ({ targetIndex })              => ({ type: 'AddSegment', targetIndex }),
+        AddSegmentLeft         : ({ index, desiredLength })     => ({ type: 'AddSegmentLeft', index, desiredLength }),
+        ReplaceSegments        : ({ segments })                 => ({ type: 'ReplaceSegments', segmentCount: segments.length }),
     })
 
     Action.piiFields(a).forEach(redactField)
@@ -220,6 +288,20 @@ Action.getSubject = action =>
 
         // Auth
         AuthenticationCompleted: a => ({ id: a.email,          type: 'user' }),
+
+        // Data Loading
+        LoadAllInitialData     : a => ({ id: a.currentUser.id, type: 'user' }),
+
+        // Blockface Actions
+        CreateBlockface        : a => ({ id: a.id,           type: 'blockface' }),
+        SelectBlockface        : a => ({ id: a.id,           type: 'blockface' }),
+
+        // Segment Actions (subject is the current blockface being edited)
+        UpdateSegmentUse       : () => ({ id: 'current',     type: 'blockface' }),
+        UpdateSegmentLength    : () => ({ id: 'current',     type: 'blockface' }),
+        AddSegment             : () => ({ id: 'current',     type: 'blockface' }),
+        AddSegmentLeft         : () => ({ id: 'current',     type: 'blockface' }),
+        ReplaceSegments        : () => ({ id: 'current',     type: 'blockface' }),
     })
 
 // prettier-ignore
@@ -240,4 +322,18 @@ Action.mayI = (action, actorRole, actorId) =>
         
         // Auth
         AuthenticationCompleted: () => true,
+
+        // Data Loading
+        LoadAllInitialData     : () => true,
+
+        // Blockface Actions (any authenticated user can edit blockfaces)
+        CreateBlockface        : () => true,
+        SelectBlockface        : () => true,
+
+        // Segment Actions (any authenticated user can edit segments)
+        UpdateSegmentUse       : () => true,
+        UpdateSegmentLength    : () => true,
+        AddSegment             : () => true,
+        AddSegmentLeft         : () => true,
+        ReplaceSegments        : () => true,
     })

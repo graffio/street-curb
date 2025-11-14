@@ -14,10 +14,10 @@
  */
 
 import { FieldTypes } from './field-types.js'
+import { Member } from './member.js'
 
 import * as R from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
-import { Member } from './member.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -158,5 +158,23 @@ Organization.fromFirestore = Organization._fromFirestore
 // Additional functions copied from type definition file
 //
 // -------------------------------------------------------------------------------------------------------------
+
+Organization.roleChanged = (organization, action) => {
+    const { userId, role } = action
+    const oldMember = organization.members[userId]
+    const newMember = Member.from({
+        ...oldMember,
+        role,
+    })
+    const members = organization.members.addItemWithId(newMember)
+    return Organization.from({
+        ...organization,
+        members,
+    })
+}
+
+Organization.role = (organization, userId) => organization?.members?.[userId]?.role
+
+Organization.isAdmin = (organization, userId) => Organization.role(organization, userId) === 'admin'
 
 export { Organization }

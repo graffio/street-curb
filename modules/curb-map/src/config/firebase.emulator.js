@@ -27,4 +27,14 @@ const possiblyAutoLogin = async ({ email = 'usr_alice0000000@example.com', passw
     await loginPromise
 }
 
-export { app, possiblyAutoLogin }
+/**
+ * Build URL for Cloud Function in emulator
+ * @sig functionsUrl :: String -> String
+ */
+const functionsUrl = functionName => {
+    const origin = import.meta.env.VITE_FUNCTIONS_EMULATOR_ORIGIN || 'http://127.0.0.1:5001'
+    const region = import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || 'us-central1'
+    return `${origin}/${projectId}/${region}/${functionName}`
+}
+
+export { app, possiblyAutoLogin, functionsUrl }

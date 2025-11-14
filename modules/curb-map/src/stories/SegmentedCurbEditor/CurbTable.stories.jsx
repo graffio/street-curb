@@ -1,6 +1,11 @@
+import React from 'react'
 import { Provider } from 'react-redux'
-import { createStoreWithScenario } from '../../../test/test-store.js'
+import { post } from '../../commands/index.js'
 import CurbTable from '../../components/CurbTable/CurbTable.jsx'
+import { store } from '../../store/index.js'
+import { mockOrganization, mockUser } from '../../test-data/mock-auth.js'
+import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
+import { Action } from '../../types/index.js'
 
 /**
  * Storybook stories for CurbTable component
@@ -8,15 +13,53 @@ import CurbTable from '../../components/CurbTable/CurbTable.jsx'
 
 /**
  * Wrapper component for stories with Redux provider and theme
- * @sig StoryWrapper :: ({ children: ReactNode, store: Store }) -> JSXElement
+ * @sig StoryWrapper :: ({ children: ReactNode }) -> JSXElement
  */
-const StoryWrapper = ({ children, store }) => (
+const StoryWrapper = ({ children }) => (
     <Provider store={store}>
         <div style={{ padding: '20px', background: 'var(--color-background)', minHeight: '100vh' }}>{children}</div>
     </Provider>
 )
 
-// Uses unified test store architecture shared with Playwright and tap tests
+/**
+ * Scenario initializers using post() command pattern
+ * All scenarios must initialize auth state first via LoadAllInitialData
+ */
+const useEmptyScenario = () => {
+    React.useEffect(() => {
+        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.CreateBlockface('test-blockface-empty', DEFAULT_STORY_GEOMETRY, 'Empty Street'))
+    }, [])
+}
+
+const useMultipleScenario = () => {
+    React.useEffect(() => {
+        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.CreateBlockface('test-blockface-multiple', DEFAULT_STORY_GEOMETRY, 'Multiple Street'))
+        post(Action.AddSegment(-1))
+        post(Action.UpdateSegmentLength(0, 80))
+        post(Action.UpdateSegmentUse(0, 'Parking'))
+        post(Action.AddSegment(0))
+        post(Action.UpdateSegmentLength(1, 60))
+        post(Action.UpdateSegmentUse(1, 'Loading'))
+        post(Action.AddSegment(1))
+        post(Action.UpdateSegmentLength(2, 50))
+        post(Action.UpdateSegmentUse(2, 'Parking'))
+    }, [])
+}
+
+const useFullScenario = () => {
+    React.useEffect(() => {
+        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.CreateBlockface('test-blockface-full', DEFAULT_STORY_GEOMETRY, 'Full Street'))
+        post(Action.AddSegment(-1))
+        post(Action.UpdateSegmentLength(0, 120))
+        post(Action.UpdateSegmentUse(0, 'Parking'))
+        post(Action.AddSegment(0))
+        post(Action.UpdateSegmentLength(1, 120))
+        post(Action.UpdateSegmentUse(1, 'Loading'))
+    }, [])
+}
 
 const meta = {
     title: 'SegmentedCurbEditor/CurbTable',
@@ -55,10 +98,10 @@ The CurbTable component provides an interface for managing curb segments with th
  */
 const Default = {
     render: () => {
-        const store = createStoreWithScenario('multiple')
+        useMultipleScenario()
 
         return (
-            <StoryWrapper store={store}>
+            <StoryWrapper>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable Component</h2>
                     <CurbTable />
@@ -77,10 +120,10 @@ const Default = {
  */
 const EmptyState = {
     render: () => {
-        const store = createStoreWithScenario('empty')
+        useEmptyScenario()
 
         return (
-            <StoryWrapper store={store}>
+            <StoryWrapper>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable - Empty State</h2>
                     <CurbTable />
@@ -97,10 +140,10 @@ const EmptyState = {
  */
 const MobileView = {
     render: () => {
-        const store = createStoreWithScenario('multiple')
+        useMultipleScenario()
 
         return (
-            <StoryWrapper store={store}>
+            <StoryWrapper>
                 <div style={{ maxWidth: '375px', margin: '0 auto' }}>
                     <h3 style={{ marginBottom: '15px', color: 'var(--gray-12)', fontSize: '16px' }}>
                         CurbTable - Mobile View
@@ -124,10 +167,10 @@ const MobileView = {
  */
 const CompleteCollection = {
     render: () => {
-        const store = createStoreWithScenario('full')
+        useFullScenario()
 
         return (
-            <StoryWrapper store={store}>
+            <StoryWrapper>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)' }}>CurbTable - Complete Collection</h2>
                     <CurbTable />
@@ -144,10 +187,10 @@ const CompleteCollection = {
  */
 const FeatureShowcase = {
     render: () => {
-        const store = createStoreWithScenario('multiple')
+        useMultipleScenario()
 
         return (
-            <StoryWrapper store={store}>
+            <StoryWrapper>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ marginBottom: '20px', color: 'var(--gray-12)', textAlign: 'center' }}>
                         CurbTable - Feature Showcase

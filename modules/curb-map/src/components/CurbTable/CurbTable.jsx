@@ -1,10 +1,10 @@
 import { Table as RadixTable } from '@radix-ui/themes'
 import { useCallback, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { post } from '../../commands/index.js'
 import { COLORS } from '../../constants.js'
-import { addSegment, updateSegmentLength, updateSegmentUse } from '../../store/actions.js'
 import * as S from '../../store/selectors.js'
-import { Blockface } from '../../types/index.js'
+import { Action, Blockface } from '../../types/index.js'
 import { formatLength } from '../../utils/formatting.js'
 import NumberPad from '../NumberPad.jsx'
 import { createColorOptions, CurbSegmentSelect } from './CurbSegmentSelect.jsx'
@@ -328,8 +328,6 @@ const CurbTable = () => {
         maxWidth: '100%',
     }
 
-    const dispatch = useDispatch()
-
     // Redux selectors
     const blockface = useSelector(S.currentBlockface)
 
@@ -346,27 +344,18 @@ const CurbTable = () => {
     const hasAnySegments = segments.length > 0
 
     // Action dispatchers with memoization
-    const changeSegmentType = useCallback(
-        (index, newType) => {
-            if (Object.keys(COLORS).includes(newType)) dispatch(updateSegmentUse(index, newType))
-        },
-        [dispatch],
-    )
+    const changeSegmentType = useCallback((index, newType) => {
+        if (Object.keys(COLORS).includes(newType)) post(Action.UpdateSegmentUse(index, newType))
+    }, [])
 
-    const changeSegmentLength = useCallback(
-        (index, newLength) => {
-            if (typeof newLength === 'number' && !isNaN(newLength) && newLength >= 1)
-                dispatch(updateSegmentLength(index, newLength))
-        },
-        [dispatch],
-    )
+    const changeSegmentLength = useCallback((index, newLength) => {
+        if (typeof newLength === 'number' && !isNaN(newLength) && newLength >= 1)
+            post(Action.UpdateSegmentLength(index, newLength))
+    }, [])
 
-    const addNewSegment = useCallback(
-        targetIndex => {
-            dispatch(addSegment(targetIndex))
-        },
-        [dispatch],
-    )
+    const addNewSegment = useCallback(targetIndex => {
+        post(Action.AddSegment(targetIndex))
+    }, [])
 
     // UI state
     const [selectedRowIndex, setSelectedRowIndex] = useState(0)
