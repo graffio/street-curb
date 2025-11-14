@@ -12,7 +12,7 @@ import { possiblyAutoLogin } from './config/index.js'
 import { FirestoreClientFacade } from './firestore-facade/firestore-client-facade.js'
 import { router } from './router.jsx'
 import { loadAllInitialData } from './store/actions.js'
-import store from './store/index.js'
+import { store } from './store/index.js'
 import { Organization, User } from './types/index.js'
 
 // Hard-coded IDs from seed data
@@ -24,24 +24,21 @@ const App = () => {
         const loadData = async () => {
             await possiblyAutoLogin()
 
+            const usersFacade = FirestoreClientFacade(User)
+            const organizationsFacade = FirestoreClientFacade(Organization)
+
             // Get userId from authenticated user's custom claims
             const { currentUser: authUser } = getAuth()
             if (!authUser) throw new Error('No authenticated user')
 
-            const idTokenResult = await authUser.getIdTokenResult()
-            const userId = idTokenResult.claims.userId
-
-            const usersFacade = FirestoreClientFacade(User)
-            const organizationsFacade = FirestoreClientFacade(Organization)
-
-            const currentUser = await usersFacade.read(userId)
+            const { claims } = await authUser.getIdTokenResult()
+            const currentUser = await usersFacade.read(claims.userId)
             const organizationId = currentUser.organizations?.[0].organizationId // load 1st organization for now
             if (!organizationId) throw new Error('No organization ID')
 
             const currentOrganization = await organizationsFacade.read(organizationId)
-            const members = currentOrganization.members
 
-            store.dispatch(loadAllInitialData(currentUser, currentOrganization, members))
+            store.dispatch(loadAllInitialData(currentUser, currentOrganization))
             setDataLoaded(true)
         }
 

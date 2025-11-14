@@ -1,5 +1,6 @@
+import { assoc } from '@graffio/functional'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { Blockface, Member } from '../types/index.js'
+import { Action, Blockface, Organization } from '../types/index.js'
 import { ACTION_TYPES } from './actions.js'
 
 /**
@@ -13,7 +14,6 @@ const initialState = {
 
     // from Firestore
     blockfaces: LookupTable([], Blockface, 'id'),
-    members: LookupTable([], Member, 'id'),
 }
 
 /*
@@ -115,9 +115,32 @@ const selectBlockface = (state, action) => {
  * @sig loadAllInitialData :: (State, Action) -> State
  */
 const loadAllInitialData = (state, action) => {
-    const { currentUser, currentOrganization, members } = action.payload
-    return { ...state, currentUser, currentOrganization, members }
+    const { currentUser, currentOrganization } = action.payload
+    return { ...state, currentUser, currentOrganization }
 }
+
+const postRoleChanged = (state, action) =>
+    assoc('currentOrganization', Organization.roleChanged(state.currentOrganization, action), state)
+
+const reduceAction = (state, { payload: action }) =>
+    action.match({
+        // Organization Actions
+        OrganizationCreated: () => state,
+        OrganizationDeleted: () => state,
+        OrganizationSuspended: () => state,
+        OrganizationUpdated: () => state,
+
+        // Organization Member Actions
+        MemberAdded: () => state,
+        MemberRemoved: () => state,
+        RoleChanged: () => postRoleChanged(state, action),
+        UserCreated: () => state,
+        UserForgotten: () => state,
+        UserUpdated: () => state,
+
+        // Firebase Auth
+        AuthenticationCompleted: () => state,
+    })
 
 /**
  * Root reducer handling all actions
@@ -132,6 +155,8 @@ const rootReducer = (state = initialState, action) => {
     if (action.type === ACTION_TYPES.ADD_SEGMENT_LEFT) return addSegmentLeft(state, action)
     if (action.type === ACTION_TYPES.REPLACE_SEGMENTS) return replaceSegments(state, action)
     if (action.type === ACTION_TYPES.LOAD_ALL_INITIAL_DATA) return loadAllInitialData(state, action)
+
+    if (Action.is(action.payload)) return reduceAction(state, action)
     return state
 }
 

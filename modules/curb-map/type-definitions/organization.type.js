@@ -1,5 +1,6 @@
 /** @module Organization */
 import { FieldTypes } from './field-types.js'
+import { Member } from './member.js'
 
 /**
  * Organization represents a collection of users working on projects
@@ -23,4 +24,14 @@ export const Organization = {
     }
 }
 
-// Manual serialization DELETED - now auto-generated!
+Organization.roleChanged = (organization, action) => {
+    const { userId, role } = action
+
+    const oldMember = organization.members[userId]
+    const newMember = Member.from({ ...oldMember, role })
+    const members = organization.members.addItemWithId(newMember)
+
+    return Organization.from({ ...organization, members })
+}
+
+Organization.isAdmin = (organization, userId) => organization?.members?.[userId]?.role === 'admin'

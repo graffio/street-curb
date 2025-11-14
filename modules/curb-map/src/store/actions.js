@@ -85,9 +85,9 @@ const createBlockface = (id, geometry = {}, streetName = '', cnnId = undefined) 
  * Load all initial data (currentUser, currentOrganization, members)
  * @sig loadAllInitialData :: (User, Organization, LookupTable<Member>) -> Action
  */
-const loadAllInitialData = (currentUser, currentOrganization, members) => ({
+const loadAllInitialData = (currentUser, currentOrganization) => ({
     type: ACTION_TYPES.LOAD_ALL_INITIAL_DATA,
-    payload: { currentUser, currentOrganization, members },
+    payload: { currentUser, currentOrganization },
 })
 
 export {

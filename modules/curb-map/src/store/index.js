@@ -1,4 +1,5 @@
 import { createStore } from 'redux'
+import { Action } from '../types/index.js'
 import { rootReducer } from './reducer.js'
 
 /**
@@ -12,6 +13,9 @@ const store = createStore(
     window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
 )
 
-const post = action => store.dispatch({ type: action.constructor.toString(), payload: action })
+const post = action => {
+    if (!Action.is(action)) throw new Error('Post requires an Action Tagged Sum; found: ' + action)
+    return store.dispatch({ type: action.constructor.toString(), payload: action })
+}
 
 export { store, post }
