@@ -6,15 +6,15 @@ import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/index.js'
 import { UserManagementPage } from '../components/UserManagementPage.jsx'
+import * as S from '../store/selectors.js'
 import { Action, Organization } from '../types/index.js'
 
 const AdminUsersPage = () => {
-    const onRoleChange = (userId, role) => post(Action.RoleChanged(userId, currentOrganization.id, role))
-
-    // should be selectors
-    const currentOrganization = useSelector(state => state.currentOrganization)
-    const currentUserId = useSelector(state => state.currentUser).id
+    const currentOrganization = useSelector(S.currentOrganization)
+    const currentUserId = useSelector(S.currentUser).id
     const isAdmin = Organization.isAdmin(currentOrganization, currentUserId)
+
+    const onRoleChange = (userId, role) => post(Action.RoleChanged(userId, currentOrganization.id, role))
 
     useEffect(() => {
         layoutChannel.setState({ title: 'User Management' })

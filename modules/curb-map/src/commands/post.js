@@ -4,6 +4,7 @@
 import { getAuth } from 'firebase/auth'
 import { functionsUrl } from '../config/index.js'
 import { store } from '../store/index.js'
+import * as S from '../store/selectors.js'
 import { Action, FieldTypes, Organization } from '../types/index.js'
 
 /**
@@ -46,41 +47,41 @@ const submitActionRequest = async action => {
 /**
  * Capture state snapshot for potential rollback (action-specific)
  * Returns empty object for actions that don't need rollback
- *
  * @sig captureStateSnapshot :: (Action, State) -> Object
  */
+// prettier-ignore
 const captureStateSnapshot = (action, state) =>
     action.match({
         // Organization member actions snapshot currentOrganization
-        RoleChanged: () => ({ currentOrganization: state.currentOrganization }),
-        MemberAdded: () => ({ currentOrganization: state.currentOrganization }),
-        MemberRemoved: () => ({ currentOrganization: state.currentOrganization }),
-        OrganizationUpdated: () => ({ currentOrganization: state.currentOrganization }),
+        RoleChanged            : () => ({ currentOrganization: S.currentOrganization(state) }),
+        MemberAdded            : () => ({ currentOrganization: S.currentOrganization(state) }),
+        MemberRemoved          : () => ({ currentOrganization: S.currentOrganization(state) }),
+        OrganizationUpdated    : () => ({ currentOrganization: S.currentOrganization(state) }),
 
         // User actions snapshot currentUser
-        UserUpdated: () => ({ currentUser: state.currentUser }),
+        UserUpdated            : () => ({ currentUser: S.currentUser(state) }),
 
         // These don't need rollback (no optimistic update or local-only)
-        OrganizationCreated: () => ({}),
-        OrganizationDeleted: () => ({}),
-        OrganizationSuspended: () => ({}),
-        UserCreated: () => ({}),
-        UserForgotten: () => ({}),
+        OrganizationCreated    : () => ({}),
+        OrganizationDeleted    : () => ({}),
+        OrganizationSuspended  : () => ({}),
+        UserCreated            : () => ({}),
+        UserForgotten          : () => ({}),
         AuthenticationCompleted: () => ({}),
 
         // Data loading doesn't need rollback (initialization only)
-        LoadAllInitialData: () => ({}),
+        LoadAllInitialData     : () => ({}),
 
         // Blockface actions snapshot currentBlockfaceId for rollback
-        CreateBlockface: () => ({ currentBlockfaceId: state.currentBlockfaceId, blockfaces: state.blockfaces }),
-        SelectBlockface: () => ({ currentBlockfaceId: state.currentBlockfaceId }),
+        CreateBlockface        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state), blockfaces: S.blockfaces(state) }),
+        SelectBlockface        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state) }),
 
         // Segment actions snapshot the current blockface for rollback
-        UpdateSegmentUse: () => ({ blockfaces: state.blockfaces }),
-        UpdateSegmentLength: () => ({ blockfaces: state.blockfaces }),
-        AddSegment: () => ({ blockfaces: state.blockfaces }),
-        AddSegmentLeft: () => ({ blockfaces: state.blockfaces }),
-        ReplaceSegments: () => ({ blockfaces: state.blockfaces }),
+        UpdateSegmentUse       : () => ({ blockfaces: S.blockfaces(state) }),
+        UpdateSegmentLength    : () => ({ blockfaces: S.blockfaces(state) }),
+        AddSegment             : () => ({ blockfaces: S.blockfaces(state) }),
+        AddSegmentLeft         : () => ({ blockfaces: S.blockfaces(state) }),
+        ReplaceSegments        : () => ({ blockfaces: S.blockfaces(state) }),
     })
 
 /**
@@ -100,36 +101,37 @@ const rollbackState = snapshot => {
  *
  * @sig getPersistenceStrategy :: Action -> (Action -> Promise<void>)?
  */
+// prettier-ignore
 const getPersistenceStrategy = action =>
     action.match({
         // Organization actions persist to Firestore
-        RoleChanged: () => submitActionRequest,
-        MemberAdded: () => submitActionRequest,
-        MemberRemoved: () => submitActionRequest,
-        OrganizationCreated: () => submitActionRequest,
-        OrganizationDeleted: () => submitActionRequest,
-        OrganizationSuspended: () => submitActionRequest,
-        OrganizationUpdated: () => submitActionRequest,
+        RoleChanged            : () => submitActionRequest,
+        MemberAdded            : () => submitActionRequest,
+        MemberRemoved          : () => submitActionRequest,
+        OrganizationCreated    : () => submitActionRequest,
+        OrganizationDeleted    : () => submitActionRequest,
+        OrganizationSuspended  : () => submitActionRequest,
+        OrganizationUpdated    : () => submitActionRequest,
 
         // User actions persist to Firestore
-        UserCreated: () => submitActionRequest,
-        UserForgotten: () => submitActionRequest,
-        UserUpdated: () => submitActionRequest,
+        UserCreated            : () => submitActionRequest,
+        UserForgotten          : () => submitActionRequest,
+        UserUpdated            : () => submitActionRequest,
 
         // Auth is local-only (already persisted by Firebase Auth)
         AuthenticationCompleted: () => null,
 
         // Data loading is local-only (Redux initialization)
-        LoadAllInitialData: () => null,
+        LoadAllInitialData     : () => null,
 
         // Blockface/Segment actions are local-only (no Firestore persistence yet)
-        CreateBlockface: () => null,
-        SelectBlockface: () => null,
-        UpdateSegmentUse: () => null,
-        UpdateSegmentLength: () => null,
-        AddSegment: () => null,
-        AddSegmentLeft: () => null,
-        ReplaceSegments: () => null,
+        CreateBlockface        : () => null,
+        SelectBlockface        : () => null,
+        UpdateSegmentUse       : () => null,
+        UpdateSegmentLength    : () => null,
+        AddSegment             : () => null,
+        AddSegmentLeft         : () => null,
+        ReplaceSegments        : () => null,
     })
 
 /**
@@ -158,13 +160,13 @@ const post = action => {
     }
 
     const checkAuthorization = () => {
-        if (!state.currentUser) throw new Error('Cannot execute command: currentUser not loaded')
-        if (!state.currentOrganization) throw new Error('Cannot execute command: currentOrganization not loaded')
+        if (!S.currentUser(state)) throw new Error('Cannot execute command: currentUser not loaded')
+        if (!S.currentOrganization(state)) throw new Error('Cannot execute command: currentOrganization not loaded')
 
-        const actorRole = Organization.role(state.currentOrganization, state.currentUser.id)
+        const actorRole = Organization.role(S.currentOrganization(state), S.currentUser(state).id)
 
         // Authorization check
-        if (!Action.mayI(action, actorRole, state.currentUser.id))
+        if (!Action.mayI(action, actorRole, S.currentUser(state).id))
             throw new Error(`Unauthorized: ${action.constructor.toString()}`)
     }
 

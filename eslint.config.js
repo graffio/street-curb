@@ -24,7 +24,16 @@ export default defineConfig([
             curly: ['error', 'multi', 'consistent'],
             'arrow-body-style': ['error', 'as-needed'],
             'prefer-const': 'error',
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: "MemberExpression[object.name='state']",
+                    message:
+                        'Direct state access (state.xxx) not allowed. Use selectors from store/selectors.js instead.',
+                },
+            ],
         },
     },
+    { files: ['**/store/reducer.js', '**/store/selectors.js'], rules: { 'no-restricted-syntax': 'off' } },
     { files: ['**/*.stories.{js,jsx}'], plugins: { storybook }, rules: { ...storybook.configs.recommended.rules } },
 ])

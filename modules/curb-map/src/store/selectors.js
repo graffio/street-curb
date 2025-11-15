@@ -1,8 +1,13 @@
-/**
- * Single selector that returns the current blockface
- * Components can then use Blockface domain methods directly
- * @sig currentBlockface :: State -> Blockface?
- */
-const currentBlockface = state => state.blockfaces?.[state.currentBlockfaceId] || null
+// prettier-ignore
+const Selectors = {
+    // UI state
+    currentBlockface   : state => state.blockfaces?.[state.currentBlockfaceId] || null,
+    currentBlockfaceId : state => state.currentBlockfaceId,
+    currentOrganization: state => state.currentOrganization,
+    currentUser        : state => state.currentUser,
+    
+    // persisted
+    blockfaces         : state => state.blockfaces,
+}
 
-export { currentBlockface }
+export const { currentBlockface, currentBlockfaceId, currentOrganization, currentUser, blockfaces } = Selectors
