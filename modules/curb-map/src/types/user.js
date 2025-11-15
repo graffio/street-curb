@@ -91,11 +91,6 @@ User._from = o =>
     User(o.id, o.email, o.displayName, o.organizations, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
 User.from = User._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 User._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,

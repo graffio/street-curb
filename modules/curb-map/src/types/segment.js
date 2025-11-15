@@ -68,11 +68,6 @@ Segment.is = v => v && v['@@typeName'] === 'Segment'
 Segment._from = o => Segment(o.use, o.length)
 Segment.from = Segment._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 Segment._toFirestore = (o, encodeTimestamps) => ({ ...o })
 
 Segment._fromFirestore = (doc, decodeTimestamps) => Segment._from(doc)

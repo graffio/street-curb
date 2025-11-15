@@ -132,11 +132,6 @@ Object.defineProperty(Action, '@@tagNames', {
     enumerable: false,
 })
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Action's prototype as ActionPrototype
-//
-// -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
 const ActionPrototype = {}
 
@@ -156,7 +151,7 @@ Action.prototype = ActionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationCreated constructor
+// Variant Action.OrganizationCreated
 //
 // -------------------------------------------------------------------------------------------------------------
 const OrganizationCreatedConstructor = function OrganizationCreated(organizationId, projectId, name) {
@@ -174,12 +169,6 @@ const OrganizationCreatedConstructor = function OrganizationCreated(organization
 }
 
 Action.OrganizationCreated = OrganizationCreatedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.OrganizationCreated prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationCreated', enumerable: false },
@@ -208,20 +197,17 @@ const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
 })
 
 OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationCreated: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
 OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
 OrganizationCreatedConstructor._from = o => Action.OrganizationCreated(o.organizationId, o.projectId, o.name)
 OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
 
+OrganizationCreatedConstructor.toFirestore = o => ({ ...o })
+OrganizationCreatedConstructor.fromFirestore = OrganizationCreatedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationDeleted constructor
+// Variant Action.OrganizationDeleted
 //
 // -------------------------------------------------------------------------------------------------------------
 const OrganizationDeletedConstructor = function OrganizationDeleted(organizationId) {
@@ -235,12 +221,6 @@ const OrganizationDeletedConstructor = function OrganizationDeleted(organization
 }
 
 Action.OrganizationDeleted = OrganizationDeletedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.OrganizationDeleted prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationDeleted', enumerable: false },
@@ -269,20 +249,17 @@ const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
 })
 
 OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationDeleted: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
 OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
 OrganizationDeletedConstructor._from = o => Action.OrganizationDeleted(o.organizationId)
 OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
 
+OrganizationDeletedConstructor.toFirestore = o => ({ ...o })
+OrganizationDeletedConstructor.fromFirestore = OrganizationDeletedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationSuspended constructor
+// Variant Action.OrganizationSuspended
 //
 // -------------------------------------------------------------------------------------------------------------
 const OrganizationSuspendedConstructor = function OrganizationSuspended(organizationId) {
@@ -296,12 +273,6 @@ const OrganizationSuspendedConstructor = function OrganizationSuspended(organiza
 }
 
 Action.OrganizationSuspended = OrganizationSuspendedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.OrganizationSuspended prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const OrganizationSuspendedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationSuspended', enumerable: false },
@@ -330,20 +301,17 @@ const OrganizationSuspendedPrototype = Object.create(ActionPrototype, {
 })
 
 OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationSuspended: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 OrganizationSuspendedConstructor.is = val => val && val.constructor === OrganizationSuspendedConstructor
 OrganizationSuspendedConstructor.toString = () => 'Action.OrganizationSuspended'
 OrganizationSuspendedConstructor._from = o => Action.OrganizationSuspended(o.organizationId)
 OrganizationSuspendedConstructor.from = OrganizationSuspendedConstructor._from
 
+OrganizationSuspendedConstructor.toFirestore = o => ({ ...o })
+OrganizationSuspendedConstructor.fromFirestore = OrganizationSuspendedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationUpdated constructor
+// Variant Action.OrganizationUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
 const OrganizationUpdatedConstructor = function OrganizationUpdated(organizationId, name, status) {
@@ -361,12 +329,6 @@ const OrganizationUpdatedConstructor = function OrganizationUpdated(organization
 }
 
 Action.OrganizationUpdated = OrganizationUpdatedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.OrganizationUpdated prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationUpdated', enumerable: false },
@@ -395,20 +357,17 @@ const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
 })
 
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationUpdated: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
 OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
 OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.organizationId, o.name, o.status)
 OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
 
+OrganizationUpdatedConstructor.toFirestore = o => ({ ...o })
+OrganizationUpdatedConstructor.fromFirestore = OrganizationUpdatedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.MemberAdded constructor
+// Variant Action.MemberAdded
 //
 // -------------------------------------------------------------------------------------------------------------
 const MemberAddedConstructor = function MemberAdded(userId, organizationId, displayName, role) {
@@ -428,12 +387,6 @@ const MemberAddedConstructor = function MemberAdded(userId, organizationId, disp
 }
 
 Action.MemberAdded = MemberAddedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.MemberAdded prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const MemberAddedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'MemberAdded', enumerable: false },
@@ -462,20 +415,17 @@ const MemberAddedPrototype = Object.create(ActionPrototype, {
 })
 
 MemberAddedConstructor.prototype = MemberAddedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.MemberAdded: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
 MemberAddedConstructor.toString = () => 'Action.MemberAdded'
 MemberAddedConstructor._from = o => Action.MemberAdded(o.userId, o.organizationId, o.displayName, o.role)
 MemberAddedConstructor.from = MemberAddedConstructor._from
 
+MemberAddedConstructor.toFirestore = o => ({ ...o })
+MemberAddedConstructor.fromFirestore = MemberAddedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.MemberRemoved constructor
+// Variant Action.MemberRemoved
 //
 // -------------------------------------------------------------------------------------------------------------
 const MemberRemovedConstructor = function MemberRemoved(userId, organizationId) {
@@ -491,12 +441,6 @@ const MemberRemovedConstructor = function MemberRemoved(userId, organizationId) 
 }
 
 Action.MemberRemoved = MemberRemovedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.MemberRemoved prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const MemberRemovedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'MemberRemoved', enumerable: false },
@@ -525,20 +469,17 @@ const MemberRemovedPrototype = Object.create(ActionPrototype, {
 })
 
 MemberRemovedConstructor.prototype = MemberRemovedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.MemberRemoved: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
 MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
 MemberRemovedConstructor._from = o => Action.MemberRemoved(o.userId, o.organizationId)
 MemberRemovedConstructor.from = MemberRemovedConstructor._from
 
+MemberRemovedConstructor.toFirestore = o => ({ ...o })
+MemberRemovedConstructor.fromFirestore = MemberRemovedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.RoleChanged constructor
+// Variant Action.RoleChanged
 //
 // -------------------------------------------------------------------------------------------------------------
 const RoleChangedConstructor = function RoleChanged(userId, organizationId, role) {
@@ -556,12 +497,6 @@ const RoleChangedConstructor = function RoleChanged(userId, organizationId, role
 }
 
 Action.RoleChanged = RoleChangedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.RoleChanged prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const RoleChangedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'RoleChanged', enumerable: false },
@@ -590,20 +525,17 @@ const RoleChangedPrototype = Object.create(ActionPrototype, {
 })
 
 RoleChangedConstructor.prototype = RoleChangedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.RoleChanged: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
 RoleChangedConstructor.toString = () => 'Action.RoleChanged'
 RoleChangedConstructor._from = o => Action.RoleChanged(o.userId, o.organizationId, o.role)
 RoleChangedConstructor.from = RoleChangedConstructor._from
 
+RoleChangedConstructor.toFirestore = o => ({ ...o })
+RoleChangedConstructor.fromFirestore = RoleChangedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UserCreated constructor
+// Variant Action.UserCreated
 //
 // -------------------------------------------------------------------------------------------------------------
 const UserCreatedConstructor = function UserCreated(userId, email, displayName, authUid) {
@@ -623,12 +555,6 @@ const UserCreatedConstructor = function UserCreated(userId, email, displayName, 
 }
 
 Action.UserCreated = UserCreatedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UserCreated prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const UserCreatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserCreated', enumerable: false },
@@ -657,20 +583,17 @@ const UserCreatedPrototype = Object.create(ActionPrototype, {
 })
 
 UserCreatedConstructor.prototype = UserCreatedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserCreated: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
 UserCreatedConstructor._from = o => Action.UserCreated(o.userId, o.email, o.displayName, o.authUid)
 UserCreatedConstructor.from = UserCreatedConstructor._from
 
+UserCreatedConstructor.toFirestore = o => ({ ...o })
+UserCreatedConstructor.fromFirestore = UserCreatedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UserForgotten constructor
+// Variant Action.UserForgotten
 //
 // -------------------------------------------------------------------------------------------------------------
 const UserForgottenConstructor = function UserForgotten(userId, reason) {
@@ -686,12 +609,6 @@ const UserForgottenConstructor = function UserForgotten(userId, reason) {
 }
 
 Action.UserForgotten = UserForgottenConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UserForgotten prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const UserForgottenPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserForgotten', enumerable: false },
@@ -720,20 +637,17 @@ const UserForgottenPrototype = Object.create(ActionPrototype, {
 })
 
 UserForgottenConstructor.prototype = UserForgottenPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserForgotten: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
 UserForgottenConstructor.toString = () => 'Action.UserForgotten'
 UserForgottenConstructor._from = o => Action.UserForgotten(o.userId, o.reason)
 UserForgottenConstructor.from = UserForgottenConstructor._from
 
+UserForgottenConstructor.toFirestore = o => ({ ...o })
+UserForgottenConstructor.fromFirestore = UserForgottenConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UserUpdated constructor
+// Variant Action.UserUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
 const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
@@ -749,12 +663,6 @@ const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
 }
 
 Action.UserUpdated = UserUpdatedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UserUpdated prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const UserUpdatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserUpdated', enumerable: false },
@@ -783,20 +691,17 @@ const UserUpdatedPrototype = Object.create(ActionPrototype, {
 })
 
 UserUpdatedConstructor.prototype = UserUpdatedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserUpdated: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
 UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
 UserUpdatedConstructor._from = o => Action.UserUpdated(o.userId, o.displayName)
 UserUpdatedConstructor.from = UserUpdatedConstructor._from
 
+UserUpdatedConstructor.toFirestore = o => ({ ...o })
+UserUpdatedConstructor.fromFirestore = UserUpdatedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.AuthenticationCompleted constructor
+// Variant Action.AuthenticationCompleted
 //
 // -------------------------------------------------------------------------------------------------------------
 const AuthenticationCompletedConstructor = function AuthenticationCompleted(email, displayName) {
@@ -812,12 +717,6 @@ const AuthenticationCompletedConstructor = function AuthenticationCompleted(emai
 }
 
 Action.AuthenticationCompleted = AuthenticationCompletedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.AuthenticationCompleted prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'AuthenticationCompleted', enumerable: false },
@@ -846,20 +745,17 @@ const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
 })
 
 AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.AuthenticationCompleted: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
 AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
 AuthenticationCompletedConstructor._from = o => Action.AuthenticationCompleted(o.email, o.displayName)
 AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
 
+AuthenticationCompletedConstructor.toFirestore = o => ({ ...o })
+AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.LoadAllInitialData constructor
+// Variant Action.LoadAllInitialData
 //
 // -------------------------------------------------------------------------------------------------------------
 const LoadAllInitialDataConstructor = function LoadAllInitialData(currentUser, currentOrganization) {
@@ -875,12 +771,6 @@ const LoadAllInitialDataConstructor = function LoadAllInitialData(currentUser, c
 }
 
 Action.LoadAllInitialData = LoadAllInitialDataConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.LoadAllInitialData prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const LoadAllInitialDataPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'LoadAllInitialData', enumerable: false },
@@ -909,20 +799,11 @@ const LoadAllInitialDataPrototype = Object.create(ActionPrototype, {
 })
 
 LoadAllInitialDataConstructor.prototype = LoadAllInitialDataPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.LoadAllInitialData: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 LoadAllInitialDataConstructor.is = val => val && val.constructor === LoadAllInitialDataConstructor
 LoadAllInitialDataConstructor.toString = () => 'Action.LoadAllInitialData'
 LoadAllInitialDataConstructor._from = o => Action.LoadAllInitialData(o.currentUser, o.currentOrganization)
 LoadAllInitialDataConstructor.from = LoadAllInitialDataConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-// Firestore serialization
-// -------------------------------------------------------------------------------------------------------------
 LoadAllInitialDataConstructor._toFirestore = (o, encodeTimestamps) => ({
     currentUser: User.toFirestore(o.currentUser, encodeTimestamps),
     currentOrganization: Organization.toFirestore(o.currentOrganization, encodeTimestamps),
@@ -944,7 +825,7 @@ LoadAllInitialDataConstructor.fromFirestore = LoadAllInitialDataConstructor._fro
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.CreateBlockface constructor
+// Variant Action.CreateBlockface
 //
 // -------------------------------------------------------------------------------------------------------------
 const CreateBlockfaceConstructor = function CreateBlockface(id, geometry, streetName, cnnId) {
@@ -964,12 +845,6 @@ const CreateBlockfaceConstructor = function CreateBlockface(id, geometry, street
 }
 
 Action.CreateBlockface = CreateBlockfaceConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.CreateBlockface prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const CreateBlockfacePrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'CreateBlockface', enumerable: false },
@@ -998,20 +873,17 @@ const CreateBlockfacePrototype = Object.create(ActionPrototype, {
 })
 
 CreateBlockfaceConstructor.prototype = CreateBlockfacePrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.CreateBlockface: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 CreateBlockfaceConstructor.is = val => val && val.constructor === CreateBlockfaceConstructor
 CreateBlockfaceConstructor.toString = () => 'Action.CreateBlockface'
 CreateBlockfaceConstructor._from = o => Action.CreateBlockface(o.id, o.geometry, o.streetName, o.cnnId)
 CreateBlockfaceConstructor.from = CreateBlockfaceConstructor._from
 
+CreateBlockfaceConstructor.toFirestore = o => ({ ...o })
+CreateBlockfaceConstructor.fromFirestore = CreateBlockfaceConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.SelectBlockface constructor
+// Variant Action.SelectBlockface
 //
 // -------------------------------------------------------------------------------------------------------------
 const SelectBlockfaceConstructor = function SelectBlockface(id, geometry, streetName, cnnId) {
@@ -1031,12 +903,6 @@ const SelectBlockfaceConstructor = function SelectBlockface(id, geometry, street
 }
 
 Action.SelectBlockface = SelectBlockfaceConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.SelectBlockface prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const SelectBlockfacePrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SelectBlockface', enumerable: false },
@@ -1065,20 +931,17 @@ const SelectBlockfacePrototype = Object.create(ActionPrototype, {
 })
 
 SelectBlockfaceConstructor.prototype = SelectBlockfacePrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SelectBlockface: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 SelectBlockfaceConstructor.is = val => val && val.constructor === SelectBlockfaceConstructor
 SelectBlockfaceConstructor.toString = () => 'Action.SelectBlockface'
 SelectBlockfaceConstructor._from = o => Action.SelectBlockface(o.id, o.geometry, o.streetName, o.cnnId)
 SelectBlockfaceConstructor.from = SelectBlockfaceConstructor._from
 
+SelectBlockfaceConstructor.toFirestore = o => ({ ...o })
+SelectBlockfaceConstructor.fromFirestore = SelectBlockfaceConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UpdateSegmentUse constructor
+// Variant Action.UpdateSegmentUse
 //
 // -------------------------------------------------------------------------------------------------------------
 const UpdateSegmentUseConstructor = function UpdateSegmentUse(index, use) {
@@ -1094,12 +957,6 @@ const UpdateSegmentUseConstructor = function UpdateSegmentUse(index, use) {
 }
 
 Action.UpdateSegmentUse = UpdateSegmentUseConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UpdateSegmentUse prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const UpdateSegmentUsePrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UpdateSegmentUse', enumerable: false },
@@ -1128,20 +985,17 @@ const UpdateSegmentUsePrototype = Object.create(ActionPrototype, {
 })
 
 UpdateSegmentUseConstructor.prototype = UpdateSegmentUsePrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UpdateSegmentUse: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 UpdateSegmentUseConstructor.is = val => val && val.constructor === UpdateSegmentUseConstructor
 UpdateSegmentUseConstructor.toString = () => 'Action.UpdateSegmentUse'
 UpdateSegmentUseConstructor._from = o => Action.UpdateSegmentUse(o.index, o.use)
 UpdateSegmentUseConstructor.from = UpdateSegmentUseConstructor._from
 
+UpdateSegmentUseConstructor.toFirestore = o => ({ ...o })
+UpdateSegmentUseConstructor.fromFirestore = UpdateSegmentUseConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UpdateSegmentLength constructor
+// Variant Action.UpdateSegmentLength
 //
 // -------------------------------------------------------------------------------------------------------------
 const UpdateSegmentLengthConstructor = function UpdateSegmentLength(index, newLength) {
@@ -1157,12 +1011,6 @@ const UpdateSegmentLengthConstructor = function UpdateSegmentLength(index, newLe
 }
 
 Action.UpdateSegmentLength = UpdateSegmentLengthConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.UpdateSegmentLength prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const UpdateSegmentLengthPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UpdateSegmentLength', enumerable: false },
@@ -1191,20 +1039,17 @@ const UpdateSegmentLengthPrototype = Object.create(ActionPrototype, {
 })
 
 UpdateSegmentLengthConstructor.prototype = UpdateSegmentLengthPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UpdateSegmentLength: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 UpdateSegmentLengthConstructor.is = val => val && val.constructor === UpdateSegmentLengthConstructor
 UpdateSegmentLengthConstructor.toString = () => 'Action.UpdateSegmentLength'
 UpdateSegmentLengthConstructor._from = o => Action.UpdateSegmentLength(o.index, o.newLength)
 UpdateSegmentLengthConstructor.from = UpdateSegmentLengthConstructor._from
 
+UpdateSegmentLengthConstructor.toFirestore = o => ({ ...o })
+UpdateSegmentLengthConstructor.fromFirestore = UpdateSegmentLengthConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.AddSegment constructor
+// Variant Action.AddSegment
 //
 // -------------------------------------------------------------------------------------------------------------
 const AddSegmentConstructor = function AddSegment(targetIndex) {
@@ -1218,12 +1063,6 @@ const AddSegmentConstructor = function AddSegment(targetIndex) {
 }
 
 Action.AddSegment = AddSegmentConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.AddSegment prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const AddSegmentPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'AddSegment', enumerable: false },
@@ -1252,20 +1091,17 @@ const AddSegmentPrototype = Object.create(ActionPrototype, {
 })
 
 AddSegmentConstructor.prototype = AddSegmentPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.AddSegment: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 AddSegmentConstructor.is = val => val && val.constructor === AddSegmentConstructor
 AddSegmentConstructor.toString = () => 'Action.AddSegment'
 AddSegmentConstructor._from = o => Action.AddSegment(o.targetIndex)
 AddSegmentConstructor.from = AddSegmentConstructor._from
 
+AddSegmentConstructor.toFirestore = o => ({ ...o })
+AddSegmentConstructor.fromFirestore = AddSegmentConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.AddSegmentLeft constructor
+// Variant Action.AddSegmentLeft
 //
 // -------------------------------------------------------------------------------------------------------------
 const AddSegmentLeftConstructor = function AddSegmentLeft(index, desiredLength) {
@@ -1281,12 +1117,6 @@ const AddSegmentLeftConstructor = function AddSegmentLeft(index, desiredLength) 
 }
 
 Action.AddSegmentLeft = AddSegmentLeftConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.AddSegmentLeft prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const AddSegmentLeftPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'AddSegmentLeft', enumerable: false },
@@ -1315,20 +1145,17 @@ const AddSegmentLeftPrototype = Object.create(ActionPrototype, {
 })
 
 AddSegmentLeftConstructor.prototype = AddSegmentLeftPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.AddSegmentLeft: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 AddSegmentLeftConstructor.is = val => val && val.constructor === AddSegmentLeftConstructor
 AddSegmentLeftConstructor.toString = () => 'Action.AddSegmentLeft'
 AddSegmentLeftConstructor._from = o => Action.AddSegmentLeft(o.index, o.desiredLength)
 AddSegmentLeftConstructor.from = AddSegmentLeftConstructor._from
 
+AddSegmentLeftConstructor.toFirestore = o => ({ ...o })
+AddSegmentLeftConstructor.fromFirestore = AddSegmentLeftConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.ReplaceSegments constructor
+// Variant Action.ReplaceSegments
 //
 // -------------------------------------------------------------------------------------------------------------
 const ReplaceSegmentsConstructor = function ReplaceSegments(segments) {
@@ -1342,12 +1169,6 @@ const ReplaceSegmentsConstructor = function ReplaceSegments(segments) {
 }
 
 Action.ReplaceSegments = ReplaceSegmentsConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant Action.ReplaceSegments prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const ReplaceSegmentsPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'ReplaceSegments', enumerable: false },
@@ -1376,20 +1197,11 @@ const ReplaceSegmentsPrototype = Object.create(ActionPrototype, {
 })
 
 ReplaceSegmentsConstructor.prototype = ReplaceSegmentsPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.ReplaceSegments: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 ReplaceSegmentsConstructor.is = val => val && val.constructor === ReplaceSegmentsConstructor
 ReplaceSegmentsConstructor.toString = () => 'Action.ReplaceSegments'
 ReplaceSegmentsConstructor._from = o => Action.ReplaceSegments(o.segments)
 ReplaceSegmentsConstructor.from = ReplaceSegmentsConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-// Firestore serialization
-// -------------------------------------------------------------------------------------------------------------
 ReplaceSegmentsConstructor._toFirestore = (o, encodeTimestamps) => ({
     segments: o.segments.map(item1 => Segment.toFirestore(item1, encodeTimestamps)),
 })
@@ -1405,96 +1217,34 @@ ReplaceSegmentsConstructor._fromFirestore = (doc, decodeTimestamps) =>
 ReplaceSegmentsConstructor.toFirestore = ReplaceSegmentsConstructor._toFirestore
 ReplaceSegmentsConstructor.fromFirestore = ReplaceSegmentsConstructor._fromFirestore
 
-// -------------------------------------------------------------------------------------------------------------
-// Firestore serialization
-// -------------------------------------------------------------------------------------------------------------
 Action._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
     const variant = Action[tagName]
-    if (variant && variant.toFirestore) {
-        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-    }
-    return { ...o, '@@tagName': tagName }
+    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
 }
 
 Action._fromFirestore = (doc, decodeTimestamps) => {
     const tagName = doc['@@tagName']
-    if (tagName === 'OrganizationCreated')
-        return Action.OrganizationCreated.fromFirestore
-            ? Action.OrganizationCreated.fromFirestore(doc, decodeTimestamps)
-            : Action.OrganizationCreated.from(doc)
-    if (tagName === 'OrganizationDeleted')
-        return Action.OrganizationDeleted.fromFirestore
-            ? Action.OrganizationDeleted.fromFirestore(doc, decodeTimestamps)
-            : Action.OrganizationDeleted.from(doc)
-    if (tagName === 'OrganizationSuspended')
-        return Action.OrganizationSuspended.fromFirestore
-            ? Action.OrganizationSuspended.fromFirestore(doc, decodeTimestamps)
-            : Action.OrganizationSuspended.from(doc)
-    if (tagName === 'OrganizationUpdated')
-        return Action.OrganizationUpdated.fromFirestore
-            ? Action.OrganizationUpdated.fromFirestore(doc, decodeTimestamps)
-            : Action.OrganizationUpdated.from(doc)
-    if (tagName === 'MemberAdded')
-        return Action.MemberAdded.fromFirestore
-            ? Action.MemberAdded.fromFirestore(doc, decodeTimestamps)
-            : Action.MemberAdded.from(doc)
-    if (tagName === 'MemberRemoved')
-        return Action.MemberRemoved.fromFirestore
-            ? Action.MemberRemoved.fromFirestore(doc, decodeTimestamps)
-            : Action.MemberRemoved.from(doc)
-    if (tagName === 'RoleChanged')
-        return Action.RoleChanged.fromFirestore
-            ? Action.RoleChanged.fromFirestore(doc, decodeTimestamps)
-            : Action.RoleChanged.from(doc)
-    if (tagName === 'UserCreated')
-        return Action.UserCreated.fromFirestore
-            ? Action.UserCreated.fromFirestore(doc, decodeTimestamps)
-            : Action.UserCreated.from(doc)
-    if (tagName === 'UserForgotten')
-        return Action.UserForgotten.fromFirestore
-            ? Action.UserForgotten.fromFirestore(doc, decodeTimestamps)
-            : Action.UserForgotten.from(doc)
-    if (tagName === 'UserUpdated')
-        return Action.UserUpdated.fromFirestore
-            ? Action.UserUpdated.fromFirestore(doc, decodeTimestamps)
-            : Action.UserUpdated.from(doc)
+    if (tagName === 'OrganizationCreated') return Action.OrganizationCreated.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'OrganizationDeleted') return Action.OrganizationDeleted.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'OrganizationSuspended') return Action.OrganizationSuspended.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'OrganizationUpdated') return Action.OrganizationUpdated.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'MemberAdded') return Action.MemberAdded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'MemberRemoved') return Action.MemberRemoved.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'RoleChanged') return Action.RoleChanged.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'UserCreated') return Action.UserCreated.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'UserForgotten') return Action.UserForgotten.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'UserUpdated') return Action.UserUpdated.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AuthenticationCompleted')
-        return Action.AuthenticationCompleted.fromFirestore
-            ? Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
-            : Action.AuthenticationCompleted.from(doc)
-    if (tagName === 'LoadAllInitialData')
-        return Action.LoadAllInitialData.fromFirestore
-            ? Action.LoadAllInitialData.fromFirestore(doc, decodeTimestamps)
-            : Action.LoadAllInitialData.from(doc)
-    if (tagName === 'CreateBlockface')
-        return Action.CreateBlockface.fromFirestore
-            ? Action.CreateBlockface.fromFirestore(doc, decodeTimestamps)
-            : Action.CreateBlockface.from(doc)
-    if (tagName === 'SelectBlockface')
-        return Action.SelectBlockface.fromFirestore
-            ? Action.SelectBlockface.fromFirestore(doc, decodeTimestamps)
-            : Action.SelectBlockface.from(doc)
-    if (tagName === 'UpdateSegmentUse')
-        return Action.UpdateSegmentUse.fromFirestore
-            ? Action.UpdateSegmentUse.fromFirestore(doc, decodeTimestamps)
-            : Action.UpdateSegmentUse.from(doc)
-    if (tagName === 'UpdateSegmentLength')
-        return Action.UpdateSegmentLength.fromFirestore
-            ? Action.UpdateSegmentLength.fromFirestore(doc, decodeTimestamps)
-            : Action.UpdateSegmentLength.from(doc)
-    if (tagName === 'AddSegment')
-        return Action.AddSegment.fromFirestore
-            ? Action.AddSegment.fromFirestore(doc, decodeTimestamps)
-            : Action.AddSegment.from(doc)
-    if (tagName === 'AddSegmentLeft')
-        return Action.AddSegmentLeft.fromFirestore
-            ? Action.AddSegmentLeft.fromFirestore(doc, decodeTimestamps)
-            : Action.AddSegmentLeft.from(doc)
-    if (tagName === 'ReplaceSegments')
-        return Action.ReplaceSegments.fromFirestore
-            ? Action.ReplaceSegments.fromFirestore(doc, decodeTimestamps)
-            : Action.ReplaceSegments.from(doc)
+        return Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'LoadAllInitialData') return Action.LoadAllInitialData.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'CreateBlockface') return Action.CreateBlockface.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SelectBlockface') return Action.SelectBlockface.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'UpdateSegmentUse') return Action.UpdateSegmentUse.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'UpdateSegmentLength') return Action.UpdateSegmentLength.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'AddSegment') return Action.AddSegment.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'AddSegmentLeft') return Action.AddSegmentLeft.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ReplaceSegments') return Action.ReplaceSegments.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 

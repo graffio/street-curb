@@ -80,11 +80,6 @@ Blockface.is = v => v && v['@@typeName'] === 'Blockface'
 Blockface._from = o => Blockface(o.id, o.geometry, o.streetName, o.cnnId, o.segments)
 Blockface.from = Blockface._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 Blockface._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,
@@ -121,16 +116,24 @@ Blockface.fromFirestore = Blockface._fromFirestore
 
 Blockface._roundToPrecision = value => Math.round(value * 10) / 10
 
+Blockface.createBlockface = createBlockfaceAction =>
+    Blockface.from({
+        ...createBlockfaceAction,
+        segments: [],
+    })
+
 Blockface.setSegments = (blockface, segments) =>
     Blockface(blockface.id, blockface.geometry, blockface.streetName, blockface.cnnId, segments)
 
-Blockface.updateSegmentUse = (blockface, index, use) => {
+Blockface.updateSegmentUse = (blockface, updateSegmentUseAction) => {
+    const { index, use } = updateSegmentUseAction
     if (!blockface?.segments[index]) return blockface
     const segments = blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment))
     return Blockface.setSegments(blockface, segments)
 }
 
-Blockface.updateSegmentLength = (blockface, index, newLength) => {
+Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
+    const { index, newLength } = updateSegmentLengthAction
     if (!blockface) return blockface
     if (!blockface.segments[index]) return blockface
     if (index < 0 || index >= blockface.segments.length) return blockface
@@ -158,7 +161,8 @@ Blockface.updateSegmentLength = (blockface, index, newLength) => {
     return Blockface.setSegments(blockface, newSegments)
 }
 
-Blockface.addSegment = (blockface, targetIndex) => {
+Blockface.addSegment = (blockface, addSegmentAction) => {
+    const { targetIndex } = addSegmentAction
     if (!blockface) return blockface
     const blockfaceLength = Blockface.totalLength(blockface)
     const totalSegmentLength = blockface.segments.reduce((sum, seg) => sum + seg.length, 0)
@@ -172,7 +176,8 @@ Blockface.addSegment = (blockface, targetIndex) => {
     return Blockface.setSegments(blockface, newSegments)
 }
 
-Blockface.addSegmentLeft = (blockface, index, desiredLength = 10) => {
+Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
+    const { index, desiredLength = 10 } = addSegmentLengthAction
     const calculateSplitLengths = (targetLength, desired) =>
         targetLength >= desired
             ? [desired, targetLength - desired]
@@ -195,7 +200,8 @@ Blockface.addSegmentLeft = (blockface, index, desiredLength = 10) => {
     return Blockface.setSegments(blockface, newSegments)
 }
 
-Blockface.replaceSegments = (blockface, segments) => {
+Blockface.replaceSegments = (blockface, replaceSegmentsAction) => {
+    const { segments } = replaceSegmentsAction
     if (!blockface) return blockface
     const newTaggedSegments = segments.map(seg => Segment(seg.use, seg.length))
     return Blockface.setSegments(blockface, newTaggedSegments)

@@ -269,11 +269,6 @@ const generateStaticTaggedType = async typeDefinition => {
         ${`${name}._from = ${Generator.generateFrom('prototype', name, name, fields)}`}
         ${shouldGenerate('from', existingStandard) ? `${name}.from = ${name}._from` : ''}
 
-        // -------------------------------------------------------------------------------------------------------------
-        //
-        // Firestore serialization
-        //
-        // -------------------------------------------------------------------------------------------------------------
         ${generateToFirestore(name, fields)}
         
         ${generateFromFirestore(name, fields)}
@@ -348,11 +343,6 @@ const generateStaticTaggedSumType = async typeDefinition => {
         Object.defineProperty(${name}, '@@typeName', { value: '${name}', enumerable: false })
         Object.defineProperty(${name}, '@@tagNames', { value: [${variantNames.map(v => `'${v}'`).join(', ')}], enumerable: false })
 
-        // -------------------------------------------------------------------------------------------------------------
-        //
-        // Set up ${name}'s prototype as ${name}Prototype
-        //
-        // -------------------------------------------------------------------------------------------------------------
         // Type prototype with match method
         const ${name}Prototype = {}
 
@@ -394,7 +384,13 @@ const generateStaticTaggedSumType = async typeDefinition => {
  */
 const generateVariantFirestoreSerialization = (variantName, fields) => {
     const hasSerializableFields = Object.values(fields).some(needsFirestoreSerialization)
-    if (!hasSerializableFields) return ''
+
+    if (!hasSerializableFields)
+        // No custom serialization needed - simple pass-through
+        return `
+        ${variantName}Constructor.toFirestore = o => ({ ...o })
+        ${variantName}Constructor.fromFirestore = ${variantName}Constructor._from
+        `
 
     const toFirestoreFields = Object.entries(fields).map(([fieldName, fieldType]) =>
         generateToFirestoreField(fieldName, fieldType),
@@ -404,9 +400,6 @@ const generateVariantFirestoreSerialization = (variantName, fields) => {
     )
 
     return `
-        // -------------------------------------------------------------------------------------------------------------
-        // Firestore serialization
-        // -------------------------------------------------------------------------------------------------------------
         ${variantName}Constructor._toFirestore = (o, encodeTimestamps) => ({
             ${toFirestoreFields.join(',\n            ')}
         })
@@ -429,23 +422,14 @@ const generateVariantFirestoreSerialization = (variantName, fields) => {
 const generateTaggedSumFirestoreSerialization = (typeName, variants) => {
     const variantNames = Object.keys(variants)
     const fromFirestoreCases = variantNames
-        .map(
-            v =>
-                `if (tagName === '${v}') return ${typeName}.${v}.fromFirestore ? ${typeName}.${v}.fromFirestore(doc, decodeTimestamps) : ${typeName}.${v}.from(doc)`,
-        )
+        .map(v => `if (tagName === '${v}') return ${typeName}.${v}.fromFirestore(doc, decodeTimestamps)`)
         .join('\n        ')
 
     return `
-        // -------------------------------------------------------------------------------------------------------------
-        // Firestore serialization
-        // -------------------------------------------------------------------------------------------------------------
         ${typeName}._toFirestore = (o, encodeTimestamps) => {
             const tagName = o['@@tagName']
             const variant = ${typeName}[tagName]
-            if (variant && variant.toFirestore) {
-                return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-            }
-            return { ...o, '@@tagName': tagName }
+            return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
         }
 
         ${typeName}._fromFirestore = (doc, decodeTimestamps) => {
@@ -477,18 +461,12 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
     return `
         // -------------------------------------------------------------------------------------------------------------
         //
-        // Variant ${typeName}.${variantName} constructor
+        // Variant ${typeName}.${variantName}
         //
         // -------------------------------------------------------------------------------------------------------------
         const ${variantName}Constructor = ${constructorCode.replace('prototype', `${variantName}Prototype`)}
 
         ${typeName}.${variantName} = ${variantName}Constructor
-
-        // -------------------------------------------------------------------------------------------------------------
-        //
-        // Set up Variant ${typeName}.${variantName} prototype
-        //
-        // -------------------------------------------------------------------------------------------------------------
 
         const ${variantName}Prototype = Object.create(${typeName}Prototype, {
             '@@tagName' : { value: '${variantName}', enumerable: false },
@@ -513,12 +491,6 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
         })
 
         ${variantName}Constructor.prototype = ${variantName}Prototype
-
-        // -------------------------------------------------------------------------------------------------------------
-        //
-        // Variant ${typeName}.${variantName}: static functions:
-        //
-        // -------------------------------------------------------------------------------------------------------------
         ${variantName}Constructor.is = val => val && val.constructor === ${variantName}Constructor
         ${variantName}Constructor.toString = () => '${fullName}'
         ${variantName}Constructor._from = ${fromCode}

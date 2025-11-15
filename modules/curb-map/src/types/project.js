@@ -85,11 +85,6 @@ Project.is = v => v && v['@@typeName'] === 'Project'
 Project._from = o => Project(o.id, o.organizationId, o.name, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
 Project.from = Project._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 Project._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,

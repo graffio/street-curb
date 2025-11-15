@@ -140,11 +140,6 @@ ActionRequest._from = o =>
     )
 ActionRequest.from = ActionRequest._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 ActionRequest._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,

@@ -85,11 +85,6 @@ Member.is = v => v && v['@@typeName'] === 'Member'
 Member._from = o => Member(o.userId, o.displayName, o.role, o.addedAt, o.addedBy, o.removedAt, o.removedBy)
 Member.from = Member._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 Member._toFirestore = (o, encodeTimestamps) => {
     const result = {
         userId: o.userId,

@@ -31,11 +31,6 @@ const TypeDefinition = {
 Object.defineProperty(TypeDefinition, '@@typeName', { value: 'TypeDefinition', enumerable: false })
 Object.defineProperty(TypeDefinition, '@@tagNames', { value: ['Tagged', 'TaggedSum'], enumerable: false })
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up TypeDefinition's prototype as TypeDefinitionPrototype
-//
-// -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
 const TypeDefinitionPrototype = {}
 
@@ -55,7 +50,7 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant TypeDefinition.Tagged constructor
+// Variant TypeDefinition.Tagged
 //
 // -------------------------------------------------------------------------------------------------------------
 const TaggedConstructor = function Tagged(name, kind, fields) {
@@ -73,12 +68,6 @@ const TaggedConstructor = function Tagged(name, kind, fields) {
 }
 
 TypeDefinition.Tagged = TaggedConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant TypeDefinition.Tagged prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
     '@@tagName': { value: 'Tagged', enumerable: false },
@@ -107,20 +96,17 @@ const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
 })
 
 TaggedConstructor.prototype = TaggedPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant TypeDefinition.Tagged: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
 TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
 TaggedConstructor._from = o => TypeDefinition.Tagged(o.name, o.kind, o.fields)
 TaggedConstructor.from = TaggedConstructor._from
 
+TaggedConstructor.toFirestore = o => ({ ...o })
+TaggedConstructor.fromFirestore = TaggedConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant TypeDefinition.TaggedSum constructor
+// Variant TypeDefinition.TaggedSum
 //
 // -------------------------------------------------------------------------------------------------------------
 const TaggedSumConstructor = function TaggedSum(name, kind, variants) {
@@ -138,12 +124,6 @@ const TaggedSumConstructor = function TaggedSum(name, kind, variants) {
 }
 
 TypeDefinition.TaggedSum = TaggedSumConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant TypeDefinition.TaggedSum prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
     '@@tagName': { value: 'TaggedSum', enumerable: false },
@@ -172,39 +152,24 @@ const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
 })
 
 TaggedSumConstructor.prototype = TaggedSumPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant TypeDefinition.TaggedSum: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
 TaggedSumConstructor.toString = () => 'TypeDefinition.TaggedSum'
 TaggedSumConstructor._from = o => TypeDefinition.TaggedSum(o.name, o.kind, o.variants)
 TaggedSumConstructor.from = TaggedSumConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-// Firestore serialization
-// -------------------------------------------------------------------------------------------------------------
+TaggedSumConstructor.toFirestore = o => ({ ...o })
+TaggedSumConstructor.fromFirestore = TaggedSumConstructor._from
+
 TypeDefinition._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
     const variant = TypeDefinition[tagName]
-    if (variant && variant.toFirestore) {
-        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-    }
-    return { ...o, '@@tagName': tagName }
+    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
 }
 
 TypeDefinition._fromFirestore = (doc, decodeTimestamps) => {
     const tagName = doc['@@tagName']
-    if (tagName === 'Tagged')
-        return TypeDefinition.Tagged.fromFirestore
-            ? TypeDefinition.Tagged.fromFirestore(doc, decodeTimestamps)
-            : TypeDefinition.Tagged.from(doc)
-    if (tagName === 'TaggedSum')
-        return TypeDefinition.TaggedSum.fromFirestore
-            ? TypeDefinition.TaggedSum.fromFirestore(doc, decodeTimestamps)
-            : TypeDefinition.TaggedSum.from(doc)
+    if (tagName === 'Tagged') return TypeDefinition.Tagged.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'TaggedSum') return TypeDefinition.TaggedSum.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized TypeDefinition variant: ${tagName}`)
 }
 

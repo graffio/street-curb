@@ -77,11 +77,6 @@ OrganizationMember.is = v => v && v['@@typeName'] === 'OrganizationMember'
 OrganizationMember._from = o => OrganizationMember(o.organizationId, o.role)
 OrganizationMember.from = OrganizationMember._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 OrganizationMember._toFirestore = (o, encodeTimestamps) => ({ ...o })
 
 OrganizationMember._fromFirestore = (doc, decodeTimestamps) => OrganizationMember._from(doc)

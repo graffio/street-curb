@@ -70,11 +70,6 @@ ImportInfo.is = v => v && v['@@typeName'] === 'ImportInfo'
 ImportInfo._from = o => ImportInfo(o.source, o.specifiers)
 ImportInfo.from = ImportInfo._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 ImportInfo._toFirestore = (o, encodeTimestamps) => {
     const result = {
         source: o.source,

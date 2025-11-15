@@ -76,11 +76,6 @@ ParseResult.is = v => v && v['@@typeName'] === 'ParseResult'
 ParseResult._from = o => ParseResult(o.typeDefinition, o.imports, o.functions, o.sourceContent)
 ParseResult.from = ParseResult._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 ParseResult._toFirestore = (o, encodeTimestamps) => {
     const result = {
         typeDefinition: o.typeDefinition,

@@ -135,11 +135,6 @@ AuditRecord._from = o =>
     )
 AuditRecord.from = AuditRecord._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 AuditRecord._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,

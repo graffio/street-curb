@@ -74,11 +74,6 @@ FunctionInfo.is = v => v && v['@@typeName'] === 'FunctionInfo'
 FunctionInfo._from = o => FunctionInfo(o.typeName, o.functionName, o.node, o.sourceCode)
 FunctionInfo.from = FunctionInfo._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 FunctionInfo._toFirestore = (o, encodeTimestamps) => ({ ...o })
 
 FunctionInfo._fromFirestore = (doc, decodeTimestamps) => FunctionInfo._from(doc)

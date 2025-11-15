@@ -115,11 +115,6 @@ Organization._from = o =>
     )
 Organization.from = Organization._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
 Organization._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,

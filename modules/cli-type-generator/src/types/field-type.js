@@ -38,11 +38,6 @@ Object.defineProperty(FieldType, '@@tagNames', {
     enumerable: false,
 })
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up FieldType's prototype as FieldTypePrototype
-//
-// -------------------------------------------------------------------------------------------------------------
 // Type prototype with match method
 const FieldTypePrototype = {}
 
@@ -62,7 +57,7 @@ FieldType.prototype = FieldTypePrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant FieldType.StringType constructor
+// Variant FieldType.StringType
 //
 // -------------------------------------------------------------------------------------------------------------
 const StringTypeConstructor = function StringType(value) {
@@ -76,12 +71,6 @@ const StringTypeConstructor = function StringType(value) {
 }
 
 FieldType.StringType = StringTypeConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant FieldType.StringType prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const StringTypePrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'StringType', enumerable: false },
@@ -110,20 +99,17 @@ const StringTypePrototype = Object.create(FieldTypePrototype, {
 })
 
 StringTypeConstructor.prototype = StringTypePrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FieldType.StringType: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor.is = val => val && val.constructor === StringTypeConstructor
 StringTypeConstructor.toString = () => 'FieldType.StringType'
 StringTypeConstructor._from = o => FieldType.StringType(o.value)
 StringTypeConstructor.from = StringTypeConstructor._from
 
+StringTypeConstructor.toFirestore = o => ({ ...o })
+StringTypeConstructor.fromFirestore = StringTypeConstructor._from
+
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant FieldType.RegexType constructor
+// Variant FieldType.RegexType
 //
 // -------------------------------------------------------------------------------------------------------------
 const RegexTypeConstructor = function RegexType(value) {
@@ -137,12 +123,6 @@ const RegexTypeConstructor = function RegexType(value) {
 }
 
 FieldType.RegexType = RegexTypeConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant FieldType.RegexType prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const RegexTypePrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'RegexType', enumerable: false },
@@ -171,20 +151,11 @@ const RegexTypePrototype = Object.create(FieldTypePrototype, {
 })
 
 RegexTypeConstructor.prototype = RegexTypePrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FieldType.RegexType: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 RegexTypeConstructor.is = val => val && val.constructor === RegexTypeConstructor
 RegexTypeConstructor.toString = () => 'FieldType.RegexType'
 RegexTypeConstructor._from = o => FieldType.RegexType(o.value)
 RegexTypeConstructor.from = RegexTypeConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-// Firestore serialization
-// -------------------------------------------------------------------------------------------------------------
 RegexTypeConstructor._toFirestore = (o, encodeTimestamps) => ({
     value: RegExp.toFirestore(o.value, encodeTimestamps),
 })
@@ -200,7 +171,7 @@ RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant FieldType.ImportPlaceholder constructor
+// Variant FieldType.ImportPlaceholder
 //
 // -------------------------------------------------------------------------------------------------------------
 const ImportPlaceholderConstructor = function ImportPlaceholder(__importPlaceholder, source, localName) {
@@ -218,12 +189,6 @@ const ImportPlaceholderConstructor = function ImportPlaceholder(__importPlacehol
 }
 
 FieldType.ImportPlaceholder = ImportPlaceholderConstructor
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Set up Variant FieldType.ImportPlaceholder prototype
-//
-// -------------------------------------------------------------------------------------------------------------
 
 const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'ImportPlaceholder', enumerable: false },
@@ -252,43 +217,25 @@ const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
 })
 
 ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FieldType.ImportPlaceholder: static functions:
-//
-// -------------------------------------------------------------------------------------------------------------
 ImportPlaceholderConstructor.is = val => val && val.constructor === ImportPlaceholderConstructor
 ImportPlaceholderConstructor.toString = () => 'FieldType.ImportPlaceholder'
 ImportPlaceholderConstructor._from = o => FieldType.ImportPlaceholder(o.__importPlaceholder, o.source, o.localName)
 ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-// Firestore serialization
-// -------------------------------------------------------------------------------------------------------------
+ImportPlaceholderConstructor.toFirestore = o => ({ ...o })
+ImportPlaceholderConstructor.fromFirestore = ImportPlaceholderConstructor._from
+
 FieldType._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
     const variant = FieldType[tagName]
-    if (variant && variant.toFirestore) {
-        return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-    }
-    return { ...o, '@@tagName': tagName }
+    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
 }
 
 FieldType._fromFirestore = (doc, decodeTimestamps) => {
     const tagName = doc['@@tagName']
-    if (tagName === 'StringType')
-        return FieldType.StringType.fromFirestore
-            ? FieldType.StringType.fromFirestore(doc, decodeTimestamps)
-            : FieldType.StringType.from(doc)
-    if (tagName === 'RegexType')
-        return FieldType.RegexType.fromFirestore
-            ? FieldType.RegexType.fromFirestore(doc, decodeTimestamps)
-            : FieldType.RegexType.from(doc)
-    if (tagName === 'ImportPlaceholder')
-        return FieldType.ImportPlaceholder.fromFirestore
-            ? FieldType.ImportPlaceholder.fromFirestore(doc, decodeTimestamps)
-            : FieldType.ImportPlaceholder.from(doc)
+    if (tagName === 'StringType') return FieldType.StringType.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'RegexType') return FieldType.RegexType.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ImportPlaceholder') return FieldType.ImportPlaceholder.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized FieldType variant: ${tagName}`)
 }
 
