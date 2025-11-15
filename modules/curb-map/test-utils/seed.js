@@ -5,11 +5,14 @@ import { Member, Organization, OrganizationMember, Project, User } from '../src/
 
 const EMULATOR_HUB_PORT = 4400 // Default Emulator Hub port
 
+const log = s => console.log(`\x1b[1;32m    [seeding] ${s}\x1b[0m`)
+const warn = s => console.warn(`\x1b[1;32m    [seeding] ${s}\x1b[0m`)
+
 const disableTriggers = async () => {
     try {
         await fetch(`http://localhost:${EMULATOR_HUB_PORT}/functions/disableBackgroundTriggers`, { method: 'PUT' })
     } catch (error) {
-        console.warn('Failed to disable triggers via Emulator Hub API:', error.message)
+        warn('Failed to disable triggers via Emulator Hub API:', error.message)
     }
 }
 
@@ -17,7 +20,7 @@ const enableTriggers = async () => {
     try {
         await fetch(`http://localhost:${EMULATOR_HUB_PORT}/functions/enableBackgroundTriggers`, { method: 'PUT' })
     } catch (error) {
-        console.warn('Failed to enable triggers via Emulator Hub API:', error.message)
+        warn('Failed to enable triggers via Emulator Hub API:', error.message)
     }
 }
 
@@ -68,7 +71,7 @@ const createUsers = async (fsContext, members) => {
         await admin.auth().setCustomUserClaims(id, { userId: id })
         users.push(user)
 
-        console.log('Created User ' + id)
+        log('Created User ' + id)
     }
 
     const users = []
@@ -106,6 +109,8 @@ const createOrganizationsAndProjects = async (fsContext, members) => {
     await fsContext.organizations.write(organization)
     await fsContext.projects.write(project)
 
+    log('Created Organization ' + organizationId)
+    log('Created Project ' + projectId)
     return { organizations: [organization], projects: [project] }
 }
 const seed = async () => {
