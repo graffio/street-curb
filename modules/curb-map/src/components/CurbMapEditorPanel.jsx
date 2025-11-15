@@ -64,7 +64,8 @@ const CurbMapEditorPanel = () => {
 
         // Initialize Redux store with new blockface
         const geometry = blockfaceData.feature?.geometry || blockfaceData.geometry
-        post(Action.SelectBlockface(blockfaceData.id, geometry, blockfaceData.streetName, blockfaceData.cnnId))
+        const streetName = blockfaceData.streetName || blockfaceData.feature.properties.street_nam || 'unknown'
+        post(Action.SelectBlockface(blockfaceData.id, geometry, streetName, blockfaceData.cnnId))
     }
 
     const blockface = useSelector(S.currentBlockface)

@@ -22,6 +22,7 @@ Blockface._roundToPrecision = value => Math.round(value * 10) / 10
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructors
 // ---------------------------------------------------------------------------------------------------------------------
+Blockface.createBlockface = createBlockfaceAction => Blockface.from({ ...createBlockfaceAction, segments: [] })
 
 /**
  * Create a new Blockface with the given Segments
@@ -32,9 +33,10 @@ Blockface.setSegments = (blockface, segments) =>
 
 /**
  * Create a new Blockface with the use of the Segment at the given index updated
- * @sig updateSegmentUse :: (Blockface, Number, String) -> Blockface
+ * @sig updateSegmentUse :: (Blockface, UpdateSegmentUseAction) -> Blockface
  */
-Blockface.updateSegmentUse = (blockface, index, use) => {
+Blockface.updateSegmentUse = (blockface, updateSegmentUseAction) => {
+    const { index, use } = updateSegmentUseAction
     if (!blockface?.segments[index]) return blockface
 
     const segments = blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment))
@@ -43,9 +45,11 @@ Blockface.updateSegmentUse = (blockface, index, use) => {
 
 /**
  * Adjust segment length and rebalance affected segments or unknown space
- * @sig updateSegmentLength :: (Blockface, Number, Number) -> Blockface
+ * @sig updateSegmentLength :: (Blockface, UpdateSegmentLengthAction) -> Blockface
  */
-Blockface.updateSegmentLength = (blockface, index, newLength) => {
+Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
+    const { index, newLength } = updateSegmentLengthAction
+
     if (!blockface) return blockface
     if (!blockface.segments[index]) return blockface
     if (index < 0 || index >= blockface.segments.length) return blockface
@@ -84,9 +88,11 @@ Blockface.updateSegmentLength = (blockface, index, newLength) => {
 
 /**
  * Create new segment by consuming unknown space
- * @sig addSegment :: (Blockface, Number) -> Blockface
+ * @sig addSegment :: (Blockface, AddSegmentAction) -> Blockface
  */
-Blockface.addSegment = (blockface, targetIndex) => {
+Blockface.addSegment = (blockface, addSegmentAction) => {
+    const { targetIndex } = addSegmentAction
+
     if (!blockface) return blockface
 
     const blockfaceLength = Blockface.totalLength(blockface)
@@ -107,9 +113,11 @@ Blockface.addSegment = (blockface, targetIndex) => {
 /**
  * Split existing segment to create new segment on the left
  * Always creates a new segment - user expects feedback
- * @sig addSegmentLeft :: (Blockface, Number, Number?) -> Blockface
+ * @sig addSegmentLeft :: (Blockface, AddSegmentLeftAction) -> Blockface
  */
-Blockface.addSegmentLeft = (blockface, index, desiredLength = 10) => {
+Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
+    const { index, desiredLength = 10 } = addSegmentLengthAction
+
     const calculateSplitLengths = (targetLength, desired) =>
         targetLength >= desired
             ? [desired, targetLength - desired]
@@ -138,9 +146,10 @@ Blockface.addSegmentLeft = (blockface, index, desiredLength = 10) => {
 
 /**
  * Replace entire segments array with new segments
- * @sig replaceSegments :: (Blockface, [Segment]) -> Blockface
+ * @sig replaceSegments :: (Blockface, ReplaceSegmentsAction) -> Blockface
  */
-Blockface.replaceSegments = (blockface, segments) => {
+Blockface.replaceSegments = (blockface, replaceSegmentsAction) => {
+    const { segments } = replaceSegmentsAction
     if (!blockface) return blockface
 
     const newTaggedSegments = segments.map(seg => Segment(seg.use, seg.length))

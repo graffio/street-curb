@@ -1,4 +1,3 @@
-import { assoc } from '@graffio/functional'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Action, Blockface, Organization } from '../types/index.js'
 
@@ -6,104 +5,43 @@ import { Action, Blockface, Organization } from '../types/index.js'
  * Initial state for the application
  */
 const initialState = {
-    // UI
+    // local state
     currentBlockfaceId: null,
     currentUser: null,
     currentOrganization: null,
 
-    // from Firestore
+    // persisted from Firestore
     blockfaces: LookupTable([], Blockface, 'id'),
 }
 
-/*
- * Add the new or modified blockface to the blockfaces; leaves state unchanged in Blockface is undefined
- * @sig addBlockface :: (State, Blockface) -> State
- */
-const _addBlockface = (state, blockface) =>
-    blockface
-        ? { ...state, blockfaces: state.blockfaces.addItemWithId(blockface), currentBlockfaceId: blockface.id }
-        : state
+/**********************************************************************************************************************
+ * Getters
+ **********************************************************************************************************************/
 
-/**
- * Get the current blockface from state
- * @sig _currentBlockface :: State -> Blockface?
- */
-const _currentBlockface = state => state.blockfaces?.[state.currentBlockfaceId] || null
+const _blockface = (state, id = state.currentBlockfaceId) => state.blockfaces[id] // defaults to current blockface
+const _organization = state => state.currentOrganization // there is only one organization loaded at a time
 
-/**
- * Change the use of a specific segment by index
- * @sig updateSegmentUse :: (State, Action) -> State
- */
-const updateSegmentUse = (state, action) =>
-    _addBlockface(state, Blockface.updateSegmentUse(_currentBlockface(state), action.index, action.use))
+/***********************************************************************************************************************
+ * Setters: KEEP IDEMPOTENT!
+ **********************************************************************************************************************/
+const _setOrganization = (state, currentOrganization) =>
+    state.currentOrganization === currentOrganization ? state : { ...state, currentOrganization }
 
-/**
- * Adjust segment length and rebalance affected segments or unknown space
- * @sig updateSegmentLength :: (State, Action) -> State
- */
-const updateSegmentLength = (state, action) =>
-    _addBlockface(state, Blockface.updateSegmentLength(_currentBlockface(state), action.index, action.newLength))
+const _setBlockface = (state, blockface) =>
+    _blockface(state) === blockface && _blockface(state, blockface.id) === blockface
+        ? state // is already set
+        : { ...state, blockfaces: state.blockfaces.addItemWithId(blockface), currentBlockfaceId: blockface.id }
 
-/**
- * Create new segment by consuming unknown space
- * @sig addSegment :: (State, Action) -> State
- */
-const addSegment = (state, action) =>
-    _addBlockface(state, Blockface.addSegment(_currentBlockface(state), action.targetIndex))
-
-/**
- * Split existing segment to create new segment on the left
- * @sig addSegmentLeft :: (State, Action) -> State
- */
-const addSegmentLeft = (state, action) =>
-    _addBlockface(state, Blockface.addSegmentLeft(_currentBlockface(state), action.index, action.desiredLength))
-
-/**
- * Replace entire segments array with new segments
- * @sig replaceSegments :: (State, Action) -> State
- */
-const replaceSegments = (state, action) =>
-    _addBlockface(state, Blockface.replaceSegments(_currentBlockface(state), action.segments))
-
-/**
- * Create blockface action handler; mostly for testing
- * @sig createBlockface :: (State, Action) -> State
- */
-const createBlockface = (state, action) => _addBlockface(state, Blockface.from({ ...action, segments: [] }))
-
-/**
- * Select blockface action handler (with auto-creation)
- // If blockface already exists, just select it, otherwise, create it and select it
- * @sig selectBlockface :: (State, Action) -> State
- */
-const selectBlockface = (state, action) =>
-    state.blockfaces[action.id] ? { ...state, currentBlockfaceId: action.id } : createBlockface(state, action)
-
-/**
- * Load all initial data action handler
- * @sig loadAllInitialData :: (State, Action) -> State
- */
-const loadAllInitialData = (state, action) => ({
-    ...state,
-    currentUser: action.currentUser,
-    currentOrganization: action.currentOrganization,
-})
-
-const postRoleChanged = (state, action) =>
-    assoc('currentOrganization', Organization.roleChanged(state.currentOrganization, action), state)
-
-/**
- * Rollback state from snapshot (for command failure handling)
- * @sig rollbackState :: (State, Action) -> State
- */
-const rollbackState = (state, action) => ({ ...state, ...action })
+/**********************************************************************************************************************
+ * Reducer
+ **********************************************************************************************************************/
 
 /**
  * Root reducer handling all actions
  * @sig rootReducer :: (State, Action) -> State
  */
 const rootReducer = (state = initialState, { type, payload: action }) => {
-    if (type === 'ROLLBACK_STATE') return rollbackState(state, action)
+    if (type === 'ROLLBACK_STATE') return { ...state, ...action }
 
     // prettier-ignore
     if (Action.is(action)) return action.match({
@@ -116,7 +54,7 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         // Organization Member Actions
         MemberAdded            : () => state,
         MemberRemoved          : () => state,
-        RoleChanged            : () => postRoleChanged(state, action),
+        RoleChanged            : () => _setOrganization(state, Organization.roleChanged(_organization(state), action)),
         UserCreated            : () => state,
         UserForgotten          : () => state,
         UserUpdated            : () => state,
@@ -125,18 +63,18 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         AuthenticationCompleted: () => state,
         
         // Data Loading
-        LoadAllInitialData     : () => loadAllInitialData(state, action),
+        LoadAllInitialData     : () => ({ ...state, ...action }),
         
         // Blockface Actions
-        CreateBlockface        : () => createBlockface(state, action),
-        SelectBlockface        : () => selectBlockface(state, action),
+        CreateBlockface        : () => _setBlockface(state, Blockface.createBlockface(action)),
+        SelectBlockface        : () => _setBlockface(state, _blockface(state, action.id) || Blockface.createBlockface(action)),
         
         // Segment Actions
-        UpdateSegmentUse       : () => updateSegmentUse(state, action),
-        UpdateSegmentLength    : () => updateSegmentLength(state, action),
-        AddSegment             : () => addSegment(state, action),
-        AddSegmentLeft         : () => addSegmentLeft(state, action),
-        ReplaceSegments        : () => replaceSegments(state, action),
+        UpdateSegmentUse       : () => _setBlockface(state, Blockface.updateSegmentUse(_blockface(state), action)),
+        UpdateSegmentLength    : () => _setBlockface(state, Blockface.updateSegmentLength(_blockface(state), action)),
+        AddSegment             : () => _setBlockface(state, Blockface.addSegment(_blockface(state), action)),
+        AddSegmentLeft         : () => _setBlockface(state, Blockface.addSegmentLeft(_blockface(state), action)),
+        ReplaceSegments        : () => _setBlockface(state, Blockface.replaceSegments(_blockface(state), action)),
     })
 
     return state
