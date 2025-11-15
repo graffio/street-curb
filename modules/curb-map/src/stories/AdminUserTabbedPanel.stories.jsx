@@ -3,10 +3,10 @@
 
 import { LookupTable } from '@graffio/functional'
 import { generateMockMembers } from '../../test/fixtures/mock-members.js'
-import { UserManagementPage } from '../components/UserManagementPage.jsx'
+import { AdminUsersTabbedPanel } from '../components/AdminUsersTabbedPanel.jsx'
 import { Member } from '../types/member.js'
 
-export default { title: 'Components/UserManagementPage', component: UserManagementPage }
+export default { title: 'AdminUsersTabbedPanel', component: AdminUsersTabbedPanel }
 
 // Story 1: Admin View
 export const AdminView = {

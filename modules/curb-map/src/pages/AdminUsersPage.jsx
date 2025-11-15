@@ -5,7 +5,7 @@ import { layoutChannel } from '@graffio/design-system'
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/index.js'
-import { UserManagementPage } from '../components/UserManagementPage.jsx'
+import { AdminUsersTabbedPanel } from '../components/AdminUsersTabbedPanel.jsx'
 import * as S from '../store/selectors.js'
 import { Action, Organization } from '../types/index.js'
 
@@ -21,7 +21,7 @@ const AdminUsersPage = () => {
     }, [])
 
     return (
-        <UserManagementPage
+        <AdminUsersTabbedPanel
             members={currentOrganization.members}
             currentUserId={currentUserId}
             isAdmin={isAdmin}

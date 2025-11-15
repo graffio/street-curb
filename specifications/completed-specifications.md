@@ -26,8 +26,8 @@ This document summarizes the specifications that were previously archived in `sp
 
 - Created generic sortable Table component in design-system wrapping Radix Themes Table
 - Implemented LookupTable PropTypes validator with `.of(Type)` for type-specific validation
-- Built UserTable component with role dropdown for admins and date formatting for removed users
-- Created UserManagementPage with tabs (active/removed), search filter, role filter, and column sorting
+- Built AdminUsersTable component with role dropdown for admins and date formatting for removed users
+- Created AdminUsersTabbedPanel with tabs (active/removed), search filter, role filter, and column sorting
 - Added mock member data fixtures for testing
 - Built comprehensive Storybook stories demonstrating all component states
 - Established controlled component pattern with parent-managed sort state

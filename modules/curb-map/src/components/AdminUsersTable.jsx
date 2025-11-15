@@ -21,7 +21,7 @@ const RoleDropdown = ({ value, disabled, tooltip, onChange }) => {
     const trigger = <Select.Trigger style={{ minWidth: '120px' }} />
 
     return (
-        <Select.Root value={value} onValueChange={onChange} disabled={disabled}>
+        <Select.Root value={value} onValueChange={onChange} disabled={disabled} size="1">
             {disabled && tooltip ? <Tooltip content={tooltip}>{trigger}</Tooltip> : trigger}
             <Select.Content>
                 <Select.Item value="admin">Admin</Select.Item>
@@ -42,7 +42,16 @@ const isOwnEntry = (member, currentUserId) => member.userId === currentUserId
  * UserTable component - displays member data with role management for admins
  * @sig UserTable :: ({ members, currentTab, isAdmin, currentUserId, onRoleChange, sortBy, sortDirection, onSort }) -> JSXElement
  */
-const UserTable = ({ members, currentTab, isAdmin, currentUserId, onRoleChange, sortBy, sortDirection, onSort }) => {
+const AdminUsersTable = ({
+    members,
+    currentTab,
+    isAdmin,
+    currentUserId,
+    onRoleChange,
+    sortBy,
+    sortDirection,
+    onSort,
+}) => {
     const renderRoleDropdown = member => (
         <RoleDropdown
             value={member.role}
@@ -78,7 +87,7 @@ const UserTable = ({ members, currentTab, isAdmin, currentUserId, onRoleChange, 
     )
 }
 
-UserTable.propTypes = {
+AdminUsersTable.propTypes = {
     members: lookupTablePropType.of(Member).isRequired,
     currentTab: PropTypes.oneOf(['active', 'removed']).isRequired,
     isAdmin: PropTypes.bool.isRequired,
@@ -89,4 +98,4 @@ UserTable.propTypes = {
     onSort: PropTypes.func,
 }
 
-export { UserTable }
+export { AdminUsersTable }

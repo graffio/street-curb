@@ -3,9 +3,9 @@
 
 import { useMemo, useState } from 'react'
 import { generateMockMembers } from '../../test/fixtures/mock-members.js'
-import { UserTable } from '../components/UserTable.jsx'
+import { AdminUsersTable } from '../components/AdminUsersTable.jsx'
 
-export default { title: 'Components/UserTable', component: UserTable }
+export default { title: 'AdminUsersTable', component: AdminUsersTable }
 
 // Story 1: Active Users (Admin View)
 const ActiveUsersAdminComponent = () => {
@@ -38,7 +38,7 @@ const ActiveUsersAdminComponent = () => {
     )
 
     return (
-        <UserTable
+        <AdminUsersTable
             members={sortedMembers}
             currentTab="active"
             isAdmin={true}
@@ -80,7 +80,7 @@ const ActiveUsersMemberComponent = () => {
     )
 
     return (
-        <UserTable
+        <AdminUsersTable
             members={sortedMembers}
             currentTab="active"
             isAdmin={false}
@@ -122,7 +122,7 @@ const RemovedUsersAdminComponent = () => {
     )
 
     return (
-        <UserTable
+        <AdminUsersTable
             members={sortedMembers}
             currentTab="removed"
             isAdmin={true}

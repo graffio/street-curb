@@ -93,7 +93,7 @@ Items here should be reconsidered when the appropriate context exists.
 - **When**: After app routing and page structure is established
 - **Complexity**: Medium (6-8 hours)
 - **Description**:
-  - Integrate UserManagementPage into app routing
+  - Integrate AdminUsersTabbedPanel into app routing
   - Connect to real Firestore members collection via Redux/selectors
   - Implement role change via `submitActionRequest()` API
   - Add toast notifications for successful role changes

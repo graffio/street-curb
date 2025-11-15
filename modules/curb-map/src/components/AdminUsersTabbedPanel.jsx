@@ -5,7 +5,7 @@ import { Box, Flex, lookupTablePropType, Select, Tabs, TextField } from '@graffi
 import PropTypes from 'prop-types'
 import { useMemo, useState } from 'react'
 import { Member } from '../types/index.js'
-import { UserTable } from './UserTable.jsx'
+import { AdminUsersTable } from './AdminUsersTable.jsx'
 
 /**
  * Role ordering for sorting
@@ -43,7 +43,7 @@ const Toolbar = ({ searchText, onSearchChange, roleFilter, onRoleFilterChange })
  * @sig UserManagementPage :: ({ LookupTable, Id, Boolean, Handler }) -> JSXElement
  *  Handler = String -> ()
  */
-const UserManagementPage = ({ members, currentUserId, isAdmin, onRoleChange }) => {
+const AdminUsersTabbedPanel = ({ members, currentUserId, isAdmin, onRoleChange }) => {
     const filterAndSort = () => {
         const filter = member => {
             const matchesSearch = member.displayName.toLowerCase().includes(searchText.toLowerCase())
@@ -97,7 +97,7 @@ const UserManagementPage = ({ members, currentUserId, isAdmin, onRoleChange }) =
                 onRoleFilterChange={setRoleFilter}
             />
 
-            <UserTable
+            <AdminUsersTable
                 members={filteredAndSortedMembers}
                 currentTab={currentTab}
                 isAdmin={isAdmin}
@@ -111,11 +111,11 @@ const UserManagementPage = ({ members, currentUserId, isAdmin, onRoleChange }) =
     )
 }
 
-UserManagementPage.propTypes = {
+AdminUsersTabbedPanel.propTypes = {
     members: lookupTablePropType.of(Member).isRequired,
     currentUserId: PropTypes.string.isRequired,
     isAdmin: PropTypes.bool.isRequired,
     onRoleChange: PropTypes.func,
 }
 
-export { UserManagementPage }
+export { AdminUsersTabbedPanel }
