@@ -6,6 +6,7 @@ import { functionsUrl } from '../config/index.js'
 import { store } from '../store/index.js'
 import * as S from '../store/selectors.js'
 import { Action, FieldTypes, Organization } from '../types/index.js'
+import { diffBlockfaces } from '../utils/diff-blockface.js'
 
 const { getState } = store
 
@@ -15,6 +16,14 @@ const { getState } = store
  * @type {Map<string, NodeJS.Timeout>}
  */
 const pendingSaves = new Map()
+
+/**
+ * Snapshot of blockfaces at the time save was scheduled
+ * Used to compute diffs when save executes
+ * Maps blockfaceId -> Blockface
+ * @type {Map<string, Blockface>}
+ */
+const savedBlockfaceSnapshots = new Map()
 
 /**
  * Get current user's Firebase Auth ID token
@@ -112,14 +121,18 @@ const _saveBlockface = blockfaceId => {
     if (timeoutId) clearTimeout(timeoutId)
     pendingSaves.delete(blockfaceId)
 
-    const blockface = S.blockface(getState(), blockfaceId)
-    if (!blockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
+    const currentBlockface = S.blockface(getState(), blockfaceId)
+    if (!currentBlockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
 
-    // TODO: Implement diff logic in Task 3
-    const changes = {}
+    // Compute changes from saved snapshot
+    const previousBlockface = savedBlockfaceSnapshots.get(blockfaceId)
+    const changes = diffBlockfaces(previousBlockface, currentBlockface)
+
+    // Update snapshot for next save
+    savedBlockfaceSnapshots.set(blockfaceId, currentBlockface)
 
     // Post SaveBlockface action
-    post(Action.SaveBlockface(blockface, changes))
+    post(Action.SaveBlockface(currentBlockface, changes))
 }
 
 /**
