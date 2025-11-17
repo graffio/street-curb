@@ -33,103 +33,37 @@ export const Action = {
     kind: 'taggedSum',
     variants: {
         // Organization Actions
-        OrganizationCreated: {
-            organizationId: FieldTypes.organizationId,
-            projectId     : FieldTypes.projectId,
-            name          : 'String',
-        },
-        OrganizationDeleted: {
-            organizationId: FieldTypes.organizationId,
-        },
-        OrganizationSuspended: {
-            organizationId: FieldTypes.organizationId,
-        },
-        OrganizationUpdated: {
-            organizationId: FieldTypes.organizationId,
-            name          : 'String?',
-            status        : '/^(active|suspended)$/?',
-        },
+        OrganizationCreated  : { organizationId: FieldTypes.organizationId, name: 'String' , projectId: FieldTypes.projectId, },
+        OrganizationUpdated  : { organizationId: FieldTypes.organizationId, name: 'String?', status: '/^(active|suspended)$/?', },
+        OrganizationDeleted  : { organizationId: FieldTypes.organizationId, },
+        OrganizationSuspended: { organizationId: FieldTypes.organizationId, },
         
         // Organization Member Actions
-        MemberAdded: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-            displayName   : 'String',
-            role          : FieldTypes.role,
-        },
-        MemberRemoved: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-        },
-        RoleChanged: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-            role          : FieldTypes.role,
-        },
+        MemberAdded  : { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, role: FieldTypes.role, displayName: 'String'},
+        RoleChanged  : { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, role: FieldTypes.role, },
+        MemberRemoved: { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, },
 
         // User Actions
-        UserCreated: {
-            userId        : FieldTypes.userId,
-            email         : FieldTypes.email,
-            displayName   : 'String',
-            authUid       : 'String',  // Firebase Auth UID (for userId claim sync)
-        },
-        UserForgotten: {
-            userId        : FieldTypes.userId,
-            reason        : 'String',
-        },
-        UserUpdated: {
-            userId        : FieldTypes.userId,
-            displayName   : 'String?',
-        },
+        UserCreated  : { userId: FieldTypes.userId, displayName: 'String', email: FieldTypes.email, authUid: 'String', },
+        UserUpdated  : { userId: FieldTypes.userId, displayName: 'String?', },
+        UserForgotten: { userId: FieldTypes.userId, reason     : 'String', },
 
-        
         // Firebase Auth
-        AuthenticationCompleted: {
-            email         : FieldTypes.email,
-            displayName   : 'String',
-            // phoneNumber extracted from verified Firebase token (not client input)
-        },
+        AuthenticationCompleted: { email: FieldTypes.email, displayName: 'String', },
 
         // Data Loading
-        LoadAllInitialData: {
-            currentUser        : 'User',
-            currentOrganization: 'Organization',
-        },
+        LoadAllInitialData: { currentUser: 'User', currentOrganization: 'Organization', },
 
         // Blockface Actions
-        CreateBlockface: {
-            id        : 'String',
-            geometry  : 'Object',
-            streetName: 'String',
-            cnnId     : 'String?',
-        },
-        SelectBlockface: {
-            id         : 'String',
-            geometry   : 'Object',
-            streetName : 'String',
-            cnnId      : 'String?',
-        },
+        CreateBlockface: { id: 'String', geometry: 'Object', streetName: 'String', cnnId: 'String?', },
+        SelectBlockface: { id: 'String', geometry: 'Object', streetName: 'String', cnnId: 'String?', },
 
         // Segment Actions
-        UpdateSegmentUse: {
-            index: 'Number',
-            use  : 'String',
-        },
-        UpdateSegmentLength: {
-            index    : 'Number',
-            newLength: 'Number',
-        },
-        AddSegment: {
-            targetIndex: 'Number',
-        },
-        AddSegmentLeft: {
-            index        : 'Number',
-            desiredLength: 'Number',
-        },
-        ReplaceSegments: {
-            segments: '[Segment]',
-        },
+        UpdateSegmentUse   : { index: 'Number', use: 'String', },
+        UpdateSegmentLength: { index: 'Number', newLength: 'Number', },
+        AddSegmentLeft     : { index: 'Number', desiredLength: 'Number', },
+        AddSegment         : { targetIndex: 'Number', },
+        ReplaceSegments    : { segments: '[Segment]', },
 
     }
 }

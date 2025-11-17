@@ -5,12 +5,25 @@
  * @sig Blockface :: { id: String, geometry: Object, streetName: String, cnnId: String?, segments: [Segment] }
  */
 import { length } from '@turf/length'
+import { FieldTypes } from './field-types.js'
 import { Segment } from './segment.js'
 
+// prettier-ignore
 export const Blockface = {
     name: 'Blockface',
     kind: 'tagged',
-    fields: { id: 'String', geometry: 'Object', streetName: 'String', cnnId: 'String?', segments: '[Segment]' },
+    fields: {
+        id        : FieldTypes.newBlockfaceId(),
+        geometry  : 'Object',
+        streetName: 'String',
+        cnnId     : 'String?',
+        segments  : '[Segment]',
+        
+        createdAt : 'Date',
+        createdBy : FieldTypes.userId,
+        updatedAt : 'Date',
+        updatedBy : FieldTypes.userId,
+    },
 }
 
 /**

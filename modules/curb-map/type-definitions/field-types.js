@@ -27,6 +27,7 @@ const FieldTypes = {
 
     newActionRequestId: () => `acr_${cuid12()}`,
     newAuditRecordId  : () => `aud_${cuid12()}`,
+    newBlockfaceId    : () => `blk_${cuid12()}`,
     newCorrelationId  : () => `cor_${cuid12()}`,
     newEventId        : () => `evt_${cuid12()}`,
     newIdempotencyKey : () => `idm_${cuid12()}`,
