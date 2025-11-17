@@ -3,7 +3,9 @@ import { Provider } from 'react-redux'
 import { post } from '../../commands/index.js'
 import { SegmentedCurbEditor } from '../../components/SegmentedCurbEditor/SegmentedCurbEditor.jsx'
 import { store } from '../../store/index.js'
-import { Action } from '../../types/index.js'
+import { mockOrganization, mockUser } from '../../test-data/mock-auth.js'
+import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
+import { Action, Blockface } from '../../types/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 
 /**
@@ -19,7 +21,22 @@ import { DragStateDecorator } from '../DragStateDecorator.jsx'
  */
 const useTestData = () => {
     React.useEffect(() => {
-        post(Action.SelectBlockface('editor-showcase', {}, 'Editor Street'))
+        const blockface = Blockface.from({
+            id: 'blk_000000000000',
+            sourceId: 'editor-showcase',
+            organizationId: mockOrganization.id,
+            projectId: mockOrganization.defaultProjectId,
+            geometry: DEFAULT_STORY_GEOMETRY,
+            streetName: 'Editor Street',
+            segments: [],
+            createdAt: new Date(),
+            createdBy: mockUser.id,
+            updatedAt: new Date(),
+            updatedBy: mockUser.id,
+        })
+
+        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.SelectBlockface(blockface))
         post(Action.AddSegment(-1))
         post(Action.UpdateSegmentLength(0, 80))
         post(Action.UpdateSegmentUse(0, 'Parking'))

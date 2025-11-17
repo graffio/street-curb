@@ -5,7 +5,7 @@ import { SegmentRenderer } from '../../components/SegmentedCurbEditor/SegmentRen
 import { store } from '../../store/index.js'
 import { mockOrganization, mockUser } from '../../test-data/mock-auth.js'
 import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
-import { Action } from '../../types/index.js'
+import { Action, Blockface } from '../../types/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 
 /**
@@ -31,8 +31,22 @@ const mockDragDropHandler = {
  */
 const useTestData = () => {
     React.useEffect(() => {
+        const blockface = Blockface.from({
+            id: 'blk_000000000000',
+            sourceId: 'segment-showcase',
+            organizationId: mockOrganization.id,
+            projectId: mockOrganization.defaultProjectId,
+            geometry: DEFAULT_STORY_GEOMETRY,
+            streetName: 'Showcase Street',
+            segments: [],
+            createdAt: new Date(),
+            createdBy: mockUser.id,
+            updatedAt: new Date(),
+            updatedBy: mockUser.id,
+        })
+
         post(Action.LoadAllInitialData(mockUser, mockOrganization))
-        post(Action.CreateBlockface('segment-showcase', DEFAULT_STORY_GEOMETRY, 'Showcase Street'))
+        post(Action.CreateBlockface(blockface))
         post(Action.AddSegment(-1))
         post(Action.UpdateSegmentLength(0, 80))
         post(Action.UpdateSegmentUse(0, 'Parking'))
