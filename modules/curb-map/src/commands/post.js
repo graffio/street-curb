@@ -75,6 +75,7 @@ const captureStateSnapshot = (action, state) =>
         // Blockface actions snapshot currentBlockfaceId for rollback
         CreateBlockface        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state), blockfaces: S.blockfaces(state) }),
         SelectBlockface        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state) }),
+        SaveBlockface          : () => ({}),
 
         // Segment actions snapshot the current blockface for rollback
         UpdateSegmentUse       : () => ({ blockfaces: S.blockfaces(state) }),
@@ -127,6 +128,7 @@ const getPersistenceStrategy = action =>
         // Blockface/Segment actions are local-only (no Firestore persistence yet)
         CreateBlockface        : () => null,
         SelectBlockface        : () => null,
+        SaveBlockface          : () => submitActionRequest,
         UpdateSegmentUse       : () => null,
         UpdateSegmentLength    : () => null,
         AddSegment             : () => null,

@@ -229,6 +229,7 @@ const dispatchToHandler = actionRequest =>
         LoadAllInitialData     : () => { throw new Error('LoadAllInitialData should never reach server (local-only action)') },
         CreateBlockface        : () => { throw new Error('CreateBlockface should never reach server (local-only action)') },
         SelectBlockface        : () => { throw new Error('SelectBlockface should never reach server (local-only action)') },
+        SaveBlockface          : () => { throw new Error('SaveBlockface handler not yet implemented (Task 6)') },
         UpdateSegmentUse       : () => { throw new Error('UpdateSegmentUse should never reach server (local-only action)') },
         UpdateSegmentLength    : () => { throw new Error('UpdateSegmentLength should never reach server (local-only action)') },
         AddSegment             : () => { throw new Error('AddSegment should never reach server (local-only action)') },

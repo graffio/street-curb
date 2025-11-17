@@ -57,7 +57,7 @@ export const Action = {
         // Blockface Actions
         CreateBlockface: { blockface: 'Blockface' },
         SelectBlockface: { blockface: 'Blockface' },
-        // SaveBlockface:   { blockface: 'Blockface', changes: 'Object?' },
+        SaveBlockface:   { blockface: 'Blockface', changes: 'Object' },
 
         // Segment Actions
         UpdateSegmentUse   : { index: 'Number', use: 'String', },
@@ -108,6 +108,7 @@ Action.piiFields = rawData => {
     // Blockface Actions
     if (tagName === 'CreateBlockface'        ) return []
     if (tagName === 'SelectBlockface'        ) return []
+    if (tagName === 'SaveBlockface'          ) return []
 
     // Segment Actions
     if (tagName === 'UpdateSegmentUse'       ) return []
@@ -154,8 +155,9 @@ Action.toLog = a => {
         LoadAllInitialData     : ()                             => ({ type: 'LoadAllInitialData' }),
 
         // Blockface Actions
-        CreateBlockface        : ({ id })                       => ({ type: 'CreateBlockface', id }),
-        SelectBlockface        : ({ id })                       => ({ type: 'SelectBlockface', id }),
+        CreateBlockface        : ({ blockface })                => ({ type: 'CreateBlockface', blockfaceId: blockface.id }),
+        SelectBlockface        : ({ blockface })                => ({ type: 'SelectBlockface', blockfaceId: blockface.id }),
+        SaveBlockface          : ({ blockface })                => ({ type: 'SaveBlockface', blockfaceId: blockface.id }),
 
         // Segment Actions
         UpdateSegmentUse       : ({ index, use })               => ({ type: 'UpdateSegmentUse', index, use }),
@@ -228,8 +230,9 @@ Action.getSubject = action =>
         LoadAllInitialData     : a => ({ id: a.currentUser.id, type: 'user' }),
 
         // Blockface Actions
-        CreateBlockface        : a => ({ id: a.id,           type: 'blockface' }),
-        SelectBlockface        : a => ({ id: a.id,           type: 'blockface' }),
+        CreateBlockface        : a => ({ id: a.blockface.id, type: 'blockface' }),
+        SelectBlockface        : a => ({ id: a.blockface.id, type: 'blockface' }),
+        SaveBlockface          : a => ({ id: a.blockface.id, type: 'blockface' }),
 
         // Segment Actions (subject is the current blockface being edited)
         UpdateSegmentUse       : () => ({ id: 'current',     type: 'blockface' }),
@@ -262,8 +265,9 @@ Action.mayI = (action, actorRole, actorId) =>
         LoadAllInitialData     : () => true,
 
         // Blockface Actions (any authenticated user can edit blockfaces)
-        CreateBlockface        : () => true,
+        CreateBlockface        : () => ['admin', 'editor'].includes(actorRole),
         SelectBlockface        : () => true,
+        SaveBlockface          : () => ['admin', 'editor'].includes(actorRole),
 
         // Segment Actions (any authenticated user can edit segments)
         UpdateSegmentUse       : () => true,

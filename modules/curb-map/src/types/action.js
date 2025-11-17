@@ -45,6 +45,9 @@
  *      blockface: "Blockface"
  *  SelectBlockface
  *      blockface: "Blockface"
+ *  SaveBlockface
+ *      blockface: "Blockface",
+ *      changes  : "Object"
  *  UpdateSegmentUse
  *      index: "Number",
  *      use  : "String"
@@ -90,6 +93,7 @@ const Action = {
             constructor === Action.LoadAllInitialData ||
             constructor === Action.CreateBlockface ||
             constructor === Action.SelectBlockface ||
+            constructor === Action.SaveBlockface ||
             constructor === Action.UpdateSegmentUse ||
             constructor === Action.UpdateSegmentLength ||
             constructor === Action.AddSegmentLeft ||
@@ -117,6 +121,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'LoadAllInitialData',
         'CreateBlockface',
         'SelectBlockface',
+        'SaveBlockface',
         'UpdateSegmentUse',
         'UpdateSegmentLength',
         'AddSegmentLeft',
@@ -947,6 +952,74 @@ SelectBlockfaceConstructor.fromFirestore = SelectBlockfaceConstructor._fromFires
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// Variant Action.SaveBlockface
+//
+// -------------------------------------------------------------------------------------------------------------
+const SaveBlockfaceConstructor = function SaveBlockface(blockface, changes) {
+    const constructorName = 'Action.SaveBlockface(blockface, changes)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
+    R.validateObject(constructorName, 'changes', false, changes)
+
+    const result = Object.create(SaveBlockfacePrototype)
+    result.blockface = blockface
+    result.changes = changes
+    return result
+}
+
+Action.SaveBlockface = SaveBlockfaceConstructor
+
+const SaveBlockfacePrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SaveBlockface', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.SaveBlockface(${R._toString(this.blockface)}, ${R._toString(this.changes)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: SaveBlockfaceConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+SaveBlockfaceConstructor.prototype = SaveBlockfacePrototype
+SaveBlockfaceConstructor.is = val => val && val.constructor === SaveBlockfaceConstructor
+SaveBlockfaceConstructor.toString = () => 'Action.SaveBlockface'
+SaveBlockfaceConstructor._from = o => Action.SaveBlockface(o.blockface, o.changes)
+SaveBlockfaceConstructor.from = SaveBlockfaceConstructor._from
+
+SaveBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
+    changes: o.changes,
+})
+
+SaveBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    SaveBlockfaceConstructor._from({
+        blockface: Blockface.fromFirestore
+            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
+            : Blockface.from(doc.blockface),
+        changes: doc.changes,
+    })
+
+// Public aliases (can be overridden)
+SaveBlockfaceConstructor.toFirestore = SaveBlockfaceConstructor._toFirestore
+SaveBlockfaceConstructor.fromFirestore = SaveBlockfaceConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // Variant Action.UpdateSegmentUse
 //
 // -------------------------------------------------------------------------------------------------------------
@@ -1246,6 +1319,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'LoadAllInitialData') return Action.LoadAllInitialData.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'CreateBlockface') return Action.CreateBlockface.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SelectBlockface') return Action.SelectBlockface.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SaveBlockface') return Action.SaveBlockface.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'UpdateSegmentUse') return Action.UpdateSegmentUse.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'UpdateSegmentLength') return Action.UpdateSegmentLength.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AddSegmentLeft') return Action.AddSegmentLeft.fromFirestore(doc, decodeTimestamps)
@@ -1280,6 +1354,7 @@ Action.piiFields = rawData => {
     if (tagName === 'LoadAllInitialData') return []
     if (tagName === 'CreateBlockface') return []
     if (tagName === 'SelectBlockface') return []
+    if (tagName === 'SaveBlockface') return []
     if (tagName === 'UpdateSegmentUse') return []
     if (tagName === 'UpdateSegmentLength') return []
     if (tagName === 'AddSegment') return []
@@ -1335,13 +1410,17 @@ Action.toLog = a => {
             displayName,
         }),
         LoadAllInitialData: () => ({ type: 'LoadAllInitialData' }),
-        CreateBlockface: ({ id }) => ({
+        CreateBlockface: ({ blockface }) => ({
             type: 'CreateBlockface',
-            id,
+            blockfaceId: blockface.id,
         }),
-        SelectBlockface: ({ id }) => ({
+        SelectBlockface: ({ blockface }) => ({
             type: 'SelectBlockface',
-            id,
+            blockfaceId: blockface.id,
+        }),
+        SaveBlockface: ({ blockface }) => ({
+            type: 'SaveBlockface',
+            blockfaceId: blockface.id,
         }),
         UpdateSegmentUse: ({ index, use }) => ({
             type: 'UpdateSegmentUse',
@@ -1438,11 +1517,15 @@ Action.getSubject = action =>
             type: 'user',
         }),
         CreateBlockface: a => ({
-            id: a.id,
+            id: a.blockface.id,
             type: 'blockface',
         }),
         SelectBlockface: a => ({
-            id: a.id,
+            id: a.blockface.id,
+            type: 'blockface',
+        }),
+        SaveBlockface: a => ({
+            id: a.blockface.id,
             type: 'blockface',
         }),
         UpdateSegmentUse: () => ({
@@ -1481,8 +1564,9 @@ Action.mayI = (action, actorRole, actorId) =>
         UserUpdated: a => a.userId === actorId,
         AuthenticationCompleted: () => true,
         LoadAllInitialData: () => true,
-        CreateBlockface: () => true,
+        CreateBlockface: () => ['admin', 'editor'].includes(actorRole),
         SelectBlockface: () => true,
+        SaveBlockface: () => ['admin', 'editor'].includes(actorRole),
         UpdateSegmentUse: () => true,
         UpdateSegmentLength: () => true,
         AddSegment: () => true,
