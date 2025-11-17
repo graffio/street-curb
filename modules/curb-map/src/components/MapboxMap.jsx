@@ -21,19 +21,6 @@ import * as S from '../store/selectors.js'
  */
 
 /**
- * Gets unique blockface identifier from feature properties and geometry
- * @sig getBlockfaceId :: Feature -> String
- */
-const getBlockfaceId = feature => {
-    const props = feature.properties
-    const coords = feature.geometry.coordinates
-    const firstCoord = coords[0]
-    const lastCoord = coords[coords.length - 1]
-    const coordHash = `${firstCoord[0].toFixed(6)},${firstCoord[1].toFixed(6)}-${lastCoord[0].toFixed(6)},${lastCoord[1].toFixed(6)}`
-    return `${JSON.stringify(props)}/${coordHash}`
-}
-
-/**
  * Gets segment color based on type (matching SegmentedCurbEditor colors)
  * @sig getSegmentColor :: String -> String
  */
@@ -252,16 +239,14 @@ const setupCursorEffects = map => {
  * Handles blockface click events
  * @sig handleClick :: (Map, Function) -> (MapMouseEvent) -> Void
  */
-const handleClick = (map, onBlockfaceSelectRef) => e => {
+const handleClick = (map, onBlockfaceSelectedRef) => e => {
     const features = map.queryRenderedFeatures(e.point, { layers: ['sf-blockfaces'] })
     if (features.length === 0) return
 
     const feature = features[0]
-    const blockfaceId = getBlockfaceId(feature)
     const blockfaceLength = calculateBlockfaceLength(feature)
 
-    if (onBlockfaceSelectRef.current)
-        onBlockfaceSelectRef.current({ id: blockfaceId, feature, length: blockfaceLength })
+    if (onBlockfaceSelectedRef.current) onBlockfaceSelectedRef.current({ feature, length: blockfaceLength })
 }
 
 /**

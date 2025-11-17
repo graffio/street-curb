@@ -2,11 +2,13 @@
 // ABOUTME: Full map UI with sliding editor panel for segment management
 
 import { Box, Button, Checkbox, Flex, Heading } from '@graffio/design-system'
+import { LookupTable } from '@graffio/functional'
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/index.js'
 import * as S from '../store/selectors.js'
-import { Action } from '../types/index.js'
+import { Action, Blockface, FieldTypes, Segment } from '../types/index.js'
+import { hashFeatureGeoemetry } from '../utils/geometry.js'
 import CurbTable from './CurbTable/index.js'
 import MapboxMap from './MapboxMap.jsx'
 import SegmentedCurbEditor from './SegmentedCurbEditor/index.js'
@@ -56,19 +58,64 @@ const EditorPanel = ({ onClose }) => {
     )
 }
 
+const cityBlockfaceId = feature => {
+    const { id, properties = {} } = feature
+
+    const { id: propId, cnn_id: CNN, COMPKEY, PHYSICALID, SEGMENTID, STREETID } = properties
+
+    // Try city-specific ID fields
+    // prettier-ignore
+    // eslint-disable-next-line no-lone-blocks
+    {
+        if (id)         return feature.id   // id from feature
+        if (propId)     return propId       // id from feature.properties
+        if (CNN)        return CNN          // san-francisco
+        if (COMPKEY)    return COMPKEY      // seattle
+        if (PHYSICALID) return PHYSICALID   // new-york
+        if (SEGMENTID)  return SEGMENTID    // portland
+        if (STREETID)   return STREETID     // los-angeles
+    }
+
+    // Fallback: hash geometry coordinates
+    return `geohash-${hashFeatureGeoemetry(feature)}`
+}
+
+/*
+ * Typical Feature:
+ *     blockface_: "1RY"
+ *     cnn_id    : "6812000"
+ *     globalid  : "{FE4AB464-7304-4299-AE15-85CC09063A14}"
+ *     name      : "464001"
+ *     sfpark_id : "464001"
+ *     shape_leng: "0.00095727"
+ *     street_nam: "NULL"
+ */
 const CurbMapEditorPanel = () => {
     const handleEditorClose = () => setIsEditorVisible(false)
-    const handleBlockfaceSelected = blockfaceData => {
-        setSelectedBlockface(blockfaceData)
+    const handleBlockfaceSelected = _blockfaceData => {
+        setSelectedBlockface(_blockfaceData)
         setIsEditorVisible(true)
 
-        // Initialize Redux store with new blockface
-        const geometry = blockfaceData.feature?.geometry || blockfaceData.geometry
-        const streetName = blockfaceData.streetName || blockfaceData.feature.properties.street_nam || 'unknown'
-        post(Action.SelectBlockface(blockfaceData.id, geometry, streetName, blockfaceData.cnnId))
+        const { feature } = _blockfaceData // { feature: GeoJSONFeature, length: Number }
+        const { geometry, properties = {} } = feature
+        const { street_nam: streetName = 'unknown', cnn_id: cnn } = properties
+
+        const blockface = Blockface.from({
+            id: FieldTypes.newBlockfaceId(),
+            sourceId: cityBlockfaceId(feature),
+            geometry,
+            streetName,
+            segments: LookupTable([], Segment, 'id'),
+            cnn,
+            organizationId: organization.id,
+            projectId: organization.defaultProjectId,
+        })
+
+        post(Action.SelectBlockface(blockface))
     }
 
     const blockface = useSelector(S.currentBlockface)
+    const organization = useSelector(S.currentOrganization)
     const segments = blockface?.segments || []
 
     const [selectedBlockface, setSelectedBlockface] = useState(null)

@@ -66,8 +66,8 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         LoadAllInitialData     : () => ({ ...state, ...action }),
         
         // Blockface Actions
-        CreateBlockface        : () => _setBlockface(state, Blockface.createBlockface(action)),
-        SelectBlockface        : () => _setBlockface(state, _blockface(state, action.id) || Blockface.createBlockface(action)),
+        CreateBlockface        : () => _setBlockface(state, action.blockface),
+        SelectBlockface        : () => _setBlockface(state, _blockface(state, action.blockface.id)),
         
         // Segment Actions
         UpdateSegmentUse       : () => _setBlockface(state, Blockface.updateSegmentUse(_blockface(state), action)),

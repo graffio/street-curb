@@ -3,15 +3,41 @@
  * Tests the business logic functions directly without Redux
  */
 
+import { LookupTable } from '@graffio/functional'
 import { test } from 'tap'
-import { Blockface, Segment } from '../src/types/index.js'
+import { Action, Blockface, Segment } from '../src/types/index.js'
+
+const seg1 = 'seg_000000000001'
+const seg2 = 'seg_000000000002'
+
+const blk1 = 'blk_000000000001'
+const srcId = 'srcId'
+const organizationId = 'org_000000000000'
+const projectId = 'prj_000000000000'
+const user = 'usr_000000000000'
+const date = new Date('Jan 1, 2025')
+
+const createBlockface = segments =>
+    Blockface.from({
+        id: blk1,
+        sourceId: srcId,
+        geometry: null,
+        streetName: 'Test St',
+        segments: LookupTable(segments, Segment),
+        organizationId,
+        projectId,
+        createdAt: date,
+        createdBy: user,
+        updatedAt: date,
+        updatedBy: user,
+    })
 
 test('Blockface domain functions', t => {
     t.test('Blockface.unknownRemaining', t => {
         t.test('Given segments using 100ft of a 240ft blockface', t => {
             t.test('When calling unknownRemaining', t => {
-                const segments = [Segment('Parking', 60), Segment('NoParking', 40)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'Parking', 60), Segment(seg2, 'NoParking', 40)]
+                const blockface = createBlockface(segments)
 
                 const result = Blockface.unknownRemaining(blockface)
 
@@ -23,8 +49,8 @@ test('Blockface domain functions', t => {
 
         t.test('Given segments using all 240ft of a blockface', t => {
             t.test('When calling unknownRemaining', t => {
-                const segments = [Segment('Parking', 120), Segment('NoParking', 120)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'Parking', 120), Segment(seg2, 'NoParking', 120)]
+                const blockface = createBlockface(segments)
 
                 const result = Blockface.unknownRemaining(blockface)
 
@@ -49,10 +75,10 @@ test('Blockface domain functions', t => {
     t.test('Blockface.addSegmentLeft', t => {
         t.test('Given a segment with sufficient length', t => {
             t.test('When calling addSegmentLeft with a desired length of 10ft', t => {
-                const segments = [Segment('NoParking', 30)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'NoParking', 30)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegmentLeft(blockface, 0, 10)
+                const result = Blockface.addSegmentLeft(blockface, Action.AddSegmentLeft(0, 10))
 
                 t.equal(result.segments.length, 2, 'Then it creates two segments')
                 t.equal(result.segments[0].length, 10, 'Then the new segment has the desired length')
@@ -66,10 +92,10 @@ test('Blockface domain functions', t => {
 
         t.test('Given a segment that is too small - split in half', t => {
             t.test('When calling addSegmentLeft wanting 10ft but only having 6ft', t => {
-                const segments = [Segment('NoParking', 6)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'NoParking', 6)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegmentLeft(blockface, 0, 10)
+                const result = Blockface.addSegmentLeft(blockface, Action.AddSegmentLeft(0, 10))
 
                 t.equal(result.segments.length, 2, 'Then it creates two segments')
                 t.equal(result.segments[0].length, 3, 'Then the new segment gets half the length (3ft)')
@@ -83,10 +109,10 @@ test('Blockface domain functions', t => {
 
         t.test('Given a tiny segment', t => {
             t.test('When calling addSegmentLeft on a 1ft segment', t => {
-                const segments = [Segment('NoParking', 1)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'NoParking', 1)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegmentLeft(blockface, 0, 10)
+                const result = Blockface.addSegmentLeft(blockface, Action.AddSegmentLeft(0, 10))
 
                 t.equal(result.segments.length, 2, 'Then it creates two segments')
                 t.equal(result.segments[0].length, 0.5, 'Then the new segment gets half the length (0.5ft)')
@@ -113,10 +139,10 @@ test('Blockface domain functions', t => {
     t.test('Blockface.updateSegmentLength', t => {
         t.test('Given a segment adjustment that consumes unknown space', t => {
             t.test('When expanding the last segment from 40ft to 60ft', t => {
-                const segments = [Segment('Parking', 60), Segment('NoParking', 40)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'Parking', 60), Segment(seg2, 'NoParking', 40)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.updateSegmentLength(blockface, 1, 60)
+                const result = Blockface.updateSegmentLength(blockface, Action.UpdateSegmentLength(1, 60))
 
                 t.equal(result.segments.length, 2, 'Then it maintains the segment count')
                 t.equal(result.segments[0].length, 60, 'Then the first segment remains unchanged')
@@ -129,10 +155,10 @@ test('Blockface domain functions', t => {
 
         t.test('Given invalid adjustments', t => {
             t.test('When providing a zero length', t => {
-                const segments = [Segment('Parking', 60)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'Parking', 60)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.updateSegmentLength(blockface, 0, 0)
+                const result = Blockface.updateSegmentLength(blockface, Action.UpdateSegmentLength(0, 0))
 
                 t.equal(result, blockface, 'Then it returns the original blockface for zero length')
                 t.end()
@@ -145,10 +171,10 @@ test('Blockface domain functions', t => {
     t.test('Blockface.addSegment', t => {
         t.test('Given a blockface with unknown space', t => {
             t.test('When adding a segment at the end', t => {
-                const segments = [Segment('Parking', 100)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'Parking', 100)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegment(blockface, -1)
+                const result = Blockface.addSegment(blockface, Action.AddSegment(-1))
 
                 t.equal(result.segments.length, 2, 'Then it adds a new segment')
                 t.equal(result.segments[0].length, 100, 'Then the original segment remains unchanged')
@@ -162,10 +188,10 @@ test('Blockface domain functions', t => {
 
         t.test('Given a blockface with no unknown space', t => {
             t.test('When trying to add a segment', t => {
-                const segments = [Segment('Parking', 120), Segment('NoParking', 120)]
-                const blockface = Blockface('test-id', null, 'Test St', null, segments)
+                const segments = [Segment(seg1, 'Parking', 120), Segment(seg2, 'NoParking', 120)]
+                const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegment(blockface, 0)
+                const result = Blockface.addSegment(blockface, Action.AddSegment(0))
 
                 t.equal(result, blockface, 'Then it returns the original blockface when no space is available')
                 t.end()
@@ -178,15 +204,12 @@ test('Blockface domain functions', t => {
     t.test('Blockface.replaceSegments', t => {
         t.test('Given a new segments array', t => {
             t.test('When replacing the existing segments with new segments', t => {
-                const originalSegments = [Segment('Parking', 100)]
-                const blockface = Blockface('test-id', null, 'Test St', null, originalSegments)
+                const originalSegments = [Segment(seg1, 'Parking', 100)]
+                const blockface = createBlockface(originalSegments)
 
-                const newSegments = [
-                    { use: 'Loading', length: 80 },
-                    { use: 'NoParking', length: 60 },
-                ]
+                const newSegments = [Segment(seg1, 'Loading', 80), Segment(seg2, 'NoParking', 60)]
 
-                const result = Blockface.replaceSegments(blockface, newSegments)
+                const result = Blockface.replaceSegments(blockface, Action.ReplaceSegments(newSegments))
 
                 t.equal(result.segments.length, 2, 'Then it replaces the segments with the new segments')
                 t.equal(result.segments[0].use, 'Loading', 'Then the first segment has the correct use')

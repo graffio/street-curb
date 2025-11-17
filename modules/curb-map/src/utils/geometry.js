@@ -30,4 +30,20 @@ const calculateVisualPercentages = (segments, blockfaceLength) =>
     // Convert each segment length to percentage of total blockface
     segments.map(segment => (segment.length / blockfaceLength) * 100)
 
-export { calculateCumulativePositions, calculateVisualPercentages }
+const hashFeatureGeoemetry = feature => {
+    const hashCode = str => {
+        let hash = 0
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i)
+            hash = (hash << 5) - hash + char
+            hash = hash & hash // Convert to 32bit integer
+        }
+
+        return Math.abs(hash).toString(36)
+    }
+
+    return hashCode(JSON.stringify(feature.geometry.coordinates))
+}
+
+export { calculateCumulativePositions, calculateVisualPercentages, hashFeatureGeoemetry }
