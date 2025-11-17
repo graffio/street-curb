@@ -250,10 +250,16 @@ const post = action => {
     // Phase 3.5: Handle debounced blockface saves
     const currentBlockfaceId = S.currentBlockfaceId(getState())
 
-    if (Action.SelectBlockface.is(action)) {
+    if (Action.CreateBlockface.is(action) || Action.SelectBlockface.is(action)) {
+        // Seed snapshot when blockface is created or loaded from Firestore
+        savedBlockfaceSnapshots.set(action.blockface.id, action.blockface)
+
         // Flush pending save for previous blockface before switching
-        const previousBlockfaceId = S.currentBlockfaceId(state) // state before dispatch
-        if (previousBlockfaceId && previousBlockfaceId !== action.blockface.id) flushBlockfaceSave(previousBlockfaceId)
+        if (Action.SelectBlockface.is(action)) {
+            const previousBlockfaceId = S.currentBlockfaceId(state) // state before dispatch
+            if (previousBlockfaceId && previousBlockfaceId !== action.blockface.id)
+                flushBlockfaceSave(previousBlockfaceId)
+        }
     } else if (
         Action.UpdateSegmentUse.is(action) ||
         Action.UpdateSegmentLength.is(action) ||

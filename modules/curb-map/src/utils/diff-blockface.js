@@ -12,60 +12,53 @@
  * }
  */
 export const diffBlockfaces = (oldBlockface, newBlockface) => {
-    const added = []
-    const modified = []
-    const removed = []
+    const buildSegmentMap = segments => {
+        const map = new Map()
+        segments.forEach((segment, index) => map.set(segment.id, segment))
+        return map
+    }
+
+    const detectAddedSegment = (newSegment, newIndex, oldSegmentsById) => {
+        if (oldSegmentsById.has(newSegment.id)) return null
+        return { index: newIndex, segment: newSegment }
+    }
+
+    const detectModifications = (oldSegment, newSegment, newIndex) => {
+        const mods = []
+        if (oldSegment.use !== newSegment.use)
+            mods.push({ index: newIndex, field: 'use', oldValue: oldSegment.use, newValue: newSegment.use })
+        if (oldSegment.length !== newSegment.length)
+            mods.push({ index: newIndex, field: 'length', oldValue: oldSegment.length, newValue: newSegment.length })
+        return mods
+    }
+
+    const detectRemovedSegment = (oldSegment, oldIndex, newSegmentsById) => {
+        if (newSegmentsById.has(oldSegment.id)) return null
+        return { index: oldIndex, segment: oldSegment }
+    }
 
     // Handle case where there's no previous blockface
     if (!oldBlockface) {
-        newBlockface.segments.forEach((segment, index) => {
-            added.push({ index, segment })
-        })
-        return { added, modified, removed }
+        const added = newBlockface.segments.map((segment, index) => ({ index, segment }))
+        return { added, modified: [], removed: [] }
     }
 
-    // Build lookup maps by segment ID for efficient comparison
-    const oldSegmentsById = new Map()
-    const oldSegmentsByIndex = new Map()
-    oldBlockface.segments.forEach((segment, index) => {
-        oldSegmentsById.set(segment.id, segment)
-        oldSegmentsByIndex.set(segment.id, index)
-    })
-
-    const newSegmentsById = new Map()
-    newBlockface.segments.forEach((segment, index) => {
-        newSegmentsById.set(segment.id, segment)
-    })
+    const oldSegmentsById = buildSegmentMap(oldBlockface.segments)
+    const newSegmentsById = buildSegmentMap(newBlockface.segments)
 
     // Find added and modified segments
+    const added = []
+    const modified = []
     newBlockface.segments.forEach((newSegment, newIndex) => {
         const oldSegment = oldSegmentsById.get(newSegment.id)
-
-        if (!oldSegment) {
-            // Segment is new
-            added.push({ index: newIndex, segment: newSegment })
-        } else {
-            // Segment exists - check for modifications
-            if (oldSegment.use !== newSegment.use) 
-                modified.push({ index: newIndex, field: 'use', oldValue: oldSegment.use, newValue: newSegment.use })
-            
-            if (oldSegment.length !== newSegment.length) 
-                modified.push({
-                    index: newIndex,
-                    field: 'length',
-                    oldValue: oldSegment.length,
-                    newValue: newSegment.length,
-                })
-            
-        }
+        if (!oldSegment) return added.push(detectAddedSegment(newSegment, newIndex, oldSegmentsById))
+        modified.push(...detectModifications(oldSegment, newSegment, newIndex))
     })
 
     // Find removed segments
-    oldBlockface.segments.forEach((oldSegment, oldIndex) => {
-        if (!newSegmentsById.has(oldSegment.id)) 
-            removed.push({ index: oldIndex, segment: oldSegment })
-        
-    })
+    const removed = oldBlockface.segments
+        .map((oldSegment, oldIndex) => detectRemovedSegment(oldSegment, oldIndex, newSegmentsById))
+        .filter(Boolean)
 
     return { added, modified, removed }
 }
