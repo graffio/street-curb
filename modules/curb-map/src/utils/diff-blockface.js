@@ -1,28 +1,20 @@
 // ABOUTME: Utility for computing changes between two blockface states
 // ABOUTME: Used to track segment modifications for audit trails and change logs
 
+import LookupTable from '@graffio/functional/src/lookup-table.js'
+import { Segment } from '../types/index.js'
+
 /**
  * Compare two blockfaces and identify changes to segments
  * Returns structured change object with added, modified, and removed segments
  *
  * @sig diffBlockfaces :: (Blockface?, Blockface) -> {
- *   added: [{index: Number, segment: Segment}],
+ *   added:    [{index: Number, segment: Segment}],
  *   modified: [{index: Number, field: String, oldValue: Any, newValue: Any}],
- *   removed: [{index: Number, segment: Segment}]
+ *   removed:  [{index: Number, segment: Segment}]
  * }
  */
-export const diffBlockfaces = (oldBlockface, newBlockface) => {
-    const buildSegmentMap = segments => {
-        const map = new Map()
-        segments.forEach((segment, index) => map.set(segment.id, segment))
-        return map
-    }
-
-    const detectAddedSegment = (newSegment, newIndex, oldSegmentsById) => {
-        if (oldSegmentsById.has(newSegment.id)) return null
-        return { index: newIndex, segment: newSegment }
-    }
-
+const diffBlockfaces = (oldBlockface, newBlockface) => {
     const detectModifications = (oldSegment, newSegment, newIndex) => {
         const mods = []
         if (oldSegment.use !== newSegment.use)
@@ -32,33 +24,33 @@ export const diffBlockfaces = (oldBlockface, newBlockface) => {
         return mods
     }
 
-    const detectRemovedSegment = (oldSegment, oldIndex, newSegmentsById) => {
-        if (newSegmentsById.has(oldSegment.id)) return null
-        return { index: oldIndex, segment: oldSegment }
-    }
-
     // Handle case where there's no previous blockface
-    if (!oldBlockface) {
-        const added = newBlockface.segments.map((segment, index) => ({ index, segment }))
-        return { added, modified: [], removed: [] }
-    }
-
-    const oldSegmentsById = buildSegmentMap(oldBlockface.segments)
-    const newSegmentsById = buildSegmentMap(newBlockface.segments)
-
-    // Find added and modified segments
+    let newSegments = newBlockface.segments
+    let oldSegments = oldBlockface?.segments || LookupTable([], Segment, 'id')
     const added = []
     const modified = []
-    newBlockface.segments.forEach((newSegment, newIndex) => {
-        const oldSegment = oldSegmentsById.get(newSegment.id)
-        if (!oldSegment) return added.push(detectAddedSegment(newSegment, newIndex, oldSegmentsById))
-        modified.push(...detectModifications(oldSegment, newSegment, newIndex))
+
+    // Ensure segments are LookupTables for efficient ID-based lookups
+    oldSegments = LookupTable.is(oldSegments) ? oldSegments : LookupTable(oldSegments, Segment, 'id')
+    newSegments = LookupTable.is(newSegments) ? newSegments : LookupTable(newSegments, Segment, 'id')
+
+    // everything is new!
+    if (!oldBlockface) return { added: newSegments.map((s, i) => ({ index: i, segment: s })), modified, removed: [] }
+
+    // Find added and modified segments
+    newSegments.forEach((newSegment, newIndex) => {
+        const oldSegment = oldSegments.get(newSegment.id)
+        return oldSegment
+            ? modified.push(...detectModifications(oldSegment, newSegment, newIndex))
+            : added.push({ index: newIndex, segment: newSegment })
     })
 
     // Find removed segments
-    const removed = oldBlockface.segments
-        .map((oldSegment, oldIndex) => detectRemovedSegment(oldSegment, oldIndex, newSegmentsById))
-        .filter(Boolean)
+    const removed = oldSegments
+        .filter(oldSegment => !newSegments.get(oldSegment.id))
+        .map(segment => ({ index: oldSegments.indexOf(segment), segment }))
 
     return { added, modified, removed }
 }
+
+export { diffBlockfaces }
