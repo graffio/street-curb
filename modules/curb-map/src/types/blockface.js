@@ -1,15 +1,23 @@
 /** {@link module:Blockface} */
 /*  Blockface generated from: modules/curb-map/type-definitions/blockface.type.js
  *
- *  id        : "String",
- *  geometry  : "Object",
- *  streetName: "String",
- *  cnnId     : "String?",
- *  segments  : "[Segment]"
+ *  id            : FieldTypes.blockfaceId,
+ *  sourceId      : "String",
+ *  geometry      : "Object",
+ *  streetName    : "String",
+ *  segments      : "[Segment]",
+ *  organizationId: FieldTypes.organizationId,
+ *  projectId     : FieldTypes.projectId,
+ *  createdAt     : "Date",
+ *  createdBy     : FieldTypes.userId,
+ *  updatedAt     : "Date",
+ *  updatedBy     : FieldTypes.userId
  *
  */
 
+import { LookupTable } from '@graffio/functional'
 import { length } from '@turf/length'
+import { FieldTypes } from './field-types.js'
 import { Segment } from './segment.js'
 
 import * as R from '@graffio/cli-type-generator'
@@ -19,21 +27,46 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const Blockface = function Blockface(id, geometry, streetName, cnnId, segments) {
-    const constructorName = 'Blockface(id, geometry, streetName, cnnId, segments)'
-
-    R.validateString(constructorName, 'id', false, id)
+const Blockface = function Blockface(
+    id,
+    sourceId,
+    geometry,
+    streetName,
+    segments,
+    organizationId,
+    projectId,
+    createdAt,
+    createdBy,
+    updatedAt,
+    updatedBy,
+) {
+    const constructorName =
+        'Blockface(id, sourceId, geometry, streetName, segments, organizationId, projectId, createdAt, createdBy, updatedAt, updatedBy)'
+    R.validateArgumentLength(constructorName, 11, arguments)
+    R.validateRegex(constructorName, FieldTypes.blockfaceId, 'id', false, id)
+    R.validateString(constructorName, 'sourceId', false, sourceId)
     R.validateObject(constructorName, 'geometry', false, geometry)
     R.validateString(constructorName, 'streetName', false, streetName)
-    R.validateString(constructorName, 'cnnId', true, cnnId)
     R.validateArray(constructorName, 1, 'Tagged', 'Segment', 'segments', false, segments)
+    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+    R.validateRegex(constructorName, FieldTypes.projectId, 'projectId', false, projectId)
+    R.validateDate(constructorName, 'createdAt', false, createdAt)
+    R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
+    R.validateDate(constructorName, 'updatedAt', false, updatedAt)
+    R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
 
     const result = Object.create(prototype)
     result.id = id
+    result.sourceId = sourceId
     result.geometry = geometry
     result.streetName = streetName
-    if (cnnId != null) result.cnnId = cnnId
     result.segments = segments
+    result.organizationId = organizationId
+    result.projectId = projectId
+    result.createdAt = createdAt
+    result.createdBy = createdBy
+    result.updatedAt = updatedAt
+    result.updatedBy = updatedBy
     return result
 }
 
@@ -47,7 +80,7 @@ const prototype = Object.create(Object.prototype, {
 
     toString: {
         value: function () {
-            return `Blockface(${R._toString(this.id)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.cnnId)}, ${R._toString(this.segments)})`
+            return `Blockface(${R._toString(this.id)}, ${R._toString(this.sourceId)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.segments)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
         },
         enumerable: false,
     },
@@ -77,18 +110,36 @@ Blockface.prototype = prototype
 Blockface.toString = () => 'Blockface'
 Blockface.is = v => v && v['@@typeName'] === 'Blockface'
 
-Blockface._from = o => Blockface(o.id, o.geometry, o.streetName, o.cnnId, o.segments)
+Blockface._from = o =>
+    Blockface(
+        o.id,
+        o.sourceId,
+        o.geometry,
+        o.streetName,
+        o.segments,
+        o.organizationId,
+        o.projectId,
+        o.createdAt,
+        o.createdBy,
+        o.updatedAt,
+        o.updatedBy,
+    )
 Blockface.from = Blockface._from
 
 Blockface._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,
+        sourceId: o.sourceId,
         geometry: o.geometry,
         streetName: o.streetName,
         segments: o.segments.map(item1 => Segment.toFirestore(item1, encodeTimestamps)),
+        organizationId: o.organizationId,
+        projectId: o.projectId,
+        createdAt: encodeTimestamps(o.createdAt),
+        createdBy: o.createdBy,
+        updatedAt: encodeTimestamps(o.updatedAt),
+        updatedBy: o.updatedBy,
     }
-
-    if (o.cnnId != null) result.cnnId = o.cnnId
 
     return result
 }
@@ -96,12 +147,18 @@ Blockface._toFirestore = (o, encodeTimestamps) => {
 Blockface._fromFirestore = (doc, decodeTimestamps) =>
     Blockface._from({
         id: doc.id,
+        sourceId: doc.sourceId,
         geometry: doc.geometry,
         streetName: doc.streetName,
-        cnnId: doc.cnnId,
         segments: doc.segments.map(item1 =>
             Segment.fromFirestore ? Segment.fromFirestore(item1, decodeTimestamps) : Segment.from(item1),
         ),
+        organizationId: doc.organizationId,
+        projectId: doc.projectId,
+        createdAt: decodeTimestamps(doc.createdAt),
+        createdBy: doc.createdBy,
+        updatedAt: decodeTimestamps(doc.updatedAt),
+        updatedBy: doc.updatedBy,
     })
 
 // Public aliases (override if necessary)
@@ -116,20 +173,14 @@ Blockface.fromFirestore = Blockface._fromFirestore
 
 Blockface._roundToPrecision = value => Math.round(value * 10) / 10
 
-Blockface.createBlockface = createBlockfaceAction =>
-    Blockface.from({
-        ...createBlockfaceAction,
-        segments: [],
-    })
-
-Blockface.setSegments = (blockface, segments) =>
-    Blockface(blockface.id, blockface.geometry, blockface.streetName, blockface.cnnId, segments)
-
 Blockface.updateSegmentUse = (blockface, updateSegmentUseAction) => {
     const { index, use } = updateSegmentUseAction
     if (!blockface?.segments[index]) return blockface
     const segments = blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment))
-    return Blockface.setSegments(blockface, segments)
+    return Blockface.from({
+        ...blockface,
+        segments,
+    })
 }
 
 Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
@@ -147,18 +198,24 @@ Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
         let newUnknownRemaining = Blockface._roundToPrecision(currentUnknownRemaining - lengthDelta)
         if (Math.abs(newUnknownRemaining) < 0.01) newUnknownRemaining = 0
         if (newUnknownRemaining < 0) return blockface
-        const newSegments = blockface.segments.map((seg, i) => (i === index ? Segment(seg.use, roundedLength) : seg))
-        return Blockface.setSegments(blockface, newSegments)
+        const newSegments = blockface.segments.map((s, i) => (i === index ? Segment(s.id, s.use, roundedLength) : s))
+        return Blockface.from({
+            ...blockface,
+            segments: newSegments,
+        })
     }
     const nextSegment = blockface.segments[index + 1]
     const newNextLength = Blockface._roundToPrecision(nextSegment.length - lengthDelta)
     if (newNextLength <= 0) return blockface
     const newSegments = blockface.segments.map((seg, i) => {
-        if (i === index) return Segment(seg.use, roundedLength)
-        if (i === index + 1) return Segment(seg.use, newNextLength)
+        if (i === index) return Segment(seg.id, seg.use, roundedLength)
+        if (i === index + 1) return Segment(seg.id, seg.use, newNextLength)
         return seg
     })
-    return Blockface.setSegments(blockface, newSegments)
+    return Blockface.from({
+        ...blockface,
+        segments: newSegments,
+    })
 }
 
 Blockface.addSegment = (blockface, addSegmentAction) => {
@@ -169,15 +226,17 @@ Blockface.addSegment = (blockface, addSegmentAction) => {
     const currentUnknownRemaining = blockfaceLength - totalSegmentLength
     if (currentUnknownRemaining <= 0) return blockface
     const newSegmentSize = Math.min(20, currentUnknownRemaining)
-    const newSegment = Segment('Parking', Blockface._roundToPrecision(newSegmentSize))
+    const newSegment = Segment(FieldTypes.newSegmentId(), 'Parking', Blockface._roundToPrecision(newSegmentSize))
     const newSegments = [...blockface.segments]
     const insertIndex = targetIndex >= 0 ? targetIndex + 1 : newSegments.length
     newSegments.splice(insertIndex, 0, newSegment)
-    return Blockface.setSegments(blockface, newSegments)
+    return Blockface.from({
+        ...blockface,
+        segments: newSegments,
+    })
 }
 
 Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
-    const { index, desiredLength = 10 } = addSegmentLengthAction
     const calculateSplitLengths = (targetLength, desired) =>
         targetLength >= desired
             ? [desired, targetLength - desired]
@@ -186,25 +245,32 @@ Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
                   Blockface._roundToPrecision(targetLength - targetLength / 2),
               ]
     if (!blockface) return blockface
+    const { index, desiredLength = 10 } = addSegmentLengthAction
     if (index < 0 || index >= blockface.segments.length) return blockface
     const targetSegment = blockface.segments[index]
     const [newSegmentLength, remainingSegmentLength] = calculateSplitLengths(targetSegment.length, desiredLength)
-    const newSegment = Segment('Parking', newSegmentLength)
-    const modifiedTargetSegment = Segment(targetSegment.use, remainingSegmentLength)
+    const newSegment = Segment(FieldTypes.newSegmentId(), 'Parking', newSegmentLength)
+    const modifiedTargetSegment = Segment(targetSegment.id, targetSegment.use, remainingSegmentLength)
     const newSegments = [
         ...blockface.segments.slice(0, index),
         newSegment,
         modifiedTargetSegment,
         ...blockface.segments.slice(index + 1),
     ]
-    return Blockface.setSegments(blockface, newSegments)
+    return Blockface.from({
+        ...blockface,
+        segments: newSegments,
+    })
 }
 
 Blockface.replaceSegments = (blockface, replaceSegmentsAction) => {
     const { segments } = replaceSegmentsAction
     if (!blockface) return blockface
-    const newTaggedSegments = segments.map(seg => Segment(seg.use, seg.length))
-    return Blockface.setSegments(blockface, newTaggedSegments)
+    const newTaggedSegments = LookupTable.is(segments) ? segments : LookupTable(segments, Segment)
+    return Blockface.from({
+        ...blockface,
+        segments: newTaggedSegments,
+    })
 }
 
 Blockface.totalLength = blockface => {

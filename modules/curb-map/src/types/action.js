@@ -42,15 +42,9 @@
  *      currentUser        : "User",
  *      currentOrganization: "Organization"
  *  CreateBlockface
- *      id        : "String",
- *      geometry  : "Object",
- *      streetName: "String",
- *      cnnId     : "String?"
+ *      blockface: "Blockface"
  *  SelectBlockface
- *      id        : "String",
- *      geometry  : "Object",
- *      streetName: "String",
- *      cnnId     : "String?"
+ *      blockface: "Blockface"
  *  UpdateSegmentUse
  *      index: "Number",
  *      use  : "String"
@@ -828,19 +822,13 @@ LoadAllInitialDataConstructor.fromFirestore = LoadAllInitialDataConstructor._fro
 // Variant Action.CreateBlockface
 //
 // -------------------------------------------------------------------------------------------------------------
-const CreateBlockfaceConstructor = function CreateBlockface(id, geometry, streetName, cnnId) {
-    const constructorName = 'Action.CreateBlockface(id, geometry, streetName, cnnId)'
-
-    R.validateString(constructorName, 'id', false, id)
-    R.validateObject(constructorName, 'geometry', false, geometry)
-    R.validateString(constructorName, 'streetName', false, streetName)
-    R.validateString(constructorName, 'cnnId', true, cnnId)
+const CreateBlockfaceConstructor = function CreateBlockface(blockface) {
+    const constructorName = 'Action.CreateBlockface(blockface)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
 
     const result = Object.create(CreateBlockfacePrototype)
-    result.id = id
-    result.geometry = geometry
-    result.streetName = streetName
-    if (cnnId != null) result.cnnId = cnnId
+    result.blockface = blockface
     return result
 }
 
@@ -852,7 +840,7 @@ const CreateBlockfacePrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.CreateBlockface(${R._toString(this.id)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.cnnId)})`
+            return `Action.CreateBlockface(${R._toString(this.blockface)})`
         },
         enumerable: false,
     },
@@ -875,30 +863,36 @@ const CreateBlockfacePrototype = Object.create(ActionPrototype, {
 CreateBlockfaceConstructor.prototype = CreateBlockfacePrototype
 CreateBlockfaceConstructor.is = val => val && val.constructor === CreateBlockfaceConstructor
 CreateBlockfaceConstructor.toString = () => 'Action.CreateBlockface'
-CreateBlockfaceConstructor._from = o => Action.CreateBlockface(o.id, o.geometry, o.streetName, o.cnnId)
+CreateBlockfaceConstructor._from = o => Action.CreateBlockface(o.blockface)
 CreateBlockfaceConstructor.from = CreateBlockfaceConstructor._from
 
-CreateBlockfaceConstructor.toFirestore = o => ({ ...o })
-CreateBlockfaceConstructor.fromFirestore = CreateBlockfaceConstructor._from
+CreateBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
+})
+
+CreateBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    CreateBlockfaceConstructor._from({
+        blockface: Blockface.fromFirestore
+            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
+            : Blockface.from(doc.blockface),
+    })
+
+// Public aliases (can be overridden)
+CreateBlockfaceConstructor.toFirestore = CreateBlockfaceConstructor._toFirestore
+CreateBlockfaceConstructor.fromFirestore = CreateBlockfaceConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant Action.SelectBlockface
 //
 // -------------------------------------------------------------------------------------------------------------
-const SelectBlockfaceConstructor = function SelectBlockface(id, geometry, streetName, cnnId) {
-    const constructorName = 'Action.SelectBlockface(id, geometry, streetName, cnnId)'
-
-    R.validateString(constructorName, 'id', false, id)
-    R.validateObject(constructorName, 'geometry', false, geometry)
-    R.validateString(constructorName, 'streetName', false, streetName)
-    R.validateString(constructorName, 'cnnId', true, cnnId)
+const SelectBlockfaceConstructor = function SelectBlockface(blockface) {
+    const constructorName = 'Action.SelectBlockface(blockface)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
 
     const result = Object.create(SelectBlockfacePrototype)
-    result.id = id
-    result.geometry = geometry
-    result.streetName = streetName
-    if (cnnId != null) result.cnnId = cnnId
+    result.blockface = blockface
     return result
 }
 
@@ -910,7 +904,7 @@ const SelectBlockfacePrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.SelectBlockface(${R._toString(this.id)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.cnnId)})`
+            return `Action.SelectBlockface(${R._toString(this.blockface)})`
         },
         enumerable: false,
     },
@@ -933,11 +927,23 @@ const SelectBlockfacePrototype = Object.create(ActionPrototype, {
 SelectBlockfaceConstructor.prototype = SelectBlockfacePrototype
 SelectBlockfaceConstructor.is = val => val && val.constructor === SelectBlockfaceConstructor
 SelectBlockfaceConstructor.toString = () => 'Action.SelectBlockface'
-SelectBlockfaceConstructor._from = o => Action.SelectBlockface(o.id, o.geometry, o.streetName, o.cnnId)
+SelectBlockfaceConstructor._from = o => Action.SelectBlockface(o.blockface)
 SelectBlockfaceConstructor.from = SelectBlockfaceConstructor._from
 
-SelectBlockfaceConstructor.toFirestore = o => ({ ...o })
-SelectBlockfaceConstructor.fromFirestore = SelectBlockfaceConstructor._from
+SelectBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
+})
+
+SelectBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    SelectBlockfaceConstructor._from({
+        blockface: Blockface.fromFirestore
+            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
+            : Blockface.from(doc.blockface),
+    })
+
+// Public aliases (can be overridden)
+SelectBlockfaceConstructor.toFirestore = SelectBlockfaceConstructor._toFirestore
+SelectBlockfaceConstructor.fromFirestore = SelectBlockfaceConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

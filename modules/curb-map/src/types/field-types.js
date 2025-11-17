@@ -17,11 +17,13 @@ const FieldTypes = {
     actionRequestId  : /^acr_[a-z0-9]{12,}$/,
     actorId          : /^usr_[a-z0-9]{12,}$/, // an actor is a user; some day it might some automated back-end processor
     auditRecordId    : /^aud_[a-z0-9]{12,}$/,
+    blockfaceId      : /^blk_[a-z0-9]{12,}$/,
     correlationId    : /^cor_[a-z0-9]{12,}$/,
     eventId          : /^evt_[a-z0-9]{12,}$/, // permanent audit event ID
     idempotencyKey   : /^idm_[a-z0-9]{12,}$/,
     organizationId   : /^org_[a-z0-9]{12,}$/,
     projectId        : /^prj_[a-z0-9]{12,}$/,
+    segmentId        : /^seg_[a-z0-9]{12,}$/,
     subjectId        : /^(usr|org|prj)_[a-z0-9]{12,}$/, // subject can be user, organization, or project
     userId           : /^usr_[a-z0-9]{12,}$/,
 
@@ -33,6 +35,7 @@ const FieldTypes = {
     newIdempotencyKey : () => `idm_${cuid12()}`,
     newOrganizationId : () => `org_${cuid12()}`,
     newProjectId      : () => `prj_${cuid12()}`,
+    newSegmentId      : () => `seg_${cuid12()}`,
     newUserId         : () => `usr_${cuid12()}`,
 }
 
