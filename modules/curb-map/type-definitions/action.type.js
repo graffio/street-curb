@@ -55,8 +55,9 @@ export const Action = {
         LoadAllInitialData: { currentUser: 'User', currentOrganization: 'Organization', },
 
         // Blockface Actions
-        CreateBlockface: { id: 'String', geometry: 'Object', streetName: 'String', cnnId: 'String?', },
-        SelectBlockface: { id: 'String', geometry: 'Object', streetName: 'String', cnnId: 'String?', },
+        CreateBlockface: { blockface: 'Blockface' },
+        SelectBlockface: { blockface: 'Blockface' },
+        // SaveBlockface:   { blockface: 'Blockface', changes: 'Object?' },
 
         // Segment Actions
         UpdateSegmentUse   : { index: 'Number', use: 'String', },
