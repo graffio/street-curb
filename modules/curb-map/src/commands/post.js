@@ -7,6 +7,15 @@ import { store } from '../store/index.js'
 import * as S from '../store/selectors.js'
 import { Action, FieldTypes, Organization } from '../types/index.js'
 
+const { getState } = store
+
+/**
+ * Debounce timer map for blockface auto-save
+ * Maps blockfaceId -> timeoutId
+ * @type {Map<string, NodeJS.Timeout>}
+ */
+const pendingSaves = new Map()
+
 /**
  * Get current user's Firebase Auth ID token
  * @sig getIdToken :: () -> Promise<String>
@@ -96,6 +105,43 @@ const rollbackState = snapshot => {
     store.dispatch({ type: 'ROLLBACK_STATE', payload: snapshot })
 }
 
+// Call Action.SaveBlockface and manage pendingSaves
+const _saveBlockface = blockfaceId => {
+    // pending is done
+    const timeoutId = pendingSaves.get(blockfaceId)
+    if (timeoutId) clearTimeout(timeoutId)
+    pendingSaves.delete(blockfaceId)
+
+    const blockface = S.blockface(getState(), blockfaceId)
+    if (!blockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
+
+    // TODO: Implement diff logic in Task 3
+    const changes = {}
+
+    // Post SaveBlockface action
+    post(Action.SaveBlockface(blockface, changes))
+}
+
+/**
+ * Schedule a debounced save for a blockface
+ * Clears any existing pending save and schedules a new one after 3 seconds
+ *
+ * @sig scheduleBlockfaceSave :: String -> void
+ */
+const scheduleBlockfaceSave = blockfaceId => {
+    if (pendingSaves.has(blockfaceId)) clearTimeout(pendingSaves.get(blockfaceId))
+    const timerId = setTimeout(() => _saveBlockface(blockfaceId), 3000)
+    pendingSaves.set(blockfaceId, timerId)
+}
+
+/**
+ * Flush any pending save for a blockface immediately
+ * Clears the debounce timer and saves right away
+ *
+ * @sig flushBlockfaceSave :: String -> void
+ */
+const flushBlockfaceSave = _saveBlockface
+
 /**
  * Get persistence strategy for action
  * Returns null if action is local-only (Redux only)
@@ -175,7 +221,7 @@ const post = action => {
     if (!Action.is(action)) throw new Error('post requires an Action; found: ' + action)
 
     // Phase 1: Get current state and validate
-    const state = store.getState()
+    const state = getState()
 
     // LoadAllInitialData is the ONLY action that bypasses authorization
     // It runs before currentUser/currentOrganization exist (it loads them)
@@ -187,6 +233,24 @@ const post = action => {
 
     // Phase 3: Optimistic Redux update (always happens)
     store.dispatch({ type: action.constructor.toString(), payload: action })
+
+    // Phase 3.5: Handle debounced blockface saves
+    const currentBlockfaceId = S.currentBlockfaceId(getState())
+
+    if (Action.SelectBlockface.is(action)) {
+        // Flush pending save for previous blockface before switching
+        const previousBlockfaceId = S.currentBlockfaceId(state) // state before dispatch
+        if (previousBlockfaceId && previousBlockfaceId !== action.blockface.id) flushBlockfaceSave(previousBlockfaceId)
+    } else if (
+        Action.UpdateSegmentUse.is(action) ||
+        Action.UpdateSegmentLength.is(action) ||
+        Action.AddSegment.is(action) ||
+        Action.AddSegmentLeft.is(action) ||
+        Action.ReplaceSegments.is(action)
+    ) {
+        // Schedule debounced save for segment changes
+        if (currentBlockfaceId) scheduleBlockfaceSave(currentBlockfaceId)
+    }
 
     // Phase 4: Persist to backend (async, may fail)
     const persistenceStrategy = getPersistenceStrategy(action)
