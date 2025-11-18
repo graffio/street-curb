@@ -53,10 +53,10 @@ const submitActionRequest = async (action, organizationId, projectId) => {
 /**
  * Capture state snapshot for potential rollback (action-specific)
  * Returns empty object for actions that don't need rollback
- * @sig captureStateSnapshot :: (Action, State) -> Object
+ * @sig captureRollbackSnapshot :: (Action, State) -> Object
  */
 // prettier-ignore
-const captureStateSnapshot = (action, state) =>
+const captureRollbackSnapshot = (action, state) =>
     action.match({
         // Organization member actions snapshot currentOrganization
         RoleChanged            : () => ({ currentOrganization: S.currentOrganization(state) }),
@@ -227,7 +227,7 @@ const post = action => {
     if (!Action.LoadAllInitialData.is(action)) checkAuthorization()
 
     // Phase 2: Capture state snapshot for rollback
-    const snapshot = captureStateSnapshot(action, state)
+    const snapshot = captureRollbackSnapshot(action, state)
 
     // Phase 3: Optimistic Redux update (always happens)
     store.dispatch({ type: action.constructor.toString(), payload: action })

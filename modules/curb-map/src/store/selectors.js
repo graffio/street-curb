@@ -11,8 +11,6 @@ const S = {
     // todo: store project properly
     currentProjectId      : state => state.currentOrganization.defaultProjectId,
     
-    savedBlockfaceSnapshot : state => state.savedBlockfaceSnapshot,
-
     // persisted
     blockfaces             : state => state.blockfaces,
     blockface              : (state, id) => state.blockfaces?.[id]
@@ -26,7 +24,6 @@ export const {
     currentOrganizationId,
     currentUser,
     currentUserId,
-    savedBlockfaceSnapshot,
     blockface,
     blockfaces,
 } = S

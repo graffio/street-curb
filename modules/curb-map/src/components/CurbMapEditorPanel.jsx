@@ -125,7 +125,7 @@ const CurbMapEditorPanel = () => {
     const currentUserId = useSelector(S.currentUserId)
     const segments = blockface?.segments || []
 
-    const [geoJsonFeatureAndLength, setGeoJsonFeatureAndLength] = useState(null)
+    const [geoJsonFeatureAndLength, setGeoJsonFeatureAndLength] = useState({})
     const [isEditorVisible, setIsEditorVisible] = useState(false)
 
     return (
