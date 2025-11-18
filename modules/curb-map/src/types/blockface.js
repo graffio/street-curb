@@ -160,8 +160,6 @@ Blockface._fromFirestore = (doc, decodeTimestamps) =>
     })
 
 // Public aliases (override if necessary)
-Blockface.toFirestore = Blockface._toFirestore
-Blockface.fromFirestore = Blockface._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -333,6 +331,18 @@ Blockface.visualPercentages = blockface => {
     if (!blockface) return []
     const blockfaceLength = Blockface.totalLength(blockface)
     return blockface.segments.map(segment => (segment.length / blockfaceLength) * 100)
+}
+
+Blockface.toFirestore = (blockface, encodeTimestamps) => {
+    const data = Blockface._toFirestore(blockface, encodeTimestamps)
+    if (data.geometry) data.geometry = JSON.stringify(data.geometry)
+    return data
+}
+
+Blockface.fromFirestore = (doc, decodeTimestamps) => {
+    const docWithGeometry = { ...doc }
+    if (typeof docWithGeometry.geometry === 'string') docWithGeometry.geometry = JSON.parse(docWithGeometry.geometry)
+    return Blockface._fromFirestore(docWithGeometry, decodeTimestamps)
 }
 
 export { Blockface }

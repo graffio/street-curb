@@ -92,11 +92,11 @@ const cityBlockfaceId = feature => {
  */
 const CurbMapEditorPanel = () => {
     const handleEditorClose = () => setIsEditorVisible(false)
-    const handleBlockfaceSelected = _blockfaceData => {
-        setSelectedBlockface(_blockfaceData)
+    const handleBlockfaceSelected = geoJsonFeatureAndLength => {
+        setGeoJsonFeatureAndLength(geoJsonFeatureAndLength)
         setIsEditorVisible(true)
 
-        const { feature } = _blockfaceData // { feature: GeoJSONFeature, length: Number }
+        const { feature } = geoJsonFeatureAndLength // { feature: GeoJSONFeature, length: Number }
         const { geometry, properties = {} } = feature
         const { street_nam: streetName = 'unknown', cnn_id: cnn } = properties
 
@@ -109,16 +109,23 @@ const CurbMapEditorPanel = () => {
             cnn,
             organizationId: organization.id,
             projectId: organization.defaultProjectId,
+
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdBy: currentUserId,
+            updatedBy: currentUserId,
         })
 
-        post(Action.SelectBlockface(blockface))
+        const action = Action.CreateBlockface(blockface)
+        post(action)
     }
 
     const blockface = useSelector(S.currentBlockface)
     const organization = useSelector(S.currentOrganization)
+    const currentUserId = useSelector(S.currentUserId)
     const segments = blockface?.segments || []
 
-    const [selectedBlockface, setSelectedBlockface] = useState(null)
+    const [geoJsonFeatureAndLength, setGeoJsonFeatureAndLength] = useState(null)
     const [isEditorVisible, setIsEditorVisible] = useState(false)
 
     return (
@@ -126,7 +133,7 @@ const CurbMapEditorPanel = () => {
             <MapboxMap
                 accessToken={accessToken}
                 onBlockfaceSelect={handleBlockfaceSelected}
-                selectedBlockface={selectedBlockface}
+                geoJsonFeatureAndLength={geoJsonFeatureAndLength}
                 currentSegments={segments}
             />
 

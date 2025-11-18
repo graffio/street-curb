@@ -1,4 +1,3 @@
-import { Blockface } from '../../../src/types/index.js'
 import { updatedMetadata } from '../shared.js'
 
 /*
@@ -8,12 +7,13 @@ import { updatedMetadata } from '../shared.js'
  */
 const handleSaveBlockface = async (logger, fsContext, actionRequest) => {
     const { action } = actionRequest
-    const { blockface } = action
+    let { blockface } = action
 
     const projectContext = fsContext.forProject(blockface.organizationId, blockface.projectId)
-    const blockfaceWithMetadata = Blockface.from({ ...blockface, ...updatedMetadata(fsContext, actionRequest) })
 
-    await projectContext.blockfaces.write(blockfaceWithMetadata)
+    // segments has to *stay* a LookupTable; spreading turns it into an array, which will not be serialized properly
+    blockface = { ...blockface, ...updatedMetadata(fsContext, actionRequest), segments: blockface.segments }
+    await projectContext.blockfaces.write(blockface)
     logger.flowStep('Blockface saved')
 }
 

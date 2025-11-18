@@ -20,6 +20,8 @@ const getIdToken = async () => {
     return auth.currentUser.getIdToken()
 }
 
+const encodeTimestamp = date => (date instanceof Date ? date.toISOString() : date)
+
 /**
  * Submit an action to Firestore via HTTP Cloud Function
  * Private helper - only called from executeCommand
@@ -27,7 +29,7 @@ const getIdToken = async () => {
  * @sig submitActionRequest :: Action -> Promise<void>
  * @throws {Error} If submission fails or action is invalid
  */
-const submitActionRequest = async action => {
+const submitActionRequest = async (action, organizationId, projectId) => {
     const message = () =>
         `Failed to submit action: ${data.error || data.status || response.statusText} (HTTP ${response.status})`
 
@@ -35,9 +37,11 @@ const submitActionRequest = async action => {
 
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
     const payload = {
-        action: Action.toFirestore(action),
+        action: Action.toFirestore(action, encodeTimestamp),
         idempotencyKey: FieldTypes.newIdempotencyKey(),
         correlationId: FieldTypes.newCorrelationId(),
+        organizationId,
+        projectId,
         // namespace: '',
     }
     const url = functionsUrl('submitActionRequest')
@@ -196,8 +200,8 @@ const post = action => {
         rollbackState(snapshot)
 
         // TODO: Replace with proper toast notification
-        // eslint-disable-next-line no-undef
-        alert(`Failed to save changes: ${error.message}`)
+
+        console.error(`Failed to save changes: ${error.message}`)
     }
 
     const checkAuthorization = () => {
@@ -231,13 +235,17 @@ const post = action => {
     // Phase 3.5: debounce blockface saves
     // Any action that affects the current Blockface is debounced for 3 seconds before saving,
     // but if a new Blockface is selected then immediately save the previously-pending saves
-    const currentBlockfaceId = S.currentBlockfaceId(getState())
+    const newState = getState()
+    const currentBlockfaceId = S.currentBlockfaceId(newState)
+    const organizationId = S.currentOrganizationId(newState)
+    const projectId = S.currentProjectId(newState)
+
     if (actionTriggersBlockfaceChange(action)) debounceBlockfaceSave(currentBlockfaceId) // reset 3-second timer
     if (previousBlockfaceId && Action.SelectBlockface.is(action)) saveBlockfaceImmediately(previousBlockfaceId)
 
     // Phase 4: Persist to backend (async, may fail)
     const persistenceStrategy = getPersistenceStrategy(action)
-    if (persistenceStrategy) persistenceStrategy(action).catch(handlePersistenceFailure)
+    if (persistenceStrategy) persistenceStrategy(action, organizationId, projectId).catch(handlePersistenceFailure)
 }
 
 export { post }

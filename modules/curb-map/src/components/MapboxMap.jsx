@@ -320,7 +320,8 @@ const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockf
  * MapboxMap component - renders interactive map with blockface highlighting
  * @sig MapboxMap :: { accessToken: String, onBlockfaceSelect?: Function, selectedBlockface?: Object } -> ReactElement
  */
-const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, selectedBlockface }) => {
+const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, geoJsonFeatureAndLength = {} }) => {
+    const { id, feature, length } = geoJsonFeatureAndLength
     const blockface = useSelector(S.currentBlockface)
     const currentSegments = blockface?.segments || [] // Keep defensive here since map works without blockface
 
@@ -352,8 +353,8 @@ const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, 
 
     useEffect(() => {
         if (!map.current?.isStyleLoaded()) return
-        updateSegmentedHighlight(map.current, selectedBlockface?.feature, currentSegments, selectedBlockface?.length)
-    }, [selectedBlockface?.feature, selectedBlockface?.id, currentSegments])
+        updateSegmentedHighlight(map.current, feature, currentSegments, length)
+    }, [feature, id, currentSegments])
 
     return (
         <div

@@ -263,3 +263,26 @@ Blockface.visualPercentages = blockface => {
     const blockfaceLength = Blockface.totalLength(blockface)
     return blockface.segments.map(segment => (segment.length / blockfaceLength) * 100)
 }
+
+/**
+ * Override toFirestore to handle geometry serialization
+ * Geometry contains nested arrays which Firestore doesn't support, so we stringify it
+ * @sig toFirestore :: (Blockface, (Date -> Any)) -> Object
+ */
+Blockface.toFirestore = (blockface, encodeTimestamps) => {
+    const data = Blockface._toFirestore(blockface, encodeTimestamps)
+    if (data.geometry) data.geometry = JSON.stringify(data.geometry)
+    return data
+}
+
+/**
+ * Override fromFirestore to handle geometry deserialization
+ * Parse the stringified geometry back to an object
+ * @sig fromFirestore :: (Object, (Any -> Date)) -> Blockface
+ */
+Blockface.fromFirestore = (doc, decodeTimestamps) => {
+    const docWithGeometry = { ...doc }
+    if (typeof docWithGeometry.geometry === 'string') docWithGeometry.geometry = JSON.parse(docWithGeometry.geometry)
+
+    return Blockface._fromFirestore(docWithGeometry, decodeTimestamps)
+}
