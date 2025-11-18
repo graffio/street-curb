@@ -15,9 +15,8 @@
         "tap:firebase": "firebase emulators:exec --only firestore,auth,storage,functions \"../../bash/run-tap.sh test/**/*.firebase.js\"",
         "seed": "node test-utils/seed.js",
         "emulators:kill": "pkill -f 'firebase emulators:start' || echo '' ",
-        "emulators:debug": "yarn emulators:kill ; firebase emulators:start --inspect-functions=9229 --only firestore,functions,auth",
-        "emulators:start": "yarn emulators:kill ; firebase emulators:start --only firestore,functions,auth",
-        "emulators:seed": "bash scripts/start-and-seed.sh",
+        "emulators:debug": "bash scripts/start-and-seed.sh debug",
+        "emulators:start": "bash scripts/start-and-seed.sh",
         "validate-style": "node ../style-validator/src/cli.js",
         "functions:build": "yarn workspace @graffio/curb-map-functions build",
         "functions:deploy": "yarn workspace @graffio/curb-map-functions deploy"

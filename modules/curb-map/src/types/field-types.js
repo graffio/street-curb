@@ -24,7 +24,7 @@ const FieldTypes = {
     organizationId   : /^org_[a-z0-9]{12,}$/,
     projectId        : /^prj_[a-z0-9]{12,}$/,
     segmentId        : /^seg_[a-z0-9]{12,}$/,
-    subjectId        : /^(usr|org|prj)_[a-z0-9]{12,}$/, // subject can be user, organization, or project
+    subjectId        : /^(blk|usr|org|prj)_[a-z0-9]{12,}$/, // subject for SOC2
     userId           : /^usr_[a-z0-9]{12,}$/,
 
     newActionRequestId: () => `acr_${cuid12()}`,

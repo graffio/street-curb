@@ -23,7 +23,7 @@ export const ActionRequest = {
         // Actor/Subject (SOC2)
         actorId        : FieldTypes.actorId,
         subjectId      : FieldTypes.subjectId,
-        subjectType    : /^(user|organization|project)$/,
+        subjectType    : /^(blockface|user|organization|project)$/,
 
         // Tenant scoping (SOC2) - optional because some user actions aren't org-scoped
         organizationId : '/^org_[a-z0-9]{12,}$/?', // copied from FieldTypes.organizationId for now due to bugs in generator

@@ -12,7 +12,7 @@ test('Given OrganizationUpdated action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token, name: 'Original Name' })
 
             const action = Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' })
-            await submitAndExpectSuccess({ action, namespace, token })
+            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const organization = await readOrganization({ namespace, organizationId, projectId })
             t.equal(organization.name, 'Updated Name', 'Then name updated')
@@ -25,7 +25,7 @@ test('Given OrganizationUpdated action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const action = Action.OrganizationUpdated.from({ organizationId, status: 'suspended' })
-            await submitAndExpectSuccess({ action, namespace, token })
+            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const organization = await readOrganization({ namespace, organizationId, projectId })
             t.equal(organization.status, 'suspended', 'Then status updated')
