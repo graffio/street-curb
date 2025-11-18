@@ -193,7 +193,8 @@ const generateStaticTaggedType = async typeDefinition => {
         return parsed.baseType === 'LookupTable'
     })
 
-    // Collect child types from LookupTable and Tagged fields for imports
+    // Collect child types from LookupTable and Tagged fields for import
+
     const childTypes = new Set()
     Object.values(fields).forEach(fieldType => {
         const parsed = TaggedFieldType.fromString(fieldType.toString())
@@ -319,11 +320,34 @@ const generateStaticTaggedSumType = async typeDefinition => {
         .map(variantName => constructorForVariant(name, variants, variantName))
         .join('\n\n')
 
+    // Collect child types from all variant fields for imports
+    const childTypes = new Set()
+    Object.values(variants).forEach(variantFields => {
+        Object.values(variantFields).forEach(fieldType => {
+            const parsed = TaggedFieldType.fromString(fieldType.toString())
+            if (parsed.baseType === 'LookupTable' || parsed.baseType === 'Tagged')
+                if (parsed.taggedType) childTypes.add(parsed.taggedType)
+        })
+    })
+
+    // Filter out child types that are already imported by the user
+    const existingImports = new Set(imports.flatMap(imp => imp.specifiers.map(spec => spec.local)))
+    const newChildTypes = Array.from(childTypes).filter(typeName => !existingImports.has(typeName))
+
+    // Generate import statements for child types (only those not already imported)
+    const childTypeImports = newChildTypes
+        .map(
+            typeName =>
+                `import { ${typeName} } from './${typeName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}.js'`,
+        )
+        .join('\n        ')
+
     const code = `
         ${stringifyObjectAsMultilineComment(typeDefinition.variants, typeDefinition.relativePath, name)}
 
         ${generateImportsSection(imports)}
         import * as R from '@graffio/cli-type-generator'
+        ${childTypeImports || ''}
 
         // -------------------------------------------------------------------------------------------------------------
         //

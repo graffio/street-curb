@@ -14,11 +14,11 @@ const encodeTimestamp = date => admin.firestore.Timestamp.fromDate(date)
  * @sig createFirestoreContext :: (String, String, String?, Transaction?) -> FirestoreContext
  */
 const createFirestoreContext = (namespace, organizationId, projectId, tx = null) => {
-    const organizationPrefix = `${namespace}/organizations/${organizationId}/`
-    const projectsPrefix = `${organizationPrefix}/projects/${projectId}/`
+    const organizationPrefix = `${namespace}/organizations/${organizationId}`
+    const projectsPrefix = `${organizationPrefix}/projects/${projectId}`
 
-    const completedActions = FirestoreAdminFacade(ActionRequest, `${namespace}/`, tx)
-    const organizations = FirestoreAdminFacade(Organization, `${namespace}/`, tx)
+    const completedActions = FirestoreAdminFacade(ActionRequest, `${namespace}`, tx)
+    const organizations = FirestoreAdminFacade(Organization, `${namespace}`, tx)
     const users = FirestoreAdminFacade(User, `${namespace}/`, tx)
     const projects = organizationId ? FirestoreAdminFacade(Project, organizationPrefix, tx) : null
     const blockfaces = organizationId && projectId ? FirestoreAdminFacade(Blockface, projectsPrefix, tx) : null

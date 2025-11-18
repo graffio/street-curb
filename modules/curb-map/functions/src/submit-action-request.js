@@ -102,9 +102,11 @@ const validateRequiredFields = body =>
         ? null
         : 'Missing required fields: action, idempotencyKey, correlationId'
 
+const decodeTimestamp = timestamp => (timestamp && timestamp.toDate ? timestamp.toDate() : timestamp)
+
 const validateAction = (plainAction, logger) => {
     try {
-        Action.fromFirestore(plainAction)
+        Action.fromFirestore(plainAction, decodeTimestamp)
         return null
     } catch (error) {
         // Can't use Action.toLog since construction failed - redact PII while preserving structure for debugging
@@ -254,7 +256,7 @@ const dispatchToHandler = actionRequest =>
  */
 const enrichActionRequest = req => {
     const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
-    const action = Action.fromFirestore(req.body.action)
+    const action = Action.fromFirestore(req.body.action, decodeTimestamp)
     const { organizationId, projectId } = action
     const { id: subjectId, type: subjectType } = Action.getSubject(action)
     const { idempotencyKey, correlationId } = req.body

@@ -27,8 +27,12 @@ const buildUrl = () => {
     return `${origin}/${projectId}/${region}/submitActionRequest`
 }
 
+// @sig encodeTimestamp :: Date -> Timestamp
+const encodeTimestamp = date => date
+
 // @sig convertActionToPlain :: (Action | Object | null) -> Object | null
-const convertActionToPlain = action => (action && Action.is(action) ? Action.toFirestore(action) : action)
+const convertActionToPlain = action =>
+    action && Action.is(action) ? Action.toFirestore(action, encodeTimestamp) : action
 
 // @sig buildPayload :: (Object | null, String, String) -> Object
 const buildPayload = (plainAction, idempotencyKey, correlationId) => ({
