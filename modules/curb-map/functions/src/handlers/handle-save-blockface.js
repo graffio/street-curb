@@ -10,17 +10,12 @@ const handleSaveBlockface = async (logger, fsContext, actionRequest) => {
     const { action } = actionRequest
     const { blockface, changes } = action
 
-    // Build Firestore path from denormalized IDs
-    const path = `organizations/${blockface.organizationId}/projects/${blockface.projectId}/blockfaces/${blockface.id}`
-
     // Serialize blockface with updated metadata
-    const blockfaceData = {
+    const projectContext = fsContext.forProject(blockface.organizationId, blockface.projectId)
+    await projectContext.blockfaces.write({
         ...Blockface.toFirestore(blockface, fsContext.encodeTimestamp),
         ...updatedMetadata(fsContext, actionRequest),
-    }
-
-    // Write to Firestore
-    await fsContext.db.doc(path).set(blockfaceData)
+    })
     logger.flowStep('Blockface saved')
 
     // Log changes for audit trail
