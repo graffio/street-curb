@@ -57,7 +57,7 @@ export const Action = {
         // Blockface Actions
         CreateBlockface: { blockface: 'Blockface' },
         SelectBlockface: { blockface: 'Blockface' },
-        SaveBlockface:   { blockface: 'Blockface', changes: 'Object' },
+        SaveBlockface:   { blockface: 'Blockface' },
 
         // Segment Actions
         UpdateSegmentUse   : { index: 'Number', use: 'String', },

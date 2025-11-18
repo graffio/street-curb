@@ -187,14 +187,19 @@ const generateStaticTaggedType = async typeDefinition => {
     // Validate no [Date] arrays since Firestore facade can't handle them
     validateNoDateArrays(name, fields)
 
-    // Check if we need LookupTable import
-    const needsLookupTable = Object.values(fields).some(fieldType => {
-        const parsed = TaggedFieldType.fromString(fieldType.toString())
-        return parsed.baseType === 'LookupTable'
-    })
+    // Filter out child types that are already imported by the user
+    // Import info has structure: { source, specifiers: [{ type, imported, local }] }
+    const existingImports = new Set(imports.flatMap(imp => imp.specifiers.map(spec => spec.local)))
+
+    // Check if we need LookupTable import (and user hasn't already imported it)
+    const needsLookupTable =
+        !existingImports.has('LookupTable') &&
+        Object.values(fields).some(fieldType => {
+            const parsed = TaggedFieldType.fromString(fieldType.toString())
+            return parsed.baseType === 'LookupTable'
+        })
 
     // Collect child types from LookupTable and Tagged fields for import
-
     const childTypes = new Set()
     Object.values(fields).forEach(fieldType => {
         const parsed = TaggedFieldType.fromString(fieldType.toString())
@@ -202,9 +207,6 @@ const generateStaticTaggedType = async typeDefinition => {
             if (parsed.taggedType) childTypes.add(parsed.taggedType)
     })
 
-    // Filter out child types that are already imported by the user
-    // Import info has structure: { source, specifiers: [{ type, imported, local }] }
-    const existingImports = new Set(imports.flatMap(imp => imp.specifiers.map(spec => spec.local)))
     const newChildTypes = Array.from(childTypes).filter(typeName => !existingImports.has(typeName))
 
     // Generate import statements for child types (only those not already imported)

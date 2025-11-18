@@ -46,8 +46,7 @@
  *  SelectBlockface
  *      blockface: "Blockface"
  *  SaveBlockface
- *      blockface: "Blockface",
- *      changes  : "Object"
+ *      blockface: "Blockface"
  *  UpdateSegmentUse
  *      index: "Number",
  *      use  : "String"
@@ -959,15 +958,13 @@ SelectBlockfaceConstructor.fromFirestore = SelectBlockfaceConstructor._fromFires
 // Variant Action.SaveBlockface
 //
 // -------------------------------------------------------------------------------------------------------------
-const SaveBlockfaceConstructor = function SaveBlockface(blockface, changes) {
-    const constructorName = 'Action.SaveBlockface(blockface, changes)'
-    R.validateArgumentLength(constructorName, 2, arguments)
+const SaveBlockfaceConstructor = function SaveBlockface(blockface) {
+    const constructorName = 'Action.SaveBlockface(blockface)'
+    R.validateArgumentLength(constructorName, 1, arguments)
     R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
-    R.validateObject(constructorName, 'changes', false, changes)
 
     const result = Object.create(SaveBlockfacePrototype)
     result.blockface = blockface
-    result.changes = changes
     return result
 }
 
@@ -979,7 +976,7 @@ const SaveBlockfacePrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.SaveBlockface(${R._toString(this.blockface)}, ${R._toString(this.changes)})`
+            return `Action.SaveBlockface(${R._toString(this.blockface)})`
         },
         enumerable: false,
     },
@@ -1002,12 +999,11 @@ const SaveBlockfacePrototype = Object.create(ActionPrototype, {
 SaveBlockfaceConstructor.prototype = SaveBlockfacePrototype
 SaveBlockfaceConstructor.is = val => val && val.constructor === SaveBlockfaceConstructor
 SaveBlockfaceConstructor.toString = () => 'Action.SaveBlockface'
-SaveBlockfaceConstructor._from = o => Action.SaveBlockface(o.blockface, o.changes)
+SaveBlockfaceConstructor._from = o => Action.SaveBlockface(o.blockface)
 SaveBlockfaceConstructor.from = SaveBlockfaceConstructor._from
 
 SaveBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
     blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
-    changes: o.changes,
 })
 
 SaveBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
@@ -1015,7 +1011,6 @@ SaveBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
         blockface: Blockface.fromFirestore
             ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
             : Blockface.from(doc.blockface),
-        changes: doc.changes,
     })
 
 // Public aliases (can be overridden)

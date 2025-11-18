@@ -102,7 +102,13 @@ const validateRequiredFields = body =>
         ? null
         : 'Missing required fields: action, idempotencyKey, correlationId'
 
-const decodeTimestamp = timestamp => (timestamp && timestamp.toDate ? timestamp.toDate() : timestamp)
+// @sig decodeTimestamp :: (String | Timestamp) -> Date
+// Decode ISO string from HTTP JSON to Date, or Firestore Timestamp to Date
+const decodeTimestamp = timestamp => {
+    if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate()
+    if (typeof timestamp === 'string') return new Date(timestamp)
+    return timestamp
+}
 
 const validateAction = (plainAction, logger) => {
     try {
@@ -257,9 +263,8 @@ const dispatchToHandler = actionRequest =>
 const enrichActionRequest = req => {
     const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
     const action = Action.fromFirestore(req.body.action, decodeTimestamp)
-    const { organizationId, projectId } = action
+    const { organizationId, projectId, idempotencyKey, correlationId } = req.body
     const { id: subjectId, type: subjectType } = Action.getSubject(action)
-    const { idempotencyKey, correlationId } = req.body
 
     return { namespace, action, organizationId, projectId, subjectId, subjectType, idempotencyKey, correlationId }
 }

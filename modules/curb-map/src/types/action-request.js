@@ -5,7 +5,7 @@
  *  action        : "Action",
  *  actorId       : FieldTypes.actorId,
  *  subjectId     : FieldTypes.subjectId,
- *  subjectType   : /^(user|organization|project)$/,
+ *  subjectType   : /^(blockface|user|organization|project)$/,
  *  organizationId: "/^org_[a-z0-9]{12,}$/?",
  *  projectId     : "/^prj_[a-z0-9]{12,}$/?",
  *  idempotencyKey: FieldTypes.idempotencyKey,
@@ -52,7 +52,7 @@ const ActionRequest = function ActionRequest(
     R.validateTag(constructorName, 'Action', 'action', false, action)
     R.validateRegex(constructorName, FieldTypes.actorId, 'actorId', false, actorId)
     R.validateRegex(constructorName, FieldTypes.subjectId, 'subjectId', false, subjectId)
-    R.validateRegex(constructorName, /^(user|organization|project)$/, 'subjectType', false, subjectType)
+    R.validateRegex(constructorName, /^(blockface|user|organization|project)$/, 'subjectType', false, subjectType)
     R.validateRegex(constructorName, /^org_[a-z0-9]{12,}$/, 'organizationId', true, organizationId)
     R.validateRegex(constructorName, /^prj_[a-z0-9]{12,}$/, 'projectId', true, projectId)
     R.validateRegex(constructorName, FieldTypes.idempotencyKey, 'idempotencyKey', false, idempotencyKey)

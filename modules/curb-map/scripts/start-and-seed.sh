@@ -1,6 +1,7 @@
 #!/bin/bash
 # ABOUTME: Start Firebase emulators and seed data
 # ABOUTME: Keeps emulators running after seeding completes
+# ABOUTME: Usage: ./start-and-seed.sh [debug]  - Pass 'debug' to enable function debugging on port 9229
 
 set -e
 
@@ -16,12 +17,25 @@ log() {
     echo -e "${GREEN_BOLD}    [seeding] $1${NC}"
 }
 
+# Parse command line arguments
+DEBUG_MODE=false
+if [ "$1" = "debug" ]; then
+    DEBUG_MODE=true
+    log "Debug mode enabled - Functions will be inspectable on port 9229"
+fi
+
 # Kill any existing emulator processes
 pkill -f 'firebase emulators' || true
 
+# Build emulator command
+EMULATOR_CMD="firebase emulators:start --only firestore,auth,functions"
+if [ "$DEBUG_MODE" = true ]; then
+    EMULATOR_CMD="$EMULATOR_CMD --inspect-functions=9229"
+fi
+
 # Start emulators in background
 log "Starting Firebase emulators..."
-firebase emulators:start --only firestore,auth,functions &
+$EMULATOR_CMD &
 EMULATOR_PID=$!
 
 # Wait for emulators to be ready (check Firestore and Auth ports)

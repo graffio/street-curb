@@ -1,9 +1,10 @@
+import { LookupTable } from '@graffio/functional'
 import t from 'tap'
+import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 import { Action, Blockface, Segment } from '../../src/types/index.js'
 import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
 import { createOrganization } from '../integration-test-helpers/test-helpers.js'
-import { createFirestoreContext } from '../../functions/src/firestore-context.js'
 
 const { test } = t
 
@@ -15,7 +16,10 @@ const createTestBlockface = (organizationId, projectId) =>
         projectId,
         geometry: null,
         streetName: 'Test Street',
-        segments: [Segment('seg_000000000001', 'Parking', 50), Segment('seg_000000000002', 'Loading', 30)],
+        segments: LookupTable(
+            [Segment('seg_000000000001', 'Parking', 50), Segment('seg_000000000002', 'Loading', 30)],
+            Segment,
+        ),
         createdAt: new Date(),
         createdBy: 'usr_000000000001',
         updatedAt: new Date(),
@@ -28,10 +32,9 @@ test('Given SaveBlockface action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const blockface = createTestBlockface(organizationId, projectId)
-            const changes = { added: [], modified: [], removed: [] }
 
-            const action = Action.SaveBlockface(blockface, changes)
-            await submitAndExpectSuccess({ action, namespace, token })
+            const action = Action.SaveBlockface(blockface)
+            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             // Read blockface from Firestore
             const fsContext = createFirestoreContext(namespace, organizationId, projectId)
@@ -46,23 +49,24 @@ test('Given SaveBlockface action', t => {
         t.end()
     })
 
-    t.test('When blockface has modified segments Then changes are logged', async t => {
-        await asSignedInUser('save-with-changes', async ({ namespace, token }) => {
+    t.test('When blockface is saved multiple times Then each version persists', async t => {
+        await asSignedInUser('save-multiple-times', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const blockface = createTestBlockface(organizationId, projectId)
-            const changes = {
-                added: [{ index: 2, segment: Segment('seg_000000000003', 'Bus Stop', 20) }],
-                modified: [{ index: 0, field: 'use', oldValue: 'Parking', newValue: 'Disabled' }],
-                removed: [{ index: 1, segment: Segment('seg_000000000002', 'Loading', 30) }],
-            }
+            const action = Action.SaveBlockface(blockface)
+            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
-            const action = Action.SaveBlockface(blockface, changes)
-            await submitAndExpectSuccess({ action, namespace, token })
+            // Modify and save again
+            const updatedBlockface = Blockface.from({ ...blockface, streetName: 'Updated Street' })
+            const action2 = Action.SaveBlockface(updatedBlockface)
+            await submitAndExpectSuccess({ action: action2, namespace, token, organizationId, projectId })
 
-            // Changes are logged but not validated in this test
-            // Cloud Function logs would contain the change details
-            t.pass('Then action completes successfully with changes logged')
+            // Read from Firestore
+            const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+            const savedBlockface = await fsContext.blockfaces.read(blockface.id)
+
+            t.equal(savedBlockface.streetName, 'Updated Street', 'Then updated street name persists')
         })
         t.end()
     })

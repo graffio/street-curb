@@ -3,6 +3,7 @@
  * Compares two blockfaces and identifies changes to segments
  */
 
+import { LookupTable } from '@graffio/functional'
 import { test } from 'tap'
 import { Blockface, Segment } from '../src/types/index.js'
 import { diffBlockfaces } from '../src/utils/diff-blockface.js'
@@ -21,7 +22,7 @@ const createBlockface = segments =>
         projectId: 'prj_000000000001',
         geometry: null,
         streetName: 'Test St',
-        segments,
+        segments: LookupTable(segments, Segment),
         createdAt: new Date(),
         createdBy: 'usr_000000000001',
         updatedAt: new Date(),

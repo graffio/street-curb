@@ -6,7 +6,6 @@ import { functionsUrl } from '../config/index.js'
 import { store } from '../store/index.js'
 import * as S from '../store/selectors.js'
 import { Action, FieldTypes, Organization } from '../types/index.js'
-import { diffBlockfaces } from '../utils/diff-blockface.js'
 
 const { getState } = store
 
@@ -114,12 +113,7 @@ const saveBlockfaceImmediately = blockfaceId => {
     const currentBlockface = S.blockface(state, blockfaceId)
     if (!currentBlockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
 
-    // Compute changes from saved snapshot
-    const previousBlockface = S.savedBlockfaceSnapshot(state)
-    const changes = diffBlockfaces(previousBlockface, currentBlockface)
-
-    // Post SaveBlockface action (reducer will update snapshot)
-    post(Action.SaveBlockface(currentBlockface, changes))
+    post(Action.SaveBlockface(currentBlockface))
 }
 
 /*

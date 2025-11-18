@@ -5,7 +5,7 @@
  *  sourceId      : "String",
  *  geometry      : "Object",
  *  streetName    : "String",
- *  segments      : "[Segment]",
+ *  segments      : "{Segment:id}",
  *  organizationId: FieldTypes.organizationId,
  *  projectId     : FieldTypes.projectId,
  *  createdAt     : "Date",
@@ -47,7 +47,7 @@ const Blockface = function Blockface(
     R.validateString(constructorName, 'sourceId', false, sourceId)
     R.validateObject(constructorName, 'geometry', false, geometry)
     R.validateString(constructorName, 'streetName', false, streetName)
-    R.validateArray(constructorName, 1, 'Tagged', 'Segment', 'segments', false, segments)
+    R.validateLookupTable(constructorName, 'Segment', 'segments', false, segments)
     R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateRegex(constructorName, FieldTypes.projectId, 'projectId', false, projectId)
     R.validateDate(constructorName, 'createdAt', false, createdAt)
@@ -132,7 +132,7 @@ Blockface._toFirestore = (o, encodeTimestamps) => {
         sourceId: o.sourceId,
         geometry: o.geometry,
         streetName: o.streetName,
-        segments: o.segments.map(item1 => Segment.toFirestore(item1, encodeTimestamps)),
+        segments: R.lookupTableToFirestore(Segment, 'id', encodeTimestamps, o.segments),
         organizationId: o.organizationId,
         projectId: o.projectId,
         createdAt: encodeTimestamps(o.createdAt),
@@ -150,9 +150,7 @@ Blockface._fromFirestore = (doc, decodeTimestamps) =>
         sourceId: doc.sourceId,
         geometry: doc.geometry,
         streetName: doc.streetName,
-        segments: doc.segments.map(item1 =>
-            Segment.fromFirestore ? Segment.fromFirestore(item1, decodeTimestamps) : Segment.from(item1),
-        ),
+        segments: R.lookupTableFromFirestore(Segment, 'id', decodeTimestamps, doc.segments),
         organizationId: doc.organizationId,
         projectId: doc.projectId,
         createdAt: decodeTimestamps(doc.createdAt),
@@ -176,7 +174,10 @@ Blockface._roundToPrecision = value => Math.round(value * 10) / 10
 Blockface.updateSegmentUse = (blockface, updateSegmentUseAction) => {
     const { index, use } = updateSegmentUseAction
     if (!blockface?.segments[index]) return blockface
-    const segments = blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment))
+    const segments = LookupTable(
+        blockface.segments.map((segment, i) => (i === index ? Segment.updateUse(segment, use) : segment)),
+        Segment,
+    )
     return Blockface.from({
         ...blockface,
         segments,
@@ -198,7 +199,10 @@ Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
         let newUnknownRemaining = Blockface._roundToPrecision(currentUnknownRemaining - lengthDelta)
         if (Math.abs(newUnknownRemaining) < 0.01) newUnknownRemaining = 0
         if (newUnknownRemaining < 0) return blockface
-        const newSegments = blockface.segments.map((s, i) => (i === index ? Segment(s.id, s.use, roundedLength) : s))
+        const newSegments = LookupTable(
+            blockface.segments.map((s, i) => (i === index ? Segment(s.id, s.use, roundedLength) : s)),
+            Segment,
+        )
         return Blockface.from({
             ...blockface,
             segments: newSegments,
@@ -207,11 +211,14 @@ Blockface.updateSegmentLength = (blockface, updateSegmentLengthAction) => {
     const nextSegment = blockface.segments[index + 1]
     const newNextLength = Blockface._roundToPrecision(nextSegment.length - lengthDelta)
     if (newNextLength <= 0) return blockface
-    const newSegments = blockface.segments.map((seg, i) => {
-        if (i === index) return Segment(seg.id, seg.use, roundedLength)
-        if (i === index + 1) return Segment(seg.id, seg.use, newNextLength)
-        return seg
-    })
+    const newSegments = LookupTable(
+        blockface.segments.map((seg, i) => {
+            if (i === index) return Segment(seg.id, seg.use, roundedLength)
+            if (i === index + 1) return Segment(seg.id, seg.use, newNextLength)
+            return seg
+        }),
+        Segment,
+    )
     return Blockface.from({
         ...blockface,
         segments: newSegments,
@@ -232,7 +239,7 @@ Blockface.addSegment = (blockface, addSegmentAction) => {
     newSegments.splice(insertIndex, 0, newSegment)
     return Blockface.from({
         ...blockface,
-        segments: newSegments,
+        segments: LookupTable(newSegments, Segment),
     })
 }
 
@@ -251,12 +258,15 @@ Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
     const [newSegmentLength, remainingSegmentLength] = calculateSplitLengths(targetSegment.length, desiredLength)
     const newSegment = Segment(FieldTypes.newSegmentId(), 'Parking', newSegmentLength)
     const modifiedTargetSegment = Segment(targetSegment.id, targetSegment.use, remainingSegmentLength)
-    const newSegments = [
-        ...blockface.segments.slice(0, index),
-        newSegment,
-        modifiedTargetSegment,
-        ...blockface.segments.slice(index + 1),
-    ]
+    const newSegments = LookupTable(
+        [
+            ...blockface.segments.slice(0, index),
+            newSegment,
+            modifiedTargetSegment,
+            ...blockface.segments.slice(index + 1),
+        ],
+        Segment,
+    )
     return Blockface.from({
         ...blockface,
         segments: newSegments,
