@@ -3,7 +3,7 @@
 
 import { Box, Button, Checkbox, Flex, Heading } from '@graffio/design-system'
 import { LookupTable } from '@graffio/functional'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/index.js'
 import * as S from '../store/selectors.js'
@@ -92,17 +92,22 @@ const cityBlockfaceId = feature => {
  */
 const CurbMapEditorPanel = () => {
     const handleEditorClose = () => setIsEditorVisible(false)
-    const handleBlockfaceSelected = geoJsonFeatureAndLength => {
+
+    const _handleBlockfaceSelected = geoJsonFeatureAndLength => {
         setGeoJsonFeatureAndLength(geoJsonFeatureAndLength)
         setIsEditorVisible(true)
 
         const { feature } = geoJsonFeatureAndLength // { feature: GeoJSONFeature, length: Number }
         const { geometry, properties = {} } = feature
         const { street_nam: streetName = 'unknown', cnn_id: cnn } = properties
+        const sourceId = cityBlockfaceId(geoJsonFeatureAndLength.feature)
+        const existing = existingBlockfaces.find(bf => bf.sourceId === sourceId)
+
+        if (existing) return post(Action.SelectBlockface(existing))
 
         const blockface = Blockface.from({
             id: FieldTypes.newBlockfaceId(),
-            sourceId: cityBlockfaceId(feature),
+            sourceId,
             geometry,
             streetName,
             segments: LookupTable([], Segment, 'id'),
@@ -116,10 +121,10 @@ const CurbMapEditorPanel = () => {
             updatedBy: currentUserId,
         })
 
-        const action = Action.CreateBlockface(blockface)
-        post(action)
+        post(Action.CreateBlockface(blockface))
     }
 
+    const existingBlockfaces = useSelector(S.blockfaces)
     const blockface = useSelector(S.currentBlockface)
     const organization = useSelector(S.currentOrganization)
     const currentUserId = useSelector(S.currentUserId)
@@ -127,6 +132,9 @@ const CurbMapEditorPanel = () => {
 
     const [geoJsonFeatureAndLength, setGeoJsonFeatureAndLength] = useState({})
     const [isEditorVisible, setIsEditorVisible] = useState(false)
+
+    const dependencies = [existingBlockfaces, organization, currentUserId]
+    const handleBlockfaceSelected = useCallback(_handleBlockfaceSelected, dependencies)
 
     return (
         <Box width="100%" height="100%" style={{ position: 'relative', overflow: 'hidden' }}>
