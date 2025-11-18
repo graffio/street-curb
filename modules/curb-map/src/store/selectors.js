@@ -5,11 +5,9 @@ const S = {
     currentBlockfaceId     : state => state.currentBlockfaceId,
     currentOrganization    : state => state.currentOrganization,
     currentOrganizationId  : state => state.currentOrganization.id,
+    currentProjectId       : state => state.currentProjectId,
     currentUser            : state => state.currentUser,
     currentUserId          : state => state.currentUser.id,
-   
-    // todo: store project properly
-    currentProjectId      : state => state.currentOrganization.defaultProjectId,
     
     // persisted
     blockfaces             : state => state.blockfaces,

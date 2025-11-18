@@ -9,6 +9,7 @@ const initialState = {
     currentBlockfaceId: null,
     currentUser: null,
     currentOrganization: null,
+    currentProjectId: null,
 
     // persisted from Firestore
     blockfaces: LookupTable([], Blockface, 'id'),
@@ -62,8 +63,8 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         // Firebase Auth
         AuthenticationCompleted: () => state,
         
-        // Data Loading
-        LoadAllInitialData     : () => ({ ...state, ...action }),
+        // Data Loading. For now, with 1:1 org:project mapping, store just the project ID
+        LoadAllInitialData     : () => ({ ...state, ...action, currentProjectId: action.currentOrganization?.defaultProjectId || null }),
         
         // Blockface Actions
         CreateBlockface        : () => _setBlockface(state, action.blockface),
