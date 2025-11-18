@@ -11,21 +11,6 @@ import { diffBlockfaces } from '../utils/diff-blockface.js'
 const { getState } = store
 
 /**
- * Debounce timer map for blockface auto-save
- * Maps blockfaceId -> timeoutId
- * @type {Map<string, NodeJS.Timeout>}
- */
-const pendingSaves = new Map()
-
-/**
- * Snapshot of blockfaces at the time save was scheduled
- * Used to compute diffs when save executes
- * Maps blockfaceId -> Blockface
- * @type {Map<string, Blockface>}
- */
-const savedBlockfaceSnapshots = new Map()
-
-/**
  * Get current user's Firebase Auth ID token
  * @sig getIdToken :: () -> Promise<String>
  */
@@ -114,46 +99,38 @@ const rollbackState = snapshot => {
     store.dispatch({ type: 'ROLLBACK_STATE', payload: snapshot })
 }
 
-// Call Action.SaveBlockface and manage pendingSaves
-const _saveBlockface = blockfaceId => {
-    // pending is done
-    const timeoutId = pendingSaves.get(blockfaceId)
-    if (timeoutId) clearTimeout(timeoutId)
-    pendingSaves.delete(blockfaceId)
+// Debounce timer for blockface auto-save
+// Only one blockface is selected at a time, so only one pending save
+let timeoutId = null
 
-    const currentBlockface = S.blockface(getState(), blockfaceId)
+// Call Action.SaveBlockface and clear pending timer
+const saveBlockfaceImmediately = blockfaceId => {
+    if (timeoutId) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+    }
+
+    const state = getState()
+    const currentBlockface = S.blockface(state, blockfaceId)
     if (!currentBlockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
 
     // Compute changes from saved snapshot
-    const previousBlockface = savedBlockfaceSnapshots.get(blockfaceId)
+    const previousBlockface = S.savedBlockfaceSnapshot(state)
     const changes = diffBlockfaces(previousBlockface, currentBlockface)
 
-    // Update snapshot for next save
-    savedBlockfaceSnapshots.set(blockfaceId, currentBlockface)
-
-    // Post SaveBlockface action
+    // Post SaveBlockface action (reducer will update snapshot)
     post(Action.SaveBlockface(currentBlockface, changes))
 }
 
-/**
+/*
  * Schedule a debounced save for a blockface
  * Clears any existing pending save and schedules a new one after 3 seconds
- *
- * @sig scheduleBlockfaceSave :: String -> void
+ * @sig debounceBlockfaceSave :: String -> void
  */
-const scheduleBlockfaceSave = blockfaceId => {
-    if (pendingSaves.has(blockfaceId)) clearTimeout(pendingSaves.get(blockfaceId))
-    const timerId = setTimeout(() => _saveBlockface(blockfaceId), 3000)
-    pendingSaves.set(blockfaceId, timerId)
+const debounceBlockfaceSave = blockfaceId => {
+    if (timeoutId) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => saveBlockfaceImmediately(blockfaceId), 3000)
 }
-
-/**
- * Flush any pending save for a blockface immediately
- * Clears the debounce timer and saves right away
- *
- * @sig flushBlockfaceSave :: String -> void
- */
-const flushBlockfaceSave = _saveBlockface
 
 /**
  * Get persistence strategy for action
@@ -177,7 +154,9 @@ const getPersistenceStrategy = action =>
         UserCreated            : () => submitActionRequest,
         UserForgotten          : () => submitActionRequest,
         UserUpdated            : () => submitActionRequest,
-
+        
+        SaveBlockface          : () => submitActionRequest,
+        
         // Auth is local-only (already persisted by Firebase Auth)
         AuthenticationCompleted: () => null,
 
@@ -187,13 +166,19 @@ const getPersistenceStrategy = action =>
         // Blockface/Segment actions are local-only (no Firestore persistence yet)
         CreateBlockface        : () => null,
         SelectBlockface        : () => null,
-        SaveBlockface          : () => submitActionRequest,
         UpdateSegmentUse       : () => null,
         UpdateSegmentLength    : () => null,
         AddSegment             : () => null,
         AddSegmentLeft         : () => null,
         ReplaceSegments        : () => null,
     })
+
+const actionTriggersBlockfaceChange = action =>
+    Action.UpdateSegmentUse.is(action) ||
+    Action.UpdateSegmentLength.is(action) ||
+    Action.AddSegment.is(action) ||
+    Action.AddSegmentLeft.is(action) ||
+    Action.ReplaceSegments.is(action)
 
 /**
  * Post a domain Action: authorize, update Redux, persist to Firestore
@@ -202,6 +187,7 @@ const getPersistenceStrategy = action =>
  * Phase 1: Validate and authorize
  * Phase 2: Capture state snapshot
  * Phase 3: Optimistic Redux update
+ * Phase 3.5: debounce blockface saves
  * Phase 4: Persist to Firestore (async)
  * Phase 5: Rollback on failure with toast notification
  *
@@ -235,6 +221,7 @@ const post = action => {
 
     // Phase 1: Get current state and validate
     const state = getState()
+    const previousBlockfaceId = S.currentBlockfaceId(state)
 
     // LoadAllInitialData is the ONLY action that bypasses authorization
     // It runs before currentUser/currentOrganization exist (it loads them)
@@ -247,29 +234,12 @@ const post = action => {
     // Phase 3: Optimistic Redux update (always happens)
     store.dispatch({ type: action.constructor.toString(), payload: action })
 
-    // Phase 3.5: Handle debounced blockface saves
+    // Phase 3.5: debounce blockface saves
+    // Any action that affects the current Blockface is debounced for 3 seconds before saving,
+    // but if a new Blockface is selected then immediately save the previously-pending saves
     const currentBlockfaceId = S.currentBlockfaceId(getState())
-
-    if (Action.CreateBlockface.is(action) || Action.SelectBlockface.is(action)) {
-        // Seed snapshot when blockface is created or loaded from Firestore
-        savedBlockfaceSnapshots.set(action.blockface.id, action.blockface)
-
-        // Flush pending save for previous blockface before switching
-        if (Action.SelectBlockface.is(action)) {
-            const previousBlockfaceId = S.currentBlockfaceId(state) // state before dispatch
-            if (previousBlockfaceId && previousBlockfaceId !== action.blockface.id)
-                flushBlockfaceSave(previousBlockfaceId)
-        }
-    } else if (
-        Action.UpdateSegmentUse.is(action) ||
-        Action.UpdateSegmentLength.is(action) ||
-        Action.AddSegment.is(action) ||
-        Action.AddSegmentLeft.is(action) ||
-        Action.ReplaceSegments.is(action)
-    ) {
-        // Schedule debounced save for segment changes
-        if (currentBlockfaceId) scheduleBlockfaceSave(currentBlockfaceId)
-    }
+    if (actionTriggersBlockfaceChange(action)) debounceBlockfaceSave(currentBlockfaceId) // reset 3-second timer
+    if (previousBlockfaceId && Action.SelectBlockface.is(action)) saveBlockfaceImmediately(previousBlockfaceId)
 
     // Phase 4: Persist to backend (async, may fail)
     const persistenceStrategy = getPersistenceStrategy(action)

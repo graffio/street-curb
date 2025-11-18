@@ -9,6 +9,7 @@ const initialState = {
     currentBlockfaceId: null,
     currentUser: null,
     currentOrganization: null,
+    savedBlockfaceSnapshot: null, // Blockface snapshot at selection time for diff computation
 
     // persisted from Firestore
     blockfaces: LookupTable([], Blockface, 'id'),
@@ -66,9 +67,9 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         LoadAllInitialData     : () => ({ ...state, ...action }),
         
         // Blockface Actions
-        CreateBlockface        : () => _setBlockface(state, action.blockface),
-        SelectBlockface        : () => _setBlockface(state, _blockface(state, action.blockface.id)),
-        SaveBlockface          : () => state,
+        CreateBlockface        : () => ({ ..._setBlockface(state, action.blockface), savedBlockfaceSnapshot: action.blockface }),
+        SelectBlockface        : () => ({ ..._setBlockface(state, _blockface(state, action.blockface.id)), savedBlockfaceSnapshot: action.blockface }),
+        SaveBlockface          : () => ({ ...state, savedBlockfaceSnapshot: action.blockface }),
 
         // Segment Actions
         UpdateSegmentUse       : () => _setBlockface(state, Blockface.updateSegmentUse(_blockface(state), action)),
