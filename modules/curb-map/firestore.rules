@@ -20,10 +20,12 @@ service cloud.firestore {
         // -------------------------------------------------------------------------------------------------------------
 
         // Completed Actions collection (immutable audit trail)
-        match /{path=**}/completedActions/{id} { allow read: if isMemberOfOrganization(resource.data.organizationId); }
-        match /{path=**}/organizations/{orgId} { allow read: if isMemberOfOrganization(orgId); }
-        match /{path=**}/projects/{projectId}  { allow read: if isMemberOfOrganization(resource.data.organizationId); }
-        match /{path=**}/users/{userId}        { allow read: if isOwnUserDoc(userId); }
+        match /{path=**}/completedActions/{id}                                     { allow read: if isMemberOfOrganization(resource.data.organizationId); }
+        match /{path=**}/organizations/{orgId}                                     { allow read: if isMemberOfOrganization(orgId); }
+        match /{path=**}/projects/{projectId}                                      { allow read: if isMemberOfOrganization(resource.data.organizationId); }
+        match /{path=**}/users/{userId}                                            { allow read: if isOwnUserDoc(userId); }
+
+        match /organizations/{orgId}/projects/{projectId}/blockfaces/{blockfaceId} { allow read: if isMemberOfOrganization(orgId); }
 
         // Default: Deny all other collections
         match /{document=**} {
