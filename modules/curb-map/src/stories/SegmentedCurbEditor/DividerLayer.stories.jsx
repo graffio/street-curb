@@ -69,17 +69,17 @@ const useTestData = () => {
             updatedBy: mockUser.id,
         })
 
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
-        post(Action.CreateBlockface(blockface))
-        post(Action.AddSegment(-1))
-        post(Action.UpdateSegmentLength(0, 80))
-        post(Action.UpdateSegmentUse(0, 'Parking'))
-        post(Action.AddSegment(0))
-        post(Action.UpdateSegmentLength(1, 60))
-        post(Action.UpdateSegmentUse(1, 'Loading'))
-        post(Action.AddSegment(1))
-        post(Action.UpdateSegmentLength(2, 50))
-        post(Action.UpdateSegmentUse(2, 'Parking'))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
+        post(Action.BlockfaceCreated(blockface))
+        post(Action.SegmentAdded(-1))
+        post(Action.SegmentLengthUpdated(0, 80))
+        post(Action.SegmentUseUpdated(0, 'Parking'))
+        post(Action.SegmentAdded(0))
+        post(Action.SegmentLengthUpdated(1, 60))
+        post(Action.SegmentUseUpdated(1, 'Loading'))
+        post(Action.SegmentAdded(1))
+        post(Action.SegmentLengthUpdated(2, 50))
+        post(Action.SegmentUseUpdated(2, 'Parking'))
     }, [])
 }
 

@@ -103,7 +103,7 @@ const CurbMapEditorPanel = () => {
         const sourceId = cityBlockfaceId(geoJsonFeatureAndLength.feature)
         const existing = existingBlockfaces.find(bf => bf.sourceId === sourceId)
 
-        if (existing) return post(Action.SelectBlockface(existing))
+        if (existing) return post(Action.BlockfaceSelected(existing))
 
         const blockface = Blockface.from({
             id: FieldTypes.newBlockfaceId(),
@@ -121,7 +121,7 @@ const CurbMapEditorPanel = () => {
             updatedBy: currentUserId,
         })
 
-        post(Action.CreateBlockface(blockface))
+        post(Action.BlockfaceCreated(blockface))
     }
 
     const existingBlockfaces = useSelector(S.blockfaces)

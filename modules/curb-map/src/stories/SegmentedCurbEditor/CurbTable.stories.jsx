@@ -23,11 +23,11 @@ const StoryWrapper = ({ children }) => (
 
 /**
  * Scenario initializers using post() command pattern
- * All scenarios must initialize auth state first via LoadAllInitialData
+ * All scenarios must initialize auth state first via AllInitialDataLoaded
  */
 const useEmptyScenario = () => {
     React.useEffect(() => {
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
         const blockface = Blockface.from({
             id: 'blk_000000000000',
             sourceId: 'test-blockface-empty',
@@ -41,13 +41,13 @@ const useEmptyScenario = () => {
             updatedAt: new Date(),
             updatedBy: mockUser.id,
         })
-        post(Action.CreateBlockface(blockface))
+        post(Action.BlockfaceCreated(blockface))
     }, [])
 }
 
 const useMultipleScenario = () => {
     React.useEffect(() => {
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
         const blockface = Blockface.from({
             id: 'blk_000000000000',
             sourceId: 'test-blockface-multiple',
@@ -61,22 +61,22 @@ const useMultipleScenario = () => {
             updatedAt: new Date(),
             updatedBy: mockUser.id,
         })
-        post(Action.CreateBlockface(blockface))
-        post(Action.AddSegment(-1))
-        post(Action.UpdateSegmentLength(0, 80))
-        post(Action.UpdateSegmentUse(0, 'Parking'))
-        post(Action.AddSegment(0))
-        post(Action.UpdateSegmentLength(1, 60))
-        post(Action.UpdateSegmentUse(1, 'Loading'))
-        post(Action.AddSegment(1))
-        post(Action.UpdateSegmentLength(2, 50))
-        post(Action.UpdateSegmentUse(2, 'Parking'))
+        post(Action.BlockfaceCreated(blockface))
+        post(Action.SegmentAdded(-1))
+        post(Action.SegmentLengthUpdated(0, 80))
+        post(Action.SegmentUseUpdated(0, 'Parking'))
+        post(Action.SegmentAdded(0))
+        post(Action.SegmentLengthUpdated(1, 60))
+        post(Action.SegmentUseUpdated(1, 'Loading'))
+        post(Action.SegmentAdded(1))
+        post(Action.SegmentLengthUpdated(2, 50))
+        post(Action.SegmentUseUpdated(2, 'Parking'))
     }, [])
 }
 
 const useFullScenario = () => {
     React.useEffect(() => {
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
         const blockface = Blockface.from({
             id: 'blk_000000000000',
             sourceId: 'test-blockface-full',
@@ -90,13 +90,13 @@ const useFullScenario = () => {
             updatedAt: new Date(),
             updatedBy: mockUser.id,
         })
-        post(Action.CreateBlockface(blockface))
-        post(Action.AddSegment(-1))
-        post(Action.UpdateSegmentLength(0, 120))
-        post(Action.UpdateSegmentUse(0, 'Parking'))
-        post(Action.AddSegment(0))
-        post(Action.UpdateSegmentLength(1, 120))
-        post(Action.UpdateSegmentUse(1, 'Loading'))
+        post(Action.BlockfaceCreated(blockface))
+        post(Action.SegmentAdded(-1))
+        post(Action.SegmentLengthUpdated(0, 120))
+        post(Action.SegmentUseUpdated(0, 'Parking'))
+        post(Action.SegmentAdded(0))
+        post(Action.SegmentLengthUpdated(1, 120))
+        post(Action.SegmentUseUpdated(1, 'Loading'))
     }, [])
 }
 

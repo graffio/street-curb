@@ -4,4 +4,4 @@
 - Fetch current blockface from Redux state using `S.currentBlockface`
 - Fetch previous blockface from Firestore (path: `organizations/${blockface.organizationId}/projects/${blockface.projectId}/blockfaces/${blockface.id}`)
 - Call `diffBlockfaces()` to generate changes object
-- Dispatch `Action.SaveBlockface(blockface, changes)` via `post()`
+- Dispatch `Action.BlockfaceSaved(blockface, changes)` via `post()`

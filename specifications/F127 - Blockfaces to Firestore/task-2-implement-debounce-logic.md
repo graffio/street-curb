@@ -4,4 +4,4 @@
 - Create `scheduleBlockfaceSave(blockfaceId)` function that clears existing timer and sets new 3s timeout
 - Create `flushBlockfaceSave(blockfaceId)` function that clears timer and saves immediately
 - Update segment action handlers to call `scheduleBlockfaceSave()` after Redux dispatch
-- Update `SelectBlockface` handler to call `flushBlockfaceSave()` for previous blockface before switching
+- Update `BlockfaceSelected` handler to call `flushBlockfaceSave()` for previous blockface before switching

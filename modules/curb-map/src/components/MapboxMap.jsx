@@ -144,15 +144,6 @@ const createSegmentedHighlight = (blockfaceFeature, segments, blockfaceLengthFee
 }
 
 /**
- * Creates SF Blockfaces data source configuration
- * @sig createBlockfaceSource :: () -> SourceConfig
- */
-const createBlockfaceSource = () => ({
-    type: 'geojson',
-    data: 'https://data.sfgov.org/resource/pep9-66vw.geojson?$limit=50000',
-})
-
-/**
  * Creates SF Blockfaces layer configuration
  * @sig createBlockfaceLayer :: () -> LayerConfig
  */
@@ -267,7 +258,10 @@ const handleSourceData = (map, onBlockfaceSelectRef) => e => {
  * @sig handleMapLoad :: (Map, Function) -> Void
  */
 const handleMapLoad = (map, onBlockfaceSelectRef) => {
-    map.addSource('sf-blockfaces-source', createBlockfaceSource())
+    map.addSource('sf-blockfaces-source', {
+        type: 'geojson',
+        data: 'https://data.sfgov.org/resource/pep9-66vw.geojson?$limit=50000',
+    })
     map.on('sourcedata', handleSourceData(map, onBlockfaceSelectRef))
 }
 

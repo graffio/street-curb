@@ -1,11 +1,11 @@
 import { updatedMetadata } from '../shared.js'
 
 /*
- * Handle SaveBlockface action
+ * Handle BlockfaceSaved action
  * Persists blockface to Firestore
- * @sig handleSaveBlockface :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
+ * @sig handleBlockfaceSaved :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
-const handleSaveBlockface = async (logger, fsContext, actionRequest) => {
+const handleBlockfaceSaved = async (logger, fsContext, actionRequest) => {
     const { action } = actionRequest
     let { blockface } = action
 
@@ -17,4 +17,4 @@ const handleSaveBlockface = async (logger, fsContext, actionRequest) => {
     logger.flowStep('Blockface saved')
 }
 
-export default handleSaveBlockface
+export default handleBlockfaceSaved

@@ -76,19 +76,19 @@ const captureRollbackSnapshot = (action, state) =>
         AuthenticationCompleted: () => ({}),
 
         // Data loading doesn't need rollback (initialization only)
-        LoadAllInitialData     : () => ({}),
+        AllInitialDataLoaded     : () => ({}),
 
         // Blockface actions snapshot currentBlockfaceId for rollback
-        CreateBlockface        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state), blockfaces: S.blockfaces(state) }),
-        SelectBlockface        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state) }),
-        SaveBlockface          : () => ({}),
+        BlockfaceCreated        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state), blockfaces: S.blockfaces(state) }),
+        BlockfaceSelected        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state) }),
+        BlockfaceSaved          : () => ({}),
 
         // Segment actions snapshot the current blockface for rollback
-        UpdateSegmentUse       : () => ({ blockfaces: S.blockfaces(state) }),
-        UpdateSegmentLength    : () => ({ blockfaces: S.blockfaces(state) }),
-        AddSegment             : () => ({ blockfaces: S.blockfaces(state) }),
-        AddSegmentLeft         : () => ({ blockfaces: S.blockfaces(state) }),
-        ReplaceSegments        : () => ({ blockfaces: S.blockfaces(state) }),
+        SegmentUseUpdated       : () => ({ blockfaces: S.blockfaces(state) }),
+        SegmentLengthUpdated    : () => ({ blockfaces: S.blockfaces(state) }),
+        SegmentAdded             : () => ({ blockfaces: S.blockfaces(state) }),
+        SegmentAddedLeft         : () => ({ blockfaces: S.blockfaces(state) }),
+        SegmentsReplaced        : () => ({ blockfaces: S.blockfaces(state) }),
     })
 
 /**
@@ -106,7 +106,7 @@ const rollbackState = snapshot => {
 // Only one blockface is selected at a time, so only one pending save
 let timeoutId = null
 
-// Call Action.SaveBlockface and clear pending timer
+// Call Action.BlockfaceSaved and clear pending timer
 const saveBlockfaceImmediately = blockfaceId => {
     if (timeoutId) {
         clearTimeout(timeoutId)
@@ -117,7 +117,7 @@ const saveBlockfaceImmediately = blockfaceId => {
     const currentBlockface = S.blockface(state, blockfaceId)
     if (!currentBlockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
 
-    post(Action.SaveBlockface(currentBlockface))
+    post(Action.BlockfaceSaved(currentBlockface))
 }
 
 /*
@@ -153,30 +153,30 @@ const getPersistenceStrategy = action =>
         UserForgotten          : () => submitActionRequest,
         UserUpdated            : () => submitActionRequest,
         
-        SaveBlockface          : () => submitActionRequest,
+        BlockfaceSaved          : () => submitActionRequest,
         
         // Auth is local-only (already persisted by Firebase Auth)
         AuthenticationCompleted: () => null,
 
         // Data loading is local-only (Redux initialization)
-        LoadAllInitialData     : () => null,
+        AllInitialDataLoaded     : () => null,
 
         // Blockface/Segment actions are local-only (no Firestore persistence yet)
-        CreateBlockface        : () => null,
-        SelectBlockface        : () => null,
-        UpdateSegmentUse       : () => null,
-        UpdateSegmentLength    : () => null,
-        AddSegment             : () => null,
-        AddSegmentLeft         : () => null,
-        ReplaceSegments        : () => null,
+        BlockfaceCreated        : () => null,
+        BlockfaceSelected        : () => null,
+        SegmentUseUpdated       : () => null,
+        SegmentLengthUpdated    : () => null,
+        SegmentAdded             : () => null,
+        SegmentAddedLeft         : () => null,
+        SegmentsReplaced        : () => null,
     })
 
 const actionTriggersBlockfaceChange = action =>
-    Action.UpdateSegmentUse.is(action) ||
-    Action.UpdateSegmentLength.is(action) ||
-    Action.AddSegment.is(action) ||
-    Action.AddSegmentLeft.is(action) ||
-    Action.ReplaceSegments.is(action)
+    Action.SegmentUseUpdated.is(action) ||
+    Action.SegmentLengthUpdated.is(action) ||
+    Action.SegmentAdded.is(action) ||
+    Action.SegmentAddedLeft.is(action) ||
+    Action.SegmentsReplaced.is(action)
 
 /**
  * Post a domain Action: authorize, update Redux, persist to Firestore
@@ -221,10 +221,10 @@ const post = action => {
     const state = getState()
     const previousBlockfaceId = S.currentBlockfaceId(state)
 
-    // LoadAllInitialData is the ONLY action that bypasses authorization
+    // AllInitialDataLoaded is the ONLY action that bypasses authorization
     // It runs before currentUser/currentOrganization exist (it loads them)
     // All other actions MUST have currentUser loaded for authorization
-    if (!Action.LoadAllInitialData.is(action)) checkAuthorization()
+    if (!Action.AllInitialDataLoaded.is(action)) checkAuthorization()
 
     // Phase 2: Capture state snapshot for rollback
     const snapshot = captureRollbackSnapshot(action, state)
@@ -241,7 +241,7 @@ const post = action => {
     const projectId = S.currentProjectId(newState)
 
     if (actionTriggersBlockfaceChange(action)) debounceBlockfaceSave(currentBlockfaceId) // reset 3-second timer
-    if (previousBlockfaceId && Action.SelectBlockface.is(action)) saveBlockfaceImmediately(previousBlockfaceId)
+    if (previousBlockfaceId && Action.BlockfaceSelected.is(action)) saveBlockfaceImmediately(previousBlockfaceId)
 
     // Phase 4: Persist to backend (async, may fail)
     const persistenceStrategy = getPersistenceStrategy(action)

@@ -4,6 +4,7 @@ import { onRequest } from 'firebase-functions/v2/https'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
 import { createFirestoreContext } from './firestore-context.js'
 import handleAuthenticationCompleted from './handlers/handle-authentication-completed.js'
+import handleBlockfaceSaved from './handlers/handle-blockface-saved.js'
 import handleMemberAdded from './handlers/handle-member-added.js'
 import handleMemberRemoved from './handlers/handle-member-removed.js'
 import handleOrganizationCreated from './handlers/handle-organization-created.js'
@@ -11,7 +12,6 @@ import handleOrganizationDeleted from './handlers/handle-organization-deleted.js
 import handleOrganizationSuspended from './handlers/handle-organization-suspended.js'
 import handleOrganizationUpdated from './handlers/handle-organization-updated.js'
 import handleRoleChanged from './handlers/handle-role-changed.js'
-import handleSaveBlockface from './handlers/handle-save-blockface.js'
 import handleUserCreated from './handlers/handle-user-created.js'
 import handleUserForgotten from './handlers/handle-user-forgotten.js'
 import handleUserUpdated from './handlers/handle-user-updated.js'
@@ -235,15 +235,15 @@ const dispatchToHandler = actionRequest =>
         MemberRemoved          : () => handleMemberRemoved,
         RoleChanged            : () => handleRoleChanged,
         AuthenticationCompleted: () => handleAuthenticationCompleted,
-        LoadAllInitialData     : () => { throw new Error('LoadAllInitialData should never reach server (local-only action)') },
-        CreateBlockface        : () => { throw new Error('CreateBlockface should never reach server (local-only action)') },
-        SelectBlockface        : () => { throw new Error('SelectBlockface should never reach server (local-only action)') },
-        SaveBlockface          : () => handleSaveBlockface,
-        UpdateSegmentUse       : () => { throw new Error('UpdateSegmentUse should never reach server (local-only action)') },
-        UpdateSegmentLength    : () => { throw new Error('UpdateSegmentLength should never reach server (local-only action)') },
-        AddSegment             : () => { throw new Error('AddSegment should never reach server (local-only action)') },
-        AddSegmentLeft         : () => { throw new Error('AddSegmentLeft should never reach server (local-only action)') },
-        ReplaceSegments        : () => { throw new Error('ReplaceSegments should never reach server (local-only action)') },
+        AllInitialDataLoaded     : () => { throw new Error('AllInitialDataLoaded should never reach server (local-only action)') },
+        BlockfaceCreated        : () => { throw new Error('BlockfaceCreated should never reach server (local-only action)') },
+        BlockfaceSelected        : () => { throw new Error('BlockfaceSelected should never reach server (local-only action)') },
+        BlockfaceSaved          : () => handleBlockfaceSaved,
+        SegmentUseUpdated       : () => { throw new Error('SegmentUseUpdated should never reach server (local-only action)') },
+        SegmentLengthUpdated    : () => { throw new Error('SegmentLengthUpdated should never reach server (local-only action)') },
+        SegmentAdded             : () => { throw new Error('SegmentAdded should never reach server (local-only action)') },
+        SegmentAddedLeft         : () => { throw new Error('SegmentAddedLeft should never reach server (local-only action)') },
+        SegmentsReplaced        : () => { throw new Error('SegmentsReplaced should never reach server (local-only action)') },
     })
 
 /*

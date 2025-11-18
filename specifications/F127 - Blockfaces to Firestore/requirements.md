@@ -5,23 +5,23 @@ Persist blockface edits to Firestore with debounced auto-save
 
 ## Persistence Timing
 - **3 seconds after last edit** - Debounced save to batch rapid edits
-- **On blockface switch** - Flush pending save when SelectBlockface
+- **On blockface switch** - Flush pending save when BlockfaceSelected
 - **On page unload** - beforeunload handler flushes pending save
 - **Manual flush available** - For tests/explicit save scenarios
 
 ## Actions to Persist
-- `CreateBlockface` → persist immediately (new blockface)
+- `BlockfaceCreated` → persist immediately (new blockface)
 - All segment actions → trigger debounced save of entire blockface
-  - `UpdateSegmentUse`, `UpdateSegmentLength`, `AddSegment`, `AddSegmentLeft`, `ReplaceSegments`
-- Add `Action.SaveBlockface(organizationId, projectId, blockface)` for explicit/debounced saves
+  - `SegmentUseUpdated`, `SegmentLengthUpdated`, `SegmentAdded`, `SegmentAddedLeft`, `SegmentsReplaced`
+- Add `Action.BlockfaceSaved(organizationId, projectId, blockface)` for explicit/debounced saves
 
 ## Implementation
 1. Add debounce timer to `post.js` (single global timer, keyed by blockfaceId)
 2. Segment actions trigger debounce instead of returning `submitActionRequest`
-3. `SelectBlockface` clears timer and flushes if pending
+3. `BlockfaceSelected` clears timer and flushes if pending
 4. Add `window.addEventListener('beforeunload')` to flush on exit
-5. Create `Action.SaveBlockface(blockfaceId)` for explicit save/flush
-6. Update Cloud Function handler to accept SaveBlockface
+5. Create `Action.BlockfaceSaved(blockfaceId)` for explicit save/flush
+6. Update Cloud Function handler to accept BlockfaceSaved
 
 ## Firestore Schema
 ```
@@ -51,14 +51,14 @@ match /organizations/{orgId}/projects/{projectId}/blockfaces/{blockfaceId} {
 ## Architectural Decision: Snapshot vs Event Sourcing
 
 **Blockfaces use snapshot-based persistence, NOT event sourcing:**
-- Redux actions (UpdateSegmentUse, etc.) remain granular for UI reactivity
-- Firestore receives entire blockface snapshots via debounced SaveBlockface
+- Redux actions (SegmentUseUpdated, etc.) remain granular for UI reactivity
+- Firestore receives entire blockface snapshots via debounced BlockfaceSaved
 - Trade-off: Lower cost, acceptable audit trail granularity for iterative editing
 - Single user per blockface assumed (no concurrent edit conflicts)
 
 **Change tracking:**
 - Before saving, diff previous Firestore snapshot vs current state
-- Include changes object in SaveBlockface action for audit trail
+- Include changes object in BlockfaceSaved action for audit trail
 - Structure: `{ added: [...], modified: [...], removed: [...] }`
 - Example: `{ modified: [{ index: 0, field: 'use', oldValue: 'Loading', newValue: 'Parking' }] }`
 - Requires fetching previous version before save (1 extra read per save)

@@ -38,27 +38,27 @@
  *  AuthenticationCompleted
  *      email      : FieldTypes.email,
  *      displayName: "String"
- *  LoadAllInitialData
+ *  AllInitialDataLoaded
  *      currentUser        : "User",
  *      currentOrganization: "Organization"
- *  CreateBlockface
+ *  BlockfaceCreated
  *      blockface: "Blockface"
- *  SelectBlockface
+ *  BlockfaceSelected
  *      blockface: "Blockface"
- *  SaveBlockface
+ *  BlockfaceSaved
  *      blockface: "Blockface"
- *  UpdateSegmentUse
+ *  SegmentUseUpdated
  *      index: "Number",
  *      use  : "String"
- *  UpdateSegmentLength
+ *  SegmentLengthUpdated
  *      index    : "Number",
  *      newLength: "Number"
- *  AddSegmentLeft
+ *  SegmentAddedLeft
  *      index        : "Number",
  *      desiredLength: "Number"
- *  AddSegment
+ *  SegmentAdded
  *      targetIndex: "Number"
- *  ReplaceSegments
+ *  SegmentsReplaced
  *      segments: "[Segment]"
  *
  */
@@ -93,15 +93,15 @@ const Action = {
             constructor === Action.UserUpdated ||
             constructor === Action.UserForgotten ||
             constructor === Action.AuthenticationCompleted ||
-            constructor === Action.LoadAllInitialData ||
-            constructor === Action.CreateBlockface ||
-            constructor === Action.SelectBlockface ||
-            constructor === Action.SaveBlockface ||
-            constructor === Action.UpdateSegmentUse ||
-            constructor === Action.UpdateSegmentLength ||
-            constructor === Action.AddSegmentLeft ||
-            constructor === Action.AddSegment ||
-            constructor === Action.ReplaceSegments
+            constructor === Action.AllInitialDataLoaded ||
+            constructor === Action.BlockfaceCreated ||
+            constructor === Action.BlockfaceSelected ||
+            constructor === Action.BlockfaceSaved ||
+            constructor === Action.SegmentUseUpdated ||
+            constructor === Action.SegmentLengthUpdated ||
+            constructor === Action.SegmentAddedLeft ||
+            constructor === Action.SegmentAdded ||
+            constructor === Action.SegmentsReplaced
         )
     },
 }
@@ -121,15 +121,15 @@ Object.defineProperty(Action, '@@tagNames', {
         'UserUpdated',
         'UserForgotten',
         'AuthenticationCompleted',
-        'LoadAllInitialData',
-        'CreateBlockface',
-        'SelectBlockface',
-        'SaveBlockface',
-        'UpdateSegmentUse',
-        'UpdateSegmentLength',
-        'AddSegmentLeft',
-        'AddSegment',
-        'ReplaceSegments',
+        'AllInitialDataLoaded',
+        'BlockfaceCreated',
+        'BlockfaceSelected',
+        'BlockfaceSaved',
+        'SegmentUseUpdated',
+        'SegmentLengthUpdated',
+        'SegmentAddedLeft',
+        'SegmentAdded',
+        'SegmentsReplaced',
     ],
     enumerable: false,
 })
@@ -757,30 +757,30 @@ AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstr
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.LoadAllInitialData
+// Variant Action.AllInitialDataLoaded
 //
 // -------------------------------------------------------------------------------------------------------------
-const LoadAllInitialDataConstructor = function LoadAllInitialData(currentUser, currentOrganization) {
-    const constructorName = 'Action.LoadAllInitialData(currentUser, currentOrganization)'
+const AllInitialDataLoadedConstructor = function AllInitialDataLoaded(currentUser, currentOrganization) {
+    const constructorName = 'Action.AllInitialDataLoaded(currentUser, currentOrganization)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateTag(constructorName, 'User', 'currentUser', false, currentUser)
     R.validateTag(constructorName, 'Organization', 'currentOrganization', false, currentOrganization)
 
-    const result = Object.create(LoadAllInitialDataPrototype)
+    const result = Object.create(AllInitialDataLoadedPrototype)
     result.currentUser = currentUser
     result.currentOrganization = currentOrganization
     return result
 }
 
-Action.LoadAllInitialData = LoadAllInitialDataConstructor
+Action.AllInitialDataLoaded = AllInitialDataLoadedConstructor
 
-const LoadAllInitialDataPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'LoadAllInitialData', enumerable: false },
+const AllInitialDataLoadedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'AllInitialDataLoaded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.LoadAllInitialData(${R._toString(this.currentUser)}, ${R._toString(this.currentOrganization)})`
+            return `Action.AllInitialDataLoaded(${R._toString(this.currentUser)}, ${R._toString(this.currentOrganization)})`
         },
         enumerable: false,
     },
@@ -793,26 +793,26 @@ const LoadAllInitialDataPrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: LoadAllInitialDataConstructor,
+        value: AllInitialDataLoadedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-LoadAllInitialDataConstructor.prototype = LoadAllInitialDataPrototype
-LoadAllInitialDataConstructor.is = val => val && val.constructor === LoadAllInitialDataConstructor
-LoadAllInitialDataConstructor.toString = () => 'Action.LoadAllInitialData'
-LoadAllInitialDataConstructor._from = o => Action.LoadAllInitialData(o.currentUser, o.currentOrganization)
-LoadAllInitialDataConstructor.from = LoadAllInitialDataConstructor._from
+AllInitialDataLoadedConstructor.prototype = AllInitialDataLoadedPrototype
+AllInitialDataLoadedConstructor.is = val => val && val.constructor === AllInitialDataLoadedConstructor
+AllInitialDataLoadedConstructor.toString = () => 'Action.AllInitialDataLoaded'
+AllInitialDataLoadedConstructor._from = o => Action.AllInitialDataLoaded(o.currentUser, o.currentOrganization)
+AllInitialDataLoadedConstructor.from = AllInitialDataLoadedConstructor._from
 
-LoadAllInitialDataConstructor._toFirestore = (o, encodeTimestamps) => ({
+AllInitialDataLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
     currentUser: User.toFirestore(o.currentUser, encodeTimestamps),
     currentOrganization: Organization.toFirestore(o.currentOrganization, encodeTimestamps),
 })
 
-LoadAllInitialDataConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    LoadAllInitialDataConstructor._from({
+AllInitialDataLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    AllInitialDataLoadedConstructor._from({
         currentUser: User.fromFirestore
             ? User.fromFirestore(doc.currentUser, decodeTimestamps)
             : User.from(doc.currentUser),
@@ -822,33 +822,33 @@ LoadAllInitialDataConstructor._fromFirestore = (doc, decodeTimestamps) =>
     })
 
 // Public aliases (can be overridden)
-LoadAllInitialDataConstructor.toFirestore = LoadAllInitialDataConstructor._toFirestore
-LoadAllInitialDataConstructor.fromFirestore = LoadAllInitialDataConstructor._fromFirestore
+AllInitialDataLoadedConstructor.toFirestore = AllInitialDataLoadedConstructor._toFirestore
+AllInitialDataLoadedConstructor.fromFirestore = AllInitialDataLoadedConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.CreateBlockface
+// Variant Action.BlockfaceCreated
 //
 // -------------------------------------------------------------------------------------------------------------
-const CreateBlockfaceConstructor = function CreateBlockface(blockface) {
-    const constructorName = 'Action.CreateBlockface(blockface)'
+const BlockfaceCreatedConstructor = function BlockfaceCreated(blockface) {
+    const constructorName = 'Action.BlockfaceCreated(blockface)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
 
-    const result = Object.create(CreateBlockfacePrototype)
+    const result = Object.create(BlockfaceCreatedPrototype)
     result.blockface = blockface
     return result
 }
 
-Action.CreateBlockface = CreateBlockfaceConstructor
+Action.BlockfaceCreated = BlockfaceCreatedConstructor
 
-const CreateBlockfacePrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'CreateBlockface', enumerable: false },
+const BlockfaceCreatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfaceCreated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.CreateBlockface(${R._toString(this.blockface)})`
+            return `Action.BlockfaceCreated(${R._toString(this.blockface)})`
         },
         enumerable: false,
     },
@@ -861,58 +861,58 @@ const CreateBlockfacePrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: CreateBlockfaceConstructor,
+        value: BlockfaceCreatedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-CreateBlockfaceConstructor.prototype = CreateBlockfacePrototype
-CreateBlockfaceConstructor.is = val => val && val.constructor === CreateBlockfaceConstructor
-CreateBlockfaceConstructor.toString = () => 'Action.CreateBlockface'
-CreateBlockfaceConstructor._from = o => Action.CreateBlockface(o.blockface)
-CreateBlockfaceConstructor.from = CreateBlockfaceConstructor._from
+BlockfaceCreatedConstructor.prototype = BlockfaceCreatedPrototype
+BlockfaceCreatedConstructor.is = val => val && val.constructor === BlockfaceCreatedConstructor
+BlockfaceCreatedConstructor.toString = () => 'Action.BlockfaceCreated'
+BlockfaceCreatedConstructor._from = o => Action.BlockfaceCreated(o.blockface)
+BlockfaceCreatedConstructor.from = BlockfaceCreatedConstructor._from
 
-CreateBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
+BlockfaceCreatedConstructor._toFirestore = (o, encodeTimestamps) => ({
     blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
 })
 
-CreateBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    CreateBlockfaceConstructor._from({
+BlockfaceCreatedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfaceCreatedConstructor._from({
         blockface: Blockface.fromFirestore
             ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
             : Blockface.from(doc.blockface),
     })
 
 // Public aliases (can be overridden)
-CreateBlockfaceConstructor.toFirestore = CreateBlockfaceConstructor._toFirestore
-CreateBlockfaceConstructor.fromFirestore = CreateBlockfaceConstructor._fromFirestore
+BlockfaceCreatedConstructor.toFirestore = BlockfaceCreatedConstructor._toFirestore
+BlockfaceCreatedConstructor.fromFirestore = BlockfaceCreatedConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.SelectBlockface
+// Variant Action.BlockfaceSelected
 //
 // -------------------------------------------------------------------------------------------------------------
-const SelectBlockfaceConstructor = function SelectBlockface(blockface) {
-    const constructorName = 'Action.SelectBlockface(blockface)'
+const BlockfaceSelectedConstructor = function BlockfaceSelected(blockface) {
+    const constructorName = 'Action.BlockfaceSelected(blockface)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
 
-    const result = Object.create(SelectBlockfacePrototype)
+    const result = Object.create(BlockfaceSelectedPrototype)
     result.blockface = blockface
     return result
 }
 
-Action.SelectBlockface = SelectBlockfaceConstructor
+Action.BlockfaceSelected = BlockfaceSelectedConstructor
 
-const SelectBlockfacePrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SelectBlockface', enumerable: false },
+const BlockfaceSelectedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfaceSelected', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.SelectBlockface(${R._toString(this.blockface)})`
+            return `Action.BlockfaceSelected(${R._toString(this.blockface)})`
         },
         enumerable: false,
     },
@@ -925,58 +925,58 @@ const SelectBlockfacePrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: SelectBlockfaceConstructor,
+        value: BlockfaceSelectedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-SelectBlockfaceConstructor.prototype = SelectBlockfacePrototype
-SelectBlockfaceConstructor.is = val => val && val.constructor === SelectBlockfaceConstructor
-SelectBlockfaceConstructor.toString = () => 'Action.SelectBlockface'
-SelectBlockfaceConstructor._from = o => Action.SelectBlockface(o.blockface)
-SelectBlockfaceConstructor.from = SelectBlockfaceConstructor._from
+BlockfaceSelectedConstructor.prototype = BlockfaceSelectedPrototype
+BlockfaceSelectedConstructor.is = val => val && val.constructor === BlockfaceSelectedConstructor
+BlockfaceSelectedConstructor.toString = () => 'Action.BlockfaceSelected'
+BlockfaceSelectedConstructor._from = o => Action.BlockfaceSelected(o.blockface)
+BlockfaceSelectedConstructor.from = BlockfaceSelectedConstructor._from
 
-SelectBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
+BlockfaceSelectedConstructor._toFirestore = (o, encodeTimestamps) => ({
     blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
 })
 
-SelectBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    SelectBlockfaceConstructor._from({
+BlockfaceSelectedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfaceSelectedConstructor._from({
         blockface: Blockface.fromFirestore
             ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
             : Blockface.from(doc.blockface),
     })
 
 // Public aliases (can be overridden)
-SelectBlockfaceConstructor.toFirestore = SelectBlockfaceConstructor._toFirestore
-SelectBlockfaceConstructor.fromFirestore = SelectBlockfaceConstructor._fromFirestore
+BlockfaceSelectedConstructor.toFirestore = BlockfaceSelectedConstructor._toFirestore
+BlockfaceSelectedConstructor.fromFirestore = BlockfaceSelectedConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.SaveBlockface
+// Variant Action.BlockfaceSaved
 //
 // -------------------------------------------------------------------------------------------------------------
-const SaveBlockfaceConstructor = function SaveBlockface(blockface) {
-    const constructorName = 'Action.SaveBlockface(blockface)'
+const BlockfaceSavedConstructor = function BlockfaceSaved(blockface) {
+    const constructorName = 'Action.BlockfaceSaved(blockface)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateTag(constructorName, 'Blockface', 'blockface', false, blockface)
 
-    const result = Object.create(SaveBlockfacePrototype)
+    const result = Object.create(BlockfaceSavedPrototype)
     result.blockface = blockface
     return result
 }
 
-Action.SaveBlockface = SaveBlockfaceConstructor
+Action.BlockfaceSaved = BlockfaceSavedConstructor
 
-const SaveBlockfacePrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SaveBlockface', enumerable: false },
+const BlockfaceSavedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfaceSaved', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.SaveBlockface(${R._toString(this.blockface)})`
+            return `Action.BlockfaceSaved(${R._toString(this.blockface)})`
         },
         enumerable: false,
     },
@@ -989,60 +989,60 @@ const SaveBlockfacePrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: SaveBlockfaceConstructor,
+        value: BlockfaceSavedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-SaveBlockfaceConstructor.prototype = SaveBlockfacePrototype
-SaveBlockfaceConstructor.is = val => val && val.constructor === SaveBlockfaceConstructor
-SaveBlockfaceConstructor.toString = () => 'Action.SaveBlockface'
-SaveBlockfaceConstructor._from = o => Action.SaveBlockface(o.blockface)
-SaveBlockfaceConstructor.from = SaveBlockfaceConstructor._from
+BlockfaceSavedConstructor.prototype = BlockfaceSavedPrototype
+BlockfaceSavedConstructor.is = val => val && val.constructor === BlockfaceSavedConstructor
+BlockfaceSavedConstructor.toString = () => 'Action.BlockfaceSaved'
+BlockfaceSavedConstructor._from = o => Action.BlockfaceSaved(o.blockface)
+BlockfaceSavedConstructor.from = BlockfaceSavedConstructor._from
 
-SaveBlockfaceConstructor._toFirestore = (o, encodeTimestamps) => ({
+BlockfaceSavedConstructor._toFirestore = (o, encodeTimestamps) => ({
     blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
 })
 
-SaveBlockfaceConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    SaveBlockfaceConstructor._from({
+BlockfaceSavedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfaceSavedConstructor._from({
         blockface: Blockface.fromFirestore
             ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
             : Blockface.from(doc.blockface),
     })
 
 // Public aliases (can be overridden)
-SaveBlockfaceConstructor.toFirestore = SaveBlockfaceConstructor._toFirestore
-SaveBlockfaceConstructor.fromFirestore = SaveBlockfaceConstructor._fromFirestore
+BlockfaceSavedConstructor.toFirestore = BlockfaceSavedConstructor._toFirestore
+BlockfaceSavedConstructor.fromFirestore = BlockfaceSavedConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UpdateSegmentUse
+// Variant Action.SegmentUseUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
-const UpdateSegmentUseConstructor = function UpdateSegmentUse(index, use) {
-    const constructorName = 'Action.UpdateSegmentUse(index, use)'
+const SegmentUseUpdatedConstructor = function SegmentUseUpdated(index, use) {
+    const constructorName = 'Action.SegmentUseUpdated(index, use)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateNumber(constructorName, 'index', false, index)
     R.validateString(constructorName, 'use', false, use)
 
-    const result = Object.create(UpdateSegmentUsePrototype)
+    const result = Object.create(SegmentUseUpdatedPrototype)
     result.index = index
     result.use = use
     return result
 }
 
-Action.UpdateSegmentUse = UpdateSegmentUseConstructor
+Action.SegmentUseUpdated = SegmentUseUpdatedConstructor
 
-const UpdateSegmentUsePrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UpdateSegmentUse', enumerable: false },
+const SegmentUseUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentUseUpdated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.UpdateSegmentUse(${R._toString(this.index)}, ${R._toString(this.use)})`
+            return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})`
         },
         enumerable: false,
     },
@@ -1055,48 +1055,48 @@ const UpdateSegmentUsePrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: UpdateSegmentUseConstructor,
+        value: SegmentUseUpdatedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-UpdateSegmentUseConstructor.prototype = UpdateSegmentUsePrototype
-UpdateSegmentUseConstructor.is = val => val && val.constructor === UpdateSegmentUseConstructor
-UpdateSegmentUseConstructor.toString = () => 'Action.UpdateSegmentUse'
-UpdateSegmentUseConstructor._from = o => Action.UpdateSegmentUse(o.index, o.use)
-UpdateSegmentUseConstructor.from = UpdateSegmentUseConstructor._from
+SegmentUseUpdatedConstructor.prototype = SegmentUseUpdatedPrototype
+SegmentUseUpdatedConstructor.is = val => val && val.constructor === SegmentUseUpdatedConstructor
+SegmentUseUpdatedConstructor.toString = () => 'Action.SegmentUseUpdated'
+SegmentUseUpdatedConstructor._from = o => Action.SegmentUseUpdated(o.index, o.use)
+SegmentUseUpdatedConstructor.from = SegmentUseUpdatedConstructor._from
 
-UpdateSegmentUseConstructor.toFirestore = o => ({ ...o })
-UpdateSegmentUseConstructor.fromFirestore = UpdateSegmentUseConstructor._from
+SegmentUseUpdatedConstructor.toFirestore = o => ({ ...o })
+SegmentUseUpdatedConstructor.fromFirestore = SegmentUseUpdatedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.UpdateSegmentLength
+// Variant Action.SegmentLengthUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
-const UpdateSegmentLengthConstructor = function UpdateSegmentLength(index, newLength) {
-    const constructorName = 'Action.UpdateSegmentLength(index, newLength)'
+const SegmentLengthUpdatedConstructor = function SegmentLengthUpdated(index, newLength) {
+    const constructorName = 'Action.SegmentLengthUpdated(index, newLength)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateNumber(constructorName, 'index', false, index)
     R.validateNumber(constructorName, 'newLength', false, newLength)
 
-    const result = Object.create(UpdateSegmentLengthPrototype)
+    const result = Object.create(SegmentLengthUpdatedPrototype)
     result.index = index
     result.newLength = newLength
     return result
 }
 
-Action.UpdateSegmentLength = UpdateSegmentLengthConstructor
+Action.SegmentLengthUpdated = SegmentLengthUpdatedConstructor
 
-const UpdateSegmentLengthPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UpdateSegmentLength', enumerable: false },
+const SegmentLengthUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentLengthUpdated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.UpdateSegmentLength(${R._toString(this.index)}, ${R._toString(this.newLength)})`
+            return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})`
         },
         enumerable: false,
     },
@@ -1109,48 +1109,48 @@ const UpdateSegmentLengthPrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: UpdateSegmentLengthConstructor,
+        value: SegmentLengthUpdatedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-UpdateSegmentLengthConstructor.prototype = UpdateSegmentLengthPrototype
-UpdateSegmentLengthConstructor.is = val => val && val.constructor === UpdateSegmentLengthConstructor
-UpdateSegmentLengthConstructor.toString = () => 'Action.UpdateSegmentLength'
-UpdateSegmentLengthConstructor._from = o => Action.UpdateSegmentLength(o.index, o.newLength)
-UpdateSegmentLengthConstructor.from = UpdateSegmentLengthConstructor._from
+SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
+SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLengthUpdatedConstructor
+SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
+SegmentLengthUpdatedConstructor._from = o => Action.SegmentLengthUpdated(o.index, o.newLength)
+SegmentLengthUpdatedConstructor.from = SegmentLengthUpdatedConstructor._from
 
-UpdateSegmentLengthConstructor.toFirestore = o => ({ ...o })
-UpdateSegmentLengthConstructor.fromFirestore = UpdateSegmentLengthConstructor._from
+SegmentLengthUpdatedConstructor.toFirestore = o => ({ ...o })
+SegmentLengthUpdatedConstructor.fromFirestore = SegmentLengthUpdatedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.AddSegmentLeft
+// Variant Action.SegmentAddedLeft
 //
 // -------------------------------------------------------------------------------------------------------------
-const AddSegmentLeftConstructor = function AddSegmentLeft(index, desiredLength) {
-    const constructorName = 'Action.AddSegmentLeft(index, desiredLength)'
+const SegmentAddedLeftConstructor = function SegmentAddedLeft(index, desiredLength) {
+    const constructorName = 'Action.SegmentAddedLeft(index, desiredLength)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateNumber(constructorName, 'index', false, index)
     R.validateNumber(constructorName, 'desiredLength', false, desiredLength)
 
-    const result = Object.create(AddSegmentLeftPrototype)
+    const result = Object.create(SegmentAddedLeftPrototype)
     result.index = index
     result.desiredLength = desiredLength
     return result
 }
 
-Action.AddSegmentLeft = AddSegmentLeftConstructor
+Action.SegmentAddedLeft = SegmentAddedLeftConstructor
 
-const AddSegmentLeftPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'AddSegmentLeft', enumerable: false },
+const SegmentAddedLeftPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentAddedLeft', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.AddSegmentLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})`
+            return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})`
         },
         enumerable: false,
     },
@@ -1163,46 +1163,46 @@ const AddSegmentLeftPrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: AddSegmentLeftConstructor,
+        value: SegmentAddedLeftConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-AddSegmentLeftConstructor.prototype = AddSegmentLeftPrototype
-AddSegmentLeftConstructor.is = val => val && val.constructor === AddSegmentLeftConstructor
-AddSegmentLeftConstructor.toString = () => 'Action.AddSegmentLeft'
-AddSegmentLeftConstructor._from = o => Action.AddSegmentLeft(o.index, o.desiredLength)
-AddSegmentLeftConstructor.from = AddSegmentLeftConstructor._from
+SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
+SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
+SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
+SegmentAddedLeftConstructor._from = o => Action.SegmentAddedLeft(o.index, o.desiredLength)
+SegmentAddedLeftConstructor.from = SegmentAddedLeftConstructor._from
 
-AddSegmentLeftConstructor.toFirestore = o => ({ ...o })
-AddSegmentLeftConstructor.fromFirestore = AddSegmentLeftConstructor._from
+SegmentAddedLeftConstructor.toFirestore = o => ({ ...o })
+SegmentAddedLeftConstructor.fromFirestore = SegmentAddedLeftConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.AddSegment
+// Variant Action.SegmentAdded
 //
 // -------------------------------------------------------------------------------------------------------------
-const AddSegmentConstructor = function AddSegment(targetIndex) {
-    const constructorName = 'Action.AddSegment(targetIndex)'
+const SegmentAddedConstructor = function SegmentAdded(targetIndex) {
+    const constructorName = 'Action.SegmentAdded(targetIndex)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateNumber(constructorName, 'targetIndex', false, targetIndex)
 
-    const result = Object.create(AddSegmentPrototype)
+    const result = Object.create(SegmentAddedPrototype)
     result.targetIndex = targetIndex
     return result
 }
 
-Action.AddSegment = AddSegmentConstructor
+Action.SegmentAdded = SegmentAddedConstructor
 
-const AddSegmentPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'AddSegment', enumerable: false },
+const SegmentAddedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentAdded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.AddSegment(${R._toString(this.targetIndex)})`
+            return `Action.SegmentAdded(${R._toString(this.targetIndex)})`
         },
         enumerable: false,
     },
@@ -1215,46 +1215,46 @@ const AddSegmentPrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: AddSegmentConstructor,
+        value: SegmentAddedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-AddSegmentConstructor.prototype = AddSegmentPrototype
-AddSegmentConstructor.is = val => val && val.constructor === AddSegmentConstructor
-AddSegmentConstructor.toString = () => 'Action.AddSegment'
-AddSegmentConstructor._from = o => Action.AddSegment(o.targetIndex)
-AddSegmentConstructor.from = AddSegmentConstructor._from
+SegmentAddedConstructor.prototype = SegmentAddedPrototype
+SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
+SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
+SegmentAddedConstructor._from = o => Action.SegmentAdded(o.targetIndex)
+SegmentAddedConstructor.from = SegmentAddedConstructor._from
 
-AddSegmentConstructor.toFirestore = o => ({ ...o })
-AddSegmentConstructor.fromFirestore = AddSegmentConstructor._from
+SegmentAddedConstructor.toFirestore = o => ({ ...o })
+SegmentAddedConstructor.fromFirestore = SegmentAddedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.ReplaceSegments
+// Variant Action.SegmentsReplaced
 //
 // -------------------------------------------------------------------------------------------------------------
-const ReplaceSegmentsConstructor = function ReplaceSegments(segments) {
-    const constructorName = 'Action.ReplaceSegments(segments)'
+const SegmentsReplacedConstructor = function SegmentsReplaced(segments) {
+    const constructorName = 'Action.SegmentsReplaced(segments)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateArray(constructorName, 1, 'Tagged', 'Segment', 'segments', false, segments)
 
-    const result = Object.create(ReplaceSegmentsPrototype)
+    const result = Object.create(SegmentsReplacedPrototype)
     result.segments = segments
     return result
 }
 
-Action.ReplaceSegments = ReplaceSegmentsConstructor
+Action.SegmentsReplaced = SegmentsReplacedConstructor
 
-const ReplaceSegmentsPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'ReplaceSegments', enumerable: false },
+const SegmentsReplacedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentsReplaced', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.ReplaceSegments(${R._toString(this.segments)})`
+            return `Action.SegmentsReplaced(${R._toString(this.segments)})`
         },
         enumerable: false,
     },
@@ -1267,33 +1267,33 @@ const ReplaceSegmentsPrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: ReplaceSegmentsConstructor,
+        value: SegmentsReplacedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-ReplaceSegmentsConstructor.prototype = ReplaceSegmentsPrototype
-ReplaceSegmentsConstructor.is = val => val && val.constructor === ReplaceSegmentsConstructor
-ReplaceSegmentsConstructor.toString = () => 'Action.ReplaceSegments'
-ReplaceSegmentsConstructor._from = o => Action.ReplaceSegments(o.segments)
-ReplaceSegmentsConstructor.from = ReplaceSegmentsConstructor._from
+SegmentsReplacedConstructor.prototype = SegmentsReplacedPrototype
+SegmentsReplacedConstructor.is = val => val && val.constructor === SegmentsReplacedConstructor
+SegmentsReplacedConstructor.toString = () => 'Action.SegmentsReplaced'
+SegmentsReplacedConstructor._from = o => Action.SegmentsReplaced(o.segments)
+SegmentsReplacedConstructor.from = SegmentsReplacedConstructor._from
 
-ReplaceSegmentsConstructor._toFirestore = (o, encodeTimestamps) => ({
+SegmentsReplacedConstructor._toFirestore = (o, encodeTimestamps) => ({
     segments: o.segments.map(item1 => Segment.toFirestore(item1, encodeTimestamps)),
 })
 
-ReplaceSegmentsConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    ReplaceSegmentsConstructor._from({
+SegmentsReplacedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    SegmentsReplacedConstructor._from({
         segments: doc.segments.map(item1 =>
             Segment.fromFirestore ? Segment.fromFirestore(item1, decodeTimestamps) : Segment.from(item1),
         ),
     })
 
 // Public aliases (can be overridden)
-ReplaceSegmentsConstructor.toFirestore = ReplaceSegmentsConstructor._toFirestore
-ReplaceSegmentsConstructor.fromFirestore = ReplaceSegmentsConstructor._fromFirestore
+SegmentsReplacedConstructor.toFirestore = SegmentsReplacedConstructor._toFirestore
+SegmentsReplacedConstructor.fromFirestore = SegmentsReplacedConstructor._fromFirestore
 
 Action._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
@@ -1315,15 +1315,15 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'UserForgotten') return Action.UserForgotten.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AuthenticationCompleted')
         return Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'LoadAllInitialData') return Action.LoadAllInitialData.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'CreateBlockface') return Action.CreateBlockface.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'SelectBlockface') return Action.SelectBlockface.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'SaveBlockface') return Action.SaveBlockface.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'UpdateSegmentUse') return Action.UpdateSegmentUse.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'UpdateSegmentLength') return Action.UpdateSegmentLength.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'AddSegmentLeft') return Action.AddSegmentLeft.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'AddSegment') return Action.AddSegment.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'ReplaceSegments') return Action.ReplaceSegments.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'AllInitialDataLoaded') return Action.AllInitialDataLoaded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'BlockfaceCreated') return Action.BlockfaceCreated.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'BlockfaceSelected') return Action.BlockfaceSelected.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'BlockfaceSaved') return Action.BlockfaceSaved.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SegmentUseUpdated') return Action.SegmentUseUpdated.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SegmentLengthUpdated') return Action.SegmentLengthUpdated.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SegmentAddedLeft') return Action.SegmentAddedLeft.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SegmentAdded') return Action.SegmentAdded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SegmentsReplaced') return Action.SegmentsReplaced.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 
@@ -1350,15 +1350,15 @@ Action.piiFields = rawData => {
     if (tagName === 'UserForgotten') return []
     if (tagName === 'UserUpdated') return ['displayName']
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
-    if (tagName === 'LoadAllInitialData') return []
-    if (tagName === 'CreateBlockface') return []
-    if (tagName === 'SelectBlockface') return []
-    if (tagName === 'SaveBlockface') return []
-    if (tagName === 'UpdateSegmentUse') return []
-    if (tagName === 'UpdateSegmentLength') return []
-    if (tagName === 'AddSegment') return []
-    if (tagName === 'AddSegmentLeft') return []
-    if (tagName === 'ReplaceSegments') return []
+    if (tagName === 'AllInitialDataLoaded') return []
+    if (tagName === 'BlockfaceCreated') return []
+    if (tagName === 'BlockfaceSelected') return []
+    if (tagName === 'BlockfaceSaved') return []
+    if (tagName === 'SegmentUseUpdated') return []
+    if (tagName === 'SegmentLengthUpdated') return []
+    if (tagName === 'SegmentAdded') return []
+    if (tagName === 'SegmentAddedLeft') return []
+    if (tagName === 'SegmentsReplaced') return []
     return []
 }
 
@@ -1408,40 +1408,40 @@ Action.toLog = a => {
             email,
             displayName,
         }),
-        LoadAllInitialData: () => ({ type: 'LoadAllInitialData' }),
-        CreateBlockface: ({ blockface }) => ({
-            type: 'CreateBlockface',
+        AllInitialDataLoaded: () => ({ type: 'AllInitialDataLoaded' }),
+        BlockfaceCreated: ({ blockface }) => ({
+            type: 'BlockfaceCreated',
             blockfaceId: blockface.id,
         }),
-        SelectBlockface: ({ blockface }) => ({
-            type: 'SelectBlockface',
+        BlockfaceSelected: ({ blockface }) => ({
+            type: 'BlockfaceSelected',
             blockfaceId: blockface.id,
         }),
-        SaveBlockface: ({ blockface }) => ({
-            type: 'SaveBlockface',
+        BlockfaceSaved: ({ blockface }) => ({
+            type: 'BlockfaceSaved',
             blockfaceId: blockface.id,
         }),
-        UpdateSegmentUse: ({ index, use }) => ({
-            type: 'UpdateSegmentUse',
+        SegmentUseUpdated: ({ index, use }) => ({
+            type: 'SegmentUseUpdated',
             index,
             use,
         }),
-        UpdateSegmentLength: ({ index, newLength }) => ({
-            type: 'UpdateSegmentLength',
+        SegmentLengthUpdated: ({ index, newLength }) => ({
+            type: 'SegmentLengthUpdated',
             index,
             newLength,
         }),
-        AddSegment: ({ targetIndex }) => ({
-            type: 'AddSegment',
+        SegmentAdded: ({ targetIndex }) => ({
+            type: 'SegmentAdded',
             targetIndex,
         }),
-        AddSegmentLeft: ({ index, desiredLength }) => ({
-            type: 'AddSegmentLeft',
+        SegmentAddedLeft: ({ index, desiredLength }) => ({
+            type: 'SegmentAddedLeft',
             index,
             desiredLength,
         }),
-        ReplaceSegments: ({ segments }) => ({
-            type: 'ReplaceSegments',
+        SegmentsReplaced: ({ segments }) => ({
+            type: 'SegmentsReplaced',
             segmentCount: segments.length,
         }),
     })
@@ -1511,39 +1511,39 @@ Action.getSubject = action =>
             id: a.email,
             type: 'user',
         }),
-        LoadAllInitialData: a => ({
+        AllInitialDataLoaded: a => ({
             id: a.currentUser.id,
             type: 'user',
         }),
-        CreateBlockface: a => ({
+        BlockfaceCreated: a => ({
             id: a.blockface.id,
             type: 'blockface',
         }),
-        SelectBlockface: a => ({
+        BlockfaceSelected: a => ({
             id: a.blockface.id,
             type: 'blockface',
         }),
-        SaveBlockface: a => ({
+        BlockfaceSaved: a => ({
             id: a.blockface.id,
             type: 'blockface',
         }),
-        UpdateSegmentUse: () => ({
+        SegmentUseUpdated: () => ({
             id: 'current',
             type: 'blockface',
         }),
-        UpdateSegmentLength: () => ({
+        SegmentLengthUpdated: () => ({
             id: 'current',
             type: 'blockface',
         }),
-        AddSegment: () => ({
+        SegmentAdded: () => ({
             id: 'current',
             type: 'blockface',
         }),
-        AddSegmentLeft: () => ({
+        SegmentAddedLeft: () => ({
             id: 'current',
             type: 'blockface',
         }),
-        ReplaceSegments: () => ({
+        SegmentsReplaced: () => ({
             id: 'current',
             type: 'blockface',
         }),
@@ -1562,15 +1562,15 @@ Action.mayI = (action, actorRole, actorId) =>
         UserForgotten: a => a.userId === actorId,
         UserUpdated: a => a.userId === actorId,
         AuthenticationCompleted: () => true,
-        LoadAllInitialData: () => true,
-        CreateBlockface: () => ['admin', 'editor'].includes(actorRole),
-        SelectBlockface: () => true,
-        SaveBlockface: () => ['admin', 'editor'].includes(actorRole),
-        UpdateSegmentUse: () => true,
-        UpdateSegmentLength: () => true,
-        AddSegment: () => true,
-        AddSegmentLeft: () => true,
-        ReplaceSegments: () => true,
+        AllInitialDataLoaded: () => true,
+        BlockfaceCreated: () => ['admin', 'editor'].includes(actorRole),
+        BlockfaceSelected: () => true,
+        BlockfaceSaved: () => ['admin', 'editor'].includes(actorRole),
+        SegmentUseUpdated: () => true,
+        SegmentLengthUpdated: () => true,
+        SegmentAdded: () => true,
+        SegmentAddedLeft: () => true,
+        SegmentsReplaced: () => true,
     })
 
 export { Action }

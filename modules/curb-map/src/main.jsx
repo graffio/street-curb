@@ -21,7 +21,7 @@ import { Action, Organization, User } from './types/index.js'
 const App = () => {
     const flushPendingSave = () => {
         const currentBlockface = S.currentBlockface(store.getState())
-        if (currentBlockface) post(Action.SelectBlockface(currentBlockface))
+        if (currentBlockface) post(Action.BlockfaceSelected(currentBlockface))
     }
 
     const [dataLoaded, setDataLoaded] = useState(false)
@@ -44,7 +44,7 @@ const App = () => {
 
             const currentOrganization = await organizationsFacade.read(organizationId)
 
-            post(Action.LoadAllInitialData(currentUser, currentOrganization))
+            post(Action.AllInitialDataLoaded(currentUser, currentOrganization))
             setDataLoaded(true)
         }
 

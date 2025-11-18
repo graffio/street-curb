@@ -78,7 +78,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'NoParking', 30)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegmentLeft(blockface, Action.AddSegmentLeft(0, 10))
+                const result = Blockface.addSegmentLeft(blockface, Action.SegmentAddedLeft(0, 10))
 
                 t.equal(result.segments.length, 2, 'Then it creates two segments')
                 t.equal(result.segments[0].length, 10, 'Then the new segment has the desired length')
@@ -95,7 +95,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'NoParking', 6)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegmentLeft(blockface, Action.AddSegmentLeft(0, 10))
+                const result = Blockface.addSegmentLeft(blockface, Action.SegmentAddedLeft(0, 10))
 
                 t.equal(result.segments.length, 2, 'Then it creates two segments')
                 t.equal(result.segments[0].length, 3, 'Then the new segment gets half the length (3ft)')
@@ -112,7 +112,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'NoParking', 1)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegmentLeft(blockface, Action.AddSegmentLeft(0, 10))
+                const result = Blockface.addSegmentLeft(blockface, Action.SegmentAddedLeft(0, 10))
 
                 t.equal(result.segments.length, 2, 'Then it creates two segments')
                 t.equal(result.segments[0].length, 0.5, 'Then the new segment gets half the length (0.5ft)')
@@ -142,7 +142,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'Parking', 60), Segment(seg2, 'NoParking', 40)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.updateSegmentLength(blockface, Action.UpdateSegmentLength(1, 60))
+                const result = Blockface.updateSegmentLength(blockface, Action.SegmentLengthUpdated(1, 60))
 
                 t.equal(result.segments.length, 2, 'Then it maintains the segment count')
                 t.equal(result.segments[0].length, 60, 'Then the first segment remains unchanged')
@@ -158,7 +158,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'Parking', 60)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.updateSegmentLength(blockface, Action.UpdateSegmentLength(0, 0))
+                const result = Blockface.updateSegmentLength(blockface, Action.SegmentLengthUpdated(0, 0))
 
                 t.equal(result, blockface, 'Then it returns the original blockface for zero length')
                 t.end()
@@ -174,7 +174,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'Parking', 100)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegment(blockface, Action.AddSegment(-1))
+                const result = Blockface.addSegment(blockface, Action.SegmentAdded(-1))
 
                 t.equal(result.segments.length, 2, 'Then it adds a new segment')
                 t.equal(result.segments[0].length, 100, 'Then the original segment remains unchanged')
@@ -191,7 +191,7 @@ test('Blockface domain functions', t => {
                 const segments = [Segment(seg1, 'Parking', 120), Segment(seg2, 'NoParking', 120)]
                 const blockface = createBlockface(segments)
 
-                const result = Blockface.addSegment(blockface, Action.AddSegment(0))
+                const result = Blockface.addSegment(blockface, Action.SegmentAdded(0))
 
                 t.equal(result, blockface, 'Then it returns the original blockface when no space is available')
                 t.end()
@@ -209,7 +209,7 @@ test('Blockface domain functions', t => {
 
                 const newSegments = [Segment(seg1, 'Loading', 80), Segment(seg2, 'NoParking', 60)]
 
-                const result = Blockface.replaceSegments(blockface, Action.ReplaceSegments(newSegments))
+                const result = Blockface.replaceSegments(blockface, Action.SegmentsReplaced(newSegments))
 
                 t.equal(result.segments.length, 2, 'Then it replaces the segments with the new segments')
                 t.equal(result.segments[0].use, 'Loading', 'Then the first segment has the correct use')

@@ -52,19 +52,19 @@ export const Action = {
         AuthenticationCompleted: { email: FieldTypes.email, displayName: 'String', },
 
         // Data Loading
-        LoadAllInitialData: { currentUser: 'User', currentOrganization: 'Organization', },
+        AllInitialDataLoaded: { currentUser: 'User', currentOrganization: 'Organization', },
 
         // Blockface Actions
-        CreateBlockface: { blockface: 'Blockface' },
-        SelectBlockface: { blockface: 'Blockface' },
-        SaveBlockface:   { blockface: 'Blockface' },
+        BlockfaceCreated:  { blockface: 'Blockface' },
+        BlockfaceSelected: { blockface: 'Blockface' },
+        BlockfaceSaved:    { blockface: 'Blockface' },
 
         // Segment Actions
-        UpdateSegmentUse   : { index: 'Number', use: 'String', },
-        UpdateSegmentLength: { index: 'Number', newLength: 'Number', },
-        AddSegmentLeft     : { index: 'Number', desiredLength: 'Number', },
-        AddSegment         : { targetIndex: 'Number', },
-        ReplaceSegments    : { segments: '[Segment]', },
+        SegmentUseUpdated   : { index: 'Number', use: 'String', },
+        SegmentLengthUpdated: { index: 'Number', newLength: 'Number', },
+        SegmentAddedLeft    : { index: 'Number', desiredLength: 'Number', },
+        SegmentAdded        : { targetIndex: 'Number', },
+        SegmentsReplaced    : { segments: '[Segment]', },
 
     }
 }
@@ -103,19 +103,19 @@ Action.piiFields = rawData => {
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
     // Data Loading
-    if (tagName === 'LoadAllInitialData'     ) return []
+    if (tagName === 'AllInitialDataLoaded'   ) return []
 
     // Blockface Actions
-    if (tagName === 'CreateBlockface'        ) return []
-    if (tagName === 'SelectBlockface'        ) return []
-    if (tagName === 'SaveBlockface'          ) return []
+    if (tagName === 'BlockfaceCreated'       ) return []
+    if (tagName === 'BlockfaceSelected'      ) return []
+    if (tagName === 'BlockfaceSaved'         ) return []
 
     // Segment Actions
-    if (tagName === 'UpdateSegmentUse'       ) return []
-    if (tagName === 'UpdateSegmentLength'    ) return []
-    if (tagName === 'AddSegment'             ) return []
-    if (tagName === 'AddSegmentLeft'         ) return []
-    if (tagName === 'ReplaceSegments'        ) return []
+    if (tagName === 'SegmentUseUpdated'      ) return []
+    if (tagName === 'SegmentLengthUpdated'   ) return []
+    if (tagName === 'SegmentAdded'           ) return []
+    if (tagName === 'SegmentAddedLeft'       ) return []
+    if (tagName === 'SegmentsReplaced'       ) return []
 
     return []  // Fallback for unrecognized types
 }
@@ -152,19 +152,19 @@ Action.toLog = a => {
         AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
 
         // Data Loading
-        LoadAllInitialData     : ()                             => ({ type: 'LoadAllInitialData' }),
+        AllInitialDataLoaded     : ()                           => ({ type: 'AllInitialDataLoaded' }),
 
         // Blockface Actions
-        CreateBlockface        : ({ blockface })                => ({ type: 'CreateBlockface', blockfaceId: blockface.id }),
-        SelectBlockface        : ({ blockface })                => ({ type: 'SelectBlockface', blockfaceId: blockface.id }),
-        SaveBlockface          : ({ blockface })                => ({ type: 'SaveBlockface', blockfaceId: blockface.id }),
+        BlockfaceCreated       : ({ blockface })                => ({ type: 'BlockfaceCreated', blockfaceId: blockface.id }),
+        BlockfaceSelected      : ({ blockface })                => ({ type: 'BlockfaceSelected', blockfaceId: blockface.id }),
+        BlockfaceSaved         : ({ blockface })                => ({ type: 'BlockfaceSaved', blockfaceId: blockface.id }),
 
         // Segment Actions
-        UpdateSegmentUse       : ({ index, use })               => ({ type: 'UpdateSegmentUse', index, use }),
-        UpdateSegmentLength    : ({ index, newLength })         => ({ type: 'UpdateSegmentLength', index, newLength }),
-        AddSegment             : ({ targetIndex })              => ({ type: 'AddSegment', targetIndex }),
-        AddSegmentLeft         : ({ index, desiredLength })     => ({ type: 'AddSegmentLeft', index, desiredLength }),
-        ReplaceSegments        : ({ segments })                 => ({ type: 'ReplaceSegments', segmentCount: segments.length }),
+        SegmentUseUpdated      : ({ index, use })               => ({ type: 'SegmentUseUpdated', index, use }),
+        SegmentLengthUpdated   : ({ index, newLength })         => ({ type: 'SegmentLengthUpdated', index, newLength }),
+        SegmentAdded           : ({ targetIndex })              => ({ type: 'SegmentAdded', targetIndex }),
+        SegmentAddedLeft       : ({ index, desiredLength })     => ({ type: 'SegmentAddedLeft', index, desiredLength }),
+        SegmentsReplaced       : ({ segments })                 => ({ type: 'SegmentsReplaced', segmentCount: segments.length }),
     })
 
     Action.piiFields(a).forEach(redactField)
@@ -227,19 +227,19 @@ Action.getSubject = action =>
         AuthenticationCompleted: a => ({ id: a.email,          type: 'user' }),
 
         // Data Loading
-        LoadAllInitialData     : a => ({ id: a.currentUser.id, type: 'user' }),
+        AllInitialDataLoaded   : a => ({ id: a.currentUser.id, type: 'user' }),
 
         // Blockface Actions
-        CreateBlockface        : a => ({ id: a.blockface.id, type: 'blockface' }),
-        SelectBlockface        : a => ({ id: a.blockface.id, type: 'blockface' }),
-        SaveBlockface          : a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceCreated       : a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceSelected      : a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceSaved         : a => ({ id: a.blockface.id, type: 'blockface' }),
 
         // Segment Actions (subject is the current blockface being edited)
-        UpdateSegmentUse       : () => ({ id: 'current',     type: 'blockface' }),
-        UpdateSegmentLength    : () => ({ id: 'current',     type: 'blockface' }),
-        AddSegment             : () => ({ id: 'current',     type: 'blockface' }),
-        AddSegmentLeft         : () => ({ id: 'current',     type: 'blockface' }),
-        ReplaceSegments        : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentUseUpdated      : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentLengthUpdated   : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentAdded           : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentAddedLeft       : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentsReplaced       : () => ({ id: 'current',     type: 'blockface' }),
     })
 
 // prettier-ignore
@@ -262,17 +262,17 @@ Action.mayI = (action, actorRole, actorId) =>
         AuthenticationCompleted: () => true,
 
         // Data Loading
-        LoadAllInitialData     : () => true,
+        AllInitialDataLoaded   : () => true,
 
         // Blockface Actions (any authenticated user can edit blockfaces)
-        CreateBlockface        : () => ['admin', 'editor'].includes(actorRole),
-        SelectBlockface        : () => true,
-        SaveBlockface          : () => ['admin', 'editor'].includes(actorRole),
+        BlockfaceCreated       : () => ['admin', 'editor'].includes(actorRole),
+        BlockfaceSelected      : () => true,
+        BlockfaceSaved         : () => ['admin', 'editor'].includes(actorRole),
 
         // Segment Actions (any authenticated user can edit segments)
-        UpdateSegmentUse       : () => true,
-        UpdateSegmentLength    : () => true,
-        AddSegment             : () => true,
-        AddSegmentLeft         : () => true,
-        ReplaceSegments        : () => true,
+        SegmentUseUpdated      : () => true,
+        SegmentLengthUpdated   : () => true,
+        SegmentAdded           : () => true,
+        SegmentAddedLeft       : () => true,
+        SegmentsReplaced       : () => true,
     })

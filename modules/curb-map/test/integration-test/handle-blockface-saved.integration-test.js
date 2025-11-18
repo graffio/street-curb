@@ -26,14 +26,14 @@ const createTestBlockface = (organizationId, projectId) =>
         updatedBy: 'usr_000000000001',
     })
 
-test('Given SaveBlockface action', t => {
+test('Given BlockfaceSaved action', t => {
     t.test('When blockface is saved Then blockface persists to Firestore', async t => {
         await asSignedInUser('save-blockface', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const blockface = createTestBlockface(organizationId, projectId)
 
-            const action = Action.SaveBlockface(blockface)
+            const action = Action.BlockfaceSaved(blockface)
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             // Read blockface from Firestore
@@ -54,12 +54,12 @@ test('Given SaveBlockface action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const blockface = createTestBlockface(organizationId, projectId)
-            const action = Action.SaveBlockface(blockface)
+            const action = Action.BlockfaceSaved(blockface)
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             // Modify and save again
             const updatedBlockface = Blockface.from({ ...blockface, streetName: 'Updated Street' })
-            const action2 = Action.SaveBlockface(updatedBlockface)
+            const action2 = Action.BlockfaceSaved(updatedBlockface)
             await submitAndExpectSuccess({ action: action2, namespace, token, organizationId, projectId })
 
             // Read from Firestore
