@@ -4,6 +4,7 @@ import { onRequest } from 'firebase-functions/v2/https'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
 import { createFirestoreContext } from './firestore-context.js'
 import handleAuthenticationCompleted from './handlers/handle-authentication-completed.js'
+import handleBlockfaceSaved from './handlers/handle-blockface-saved.js'
 import handleMemberAdded from './handlers/handle-member-added.js'
 import handleMemberRemoved from './handlers/handle-member-removed.js'
 import handleOrganizationCreated from './handlers/handle-organization-created.js'
@@ -101,9 +102,17 @@ const validateRequiredFields = body =>
         ? null
         : 'Missing required fields: action, idempotencyKey, correlationId'
 
+// @sig decodeTimestamp :: (String | Timestamp) -> Date
+// Decode ISO string from HTTP JSON to Date, or Firestore Timestamp to Date
+const decodeTimestamp = timestamp => {
+    if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate()
+    if (typeof timestamp === 'string') return new Date(timestamp)
+    return timestamp
+}
+
 const validateAction = (plainAction, logger) => {
     try {
-        Action.fromFirestore(plainAction)
+        Action.fromFirestore(plainAction, decodeTimestamp)
         return null
     } catch (error) {
         // Can't use Action.toLog since construction failed - redact PII while preserving structure for debugging
@@ -226,14 +235,15 @@ const dispatchToHandler = actionRequest =>
         MemberRemoved          : () => handleMemberRemoved,
         RoleChanged            : () => handleRoleChanged,
         AuthenticationCompleted: () => handleAuthenticationCompleted,
-        LoadAllInitialData     : () => { throw new Error('LoadAllInitialData should never reach server (local-only action)') },
-        CreateBlockface        : () => { throw new Error('CreateBlockface should never reach server (local-only action)') },
-        SelectBlockface        : () => { throw new Error('SelectBlockface should never reach server (local-only action)') },
-        UpdateSegmentUse       : () => { throw new Error('UpdateSegmentUse should never reach server (local-only action)') },
-        UpdateSegmentLength    : () => { throw new Error('UpdateSegmentLength should never reach server (local-only action)') },
-        AddSegment             : () => { throw new Error('AddSegment should never reach server (local-only action)') },
-        AddSegmentLeft         : () => { throw new Error('AddSegmentLeft should never reach server (local-only action)') },
-        ReplaceSegments        : () => { throw new Error('ReplaceSegments should never reach server (local-only action)') },
+        AllInitialDataLoaded     : () => { throw new Error('AllInitialDataLoaded should never reach server (local-only action)') },
+        BlockfaceCreated        : () => { throw new Error('BlockfaceCreated should never reach server (local-only action)') },
+        BlockfaceSelected        : () => { throw new Error('BlockfaceSelected should never reach server (local-only action)') },
+        BlockfaceSaved          : () => handleBlockfaceSaved,
+        SegmentUseUpdated       : () => { throw new Error('SegmentUseUpdated should never reach server (local-only action)') },
+        SegmentLengthUpdated    : () => { throw new Error('SegmentLengthUpdated should never reach server (local-only action)') },
+        SegmentAdded             : () => { throw new Error('SegmentAdded should never reach server (local-only action)') },
+        SegmentAddedLeft         : () => { throw new Error('SegmentAddedLeft should never reach server (local-only action)') },
+        SegmentsReplaced        : () => { throw new Error('SegmentsReplaced should never reach server (local-only action)') },
     })
 
 /*
@@ -252,10 +262,9 @@ const dispatchToHandler = actionRequest =>
  */
 const enrichActionRequest = req => {
     const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
-    const action = Action.fromFirestore(req.body.action)
-    const { organizationId, projectId } = action
+    const action = Action.fromFirestore(req.body.action, decodeTimestamp)
+    const { organizationId, projectId, idempotencyKey, correlationId } = req.body
     const { id: subjectId, type: subjectType } = Action.getSubject(action)
-    const { idempotencyKey, correlationId } = req.body
 
     return { namespace, action, organizationId, projectId, subjectId, subjectType, idempotencyKey, correlationId }
 }

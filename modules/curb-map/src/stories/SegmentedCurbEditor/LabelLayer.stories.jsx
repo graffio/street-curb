@@ -3,7 +3,9 @@ import { Provider } from 'react-redux'
 import { post } from '../../commands/index.js'
 import { LabelLayer } from '../../components/SegmentedCurbEditor/LabelLayer.jsx'
 import { store } from '../../store/index.js'
-import { Action } from '../../types/index.js'
+import { mockOrganization, mockUser } from '../../test-data/mock-auth.js'
+import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
+import { Action, Blockface } from '../../types/index.js'
 import { DragStateDecorator } from '../DragStateDecorator.jsx'
 
 /**
@@ -46,19 +48,34 @@ const SegmentVisualizer = ({ segments, total }) => (
  */
 const useTestData = () => {
     React.useEffect(() => {
-        post(Action.CreateBlockface('label-showcase', {}, 'Label Street'))
-        post(Action.AddSegment(-1))
-        post(Action.UpdateSegmentLength(0, 60))
-        post(Action.UpdateSegmentUse(0, 'Parking'))
-        post(Action.AddSegment(0))
-        post(Action.UpdateSegmentLength(1, 40))
-        post(Action.UpdateSegmentUse(1, 'Loading'))
-        post(Action.AddSegment(1))
-        post(Action.UpdateSegmentLength(2, 50))
-        post(Action.UpdateSegmentUse(2, 'Bus Stop'))
-        post(Action.AddSegment(2))
-        post(Action.UpdateSegmentLength(3, 30))
-        post(Action.UpdateSegmentUse(3, 'Disabled'))
+        const blockface = Blockface.from({
+            id: 'blk_000000000000',
+            sourceId: 'label-showcase',
+            organizationId: mockOrganization.id,
+            projectId: mockOrganization.defaultProjectId,
+            geometry: DEFAULT_STORY_GEOMETRY,
+            streetName: 'Label Street',
+            segments: [],
+            createdAt: new Date(),
+            createdBy: mockUser.id,
+            updatedAt: new Date(),
+            updatedBy: mockUser.id,
+        })
+
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
+        post(Action.BlockfaceCreated(blockface))
+        post(Action.SegmentAdded(-1))
+        post(Action.SegmentLengthUpdated(0, 60))
+        post(Action.SegmentUseUpdated(0, 'Parking'))
+        post(Action.SegmentAdded(0))
+        post(Action.SegmentLengthUpdated(1, 40))
+        post(Action.SegmentUseUpdated(1, 'Loading'))
+        post(Action.SegmentAdded(1))
+        post(Action.SegmentLengthUpdated(2, 50))
+        post(Action.SegmentUseUpdated(2, 'Bus Stop'))
+        post(Action.SegmentAdded(2))
+        post(Action.SegmentLengthUpdated(3, 30))
+        post(Action.SegmentUseUpdated(3, 'Disabled'))
     }, [])
 }
 

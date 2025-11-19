@@ -27,15 +27,21 @@ const buildUrl = () => {
     return `${origin}/${projectId}/${region}/submitActionRequest`
 }
 
-// @sig convertActionToPlain :: (Action | Object | null) -> Object | null
-const convertActionToPlain = action => (action && Action.is(action) ? Action.toFirestore(action) : action)
+// @sig encodeTimestamp :: Date -> String
+// Encode Date to ISO string for JSON transport over HTTP
+const encodeTimestamp = date => (date instanceof Date ? date.toISOString() : date)
 
-// @sig buildPayload :: (Object | null, String, String) -> Object
-const buildPayload = (plainAction, idempotencyKey, correlationId) => ({
-    action: plainAction,
-    idempotencyKey,
-    correlationId,
-})
+// @sig convertActionToPlain :: (Action | Object | null) -> Object | null
+const convertActionToPlain = action =>
+    action && Action.is(action) ? Action.toFirestore(action, encodeTimestamp) : action
+
+// @sig buildPayload :: (Object | null, String, String, String?, String?) -> Object
+const buildPayload = (plainAction, idempotencyKey, correlationId, organizationId, projectId) => {
+    const payload = { action: plainAction, idempotencyKey, correlationId }
+    if (organizationId) payload.organizationId = organizationId
+    if (projectId) payload.projectId = projectId
+    return payload
+}
 
 // @sig addOptionalFields :: (Object, String?) -> Object
 const addOptionalFields = (payload, namespace) => {
@@ -96,11 +102,14 @@ const submitActionRequest = async ({
     correlationId = FieldTypes.newCorrelationId(),
     namespace,
     token,
+    organizationId,
+    projectId,
 }) => {
     const url = buildUrl()
     const bearer = assertTokenPresent(token)
     const plainAction = convertActionToPlain(action)
-    const payload = buildPayload(plainAction, idempotencyKey, correlationId)
+
+    const payload = buildPayload(plainAction, idempotencyKey, correlationId, organizationId, projectId)
     const fullPayload = addOptionalFields(payload, namespace)
     const response = await makeHttpRequest(url, 'POST', fullPayload, bearer)
 

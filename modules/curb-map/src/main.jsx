@@ -13,11 +13,17 @@ import { possiblyAutoLogin } from './config/index.js'
 import { FirestoreClientFacade } from './firestore-facade/firestore-client-facade.js'
 import { router } from './router.jsx'
 import { store } from './store/index.js'
+import * as S from './store/selectors.js'
 import { Action, Organization, User } from './types/index.js'
 
 // Hard-coded IDs from seed data
 
 const App = () => {
+    const flushPendingSave = () => {
+        const currentBlockface = S.currentBlockface(store.getState())
+        if (currentBlockface) post(Action.BlockfaceSelected(currentBlockface))
+    }
+
     const [dataLoaded, setDataLoaded] = useState(false)
 
     useEffect(() => {
@@ -38,11 +44,19 @@ const App = () => {
 
             const currentOrganization = await organizationsFacade.read(organizationId)
 
-            post(Action.LoadAllInitialData(currentUser, currentOrganization))
+            post(Action.AllInitialDataLoaded(currentUser, currentOrganization))
             setDataLoaded(true)
         }
 
         loadData()
+
+        window.addEventListener('beforeunload', flushPendingSave)
+        window.addEventListener('visibilitychange', flushPendingSave)
+
+        return () => {
+            window.removeEventListener('beforeunload', flushPendingSave)
+            window.removeEventListener('visibilitychange', flushPendingSave)
+        }
     }, [])
 
     if (!dataLoaded) return <LoadingSpinner />

@@ -21,19 +21,6 @@ import * as S from '../store/selectors.js'
  */
 
 /**
- * Gets unique blockface identifier from feature properties and geometry
- * @sig getBlockfaceId :: Feature -> String
- */
-const getBlockfaceId = feature => {
-    const props = feature.properties
-    const coords = feature.geometry.coordinates
-    const firstCoord = coords[0]
-    const lastCoord = coords[coords.length - 1]
-    const coordHash = `${firstCoord[0].toFixed(6)},${firstCoord[1].toFixed(6)}-${lastCoord[0].toFixed(6)},${lastCoord[1].toFixed(6)}`
-    return `${JSON.stringify(props)}/${coordHash}`
-}
-
-/**
  * Gets segment color based on type (matching SegmentedCurbEditor colors)
  * @sig getSegmentColor :: String -> String
  */
@@ -157,15 +144,6 @@ const createSegmentedHighlight = (blockfaceFeature, segments, blockfaceLengthFee
 }
 
 /**
- * Creates SF Blockfaces data source configuration
- * @sig createBlockfaceSource :: () -> SourceConfig
- */
-const createBlockfaceSource = () => ({
-    type: 'geojson',
-    data: 'https://data.sfgov.org/resource/pep9-66vw.geojson?$limit=50000',
-})
-
-/**
  * Creates SF Blockfaces layer configuration
  * @sig createBlockfaceLayer :: () -> LayerConfig
  */
@@ -252,16 +230,14 @@ const setupCursorEffects = map => {
  * Handles blockface click events
  * @sig handleClick :: (Map, Function) -> (MapMouseEvent) -> Void
  */
-const handleClick = (map, onBlockfaceSelectRef) => e => {
+const handleClick = (map, onBlockfaceSelectedRef) => e => {
     const features = map.queryRenderedFeatures(e.point, { layers: ['sf-blockfaces'] })
     if (features.length === 0) return
 
     const feature = features[0]
-    const blockfaceId = getBlockfaceId(feature)
     const blockfaceLength = calculateBlockfaceLength(feature)
 
-    if (onBlockfaceSelectRef.current)
-        onBlockfaceSelectRef.current({ id: blockfaceId, feature, length: blockfaceLength })
+    if (onBlockfaceSelectedRef.current) onBlockfaceSelectedRef.current({ feature, length: blockfaceLength })
 }
 
 /**
@@ -282,7 +258,10 @@ const handleSourceData = (map, onBlockfaceSelectRef) => e => {
  * @sig handleMapLoad :: (Map, Function) -> Void
  */
 const handleMapLoad = (map, onBlockfaceSelectRef) => {
-    map.addSource('sf-blockfaces-source', createBlockfaceSource())
+    map.addSource('sf-blockfaces-source', {
+        type: 'geojson',
+        data: 'https://data.sfgov.org/resource/pep9-66vw.geojson?$limit=50000',
+    })
     map.on('sourcedata', handleSourceData(map, onBlockfaceSelectRef))
 }
 
@@ -335,7 +314,8 @@ const updateSegmentedHighlight = (map, blockfaceFeature, currentSegments, blockf
  * MapboxMap component - renders interactive map with blockface highlighting
  * @sig MapboxMap :: { accessToken: String, onBlockfaceSelect?: Function, selectedBlockface?: Object } -> ReactElement
  */
-const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, selectedBlockface }) => {
+const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, geoJsonFeatureAndLength = {} }) => {
+    const { id, feature, length } = geoJsonFeatureAndLength
     const blockface = useSelector(S.currentBlockface)
     const currentSegments = blockface?.segments || [] // Keep defensive here since map works without blockface
 
@@ -367,8 +347,8 @@ const MapboxMap = ({ accessToken = 'your-mapbox-token-here', onBlockfaceSelect, 
 
     useEffect(() => {
         if (!map.current?.isStyleLoaded()) return
-        updateSegmentedHighlight(map.current, selectedBlockface?.feature, currentSegments, selectedBlockface?.length)
-    }, [selectedBlockface?.feature, selectedBlockface?.id, currentSegments])
+        updateSegmentedHighlight(map.current, feature, currentSegments, length)
+    }, [feature, id, currentSegments])
 
     return (
         <div

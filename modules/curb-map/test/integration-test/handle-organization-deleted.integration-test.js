@@ -13,7 +13,7 @@ test('Given OrganizationDeleted action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const action = Action.OrganizationDeleted.from({ organizationId })
-            await submitAndExpectSuccess({ action, namespace, token })
+            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const fsContext = createFirestoreContext(namespace, organizationId, projectId)
             await t.rejects(fsContext.organizations.read(organizationId), /not found/, 'Then organization is deleted')

@@ -12,7 +12,7 @@ test('Given OrganizationSuspended action', t => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
             const action = Action.OrganizationSuspended.from({ organizationId })
-            await submitAndExpectSuccess({ action, namespace, token })
+            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const organization = await readOrganization({ namespace, organizationId, projectId })
             t.equal(organization.status, 'suspended', 'Then suspended state persisted')

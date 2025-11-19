@@ -5,7 +5,7 @@ import CurbTable from '../../components/CurbTable/CurbTable.jsx'
 import { store } from '../../store/index.js'
 import { mockOrganization, mockUser } from '../../test-data/mock-auth.js'
 import { DEFAULT_STORY_GEOMETRY } from '../../test-data/mock-geometries.js'
-import { Action } from '../../types/index.js'
+import { Action, Blockface } from '../../types/index.js'
 
 /**
  * Storybook stories for CurbTable component
@@ -23,41 +23,80 @@ const StoryWrapper = ({ children }) => (
 
 /**
  * Scenario initializers using post() command pattern
- * All scenarios must initialize auth state first via LoadAllInitialData
+ * All scenarios must initialize auth state first via AllInitialDataLoaded
  */
 const useEmptyScenario = () => {
     React.useEffect(() => {
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
-        post(Action.CreateBlockface('test-blockface-empty', DEFAULT_STORY_GEOMETRY, 'Empty Street'))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
+        const blockface = Blockface.from({
+            id: 'blk_000000000000',
+            sourceId: 'test-blockface-empty',
+            organizationId: mockOrganization.id,
+            projectId: mockOrganization.defaultProjectId,
+            geometry: DEFAULT_STORY_GEOMETRY,
+            streetName: 'Empty Street',
+            segments: [],
+            createdAt: new Date(),
+            createdBy: mockUser.id,
+            updatedAt: new Date(),
+            updatedBy: mockUser.id,
+        })
+        post(Action.BlockfaceCreated(blockface))
     }, [])
 }
 
 const useMultipleScenario = () => {
     React.useEffect(() => {
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
-        post(Action.CreateBlockface('test-blockface-multiple', DEFAULT_STORY_GEOMETRY, 'Multiple Street'))
-        post(Action.AddSegment(-1))
-        post(Action.UpdateSegmentLength(0, 80))
-        post(Action.UpdateSegmentUse(0, 'Parking'))
-        post(Action.AddSegment(0))
-        post(Action.UpdateSegmentLength(1, 60))
-        post(Action.UpdateSegmentUse(1, 'Loading'))
-        post(Action.AddSegment(1))
-        post(Action.UpdateSegmentLength(2, 50))
-        post(Action.UpdateSegmentUse(2, 'Parking'))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
+        const blockface = Blockface.from({
+            id: 'blk_000000000000',
+            sourceId: 'test-blockface-multiple',
+            organizationId: mockOrganization.id,
+            projectId: mockOrganization.defaultProjectId,
+            geometry: DEFAULT_STORY_GEOMETRY,
+            streetName: 'Multiple Street',
+            segments: [],
+            createdAt: new Date(),
+            createdBy: mockUser.id,
+            updatedAt: new Date(),
+            updatedBy: mockUser.id,
+        })
+        post(Action.BlockfaceCreated(blockface))
+        post(Action.SegmentAdded(-1))
+        post(Action.SegmentLengthUpdated(0, 80))
+        post(Action.SegmentUseUpdated(0, 'Parking'))
+        post(Action.SegmentAdded(0))
+        post(Action.SegmentLengthUpdated(1, 60))
+        post(Action.SegmentUseUpdated(1, 'Loading'))
+        post(Action.SegmentAdded(1))
+        post(Action.SegmentLengthUpdated(2, 50))
+        post(Action.SegmentUseUpdated(2, 'Parking'))
     }, [])
 }
 
 const useFullScenario = () => {
     React.useEffect(() => {
-        post(Action.LoadAllInitialData(mockUser, mockOrganization))
-        post(Action.CreateBlockface('test-blockface-full', DEFAULT_STORY_GEOMETRY, 'Full Street'))
-        post(Action.AddSegment(-1))
-        post(Action.UpdateSegmentLength(0, 120))
-        post(Action.UpdateSegmentUse(0, 'Parking'))
-        post(Action.AddSegment(0))
-        post(Action.UpdateSegmentLength(1, 120))
-        post(Action.UpdateSegmentUse(1, 'Loading'))
+        post(Action.AllInitialDataLoaded(mockUser, mockOrganization))
+        const blockface = Blockface.from({
+            id: 'blk_000000000000',
+            sourceId: 'test-blockface-full',
+            organizationId: mockOrganization.id,
+            projectId: mockOrganization.defaultProjectId,
+            geometry: DEFAULT_STORY_GEOMETRY,
+            streetName: 'Full Street',
+            segments: [],
+            createdAt: new Date(),
+            createdBy: mockUser.id,
+            updatedAt: new Date(),
+            updatedBy: mockUser.id,
+        })
+        post(Action.BlockfaceCreated(blockface))
+        post(Action.SegmentAdded(-1))
+        post(Action.SegmentLengthUpdated(0, 120))
+        post(Action.SegmentUseUpdated(0, 'Parking'))
+        post(Action.SegmentAdded(0))
+        post(Action.SegmentLengthUpdated(1, 120))
+        post(Action.SegmentUseUpdated(1, 'Loading'))
     }, [])
 }
 

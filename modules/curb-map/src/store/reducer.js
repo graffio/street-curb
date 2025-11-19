@@ -9,6 +9,7 @@ const initialState = {
     currentBlockfaceId: null,
     currentUser: null,
     currentOrganization: null,
+    currentProjectId: null,
 
     // persisted from Firestore
     blockfaces: LookupTable([], Blockface, 'id'),
@@ -62,19 +63,20 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         // Firebase Auth
         AuthenticationCompleted: () => state,
         
-        // Data Loading
-        LoadAllInitialData     : () => ({ ...state, ...action }),
+        // Data Loading. For now, with 1:1 org:project mapping, store just the project ID
+        AllInitialDataLoaded     : () => ({ ...state, ...action, currentProjectId: action.currentOrganization?.defaultProjectId || null }),
         
         // Blockface Actions
-        CreateBlockface        : () => _setBlockface(state, Blockface.createBlockface(action)),
-        SelectBlockface        : () => _setBlockface(state, _blockface(state, action.id) || Blockface.createBlockface(action)),
-        
+        BlockfaceCreated       : () => _setBlockface(state, action.blockface),
+        BlockfaceSelected      : () => _setBlockface(state, _blockface(state, action.blockface.id)),
+        BlockfaceSaved         : () => state,
+
         // Segment Actions
-        UpdateSegmentUse       : () => _setBlockface(state, Blockface.updateSegmentUse(_blockface(state), action)),
-        UpdateSegmentLength    : () => _setBlockface(state, Blockface.updateSegmentLength(_blockface(state), action)),
-        AddSegment             : () => _setBlockface(state, Blockface.addSegment(_blockface(state), action)),
-        AddSegmentLeft         : () => _setBlockface(state, Blockface.addSegmentLeft(_blockface(state), action)),
-        ReplaceSegments        : () => _setBlockface(state, Blockface.replaceSegments(_blockface(state), action)),
+        SegmentUseUpdated      : () => _setBlockface(state, Blockface.updateSegmentUse(_blockface(state), action)),
+        SegmentLengthUpdated   : () => _setBlockface(state, Blockface.updateSegmentLength(_blockface(state), action)),
+        SegmentAdded           : () => _setBlockface(state, Blockface.addSegment(_blockface(state), action)),
+        SegmentAddedLeft       : () => _setBlockface(state, Blockface.addSegmentLeft(_blockface(state), action)),
+        SegmentsReplaced       : () => _setBlockface(state, Blockface.replaceSegments(_blockface(state), action)),
     })
 
     return state

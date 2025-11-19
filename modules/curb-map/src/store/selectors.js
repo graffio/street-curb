@@ -1,13 +1,27 @@
 // prettier-ignore
-const Selectors = {
+const S = {
     // UI state
-    currentBlockface   : state => state.blockfaces?.[state.currentBlockfaceId] || null,
-    currentBlockfaceId : state => state.currentBlockfaceId,
-    currentOrganization: state => state.currentOrganization,
-    currentUser        : state => state.currentUser,
+    currentBlockface       : state => S.blockface(state, state.currentBlockfaceId),
+    currentBlockfaceId     : state => state.currentBlockfaceId,
+    currentOrganization    : state => state.currentOrganization,
+    currentOrganizationId  : state => state.currentOrganization.id,
+    currentProjectId       : state => state.currentProjectId,
+    currentUser            : state => state.currentUser,
+    currentUserId          : state => state.currentUser.id,
     
     // persisted
-    blockfaces         : state => state.blockfaces,
+    blockfaces             : state => state.blockfaces,
+    blockface              : (state, id) => state.blockfaces?.[id]
 }
 
-export const { currentBlockface, currentBlockfaceId, currentOrganization, currentUser, blockfaces } = Selectors
+export const {
+    currentBlockface,
+    currentBlockfaceId,
+    currentProjectId,
+    currentOrganization,
+    currentOrganizationId,
+    currentUser,
+    currentUserId,
+    blockface,
+    blockfaces,
+} = S

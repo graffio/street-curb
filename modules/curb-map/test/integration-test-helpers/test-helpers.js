@@ -20,7 +20,7 @@ const createOrganization = async ({
     name = 'Test Org',
 }) => {
     const action = Action.OrganizationCreated.from({ organizationId, projectId, name })
-    await submitAndExpectSuccess({ action, namespace, token })
+    await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
     return { organizationId, projectId }
 }
 
@@ -51,7 +51,7 @@ const createUser = async ({ namespace, token, userId = FieldTypes.newUserId(), e
  */
 const addMember = async ({ namespace, token, userId, organizationId, role, displayName }) => {
     const action = Action.MemberAdded.from({ userId, organizationId, role, displayName })
-    await submitAndExpectSuccess({ action, namespace, token })
+    await submitAndExpectSuccess({ action, namespace, token, organizationId })
 }
 
 /**
@@ -60,7 +60,7 @@ const addMember = async ({ namespace, token, userId, organizationId, role, displ
  */
 const removeMember = async ({ namespace, token, userId, organizationId }) => {
     const action = Action.MemberRemoved.from({ userId, organizationId })
-    await submitAndExpectSuccess({ action, namespace, token })
+    await submitAndExpectSuccess({ action, namespace, token, organizationId })
 }
 
 /**
@@ -69,7 +69,7 @@ const removeMember = async ({ namespace, token, userId, organizationId }) => {
  */
 const changeRole = async ({ namespace, token, userId, organizationId, role }) => {
     const action = Action.RoleChanged.from({ userId, organizationId, role })
-    await submitAndExpectSuccess({ action, namespace, token })
+    await submitAndExpectSuccess({ action, namespace, token, organizationId })
 }
 
 /**

@@ -33,103 +33,38 @@ export const Action = {
     kind: 'taggedSum',
     variants: {
         // Organization Actions
-        OrganizationCreated: {
-            organizationId: FieldTypes.organizationId,
-            projectId     : FieldTypes.projectId,
-            name          : 'String',
-        },
-        OrganizationDeleted: {
-            organizationId: FieldTypes.organizationId,
-        },
-        OrganizationSuspended: {
-            organizationId: FieldTypes.organizationId,
-        },
-        OrganizationUpdated: {
-            organizationId: FieldTypes.organizationId,
-            name          : 'String?',
-            status        : '/^(active|suspended)$/?',
-        },
+        OrganizationCreated  : { organizationId: FieldTypes.organizationId, name: 'String' , projectId: FieldTypes.projectId, },
+        OrganizationUpdated  : { organizationId: FieldTypes.organizationId, name: 'String?', status: '/^(active|suspended)$/?', },
+        OrganizationDeleted  : { organizationId: FieldTypes.organizationId, },
+        OrganizationSuspended: { organizationId: FieldTypes.organizationId, },
         
         // Organization Member Actions
-        MemberAdded: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-            displayName   : 'String',
-            role          : FieldTypes.role,
-        },
-        MemberRemoved: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-        },
-        RoleChanged: {
-            userId        : FieldTypes.userId,
-            organizationId: FieldTypes.organizationId,
-            role          : FieldTypes.role,
-        },
+        MemberAdded  : { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, role: FieldTypes.role, displayName: 'String'},
+        RoleChanged  : { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, role: FieldTypes.role, },
+        MemberRemoved: { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, },
 
         // User Actions
-        UserCreated: {
-            userId        : FieldTypes.userId,
-            email         : FieldTypes.email,
-            displayName   : 'String',
-            authUid       : 'String',  // Firebase Auth UID (for userId claim sync)
-        },
-        UserForgotten: {
-            userId        : FieldTypes.userId,
-            reason        : 'String',
-        },
-        UserUpdated: {
-            userId        : FieldTypes.userId,
-            displayName   : 'String?',
-        },
+        UserCreated  : { userId: FieldTypes.userId, displayName: 'String', email: FieldTypes.email, authUid: 'String', },
+        UserUpdated  : { userId: FieldTypes.userId, displayName: 'String?', },
+        UserForgotten: { userId: FieldTypes.userId, reason     : 'String', },
 
-        
         // Firebase Auth
-        AuthenticationCompleted: {
-            email         : FieldTypes.email,
-            displayName   : 'String',
-            // phoneNumber extracted from verified Firebase token (not client input)
-        },
+        AuthenticationCompleted: { email: FieldTypes.email, displayName: 'String', },
 
         // Data Loading
-        LoadAllInitialData: {
-            currentUser        : 'User',
-            currentOrganization: 'Organization',
-        },
+        AllInitialDataLoaded: { currentUser: 'User', currentOrganization: 'Organization', },
 
         // Blockface Actions
-        CreateBlockface: {
-            id        : 'String',
-            geometry  : 'Object',
-            streetName: 'String',
-            cnnId     : 'String?',
-        },
-        SelectBlockface: {
-            id         : 'String',
-            geometry   : 'Object',
-            streetName : 'String',
-            cnnId      : 'String?',
-        },
+        BlockfaceCreated:  { blockface: 'Blockface' },
+        BlockfaceSelected: { blockface: 'Blockface' },
+        BlockfaceSaved:    { blockface: 'Blockface' },
 
         // Segment Actions
-        UpdateSegmentUse: {
-            index: 'Number',
-            use  : 'String',
-        },
-        UpdateSegmentLength: {
-            index    : 'Number',
-            newLength: 'Number',
-        },
-        AddSegment: {
-            targetIndex: 'Number',
-        },
-        AddSegmentLeft: {
-            index        : 'Number',
-            desiredLength: 'Number',
-        },
-        ReplaceSegments: {
-            segments: '[Segment]',
-        },
+        SegmentUseUpdated   : { index: 'Number', use: 'String', },
+        SegmentLengthUpdated: { index: 'Number', newLength: 'Number', },
+        SegmentAddedLeft    : { index: 'Number', desiredLength: 'Number', },
+        SegmentAdded        : { targetIndex: 'Number', },
+        SegmentsReplaced    : { segments: '[Segment]', },
 
     }
 }
@@ -168,18 +103,19 @@ Action.piiFields = rawData => {
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
     // Data Loading
-    if (tagName === 'LoadAllInitialData'     ) return []
+    if (tagName === 'AllInitialDataLoaded'   ) return []
 
     // Blockface Actions
-    if (tagName === 'CreateBlockface'        ) return []
-    if (tagName === 'SelectBlockface'        ) return []
+    if (tagName === 'BlockfaceCreated'       ) return []
+    if (tagName === 'BlockfaceSelected'      ) return []
+    if (tagName === 'BlockfaceSaved'         ) return []
 
     // Segment Actions
-    if (tagName === 'UpdateSegmentUse'       ) return []
-    if (tagName === 'UpdateSegmentLength'    ) return []
-    if (tagName === 'AddSegment'             ) return []
-    if (tagName === 'AddSegmentLeft'         ) return []
-    if (tagName === 'ReplaceSegments'        ) return []
+    if (tagName === 'SegmentUseUpdated'      ) return []
+    if (tagName === 'SegmentLengthUpdated'   ) return []
+    if (tagName === 'SegmentAdded'           ) return []
+    if (tagName === 'SegmentAddedLeft'       ) return []
+    if (tagName === 'SegmentsReplaced'       ) return []
 
     return []  // Fallback for unrecognized types
 }
@@ -216,18 +152,19 @@ Action.toLog = a => {
         AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
 
         // Data Loading
-        LoadAllInitialData     : ()                             => ({ type: 'LoadAllInitialData' }),
+        AllInitialDataLoaded     : ()                           => ({ type: 'AllInitialDataLoaded' }),
 
         // Blockface Actions
-        CreateBlockface        : ({ id })                       => ({ type: 'CreateBlockface', id }),
-        SelectBlockface        : ({ id })                       => ({ type: 'SelectBlockface', id }),
+        BlockfaceCreated       : ({ blockface })                => ({ type: 'BlockfaceCreated', blockfaceId: blockface.id }),
+        BlockfaceSelected      : ({ blockface })                => ({ type: 'BlockfaceSelected', blockfaceId: blockface.id }),
+        BlockfaceSaved         : ({ blockface })                => ({ type: 'BlockfaceSaved', blockfaceId: blockface.id }),
 
         // Segment Actions
-        UpdateSegmentUse       : ({ index, use })               => ({ type: 'UpdateSegmentUse', index, use }),
-        UpdateSegmentLength    : ({ index, newLength })         => ({ type: 'UpdateSegmentLength', index, newLength }),
-        AddSegment             : ({ targetIndex })              => ({ type: 'AddSegment', targetIndex }),
-        AddSegmentLeft         : ({ index, desiredLength })     => ({ type: 'AddSegmentLeft', index, desiredLength }),
-        ReplaceSegments        : ({ segments })                 => ({ type: 'ReplaceSegments', segmentCount: segments.length }),
+        SegmentUseUpdated      : ({ index, use })               => ({ type: 'SegmentUseUpdated', index, use }),
+        SegmentLengthUpdated   : ({ index, newLength })         => ({ type: 'SegmentLengthUpdated', index, newLength }),
+        SegmentAdded           : ({ targetIndex })              => ({ type: 'SegmentAdded', targetIndex }),
+        SegmentAddedLeft       : ({ index, desiredLength })     => ({ type: 'SegmentAddedLeft', index, desiredLength }),
+        SegmentsReplaced       : ({ segments })                 => ({ type: 'SegmentsReplaced', segmentCount: segments.length }),
     })
 
     Action.piiFields(a).forEach(redactField)
@@ -290,18 +227,19 @@ Action.getSubject = action =>
         AuthenticationCompleted: a => ({ id: a.email,          type: 'user' }),
 
         // Data Loading
-        LoadAllInitialData     : a => ({ id: a.currentUser.id, type: 'user' }),
+        AllInitialDataLoaded   : a => ({ id: a.currentUser.id, type: 'user' }),
 
         // Blockface Actions
-        CreateBlockface        : a => ({ id: a.id,           type: 'blockface' }),
-        SelectBlockface        : a => ({ id: a.id,           type: 'blockface' }),
+        BlockfaceCreated       : a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceSelected      : a => ({ id: a.blockface.id, type: 'blockface' }),
+        BlockfaceSaved         : a => ({ id: a.blockface.id, type: 'blockface' }),
 
         // Segment Actions (subject is the current blockface being edited)
-        UpdateSegmentUse       : () => ({ id: 'current',     type: 'blockface' }),
-        UpdateSegmentLength    : () => ({ id: 'current',     type: 'blockface' }),
-        AddSegment             : () => ({ id: 'current',     type: 'blockface' }),
-        AddSegmentLeft         : () => ({ id: 'current',     type: 'blockface' }),
-        ReplaceSegments        : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentUseUpdated      : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentLengthUpdated   : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentAdded           : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentAddedLeft       : () => ({ id: 'current',     type: 'blockface' }),
+        SegmentsReplaced       : () => ({ id: 'current',     type: 'blockface' }),
     })
 
 // prettier-ignore
@@ -324,16 +262,17 @@ Action.mayI = (action, actorRole, actorId) =>
         AuthenticationCompleted: () => true,
 
         // Data Loading
-        LoadAllInitialData     : () => true,
+        AllInitialDataLoaded   : () => true,
 
         // Blockface Actions (any authenticated user can edit blockfaces)
-        CreateBlockface        : () => true,
-        SelectBlockface        : () => true,
+        BlockfaceCreated       : () => ['admin', 'editor'].includes(actorRole),
+        BlockfaceSelected      : () => true,
+        BlockfaceSaved         : () => ['admin', 'editor'].includes(actorRole),
 
         // Segment Actions (any authenticated user can edit segments)
-        UpdateSegmentUse       : () => true,
-        UpdateSegmentLength    : () => true,
-        AddSegment             : () => true,
-        AddSegmentLeft         : () => true,
-        ReplaceSegments        : () => true,
+        SegmentUseUpdated      : () => true,
+        SegmentLengthUpdated   : () => true,
+        SegmentAdded           : () => true,
+        SegmentAddedLeft       : () => true,
+        SegmentsReplaced       : () => true,
     })

@@ -36,7 +36,7 @@ const SegmentedCurbEditor = () => {
      * @sig buildChangeTypeHandler :: (Number, String) -> Void
      */
     const buildChangeTypeHandler = (index, newType) => {
-        post(Action.UpdateSegmentUse(index, newType))
+        post(Action.SegmentUseUpdated(index, newType))
     }
 
     /**
@@ -139,7 +139,7 @@ const SegmentedCurbEditor = () => {
         if (newLength < 0.1) {
             // For zero snap, still need to sync to Redux immediately
             try {
-                post(Action.UpdateSegmentLength(index, dragState.current.startLength + unknownRemaining))
+                post(Action.SegmentLengthUpdated(index, dragState.current.startLength + unknownRemaining))
             } catch (error) {
                 console.warn('Invalid segment adjustment:', error.message)
             }
@@ -147,7 +147,7 @@ const SegmentedCurbEditor = () => {
         }
 
         try {
-            post(Action.UpdateSegmentLength(index, newLength))
+            post(Action.SegmentLengthUpdated(index, newLength))
         } catch (error) {
             console.warn('Invalid segment adjustment:', error.message)
         }
@@ -196,12 +196,12 @@ const SegmentedCurbEditor = () => {
             </Text>
             <Flex gap="2" justify="center">
                 {segmentsLength === 0 && unknownRemaining > 0 && (
-                    <Button size="2" variant="soft" onClick={() => post(Action.AddSegment(0))}>
+                    <Button size="2" variant="soft" onClick={() => post(Action.SegmentAdded(0))}>
                         + Add First Segment
                     </Button>
                 )}
                 {segmentsLength > 0 && unknownRemaining > 0 && (
-                    <Button size="2" variant="soft" onClick={() => post(Action.AddSegment(segmentsLength))}>
+                    <Button size="2" variant="soft" onClick={() => post(Action.SegmentAdded(segmentsLength))}>
                         + Add Segment
                     </Button>
                 )}
@@ -228,7 +228,7 @@ const SegmentedCurbEditor = () => {
     // Drag and drop handler
     const dragDropHandler = DragDropHandler({
         segments,
-        onSwap: newSegments => post(Action.ReplaceSegments(newSegments)),
+        onSwap: newSegments => post(Action.SegmentsReplaced(newSegments)),
         draggingIndex: segmentDragState?.segmentIndex ?? null,
         setDraggingIndex: index =>
             setSegmentDragState(
@@ -250,7 +250,7 @@ const SegmentedCurbEditor = () => {
     const handleDirectDragStart = useCallback(handleDirectDragStartImpl, [segments, total, unknownRemaining])
     const handleChangeType = buildChangeTypeHandler
 
-    const handleAddLeft = useCallback(index => post(Action.AddSegmentLeft(index)), [])
+    const handleAddLeft = useCallback(index => post(Action.SegmentAddedLeft(index)), [])
     const tickPoints = Blockface.cumulativePositions(blockface)
 
     // Redux handles blockface initialization and segment management

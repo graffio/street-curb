@@ -345,16 +345,16 @@ const CurbTable = () => {
 
     // Action dispatchers with memoization
     const changeSegmentType = useCallback((index, newType) => {
-        if (Object.keys(COLORS).includes(newType)) post(Action.UpdateSegmentUse(index, newType))
+        if (Object.keys(COLORS).includes(newType)) post(Action.SegmentUseUpdated(index, newType))
     }, [])
 
     const changeSegmentLength = useCallback((index, newLength) => {
         if (typeof newLength === 'number' && !isNaN(newLength) && newLength >= 1)
-            post(Action.UpdateSegmentLength(index, newLength))
+            post(Action.SegmentLengthUpdated(index, newLength))
     }, [])
 
     const addNewSegment = useCallback(targetIndex => {
-        post(Action.AddSegment(targetIndex))
+        post(Action.SegmentAdded(targetIndex))
     }, [])
 
     // UI state

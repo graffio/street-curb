@@ -2,6 +2,18 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F127 - Blockfaces to Firestore (2025-11-18)
+**Purpose:** Persist blockface edits to Firestore with debounced auto-save
+
+- Added SaveBlockface action with snapshot-based persistence (not event sourcing)
+- Implemented debounced auto-save (3 seconds after last edit)
+- Added flush logic on blockface switch and page unload (beforeunload/visibilitychange handlers)
+- Created Cloud Function handler for SaveBlockface
+- Added Firestore rules for blockfaces collection at organizations/{orgId}/projects/{projectId}/blockfaces/{id}
+- Updated Blockface type definition with organizationId, projectId, and LookupTable segments
+- Implemented diff logic for change tracking in audit trail
+- All segment actions (SegmentUseUpdated, SegmentLengthUpdated, etc.) trigger debounced save
+
 ## F126 - Application Routing (2025-11-13)
 **Purpose:** Add TanStack Router with MainLayout shell and lazy-loaded route components
 
