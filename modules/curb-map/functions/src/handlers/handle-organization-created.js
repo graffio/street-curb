@@ -41,6 +41,7 @@ const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
 
     const orgMember = { organizationId, role: 'admin' }
     await fsContext.users.update(actorId, { [`organizations.${organizationId}`]: orgMember })
+
     logger.flowStep('Creator added as admin')
 }
 
