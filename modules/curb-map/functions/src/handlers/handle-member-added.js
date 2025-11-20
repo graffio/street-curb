@@ -6,8 +6,8 @@ import { Member } from '../../../src/types/index.js'
  * @sig handleMemberAdded :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleMemberAdded = async (logger, fsContext, actionRequest) => {
-    const { action, actorId: addedBy } = actionRequest
-    const { userId, organizationId, role, displayName } = action
+    const { action, actorId: addedBy, organizationId } = actionRequest
+    const { userId, role, displayName } = action
 
     const org = await fsContext.organizations.read(organizationId)
     const existingMember = org.members?.[userId]

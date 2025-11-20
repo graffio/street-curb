@@ -19,7 +19,7 @@ const createOrganization = async ({
     projectId = FieldTypes.newProjectId(),
     name = 'Test Org',
 }) => {
-    const action = Action.OrganizationCreated.from({ organizationId, projectId, name })
+    const action = Action.OrganizationCreated.from({ projectId, name })
     await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
     return { organizationId, projectId }
 }
@@ -48,7 +48,7 @@ const createUser = async ({ namespace, token, userId = FieldTypes.newUserId(), e
  * @sig addMember :: ({ namespace: String, token: String, userId: String, organizationId: String, role: String, displayName: String }) -> Promise<void>
  */
 const addMember = async ({ namespace, token, userId, organizationId, role, displayName }) => {
-    const action = Action.MemberAdded.from({ userId, organizationId, role, displayName })
+    const action = Action.MemberAdded.from({ userId, role, displayName })
     await submitAndExpectSuccess({ action, namespace, token, organizationId })
 }
 
@@ -57,7 +57,7 @@ const addMember = async ({ namespace, token, userId, organizationId, role, displ
  * @sig removeMember :: ({ namespace: String, token: String, userId: String, organizationId: String }) -> Promise<void>
  */
 const removeMember = async ({ namespace, token, userId, organizationId }) => {
-    const action = Action.MemberRemoved.from({ userId, organizationId })
+    const action = Action.MemberRemoved.from({ userId })
     await submitAndExpectSuccess({ action, namespace, token, organizationId })
 }
 
@@ -66,7 +66,7 @@ const removeMember = async ({ namespace, token, userId, organizationId }) => {
  * @sig changeRole :: ({ namespace: String, token: String, userId: String, organizationId: String, role: String }) -> Promise<void>
  */
 const changeRole = async ({ namespace, token, userId, organizationId, role }) => {
-    const action = Action.RoleChanged.from({ userId, organizationId, role })
+    const action = Action.RoleChanged.from({ userId, role })
     await submitAndExpectSuccess({ action, namespace, token, organizationId })
 }
 

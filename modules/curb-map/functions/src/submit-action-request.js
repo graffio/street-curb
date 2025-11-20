@@ -316,7 +316,7 @@ const enrichActionRequest = req => {
     const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
     const action = Action.fromFirestore(req.body.action, decodeTimestamp)
     const { organizationId, projectId, idempotencyKey, correlationId } = req.body
-    const { id: subjectId, type: subjectType } = Action.getSubject(action)
+    const { id: subjectId, type: subjectType } = Action.getSubject(action, organizationId)
 
     return { namespace, action, organizationId, projectId, subjectId, subjectType, idempotencyKey, correlationId }
 }

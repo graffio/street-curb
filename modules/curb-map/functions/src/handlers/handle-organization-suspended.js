@@ -6,8 +6,7 @@ import { updatedMetadata } from '../shared.js'
  * @sig handleOrganizationSuspended :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleOrganizationSuspended = async (logger, fsContext, actionRequest) => {
-    const { action } = actionRequest
-    const { organizationId } = action
+    const { organizationId } = actionRequest
     const metadata = updatedMetadata(fsContext, actionRequest)
 
     await fsContext.organizations.update(organizationId, { status: 'suspended', ...metadata })

@@ -8,8 +8,8 @@ import { generateMetadata } from '../shared.js'
  * @sig handleOrganizationCreated :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleOrganizationCreated = async (logger, fsContext, actionRequest) => {
-    const { action, actorId } = actionRequest
-    const { organizationId, projectId, name } = action
+    const { action, actorId, organizationId } = actionRequest
+    const { projectId, name } = action
     const metadata = generateMetadata(fsContext, actionRequest)
 
     // Add creator as admin member

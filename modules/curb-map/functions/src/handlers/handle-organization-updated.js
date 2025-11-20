@@ -1,4 +1,4 @@
-import { omit, removeNilValues } from '@graffio/functional'
+import { removeNilValues } from '@graffio/functional'
 import { updatedMetadata } from '../shared.js'
 
 /**
@@ -9,8 +9,7 @@ import { updatedMetadata } from '../shared.js'
 const handleOrganizationUpdated = async (logger, fsContext, actionRequest) => {
     const { action, organizationId } = actionRequest
     const metadata = updatedMetadata(fsContext, actionRequest)
-    const o = omit('organizationId', action)
-    const changes = removeNilValues(o)
+    const changes = removeNilValues(action)
 
     await fsContext.organizations.update(organizationId, { ...changes, ...metadata })
     logger.flowStep('Organization updated')

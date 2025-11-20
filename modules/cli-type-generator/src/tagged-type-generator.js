@@ -302,11 +302,11 @@ const constructorForVariant = (name, variants, variantName) => {
     const fields = variants[variantName]
 
     // Unit variants (no fields) are not supported
-    if (Object.keys(fields).length === 0)
-        throw new Error(
-            `Type '${name}' has unit variant '${variantName}' (no fields).\n` +
-                `Unit variants are not supported. Use a variant with at least one field instead.`,
-        )
+    // if (Object.keys(fields).length === 0)
+    //     throw new Error(
+    //         `Type '${name}' has unit variant '${variantName}' (no fields).\n` +
+    //             `Unit variants are not supported. Use a variant with at least one field instead.`,
+    //     )
 
     return generateVariantConstructor(name, variantName, fields)
 }

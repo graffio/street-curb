@@ -11,7 +11,7 @@ test('Given OrganizationUpdated action', t => {
         await asSignedInUser('name', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token, name: 'Original Name' })
 
-            const action = Action.OrganizationUpdated.from({ organizationId, name: 'Updated Name' })
+            const action = Action.OrganizationUpdated.from({ name: 'Updated Name' })
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const organization = await readOrganization({ namespace, organizationId, projectId })
@@ -24,7 +24,7 @@ test('Given OrganizationUpdated action', t => {
         await asSignedInUser('status', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
-            const action = Action.OrganizationUpdated.from({ organizationId, status: 'suspended' })
+            const action = Action.OrganizationUpdated.from({ status: 'suspended' })
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const organization = await readOrganization({ namespace, organizationId, projectId })
