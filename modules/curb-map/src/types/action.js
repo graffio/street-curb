@@ -1,29 +1,22 @@
 /*  Action generated from: modules/curb-map/type-definitions/action.type.js
  *
  *  OrganizationCreated
- *      organizationId: FieldTypes.organizationId,
- *      name          : "String",
- *      projectId     : FieldTypes.projectId
+ *      name     : "String",
+ *      projectId: FieldTypes.projectId
  *  OrganizationUpdated
- *      organizationId: FieldTypes.organizationId,
- *      name          : "String?",
- *      status        : "/^(active|suspended)$/?"
+ *      name  : "String?",
+ *      status: "/^(active|suspended)$/?"
  *  OrganizationDeleted
- *      organizationId: FieldTypes.organizationId
  *  OrganizationSuspended
- *      organizationId: FieldTypes.organizationId
  *  MemberAdded
- *      userId        : FieldTypes.userId,
- *      organizationId: FieldTypes.organizationId,
- *      role          : FieldTypes.role,
- *      displayName   : "String"
+ *      userId     : FieldTypes.userId,
+ *      role       : FieldTypes.role,
+ *      displayName: "String"
  *  RoleChanged
- *      userId        : FieldTypes.userId,
- *      organizationId: FieldTypes.organizationId,
- *      role          : FieldTypes.role
+ *      userId: FieldTypes.userId,
+ *      role  : FieldTypes.role
  *  MemberRemoved
- *      userId        : FieldTypes.userId,
- *      organizationId: FieldTypes.organizationId
+ *      userId: FieldTypes.userId
  *  UserCreated
  *      userId     : FieldTypes.userId,
  *      displayName: "String",
@@ -155,15 +148,13 @@ Action.prototype = ActionPrototype
 // Variant Action.OrganizationCreated
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationCreatedConstructor = function OrganizationCreated(organizationId, name, projectId) {
-    const constructorName = 'Action.OrganizationCreated(organizationId, name, projectId)'
-    R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+const OrganizationCreatedConstructor = function OrganizationCreated(name, projectId) {
+    const constructorName = 'Action.OrganizationCreated(name, projectId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
     R.validateString(constructorName, 'name', false, name)
     R.validateRegex(constructorName, FieldTypes.projectId, 'projectId', false, projectId)
 
     const result = Object.create(OrganizationCreatedPrototype)
-    result.organizationId = organizationId
     result.name = name
     result.projectId = projectId
     return result
@@ -177,7 +168,7 @@ const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.OrganizationCreated(${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.projectId)})`
+            return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})`
         },
         enumerable: false,
     },
@@ -200,7 +191,7 @@ const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
 OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
 OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
 OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
-OrganizationCreatedConstructor._from = o => Action.OrganizationCreated(o.organizationId, o.name, o.projectId)
+OrganizationCreatedConstructor._from = o => Action.OrganizationCreated(o.name, o.projectId)
 OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
 
 OrganizationCreatedConstructor.toFirestore = o => ({ ...o })
@@ -211,15 +202,13 @@ OrganizationCreatedConstructor.fromFirestore = OrganizationCreatedConstructor._f
 // Variant Action.OrganizationUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationUpdatedConstructor = function OrganizationUpdated(organizationId, name, status) {
-    const constructorName = 'Action.OrganizationUpdated(organizationId, name, status)'
+const OrganizationUpdatedConstructor = function OrganizationUpdated(name, status) {
+    const constructorName = 'Action.OrganizationUpdated(name, status)'
 
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateString(constructorName, 'name', true, name)
     R.validateRegex(constructorName, /^(active|suspended)$/, 'status', true, status)
 
     const result = Object.create(OrganizationUpdatedPrototype)
-    result.organizationId = organizationId
     if (name != null) result.name = name
     if (status != null) result.status = status
     return result
@@ -233,7 +222,7 @@ const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.OrganizationUpdated(${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.status)})`
+            return `Action.OrganizationUpdated(${R._toString(this.name)}, ${R._toString(this.status)})`
         },
         enumerable: false,
     },
@@ -256,7 +245,7 @@ const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
 OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
 OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
-OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.organizationId, o.name, o.status)
+OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.name, o.status)
 OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
 
 OrganizationUpdatedConstructor.toFirestore = o => ({ ...o })
@@ -267,13 +256,12 @@ OrganizationUpdatedConstructor.fromFirestore = OrganizationUpdatedConstructor._f
 // Variant Action.OrganizationDeleted
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationDeletedConstructor = function OrganizationDeleted(organizationId) {
-    const constructorName = 'Action.OrganizationDeleted(organizationId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+const OrganizationDeletedConstructor = function OrganizationDeleted() {
+    const constructorName = 'Action.OrganizationDeleted()'
+    R.validateArgumentLength(constructorName, 0, arguments)
 
     const result = Object.create(OrganizationDeletedPrototype)
-    result.organizationId = organizationId
+
     return result
 }
 
@@ -285,7 +273,7 @@ const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.OrganizationDeleted(${R._toString(this.organizationId)})`
+            return `Action.OrganizationDeleted()`
         },
         enumerable: false,
     },
@@ -308,7 +296,7 @@ const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
 OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
 OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
 OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
-OrganizationDeletedConstructor._from = o => Action.OrganizationDeleted(o.organizationId)
+OrganizationDeletedConstructor._from = o => Action.OrganizationDeleted()
 OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
 
 OrganizationDeletedConstructor.toFirestore = o => ({ ...o })
@@ -319,13 +307,12 @@ OrganizationDeletedConstructor.fromFirestore = OrganizationDeletedConstructor._f
 // Variant Action.OrganizationSuspended
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationSuspendedConstructor = function OrganizationSuspended(organizationId) {
-    const constructorName = 'Action.OrganizationSuspended(organizationId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
+const OrganizationSuspendedConstructor = function OrganizationSuspended() {
+    const constructorName = 'Action.OrganizationSuspended()'
+    R.validateArgumentLength(constructorName, 0, arguments)
 
     const result = Object.create(OrganizationSuspendedPrototype)
-    result.organizationId = organizationId
+
     return result
 }
 
@@ -337,7 +324,7 @@ const OrganizationSuspendedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.OrganizationSuspended(${R._toString(this.organizationId)})`
+            return `Action.OrganizationSuspended()`
         },
         enumerable: false,
     },
@@ -360,7 +347,7 @@ const OrganizationSuspendedPrototype = Object.create(ActionPrototype, {
 OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
 OrganizationSuspendedConstructor.is = val => val && val.constructor === OrganizationSuspendedConstructor
 OrganizationSuspendedConstructor.toString = () => 'Action.OrganizationSuspended'
-OrganizationSuspendedConstructor._from = o => Action.OrganizationSuspended(o.organizationId)
+OrganizationSuspendedConstructor._from = o => Action.OrganizationSuspended()
 OrganizationSuspendedConstructor.from = OrganizationSuspendedConstructor._from
 
 OrganizationSuspendedConstructor.toFirestore = o => ({ ...o })
@@ -371,17 +358,15 @@ OrganizationSuspendedConstructor.fromFirestore = OrganizationSuspendedConstructo
 // Variant Action.MemberAdded
 //
 // -------------------------------------------------------------------------------------------------------------
-const MemberAddedConstructor = function MemberAdded(userId, organizationId, role, displayName) {
-    const constructorName = 'Action.MemberAdded(userId, organizationId, role, displayName)'
-    R.validateArgumentLength(constructorName, 4, arguments)
+const MemberAddedConstructor = function MemberAdded(userId, role, displayName) {
+    const constructorName = 'Action.MemberAdded(userId, role, displayName)'
+    R.validateArgumentLength(constructorName, 3, arguments)
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
     R.validateString(constructorName, 'displayName', false, displayName)
 
     const result = Object.create(MemberAddedPrototype)
     result.userId = userId
-    result.organizationId = organizationId
     result.role = role
     result.displayName = displayName
     return result
@@ -395,7 +380,7 @@ const MemberAddedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})`
+            return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})`
         },
         enumerable: false,
     },
@@ -418,7 +403,7 @@ const MemberAddedPrototype = Object.create(ActionPrototype, {
 MemberAddedConstructor.prototype = MemberAddedPrototype
 MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
 MemberAddedConstructor.toString = () => 'Action.MemberAdded'
-MemberAddedConstructor._from = o => Action.MemberAdded(o.userId, o.organizationId, o.role, o.displayName)
+MemberAddedConstructor._from = o => Action.MemberAdded(o.userId, o.role, o.displayName)
 MemberAddedConstructor.from = MemberAddedConstructor._from
 
 MemberAddedConstructor.toFirestore = o => ({ ...o })
@@ -429,16 +414,14 @@ MemberAddedConstructor.fromFirestore = MemberAddedConstructor._from
 // Variant Action.RoleChanged
 //
 // -------------------------------------------------------------------------------------------------------------
-const RoleChangedConstructor = function RoleChanged(userId, organizationId, role) {
-    const constructorName = 'Action.RoleChanged(userId, organizationId, role)'
-    R.validateArgumentLength(constructorName, 3, arguments)
+const RoleChangedConstructor = function RoleChanged(userId, role) {
+    const constructorName = 'Action.RoleChanged(userId, role)'
+    R.validateArgumentLength(constructorName, 2, arguments)
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
     R.validateRegex(constructorName, FieldTypes.role, 'role', false, role)
 
     const result = Object.create(RoleChangedPrototype)
     result.userId = userId
-    result.organizationId = organizationId
     result.role = role
     return result
 }
@@ -451,7 +434,7 @@ const RoleChangedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.organizationId)}, ${R._toString(this.role)})`
+            return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})`
         },
         enumerable: false,
     },
@@ -474,7 +457,7 @@ const RoleChangedPrototype = Object.create(ActionPrototype, {
 RoleChangedConstructor.prototype = RoleChangedPrototype
 RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
 RoleChangedConstructor.toString = () => 'Action.RoleChanged'
-RoleChangedConstructor._from = o => Action.RoleChanged(o.userId, o.organizationId, o.role)
+RoleChangedConstructor._from = o => Action.RoleChanged(o.userId, o.role)
 RoleChangedConstructor.from = RoleChangedConstructor._from
 
 RoleChangedConstructor.toFirestore = o => ({ ...o })
@@ -485,15 +468,13 @@ RoleChangedConstructor.fromFirestore = RoleChangedConstructor._from
 // Variant Action.MemberRemoved
 //
 // -------------------------------------------------------------------------------------------------------------
-const MemberRemovedConstructor = function MemberRemoved(userId, organizationId) {
-    const constructorName = 'Action.MemberRemoved(userId, organizationId)'
-    R.validateArgumentLength(constructorName, 2, arguments)
+const MemberRemovedConstructor = function MemberRemoved(userId) {
+    const constructorName = 'Action.MemberRemoved(userId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
-    R.validateRegex(constructorName, FieldTypes.organizationId, 'organizationId', false, organizationId)
 
     const result = Object.create(MemberRemovedPrototype)
     result.userId = userId
-    result.organizationId = organizationId
     return result
 }
 
@@ -505,7 +486,7 @@ const MemberRemovedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.MemberRemoved(${R._toString(this.userId)}, ${R._toString(this.organizationId)})`
+            return `Action.MemberRemoved(${R._toString(this.userId)})`
         },
         enumerable: false,
     },
@@ -528,7 +509,7 @@ const MemberRemovedPrototype = Object.create(ActionPrototype, {
 MemberRemovedConstructor.prototype = MemberRemovedPrototype
 MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
 MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
-MemberRemovedConstructor._from = o => Action.MemberRemoved(o.userId, o.organizationId)
+MemberRemovedConstructor._from = o => Action.MemberRemoved(o.userId)
 MemberRemovedConstructor.from = MemberRemovedConstructor._from
 
 MemberRemovedConstructor.toFirestore = o => ({ ...o })
@@ -1462,22 +1443,22 @@ Action.redactPii = rawData => {
     return result
 }
 
-Action.getSubject = action =>
+Action.getSubject = (action, organizationId) =>
     action.match({
-        OrganizationCreated: a => ({
-            id: a.organizationId,
+        OrganizationCreated: () => ({
+            id: organizationId,
             type: 'organization',
         }),
-        OrganizationDeleted: a => ({
-            id: a.organizationId,
+        OrganizationDeleted: () => ({
+            id: organizationId,
             type: 'organization',
         }),
-        OrganizationSuspended: a => ({
-            id: a.organizationId,
+        OrganizationSuspended: () => ({
+            id: organizationId,
             type: 'organization',
         }),
-        OrganizationUpdated: a => ({
-            id: a.organizationId,
+        OrganizationUpdated: () => ({
+            id: organizationId,
             type: 'organization',
         }),
         MemberAdded: a => ({

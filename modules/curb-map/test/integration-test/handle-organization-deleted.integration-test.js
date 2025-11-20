@@ -12,7 +12,7 @@ test('Given OrganizationDeleted action', t => {
         await asSignedInUser('success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
-            const action = Action.OrganizationDeleted.from({ organizationId })
+            const action = Action.OrganizationDeleted.from({})
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const fsContext = createFirestoreContext(namespace, organizationId, projectId)

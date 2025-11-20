@@ -213,7 +213,6 @@ const isOrganizationAction = action =>
     Action.RoleChanged.is(action)
 /**
  * Validates that user has access to requested organization and project
- * Uses auth token custom claims for fast tenant validation
  * @sig validateTenantAccess :: (ActionRequest, Object) -> String | undefined
  */
 const validateTenantAccess = (actionRequest, allowedOrganizations) => {
@@ -317,7 +316,7 @@ const enrichActionRequest = req => {
     const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
     const action = Action.fromFirestore(req.body.action, decodeTimestamp)
     const { organizationId, projectId, idempotencyKey, correlationId } = req.body
-    const { id: subjectId, type: subjectType } = Action.getSubject(action)
+    const { id: subjectId, type: subjectType } = Action.getSubject(action, organizationId)
 
     return { namespace, action, organizationId, projectId, subjectId, subjectType, idempotencyKey, correlationId }
 }
@@ -461,9 +460,6 @@ const submitActionRequestHandler = async (req, res) => {
         // write our SOC2 record
         const fsContext = createFirestoreContext(namespace, organizationId, projectId)
         const completed = await fsContext.completedActions.readOrNull(actionRequest.id)
-
-        const handler = handlerForActionRequest(actionRequest)
-        if (handler.syncUserAuthClaims) await handler.syncUserAuthClaims(fsContext, actionRequest)
 
         // If null, transaction failed/rolled back - return error
         if (!completed) {

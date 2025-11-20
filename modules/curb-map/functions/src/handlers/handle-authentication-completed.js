@@ -1,15 +1,13 @@
-import admin from 'firebase-admin'
 import { FieldTypes } from '../../../src/types/index.js'
 import { User } from '../../../type-definitions/user.type.js'
 import { generateMetadata } from '../shared.js'
 
 /**
  * Handle AuthenticationCompleted action
- * Creates new user or looks up existing by phone, sets userId custom claim
+ * Creates new user or looks up existing by phone
  * @sig handleAuthenticationCompleted :: (Logger, FirestoreContext, ActionRequest, DecodedToken) -> Promise<Void>
  */
 const handleAuthenticationCompleted = async (logger, fsContext, actionRequest, decodedToken) => {
-    // Returning user (has custom claim already)
     const handleReturningUser = async () => {
         logger.flowStep('Existing user authenticated')
         return existingUsers[0].id
@@ -30,15 +28,13 @@ const handleAuthenticationCompleted = async (logger, fsContext, actionRequest, d
     const { phone_number: phoneNumber } = decodedToken
     const { email, displayName } = actionRequest.action
 
-    if (!phoneNumber) throw new Error('irebase token missing phone_number claim')
+    if (!phoneNumber) throw new Error('Firebase token missing phone_number claim')
 
     // Lookup existing user by phoneNumber
     const existingUsers = await fsContext.users.query({ where: [['phoneNumber', '==', phoneNumber]], limit: 1 })
 
-    const userId = existingUsers.length > 0 ? await handleReturningUser() : await handleNewUser()
+    existingUsers.length > 0 ? await handleReturningUser() : await handleNewUser()
 
-    // Set userId custom claim
-    await admin.auth().setCustomUserClaims(userId, { userId })
     logger.flowStep('Authentication completed')
 }
 

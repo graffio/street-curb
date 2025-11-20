@@ -27,14 +27,14 @@ const buildOrganizationCreatedAction = overrides => {
     const organizationId = overrides?.organizationId || FieldTypes.newOrganizationId()
     const projectId = overrides?.projectId || FieldTypes.newProjectId()
     const name = overrides?.name || 'Test Org'
-    return Action.OrganizationCreated.from({ organizationId, projectId, name })
+    const action = Action.OrganizationCreated.from({ projectId, name })
+    return { action, organizationId, projectId }
 }
 
 test('Given submitActionRequest minimal HTTP flow', t => {
     t.test('When a valid action is submitted Then response is completed', async t => {
         await withHttpAuth('http-success', async ({ namespace, token }) => {
-            const action = buildOrganizationCreatedAction()
-            const { organizationId, projectId } = action
+            const { action, organizationId, projectId } = buildOrganizationCreatedAction()
             const result = await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             t.equal(result.status, 'completed', 'Then status is completed')
@@ -47,9 +47,8 @@ test('Given submitActionRequest minimal HTTP flow', t => {
         await withHttpAuth(
             'http-completed-actions',
             async ({ namespace, token, actorUserId, completedActionsFacade }) => {
-                const action = buildOrganizationCreatedAction()
+                const { action, organizationId, projectId } = buildOrganizationCreatedAction()
                 const idempotencyKey = FieldTypes.newIdempotencyKey()
-                const { organizationId, projectId } = action
 
                 await submitAndExpectSuccess({ action, namespace, token, idempotencyKey, organizationId, projectId })
 
@@ -57,7 +56,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
                 const completed = results[0]
 
                 t.ok(completed, 'Then completedActions entry exists')
-                t.equal(completed.actorId, actorUserId, 'Then actorId equals custom claim userId')
+                t.equal(completed.actorId, actorUserId, 'Then actorId equals userId')
                 t.ok(completed.processedAt, 'Then processedAt stored as Date')
             },
         )
@@ -66,9 +65,8 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When processed Then server timestamps are used', async t => {
         await withHttpAuth('http-timestamps', async ({ namespace, token, completedActionsFacade }) => {
-            const action = buildOrganizationCreatedAction()
+            const { action, organizationId, projectId } = buildOrganizationCreatedAction()
             const idempotencyKey = FieldTypes.newIdempotencyKey()
-            const { organizationId, projectId } = action
 
             await submitAndExpectSuccess({ action, namespace, token, idempotencyKey, organizationId, projectId })
 
@@ -81,9 +79,8 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When duplicate submission occurs Then duplicate status returned', async t => {
         await withHttpAuth('http-duplicate', async ({ namespace, token }) => {
-            const action = buildOrganizationCreatedAction()
+            const { action, organizationId, projectId } = buildOrganizationCreatedAction()
             const idempotencyKey = FieldTypes.newIdempotencyKey()
-            const { organizationId, projectId } = action
 
             await submitAndExpectSuccess({ action, namespace, token, idempotencyKey, organizationId, projectId })
             const duplicate = await submitAndExpectDuplicate({
@@ -102,9 +99,8 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When concurrent duplicates arrive Then one 200 and one 409', async t => {
         await withHttpAuth('http-concurrent', async ({ namespace, token, completedActionsFacade }) => {
-            const action = buildOrganizationCreatedAction()
+            const { action, organizationId, projectId } = buildOrganizationCreatedAction()
             const idempotencyKey = FieldTypes.newIdempotencyKey()
-            const { organizationId, projectId } = action
 
             const [first, second] = await Promise.all([
                 submitActionRequest({ action, namespace, token, idempotencyKey, organizationId, projectId }),
@@ -125,7 +121,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When request lacks token Then HTTP 401 returned and no write occurs', async t => {
         await withHttpAuth('http-missing-token', async ({ namespace, completedActionsFacade }) => {
-            const action = buildOrganizationCreatedAction()
+            const { action } = buildOrganizationCreatedAction()
             const payload = {
                 action: Action.toFirestore(action),
                 idempotencyKey: FieldTypes.newIdempotencyKey(),
@@ -146,7 +142,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When token is malformed Then specific error message returned', async t => {
         await withHttpAuth('http-malformed-token', async ({ namespace }) => {
-            const action = buildOrganizationCreatedAction()
+            const { action } = buildOrganizationCreatedAction()
             const payload = {
                 action: Action.toFirestore(action),
                 idempotencyKey: FieldTypes.newIdempotencyKey(),
@@ -170,7 +166,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When token has invalid signature Then specific error message returned', async t => {
         await withHttpAuth('http-invalid-signature', async ({ namespace }) => {
-            const action = buildOrganizationCreatedAction()
+            const { action } = buildOrganizationCreatedAction()
             const payload = {
                 action: Action.toFirestore(action),
                 idempotencyKey: FieldTypes.newIdempotencyKey(),
@@ -202,8 +198,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
     t.test('When user document does not exist Then specific error message returned', async t => {
         await asSignedInUser('missing-user-doc', async ({ namespace }) => {
-            const action = buildOrganizationCreatedAction()
-            const { organizationId, projectId } = action
+            const { action, organizationId, projectId } = buildOrganizationCreatedAction()
             const payload = {
                 action: Action.toFirestore(action),
                 idempotencyKey: FieldTypes.newIdempotencyKey(),

@@ -4,7 +4,7 @@ service cloud.firestore {
     match /databases/{database}/documents {
 
         function isAuthenticated()             { return request.auth != null; }
-        function getAuthenticatedUserId()      { return request.auth.token.userId; }
+        function getAuthenticatedUserId()      { return request.auth.uid; }
         function getUserDoc()                  { return get(   /databases/$(database)/documents/users/$(getAuthenticatedUserId())); }
         function userExists()                  { return exists(/databases/$(database)/documents/users/$(getAuthenticatedUserId())); }
         function isOwnUserDoc(userId)          { return isAuthenticated() && getAuthenticatedUserId() == userId; }

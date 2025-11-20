@@ -43,7 +43,7 @@ test('Given user attempts to access unauthorized organization', t => {
 
                 // Try to submit action for org2 using user1's token
                 // This should fail because user1 is not a member of org2
-                const action = Action.OrganizationUpdated.from({ organizationId: org2Id, name: 'Hacked!' })
+                const action = Action.OrganizationUpdated.from({ name: 'Hacked!' })
                 const result = await submitActionRequest({
                     action,
                     namespace,

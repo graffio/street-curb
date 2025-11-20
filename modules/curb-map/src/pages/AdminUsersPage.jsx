@@ -14,7 +14,7 @@ const AdminUsersPage = () => {
     const currentUserId = useSelector(S.currentUser).id
     const isAdmin = Organization.isAdmin(currentOrganization, currentUserId)
 
-    const onRoleChange = (userId, role) => post(Action.RoleChanged(userId, currentOrganization.id, role))
+    const onRoleChange = (userId, role) => post(Action.RoleChanged(userId, role))
 
     useEffect(() => {
         layoutChannel.setState({ title: 'User Management' })

@@ -33,15 +33,15 @@ export const Action = {
     kind: 'taggedSum',
     variants: {
         // Organization Actions
-        OrganizationCreated  : { organizationId: FieldTypes.organizationId, name: 'String' , projectId: FieldTypes.projectId, },
-        OrganizationUpdated  : { organizationId: FieldTypes.organizationId, name: 'String?', status: '/^(active|suspended)$/?', },
-        OrganizationDeleted  : { organizationId: FieldTypes.organizationId, },
-        OrganizationSuspended: { organizationId: FieldTypes.organizationId, },
-        
+        OrganizationCreated  : { name: 'String' , projectId: FieldTypes.projectId, },
+        OrganizationUpdated  : { name: 'String?', status: '/^(active|suspended)$/?', },
+        OrganizationDeleted  : { },
+        OrganizationSuspended: { },
+
         // Organization Member Actions
-        MemberAdded  : { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, role: FieldTypes.role, displayName: 'String'},
-        RoleChanged  : { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, role: FieldTypes.role, },
-        MemberRemoved: { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, },
+        MemberAdded  : { userId: FieldTypes.userId, role: FieldTypes.role, displayName: 'String'},
+        RoleChanged  : { userId: FieldTypes.userId, role: FieldTypes.role, },
+        MemberRemoved: { userId: FieldTypes.userId, },
 
         // User Actions
         UserCreated  : { userId: FieldTypes.userId, displayName: 'String', email: FieldTypes.email },
@@ -203,15 +203,15 @@ Action.redactPii = rawData => {
 
 // Additional function: getSubject
 // Returns the subject (entity being acted upon) for an action
-// @sig getSubject :: Action -> { id: String, type: String }
+// @sig getSubject :: (Action, String) -> { id: String, type: String }
 // prettier-ignore
-Action.getSubject = action =>
+Action.getSubject = (action, organizationId) =>
     action.match({
         // organization
-        OrganizationCreated    : a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationDeleted    : a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationSuspended  : a => ({ id: a.organizationId, type: 'organization' }),
-        OrganizationUpdated    : a => ({ id: a.organizationId, type: 'organization' }),
+        OrganizationCreated    : () => ({ id: organizationId, type: 'organization' }),
+        OrganizationDeleted    : () => ({ id: organizationId, type: 'organization' }),
+        OrganizationSuspended  : () => ({ id: organizationId, type: 'organization' }),
+        OrganizationUpdated    : () => ({ id: organizationId, type: 'organization' }),
 
         // organization member
         MemberAdded            : a => ({ id: a.userId,         type: 'user' }),

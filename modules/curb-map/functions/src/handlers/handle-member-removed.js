@@ -6,8 +6,8 @@ import { Member } from '../../../src/types/index.js'
  * @sig handleMemberRemoved :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleMemberRemoved = async (logger, fsContext, actionRequest) => {
-    const { action, actorId } = actionRequest
-    const { userId, organizationId } = action
+    const { action, actorId, organizationId } = actionRequest
+    const { userId } = action
 
     const org = await fsContext.organizations.read(organizationId)
     const member = org.members?.[userId]

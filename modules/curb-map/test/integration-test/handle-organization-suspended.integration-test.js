@@ -11,7 +11,7 @@ test('Given OrganizationSuspended action', t => {
         await asSignedInUser('success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
-            const action = Action.OrganizationSuspended.from({ organizationId })
+            const action = Action.OrganizationSuspended.from({})
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
             const organization = await readOrganization({ namespace, organizationId, projectId })

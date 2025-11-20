@@ -37,7 +37,7 @@ test('Given OrganizationCreated action', t => {
             // Try to create third org (should fail due to limit)
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
-            const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Third Org' })
+            const action = Action.OrganizationCreated.from({ projectId, name: 'Third Org' })
             const result = await submitActionRequest({ action, namespace, token, organizationId, projectId })
 
             t.equal(result.status, 401, 'Then HTTP status is 401')
