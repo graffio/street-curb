@@ -91,7 +91,10 @@ const sendFailed = (res, errorMessage, handlerName = null) => {
 const sendDuplicate = (res, result) =>
     sendJson(res, 409, { status: 'duplicate', message: 'Already processed', processedAt: result.processedAt })
 
-const sendUnauthorized = (res, error) => sendJson(res, 401, { status: 'unauthorized', error })
+const sendUnauthorized = (logger, res, error, extraData = {}) => {
+    logger.error(new Error(error), extraData)
+    sendJson(res, 401, { status: 'unauthorized', error })
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Validation
@@ -164,16 +167,11 @@ const convertToActionRequest = (rawActionRequest, logger) => {
     }
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------------------------------------------------
-
 /*
- * The authorization header includes a `bearer: token` which we use to identify the sender of the ActionRequest
- * From that Auth user, we get the userId buried in its custom claims
- * @sig readUserIdFromAuthCustomClaims :: (HttpRequest, Logger, Boolean) -> { userId: UserId } | { error: String }
+ * Verifies auth token and extracts userId
+ * @sig verifyAuthToken :: (HttpRequest, Logger) -> { userId: UserId } | { error: String }
  */
-const readUserIdFromAuthCustomClaims = async (req, logger, isAuthenticationCompleted) => {
+const verifyAuthToken = async (logger, req) => {
     const getAuthErrorMessage = error => {
         if (error.code === 'auth/id-token-expired') return 'Authorization token has expired'
         if (error.code === 'auth/argument-error') return 'Authorization token is malformed'
@@ -189,22 +187,77 @@ const readUserIdFromAuthCustomClaims = async (req, logger, isAuthenticationCompl
     if (!token) return { error: 'Authorization token is required' }
 
     try {
-        const decoded = await admin.auth().verifyIdToken(token)
-        const { userId } = decoded
-
-        // AuthenticationCompleted works without userId claim (first-time auth)
-        if (isAuthenticationCompleted)
-            return decoded.uid ? { decodedToken: decoded } : { error: 'Authorization token missing uid' }
-
-        return !userId || !FieldTypes.userId.test(userId)
-            ? { error: 'Authorization token missing userId claim' }
-            : { userId }
+        const { uid } = await admin.auth().verifyIdToken(token)
+        return FieldTypes.userId.test(uid)
+            ? { userId: uid }
+            : { error: 'Malformed userId; uid not properly set to a userId' }
     } catch (error) {
         const message = getAuthErrorMessage(error)
         logger.error(new Error(message), { originalError: error.message, code: error.code })
         return { error: message }
     }
 }
+
+const isUserAction = action =>
+    Action.UserCreated.is(action) ||
+    Action.UserUpdated.is(action) ||
+    Action.UserForgotten.is(action) ||
+    Action.AuthenticationCompleted.is(action)
+const isOrganizationAction = action =>
+    Action.OrganizationCreated.is(action) ||
+    Action.OrganizationUpdated.is(action) ||
+    Action.OrganizationDeleted.is(action) ||
+    Action.OrganizationSuspended.is(action) ||
+    Action.MemberAdded.is(action) ||
+    Action.MemberRemoved.is(action) ||
+    Action.RoleChanged.is(action)
+/**
+ * Validates that user has access to requested organization and project
+ * Uses auth token custom claims for fast tenant validation
+ * @sig validateTenantAccess :: (ActionRequest, Object) -> String | undefined
+ */
+const validateTenantAccess = (actionRequest, allowedOrganizations) => {
+    const { organizationId, projectId, action, actorId } = actionRequest
+
+    // Special case: there are NO allowedOrganizations. Most actions should fail, but some have to succeed,
+    // or we get into a chicken-and-egg situation
+    const noAllowedOrganizations = Object.keys(allowedOrganizations).length === 0
+    if (noAllowedOrganizations) {
+        if (isUserAction(action)) return undefined
+        if (Action.AuthenticationCompleted.is(action)) return undefined
+        if (Action.OrganizationCreated.is(action)) return undefined // Users can create their first org
+        return `User ${actorId} has no access to ${organizationId} for ${action.toString()}`
+    }
+
+    // If request doesn't specify organizationId, skip validation
+    // (some actions like UserUpdated don't require org context)
+    if (!organizationId) {
+        if (Action.UserUpdated.is(action)) return undefined
+        if (Action.UserForgotten.is(action)) return undefined
+        return `Access denied: no organizationId`
+    }
+
+    // Allow OrganizationCreated - user is creating a new org, so they won't have access yet
+    if (Action.OrganizationCreated.is(action)) return undefined
+
+    // Validate organization access
+    const organizationAccess = allowedOrganizations[organizationId]
+    if (!organizationAccess) return `Access denied to organization ${organizationId}`
+
+    // Validate projectId is present for project-level actions
+    const requiresProjectId = !isOrganizationAction(action) && !isUserAction(action)
+    if (requiresProjectId && !projectId) return `Access denied: projectId required for ${action['@@tagName']}`
+
+    // Note: We don't validate specific projectId access here because user.organizations
+    // doesn't contain projects list. If user is member of org, they can access any project
+    // in that org. Project-specific permissions would require reading org document.
+
+    return undefined
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
 const createActionRequestLogger = (logger, actionRequest) => {
@@ -222,7 +275,7 @@ const createActionRequestLogger = (logger, actionRequest) => {
  * Handler dispatch - maps Action types to handler functions
  */
 // prettier-ignore
-const dispatchToHandler = actionRequest =>
+const handlerForActionRequest = actionRequest =>
     actionRequest.action.match({
         OrganizationCreated    : () => handleOrganizationCreated,
         OrganizationUpdated    : () => handleOrganizationUpdated,
@@ -235,15 +288,15 @@ const dispatchToHandler = actionRequest =>
         MemberRemoved          : () => handleMemberRemoved,
         RoleChanged            : () => handleRoleChanged,
         AuthenticationCompleted: () => handleAuthenticationCompleted,
-        AllInitialDataLoaded     : () => { throw new Error('AllInitialDataLoaded should never reach server (local-only action)') },
-        BlockfaceCreated        : () => { throw new Error('BlockfaceCreated should never reach server (local-only action)') },
-        BlockfaceSelected        : () => { throw new Error('BlockfaceSelected should never reach server (local-only action)') },
-        BlockfaceSaved          : () => handleBlockfaceSaved,
-        SegmentUseUpdated       : () => { throw new Error('SegmentUseUpdated should never reach server (local-only action)') },
-        SegmentLengthUpdated    : () => { throw new Error('SegmentLengthUpdated should never reach server (local-only action)') },
-        SegmentAdded             : () => { throw new Error('SegmentAdded should never reach server (local-only action)') },
-        SegmentAddedLeft         : () => { throw new Error('SegmentAddedLeft should never reach server (local-only action)') },
-        SegmentsReplaced        : () => { throw new Error('SegmentsReplaced should never reach server (local-only action)') },
+        AllInitialDataLoaded   : () => { throw new Error('AllInitialDataLoaded should never reach server (local-only action)') },
+        BlockfaceCreated       : () => { throw new Error('BlockfaceCreated should never reach server (local-only action)') },
+        BlockfaceSelected      : () => { throw new Error('BlockfaceSelected should never reach server (local-only action)') },
+        BlockfaceSaved         : () => handleBlockfaceSaved,
+        SegmentUseUpdated      : () => { throw new Error('SegmentUseUpdated should never reach server (local-only action)') },
+        SegmentLengthUpdated   : () => { throw new Error('SegmentLengthUpdated should never reach server (local-only action)') },
+        SegmentAdded           : () => { throw new Error('SegmentAdded should never reach server (local-only action)') },
+        SegmentAddedLeft       : () => { throw new Error('SegmentAddedLeft should never reach server (local-only action)') },
+        SegmentsReplaced       : () => { throw new Error('SegmentsReplaced should never reach server (local-only action)') },
     })
 
 /*
@@ -291,7 +344,7 @@ const handleInTransaction = async (actionRequest, txContext, logger) => {
     }
 
     // Dispatch to handler
-    const handler = dispatchToHandler(actionRequest)
+    const handler = handlerForActionRequest(actionRequest)
     actionRequestLogger.flowStep(`Starting ${handler.name}`)
 
     try {
@@ -313,48 +366,48 @@ const handleInTransaction = async (actionRequest, txContext, logger) => {
     return { isDuplicate: false }
 }
 
-const submitActionRequestHandler = async (req, res) => {
-    const checkRole = async (fsContext, actionRequest) => {
-        const { organizationId, action, actorId } = actionRequest
+const checkRole = async (fsContext, actionRequest) => {
+    const { organizationId, action, actorId } = actionRequest
 
-        // an actor can update or forget *only* themselves
-        if (Action.UserUpdated.is(action))
-            return actorId === action.userId ? undefined : `User ${actorId} trying to update user ${action.userId}`
-        if (Action.UserForgotten.is(action))
-            return actorId === action.userId ? undefined : `User ${actorId} trying to forget user ${action.userId}`
+    // an actor can update or forget *only* themselves
+    if (Action.UserUpdated.is(action))
+        return actorId === action.userId ? undefined : `User ${actorId} trying to update user ${action.userId}`
+    if (Action.UserForgotten.is(action))
+        return actorId === action.userId ? undefined : `User ${actorId} trying to forget user ${action.userId}`
 
-        // UserCreated: Allow system actor (PasscodeVerified handler) or emulator mode (tests)
-        // Real-life flow: Client → PasscodeVerified → handlePasscodeVerified → UserCreated
-        // PasscodeVerified sets actorId='system' when creating new users
-        if (Action.UserCreated.is(action)) {
-            const isSystemActor = actorId === 'system'
-            const isEmulator = process.env.FUNCTIONS_EMULATOR
+    // UserCreated: Allow system actor (PasscodeVerified handler) or emulator mode (tests)
+    // Real-life flow: Client → PasscodeVerified → handlePasscodeVerified → UserCreated
+    // PasscodeVerified sets actorId='system' when creating new users
+    if (Action.UserCreated.is(action)) {
+        const isSystemActor = actorId === 'system'
+        const isEmulator = process.env.FUNCTIONS_EMULATOR
 
-            if (isSystemActor || isEmulator) return
-            return `UserCreated disallowed for ${actorId}`
-        }
-
-        // OrganizationCreated: Check one-org-per-user limit
-        if (Action.OrganizationCreated.is(action)) {
-            const user = await fsContext.users.read(actorId)
-            const existingOrgs = Object.keys(user.organizations || {})
-
-            // two allowed
-            return existingOrgs.length < 2 ? undefined : `User ${actorId} can't create another organization`
-        }
-
-        // All other actions require org membership
-        if (!organizationId) return `Action ${action['@@tagName']} requires an organizationId`
-
-        const organization = await fsContext.organizations.read(organizationId)
-        const actorAsMember = organization.members[actorId]
-        if (!actorAsMember) return `The actor ${actorId} is not a member of organization ${organizationId}`
-        if (actorAsMember.removedAt) return `The actor ${actorId} was removed from organization ${organizationId}`
-
-        if (!Action.mayI(action, actorAsMember.role, actorId))
-            return `${actorId} with role ${actorAsMember.role} may not perform ${action['@@tagName']}`
+        if (isSystemActor || isEmulator) return
+        return `UserCreated disallowed for ${actorId}`
     }
 
+    // OrganizationCreated: Check one-org-per-user limit
+    if (Action.OrganizationCreated.is(action)) {
+        const user = await fsContext.users.read(actorId)
+        const existingOrgs = Object.keys(user.organizations || {})
+
+        // two allowed
+        return existingOrgs.length < 2 ? undefined : `User ${actorId} can't create another organization`
+    }
+
+    // All other actions require org membership
+    if (!organizationId) return `Action ${action['@@tagName']} requires an organizationId`
+
+    const organization = await fsContext.organizations.read(organizationId)
+    const actorAsMember = organization.members[actorId]
+    if (!actorAsMember) return `The actor ${actorId} is not a member of organization ${organizationId}`
+    if (actorAsMember.removedAt) return `The actor ${actorId} was removed from organization ${organizationId}`
+
+    if (!Action.mayI(action, actorAsMember.role, actorId))
+        return `${actorId} with role ${actorAsMember.role} may not perform ${action['@@tagName']}`
+}
+
+const submitActionRequestHandler = async (req, res) => {
     const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')
     const startTime = Date.now()
 
@@ -363,9 +416,8 @@ const submitActionRequestHandler = async (req, res) => {
         if (!validateRequest(req, res, logger)) return
 
         // Authentication first – reject missing/invalid tokens before other validation
-        const isAuthenticationCompleted = req.body.action['@@tagName'] === 'AuthenticationCompleted'
-        const { userId: actorId, error } = await readUserIdFromAuthCustomClaims(req, logger, isAuthenticationCompleted)
-        if (error) return sendUnauthorized(res, error)
+        const { userId: actorId, error: authError } = await verifyAuthToken(logger, req)
+        if (authError) return sendUnauthorized(logger, res, authError)
 
         // create a raw object by enriching our parameters
         const params = enrichActionRequest(req)
@@ -379,8 +431,21 @@ const submitActionRequestHandler = async (req, res) => {
         if (wrapper.error) return sendValidationFailed(res, wrapper.error, wrapper.field)
         const actionRequest = wrapper.actionRequest
 
+        // Read user document to get organization memberships for tenant validation
+        // Skip for UserCreated - user document doesn't exist yet
+        let allowedOrganizations = {}
+        if (!Action.UserCreated.is(actionRequest.action)) {
+            const transactionlessContext = createFirestoreContext(namespace, null, null, null)
+            const user = await transactionlessContext.users.read(actorId)
+            allowedOrganizations = user.organizations || {}
+        }
+
+        // Tenant access validation – ensure user has access to requested organization/project
+        const tenantError = validateTenantAccess(actionRequest, allowedOrganizations)
+        if (tenantError) return sendUnauthorized(logger, res, tenantError, { action: actionRequest.action })
+
         const roleError = await checkRole(createFirestoreContext(namespace, organizationId, projectId), actionRequest)
-        if (roleError) return sendUnauthorized(res, roleError)
+        if (roleError) return sendUnauthorized(logger, res, roleError)
 
         logger.flowStart('┌─ Processing action request', { ...ActionRequest.toLog(actionRequest), namespace }, '')
 
@@ -396,6 +461,9 @@ const submitActionRequestHandler = async (req, res) => {
         // write our SOC2 record
         const fsContext = createFirestoreContext(namespace, organizationId, projectId)
         const completed = await fsContext.completedActions.readOrNull(actionRequest.id)
+
+        const handler = handlerForActionRequest(actionRequest)
+        if (handler.syncUserAuthClaims) await handler.syncUserAuthClaims(fsContext, actionRequest)
 
         // If null, transaction failed/rolled back - return error
         if (!completed) {
