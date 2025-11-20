@@ -19,11 +19,11 @@ const path = path => {
         if (path.length === 0) return o // special case; just return the whole thing
 
         let result = o
-        let descendents = fields
+        let descendants = fields
 
-        while (descendents.length) {
-            result = result[descendents[0]]
-            descendents = descendents.slice(1)
+        while (descendants.length) {
+            result = result[descendants[0]]
+            descendants = descendants.slice(1)
         }
 
         return result

@@ -1,5 +1,5 @@
 import admin from 'firebase-admin'
-import { createFirestoreContext } from '../../functions/src/firestore-context.js'
+import { createFirestoreContext } from '../../functions/src/firestore-admin-context.js'
 import { Action, FieldTypes } from '../../src/types/index.js'
 import { submitAndExpectSuccess } from './http-submit-action.js'
 

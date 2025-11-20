@@ -160,8 +160,8 @@ const getPersistenceStrategy = action =>
 
         // Data loading is local-only (Redux initialization)
         AllInitialDataLoaded     : () => null,
-        OrganizationUpdatedFromListener: () => null,
-        BlockfacesLoadedFromListener: () => null,
+        OrganizationSynced: () => null,
+        BlockfacesSynced: () => null,
 
         // Blockface/Segment actions are local-only (no Firestore persistence yet)
         BlockfaceCreated        : () => null,

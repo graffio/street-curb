@@ -14,83 +14,72 @@ import { FirestoreClientFacade } from './firestore-facade/firestore-client-facad
 import { router } from './router.jsx'
 import { store } from './store/index.js'
 import * as S from './store/selectors.js'
-import { Action, Blockface, Organization, User } from './types/index.js'
+import { Action, Blockface, Organization, Project, User } from './types/index.js'
 
 // Hard-coded IDs from seed data
 
 const App = () => {
-    const flushPendingSave = () => {
+    const flushPendingBlockfaceSave = () => {
         const currentBlockface = S.currentBlockface(store.getState())
         if (currentBlockface) post(Action.BlockfaceSelected(currentBlockface))
     }
 
+    const blockfacesArrived = (blockfaces, error) =>
+        error ? console.error('Blockfaces listener error:', error) : post(Action.BlockfacesSynced(blockfaces))
+
+    const organizationArrived = (organization, error) => {
+        if (error) return console.error('Organization listener error:', error)
+
+        post(Action.OrganizationSynced(organization))
+
+        // read blockfaces and listen for changes
+        projectId = organization.defaultProjectId
+        blockfaceFacade = organizationsFacade.descendant(organizationId, Project).descendant(projectId, Blockface)
+        const blockfacesUnsubscribe = blockfaceFacade.listenToCollection([], blockfacesArrived)
+
+        // Store unsubscribe functions for cleanup
+        window.firestoreUnsubscribers = { organization: orgUnsubscribe, blockfaces: blockfacesUnsubscribe }
+    }
+
+    const setUpFirestoreListeners = async () => {
+        await possiblyAutoLogin()
+
+        const { currentUser: authUser } = getAuth()
+        if (!authUser) throw new Error('No authenticated user')
+
+        currentUser = await usersFacade.read(authUser.uid)
+
+        // read current organization and listen for changes
+        organizationId = currentUser.organizations?.[0].organizationId
+        if (!organizationId) throw new Error('User has no organizations')
+        orgUnsubscribe = organizationsFacade.listenToDocument(organizationId, organizationArrived)
+    }
+
+    const usersFacade = FirestoreClientFacade(User)
+    const organizationsFacade = FirestoreClientFacade(Organization)
+    let orgUnsubscribe // set up *after* we have the organization
+    let organizationId
+    let projectId
+    let currentUser
+    let blockfaceFacade // set up *after* we have an organization and project!
+
     const [dataLoaded, setDataLoaded] = useState(false)
 
     useEffect(() => {
-        const loadData = async () => {
-            await possiblyAutoLogin()
+        setUpFirestoreListeners() // no need to await
 
-            const { currentUser: authUser } = getAuth()
-            if (!authUser) throw new Error('No authenticated user')
-
-            const userId = authUser.uid
-
-            // 1. Read user document (one-time - rarely changes)
-            const usersFacade = FirestoreClientFacade(User)
-            const currentUser = await usersFacade.read(userId)
-
-            const organizationId = Object.keys(currentUser.organizations || {})[0]
-            if (!organizationId) throw new Error('User has no organizations')
-
-            // 2. Set up Organization listener (real-time)
-            const organizationsFacade = FirestoreClientFacade(Organization)
-            const orgUnsubscribe = organizationsFacade.listenToDocument(organizationId, (organization, error) => {
-                if (error) {
-                    console.error('Organization listener error:', error)
-                    return
-                }
-                if (organization) 
-                    post(Action.OrganizationUpdatedFromListener(organization))
-                
-            })
-
-            // 3. Set up Blockfaces listener (real-time)
-            const projectId = currentUser.organizations[organizationId].defaultProjectId
-            const blockfacesPath = `organizations/${organizationId}/projects/${projectId}`
-            const blockfacesFacade = FirestoreClientFacade(Blockface, blockfacesPath)
-
-            const blockfacesUnsubscribe = blockfacesFacade.listenToCollection([], (blockfaces, error) => {
-                if (error) {
-                    console.error('Blockfaces listener error:', error)
-                    return
-                }
-                // Silent update - no toast notification
-                post(Action.BlockfacesLoadedFromListener(blockfaces))
-            })
-
-            // Store unsubscribe functions for cleanup
-            window.firestoreUnsubscribers = { organization: orgUnsubscribe, blockfaces: blockfacesUnsubscribe }
-
-            // 4. Show app immediately (don't wait for listeners)
-            post(Action.AllInitialDataLoaded(currentUser, null))
-            setDataLoaded(true)
-        }
-
-        loadData()
-
-        window.addEventListener('beforeunload', flushPendingSave)
-        window.addEventListener('visibilitychange', flushPendingSave)
+        window.addEventListener('beforeunload', flushPendingBlockfaceSave)
+        window.addEventListener('visibilitychange', flushPendingBlockfaceSave)
 
         return () => {
-            window.removeEventListener('beforeunload', flushPendingSave)
-            window.removeEventListener('visibilitychange', flushPendingSave)
+            window.removeEventListener('beforeunload', flushPendingBlockfaceSave)
+            window.removeEventListener('visibilitychange', flushPendingBlockfaceSave)
 
             // Cleanup Firestore listeners
-            if (window.firestoreUnsubscribers) 
+            if (window.firestoreUnsubscribers)
                 Object.values(window.firestoreUnsubscribers).forEach(unsubscribe => {
                     if (typeof unsubscribe === 'function') unsubscribe()
                 })
-            
         }
     }, [])
 

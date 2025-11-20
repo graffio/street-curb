@@ -53,8 +53,8 @@ export const Action = {
 
         // Data Loading
         AllInitialDataLoaded: { currentUser: 'User', currentOrganization: 'Organization?', },
-        OrganizationUpdatedFromListener: { organization: 'Organization' },
-        BlockfacesLoadedFromListener: { blockfaces: '[Blockface]' },
+        OrganizationSynced: { organization: 'Organization' },
+        BlockfacesSynced: { blockfaces: '[Blockface]' },
 
         // Blockface Actions
         BlockfaceCreated:  { blockface: 'Blockface' },
@@ -106,8 +106,8 @@ Action.piiFields = rawData => {
 
     // Data Loading
     if (tagName === 'AllInitialDataLoaded'   ) return []
-    if (tagName === 'OrganizationUpdatedFromListener') return []
-    if (tagName === 'BlockfacesLoadedFromListener') return []
+    if (tagName === 'OrganizationSynced') return []
+    if (tagName === 'BlockfacesSynced') return []
 
     // Blockface Actions
     if (tagName === 'BlockfaceCreated'       ) return []
@@ -157,8 +157,8 @@ Action.toLog = a => {
 
         // Data Loading
         AllInitialDataLoaded     : ()                           => ({ type: 'AllInitialDataLoaded' }),
-        OrganizationUpdatedFromListener: ({ organization })     => ({ type: 'OrganizationUpdatedFromListener', organizationId: organization.id }),
-        BlockfacesLoadedFromListener: ({ blockfaces })          => ({ type: 'BlockfacesLoadedFromListener', count: blockfaces.length }),
+        OrganizationSynced: ({ organization })     => ({ type: 'OrganizationSynced', organizationId: organization.id }),
+        BlockfacesSynced: ({ blockfaces })          => ({ type: 'BlockfacesSynced', count: blockfaces.length }),
 
         // Blockface Actions
         BlockfaceCreated       : ({ blockface })                => ({ type: 'BlockfaceCreated', blockfaceId: blockface.id }),
@@ -234,8 +234,8 @@ Action.getSubject = (action, organizationId) =>
 
         // Data Loading
         AllInitialDataLoaded   : a => ({ id: a.currentUser.id, type: 'user' }),
-        OrganizationUpdatedFromListener: a => ({ id: a.organization.id, type: 'organization' }),
-        BlockfacesLoadedFromListener: () => ({ id: 'collection', type: 'blockfaces' }),
+        OrganizationSynced: a => ({ id: a.organization.id, type: 'organization' }),
+        BlockfacesSynced: () => ({ id: 'collection', type: 'blockfaces' }),
 
         // Blockface Actions
         BlockfaceCreated       : a => ({ id: a.blockface.id, type: 'blockface' }),
@@ -271,8 +271,8 @@ Action.mayI = (action, actorRole, actorId) =>
 
         // Data Loading
         AllInitialDataLoaded   : () => true,
-        OrganizationUpdatedFromListener: () => true,
-        BlockfacesLoadedFromListener: () => true,
+        OrganizationSynced: () => true,
+        BlockfacesSynced: () => true,
 
         // Blockface Actions (any authenticated user can edit blockfaces)
         BlockfaceCreated       : () => ['admin', 'editor'].includes(actorRole),

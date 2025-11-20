@@ -1,6 +1,6 @@
 import { LookupTable } from '@graffio/functional'
 import admin from 'firebase-admin'
-import { createFirestoreContext } from '../functions/src/firestore-context.js'
+import { createFirestoreContext } from '../functions/src/firestore-admin-context.js'
 import { Member, Organization, OrganizationMember, Project, User } from '../src/types/index.js'
 
 const EMULATOR_HUB_PORT = 4400 // Default Emulator Hub port
