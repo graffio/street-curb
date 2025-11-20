@@ -57,7 +57,7 @@ test('Given submitActionRequest minimal HTTP flow', t => {
                 const completed = results[0]
 
                 t.ok(completed, 'Then completedActions entry exists')
-                t.equal(completed.actorId, actorUserId, 'Then actorId equals custom claim userId')
+                t.equal(completed.actorId, actorUserId, 'Then actorId equals userId')
                 t.ok(completed.processedAt, 'Then processedAt stored as Date')
             },
         )

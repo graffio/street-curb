@@ -27,7 +27,7 @@ test('Given MemberAdded action', t => {
         t.end()
     })
 
-    t.test('When new member added Then metadata uses actor userId claim', async t => {
+    t.test('When new member added Then metadata uses actor userId', async t => {
         await asSignedInUser('success', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Bob' })
@@ -36,13 +36,13 @@ test('Given MemberAdded action', t => {
 
             const { org, user } = await readOrgAndUser({ namespace, organizationId, projectId, userId })
 
-            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy set from token userId claim')
+            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy set from auth User uid')
             t.equal(user.organizations[organizationId].role, 'member', 'Then user.organizations has entry')
         })
         t.end()
     })
 
-    t.test('When removed member reactivated Then claims and metadata refresh', async t => {
+    t.test('When removed member reactivated Then metadata refreshes', async t => {
         await asSignedInUser('reactivate', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Carol' })
@@ -62,7 +62,7 @@ test('Given MemberAdded action', t => {
 
             t.equal(org.members[userId].removedAt, undefined, 'Then removedAt cleared')
             t.equal(user.organizations[organizationId].role, 'admin', 'Then user organization role updated')
-            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy uses token userId claim')
+            t.equal(org.members[userId].addedBy, actorUserId, 'Then addedBy uses auth user uid')
         })
         t.end()
     })

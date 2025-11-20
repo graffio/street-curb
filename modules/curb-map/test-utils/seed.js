@@ -68,7 +68,6 @@ const createUsers = async (fsContext, members) => {
         const user = User.from(firestoreUser)
         await fsContext.users.write(user)
         await admin.auth().createUser(authUser)
-        await admin.auth().setCustomUserClaims(userId, { userId })
         users.push(user)
 
         log('Created User ' + userId)

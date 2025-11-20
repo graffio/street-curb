@@ -33,12 +33,12 @@ const App = () => {
             const usersFacade = FirestoreClientFacade(User)
             const organizationsFacade = FirestoreClientFacade(Organization)
 
-            // Get userId from authenticated user's custom claims
+            // Get userId from authenticated user's uid
             const { currentUser: authUser } = getAuth()
             if (!authUser) throw new Error('No authenticated user')
 
-            const { claims } = await authUser.getIdTokenResult()
-            const currentUser = await usersFacade.read(claims.userId)
+            const userId = authUser.uid // userId is the same as the auth user's uid
+            const currentUser = await usersFacade.read(userId)
             const organizationId = currentUser.organizations?.[0].organizationId // load 1st organization for now
             if (!organizationId) throw new Error('No organization ID')
 

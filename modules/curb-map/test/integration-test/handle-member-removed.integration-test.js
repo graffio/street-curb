@@ -44,7 +44,7 @@ test('Given MemberRemoved action', t => {
         t.end()
     })
 
-    t.test('When member removed Then metadata and claims record actor userId', async t => {
+    t.test('When member removed Then metadata record actor userId', async t => {
         await asSignedInUser('success', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Eve' })
@@ -55,7 +55,7 @@ test('Given MemberRemoved action', t => {
             const organization = await readOrganization({ namespace, organizationId, projectId })
 
             t.ok(organization.members[userId].removedAt, 'Then removedAt is set')
-            t.equal(organization.members[userId].removedBy, actorUserId, 'Then removedBy uses token userId claim')
+            t.equal(organization.members[userId].removedBy, actorUserId, 'Then removedBy uses auth user uid')
         })
         t.end()
     })

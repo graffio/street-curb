@@ -43,7 +43,7 @@ test('Given RoleChanged action', t => {
         t.end()
     })
 
-    t.test('When role changed Then organization, user, and claims update', async t => {
+    t.test('When role changed Then organization and user update', async t => {
         await asSignedInUser('success', async ({ namespace, token }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
             const { userId } = await createUser({ namespace, token, displayName: 'Grace' })
