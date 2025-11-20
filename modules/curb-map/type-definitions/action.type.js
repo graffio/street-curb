@@ -44,7 +44,7 @@ export const Action = {
         MemberRemoved: { userId: FieldTypes.userId, organizationId: FieldTypes.organizationId, },
 
         // User Actions
-        UserCreated  : { userId: FieldTypes.userId, displayName: 'String', email: FieldTypes.email, authUid: 'String', },
+        UserCreated  : { userId: FieldTypes.userId, displayName: 'String', email: FieldTypes.email },
         UserUpdated  : { userId: FieldTypes.userId, displayName: 'String?', },
         UserForgotten: { userId: FieldTypes.userId, reason     : 'String', },
 

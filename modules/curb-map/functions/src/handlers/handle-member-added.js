@@ -6,7 +6,7 @@ import { Member } from '../../../src/types/index.js'
  * @sig handleMemberAdded :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
  */
 const handleMemberAdded = async (logger, fsContext, actionRequest) => {
-    const { action } = actionRequest
+    const { action, actorId: addedBy } = actionRequest
     const { userId, organizationId, role, displayName } = action
 
     const org = await fsContext.organizations.read(organizationId)
@@ -16,7 +16,6 @@ const handleMemberAdded = async (logger, fsContext, actionRequest) => {
     if (existingMember && !existingMember.removedAt)
         throw new Error(`Member ${userId} is already active in organization ${organizationId}`)
 
-    const addedBy = actionRequest.actorId
     const memberData = Member.toFirestore(
         { userId, displayName, role, addedAt: new Date(), addedBy },
         fsContext.encodeTimestamp,

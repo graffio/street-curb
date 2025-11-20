@@ -12,12 +12,12 @@ import {
 } from '../integration-test-helpers/http-submit-action.js'
 
 const withHttpAuth = (label, effect) =>
-    asSignedInUser(label, async ({ namespace, token, uid, actorUserId }) => {
+    asSignedInUser(label, async ({ namespace, token, actorUserId }) => {
         const completedActionsFacade = FirestoreAdminFacade(ActionRequest, `${namespace}/`)
 
         await completedActionsFacade.recursiveDelete()
         try {
-            await effect({ namespace, token, uid, actorUserId, completedActionsFacade })
+            await effect({ namespace, token, actorUserId, completedActionsFacade })
         } finally {
             await completedActionsFacade.recursiveDelete()
         }
@@ -86,7 +86,14 @@ test('Given submitActionRequest minimal HTTP flow', t => {
             const { organizationId, projectId } = action
 
             await submitAndExpectSuccess({ action, namespace, token, idempotencyKey, organizationId, projectId })
-            const duplicate = await submitAndExpectDuplicate({ action, namespace, token, idempotencyKey })
+            const duplicate = await submitAndExpectDuplicate({
+                action,
+                namespace,
+                token,
+                idempotencyKey,
+                organizationId,
+                projectId,
+            })
 
             t.equal(duplicate.status, 'duplicate', 'Then duplicate status is returned')
         })
@@ -193,22 +200,26 @@ test('Given submitActionRequest minimal HTTP flow', t => {
         t.end()
     })
 
-    t.test('When token missing userId claim Then specific error message returned', async t => {
-        await asSignedInUser('missing-userId', async ({ namespace }) => {
+    t.test('When user document does not exist Then specific error message returned', async t => {
+        await asSignedInUser('missing-user-doc', async ({ namespace }) => {
             const action = buildOrganizationCreatedAction()
+            const { organizationId, projectId } = action
             const payload = {
                 action: Action.toFirestore(action),
                 idempotencyKey: FieldTypes.newIdempotencyKey(),
                 correlationId: FieldTypes.newCorrelationId(),
+                organizationId,
+                projectId,
                 namespace,
             }
 
-            // Create a valid Firebase Auth user but don't set userId claim
-            const tempEmail = `no-claim-${Date.now()}@example.com`
-            const authUser = await admin.auth().createUser({ email: tempEmail, password: 'Test123!' })
+            // Create a valid Firebase Auth user but don't create Firestore user document
+            const tempEmail = `no-doc-${Date.now()}@example.com`
+            const userId = FieldTypes.newUserId()
+            await admin.auth().createUser({ uid: userId, email: tempEmail, password: 'Test123!' })
 
-            // Create a custom token without userId claim
-            const customToken = await admin.auth().createCustomToken(authUser.uid)
+            // Create a custom token
+            const customToken = await admin.auth().createCustomToken(userId)
 
             // Exchange for ID token
             const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
@@ -222,12 +233,12 @@ test('Given submitActionRequest minimal HTTP flow', t => {
 
             const result = await rawHttpRequest({ body: payload, token: idToken })
 
-            t.equal(result.status, 401, 'Then HTTP 401 returned')
-            t.equal(result.data.status, 'unauthorized', 'Then payload marks unauthorized')
-            t.match(result.data.error, /missing userId claim/i, 'Then error message indicates missing userId claim')
+            t.equal(result.status, 500, 'Then HTTP 500 returned')
+            t.equal(result.data.status, 'error', 'Then payload marks error')
+            t.match(result.data.error, /User not found/i, 'Then error message indicates user not found')
 
             // Cleanup
-            await admin.auth().deleteUser(authUser.uid)
+            await admin.auth().deleteUser(userId)
         })
         t.end()
     })

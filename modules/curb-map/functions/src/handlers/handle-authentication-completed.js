@@ -27,7 +27,7 @@ const handleAuthenticationCompleted = async (logger, fsContext, actionRequest, d
         return userId
     }
 
-    const { uid, phone_number: phoneNumber } = decodedToken
+    const { phone_number: phoneNumber } = decodedToken
     const { email, displayName } = actionRequest.action
 
     if (!phoneNumber) throw new Error('irebase token missing phone_number claim')
@@ -38,7 +38,7 @@ const handleAuthenticationCompleted = async (logger, fsContext, actionRequest, d
     const userId = existingUsers.length > 0 ? await handleReturningUser() : await handleNewUser()
 
     // Set userId custom claim
-    await admin.auth().setCustomUserClaims(uid, { userId })
+    await admin.auth().setCustomUserClaims(userId, { userId })
     logger.flowStep('Authentication completed')
 }
 

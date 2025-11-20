@@ -36,13 +36,13 @@ const createUser = async ({ namespace, token, userId = FieldTypes.newUserId(), e
     const userEmail = email || `${userId}@users.test`
 
     // Always create fresh auth user (don't reuse existing)
-    const authUser = await admin.auth().createUser({ email: userEmail, password: 'Passw0rd!' })
+    await admin.auth().createUser({ uid: userId, email: userEmail, password: 'Passw0rd!' })
 
     // Note: NOT setting custom claims here - handler should do it
-    const action = Action.UserCreated.from({ userId, email: userEmail, displayName, authUid: authUser.uid })
+    const action = Action.UserCreated.from({ userId, email: userEmail, displayName })
     await submitAndExpectSuccess({ action, namespace, token })
 
-    return { userId, authUid: authUser.uid }
+    return { userId }
 }
 
 /**

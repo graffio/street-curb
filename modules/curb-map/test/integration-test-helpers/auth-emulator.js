@@ -52,12 +52,6 @@ const ensureAdminInitialized = projectId => {
     if (!admin.apps.length) admin.initializeApp({ projectId })
 }
 
-const assignUserClaims = async (uid, userId) => {
-    const record = await admin.auth().getUser(uid)
-    const claims = { ...(record.customClaims || {}), userId }
-    await admin.auth().setCustomUserClaims(uid, claims)
-}
-
 const postJson = async (url, payload) => {
     let response
     try {
@@ -77,40 +71,6 @@ const postJson = async (url, payload) => {
 }
 
 /**
- * Request an email sign-in OOB code from the emulator and exchange it for an ID token.
- * @sig signInWithEmailLink :: String -> Promise<{ token: String, uid: String, refreshToken: String }>
- */
-
-const signInWithEmailLink = async email => {
-    const { projectId, signUpUrl, signInWithCustomTokenUrl } = buildEndpoints()
-    const password = Math.random().toString(36).slice(2, 14)
-    const res = await postJson(signUpUrl, { email, password, returnSecureToken: true })
-    const userId = FieldTypes.newUserId()
-    ensureAdminInitialized(projectId)
-    await assignUserClaims(res.localId, userId)
-    const customToken = await admin.auth().createCustomToken(res.localId, { userId })
-    const signedIn = await postJson(signInWithCustomTokenUrl, { token: customToken, returnSecureToken: true })
-    return { token: signedIn.idToken, uid: res.localId, userId, refreshToken: signedIn.refreshToken }
-}
-
-/**
- * Request a phone verification code from the emulator and exchange it for an ID token.
- * @sig signInWithPhoneNumber :: (String?) -> Promise<{ token: String, uid: String, refreshToken: String }>
- */
-const signInWithPhoneNumber = async (phoneNumber = '+15551234567') => {
-    const { projectId, signUpUrl, signInWithCustomTokenUrl } = buildEndpoints()
-    const tempEmail = `${FieldTypes.newUserId()}@phone.test`
-    const password = Math.random().toString(36).slice(2, 14)
-    const res = await postJson(signUpUrl, { email: tempEmail, password, returnSecureToken: true })
-    const userId = FieldTypes.newUserId()
-    ensureAdminInitialized(projectId)
-    await assignUserClaims(res.localId, userId)
-    const customToken = await admin.auth().createCustomToken(res.localId, { userId })
-    const signedIn = await postJson(signInWithCustomTokenUrl, { token: customToken, returnSecureToken: true })
-    return { token: signedIn.idToken, uid: res.localId, userId, refreshToken: signedIn.refreshToken }
-}
-
-/**
  * Generate a timestamp-based test email address for unique sign-in attempts.
  * @sig uniqueEmail :: String -> String
  */
@@ -121,24 +81,31 @@ const uniqueEmail = prefix => `${prefix}-${Date.now()}-${Math.random().toString(
  * Supports both email and phone sign-in methods
  * @sig asSignedInUser :: (String | Object, Function) -> Promise<void>
  */
-const asSignedInUser = async (options, effect) => {
+const asSignedInUser = async (labelOrOptions, effect) => {
     if (!firebaseProjectId) throw new Error('GCLOUD_PROJECT must be set')
     ensureAdminInitialized(firebaseProjectId)
 
-    const { label = 'test', signInMethod = 'email' } = typeof options === 'string' ? { label: options } : options
-    const namespace = buildNamespace(label)
+    const { label, namespace: explicitNamespace } =
+        typeof labelOrOptions === 'string' ? { label: labelOrOptions, namespace: undefined } : labelOrOptions
 
-    const { token, uid, userId } =
-        signInMethod === 'phone' ? await signInWithPhoneNumber() : await signInWithEmailLink(uniqueEmail(label))
+    const namespace = explicitNamespace || buildNamespace(label)
+
+    const userId = FieldTypes.newUserId()
+    const email = `${label}-${userId}@example.com`
+
+    await admin.auth().createUser({ uid: userId, email })
+
+    const customToken = await admin.auth().createCustomToken(userId)
+    const url = buildEndpoints().signInWithCustomTokenUrl
+    const { idToken: token } = await postJson(url, { token: customToken, returnSecureToken: true })
 
     // Create User document for the signed-in actor (mirrors real signup flow)
-    const email = uniqueEmail(label)
     const displayName = `Test Actor ${label}`
     const organizations = LookupTable([], OrganizationMember, 'organizationId')
-    const action = Action.UserCreated.from({ userId, email, displayName, organizations, authUid: uid })
+    const action = Action.UserCreated.from({ userId, email, displayName, organizations })
     await submitAndExpectSuccess({ action, namespace, token })
 
-    return await effect({ namespace, token, uid, actorUserId: userId })
+    return await effect({ namespace, token, actorUserId: userId })
 }
 
 export { uniqueEmail, asSignedInUser }

@@ -46,21 +46,21 @@ const date = new Date('2025-01-01T10:00:00Z')
 
 const createUsers = async (fsContext, members) => {
     const createUser = async member => {
-        const { displayName, userId: id, removedAt, role } = member
-        const email = `${id}@example.com`
+        const { displayName, userId, removedAt, role } = member
+        const email = `${userId}@example.com`
 
         const items = removedAt ? [] : [OrganizationMember.from({ organizationId, role })]
         const organizations = LookupTable(items, OrganizationMember, 'organizationId')
 
-        const authUser = { uid: id, email, displayName, password: 'password123', emailVerified: true }
+        const authUser = { uid: userId, email, displayName, password: 'password123', emailVerified: true }
         const firestoreUser = {
-            id,
+            id: userId,
             email,
             displayName,
             organizations,
-            createdBy: id,
+            createdBy: userId,
             createdAt: date,
-            updatedBy: id,
+            updatedBy: userId,
             updatedAt: date,
         }
 
@@ -68,10 +68,10 @@ const createUsers = async (fsContext, members) => {
         const user = User.from(firestoreUser)
         await fsContext.users.write(user)
         await admin.auth().createUser(authUser)
-        await admin.auth().setCustomUserClaims(id, { userId: id })
+        await admin.auth().setCustomUserClaims(userId, { userId })
         users.push(user)
 
-        log('Created User ' + id)
+        log('Created User ' + userId)
     }
 
     const users = []
