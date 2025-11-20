@@ -27,8 +27,7 @@
  *  UserCreated
  *      userId     : FieldTypes.userId,
  *      displayName: "String",
- *      email      : FieldTypes.email,
- *      authUid    : "String"
+ *      email      : FieldTypes.email
  *  UserUpdated
  *      userId     : FieldTypes.userId,
  *      displayName: "String?"
@@ -540,19 +539,17 @@ MemberRemovedConstructor.fromFirestore = MemberRemovedConstructor._from
 // Variant Action.UserCreated
 //
 // -------------------------------------------------------------------------------------------------------------
-const UserCreatedConstructor = function UserCreated(userId, displayName, email, authUid) {
-    const constructorName = 'Action.UserCreated(userId, displayName, email, authUid)'
-    R.validateArgumentLength(constructorName, 4, arguments)
+const UserCreatedConstructor = function UserCreated(userId, displayName, email) {
+    const constructorName = 'Action.UserCreated(userId, displayName, email)'
+    R.validateArgumentLength(constructorName, 3, arguments)
     R.validateRegex(constructorName, FieldTypes.userId, 'userId', false, userId)
     R.validateString(constructorName, 'displayName', false, displayName)
     R.validateRegex(constructorName, FieldTypes.email, 'email', false, email)
-    R.validateString(constructorName, 'authUid', false, authUid)
 
     const result = Object.create(UserCreatedPrototype)
     result.userId = userId
     result.displayName = displayName
     result.email = email
-    result.authUid = authUid
     return result
 }
 
@@ -564,7 +561,7 @@ const UserCreatedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.email)}, ${R._toString(this.authUid)})`
+            return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.email)})`
         },
         enumerable: false,
     },
@@ -587,7 +584,7 @@ const UserCreatedPrototype = Object.create(ActionPrototype, {
 UserCreatedConstructor.prototype = UserCreatedPrototype
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
-UserCreatedConstructor._from = o => Action.UserCreated(o.userId, o.displayName, o.email, o.authUid)
+UserCreatedConstructor._from = o => Action.UserCreated(o.userId, o.displayName, o.email)
 UserCreatedConstructor.from = UserCreatedConstructor._from
 
 UserCreatedConstructor.toFirestore = o => ({ ...o })

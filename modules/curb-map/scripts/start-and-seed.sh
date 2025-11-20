@@ -25,7 +25,7 @@ if [ "$1" = "debug" ]; then
 fi
 
 # Kill any existing emulator processes
-pkill -f 'firebase emulators' || true
+pkill -f 'emulators' || true
 
 # Build emulator command
 EMULATOR_CMD="firebase emulators:start --only firestore,auth,functions"
