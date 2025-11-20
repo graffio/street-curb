@@ -65,7 +65,9 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         
         // Data Loading. For now, with 1:1 org:project mapping, store just the project ID
         AllInitialDataLoaded     : () => ({ ...state, ...action, currentProjectId: action.currentOrganization?.defaultProjectId || null }),
-        
+        OrganizationUpdatedFromListener: () => ({ ...state, currentOrganization: action.organization, currentProjectId: action.organization.defaultProjectId }),
+        BlockfacesLoadedFromListener: () => ({ ...state, blockfaces: LookupTable(action.blockfaces, Blockface, 'id') }),
+
         // Blockface Actions
         BlockfaceCreated       : () => _setBlockface(state, action.blockface),
         BlockfaceSelected      : () => _setBlockface(state, _blockface(state, action.blockface.id)),

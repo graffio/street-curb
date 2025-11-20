@@ -14,7 +14,7 @@ import { FirestoreClientFacade } from './firestore-facade/firestore-client-facad
 import { router } from './router.jsx'
 import { store } from './store/index.js'
 import * as S from './store/selectors.js'
-import { Action, Organization, User } from './types/index.js'
+import { Action, Blockface, Organization, User } from './types/index.js'
 
 // Hard-coded IDs from seed data
 
@@ -30,21 +30,49 @@ const App = () => {
         const loadData = async () => {
             await possiblyAutoLogin()
 
-            const usersFacade = FirestoreClientFacade(User)
-            const organizationsFacade = FirestoreClientFacade(Organization)
-
-            // Get userId from authenticated user's uid
             const { currentUser: authUser } = getAuth()
             if (!authUser) throw new Error('No authenticated user')
 
-            const userId = authUser.uid // userId is the same as the auth user's uid
+            const userId = authUser.uid
+
+            // 1. Read user document (one-time - rarely changes)
+            const usersFacade = FirestoreClientFacade(User)
             const currentUser = await usersFacade.read(userId)
-            const organizationId = currentUser.organizations?.[0].organizationId // load 1st organization for now
-            if (!organizationId) throw new Error('No organization ID')
 
-            const currentOrganization = await organizationsFacade.read(organizationId)
+            const organizationId = Object.keys(currentUser.organizations || {})[0]
+            if (!organizationId) throw new Error('User has no organizations')
 
-            post(Action.AllInitialDataLoaded(currentUser, currentOrganization))
+            // 2. Set up Organization listener (real-time)
+            const organizationsFacade = FirestoreClientFacade(Organization)
+            const orgUnsubscribe = organizationsFacade.listenToDocument(organizationId, (organization, error) => {
+                if (error) {
+                    console.error('Organization listener error:', error)
+                    return
+                }
+                if (organization) 
+                    post(Action.OrganizationUpdatedFromListener(organization))
+                
+            })
+
+            // 3. Set up Blockfaces listener (real-time)
+            const projectId = currentUser.organizations[organizationId].defaultProjectId
+            const blockfacesPath = `organizations/${organizationId}/projects/${projectId}`
+            const blockfacesFacade = FirestoreClientFacade(Blockface, blockfacesPath)
+
+            const blockfacesUnsubscribe = blockfacesFacade.listenToCollection([], (blockfaces, error) => {
+                if (error) {
+                    console.error('Blockfaces listener error:', error)
+                    return
+                }
+                // Silent update - no toast notification
+                post(Action.BlockfacesLoadedFromListener(blockfaces))
+            })
+
+            // Store unsubscribe functions for cleanup
+            window.firestoreUnsubscribers = { organization: orgUnsubscribe, blockfaces: blockfacesUnsubscribe }
+
+            // 4. Show app immediately (don't wait for listeners)
+            post(Action.AllInitialDataLoaded(currentUser, null))
             setDataLoaded(true)
         }
 
@@ -56,6 +84,13 @@ const App = () => {
         return () => {
             window.removeEventListener('beforeunload', flushPendingSave)
             window.removeEventListener('visibilitychange', flushPendingSave)
+
+            // Cleanup Firestore listeners
+            if (window.firestoreUnsubscribers) 
+                Object.values(window.firestoreUnsubscribers).forEach(unsubscribe => {
+                    if (typeof unsubscribe === 'function') unsubscribe()
+                })
+            
         }
     }, [])
 

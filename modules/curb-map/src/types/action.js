@@ -32,7 +32,11 @@
  *      displayName: "String"
  *  AllInitialDataLoaded
  *      currentUser        : "User",
- *      currentOrganization: "Organization"
+ *      currentOrganization: "Organization?"
+ *  OrganizationUpdatedFromListener
+ *      organization: "Organization"
+ *  BlockfacesLoadedFromListener
+ *      blockfaces: "[Blockface]"
  *  BlockfaceCreated
  *      blockface: "Blockface"
  *  BlockfaceSelected
@@ -86,6 +90,8 @@ const Action = {
             constructor === Action.UserForgotten ||
             constructor === Action.AuthenticationCompleted ||
             constructor === Action.AllInitialDataLoaded ||
+            constructor === Action.OrganizationUpdatedFromListener ||
+            constructor === Action.BlockfacesLoadedFromListener ||
             constructor === Action.BlockfaceCreated ||
             constructor === Action.BlockfaceSelected ||
             constructor === Action.BlockfaceSaved ||
@@ -114,6 +120,8 @@ Object.defineProperty(Action, '@@tagNames', {
         'UserForgotten',
         'AuthenticationCompleted',
         'AllInitialDataLoaded',
+        'OrganizationUpdatedFromListener',
+        'BlockfacesLoadedFromListener',
         'BlockfaceCreated',
         'BlockfaceSelected',
         'BlockfaceSaved',
@@ -740,13 +748,13 @@ AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstr
 // -------------------------------------------------------------------------------------------------------------
 const AllInitialDataLoadedConstructor = function AllInitialDataLoaded(currentUser, currentOrganization) {
     const constructorName = 'Action.AllInitialDataLoaded(currentUser, currentOrganization)'
-    R.validateArgumentLength(constructorName, 2, arguments)
+
     R.validateTag(constructorName, 'User', 'currentUser', false, currentUser)
-    R.validateTag(constructorName, 'Organization', 'currentOrganization', false, currentOrganization)
+    R.validateTag(constructorName, 'Organization', 'currentOrganization', true, currentOrganization)
 
     const result = Object.create(AllInitialDataLoadedPrototype)
     result.currentUser = currentUser
-    result.currentOrganization = currentOrganization
+    if (currentOrganization != null) result.currentOrganization = currentOrganization
     return result
 }
 
@@ -802,6 +810,135 @@ AllInitialDataLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
 // Public aliases (can be overridden)
 AllInitialDataLoadedConstructor.toFirestore = AllInitialDataLoadedConstructor._toFirestore
 AllInitialDataLoadedConstructor.fromFirestore = AllInitialDataLoadedConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.OrganizationUpdatedFromListener
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationUpdatedFromListenerConstructor = function OrganizationUpdatedFromListener(organization) {
+    const constructorName = 'Action.OrganizationUpdatedFromListener(organization)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'Organization', 'organization', false, organization)
+
+    const result = Object.create(OrganizationUpdatedFromListenerPrototype)
+    result.organization = organization
+    return result
+}
+
+Action.OrganizationUpdatedFromListener = OrganizationUpdatedFromListenerConstructor
+
+const OrganizationUpdatedFromListenerPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationUpdatedFromListener', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.OrganizationUpdatedFromListener(${R._toString(this.organization)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: OrganizationUpdatedFromListenerConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+OrganizationUpdatedFromListenerConstructor.prototype = OrganizationUpdatedFromListenerPrototype
+OrganizationUpdatedFromListenerConstructor.is = val =>
+    val && val.constructor === OrganizationUpdatedFromListenerConstructor
+OrganizationUpdatedFromListenerConstructor.toString = () => 'Action.OrganizationUpdatedFromListener'
+OrganizationUpdatedFromListenerConstructor._from = o => Action.OrganizationUpdatedFromListener(o.organization)
+OrganizationUpdatedFromListenerConstructor.from = OrganizationUpdatedFromListenerConstructor._from
+
+OrganizationUpdatedFromListenerConstructor._toFirestore = (o, encodeTimestamps) => ({
+    organization: Organization.toFirestore(o.organization, encodeTimestamps),
+})
+
+OrganizationUpdatedFromListenerConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    OrganizationUpdatedFromListenerConstructor._from({
+        organization: Organization.fromFirestore
+            ? Organization.fromFirestore(doc.organization, decodeTimestamps)
+            : Organization.from(doc.organization),
+    })
+
+// Public aliases (can be overridden)
+OrganizationUpdatedFromListenerConstructor.toFirestore = OrganizationUpdatedFromListenerConstructor._toFirestore
+OrganizationUpdatedFromListenerConstructor.fromFirestore = OrganizationUpdatedFromListenerConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.BlockfacesLoadedFromListener
+//
+// -------------------------------------------------------------------------------------------------------------
+const BlockfacesLoadedFromListenerConstructor = function BlockfacesLoadedFromListener(blockfaces) {
+    const constructorName = 'Action.BlockfacesLoadedFromListener(blockfaces)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateArray(constructorName, 1, 'Tagged', 'Blockface', 'blockfaces', false, blockfaces)
+
+    const result = Object.create(BlockfacesLoadedFromListenerPrototype)
+    result.blockfaces = blockfaces
+    return result
+}
+
+Action.BlockfacesLoadedFromListener = BlockfacesLoadedFromListenerConstructor
+
+const BlockfacesLoadedFromListenerPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfacesLoadedFromListener', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.BlockfacesLoadedFromListener(${R._toString(this.blockfaces)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: BlockfacesLoadedFromListenerConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+BlockfacesLoadedFromListenerConstructor.prototype = BlockfacesLoadedFromListenerPrototype
+BlockfacesLoadedFromListenerConstructor.is = val => val && val.constructor === BlockfacesLoadedFromListenerConstructor
+BlockfacesLoadedFromListenerConstructor.toString = () => 'Action.BlockfacesLoadedFromListener'
+BlockfacesLoadedFromListenerConstructor._from = o => Action.BlockfacesLoadedFromListener(o.blockfaces)
+BlockfacesLoadedFromListenerConstructor.from = BlockfacesLoadedFromListenerConstructor._from
+
+BlockfacesLoadedFromListenerConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockfaces: o.blockfaces.map(item1 => Blockface.toFirestore(item1, encodeTimestamps)),
+})
+
+BlockfacesLoadedFromListenerConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfacesLoadedFromListenerConstructor._from({
+        blockfaces: doc.blockfaces.map(item1 =>
+            Blockface.fromFirestore ? Blockface.fromFirestore(item1, decodeTimestamps) : Blockface.from(item1),
+        ),
+    })
+
+// Public aliases (can be overridden)
+BlockfacesLoadedFromListenerConstructor.toFirestore = BlockfacesLoadedFromListenerConstructor._toFirestore
+BlockfacesLoadedFromListenerConstructor.fromFirestore = BlockfacesLoadedFromListenerConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -1294,6 +1431,10 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'AuthenticationCompleted')
         return Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AllInitialDataLoaded') return Action.AllInitialDataLoaded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'OrganizationUpdatedFromListener')
+        return Action.OrganizationUpdatedFromListener.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'BlockfacesLoadedFromListener')
+        return Action.BlockfacesLoadedFromListener.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockfaceCreated') return Action.BlockfaceCreated.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockfaceSelected') return Action.BlockfaceSelected.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockfaceSaved') return Action.BlockfaceSaved.fromFirestore(doc, decodeTimestamps)
@@ -1329,6 +1470,8 @@ Action.piiFields = rawData => {
     if (tagName === 'UserUpdated') return ['displayName']
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
     if (tagName === 'AllInitialDataLoaded') return []
+    if (tagName === 'OrganizationUpdatedFromListener') return []
+    if (tagName === 'BlockfacesLoadedFromListener') return []
     if (tagName === 'BlockfaceCreated') return []
     if (tagName === 'BlockfaceSelected') return []
     if (tagName === 'BlockfaceSaved') return []
@@ -1387,6 +1530,14 @@ Action.toLog = a => {
             displayName,
         }),
         AllInitialDataLoaded: () => ({ type: 'AllInitialDataLoaded' }),
+        OrganizationUpdatedFromListener: ({ organization }) => ({
+            type: 'OrganizationUpdatedFromListener',
+            organizationId: organization.id,
+        }),
+        BlockfacesLoadedFromListener: ({ blockfaces }) => ({
+            type: 'BlockfacesLoadedFromListener',
+            count: blockfaces.length,
+        }),
         BlockfaceCreated: ({ blockface }) => ({
             type: 'BlockfaceCreated',
             blockfaceId: blockface.id,
@@ -1493,6 +1644,14 @@ Action.getSubject = (action, organizationId) =>
             id: a.currentUser.id,
             type: 'user',
         }),
+        OrganizationUpdatedFromListener: a => ({
+            id: a.organization.id,
+            type: 'organization',
+        }),
+        BlockfacesLoadedFromListener: () => ({
+            id: 'collection',
+            type: 'blockfaces',
+        }),
         BlockfaceCreated: a => ({
             id: a.blockface.id,
             type: 'blockface',
@@ -1541,6 +1700,8 @@ Action.mayI = (action, actorRole, actorId) =>
         UserUpdated: a => a.userId === actorId,
         AuthenticationCompleted: () => true,
         AllInitialDataLoaded: () => true,
+        OrganizationUpdatedFromListener: () => true,
+        BlockfacesLoadedFromListener: () => true,
         BlockfaceCreated: () => ['admin', 'editor'].includes(actorRole),
         BlockfaceSelected: () => true,
         BlockfaceSaved: () => ['admin', 'editor'].includes(actorRole),
