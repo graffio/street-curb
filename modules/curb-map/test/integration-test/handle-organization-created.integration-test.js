@@ -38,7 +38,7 @@ test('Given OrganizationCreated action', t => {
             const organizationId = FieldTypes.newOrganizationId()
             const projectId = FieldTypes.newProjectId()
             const action = Action.OrganizationCreated.from({ organizationId, projectId, name: 'Third Org' })
-            const result = await submitActionRequest({ action, namespace, token })
+            const result = await submitActionRequest({ action, namespace, token, organizationId, projectId })
 
             t.equal(result.status, 401, 'Then HTTP status is 401')
             t.equal(result.data.status, 'unauthorized', 'Then status is unauthorized')
