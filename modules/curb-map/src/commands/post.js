@@ -76,7 +76,9 @@ const captureRollbackSnapshot = (action, state) =>
         AuthenticationCompleted: () => ({}),
 
         // Data loading doesn't need rollback (initialization only)
-        AllInitialDataLoaded     : () => ({}),
+        UserLoaded             : () => ({}),
+        OrganizationSynced     : () => ({}),
+        BlockfacesSynced       : () => ({}),
 
         // Blockface actions snapshot currentBlockfaceId for rollback
         BlockfaceCreated        : () => ({ currentBlockfaceId: S.currentBlockfaceId(state), blockfaces: S.blockfaces(state) }),
@@ -159,9 +161,9 @@ const getPersistenceStrategy = action =>
         AuthenticationCompleted: () => null,
 
         // Data loading is local-only (Redux initialization)
-        AllInitialDataLoaded     : () => null,
-        OrganizationSynced: () => null,
-        BlockfacesSynced: () => null,
+        UserLoaded             : () => null,
+        OrganizationSynced     : () => null,
+        BlockfacesSynced       : () => null,
 
         // Blockface/Segment actions are local-only (no Firestore persistence yet)
         BlockfaceCreated        : () => null,
@@ -179,6 +181,9 @@ const actionTriggersBlockfaceChange = action =>
     Action.SegmentAdded.is(action) ||
     Action.SegmentAddedLeft.is(action) ||
     Action.SegmentsReplaced.is(action)
+
+const isDataLoadingAction = action =>
+    Action.UserLoaded.is(action) || Action.OrganizationSynced.is(action) || Action.BlockfacesSynced.is(action)
 
 /**
  * Post a domain Action: authorize, update Redux, persist to Firestore
@@ -223,10 +228,9 @@ const post = action => {
     const state = getState()
     const previousBlockfaceId = S.currentBlockfaceId(state)
 
-    // AllInitialDataLoaded is the ONLY action that bypasses authorization
-    // It runs before currentUser/currentOrganization exist (it loads them)
-    // All other actions MUST have currentUser loaded for authorization
-    if (!Action.AllInitialDataLoaded.is(action)) checkAuthorization()
+    // Data loading actions bypass authorization (they populate Redux from Firestore)
+    // All other actions MUST have currentUser and currentOrganization loaded for authorization
+    if (!isDataLoadingAction(action)) checkAuthorization()
 
     // Phase 2: Capture state snapshot for rollback
     const snapshot = captureRollbackSnapshot(action, state)

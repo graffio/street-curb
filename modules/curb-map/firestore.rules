@@ -9,27 +9,22 @@ service cloud.firestore {
         function userExists()                  { return exists(/databases/$(database)/documents/users/$(getAuthenticatedUserId())); }
         function isOwnUserDoc(userId)          { return isAuthenticated() && getAuthenticatedUserId() == userId; }
 
-        function isMemberOfOrganization(orgId) {
+        function isMemberOfOrganization(organizationId) {
             return isAuthenticated()
             && userExists()
-            && getUserDoc().data.organizations[orgId] != null;
+            && getUserDoc().data.organizations[organizationId] != null;
         }
 
         // -------------------------------------------------------------------------------------------------------------
         // Rules
         // -------------------------------------------------------------------------------------------------------------
 
-        // Completed Actions collection (immutable audit trail)
-        match /{path=**}/completedActions/{id}                                     { allow read: if isMemberOfOrganization(resource.data.organizationId); }
-        match /{path=**}/organizations/{orgId}                                     { allow read: if isMemberOfOrganization(orgId); }
-        match /{path=**}/projects/{projectId}                                      { allow read: if isMemberOfOrganization(resource.data.organizationId); }
-        match /{path=**}/users/{userId}                                            { allow read: if isOwnUserDoc(userId); }
-
-        match /organizations/{orgId}/projects/{projectId}/blockfaces/{blockfaceId} { allow read: if isMemberOfOrganization(orgId); }
+        match /organizations/{organizationId}                                               { allow read: if isMemberOfOrganization(organizationId); }
+        match /organizations/{organizationId}/projects/{projectId}                          { allow read: if isMemberOfOrganization(organizationId); }
+        match /organizations/{organizationId}/projects/{projectId}/blockfaces/{blockfaceId} { allow read: if isMemberOfOrganization(organizationId); }
+        match /users/{userId}                                                               { allow read: if isOwnUserDoc(userId); }
 
         // Default: Deny all other collections
-        match /{document=**} {
-            allow read, write: if false;
-        }
+        match /{document=**} { allow read, write: if false; }
     }
 }

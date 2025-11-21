@@ -90,10 +90,8 @@ const FirestoreClientFacade = (Type, collectionPrefix = '', db = getDefaultClien
         )
     }
 
-    const descendant = (parentId, descendantType) => {
-        const suffix = collectionPaths.get(descendantType)
-        return FirestoreClientFacade(descendantType, `${collectionPath}/${parentId}/${suffix}`, db)
-    }
+    const descendant = (parentId, descendantType) =>
+        FirestoreClientFacade(descendantType, `${collectionPath}/${parentId}`, db)
 
     // Main
 

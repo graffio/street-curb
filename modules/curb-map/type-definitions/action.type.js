@@ -52,14 +52,14 @@ export const Action = {
         AuthenticationCompleted: { email: FieldTypes.email, displayName: 'String', },
 
         // Data Loading
-        AllInitialDataLoaded: { currentUser: 'User', currentOrganization: 'Organization?', },
+        UserLoaded        : { user: 'User' },
         OrganizationSynced: { organization: 'Organization' },
-        BlockfacesSynced: { blockfaces: '[Blockface]' },
+        BlockfacesSynced  : { blockfaces: '[Blockface]' },
 
         // Blockface Actions
-        BlockfaceCreated:  { blockface: 'Blockface' },
+        BlockfaceCreated :  { blockface: 'Blockface' },
         BlockfaceSelected: { blockface: 'Blockface' },
-        BlockfaceSaved:    { blockface: 'Blockface' },
+        BlockfaceSaved   :    { blockface: 'Blockface' },
 
         // Segment Actions
         SegmentUseUpdated   : { index: 'Number', use: 'String', },
@@ -67,7 +67,6 @@ export const Action = {
         SegmentAddedLeft    : { index: 'Number', desiredLength: 'Number', },
         SegmentAdded        : { targetIndex: 'Number', },
         SegmentsReplaced    : { segments: '[Segment]', },
-
     }
 }
 
@@ -105,9 +104,9 @@ Action.piiFields = rawData => {
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
 
     // Data Loading
-    if (tagName === 'AllInitialDataLoaded'   ) return []
-    if (tagName === 'OrganizationSynced') return []
-    if (tagName === 'BlockfacesSynced') return []
+    if (tagName === 'UserLoaded'             ) return []
+    if (tagName === 'OrganizationSynced'     ) return []
+    if (tagName === 'BlockfacesSynced'       ) return []
 
     // Blockface Actions
     if (tagName === 'BlockfaceCreated'       ) return []
@@ -156,9 +155,9 @@ Action.toLog = a => {
         AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
 
         // Data Loading
-        AllInitialDataLoaded     : ()                           => ({ type: 'AllInitialDataLoaded' }),
-        OrganizationSynced: ({ organization })     => ({ type: 'OrganizationSynced', organizationId: organization.id }),
-        BlockfacesSynced: ({ blockfaces })          => ({ type: 'BlockfacesSynced', count: blockfaces.length }),
+        UserLoaded               : ()                           => ({ type: 'UserLoaded' }),
+        OrganizationSynced       : ({ organization })           => ({ type: 'OrganizationSynced', organizationId: organization.id }),
+        BlockfacesSynced         : ({ blockfaces })             => ({ type: 'BlockfacesSynced', count: blockfaces.length }),
 
         // Blockface Actions
         BlockfaceCreated       : ({ blockface })                => ({ type: 'BlockfaceCreated', blockfaceId: blockface.id }),
@@ -233,9 +232,9 @@ Action.getSubject = (action, organizationId) =>
         AuthenticationCompleted: a => ({ id: a.email,          type: 'user' }),
 
         // Data Loading
-        AllInitialDataLoaded   : a => ({ id: a.currentUser.id, type: 'user' }),
-        OrganizationSynced: a => ({ id: a.organization.id, type: 'organization' }),
-        BlockfacesSynced: () => ({ id: 'collection', type: 'blockfaces' }),
+        UserLoaded             : a => ({ id: a.user.id,         type: 'user' }),
+        OrganizationSynced     : a => ({ id: a.organization.id, type: 'organization' }),
+        BlockfacesSynced       : () => ({ id: 'collection',     type: 'blockfaces' }),
 
         // Blockface Actions
         BlockfaceCreated       : a => ({ id: a.blockface.id, type: 'blockface' }),
@@ -270,9 +269,9 @@ Action.mayI = (action, actorRole, actorId) =>
         AuthenticationCompleted: () => true,
 
         // Data Loading
-        AllInitialDataLoaded   : () => true,
-        OrganizationSynced: () => true,
-        BlockfacesSynced: () => true,
+        UserLoaded             : () => true,
+        OrganizationSynced     : () => true,
+        BlockfacesSynced       : () => true,
 
         // Blockface Actions (any authenticated user can edit blockfaces)
         BlockfaceCreated       : () => ['admin', 'editor'].includes(actorRole),
