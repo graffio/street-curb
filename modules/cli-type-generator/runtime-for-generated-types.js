@@ -32,11 +32,21 @@ const _toString = value => {
 }
 
 const lookupTableToFirestore = (Type, idField, encodeTimestamps, lookupTable) =>
-    Object.fromEntries(lookupTable.map(item => [item[idField], Type.toFirestore(item, encodeTimestamps)]))
+    Object.fromEntries(
+        lookupTable.map((item, index) => [
+            item[idField],
+            { ...Type.toFirestore(item, encodeTimestamps), _order: index },
+        ]),
+    )
 
 const lookupTableFromFirestore = (Type, idField, decodeTimestamps, o) =>
     LookupTable(
-        Object.values(o || {}).map(item => Type.fromFirestore(item, decodeTimestamps)),
+        Object.values(o || {})
+            .sort((a, b) => (a._order ?? 0) - (b._order ?? 0))
+            .map(item => {
+                const { _order, ...rest } = item
+                return Type.fromFirestore(rest, decodeTimestamps)
+            }),
         Type,
         idField,
     )
