@@ -4,11 +4,12 @@ const S = {
     currentBlockface       : state => S.blockface(state, state.currentBlockfaceId),
     currentBlockfaceId     : state => state.currentBlockfaceId,
     currentOrganization    : state => state.currentOrganization,
-    currentOrganizationId  : state => state.currentOrganization.id,
+    currentOrganizationId  : state => state.currentOrganization?.id,
     currentProjectId       : state => state.currentProjectId,
     currentUser            : state => state.currentUser,
-    currentUserId          : state => state.currentUser.id,
-    
+    currentUserId          : state => state.currentUser?.id,
+    projectDataLoading     : state => state.projectDataLoading,
+
     // persisted
     blockfaces             : state => state.blockfaces,
     blockface              : (state, id) => state.blockfaces?.[id]
@@ -22,6 +23,7 @@ export const {
     currentOrganizationId,
     currentUser,
     currentUserId,
+    projectDataLoading,
     blockface,
     blockfaces,
 } = S

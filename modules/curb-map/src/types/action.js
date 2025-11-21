@@ -30,9 +30,12 @@
  *  AuthenticationCompleted
  *      email      : FieldTypes.email,
  *      displayName: "String"
- *  AllInitialDataLoaded
- *      currentUser        : "User",
- *      currentOrganization: "Organization"
+ *  UserLoaded
+ *      user: "User"
+ *  OrganizationSynced
+ *      organization: "Organization"
+ *  BlockfacesSynced
+ *      blockfaces: "[Blockface]"
  *  BlockfaceCreated
  *      blockface: "Blockface"
  *  BlockfaceSelected
@@ -85,7 +88,9 @@ const Action = {
             constructor === Action.UserUpdated ||
             constructor === Action.UserForgotten ||
             constructor === Action.AuthenticationCompleted ||
-            constructor === Action.AllInitialDataLoaded ||
+            constructor === Action.UserLoaded ||
+            constructor === Action.OrganizationSynced ||
+            constructor === Action.BlockfacesSynced ||
             constructor === Action.BlockfaceCreated ||
             constructor === Action.BlockfaceSelected ||
             constructor === Action.BlockfaceSaved ||
@@ -113,7 +118,9 @@ Object.defineProperty(Action, '@@tagNames', {
         'UserUpdated',
         'UserForgotten',
         'AuthenticationCompleted',
-        'AllInitialDataLoaded',
+        'UserLoaded',
+        'OrganizationSynced',
+        'BlockfacesSynced',
         'BlockfaceCreated',
         'BlockfaceSelected',
         'BlockfaceSaved',
@@ -735,30 +742,28 @@ AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstr
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.AllInitialDataLoaded
+// Variant Action.UserLoaded
 //
 // -------------------------------------------------------------------------------------------------------------
-const AllInitialDataLoadedConstructor = function AllInitialDataLoaded(currentUser, currentOrganization) {
-    const constructorName = 'Action.AllInitialDataLoaded(currentUser, currentOrganization)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateTag(constructorName, 'User', 'currentUser', false, currentUser)
-    R.validateTag(constructorName, 'Organization', 'currentOrganization', false, currentOrganization)
+const UserLoadedConstructor = function UserLoaded(user) {
+    const constructorName = 'Action.UserLoaded(user)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'User', 'user', false, user)
 
-    const result = Object.create(AllInitialDataLoadedPrototype)
-    result.currentUser = currentUser
-    result.currentOrganization = currentOrganization
+    const result = Object.create(UserLoadedPrototype)
+    result.user = user
     return result
 }
 
-Action.AllInitialDataLoaded = AllInitialDataLoadedConstructor
+Action.UserLoaded = UserLoadedConstructor
 
-const AllInitialDataLoadedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'AllInitialDataLoaded', enumerable: false },
+const UserLoadedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserLoaded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.AllInitialDataLoaded(${R._toString(this.currentUser)}, ${R._toString(this.currentOrganization)})`
+            return `Action.UserLoaded(${R._toString(this.user)})`
         },
         enumerable: false,
     },
@@ -771,37 +776,159 @@ const AllInitialDataLoadedPrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: AllInitialDataLoadedConstructor,
+        value: UserLoadedConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-AllInitialDataLoadedConstructor.prototype = AllInitialDataLoadedPrototype
-AllInitialDataLoadedConstructor.is = val => val && val.constructor === AllInitialDataLoadedConstructor
-AllInitialDataLoadedConstructor.toString = () => 'Action.AllInitialDataLoaded'
-AllInitialDataLoadedConstructor._from = o => Action.AllInitialDataLoaded(o.currentUser, o.currentOrganization)
-AllInitialDataLoadedConstructor.from = AllInitialDataLoadedConstructor._from
+UserLoadedConstructor.prototype = UserLoadedPrototype
+UserLoadedConstructor.is = val => val && val.constructor === UserLoadedConstructor
+UserLoadedConstructor.toString = () => 'Action.UserLoaded'
+UserLoadedConstructor._from = o => Action.UserLoaded(o.user)
+UserLoadedConstructor.from = UserLoadedConstructor._from
 
-AllInitialDataLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    currentUser: User.toFirestore(o.currentUser, encodeTimestamps),
-    currentOrganization: Organization.toFirestore(o.currentOrganization, encodeTimestamps),
+UserLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    user: User.toFirestore(o.user, encodeTimestamps),
 })
 
-AllInitialDataLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    AllInitialDataLoadedConstructor._from({
-        currentUser: User.fromFirestore
-            ? User.fromFirestore(doc.currentUser, decodeTimestamps)
-            : User.from(doc.currentUser),
-        currentOrganization: Organization.fromFirestore
-            ? Organization.fromFirestore(doc.currentOrganization, decodeTimestamps)
-            : Organization.from(doc.currentOrganization),
+UserLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    UserLoadedConstructor._from({
+        user: User.fromFirestore ? User.fromFirestore(doc.user, decodeTimestamps) : User.from(doc.user),
     })
 
 // Public aliases (can be overridden)
-AllInitialDataLoadedConstructor.toFirestore = AllInitialDataLoadedConstructor._toFirestore
-AllInitialDataLoadedConstructor.fromFirestore = AllInitialDataLoadedConstructor._fromFirestore
+UserLoadedConstructor.toFirestore = UserLoadedConstructor._toFirestore
+UserLoadedConstructor.fromFirestore = UserLoadedConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.OrganizationSynced
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationSyncedConstructor = function OrganizationSynced(organization) {
+    const constructorName = 'Action.OrganizationSynced(organization)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'Organization', 'organization', false, organization)
+
+    const result = Object.create(OrganizationSyncedPrototype)
+    result.organization = organization
+    return result
+}
+
+Action.OrganizationSynced = OrganizationSyncedConstructor
+
+const OrganizationSyncedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationSynced', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.OrganizationSynced(${R._toString(this.organization)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: OrganizationSyncedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+OrganizationSyncedConstructor.prototype = OrganizationSyncedPrototype
+OrganizationSyncedConstructor.is = val => val && val.constructor === OrganizationSyncedConstructor
+OrganizationSyncedConstructor.toString = () => 'Action.OrganizationSynced'
+OrganizationSyncedConstructor._from = o => Action.OrganizationSynced(o.organization)
+OrganizationSyncedConstructor.from = OrganizationSyncedConstructor._from
+
+OrganizationSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    organization: Organization.toFirestore(o.organization, encodeTimestamps),
+})
+
+OrganizationSyncedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    OrganizationSyncedConstructor._from({
+        organization: Organization.fromFirestore
+            ? Organization.fromFirestore(doc.organization, decodeTimestamps)
+            : Organization.from(doc.organization),
+    })
+
+// Public aliases (can be overridden)
+OrganizationSyncedConstructor.toFirestore = OrganizationSyncedConstructor._toFirestore
+OrganizationSyncedConstructor.fromFirestore = OrganizationSyncedConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.BlockfacesSynced
+//
+// -------------------------------------------------------------------------------------------------------------
+const BlockfacesSyncedConstructor = function BlockfacesSynced(blockfaces) {
+    const constructorName = 'Action.BlockfacesSynced(blockfaces)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateArray(constructorName, 1, 'Tagged', 'Blockface', 'blockfaces', false, blockfaces)
+
+    const result = Object.create(BlockfacesSyncedPrototype)
+    result.blockfaces = blockfaces
+    return result
+}
+
+Action.BlockfacesSynced = BlockfacesSyncedConstructor
+
+const BlockfacesSyncedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfacesSynced', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: BlockfacesSyncedConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+BlockfacesSyncedConstructor.prototype = BlockfacesSyncedPrototype
+BlockfacesSyncedConstructor.is = val => val && val.constructor === BlockfacesSyncedConstructor
+BlockfacesSyncedConstructor.toString = () => 'Action.BlockfacesSynced'
+BlockfacesSyncedConstructor._from = o => Action.BlockfacesSynced(o.blockfaces)
+BlockfacesSyncedConstructor.from = BlockfacesSyncedConstructor._from
+
+BlockfacesSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockfaces: o.blockfaces.map(item1 => Blockface.toFirestore(item1, encodeTimestamps)),
+})
+
+BlockfacesSyncedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfacesSyncedConstructor._from({
+        blockfaces: doc.blockfaces.map(item1 =>
+            Blockface.fromFirestore ? Blockface.fromFirestore(item1, decodeTimestamps) : Blockface.from(item1),
+        ),
+    })
+
+// Public aliases (can be overridden)
+BlockfacesSyncedConstructor.toFirestore = BlockfacesSyncedConstructor._toFirestore
+BlockfacesSyncedConstructor.fromFirestore = BlockfacesSyncedConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -1293,7 +1420,9 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'UserForgotten') return Action.UserForgotten.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AuthenticationCompleted')
         return Action.AuthenticationCompleted.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'AllInitialDataLoaded') return Action.AllInitialDataLoaded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'UserLoaded') return Action.UserLoaded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'OrganizationSynced') return Action.OrganizationSynced.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'BlockfacesSynced') return Action.BlockfacesSynced.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockfaceCreated') return Action.BlockfaceCreated.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockfaceSelected') return Action.BlockfaceSelected.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockfaceSaved') return Action.BlockfaceSaved.fromFirestore(doc, decodeTimestamps)
@@ -1328,7 +1457,9 @@ Action.piiFields = rawData => {
     if (tagName === 'UserForgotten') return []
     if (tagName === 'UserUpdated') return ['displayName']
     if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
-    if (tagName === 'AllInitialDataLoaded') return []
+    if (tagName === 'UserLoaded') return []
+    if (tagName === 'OrganizationSynced') return []
+    if (tagName === 'BlockfacesSynced') return []
     if (tagName === 'BlockfaceCreated') return []
     if (tagName === 'BlockfaceSelected') return []
     if (tagName === 'BlockfaceSaved') return []
@@ -1386,7 +1517,15 @@ Action.toLog = a => {
             email,
             displayName,
         }),
-        AllInitialDataLoaded: () => ({ type: 'AllInitialDataLoaded' }),
+        UserLoaded: () => ({ type: 'UserLoaded' }),
+        OrganizationSynced: ({ organization }) => ({
+            type: 'OrganizationSynced',
+            organizationId: organization.id,
+        }),
+        BlockfacesSynced: ({ blockfaces }) => ({
+            type: 'BlockfacesSynced',
+            count: blockfaces.length,
+        }),
         BlockfaceCreated: ({ blockface }) => ({
             type: 'BlockfaceCreated',
             blockfaceId: blockface.id,
@@ -1489,9 +1628,17 @@ Action.getSubject = (action, organizationId) =>
             id: a.email,
             type: 'user',
         }),
-        AllInitialDataLoaded: a => ({
-            id: a.currentUser.id,
+        UserLoaded: a => ({
+            id: a.user.id,
             type: 'user',
+        }),
+        OrganizationSynced: a => ({
+            id: a.organization.id,
+            type: 'organization',
+        }),
+        BlockfacesSynced: () => ({
+            id: 'collection',
+            type: 'blockfaces',
         }),
         BlockfaceCreated: a => ({
             id: a.blockface.id,
@@ -1540,7 +1687,9 @@ Action.mayI = (action, actorRole, actorId) =>
         UserForgotten: a => a.userId === actorId,
         UserUpdated: a => a.userId === actorId,
         AuthenticationCompleted: () => true,
-        AllInitialDataLoaded: () => true,
+        UserLoaded: () => true,
+        OrganizationSynced: () => true,
+        BlockfacesSynced: () => true,
         BlockfaceCreated: () => ['admin', 'editor'].includes(actorRole),
         BlockfaceSelected: () => true,
         BlockfaceSaved: () => ['admin', 'editor'].includes(actorRole),

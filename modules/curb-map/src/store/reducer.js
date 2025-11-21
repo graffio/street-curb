@@ -7,9 +7,10 @@ import { Action, Blockface, Organization } from '../types/index.js'
 const initialState = {
     // local state
     currentBlockfaceId: null,
-    currentUser: null,
     currentOrganization: null,
     currentProjectId: null,
+    currentUser: null,
+    projectDataLoading: false,
 
     // persisted from Firestore
     blockfaces: LookupTable([], Blockface, 'id'),
@@ -37,6 +38,22 @@ const _setBlockface = (state, blockface) =>
  * Reducer
  **********************************************************************************************************************/
 
+// organization changed; only wipe project data if projectId changed
+const organizationSynced = (state, action) => {
+    const newProjectId = action.organization.defaultProjectId
+
+    return newProjectId === state.currentProjectId
+        ? { ...state, currentOrganization: action.organization }
+        : {
+              currentUser: state.currentUser,
+              currentOrganization: action.organization,
+              currentProjectId: newProjectId,
+              blockfaces: LookupTable([], Blockface, 'id'),
+              currentBlockfaceId: null,
+              projectDataLoading: true,
+          }
+}
+
 /**
  * Root reducer handling all actions
  * @sig rootReducer :: (State, Action) -> State
@@ -63,9 +80,11 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         // Firebase Auth
         AuthenticationCompleted: () => state,
         
-        // Data Loading. For now, with 1:1 org:project mapping, store just the project ID
-        AllInitialDataLoaded     : () => ({ ...state, ...action, currentProjectId: action.currentOrganization?.defaultProjectId || null }),
-        
+        // Data Loading
+        UserLoaded             : () => ({ ...state, currentUser: action.user }),
+        OrganizationSynced     : () => organizationSynced(state, action),
+        BlockfacesSynced       : () => ({ ...state, blockfaces: LookupTable(action.blockfaces, Blockface, 'id'), projectDataLoading: false }),
+
         // Blockface Actions
         BlockfaceCreated       : () => _setBlockface(state, action.blockface),
         BlockfaceSelected      : () => _setBlockface(state, _blockface(state, action.blockface.id)),

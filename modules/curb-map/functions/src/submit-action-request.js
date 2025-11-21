@@ -2,7 +2,7 @@ import { createLogger } from '@graffio/logger'
 import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
 import { Action, ActionRequest, FieldTypes } from '../../src/types/index.js'
-import { createFirestoreContext } from './firestore-context.js'
+import { createFirestoreContext } from './firestore-admin-context.js'
 import handleAuthenticationCompleted from './handlers/handle-authentication-completed.js'
 import handleBlockfaceSaved from './handlers/handle-blockface-saved.js'
 import handleMemberAdded from './handlers/handle-member-added.js'
@@ -287,7 +287,9 @@ const handlerForActionRequest = actionRequest =>
         MemberRemoved          : () => handleMemberRemoved,
         RoleChanged            : () => handleRoleChanged,
         AuthenticationCompleted: () => handleAuthenticationCompleted,
-        AllInitialDataLoaded   : () => { throw new Error('AllInitialDataLoaded should never reach server (local-only action)') },
+        UserLoaded             : () => { throw new Error('UserLoaded should never reach server (local-only action)') },
+        OrganizationSynced     : () => { throw new Error('OrganizationSynced should never reach server (local-only action)') },
+        BlockfacesSynced       : () => { throw new Error('BlockfacesSynced should never reach server (local-only action)') },
         BlockfaceCreated       : () => { throw new Error('BlockfaceCreated should never reach server (local-only action)') },
         BlockfaceSelected      : () => { throw new Error('BlockfaceSelected should never reach server (local-only action)') },
         BlockfaceSaved         : () => handleBlockfaceSaved,

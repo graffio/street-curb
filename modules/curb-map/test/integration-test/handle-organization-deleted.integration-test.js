@@ -1,5 +1,5 @@
 import t from 'tap'
-import { createFirestoreContext } from '../../functions/src/firestore-context.js'
+import { createFirestoreContext } from '../../functions/src/firestore-admin-context.js'
 import { Action } from '../../src/types/index.js'
 import { asSignedInUser } from '../integration-test-helpers/auth-emulator.js'
 import { submitAndExpectSuccess } from '../integration-test-helpers/http-submit-action.js'
