@@ -36,10 +36,17 @@ const decodeTimestamp = timestamp => {
 
 /*
  *
- * @sig FirestoreAdminFacade :: (Type, String, FirestoreTransaction?, Firestore?)) -> Facade
+ * @sig FirestoreAdminFacade :: (Type, String, FirestoreTransaction?, Firestore?, TenantContext?) -> Facade
  *  Facade = { [functionName]: Function }
+ *  TenantContext = { organizationId?: String, projectId?: String }
  */
-const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDefaultAdminDb()) => {
+const FirestoreAdminFacade = (
+    Type,
+    collectionPrefix = '',
+    tx = null,
+    tenantContext = null,
+    db = getDefaultAdminDb(),
+) => {
     const fromFirestore = (Type, data) => Type.fromFirestore(data, decodeTimestamp)
     const toFirestore = (Type, data) => Type.toFirestore(data, encodeTimestamp)
 
@@ -99,6 +106,27 @@ const FirestoreAdminFacade = (Type, collectionPrefix = '', tx = null, db = getDe
     const write = async record => {
         try {
             if (!Type.is(record)) record = Type.from(record)
+
+            // Tenant boundary enforcement: prevent cross-tenant data writes
+            // Only validates fields that exist on the document type
+            if (tenantContext) {
+                if (
+                    tenantContext.organizationId &&
+                    'organizationId' in record &&
+                    record.organizationId !== tenantContext.organizationId
+                )
+                    throw new Error(
+                        `Tenant boundary violation: Cannot write document with organizationId '${record.organizationId}' ` +
+                            `to context scoped for organizationId '${tenantContext.organizationId}'`,
+                    )
+
+                if (tenantContext.projectId && 'projectId' in record && record.projectId !== tenantContext.projectId)
+                    throw new Error(
+                        `Tenant boundary violation: Cannot write document with projectId '${record.projectId}' ` +
+                            `to context scoped for projectId '${tenantContext.projectId}'`,
+                    )
+            }
+
             const firestoreData = toFirestore(Type, record)
             tx ? await tx.set(_docRef(record.id), firestoreData) : await _docRef(record.id).set(firestoreData)
         } catch (e) {
