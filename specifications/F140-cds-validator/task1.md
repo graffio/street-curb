@@ -1,0 +1,15 @@
+- Fetch CDS OpenAPI 1.1 JSON for curbs/events/metrics from `openmobilityfoundation/cds-openapi` (or Stoplight export) and cache locally; document that `curb-data-specification` itself is narrative-only.
+  - [x] Cloned `github.com/openmobilityfoundation/cds-openapi` `draft-v1.1` at `350f8374` (2025-11-21) and vendored the upstream YAML assets under `modules/cli-cds-validator/sources/cds-openapi/v1.1/` (APIs, Rest Responses, Shared Data Models, README, LICENSE, toc, source metadata).
+  - [x] Added `modules/cli-cds-validator/scripts/build-openapi-json.js` + `yarn workspace @graffio/cli-cds-validator schemas:openapi` to convert the upstream YAML files into cached JSON snapshots at `modules/cli-cds-validator/schemas/1.1/openapi/*.openapi.json`, with provenance captured in `schemas/1.1/metadata.json`.
+- Convert OpenAPI to per-API JSON Schemas compatible with AJV (draft 7+).
+  - [x] Build extractor that walks the cached OpenAPI docs to select the payload object(s) for `curbs`, `events`, and `metrics` (likely the `paths.*.responses['200'].content['application/json'].schema.data` block).
+  - [x] Resolve `$ref` links that point to shared YAML fragments (Rest Responses + Shared Data Models) before emitting JSON Schema; consider `@apidevtools/json-schema-ref-parser` or manual resolver fed by our vendored files.
+  - [x] Persist generated AJV-ready schemas under `modules/cli-cds-validator/schemas/1.1/json/*.schema.json` with metadata linking back to the OpenAPI commit + generator version.
+- Note spec version string and commit hash/URL for provenance.
+  - [x] Captured in `modules/cli-cds-validator/sources/cds-openapi/v1.1/source.json` and mirrored in `modules/cli-cds-validator/schemas/1.1/metadata.json`.
+- Decide how to pin schemas in repo and update rules when version changes.
+  - [x] Pin via vendored source tree + generated JSON snapshots keyed by spec version directories (e.g., `schemas/<version>/...`); regenerate via the new script whenever upstream commits advance.
+- List any quirks (nullable, defaults) needing AJV options/custom keywords.
+  - [x] AJV runs in draft 2020-12 mode with `strict: false` and `allErrors: true` so OpenAPI keywords (e.g., `example`, `description`) remain untouched; Curbs payload schemas overlap heavily so the generated root schemas rely on `anyOf` rather than `oneOf` to avoid false negatives until upstream marks discriminating fields as required.
+- Record that schemas represent request/response contracts, not a hosted central datastore; validation stays offline.
+  - [x] CLI validates the cached `data` envelopes from CDS responses entirely offline using vendored schemas and never queries live city APIs; payload files are expected to match the published CDS API contracts.

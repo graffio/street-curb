@@ -40,8 +40,7 @@ test('Given UserUpdated action', t => {
             const result = await submitActionRequest({ action, namespace, token })
 
             t.equal(result.status, 401, 'Then HTTP status is 401')
-            t.equal(result.data.status, 'unauthorized', 'Then status is unauthorized')
-            t.match(result.data.error, /trying to update user/, 'Then error mentions unauthorized update attempt')
+            t.match(result.data, /Can only modify own user/, 'Then error mentions unauthorized update attempt')
 
             // Verify user was not modified
             const user = await readUser({ namespace, organizationId, userId: otherUserId })

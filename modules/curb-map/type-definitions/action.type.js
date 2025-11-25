@@ -9,7 +9,6 @@ import { FieldTypes } from './field-types.js'
  *      // organization
  *      OrganizationCreated
  *      OrganizationDeleted
- *      OrganizationSuspended
  *      OrganizationUpdated
  *
  *      // organization member
@@ -34,9 +33,8 @@ export const Action = {
     variants: {
         // Organization Actions
         OrganizationCreated  : { name: 'String' , projectId: FieldTypes.projectId, },
-        OrganizationUpdated  : { name: 'String?', status: '/^(active|suspended)$/?', },
+        OrganizationUpdated  : { name: 'String?' },
         OrganizationDeleted  : { },
-        OrganizationSuspended: { },
 
         // Organization Member Actions
         MemberAdded  : { userId: FieldTypes.userId, role: FieldTypes.role, displayName: 'String'},
@@ -87,7 +85,6 @@ Action.piiFields = rawData => {
     // organization
     if (tagName === 'OrganizationCreated'    ) return []
     if (tagName === 'OrganizationDeleted'    ) return []
-    if (tagName === 'OrganizationSuspended'  ) return []
     if (tagName === 'OrganizationUpdated'    ) return []
     
     // organization member
@@ -123,23 +120,27 @@ Action.piiFields = rawData => {
     return []  // Fallback for unrecognized types
 }
 
+Action.redactField = (acc, field) => {
+    if (!acc[field]) return acc // skip, there's no actual value for this field
+
+    if (field.match(/email/)) return { ...acc, [field]: acc[field].replace(/(.).*(@.*)/, '$1***$2') }
+    if (field.match(/displayName/)) return { ...acc, [field]: acc[field].replace(/\b(\w)\w*/g, '$1***') }
+
+    return { ...acc, [field]: `[REDACTED length: ${acc[field].length}]` }
+}
+
 /*
  * Return a subset of interesting fields to log, with PII redacted.
  * Automatically applies PII redaction as a security layer
  * @sig toLog = Action -> Object
  */
 Action.toLog = a => {
-    const redactField = field => {
-        if (result[field]) result[field] = `${field}: ${result[field].length}`
-    }
-
     // prettier-ignore
-    const result = a.match({
+    let result = a.match({
         // organization
         OrganizationCreated    : ({ name })                     => ({ type: 'OrganizationCreated', name}),
         OrganizationDeleted    : ()                             => ({ type: 'OrganizationDeleted', }),
-        OrganizationSuspended  : ()                             => ({ type: 'OrganizationSuspended', }),
-        OrganizationUpdated    : ({ name, status })             => ({ type: 'OrganizationUpdated', name, status}),
+        OrganizationUpdated    : ({ name })                     => ({ type: 'OrganizationUpdated', name }),
         
         // member
         MemberAdded            : ({ displayName, role })        => ({ type: 'MemberAdded', displayName, role }),
@@ -160,9 +161,9 @@ Action.toLog = a => {
         BlockfacesSynced         : ({ blockfaces })             => ({ type: 'BlockfacesSynced', count: blockfaces.length }),
 
         // Blockface Actions
-        BlockfaceCreated       : ({ blockface })                => ({ type: 'BlockfaceCreated', blockfaceId: blockface.id }),
-        BlockfaceSelected      : ({ blockface })                => ({ type: 'BlockfaceSelected', blockfaceId: blockface.id }),
-        BlockfaceSaved         : ({ blockface })                => ({ type: 'BlockfaceSaved', blockfaceId: blockface.id }),
+        BlockfaceCreated       : ({ blockface })                => ({ type: 'BlockfaceCreated', blockface }),
+        BlockfaceSelected      : ({ blockface })                => ({ type: 'BlockfaceSelected', blockface }),
+        BlockfaceSaved         : ({ blockface })                => ({ type: 'BlockfaceSaved', blockface }),
 
         // Segment Actions
         SegmentUseUpdated      : ({ index, use })               => ({ type: 'SegmentUseUpdated', index, use }),
@@ -172,7 +173,7 @@ Action.toLog = a => {
         SegmentsReplaced       : ({ segments })                 => ({ type: 'SegmentsReplaced', segmentCount: segments.length }),
     })
 
-    Action.piiFields(a).forEach(redactField)
+    result = Action.piiFields(a).reduce(Action.redactField, result)
     return result
 }
 
@@ -187,10 +188,6 @@ Action.toLog = a => {
  * @sig redactPii :: Object -> Object
  */
 Action.redactPii = rawData => {
-    const redactField = field => {
-        if (result[field]) result[field] = `${field}: ${result[field].length}`
-    }
-
     const piiFields = () => {
         const tagName = rawData['@@tagName']
 
@@ -201,9 +198,7 @@ Action.redactPii = rawData => {
         return []
     }
 
-    const result = { ...rawData }
-    piiFields().forEach(redactField)
-    return result
+    return piiFields().reduce(Action.redactField, { ...rawData })
 }
 
 // Additional function: getSubject
@@ -215,7 +210,6 @@ Action.getSubject = (action, organizationId) =>
         // organization
         OrganizationCreated    : () => ({ id: organizationId, type: 'organization' }),
         OrganizationDeleted    : () => ({ id: organizationId, type: 'organization' }),
-        OrganizationSuspended  : () => ({ id: organizationId, type: 'organization' }),
         OrganizationUpdated    : () => ({ id: organizationId, type: 'organization' }),
 
         // organization member
@@ -256,15 +250,14 @@ Action.mayI = (action, actorRole, actorId) =>
         MemberRemoved          : () => ['admin'].includes(actorRole),
         OrganizationCreated    : () => ['admin'].includes(actorRole),
         OrganizationDeleted    : () => ['admin'].includes(actorRole),
-        OrganizationSuspended  : () => ['admin'].includes(actorRole),
         OrganizationUpdated    : () => ['admin'].includes(actorRole),
         RoleChanged            : () => ['admin'].includes(actorRole),
         UserCreated            : () => ['admin'].includes(actorRole),
-        
+
         // Self-modification support
         UserForgotten          : a => a.userId === actorId,
         UserUpdated            : a => a.userId === actorId,
-        
+
         // Auth
         AuthenticationCompleted: () => true,
 
@@ -285,3 +278,51 @@ Action.mayI = (action, actorRole, actorId) =>
         SegmentAddedLeft       : () => true,
         SegmentsReplaced       : () => true,
     })
+
+/**
+ * Get metadata for an action
+ * Declares authorization requirements and documents that need validation
+ * @sig Action.metadata :: Action -> ActionMetadata
+ */
+// prettier-ignore
+Action.metadata = action => {
+    const f = (requiresUser, requiresOrganization, requiresProject, authStrategy, writesTo = [], validateInput = null) =>
+        ({ requiresUser, requiresOrganization, requiresProject, authStrategy, writesTo, validateInput })
+    
+    return action.match({
+        //                               user   org    proj   strategy
+        AuthenticationCompleted: () => f(false, false, false, 'allowAll'),
+        OrganizationCreated    : () => f(true,  false, false, 'requireOrganizationLimit'),
+        UserCreated            : () => f(false, false, false, 'requireSystem'),
+        UserForgotten          : () => f(true,  false, false, 'requireSelfOnly'),
+        UserUpdated            : () => f(true,  false, false, 'requireSelfOnly'),
+        MemberAdded            : () => f(true,  true,  false, 'requireActorIsOrganizationMember'),
+        MemberRemoved          : () => f(true,  true,  false, 'requireActorIsOrganizationMember'),
+        OrganizationDeleted    : () => f(true,  true,  false, 'requireActorIsOrganizationMember'),
+        OrganizationUpdated    : () => f(true,  true,  false, 'requireActorIsOrganizationMember'),
+        RoleChanged            : () => f(true,  true,  false, 'requireActorIsOrganizationMember'),
+        BlockfaceSaved         : () => f(
+            true,  true,  true,  'requireActorIsOrganizationMember',
+            [{ collection: 'blockfaces', path: 'action.blockface.id' }],
+            (action, actionRequest, existingDocs) => {
+                const { blockface } = action
+
+                // Validate tenant boundaries (both creates and updates)
+                if (blockface.organizationId !== actionRequest.organizationId) throw new Error(`Organization ids in blockface and ActionRequest cannot differ`)
+                if (blockface.projectId !== actionRequest.projectId) throw new Error(`Project ids in blockface and ActionRequest cannot differ`)
+            }
+        ),
+        
+        // Local-only actions (throw errors if they reach server)
+        BlockfaceCreated       : () => { throw new Error('BlockfaceCreated is local-only') },
+        BlockfaceSelected      : () => { throw new Error('BlockfaceSelected is local-only') },
+        BlockfacesSynced       : () => { throw new Error('BlockfacesSynced is local-only') },
+        OrganizationSynced     : () => { throw new Error('OrganizationSynced is local-only') },
+        SegmentAdded           : () => { throw new Error('SegmentAdded is local-only') },
+        SegmentAddedLeft       : () => { throw new Error('SegmentAddedLeft is local-only') },
+        SegmentLengthUpdated   : () => { throw new Error('SegmentLengthUpdated is local-only') },
+        SegmentUseUpdated      : () => { throw new Error('SegmentUseUpdated is local-only') },
+        SegmentsReplaced       : () => { throw new Error('SegmentsReplaced is local-only') },
+        UserLoaded             : () => { throw new Error('UserLoaded is local-only') },
+    })
+}

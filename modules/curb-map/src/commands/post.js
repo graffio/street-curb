@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth'
 import { functionsUrl } from '../config/index.js'
 import { store } from '../store/index.js'
 import * as S from '../store/selectors.js'
-import { Action, FieldTypes, Organization } from '../types/index.js'
+import { Action, Blockface, FieldTypes, Organization } from '../types/index.js'
 
 const { getState } = store
 
@@ -70,7 +70,6 @@ const captureRollbackSnapshot = (action, state) =>
         // These don't need rollback (no optimistic update or local-only)
         OrganizationCreated    : () => ({}),
         OrganizationDeleted    : () => ({}),
-        OrganizationSuspended  : () => ({}),
         UserCreated            : () => ({}),
         UserForgotten          : () => ({}),
         AuthenticationCompleted: () => ({}),
@@ -119,7 +118,7 @@ const saveBlockfaceImmediately = blockfaceId => {
     const currentBlockface = S.blockface(state, blockfaceId)
     if (!currentBlockface) return console.warn(`Cannot save blockface ${blockfaceId}: not found in state`)
 
-    post(Action.BlockfaceSaved(currentBlockface))
+    post(Action.BlockfaceSaved(Blockface.updateMetadata(currentBlockface, S.currentUserId(state))))
 }
 
 /*
@@ -147,7 +146,6 @@ const getPersistenceStrategy = action =>
         MemberRemoved          : () => submitActionRequest,
         OrganizationCreated    : () => submitActionRequest,
         OrganizationDeleted    : () => submitActionRequest,
-        OrganizationSuspended  : () => submitActionRequest,
         OrganizationUpdated    : () => submitActionRequest,
 
         // User actions persist to Firestore

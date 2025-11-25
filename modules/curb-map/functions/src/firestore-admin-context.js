@@ -17,11 +17,15 @@ const createFirestoreContext = (namespace, organizationId, projectId, tx = null)
     const organizationPrefix = `${namespace}/organizations/${organizationId}`
     const projectsPrefix = `${organizationPrefix}/projects/${projectId}`
 
-    const completedActions = FirestoreAdminFacade(ActionRequest, `${namespace}`, tx)
-    const organizations = FirestoreAdminFacade(Organization, `${namespace}`, tx)
-    const users = FirestoreAdminFacade(User, `${namespace}/`, tx)
-    const projects = organizationId ? FirestoreAdminFacade(Project, organizationPrefix, tx) : null
-    const blockfaces = organizationId && projectId ? FirestoreAdminFacade(Blockface, projectsPrefix, tx) : null
+    // Tenant boundaries for validation
+    const tenantContext = { organizationId, projectId }
+
+    const completedActions = FirestoreAdminFacade(ActionRequest, `${namespace}`, tx, tenantContext)
+    const organizations = FirestoreAdminFacade(Organization, `${namespace}`, tx, tenantContext)
+    const users = FirestoreAdminFacade(User, `${namespace}/`, tx, tenantContext)
+    const projects = organizationId ? FirestoreAdminFacade(Project, organizationPrefix, tx, tenantContext) : null
+    const blockfaces =
+        organizationId && projectId ? FirestoreAdminFacade(Blockface, projectsPrefix, tx, tenantContext) : null
 
     return {
         completedActions,

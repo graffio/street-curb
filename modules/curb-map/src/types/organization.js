@@ -3,13 +3,14 @@
  *
  *  id              : FieldTypes.organizationId,
  *  name            : "String",
- *  status          : /active|suspended/,
  *  defaultProjectId: FieldTypes.projectId,
  *  members         : "{Member:userId}",
  *  createdAt       : "Date",
  *  createdBy       : FieldTypes.userId,
  *  updatedAt       : "Date",
- *  updatedBy       : FieldTypes.userId
+ *  updatedBy       : FieldTypes.userId,
+ *  deletedAt       : "Date?",
+ *  deletedBy       : "^usr_[a-z0-9]{12,}$/?"
  *
  */
 
@@ -27,37 +28,40 @@ import { LookupTable } from '@graffio/functional'
 const Organization = function Organization(
     id,
     name,
-    status,
     defaultProjectId,
     members,
     createdAt,
     createdBy,
     updatedAt,
     updatedBy,
+    deletedAt,
+    deletedBy,
 ) {
     const constructorName =
-        'Organization(id, name, status, defaultProjectId, members, createdAt, createdBy, updatedAt, updatedBy)'
-    R.validateArgumentLength(constructorName, 9, arguments)
+        'Organization(id, name, defaultProjectId, members, createdAt, createdBy, updatedAt, updatedBy, deletedAt, deletedBy)'
+
     R.validateRegex(constructorName, FieldTypes.organizationId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
-    R.validateRegex(constructorName, /active|suspended/, 'status', false, status)
     R.validateRegex(constructorName, FieldTypes.projectId, 'defaultProjectId', false, defaultProjectId)
     R.validateLookupTable(constructorName, 'Member', 'members', false, members)
     R.validateDate(constructorName, 'createdAt', false, createdAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'createdBy', false, createdBy)
     R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
+    R.validateDate(constructorName, 'deletedAt', true, deletedAt)
+    R.validateString(constructorName, 'deletedBy', true, deletedBy)
 
     const result = Object.create(prototype)
     result.id = id
     result.name = name
-    result.status = status
     result.defaultProjectId = defaultProjectId
     result.members = members
     result.createdAt = createdAt
     result.createdBy = createdBy
     result.updatedAt = updatedAt
     result.updatedBy = updatedBy
+    if (deletedAt != null) result.deletedAt = deletedAt
+    if (deletedBy != null) result.deletedBy = deletedBy
     return result
 }
 
@@ -71,7 +75,7 @@ const prototype = Object.create(Object.prototype, {
 
     toString: {
         value: function () {
-            return `Organization(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.status)}, ${R._toString(this.defaultProjectId)}, ${R._toString(this.members)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
+            return `Organization(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.defaultProjectId)}, ${R._toString(this.members)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)}, ${R._toString(this.deletedAt)}, ${R._toString(this.deletedBy)})`
         },
         enumerable: false,
     },
@@ -105,13 +109,14 @@ Organization._from = o =>
     Organization(
         o.id,
         o.name,
-        o.status,
         o.defaultProjectId,
         o.members,
         o.createdAt,
         o.createdBy,
         o.updatedAt,
         o.updatedBy,
+        o.deletedAt,
+        o.deletedBy,
     )
 Organization.from = Organization._from
 
@@ -119,7 +124,6 @@ Organization._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,
         name: o.name,
-        status: o.status,
         defaultProjectId: o.defaultProjectId,
         members: R.lookupTableToFirestore(Member, 'userId', encodeTimestamps, o.members),
         createdAt: encodeTimestamps(o.createdAt),
@@ -128,6 +132,10 @@ Organization._toFirestore = (o, encodeTimestamps) => {
         updatedBy: o.updatedBy,
     }
 
+    if (o.deletedAt != null) result.deletedAt = encodeTimestamps(o.deletedAt)
+
+    if (o.deletedBy != null) result.deletedBy = o.deletedBy
+
     return result
 }
 
@@ -135,13 +143,14 @@ Organization._fromFirestore = (doc, decodeTimestamps) =>
     Organization._from({
         id: doc.id,
         name: doc.name,
-        status: doc.status,
         defaultProjectId: doc.defaultProjectId,
         members: R.lookupTableFromFirestore(Member, 'userId', decodeTimestamps, doc.members),
         createdAt: decodeTimestamps(doc.createdAt),
         createdBy: doc.createdBy,
         updatedAt: decodeTimestamps(doc.updatedAt),
         updatedBy: doc.updatedBy,
+        deletedAt: doc.deletedAt != null ? decodeTimestamps(doc.deletedAt) : undefined,
+        deletedBy: doc.deletedBy,
     })
 
 // Public aliases (override if necessary)

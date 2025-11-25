@@ -8,7 +8,7 @@ import { createOrganization } from '../integration-test-helpers/test-helpers.js'
 
 const { test } = t
 
-const createTestBlockface = (organizationId, projectId) =>
+const createTestBlockface = (organizationId, projectId, userId) =>
     Blockface.from({
         id: 'blk_000000000001',
         sourceId: 'test-source-1',
@@ -21,9 +21,9 @@ const createTestBlockface = (organizationId, projectId) =>
             Segment,
         ),
         createdAt: new Date(),
-        createdBy: 'usr_000000000001',
+        createdBy: userId,
         updatedAt: new Date(),
-        updatedBy: 'usr_000000000001',
+        updatedBy: userId,
     })
 
 test('Given BlockfaceSaved action', t => {
@@ -31,7 +31,7 @@ test('Given BlockfaceSaved action', t => {
         await asSignedInUser('save-blockface', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
-            const blockface = createTestBlockface(organizationId, projectId)
+            const blockface = createTestBlockface(organizationId, projectId, actorUserId)
 
             const action = Action.BlockfaceSaved(blockface)
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
@@ -50,20 +50,29 @@ test('Given BlockfaceSaved action', t => {
     })
 
     t.test('When blockface is saved multiple times Then each version persists', async t => {
-        await asSignedInUser('save-multiple-times', async ({ namespace, token }) => {
+        await asSignedInUser('save-multiple-times', async ({ namespace, token, actorUserId }) => {
             const { organizationId, projectId } = await createOrganization({ namespace, token })
 
-            const blockface = createTestBlockface(organizationId, projectId)
+            // Create initial blockface
+            const blockface = createTestBlockface(organizationId, projectId, actorUserId)
             const action = Action.BlockfaceSaved(blockface)
             await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
 
-            // Modify and save again
-            const updatedBlockface = Blockface.from({ ...blockface, streetName: 'Updated Street' })
+            // Read existing blockface to get correct metadata for update
+            const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+            const existingBlockface = await fsContext.blockfaces.read(blockface.id)
+
+            // Update preserving existing metadata
+            const updatedBlockface = Blockface.from({
+                ...existingBlockface,
+                streetName: 'Updated Street',
+                updatedBy: actorUserId,
+                updatedAt: new Date(),
+            })
             const action2 = Action.BlockfaceSaved(updatedBlockface)
             await submitAndExpectSuccess({ action: action2, namespace, token, organizationId, projectId })
 
             // Read from Firestore
-            const fsContext = createFirestoreContext(namespace, organizationId, projectId)
             const savedBlockface = await fsContext.blockfaces.read(blockface.id)
 
             t.equal(savedBlockface.streetName, 'Updated Street', 'Then updated street name persists')

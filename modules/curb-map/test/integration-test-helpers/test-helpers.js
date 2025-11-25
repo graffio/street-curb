@@ -110,6 +110,80 @@ const readOrgAndUser = async ({ namespace, organizationId, projectId, userId }) 
     return { org, user }
 }
 
+/**
+ * Create an expired Firebase Auth token
+ * Creates a custom token with 1-second expiry that can be used to test expired token handling
+ * @sig createExpiredToken :: String -> Promise<String>
+ */
+const createExpiredToken = async userId => {
+    // Create a custom token with 1-second expiry
+    const customToken = await admin.auth().createCustomToken(userId, { exp: Math.floor(Date.now() / 1000) + 1 })
+
+    // Exchange for ID token
+    const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
+    const authUrl = `http://${authHost}/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fake-key`
+    const signInResponse = await fetch(authUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: customToken, returnSecureToken: true }),
+    })
+    const { idToken } = await signInResponse.json()
+
+    // Wait for token to expire
+    await new Promise(resolve => setTimeout(resolve, 1100))
+
+    return idToken
+}
+
+/**
+ * Create object bypassing validation
+ * Useful for testing metadata spoofing scenarios where we need invalid data
+ * @sig bypassValidation :: (Type, Object) -> Object
+ */
+const bypassValidation = (Type, data) => {
+    // Create raw object with @@tagName but skip .from() validation
+    const tagName = Type.name || Object.keys(Type)[0]
+    return { '@@tagName': tagName, ...data }
+}
+
+/**
+ * Delete an organization
+ * @sig deleteOrganization :: ({ namespace: String, token: String, organizationId: String, projectId?: String }) -> Promise<void>
+ */
+const deleteOrganization = async ({ namespace, token, organizationId, projectId }) => {
+    const action = Action.OrganizationDeleted.from({})
+    await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
+}
+
+/**
+ * Verify organization is soft-deleted with proper metadata
+ * @sig verifyOrganizationSoftDeleted :: (TapTest, Organization, String) -> void
+ */
+const verifyOrganizationSoftDeleted = (t, org, actorUserId) => {
+    t.ok(org.deletedAt, 'Then organization.deletedAt is set')
+    t.equal(org.deletedBy, actorUserId, 'Then organization.deletedBy is set to actorId')
+    t.ok(org.deletedAt instanceof Date, 'Then deletedAt is a Date object')
+}
+
+/**
+ * Verify user no longer has organization in their organizations
+ * @sig verifyUserLacksOrganization :: (TapTest, User, String) -> void
+ */
+const verifyUserLacksOrganization = (t, user, organizationId) => {
+    t.notOk(user.organizations[organizationId], 'Then user.organizations no longer contains organizationId')
+}
+
+/**
+ * Create a user and add them as a member to an organization
+ * @sig createUserAndAddMember :: ({ namespace: String, token: String, organizationId: String, role: String, displayName: String, userId?: String }) -> Promise<{ userId: String }>
+ */
+const createUserAndAddMember = async ({ namespace, token, organizationId, role, displayName, userId }) => {
+    const newUserId = userId || FieldTypes.newUserId()
+    await createUser({ namespace, token, userId: newUserId, displayName })
+    await addMember({ namespace, token, userId: newUserId, organizationId, role, displayName })
+    return { userId: newUserId }
+}
+
 export {
     createOrganization,
     createUser,
@@ -120,4 +194,10 @@ export {
     readProject,
     readUser,
     readOrgAndUser,
+    createExpiredToken,
+    bypassValidation,
+    deleteOrganization,
+    verifyOrganizationSoftDeleted,
+    verifyUserLacksOrganization,
+    createUserAndAddMember,
 }

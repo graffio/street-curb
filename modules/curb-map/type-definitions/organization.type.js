@@ -13,7 +13,6 @@ export const Organization = {
     fields: {
         id              : FieldTypes.organizationId,
         name            : "String",
-        status          : /active|suspended/,
         defaultProjectId: FieldTypes.projectId,
         members         : '{Member:userId}', // LookupTable of members
 
@@ -21,6 +20,8 @@ export const Organization = {
         createdBy       : FieldTypes.userId,
         updatedAt       : 'Date',
         updatedBy       : FieldTypes.userId,
+        deletedAt       : 'Date?',
+        deletedBy       : '^usr_[a-z0-9]{12,}$/?',
     }
 }
 

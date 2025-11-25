@@ -1,3 +1,7 @@
+// ABOUTME: HTTP endpoint for submitting action requests with validation and authorization
+// ABOUTME: Validates metadata inside transaction, checks permissions, executes handlers atomically
+
+import { path } from '@graffio/functional'
 import { createLogger } from '@graffio/logger'
 import admin from 'firebase-admin'
 import { onRequest } from 'firebase-functions/v2/https'
@@ -9,169 +13,100 @@ import handleMemberAdded from './handlers/handle-member-added.js'
 import handleMemberRemoved from './handlers/handle-member-removed.js'
 import handleOrganizationCreated from './handlers/handle-organization-created.js'
 import handleOrganizationDeleted from './handlers/handle-organization-deleted.js'
-import handleOrganizationSuspended from './handlers/handle-organization-suspended.js'
 import handleOrganizationUpdated from './handlers/handle-organization-updated.js'
 import handleRoleChanged from './handlers/handle-role-changed.js'
 import handleUserCreated from './handlers/handle-user-created.js'
 import handleUserForgotten from './handlers/handle-user-forgotten.js'
 import handleUserUpdated from './handlers/handle-user-updated.js'
 
-/*
- * HTTP endpoint for submitting action requests.
- *
- * Endpoint: POST /submitActionRequest
- *
- * Request payload:
- *   - action: Action type (OrganizationCreated, UserCreated, etc.)
- *   - idempotencyKey: String - client-generated key (idm_<cuid12>)
- *   - correlationId: String - client-generated tracing ID (cor_<cuid12>)
- *   - namespace: String (optional, emulator only) - test namespace for isolation
- *
- * Success response (200):
- *   - status: 'completed'
- *   - processedAt: String (ISO timestamp)
- *
- * Duplicate response (409):
- *   - status: 'duplicate'
- *   - message: 'Already processed'
- *   - processedAt: String (ISO timestamp from original request)
- *
- * Error responses:
- *   - 400: Validation failed
- *   - 405: Method not allowed
- *   - 500: Server error
- *
- * Server enrichment:
- *   - Extracts actorId from Firebase Auth token (or emulator bypass)
- *   - Derives organizationId from action
- *   - Derives subjectId and subjectType using Action.getSubject()
- *   - Adds server timestamps (createdAt, processedAt)
- *   - Converts idempotencyKey to document ID (idm_ -> acr_)
- *
- * Idempotency:
- *   Uses Transaction-based pattern with atomic duplicate detection.
- *   IdempotencyKey becomes document ID, ensuring exactly-once processing.
- *   duplicate requests return HTTP 409 with processedAt from original request.
- *
- * Authentication:
- *   Firebase Auth token validation will be implemented in F110.5.
- *   Currently uses emulator bypass for development.
- */
-
 // ---------------------------------------------------------------------------------------------------------------------
-// HTTP responses
+// Errors
 // ---------------------------------------------------------------------------------------------------------------------
-
-const sendJson = (res, statusCode, payload) => res.status(statusCode).json(payload)
-
-/*
- * Response helpers - one for each status type
- * All responses follow consistent JSON format with status field
- */
-
-const sendValidationFailed = (res, error, field) => {
-    const payload = { status: 'validation-failed', error }
-    if (field) payload.field = field
-    return sendJson(res, 400, payload)
-}
-
-const sendMethodNotAllowed = (res, error) => sendJson(res, 405, { status: 'method-not-allowed', error })
-
-const sendCompleted = (res, processedAt) => {
-    const payload = { status: 'completed', processedAt }
-    return sendJson(res, 200, payload)
-}
-
-const sendFailed = (res, errorMessage, handlerName = null) => {
-    const response = { status: 'error', message: 'Action processing failed', error: errorMessage }
-    if (handlerName) response.handler = handlerName
-    return sendJson(res, 500, response)
-}
-
-const sendDuplicate = (res, result) =>
-    sendJson(res, 409, { status: 'duplicate', message: 'Already processed', processedAt: result.processedAt })
-
-const sendUnauthorized = (logger, res, error, extraData = {}) => {
-    logger.error(new Error(error), extraData)
-    sendJson(res, 401, { status: 'unauthorized', error })
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Validation
-// ---------------------------------------------------------------------------------------------------------------------
-
-const validateRequiredFields = body =>
-    body.action && body.idempotencyKey && body.correlationId
-        ? null
-        : 'Missing required fields: action, idempotencyKey, correlationId'
 
 // @sig decodeTimestamp :: (String | Timestamp) -> Date
-// Decode ISO string from HTTP JSON to Date, or Firestore Timestamp to Date
 const decodeTimestamp = timestamp => {
     if (timestamp && typeof timestamp.toDate === 'function') return timestamp.toDate()
     if (typeof timestamp === 'string') return new Date(timestamp)
     return timestamp
 }
 
-const validateAction = (plainAction, logger) => {
-    try {
-        Action.fromFirestore(plainAction, decodeTimestamp)
-        return null
-    } catch (error) {
-        // Can't use Action.toLog since construction failed - redact PII while preserving structure for debugging
-        logger.error(error, { action: Action.redactPii(plainAction) })
-        return error.message
-    }
+const throwError = (message, name, statusCode) => {
+    const error = new Error(message)
+    error.name = name
+    error.statusCode = statusCode
+    throw error
 }
 
-const validateRequest = (req, res, logger) => {
-    let error = req.method === 'POST' ? null : 'Only POST requests are allowed'
-    if (error) {
-        sendMethodNotAllowed(res, error)
-        return false
-    }
+const throwValidationError = message => throwError(message, 'ValidationError', 400)
+const throwAuthorizationError = message => throwError(message, 'AuthorizationError', 401)
+const throwMethodNotAllowedError = message => throwError(message, 'MethodNotAllowedError', 405)
+const throwDuplicateRequestError = message => throwError(message, 'DuplicateRequestError', 409)
+const throwMetadataSpoofingError = message => throwError(message, 'MetadataSpoofingError', 500)
 
-    // Require request body to be a plain object (not array, null, or primitive)
-    if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
-        sendValidationFailed(res, 'Request body must be a JSON object')
-        return false
-    }
-
-    error = validateRequiredFields(req.body)
-    if (error) {
-        sendValidationFailed(res, error)
-        return false
-    }
-
-    // Namespace (emulator only)
-    if (typeof process.env.FUNCTIONS_EMULATOR && !req.body.namespace) req.body.namespace = ''
-
-    // well-formed action
-    error = validateAction(req.body.action, logger)
-    if (error) {
-        sendValidationFailed(res, error, 'action')
-        return false
-    }
-
-    return true
-}
-
-const convertToActionRequest = (rawActionRequest, logger) => {
-    try {
-        return { actionRequest: ActionRequest.from(rawActionRequest) }
-    } catch (error) {
-        // Action is valid (passed validateAction), so use Action.toLog to scrub PII
-        const scrubbedRequest = { ...rawActionRequest, action: Action.toLog(rawActionRequest.action) }
-        logger.error(error, { actionRequest: scrubbedRequest })
-        return { error: error.message, field: error.field || 'action' }
-    }
-}
+// ---------------------------------------------------------------------------------------------------------------------
+// Validations
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
- * Verifies auth token and extracts userId
- * @sig verifyAuthToken :: (HttpRequest, Logger) -> { userId: UserId } | { error: String }
+ * Must be a `POST`; have all required fields, include a valid Action
  */
-const verifyAuthToken = async (logger, req) => {
+const validateRequestParameters = req => {
+    const { body, method } = req
+
+    if (method !== 'POST') throwMethodNotAllowedError('Only POST requests are allowed')
+    if (typeof body !== 'object' || body === null || Array.isArray(body))
+        throwValidationError('Request body must be a JSON object')
+
+    const { action, idempotencyKey, correlationId } = body
+    if (!action || !idempotencyKey || !correlationId)
+        throwValidationError('Missing required fields: action, idempotencyKey, correlationId')
+
+    try {
+        Action.fromFirestore(action, decodeTimestamp)
+    } catch (error) {
+        throwValidationError(error.message)
+    }
+}
+
+const buildActionRequest = (req, actorId) => {
+    try {
+        const action = Action.fromFirestore(req.body.action, decodeTimestamp)
+        const { organizationId, projectId, idempotencyKey, correlationId } = req.body
+        const { id: subjectId, type: subjectType } = Action.getSubject(action, organizationId)
+
+        const rawActionRequest = {
+            // from authenticated user
+            actorId,
+
+            // generated from request body
+            action,
+
+            // from request body
+            organizationId,
+            projectId,
+            idempotencyKey,
+            correlationId,
+
+            // from Action's getSubject
+            subjectId,
+            subjectType,
+
+            // generated on demand
+            id: idempotencyKey.replace(/^idm_/, 'acr_'),
+            createdAt: new Date(),
+            processedAt: new Date(),
+
+            // current version
+            schemaVersion: 1,
+        }
+
+        return ActionRequest.from(rawActionRequest)
+    } catch (error) {
+        throwValidationError(error.message)
+    }
+}
+
+const authenticate = async req => {
     const getAuthErrorMessage = error => {
         if (error.code === 'auth/id-token-expired') return 'Authorization token has expired'
         if (error.code === 'auth/argument-error') return 'Authorization token is malformed'
@@ -181,300 +116,262 @@ const verifyAuthToken = async (logger, req) => {
     }
 
     const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return { error: 'Missing or invalid Authorization header' }
-
+    if (!authHeader?.startsWith('Bearer ')) throwAuthorizationError('Missing or invalid Authorization header')
     const token = authHeader.slice('Bearer '.length).trim()
-    if (!token) return { error: 'Authorization token is required' }
+    if (!token) throwAuthorizationError('Authorization token is required')
 
     try {
         const { uid } = await admin.auth().verifyIdToken(token)
-        return FieldTypes.userId.test(uid)
-            ? { userId: uid }
-            : { error: 'Malformed userId; uid not properly set to a userId' }
+        if (!FieldTypes.userId.test(uid)) throwAuthorizationError(`Malformed uid ${uid} is not a valid userId`)
+        return uid
     } catch (error) {
-        const message = getAuthErrorMessage(error)
-        logger.error(new Error(message), { originalError: error.message, code: error.code })
-        return { error: message }
+        if (error.name === 'AuthorizationError') throw error // ie. a malformed uid error we just generated
+        throwAuthorizationError(getAuthErrorMessage(error))
     }
 }
 
-const isUserAction = action =>
-    Action.UserCreated.is(action) ||
-    Action.UserUpdated.is(action) ||
-    Action.UserForgotten.is(action) ||
-    Action.AuthenticationCompleted.is(action)
-const isOrganizationAction = action =>
-    Action.OrganizationCreated.is(action) ||
-    Action.OrganizationUpdated.is(action) ||
-    Action.OrganizationDeleted.is(action) ||
-    Action.OrganizationSuspended.is(action) ||
-    Action.MemberAdded.is(action) ||
-    Action.MemberRemoved.is(action) ||
-    Action.RoleChanged.is(action)
-/**
- * Validates that user has access to requested organization and project
- * @sig validateTenantAccess :: (ActionRequest, Object) -> String | undefined
- */
-const validateTenantAccess = (actionRequest, allowedOrganizations) => {
-    const { organizationId, projectId, action, actorId } = actionRequest
-
-    // Special case: there are NO allowedOrganizations. Most actions should fail, but some have to succeed,
-    // or we get into a chicken-and-egg situation
-    const noAllowedOrganizations = Object.keys(allowedOrganizations).length === 0
-    if (noAllowedOrganizations) {
-        if (isUserAction(action)) return undefined
-        if (Action.AuthenticationCompleted.is(action)) return undefined
-        if (Action.OrganizationCreated.is(action)) return undefined // Users can create their first org
-        return `User ${actorId} has no access to ${organizationId} for ${action.toString()}`
-    }
-
-    // If request doesn't specify organizationId, skip validation
-    // (some actions like UserUpdated don't require org context)
-    if (!organizationId) {
-        if (Action.UserUpdated.is(action)) return undefined
-        if (Action.UserForgotten.is(action)) return undefined
-        return `Access denied: no organizationId`
-    }
-
-    // Allow OrganizationCreated - user is creating a new org, so they won't have access yet
-    if (Action.OrganizationCreated.is(action)) return undefined
-
-    // Validate organization access
-    const organizationAccess = allowedOrganizations[organizationId]
-    if (!organizationAccess) return `Access denied to organization ${organizationId}`
-
-    // Validate projectId is present for project-level actions
-    const requiresProjectId = !isOrganizationAction(action) && !isUserAction(action)
-    if (requiresProjectId && !projectId) return `Access denied: projectId required for ${action['@@tagName']}`
-
-    // Note: We don't validate specific projectId access here because user.organizations
-    // doesn't contain projects list. If user is member of org, they can access any project
-    // in that org. Project-specific permissions would require reading org document.
-
-    return undefined
+const getDocumentId = (actionRequest, idPath) => {
+    const value = path(idPath, actionRequest)
+    if (value === undefined) throw new Error(`Invalid path: ${idPath}`)
+    return value
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Main
+// Authorization strategies
 // ---------------------------------------------------------------------------------------------------------------------
 
-// prettier-ignore
-const createActionRequestLogger = (logger, actionRequest) => {
-    const interesting = () => ActionRequest.toLog(actionRequest)
+const authStrategies = {
+    requireSelfOnly: (action, { actor }) => {
+        if (action.userId !== actor.id) throwAuthorizationError('Can only modify own user')
+    },
 
-    return {
-        flowStart: (message, extraData = {}, pr = '┌─ ') => logger.flowStart(pr + message, { ...interesting(), ...extraData }),
-        flowStep:  (message, extraData = {}, pr = '├─ ') => logger.flowStep( pr + message, { ...interesting(), ...extraData }),
-        flowStop:  (message, extraData = {}, pr = '└─ ') => logger.flowStop( pr + message, { ...interesting(), ...extraData }),
-        error:     (error,   extraData = {}            ) => logger.error(    error,        { ...interesting(), ...extraData }),
-    }
+    requireActorIsOrganizationMember: (action, { actor, organizationId }) => {
+        const membership = actor.organizations[organizationId]
+        if (!membership) throwAuthorizationError(`Access denied to organization ${organizationId}`)
+        if (!Action.mayI(action, membership.role, actor.id))
+            throwAuthorizationError(`${actor.id} with role ${membership.role} may not perform ${action.toString()}`)
+    },
+
+    requireOrganizationLimit: (action, { actor }) => {
+        const organizationCount = actor.organizations.length
+        if (organizationCount >= 2) throwAuthorizationError('Cannot create more than 2 organizations')
+    },
+
+    requireSystem: (action, ctx) => {
+        const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true'
+        if (!isEmulator) throwAuthorizationError('UserCreated only allowed in emulator')
+    },
+
+    // No restrictions
+    allowAll: (action, ctx) => {},
 }
 
-/*
- * Handler dispatch - maps Action types to handler functions
- */
+// ---------------------------------------------------------------------------------------------------------------------
+// Metadata validation
+// ---------------------------------------------------------------------------------------------------------------------
+
+const readExistingDocuments = async (fsContext, metadata, actionRequest) => {
+    const existingDocs = {}
+
+    for (const writeTo of metadata.writesTo) {
+        const { collection, path } = writeTo
+        const docId = getDocumentId(actionRequest, path) // pull the existing doc's id from the current actionRequest
+        existingDocs[docId] = await fsContext[collection].readOrNull(docId)
+    }
+
+    return existingDocs
+}
+
+const validateMetadata = (actionRequest, metadata, existingDocs) => {
+    // prettier-ignore
+    const validateCreate = doc => {
+        if (doc.createdBy !== actorId) throwMetadataSpoofingError(`Invalid createdBy: expected ${actorId}, got ${doc.createdBy}`)
+        if (doc.updatedBy !== actorId) throwMetadataSpoofingError(`Invalid updatedBy: expected ${actorId}, got ${doc.updatedBy}`)
+
+        const date = new Date()
+        const createdAge = date - doc.createdAt
+        const updatedAge = date - doc.updatedAt
+        const isLegalCreatedAt = createdAge > 0 && createdAge < MAXIMUM_ALLOWED_AGE
+        const isLegalUpdatedAt = updatedAge > 0 && updatedAge < MAXIMUM_ALLOWED_AGE
+
+        if (!isLegalCreatedAt) throwMetadataSpoofingError(`Invalid createdAt: timestamp must be recent (server-generated)`)
+        if (!isLegalUpdatedAt) throwMetadataSpoofingError(`Invalid updatedAt: timestamp must be recent (server-generated)`)}
+
+    // prettier-ignore
+    const validateUpdate = (doc, alreadyExists) => {
+        const updatedAge = new Date() - doc.updatedAt
+       
+        const createdByMatches = doc.createdBy === alreadyExists.createdBy
+        const createdAtMatches = doc.createdAt.getTime() === alreadyExists.createdAt.getTime()
+        const isLegalUpdatedBy = doc.updatedBy === actorId
+        const isLegalUpdatedAt = updatedAge > 0 && updatedAge < MAXIMUM_ALLOWED_AGE
+        
+        if (!createdByMatches) throwMetadataSpoofingError(`Cannot modify createdBy (existing: ${alreadyExists.createdBy}, provided: ${doc.createdBy})`)
+        if (!createdAtMatches) throwMetadataSpoofingError(`Cannot modify createdAt`)
+        if (!isLegalUpdatedBy) throwMetadataSpoofingError(`Invalid updatedBy: expected ${actorId}, got ${doc.updatedBy}`)
+        if (!isLegalUpdatedAt) throwMetadataSpoofingError(`Invalid updatedAt: timestamp must be recent (server-generated)`)
+    }
+
+    const validateCreateOrUpdate = writeTo => {
+        // get the previous doc using the id found at writeTo.path in the actionRequest
+        const docId = path(writeTo.path, actionRequest)
+        const previousValue = existingDocs[docId]
+
+        // get the current doc from directly in the actionRequest
+        // (Assume the current document is the parent of the idPath, e.g., 'action.blockface.id' -> 'action.blockface')
+        const currentDocPath = writeTo.path.replace(/\.id$/, '')
+        const currentValue = path(currentDocPath, actionRequest)
+
+        previousValue ? validateUpdate(currentValue, previousValue) : validateCreate(currentValue)
+    }
+
+    const MAXIMUM_ALLOWED_AGE = 60 * 1000 // allow time for debouncing
+    const { actorId, action } = actionRequest
+
+    metadata.writesTo.forEach(validateCreateOrUpdate)
+
+    // Run custom validateInput if provided (will throw ValidationError if fails)
+    if (metadata.validateInput) metadata.validateInput(action, actionRequest, existingDocs)
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Handler dispatch
+// ---------------------------------------------------------------------------------------------------------------------
+
 // prettier-ignore
 const handlerForActionRequest = actionRequest =>
     actionRequest.action.match({
-        OrganizationCreated    : () => handleOrganizationCreated,
-        OrganizationUpdated    : () => handleOrganizationUpdated,
-        OrganizationDeleted    : () => handleOrganizationDeleted,
-        OrganizationSuspended  : () => handleOrganizationSuspended,
-        UserCreated            : () => handleUserCreated,
-        UserUpdated            : () => handleUserUpdated,
-        UserForgotten          : () => handleUserForgotten,
+        AuthenticationCompleted: () => handleAuthenticationCompleted,
         MemberAdded            : () => handleMemberAdded,
         MemberRemoved          : () => handleMemberRemoved,
+        OrganizationCreated    : () => handleOrganizationCreated,
+        OrganizationDeleted    : () => handleOrganizationDeleted,
+        OrganizationUpdated    : () => handleOrganizationUpdated,
         RoleChanged            : () => handleRoleChanged,
-        AuthenticationCompleted: () => handleAuthenticationCompleted,
-        UserLoaded             : () => { throw new Error('UserLoaded should never reach server (local-only action)') },
-        OrganizationSynced     : () => { throw new Error('OrganizationSynced should never reach server (local-only action)') },
-        BlockfacesSynced       : () => { throw new Error('BlockfacesSynced should never reach server (local-only action)') },
+        UserCreated            : () => handleUserCreated,
+        UserForgotten          : () => handleUserForgotten,
+        UserUpdated            : () => handleUserUpdated,
+        BlockfaceSaved         : () => handleBlockfaceSaved,
+
         BlockfaceCreated       : () => { throw new Error('BlockfaceCreated should never reach server (local-only action)') },
         BlockfaceSelected      : () => { throw new Error('BlockfaceSelected should never reach server (local-only action)') },
-        BlockfaceSaved         : () => handleBlockfaceSaved,
-        SegmentUseUpdated      : () => { throw new Error('SegmentUseUpdated should never reach server (local-only action)') },
-        SegmentLengthUpdated   : () => { throw new Error('SegmentLengthUpdated should never reach server (local-only action)') },
+        BlockfacesSynced       : () => { throw new Error('BlockfacesSynced should never reach server (local-only action)') },
+        OrganizationSynced     : () => { throw new Error('OrganizationSynced should never reach server (local-only action)') },
         SegmentAdded           : () => { throw new Error('SegmentAdded should never reach server (local-only action)') },
         SegmentAddedLeft       : () => { throw new Error('SegmentAddedLeft should never reach server (local-only action)') },
+        SegmentLengthUpdated   : () => { throw new Error('SegmentLengthUpdated should never reach server (local-only action)') },
+        SegmentUseUpdated      : () => { throw new Error('SegmentUseUpdated should never reach server (local-only action)') },
         SegmentsReplaced       : () => { throw new Error('SegmentsReplaced should never reach server (local-only action)') },
+        UserLoaded             : () => { throw new Error('UserLoaded should never reach server (local-only action)') },
     })
 
-/*
- * @sig enrichActionRequest :: Request -> {
- *      namespace: String,
- *      action: Action,
- *      organizationId: String?,
- *      projectId: String?,
- *
- *      // SOC2 fields
- *      subjectId: String,
- *      subjectType: String,
- *      idempotencyKey: String,
- *      correlationId: String
- * }
- */
-const enrichActionRequest = req => {
-    const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace : ''
-    const action = Action.fromFirestore(req.body.action, decodeTimestamp)
-    const { organizationId, projectId, idempotencyKey, correlationId } = req.body
-    const { id: subjectId, type: subjectType } = Action.getSubject(action, organizationId)
+// ---------------------------------------------------------------------------------------------------------------------
+// Transaction execution
+// ---------------------------------------------------------------------------------------------------------------------
 
-    return { namespace, action, organizationId, projectId, subjectId, subjectType, idempotencyKey, correlationId }
-}
+const handleInTransaction = async (actionRequest, metadata, txContext) => {
+    // Read existing documents and validate metadata (inside transaction for atomicity)
+    const existingDocs = await readExistingDocuments(txContext, metadata, actionRequest)
+    validateMetadata(actionRequest, metadata, existingDocs)
 
-/*
- * Send the ActionRequest to a handler
- * @sig handleInTransaction :: (ActionRequest, FirestoreContext, Logger) -> Promise<Result>
- *  Result = {
- *      isDuplicate : Boolean,  // IFF idempotentId was already used
- *      processedAt : String?,  // IFF isDuplicate
- *      errorMessage: String?,  // IFF error
- *      handlerName : String?   // IFF error
- *  }
- *
- */
-const handleInTransaction = async (actionRequest, txContext, logger) => {
-    const actionRequestLogger = createActionRequestLogger(logger, actionRequest)
-
-    // isDuplicate check using readOrNull
+    // Check idempotency
     const existing = await txContext.completedActions.readOrNull(actionRequest.id)
-    if (existing) {
-        actionRequestLogger.flowStop('Processing skipped - duplicate idempotency key')
-        return { isDuplicate: true, processedAt: existing.processedAt.toISOString() }
-    }
+    if (existing) throwDuplicateRequestError(`Already processed at: ${existing.processedAt.toISOString()}`)
 
-    // Dispatch to handler
+    // Execute handler
     const handler = handlerForActionRequest(actionRequest)
-    actionRequestLogger.flowStep(`Starting ${handler.name}`)
+    await handler(txContext, actionRequest)
 
-    try {
-        await handler(actionRequestLogger, txContext, actionRequest)
-        actionRequestLogger.flowStep(`Finished ${handler.name}`)
-    } catch (error) {
-        // Handler failed - transaction will roll back automatically
-        actionRequestLogger.error(error, { handlerName: handler.name })
-        actionRequestLogger.flowStop(`Handler ${handler.name} failed`)
-
-        // Return error info for HTTP response
-        return { errorMessage: error.message, handlerName: handler.name }
-    }
-
-    // Single write with server timestamps
+    // Write completedAction
     await txContext.completedActions.create(actionRequest)
-
-    // Success: return nothing (processedAt read after commit)
-    return { isDuplicate: false }
 }
 
-const checkRole = async (fsContext, actionRequest) => {
-    const { organizationId, action, actorId } = actionRequest
+// ---------------------------------------------------------------------------------------------------------------------
+// Main handler
+// ---------------------------------------------------------------------------------------------------------------------
 
-    // an actor can update or forget *only* themselves
-    if (Action.UserUpdated.is(action))
-        return actorId === action.userId ? undefined : `User ${actorId} trying to update user ${action.userId}`
-    if (Action.UserForgotten.is(action))
-        return actorId === action.userId ? undefined : `User ${actorId} trying to forget user ${action.userId}`
+const checkTenantAccess = (actor, organizationId, projectId, actionMetadata) => {
+    const isMissingOrganization = actionMetadata.requiresOrganization && !organizationId
+    const isMissingProject = actionMetadata.requiresProject && !projectId
+    const isntMemberOfOrganization = actionMetadata.requiresOrganization && !actor.organizations?.[organizationId]
 
-    // UserCreated: Allow system actor (PasscodeVerified handler) or emulator mode (tests)
-    // Real-life flow: Client → PasscodeVerified → handlePasscodeVerified → UserCreated
-    // PasscodeVerified sets actorId='system' when creating new users
-    if (Action.UserCreated.is(action)) {
-        const isSystemActor = actorId === 'system'
-        const isEmulator = process.env.FUNCTIONS_EMULATOR
-
-        if (isSystemActor || isEmulator) return
-        return `UserCreated disallowed for ${actorId}`
-    }
-
-    // OrganizationCreated: Check one-org-per-user limit
-    if (Action.OrganizationCreated.is(action)) {
-        const user = await fsContext.users.read(actorId)
-        const existingOrgs = Object.keys(user.organizations || {})
-
-        // two allowed
-        return existingOrgs.length < 2 ? undefined : `User ${actorId} can't create another organization`
-    }
-
-    // All other actions require org membership
-    if (!organizationId) return `Action ${action['@@tagName']} requires an organizationId`
-
-    const organization = await fsContext.organizations.read(organizationId)
-    const actorAsMember = organization.members[actorId]
-    if (!actorAsMember) return `The actor ${actorId} is not a member of organization ${organizationId}`
-    if (actorAsMember.removedAt) return `The actor ${actorId} was removed from organization ${organizationId}`
-
-    if (!Action.mayI(action, actorAsMember.role, actorId))
-        return `${actorId} with role ${actorAsMember.role} may not perform ${action['@@tagName']}`
+    if (isMissingOrganization) throwAuthorizationError('organizationId required for this action')
+    if (isntMemberOfOrganization) throwAuthorizationError(`Access denied to organization ${organizationId}`)
+    if (isMissingProject) throwAuthorizationError('projectId required for this action')
 }
 
+const verifyTransactionCommitted = async (fsContext, actionRequestId) => {
+    const completed = await fsContext.completedActions.readOrNull(actionRequestId)
+    if (!completed) throw new Error('Transaction completed but action request not found')
+}
+
+// 1. Validate HTTP request structure
+// 2. Authenticate and read actor
+// 3. Build ActionRequest
+// 4. Check tenant access
+// 5. Build validation context and authorize
+// 6. Execute in transaction:
+//    a. Read existing documents (for metadata validation)
+//    b. Validate metadata (REJECT if spoofed)
+//    c. Check idempotency
+//    d. Execute handler
+//    e. Write completedAction
+// 7. Verify transaction committed
+// 8. Log success (or error if any step fails)
 const submitActionRequestHandler = async (req, res) => {
+    const namespace = process.env.FUNCTIONS_EMULATOR ? req.body.namespace || '' : ''
     const logger = createLogger(process.env.FUNCTIONS_EMULATOR ? 'dev' : 'production')
-    const startTime = Date.now()
 
     try {
-        // Validate all inputs first
-        if (!validateRequest(req, res, logger)) return
+        validateRequestParameters(req)
+        const actorId = await authenticate(req)
 
-        // Authentication first – reject missing/invalid tokens before other validation
-        const { userId: actorId, error: authError } = await verifyAuthToken(logger, req)
-        if (authError) return sendUnauthorized(logger, res, authError)
+        // Parse action to determine if we need to read the actor
+        const action = Action.fromFirestore(req.body.action, decodeTimestamp)
+        const actionMetadata = Action.metadata(action)
 
-        // create a raw object by enriching our parameters
-        const params = enrichActionRequest(req)
-        const { idempotencyKey, namespace, organizationId, projectId } = params
-        const createdAt = new Date()
-        const id = idempotencyKey.replace(/^idm_/, 'acr_')
-        const rawActionRequest = { ...params, id, actorId, schemaVersion: 1, createdAt, processedAt: createdAt }
+        // Only read actor if the action requires it (e.g., UserCreated doesn't have a user yet)
+        const actionRequest = buildActionRequest(req, actorId)
+        const { organizationId, projectId } = actionRequest
+        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
+        const actor = actionMetadata.requiresUser && (await fsContext.users.read(actorId))
+        checkTenantAccess(actor, organizationId, projectId, actionMetadata)
 
-        // create an ActionRequest (or die) from the raw data
-        const wrapper = convertToActionRequest(rawActionRequest, logger)
-        if (wrapper.error) return sendValidationFailed(res, wrapper.error, wrapper.field)
-        const actionRequest = wrapper.actionRequest
+        authStrategies[actionMetadata.authStrategy](actionRequest.action, { actor, organizationId, projectId })
 
-        // Read user document to get organization memberships for tenant validation
-        // Skip for UserCreated - user document doesn't exist yet
-        let allowedOrganizations = {}
-        if (!Action.UserCreated.is(actionRequest.action)) {
-            const transactionlessContext = createFirestoreContext(namespace, null, null, null)
-            const user = await transactionlessContext.users.read(actorId)
-            allowedOrganizations = user.organizations || {}
-        }
-
-        // Tenant access validation – ensure user has access to requested organization/project
-        const tenantError = validateTenantAccess(actionRequest, allowedOrganizations)
-        if (tenantError) return sendUnauthorized(logger, res, tenantError, { action: actionRequest.action })
-
-        const roleError = await checkRole(createFirestoreContext(namespace, organizationId, projectId), actionRequest)
-        if (roleError) return sendUnauthorized(logger, res, roleError)
-
-        logger.flowStart('┌─ Processing action request', { ...ActionRequest.toLog(actionRequest), namespace }, '')
-
-        // call the handler in a transaction
-        const result = await admin.firestore().runTransaction(async tx => {
+        await admin.firestore().runTransaction(async tx => {
             const txContext = createFirestoreContext(namespace, organizationId, projectId, tx)
-            return await handleInTransaction(actionRequest, txContext, logger)
+            await handleInTransaction(actionRequest, actionMetadata, txContext)
         })
 
-        if (result.isDuplicate) return sendDuplicate(res, result)
-        if (result.errorMessage) return sendFailed(res, result.errorMessage, result.handlerName)
+        await verifyTransactionCommitted(fsContext, actionRequest.id)
 
-        // write our SOC2 record
-        const fsContext = createFirestoreContext(namespace, organizationId, projectId)
-        const completed = await fsContext.completedActions.readOrNull(actionRequest.id)
+        // Log successful completion with action details and queryable metadata
+        const { id, idempotencyKey, correlationId, subjectId, subjectType } = actionRequest
+        logger.info(actionRequest.action['@@tagName'], {
+            actionRequest: {
+                id,
+                actorId,
+                organizationId,
+                projectId,
+                idempotencyKey,
+                correlationId,
+                subjectId,
+                subjectType,
+                action: Action.toLog(action),
+            },
+        })
 
-        // If null, transaction failed/rolled back - return error
-        if (!completed) {
-            logger.error(new Error('Transaction completed but action request not found'))
-            return sendFailed(res, 'Transaction failed - action request not persisted')
-        }
-
-        logger.flowStop('└─ Processing completed', { durationMs: Date.now() - startTime }, '')
-        return sendCompleted(res, completed.processedAt.toISOString())
+        return res.status(200).send({ status: 'completed' })
     } catch (error) {
-        const durationMs = Date.now() - startTime
-        logger.error(error, { durationMs })
-        return sendFailed(res, error.message || 'Internal server error')
+        // Always log request body with redacted action for debugging
+        logger.error(error, {
+            errorType: error.name,
+            errorMessage: error.message,
+            requestBody: { ...req.body, action: req.body?.action ? Action.redactPii(req.body.action) : undefined },
+        })
+
+        return res.status(error.statusCode || 500).send(error.message || 'Internal server error')
     }
 }
 

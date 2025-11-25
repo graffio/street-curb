@@ -3,9 +3,9 @@ import { Member } from '../../../src/types/index.js'
 /**
  * Handle RoleChanged action
  * Updates member role in organization
- * @sig handleRoleChanged :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
+ * @sig handleRoleChanged :: (FirestoreContext, ActionRequest) -> Promise<void>
  */
-const handleRoleChanged = async (logger, fsContext, actionRequest) => {
+const handleRoleChanged = async (fsContext, actionRequest) => {
     const { action, organizationId } = actionRequest
     const { userId, role } = action
 
@@ -32,8 +32,6 @@ const handleRoleChanged = async (logger, fsContext, actionRequest) => {
 
     const orgMember = { organizationId, role }
     await fsContext.users.update(userId, { [`organizations.${organizationId}`]: orgMember })
-
-    logger.flowStep('Role changed')
 }
 
 export default handleRoleChanged

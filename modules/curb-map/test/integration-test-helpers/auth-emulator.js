@@ -108,4 +108,53 @@ const asSignedInUser = async (labelOrOptions, effect) => {
     return await effect({ namespace, token, actorUserId: userId })
 }
 
-export { uniqueEmail, asSignedInUser }
+/**
+ * Create authenticated user with specific organization role
+ * Useful for RBAC testing where we need users with different roles
+ * @sig asSignedInUserWithRole :: (String, String, Function) -> Promise<void>
+ */
+const asSignedInUserWithRole = async (label, role, effect) =>
+    asSignedInUser(label, async ctx => {
+        const { FieldTypes } = await import('../../src/types/index.js')
+        const { createOrganization, createUser, addMember, changeRole } = await import('./test-helpers.js')
+
+        // Create organization as admin
+        const { organizationId, projectId } = await createOrganization({
+            namespace: ctx.namespace,
+            token: ctx.token,
+            name: `${label} Org`,
+        })
+
+        // If not admin, add a second admin first so we can safely change the role
+        if (role !== 'admin') {
+            // Create and add a second admin
+            const secondAdminId = FieldTypes.newUserId()
+            await createUser({
+                namespace: ctx.namespace,
+                token: ctx.token,
+                userId: secondAdminId,
+                displayName: 'Second Admin',
+            })
+            await addMember({
+                namespace: ctx.namespace,
+                token: ctx.token,
+                userId: secondAdminId,
+                organizationId,
+                role: 'admin',
+                displayName: 'Second Admin',
+            })
+
+            // Now safely change the original user to requested role
+            await changeRole({
+                namespace: ctx.namespace,
+                token: ctx.token,
+                userId: ctx.actorUserId,
+                organizationId,
+                role,
+            })
+        }
+
+        return await effect({ ...ctx, organizationId, projectId, role })
+    })
+
+export { uniqueEmail, asSignedInUser, asSignedInUserWithRole }

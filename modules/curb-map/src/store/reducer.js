@@ -66,7 +66,6 @@ const rootReducer = (state = initialState, { type, payload: action }) => {
         // Organization Actions
         OrganizationCreated    : () => state,
         OrganizationDeleted    : () => state,
-        OrganizationSuspended  : () => state,
         OrganizationUpdated    : () => state,
         
         // Organization Member Actions

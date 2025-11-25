@@ -1,0 +1,5 @@
+- Enumerate target use-case profiles (parking occupancy, citations, micromobility, etc.).
+- For each profile, mark spec fields that become required and document rationale.
+- Capture only intra-payload relationships we can assert locally (e.g., start/end ordering); log cross-API dependencies as explicitly out-of-scope for this CLI.
+- Decide profile naming/identifier scheme exposed via CLI flag.
+- Define how profiles evolve with spec versions (compat matrix?)

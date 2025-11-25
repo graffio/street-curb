@@ -3,9 +3,9 @@ import { Member } from '../../../src/types/index.js'
 /**
  * Handle MemberAdded action
  * Adds or reactivates member in organization
- * @sig handleMemberAdded :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
+ * @sig handleMemberAdded :: (FirestoreContext, ActionRequest) -> Promise<void>
  */
-const handleMemberAdded = async (logger, fsContext, actionRequest) => {
+const handleMemberAdded = async (fsContext, actionRequest) => {
     const { action, actorId: addedBy, organizationId } = actionRequest
     const { userId, role, displayName } = action
 
@@ -26,8 +26,6 @@ const handleMemberAdded = async (logger, fsContext, actionRequest) => {
 
     const orgMember = { organizationId, role }
     await fsContext.users.update(userId, { [`organizations.${organizationId}`]: orgMember })
-
-    logger.flowStep('Member added')
 }
 
 export default handleMemberAdded
