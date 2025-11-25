@@ -41,8 +41,7 @@ test('Given OrganizationCreated action', t => {
             const result = await submitActionRequest({ action, namespace, token, organizationId, projectId })
 
             t.equal(result.status, 401, 'Then HTTP status is 401')
-            t.equal(result.data.status, 'unauthorized', 'Then status is unauthorized')
-            t.match(result.data.error, /can't create another organization/, 'Then error mentions org limit')
+            t.match(result.data, /Cannot create more than 2 organizations/, 'Then error mentions org limit')
         })
         t.end()
     })

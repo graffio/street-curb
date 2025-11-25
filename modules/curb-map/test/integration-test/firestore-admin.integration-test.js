@@ -1,9 +1,9 @@
+import { LookupTable } from '@graffio/functional'
 import admin from 'firebase-admin'
 import { deleteApp, getApps } from 'firebase/app'
 import { test } from 'tap'
-import { LookupTable } from '@graffio/functional'
 import { FirestoreAdminFacade } from '../../src/firestore-facade/firestore-admin-facade.js'
-import { FieldTypes, Organization, Member } from '../../src/types/index.js'
+import { FieldTypes, Member, Organization } from '../../src/types/index.js'
 import { buildNamespace } from '../integration-test-helpers/build-namespace.js'
 
 // Read project ID from environment (must be set externally)
@@ -12,11 +12,10 @@ process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099'
 process.env.FIREBASE_TEST_MODE ||= '1'
 
 // @sig buildOrganization :: Object -> Organization
-const buildOrganization = ({ id = FieldTypes.newOrganizationId(), status = 'active', name = 'Test Organization' }) =>
+const buildOrganization = ({ id = FieldTypes.newOrganizationId(), name = 'Test Organization' }) =>
     Organization.from({
         id,
         name,
-        status,
         defaultProjectId: FieldTypes.newProjectId(),
         members: LookupTable([], Member, 'userId'),
         createdAt: new Date('2025-01-01T00:00:00Z'),
@@ -123,22 +122,6 @@ test('Given the Firestore facade update method', async t => {
             )
         }
     })
-
-    await t.test('When write is called with invalid status value', async tt => {
-        const namespace = buildNamespace()
-
-        const fsOrganizations = FirestoreAdminFacade(Organization, `${namespace}/`)
-        const item = buildOrganization({ status: 'active' })
-
-        // Try to create an Organization with invalid status
-        try {
-            const invalidItem = { ...item, status: 'invalid' }
-            await fsOrganizations.write(invalidItem)
-            tt.fail('Then write should throw a validation error')
-        } catch (error) {
-            tt.match(error.message, /expected status to match/, 'Then error indicates type validation failed')
-        }
-    })
 })
 
 test('Given the Firestore facade listenToDocument method', async t => {
@@ -175,7 +158,7 @@ test('Given the Firestore facade listenToDocument method', async t => {
         const namespace = buildNamespace()
 
         const fsOrganizations = FirestoreAdminFacade(Organization, `${namespace}/`)
-        const item = buildOrganization({ name: 'Original Name', status: 'active' })
+        const item = buildOrganization({ name: 'Original Name' })
         await fsOrganizations.write(item)
 
         const updates = []
@@ -208,8 +191,8 @@ test('Given the Firestore facade listenToCollection method', async t => {
         const namespace = buildNamespace()
 
         const fsOrganizations = FirestoreAdminFacade(Organization, `${namespace}/`)
-        const item1 = buildOrganization({ name: 'Org 1', status: 'active' })
-        const item2 = buildOrganization({ name: 'Org 2', status: 'active' })
+        const item1 = buildOrganization({ name: 'Org 1' })
+        const item2 = buildOrganization({ name: 'Org 2' })
 
         const updates = []
 
@@ -232,7 +215,7 @@ test('Given the Firestore facade listenToCollection method', async t => {
                 }
             }
 
-            const unsubscribe = fsOrganizations.listenToCollection([['status', '==', 'active']], listener)
+            const unsubscribe = fsOrganizations.listenToCollection([], listener)
 
             // Write documents after listener is set up
             setTimeout(() => fsOrganizations.write(item1), 100)
@@ -269,7 +252,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
         // Test with transaction
         const db = fsOrganizations.db || admin.firestore()
         await db.runTransaction(async tx => {
-            const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
+            const txFacade = FirestoreAdminFacade(Organization, namespace, tx, undefined, db)
 
             // Read first (to check current state)
             const txReadResult = await txFacade.read(org.id)
@@ -297,7 +280,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
         // Test with transaction
         const db = fsOrganizations.db || admin.firestore()
         await db.runTransaction(async tx => {
-            const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
+            const txFacade = FirestoreAdminFacade(Organization, namespace, tx, undefined, db)
             const resultWithTx = await txFacade.readOrNull(nonExistentId)
             tt.equal(resultWithTx, null, 'Then readOrNull returns null for non-existent document with transaction')
         })
@@ -312,7 +295,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
         // Test successful transaction
         const db = fsOrganizations.db || admin.firestore()
         await db.runTransaction(async tx => {
-            const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
+            const txFacade = FirestoreAdminFacade(Organization, namespace, tx, undefined, db)
 
             // Check document doesn't exist (READ FIRST)
             const existing = await txFacade.readOrNull(atomicTestId)
@@ -337,7 +320,7 @@ test('Given the FirestoreAdminFacade with transaction support', async t => {
         try {
             const db = fsOrganizations.db || admin.firestore()
             await db.runTransaction(async tx => {
-                const txFacade = FirestoreAdminFacade(Organization, namespace, tx, db)
+                const txFacade = FirestoreAdminFacade(Organization, namespace, tx, undefined, db)
 
                 // Create document
                 await txFacade.create(buildOrganization({ id: rollbackTestId, name: 'Should Rollback' }))

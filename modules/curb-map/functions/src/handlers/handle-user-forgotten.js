@@ -3,17 +3,14 @@ import { Member } from '../../../src/types/index.js'
 /**
  * Handle UserForgotten action (GDPR)
  * Removes user from all organizations and deletes user document
- * @sig handleUserForgotten :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
+ * @sig handleUserForgotten :: (FirestoreContext, ActionRequest) -> Promise<void>
  */
-const handleUserForgotten = async (logger, fsContext, actionRequest) => {
+const handleUserForgotten = async (fsContext, actionRequest) => {
     const { action, actorId } = actionRequest
     const { userId } = action
 
     const user = await fsContext.users.readOrNull(userId)
-    if (!user) {
-        logger.flowStep('User not found, nothing to forget')
-        return
-    }
+    if (!user) return
 
     const orgIds = user.organizations.map(orgMember => orgMember.organizationId)
 
@@ -33,8 +30,6 @@ const handleUserForgotten = async (logger, fsContext, actionRequest) => {
         const memberData = Member.toFirestore({ ...member, removedAt, removedBy: actorId }, fsContext.encodeTimestamp)
         await fsContext.organizations.update(orgId, { [`members.${userId}`]: memberData })
     }
-
-    logger.flowStep('User forgotten (GDPR)')
 }
 
 export default handleUserForgotten

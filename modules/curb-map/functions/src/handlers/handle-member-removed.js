@@ -3,9 +3,9 @@ import { Member } from '../../../src/types/index.js'
 /**
  * Handle MemberRemoved action
  * Soft-deletes member from organization
- * @sig handleMemberRemoved :: (Logger, FirestoreContext, ActionRequest) -> Promise<void>
+ * @sig handleMemberRemoved :: (FirestoreContext, ActionRequest) -> Promise<void>
  */
-const handleMemberRemoved = async (logger, fsContext, actionRequest) => {
+const handleMemberRemoved = async (fsContext, actionRequest) => {
     const { action, actorId, organizationId } = actionRequest
     const { userId } = action
 
@@ -30,8 +30,6 @@ const handleMemberRemoved = async (logger, fsContext, actionRequest) => {
     // Atomic update: write whole member object and delete user.organizations[orgId]
     await fsContext.organizations.update(organizationId, { [`members.${userId}`]: memberData })
     await fsContext.users.update(userId, { [`organizations.${organizationId}`]: fsContext.deleteField() })
-
-    logger.flowStep('Member removed')
 }
 
 export default handleMemberRemoved

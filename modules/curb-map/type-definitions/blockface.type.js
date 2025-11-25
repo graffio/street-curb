@@ -163,6 +163,8 @@ Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
     return Blockface.from({ ...blockface, segments: newSegments })
 }
 
+Blockface.updateMetadata = (blockface, updatedBy) => Blockface.from({ ...blockface, updatedBy, updatedAt: new Date() })
+
 /**
  * Replace entire segments array with new segments
  * @sig replaceSegments :: (Blockface, ReplaceSegmentsAction) -> Blockface

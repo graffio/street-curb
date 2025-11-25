@@ -4,10 +4,8 @@
  *      name     : "String",
  *      projectId: FieldTypes.projectId
  *  OrganizationUpdated
- *      name  : "String?",
- *      status: "/^(active|suspended)$/?"
+ *      name: "String?"
  *  OrganizationDeleted
- *  OrganizationSuspended
  *  MemberAdded
  *      userId     : FieldTypes.userId,
  *      role       : FieldTypes.role,
@@ -80,7 +78,6 @@ const Action = {
             constructor === Action.OrganizationCreated ||
             constructor === Action.OrganizationUpdated ||
             constructor === Action.OrganizationDeleted ||
-            constructor === Action.OrganizationSuspended ||
             constructor === Action.MemberAdded ||
             constructor === Action.RoleChanged ||
             constructor === Action.MemberRemoved ||
@@ -110,7 +107,6 @@ Object.defineProperty(Action, '@@tagNames', {
         'OrganizationCreated',
         'OrganizationUpdated',
         'OrganizationDeleted',
-        'OrganizationSuspended',
         'MemberAdded',
         'RoleChanged',
         'MemberRemoved',
@@ -209,15 +205,13 @@ OrganizationCreatedConstructor.fromFirestore = OrganizationCreatedConstructor._f
 // Variant Action.OrganizationUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
-const OrganizationUpdatedConstructor = function OrganizationUpdated(name, status) {
-    const constructorName = 'Action.OrganizationUpdated(name, status)'
+const OrganizationUpdatedConstructor = function OrganizationUpdated(name) {
+    const constructorName = 'Action.OrganizationUpdated(name)'
 
     R.validateString(constructorName, 'name', true, name)
-    R.validateRegex(constructorName, /^(active|suspended)$/, 'status', true, status)
 
     const result = Object.create(OrganizationUpdatedPrototype)
     if (name != null) result.name = name
-    if (status != null) result.status = status
     return result
 }
 
@@ -229,7 +223,7 @@ const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.OrganizationUpdated(${R._toString(this.name)}, ${R._toString(this.status)})`
+            return `Action.OrganizationUpdated(${R._toString(this.name)})`
         },
         enumerable: false,
     },
@@ -252,7 +246,7 @@ const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
 OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
 OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
-OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.name, o.status)
+OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.name)
 OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
 
 OrganizationUpdatedConstructor.toFirestore = o => ({ ...o })
@@ -308,57 +302,6 @@ OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
 
 OrganizationDeletedConstructor.toFirestore = o => ({ ...o })
 OrganizationDeletedConstructor.fromFirestore = OrganizationDeletedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationSuspended
-//
-// -------------------------------------------------------------------------------------------------------------
-const OrganizationSuspendedConstructor = function OrganizationSuspended() {
-    const constructorName = 'Action.OrganizationSuspended()'
-    R.validateArgumentLength(constructorName, 0, arguments)
-
-    const result = Object.create(OrganizationSuspendedPrototype)
-
-    return result
-}
-
-Action.OrganizationSuspended = OrganizationSuspendedConstructor
-
-const OrganizationSuspendedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'OrganizationSuspended', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Action.OrganizationSuspended()`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: OrganizationSuspendedConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
-})
-
-OrganizationSuspendedConstructor.prototype = OrganizationSuspendedPrototype
-OrganizationSuspendedConstructor.is = val => val && val.constructor === OrganizationSuspendedConstructor
-OrganizationSuspendedConstructor.toString = () => 'Action.OrganizationSuspended'
-OrganizationSuspendedConstructor._from = o => Action.OrganizationSuspended()
-OrganizationSuspendedConstructor.from = OrganizationSuspendedConstructor._from
-
-OrganizationSuspendedConstructor.toFirestore = o => ({ ...o })
-OrganizationSuspendedConstructor.fromFirestore = OrganizationSuspendedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -1411,7 +1354,6 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'OrganizationCreated') return Action.OrganizationCreated.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'OrganizationUpdated') return Action.OrganizationUpdated.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'OrganizationDeleted') return Action.OrganizationDeleted.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'OrganizationSuspended') return Action.OrganizationSuspended.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'MemberAdded') return Action.MemberAdded.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'RoleChanged') return Action.RoleChanged.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'MemberRemoved') return Action.MemberRemoved.fromFirestore(doc, decodeTimestamps)
@@ -1448,7 +1390,6 @@ Action.piiFields = rawData => {
     const tagName = rawData['@@tagName']
     if (tagName === 'OrganizationCreated') return []
     if (tagName === 'OrganizationDeleted') return []
-    if (tagName === 'OrganizationSuspended') return []
     if (tagName === 'OrganizationUpdated') return []
     if (tagName === 'MemberAdded') return ['displayName']
     if (tagName === 'MemberRemoved') return []
@@ -1471,21 +1412,34 @@ Action.piiFields = rawData => {
     return []
 }
 
-Action.toLog = a => {
-    const redactField = field => {
-        if (result[field]) result[field] = `${field}: ${result[field].length}`
+Action.redactField = (acc, field) => {
+    if (!acc[field]) return acc
+    if (field.match(/email/))
+        return {
+            ...acc,
+            [field]: acc[field].replace(/(.).*(@.*)/, '$1***$2'),
+        }
+    if (field.match(/displayName/))
+        return {
+            ...acc,
+            [field]: acc[field].replace(/\b(\w)\w*/g, '$1***'),
+        }
+    return {
+        ...acc,
+        [field]: `[REDACTED length: ${acc[field].length}]`,
     }
-    const result = a.match({
+}
+
+Action.toLog = a => {
+    let result = a.match({
         OrganizationCreated: ({ name }) => ({
             type: 'OrganizationCreated',
             name,
         }),
         OrganizationDeleted: () => ({ type: 'OrganizationDeleted' }),
-        OrganizationSuspended: () => ({ type: 'OrganizationSuspended' }),
-        OrganizationUpdated: ({ name, status }) => ({
+        OrganizationUpdated: ({ name }) => ({
             type: 'OrganizationUpdated',
             name,
-            status,
         }),
         MemberAdded: ({ displayName, role }) => ({
             type: 'MemberAdded',
@@ -1528,15 +1482,15 @@ Action.toLog = a => {
         }),
         BlockfaceCreated: ({ blockface }) => ({
             type: 'BlockfaceCreated',
-            blockfaceId: blockface.id,
+            blockface,
         }),
         BlockfaceSelected: ({ blockface }) => ({
             type: 'BlockfaceSelected',
-            blockfaceId: blockface.id,
+            blockface,
         }),
         BlockfaceSaved: ({ blockface }) => ({
             type: 'BlockfaceSaved',
-            blockfaceId: blockface.id,
+            blockface,
         }),
         SegmentUseUpdated: ({ index, use }) => ({
             type: 'SegmentUseUpdated',
@@ -1562,14 +1516,11 @@ Action.toLog = a => {
             segmentCount: segments.length,
         }),
     })
-    Action.piiFields(a).forEach(redactField)
+    result = Action.piiFields(a).reduce(Action.redactField, result)
     return result
 }
 
 Action.redactPii = rawData => {
-    const redactField = field => {
-        if (result[field]) result[field] = `${field}: ${result[field].length}`
-    }
     const piiFields = () => {
         const tagName = rawData['@@tagName']
         if (tagName === 'UserCreated') return ['email', 'displayName']
@@ -1577,9 +1528,7 @@ Action.redactPii = rawData => {
         if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
         return []
     }
-    const result = { ...rawData }
-    piiFields().forEach(redactField)
-    return result
+    return piiFields().reduce(Action.redactField, { ...rawData })
 }
 
 Action.getSubject = (action, organizationId) =>
@@ -1589,10 +1538,6 @@ Action.getSubject = (action, organizationId) =>
             type: 'organization',
         }),
         OrganizationDeleted: () => ({
-            id: organizationId,
-            type: 'organization',
-        }),
-        OrganizationSuspended: () => ({
             id: organizationId,
             type: 'organization',
         }),
@@ -1680,7 +1625,6 @@ Action.mayI = (action, actorRole, actorId) =>
         MemberRemoved: () => ['admin'].includes(actorRole),
         OrganizationCreated: () => ['admin'].includes(actorRole),
         OrganizationDeleted: () => ['admin'].includes(actorRole),
-        OrganizationSuspended: () => ['admin'].includes(actorRole),
         OrganizationUpdated: () => ['admin'].includes(actorRole),
         RoleChanged: () => ['admin'].includes(actorRole),
         UserCreated: () => ['admin'].includes(actorRole),
@@ -1699,5 +1643,85 @@ Action.mayI = (action, actorRole, actorId) =>
         SegmentAddedLeft: () => true,
         SegmentsReplaced: () => true,
     })
+
+Action.metadata = action => {
+    const f = (
+        requiresUser,
+        requiresOrganization,
+        requiresProject,
+        authStrategy,
+        writesTo = [],
+        validateInput = null,
+    ) => ({
+        requiresUser,
+        requiresOrganization,
+        requiresProject,
+        authStrategy,
+        writesTo,
+        validateInput,
+    })
+    return action.match({
+        AuthenticationCompleted: () => f(false, false, false, 'allowAll'),
+        OrganizationCreated: () => f(true, false, false, 'requireOrganizationLimit'),
+        UserCreated: () => f(false, false, false, 'requireSystem'),
+        UserForgotten: () => f(true, false, false, 'requireSelfOnly'),
+        UserUpdated: () => f(true, false, false, 'requireSelfOnly'),
+        MemberAdded: () => f(true, true, false, 'requireActorIsOrganizationMember'),
+        MemberRemoved: () => f(true, true, false, 'requireActorIsOrganizationMember'),
+        OrganizationDeleted: () => f(true, true, false, 'requireActorIsOrganizationMember'),
+        OrganizationUpdated: () => f(true, true, false, 'requireActorIsOrganizationMember'),
+        RoleChanged: () => f(true, true, false, 'requireActorIsOrganizationMember'),
+        BlockfaceSaved: () =>
+            f(
+                true,
+                true,
+                true,
+                'requireActorIsOrganizationMember',
+                [
+                    {
+                        collection: 'blockfaces',
+                        path: 'action.blockface.id',
+                    },
+                ],
+                (action, actionRequest, existingDocs) => {
+                    const { blockface } = action
+                    if (blockface.organizationId !== actionRequest.organizationId)
+                        throw new Error(`Organization ids in blockface and ActionRequest cannot differ`)
+                    if (blockface.projectId !== actionRequest.projectId)
+                        throw new Error(`Project ids in blockface and ActionRequest cannot differ`)
+                },
+            ),
+        BlockfaceCreated: () => {
+            throw new Error('BlockfaceCreated is local-only')
+        },
+        BlockfaceSelected: () => {
+            throw new Error('BlockfaceSelected is local-only')
+        },
+        BlockfacesSynced: () => {
+            throw new Error('BlockfacesSynced is local-only')
+        },
+        OrganizationSynced: () => {
+            throw new Error('OrganizationSynced is local-only')
+        },
+        SegmentAdded: () => {
+            throw new Error('SegmentAdded is local-only')
+        },
+        SegmentAddedLeft: () => {
+            throw new Error('SegmentAddedLeft is local-only')
+        },
+        SegmentLengthUpdated: () => {
+            throw new Error('SegmentLengthUpdated is local-only')
+        },
+        SegmentUseUpdated: () => {
+            throw new Error('SegmentUseUpdated is local-only')
+        },
+        SegmentsReplaced: () => {
+            throw new Error('SegmentsReplaced is local-only')
+        },
+        UserLoaded: () => {
+            throw new Error('UserLoaded is local-only')
+        },
+    })
+}
 
 export { Action }

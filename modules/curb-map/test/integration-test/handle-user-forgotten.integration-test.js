@@ -61,8 +61,7 @@ test('Given UserForgotten action (GDPR)', t => {
             const result = await submitActionRequest({ action, namespace, token })
 
             t.equal(result.status, 401, 'Then HTTP status is 401')
-            t.equal(result.data.status, 'unauthorized', 'Then status is unauthorized')
-            t.match(result.data.error, /trying to forget user/, 'Then error mentions unauthorized forget attempt')
+            t.match(result.data, /Can only modify own user/, 'Then error mentions unauthorized forget attempt')
 
             // Verify user was not deleted
             const fsContext = createFirestoreContext(namespace, organizationId, null)

@@ -271,6 +271,13 @@ Blockface.addSegmentLeft = (blockface, addSegmentLengthAction) => {
     })
 }
 
+Blockface.updateMetadata = (blockface, updatedBy) =>
+    Blockface.from({
+        ...blockface,
+        updatedBy,
+        updatedAt: new Date(),
+    })
+
 Blockface.replaceSegments = (blockface, replaceSegmentsAction) => {
     const { segments } = replaceSegmentsAction
     if (!blockface) return blockface

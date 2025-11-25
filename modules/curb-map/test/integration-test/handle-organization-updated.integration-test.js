@@ -20,18 +20,5 @@ test('Given OrganizationUpdated action', t => {
         t.end()
     })
 
-    t.test('When OrganizationUpdated changes status Then status is updated', async t => {
-        await asSignedInUser('status', async ({ namespace, token }) => {
-            const { organizationId, projectId } = await createOrganization({ namespace, token })
-
-            const action = Action.OrganizationUpdated.from({ status: 'suspended' })
-            await submitAndExpectSuccess({ action, namespace, token, organizationId, projectId })
-
-            const organization = await readOrganization({ namespace, organizationId, projectId })
-            t.equal(organization.status, 'suspended', 'Then status updated')
-        })
-        t.end()
-    })
-
     t.end()
 })
