@@ -64,28 +64,27 @@ const makeHttpRequest = (url, method, body, token) => {
 
 // @sig parseResponse :: Response -> Promise<{ status: Number, ok: Boolean, data: Object }>
 const parseResponse = async response => {
+    // Read text first (can only read body once)
+    const text = await response.text()
+
+    // Try to parse as JSON, fall back to plain text
     try {
-        const data = await response.json()
+        const data = JSON.parse(text)
         return { status: response.status, ok: response.ok, data }
     } catch (error) {
-        throw new Error(
-            `HTTP function returned non-JSON response (Status: ${response.status}). ` +
-                `Is the emulator running and the function deployed? URL: ${response.url}`,
-        )
+        // Plain text response
+        return { status: response.status, ok: response.ok, data: text }
     }
 }
 
-// @sig validateSuccess :: ({ status: Number, ok: Boolean, data: Object }) -> void
+// @sig validateSuccess :: ({ status: Number, ok: Boolean, data: String }) -> void
 const validateSuccess = ({ status, ok, data }) => {
-    if (!ok || data.status !== 'completed')
-        throw new Error(
-            `Action request failed: ${data.error || 'Unknown error'} (HTTP ${status}, status: ${data.status})`,
-        )
+    if (!ok) throw new Error(`Action request failed: ${data} (HTTP ${status})`)
 }
 
-// @sig validateFailure :: ({ ok: Boolean, data: Object }) -> void
+// @sig validateFailure :: ({ ok: Boolean, data: String }) -> void
 const validateFailure = ({ ok, data }) => {
-    if (ok && data.status === 'completed') throw new Error('Expected validation error but request succeeded')
+    if (ok) throw new Error('Expected validation error but request succeeded')
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -138,14 +137,11 @@ const submitAndExpectValidationError = async params => {
 
 /**
  * Submit an action request and expect HTTP 409 duplicate response.
- * @sig submitAndExpectDuplicate :: ({ action: Any, idempotencyKey?: String, correlationId?: String, namespace?: String, token: String }) -> Promise<Object>
+ * @sig submitAndExpectDuplicate :: ({ action: Any, idempotencyKey?: String, correlationId?: String, namespace?: String, token: String }) -> Promise<String>
  */
 const submitAndExpectDuplicate = async params => {
     const result = await submitActionRequest(params)
-    if (result.status !== 409 || result.data.status !== 'duplicate')
-        throw new Error(
-            `Expected duplicate (HTTP 409, status: 'duplicate') but got HTTP ${result.status}, status: ${result.data.status}`,
-        )
+    if (result.status !== 409) throw new Error(`Expected duplicate (HTTP 409) but got HTTP ${result.status}`)
 
     return result.data
 }

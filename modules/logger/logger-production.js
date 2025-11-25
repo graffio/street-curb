@@ -16,24 +16,11 @@ const log = (level, message, logValues = {}) => {
 
 const createProductionLogger = () => {
     const fourLetterWord = pickAWord()
-    let step = 0
 
+    // prettier-ignore
     return {
-        flowStart: (message, extraData = {}) => {
-            step = 0
-            log('info', message, { ...extraData, flowId: fourLetterWord, flowEvent: 'flowStart' })
-        },
-
-        flowStep: (message, extraData = {}) => {
-            step++
-            log('info', message, { ...extraData, flowId: fourLetterWord, flowEvent: 'flowStep', flowStep: step })
-        },
-
-        flowStop: (message, extraData = {}) => {
-            step = 0
-            log('info', message, { ...extraData, flowId: fourLetterWord, flowEvent: 'flowStop' })
-        },
-
+        info : (message, extraData = {}) => log('info',  message, { ...extraData, flowId: fourLetterWord }),
+        warn : (message, extraData = {}) => log('warn',  message, { ...extraData, flowId: fourLetterWord }),
         error: (message, extraData = {}) => log('error', message, { ...extraData, flowId: fourLetterWord }),
     }
 }

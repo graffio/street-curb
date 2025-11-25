@@ -2,7 +2,6 @@
  * Development logger - human-readable output with flow tracking
  */
 import isObject from '@graffio/functional/src/ramda-like/internal/is-object.js'
-import pickAWord from './words.js'
 
 const effect = v => `\x1b[` + v + `m`
 const reset = `\x1b[0m`
@@ -37,8 +36,9 @@ const colorize = {
 }
 
 const formatData = data => {
+    const logKey = (value, key) => (isObject(value) ? colorize.brightRed(key) : colorize.brightBlue(key))
     const logValue = value => (isObject(value) ? formatData(value) : value)
-    const logEntry = ([key, value]) => `${colorize.brightBlue(key)}=${logValue(value)}`
+    const logEntry = ([key, value]) => `${logKey(value, key)}=${logValue(value)}`
 
     if (!data || Object.keys(data).length === 0) return ''
     const parts = Object.entries(data).map(logEntry).join(' ')
@@ -93,26 +93,26 @@ const wrapText = (text, maxWidth, indent) => {
     return lines
 }
 
-const log = (level, message, data, flowPrefix, maxLineLength = 300) => {
-    const emoji = { debug: '🔍', info: ' ️', warn: '⚠️', error: '❌' }[level] || '📝'
+const ACTION_STRING_LENGTH = 25
+const log = (level, message, extraData, maxLineLength = 300) => {
+    // prettier-ignore
+    const formatMessage = s => {
+        if (level === 'debug') return colorize.green(       '🔍 ' + s.padEnd(ACTION_STRING_LENGTH    ))
+        if (level === 'info')  return colorize.brightGreen(         s.padEnd(ACTION_STRING_LENGTH + 2))
+        if (level === 'warn')  return colorize.brightYellow('⚠️ ' + s.padEnd(ACTION_STRING_LENGTH    ))
+    }
 
-    const formattedData = formatData(data)
-    const prefix = flowPrefix ? `${flowPrefix} ${emoji}` : emoji
-    const messagePadded = message.padEnd(40)
-    const firstLine = `${prefix} ${messagePadded} ${formattedData}`
-
-    // Calculate the indentation for continuation lines (align with data section)
-    const indent = stripAnsi(prefix).length + 1 + 40 + 1
+    const firstLine = `${formatMessage(message)} ${formatData(extraData)}`
 
     // Wrap if the line is too long
-    const wrappedLines = wrapText(firstLine, maxLineLength, indent)
+    const wrappedLines = wrapText(firstLine, maxLineLength, ACTION_STRING_LENGTH + 4)
 
     console[level](wrappedLines.join('\n'))
 }
 
-const logError = (error, extraData, flowPrefix) => {
-    const formattedData = formatData(extraData)
-    console.error(`${flowPrefix} ❌ ${error.stack}\n\n    ${formattedData}`)
+const logError = (error, extraData, maxLineLength = 200) => {
+    const formattedData = wrapText(formatData(extraData), maxLineLength, 5)
+    console.error(`\n❌ ${error.stack}\n\n    ${formattedData.join('\n')}\n`)
 }
 
 /*
@@ -120,28 +120,12 @@ const logError = (error, extraData, flowPrefix) => {
  * @sig createDevLogger :: F -> Logger
  *  F = () -> Any
  */
-const createDevLogger = () => {
-    const fourLetterWord = pickAWord()
-    let step = 0
-
-    return {
-        flowStart: (message, extraData = {}) => {
-            step = 0
-            log('info', message, extraData, `${colorize.brightGreen('▶')} ${fourLetterWord}`)
-        },
-
-        flowStep: (message, extraData = {}) => {
-            step++
-            log('info', message, extraData, `${step} ${fourLetterWord}`)
-        },
-
-        flowStop: (message, extraData = {}) => {
-            step = 0
-            log('info', message, extraData, `${colorize.brightRed(colorize.red('■'))} ${fourLetterWord}`)
-        },
-
-        error: (error, extraData) => logError(error, extraData, `${colorize.red('■')} ${fourLetterWord}`),
-    }
-}
+// prettier-ignore
+const createDevLogger = () => ({
+    debug: (message, extraData = {}) => log('debug', message, extraData),
+    info:  (message, extraData = {}) => log('info',  message, extraData),
+    warn:  (message, extraData = {}) => log('warn',  message, extraData),
+    error: (error,   extraData = {}) => logError(    error,   extraData),
+})
 
 export { createDevLogger }

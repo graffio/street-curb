@@ -1,0 +1,6 @@
+- Search for published CDS sample datasets; log sources or absence.
+- If none, draft realistic fixtures per profile (valid and invalid pairs).
+- Keep fixtures small but covering edge cases (time ordering, enums, coords).
+- Decide fixture storage layout under modules/cli-cds-validator/fixtures/.
+- Record any confidentiality/licensing notes for sourced data.
+- Ensure fixtures illustrate only what the CLI can check offline (structure, profiles, intra-payload coherence) and avoid scenarios needing live API state.
