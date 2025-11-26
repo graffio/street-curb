@@ -4,7 +4,7 @@ const cuid12 = cuid2.init({ length: 12 })
 
 // prettier-ignore
 const FieldTypes = {
-    email            : /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // email address format: a@b.com
+    email            : /^[a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // email address format: a@b.com
     environment      : /^(development|test|staging|production)$/, // Our environment names
     event            : /^[a-z]+(\.[a-z]+)*\.[a-z_]+$/, // Hierarchical event type: infrastructure.shell.execute
     ipv4Type         : /^(\d{1,3}\.){3}\d{1,3}$/, // IPv4 address format

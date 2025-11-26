@@ -69,89 +69,28 @@ export const Action = {
 }
 
 /*
- * Returns list of PII field names for a given action type.
- * These fields contain personally identifiable information and should be redacted in logs.
- * This is the definitive security boundary - separate from toLog which controls relevance.
- *
- * IMPORTANT: Accepts raw data (plain object) because it's used when Action construction fails.
- * Cannot use .match() since the Action may not be constructed yet.
- *
- * @sig piiFields :: Object -> [String]
- */
-// prettier-ignore
-Action.piiFields = rawData => {
-    const tagName = rawData['@@tagName']
-    
-    // organization
-    if (tagName === 'OrganizationCreated'    ) return []
-    if (tagName === 'OrganizationDeleted'    ) return []
-    if (tagName === 'OrganizationUpdated'    ) return []
-    
-    // organization member
-    if (tagName === 'MemberAdded'            ) return ['displayName']
-    if (tagName === 'MemberRemoved'          ) return []
-    if (tagName === 'RoleChanged'            ) return []
-    
-    // user
-    if (tagName === 'UserCreated'            ) return ['email', 'displayName']
-    if (tagName === 'UserForgotten'          ) return []
-    if (tagName === 'UserUpdated'            ) return ['displayName']
-    
-    // Auth
-    if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
-
-    // Data Loading
-    if (tagName === 'UserLoaded'             ) return []
-    if (tagName === 'OrganizationSynced'     ) return []
-    if (tagName === 'BlockfacesSynced'       ) return []
-
-    // Blockface Actions
-    if (tagName === 'BlockfaceCreated'       ) return []
-    if (tagName === 'BlockfaceSelected'      ) return []
-    if (tagName === 'BlockfaceSaved'         ) return []
-
-    // Segment Actions
-    if (tagName === 'SegmentUseUpdated'      ) return []
-    if (tagName === 'SegmentLengthUpdated'   ) return []
-    if (tagName === 'SegmentAdded'           ) return []
-    if (tagName === 'SegmentAddedLeft'       ) return []
-    if (tagName === 'SegmentsReplaced'       ) return []
-
-    return []  // Fallback for unrecognized types
-}
-
-Action.redactField = (acc, field) => {
-    if (!acc[field]) return acc // skip, there's no actual value for this field
-
-    if (field.match(/email/)) return { ...acc, [field]: acc[field].replace(/(.).*(@.*)/, '$1***$2') }
-    if (field.match(/displayName/)) return { ...acc, [field]: acc[field].replace(/\b(\w)\w*/g, '$1***') }
-
-    return { ...acc, [field]: `[REDACTED length: ${acc[field].length}]` }
-}
-
-/*
- * Return a subset of interesting fields to log, with PII redacted.
- * Automatically applies PII redaction as a security layer
+ * Return a subset of interesting fields to log.
+ * PII redaction is now handled automatically by the logger via redact()
  * @sig toLog = Action -> Object
  */
-Action.toLog = a => {
+Action.toLog = a =>
     // prettier-ignore
-    let result = a.match({
+    a.match({
         // organization
         OrganizationCreated    : ({ name })                     => ({ type: 'OrganizationCreated', name}),
         OrganizationDeleted    : ()                             => ({ type: 'OrganizationDeleted', }),
         OrganizationUpdated    : ({ name })                     => ({ type: 'OrganizationUpdated', name }),
-        
+
         // member
         MemberAdded            : ({ displayName, role })        => ({ type: 'MemberAdded', displayName, role }),
         MemberRemoved          : ()                             => ({ type: 'MemberRemoved' }),
         RoleChanged            : ({ role })                     => ({ type: 'RoleChanged', role }),
-        
+
         // user
         UserCreated            : ({ email, displayName })       => ({ type: 'UserCreated', email, displayName }),
         UserForgotten          : ({ reason })                   => ({ type: 'UserForgotten', reason }),
         UserUpdated            : ({ email, displayName, role }) => ({ type: 'UserUpdated', email, displayName, role }),
-       
+
         // Auth
         AuthenticationCompleted: ({ email, displayName })       => ({ type: 'AuthenticationCompleted', email, displayName}),
 
@@ -172,34 +111,6 @@ Action.toLog = a => {
         SegmentAddedLeft       : ({ index, desiredLength })     => ({ type: 'SegmentAddedLeft', index, desiredLength }),
         SegmentsReplaced       : ({ segments })                 => ({ type: 'SegmentsReplaced', segmentCount: segments.length }),
     })
-
-    result = Action.piiFields(a).reduce(Action.redactField, result)
-    return result
-}
-
-/*
- * Redacts PII fields from raw action data for safe logging.
- * Unlike omit(), this preserves field presence and structure for debugging.
- *
- * Examples:
- *   email: "user@example.com" -> email: "[EMAIL:16chars]"
- *   displayName: "John Doe" -> displayName: "[NAME:8chars]"
- *
- * @sig redactPii :: Object -> Object
- */
-Action.redactPii = rawData => {
-    const piiFields = () => {
-        const tagName = rawData['@@tagName']
-
-        if (tagName === 'UserCreated') return ['email', 'displayName']
-        if (tagName === 'UserUpdated') return ['email', 'displayName']
-        if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
-
-        return []
-    }
-
-    return piiFields().reduce(Action.redactField, { ...rawData })
-}
 
 // Additional function: getSubject
 // Returns the subject (entity being acted upon) for an action

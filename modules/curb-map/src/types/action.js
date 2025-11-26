@@ -1386,52 +1386,8 @@ Action.fromFirestore = Action._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-Action.piiFields = rawData => {
-    const tagName = rawData['@@tagName']
-    if (tagName === 'OrganizationCreated') return []
-    if (tagName === 'OrganizationDeleted') return []
-    if (tagName === 'OrganizationUpdated') return []
-    if (tagName === 'MemberAdded') return ['displayName']
-    if (tagName === 'MemberRemoved') return []
-    if (tagName === 'RoleChanged') return []
-    if (tagName === 'UserCreated') return ['email', 'displayName']
-    if (tagName === 'UserForgotten') return []
-    if (tagName === 'UserUpdated') return ['displayName']
-    if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
-    if (tagName === 'UserLoaded') return []
-    if (tagName === 'OrganizationSynced') return []
-    if (tagName === 'BlockfacesSynced') return []
-    if (tagName === 'BlockfaceCreated') return []
-    if (tagName === 'BlockfaceSelected') return []
-    if (tagName === 'BlockfaceSaved') return []
-    if (tagName === 'SegmentUseUpdated') return []
-    if (tagName === 'SegmentLengthUpdated') return []
-    if (tagName === 'SegmentAdded') return []
-    if (tagName === 'SegmentAddedLeft') return []
-    if (tagName === 'SegmentsReplaced') return []
-    return []
-}
-
-Action.redactField = (acc, field) => {
-    if (!acc[field]) return acc
-    if (field.match(/email/))
-        return {
-            ...acc,
-            [field]: acc[field].replace(/(.).*(@.*)/, '$1***$2'),
-        }
-    if (field.match(/displayName/))
-        return {
-            ...acc,
-            [field]: acc[field].replace(/\b(\w)\w*/g, '$1***'),
-        }
-    return {
-        ...acc,
-        [field]: `[REDACTED length: ${acc[field].length}]`,
-    }
-}
-
-Action.toLog = a => {
-    let result = a.match({
+Action.toLog = a =>
+    a.match({
         OrganizationCreated: ({ name }) => ({
             type: 'OrganizationCreated',
             name,
@@ -1516,20 +1472,6 @@ Action.toLog = a => {
             segmentCount: segments.length,
         }),
     })
-    result = Action.piiFields(a).reduce(Action.redactField, result)
-    return result
-}
-
-Action.redactPii = rawData => {
-    const piiFields = () => {
-        const tagName = rawData['@@tagName']
-        if (tagName === 'UserCreated') return ['email', 'displayName']
-        if (tagName === 'UserUpdated') return ['email', 'displayName']
-        if (tagName === 'AuthenticationCompleted') return ['email', 'displayName']
-        return []
-    }
-    return piiFields().reduce(Action.redactField, { ...rawData })
-}
 
 Action.getSubject = (action, organizationId) =>
     action.match({

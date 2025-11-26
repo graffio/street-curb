@@ -1,6 +1,7 @@
 // ABOUTME: HTTP endpoint for submitting action requests with validation and authorization
 // ABOUTME: Validates metadata inside transaction, checks permissions, executes handlers atomically
 
+import { redact } from '@graffio/cli-type-generator'
 import { path } from '@graffio/functional'
 import { createLogger } from '@graffio/logger'
 import admin from 'firebase-admin'
@@ -282,8 +283,9 @@ const handleInTransaction = async (actionRequest, metadata, txContext) => {
     const handler = handlerForActionRequest(actionRequest)
     await handler(txContext, actionRequest)
 
-    // Write completedAction
-    await txContext.completedActions.create(actionRequest)
+    // Write completedAction with redacted PII for SOC2 compliance
+    const redactedActionRequest = ActionRequest.from({ ...actionRequest, action: redact(actionRequest.action) })
+    await txContext.completedActions.create(redactedActionRequest)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -364,12 +366,8 @@ const submitActionRequestHandler = async (req, res) => {
 
         return res.status(200).send({ status: 'completed' })
     } catch (error) {
-        // Always log request body with redacted action for debugging
-        logger.error(error, {
-            errorType: error.name,
-            errorMessage: error.message,
-            requestBody: { ...req.body, action: req.body?.action ? Action.redactPii(req.body.action) : undefined },
-        })
+        // Always log request body for debugging (logger handles PII redaction)
+        logger.error(error, { errorType: error.name, errorMessage: error.message, requestBody: req.body })
 
         return res.status(error.statusCode || 500).send(error.message || 'Internal server error')
     }

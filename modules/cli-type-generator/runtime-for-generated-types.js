@@ -248,6 +248,76 @@ const validateLookupTable = (constructorName, expectedItemType, field, optional,
     throw new TypeError(message)
 }
 
+/*
+ * Redaction patterns for known PII fields
+ */
+// prettier-ignore
+const piiRedactions = {
+    email      : v => v.replace(/(.).*(@.*)/                                                   , '$1***$2'),
+    displayName: v => v.replace(/\b(\w)\w*/g                                                   , '$1***'),
+    phoneNumber: v => v.replace(/(\+?\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)(\d{3}[-.\s]?)(\d{4})/, '***-***-$4'),
+}
+
+/*
+ * Check if a value contains PII anywhere in its tree (recursively)
+ * @sig hasPii :: Tagged -> Boolean
+ */
+const hasPii = value => {
+    if (value == null) return false
+
+    // Check direct PII fields
+    const hasDirectPii = Object.keys(piiRedactions).some(field => value[field] && typeof value[field] === 'string')
+    if (hasDirectPii) return true
+
+    // Check nested structures recursively
+    return Object.values(value).some(fieldValue => {
+        if (Array.isArray(fieldValue)) return fieldValue.some(hasPii) // recurse into array/LookupTable
+        if (typeof fieldValue === 'object') return hasPii(fieldValue) // recurse into object/Tagged type
+        return false
+    })
+}
+
+/*
+ * Redact a single field value (recursively for nested types)
+ * @sig redactField :: (String, Any, Tagged) -> Any
+ */
+const redactField = (k, v, originalValue) => {
+    if (piiRedactions[k] && typeof v === 'string') return piiRedactions[k](v) // Redact PII fields
+    if (v?.['@@tagName']) return redact(v) // Recurse into Tagged types
+    if (LookupTable.is(v)) return LookupTable(v.map(redact), v.ItemType, v.idField) // Recurse into LookupTables
+    if (Array.isArray(v) && v[0]?.['@@tagName']) return v.map(redact) // Recurse into arrays of Tagged types
+
+    return v
+}
+
+/*
+ * Mark an object as redacted (mutates and returns object)
+ * @sig markAsRedacted :: Tagged -> Tagged
+ */
+const markAsRedacted = obj => {
+    Object.defineProperty(obj, '__redacted', { value: true, enumerable: false, writable: false, configurable: false })
+    return obj
+}
+
+/*
+ * Universal PII redaction function for Tagged types
+ * Redacts email, displayName, and phoneNumber fields recursively
+ * Returns same object if already redacted (idempotent)
+ *
+ * @sig redact :: Tagged -> Tagged
+ */
+const redact = value => {
+    if (value?.__redacted) return value // Already redacted - return same object
+    if (!value?.['@@tagName']) return value // Not a Tagged type - return unchanged
+    if (!hasPii(value)) return markAsRedacted(value) // Early exit: no PII found - mark and return original
+
+    // PII found - create redacted version
+    // Reconstruct Tagged type with redacted fields
+    const redactedObject = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, redactField(k, v, value)]))
+    const constructor = Object.getPrototypeOf(value).constructor
+    return markAsRedacted(constructor.from(redactedObject))
+}
+
 export {
     validateArgumentLength,
     validateArray,
@@ -263,4 +333,5 @@ export {
     lookupTableFromFirestore,
     match,
     _toString,
+    redact,
 }

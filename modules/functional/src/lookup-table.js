@@ -78,7 +78,7 @@ const LookupTable = (items, ItemType, idField = 'id') => {
  * Is o a LookupTable?
  * @sig LookupTable.is :: {k:v} -> Boolean
  */
-LookupTable.is = o => !!o.idField
+LookupTable.is = o => !!o?.idField
 
 // ---------------------------------------------------------------------------------------------------------------------
 // LookupTablePrototype (extends Array.prototype)
