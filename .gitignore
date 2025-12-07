@@ -34,3 +34,7 @@ modules/curb-map/migrations/config/temporary*
 
 # don't save built functions code
 modules/curb-map/functions/dist/
+
+*.sql
+*.sqlite
+*.sqlite3
