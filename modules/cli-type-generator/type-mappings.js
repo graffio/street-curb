@@ -9,12 +9,14 @@ const REPO_ROOT = resolve(__dirname, '../..')
 // prettier-ignore
 const sources = {
     curbMap        : `${REPO_ROOT}/modules/curb-map/type-definitions`,
+    cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
 
 // prettier-ignore
 const targets = {
     curbMap        : `${REPO_ROOT}/modules/curb-map/src/types`,
+    cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
     typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
 
@@ -37,6 +39,21 @@ export const typeMappings = {
    
     // special case: source is just copied verbatim to target
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
+    
+    
+    // quicken-tools domain
+    [`${sources.cliQifToSqlite}/account.type.js`]         : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/category.type.js`]        : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/daily-portfolio.type.js`] : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/entry.type.js`]           : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/holding.type.js`]         : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/lot.type.js`]             : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/price.type.js`]           : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite],
+    
     
     // for the cli-type-generator itself (all internal types)
     [`${sources.typesGeneration}/field-type.type.js`]     : [targets.typesGeneration],
