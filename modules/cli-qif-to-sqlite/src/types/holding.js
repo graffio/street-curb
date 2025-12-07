@@ -1,0 +1,97 @@
+/** {@link module:Holding} */
+/*  Holding generated from: modules/cli-qif-to-sqlite/type-definitions/holding.type.js
+ *
+ *  accountId      : "Number",
+ *  avgCostPerShare: "Number",
+ *  costBasis      : "Number",
+ *  lastUpdated    : "String",
+ *  quantity       : "Number",
+ *  securityId     : "Number"
+ *
+ */
+
+import * as R from '@graffio/cli-type-generator'
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// main constructor
+//
+// -------------------------------------------------------------------------------------------------------------
+const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId) {
+    const constructorName = 'Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)'
+    R.validateArgumentLength(constructorName, 6, arguments)
+    R.validateNumber(constructorName, 'accountId', false, accountId)
+    R.validateNumber(constructorName, 'avgCostPerShare', false, avgCostPerShare)
+    R.validateNumber(constructorName, 'costBasis', false, costBasis)
+    R.validateString(constructorName, 'lastUpdated', false, lastUpdated)
+    R.validateNumber(constructorName, 'quantity', false, quantity)
+    R.validateNumber(constructorName, 'securityId', false, securityId)
+
+    const result = Object.create(prototype)
+    result.accountId = accountId
+    result.avgCostPerShare = avgCostPerShare
+    result.costBasis = costBasis
+    result.lastUpdated = lastUpdated
+    result.quantity = quantity
+    result.securityId = securityId
+    return result
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// prototype
+//
+// -------------------------------------------------------------------------------------------------------------
+const prototype = Object.create(Object.prototype, {
+    '@@typeName': { value: 'Holding', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Holding(${R._toString(this.accountId)}, ${R._toString(this.avgCostPerShare)}, ${R._toString(this.costBasis)}, ${R._toString(this.lastUpdated)}, ${R._toString(this.quantity)}, ${R._toString(this.securityId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return this
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: Holding,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+Holding.prototype = prototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// static methods
+//
+// -------------------------------------------------------------------------------------------------------------
+Holding.toString = () => 'Holding'
+Holding.is = v => v && v['@@typeName'] === 'Holding'
+
+Holding._from = o => Holding(o.accountId, o.avgCostPerShare, o.costBasis, o.lastUpdated, o.quantity, o.securityId)
+Holding.from = Holding._from
+
+Holding._toFirestore = (o, encodeTimestamps) => ({ ...o })
+
+Holding._fromFirestore = (doc, decodeTimestamps) => Holding._from(doc)
+
+// Public aliases (override if necessary)
+Holding.toFirestore = Holding._toFirestore
+Holding.fromFirestore = Holding._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Additional functions copied from type definition file
+//
+// -------------------------------------------------------------------------------------------------------------
+
+export { Holding }
