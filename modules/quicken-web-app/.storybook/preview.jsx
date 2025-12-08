@@ -1,4 +1,4 @@
-import { MainTheme } from '@graffio/design-system'
+import { Theme } from '@radix-ui/themes'
 import React from 'react'
 
 /** @type { import('@storybook/react-vite').Preview } */
@@ -11,9 +11,9 @@ const preview = {
 
     decorators: [
         Story => (
-            <MainTheme>
+            <Theme appearance="light" accentColor="blue" grayColor="slate" radius="medium" scaling="100%">
                 <Story />
-            </MainTheme>
+            </Theme>
         ),
     ],
 }

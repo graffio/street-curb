@@ -36,7 +36,7 @@ const sidebarSections = [
 // Lazy / suspense
 // ---------------------------------------------------------------------------------------------------------------------
 const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'))
-const CheckingPage = lazy(() => import('./pages/CheckingPage.jsx'))
+const CheckingPage = lazy(() => import('./pages/TransactionRegisterPage.jsx'))
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Main Router

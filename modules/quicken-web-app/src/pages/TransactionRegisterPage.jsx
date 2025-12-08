@@ -5,128 +5,163 @@ import {
     DateRangePicker,
     Flex,
     layoutChannel,
-    MainLayout,
     Text,
     TextField,
     useChannel,
 } from '@graffio/design-system'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { TransactionRegister } from '../components/index.js'
-import { createSidebarItems } from '../utils/sidebar-config.js'
-import { transactionMatchesSearch } from '../utils/transaction-utils.js'
-import { filtersCard, mainContent, pageContainer } from './TransactionRegisterPage.css.js'
+import { resetTransactionFilters, setTransactionFilter } from '../store/actions.js'
+import * as S from '../store/selectors.js'
+import { generateParentCategories } from '../utils/category-hierarchy.js'
+import { generateRealisticTransactions } from '../utils/mock-transaction-generator.js'
+import {
+    extractCategories,
+    filterByCategories,
+    filterByDateRange,
+    filterByText,
+    getEarliestTransactionDate,
+    transactionMatchesSearch,
+} from '../utils/transaction-filters.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Inline styles using Radix Themes tokens
+// ---------------------------------------------------------------------------------------------------------------------
+
+const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
+
+const filtersCardStyle = { width: '280px', flexShrink: 0 }
+
+const mainContentStyle = { flex: 1, minWidth: 0 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+const fakeTransactions = generateRealisticTransactions(10000)
 
 /*
- * Filter transactions by text content
+ * Filters sidebar card for transaction filtering, searching, and category selection
  *
- * @sig filterByText :: ([Transaction], String) -> [Transaction]
+ * @sig TransactionFiltersCard :: (TransactionFiltersCardProps) -> ReactElement
  */
-const filterByText = (transactions, query) => {
-    if (!query.trim()) return transactions
+const TransactionFiltersCard = ({
+    dateRange,
+    dateRangeKey,
+    filterQuery,
+    searchQuery,
+    selectedCategories,
+    currentSearchIndex,
+    customStartDate,
+    customEndDate,
+    defaultStartDate,
+    defaultEndDate,
+    allCategories,
+    searchMatches,
+    filteredTransactionsCount,
+    onDateRangeChange,
+    onDateRangeKeyChange,
+    onCustomStartDateChange,
+    onCustomEndDateChange,
+    onFilterQueryChange,
+    onSearchQueryChange,
+    onCategoryAdd,
+    onCategoryRemove,
+    onPreviousMatch,
+    onNextMatch,
+    onClearFilters,
+}) => (
+    <Card style={filtersCardStyle}>
+        <Flex direction="column" gap="4">
+            <Text size="3" weight="medium">
+                Filters
+            </Text>
 
-    return transactions.filter(transaction => {
-        const searchableText = [transaction.description, transaction.memo, transaction.payee, transaction.category]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
+            <DateRangePicker
+                value={dateRangeKey}
+                onChange={onDateRangeChange}
+                onValueChange={onDateRangeKeyChange}
+                customStartDate={customStartDate}
+                customEndDate={customEndDate}
+                onCustomStartDateChange={onCustomStartDateChange}
+                onCustomEndDateChange={onCustomEndDateChange}
+                defaultStartDate={defaultStartDate}
+                defaultEndDate={defaultEndDate}
+            />
 
-        return searchableText.includes(query.toLowerCase())
-    })
-}
+            <Flex direction="column" gap="2">
+                <Text size="2" weight="medium" color="gray">
+                    Filter
+                </Text>
+                <TextField.Root
+                    placeholder="Filter transactions (e.g., Chipotle)..."
+                    value={filterQuery}
+                    onChange={onFilterQueryChange}
+                />
+            </Flex>
 
-/*
- * Filter transactions by date range
- *
- * @sig filterByDateRange :: ([Transaction], DateRange) -> [Transaction]
- *     DateRange = { start: Date?, end: Date? }
- */
-const filterByDateRange = (transactions, dateRange) => {
-    if (!dateRange.start && !dateRange.end) return transactions
+            <Flex direction="column" gap="2">
+                <Text size="2" weight="medium" color="gray">
+                    Search
+                </Text>
+                <TextField.Root
+                    placeholder="Search transactions..."
+                    value={searchQuery}
+                    onChange={onSearchQueryChange}
+                />
+                {searchQuery && searchMatches.length > 0 && (
+                    <Flex gap="2" align="center">
+                        <Button size="1" variant="soft" disabled={searchMatches.length === 0} onClick={onPreviousMatch}>
+                            ← Previous
+                        </Button>
+                        <Button size="1" variant="soft" disabled={searchMatches.length === 0} onClick={onNextMatch}>
+                            Next →
+                        </Button>
+                        <Text size="1" color="gray">
+                            {currentSearchIndex + 1} of {searchMatches.length}
+                        </Text>
+                    </Flex>
+                )}
+            </Flex>
 
-    return transactions.filter(transaction => {
-        // Parse ISO date string correctly (transaction.date is like "2024-06-15")
-        // Add explicit time to avoid timezone issues
-        const transactionDate = new Date(transaction.date + 'T00:00:00')
+            <CategorySelector
+                categories={allCategories}
+                selectedCategories={selectedCategories}
+                onCategoryAdded={onCategoryAdd}
+                onCategoryRemoved={onCategoryRemove}
+            />
 
-        if (dateRange.start && transactionDate < dateRange.start) return false
-        if (dateRange.end && transactionDate > dateRange.end) return false
+            <Button variant="soft" onClick={onClearFilters}>
+                Clear Filters
+            </Button>
 
-        return true
-    })
-}
-
-/*
- * Generate all parent categories for a hierarchical category
- * e.g., "food:restaurant:lunch" -> ["food", "food:restaurant", "food:restaurant:lunch"]
- *
- * @sig generateParentCategories :: String -> [String]
- */
-const generateParentCategories = category => {
-    const parts = category.split(':')
-    return parts.map((_, i) => parts.slice(0, i + 1).join(':'))
-}
-
-/*
- * Extract all unique categories from transactions, including parent categories
- *
- * @sig extractCategories :: [Transaction] -> [String]
- */
-const extractCategories = transactions => {
-    const allCategories = transactions
-        .filter(transaction => transaction.category && transaction.category.trim())
-        .map(transaction => generateParentCategories(transaction.category.trim()))
-        .flat()
-
-    return Array.from(new Set(allCategories)).sort()
-}
-
-/*
- * Check if a transaction category matches any of the selected category filters
- *
- * @sig categoryMatches :: (String?, [String]) -> Boolean
- */
-const categoryMatches = (transactionCategory, selectedCategories) => {
-    if (!selectedCategories.length) return true
-    if (!transactionCategory) return false
-
-    return selectedCategories.some(
-        selectedCategory =>
-            // Exact match or hierarchical match (selected category is a parent)
-            transactionCategory === selectedCategory || transactionCategory.startsWith(selectedCategory + ':'),
-    )
-}
-
-/*
- * Filter transactions by selected categories
- *
- * @sig filterByCategories :: ([Transaction], [String]) -> [Transaction]
- */
-const filterByCategories = (transactions, selectedCategories) => {
-    if (!selectedCategories.length) return transactions
-
-    return transactions.filter(transaction => categoryMatches(transaction.category, selectedCategories))
-}
-
-/*
- * Get the earliest transaction date for default start date
- *
- * @sig getEarliestTransactionDate :: [Transaction] -> Date?
- */
-const getEarliestTransactionDate = transactions => {
-    if (!transactions || transactions.length === 0) return null
-
-    return transactions.reduce((earliest, transaction) => {
-        const transactionDate = new Date(transaction.date)
-        return transactionDate < earliest ? transactionDate : earliest
-    }, new Date(transactions[0].date))
-}
-
-/*
- * Get today's date
- *
- * @sig getTodaysDate :: () -> Date
- */
-const getTodaysDate = () => new Date()
+            <Flex direction="column" gap="1">
+                <Text size="1" color="gray">
+                    Showing {filteredTransactionsCount} transactions
+                </Text>
+                {dateRange && (
+                    <Text size="1" color="gray">
+                        {dateRange.start.toLocaleDateString()} - {dateRange.end.toLocaleDateString()}
+                    </Text>
+                )}
+                {filterQuery && (
+                    <Text size="1" color="gray">
+                        Filtered by: "{filterQuery}"
+                    </Text>
+                )}
+                {searchQuery && (
+                    <Text size="1" color="gray">
+                        Highlighting: "{searchQuery}"
+                    </Text>
+                )}
+                {selectedCategories.length > 0 && (
+                    <Text size="1" color="gray">
+                        Categories: {selectedCategories.join(', ')}
+                    </Text>
+                )}
+            </Flex>
+        </Flex>
+    </Card>
+)
 
 /*
  * Transaction Register page with filtering, search, and navigation
@@ -146,35 +181,58 @@ const getTodaysDate = () => new Date()
  *         height?: Number
  *     }
  */
-const TransactionRegisterPage = ({ transactions = [], startingBalance = 5000, height = 600 }) => {
-    // Function definitions (without dependencies)
-    const handleClearFilters = () => {
-        setDateRange(null)
-        setDateRangeKey('all')
-        setSearchQuery('')
-        setFilterQuery('')
-        setCurrentSearchIndex(0)
-        setCurrentRowIndex(0)
-        setCustomStartDate(null)
-        setCustomEndDate(null)
-        setSelectedCategories([])
-    }
+const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBalance = 5000, height = '100%' }) => {
+    const dispatch = useDispatch()
+    const [, setLayout] = useChannel(layoutChannel)
+
+    const dateRange = useSelector(S.dateRange)
+    const dateRangeKey = useSelector(S.dateRangeKey)
+    const filterQuery = useSelector(S.filterQuery)
+    const searchQuery = useSelector(S.searchQuery)
+    const selectedCategories = useSelector(S.selectedCategories)
+    const currentSearchIndex = useSelector(S.currentSearchIndex)
+    const currentRowIndex = useSelector(S.currentRowIndex)
+    const customStartDate = useSelector(S.customStartDate)
+    const customEndDate = useSelector(S.customEndDate)
+
+    const transactionRegisterRef = useRef(null)
+
+    // Calculate default dates from transaction data
+    const defaultStartDate = getEarliestTransactionDate(transactions)
+    const defaultEndDate = new Date()
+
+    // Extract all categories for the selector
+    const allCategories = extractCategories(transactions, generateParentCategories)
+
+    // Apply filters in sequence: text filter → date filter → category filter
+    const textFiltered = filterByText(transactions, filterQuery)
+    const dateFiltered = filterByDateRange(textFiltered, dateRange || {})
+    const filteredTransactions = filterByCategories(dateFiltered, selectedCategories)
+
+    // Calculate search matches for navigation
+    const searchMatches = filteredTransactions
+        .map((transaction, index) => ({ transaction, index }))
+        .filter(({ transaction }) => transactionMatchesSearch(transaction, searchQuery))
+        .map(({ index }) => index)
+
+    // Function definitions
+    const handleClearFilters = () => dispatch(resetTransactionFilters())
 
     const moveToNextRow = () => {
         const maxIndex = filteredTransactions.length - 1
-        setCurrentRowIndex(prev => (prev >= maxIndex ? 0 : prev + 1)) // Wrap around
+        dispatch(setTransactionFilter({ currentRowIndex: currentRowIndex >= maxIndex ? 0 : currentRowIndex + 1 }))
     }
 
     const moveToPreviousRow = () => {
         const maxIndex = filteredTransactions.length - 1
-        setCurrentRowIndex(prev => (prev <= 0 ? maxIndex : prev - 1)) // Wrap around
+        dispatch(setTransactionFilter({ currentRowIndex: currentRowIndex <= 0 ? maxIndex : currentRowIndex - 1 }))
     }
 
     const handlePreviousMatch = () => {
         if (searchMatches.length > 0) {
             // Wrap to last match if at first match, otherwise go to previous
             const newIndex = currentSearchIndex === 0 ? searchMatches.length - 1 : currentSearchIndex - 1
-            setCurrentSearchIndex(newIndex)
+            dispatch(setTransactionFilter({ currentSearchIndex: newIndex }))
         }
     }
 
@@ -182,16 +240,16 @@ const TransactionRegisterPage = ({ transactions = [], startingBalance = 5000, he
         if (searchMatches.length > 0) {
             // Wrap to first match if at last match, otherwise go to next
             const newIndex = currentSearchIndex === searchMatches.length - 1 ? 0 : currentSearchIndex + 1
-            setCurrentSearchIndex(newIndex)
+            dispatch(setTransactionFilter({ currentSearchIndex: newIndex }))
         }
     }
 
     const handleCategoryAdd = category => {
-        setSelectedCategories(prev => [...prev, category])
+        dispatch(setTransactionFilter({ selectedCategories: [...selectedCategories, category] }))
     }
 
     const handleCategoryRemove = category => {
-        setSelectedCategories(prev => prev.filter(c => c !== category))
+        dispatch(setTransactionFilter({ selectedCategories: selectedCategories.filter(c => c !== category) }))
     }
 
     // Keyboard navigation handler
@@ -200,13 +258,10 @@ const TransactionRegisterPage = ({ transactions = [], startingBalance = 5000, he
         const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA'
 
         // Handle Escape key to clear search (works even when input is focused)
+        // Keep currentRowIndex for browse mode
         if (event.key === 'Escape') {
             event.preventDefault()
-            if (searchQuery) {
-                setSearchQuery('')
-                setCurrentSearchIndex(0)
-                // Keep currentRowIndex for browse mode
-            }
+            if (searchQuery) dispatch(setTransactionFilter({ searchQuery: '', currentSearchIndex: 0 }))
             return
         }
 
@@ -216,29 +271,14 @@ const TransactionRegisterPage = ({ transactions = [], startingBalance = 5000, he
 
         event.preventDefault()
 
-        if (searchMatches.length > 0) {
-            // Search mode: navigate through search matches
-            if (event.key === 'ArrowDown') handleNextMatch()
-            else if (event.key === 'ArrowUp') handlePreviousMatch()
-        } else {
-            // Browse mode: navigate through all rows
-            if (event.key === 'ArrowDown') moveToNextRow()
-            else if (event.key === 'ArrowUp') moveToPreviousRow()
-        }
+        const inSearchMode = searchMatches.length > 0
+
+        if (event.key === 'ArrowDown') inSearchMode ? handleNextMatch() : moveToNextRow()
+        if (event.key === 'ArrowUp') inSearchMode ? handlePreviousMatch() : moveToPreviousRow()
     }
 
     const setupLayoutEffect = () => {
-        setLayout({
-            title: 'Checking Account',
-            subtitle: 'View and filter your checking account transactions',
-            topBarActions: (
-                <Flex gap="2">
-                    <Button variant="soft">Export</Button>
-                    <Button>Import</Button>
-                </Flex>
-            ),
-            sidebarItems: createSidebarItems('/transactions/checking'),
-        })
+        setLayout({ title: 'Checking Account', subtitle: 'View and filter your checking account transactions' })
     }
 
     const setupInitialDateRangeEffect = () => {
@@ -247,46 +287,15 @@ const TransactionRegisterPage = ({ transactions = [], startingBalance = 5000, he
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
             const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
             const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-            setDateRange({ start: twelveMonthsAgo, end: endOfToday })
+            dispatch(setTransactionFilter({ dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
         }
     }
-
-    const [, setLayout] = useChannel(layoutChannel)
-    const [dateRange, setDateRange] = useState(null)
-    const [dateRangeKey, setDateRangeKey] = useState('lastTwelveMonths')
-    const [searchQuery, setSearchQuery] = useState('')
-    const [filterQuery, setFilterQuery] = useState('')
-    const [currentSearchIndex, setCurrentSearchIndex] = useState(0)
-    const [currentRowIndex, setCurrentRowIndex] = useState(0) // For browse mode navigation
-    const [customStartDate, setCustomStartDate] = useState(null)
-    const [customEndDate, setCustomEndDate] = useState(null)
-    const [selectedCategories, setSelectedCategories] = useState([])
-
-    const transactionRegisterRef = useRef(null)
-
-    // Calculate default dates from transaction data
-    const defaultStartDate = getEarliestTransactionDate(transactions)
-    const defaultEndDate = getTodaysDate()
-
-    // Extract all categories for the selector
-    const allCategories = extractCategories(transactions)
-
-    // Apply filters in sequence: text filter → date filter → category filter
-    const textFilteredTransactions = filterByText(transactions, filterQuery)
-    const dateFilteredTransactions = filterByDateRange(textFilteredTransactions, dateRange || {})
-    const filteredTransactions = filterByCategories(dateFilteredTransactions, selectedCategories)
-
-    // Calculate search matches for navigation
-    const searchMatches = filteredTransactions
-        .map((transaction, index) => ({ transaction, index }))
-        .filter(({ transaction }) => transactionMatchesSearch(transaction, searchQuery))
-        .map(({ index }) => index)
 
     // Set layout state for this page
     useEffect(setupLayoutEffect, [setLayout])
 
     // Apply initial date range for "lastTwelveMonths"
-    useEffect(setupInitialDateRangeEffect, [dateRangeKey, dateRange])
+    useEffect(setupInitialDateRangeEffect, [dateRangeKey, dateRange, dispatch])
 
     // Add keyboard event listener
     useEffect(() => {
@@ -305,127 +314,50 @@ const TransactionRegisterPage = ({ transactions = [], startingBalance = 5000, he
     }, [currentSearchIndex, currentRowIndex, searchMatches, filteredTransactions.length])
 
     return (
-        <MainLayout>
-            <Flex gap="4" className={pageContainer}>
-                <Card className={filtersCard}>
-                    <Flex direction="column" gap="4">
-                        <Text size="3" weight="medium">
-                            Filters
-                        </Text>
+        <Flex gap="4" style={pageContainerStyle}>
+            <TransactionFiltersCard
+                dateRange={dateRange}
+                dateRangeKey={dateRangeKey}
+                filterQuery={filterQuery}
+                searchQuery={searchQuery}
+                selectedCategories={selectedCategories}
+                currentSearchIndex={currentSearchIndex}
+                customStartDate={customStartDate}
+                customEndDate={customEndDate}
+                defaultStartDate={defaultStartDate}
+                defaultEndDate={defaultEndDate}
+                allCategories={allCategories}
+                searchMatches={searchMatches}
+                filteredTransactionsCount={filteredTransactions.length}
+                onDateRangeChange={dateRange => dispatch(setTransactionFilter({ dateRange }))}
+                onDateRangeKeyChange={dateRangeKey => dispatch(setTransactionFilter({ dateRangeKey }))}
+                onCustomStartDateChange={customStartDate => dispatch(setTransactionFilter({ customStartDate }))}
+                onCustomEndDateChange={customEndDate => dispatch(setTransactionFilter({ customEndDate }))}
+                onFilterQueryChange={e => dispatch(setTransactionFilter({ filterQuery: e.target.value }))}
+                onSearchQueryChange={e =>
+                    dispatch(setTransactionFilter({ searchQuery: e.target.value, currentSearchIndex: 0 }))
+                }
+                onCategoryAdd={handleCategoryAdd}
+                onCategoryRemove={handleCategoryRemove}
+                onPreviousMatch={handlePreviousMatch}
+                onNextMatch={handleNextMatch}
+                onClearFilters={handleClearFilters}
+            />
 
-                        <DateRangePicker
-                            value={dateRangeKey}
-                            onChange={setDateRange}
-                            onValueChange={setDateRangeKey}
-                            customStartDate={customStartDate}
-                            customEndDate={customEndDate}
-                            onCustomStartDateChange={setCustomStartDate}
-                            onCustomEndDateChange={setCustomEndDate}
-                            defaultStartDate={defaultStartDate}
-                            defaultEndDate={defaultEndDate}
-                        />
-
-                        <Flex direction="column" gap="2">
-                            <Text size="2" weight="medium" color="gray">
-                                Filter
-                            </Text>
-                            <TextField.Root
-                                placeholder="Filter transactions (e.g., Chipotle)..."
-                                value={filterQuery}
-                                onChange={e => setFilterQuery(e.target.value)}
-                            />
-                        </Flex>
-
-                        <Flex direction="column" gap="2">
-                            <Text size="2" weight="medium" color="gray">
-                                Search
-                            </Text>
-                            <TextField.Root
-                                placeholder="Search transactions..."
-                                value={searchQuery}
-                                onChange={e => {
-                                    setSearchQuery(e.target.value)
-                                    setCurrentSearchIndex(0)
-                                }}
-                            />
-                            {searchQuery && searchMatches.length > 0 && (
-                                <Flex gap="2" align="center">
-                                    <Button
-                                        size="1"
-                                        variant="soft"
-                                        disabled={searchMatches.length === 0}
-                                        onClick={handlePreviousMatch}
-                                    >
-                                        ← Previous
-                                    </Button>
-                                    <Button
-                                        size="1"
-                                        variant="soft"
-                                        disabled={searchMatches.length === 0}
-                                        onClick={handleNextMatch}
-                                    >
-                                        Next →
-                                    </Button>
-                                    <Text size="1" color="gray">
-                                        {currentSearchIndex + 1} of {searchMatches.length}
-                                    </Text>
-                                </Flex>
-                            )}
-                        </Flex>
-
-                        <CategorySelector
-                            categories={allCategories}
-                            selectedCategories={selectedCategories}
-                            onCategoryAdd={handleCategoryAdd}
-                            onCategoryRemove={handleCategoryRemove}
-                        />
-
-                        <Button variant="soft" onClick={handleClearFilters}>
-                            Clear Filters
-                        </Button>
-
-                        <Flex direction="column" gap="1">
-                            <Text size="1" color="gray">
-                                Showing {filteredTransactions.length} transactions
-                            </Text>
-                            {dateRange && (
-                                <Text size="1" color="gray">
-                                    {dateRange.start.toLocaleDateString()} - {dateRange.end.toLocaleDateString()}
-                                </Text>
-                            )}
-                            {filterQuery && (
-                                <Text size="1" color="gray">
-                                    Filtered by: "{filterQuery}"
-                                </Text>
-                            )}
-                            {searchQuery && (
-                                <Text size="1" color="gray">
-                                    Highlighting: "{searchQuery}"
-                                </Text>
-                            )}
-                            {selectedCategories.length > 0 && (
-                                <Text size="1" color="gray">
-                                    Categories: {selectedCategories.join(', ')}
-                                </Text>
-                            )}
-                        </Flex>
-                    </Flex>
-                </Card>
-
-                <div className={mainContent}>
-                    <TransactionRegister
-                        ref={transactionRegisterRef}
-                        transactions={filteredTransactions}
-                        searchQuery={searchQuery}
-                        startingBalance={startingBalance}
-                        height={height}
-                        highlightedRow={searchMatches.length > 0 ? searchMatches[currentSearchIndex] : currentRowIndex}
-                        tabIndex={0}
-                    />
-                </div>
-            </Flex>
-        </MainLayout>
+            <div style={mainContentStyle}>
+                <TransactionRegister
+                    ref={transactionRegisterRef}
+                    transactions={filteredTransactions}
+                    searchQuery={searchQuery}
+                    startingBalance={startingBalance}
+                    height={height}
+                    highlightedRow={searchMatches.length > 0 ? searchMatches[currentSearchIndex] : currentRowIndex}
+                    tabIndex={0}
+                />
+            </div>
+        </Flex>
     )
 }
 
+export default TransactionRegisterPage // fixme: TanStack Router depends on a default export!
 export { TransactionRegisterPage }

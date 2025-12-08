@@ -36,14 +36,33 @@
 import { VirtualTable } from '@graffio/design-system'
 import PropTypes from 'prop-types'
 import React from 'react'
-import { transactionMatchesSearch } from '../../utils/transaction-utils.js'
-import * as styles from './TransactionRegister.css' /*
- * Calculate running balances for transaction list
- *
- * @sig calculateRunningBalances :: ([Transaction], Number) -> [TransactionWithBalance]
- *     Transaction = { amount: Number }
- *     TransactionWithBalance = { runningBalance: Number, amount: Number }
- */
+import { transactionMatchesSearch } from '../../utils/transaction-filters.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Inline styles using Radix Themes tokens
+// ---------------------------------------------------------------------------------------------------------------------
+
+const rowBaseStyle = {}
+
+const searchMatchRowStyle = { backgroundColor: 'var(--accent-2)' }
+
+const highlightedRowStyle = { backgroundColor: 'var(--accent-3)' }
+
+const payeeInfoStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
+
+const payeeNameStyle = { color: 'var(--gray-12)' }
+
+const payeeMemoStyle = { color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }
+
+const dateInfoStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
+
+const dateStyle = { color: 'var(--gray-12)' }
+
+const relativeTimeStyle = { color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }
+
+const searchHighlightStyle = { backgroundColor: 'var(--yellow-3)', borderRadius: 'var(--radius-1)', padding: '0 2px' }
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Calculate running balances for transaction list
@@ -72,18 +91,54 @@ const formatAmount = amount => (amount >= 0 ? `+$${amount.toFixed(2)}` : `-$${Ma
 const formatBalance = balance => `$${balance.toFixed(2)}`
 
 /*
- * Get amount style class for display
+ * Format date for display
  *
- * @sig getAmountStyle :: Number -> String
+ * @sig formatDate :: String -> String
  */
-const getAmountStyle = amount => (amount >= 0 ? styles.amountPositive : styles.amountNegative)
+const formatDate = dateString => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
 /*
- * Get balance style class for display
+ * Get relative time from date
  *
- * @sig getBalanceStyle :: Number -> String
+ * @sig getRelativeTime :: String -> String
  */
-const getBalanceStyle = balance => (balance >= 0 ? styles.balancePositive : styles.balanceNegative)
+const getRelativeTime = dateString => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return '1 day ago'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7)
+        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`
+    }
+    if (diffDays < 365) {
+        const months = Math.floor(diffDays / 30)
+        return months === 1 ? '1 month ago' : `${months} months ago`
+    }
+    const years = Math.floor(diffDays / 365)
+    return years === 1 ? '1 year ago' : `${years} years ago`
+}
+
+/*
+ * Get amount style for display
+ *
+ * @sig getAmountStyle :: Number -> Object
+ */
+const getAmountStyle = amount => ({ color: amount >= 0 ? 'var(--green-11)' : 'var(--red-11)', fontWeight: '500' })
+
+/*
+ * Get balance style for display
+ *
+ * @sig getBalanceStyle :: Number -> Object
+ */
+const getBalanceStyle = balance => ({ color: balance >= 0 ? 'var(--green-11)' : 'var(--red-11)', fontWeight: '500' })
 
 /*
  * Get search matches within a specific field for highlighting
@@ -128,7 +183,7 @@ const getFieldSearchMatches = (fieldValue, searchQuery) => {
  */
 const HighlightedText = ({ text, searchQuery }) => {
     const possiblyHighlightRow = (match, index) => (
-        <span key={index} className={match.isMatch ? styles.searchHighlight : undefined}>
+        <span key={index} style={match.isMatch ? searchHighlightStyle : undefined}>
             {match.text}
         </span>
     )
@@ -150,7 +205,6 @@ const HighlightedText = ({ text, searchQuery }) => {
  *         memo: String?,
  *         cleared: String?,
  *         category: String?,
- *         address: String?,
  *         amount: Number,
  *         runningBalance: Number
  *     }
@@ -164,48 +218,46 @@ const renderTransactionRow =
         const handleRowClick = () => onTransactionClick && onTransactionClick(transaction)
         const isSearchMatch = transactionMatchesSearch(transaction, searchQuery)
 
-        // Build className based on row state
-        let rowClassName = styles.transactionRow
-        if (isSearchMatch) rowClassName += ` ${styles.searchMatchRow}`
-        if (isHighlighted) rowClassName += ` ${styles.highlightedRow}`
+        // Build style object based on row state
+        const rowStyle = {
+            ...rowBaseStyle,
+            ...(isSearchMatch && searchMatchRowStyle),
+            ...(isHighlighted && highlightedRowStyle),
+        }
 
         return (
-            <VirtualTable.Row onClick={handleRowClick} className={rowClassName}>
-                <VirtualTable.Cell columnIndex={0}>
-                    <HighlightedText
-                        text={String(transaction.transactionNumber || transaction.id)}
-                        searchQuery={searchQuery}
-                    />
+            <VirtualTable.Row onClick={handleRowClick} style={rowStyle}>
+                <VirtualTable.Cell width="110px">
+                    <div style={dateInfoStyle}>
+                        <div style={dateStyle}>
+                            <HighlightedText text={formatDate(transaction.date)} searchQuery={searchQuery} />
+                        </div>
+                        <div style={relativeTimeStyle}>{getRelativeTime(transaction.date)}</div>
+                    </div>
                 </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={1}>
-                    <HighlightedText text={transaction.date} searchQuery={searchQuery} />
-                </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={2}>
+                <VirtualTable.Cell width="70px">
                     <HighlightedText text={transaction.number || ''} searchQuery={searchQuery} />
                 </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={3}>
-                    <div className={styles.payeeInfo}>
-                        <div className={styles.payeeName}>
+                <VirtualTable.Cell flex={1}>
+                    <div style={payeeInfoStyle}>
+                        <div style={payeeNameStyle}>
                             <HighlightedText text={transaction.payee || 'Unknown Payee'} searchQuery={searchQuery} />
                         </div>
-                        <div className={styles.payeeMemo}>
+                        <div style={payeeMemoStyle}>
                             <HighlightedText text={transaction.memo || ''} searchQuery={searchQuery} />
                         </div>
                     </div>
                 </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={4}>
+                <VirtualTable.Cell width="60px" textAlign="center">
                     <HighlightedText text={transaction.cleared || ''} searchQuery={searchQuery} />
                 </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={5}>
+                <VirtualTable.Cell width="140px">
                     <HighlightedText text={transaction.category || ''} searchQuery={searchQuery} />
                 </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={6}>
-                    <HighlightedText text={transaction.address || ''} searchQuery={searchQuery} />
-                </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={7} className={getAmountStyle(transaction.amount)}>
+                <VirtualTable.Cell width="100px" textAlign="right" style={getAmountStyle(transaction.amount)}>
                     <HighlightedText text={formatAmount(transaction.amount)} searchQuery={searchQuery} />
                 </VirtualTable.Cell>
-                <VirtualTable.Cell columnIndex={8} className={getBalanceStyle(transaction.runningBalance)}>
+                <VirtualTable.Cell width="100px" textAlign="right" style={getBalanceStyle(transaction.runningBalance)}>
                     {formatBalance(transaction.runningBalance)}
                 </VirtualTable.Cell>
             </VirtualTable.Row>
@@ -220,13 +272,11 @@ const renderTransactionRow =
  */
 // prettier-ignore
 const transactionColumns = [
-    { width: '80px' , title: 'ID'          , textAlign: 'right' },
-    { width: '90px' , title: 'Date'        , textAlign: 'left'  },
+    { width: '110px', title: 'Date'        , textAlign: 'left'  },
     { width: '70px' , title: 'Number'      , textAlign: 'left'  },
     { flex: 1       , title: 'Payee / Memo', textAlign: 'left'  },
     { width: '60px' , title: 'Cleared'     , textAlign: 'center'},
     { width: '140px', title: 'Category'    , textAlign: 'left'  },
-    { width: '120px', title: 'Address'     , textAlign: 'left'  },
     { width: '100px', title: 'Amount'      , textAlign: 'right' },
     { width: '100px', title: 'Balance'     , textAlign: 'right' },
 ]
@@ -253,7 +303,18 @@ const TransactionRegister = React.forwardRef(
 
         return (
             <VirtualTable.Root ref={ref} height={height} columns={transactionColumns} {...props}>
-                <VirtualTable.Header />
+                <VirtualTable.Header>
+                    {transactionColumns.map((column, index) => (
+                        <VirtualTable.HeaderCell
+                            key={index}
+                            width={column.width}
+                            flex={column.flex}
+                            textAlign={column.textAlign}
+                        >
+                            {column.title}
+                        </VirtualTable.HeaderCell>
+                    ))}
+                </VirtualTable.Header>
                 <VirtualTable.Body
                     rowCount={transactionsWithBalance.length}
                     rowHeight={72}
