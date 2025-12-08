@@ -86,7 +86,7 @@ const VirtualScroller = React.forwardRef(
                 background: backgroundColor,
             }
 
-            const props = { position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }
+            const props = { position: 'absolute', top: 0, left: 0, height: `${vRow.size}px`, width: '100%' }
 
             return (
                 <Box key={vRow.key} ref={onMountOrUnmount} {...props} style={style}>
