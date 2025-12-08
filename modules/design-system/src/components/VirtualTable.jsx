@@ -124,7 +124,7 @@ const Body = React.forwardRef(({ rowHeight = 40, renderRow, ...virtualScrollerPr
  * Row component for table
  */
 const Row = ({ children, style = {} }) => (
-    <Flex align="center" p="2" gap="2" style={style}>
+    <Flex align="start" p="2" gap="2" style={style}>
         {children}
     </Flex>
 )
