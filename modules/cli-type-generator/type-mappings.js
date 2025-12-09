@@ -10,6 +10,7 @@ const REPO_ROOT = resolve(__dirname, '../..')
 const sources = {
     curbMap        : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
+    quickenWebApp  : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
     typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
 
@@ -17,6 +18,7 @@ const sources = {
 const targets = {
     curbMap        : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
+    quickenWebApp  : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
     typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
 
@@ -53,8 +55,12 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite],
-    
-    
+
+
+    // quicken-web-app
+    [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
+
+
     // for the cli-type-generator itself (all internal types)
     [`${sources.typesGeneration}/field-type.type.js`]     : [targets.typesGeneration],
     [`${sources.typesGeneration}/function-info.type.js`]  : [targets.typesGeneration],

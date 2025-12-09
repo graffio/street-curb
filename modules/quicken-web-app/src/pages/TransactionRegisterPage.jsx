@@ -10,10 +10,11 @@ import {
     useChannel,
 } from '@graffio/design-system'
 import React, { useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { post } from '../commands/post.js'
 import { TransactionRegister } from '../components/index.js'
-import { resetTransactionFilters, setTransactionFilter } from '../store/actions.js'
 import * as S from '../store/selectors.js'
+import { Action } from '../types/action.js'
 import { generateParentCategories } from '../utils/category-hierarchy.js'
 import { generateRealisticTransactions } from '../utils/mock-transaction-generator.js'
 import {
@@ -182,7 +183,6 @@ const TransactionFiltersCard = ({
  *     }
  */
 const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBalance = 5000, height = '100%' }) => {
-    const dispatch = useDispatch()
     const [, setLayout] = useChannel(layoutChannel)
 
     const dateRange = useSelector(S.dateRange)
@@ -216,23 +216,23 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
         .map(({ index }) => index)
 
     // Function definitions
-    const handleClearFilters = () => dispatch(resetTransactionFilters())
+    const handleClearFilters = () => post(Action.ResetTransactionFilters())
 
     const moveToNextRow = () => {
         const maxIndex = filteredTransactions.length - 1
-        dispatch(setTransactionFilter({ currentRowIndex: currentRowIndex >= maxIndex ? 0 : currentRowIndex + 1 }))
+        post(Action.SetTransactionFilter({ currentRowIndex: currentRowIndex >= maxIndex ? 0 : currentRowIndex + 1 }))
     }
 
     const moveToPreviousRow = () => {
         const maxIndex = filteredTransactions.length - 1
-        dispatch(setTransactionFilter({ currentRowIndex: currentRowIndex <= 0 ? maxIndex : currentRowIndex - 1 }))
+        post(Action.SetTransactionFilter({ currentRowIndex: currentRowIndex <= 0 ? maxIndex : currentRowIndex - 1 }))
     }
 
     const handlePreviousMatch = () => {
         if (searchMatches.length > 0) {
             // Wrap to last match if at first match, otherwise go to previous
             const newIndex = currentSearchIndex === 0 ? searchMatches.length - 1 : currentSearchIndex - 1
-            dispatch(setTransactionFilter({ currentSearchIndex: newIndex }))
+            post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
         }
     }
 
@@ -240,17 +240,15 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
         if (searchMatches.length > 0) {
             // Wrap to first match if at last match, otherwise go to next
             const newIndex = currentSearchIndex === searchMatches.length - 1 ? 0 : currentSearchIndex + 1
-            dispatch(setTransactionFilter({ currentSearchIndex: newIndex }))
+            post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
         }
     }
 
-    const handleCategoryAdd = category => {
-        dispatch(setTransactionFilter({ selectedCategories: [...selectedCategories, category] }))
-    }
+    const handleCategoryAdd = category =>
+        post(Action.SetTransactionFilter({ selectedCategories: [...selectedCategories, category] }))
 
-    const handleCategoryRemove = category => {
-        dispatch(setTransactionFilter({ selectedCategories: selectedCategories.filter(c => c !== category) }))
-    }
+    const handleCategoryRemove = category =>
+        post(Action.SetTransactionFilter({ selectedCategories: selectedCategories.filter(c => c !== category) }))
 
     // Keyboard navigation handler
     const handleKeyDown = event => {
@@ -261,7 +259,7 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
         // Keep currentRowIndex for browse mode
         if (event.key === 'Escape') {
             event.preventDefault()
-            if (searchQuery) dispatch(setTransactionFilter({ searchQuery: '', currentSearchIndex: 0 }))
+            if (searchQuery) post(Action.SetTransactionFilter({ searchQuery: '', currentSearchIndex: 0 }))
             return
         }
 
@@ -277,9 +275,8 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
         if (event.key === 'ArrowUp') inSearchMode ? handlePreviousMatch() : moveToPreviousRow()
     }
 
-    const setupLayoutEffect = () => {
+    const setupLayoutEffect = () =>
         setLayout({ title: 'Checking Account', subtitle: 'View and filter your checking account transactions' })
-    }
 
     const setupInitialDateRangeEffect = () => {
         if (dateRangeKey === 'lastTwelveMonths' && !dateRange) {
@@ -287,7 +284,7 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
             const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
             const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-            dispatch(setTransactionFilter({ dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
+            post(Action.SetTransactionFilter({ dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
         }
     }
 
@@ -295,7 +292,7 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
     useEffect(setupLayoutEffect, [setLayout])
 
     // Apply initial date range for "lastTwelveMonths"
-    useEffect(setupInitialDateRangeEffect, [dateRangeKey, dateRange, dispatch])
+    useEffect(setupInitialDateRangeEffect, [dateRangeKey, dateRange])
 
     // Add keyboard event listener
     useEffect(() => {
@@ -329,13 +326,13 @@ const TransactionRegisterPage = ({ transactions = fakeTransactions, startingBala
                 allCategories={allCategories}
                 searchMatches={searchMatches}
                 filteredTransactionsCount={filteredTransactions.length}
-                onDateRangeChange={dateRange => dispatch(setTransactionFilter({ dateRange }))}
-                onDateRangeKeyChange={dateRangeKey => dispatch(setTransactionFilter({ dateRangeKey }))}
-                onCustomStartDateChange={customStartDate => dispatch(setTransactionFilter({ customStartDate }))}
-                onCustomEndDateChange={customEndDate => dispatch(setTransactionFilter({ customEndDate }))}
-                onFilterQueryChange={e => dispatch(setTransactionFilter({ filterQuery: e.target.value }))}
+                onDateRangeChange={dateRange => post(Action.SetTransactionFilter({ dateRange }))}
+                onDateRangeKeyChange={dateRangeKey => post(Action.SetTransactionFilter({ dateRangeKey }))}
+                onCustomStartDateChange={customStartDate => post(Action.SetTransactionFilter({ customStartDate }))}
+                onCustomEndDateChange={customEndDate => post(Action.SetTransactionFilter({ customEndDate }))}
+                onFilterQueryChange={e => post(Action.SetTransactionFilter({ filterQuery: e.target.value }))}
                 onSearchQueryChange={e =>
-                    dispatch(setTransactionFilter({ searchQuery: e.target.value, currentSearchIndex: 0 }))
+                    post(Action.SetTransactionFilter({ searchQuery: e.target.value, currentSearchIndex: 0 }))
                 }
                 onCategoryAdd={handleCategoryAdd}
                 onCategoryRemove={handleCategoryRemove}
