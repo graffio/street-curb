@@ -98,13 +98,17 @@ const VirtualScroller = React.forwardRef(
         const scrollData = useVirtualScroll({ rowCount, rowHeight, overscan, enableSnap, onScroll, onRowMount })
         const { scrollRef, virtualItems, totalHeight, handleRowMount, scrollToIndex } = scrollData
 
+        // Auto-scroll to highlighted row when it changes
+        React.useEffect(() => {
+            if (highlightedRow != null) scrollToIndex(highlightedRow, { behavior: 'smooth', block: 'center' })
+        }, [highlightedRow, scrollToIndex])
+
         // Expose scrollToIndex method via ref
         React.useImperativeHandle(
             ref,
             () => ({
-                scrollToRow: (index, options = { behavior: 'smooth', block: 'center' }) => {
-                    scrollToIndex(index, options)
-                },
+                scrollToRow: (index, options = { behavior: 'smooth', block: 'center' }) =>
+                    scrollToIndex(index, options),
             }),
             [scrollToIndex],
         )

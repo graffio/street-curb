@@ -23,7 +23,7 @@
  * - Used by TransactionRegister.stories.jsx for Storybook examples
  * - Provides test data for TransactionRegister component performance testing
  * - Supports both large datasets (10,000+ transactions) and small test sets
- * - Generates data compatible with transaction-register-channel structure
+ * - Returns LookupTable<Transaction> for Redux store
  *
  * FUNCTIONAL PROGRAMMING APPROACH:
  * - Pure functions for all data transformations
@@ -31,6 +31,9 @@
  * - No side effects or global state mutations
  * - Composable functions for different transaction types
  */
+
+import LookupTable from '@graffio/functional/src/lookup-table.js'
+import { Transaction } from '../types/transaction.js'
 
 /*
  * Sample payee data with realistic amounts and transaction patterns
@@ -216,61 +219,44 @@ const filterPayeesByBalance = (payees, currentBalance) => {
 }
 
 /*
- * Create a single transaction from payee template and context
+ * Create a single Transaction.Bank from payee template and context
  *
- * @sig createTransaction :: (PayeeTemplate, String, Number, Number, Number) -> Transaction
- *     Transaction = {
- *         id: Number,
- *         transactionNumber: Number,
- *         accountId: Number,
- *         amount: Number,
- *         date: String,
- *         transactionType: String,
- *         payee: String,
- *         categoryId: Number,
- *         category: String,
- *         memo: String,
- *         cleared: String,
- *         address: String?,
- *         number: String?
- *     }
+ * @sig createTransaction :: (PayeeTemplate, String, Number, Number, Number) -> Transaction.Bank
  */
-const createTransaction = (payeeData, dateStr, transactionId, amount, transactionNumber) => ({
-    id: transactionId,
-    transactionNumber, // Stable sequential identifier for sorting/filtering
-    accountId: 1,
-    amount,
-    date: dateStr,
-    transactionType: 'bank',
-    payee: payeeData.name,
-    categoryId: 1,
-    category: payeeData.category,
-    memo: 'Auto-generated transaction',
-    cleared: Math.random() > 0.1 ? 'R' : '', // 90% reconciled
-    address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
-    number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
-})
+const createTransaction = (payeeData, dateStr, transactionId, amount, transactionNumber) =>
+    Transaction.Bank.from({
+        accountId: 1, // accountId
+        amount,
+        date: dateStr,
+        id: transactionId,
+        transactionType: 'bank',
+        address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
+        categoryId: 1,
+        cleared: Math.random() > 0.1 ? 'R' : '', // (90% reconciled)
+        memo: 'Auto-generated transaction', //
+        number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
+        payee: payeeData.name,
+    })
 
 /*
- * Create a follow-up transaction from cluster data
+ * Create a follow-up Transaction.Bank from cluster data
  *
- * @sig createFollowUpTransaction :: (FollowUpTransaction, String, Number, Number, Number) -> Transaction
+ * @sig createFollowUpTransaction :: (FollowUpTransaction, String, Number, Number, Number) -> Transaction.Bank
  */
-const createFollowUpTransaction = (followUp, dateStr, transactionId, amount, transactionNumber) => ({
-    id: transactionId,
-    transactionNumber, // Stable sequential identifier for sorting/filtering
-    accountId: 1,
-    amount,
-    date: dateStr,
-    transactionType: 'bank',
-    payee: followUp.name,
-    categoryId: 1,
-    category: followUp.category,
-    memo: 'Auto-generated cluster transaction',
-    cleared: Math.random() > 0.1 ? 'R' : '',
-    address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
-    number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
-})
+const createFollowUpTransaction = (followUp, dateStr, transactionId, amount, transactionNumber) =>
+    Transaction.Bank.from({
+        accountId: 1, //
+        amount,
+        date: dateStr,
+        id: transactionId,
+        transactionType: 'bank',
+        addresss: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
+        categoryId: followUp.category.id,
+        cleared: Math.random() > 0.1 ? 'R' : '',
+        memo: 'Auto-generated cluster transaction',
+        number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
+        payee: followUp.name,
+    })
 
 /*
  * Generate transactions for a single date with balance management
@@ -343,7 +329,7 @@ const generateTransactionsForDate = (dateStr, dateTimes, currentBalance, transac
 /*
  * Generate realistic financial transactions with clustering and balance management
  *
- * @sig generateRealisticTransactions :: Number -> [Transaction]
+ * @sig generateRealisticTransactions :: Number -> LookupTable<Transaction>
  */
 const generateRealisticTransactions = (count = 10000) => {
     const dates = generateTransactionDates(count)
@@ -363,7 +349,7 @@ const generateRealisticTransactions = (count = 10000) => {
         transactionNumber = result.newTransactionNumber
     }
 
-    return allTransactions.slice(0, count) // Ensure we don't exceed requested count
+    return LookupTable(allTransactions.slice(0, count), Transaction, 'id')
 }
 
 export { generateRealisticTransactions }

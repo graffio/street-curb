@@ -11,7 +11,8 @@
         "test:debug": "playwright test --debug",
         "storybook": "storybook dev -p 6007",
         "build-storybook": "storybook build",
-        "tap": " TAP_DISABLE_COVERAGE=1 tap **/*.tap.js -R tap | tap-mocha-reporter spec"
+        "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
+        "tap:file": "../../bash/run-tap.sh"
     },
     "dependencies": {
         "@graffio/design-system": "0.1.0",

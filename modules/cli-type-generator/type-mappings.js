@@ -10,6 +10,8 @@ const REPO_ROOT = resolve(__dirname, '../..')
 const sources = {
     curbMap        : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
+    designSystem   : `${REPO_ROOT}/modules/design-system/type-definitions`,
+    functional     : `${REPO_ROOT}/modules/functional/type-definitions`,
     quickenWebApp  : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
     typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
@@ -18,6 +20,8 @@ const sources = {
 const targets = {
     curbMap        : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
+    designSystem   : `${REPO_ROOT}/modules/design-system/src/types`,
+    functional     : `${REPO_ROOT}/modules/functional/src/types`,
     quickenWebApp  : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
     typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
@@ -41,8 +45,17 @@ export const typeMappings = {
    
     // special case: source is just copied verbatim to target
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
-    
-    
+
+
+    // design-system (Format must come before ColumnDefinition since ColumnDefinition references Format)
+    [`${sources.designSystem}/format.type.js`]            : [targets.designSystem],
+    [`${sources.designSystem}/column-definition.type.js`] : [targets.designSystem],
+
+
+    // functional
+    [`${sources.functional}/filter-spec.type.js`]         : [targets.functional],
+
+
     // quicken-tools domain
     [`${sources.cliQifToSqlite}/account.type.js`]         : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/category.type.js`]        : [targets.cliQifToSqlite],
@@ -54,10 +67,11 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite],
+    
+    // multiple targets
+    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite, targets.quickenWebApp],
 
-
-    // quicken-web-app
+    // quicken-web-app (Transaction must come before Action since Action references Transaction)
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 

@@ -1,0 +1,63 @@
+{
+    "feature": "Table infrastructure refactor",
+    "goal": "Extract filtering, formatting, and column definitions into reusable tagged types to support polymorphic transaction registers and future table-based reports",
+    "templates_used": ["implement-feature.md", "add-redux-action.md", "commit-changes.md"],
+    "steps": [
+        { "step": 1, "action": "Add functional and design-system to type-mappings.js", "done": true },
+        { "step": 2, "action": "Write failing test for applyFilter in modules/functional/test/apply-filter.tap.js", "done": true },
+        { "step": 3, "action": "Create modules/functional/type-definitions/filter-spec.type.js", "done": true },
+        { "step": 4, "action": "Run yarn types:generate for filter-spec.type.js", "done": true },
+        { "step": 5, "action": "Implement applyFilter in modules/functional/src/apply-filter.js", "done": true },
+        { "step": 6, "action": "Run tests, confirm pass", "done": true },
+        { "step": 7, "action": "Create modules/design-system/type-definitions/format.type.js (no tests - tests type generator not design-system)", "done": true },
+        { "step": 8, "action": "Run yarn types:generate for format.type.js", "done": true },
+        { "step": 9, "action": "Create modules/design-system/type-definitions/column-definition.type.js", "done": true },
+        { "step": 10, "action": "Run yarn types:generate for column-definition.type.js", "done": true },
+        { "step": 11, "action": "Write test in modules/quicken-web-app/test/formatters/apply-format.tap.js", "done": true },
+        { "step": 12, "action": "Create modules/quicken-web-app/src/formatters/apply-format.js", "done": true },
+        { "step": 13, "action": "Run applyFormat tests, confirm pass", "done": true },
+        { "step": 14, "action": "Create modules/quicken-web-app/src/columns/bank-transaction-columns.js", "done": true },
+        { "step": 15, "action": "Create modules/quicken-web-app/src/columns/investment-transaction-columns.js", "done": true },
+        { "step": 16, "action": "Create modules/quicken-web-app/src/columns/index.js", "done": true },
+
+        { "step": 17, "action": "Refactor TransactionRegister.jsx: add columns prop, iterate columns for header/cells, use applyFormat. Keep calculateRunningBalances. Remove formatAmount, formatDate, getRelativeTime, getAmountStyle, getBalanceStyle (now in applyFormat). Keep HighlightedText for now.", "done": true },
+        { "step": 18, "action": "Extract TransactionFiltersCard from TransactionRegisterPage.jsx to its own file", "done": true },
+        { "step": 19, "action": "Refactor TransactionRegisterPage.jsx to use FilterSpec (optional - deferred)", "done": true },
+        { "step": 20, "action": "Run all tests, fix failures", "done": true },
+        { "step": 21, "action": "Commit with descriptive message", "done": true }
+    ],
+    "verification": [
+        "yarn types:generate succeeds",
+        "All tests pass (functional, design-system, quicken-web-app)",
+        "TransactionRegister renders Bank transactions correctly",
+        "No lint errors"
+    ],
+    "notes": [
+        "BUG FIX: Generated filter-spec.js had self-import line that caused 'already declared' error - manually removed import { FilterSpec } from './filter-spec.js'",
+        "DECISION: No tests for Format/ColumnDefinition in design-system - they only test type generator, behavior tested in applyFormat",
+        "DECISION: applyFormat lives in quicken-web-app (not design-system) because it has app-specific custom formatters like signedAmount",
+        "DECISION: FilterSpec lives in @graffio/functional because filtering is data transformation, not UI",
+        "Defer: HighlightedText move to design-system",
+        "Defer: Converting TransactionRegisterPage filter state to FilterSpec (complex, may not be worth it for UI state)"
+    ],
+    "files_created": [
+        "modules/cli-type-generator/type-mappings.js (modified)",
+        "modules/functional/type-definitions/filter-spec.type.js",
+        "modules/functional/src/types/filter-spec.js (generated)",
+        "modules/functional/src/apply-filter.js",
+        "modules/functional/test/apply-filter.tap.js",
+        "modules/design-system/type-definitions/format.type.js",
+        "modules/design-system/type-definitions/column-definition.type.js",
+        "modules/design-system/src/types/format.js (generated)",
+        "modules/design-system/src/types/column-definition.js (generated)",
+        "modules/quicken-web-app/src/formatters/apply-format.js",
+        "modules/quicken-web-app/test/formatters/apply-format.tap.js",
+        "modules/quicken-web-app/src/columns/bank-transaction-columns.js",
+        "modules/quicken-web-app/src/columns/investment-transaction-columns.js",
+        "modules/quicken-web-app/src/columns/index.js",
+        "modules/quicken-web-app/src/components/TransactionRegister.jsx (refactored)",
+        "modules/quicken-web-app/src/components/TransactionFiltersCard.jsx (extracted)",
+        "modules/quicken-web-app/src/components/index.js (modified)",
+        "modules/quicken-web-app/src/pages/TransactionRegisterPage.jsx (refactored)"
+    ]
+}

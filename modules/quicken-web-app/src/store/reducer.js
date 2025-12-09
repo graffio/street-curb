@@ -1,10 +1,13 @@
 // ABOUTME: Root reducer for application state
-// ABOUTME: Manages transaction filter state and application initialization
+// ABOUTME: Manages transactions (LookupTable) and transaction filter state
 
+import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Action } from '../types/action.js'
+import { Transaction } from '../types/transaction.js'
 
 const initialState = {
     initialized: true,
+    transactions: LookupTable([], Transaction, 'id'),
     transactionFilters: {
         dateRange: null,
         dateRangeKey: 'lastTwelveMonths',
@@ -22,6 +25,7 @@ const rootReducer = (state = initialState, action) => {
     if (!Action.is(action.payload)) return state
 
     return action.payload.match({
+        LoadFile: ({ transactions }) => ({ ...state, transactions }),
         SetTransactionFilter: ({ payload }) => ({
             ...state,
             transactionFilters: { ...state.transactionFilters, ...payload },
