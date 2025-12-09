@@ -14,8 +14,38 @@ export default defineConfig([
     {
         files: ['**/*.{js,jsx}'],
         languageOptions: { globals: { browser: true } },
-        plugins: { react: eslintPluginReact },
+        plugins: {
+            react: eslintPluginReact,
+            custom: {
+                rules: {
+                    'arrow-expression-body': {
+                        meta: { type: 'suggestion', fixable: 'code' },
+                        create(context) {
+                            return {
+                                ArrowFunctionExpression(node) {
+                                    if (
+                                        node.body.type === 'BlockStatement' &&
+                                        node.body.body.length === 1 &&
+                                        node.body.body[0].type === 'ExpressionStatement'
+                                    )
+                                        context.report({
+                                            node,
+                                            message: 'Unnecessary braces around single expression',
+                                            fix: fixer =>
+                                                fixer.replaceText(
+                                                    node.body,
+                                                    context.sourceCode.getText(node.body.body[0].expression),
+                                                ),
+                                        })
+                                },
+                            }
+                        },
+                    },
+                },
+            },
+        },
         rules: {
+            'custom/arrow-expression-body': 'error',
             semi: 'error',
             'react/jsx-uses-react': 'error',
             'react/jsx-uses-vars': 'error',
