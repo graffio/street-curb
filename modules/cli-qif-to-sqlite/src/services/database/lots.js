@@ -1,36 +1,52 @@
 import { filter, map } from '@graffio/functional'
+import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Lot } from '../../types/index.js'
 
 const EPSILON = 1e-10
 
 /*
- * Insert lot into database
- * @sig insertLot :: (Database, Lot) -> Number
+ * Generate lot ID from key fields only (not entire object to avoid circular reference)
+ * @sig generateLotId :: Object -> String
  */
-const insertLot = (db, lot) => {
+const generateLotId = lotData =>
+    `lot_${hashFields({
+        accountId: lotData.accountId,
+        securityId: lotData.securityId,
+        purchaseDate: lotData.purchaseDate,
+        createdByTransactionId: lotData.createdByTransactionId,
+    })}`
+
+/*
+ * Insert lot into database
+ * @sig insertLot :: (Database, Object) -> String
+ */
+const insertLot = (db, lotData) => {
+    // Generate ID from key fields, then validate complete lot
+    const id = generateLotId(lotData)
+    const lot = Lot.from({ ...lotData, id })
+
     if (!Lot.is(lot)) throw new Error(`Expected Lot; found: ${JSON.stringify(lot)}`)
 
     const statement = `
-        INSERT INTO lots (account_id, security_id, purchase_date, quantity, cost_basis,
+        INSERT INTO lots (id, account_id, security_id, purchase_date, quantity, cost_basis,
             remaining_quantity, closed_date, created_by_transaction_id, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
 
-    const result = db
-        .prepare(statement)
-        .run(
-            lot.accountId,
-            lot.securityId,
-            lot.purchaseDate,
-            lot.quantity,
-            lot.costBasis,
-            lot.remainingQuantity,
-            lot.closedDate || null,
-            lot.createdByTransactionId,
-            lot.createdAt,
-        )
+    db.prepare(statement).run(
+        id,
+        lot.accountId,
+        lot.securityId,
+        lot.purchaseDate,
+        lot.quantity,
+        lot.costBasis,
+        lot.remainingQuantity,
+        lot.closedDate || null,
+        lot.createdByTransactionId,
+        lot.createdAt,
+    )
 
-    return result.lastInsertRowid
+    return id
 }
 
 /*
@@ -260,7 +276,8 @@ const processInvestmentTransaction = (db, transaction) => {
         if (sellActions.includes(action)) return processSellTransaction(db, transaction, account, security)
         if (sharesOutActions.includes(action)) return processSharesOutTransaction(db, transaction, account, security)
         if (splitActions.includes(action)) return processStockSplitTransaction(db, transaction, account, security)
-        if (action === 'Grant') if (action === 'Vest') return processVestOptions(transaction, account, security, db)
+        // Grant and Vest both create option lots (Grant at 0 cost, Vest converts to owned)
+        if (action === 'Grant' || action === 'Vest') return processVestOptions(transaction, account, security, db)
         if (action === 'Exercise') return processExerciseOptions(transaction, security, account, db)
     }
 
@@ -281,22 +298,20 @@ const processInvestmentTransaction = (db, transaction) => {
 const isSignificantQuantity = quantity => Math.abs(quantity) > EPSILON
 
 /*
- * Create new lot from transaction
- * @sig createLotFromTransaction :: (Object, Object, Object, Number, Number) -> Lot
+ * Create new lot data from transaction (raw object, not typed)
+ * @sig createLotFromTransaction :: (Object, Object, Object, Number, Number) -> Object
  */
-const createLotFromTransaction = (transaction, account, security, quantity, costBasis) =>
-    Lot.from({
-        id: 0,
-        accountId: account.id,
-        securityId: security.id,
-        purchaseDate: formatDate(transaction.date),
-        quantity,
-        costBasis,
-        remainingQuantity: quantity,
-        closedDate: null,
-        createdByTransactionId: transaction.id,
-        createdAt: new Date().toISOString(),
-    })
+const createLotFromTransaction = (transaction, account, security, quantity, costBasis) => ({
+    accountId: account.id,
+    securityId: security.id,
+    purchaseDate: formatDate(transaction.date),
+    quantity,
+    costBasis,
+    remainingQuantity: quantity,
+    closedDate: null,
+    createdByTransactionId: transaction.id,
+    createdAt: new Date().toISOString(),
+})
 
 /*
  * Helper to process lots in either direction (long or short)

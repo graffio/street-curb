@@ -1,7 +1,7 @@
 /** {@link module:DailyPortfolio} */
 /*  DailyPortfolio generated from: modules/cli-qif-to-sqlite/type-definitions/daily-portfolio.type.js
  *
- *  accountId         : "Number",
+ *  accountId         : /^acc_[a-f0-9]{12}$/,
  *  accountName       : "String",
  *  date              : "String",
  *  cashBalance       : "Number",
@@ -32,7 +32,7 @@ const DailyPortfolio = function DailyPortfolio(
     const constructorName =
         'DailyPortfolio(accountId, accountName, date, cashBalance, totalMarketValue, totalCostBasis, unrealizedGainLoss, holdings)'
     R.validateArgumentLength(constructorName, 8, arguments)
-    R.validateNumber(constructorName, 'accountId', false, accountId)
+    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
     R.validateString(constructorName, 'accountName', false, accountName)
     R.validateString(constructorName, 'date', false, date)
     R.validateNumber(constructorName, 'cashBalance', false, cashBalance)

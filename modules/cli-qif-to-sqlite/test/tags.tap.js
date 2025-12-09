@@ -34,7 +34,7 @@ test('Tags Repository', t => {
             const tagId = insertTag(db, tagEntry)
 
             t.test('Then the tag is inserted with a valid ID', t => {
-                t.ok(tagId > 0, 'Tag ID should be positive')
+                t.match(tagId, /^tag_[a-f0-9]{12}$/, 'Tag ID should match pattern')
                 t.end()
             })
 
@@ -57,7 +57,7 @@ test('Tags Repository', t => {
             const tagId = insertTag(db, tagEntry)
 
             t.test('Then the tag is inserted successfully', t => {
-                t.ok(tagId > 0, 'Tag ID should be positive')
+                t.match(tagId, /^tag_[a-f0-9]{12}$/, 'Tag ID should match pattern')
                 t.end()
             })
 
@@ -149,7 +149,7 @@ test('Tags Repository', t => {
             t.test('And each tag has the correct structure', t => {
                 allTags.forEach(tag => {
                     t.ok(Tag.is(tag), 'Each item should be a Tag type')
-                    t.ok(typeof tag.id === 'number', 'Each tag should have a numeric ID')
+                    t.match(tag.id, /^tag_[a-f0-9]{12}$/, 'Each tag should have a valid ID')
                     t.ok(typeof tag.name === 'string', 'Each tag should have a string name')
                 })
                 t.end()
@@ -179,7 +179,7 @@ test('Tags Repository', t => {
 
             t.test('Then all tags are imported successfully', t => {
                 t.same(tagIds.length, 2, 'Should return 2 tag IDs')
-                tagIds.forEach(id => t.ok(id > 0, 'Each ID should be positive'))
+                tagIds.forEach(id => t.match(id, /^tag_[a-f0-9]{12}$/, 'Each ID should match pattern'))
                 t.end()
             })
 

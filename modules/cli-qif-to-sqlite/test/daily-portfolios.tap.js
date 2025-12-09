@@ -17,7 +17,7 @@ import {
     insertSecurity,
 } from '../src/services/database/index.js'
 
-import { Entry, Lot } from '../src/types/index.js'
+import { Entry } from '../src/types/index.js'
 
 test('Daily Portfolios', t => {
     t.test('Given a fresh database', t => {
@@ -127,9 +127,8 @@ test('Daily Portfolios', t => {
             })
             const buyTransactionId = insertInvestmentTransaction(db, buyTransaction, accountObj, securityObj)
 
-            // Create lot
-            const lot = Lot.from({
-                id: 1,
+            // Create lot - pass data object, let insertLot generate the ID
+            insertLot(db, {
                 accountId: accountObj.id,
                 securityId: securityObj.id,
                 purchaseDate: '2024-01-16',
@@ -139,7 +138,6 @@ test('Daily Portfolios', t => {
                 createdByTransactionId: buyTransactionId,
                 createdAt: new Date().toISOString(),
             })
-            insertLot(db, lot)
 
             // Add initial price
             const price1 = Entry.Price.from({

@@ -1,24 +1,31 @@
 import { map } from '@graffio/functional'
+import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Account, Entry } from '../../types/index.js'
 
 /*
+ * Generate deterministic account ID from name
+ * @sig generateAccountId :: String -> String
+ */
+const generateAccountId = name => `acc_${hashFields({ name })}`
+
+/*
  * Insert account into database
- * @sig insertAccount :: (Database, Entry.Account) -> Number
+ * @sig insertAccount :: (Database, Entry.Account) -> String
  */
 const insertAccount = (db, accountEntry) => {
     if (!Entry.Account.is(accountEntry))
         throw new Error(`Expected Entry.Account; found: ${JSON.stringify(accountEntry)}`)
 
+    const id = generateAccountId(accountEntry.name)
+
     // Check if account already exists
-    const existing = db
-        .prepare('SELECT id, type, description, credit_limit FROM accounts WHERE name = ?')
-        .get(accountEntry.name)
+    const existing = db.prepare('SELECT id, type, description, credit_limit FROM accounts WHERE id = ?').get(id)
 
     // prettier-ignore
     if (existing) {
         const { type, creditLimit, description } = accountEntry
         const conflicts = []
-        
+
         if (type                      && existing.type         !== type)        conflicts.push(`type: existing="${existing.type}", new="${type}"`)
         if (description               && existing.description  !== description) conflicts.push(`description: existing="${existing.description}", new="${description}"`)
         if (creditLimit !== undefined && existing.credit_limit !== creditLimit) conflicts.push(`credit_limit: existing=${existing.credit_limit}, new=${creditLimit}`)
@@ -28,14 +35,14 @@ const insertAccount = (db, accountEntry) => {
     }
 
     const { name, type, description = null, creditLimit = null } = accountEntry
-    const stmt = db.prepare(`INSERT INTO accounts (name, type, description, credit_limit) VALUES (?, ?, ?, ?)`)
-    const result = stmt.run(name, type, description, creditLimit)
-    return result.lastInsertRowid
+    const stmt = db.prepare(`INSERT INTO accounts (id, name, type, description, credit_limit) VALUES (?, ?, ?, ?, ?)`)
+    stmt.run(id, name, type, description, creditLimit)
+    return id
 }
 
 /*
  * Import accounts into database
- * @sig importAccounts :: (Database, [Entry.Account]) -> [Number]
+ * @sig importAccounts :: (Database, [Entry.Account]) -> [String]
  */
 const importAccounts = (db, accounts) => map(account => insertAccount(db, account), accounts)
 

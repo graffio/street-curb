@@ -1,25 +1,25 @@
 /*  Transaction generated from: modules/cli-qif-to-sqlite/type-definitions/transaction.type.js
  *
  *  Bank
- *      accountId      : "Number",
+ *      accountId      : /^acc_[a-f0-9]{12}$/,
  *      amount         : "Number",
  *      date           : "String",
  *      id             : /^txn_[a-f0-9]{12}(-\d+)?$/,
  *      transactionType: /^bank$/,
  *      address        : "String?",
- *      categoryId     : "Number?",
+ *      categoryId     : "String?",
  *      cleared        : "String?",
  *      memo           : "String?",
  *      number         : "String?",
  *      payee          : "String?"
  *  Investment
- *      accountId       : "Number",
+ *      accountId       : /^acc_[a-f0-9]{12}$/,
  *      date            : "String",
  *      id              : /^txn_[a-f0-9]{12}(-\d+)?$/,
  *      transactionType : /^investment$/,
  *      address         : "String?",
  *      amount          : "Number?",
- *      categoryId      : "Number?",
+ *      categoryId      : "String?",
  *      cleared         : "String?",
  *      commission      : "Number?",
  *      investmentAction: /^(Buy|BuyX|CGLong|CGShort|CvrShrt|Div|IntInc|MargInt|MiscExp|MiscInc|ReinvDiv|ReinvInt|ReinvLg|ReinvSh|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|XIn|XOut)$/,
@@ -27,7 +27,7 @@
  *      payee           : "String?",
  *      price           : "Number?",
  *      quantity        : "Number?",
- *      securityId      : "Number?"
+ *      securityId      : "String?"
  *
  */
 
@@ -89,13 +89,13 @@ const BankConstructor = function Bank(
     const constructorName =
         'Transaction.Bank(accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee)'
 
-    R.validateNumber(constructorName, 'accountId', false, accountId)
+    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
     R.validateNumber(constructorName, 'amount', false, amount)
     R.validateString(constructorName, 'date', false, date)
     R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'id', false, id)
     R.validateRegex(constructorName, /^bank$/, 'transactionType', false, transactionType)
     R.validateString(constructorName, 'address', true, address)
-    R.validateNumber(constructorName, 'categoryId', true, categoryId)
+    R.validateString(constructorName, 'categoryId', true, categoryId)
     R.validateString(constructorName, 'cleared', true, cleared)
     R.validateString(constructorName, 'memo', true, memo)
     R.validateString(constructorName, 'number', true, number)
@@ -191,13 +191,13 @@ const InvestmentConstructor = function Investment(
     const constructorName =
         'Transaction.Investment(accountId, date, id, transactionType, address, amount, categoryId, cleared, commission, investmentAction, memo, payee, price, quantity, securityId)'
 
-    R.validateNumber(constructorName, 'accountId', false, accountId)
+    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
     R.validateString(constructorName, 'date', false, date)
     R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'id', false, id)
     R.validateRegex(constructorName, /^investment$/, 'transactionType', false, transactionType)
     R.validateString(constructorName, 'address', true, address)
     R.validateNumber(constructorName, 'amount', true, amount)
-    R.validateNumber(constructorName, 'categoryId', true, categoryId)
+    R.validateString(constructorName, 'categoryId', true, categoryId)
     R.validateString(constructorName, 'cleared', true, cleared)
     R.validateNumber(constructorName, 'commission', true, commission)
     R.validateRegex(
@@ -211,7 +211,7 @@ const InvestmentConstructor = function Investment(
     R.validateString(constructorName, 'payee', true, payee)
     R.validateNumber(constructorName, 'price', true, price)
     R.validateNumber(constructorName, 'quantity', true, quantity)
-    R.validateNumber(constructorName, 'securityId', true, securityId)
+    R.validateString(constructorName, 'securityId', true, securityId)
 
     const result = Object.create(InvestmentPrototype)
     result.accountId = accountId

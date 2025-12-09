@@ -1,5 +1,8 @@
 import Database from 'better-sqlite3'
+import { readFileSync } from 'fs'
+import { dirname, join } from 'path'
 import { test } from 'tap'
+import { fileURLToPath } from 'url'
 import {
     getCurrentHoldings,
     getHoldingByAccountAndSecurity,
@@ -10,47 +13,45 @@ import {
     insertAccount,
     insertLot,
     insertSecurity,
+    insertInvestmentTransaction,
+    findAccountByName,
+    findSecurityByName,
 } from '../src/services/database/index.js'
 
-import { Entry, Lot } from '../src/types/index.js'
+import { Entry } from '../src/types/index.js'
+
+/*
+ * Create test database with proper schema
+ */
+const createTestDatabase = () => {
+    const db = new Database(':memory:')
+    const __filename = fileURLToPath(import.meta.url)
+    const __dirname = dirname(__filename)
+    const schemaPath = join(__dirname, '..', 'schema.sql')
+    const schema = readFileSync(schemaPath, 'utf8')
+    db.exec(schema)
+    return db
+}
+
+/*
+ * Helper to create test transaction and return its ID
+ */
+const createTestTransaction = (db, account, security, date, action = 'Buy') => {
+    const transactionEntry = Entry.TransactionInvestment.from({
+        account: 'dummy',
+        date: new Date(date),
+        transactionType: action,
+        amount: -1000,
+        security: 'dummy',
+        quantity: 10,
+        price: 100,
+    })
+    return insertInvestmentTransaction(db, transactionEntry, account, security)
+}
 
 test('Holdings Repository', t => {
     t.test('Given a fresh database', t => {
-        const db = new Database(':memory:')
-
-        // Create schema
-        db.exec(`
-            CREATE TABLE accounts (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                description TEXT,
-                credit_limit REAL
-            );
-            
-            CREATE TABLE securities (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                symbol TEXT,
-                type TEXT,
-                goal TEXT
-            );
-            
-            CREATE TABLE lots (
-                id INTEGER PRIMARY KEY,
-                account_id INTEGER NOT NULL,
-                security_id INTEGER NOT NULL,
-                purchase_date TEXT NOT NULL,
-                quantity REAL NOT NULL,
-                cost_basis REAL NOT NULL,
-                remaining_quantity REAL NOT NULL,
-                closed_date TEXT,
-                created_by_transaction_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (account_id) REFERENCES accounts(id),
-                FOREIGN KEY (security_id) REFERENCES securities(id)
-            );
-        `)
+        const db = createTestDatabase()
 
         t.test('When I get current holdings on a fresh database', t => {
             const holdings = getCurrentHoldings(db)
@@ -71,19 +72,19 @@ test('Holdings Repository', t => {
         })
 
         t.test('When I get holdings by account on a fresh database', t => {
-            const holdings = getHoldingsByAccount(db, 1)
+            const holdings = getHoldingsByAccount(db, 'acc_000000000001')
             t.same(holdings, [], 'Then I get an empty array')
             t.end()
         })
 
         t.test('When I get holdings by security on a fresh database', t => {
-            const holdings = getHoldingsBySecurity(db, 1)
+            const holdings = getHoldingsBySecurity(db, 'sec_000000000001')
             t.same(holdings, [], 'Then I get an empty array')
             t.end()
         })
 
         t.test('When I get specific holding by account and security on a fresh database', t => {
-            const holding = getHoldingByAccountAndSecurity(db, 1, 1)
+            const holding = getHoldingByAccountAndSecurity(db, 'acc_000000000001', 'sec_000000000001')
             t.same(holding, null, 'Then I get null')
             t.end()
         })
@@ -92,124 +93,85 @@ test('Holdings Repository', t => {
     })
 
     t.test('Given a database with lots', t => {
-        const db = new Database(':memory:')
+        const db = createTestDatabase()
 
-        // Create schema
-        db.exec(`
-            CREATE TABLE accounts (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                description TEXT,
-                credit_limit REAL
-            );
-            
-            CREATE TABLE securities (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                symbol TEXT,
-                type TEXT,
-                goal TEXT
-            );
-            
-            CREATE TABLE lots (
-                id INTEGER PRIMARY KEY,
-                account_id INTEGER NOT NULL,
-                security_id INTEGER NOT NULL,
-                purchase_date TEXT NOT NULL,
-                quantity REAL NOT NULL,
-                cost_basis REAL NOT NULL,
-                remaining_quantity REAL NOT NULL,
-                closed_date TEXT,
-                created_by_transaction_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (account_id) REFERENCES accounts(id),
-                FOREIGN KEY (security_id) REFERENCES securities(id)
-            );
-        `)
-
-        // Insert test data
-        const account1 = insertAccount(
+        // Insert accounts
+        insertAccount(
             db,
             Entry.Account.from({ name: 'Brokerage', type: 'Investment', description: 'Main brokerage account' }),
         )
-        const account2 = insertAccount(
+        insertAccount(
             db,
             Entry.Account.from({ name: 'IRA', type: 'Investment', description: 'Individual retirement account' }),
         )
+        const account1 = findAccountByName(db, 'Brokerage')
+        const account2 = findAccountByName(db, 'IRA')
 
-        const security1 = insertSecurity(db, Entry.Security.from({ name: 'Apple Inc.', symbol: 'AAPL', type: 'Stock' }))
-        const security2 = insertSecurity(
-            db,
-            Entry.Security.from({ name: 'Microsoft Corporation', symbol: 'MSFT', type: 'Stock' }),
-        )
+        // Insert securities
+        insertSecurity(db, Entry.Security.from({ name: 'Apple Inc.', symbol: 'AAPL', type: 'Stock' }))
+        insertSecurity(db, Entry.Security.from({ name: 'Microsoft Corporation', symbol: 'MSFT', type: 'Stock' }))
+        const security1 = findSecurityByName(db, 'Apple Inc.')
+        const security2 = findSecurityByName(db, 'Microsoft Corporation')
+
+        // Create transactions for lot references
+        const txn1 = createTestTransaction(db, account1, security1, '2024-01-15')
+        const txn2 = createTestTransaction(db, account1, security2, '2024-02-01')
+        const txn3 = createTestTransaction(db, account2, security1, '2024-03-01')
 
         // Insert lots
-        insertLot(
-            db,
-            Lot.from({
-                id: 0,
-                accountId: account1,
-                securityId: security1,
-                purchaseDate: '2024-01-15',
-                quantity: 100,
-                costBasis: 15000,
-                remainingQuantity: 100,
-                closedDate: null,
-                createdByTransactionId: 1,
-                createdAt: '2024-01-15T10:00:00Z',
-            }),
-        )
+        insertLot(db, {
+            accountId: account1.id,
+            securityId: security1.id,
+            purchaseDate: '2024-01-15',
+            quantity: 100,
+            costBasis: 15000,
+            remainingQuantity: 100,
+            closedDate: null,
+            createdByTransactionId: txn1,
+            createdAt: '2024-01-15T10:00:00Z',
+        })
 
-        insertLot(
-            db,
-            Lot.from({
-                id: 0,
-                accountId: account1,
-                securityId: security2,
-                purchaseDate: '2024-02-01',
-                quantity: 50,
-                costBasis: 10000,
-                remainingQuantity: 50,
-                closedDate: null,
-                createdByTransactionId: 2,
-                createdAt: '2024-02-01T10:00:00Z',
-            }),
-        )
+        insertLot(db, {
+            accountId: account1.id,
+            securityId: security2.id,
+            purchaseDate: '2024-02-01',
+            quantity: 50,
+            costBasis: 10000,
+            remainingQuantity: 50,
+            closedDate: null,
+            createdByTransactionId: txn2,
+            createdAt: '2024-02-01T10:00:00Z',
+        })
 
-        insertLot(
-            db,
-            Lot.from({
-                id: 0,
-                accountId: account2,
-                securityId: security1,
-                purchaseDate: '2024-03-01',
-                quantity: 25,
-                costBasis: 4000,
-                remainingQuantity: 25,
-                closedDate: null,
-                createdByTransactionId: 3,
-                createdAt: '2024-03-01T10:00:00Z',
-            }),
-        )
+        insertLot(db, {
+            accountId: account2.id,
+            securityId: security1.id,
+            purchaseDate: '2024-03-01',
+            quantity: 25,
+            costBasis: 4000,
+            remainingQuantity: 25,
+            closedDate: null,
+            createdByTransactionId: txn3,
+            createdAt: '2024-03-01T10:00:00Z',
+        })
 
         t.test('When I get current holdings', t => {
             const holdings = getCurrentHoldings(db)
             t.same(holdings.length, 3, 'Then I get 3 holdings')
 
-            const aaplInAccount1 = holdings.find(h => h.accountId === account1 && h.securityId === security1)
+            const aaplInAccount1 = holdings.find(h => h.accountId === account1.id && h.securityId === security1.id)
             t.ok(aaplInAccount1, 'And I find AAPL in account 1')
             t.same(aaplInAccount1.quantity, 100, 'And quantity is 100')
             t.same(aaplInAccount1.costBasis, 15000, 'And cost basis is 15000')
             t.same(aaplInAccount1.avgCostPerShare, 150, 'And average cost per share is 150')
 
-            const msftInAccount1 = holdings.find(h => h.accountId === account1 && h.securityId === security2)
+            const msftInAccount1 = holdings.find(h => h.accountId === account1.id && h.securityId === security2.id)
             t.ok(msftInAccount1, 'And I find MSFT in account 1')
             t.same(msftInAccount1.quantity, 50, 'And quantity is 50')
             t.same(msftInAccount1.costBasis, 10000, 'And cost basis is 10000')
             t.same(msftInAccount1.avgCostPerShare, 200, 'And average cost per share is 200')
 
-            const aaplInAccount2 = holdings.find(h => h.accountId === account2 && h.securityId === security1)
+            const aaplInAccount2 = holdings.find(h => h.accountId === account2.id && h.securityId === security1.id)
             t.ok(aaplInAccount2, 'And I find AAPL in account 2')
             t.same(aaplInAccount2.quantity, 25, 'And quantity is 25')
             t.same(aaplInAccount2.costBasis, 4000, 'And cost basis is 4000')
@@ -219,30 +181,30 @@ test('Holdings Repository', t => {
         })
 
         t.test('When I get holdings by account', t => {
-            const account1Holdings = getHoldingsByAccount(db, account1)
+            const account1Holdings = getHoldingsByAccount(db, account1.id)
             t.same(account1Holdings.length, 2, 'Then I get 2 holdings for account 1')
 
-            const account2Holdings = getHoldingsByAccount(db, account2)
+            const account2Holdings = getHoldingsByAccount(db, account2.id)
             t.same(account2Holdings.length, 1, 'Then I get 1 holding for account 2')
 
             t.end()
         })
 
         t.test('When I get holdings by security', t => {
-            const aaplHoldings = getHoldingsBySecurity(db, security1)
+            const aaplHoldings = getHoldingsBySecurity(db, security1.id)
             t.same(aaplHoldings.length, 2, 'Then I get 2 holdings for AAPL')
 
-            const msftHoldings = getHoldingsBySecurity(db, security2)
+            const msftHoldings = getHoldingsBySecurity(db, security2.id)
             t.same(msftHoldings.length, 1, 'Then I get 1 holding for MSFT')
 
             t.end()
         })
 
         t.test('When I get specific holding by account and security', t => {
-            const holding = getHoldingByAccountAndSecurity(db, account1, security1)
+            const holding = getHoldingByAccountAndSecurity(db, account1.id, security1.id)
             t.ok(holding, 'Then I find the holding')
-            t.same(holding.accountId, account1, 'And account ID matches')
-            t.same(holding.securityId, security1, 'And security ID matches')
+            t.same(holding.accountId, account1.id, 'And account ID matches')
+            t.same(holding.securityId, security1.id, 'And security ID matches')
             t.same(holding.quantity, 100, 'And quantity matches')
 
             t.end()
@@ -271,78 +233,43 @@ test('Holdings Repository', t => {
     })
 
     t.test('Given a database with closed lots', t => {
-        const db = new Database(':memory:')
+        const db = createTestDatabase()
 
-        // Create schema
-        db.exec(`
-            CREATE TABLE accounts (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                description TEXT,
-                credit_limit REAL
-            );
-            
-            CREATE TABLE securities (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                symbol TEXT,
-                type TEXT,
-                goal TEXT
-            );
-            
-            CREATE TABLE lots (
-                id INTEGER PRIMARY KEY,
-                account_id INTEGER NOT NULL,
-                security_id INTEGER NOT NULL,
-                purchase_date TEXT NOT NULL,
-                quantity REAL NOT NULL,
-                cost_basis REAL NOT NULL,
-                remaining_quantity REAL NOT NULL,
-                closed_date TEXT,
-                created_by_transaction_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (account_id) REFERENCES accounts(id),
-                FOREIGN KEY (security_id) REFERENCES securities(id)
-            );
-        `)
+        // Insert account and security
+        insertAccount(db, Entry.Account.from({ name: 'Brokerage', type: 'Investment' }))
+        const account = findAccountByName(db, 'Brokerage')
 
-        // Insert test data
-        const account = insertAccount(db, Entry.Account.from({ name: 'Brokerage', type: 'Investment' }))
-        const security = insertSecurity(db, Entry.Security.from({ name: 'Apple Inc.', symbol: 'AAPL' }))
+        insertSecurity(db, Entry.Security.from({ name: 'Apple Inc.', symbol: 'AAPL' }))
+        const security = findSecurityByName(db, 'Apple Inc.')
+
+        // Create transactions
+        const txn1 = createTestTransaction(db, account, security, '2024-01-15')
+        const txn2 = createTestTransaction(db, account, security, '2024-03-01')
 
         // Insert lots - one closed, one open
-        insertLot(
-            db,
-            Lot.from({
-                id: 0,
-                accountId: account,
-                securityId: security,
-                purchaseDate: '2024-01-15',
-                quantity: 100,
-                costBasis: 15000,
-                remainingQuantity: 0,
-                closedDate: '2024-02-01',
-                createdByTransactionId: 1,
-                createdAt: '2024-01-15T10:00:00Z',
-            }),
-        )
+        insertLot(db, {
+            accountId: account.id,
+            securityId: security.id,
+            purchaseDate: '2024-01-15',
+            quantity: 100,
+            costBasis: 15000,
+            remainingQuantity: 0,
+            closedDate: '2024-02-01',
+            createdByTransactionId: txn1,
+            createdAt: '2024-01-15T10:00:00Z',
+        })
 
-        insertLot(
-            db,
-            Lot.from({
-                id: 0,
-                accountId: account,
-                securityId: security,
-                purchaseDate: '2024-03-01',
-                quantity: 50,
-                costBasis: 8000,
-                remainingQuantity: 50,
-                closedDate: null,
-                createdByTransactionId: 2,
-                createdAt: '2024-03-01T10:00:00Z',
-            }),
-        )
+        insertLot(db, {
+            accountId: account.id,
+            securityId: security.id,
+            purchaseDate: '2024-03-01',
+            quantity: 50,
+            costBasis: 8000,
+            remainingQuantity: 50,
+            closedDate: null,
+            createdByTransactionId: txn2,
+            createdAt: '2024-03-01T10:00:00Z',
+        })
 
         t.test('When I get current holdings', t => {
             const holdings = getCurrentHoldings(db)
@@ -372,56 +299,22 @@ test('Holdings Repository', t => {
     })
 
     t.test('Given invalid input', t => {
-        const db = new Database(':memory:')
-
-        // Create schema for invalid input tests
-        db.exec(`
-            CREATE TABLE accounts (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                description TEXT,
-                credit_limit REAL
-            );
-            
-            CREATE TABLE securities (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                symbol TEXT,
-                type TEXT,
-                goal TEXT
-            );
-            
-            CREATE TABLE lots (
-                id INTEGER PRIMARY KEY,
-                account_id INTEGER NOT NULL,
-                security_id INTEGER NOT NULL,
-                purchase_date TEXT NOT NULL,
-                quantity REAL NOT NULL,
-                cost_basis REAL NOT NULL,
-                remaining_quantity REAL NOT NULL,
-                closed_date TEXT,
-                created_by_transaction_id INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (account_id) REFERENCES accounts(id),
-                FOREIGN KEY (security_id) REFERENCES securities(id)
-            );
-        `)
+        const db = createTestDatabase()
 
         t.test('When I get holdings by non-existent account', t => {
-            const holdings = getHoldingsByAccount(db, 999)
+            const holdings = getHoldingsByAccount(db, 'acc_nonexistent01')
             t.same(holdings, [], 'Then I get an empty array')
             t.end()
         })
 
         t.test('When I get holdings by non-existent security', t => {
-            const holdings = getHoldingsBySecurity(db, 999)
+            const holdings = getHoldingsBySecurity(db, 'sec_nonexistent01')
             t.same(holdings, [], 'Then I get an empty array')
             t.end()
         })
 
         t.test('When I get specific holding by non-existent account and security', t => {
-            const holding = getHoldingByAccountAndSecurity(db, 999, 999)
+            const holding = getHoldingByAccountAndSecurity(db, 'acc_nonexistent01', 'sec_nonexistent01')
             t.same(holding, null, 'Then I get null')
             t.end()
         })

@@ -1,5 +1,5 @@
 export const Price = {
     name: 'Price',
     kind: 'tagged',
-    fields: { id: 'Number', securityId: 'Number', date: 'String', price: 'Number' },
+    fields: { id: /^prc_[a-f0-9]{12}$/, securityId: /^sec_[a-f0-9]{12}$/, date: 'String', price: 'Number' },
 }

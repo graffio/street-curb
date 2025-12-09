@@ -1,7 +1,7 @@
 /** {@link module:Category} */
 /*  Category generated from: modules/cli-qif-to-sqlite/type-definitions/category.type.js
  *
- *  id              : "Number",
+ *  id              : /^cat_[a-f0-9]{12}$/,
  *  name            : "String",
  *  description     : "String?",
  *  budgetAmount    : "Number?",
@@ -21,7 +21,7 @@ import * as R from '@graffio/cli-type-generator'
 const Category = function Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule) {
     const constructorName = 'Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)'
 
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^cat_[a-f0-9]{12}$/, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
     R.validateNumber(constructorName, 'budgetAmount', true, budgetAmount)

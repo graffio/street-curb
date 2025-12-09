@@ -3,7 +3,7 @@ export const Tag = {
     name: 'Tag',
     kind: 'tagged',
     fields: {
-        id: 'Number',
+        id: /^tag_[a-f0-9]{12}$/,
         name: 'String',
         color: 'String?',
         description: 'String?'

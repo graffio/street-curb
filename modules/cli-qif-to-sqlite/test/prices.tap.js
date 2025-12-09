@@ -11,7 +11,8 @@ import {
     insertPrice,
     populatePricesFromTransactions,
 } from '../src/services/database/prices.js'
-import { Entry, Price, Security } from '../src/types/index.js'
+import { insertAccount, insertSecurity, findAccountByName, findSecurityByName } from '../src/services/database/index.js'
+import { Entry, Price } from '../src/types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -25,15 +26,15 @@ const createTestDatabase = () => {
 }
 
 const createSecurityInDb = (db, security) => {
-    const stmt = db.prepare('INSERT INTO securities (name, symbol, type, goal) VALUES (?, ?, ?, ?)')
-    const result = stmt.run(security.name, security.symbol, security.type, security.goal)
-    return Security.from({ ...security, id: result.lastInsertRowid })
+    const securityEntry = Entry.Security.from(security)
+    insertSecurity(db, securityEntry)
+    return findSecurityByName(db, security.name)
 }
 
 const createAccountInDb = (db, account) => {
-    const stmt = db.prepare('INSERT INTO accounts (name, type, description, credit_limit) VALUES (?, ?, ?, ?)')
-    const result = stmt.run(account.name, account.type, account.description, account.creditLimit)
-    return { ...account, id: result.lastInsertRowid }
+    const accountEntry = Entry.Account.from(account)
+    insertAccount(db, accountEntry)
+    return findAccountByName(db, account.name)
 }
 
 const createInvestmentTransactionInDb = (db, transaction) => {
@@ -70,7 +71,7 @@ test('Prices Repository', t => {
             const priceId = insertPrice(db, priceEntry, security)
 
             t.test('Then the price is inserted with a valid ID', t => {
-                t.ok(priceId > 0, 'Price ID should be positive')
+                t.match(priceId, /^prc_[a-f0-9]{12}$/, 'Price ID should match pattern')
                 t.end()
             })
 
@@ -78,7 +79,7 @@ test('Prices Repository', t => {
                 const allPrices = getAllPrices(db)
 
                 t.same(allPrices.length, 1, 'Should have one price')
-                t.same(allPrices[0].securityId, security.id, 'Security ID should match')
+                t.match(allPrices[0].securityId, /^sec_[a-f0-9]{12}$/, 'Security ID should match pattern')
                 t.same(allPrices[0].price, 150.25, 'Price should match')
                 t.same(allPrices[0].date, '2024-01-15', 'Date should match')
                 t.end()
@@ -95,7 +96,7 @@ test('Prices Repository', t => {
             const priceId = insertPrice(db, priceEntry, security)
 
             t.test('Then the price is inserted successfully', t => {
-                t.ok(priceId > 0, 'Price ID should be positive')
+                t.match(priceId, /^prc_[a-f0-9]{12}$/, 'Price ID should match pattern')
                 t.end()
             })
 
@@ -103,7 +104,7 @@ test('Prices Repository', t => {
                 const allPrices = getAllPrices(db)
 
                 t.same(allPrices.length, 1, 'Should have one price')
-                t.same(allPrices[0].securityId, security.id, 'Security ID should match')
+                t.match(allPrices[0].securityId, /^sec_[a-f0-9]{12}$/, 'Security ID should match pattern')
                 t.same(allPrices[0].price, 300.5, 'Price should match')
                 t.same(allPrices[0].date, '2024-01-16', 'Date should match')
                 t.end()
@@ -183,8 +184,8 @@ test('Prices Repository', t => {
             t.test('And each price has the correct structure', t => {
                 allPrices.forEach(price => {
                     t.ok(Price.is(price), 'Each item should be a Price type')
-                    t.ok(typeof price.id === 'number', 'Each price should have a numeric ID')
-                    t.ok(typeof price.securityId === 'number', 'Each price should have a numeric security ID')
+                    t.match(price.id, /^prc_[a-f0-9]{12}$/, 'Each price should have a valid ID')
+                    t.match(price.securityId, /^sec_[a-f0-9]{12}$/, 'Each price should have a valid security ID')
                     t.ok(typeof price.price === 'number', 'Each price should have a numeric price')
                     t.ok(typeof price.date === 'string', 'Each price should have a string date')
                 })
@@ -220,7 +221,7 @@ test('Prices Repository', t => {
 
             t.test('Then all prices are imported successfully', t => {
                 t.same(priceIds.length, 2, 'Should return 2 price IDs')
-                priceIds.forEach(id => t.ok(id > 0, 'Each ID should be positive'))
+                priceIds.forEach(id => t.match(id, /^prc_[a-f0-9]{12}$/, 'Each ID should match pattern'))
                 t.end()
             })
 

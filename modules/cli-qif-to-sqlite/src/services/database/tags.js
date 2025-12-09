@@ -1,16 +1,29 @@
 import { map } from '@graffio/functional'
+import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Entry, Tag } from '../../types/index.js'
 
 /*
- * Insert tag into database
- * @sig insertTag :: (Database, Entry.Tag) -> Number
+ * Generate deterministic tag ID from name
+ * @sig generateTagId :: String -> String
+ */
+const generateTagId = name => `tag_${hashFields({ name })}`
+
+/*
+ * Insert tag into database (dedupes on collision)
+ * @sig insertTag :: (Database, Entry.Tag) -> String
  */
 const insertTag = (db, tagEntry) => {
     if (!Entry.Tag.is(tagEntry)) throw new Error(`Expected Entry.Tag; found: ${JSON.stringify(tagEntry)}`)
 
+    const id = generateTagId(tagEntry.name)
+
+    // Check if tag already exists (dedupe)
+    const existing = db.prepare('SELECT id FROM tags WHERE id = ?').get(id)
+    if (existing) return existing.id
+
     const stmt = db.prepare(`
-        INSERT INTO tags (name, color, description)
-        VALUES (?, ?, ?)
+        INSERT INTO tags (id, name, color, description)
+        VALUES (?, ?, ?, ?)
     `)
 
     const { name, color, description } = tagEntry
@@ -19,13 +32,13 @@ const insertTag = (db, tagEntry) => {
     const coercedColor = color == null ? null : color
     const coercedDescription = description == null ? null : description
 
-    const result = stmt.run(name, coercedColor, coercedDescription)
-    return result.lastInsertRowid
+    stmt.run(id, name, coercedColor, coercedDescription)
+    return id
 }
 
 /*
  * Import tags into database
- * @sig importTags :: (Database, [Entry.Tag]) -> [Number]
+ * @sig importTags :: (Database, [Entry.Tag]) -> [String]
  */
 const importTags = (db, tags) => map(tag => insertTag(db, tag), tags)
 

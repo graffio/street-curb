@@ -1,7 +1,7 @@
 /** {@link module:Security} */
 /*  Security generated from: modules/cli-qif-to-sqlite/type-definitions/security.type.js
  *
- *  id    : "Number",
+ *  id    : /^sec_[a-f0-9]{12}$/,
  *  name  : "String",
  *  symbol: "String?",
  *  type  : "String?",
@@ -19,7 +19,7 @@ import * as R from '@graffio/cli-type-generator'
 const Security = function Security(id, name, symbol, type, goal) {
     const constructorName = 'Security(id, name, symbol, type, goal)'
 
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'symbol', true, symbol)
     R.validateString(constructorName, 'type', true, type)

@@ -225,12 +225,18 @@ const filterPayeesByBalance = (payees, currentBalance) => {
  * @sig createTransaction :: (IdGenerator, PayeeTemplate, String, Number) -> Transaction.Bank
  */
 const createTransaction = (generateId, payeeData, dateStr, amount) => {
-    const fields = { accountId: 1, amount, date: dateStr, payee: payeeData.name, transactionType: 'bank' }
+    const fields = {
+        accountId: 'acc_000000000001',
+        amount,
+        date: dateStr,
+        payee: payeeData.name,
+        transactionType: 'bank',
+    }
     return Transaction.Bank.from({
         ...fields,
         id: generateId(fields),
         address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
-        categoryId: 1,
+        categoryId: 'cat_000000000001',
         cleared: Math.random() > 0.1 ? 'R' : '',
         memo: 'Auto-generated transaction',
         number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
@@ -243,12 +249,18 @@ const createTransaction = (generateId, payeeData, dateStr, amount) => {
  * @sig createFollowUpTransaction :: (IdGenerator, FollowUpTransaction, String, Number) -> Transaction.Bank
  */
 const createFollowUpTransaction = (generateId, followUp, dateStr, amount) => {
-    const fields = { accountId: 1, amount, date: dateStr, payee: followUp.name, transactionType: 'bank' }
+    const fields = {
+        accountId: 'acc_000000000001',
+        amount,
+        date: dateStr,
+        payee: followUp.name,
+        transactionType: 'bank',
+    }
     return Transaction.Bank.from({
         ...fields,
         id: generateId(fields),
         address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
-        categoryId: 1,
+        categoryId: 'cat_000000000001',
         cleared: Math.random() > 0.1 ? 'R' : '',
         memo: 'Auto-generated cluster transaction',
         number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,

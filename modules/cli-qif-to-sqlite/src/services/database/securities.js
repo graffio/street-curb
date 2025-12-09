@@ -1,33 +1,46 @@
 import { map } from '@graffio/functional'
+import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Entry, Security } from '../../types/index.js'
 
 /*
- * Insert security into database
- * @sig insertSecurity :: (Database, Entry.Security) -> Number
+ * Generate deterministic security ID from name and symbol
+ * Use null for missing symbol (not empty string) to distinguish null from ''
+ * @sig generateSecurityId :: (String, String?) -> String
+ */
+const generateSecurityId = (name, symbol) => `sec_${hashFields({ name, symbol: symbol || null })}`
+
+/*
+ * Insert security into database (dedupes on collision)
+ * @sig insertSecurity :: (Database, Entry.Security) -> String
  */
 const insertSecurity = (db, securityEntry) => {
     if (!Entry.Security.is(securityEntry))
         throw new Error(`Expected Entry.Security; found: ${JSON.stringify(securityEntry)}`)
 
-    const stmt = db.prepare(`
-        INSERT INTO securities (name, symbol, type, goal)
-        VALUES (?, ?, ?, ?)
-    `)
-
     const { name, symbol, type, goal } = securityEntry
+    const id = generateSecurityId(name, symbol)
+
+    // Check if security already exists (dedupe)
+    const existing = db.prepare('SELECT id FROM securities WHERE id = ?').get(id)
+    if (existing) return existing.id
+
+    const stmt = db.prepare(`
+        INSERT INTO securities (id, name, symbol, type, goal)
+        VALUES (?, ?, ?, ?, ?)
+    `)
 
     // Coerce all optional fields to null
     const coercedSymbol = symbol == null ? null : symbol
     const coercedType = type == null ? null : type
     const coercedGoal = goal == null ? null : goal
 
-    const result = stmt.run(name, coercedSymbol, coercedType, coercedGoal)
-    return result.lastInsertRowid
+    stmt.run(id, name, coercedSymbol, coercedType, coercedGoal)
+    return id
 }
 
 /*
  * Import securities into database
- * @sig importSecurities :: (Database, [Entry.Security]) -> [Number]
+ * @sig importSecurities :: (Database, [Entry.Security]) -> [String]
  */
 const importSecurities = (db, securities) => map(security => insertSecurity(db, security), securities)
 

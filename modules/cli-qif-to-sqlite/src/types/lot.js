@@ -1,15 +1,15 @@
 /** {@link module:Lot} */
 /*  Lot generated from: modules/cli-qif-to-sqlite/type-definitions/lot.type.js
  *
- *  accountId             : "Number",
+ *  accountId             : /^acc_[a-f0-9]{12}$/,
  *  costBasis             : "Number",
  *  createdAt             : "String",
- *  id                    : "Number",
+ *  id                    : /^lot_[a-f0-9]{12}$/,
  *  purchaseDate          : "String",
  *  quantity              : "Number",
  *  remainingQuantity     : "Number",
- *  securityId            : "Number",
- *  createdByTransactionId: "Number",
+ *  securityId            : /^sec_[a-f0-9]{12}$/,
+ *  createdByTransactionId: /^txn_[a-f0-9]{12}(-\d+)?$/,
  *  closedDate            : "String?"
  *
  */
@@ -36,15 +36,21 @@ const Lot = function Lot(
     const constructorName =
         'Lot(accountId, costBasis, createdAt, id, purchaseDate, quantity, remainingQuantity, securityId, createdByTransactionId, closedDate)'
 
-    R.validateNumber(constructorName, 'accountId', false, accountId)
+    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
     R.validateNumber(constructorName, 'costBasis', false, costBasis)
     R.validateString(constructorName, 'createdAt', false, createdAt)
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^lot_[a-f0-9]{12}$/, 'id', false, id)
     R.validateString(constructorName, 'purchaseDate', false, purchaseDate)
     R.validateNumber(constructorName, 'quantity', false, quantity)
     R.validateNumber(constructorName, 'remainingQuantity', false, remainingQuantity)
-    R.validateNumber(constructorName, 'securityId', false, securityId)
-    R.validateNumber(constructorName, 'createdByTransactionId', false, createdByTransactionId)
+    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
+    R.validateRegex(
+        constructorName,
+        /^txn_[a-f0-9]{12}(-\d+)?$/,
+        'createdByTransactionId',
+        false,
+        createdByTransactionId,
+    )
     R.validateString(constructorName, 'closedDate', true, closedDate)
 
     const result = Object.create(prototype)
@@ -56,7 +62,7 @@ const Lot = function Lot(
     result.quantity = quantity
     result.remainingQuantity = remainingQuantity
     result.securityId = securityId
-    result.createdByTransactionId = createdByTransactionId
+    if (createdByTransactionId != null) result.createdByTransactionId = createdByTransactionId
     if (closedDate != null) result.closedDate = closedDate
     return result
 }

@@ -42,7 +42,7 @@ test('Categories Repository', t => {
             const categoryId = insertCategory(db, categoryEntry)
 
             t.test('Then the category is inserted with a valid ID', t => {
-                t.ok(categoryId > 0, 'Category ID should be positive')
+                t.match(categoryId, /^cat_[a-f0-9]{12}$/, 'Category ID should match pattern')
                 t.end()
             })
 
@@ -68,7 +68,7 @@ test('Categories Repository', t => {
             const categoryId = insertCategory(db, categoryEntry)
 
             t.test('Then the category is inserted successfully', t => {
-                t.ok(categoryId > 0, 'Category ID should be positive')
+                t.match(categoryId, /^cat_[a-f0-9]{12}$/, 'Category ID should match pattern')
                 t.end()
             })
 
@@ -101,7 +101,7 @@ test('Categories Repository', t => {
             const categoryId = insertCategory(db, categoryEntry)
 
             t.test('Then the category is inserted with income flags', t => {
-                t.ok(categoryId > 0, 'Category ID should be positive')
+                t.match(categoryId, /^cat_[a-f0-9]{12}$/, 'Category ID should match pattern')
                 t.end()
             })
 
@@ -184,7 +184,7 @@ test('Categories Repository', t => {
             t.test('And each category has the correct structure', t => {
                 allCategories.forEach(category => {
                     t.ok(Category.is(category), 'Each item should be a Category type')
-                    t.ok(typeof category.id === 'number', 'Each category should have a numeric ID')
+                    t.match(category.id, /^cat_[a-f0-9]{12}$/, 'Each category should have a valid ID')
                     t.ok(typeof category.name === 'string', 'Each category should have a string name')
                 })
                 t.end()
@@ -214,7 +214,7 @@ test('Categories Repository', t => {
 
             t.test('Then all categories are imported successfully', t => {
                 t.same(categoryIds.length, 2, 'Should return 2 category IDs')
-                categoryIds.forEach(id => t.ok(id > 0, 'Each ID should be positive'))
+                categoryIds.forEach(id => t.match(id, /^cat_[a-f0-9]{12}$/, 'Each ID should match pattern'))
                 t.end()
             })
 

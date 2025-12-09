@@ -2,12 +2,15 @@
  * generate-entity-id.js - Deterministic entity ID generation
  *
  * Creates stable, unique IDs for entities by hashing their fields.
- * Handles duplicate entities by appending ordinal suffixes.
+ * Same input always produces the same output (deterministic).
  *
  * @example
- * const generator = createIdGenerator('txn')
- * generator({ date: '2024-01-15', payee: 'Store', amount: -10 }) // => 'txn_abc123def456'
- * generator({ date: '2024-01-15', payee: 'Store', amount: -10 }) // => 'txn_abc123def456-2'
+ * hashFields({ date: '2024-01-15', payee: 'Store', amount: -10 }) // => 'abc123def456'
+ *
+ * RECOMMENDED: Use hashFields directly + database UNIQUE constraints for collision handling.
+ *
+ * DEPRECATED: createIdGenerator with ordinal suffixes is session-bound (state resets on restart)
+ * and doesn't help across imports. Prefer hashFields + database constraints instead.
  */
 
 /*
