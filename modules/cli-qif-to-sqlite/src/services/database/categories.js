@@ -1,17 +1,30 @@
 import { map } from '@graffio/functional'
+import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Category, Entry } from '../../types/index.js'
 
 /*
- * Insert category into database
- * @sig insertCategory :: (Database, Entry.Category) -> Number
+ * Generate deterministic category ID from name
+ * @sig generateCategoryId :: String -> String
+ */
+const generateCategoryId = name => `cat_${hashFields({ name })}`
+
+/*
+ * Insert category into database (dedupes on collision)
+ * @sig insertCategory :: (Database, Entry.Category) -> String
  */
 const insertCategory = (db, categoryEntry) => {
     if (!Entry.Category.is(categoryEntry))
         throw new Error(`Expected Entry.Category; found: ${JSON.stringify(categoryEntry)}`)
 
+    const id = generateCategoryId(categoryEntry.name)
+
+    // Check if category already exists (dedupe)
+    const existing = db.prepare('SELECT id FROM categories WHERE id = ?').get(id)
+    if (existing) return existing.id
+
     const stmt = db.prepare(`
-        INSERT INTO categories (name, description, budget_amount, is_income_category, is_tax_related, tax_schedule)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO categories (id, name, description, budget_amount, is_income_category, is_tax_related, tax_schedule)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `)
 
     let { name, description, budgetAmount, isIncomeCategory = false, isTaxRelated = false, taxSchedule } = categoryEntry
@@ -20,13 +33,13 @@ const insertCategory = (db, categoryEntry) => {
     isIncomeCategory = isIncomeCategory ? 1 : 0
     isTaxRelated = isTaxRelated ? 1 : 0
 
-    const result = stmt.run(name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
-    return result.lastInsertRowid
+    stmt.run(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
+    return id
 }
 
 /*
  * Import categories into database
- * @sig importCategories :: (Database, [Entry.Category]) -> [Number]
+ * @sig importCategories :: (Database, [Entry.Category]) -> [String]
  */
 const importCategories = (db, categories) => map(category => insertCategory(db, category), categories)
 

@@ -1,7 +1,7 @@
 /** {@link module:Account} */
 /*  Account generated from: modules/cli-qif-to-sqlite/type-definitions/account.type.js
  *
- *  id         : "Number",
+ *  id         : /^acc_[a-f0-9]{12}$/,
  *  name       : "String",
  *  type       : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability)$/,
  *  description: "String?",
@@ -19,7 +19,7 @@ import * as R from '@graffio/cli-type-generator'
 const Account = function Account(id, name, type, description, creditLimit) {
     const constructorName = 'Account(id, name, type, description, creditLimit)'
 
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateRegex(
         constructorName,

@@ -1,29 +1,26 @@
 import { map } from '@graffio/functional'
+import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Entry, Price } from '../../types/index.js'
 
 /*
- * Insert price into database
- * @sig insertPrice :: (Database, Entry.Price, Security) -> Number
+ * Generate deterministic price ID from securityId and date
+ * @sig generatePriceId :: (String, String) -> String
  */
-/*
- * Insert price into database
- * @sig insertPrice :: (Database, Entry.Price, Security) -> Number
- */
+const generatePriceId = (securityId, dateString) => `prc_${hashFields({ securityId, date: dateString })}`
 
 /*
- * Insert price into database
- * @sig insertPrice :: (Database, Entry.Price, Security) -> Number
+ * Insert price into database (dedupes on collision)
+ * @sig insertPrice :: (Database, Entry.Price, Security) -> String
  */
 const insertPrice = (db, priceEntry, security) => {
     if (!Entry.Price.is(priceEntry)) throw new Error(`Expected Entry.Price; found: ${JSON.stringify(priceEntry)}`)
 
     const { price, date } = priceEntry
     const dateString = date.toISOString().split('T')[0]
+    const id = generatePriceId(security.id, dateString)
 
     // Check if price already exists
-    const existing = db
-        .prepare('SELECT price FROM prices WHERE security_id = ? AND date = ?')
-        .get(security.id, dateString)
+    const existing = db.prepare('SELECT id, price FROM prices WHERE id = ?').get(id)
 
     // Option: Keep existing, log conflict
     if (existing && existing.price !== price) {
@@ -34,14 +31,14 @@ const insertPrice = (db, priceEntry, security) => {
     // Same price, no conflict
     if (existing) return existing.id
 
-    const stmt = db.prepare(`INSERT INTO prices (security_id, date, price) VALUES (?, ?, ?)`)
-    const result = stmt.run(security.id, dateString, price)
-    return result.lastInsertRowid
+    const stmt = db.prepare(`INSERT INTO prices (id, security_id, date, price) VALUES (?, ?, ?, ?)`)
+    stmt.run(id, security.id, dateString, price)
+    return id
 }
 
 /*
  * Import prices into database
- * @sig importPrices :: (Database, [Entry.Price], [Security]) -> [Number]
+ * @sig importPrices :: (Database, [Entry.Price], [Security]) -> [String]
  */
 const importPrices = (db, prices, securities) => {
     const securityMap = new Map()
@@ -118,25 +115,22 @@ const populatePricesFromTransactions = db => {
 
     // Insert or update prices into the prices table
     latestPrices.forEach((priceData, securityId) => {
+        const id = generatePriceId(securityId, priceData.date)
+
         // Check if a price exists for this security and date
-        const existing = db
-            .prepare('SELECT id, price FROM prices WHERE security_id = ? AND date = ?')
-            .get(securityId, priceData.date)
+        const existing = db.prepare('SELECT id, price FROM prices WHERE id = ?').get(id)
 
         if (!existing)
             // No existing price for this security and date, insert new one
-            db.prepare('INSERT INTO prices (security_id, date, price) VALUES (?, ?, ?)').run(
+            db.prepare('INSERT INTO prices (id, security_id, date, price) VALUES (?, ?, ?, ?)').run(
+                id,
                 securityId,
                 priceData.date,
                 priceData.price,
             )
         else if (existing.price !== priceData.price)
             // Existing price for this security and date, but different value, update it
-            db.prepare('UPDATE prices SET price = ? WHERE security_id = ? AND date = ?').run(
-                priceData.price,
-                securityId,
-                priceData.date,
-            )
+            db.prepare('UPDATE prices SET price = ? WHERE id = ?').run(priceData.price, id)
     })
 }
 

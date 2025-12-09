@@ -1,12 +1,12 @@
 /** {@link module:Holding} */
 /*  Holding generated from: modules/cli-qif-to-sqlite/type-definitions/holding.type.js
  *
- *  accountId      : "Number",
+ *  accountId      : /^acc_[a-f0-9]{12}$/,
  *  avgCostPerShare: "Number",
  *  costBasis      : "Number",
  *  lastUpdated    : "String",
  *  quantity       : "Number",
- *  securityId     : "Number"
+ *  securityId     : /^sec_[a-f0-9]{12}$/
  *
  */
 
@@ -20,12 +20,12 @@ import * as R from '@graffio/cli-type-generator'
 const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId) {
     const constructorName = 'Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)'
     R.validateArgumentLength(constructorName, 6, arguments)
-    R.validateNumber(constructorName, 'accountId', false, accountId)
+    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
     R.validateNumber(constructorName, 'avgCostPerShare', false, avgCostPerShare)
     R.validateNumber(constructorName, 'costBasis', false, costBasis)
     R.validateString(constructorName, 'lastUpdated', false, lastUpdated)
     R.validateNumber(constructorName, 'quantity', false, quantity)
-    R.validateNumber(constructorName, 'securityId', false, securityId)
+    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
 
     const result = Object.create(prototype)
     result.accountId = accountId

@@ -1,7 +1,7 @@
 /** {@link module:Tag} */
 /*  Tag generated from: modules/cli-qif-to-sqlite/type-definitions/tag.type.js
  *
- *  id         : "Number",
+ *  id         : /^tag_[a-f0-9]{12}$/,
  *  name       : "String",
  *  color      : "String?",
  *  description: "String?"
@@ -18,7 +18,7 @@ import * as R from '@graffio/cli-type-generator'
 const Tag = function Tag(id, name, color, description) {
     const constructorName = 'Tag(id, name, color, description)'
 
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^tag_[a-f0-9]{12}$/, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'color', true, color)
     R.validateString(constructorName, 'description', true, description)

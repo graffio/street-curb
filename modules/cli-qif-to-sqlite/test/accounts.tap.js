@@ -59,7 +59,7 @@ test('Account Repository Tests', t => {
         t.test('When inserting it into database', t => {
             const db = createTestDatabase()
             const accountId = insertAccount(db, validEntryAccount)
-            t.ok(accountId > 0, 'Then it returns a valid (new) row ID')
+            t.match(accountId, /^acc_[a-f0-9]{12}$/, 'Then it returns a valid account ID')
             db.close()
             t.end()
         })
@@ -136,8 +136,8 @@ test('Account Repository Tests', t => {
             const results = importAccounts(db, accounts)
 
             t.same(results.length, 2, 'Then all accounts are inserted')
-            t.ok(results[0] > 0, 'Then first account has valid ID')
-            t.ok(results[1] > 0, 'Then second account has valid ID')
+            t.match(results[0], /^acc_[a-f0-9]{12}$/, 'Then first account has valid ID')
+            t.match(results[1], /^acc_[a-f0-9]{12}$/, 'Then second account has valid ID')
             t.same(getAccountCount(db), 2, 'Then database contains correct count')
             db.close()
             t.end()

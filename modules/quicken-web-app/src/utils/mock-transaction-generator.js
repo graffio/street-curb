@@ -32,6 +32,7 @@
  * - Composable functions for different transaction types
  */
 
+import { createIdGenerator } from '@graffio/functional/src/generate-entity-id.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Transaction } from '../types/transaction.js'
 
@@ -221,60 +222,61 @@ const filterPayeesByBalance = (payees, currentBalance) => {
 /*
  * Create a single Transaction.Bank from payee template and context
  *
- * @sig createTransaction :: (PayeeTemplate, String, Number, Number, Number) -> Transaction.Bank
+ * @sig createTransaction :: (IdGenerator, PayeeTemplate, String, Number) -> Transaction.Bank
  */
-const createTransaction = (payeeData, dateStr, transactionId, amount, transactionNumber) =>
-    Transaction.Bank.from({
-        accountId: 1, // accountId
+const createTransaction = (generateId, payeeData, dateStr, amount) => {
+    const fields = {
+        accountId: 'acc_000000000001',
         amount,
         date: dateStr,
-        id: transactionId,
-        transactionType: 'bank',
-        address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
-        categoryId: 1,
-        cleared: Math.random() > 0.1 ? 'R' : '', // (90% reconciled)
-        memo: 'Auto-generated transaction', //
-        number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
         payee: payeeData.name,
+        transactionType: 'bank',
+    }
+    return Transaction.Bank.from({
+        ...fields,
+        id: generateId(fields),
+        address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
+        categoryId: 'cat_000000000001',
+        cleared: Math.random() > 0.1 ? 'R' : '',
+        memo: 'Auto-generated transaction',
+        number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
     })
+}
 
 /*
  * Create a follow-up Transaction.Bank from cluster data
  *
- * @sig createFollowUpTransaction :: (FollowUpTransaction, String, Number, Number, Number) -> Transaction.Bank
+ * @sig createFollowUpTransaction :: (IdGenerator, FollowUpTransaction, String, Number) -> Transaction.Bank
  */
-const createFollowUpTransaction = (followUp, dateStr, transactionId, amount, transactionNumber) =>
-    Transaction.Bank.from({
-        accountId: 1, //
+const createFollowUpTransaction = (generateId, followUp, dateStr, amount) => {
+    const fields = {
+        accountId: 'acc_000000000001',
         amount,
         date: dateStr,
-        id: transactionId,
+        payee: followUp.name,
         transactionType: 'bank',
-        addresss: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
-        categoryId: followUp.category.id,
+    }
+    return Transaction.Bank.from({
+        ...fields,
+        id: generateId(fields),
+        address: Math.random() > 0.8 ? `${Math.floor(Math.random() * 9999) + 1} Main St` : null,
+        categoryId: 'cat_000000000001',
         cleared: Math.random() > 0.1 ? 'R' : '',
         memo: 'Auto-generated cluster transaction',
         number: amount < 0 && Math.random() > 0.7 ? String(Math.floor(Math.random() * 9000) + 1000) : null,
-        payee: followUp.name,
     })
+}
 
 /*
  * Generate transactions for a single date with balance management
  *
- * @sig generateTransactionsForDate :: (String, [Date], Number, Number, Number) -> TransactionResult
- *     TransactionResult = {
- *         transactions: [Transaction],
- *         newBalance: Number,
- *         newTransactionId: Number,
- *         newTransactionNumber: Number
- *     }
+ * @sig generateTransactionsForDate :: (IdGenerator, String, [Date], Number) -> TransactionResult
+ *     TransactionResult = { transactions: [Transaction], newBalance: Number }
  */
-const generateTransactionsForDate = (dateStr, dateTimes, currentBalance, transactionId, transactionNumber) => {
+const generateTransactionsForDate = (generateId, dateStr, dateTimes, currentBalance) => {
     const processDateTransactions = () => {
         const transactionsForDate = []
         let balance = currentBalance
-        let id = transactionId
-        let txnNumber = transactionNumber
 
         for (let i = 0; i < dateTimes.length; i++) {
             const payeeOptions = filterPayeesByBalance(SAMPLE_PAYEES, balance)
@@ -286,44 +288,39 @@ const generateTransactionsForDate = (dateStr, dateTimes, currentBalance, transac
                 const incomePayee = getRandomItem(SAMPLE_PAYEES.filter(p => p.amount > 0))
                 const incomeAmount = addVariation(incomePayee.amount)
                 balance += incomeAmount
-                transactionsForDate.push(createTransaction(incomePayee, dateStr, id++, incomeAmount, txnNumber++))
+                transactionsForDate.push(createTransaction(generateId, incomePayee, dateStr, incomeAmount))
             } else {
                 balance += amount
-                transactionsForDate.push(createTransaction(payeeData, dateStr, id++, amount, txnNumber++))
+                transactionsForDate.push(createTransaction(generateId, payeeData, dateStr, amount))
             }
         }
 
-        return { transactionsForDate, balance, id, txnNumber }
+        return { transactionsForDate, balance }
     }
 
-    const processTransactionClusters = (transactionsForDate, balance, id, txnNumber) => {
-        if (transactionsForDate.length <= 1) return { transactionsForDate, balance, id, txnNumber }
+    const processTransactionClusters = (transactionsForDate, balance) => {
+        if (transactionsForDate.length <= 1) return { transactionsForDate, balance }
 
         const mainTransaction = transactionsForDate[0]
         const cluster = TRANSACTION_CLUSTERS.find(c => c.trigger === mainTransaction.payee)
 
-        if (!cluster || Math.random() >= 0.6) return { transactionsForDate, balance, id, txnNumber }
+        if (!cluster || Math.random() >= 0.6) return { transactionsForDate, balance }
 
         const followUp = getRandomItem(cluster.followUps)
         const followUpAmount = addVariation(followUp.amount)
 
-        if (balance + followUpAmount <= -10000) return { transactionsForDate, balance, id, txnNumber }
+        if (balance + followUpAmount <= -10000) return { transactionsForDate, balance }
 
         const newBalance = balance + followUpAmount
-        const clusterTransaction = createFollowUpTransaction(followUp, dateStr, id++, followUpAmount, txnNumber++)
+        const clusterTransaction = createFollowUpTransaction(generateId, followUp, dateStr, followUpAmount)
 
-        return { transactionsForDate: [...transactionsForDate, clusterTransaction], balance: newBalance, id, txnNumber }
+        return { transactionsForDate: [...transactionsForDate, clusterTransaction], balance: newBalance }
     }
 
-    const { transactionsForDate, balance, id, txnNumber } = processDateTransactions()
-    const result = processTransactionClusters(transactionsForDate, balance, id, txnNumber)
+    const { transactionsForDate, balance } = processDateTransactions()
+    const result = processTransactionClusters(transactionsForDate, balance)
 
-    return {
-        transactions: result.transactionsForDate,
-        newBalance: result.balance,
-        newTransactionId: result.id,
-        newTransactionNumber: result.txnNumber,
-    }
+    return { transactions: result.transactionsForDate, newBalance: result.balance }
 }
 
 /*
@@ -332,21 +329,17 @@ const generateTransactionsForDate = (dateStr, dateTimes, currentBalance, transac
  * @sig generateRealisticTransactions :: Number -> LookupTable<Transaction>
  */
 const generateRealisticTransactions = (count = 10000) => {
+    const generateId = createIdGenerator('txn')
     const dates = generateTransactionDates(count)
     const transactionsByDate = groupTransactionsByDate(dates)
 
-    let currentBalance = 5000.0 // Starting balance
-    let transactionId = 1
-    let transactionNumber = 1 // Stable sequential identifier
+    let currentBalance = 5000.0
     const allTransactions = []
 
     for (const [dateStr, dateTimes] of transactionsByDate) {
-        const result = generateTransactionsForDate(dateStr, dateTimes, currentBalance, transactionId, transactionNumber)
-
+        const result = generateTransactionsForDate(generateId, dateStr, dateTimes, currentBalance)
         allTransactions.push(...result.transactions)
         currentBalance = result.newBalance
-        transactionId = result.newTransactionId
-        transactionNumber = result.newTransactionNumber
     }
 
     return LookupTable(allTransactions.slice(0, count), Transaction, 'id')

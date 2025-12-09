@@ -4,15 +4,15 @@ export const Transaction = {
     variants: {
         Bank: {
             // Required fields (alphabetical)
-            accountId: 'Number',
+            accountId: /^acc_[a-f0-9]{12}$/,
             amount: 'Number',
             date: 'String',
-            id: 'Number',
+            id: /^txn_[a-f0-9]{12}(-\d+)?$/,
             transactionType: /^bank$/,
 
             // Optional fields (alphabetical)
             address: 'String?',
-            categoryId: 'Number?',
+            categoryId: 'String?', // cat_<hash> or null
             cleared: 'String?',
             memo: 'String?',
             number: 'String?',
@@ -20,15 +20,15 @@ export const Transaction = {
         },
         Investment: {
             // Required fields (alphabetical)
-            accountId: 'Number',
+            accountId: /^acc_[a-f0-9]{12}$/,
             date: 'String',
-            id: 'Number',
+            id: /^txn_[a-f0-9]{12}(-\d+)?$/,
             transactionType: /^investment$/,
 
             // Optional fields (alphabetical)
             address: 'String?',
             amount: 'Number?',
-            categoryId: 'Number?',
+            categoryId: 'String?', // cat_<hash> or null
             cleared: 'String?',
             commission: 'Number?',
             investmentAction:
@@ -37,7 +37,7 @@ export const Transaction = {
             payee: 'String?',
             price: 'Number?',
             quantity: 'Number?',
-            securityId: 'Number?',
+            securityId: 'String?', // sec_<hash> or null
         },
     },
 }

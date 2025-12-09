@@ -41,7 +41,7 @@ test('Securities Repository', t => {
             const securityId = insertSecurity(db, securityEntry)
 
             t.test('Then the security is inserted with a valid ID', t => {
-                t.ok(securityId > 0, 'Security ID should be positive')
+                t.match(securityId, /^sec_[a-f0-9]{12}$/, 'Security ID should match pattern')
                 t.end()
             })
 
@@ -84,7 +84,7 @@ test('Securities Repository', t => {
             const securityId = insertSecurity(db, securityEntry)
 
             t.test('Then the security is inserted successfully', t => {
-                t.ok(securityId > 0, 'Security ID should be positive')
+                t.match(securityId, /^sec_[a-f0-9]{12}$/, 'Security ID should match pattern')
                 t.end()
             })
 
@@ -181,7 +181,7 @@ test('Securities Repository', t => {
             t.test('And each security has the correct structure', t => {
                 allSecurities.forEach(security => {
                     t.ok(Security.is(security), 'Each item should be a Security type')
-                    t.ok(typeof security.id === 'number', 'Each security should have a numeric ID')
+                    t.match(security.id, /^sec_[a-f0-9]{12}$/, 'Each security should have a valid ID')
                     t.ok(typeof security.name === 'string', 'Each security should have a string name')
                 })
                 t.end()
@@ -211,7 +211,7 @@ test('Securities Repository', t => {
 
             t.test('Then all securities are imported successfully', t => {
                 t.same(securityIds.length, 2, 'Should return 2 security IDs')
-                securityIds.forEach(id => t.ok(id > 0, 'Each ID should be positive'))
+                securityIds.forEach(id => t.match(id, /^sec_[a-f0-9]{12}$/, 'Each ID should match pattern'))
                 t.end()
             })
 

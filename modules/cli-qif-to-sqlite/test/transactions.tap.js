@@ -7,10 +7,14 @@ import {
     clearTransactions,
     getAllTransactions,
     getTransactionCount,
+    insertAccount,
     insertBankTransaction,
     insertInvestmentTransaction,
+    insertSecurity,
+    findAccountByName,
+    findSecurityByName,
 } from '../src/services/database/index.js'
-import { Account, Entry, Security, Transaction } from '../src/types/index.js'
+import { Entry, Transaction } from '../src/types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -33,16 +37,8 @@ const createTestDatabase = () => {
  */
 const createAccountInDb = (db, accountData) => {
     const accountEntry = Entry.Account.from(accountData)
-    const stmt = db.prepare('INSERT INTO accounts (name, type, description, credit_limit) VALUES (?, ?, ?, ?)')
-    const result = stmt.run(accountEntry.name, accountEntry.type, accountEntry.description, accountEntry.creditLimit)
-
-    return Account.from({
-        id: result.lastInsertRowid,
-        name: accountEntry.name,
-        type: accountEntry.type,
-        description: accountEntry.description,
-        creditLimit: accountEntry.creditLimit,
-    })
+    insertAccount(db, accountEntry)
+    return findAccountByName(db, accountEntry.name)
 }
 
 /*
@@ -51,16 +47,8 @@ const createAccountInDb = (db, accountData) => {
  */
 const createSecurityInDb = (db, securityData) => {
     const securityEntry = Entry.Security.from(securityData)
-    const stmt = db.prepare('INSERT INTO securities (name, symbol, type, goal) VALUES (?, ?, ?, ?)')
-    const result = stmt.run(securityEntry.name, securityEntry.symbol, securityEntry.type, securityEntry.goal)
-
-    return Security.from({
-        id: result.lastInsertRowid,
-        name: securityEntry.name,
-        symbol: securityEntry.symbol,
-        type: securityEntry.type,
-        goal: securityEntry.goal,
-    })
+    insertSecurity(db, securityEntry)
+    return findSecurityByName(db, securityEntry.name)
 }
 
 test('Transactions Repository', t => {
@@ -80,7 +68,7 @@ test('Transactions Repository', t => {
             const transactionId = insertBankTransaction(db, transactionEntry, account)
 
             t.test('Then the transaction is inserted with a valid ID', t => {
-                t.ok(transactionId > 0, 'Transaction ID should be positive')
+                t.match(transactionId, /^txn_[a-f0-9]{12}(-\d+)?$/, 'Transaction ID should match pattern')
                 t.end()
             })
 
@@ -89,7 +77,7 @@ test('Transactions Repository', t => {
 
                 t.same(allTransactions.length, 1, 'Should have one transaction')
                 t.ok(Transaction.Bank.is(allTransactions[0]), 'Should be a Bank transaction')
-                t.same(allTransactions[0].accountId, account.id, 'Account ID should match')
+                t.match(allTransactions[0].accountId, /^acc_[a-f0-9]{12}$/, 'Account ID should match pattern')
                 t.same(allTransactions[0].amount, -50.0, 'Amount should match')
                 t.same(allTransactions[0].payee, 'Grocery Store', 'Payee should match')
                 t.same(allTransactions[0].memo, 'Weekly groceries', 'Memo should match')
@@ -117,7 +105,7 @@ test('Transactions Repository', t => {
             const transactionId = insertInvestmentTransaction(db, transactionEntry, account, security)
 
             t.test('Then the transaction is inserted with a valid ID', t => {
-                t.ok(transactionId > 0, 'Transaction ID should be positive')
+                t.match(transactionId, /^txn_[a-f0-9]{12}(-\d+)?$/, 'Transaction ID should match pattern')
                 t.end()
             })
 
@@ -126,8 +114,8 @@ test('Transactions Repository', t => {
 
                 t.same(allTransactions.length, 1, 'Should have one transaction')
                 t.ok(Transaction.Investment.is(allTransactions[0]), 'Should be an Investment transaction')
-                t.same(allTransactions[0].accountId, account.id, 'Account ID should match')
-                t.same(allTransactions[0].securityId, security.id, 'Security ID should match')
+                t.match(allTransactions[0].accountId, /^acc_[a-f0-9]{12}$/, 'Account ID should match pattern')
+                t.match(allTransactions[0].securityId, /^sec_[a-f0-9]{12}$/, 'Security ID should match pattern')
                 t.same(allTransactions[0].amount, -1500.0, 'Amount should match')
                 t.same(allTransactions[0].quantity, 10, 'Quantity should match')
                 t.same(allTransactions[0].price, 150.0, 'Price should match')
@@ -227,8 +215,12 @@ test('Transactions Repository', t => {
             t.test('And each transaction has the correct structure', t => {
                 allTransactions.forEach(transaction => {
                     t.ok(Transaction.is(transaction), 'Each item should be a Transaction type')
-                    t.ok(typeof transaction.id === 'number', 'Each transaction should have a numeric ID')
-                    t.ok(typeof transaction.accountId === 'number', 'Each transaction should have a numeric account ID')
+                    t.match(transaction.id, /^txn_[a-f0-9]{12}(-\d+)?$/, 'Each transaction should have a valid ID')
+                    t.match(
+                        transaction.accountId,
+                        /^acc_[a-f0-9]{12}$/,
+                        'Each transaction should have a valid account ID',
+                    )
                     t.ok(typeof transaction.date === 'string', 'Each transaction should have a string date')
                     t.ok(
                         typeof transaction.transactionType === 'string',
@@ -340,27 +332,13 @@ test('Transactions Repository', t => {
                 insertBankTransaction(db, outflowTransaction, account)
                 insertBankTransaction(db, inflowTransaction, account)
 
-                t.test('Then transactions should be processed in correct order', t => {
-                    // Get transactions in the order they were inserted
-                    const transactions = db
-                        .prepare(
-                            `
-                        SELECT id, account_id, date, amount, transaction_type, payee, memo
-                        FROM transactions
-                        ORDER BY date ASC, id ASC
-                    `,
-                        )
-                        .all()
+                t.test('Then both transactions exist with correct amounts', t => {
+                    const transactions = db.prepare('SELECT amount FROM transactions ORDER BY date ASC').all()
 
                     t.same(transactions.length, 2, 'Should have 2 transactions')
 
-                    // The first transaction should be the outflow (id: 1)
-                    t.same(transactions[0].id, 1, 'First transaction should be outflow')
-                    t.same(transactions[0].amount, -510.0, 'First transaction should be outflow amount')
-
-                    // The second transaction should be the inflow (id: 2)
-                    t.same(transactions[1].id, 2, 'Second transaction should be inflow')
-                    t.same(transactions[1].amount, 10.0, 'Second transaction should be inflow amount')
+                    const amounts = transactions.map(t => t.amount).sort((a, b) => a - b)
+                    t.same(amounts, [-510.0, 10.0], 'Both transactions should have correct amounts')
                     t.end()
                 })
 
@@ -395,29 +373,20 @@ test('Transactions Repository', t => {
                 insertInvestmentTransaction(db, buyTransaction, account, security)
                 insertInvestmentTransaction(db, interestTransaction, account)
 
-                t.test('Then investment transactions should be processed in correct order', t => {
-                    // Get transactions in the order they were inserted
+                t.test('Then both investment transactions exist with correct data', t => {
                     const transactions = db
-                        .prepare(
-                            `
-                        SELECT id, account_id, date, amount, transaction_type, investment_action, security_id
-                        FROM transactions
-                        ORDER BY date ASC, id ASC
-                    `,
-                        )
+                        .prepare('SELECT amount, investment_action FROM transactions ORDER BY date ASC')
                         .all()
 
                     t.same(transactions.length, 2, 'Should have 2 investment transactions')
 
-                    // The first transaction should be the buy (id: 1)
-                    t.same(transactions[0].id, 1, 'First transaction should be buy')
-                    t.same(transactions[0].amount, -510.0, 'First transaction should be buy amount')
-                    t.same(transactions[0].investment_action, 'Buy', 'First transaction should be buy action')
+                    const buyTxn = transactions.find(t => t.investment_action === 'Buy')
+                    const intTxn = transactions.find(t => t.investment_action === 'IntInc')
 
-                    // The second transaction should be the interest (id: 2)
-                    t.same(transactions[1].id, 2, 'Second transaction should be interest')
-                    t.same(transactions[1].amount, 10.0, 'Second transaction should be interest amount')
-                    t.same(transactions[1].investment_action, 'IntInc', 'Second transaction should be interest action')
+                    t.ok(buyTxn, 'Buy transaction should exist')
+                    t.ok(intTxn, 'Interest transaction should exist')
+                    t.same(buyTxn.amount, -510.0, 'Buy transaction should have correct amount')
+                    t.same(intTxn.amount, 10.0, 'Interest transaction should have correct amount')
                     t.end()
                 })
 

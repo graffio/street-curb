@@ -1,8 +1,8 @@
 /** {@link module:Price} */
 /*  Price generated from: modules/cli-qif-to-sqlite/type-definitions/price.type.js
  *
- *  id        : "Number",
- *  securityId: "Number",
+ *  id        : /^prc_[a-f0-9]{12}$/,
+ *  securityId: /^sec_[a-f0-9]{12}$/,
  *  date      : "String",
  *  price     : "Number"
  *
@@ -18,8 +18,8 @@ import * as R from '@graffio/cli-type-generator'
 const Price = function Price(id, securityId, date, price) {
     const constructorName = 'Price(id, securityId, date, price)'
     R.validateArgumentLength(constructorName, 4, arguments)
-    R.validateNumber(constructorName, 'id', false, id)
-    R.validateNumber(constructorName, 'securityId', false, securityId)
+    R.validateRegex(constructorName, /^prc_[a-f0-9]{12}$/, 'id', false, id)
+    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
     R.validateString(constructorName, 'date', false, date)
     R.validateNumber(constructorName, 'price', false, price)
 

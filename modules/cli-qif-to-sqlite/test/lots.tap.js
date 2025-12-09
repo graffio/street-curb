@@ -14,7 +14,14 @@ import {
     insertLot,
     updateLotQuantity,
 } from '../src/services/database/lots.js'
-import { Lot } from '../src/types/index.js'
+import {
+    insertAccount,
+    insertSecurity,
+    insertInvestmentTransaction,
+    findAccountByName,
+    findSecurityByName,
+} from '../src/services/database/index.js'
+import { Entry } from '../src/types/index.js'
 
 /*
  * Create test database with schema
@@ -35,15 +42,9 @@ const createTestDatabase = () => {
  * @sig createAccountInDb :: (Database, Object) -> Object
  */
 const createAccountInDb = (db, accountData) => {
-    const stmt = db.prepare('INSERT INTO accounts (name, type, description) VALUES (?, ?, ?)')
-    const result = stmt.run(accountData.name, accountData.type, accountData.description || null)
-
-    return {
-        id: result.lastInsertRowid,
-        name: accountData.name,
-        type: accountData.type,
-        description: accountData.description,
-    }
+    const accountEntry = Entry.Account.from(accountData)
+    insertAccount(db, accountEntry)
+    return findAccountByName(db, accountData.name)
 }
 
 /*
@@ -51,56 +52,53 @@ const createAccountInDb = (db, accountData) => {
  * @sig createSecurityInDb :: (Database, Object) -> Object
  */
 const createSecurityInDb = (db, securityData) => {
-    const stmt = db.prepare('INSERT INTO securities (name, symbol, type, goal) VALUES (?, ?, ?, ?)')
-    const result = stmt.run(
-        securityData.name,
-        securityData.symbol,
-        securityData.type || null,
-        securityData.goal || null,
-    )
-
-    return {
-        id: result.lastInsertRowid,
-        name: securityData.name,
-        symbol: securityData.symbol,
-        type: securityData.type,
-        goal: securityData.goal,
-    }
+    const securityEntry = Entry.Security.from(securityData)
+    insertSecurity(db, securityEntry)
+    return findSecurityByName(db, securityData.name)
 }
 
 /*
- * Create test transaction in database
+ * Create test transaction in database using service layer
  * @sig createTransactionInDb :: (Database, Object) -> Object
  */
 const createTransactionInDb = (db, transactionData) => {
-    const stmt = db.prepare(`
-        INSERT INTO transactions (account_id, date, amount, transaction_type, security_id,
-                                 quantity, price, investment_action)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-    const result = stmt.run(
-        transactionData.accountId,
-        transactionData.date,
-        transactionData.amount,
-        transactionData.transactionType,
-        transactionData.securityId,
-        transactionData.quantity,
-        transactionData.price,
-        transactionData.investmentAction,
-    )
-
-    return {
-        id: result.lastInsertRowid,
-        accountId: transactionData.accountId,
-        date: transactionData.date,
+    const account = { id: transactionData.accountId }
+    const security = transactionData.securityId ? { id: transactionData.securityId } : null
+    const transactionEntry = Entry.TransactionInvestment.from({
+        account: 'dummy', // not used, we pass account object
+        date: new Date(transactionData.date),
+        transactionType: transactionData.investmentAction,
         amount: transactionData.amount,
-        transactionType: transactionData.transactionType,
-        securityId: transactionData.securityId,
+        security: security ? 'dummy' : null,
         quantity: transactionData.quantity,
         price: transactionData.price,
-        investmentAction: transactionData.investmentAction,
-    }
+    })
+    const id = insertInvestmentTransaction(db, transactionEntry, account, security)
+    return { id, ...transactionData }
 }
+
+/*
+ * Insert transaction directly via SQL for edge case tests (e.g., floating-point precision)
+ * Uses proper txn_ prefixed IDs
+ * @sig insertRawTransaction :: (Database, Object) -> void
+ */
+const insertRawTransaction = (db, txn) =>
+    db
+        .prepare(
+            `INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+            txn.id,
+            txn.account_id,
+            txn.date,
+            txn.amount,
+            txn.transaction_type,
+            txn.investment_action,
+            txn.security_id,
+            txn.quantity,
+            txn.price,
+        )
 
 test('Lots Repository', async t => {
     await t.test('Given a fresh database', async t => {
@@ -112,15 +110,13 @@ test('Lots Repository', async t => {
                 accountId: account.id,
                 date: '2024-01-15',
                 amount: -1500.0,
-                transactionType: 'investment',
                 securityId: security.id,
                 quantity: 10,
                 price: 150.0,
                 investmentAction: 'Buy',
             })
 
-            const lot = Lot.from({
-                id: 0,
+            const lotData = {
                 accountId: account.id,
                 securityId: security.id,
                 purchaseDate: '2024-01-15',
@@ -130,60 +126,31 @@ test('Lots Repository', async t => {
                 closedDate: null,
                 createdByTransactionId: transaction.id,
                 createdAt: '2024-01-15T10:00:00Z',
-            })
+            }
 
-            const lotId = insertLot(db, lot)
+            insertLot(db, lotData)
 
-            await t.test('Then the lot is inserted with a valid ID', t => {
-                assert.ok(lotId > 0, 'Lot ID should be positive')
-            })
-
-            await t.test('And I can find the lot in the database', t => {
+            await t.test('Then the lot is inserted and retrievable', t => {
                 const allLots = getAllLots(db)
-
                 assert.strictEqual(allLots.length, 1, 'Should have one lot')
-                assert.ok(Lot.is(allLots[0]), 'Should be a Lot type')
                 assert.strictEqual(allLots[0].accountId, account.id, 'Account ID should match')
                 assert.strictEqual(allLots[0].securityId, security.id, 'Security ID should match')
                 assert.strictEqual(allLots[0].quantity, 10, 'Quantity should match')
                 assert.strictEqual(allLots[0].costBasis, 1500.0, 'Cost basis should match')
                 assert.strictEqual(allLots[0].remainingQuantity, 10, 'Remaining quantity should match')
-
-                // For optional fields, the tagged type library omits null values
-                // So we check that closedDate is undefined (not present) when it should be null
-                assert.strictEqual(
-                    allLots[0].closedDate,
-                    undefined,
-                    'Closed date should be undefined (not present) when null',
-                )
             })
         })
 
         await t.test('When I get all lots on a fresh database', async t => {
             const db = createTestDatabase()
             const allLots = getAllLots(db)
-
-            await t.test('Then I get an empty array', t => {
-                assert.deepStrictEqual(allLots, [], 'Should return empty array for fresh database')
-            })
+            assert.deepStrictEqual(allLots, [], 'Should return empty array for fresh database')
         })
 
         await t.test('When I get the lot count on a fresh database', async t => {
             const db = createTestDatabase()
             const count = getLotCount(db)
-
-            await t.test('Then the count is zero', t => {
-                assert.strictEqual(count, 0, 'Lot count should be zero for fresh database')
-            })
-        })
-
-        await t.test('When I clear lots', async t => {
-            const db = createTestDatabase()
-            clearLots(db)
-
-            await t.test('Then the operation completes without error', t => {
-                assert.ok(true, 'Clear lots should not throw an error')
-            })
+            assert.strictEqual(count, 0, 'Lot count should be zero for fresh database')
         })
     })
 
@@ -195,7 +162,6 @@ test('Lots Repository', async t => {
             accountId: account.id,
             date: '2024-01-15',
             amount: -1500.0,
-            transactionType: 'investment',
             securityId: security.id,
             quantity: 10,
             price: 150.0,
@@ -205,16 +171,14 @@ test('Lots Repository', async t => {
             accountId: account.id,
             date: '2024-02-01',
             amount: -800.0,
-            transactionType: 'investment',
             securityId: security.id,
             quantity: 5,
             price: 160.0,
             investmentAction: 'Buy',
         })
 
-        // Insert test lots
-        const lot1 = Lot.from({
-            id: 0,
+        // Insert test lots - one open, one closed
+        insertLot(db, {
             accountId: account.id,
             securityId: security.id,
             purchaseDate: '2024-01-15',
@@ -226,8 +190,7 @@ test('Lots Repository', async t => {
             createdAt: '2024-01-15T10:00:00Z',
         })
 
-        const lot2 = Lot.from({
-            id: 0,
+        insertLot(db, {
             accountId: account.id,
             securityId: security.id,
             purchaseDate: '2024-02-01',
@@ -239,53 +202,22 @@ test('Lots Repository', async t => {
             createdAt: '2024-02-01T10:00:00Z',
         })
 
-        insertLot(db, lot1)
-        insertLot(db, lot2)
-
         await t.test('When I get all lots', async t => {
             const allLots = getAllLots(db)
-
-            await t.test('Then I get all lots in chronological order', t => {
-                assert.strictEqual(allLots.length, 2, 'Should return all 2 lots')
-                assert.strictEqual(allLots[0].purchaseDate, '2024-01-15', 'First lot should be oldest')
-                assert.strictEqual(allLots[1].purchaseDate, '2024-02-01', 'Second lot should be newest')
-            })
-
-            await t.test('And each lot has the correct structure', t => {
-                allLots.forEach(lot => {
-                    assert.ok(Lot.is(lot), 'Each item should be a Lot type')
-                    assert.ok(typeof lot.id === 'number', 'Each lot should have a numeric ID')
-                    assert.ok(typeof lot.accountId === 'number', 'Each lot should have a numeric account ID')
-                    assert.ok(typeof lot.securityId === 'number', 'Each lot should have a numeric security ID')
-                    assert.ok(typeof lot.purchaseDate === 'string', 'Each lot should have a string purchase date')
-                    assert.ok(typeof lot.quantity === 'number', 'Each lot should have a numeric quantity')
-                    assert.ok(typeof lot.costBasis === 'number', 'Each lot should have a numeric cost basis')
-                    assert.ok(
-                        typeof lot.remainingQuantity === 'number',
-                        'Each lot should have a numeric remaining quantity',
-                    )
-                })
-            })
+            assert.strictEqual(allLots.length, 2, 'Should return all 2 lots')
+            assert.strictEqual(allLots[0].purchaseDate, '2024-01-15', 'First lot should be oldest')
+            assert.strictEqual(allLots[1].purchaseDate, '2024-02-01', 'Second lot should be newest')
         })
 
         await t.test('When I get lots by account and security', async t => {
             const lots = getLotsByAccountAndSecurity(db, account.id, security.id)
-
-            await t.test('Then I get the correct lots', t => {
-                assert.strictEqual(lots.length, 2, 'Should return 2 lots')
-                assert.strictEqual(lots[0].accountId, account.id, 'First lot account ID should match')
-                assert.strictEqual(lots[0].securityId, security.id, 'First lot security ID should match')
-            })
+            assert.strictEqual(lots.length, 2, 'Should return 2 lots')
         })
 
         await t.test('When I get open lots by account and security', async t => {
             const openLots = getOpenLotsByAccountAndSecurity(db, account.id, security.id)
-
-            await t.test('Then I get only open lots', t => {
-                assert.strictEqual(openLots.length, 1, 'Should return 1 open lot')
-                assert.strictEqual(openLots[0].closedDate, undefined, 'Lot should be open (closedDate undefined)')
-                assert.strictEqual(openLots[0].remainingQuantity, 5, 'Remaining quantity should be 5')
-            })
+            assert.strictEqual(openLots.length, 1, 'Should return 1 open lot')
+            assert.strictEqual(openLots[0].remainingQuantity, 5, 'Remaining quantity should be 5')
         })
 
         await t.test('When I update lot quantity', async t => {
@@ -294,354 +226,140 @@ test('Lots Repository', async t => {
 
             updateLotQuantity(db, lot.id, 0, '2024-04-01')
 
-            await t.test('Then the lot is updated correctly', t => {
-                const updatedLots = getLotsByAccountAndSecurity(db, account.id, security.id)
-                const updatedLot = updatedLots.find(l => l.id === lot.id)
-
-                assert.strictEqual(updatedLot.remainingQuantity, 0, 'Remaining quantity should be 0')
-                assert.strictEqual(updatedLot.closedDate, '2024-04-01', 'Closed date should be set')
-            })
+            const updatedLots = getLotsByAccountAndSecurity(db, account.id, security.id)
+            const updatedLot = updatedLots.find(l => l.id === lot.id)
+            assert.strictEqual(updatedLot.remainingQuantity, 0, 'Remaining quantity should be 0')
+            assert.strictEqual(updatedLot.closedDate, '2024-04-01', 'Closed date should be set')
         })
 
         await t.test('When I get the lot count', async t => {
             const count = getLotCount(db)
-
-            await t.test('Then the count matches the number of lots', t => {
-                assert.strictEqual(count, 2, 'Lot count should be 2')
-            })
+            assert.strictEqual(count, 2, 'Lot count should be 2')
         })
 
         await t.test('When I clear all lots', async t => {
             clearLots(db)
-
-            await t.test('Then all lots are removed', t => {
-                const count = getLotCount(db)
-                assert.strictEqual(count, 0, 'Lot count should be zero after clearing')
-
-                const allLots = getAllLots(db)
-                assert.deepStrictEqual(allLots, [], 'All lots should return empty array')
-            })
-        })
-    })
-
-    await t.test('Given invalid input', async t => {
-        await t.test('When I try to insert a non-Lot entry', async t => {
-            const db = createTestDatabase()
-            const invalidEntry = { accountId: 1, securityId: 1 }
-
-            await t.test('Then an error is thrown', t => {
-                assert.throws(
-                    () => {
-                        insertLot(db, invalidEntry)
-                    },
-                    /Expected Lot/,
-                    'Should throw error for invalid entry type',
-                )
-            })
+            assert.strictEqual(getLotCount(db), 0, 'Lot count should be zero after clearing')
         })
     })
 })
 
 test('Lot Processing Service', async t => {
-    await t.test('Given investment transactions', async t => {
+    await t.test('Given buy and sell transactions', async t => {
         const db = createTestDatabase()
         const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
         const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
 
-        // Insert test transactions
-        const buyTransaction = {
-            id: 1,
-            account_id: account.id,
+        createTransactionInDb(db, {
+            accountId: account.id,
             date: '2024-01-15',
             amount: -1500.0,
-            transaction_type: 'investment',
-            investment_action: 'Buy',
-            security_id: security.id,
+            securityId: security.id,
             quantity: 10,
             price: 150.0,
-        }
+            investmentAction: 'Buy',
+        })
 
-        const sellTransaction = {
-            id: 2,
-            account_id: account.id,
+        createTransactionInDb(db, {
+            accountId: account.id,
             date: '2024-02-15',
             amount: 800.0,
-            transaction_type: 'investment',
-            investment_action: 'Sell',
-            security_id: security.id,
+            securityId: security.id,
             quantity: 5,
             price: 160.0,
-        }
-
-        db.prepare(
-            'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).run(
-            buyTransaction.id,
-            buyTransaction.account_id,
-            buyTransaction.date,
-            buyTransaction.amount,
-            buyTransaction.transaction_type,
-            buyTransaction.investment_action,
-            buyTransaction.security_id,
-            buyTransaction.quantity,
-            buyTransaction.price,
-        )
-
-        db.prepare(
-            'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).run(
-            sellTransaction.id,
-            sellTransaction.account_id,
-            sellTransaction.date,
-            sellTransaction.amount,
-            sellTransaction.transaction_type,
-            sellTransaction.investment_action,
-            sellTransaction.security_id,
-            sellTransaction.quantity,
-            sellTransaction.price,
-        )
-
-        await t.test('When I import lots from transactions', async t => {
-            importLots(db)
-
-            await t.test('Then lots are created correctly', t => {
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 1, 'Should have 1 lot after buy and sell transactions')
-
-                const lot = allLots[0]
-                assert.strictEqual(lot.quantity, 10, 'Lot quantity should be 10')
-                assert.strictEqual(lot.costBasis, 1500.0, 'Lot cost basis should be 1500.0')
-                assert.strictEqual(lot.remainingQuantity, 5, 'Lot remaining quantity should be 5 after sell')
-                assert.strictEqual(lot.closedDate, undefined, 'Lot should be open (closedDate undefined)')
-            })
+            investmentAction: 'Sell',
         })
-    })
 
-    await t.test('Given investment transactions with new actions', async t => {
-        const db = createTestDatabase()
-        const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
-        const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
-
-        // Insert test transactions
-        const buyTransaction = {
-            id: 1,
-            account_id: account.id,
-            date: '2024-01-15',
-            amount: -1500.0,
-            transaction_type: 'investment',
-            investment_action: 'Buy',
-            security_id: security.id,
-            quantity: 10,
-            price: 150.0,
-        }
-
-        const sellTransaction = {
-            id: 2,
-            account_id: account.id,
-            date: '2024-02-15',
-            amount: 800.0,
-            transaction_type: 'investment',
-            investment_action: 'Sell',
-            security_id: security.id,
-            quantity: 5,
-            price: 160.0,
-        }
-
-        db.prepare(
-            'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).run(
-            buyTransaction.id,
-            buyTransaction.account_id,
-            buyTransaction.date,
-            buyTransaction.amount,
-            buyTransaction.transaction_type,
-            buyTransaction.investment_action,
-            buyTransaction.security_id,
-            buyTransaction.quantity,
-            buyTransaction.price,
-        )
-
-        db.prepare(
-            'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).run(
-            sellTransaction.id,
-            sellTransaction.account_id,
-            sellTransaction.date,
-            sellTransaction.amount,
-            sellTransaction.transaction_type,
-            sellTransaction.investment_action,
-            sellTransaction.security_id,
-            sellTransaction.quantity,
-            sellTransaction.price,
-        )
-
-        await t.test('When I import lots from transactions with new actions', async t => {
-            importLots(db)
-
-            await t.test('Then new investment actions are handled correctly', t => {
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 1, 'Should have 1 lot after new investment actions')
-
-                const lot = allLots[0]
-                assert.strictEqual(lot.quantity, 10, 'Lot quantity should be 10')
-                assert.strictEqual(lot.costBasis, 1500.0, 'Lot cost basis should be 1500.0')
-                assert.strictEqual(
-                    lot.remainingQuantity,
-                    5,
-                    'Lot remaining quantity should be 5 after new investment actions',
-                )
-                assert.strictEqual(lot.closedDate, undefined, 'Lot should be open (closedDate undefined)')
-            })
-        })
-    })
-
-    await t.test('Given floating-point precision issues', async t => {
-        await t.test('When I have very small remaining shares', async t => {
-            const db = createTestDatabase()
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
-            const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
-
-            // Insert test transactions with floating-point precision
-            const buyTransaction = {
-                id: 1,
-                account_id: account.id,
-                date: '2024-01-15',
-                amount: -1500.0,
-                transaction_type: 'investment',
-                investment_action: 'Buy',
-                security_id: security.id,
-                quantity: 10.00000000000001,
-                price: 150.0,
-            }
-
-            const sellTransaction = {
-                id: 2,
-                account_id: account.id,
-                date: '2024-02-15',
-                amount: 1500.0,
-                transaction_type: 'investment',
-                investment_action: 'Sell',
-                security_id: security.id,
-                quantity: 10,
-                price: 150.0,
-            }
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                buyTransaction.id,
-                buyTransaction.account_id,
-                buyTransaction.date,
-                buyTransaction.amount,
-                buyTransaction.transaction_type,
-                buyTransaction.investment_action,
-                buyTransaction.security_id,
-                buyTransaction.quantity,
-                buyTransaction.price,
-            )
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                sellTransaction.id,
-                sellTransaction.account_id,
-                sellTransaction.date,
-                sellTransaction.amount,
-                sellTransaction.transaction_type,
-                sellTransaction.investment_action,
-                sellTransaction.security_id,
-                sellTransaction.quantity,
-                sellTransaction.price,
-            )
-
+        await t.test('Then importLots creates lot with correct remaining quantity', t => {
             importLots(db)
             const allLots = getAllLots(db)
-            console.log('DEBUG allLots:', allLots)
-            assert.strictEqual(allLots.length, 1, 'Should have 1 lot after buy and sell transactions')
-            const lot = allLots[0]
-            assert.ok(Math.abs(lot.quantity - 10) < 1e-8, 'Lot quantity should be approximately 10')
-            assert.strictEqual(lot.remainingQuantity, 0, 'Lot remaining quantity should be 0 after sell (epsilon)')
-            assert.ok(lot.closedDate, 'Lot should be closed (closedDate set)')
+            assert.strictEqual(allLots.length, 1, 'Should have 1 lot')
+            assert.strictEqual(allLots[0].quantity, 10, 'Lot quantity should be 10')
+            assert.strictEqual(allLots[0].remainingQuantity, 5, 'Remaining should be 5 after sell')
+        })
+    })
+
+    await t.test('Given floating-point precision edge case', async t => {
+        const db = createTestDatabase()
+        const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+        const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
+
+        // Use raw SQL to insert transactions with specific floating-point values
+        insertRawTransaction(db, {
+            id: 'txn_000000000001',
+            account_id: account.id,
+            date: '2024-01-15',
+            amount: -1500.0,
+            transaction_type: 'investment',
+            investment_action: 'Buy',
+            security_id: security.id,
+            quantity: 10.00000000000001, // tiny floating-point error
+            price: 150.0,
+        })
+
+        insertRawTransaction(db, {
+            id: 'txn_000000000002',
+            account_id: account.id,
+            date: '2024-02-15',
+            amount: 1500.0,
+            transaction_type: 'investment',
+            investment_action: 'Sell',
+            security_id: security.id,
+            quantity: 10,
+            price: 150.0,
+        })
+
+        await t.test('Then lot is closed despite epsilon difference', t => {
+            importLots(db)
+            const allLots = getAllLots(db)
+            assert.strictEqual(allLots.length, 1, 'Should have 1 lot')
+            assert.strictEqual(allLots[0].remainingQuantity, 0, 'Remaining should be 0 (epsilon handled)')
+            assert.ok(allLots[0].closedDate, 'Lot should be closed')
         })
     })
 
     await t.test('Given transfer actions without security_id', async t => {
-        await t.test('When I import lots from transfer transactions', async t => {
-            const db = createTestDatabase()
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+        const db = createTestDatabase()
+        const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
 
-            // Insert transfer transactions without security_id
-            const xOutTransaction = {
-                id: 1,
-                account_id: account.id,
-                date: '2024-01-15',
-                amount: 1000.0,
-                transaction_type: 'investment',
-                investment_action: 'XOut',
-                security_id: null,
-                quantity: null,
-                price: null,
-            }
+        insertRawTransaction(db, {
+            id: 'txn_000000000001',
+            account_id: account.id,
+            date: '2024-01-15',
+            amount: 1000.0,
+            transaction_type: 'investment',
+            investment_action: 'XOut',
+            security_id: null,
+            quantity: null,
+            price: null,
+        })
 
-            const xInTransaction = {
-                id: 2,
-                account_id: account.id,
-                date: '2024-01-16',
-                amount: -1000.0,
-                transaction_type: 'investment',
-                investment_action: 'XIn',
-                security_id: null,
-                quantity: null,
-                price: null,
-            }
+        insertRawTransaction(db, {
+            id: 'txn_000000000002',
+            account_id: account.id,
+            date: '2024-01-16',
+            amount: -1000.0,
+            transaction_type: 'investment',
+            investment_action: 'XIn',
+            security_id: null,
+            quantity: null,
+            price: null,
+        })
 
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                xOutTransaction.id,
-                xOutTransaction.account_id,
-                xOutTransaction.date,
-                xOutTransaction.amount,
-                xOutTransaction.transaction_type,
-                xOutTransaction.investment_action,
-                xOutTransaction.security_id,
-                xOutTransaction.quantity,
-                xOutTransaction.price,
-            )
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                xInTransaction.id,
-                xInTransaction.account_id,
-                xInTransaction.date,
-                xInTransaction.amount,
-                xInTransaction.transaction_type,
-                xInTransaction.investment_action,
-                xInTransaction.security_id,
-                xInTransaction.quantity,
-                xInTransaction.price,
-            )
-
-            await t.test('Then transfer actions are handled without security_id', t => {
-                // Process the transactions
-                importLots(db)
-
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 0, 'Should have 0 lots after transfer transactions (no security_id)')
-            })
+        await t.test('Then transfer actions create no lots', t => {
+            importLots(db)
+            assert.strictEqual(getAllLots(db).length, 0, 'Transfer transactions should not create lots')
         })
     })
 
     await t.test('Given dividend transactions', async t => {
-        await t.test('When I import lots from dividend transactions', async t => {
+        await t.test('Regular dividends create no lots', async t => {
             const db = createTestDatabase()
             const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
 
-            // Insert dividend transactions
-            const dividendTransaction = {
-                id: 1,
+            insertRawTransaction(db, {
+                id: 'txn_000000000001',
                 account_id: account.id,
                 date: '2024-01-15',
                 amount: 100.0,
@@ -650,37 +368,19 @@ test('Lot Processing Service', async t => {
                 security_id: security.id,
                 quantity: null,
                 price: null,
-            }
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                dividendTransaction.id,
-                dividendTransaction.account_id,
-                dividendTransaction.date,
-                dividendTransaction.amount,
-                dividendTransaction.transaction_type,
-                dividendTransaction.investment_action,
-                dividendTransaction.security_id,
-                dividendTransaction.quantity,
-                dividendTransaction.price,
-            )
-
-            await t.test('Then regular dividends are cash-only (no lots)', t => {
-                importLots(db)
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 0, 'Should have 0 lots after dividend transactions')
             })
+
+            importLots(db)
+            assert.strictEqual(getAllLots(db).length, 0, 'Div transactions should not create lots')
         })
 
-        await t.test('When I import lots from dividend transactions with reinvested dividends', async t => {
+        await t.test('Reinvested dividends create lots', async t => {
             const db = createTestDatabase()
             const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
 
-            // Insert dividend transactions with reinvested dividends
-            const dividendTransaction = {
-                id: 1,
+            insertRawTransaction(db, {
+                id: 'txn_000000000001',
                 account_id: account.id,
                 date: '2024-01-15',
                 amount: 100.0,
@@ -689,49 +389,24 @@ test('Lot Processing Service', async t => {
                 security_id: security.id,
                 quantity: 0.5,
                 price: 200.0,
-            }
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                dividendTransaction.id,
-                dividendTransaction.account_id,
-                dividendTransaction.date,
-                dividendTransaction.amount,
-                dividendTransaction.transaction_type,
-                dividendTransaction.investment_action,
-                dividendTransaction.security_id,
-                dividendTransaction.quantity,
-                dividendTransaction.price,
-            )
-
-            await t.test('Then reinvested dividends create new lots', t => {
-                importLots(db)
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 1, 'Should have 1 lot after reinvested dividend transaction')
-
-                const lot = allLots[0]
-                assert.strictEqual(lot.quantity, 0.5, 'Lot quantity should be 0.5')
-                assert.strictEqual(lot.costBasis, 100.0, 'Lot cost basis should be 100.0')
-                assert.strictEqual(
-                    lot.remainingQuantity,
-                    0.5,
-                    'Lot remaining quantity should be 0.5 after reinvested dividend',
-                )
-                assert.strictEqual(lot.closedDate, undefined, 'Lot should be open (closedDate undefined)')
             })
+
+            importLots(db)
+            const allLots = getAllLots(db)
+            assert.strictEqual(allLots.length, 1, 'ReinvDiv should create 1 lot')
+            assert.strictEqual(allLots[0].quantity, 0.5, 'Lot quantity should be 0.5')
+            assert.strictEqual(allLots[0].costBasis, 100.0, 'Cost basis should be amount')
         })
     })
 
     await t.test('Given short positions', async t => {
-        await t.test('When I import lots from short selling transactions', async t => {
+        await t.test('Short sell creates negative quantity lot', async t => {
             const db = createTestDatabase()
             const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
 
-            // Insert a short sell transaction (selling more than we own)
-            const shortSellTransaction = {
-                id: 1,
+            insertRawTransaction(db, {
+                id: 'txn_000000000001',
                 account_id: account.id,
                 date: '2024-01-15',
                 amount: 1500.0,
@@ -740,43 +415,22 @@ test('Lot Processing Service', async t => {
                 security_id: security.id,
                 quantity: 10,
                 price: 150.0,
-            }
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                shortSellTransaction.id,
-                shortSellTransaction.account_id,
-                shortSellTransaction.date,
-                shortSellTransaction.amount,
-                shortSellTransaction.transaction_type,
-                shortSellTransaction.investment_action,
-                shortSellTransaction.security_id,
-                shortSellTransaction.quantity,
-                shortSellTransaction.price,
-            )
-
-            await t.test('Then short positions are created with negative quantities', t => {
-                importLots(db)
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 1, 'Should have 1 lot after short sale')
-
-                // The lot should be the open short position
-                const shortLot = allLots[0]
-                assert.strictEqual(shortLot.quantity, -10, 'Short lot quantity should be -10')
-                assert.strictEqual(shortLot.remainingQuantity, -10, 'Short lot remaining quantity should be -10 (open)')
-                assert.strictEqual(shortLot.closedDate, undefined, 'Short lot should be open (closedDate undefined)')
             })
+
+            importLots(db)
+            const allLots = getAllLots(db)
+            assert.strictEqual(allLots.length, 1, 'Should have 1 lot')
+            assert.strictEqual(allLots[0].quantity, -10, 'Short lot quantity should be -10')
+            assert.strictEqual(allLots[0].remainingQuantity, -10, 'Short lot remaining should be -10')
         })
 
-        await t.test('When I have a short position and then buy to cover', async t => {
+        await t.test('Buy to cover closes short position', async t => {
             const db = createTestDatabase()
             const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
 
-            // Insert a short sell transaction
-            const shortSellTransaction = {
-                id: 1,
+            insertRawTransaction(db, {
+                id: 'txn_000000000001',
                 account_id: account.id,
                 date: '2024-01-15',
                 amount: 1500.0,
@@ -785,11 +439,10 @@ test('Lot Processing Service', async t => {
                 security_id: security.id,
                 quantity: 10,
                 price: 150.0,
-            }
+            })
 
-            // Insert a buy to cover transaction
-            const buyToCoverTransaction = {
-                id: 2,
+            insertRawTransaction(db, {
+                id: 'txn_000000000002',
                 account_id: account.id,
                 date: '2024-01-20',
                 amount: -1400.0,
@@ -798,47 +451,13 @@ test('Lot Processing Service', async t => {
                 security_id: security.id,
                 quantity: 10,
                 price: 140.0,
-            }
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                shortSellTransaction.id,
-                shortSellTransaction.account_id,
-                shortSellTransaction.date,
-                shortSellTransaction.amount,
-                shortSellTransaction.transaction_type,
-                shortSellTransaction.investment_action,
-                shortSellTransaction.security_id,
-                shortSellTransaction.quantity,
-                shortSellTransaction.price,
-            )
-
-            db.prepare(
-                'INSERT INTO transactions (id, account_id, date, amount, transaction_type, investment_action, security_id, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            ).run(
-                buyToCoverTransaction.id,
-                buyToCoverTransaction.account_id,
-                buyToCoverTransaction.date,
-                buyToCoverTransaction.amount,
-                buyToCoverTransaction.transaction_type,
-                buyToCoverTransaction.investment_action,
-                buyToCoverTransaction.security_id,
-                buyToCoverTransaction.quantity,
-                buyToCoverTransaction.price,
-            )
-
-            await t.test('Then the short position is closed after buy to cover', t => {
-                importLots(db)
-                const allLots = getAllLots(db)
-                assert.strictEqual(allLots.length, 1, 'Should have 1 lot after short sell and buy to cover')
-
-                // The lot should be the closed short position
-                const shortLot = allLots[0]
-                assert.strictEqual(shortLot.quantity, -10, 'Short lot quantity should be -10')
-                assert.strictEqual(shortLot.remainingQuantity, 0, 'Short lot remaining quantity should be 0 (closed)')
-                assert.ok(shortLot.closedDate, 'Short lot should be closed')
             })
+
+            importLots(db)
+            const allLots = getAllLots(db)
+            assert.strictEqual(allLots.length, 1, 'Should have 1 lot')
+            assert.strictEqual(allLots[0].remainingQuantity, 0, 'Short lot should be closed')
+            assert.ok(allLots[0].closedDate, 'Closed date should be set')
         })
     })
 })

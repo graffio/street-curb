@@ -1,6 +1,7 @@
 // ABOUTME: Redux state selectors
 // ABOUTME: Provides access to state slices and derived data
 
+import memoizeReduxState from '@graffio/functional/src/ramda-like/memoize-redux-state.js'
 import { generateParentCategories } from '../utils/category-hierarchy.js'
 import {
     extractCategories,
@@ -27,37 +28,37 @@ const currentRowIndex = state => state.transactionFilters.currentRowIndex
 const customStartDate = state => state.transactionFilters.customStartDate
 const customEndDate = state => state.transactionFilters.customEndDate
 
-// Derived selectors
-const allCategories = state => {
+// Derived selectors (memoized to prevent unnecessary rerenders)
+const allCategories = memoizeReduxState(['transactions'], state => {
     const txns = transactions(state)
     if (!txns) return []
     return extractCategories(txns, generateParentCategories)
-}
+})
 
-const defaultStartDate = state => {
+const defaultStartDate = memoizeReduxState(['transactions'], state => {
     const txns = transactions(state)
     if (!txns) return new Date()
     return getEarliestTransactionDate(txns)
-}
+})
 
 const _defaultEndDate = new Date()
 const defaultEndDate = () => _defaultEndDate
 
-const filteredTransactions = state => {
+const filteredTransactions = memoizeReduxState(['transactions', 'transactionFilters'], state => {
     const txns = transactions(state)
     const textFiltered = filterByText(txns, filterQuery(state))
     const dateFiltered = filterByDateRange(textFiltered, dateRange(state) || {})
     return filterByCategories(dateFiltered, selectedCategories(state))
-}
+})
 
-const searchMatches = state => {
+const searchMatches = memoizeReduxState(['transactions', 'transactionFilters'], state => {
     const filtered = filteredTransactions(state)
     const query = searchQuery(state)
     return filtered
         .map((transaction, index) => ({ transaction, index }))
         .filter(({ transaction }) => transactionMatchesSearch(transaction, query))
         .map(({ index }) => index)
-}
+})
 
 export {
     initialized,
