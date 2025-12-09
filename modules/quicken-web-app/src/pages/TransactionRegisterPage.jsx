@@ -1,18 +1,8 @@
-import {
-    Button,
-    Card,
-    CategorySelector,
-    DateRangePicker,
-    Flex,
-    layoutChannel,
-    Text,
-    TextField,
-    useChannel,
-} from '@graffio/design-system'
+import { Flex, layoutChannel, useChannel } from '@graffio/design-system'
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import { TransactionRegister } from '../components/index.js'
+import { TransactionFiltersCard, TransactionRegister } from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { generateParentCategories } from '../utils/category-hierarchy.js'
@@ -32,137 +22,11 @@ import {
 
 const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
 
-const filtersCardStyle = { width: '280px', flexShrink: 0 }
-
 const mainContentStyle = { flex: 1, minWidth: 0 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const fakeTransactions = generateRealisticTransactions(10000)
-
-/*
- * Filters sidebar card for transaction filtering, searching, and category selection
- *
- * @sig TransactionFiltersCard :: (TransactionFiltersCardProps) -> ReactElement
- */
-const TransactionFiltersCard = ({
-    dateRange,
-    dateRangeKey,
-    filterQuery,
-    searchQuery,
-    selectedCategories,
-    currentSearchIndex,
-    customStartDate,
-    customEndDate,
-    defaultStartDate,
-    defaultEndDate,
-    allCategories,
-    searchMatches,
-    filteredTransactionsCount,
-    onDateRangeChange,
-    onDateRangeKeyChange,
-    onCustomStartDateChange,
-    onCustomEndDateChange,
-    onFilterQueryChange,
-    onSearchQueryChange,
-    onCategoryAdd,
-    onCategoryRemove,
-    onPreviousMatch,
-    onNextMatch,
-    onClearFilters,
-}) => (
-    <Card style={filtersCardStyle}>
-        <Flex direction="column" gap="4">
-            <Text size="3" weight="medium">
-                Filters
-            </Text>
-
-            <DateRangePicker
-                value={dateRangeKey}
-                onChange={onDateRangeChange}
-                onValueChange={onDateRangeKeyChange}
-                customStartDate={customStartDate}
-                customEndDate={customEndDate}
-                onCustomStartDateChange={onCustomStartDateChange}
-                onCustomEndDateChange={onCustomEndDateChange}
-                defaultStartDate={defaultStartDate}
-                defaultEndDate={defaultEndDate}
-            />
-
-            <Flex direction="column" gap="2">
-                <Text size="2" weight="medium" color="gray">
-                    Filter
-                </Text>
-                <TextField.Root
-                    placeholder="Filter transactions (e.g., Chipotle)..."
-                    value={filterQuery}
-                    onChange={onFilterQueryChange}
-                />
-            </Flex>
-
-            <Flex direction="column" gap="2">
-                <Text size="2" weight="medium" color="gray">
-                    Search
-                </Text>
-                <TextField.Root
-                    placeholder="Search transactions..."
-                    value={searchQuery}
-                    onChange={onSearchQueryChange}
-                />
-                {searchQuery && searchMatches.length > 0 && (
-                    <Flex gap="2" align="center">
-                        <Button size="1" variant="soft" disabled={searchMatches.length === 0} onClick={onPreviousMatch}>
-                            ← Previous
-                        </Button>
-                        <Button size="1" variant="soft" disabled={searchMatches.length === 0} onClick={onNextMatch}>
-                            Next →
-                        </Button>
-                        <Text size="1" color="gray">
-                            {currentSearchIndex + 1} of {searchMatches.length}
-                        </Text>
-                    </Flex>
-                )}
-            </Flex>
-
-            <CategorySelector
-                categories={allCategories}
-                selectedCategories={selectedCategories}
-                onCategoryAdded={onCategoryAdd}
-                onCategoryRemoved={onCategoryRemove}
-            />
-
-            <Button variant="soft" onClick={onClearFilters}>
-                Clear Filters
-            </Button>
-
-            <Flex direction="column" gap="1">
-                <Text size="1" color="gray">
-                    Showing {filteredTransactionsCount} transactions
-                </Text>
-                {dateRange && (
-                    <Text size="1" color="gray">
-                        {dateRange.start.toLocaleDateString()} - {dateRange.end.toLocaleDateString()}
-                    </Text>
-                )}
-                {filterQuery && (
-                    <Text size="1" color="gray">
-                        Filtered by: "{filterQuery}"
-                    </Text>
-                )}
-                {searchQuery && (
-                    <Text size="1" color="gray">
-                        Highlighting: "{searchQuery}"
-                    </Text>
-                )}
-                {selectedCategories.length > 0 && (
-                    <Text size="1" color="gray">
-                        Categories: {selectedCategories.join(', ')}
-                    </Text>
-                )}
-            </Flex>
-        </Flex>
-    </Card>
-)
 
 /*
  * Transaction Register page with filtering, search, and navigation

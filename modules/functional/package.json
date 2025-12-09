@@ -7,6 +7,7 @@
     "sideEffects": false,
     "scripts": {
         "tap": " TAP_DISABLE_COVERAGE=1 tap **/*.tap.js tap **/**/*.tap.js -R tap | tap-mocha-reporter spec",
+        "tap:file": "../../bash/run-tap.sh",
         "unit-tests": "yarn unit-test '**/*.tap.js' "
     },
     "private": true,
