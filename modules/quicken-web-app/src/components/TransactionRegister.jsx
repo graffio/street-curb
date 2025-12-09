@@ -117,7 +117,7 @@ const HighlightedText = ({ text, searchQuery }) => {
  */
 
 const DateCell = ({ column, value, formattedValue, searchQuery }) => (
-    <VirtualTable.Cell {...column}>
+    <VirtualTable.Cell {...column} key={column.key}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
             <div style={{ color: 'var(--gray-12)' }}>
                 <HighlightedText text={formattedValue} searchQuery={searchQuery} />
@@ -130,7 +130,7 @@ const DateCell = ({ column, value, formattedValue, searchQuery }) => (
 )
 
 const PayeeCell = ({ column, transaction, searchQuery }) => (
-    <VirtualTable.Cell {...column}>
+    <VirtualTable.Cell {...column} key={column.key}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
             <div style={{ color: 'var(--gray-12)' }}>
                 <HighlightedText text={transaction.payee || 'Unknown Payee'} searchQuery={searchQuery} />
@@ -143,13 +143,13 @@ const PayeeCell = ({ column, transaction, searchQuery }) => (
 )
 
 const MonetaryCell = ({ column, value, formattedValue, searchQuery }) => (
-    <VirtualTable.Cell {...column} style={getMonetaryStyle(value)}>
+    <VirtualTable.Cell {...column} style={getMonetaryStyle(value)} key={column.key}>
         <HighlightedText text={formattedValue} searchQuery={searchQuery} />
     </VirtualTable.Cell>
 )
 
 const DefaultCell = ({ column, formattedValue, searchQuery }) => (
-    <VirtualTable.Cell {...column}>
+    <VirtualTable.Cell {...column} key={column.key}>
         <HighlightedText text={formattedValue} searchQuery={searchQuery} />
     </VirtualTable.Cell>
 )
@@ -166,11 +166,11 @@ const renderCell = (transaction, column, searchQuery) => {
     const value = transaction[key]
     const formattedValue = applyFormat(value, format)
 
-    if (key === 'date')           return <DateCell     column={column} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
-    if (key === 'payee')          return <PayeeCell    column={column} searchQuery={searchQuery}               transaction={transaction}       />
-    if (key === 'amount')         return <MonetaryCell column={column} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
-    if (key === 'runningBalance') return <MonetaryCell column={column} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
-    return                               <DefaultCell  column={column} searchQuery={searchQuery}               formattedValue={formattedValue} />
+    if (key === 'date')           return <DateCell     column={column} key={key} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
+    if (key === 'payee')          return <PayeeCell    column={column} key={key} searchQuery={searchQuery}               transaction={transaction}       />
+    if (key === 'amount')         return <MonetaryCell column={column} key={key} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
+    if (key === 'runningBalance') return <MonetaryCell column={column} key={key} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
+    return                               <DefaultCell  column={column} key={key} searchQuery={searchQuery}               formattedValue={formattedValue} />
 }
 
 /*
