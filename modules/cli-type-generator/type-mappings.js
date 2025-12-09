@@ -67,10 +67,11 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite],
+    
+    // multiple targets
+    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite, targets.quickenWebApp],
 
-
-    // quicken-web-app
+    // quicken-web-app (Transaction must come before Action since Action references Transaction)
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 

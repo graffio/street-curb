@@ -1,5 +1,7 @@
 /*  Action generated from: modules/quicken-web-app/type-definitions/action.type.js
  *
+ *  LoadFile
+ *      transactions: "{Transaction:id}"
  *  SetTransactionFilter
  *      payload: "Object"
  *  ResetTransactionFilters
@@ -7,6 +9,7 @@
  */
 
 import * as R from '@graffio/cli-type-generator'
+import { Transaction } from './transaction.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -18,14 +21,18 @@ const Action = {
     is: v => {
         if (typeof v !== 'object') return false
         const constructor = Object.getPrototypeOf(v).constructor
-        return constructor === Action.SetTransactionFilter || constructor === Action.ResetTransactionFilters
+        return (
+            constructor === Action.LoadFile ||
+            constructor === Action.SetTransactionFilter ||
+            constructor === Action.ResetTransactionFilters
+        )
     },
 }
 
 // Add hidden properties
 Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
 Object.defineProperty(Action, '@@tagNames', {
-    value: ['SetTransactionFilter', 'ResetTransactionFilters'],
+    value: ['LoadFile', 'SetTransactionFilter', 'ResetTransactionFilters'],
     enumerable: false,
 })
 
@@ -45,6 +52,68 @@ Object.defineProperty(ActionPrototype, 'constructor', {
 })
 
 Action.prototype = ActionPrototype
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.LoadFile
+//
+// -------------------------------------------------------------------------------------------------------------
+const LoadFileConstructor = function LoadFile(transactions) {
+    const constructorName = 'Action.LoadFile(transactions)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateLookupTable(constructorName, 'Transaction', 'transactions', false, transactions)
+
+    const result = Object.create(LoadFilePrototype)
+    result.transactions = transactions
+    return result
+}
+
+Action.LoadFile = LoadFileConstructor
+
+const LoadFilePrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'LoadFile', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.LoadFile(${R._toString(this.transactions)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: LoadFileConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+LoadFileConstructor.prototype = LoadFilePrototype
+LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
+LoadFileConstructor.toString = () => 'Action.LoadFile'
+LoadFileConstructor._from = o => Action.LoadFile(o.transactions)
+LoadFileConstructor.from = LoadFileConstructor._from
+
+LoadFileConstructor._toFirestore = (o, encodeTimestamps) => ({
+    transactions: R.lookupTableToFirestore(Transaction, 'id', encodeTimestamps, o.transactions),
+})
+
+LoadFileConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    LoadFileConstructor._from({
+        transactions: R.lookupTableFromFirestore(Transaction, 'id', decodeTimestamps, doc.transactions),
+    })
+
+// Public aliases (can be overridden)
+LoadFileConstructor.toFirestore = LoadFileConstructor._toFirestore
+LoadFileConstructor.fromFirestore = LoadFileConstructor._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -157,6 +226,7 @@ Action._toFirestore = (o, encodeTimestamps) => {
 
 Action._fromFirestore = (doc, decodeTimestamps) => {
     const tagName = doc['@@tagName']
+    if (tagName === 'LoadFile') return Action.LoadFile.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTransactionFilter') return Action.SetTransactionFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ResetTransactionFilters')
         return Action.ResetTransactionFilters.fromFirestore(doc, decodeTimestamps)

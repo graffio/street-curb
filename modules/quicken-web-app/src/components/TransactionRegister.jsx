@@ -37,7 +37,6 @@ import { VirtualTable } from '@graffio/design-system'
 import { Format } from '@graffio/design-system/src/types/format.js'
 import PropTypes from 'prop-types'
 import React from 'react'
-import { bankTransactionColumns } from '../columns/bank-transaction-columns.js'
 import { applyFormat } from '../formatters/apply-format.js'
 import { transactionMatchesSearch } from '../utils/transaction-filters.js'
 
@@ -61,202 +60,176 @@ const calculateRunningBalances = (transactions, startingBalance) => {
 const getMonetaryStyle = value => ({ color: value >= 0 ? 'var(--green-11)' : 'var(--red-11)', fontWeight: '500' })
 
 /*
- * Get search matches within a specific field for highlighting
- *
- * @sig getFieldSearchMatches :: (String, String) -> [SearchMatch]
- *     SearchMatch = { text: String, isMatch: Boolean }
- */
-const getFieldSearchMatches = (fieldValue, searchQuery) => {
-    if (!searchQuery.trim() || !fieldValue) return [{ text: fieldValue || '', isMatch: false }]
-
-    const queryLower = searchQuery.toLowerCase()
-    const fieldLower = fieldValue.toLowerCase()
-
-    if (!fieldLower.includes(queryLower)) return [{ text: fieldValue, isMatch: false }]
-
-    const matches = []
-    let lastIndex = 0
-    let index = fieldLower.indexOf(queryLower, lastIndex)
-
-    while (index !== -1) {
-        // Add text before match
-        if (index > lastIndex) matches.push({ text: fieldValue.slice(lastIndex, index), isMatch: false })
-
-        // Add match
-        matches.push({ text: fieldValue.slice(index, index + searchQuery.length), isMatch: true })
-
-        lastIndex = index + searchQuery.length
-        index = fieldLower.indexOf(queryLower, lastIndex)
-    }
-
-    // Add remaining text
-    if (lastIndex < fieldValue.length) matches.push({ text: fieldValue.slice(lastIndex), isMatch: false })
-
-    return matches
-}
-
-/*
  * Render text with search highlighting
  *
  * @sig HighlightedText :: Props -> ReactElement
  *     Props = { text: String, searchQuery: String }
  */
 const HighlightedText = ({ text, searchQuery }) => {
+    /*
+     * Get search matches within a specific field for highlighting
+     *
+     * @sig getFieldSearchMatches :: (String, String) -> [SearchMatch]
+     *     SearchMatch = { text: String, isMatch: Boolean }
+     */
+
+    const getFieldSearchMatches = (fieldValue, searchQuery) => {
+        if (!searchQuery.trim() || !fieldValue) return [{ text: fieldValue || '', isMatch: false }]
+
+        const queryLower = searchQuery.toLowerCase()
+        const fieldLower = fieldValue.toLowerCase()
+
+        if (!fieldLower.includes(queryLower)) return [{ text: fieldValue, isMatch: false }]
+
+        const matches = []
+        let lastIndex = 0
+        let index = fieldLower.indexOf(queryLower, lastIndex)
+
+        while (index !== -1) {
+            // Add text before match
+            if (index > lastIndex) matches.push({ text: fieldValue.slice(lastIndex, index), isMatch: false })
+
+            // Add match
+            matches.push({ text: fieldValue.slice(index, index + searchQuery.length), isMatch: true })
+
+            lastIndex = index + searchQuery.length
+            index = fieldLower.indexOf(queryLower, lastIndex)
+        }
+
+        // Add remaining text
+        if (lastIndex < fieldValue.length) matches.push({ text: fieldValue.slice(lastIndex), isMatch: false })
+
+        return matches
+    }
+
     const possiblyHighlightRow = (match, index) => (
-        <span key={index} style={match.isMatch ? searchHighlightStyle : undefined}>
+        <span key={index} style={match.isMatch ? { backgroundColor: 'var(--ruby-6)' } : undefined}>
             {match.text}
         </span>
     )
 
-    const searchHighlightStyle = {
-        backgroundColor: 'var(--yellow-3)',
-        borderRadius: 'var(--radius-1)',
-        padding: '0 2px',
-    }
     const matches = getFieldSearchMatches(text, searchQuery)
     return <span>{matches.map(possiblyHighlightRow)}</span>
 }
+
+/*
+ * Cell rendering functions for specific column types
+ */
+
+const DateCell = ({ column, value, formattedValue, searchQuery }) => (
+    <VirtualTable.Cell {...column}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div style={{ color: 'var(--gray-12)' }}>
+                <HighlightedText text={formattedValue} searchQuery={searchQuery} />
+            </div>
+            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
+                {applyFormat(value, Format.RelativeDate())}
+            </div>
+        </div>
+    </VirtualTable.Cell>
+)
+
+const PayeeCell = ({ column, transaction, searchQuery }) => (
+    <VirtualTable.Cell {...column}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div style={{ color: 'var(--gray-12)' }}>
+                <HighlightedText text={transaction.payee || 'Unknown Payee'} searchQuery={searchQuery} />
+            </div>
+            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
+                <HighlightedText text={transaction.memo || ''} searchQuery={searchQuery} />
+            </div>
+        </div>
+    </VirtualTable.Cell>
+)
+
+const MonetaryCell = ({ column, value, formattedValue, searchQuery }) => (
+    <VirtualTable.Cell {...column} style={getMonetaryStyle(value)}>
+        <HighlightedText text={formattedValue} searchQuery={searchQuery} />
+    </VirtualTable.Cell>
+)
+
+const DefaultCell = ({ column, formattedValue, searchQuery }) => (
+    <VirtualTable.Cell {...column}>
+        <HighlightedText text={formattedValue} searchQuery={searchQuery} />
+    </VirtualTable.Cell>
+)
 
 /*
  * Render a single cell based on column definition
  *
  * @sig renderCell :: (Transaction, ColumnDefinition, String) -> ReactElement
  */
+
+// prettier-ignore
 const renderCell = (transaction, column, searchQuery) => {
-    const { key, width, flex, textAlign, format } = column
+    const { key, format } = column
     const value = transaction[key]
     const formattedValue = applyFormat(value, format)
 
-    // Special case: date column shows date + relative time
-    if (key === 'date')
-        return (
-            <VirtualTable.Cell key={key} width={width} flex={flex} textAlign={textAlign}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                    <div style={{ color: 'var(--gray-12)' }}>
-                        <HighlightedText text={formattedValue} searchQuery={searchQuery} />
-                    </div>
-                    <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
-                        {applyFormat(value, Format.RelativeDate())}
-                    </div>
-                </div>
-            </VirtualTable.Cell>
-        )
-
-    // Special case: payee column shows payee + memo
-    if (key === 'payee')
-        return (
-            <VirtualTable.Cell key={key} width={width} flex={flex} textAlign={textAlign}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                    <div style={{ color: 'var(--gray-12)' }}>
-                        <HighlightedText text={value || 'Unknown Payee'} searchQuery={searchQuery} />
-                    </div>
-                    <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
-                        <HighlightedText text={transaction.memo || ''} searchQuery={searchQuery} />
-                    </div>
-                </div>
-            </VirtualTable.Cell>
-        )
-
-    // Special case: amount/balance with conditional styling
-    if (key === 'amount' || key === 'runningBalance')
-        return (
-            <VirtualTable.Cell
-                key={key}
-                width={width}
-                flex={flex}
-                textAlign={textAlign}
-                style={getMonetaryStyle(value)}
-            >
-                <HighlightedText text={formattedValue} searchQuery={searchQuery} />
-            </VirtualTable.Cell>
-        )
-
-    // Default case: simple formatted value with search highlighting
-    return (
-        <VirtualTable.Cell key={key} width={width} flex={flex} textAlign={textAlign}>
-            <HighlightedText text={formattedValue} searchQuery={searchQuery} />
-        </VirtualTable.Cell>
-    )
+    if (key === 'date')           return <DateCell     column={column} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
+    if (key === 'payee')          return <PayeeCell    column={column} searchQuery={searchQuery}               transaction={transaction}       />
+    if (key === 'amount')         return <MonetaryCell column={column} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
+    if (key === 'runningBalance') return <MonetaryCell column={column} searchQuery={searchQuery} value={value} formattedValue={formattedValue} />
+    return                               <DefaultCell  column={column} searchQuery={searchQuery}               formattedValue={formattedValue} />
 }
-
-/*
- * Render a single transaction row with search highlighting
- *
- * @sig renderTransactionRow :: ([TransactionWithBalance], [ColumnDefinition], ClickHandler?, String) -> RenderRowFunc
- *     ClickHandler = Transaction -> void
- *     RenderRowFunc = Number -> ReactElement
- */
-const renderTransactionRow =
-    (transactions, columns, onTransactionClick, searchQuery) =>
-    (index, { isHighlighted } = {}) => {
-        const transaction = transactions[index]
-        if (!transaction) return `Row ${index} - No transaction`
-
-        const handleRowClick = () => onTransactionClick && onTransactionClick(transaction)
-        const isSearchMatch = transactionMatchesSearch(transaction, searchQuery)
-
-        const rowStyle = {
-            ...(isSearchMatch && { backgroundColor: 'var(--accent-2)' }),
-            ...(isHighlighted && { backgroundColor: 'var(--accent-3)' }),
-        }
-
-        return (
-            <VirtualTable.Row onClick={handleRowClick} style={rowStyle}>
-                {columns.map(column => renderCell(transaction, column, searchQuery))}
-            </VirtualTable.Row>
-        )
-    }
 
 /*
  * TransactionRegister main component
  * @sig TransactionRegister :: TransactionRegister.propTypes -> ReactElement
  */
-const TransactionRegister = React.forwardRef(
-    (
-        {
-            transactions = [],
-            columns = bankTransactionColumns,
-            searchQuery = '',
-            startingBalance = 0,
-            height = 600,
-            onTransactionClick,
-            highlightedRow,
-            ...props
-        },
-        ref,
-    ) => {
-        const transactionsWithBalance = calculateRunningBalances(transactions, startingBalance)
-        const transactionRenderRow = renderTransactionRow(
-            transactionsWithBalance,
-            columns,
-            onTransactionClick,
-            searchQuery,
-        )
+const TransactionRegister = ({
+    transactions,
+    columns,
+    searchQuery,
+    startingBalance,
+    height,
+    onTransactionClick,
+    highlightedRow,
+}) => {
+    const handleRowClick = transaction => () => onTransactionClick?.(transaction)
+
+    const renderColumHeader = (column, index) => (
+        <VirtualTable.HeaderCell key={index} width={column.width} flex={column.flex} textAlign={column.textAlign}>
+            {column.title}
+        </VirtualTable.HeaderCell>
+    )
+
+    const backgroundColor = (isHighlighted, isSearchMatch) => {
+        if (isHighlighted) return { backgroundColor: 'var(--yellow-5)' }
+        if (isSearchMatch) return { backgroundColor: 'var(--yellow-2)' }
+        return {}
+    }
+
+    const renderRow = (index, { isHighlighted } = {}) => {
+        const transaction = transactionsWithBalance[index]
+        if (!transaction) return `Row ${index} - No transaction`
+
+        const isSearchMatch = transactionMatchesSearch(transaction, searchQuery)
 
         return (
-            <VirtualTable.Root ref={ref} height={height} {...props}>
-                <VirtualTable.Header>
-                    {columns.map((column, index) => (
-                        <VirtualTable.HeaderCell
-                            key={index}
-                            width={column.width}
-                            flex={column.flex}
-                            textAlign={column.textAlign}
-                        >
-                            {column.title}
-                        </VirtualTable.HeaderCell>
-                    ))}
-                </VirtualTable.Header>
-                <VirtualTable.Body
-                    rowCount={transactionsWithBalance.length}
-                    rowHeight={72}
-                    renderRow={transactionRenderRow}
-                    highlightedRow={highlightedRow}
-                />
-            </VirtualTable.Root>
+            <VirtualTable.Row
+                onClick={handleRowClick(transaction)}
+                style={backgroundColor(isHighlighted, isSearchMatch)}
+            >
+                {columns.map(column => renderCell(transaction, column, searchQuery))}
+            </VirtualTable.Row>
         )
-    },
-)
+    }
+
+    const transactionsWithBalance = calculateRunningBalances(transactions, startingBalance)
+
+    return (
+        <VirtualTable.Root height={height}>
+            <VirtualTable.Header>{columns.map(renderColumHeader)}</VirtualTable.Header>
+            <VirtualTable.Body
+                rowCount={transactionsWithBalance.length}
+                rowHeight={72}
+                renderRow={renderRow}
+                highlightedRow={highlightedRow}
+            />
+        </VirtualTable.Root>
+    )
+}
 
 TransactionRegister.propTypes = {
     transactions: PropTypes.array,

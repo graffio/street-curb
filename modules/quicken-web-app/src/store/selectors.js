@@ -1,10 +1,22 @@
 // ABOUTME: Redux state selectors
-// ABOUTME: Provides access to state slices
+// ABOUTME: Provides access to state slices and derived data
 
+import { generateParentCategories } from '../utils/category-hierarchy.js'
+import {
+    extractCategories,
+    filterByCategories,
+    filterByDateRange,
+    filterByText,
+    getEarliestTransactionDate,
+    transactionMatchesSearch,
+} from '../utils/transaction-filters.js'
+
+// Base selectors
 const initialized = state => state.initialized
-
+const transactions = state => state.transactions
 const transactionFilters = state => state.transactionFilters
 
+// Filter state selectors
 const dateRange = state => state.transactionFilters.dateRange
 const dateRangeKey = state => state.transactionFilters.dateRangeKey
 const filterQuery = state => state.transactionFilters.filterQuery
@@ -15,8 +27,41 @@ const currentRowIndex = state => state.transactionFilters.currentRowIndex
 const customStartDate = state => state.transactionFilters.customStartDate
 const customEndDate = state => state.transactionFilters.customEndDate
 
+// Derived selectors
+const allCategories = state => {
+    const txns = transactions(state)
+    if (!txns) return []
+    return extractCategories(txns, generateParentCategories)
+}
+
+const defaultStartDate = state => {
+    const txns = transactions(state)
+    if (!txns) return new Date()
+    return getEarliestTransactionDate(txns)
+}
+
+const _defaultEndDate = new Date()
+const defaultEndDate = () => _defaultEndDate
+
+const filteredTransactions = state => {
+    const txns = transactions(state)
+    const textFiltered = filterByText(txns, filterQuery(state))
+    const dateFiltered = filterByDateRange(textFiltered, dateRange(state) || {})
+    return filterByCategories(dateFiltered, selectedCategories(state))
+}
+
+const searchMatches = state => {
+    const filtered = filteredTransactions(state)
+    const query = searchQuery(state)
+    return filtered
+        .map((transaction, index) => ({ transaction, index }))
+        .filter(({ transaction }) => transactionMatchesSearch(transaction, query))
+        .map(({ index }) => index)
+}
+
 export {
     initialized,
+    transactions,
     transactionFilters,
     dateRange,
     dateRangeKey,
@@ -27,4 +72,9 @@ export {
     currentRowIndex,
     customStartDate,
     customEndDate,
+    allCategories,
+    defaultStartDate,
+    defaultEndDate,
+    filteredTransactions,
+    searchMatches,
 }

@@ -12,7 +12,8 @@ export const Action = {
     name: 'Action',
     kind: 'taggedSum',
     variants: {
-        SetTransactionFilter  : { payload: 'Object' },
-        ResetTransactionFilters: { },
+        LoadFile               : { transactions: '{Transaction:id}' },
+        SetTransactionFilter   : { payload: 'Object' },
+        ResetTransactionFilters: {},
     }
 }

@@ -24,7 +24,7 @@
         { "step": 18, "action": "Extract TransactionFiltersCard from TransactionRegisterPage.jsx to its own file", "done": true },
         { "step": 19, "action": "Refactor TransactionRegisterPage.jsx to use FilterSpec (optional - deferred)", "done": true },
         { "step": 20, "action": "Run all tests, fix failures", "done": true },
-        { "step": 21, "action": "Commit with descriptive message", "done": false }
+        { "step": 21, "action": "Commit with descriptive message", "done": true }
     ],
     "verification": [
         "yarn types:generate succeeds",
