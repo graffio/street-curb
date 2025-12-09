@@ -2,6 +2,16 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## F129 - Quicken-Web-App Redux Migration (2025-12-08)
+**Purpose:** Migrate quicken-web-app Redux actions from string literals to Tagged types
+
+- Defined Action type with SetTransactionFilter and ResetTransactionFilters variants
+- Created post.js command layer to wrap Tagged actions for Redux dispatch
+- Updated reducer to use action.payload.match() for exhaustive pattern matching
+- Removed redundant actions.js—components call Action constructors directly via post()
+- Added quicken-web-app to cli-type-generator type-mappings.js
+- Also: custom eslint rule 'arrow-expression-body', lint-staged order fix, PostToolUse hook for auto-formatting
+
 ## F128 - Improve Metadata Handling (2025-11-20)
 **Purpose:** Clarify that organizationId is request metadata, not action payload data
 
