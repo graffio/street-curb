@@ -36,33 +36,7 @@
 import { VirtualTable } from '@graffio/design-system'
 import PropTypes from 'prop-types'
 import React from 'react'
-import { transactionMatchesSearch } from '../../utils/transaction-filters.js'
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Inline styles using Radix Themes tokens
-// ---------------------------------------------------------------------------------------------------------------------
-
-const rowBaseStyle = {}
-
-const searchMatchRowStyle = { backgroundColor: 'var(--accent-2)' }
-
-const highlightedRowStyle = { backgroundColor: 'var(--accent-3)' }
-
-const payeeInfoStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
-
-const payeeNameStyle = { color: 'var(--gray-12)' }
-
-const payeeMemoStyle = { color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }
-
-const dateInfoStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
-
-const dateStyle = { color: 'var(--gray-12)' }
-
-const relativeTimeStyle = { color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }
-
-const searchHighlightStyle = { backgroundColor: 'var(--yellow-3)', borderRadius: 'var(--radius-1)', padding: '0 2px' }
-
-// ---------------------------------------------------------------------------------------------------------------------
+import { transactionMatchesSearch } from '../utils/transaction-filters.js'
 
 /*
  * Calculate running balances for transaction list
@@ -88,7 +62,6 @@ const formatAmount = amount => (amount >= 0 ? `+$${amount.toFixed(2)}` : `-$${Ma
  *
  * @sig formatBalance :: Number -> String
  */
-const formatBalance = balance => `$${balance.toFixed(2)}`
 
 /*
  * Format date for display
@@ -188,6 +161,11 @@ const HighlightedText = ({ text, searchQuery }) => {
         </span>
     )
 
+    const searchHighlightStyle = {
+        backgroundColor: 'var(--yellow-3)',
+        borderRadius: 'var(--radius-1)',
+        padding: '0 2px',
+    }
     const matches = getFieldSearchMatches(text, searchQuery)
     return <span>{matches.map(possiblyHighlightRow)}</span>
 }
@@ -220,30 +198,32 @@ const renderTransactionRow =
 
         // Build style object based on row state
         const rowStyle = {
-            ...rowBaseStyle,
-            ...(isSearchMatch && searchMatchRowStyle),
-            ...(isHighlighted && highlightedRowStyle),
+            ...{},
+            ...(isSearchMatch && { backgroundColor: 'var(--accent-2)' }),
+            ...(isHighlighted && { backgroundColor: 'var(--accent-3)' }),
         }
 
         return (
             <VirtualTable.Row onClick={handleRowClick} style={rowStyle}>
                 <VirtualTable.Cell width="110px">
-                    <div style={dateInfoStyle}>
-                        <div style={dateStyle}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                        <div style={{ color: 'var(--gray-12)' }}>
                             <HighlightedText text={formatDate(transaction.date)} searchQuery={searchQuery} />
                         </div>
-                        <div style={relativeTimeStyle}>{getRelativeTime(transaction.date)}</div>
+                        <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
+                            {getRelativeTime(transaction.date)}
+                        </div>
                     </div>
                 </VirtualTable.Cell>
                 <VirtualTable.Cell width="70px">
                     <HighlightedText text={transaction.number || ''} searchQuery={searchQuery} />
                 </VirtualTable.Cell>
                 <VirtualTable.Cell flex={1}>
-                    <div style={payeeInfoStyle}>
-                        <div style={payeeNameStyle}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                        <div style={{ color: 'var(--gray-12)' }}>
                             <HighlightedText text={transaction.payee || 'Unknown Payee'} searchQuery={searchQuery} />
                         </div>
-                        <div style={payeeMemoStyle}>
+                        <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
                             <HighlightedText text={transaction.memo || ''} searchQuery={searchQuery} />
                         </div>
                     </div>
@@ -258,7 +238,7 @@ const renderTransactionRow =
                     <HighlightedText text={formatAmount(transaction.amount)} searchQuery={searchQuery} />
                 </VirtualTable.Cell>
                 <VirtualTable.Cell width="100px" textAlign="right" style={getBalanceStyle(transaction.runningBalance)}>
-                    {formatBalance(transaction.runningBalance)}
+                    {transaction.runningBalance.toFixed(2)}
                 </VirtualTable.Cell>
             </VirtualTable.Row>
         )
@@ -330,7 +310,7 @@ TransactionRegister.propTypes = {
     transactions: PropTypes.array,
     searchQuery: PropTypes.string,
     startingBalance: PropTypes.number,
-    height: PropTypes.number,
+    height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     onTransactionClick: PropTypes.func,
     highlightedRow: PropTypes.number,
 }

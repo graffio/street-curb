@@ -148,7 +148,11 @@ const Cell = ({ width, flex, textAlign = 'left', children, style = {} }) => {
     return <Box style={cellStyle}>{children}</Box>
 }
 
-Root.propTypes = { height: PropTypes.number, children: PropTypes.node.isRequired, style: PropTypes.object }
+Root.propTypes = {
+    height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    children: PropTypes.node.isRequired,
+    style: PropTypes.object,
+}
 
 Header.propTypes = { children: PropTypes.node.isRequired, style: PropTypes.object }
 
