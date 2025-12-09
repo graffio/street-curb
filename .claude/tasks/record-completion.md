@@ -11,7 +11,7 @@ Run after finishing a feature/task.
 ## Outcome Format
 
 ```markdown
-## FXXX - Feature Name (YYYY-MM-DD)
+## YYYY-MM-DD - Feature Name
 **Purpose:** One sentence
 
 - Bullet points of what was done
