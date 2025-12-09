@@ -7,7 +7,7 @@ export const Transaction = {
             accountId: 'Number',
             amount: 'Number',
             date: 'String',
-            id: 'Number',
+            id: /^txn_[a-f0-9]{12}(-\d+)?$/,
             transactionType: /^bank$/,
 
             // Optional fields (alphabetical)
@@ -22,7 +22,7 @@ export const Transaction = {
             // Required fields (alphabetical)
             accountId: 'Number',
             date: 'String',
-            id: 'Number',
+            id: /^txn_[a-f0-9]{12}(-\d+)?$/,
             transactionType: /^investment$/,
 
             // Optional fields (alphabetical)

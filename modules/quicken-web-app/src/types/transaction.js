@@ -4,7 +4,7 @@
  *      accountId      : "Number",
  *      amount         : "Number",
  *      date           : "String",
- *      id             : "Number",
+ *      id             : /^txn_[a-f0-9]{12}(-\d+)?$/,
  *      transactionType: /^bank$/,
  *      address        : "String?",
  *      categoryId     : "Number?",
@@ -15,7 +15,7 @@
  *  Investment
  *      accountId       : "Number",
  *      date            : "String",
- *      id              : "Number",
+ *      id              : /^txn_[a-f0-9]{12}(-\d+)?$/,
  *      transactionType : /^investment$/,
  *      address         : "String?",
  *      amount          : "Number?",
@@ -92,7 +92,7 @@ const BankConstructor = function Bank(
     R.validateNumber(constructorName, 'accountId', false, accountId)
     R.validateNumber(constructorName, 'amount', false, amount)
     R.validateString(constructorName, 'date', false, date)
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'id', false, id)
     R.validateRegex(constructorName, /^bank$/, 'transactionType', false, transactionType)
     R.validateString(constructorName, 'address', true, address)
     R.validateNumber(constructorName, 'categoryId', true, categoryId)
@@ -105,7 +105,7 @@ const BankConstructor = function Bank(
     result.accountId = accountId
     result.amount = amount
     result.date = date
-    result.id = id
+    if (id != null) result.id = id
     result.transactionType = transactionType
     if (address != null) result.address = address
     if (categoryId != null) result.categoryId = categoryId
@@ -193,7 +193,7 @@ const InvestmentConstructor = function Investment(
 
     R.validateNumber(constructorName, 'accountId', false, accountId)
     R.validateString(constructorName, 'date', false, date)
-    R.validateNumber(constructorName, 'id', false, id)
+    R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'id', false, id)
     R.validateRegex(constructorName, /^investment$/, 'transactionType', false, transactionType)
     R.validateString(constructorName, 'address', true, address)
     R.validateNumber(constructorName, 'amount', true, amount)
@@ -216,7 +216,7 @@ const InvestmentConstructor = function Investment(
     const result = Object.create(InvestmentPrototype)
     result.accountId = accountId
     result.date = date
-    result.id = id
+    if (id != null) result.id = id
     result.transactionType = transactionType
     if (address != null) result.address = address
     if (amount != null) result.amount = amount
