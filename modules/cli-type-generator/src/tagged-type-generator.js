@@ -207,7 +207,10 @@ const generateStaticTaggedType = async typeDefinition => {
             if (parsed.taggedType) childTypes.add(parsed.taggedType)
     })
 
-    const newChildTypes = Array.from(childTypes).filter(typeName => !existingImports.has(typeName))
+    // Filter out types already imported and self-references (recursive types)
+    const newChildTypes = Array.from(childTypes)
+        .filter(typeName => !existingImports.has(typeName))
+        .filter(typeName => typeName !== name)
 
     // Generate import statements for child types (only those not already imported)
     const childTypeImports = newChildTypes
@@ -324,17 +327,19 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
     // Collect child types from all variant fields for imports
     const childTypes = new Set()
-    Object.values(variants).forEach(variantFields => {
+    Object.values(variants).forEach(variantFields =>
         Object.values(variantFields).forEach(fieldType => {
             const parsed = TaggedFieldType.fromString(fieldType.toString())
             if (parsed.baseType === 'LookupTable' || parsed.baseType === 'Tagged')
                 if (parsed.taggedType) childTypes.add(parsed.taggedType)
-        })
-    })
+        }),
+    )
 
-    // Filter out child types that are already imported by the user
+    // Filter out types already imported and self-references (recursive types like FilterSpec.Compound.filters)
     const existingImports = new Set(imports.flatMap(imp => imp.specifiers.map(spec => spec.local)))
-    const newChildTypes = Array.from(childTypes).filter(typeName => !existingImports.has(typeName))
+    const newChildTypes = Array.from(childTypes)
+        .filter(typeName => !existingImports.has(typeName))
+        .filter(typeName => typeName !== name)
 
     // Generate import statements for child types (only those not already imported)
     const childTypeImports = newChildTypes
