@@ -39,15 +39,19 @@ export const Shape = {
 }
 ```
 
-Field expressions may reference primitives, other tagged types, regexes, arrays, or optionals:
+Field expressions may reference primitives, other tagged types, regexes, arrays, LookupTables, or optionals:
 
-| Pattern                                         | Meaning                          | Example                  |
-|-------------------------------------------------|----------------------------------|--------------------------|
-| `'Number'`, `'String'`, `'Boolean'`, `'Object'` | Primitive fields                 | `x: 'Number'`            |
-| `'Type'`                                        | Reference to another tagged type | `centre: 'Coord'`        |
-| `'Type?'`                                       | Optional field                   | `description: 'String?'` |
-| `'[Type]'`, `'[[Type]]'`, …                     | Arrays / nested arrays           | `rows: '[[Number]]'`     |
-| `/regexp/`                                      | Regex string validation          | `id: /^[0-9a-f-]{36}$/i` |
+| Pattern                                         | Meaning                          | Example                   |
+|-------------------------------------------------|----------------------------------|---------------------------|
+| `'Number'`, `'String'`, `'Boolean'`, `'Object'` | Primitive fields                 | `x: 'Number'`             |
+| `'Date'`                                        | Date field                       | `createdAt: 'Date'`       |
+| `'Type'`                                        | Reference to another tagged type | `centre: 'Coord'`         |
+| `'Type?'`                                       | Optional field (any type)        | `description: 'String?'`  |
+| `'{Type:idField}'`                              | LookupTable (preferred for collections) | `members: '{User:id}'` |
+| `'[Type]'`, `'[[Type]]'`, …                     | Arrays / nested arrays           | `rows: '[[Number]]'`      |
+| `/regexp/`                                      | Regex string validation          | `id: /^[0-9a-f-]{36}$/i`  |
+
+**Note:** Prefer LookupTable (`{Type:idField}`) over arrays when items have unique IDs. LookupTables provide O(1) lookup by ID and integrate with `@graffio/functional`.
 
 Other (test) examples in the repo:
 

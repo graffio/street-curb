@@ -22,7 +22,7 @@
  *      categoryId      : "Number?",
  *      cleared         : "String?",
  *      commission      : "Number?",
- *      investmentAction: /^(Buy|BuyX|Sell|SellX|Div|IntInc|CGLong|CGShort|ReinvDiv|ReinvInt|ReinvLg|ReinvSh|XIn|XOut|ShrsIn|ShrsOut|MiscInc|MiscExp|MargInt|ShtSell|CvrShrt|StkSplit)$/,
+ *      investmentAction: /^(Buy|BuyX|CGLong|CGShort|CvrShrt|Div|IntInc|MargInt|MiscExp|MiscInc|ReinvDiv|ReinvInt|ReinvLg|ReinvSh|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|XIn|XOut)$/,
  *      memo            : "String?",
  *      payee           : "String?",
  *      price           : "Number?",
@@ -202,7 +202,7 @@ const InvestmentConstructor = function Investment(
     R.validateNumber(constructorName, 'commission', true, commission)
     R.validateRegex(
         constructorName,
-        /^(Buy|BuyX|Sell|SellX|Div|IntInc|CGLong|CGShort|ReinvDiv|ReinvInt|ReinvLg|ReinvSh|XIn|XOut|ShrsIn|ShrsOut|MiscInc|MiscExp|MargInt|ShtSell|CvrShrt|StkSplit)$/,
+        /^(Buy|BuyX|CGLong|CGShort|CvrShrt|Div|IntInc|MargInt|MiscExp|MiscInc|ReinvDiv|ReinvInt|ReinvLg|ReinvSh|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|XIn|XOut)$/,
         'investmentAction',
         false,
         investmentAction,
