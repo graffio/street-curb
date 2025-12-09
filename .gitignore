@@ -36,5 +36,6 @@ modules/curb-map/migrations/config/temporary*
 modules/curb-map/functions/dist/
 
 *.sql
+!schema.sql
 *.sqlite
 *.sqlite3

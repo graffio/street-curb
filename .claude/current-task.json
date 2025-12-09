@@ -1,16 +1,33 @@
 {
-  "feature": "Fix recursive type imports in type generator",
-  "goal": "Prevent type generator from importing a type that is currently being defined (e.g., FilterSpec importing itself)",
-  "templates_used": ["commit-changes.md"],
+  "feature": "Comprehensive QIF Generator",
+  "goal": "Generate a ~10K transaction QIF file with all entry types to test the parser and serve as sample data",
+  "templates_used": ["implement-feature.md", "write-tests.md", "commit-changes.md"],
   "steps": [
-    { "step": 1, "action": "In generateStaticTaggedType (line ~210): Filter out self-references from newChildTypes by adding `.filter(typeName => typeName !== name)`", "done": false },
-    { "step": 2, "action": "In generateStaticTaggedSumType (line ~337): Same fix - filter out the type being defined from childTypes", "done": false },
-    { "step": 3, "action": "Regenerate FilterSpec to verify fix works", "done": false },
-    { "step": 4, "action": "Commit with descriptive message", "done": false }
+    { "step": 1, "action": "Create test file test/generate-qif.tap.js with test: Given a QIF generator, When generating reference data, Then it produces valid account/category/security records", "done": false },
+    { "step": 2, "action": "Run test to confirm it fails", "done": false },
+    { "step": 3, "action": "Create scripts/generate-comprehensive-qif.js with generateAccounts(), generateCategories(), generateSecurities(), generateTags(), generatePayees(), generateClasses()", "done": false },
+    { "step": 4, "action": "Run test to confirm it passes", "done": false },
+    { "step": 5, "action": "Add test: When generating bank transactions, Then it produces 7000 transactions with splits and transfers", "done": false },
+    { "step": 6, "action": "Run test to confirm it fails", "done": false },
+    { "step": 7, "action": "Implement generateBankTransactions() with payday income, bills, expenses, splits, transfers", "done": false },
+    { "step": 8, "action": "Run test to confirm it passes", "done": false },
+    { "step": 9, "action": "Add test: When generating investment transactions, Then it produces 3000 transactions with Buy/Sell/Div/Reinvest actions", "done": false },
+    { "step": 10, "action": "Run test to confirm it fails", "done": false },
+    { "step": 11, "action": "Implement generateInvestmentTransactions() with 401k contributions, dividends, rebalancing", "done": false },
+    { "step": 12, "action": "Run test to confirm it passes", "done": false },
+    { "step": 13, "action": "Add test: When serializing to QIF, Then output can be parsed by existing QIF parser", "done": false },
+    { "step": 14, "action": "Run test to confirm it fails", "done": false },
+    { "step": 15, "action": "Implement serializeToQIF() and all field formatters", "done": false },
+    { "step": 16, "action": "Run test to confirm it passes", "done": false },
+    { "step": 17, "action": "Generate comprehensive.qif to test/test-data/", "done": false },
+    { "step": 18, "action": "Import via CLI and verify all entry types present", "done": false },
+    { "step": 19, "action": "git status --short to check scope", "done": false },
+    { "step": 20, "action": "Commit: 'Add comprehensive QIF generator for testing all entry types'", "done": false }
   ],
   "verification": [
-    "Generated filter-spec.js does not import FilterSpec",
-    "yarn types:generate-all completes without error",
+    "Generated QIF parses without errors",
+    "Database contains ~7000 bank + ~3000 investment transactions",
+    "All 9 entry types present (Account, Category, Class, Payee, Security, Tag, Price, TransactionBank, TransactionInvestment)",
     "No lint errors"
   ]
 }
