@@ -33,9 +33,28 @@ const currentRowIndex = state => state.transactionFilters.currentRowIndex
 const customStartDate = state => state.transactionFilters.customStartDate
 const customEndDate = state => state.transactionFilters.customEndDate
 
-// Derived selectors (memoized to prevent unnecessary rerenders)
-const allCategories = memoizeReduxState(['transactions'], state => {
+/*
+ * Resolve categoryId to category name for a transaction
+ * @sig resolveCategoryName :: (Transaction, LookupTable<Category>) -> Transaction
+ */
+const resolveCategoryName = (txn, cats) => {
+    if (!txn.categoryId) return txn
+    const cat = cats.get(txn.categoryId)
+    return cat ? { ...txn, category: cat.name } : txn
+}
+
+/*
+ * Get transactions with resolved category names (used for filtering/display)
+ */
+const transactionsWithCategories = memoizeReduxState(['transactions', 'categories'], state => {
     const txns = transactions(state)
+    const cats = categories(state)
+    return txns.map(txn => resolveCategoryName(txn, cats))
+})
+
+// Derived selectors (memoized to prevent unnecessary rerenders)
+const allCategories = memoizeReduxState(['transactions', 'categories'], state => {
+    const txns = transactionsWithCategories(state)
     if (!txns) return []
     return extractCategories(txns, generateParentCategories)
 })
@@ -50,21 +69,13 @@ const _defaultEndDate = new Date()
 const defaultEndDate = () => _defaultEndDate
 
 const filteredTransactions = memoizeReduxState(['transactions', 'transactionFilters', 'categories'], state => {
-    const txns = transactions(state)
-    const cats = categories(state)
+    const txns = transactionsWithCategories(state)
     const textFiltered = filterByText(txns, filterQuery(state))
     const dateFiltered = filterByDateRange(textFiltered, dateRange(state) || {})
-    const categoryFiltered = filterByCategories(dateFiltered, selectedCategories(state))
-
-    // Resolve categoryId to category name for display
-    return categoryFiltered.map(txn => {
-        if (!txn.categoryId) return txn
-        const cat = cats.get(txn.categoryId)
-        return cat ? { ...txn, category: cat.name } : txn
-    })
+    return filterByCategories(dateFiltered, selectedCategories(state))
 })
 
-const searchMatches = memoizeReduxState(['transactions', 'transactionFilters'], state => {
+const searchMatches = memoizeReduxState(['transactions', 'transactionFilters', 'categories'], state => {
     const filtered = filteredTransactions(state)
     const query = searchQuery(state)
     return filtered
