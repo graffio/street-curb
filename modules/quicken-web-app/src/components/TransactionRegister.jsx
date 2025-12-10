@@ -37,7 +37,9 @@ import { VirtualTable } from '@graffio/design-system'
 import { Format } from '@graffio/design-system/src/types/format.js'
 import PropTypes from 'prop-types'
 import React from 'react'
+import { useSelector } from 'react-redux'
 import { applyFormat } from '../formatters/apply-format.js'
+import * as S from '../store/selectors.js'
 import { transactionMatchesSearch } from '../utils/transaction-filters.js'
 
 /*
@@ -186,6 +188,7 @@ const TransactionRegister = ({
     onTransactionClick,
     highlightedRow,
 }) => {
+    const categories = useSelector(S.categories)
     const handleRowClick = transaction => () => onTransactionClick?.(transaction)
 
     const renderColumHeader = (column, index) => (
@@ -204,7 +207,7 @@ const TransactionRegister = ({
         const transaction = transactionsWithBalance[index]
         if (!transaction) return `Row ${index} - No transaction`
 
-        const isSearchMatch = transactionMatchesSearch(transaction, searchQuery)
+        const isSearchMatch = transactionMatchesSearch(transaction, searchQuery, categories)
 
         return (
             <VirtualTable.Row

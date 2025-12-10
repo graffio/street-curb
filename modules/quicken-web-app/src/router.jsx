@@ -1,9 +1,21 @@
 // ABOUTME: TanStack Router configuration
 // ABOUTME: Defines routes with lazy loading and MainLayout shell
 
-import { Box, Button, Flex, Heading, LoadingSpinner, MainLayout } from '@graffio/design-system'
+import {
+    Box,
+    Button,
+    FilePickerButton,
+    Flex,
+    Heading,
+    LoadingSpinner,
+    MainLayout,
+    Separator,
+} from '@graffio/design-system'
 import { createRootRoute, createRoute, createRouter, Link, Outlet, redirect } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
+import { post } from './commands/post.js'
+import { loadEntitiesFromFile } from './services/sqlite-service.js'
+import { Action } from './types/action.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Sidebar rendering
@@ -32,6 +44,20 @@ const sidebarSections = [
     { title: 'Transactions', items: [{ label: 'Checking', to: '/transactions/checking' }] },
 ]
 
+/*
+ * Handle file selection from the file picker
+ * Loads SQLite file and dispatches LoadFile action with all entities
+ */
+const handleFileSelect = async file => {
+    try {
+        const { accounts, categories, securities, tags, splits, transactions } = await loadEntitiesFromFile(file)
+        post(Action.LoadFile(accounts, categories, securities, tags, splits, transactions))
+    } catch (error) {
+        // TODO: Show error in UI instead of console
+        console.error('Failed to load file:', error.message)
+    }
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Lazy / suspense
 // ---------------------------------------------------------------------------------------------------------------------
@@ -50,7 +76,20 @@ const redirectToDefaultRoute = () => {
 const rootRoute = createRootRoute({
     component: () => (
         <MainLayout>
-            <MainLayout.Sidebar>{sidebarSections.map(renderSidebarSection)}</MainLayout.Sidebar>
+            <MainLayout.Sidebar>
+                {sidebarSections.map(renderSidebarSection)}
+                <Separator size="4" my="3" />
+                <Box mx="3">
+                    <FilePickerButton
+                        accept=".sqlite,.qif"
+                        onFileSelect={handleFileSelect}
+                        variant="soft"
+                        style={{ width: '100%' }}
+                    >
+                        Open File
+                    </FilePickerButton>
+                </Box>
+            </MainLayout.Sidebar>
             <Suspense fallback={<LoadingSpinner />}>
                 <Outlet />
             </Suspense>

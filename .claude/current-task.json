@@ -1,16 +1,30 @@
 {
-  "feature": "Fix recursive type imports in type generator",
-  "goal": "Prevent type generator from importing a type that is currently being defined (e.g., FilterSpec importing itself)",
-  "templates_used": ["commit-changes.md"],
+  "feature": "Load All Entities into Redux",
+  "goal": "Load accounts, categories, securities, tags, and splits into Redux LookupTables so categoryId/securityId can resolve to names",
+  "templates_used": ["add-redux-action.md", "implement-feature.md", "commit-changes.md"],
   "steps": [
-    { "step": 1, "action": "In generateStaticTaggedType (line ~210): Filter out self-references from newChildTypes by adding `.filter(typeName => typeName !== name)`", "done": false },
-    { "step": 2, "action": "In generateStaticTaggedSumType (line ~337): Same fix - filter out the type being defined from childTypes", "done": false },
-    { "step": 3, "action": "Regenerate FilterSpec to verify fix works", "done": false },
-    { "step": 4, "action": "Commit with descriptive message", "done": false }
+    { "step": 1, "action": "Create type-definitions/account.type.js with Account variant: id (acc_xxx), name, type, description?, creditLimit?", "done": false },
+    { "step": 2, "action": "Create type-definitions/category.type.js with Category variant: id (cat_xxx), name, description?, budgetAmount?, isIncomeCategory?, isTaxRelated?, taxSchedule?", "done": false },
+    { "step": 3, "action": "Create type-definitions/security.type.js with Security variant: id (sec_xxx), name, symbol?, type?, goal?", "done": false },
+    { "step": 4, "action": "Create type-definitions/tag.type.js with Tag variant: id (tag_xxx), name, color?, description?", "done": false },
+    { "step": 5, "action": "Create type-definitions/split.type.js with Split variant: id, transactionId (txn_xxx), categoryId?, amount, memo?", "done": false },
+    { "step": 6, "action": "Run yarn types:generate-all to generate src/types/*.js for all new types", "done": false },
+    { "step": 7, "action": "Update type-definitions/action.type.js: LoadFile takes accounts:{Account:id}, categories:{Category:id}, securities:{Security:id}, tags:{Tag:id}, splits:{Split:id}, transactions:{Transaction:id}", "done": false },
+    { "step": 8, "action": "Run yarn types:generate on action.type.js to regenerate Action type", "done": false },
+    { "step": 9, "action": "Update sqlite-service.js: add queryAccounts, queryCategories, querySecurities, queryTags, querySplits functions", "done": false },
+    { "step": 10, "action": "Update sqlite-service.js: change loadTransactionsFromFile to loadEntitiesFromFile returning { accounts, categories, securities, tags, splits, transactions }", "done": false },
+    { "step": 11, "action": "Update reducer.js: add accounts, categories, securities, tags, splits to initialState as empty LookupTables", "done": false },
+    { "step": 12, "action": "Update reducer.js: LoadFile case spreads all entity LookupTables into state", "done": false },
+    { "step": 13, "action": "Update router.jsx: change handleFileSelect to destructure all entities and pass to Action.LoadFile", "done": false },
+    { "step": 14, "action": "Update bank-transaction-columns.js: change category column to resolve categoryId via categories LookupTable from state", "done": false },
+    { "step": 15, "action": "Test: Open comprehensive.sqlite, verify categories display as names not IDs", "done": false },
+    { "step": 16, "action": "git status --short to check scope", "done": false },
+    { "step": 17, "action": "Commit: 'Load all entities into Redux for category/security name resolution'", "done": false }
   ],
   "verification": [
-    "Generated filter-spec.js does not import FilterSpec",
-    "yarn types:generate-all completes without error",
+    "All types generate without errors",
+    "Opening .sqlite file loads all entities into Redux",
+    "Category names display in transaction list (not cat_xxx hashes)",
     "No lint errors"
   ]
 }
