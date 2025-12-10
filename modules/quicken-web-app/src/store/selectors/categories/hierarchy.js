@@ -1,9 +1,8 @@
 /*
  * Category hierarchy functions for working with hierarchical category structures
  *
- * This module provides functions for working with hierarchical category strings
- * that use colon separators (e.g., "food:restaurant:lunch"). These functions
- * are not transaction-specific and can be used for any hierarchical category system.
+ * Pure functions for hierarchical category strings using colon separators
+ * (e.g., "food:restaurant:lunch"). Not transaction-specific.
  */
 
 /*

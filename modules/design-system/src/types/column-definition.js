@@ -1,21 +1,20 @@
 /** {@link module:ColumnDefinition} */
 /*  ColumnDefinition generated from: modules/design-system/type-definitions/column-definition.type.js
  *
- *  key       : "String",
- *  title     : "String",
- *  width     : "String?",
- *  flex      : "Number?",
- *  textAlign : "/(left|center|right)?",
- *  format    : "Format?",
- *  searchable: "Boolean?",
- *  sortable  : "Boolean?",
- *  hidden    : "Boolean?"
+ *  id            : "String",
+ *  accessorKey   : "String?",
+ *  header        : "String",
+ *  size          : "Number?",
+ *  minSize       : "Number?",
+ *  maxSize       : "Number?",
+ *  enableSorting : "Boolean?",
+ *  enableResizing: "Boolean?",
+ *  meta          : "Object?",
+ *  cell          : "Any"
  *
  */
 
 import * as R from '@graffio/cli-type-generator'
-
-import { Format } from './format.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -23,38 +22,41 @@ import { Format } from './format.js'
 //
 // -------------------------------------------------------------------------------------------------------------
 const ColumnDefinition = function ColumnDefinition(
-    key,
-    title,
-    width,
-    flex,
-    textAlign,
-    format,
-    searchable,
-    sortable,
-    hidden,
+    id,
+    accessorKey,
+    header,
+    size,
+    minSize,
+    maxSize,
+    enableSorting,
+    enableResizing,
+    meta,
+    cell,
 ) {
-    const constructorName = 'ColumnDefinition(key, title, width, flex, textAlign, format, searchable, sortable, hidden)'
+    const constructorName =
+        'ColumnDefinition(id, accessorKey, header, size, minSize, maxSize, enableSorting, enableResizing, meta, cell)'
 
-    R.validateString(constructorName, 'key', false, key)
-    R.validateString(constructorName, 'title', false, title)
-    R.validateString(constructorName, 'width', true, width)
-    R.validateNumber(constructorName, 'flex', true, flex)
-    R.validateString(constructorName, 'textAlign', true, textAlign)
-    R.validateTag(constructorName, 'Format', 'format', true, format)
-    R.validateBoolean(constructorName, 'searchable', true, searchable)
-    R.validateBoolean(constructorName, 'sortable', true, sortable)
-    R.validateBoolean(constructorName, 'hidden', true, hidden)
+    R.validateString(constructorName, 'id', false, id)
+    R.validateString(constructorName, 'accessorKey', true, accessorKey)
+    R.validateString(constructorName, 'header', false, header)
+    R.validateNumber(constructorName, 'size', true, size)
+    R.validateNumber(constructorName, 'minSize', true, minSize)
+    R.validateNumber(constructorName, 'maxSize', true, maxSize)
+    R.validateBoolean(constructorName, 'enableSorting', true, enableSorting)
+    R.validateBoolean(constructorName, 'enableResizing', true, enableResizing)
+    R.validateObject(constructorName, 'meta', true, meta)
 
     const result = Object.create(prototype)
-    result.key = key
-    result.title = title
-    if (width != null) result.width = width
-    if (flex != null) result.flex = flex
-    if (textAlign != null) result.textAlign = textAlign
-    if (format != null) result.format = format
-    if (searchable != null) result.searchable = searchable
-    if (sortable != null) result.sortable = sortable
-    if (hidden != null) result.hidden = hidden
+    result.id = id
+    if (accessorKey != null) result.accessorKey = accessorKey
+    result.header = header
+    if (size != null) result.size = size
+    if (minSize != null) result.minSize = minSize
+    if (maxSize != null) result.maxSize = maxSize
+    if (enableSorting != null) result.enableSorting = enableSorting
+    if (enableResizing != null) result.enableResizing = enableResizing
+    if (meta != null) result.meta = meta
+    result.cell = cell
     return result
 }
 
@@ -68,7 +70,7 @@ const prototype = Object.create(Object.prototype, {
 
     toString: {
         value: function () {
-            return `ColumnDefinition(${R._toString(this.key)}, ${R._toString(this.title)}, ${R._toString(this.width)}, ${R._toString(this.flex)}, ${R._toString(this.textAlign)}, ${R._toString(this.format)}, ${R._toString(this.searchable)}, ${R._toString(this.sortable)}, ${R._toString(this.hidden)})`
+            return `ColumnDefinition(${R._toString(this.id)}, ${R._toString(this.accessorKey)}, ${R._toString(this.header)}, ${R._toString(this.size)}, ${R._toString(this.minSize)}, ${R._toString(this.maxSize)}, ${R._toString(this.enableSorting)}, ${R._toString(this.enableResizing)}, ${R._toString(this.meta)}, ${R._toString(this.cell)})`
         },
         enumerable: false,
     },
@@ -99,44 +101,23 @@ ColumnDefinition.toString = () => 'ColumnDefinition'
 ColumnDefinition.is = v => v && v['@@typeName'] === 'ColumnDefinition'
 
 ColumnDefinition._from = o =>
-    ColumnDefinition(o.key, o.title, o.width, o.flex, o.textAlign, o.format, o.searchable, o.sortable, o.hidden)
+    ColumnDefinition(
+        o.id,
+        o.accessorKey,
+        o.header,
+        o.size,
+        o.minSize,
+        o.maxSize,
+        o.enableSorting,
+        o.enableResizing,
+        o.meta,
+        o.cell,
+    )
 ColumnDefinition.from = ColumnDefinition._from
 
-ColumnDefinition._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        key: o.key,
-        title: o.title,
-    }
+ColumnDefinition._toFirestore = (o, encodeTimestamps) => ({ ...o })
 
-    if (o.width != null) result.width = o.width
-
-    if (o.flex != null) result.flex = o.flex
-
-    if (o.textAlign != null) result.textAlign = o.textAlign
-
-    if (o.format != null) result.format = Format.toFirestore(o.format, encodeTimestamps)
-
-    if (o.searchable != null) result.searchable = o.searchable
-
-    if (o.sortable != null) result.sortable = o.sortable
-
-    if (o.hidden != null) result.hidden = o.hidden
-
-    return result
-}
-
-ColumnDefinition._fromFirestore = (doc, decodeTimestamps) =>
-    ColumnDefinition._from({
-        key: doc.key,
-        title: doc.title,
-        width: doc.width,
-        flex: doc.flex,
-        textAlign: doc.textAlign,
-        format: Format.fromFirestore ? Format.fromFirestore(doc.format, decodeTimestamps) : Format.from(doc.format),
-        searchable: doc.searchable,
-        sortable: doc.sortable,
-        hidden: doc.hidden,
-    })
+ColumnDefinition._fromFirestore = (doc, decodeTimestamps) => ColumnDefinition._from(doc)
 
 // Public aliases (override if necessary)
 ColumnDefinition.toFirestore = ColumnDefinition._toFirestore
