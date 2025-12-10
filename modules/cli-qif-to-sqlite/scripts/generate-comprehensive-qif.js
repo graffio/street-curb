@@ -2,7 +2,7 @@
  * Comprehensive QIF Generator
  *
  * Generates a realistic QIF file with all entry types supported by Quicken Premier (Windows).
- * Target: ~10,000 transactions (7K bank + 3K investment) over 3 years (2022-2024).
+ * Target: ~10,000 transactions (7K bank + 3K investment) over 3 years ending today.
  */
 
 // =============================================================================
@@ -21,188 +21,163 @@ import { writeFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 
+// prettier-ignore
 export const generateAccounts = () => [
-    { name: 'Primary Checking', type: 'Bank', description: 'Main checking account for daily expenses' },
-    { name: 'Emergency Savings', type: 'Bank', description: 'Emergency fund savings' },
-    { name: 'Chase Sapphire', type: 'CCard', description: 'Primary credit card' },
-    { name: 'Petty Cash', type: 'Cash', description: 'Cash on hand' },
+    { name: 'Primary Checking',   type: 'Bank',       description: 'Main checking account for daily expenses' },
+    { name: 'Emergency Savings',  type: 'Bank',       description: 'Emergency fund savings' },
+    { name: 'Chase Sapphire',     type: 'CCard',      description: 'Primary credit card' },
+    { name: 'Petty Cash',         type: 'Cash',       description: 'Cash on hand' },
     { name: 'Fidelity Brokerage', type: 'Investment', description: 'Taxable brokerage account' },
-    { name: '401k - Employer', type: 'Investment', description: 'Employer 401k retirement account' },
-    { name: 'Roth IRA', type: 'Investment', description: 'Roth IRA retirement account' },
+    { name: '401k - Employer',    type: 'Investment', description: 'Employer 401k retirement account' },
+    { name: 'Roth IRA',           type: 'Investment', description: 'Roth IRA retirement account' },
 ]
 
 /**
  * Generate category definitions with hierarchical structure
  * @returns {Array<{name: string, description?: string, isIncomeCategory?: boolean, isTaxRelated?: boolean, budgetAmount?: number, taxSchedule?: string}>}
  */
+
+// prettier-ignore
 export const generateCategories = () => [
     // Income categories
-    {
-        name: 'Income:Salary',
-        description: 'Regular employment income',
-        isIncomeCategory: true,
-        isTaxRelated: true,
-        taxSchedule: 'W-2',
-    },
-    {
-        name: 'Income:Bonus',
-        description: 'Employment bonuses',
-        isIncomeCategory: true,
-        isTaxRelated: true,
-        taxSchedule: 'W-2',
-    },
-    {
-        name: 'Income:Dividends',
-        description: 'Stock dividends',
-        isIncomeCategory: true,
-        isTaxRelated: true,
-        taxSchedule: '1099-DIV',
-    },
-    {
-        name: 'Income:Interest',
-        description: 'Bank interest',
-        isIncomeCategory: true,
-        isTaxRelated: true,
-        taxSchedule: '1099-INT',
-    },
-    {
-        name: 'Income:Capital Gains',
-        description: 'Investment gains',
-        isIncomeCategory: true,
-        isTaxRelated: true,
-        taxSchedule: '1099-B',
-    },
-    { name: 'Income:Gifts', description: 'Gifts received', isIncomeCategory: true },
-    { name: 'Income:Refunds', description: 'Tax refunds and rebates', isIncomeCategory: true },
+    { name: 'Income:Salary'                 , description: 'Regular employment income'     , isIncomeCategory: true  , isTaxRelated: true       , taxSchedule: 'W-2'     , },
+    { name: 'Income:Bonus'                  , description: 'Employment bonuses'            , isIncomeCategory: true  , isTaxRelated: true       , taxSchedule: 'W-2'     , },
+    { name: 'Income:Dividends'              , description: 'Stock dividends'               , isIncomeCategory: true  , isTaxRelated: true       , taxSchedule: '1099-DIV', },
+    { name: 'Income:Interest'               , description: 'Bank interest'                 , isIncomeCategory: true  , isTaxRelated: true       , taxSchedule: '1099-INT', },
+    { name: 'Income:Capital Gains'          , description: 'Investment gains'              , isIncomeCategory: true  , isTaxRelated: true       , taxSchedule: '1099-B'  , },
+    { name: 'Income:Gifts'                  , description: 'Gifts received'                , isIncomeCategory: true },
+    { name: 'Income:Refunds'                , description: 'Tax refunds and rebates'       , isIncomeCategory: true },
 
     // Housing expenses
-    { name: 'Housing:Rent', description: 'Monthly rent payment', budgetAmount: 2000 },
-    { name: 'Housing:Mortgage', description: 'Mortgage payment', isTaxRelated: true, taxSchedule: '1098' },
-    { name: 'Housing:Insurance', description: 'Home insurance', budgetAmount: 150 },
-    { name: 'Housing:Property Tax', description: 'Property taxes', isTaxRelated: true },
-    { name: 'Housing:Maintenance', description: 'Home repairs and maintenance', budgetAmount: 200 },
+    { name: 'Housing:Rent'                  , description: 'Monthly rent payment'          , budgetAmount: 2000 }    ,
+    { name: 'Housing:Mortgage'              , description: 'Mortgage payment'              , isTaxRelated: true      , taxSchedule: '1098' }    ,
+    { name: 'Housing:Insurance'             , description: 'Home insurance'                , budgetAmount: 150 }     ,
+    { name: 'Housing:Property Tax'          , description: 'Property taxes'                , isTaxRelated: true }    ,
+    { name: 'Housing:Maintenance'           , description: 'Home repairs and maintenance'  , budgetAmount: 200 }     ,
 
     // Utilities
-    { name: 'Utilities:Electric', description: 'Electric bill', budgetAmount: 120 },
-    { name: 'Utilities:Gas', description: 'Gas/heating bill', budgetAmount: 80 },
-    { name: 'Utilities:Water', description: 'Water and sewer', budgetAmount: 50 },
-    { name: 'Utilities:Internet', description: 'Internet service', budgetAmount: 80 },
-    { name: 'Utilities:Phone', description: 'Mobile phone', budgetAmount: 100 },
-    { name: 'Utilities:Streaming', description: 'Streaming services', budgetAmount: 50 },
+    { name: 'Utilities:Electric'            , description: 'Electric bill'                 , budgetAmount: 120 }     ,
+    { name: 'Utilities:Gas'                 , description: 'Gas/heating bill'              , budgetAmount: 80 }      ,
+    { name: 'Utilities:Water'               , description: 'Water and sewer'               , budgetAmount: 50 }      ,
+    { name: 'Utilities:Internet'            , description: 'Internet service'              , budgetAmount: 80 }      ,
+    { name: 'Utilities:Phone'               , description: 'Mobile phone'                  , budgetAmount: 100 }     ,
+    { name: 'Utilities:Streaming'           , description: 'Streaming services'            , budgetAmount: 50 }      ,
 
     // Food
-    { name: 'Food:Groceries', description: 'Grocery shopping', budgetAmount: 600 },
-    { name: 'Food:Dining', description: 'Restaurants and takeout', budgetAmount: 300 },
-    { name: 'Food:Coffee', description: 'Coffee shops', budgetAmount: 50 },
-    { name: 'Food:Alcohol', description: 'Beer, wine, spirits', budgetAmount: 100 },
+    { name: 'Food:Groceries'                , description: 'Grocery shopping'              , budgetAmount: 600 }     ,
+    { name: 'Food:Dining'                   , description: 'Restaurants and takeout'       , budgetAmount: 300 }     ,
+    { name: 'Food:Coffee'                   , description: 'Coffee shops'                  , budgetAmount: 50 }      ,
+    { name: 'Food:Alcohol'                  , description: 'Beer, wine, spirits'           , budgetAmount: 100 }    ,
 
     // Transportation
-    { name: 'Transportation:Gas', description: 'Vehicle fuel', budgetAmount: 200 },
-    { name: 'Transportation:Insurance', description: 'Auto insurance', budgetAmount: 150 },
-    { name: 'Transportation:Maintenance', description: 'Car repairs and service', budgetAmount: 100 },
-    { name: 'Transportation:Parking', description: 'Parking fees', budgetAmount: 50 },
-    { name: 'Transportation:Public Transit', description: 'Bus, subway, train', budgetAmount: 100 },
-    { name: 'Transportation:Rideshare', description: 'Uber, Lyft', budgetAmount: 100 },
+    { name: 'Transportation:Gas'            , description: 'Vehicle fuel'                  , budgetAmount: 200 }     ,
+    { name: 'Transportation:Insurance'      , description: 'Auto insurance'                , budgetAmount: 150 }     ,
+    { name: 'Transportation:Maintenance'    , description: 'Car repairs and service'       , budgetAmount: 100 }     ,
+    { name: 'Transportation:Parking'        , description: 'Parking fees'                  , budgetAmount: 50 }      ,
+    { name: 'Transportation:Public Transit' , description: 'Bus, subway, train'            , budgetAmount: 100 }    ,
+    { name: 'Transportation:Rideshare'      , description: 'Uber, Lyft'                    , budgetAmount: 100 }      ,
 
     // Healthcare
-    { name: 'Healthcare:Insurance', description: 'Health insurance premiums', isTaxRelated: true },
-    { name: 'Healthcare:Doctor', description: 'Doctor visits and copays', isTaxRelated: true },
-    { name: 'Healthcare:Dental', description: 'Dental care', isTaxRelated: true },
-    { name: 'Healthcare:Vision', description: 'Eye care and glasses', isTaxRelated: true },
-    { name: 'Healthcare:Pharmacy', description: 'Prescriptions', isTaxRelated: true },
-    { name: 'Healthcare:Gym', description: 'Gym membership', budgetAmount: 50 },
+    { name: 'Healthcare:Insurance'          , description: 'Health insurance premiums'     , isTaxRelated: true }    ,
+    { name: 'Healthcare:Doctor'             , description: 'Doctor visits and copays'      , isTaxRelated: true }    ,
+    { name: 'Healthcare:Dental'             , description: 'Dental care'                   , isTaxRelated: true }    ,
+    { name: 'Healthcare:Vision'             , description: 'Eye care and glasses'          , isTaxRelated: true }    ,
+    { name: 'Healthcare:Pharmacy'           , description: 'Prescriptions'                 , isTaxRelated: true }    ,
+    { name: 'Healthcare:Gym'                , description: 'Gym membership'                , budgetAmount: 50 }      ,
 
     // Personal
-    { name: 'Personal:Clothing', description: 'Clothes and accessories', budgetAmount: 150 },
-    { name: 'Personal:Grooming', description: 'Haircuts and personal care', budgetAmount: 50 },
-    { name: 'Personal:Education', description: 'Courses and books', budgetAmount: 100 },
-    { name: 'Personal:Subscriptions', description: 'Magazines, apps, memberships', budgetAmount: 50 },
+    { name: 'Personal:Clothing'             , description: 'Clothes and accessories'       , budgetAmount: 150 }     ,
+    { name: 'Personal:Grooming'             , description: 'Haircuts and personal care'    , budgetAmount: 50 }      ,
+    { name: 'Personal:Education'            , description: 'Courses and books'             , budgetAmount: 100 }     ,
+    { name: 'Personal:Subscriptions'        , description: 'Magazines, apps, memberships'  , budgetAmount: 50 }     ,
 
     // Entertainment
-    { name: 'Entertainment:Movies', description: 'Movies and theater', budgetAmount: 50 },
-    { name: 'Entertainment:Games', description: 'Video games', budgetAmount: 50 },
-    { name: 'Entertainment:Sports', description: 'Sports events and equipment', budgetAmount: 100 },
-    { name: 'Entertainment:Hobbies', description: 'Hobby supplies', budgetAmount: 100 },
+    { name: 'Entertainment:Movies'          , description: 'Movies and theater'            , budgetAmount: 50 }      ,
+    { name: 'Entertainment:Games'           , description: 'Video games'                   , budgetAmount: 50 }      ,
+    { name: 'Entertainment:Sports'          , description: 'Sports events and equipment'   , budgetAmount: 100 }     ,
+    { name: 'Entertainment:Hobbies'         , description: 'Hobby supplies'                , budgetAmount: 100 }     ,
 
     // Travel
-    { name: 'Travel:Flights', description: 'Airfare', budgetAmount: 200 },
-    { name: 'Travel:Hotels', description: 'Lodging', budgetAmount: 200 },
-    { name: 'Travel:Car Rental', description: 'Rental cars', budgetAmount: 100 },
-    { name: 'Travel:Vacation', description: 'General vacation expenses', budgetAmount: 300 },
+    { name: 'Travel:Flights'                , description: 'Airfare'                       , budgetAmount: 200 }     ,
+    { name: 'Travel:Hotels'                 , description: 'Lodging'                       , budgetAmount: 200 }     ,
+    { name: 'Travel:Car Rental'             , description: 'Rental cars'                   , budgetAmount: 100 }     ,
+    { name: 'Travel:Vacation'               , description: 'General vacation expenses'     , budgetAmount: 300 }     ,
 
     // Financial
-    { name: 'Financial:Bank Fees', description: 'Bank charges', budgetAmount: 20 },
-    { name: 'Financial:ATM Fees', description: 'ATM withdrawal fees', budgetAmount: 10 },
+    { name: 'Financial:Bank Fees'           , description: 'Bank charges'                  , budgetAmount: 20 }      ,
+    { name: 'Financial:ATM Fees'            , description: 'ATM withdrawal fees'           , budgetAmount: 10 }      ,
     { name: 'Financial:Credit Card Interest', description: 'Credit card interest charges' },
-    { name: 'Financial:Investment Fees', description: 'Brokerage fees' },
+    { name: 'Financial:Investment Fees'     , description: 'Brokerage fees' }              ,
 
     // Taxes
-    { name: 'Taxes:Federal', description: 'Federal income tax', isTaxRelated: true },
-    { name: 'Taxes:State', description: 'State income tax', isTaxRelated: true },
-    { name: 'Taxes:FICA', description: 'Social security and Medicare', isTaxRelated: true },
+    { name: 'Taxes:Federal'                 , description: 'Federal income tax'            , isTaxRelated: true }    ,
+    { name: 'Taxes:State'                   , description: 'State income tax'              , isTaxRelated: true }    ,
+    { name: 'Taxes:FICA'                    , description: 'Social security and Medicare'  , isTaxRelated: true }    ,
 
     // Charitable
-    {
-        name: 'Charitable:Donations',
-        description: 'Charitable contributions',
-        isTaxRelated: true,
-        taxSchedule: 'Schedule A',
-    },
+    { name: 'Charitable:Donations'          , description: 'Charitable contributions'      , isTaxRelated: true      , taxSchedule: 'Schedule A', }                      ,
 
     // Transfers (special categories)
-    { name: 'Transfer', description: 'Account transfers' },
+    { name: 'Transfer'                      , description: 'Account transfers' }           ,
 ]
 
 /**
  * Generate security definitions
  * @returns {Array<{name: string, symbol: string, type: string, goal?: string}>}
  */
+// prettier-ignore
 export const generateSecurities = () => [
     // Individual stocks
-    { name: 'Apple Inc.', symbol: 'AAPL', type: 'Stock', goal: 'Growth' },
-    { name: 'Microsoft Corporation', symbol: 'MSFT', type: 'Stock', goal: 'Growth' },
-    { name: 'Alphabet Inc.', symbol: 'GOOGL', type: 'Stock', goal: 'Growth' },
-    { name: 'Amazon.com Inc.', symbol: 'AMZN', type: 'Stock', goal: 'Growth' },
-    { name: 'NVIDIA Corporation', symbol: 'NVDA', type: 'Stock', goal: 'Growth' },
-    { name: 'Johnson & Johnson', symbol: 'JNJ', type: 'Stock', goal: 'Income' },
-    { name: 'Procter & Gamble', symbol: 'PG', type: 'Stock', goal: 'Income' },
-    { name: 'Coca-Cola Company', symbol: 'KO', type: 'Stock', goal: 'Income' },
+    { name: 'Apple Inc.'                            , symbol: 'AAPL' , type: 'Stock'      , goal: 'Growth' },
+    { name: 'Microsoft Corporation'                 , symbol: 'MSFT' , type: 'Stock'      , goal: 'Growth' },
+    { name: 'Alphabet Inc.'                         , symbol: 'GOOGL', type: 'Stock'      , goal: 'Growth' },
+    { name: 'Amazon.com Inc.'                       , symbol: 'AMZN' , type: 'Stock'      , goal: 'Growth' },
+    { name: 'NVIDIA Corporation'                    , symbol: 'NVDA' , type: 'Stock'      , goal: 'Growth' },
+    { name: 'Johnson & Johnson'                     , symbol: 'JNJ'  , type: 'Stock'      , goal: 'Income' },
+    { name: 'Procter & Gamble'                      , symbol: 'PG'   , type: 'Stock'      , goal: 'Income' },
+    { name: 'Coca-Cola Company'                     , symbol: 'KO'   , type: 'Stock'      , goal: 'Income' },
 
     // ETFs
-    { name: 'Vanguard Total Stock Market ETF', symbol: 'VTI', type: 'ETF', goal: 'Growth' },
-    { name: 'Vanguard Total International Stock ETF', symbol: 'VXUS', type: 'ETF', goal: 'Growth' },
-    { name: 'Vanguard Total Bond Market ETF', symbol: 'BND', type: 'ETF', goal: 'Income' },
-    { name: 'SPDR S&P 500 ETF', symbol: 'SPY', type: 'ETF', goal: 'Growth' },
-    { name: 'iShares Core S&P 500 ETF', symbol: 'IVV', type: 'ETF', goal: 'Growth' },
+    { name: 'Vanguard Total Stock Market ETF'       , symbol: 'VTI'  , type: 'ETF'        , goal: 'Growth' },
+    { name: 'Vanguard Total International Stock ETF', symbol: 'VXUS' , type: 'ETF'        , goal: 'Growth' },
+    { name: 'Vanguard Total Bond Market ETF'        , symbol: 'BND'  , type: 'ETF'        , goal: 'Income' },
+    { name: 'SPDR S&P 500 ETF'                      , symbol: 'SPY'  , type: 'ETF'        , goal: 'Growth' },
+    { name: 'iShares Core S&P 500 ETF'              , symbol: 'IVV'  , type: 'ETF'        , goal: 'Growth' },
 
     // Mutual Funds
-    { name: 'Fidelity 500 Index Fund', symbol: 'FXAIX', type: 'Mutual Fund', goal: 'Growth' },
-    { name: 'Vanguard Target Retirement 2045', symbol: 'VTIVX', type: 'Mutual Fund', goal: 'Growth' },
-    { name: 'Fidelity Total Market Index', symbol: 'FSKAX', type: 'Mutual Fund', goal: 'Growth' },
-    { name: 'Vanguard Total Bond Market Index', symbol: 'VBTLX', type: 'Mutual Fund', goal: 'Income' },
-    { name: 'Fidelity Government Money Market', symbol: 'SPAXX', type: 'Mutual Fund', goal: 'Income' },
+    { name: 'Fidelity 500 Index Fund'               , symbol: 'FXAIX', type: 'Mutual Fund', goal: 'Growth' },
+    { name: 'Vanguard Target Retirement 2045'       , symbol: 'VTIVX', type: 'Mutual Fund', goal: 'Growth' },
+    { name: 'Fidelity Total Market Index'           , symbol: 'FSKAX', type: 'Mutual Fund', goal: 'Growth' },
+    { name: 'Vanguard Total Bond Market Index'      , symbol: 'VBTLX', type: 'Mutual Fund', goal: 'Income' },
+    { name: 'Fidelity Government Money Market'      , symbol: 'SPAXX', type: 'Mutual Fund', goal: 'Income' },
 
     // Additional dividend stocks
-    { name: 'Realty Income Corporation', symbol: 'O', type: 'Stock', goal: 'Income' },
-    { name: 'Verizon Communications', symbol: 'VZ', type: 'Stock', goal: 'Income' },
+    { name: 'Realty Income Corporation'             , symbol: 'O'    , type: 'Stock'      , goal: 'Income' },
+    { name: 'Verizon Communications'                , symbol: 'VZ'   , type: 'Stock'      , goal: 'Income' },
 ]
 
 /**
  * Generate tag definitions
  * @returns {Array<{name: string, description?: string, color?: string}>}
  */
-export const generateTags = () => [
-    { name: 'Tax Deductible', description: 'Items that may be tax deductible', color: '#00FF00' },
-    { name: 'Reimbursable', description: 'Expenses to be reimbursed', color: '#0000FF' },
-    { name: 'Business', description: 'Business-related expenses', color: '#FF0000' },
-    { name: 'Medical', description: 'Medical expenses for HSA/FSA', color: '#FF00FF' },
-    { name: 'Vacation', description: 'Vacation-related spending', color: '#00FFFF' },
-    { name: 'Gift', description: 'Gifts given or received', color: '#FFFF00' },
-    { name: 'Recurring', description: 'Regular recurring expenses', color: '#808080' },
-    { name: '2022', description: 'Transactions from 2022' },
-    { name: '2023', description: 'Transactions from 2023' },
-    { name: '2024', description: 'Transactions from 2024' },
-]
+// prettier-ignore
+export const generateTags = () => {
+    const currentYear = new Date().getFullYear()
+    const yearTags = [-2, -1, 0].map(offset => ({
+        name: String(currentYear + offset),
+        description: `Transactions from ${currentYear + offset}`,
+    }))
+    return [
+        { name: 'Tax Deductible', description: 'Items that may be tax deductible', color: '#00FF00' },
+        { name: 'Reimbursable'  , description: 'Expenses to be reimbursed'       , color: '#0000FF' },
+        { name: 'Business'      , description: 'Business-related expenses'       , color: '#FF0000' },
+        { name: 'Medical'       , description: 'Medical expenses for HSA/FSA'    , color: '#FF00FF' },
+        { name: 'Vacation'      , description: 'Vacation-related spending'       , color: '#00FFFF' },
+        { name: 'Gift'          , description: 'Gifts given or received'         , color: '#FFFF00' },
+        { name: 'Recurring'     , description: 'Regular recurring expenses'      , color: '#808080' },
+        ...yearTags,
+    ]
+}
 
 /**
  * Generate payee definitions
@@ -212,13 +187,13 @@ export const generatePayees = () => [
     // Groceries
     {
         name: 'Whole Foods Market',
-        address: ['123 Market St', 'San Francisco, CA 94102'],
         defaultCategory: 'Food:Groceries',
+        address: ['123 Market St', 'San Francisco, CA 94102'],
     },
     {
         name: "Trader Joe's",
-        address: ['456 Grocery Ave', 'San Francisco, CA 94103'],
         defaultCategory: 'Food:Groceries',
+        address: ['456 Grocery Ave', 'San Francisco, CA 94103'],
     },
     { name: 'Safeway', defaultCategory: 'Food:Groceries' },
     { name: 'Costco', defaultCategory: 'Food:Groceries' },
@@ -239,7 +214,7 @@ export const generatePayees = () => [
     { name: '76 Station', defaultCategory: 'Transportation:Gas' },
 
     // Utilities
-    { name: 'PG&E', address: ['PO Box 997300', 'Sacramento, CA 95899'], defaultCategory: 'Utilities:Electric' },
+    { name: 'PG&E', defaultCategory: 'Utilities:Electric', address: ['PO Box 997300', 'Sacramento   , CA 95899'] },
     { name: 'Comcast Xfinity', defaultCategory: 'Utilities:Internet' },
     { name: 'AT&T Wireless', defaultCategory: 'Utilities:Phone' },
     { name: 'Netflix', defaultCategory: 'Utilities:Streaming' },
@@ -249,8 +224,8 @@ export const generatePayees = () => [
     // Housing
     {
         name: 'Bay Area Property Management',
-        address: ['789 Property Lane', 'Oakland, CA 94612'],
         defaultCategory: 'Housing:Rent',
+        address: ['789 Property Lane', 'Oakland, CA 94612'],
     },
     { name: 'State Farm Insurance', defaultCategory: 'Housing:Insurance' },
     { name: 'Home Depot', defaultCategory: 'Housing:Maintenance' },
@@ -264,7 +239,11 @@ export const generatePayees = () => [
     { name: '24 Hour Fitness', defaultCategory: 'Healthcare:Gym' },
 
     // Retail
-    { name: 'Amazon', address: ['410 Terry Ave N', 'Seattle, WA 98109'], defaultCategory: 'Personal:Subscriptions' },
+    {
+        name: 'Amazon',
+        defaultCategory: 'Personal:Subscriptions',
+        address: ['410 Terry Ave N', 'Seattle      , WA 98109'],
+    },
     { name: 'Apple Store', defaultCategory: 'Personal:Education' },
     { name: 'Best Buy', defaultCategory: 'Entertainment:Games' },
     { name: 'Nordstrom', defaultCategory: 'Personal:Clothing' },
@@ -291,8 +270,8 @@ export const generatePayees = () => [
     // Employer
     {
         name: 'Acme Corporation',
-        address: ['1000 Corporate Blvd', 'San Jose, CA 95110'],
         defaultCategory: 'Income:Salary',
+        address: ['1000 Corporate Blvd', 'San Jose, CA 95110'],
         memo: 'Employer',
     },
 ]
@@ -316,7 +295,7 @@ export const generateClasses = () => [
 /**
  * Simple seeded random number generator for reproducible output
  */
-const createRng = (seed = 12345) => {
+const createRandomNumberGenerator = (seed = 12345) => {
     let state = seed
     return () => {
         state = (state * 1103515245 + 12345) & 0x7fffffff
@@ -376,7 +355,7 @@ const nextWeekday = date => {
  * @returns {Array} Bank transactions
  */
 export const generateBankTransactions = (accounts, categories, payees) => {
-    const random = createRng(42)
+    const random = createRandomNumberGenerator(42)
     const transactions = []
     let checkNumber = 1001
 
@@ -395,9 +374,13 @@ export const generateBankTransactions = (accounts, categories, payees) => {
         }
     })
 
-    // Date range: 2022-01-01 to 2024-12-31
-    const startDate = new Date('2022-01-01')
-    const endDate = new Date('2024-12-31')
+    // Date range: 3 years ago to today
+    const endDate = new Date()
+    const startDate = new Date(endDate)
+    startDate.setFullYear(startDate.getFullYear() - 3)
+    startDate.setMonth(0, 1) // Start on Jan 1st
+    const startYear = startDate.getFullYear()
+    const endYear = endDate.getFullYear()
 
     // Helper to create a transaction
     const createTransaction = (account, date, amount, payee, category, opts = {}) => ({
@@ -415,7 +398,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     })
 
     // Generate bi-weekly paydays
-    let payday = nextWeekday(new Date('2022-01-14')) // First payday
+    let payday = nextWeekday(new Date(startYear, 0, 14)) // First payday (Jan 14)
     const employer = payees.find(p => p.name === 'Acme Corporation')
     while (payday <= endDate) {
         // Gross salary deposit
@@ -430,8 +413,8 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Generate annual bonuses (March each year)
-    for (let year = 2022; year <= 2024; year++) {
-        const bonusDate = new Date(`${year}-03-15`)
+    for (let year = startYear; year <= endYear; year++) {
+        const bonusDate = new Date(year, 2, 15) // March 15
         transactions.push(
             createTransaction(checkingAccount, bonusDate, randomAmount(5000, 15000, random), employer, 'Income:Bonus', {
                 memo: `${year} Annual bonus`,
@@ -441,7 +424,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Generate monthly rent
-    let rentDate = new Date('2022-01-01')
+    let rentDate = new Date(startYear, 0, 1) // Jan 1
     const landlord = payees.find(p => p.name === 'Bay Area Property Management')
     while (rentDate <= endDate) {
         transactions.push(
@@ -464,7 +447,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
         { payee: 'State Farm Insurance', category: 'Housing:Insurance', min: 140, max: 160 },
     ]
 
-    let billDate = new Date('2022-01-15')
+    let billDate = new Date(startYear, 0, 15) // Jan 15
     while (billDate <= endDate) {
         for (const bill of monthlyBills) {
             const billPayee = payees.find(p => p.name === bill.payee)
@@ -490,7 +473,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
         { payee: 'Amazon', amount: 14.99 },
     ]
 
-    let subDate = new Date('2022-01-05')
+    let subDate = new Date(startYear, 0, 5) // Jan 5
     while (subDate <= endDate) {
         for (const sub of subscriptions) {
             const subPayee = payees.find(p => p.name === sub.payee)
@@ -589,7 +572,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Generate split transactions (monthly credit card payments with categorized items)
-    let splitDate = new Date('2022-01-20')
+    let splitDate = new Date(startYear, 0, 20) // Jan 20
     while (splitDate <= endDate) {
         if (random() < 0.3) {
             // Create a split grocery transaction
@@ -612,7 +595,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Generate transfers between accounts
-    let transferDate = new Date('2022-01-25')
+    let transferDate = new Date(startYear, 0, 25) // Jan 25
     while (transferDate <= endDate) {
         // Monthly savings transfer
         const savingsAmount = randomAmount(500, 1500, random)
@@ -640,7 +623,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Credit card payments (monthly)
-    let ccPayDate = new Date('2022-01-28')
+    let ccPayDate = new Date(startYear, 0, 28) // Jan 28
     while (ccPayDate <= endDate) {
         const paymentAmount = randomAmount(1500, 3500, random)
         transactions.push(
@@ -664,7 +647,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // ATM withdrawals to cash (occasional)
-    let atmDate = new Date('2022-01-10')
+    let atmDate = new Date(startYear, 0, 10) // Jan 10
     while (atmDate <= endDate) {
         if (random() < 0.4) {
             const atmAmount = pickRandom([40, 60, 80, 100, 200], random)
@@ -683,7 +666,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Healthcare expenses (occasional)
-    let healthDate = new Date('2022-02-15')
+    let healthDate = new Date(startYear, 1, 15) // Feb 15
     while (healthDate <= endDate) {
         if (random() < 0.3) {
             const healthPayees = [
@@ -702,9 +685,9 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Travel expenses (few times per year)
-    for (let year = 2022; year <= 2024; year++) {
+    for (let year = startYear; year <= endYear; year++) {
         // Summer vacation
-        const summerStart = new Date(`${year}-07-${10 + Math.floor(random() * 10)}`)
+        const summerStart = new Date(year, 6, 10 + Math.floor(random() * 10)) // July
         const airline = pickRandom(
             [payees.find(p => p.name === 'United Airlines'), payees.find(p => p.name === 'Southwest Airlines')],
             random,
@@ -731,7 +714,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
         )
 
         // Holiday travel
-        const holidayDate = new Date(`${year}-12-20`)
+        const holidayDate = new Date(year, 11, 20) // Dec 20
         transactions.push(
             createTransaction(creditCard, holidayDate, -randomAmount(250, 600, random), airline, 'Travel:Flights', {
                 memo: 'Holiday travel',
@@ -740,7 +723,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
     }
 
     // Bank interest (quarterly)
-    let interestDate = new Date('2022-03-31')
+    let interestDate = new Date(startYear, 2, 31) // Mar 31
     while (interestDate <= endDate) {
         transactions.push(
             createTransaction(
@@ -773,7 +756,7 @@ export const generateBankTransactions = (accounts, categories, payees) => {
  * @returns {Array} Investment transactions
  */
 export const generateInvestmentTransactions = (accounts, securities) => {
-    const random = createRng(123)
+    const random = createRandomNumberGenerator(123)
     const transactions = []
 
     // Get specific investment accounts
@@ -787,9 +770,13 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     const mutualFunds = securities.filter(s => s.type === 'Mutual Fund')
     const dividendStocks = securities.filter(s => s.goal === 'Income')
 
-    // Date range
-    const startDate = new Date('2022-01-01')
-    const endDate = new Date('2024-12-31')
+    // Date range: 3 years ago to today
+    const endDate = new Date()
+    const startDate = new Date(endDate)
+    startDate.setFullYear(startDate.getFullYear() - 3)
+    startDate.setMonth(0, 1) // Start on Jan 1st
+    const startYear = startDate.getFullYear()
+    const endYear = endDate.getFullYear()
 
     // Helper to create an investment transaction
     const createInvestTx = (account, date, type, opts = {}) => ({
@@ -841,7 +828,7 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     }
 
     // 401k contributions (bi-weekly, matching paydays)
-    let k401Date = nextWeekday(new Date('2022-01-14'))
+    let k401Date = nextWeekday(new Date(startYear, 0, 14)) // Jan 14
     const k401Fund = mutualFunds.find(s => s.symbol === 'VTIVX') || mutualFunds[0]
     while (k401Date <= endDate) {
         const contributionAmount = 750 // Employee contribution
@@ -878,8 +865,8 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     }
 
     // IRA contributions (annual)
-    for (let year = 2022; year <= 2024; year++) {
-        const iraDate = new Date(`${year}-04-01`) // Around tax time
+    for (let year = startYear; year <= endYear; year++) {
+        const iraDate = new Date(year, 3, 1) // Apr 1 - Around tax time
         const iraFund = mutualFunds.find(s => s.symbol === 'FXAIX') || mutualFunds[0]
         const contributionAmount = 6500 // IRA limit
         const price = getPrice(iraFund.symbol, iraDate)
@@ -920,7 +907,7 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     }
 
     // Quarterly dividends for dividend stocks
-    for (let year = 2022; year <= 2024; year++)
+    for (let year = startYear; year <= endYear; year++)
         for (const quarter of [1, 4, 7, 10]) {
             // Dividend months
             const divDate = new Date(year, quarter - 1, 15)
@@ -957,7 +944,7 @@ export const generateInvestmentTransactions = (accounts, securities) => {
         }
 
     // ETF distributions (quarterly)
-    for (let year = 2022; year <= 2024; year++)
+    for (let year = startYear; year <= endYear; year++)
         for (const quarter of [3, 6, 9, 12]) {
             const distDate = new Date(year, quarter - 1, 20)
             if (distDate > endDate) continue
@@ -1026,8 +1013,8 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     }
 
     // Annual rebalancing (December each year)
-    for (let year = 2022; year <= 2024; year++) {
-        const rebalDate = new Date(`${year}-12-10`)
+    for (let year = startYear; year <= endYear; year++) {
+        const rebalDate = new Date(year, 11, 10) // Dec 10
 
         // Sell overweight positions
         const sellStock = pickRandom(stocks, random)
@@ -1084,7 +1071,7 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     }
 
     // Money market interest in brokerage (monthly)
-    let mmDate = new Date('2022-01-31')
+    let mmDate = new Date(startYear, 0, 31) // Jan 31
     const mmFund = mutualFunds.find(s => s.symbol === 'SPAXX')
     while (mmDate <= endDate) {
         transactions.push(
@@ -1099,7 +1086,7 @@ export const generateInvestmentTransactions = (accounts, securities) => {
     }
 
     // Transfer shares between accounts (IRA to brokerage - rare)
-    const xferDate = new Date('2023-06-15')
+    const xferDate = new Date(startYear + 1, 5, 15) // June of second year
     const xferStock = stocks[0]
     const xferPrice = getPrice(xferStock.symbol, xferDate)
     const xferShares = 10
@@ -1139,7 +1126,7 @@ export const generateInvestmentTransactions = (accounts, securities) => {
  * @returns {Array} Price records
  */
 export const generatePrices = securities => {
-    const random = createRng(456)
+    const random = createRandomNumberGenerator(456)
     const prices = []
 
     // Base prices for securities
@@ -1166,8 +1153,11 @@ export const generatePrices = securities => {
         VZ: 50,
     }
 
-    const startDate = new Date('2022-01-01')
-    const endDate = new Date('2024-12-31')
+    // Date range: 3 years ago to today
+    const endDate = new Date()
+    const startDate = new Date(endDate)
+    startDate.setFullYear(startDate.getFullYear() - 3)
+    startDate.setMonth(0, 1) // Start on Jan 1st
 
     // Generate weekly prices for each security
     for (const security of securities) {
@@ -1484,7 +1474,10 @@ const main = () => {
 
     console.log('\nSummary:')
     console.log(`  Total transactions: ${bankTransactions.length + investmentTransactions.length}`)
-    console.log(`  Date range: 2022-01-01 to 2024-12-31`)
+    const allDates = [...bankTransactions, ...investmentTransactions].map(t => t.date)
+    const minDate = new Date(Math.min(...allDates))
+    const maxDate = new Date(Math.max(...allDates))
+    console.log(`  Date range: ${minDate.toISOString().split('T')[0]} to ${maxDate.toISOString().split('T')[0]}`)
 }
 
 // Run if called directly
