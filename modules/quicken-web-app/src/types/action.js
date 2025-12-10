@@ -1,6 +1,11 @@
 /*  Action generated from: modules/quicken-web-app/type-definitions/action.type.js
  *
  *  LoadFile
+ *      accounts    : "{Account:id}",
+ *      categories  : "{Category:id}",
+ *      securities  : "{Security:id}",
+ *      tags        : "{Tag:id}",
+ *      splits      : "{Split:id}",
  *      transactions: "{Transaction:id}"
  *  SetTransactionFilter
  *      payload: "Object"
@@ -9,6 +14,11 @@
  */
 
 import * as R from '@graffio/cli-type-generator'
+import { Account } from './account.js'
+import { Category } from './category.js'
+import { Security } from './security.js'
+import { Tag } from './tag.js'
+import { Split } from './split.js'
 import { Transaction } from './transaction.js'
 
 // -------------------------------------------------------------------------------------------------------------
@@ -58,12 +68,22 @@ Action.prototype = ActionPrototype
 // Variant Action.LoadFile
 //
 // -------------------------------------------------------------------------------------------------------------
-const LoadFileConstructor = function LoadFile(transactions) {
-    const constructorName = 'Action.LoadFile(transactions)'
-    R.validateArgumentLength(constructorName, 1, arguments)
+const LoadFileConstructor = function LoadFile(accounts, categories, securities, tags, splits, transactions) {
+    const constructorName = 'Action.LoadFile(accounts, categories, securities, tags, splits, transactions)'
+    R.validateArgumentLength(constructorName, 6, arguments)
+    R.validateLookupTable(constructorName, 'Account', 'accounts', false, accounts)
+    R.validateLookupTable(constructorName, 'Category', 'categories', false, categories)
+    R.validateLookupTable(constructorName, 'Security', 'securities', false, securities)
+    R.validateLookupTable(constructorName, 'Tag', 'tags', false, tags)
+    R.validateLookupTable(constructorName, 'Split', 'splits', false, splits)
     R.validateLookupTable(constructorName, 'Transaction', 'transactions', false, transactions)
 
     const result = Object.create(LoadFilePrototype)
+    result.accounts = accounts
+    result.categories = categories
+    result.securities = securities
+    result.tags = tags
+    result.splits = splits
     result.transactions = transactions
     return result
 }
@@ -76,7 +96,7 @@ const LoadFilePrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.LoadFile(${R._toString(this.transactions)})`
+            return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})`
         },
         enumerable: false,
     },
@@ -99,15 +119,26 @@ const LoadFilePrototype = Object.create(ActionPrototype, {
 LoadFileConstructor.prototype = LoadFilePrototype
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
 LoadFileConstructor.toString = () => 'Action.LoadFile'
-LoadFileConstructor._from = o => Action.LoadFile(o.transactions)
+LoadFileConstructor._from = o =>
+    Action.LoadFile(o.accounts, o.categories, o.securities, o.tags, o.splits, o.transactions)
 LoadFileConstructor.from = LoadFileConstructor._from
 
 LoadFileConstructor._toFirestore = (o, encodeTimestamps) => ({
+    accounts: R.lookupTableToFirestore(Account, 'id', encodeTimestamps, o.accounts),
+    categories: R.lookupTableToFirestore(Category, 'id', encodeTimestamps, o.categories),
+    securities: R.lookupTableToFirestore(Security, 'id', encodeTimestamps, o.securities),
+    tags: R.lookupTableToFirestore(Tag, 'id', encodeTimestamps, o.tags),
+    splits: R.lookupTableToFirestore(Split, 'id', encodeTimestamps, o.splits),
     transactions: R.lookupTableToFirestore(Transaction, 'id', encodeTimestamps, o.transactions),
 })
 
 LoadFileConstructor._fromFirestore = (doc, decodeTimestamps) =>
     LoadFileConstructor._from({
+        accounts: R.lookupTableFromFirestore(Account, 'id', decodeTimestamps, doc.accounts),
+        categories: R.lookupTableFromFirestore(Category, 'id', decodeTimestamps, doc.categories),
+        securities: R.lookupTableFromFirestore(Security, 'id', decodeTimestamps, doc.securities),
+        tags: R.lookupTableFromFirestore(Tag, 'id', decodeTimestamps, doc.tags),
+        splits: R.lookupTableFromFirestore(Split, 'id', decodeTimestamps, doc.splits),
         transactions: R.lookupTableFromFirestore(Transaction, 'id', decodeTimestamps, doc.transactions),
     })
 

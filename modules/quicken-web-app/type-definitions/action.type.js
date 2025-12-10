@@ -12,7 +12,14 @@ export const Action = {
     name: 'Action',
     kind: 'taggedSum',
     variants: {
-        LoadFile               : { transactions: '{Transaction:id}' },
+        LoadFile: {
+            accounts    : '{Account:id}',
+            categories  : '{Category:id}',
+            securities  : '{Security:id}',
+            tags        : '{Tag:id}',
+            splits      : '{Split:id}',
+            transactions: '{Transaction:id}',
+        },
         SetTransactionFilter   : { payload: 'Object' },
         ResetTransactionFilters: {},
     }

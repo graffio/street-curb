@@ -14,6 +14,11 @@ import {
 
 // Base selectors
 const initialized = state => state.initialized
+const accounts = state => state.accounts
+const categories = state => state.categories
+const securities = state => state.securities
+const tags = state => state.tags
+const splits = state => state.splits
 const transactions = state => state.transactions
 const transactionFilters = state => state.transactionFilters
 
@@ -44,11 +49,19 @@ const defaultStartDate = memoizeReduxState(['transactions'], state => {
 const _defaultEndDate = new Date()
 const defaultEndDate = () => _defaultEndDate
 
-const filteredTransactions = memoizeReduxState(['transactions', 'transactionFilters'], state => {
+const filteredTransactions = memoizeReduxState(['transactions', 'transactionFilters', 'categories'], state => {
     const txns = transactions(state)
+    const cats = categories(state)
     const textFiltered = filterByText(txns, filterQuery(state))
     const dateFiltered = filterByDateRange(textFiltered, dateRange(state) || {})
-    return filterByCategories(dateFiltered, selectedCategories(state))
+    const categoryFiltered = filterByCategories(dateFiltered, selectedCategories(state))
+
+    // Resolve categoryId to category name for display
+    return categoryFiltered.map(txn => {
+        if (!txn.categoryId) return txn
+        const cat = cats.get(txn.categoryId)
+        return cat ? { ...txn, category: cat.name } : txn
+    })
 })
 
 const searchMatches = memoizeReduxState(['transactions', 'transactionFilters'], state => {
@@ -62,6 +75,11 @@ const searchMatches = memoizeReduxState(['transactions', 'transactionFilters'], 
 
 export {
     initialized,
+    accounts,
+    categories,
+    securities,
+    tags,
+    splits,
     transactions,
     transactionFilters,
     dateRange,

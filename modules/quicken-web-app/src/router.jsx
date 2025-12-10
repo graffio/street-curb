@@ -14,7 +14,7 @@ import {
 import { createRootRoute, createRoute, createRouter, Link, Outlet, redirect } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 import { post } from './commands/post.js'
-import { loadTransactionsFromFile } from './services/sqlite-service.js'
+import { loadEntitiesFromFile } from './services/sqlite-service.js'
 import { Action } from './types/action.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -46,12 +46,12 @@ const sidebarSections = [
 
 /*
  * Handle file selection from the file picker
- * Loads SQLite file and dispatches LoadFile action
+ * Loads SQLite file and dispatches LoadFile action with all entities
  */
 const handleFileSelect = async file => {
     try {
-        const transactions = await loadTransactionsFromFile(file)
-        post(Action.LoadFile(transactions))
+        const { accounts, categories, securities, tags, splits, transactions } = await loadEntitiesFromFile(file)
+        post(Action.LoadFile(accounts, categories, securities, tags, splits, transactions))
     } catch (error) {
         // TODO: Show error in UI instead of console
         console.error('Failed to load file:', error.message)
