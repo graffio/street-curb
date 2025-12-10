@@ -7,6 +7,8 @@
  * @sig applyFormat :: (Any, Format?) -> String
  */
 
+import { store } from '../store/index.js'
+
 /*
  * Calculate relative time from date
  * @sig getRelativeTime :: Date -> String
@@ -42,9 +44,18 @@ const formatSignedAmount = amount => {
 }
 
 /*
+ * Resolve categoryId to category name from Redux store
+ * @sig formatCategoryName :: String -> String
+ */
+const formatCategoryName = categoryId => {
+    const categories = store.getState().categories
+    return categories?.get(categoryId)?.name ?? ''
+}
+
+/*
  * Registry of custom formatters by key
  */
-const customFormatters = { signedAmount: formatSignedAmount }
+const customFormatters = { signedAmount: formatSignedAmount, categoryName: formatCategoryName }
 
 /*
  * Parse date from various inputs

@@ -6,18 +6,29 @@
  */
 
 /*
+ * Resolve a transaction's categoryId to category name
+ * @sig getCategoryName :: (Transaction, LookupTable<Category>) -> String?
+ */
+const getCategoryName = (transaction, categories) => {
+    if (!transaction.categoryId || !categories) return null
+    const cat = categories.get(transaction.categoryId)
+    return cat ? cat.name : null
+}
+
+/*
  * Check if a transaction matches a search query (for highlighting and filtering purposes)
  *
- * @sig transactionMatchesSearch :: (Transaction, String) -> Boolean
+ * @sig transactionMatchesSearch :: (Transaction, String, LookupTable<Category>?) -> Boolean
  */
-const transactionMatchesSearch = (transaction, searchQuery) => {
+const transactionMatchesSearch = (transaction, searchQuery, categories) => {
     if (!searchQuery.trim()) return false
 
     const queryLower = searchQuery.toLowerCase()
+    const categoryName = getCategoryName(transaction, categories) || ''
     const searchFields = [
         transaction.payee || '',
         transaction.memo || '',
-        transaction.category || '',
+        categoryName,
         transaction.address || '',
         transaction.number || '',
         transaction.amount.toString(),
@@ -29,13 +40,14 @@ const transactionMatchesSearch = (transaction, searchQuery) => {
 /*
  * Filter transactions by text content
  *
- * @sig filterByText :: ([Transaction], String) -> [Transaction]
+ * @sig filterByText :: ([Transaction], String, LookupTable<Category>?) -> [Transaction]
  */
-const filterByText = (transactions, query) => {
+const filterByText = (transactions, query, categories) => {
     if (!query.trim()) return transactions
 
     return transactions.filter(transaction => {
-        const searchableText = [transaction.description, transaction.memo, transaction.payee, transaction.category]
+        const categoryName = getCategoryName(transaction, categories) || ''
+        const searchableText = [transaction.description, transaction.memo, transaction.payee, categoryName]
             .filter(Boolean)
             .join(' ')
             .toLowerCase()
@@ -66,40 +78,30 @@ const filterByDateRange = (transactions, dateRange) => {
 }
 
 /*
- * Check if a transaction category matches any of the selected category filters
+ * Check if a transaction's category matches any of the selected category filters
+ * Selected categories are names; we resolve transaction.categoryId to name for comparison
  *
- * @sig categoryMatches :: (String?, [String]) -> Boolean
+ * @sig categoryMatches :: (Transaction, [String], LookupTable<Category>) -> Boolean
  */
-const categoryMatches = (transactionCategory, selectedCategories) => {
+const categoryMatches = (transaction, selectedCategories, categories) => {
     if (!selectedCategories.length) return true
-    if (!transactionCategory) return false
 
-    return selectedCategories.some(selectedCategory => transactionCategory === selectedCategory)
+    const categoryName = getCategoryName(transaction, categories)
+    if (!categoryName) return false
+
+    // Check if category name matches or starts with any selected category (for hierarchy)
+    return selectedCategories.some(selected => categoryName === selected || categoryName.startsWith(selected + ':'))
 }
 
 /*
  * Filter transactions by selected categories
  *
- * @sig filterByCategories :: ([Transaction], [String]) -> [Transaction]
+ * @sig filterByCategories :: ([Transaction], [String], LookupTable<Category>) -> [Transaction]
  */
-const filterByCategories = (transactions, selectedCategories) => {
+const filterByCategories = (transactions, selectedCategories, categories) => {
     if (!selectedCategories.length) return transactions
 
-    return transactions.filter(transaction => categoryMatches(transaction.category, selectedCategories))
-}
-
-/*
- * Extract all unique categories from transactions, including parent categories
- *
- * @sig extractCategories :: ([Transaction], (String -> [String])) -> [String]
- */
-const extractCategories = (transactions, generateParentCategories) => {
-    const allCategories = transactions
-        .filter(transaction => transaction.category && transaction.category.trim())
-        .map(transaction => generateParentCategories(transaction.category.trim()))
-        .flat()
-
-    return Array.from(new Set(allCategories)).sort()
+    return transactions.filter(transaction => categoryMatches(transaction, selectedCategories, categories))
 }
 
 /*
@@ -121,7 +123,7 @@ export {
     filterByText,
     filterByDateRange,
     filterByCategories,
-    extractCategories,
     categoryMatches,
+    getCategoryName,
     getEarliestTransactionDate,
 }

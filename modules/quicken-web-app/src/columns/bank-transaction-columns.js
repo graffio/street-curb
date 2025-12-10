@@ -18,7 +18,7 @@ const bankTransactionColumns = [
     ColumnDefinition.from({ key: 'number'     , title: 'Number'     , width: '70px' , textAlign: 'left'  , format: Format.None()                     , searchable: true  }),
     ColumnDefinition.from({ key: 'payee'      , title: 'Payee / Memo', flex: 1      , textAlign: 'left'  , format: Format.None()                     , searchable: true  }),
     ColumnDefinition.from({ key: 'cleared'    , title: 'Cleared'    , width: '60px' , textAlign: 'center', format: Format.None()                     , searchable: true  }),
-    ColumnDefinition.from({ key: 'category'   , title: 'Category'   , width: '140px', textAlign: 'left'  , format: Format.None()                     , searchable: true  }),
+    ColumnDefinition.from({ key: 'categoryId' , title: 'Category'   , width: '140px', textAlign: 'left'  , format: Format.Custom('categoryName')     , searchable: true  }),
     ColumnDefinition.from({ key: 'amount'     , title: 'Amount'     , width: '100px', textAlign: 'right' , format: Format.Custom('signedAmount')     , searchable: false }),
     ColumnDefinition.from({ key: 'runningBalance', title: 'Balance' , width: '100px', textAlign: 'right' , format: Format.Currency('en-US', 'USD')   , searchable: false }),
 ]
