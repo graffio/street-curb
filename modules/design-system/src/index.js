@@ -29,8 +29,9 @@ import {
 // Channel system
 import { createChannel, layoutChannel, useChannel } from './channels/index.js'
 import { CategorySelector } from './components/CategorySelector.jsx'
-import { FilePickerButton } from './components/FilePickerButton.jsx'
+import { DataTable } from './components/DataTable.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
+import { FilePickerButton } from './components/FilePickerButton.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
 import { LoadingSpinner } from './components/LoadingSpinner.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
@@ -68,6 +69,7 @@ export {
 
     // ours
     CategorySelector,
+    DataTable,
     DateRangePicker,
     FilePickerButton,
     Dialog,

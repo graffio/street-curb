@@ -1,27 +1,41 @@
 /*
  * ColumnDefinition - Tagged type for table column configuration
  *
- * Single source of truth for column layout, formatting, and behavior.
- * Used by VirtualTable and related components to render headers and cells consistently.
+ * Aligned with TanStack Table column definition format for direct compatibility.
+ * Each column specifies a cell renderer that owns all formatting/display logic.
  *
  * Usage:
- *   const dateColumn = ColumnDefinition('date', 'Date', '110px', undefined, 'left', Format.Date('medium'), true, true, false)
- *   // or using .from():
- *   const dateColumn = ColumnDefinition.from({ key: 'date', title: 'Date', width: '110px', format: Format.Date('medium') })
+ *   ColumnDefinition.from({
+ *     id: 'amount',
+ *     header: 'Amount',
+ *     size: 100,
+ *     cell: CurrencyCell,
+ *     meta: { searchable: false }
+ *   })
+ *
+ * TanStack compatibility:
+ *   Columns can be passed directly to useReactTable({ columns: [...] })
+ *
+ * Our extensions in meta:
+ *   - searchable: include in text search highlighting
+ *   - textAlign: 'left' | 'center' | 'right' (for DefaultCell)
+ *   - showRunningTotal: display running total indicator
  */
 // prettier-ignore
 export const ColumnDefinition = {
     name: 'ColumnDefinition',
     kind: 'tagged',
     fields: {
-        key       : 'String',                // Field name in data object
-        title     : 'String',                // Header display text
-        width     : 'String?',               // Fixed width (e.g., '110px')
-        flex      : 'Number?',               // Flex grow value (alternative to width)
-        textAlign : '/(left|center|right)?', // default left
-        format    : 'Format?',               // How to format the cell value
-        searchable: 'Boolean?',              // Include in text search highlighting
-        sortable  : 'Boolean?',              // Allow sorting by this column
-        hidden    : 'Boolean?',              // Hide column from display
+        id            : 'String',    // Column identifier (TanStack: id)
+        accessorKey   : 'String?',   // Field name in row data (defaults to id)
+        header        : 'String',    // Header display text (TanStack: header as string)
+        size          : 'Number?',   // Column width in pixels (TanStack: size)
+        minSize       : 'Number?',   // Minimum width (TanStack: minSize)
+        maxSize       : 'Number?',   // Maximum width (TanStack: maxSize)
+        enableSorting : 'Boolean?',  // Allow sorting (TanStack: enableSorting)
+        enableResizing: 'Boolean?',  // Allow resizing (TanStack: enableResizing)
+        meta          : 'Object?',   // Custom extensions (searchable, textAlign, etc.)
+        
+        cell          : 'Any',       // Cell renderer component (required)
     },
 }

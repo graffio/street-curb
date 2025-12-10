@@ -1,11 +1,20 @@
-import { Flex, layoutChannel, useChannel } from '@graffio/design-system'
-import React, { useEffect } from 'react'
+import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
+import React, { useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { bankTransactionColumns } from '../columns/bank-transaction-columns.js'
+import { bankTransactionColumns } from '../columns/transaction-columns.js'
 import { post } from '../commands/post.js'
-import { TransactionFiltersCard, TransactionRegister } from '../components/index.js'
-import * as S from '../store/selectors.js'
+import { TransactionFiltersCard } from '../components/index.js'
+import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
+
+/*
+ * Calculate running balances for transaction list
+ * TODO: Move to selector for proper memoization
+ */
+const calculateRunningBalances = (transactions, startingBalance) => {
+    let runningBalance = startingBalance
+    return transactions.map(transaction => ({ ...transaction, runningBalance: (runningBalance += transaction.amount) }))
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Inline styles using Radix Themes tokens
@@ -13,7 +22,7 @@ import { Action } from '../types/action.js'
 
 const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
 
-const mainContentStyle = { flex: 1, minWidth: 0 }
+const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 
 /*
  * Transaction Register page with filtering, search, and navigation
@@ -107,6 +116,12 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
     const filteredTransactions = useSelector(S.filteredTransactions)
     const searchMatches = useSelector(S.searchMatches)
 
+    // Prepare data with running balances
+    const data = useMemo(
+        () => calculateRunningBalances(filteredTransactions, startingBalance),
+        [filteredTransactions, startingBalance],
+    )
+
     // Effects
     useEffect(setupLayoutEffect, [setLayout])
     useEffect(setupInitialDateRangeEffect, [dateRangeKey, dateRange])
@@ -122,19 +137,19 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
             <TransactionFiltersCard />
 
             <div style={mainContentStyle}>
-                <TransactionRegister
+                <DataTable
                     columns={bankTransactionColumns}
-                    transactions={filteredTransactions}
-                    searchQuery={searchQuery}
-                    startingBalance={startingBalance}
+                    data={data}
                     height={height}
+                    rowHeight={60}
                     highlightedRow={Math.max(
                         0,
                         Math.min(
                             searchMatches.length > 0 ? searchMatches[currentSearchIndex] : currentRowIndex,
-                            filteredTransactions.length - 1,
+                            data.length - 1,
                         ),
                     )}
+                    context={{ searchQuery }}
                 />
             </div>
         </Flex>

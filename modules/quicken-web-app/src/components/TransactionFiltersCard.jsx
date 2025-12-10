@@ -9,7 +9,7 @@ import { Button, Card, CategorySelector, DateRangePicker, Flex, Text, TextField 
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors.js'
+import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
 const filtersCardStyle = { width: '280px', flexShrink: 0 }
@@ -31,7 +31,7 @@ const TransactionFiltersCard = () => {
     // Derived state from selectors
     const defaultStartDate = useSelector(S.defaultStartDate)
     const defaultEndDate = useSelector(S.defaultEndDate)
-    const allCategories = useSelector(S.allCategories)
+    const allCategories = useSelector(S.allCategoryNames)
     const searchMatches = useSelector(S.searchMatches)
     const filteredTransactions = useSelector(S.filteredTransactions)
     const filteredTransactionsCount = filteredTransactions.length
@@ -86,7 +86,7 @@ const TransactionFiltersCard = () => {
                 />
 
                 <Flex direction="column" gap="2">
-                    <Text size="2" weight="medium" color="gray">
+                    <Text size="2" weight="medium" color="var(--gray-1)">
                         Filter
                     </Text>
                     <TextField.Root
@@ -105,17 +105,25 @@ const TransactionFiltersCard = () => {
                         value={searchQuery}
                         onChange={handleSearchQueryChange}
                     />
-                    {searchQuery && searchMatches.length > 0 && (
+                    {searchQuery && (
                         <Flex gap="2" align="center">
-                            <Button size="1" variant="soft" onClick={handlePreviousMatch}>
-                                ← Previous
-                            </Button>
-                            <Button size="1" variant="soft" onClick={handleNextMatch}>
-                                Next →
-                            </Button>
-                            <Text size="1" color="gray">
-                                {currentSearchIndex + 1} of {searchMatches.length}
-                            </Text>
+                            {searchMatches.length > 0 ? (
+                                <>
+                                    <Button size="1" variant="soft" onClick={handlePreviousMatch}>
+                                        ← Previous
+                                    </Button>
+                                    <Button size="1" variant="soft" onClick={handleNextMatch}>
+                                        Next →
+                                    </Button>
+                                    <Text size="1" color="gray">
+                                        {currentSearchIndex + 1} of {searchMatches.length}
+                                    </Text>
+                                </>
+                            ) : (
+                                <Text size="1" color="red">
+                                    No matches
+                                </Text>
+                            )}
                         </Flex>
                     )}
                 </Flex>

@@ -1,8 +1,8 @@
 /*
- * Transaction filtering functions for filtering and searching transaction data
+ * Transaction filtering functions
  *
- * This module provides pure functions for filtering transactions by various criteria.
- * All functions are transaction-specific and operate on transaction objects/arrays.
+ * Pure functions for filtering transactions by various criteria.
+ * No Redux dependency - can be used anywhere.
  */
 
 /*
@@ -16,7 +16,7 @@ const getCategoryName = (transaction, categories) => {
 }
 
 /*
- * Check if a transaction matches a search query (for highlighting and filtering purposes)
+ * Check if a transaction matches a search query (for highlighting and navigation)
  *
  * @sig transactionMatchesSearch :: (Transaction, String, LookupTable<Category>?) -> Boolean
  */
@@ -24,17 +24,16 @@ const transactionMatchesSearch = (transaction, searchQuery, categories) => {
     if (!searchQuery.trim()) return false
 
     const queryLower = searchQuery.toLowerCase()
-    const categoryName = getCategoryName(transaction, categories) || ''
-    const searchFields = [
-        transaction.payee || '',
-        transaction.memo || '',
-        categoryName,
-        transaction.address || '',
-        transaction.number || '',
-        transaction.amount.toString(),
-    ]
 
-    return searchFields.some(field => field.toLowerCase().includes(queryLower))
+    // Short-circuit: check each field individually, no array allocation
+    if (transaction.payee?.toLowerCase().includes(queryLower)) return true
+    if (transaction.memo?.toLowerCase().includes(queryLower)) return true
+    if (transaction.address?.toLowerCase().includes(queryLower)) return true
+    if (transaction.number?.toLowerCase().includes(queryLower)) return true
+    if (String(transaction.amount).includes(queryLower)) return true
+    const categoryName = getCategoryName(transaction, categories)
+    if (categoryName?.toLowerCase().includes(queryLower)) return true
+    return false
 }
 
 /*
@@ -45,19 +44,22 @@ const transactionMatchesSearch = (transaction, searchQuery, categories) => {
 const filterByText = (transactions, query, categories) => {
     if (!query.trim()) return transactions
 
-    return transactions.filter(transaction => {
-        const categoryName = getCategoryName(transaction, categories) || ''
-        const searchableText = [transaction.description, transaction.memo, transaction.payee, categoryName]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
+    const queryLower = query.toLowerCase()
 
-        return searchableText.includes(query.toLowerCase())
+    return transactions.filter(transaction => {
+        // Short-circuit: check each field individually, no array/string allocation
+        if (transaction.description?.toLowerCase().includes(queryLower)) return true
+        if (transaction.memo?.toLowerCase().includes(queryLower)) return true
+        if (transaction.payee?.toLowerCase().includes(queryLower)) return true
+        const categoryName = getCategoryName(transaction, categories)
+        if (categoryName?.toLowerCase().includes(queryLower)) return true
+        return false
     })
 }
 
 /*
  * Filter transactions by date range
+ * Uses string comparison for ISO dates (lexicographic order = chronological order)
  *
  * @sig filterByDateRange :: ([Transaction], DateRange) -> [Transaction]
  *     DateRange = { start: Date?, end: Date? }
@@ -65,21 +67,20 @@ const filterByText = (transactions, query, categories) => {
 const filterByDateRange = (transactions, dateRange) => {
     if (!dateRange.start && !dateRange.end) return transactions
 
+    // Convert Date bounds to ISO strings once (avoids Date parsing per row)
+    const startStr = dateRange.start?.toISOString().slice(0, 10)
+    const endStr = dateRange.end?.toISOString().slice(0, 10)
+
     return transactions.filter(transaction => {
-        // Parse ISO date string correctly (transaction.date is like "2024-06-15")
-        // Add explicit time to avoid timezone issues
-        const transactionDate = new Date(transaction.date + 'T00:00:00')
-
-        if (dateRange.start && transactionDate < dateRange.start) return false
-        if (dateRange.end && transactionDate > dateRange.end) return false
-
+        const dateStr = transaction.date // Already ISO string like "2024-06-15"
+        if (startStr && dateStr < startStr) return false
+        if (endStr && dateStr > endStr) return false
         return true
     })
 }
 
 /*
  * Check if a transaction's category matches any of the selected category filters
- * Selected categories are names; we resolve transaction.categoryId to name for comparison
  *
  * @sig categoryMatches :: (Transaction, [String], LookupTable<Category>) -> Boolean
  */

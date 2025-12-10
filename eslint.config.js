@@ -64,6 +64,6 @@ export default defineConfig([
             ],
         },
     },
-    { files: ['**/store/reducer.js', '**/store/selectors.js'], rules: { 'no-restricted-syntax': 'off' } },
+    { files: ['**/store/reducer.js', '**/store/selectors/**/*.js'], rules: { 'no-restricted-syntax': 'off' } },
     { files: ['**/*.stories.{js,jsx}'], plugins: { storybook }, rules: { ...storybook.configs.recommended.rules } },
 ])
