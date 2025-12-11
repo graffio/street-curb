@@ -37,7 +37,6 @@ import { LoadingSpinner } from './components/LoadingSpinner.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
 import { Table } from './components/Table.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
-import { VirtualTable } from './components/VirtualTable.jsx'
 import { DateRangePicker } from './DateRangePicker.jsx'
 import { lookupTablePropType } from './prop-types/lookup-table-prop-type.js'
 
@@ -77,7 +76,6 @@ export {
     LoadingSpinner,
     MainLayout,
     TitleAndSubtitle,
-    VirtualTable,
 
     // channel
     createChannel,
