@@ -13,6 +13,7 @@
  *  SetTableLayout
  *      tableLayout: "TableLayout"
  *  HydrateFromLocalStorage
+ *      tableLayouts: "{TableLayout:id}?"
  *
  */
 
@@ -324,12 +325,13 @@ SetTableLayoutConstructor.fromFirestore = SetTableLayoutConstructor._fromFiresto
 // Variant Action.HydrateFromLocalStorage
 //
 // -------------------------------------------------------------------------------------------------------------
-const HydrateFromLocalStorageConstructor = function HydrateFromLocalStorage() {
-    const constructorName = 'Action.HydrateFromLocalStorage()'
-    R.validateArgumentLength(constructorName, 0, arguments)
+const HydrateFromLocalStorageConstructor = function HydrateFromLocalStorage(tableLayouts) {
+    const constructorName = 'Action.HydrateFromLocalStorage(tableLayouts)'
+
+    R.validateLookupTable(constructorName, 'TableLayout', 'tableLayouts', true, tableLayouts)
 
     const result = Object.create(HydrateFromLocalStoragePrototype)
-
+    if (tableLayouts != null) result.tableLayouts = tableLayouts
     return result
 }
 
@@ -341,7 +343,7 @@ const HydrateFromLocalStoragePrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.HydrateFromLocalStorage()`
+            return `Action.HydrateFromLocalStorage(${R._toString(this.tableLayouts)})`
         },
         enumerable: false,
     },
@@ -364,11 +366,23 @@ const HydrateFromLocalStoragePrototype = Object.create(ActionPrototype, {
 HydrateFromLocalStorageConstructor.prototype = HydrateFromLocalStoragePrototype
 HydrateFromLocalStorageConstructor.is = val => val && val.constructor === HydrateFromLocalStorageConstructor
 HydrateFromLocalStorageConstructor.toString = () => 'Action.HydrateFromLocalStorage'
-HydrateFromLocalStorageConstructor._from = o => Action.HydrateFromLocalStorage()
+HydrateFromLocalStorageConstructor._from = o => Action.HydrateFromLocalStorage(o.tableLayouts)
 HydrateFromLocalStorageConstructor.from = HydrateFromLocalStorageConstructor._from
 
-HydrateFromLocalStorageConstructor.toFirestore = o => ({ ...o })
-HydrateFromLocalStorageConstructor.fromFirestore = HydrateFromLocalStorageConstructor._from
+HydrateFromLocalStorageConstructor._toFirestore = (o, encodeTimestamps) => ({
+    tableLayouts: R.lookupTableToFirestore(TableLayout, 'id', encodeTimestamps, o.tableLayouts),
+})
+
+HydrateFromLocalStorageConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    HydrateFromLocalStorageConstructor._from({
+        tableLayouts: doc.tableLayouts
+            ? R.lookupTableFromFirestore(TableLayout, 'id', decodeTimestamps, doc.tableLayouts)
+            : undefined,
+    })
+
+// Public aliases (can be overridden)
+HydrateFromLocalStorageConstructor.toFirestore = HydrateFromLocalStorageConstructor._toFirestore
+HydrateFromLocalStorageConstructor.fromFirestore = HydrateFromLocalStorageConstructor._fromFirestore
 
 Action._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']

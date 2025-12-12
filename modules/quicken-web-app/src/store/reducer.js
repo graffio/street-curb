@@ -52,27 +52,27 @@ const loadFile = (state, loadFileAction) => ({ ...state, ...loadFileAction })
 
 // Special case: Action.HydrateFromLocalStorage has no contents; `post` will send tableLayouts
 // @sig hydrateFromLocalStorage :: (State, LookupTable<TableLayout>) -> State
-const hydrateFromLocalStorage = (state, tableLayouts) => ({ ...state, tableLayouts })
+const hydrateFromLocalStorage = (state, hydrateFromLocalStoreAction) => ({
+    ...state,
+    tableLayouts: hydrateFromLocalStoreAction.tableLayouts,
+})
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Main reducer
 // ---------------------------------------------------------------------------------------------------------------------
 
-const rootReducer = (state = initialState, action) => {
+const rootReducer = (state = initialState, reduxAction) => {
     // Handle raw Redux action from post handler (localStorage hydration)
-    const { type, payload } = action
-
-    if (type === 'HydrateFromLocalStorage') return hydrateFromLocalStorage(state, payload)
-
-    if (!Action.is(payload)) return state
+    const { action } = reduxAction
+    if (!Action.is(action)) return state
 
     // prettier-ignore
-    return payload.match({
-        LoadFile               : () => loadFile(state, payload),
-        SetTransactionFilter   : () => setTransactionFilter(state, payload),
+    return action.match({
+        HydrateFromLocalStorage: () => hydrateFromLocalStorage(state, action),
+        LoadFile               : () => loadFile(state, action),
         ResetTransactionFilters: () => resetTransactionFilters(state),
-        SetTableLayout         : () => setTableLayout(state, payload),
-        HydrateFromLocalStorage: () => state, // handled above as raw action
+        SetTableLayout         : () => setTableLayout(state, action),
+        SetTransactionFilter   : () => setTransactionFilter(state, action),
     })
 }
 

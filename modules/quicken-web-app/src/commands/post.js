@@ -13,7 +13,7 @@ const TABLE_LAYOUTS_KEY = 'tableLayouts'
  * Dispatch action to Redux store
  * @sig dispatch :: Action -> ()
  */
-const dispatch = action => store.dispatch({ type: action.constructor.toString(), payload: action })
+const dispatch = action => store.dispatch({ type: action.constructor.toString(), action })
 
 /** @sig handleSetTableLayout :: Action.SetTableLayout -> () */
 const handleSetTableLayout = action => {
@@ -41,7 +41,7 @@ const handleHydrateFromLocalStorage = () => {
         if (!stored) return
 
         const tableLayouts = Object.values(JSON.parse(stored)).map(hydrateTableLayout)
-        store.dispatch({ type: 'HydrateFromLocalStorage', payload: LookupTable(tableLayouts, TableLayout, 'id') })
+        dispatch(Action.HydrateFromLocalStorage(LookupTable(tableLayouts, TableLayout, 'id')))
     } catch {
         console.warn('Failed to read tableLayouts from localStorage')
     }

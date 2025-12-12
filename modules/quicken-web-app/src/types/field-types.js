@@ -1,9 +1,5 @@
-// ABOUTME: Field type validators and ID generators for quicken-web-app
+// ABOUTME: Field type validators for quicken-web-app
 // ABOUTME: Contains regex patterns for tagged type field validation
-
-import cuid2 from '@paralleldrive/cuid2'
-
-const cuid12 = cuid2.init({ length: 12 })
 
 // prettier-ignore
 const FieldTypes = {

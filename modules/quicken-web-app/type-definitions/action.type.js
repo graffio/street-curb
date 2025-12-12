@@ -25,6 +25,6 @@ export const Action = {
 
         // Table layout actions
         SetTableLayout         : { tableLayout: 'TableLayout' },
-        HydrateFromLocalStorage: {},
+        HydrateFromLocalStorage: { tableLayouts: '{TableLayout:id}?'},
     }
 }
