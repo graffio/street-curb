@@ -1,3 +1,8 @@
+// ABOUTME: Rule to detect missing @sig documentation on functions
+// ABOUTME: Enforces documentation standard for top-level and long functions
+
+import { traverseAST, isFunctionNode } from '../traverse.js'
+
 /**
  * Create a sig-documentation violation object from AST node
  * @sig createViolation :: (ASTNode, String) -> Violation
@@ -9,13 +14,6 @@ const createViolation = (node, message) => ({
     message,
     rule: 'sig-documentation',
 })
-
-/**
- * Check if a node represents a function
- * @sig isFunctionNode :: ASTNode -> Boolean
- */
-const isFunctionNode = node =>
-    node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression'
 
 /**
  * Check if statement is function declaration
@@ -127,10 +125,10 @@ const requiresSigDocumentation = (node, ast) => {
 }
 
 /**
- * Process function node for @sig violations
- * @sig processFunctionNode :: (ASTNode, ASTNode, String, Set, [Violation]) -> Void
+ * Check function node for @sig violations
+ * @sig checkFunctionForSig :: (ASTNode, ASTNode, String, Set, [Violation]) -> Void
  */
-const processFunctionNode = (node, ast, sourceCode, processedNodes, violations) => {
+const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) => {
     if (!isFunctionNode(node) || processedNodes.has(node)) return
     processedNodes.add(node)
 
@@ -145,45 +143,6 @@ const processFunctionNode = (node, ast, sourceCode, processedNodes, violations) 
 }
 
 /**
- * Process array of child nodes
- * @sig processChildArray :: ([Any], Function) -> Void
- */
-const processChildArray = (childArray, processChild) => childArray.forEach(processChild)
-
-/**
- * Process single child node
- * @sig processSingleChild :: (Any, Function) -> Void
- */
-const processSingleChild = (child, processChild) => {
-    if (!child || typeof child !== 'object') return
-    processChild(child)
-}
-
-/**
- * Process child node in AST traversal
- * @sig processChildInTraversal :: (Any, ASTNode, String, Set, [Violation]) -> Void
- */
-const processChildInTraversal = (child, ast, sourceCode, processedNodes, violations) => {
-    const processChild = childNode => traverseASTNodes(childNode, ast, sourceCode, processedNodes, violations)
-
-    if (Array.isArray(child)) processChildArray(child, processChild)
-    else processSingleChild(child, processChild)
-}
-
-/**
- * Traverse AST nodes recursively
- * @sig traverseASTNodes :: (ASTNode, ASTNode, String, Set, [Violation]) -> Void
- */
-const traverseASTNodes = (node, ast, sourceCode, processedNodes, violations) => {
-    if (!node || typeof node !== 'object') return
-
-    processFunctionNode(node, ast, sourceCode, processedNodes, violations)
-
-    // Recursively check all child nodes
-    Object.keys(node).forEach(key => processChildInTraversal(node[key], ast, sourceCode, processedNodes, violations))
-}
-
-/**
  * Check for @sig documentation violations (coding standards)
  * @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
  */
@@ -193,7 +152,8 @@ const checkSigDocumentation = (ast, sourceCode, filePath) => {
     const violations = []
     const processedNodes = new Set()
 
-    traverseASTNodes(ast, ast, sourceCode, processedNodes, violations)
+    traverseAST(ast, node => checkFunctionForSig(node, ast, sourceCode, processedNodes, violations))
+
     return violations
 }
 

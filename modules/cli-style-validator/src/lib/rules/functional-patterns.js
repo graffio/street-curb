@@ -1,3 +1,8 @@
+// ABOUTME: Rule to detect imperative loop patterns
+// ABOUTME: Enforces functional programming style (no for/while loops)
+
+import { traverseAST } from '../traverse.js'
+
 /**
  * Create a functional-patterns violation object from AST node
  * @sig createViolation :: (ASTNode, String) -> Violation
@@ -44,31 +49,6 @@ const processNodeForViolations = (node, violations) => {
 
     const suggestion = getSuggestionForLoop(node.type)
     violations.push(createViolation(node, suggestion))
-}
-
-/**
- * Process child node in traversal
- * @sig processChildInTraversal :: (Any, Function) -> Void
- */
-const processChildInTraversal = (child, visitor) => {
-    if (Array.isArray(child)) {
-        child.forEach(item => traverseAST(item, visitor))
-        return
-    }
-
-    if (child && typeof child === 'object' && child.type) traverseAST(child, visitor)
-}
-
-/**
- * Traverse AST node and visit all child nodes
- * @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
- */
-const traverseAST = (node, visitor) => {
-    if (!node || typeof node !== 'object') return
-
-    visitor(node)
-
-    Object.values(node).forEach(child => processChildInTraversal(child, visitor))
 }
 
 /**

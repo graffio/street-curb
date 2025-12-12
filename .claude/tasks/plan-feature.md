@@ -33,3 +33,24 @@ Use after brainstorming to create a task spec.
 - Steps must be specific enough to follow without reading anything else
 - Always include commit step (from `commit-changes.md`) at the end
 - If no template exists for a step, note it—we'll create one
+
+## Checkpoints
+
+Identify decision points in the plan that need user approval:
+- Type/data decomposition choices
+- Library vs custom implementation
+- Any step where multiple valid approaches exist
+
+Mark these in steps with `[CHECKPOINT]` prefix. During implementation, use `implementation-checkpoint.md` template at these points.
+
+## Precedent Check
+
+Only ask when introducing something **new** - not for routine additions like new Action variants or selectors.
+
+**Ask first if no codebase precedent for:**
+- New architectural pattern or abstraction
+- New library/dependency
+- New file organization structure
+- Language feature not used elsewhere
+
+When flagging: "No precedent for X - should I proceed?" Keep it brief.

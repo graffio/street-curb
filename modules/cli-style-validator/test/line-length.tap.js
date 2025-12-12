@@ -11,7 +11,7 @@ t.test('Given a file with line length violations', t => {
         t.equal(violations[0].type, 'line-length', 'Then the violation type should be line-length')
         t.equal(violations[0].line, 1, 'Then the violation should be on line 1')
         t.equal(violations[0].rule, 'line-length', 'Then the rule field should be set correctly')
-        t.match(violations[0].message, /120 character limit/, 'Then the message should mention the character limit')
+        t.match(violations[0].message, /120 characters/, 'Then the message should mention the character limit')
         t.end()
     })
 

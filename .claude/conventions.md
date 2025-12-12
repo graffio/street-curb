@@ -21,6 +21,20 @@ Brevity > thoroughness. When in doubt, match existing code.
 - Arrow functions preferred
 - One indentation level per function (extract helpers)
 - `const` preferred, `let` if needed, never `var`
+- Define functions at the TOP of their containing block, before usage
+- This is safe: functions can reference variables declared later because the variables are initialized before the function is *called*, not when it's defined
+
+## React Components
+
+Organize component internals in this order:
+1. **Functions** - Helper functions used by hooks/callbacks
+2. **Hooks** - `useState`, `useSelector`, custom hooks
+3. **Memos** - `useMemo` computations
+4. **Callbacks** - `useCallback` handlers
+5. **Effects** - `useEffect` side effects
+6. **Return** - JSX
+
+Keep functions INSIDE their parent component (not hoisted outside) when they use component state or props.
 
 ## Files
 

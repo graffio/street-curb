@@ -1,9 +1,13 @@
 Brevity > thoroughness. Short, correct answers beat comprehensive ones. Bullet points are easier to read.
 
+@.claude/conventions.md
+@.claude/preferences.md
+
 ## How we work
 
 See `.claude/README.md` for the full workflow. Key files:
 - `.claude/conventions.md` — Code style (always apply)
+- `.claude/preferences.md` — Architectural preferences (judgment calls)
 - `.claude/tasks/` — Step-by-step templates for common work
 - `.claude/current-task.json` — Active task spec (follow exactly during implementation)
 
