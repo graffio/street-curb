@@ -45,17 +45,16 @@ const filteredTransactions = memoizeReduxState(['transactions', 'transactionFilt
 })
 
 /*
- * Indices of filtered transactions matching the search query
+ * IDs of filtered transactions matching the search query
  * Used for search navigation (previous/next) and highlighting
  *
- * @sig searchMatches :: ReduxState -> [Number]
+ * @sig searchMatches :: ReduxState -> [TransactionId]
  */
 const searchMatches = memoizeReduxState(['transactions', 'transactionFilters', 'categories'], state => {
     const query = searchQuery(state)
     return filteredTransactions(state)
-        .map((transaction, index) => ({ transaction, index }))
-        .filter(({ transaction }) => transactionMatchesSearch(transaction, query, state.categories))
-        .map(({ index }) => index)
+        .filter(txn => transactionMatchesSearch(txn, query, state.categories))
+        .map(txn => txn.id)
 })
 
 export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches }

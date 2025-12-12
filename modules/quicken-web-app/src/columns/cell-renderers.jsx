@@ -79,6 +79,8 @@ const HighlightedText = ({ text, searchQuery }) => {
     )
 }
 
+const ellipsisStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
 /*
  * Cell renderer for date column (shows relative date below)
  */
@@ -91,10 +93,10 @@ const DateCell = ({ getValue, table }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-            <div style={{ color: 'var(--gray-12)' }}>
+            <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
                 <HighlightedText text={formatted} searchQuery={searchQuery} />
             </div>
-            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>{relative}</div>
+            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>{relative}</div>
         </div>
     )
 }
@@ -108,10 +110,10 @@ const PayeeCell = ({ row, table }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-            <div style={{ color: 'var(--gray-12)' }}>
+            <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
                 <HighlightedText text={payee || 'Unknown Payee'} searchQuery={searchQuery} />
             </div>
-            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)' }}>
+            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>
                 <HighlightedText text={memo || ''} searchQuery={searchQuery} />
             </div>
         </div>
@@ -140,7 +142,7 @@ const CurrencyCell = ({ getValue, table }) => {
 const DefaultCell = ({ getValue, column, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
-    const textAlign = column.columnDef.meta?.textAlign || 'left'
+    const textAlign = column.columnDef.textAlign || 'left'
 
     return (
         <span style={{ textAlign, display: 'block' }}>

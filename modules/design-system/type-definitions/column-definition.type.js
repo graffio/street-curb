@@ -18,7 +18,6 @@
  *
  * Our extensions in meta:
  *   - searchable: include in text search highlighting
- *   - textAlign: 'left' | 'center' | 'right' (for DefaultCell)
  *   - showRunningTotal: display running total indicator
  */
 // prettier-ignore
@@ -32,10 +31,11 @@ export const ColumnDefinition = {
         size          : 'Number?',   // Column width in pixels (TanStack: size)
         minSize       : 'Number?',   // Minimum width (TanStack: minSize)
         maxSize       : 'Number?',   // Maximum width (TanStack: maxSize)
+        textAlign     : 'String?',   // Text alignment: 'left' | 'center' | 'right'
         enableSorting : 'Boolean?',  // Allow sorting (TanStack: enableSorting)
         enableResizing: 'Boolean?',  // Allow resizing (TanStack: enableResizing)
-        meta          : 'Object?',   // Custom extensions (searchable, textAlign, etc.)
-        
+        meta          : 'Object?',   // App-specific extensions (searchable, showRunningTotal)
+
         cell          : 'Any',       // Cell renderer component (required)
     },
 }

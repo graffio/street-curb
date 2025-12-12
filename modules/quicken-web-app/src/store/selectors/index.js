@@ -5,13 +5,14 @@
  */
 
 // Base state accessors (persisted domain data)
-export const initialized = state => state.initialized
-export const accounts = state => state.accounts
-export const categories = state => state.categories
-export const securities = state => state.securities
-export const tags = state => state.tags
-export const splits = state => state.splits
-export const transactions = state => state.transactions
+const initialized = state => state.initialized
+const accounts = state => state.accounts
+const categories = state => state.categories
+const securities = state => state.securities
+const tableLayouts = state => state.tableLayouts
+const tags = state => state.tags
+const splits = state => state.splits
+const transactions = state => state.transactions
 
 // UI state
 export {
@@ -27,8 +28,6 @@ export {
     customEndDate,
 } from './ui.js'
 
-// Transaction selectors and filters
 export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches } from './transactions/index.js'
-
-// Category selectors
 export { allCategoryNames } from './categories/index.js'
+export { initialized, accounts, categories, securities, tableLayouts, tags, splits, transactions }

@@ -5,16 +5,17 @@ import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Account } from '../types/account.js'
 import { Action } from '../types/action.js'
 import { Category } from '../types/category.js'
+import { TableLayout, Transaction } from '../types/index.js'
 import { Security } from '../types/security.js'
 import { Split } from '../types/split.js'
 import { Tag } from '../types/tag.js'
-import { Transaction } from '../types/transaction.js'
 
 const initialState = {
     initialized: true,
     accounts: LookupTable([], Account, 'id'),
     categories: LookupTable([], Category, 'id'),
     securities: LookupTable([], Security, 'id'),
+    tableLayouts: LookupTable([], TableLayout, 'id'),
     tags: LookupTable([], Tag, 'id'),
     splits: LookupTable([], Split, 'id'),
     transactions: LookupTable([], Transaction, 'id'),
@@ -31,27 +32,47 @@ const initialState = {
     },
 }
 
-const rootReducer = (state = initialState, action) => {
-    if (!Action.is(action.payload)) return state
+// @sig loadFile :: (State. Action.SetTransactionFilterAction) -> State
+const setTransactionFilter = (state, setTransactionFilterAction) => ({
+    ...state,
+    transactionFilters: { ...state.transactionFilters, ...setTransactionFilterAction.changes },
+})
 
-    return action.payload.match({
-        LoadFile: ({ accounts, categories, securities, tags, splits, transactions }) => ({
-            ...state,
-            accounts,
-            categories,
-            securities,
-            tags,
-            splits,
-            transactions,
-        }),
-        SetTransactionFilter: ({ payload }) => ({
-            ...state,
-            transactionFilters: { ...state.transactionFilters, ...payload },
-        }),
-        ResetTransactionFilters: () => ({
-            ...state,
-            transactionFilters: { ...initialState.transactionFilters, dateRangeKey: 'all' },
-        }),
+// @sig resetTransactionFilters :: State -> State
+const resetTransactionFilters = state => ({ ...state, transactionFilters: { ...initialState.transactionFilters } })
+
+// @sig setTableLayout :: (State. Action.SetTableLayoutAction) -> State
+const setTableLayout = (state, setTableLayoutAction) => ({
+    ...state,
+    tableLayouts: state.tableLayouts.addItemWithId(setTableLayoutAction.tableLayout),
+})
+
+// @sig loadFile :: (State. Action.LoadFile) -> State
+const loadFile = (state, loadFileAction) => ({ ...state, ...loadFileAction })
+
+// Special case: Action.HydrateFromLocalStorage has no contents; `post` will send tableLayouts
+// @sig hydrateFromLocalStorage :: (State, LookupTable<TableLayout>) -> State
+const hydrateFromLocalStorage = (state, hydrateFromLocalStoreAction) => ({
+    ...state,
+    tableLayouts: hydrateFromLocalStoreAction.tableLayouts,
+})
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Main reducer
+// ---------------------------------------------------------------------------------------------------------------------
+
+const rootReducer = (state = initialState, reduxAction) => {
+    // Handle raw Redux action from post handler (localStorage hydration)
+    const { action } = reduxAction
+    if (!Action.is(action)) return state
+
+    // prettier-ignore
+    return action.match({
+        HydrateFromLocalStorage: () => hydrateFromLocalStorage(state, action),
+        LoadFile               : () => loadFile(state, action),
+        ResetTransactionFilters: () => resetTransactionFilters(state),
+        SetTableLayout         : () => setTableLayout(state, action),
+        SetTransactionFilter   : () => setTransactionFilter(state, action),
     })
 }
 
