@@ -1,3 +1,6 @@
+// ABOUTME: Rule to detect lines exceeding 120 characters
+// ABOUTME: Suggests extracting variables rather than wrapping lines
+
 /**
  * Create a line-length violation object
  * @sig createViolation :: (Number, Number, String) -> Violation
@@ -10,7 +13,10 @@ const createViolation = (line, column, message) => ({ type: 'line-length', line,
  */
 const processLineForLength = (line, index, violations) => {
     if (line.length <= 120) return
-    violations.push(createViolation(index + 1, 121, 'Line exceeds 120 character limit'))
+
+    const message =
+        'Line exceeds 120 characters. Extract a sub-expression into a named variable to shorten (do not just wrap).'
+    violations.push(createViolation(index + 1, 121, message))
 }
 
 /**

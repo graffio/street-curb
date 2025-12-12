@@ -1,26 +1,7 @@
-/**
- * Process child node in AST traversal
- * @sig processChildNode :: (Any, Function) -> Void
- */
-const processChildNode = (child, visitor) => {
-    if (Array.isArray(child)) {
-        child.forEach(item => traverseAST(item, visitor))
-        return
-    }
-    if (child && typeof child === 'object' && child.type) traverseAST(child, visitor)
-}
+// ABOUTME: Rule to detect functions defined after non-function statements
+// ABOUTME: Enforces functions-at-top-of-block coding standard
 
-/**
- * Traverse AST node and visit all child nodes
- * @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
- */
-const traverseAST = (node, visitor) => {
-    if (!node || typeof node !== 'object') return
-
-    visitor(node)
-
-    Object.values(node).forEach(child => processChildNode(child, visitor))
-}
+import { traverseAST } from '../traverse.js'
 
 /**
  * Create a function-declaration-ordering violation object from AST node
@@ -169,17 +150,17 @@ const processMisplacedFunctionStatement = (statement, violations) => {
  * Process individual statement in block
  * @sig processStatement :: (ASTNode, [Violation], Object) -> Void
  */
-const processStatement = (statement, violations, state) => {
+const processStatement = (statement, violations, tracker) => {
     if (isNonFunctionStatement(statement)) {
-        state.foundNonFunction = true
+        tracker.foundNonFunction = true
         return
     }
 
-    if (isFunctionStatement(statement) && state.foundNonFunction)
+    if (isFunctionStatement(statement) && tracker.foundNonFunction)
         processMisplacedFunctionStatement(statement, violations)
 
     // Also check if this is a variable declaration with function that comes after non-function
-    if (statement.type === 'VariableDeclaration' && !isFunctionStatement(statement)) state.foundNonFunction = true
+    if (statement.type === 'VariableDeclaration' && !isFunctionStatement(statement)) tracker.foundNonFunction = true
 }
 
 /**
@@ -190,9 +171,9 @@ const processBlockForViolations = (block, violations) => {
     if (!isBlockStatement(block) || !block.body) return
 
     const statements = block.body
-    const state = { foundNonFunction: false }
+    const tracker = { foundNonFunction: false }
 
-    statements.forEach(statement => processStatement(statement, violations, state))
+    statements.forEach(statement => processStatement(statement, violations, tracker))
 }
 
 /**

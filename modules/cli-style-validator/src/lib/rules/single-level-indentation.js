@@ -1,3 +1,8 @@
+// ABOUTME: Rule to detect nested indentation (>1 level deep)
+// ABOUTME: Enforces single-level indentation via early returns and extraction
+
+import { isFunctionNode } from '../traverse.js'
+
 /**
  * Visit child node if it exists and has a type
  * @sig visitChild :: (Any, (ASTNode) -> Void) -> Void
@@ -44,13 +49,6 @@ const createViolation = (node, message) => ({
 })
 
 /**
- * Check if a node represents a function
- * @sig isFunctionNode :: ASTNode -> Boolean
- */
-const isFunctionNode = node =>
-    node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression'
-
-/**
  * Check if node is in arguments array context
  * @sig checkArgumentsContext :: (String, [Any], ASTNode) -> Boolean
  */
@@ -86,8 +84,8 @@ const processObjectChild = (child, findContext) => child && typeof child === 'ob
  * Process non-array child in context finding
  * @sig processNonArrayChild :: (String, Any, ASTNode, ASTNode, Function, Object) -> Boolean
  */
-const processNonArrayChild = (key, child, node, searchNode, findContext, state) => {
-    if (child === node && checkCallbackContext(key, searchNode, node)) state.isCallback = true
+const processNonArrayChild = (key, child, node, searchNode, findContext, tracker) => {
+    if (child === node && checkCallbackContext(key, searchNode, node)) tracker.isCallback = true
     processObjectChild(child, findContext)
     return false
 }
@@ -96,11 +94,11 @@ const processNonArrayChild = (key, child, node, searchNode, findContext, state) 
  * Process search node child in context finding
  * @sig processSearchNodeChild :: (String, Any, ASTNode, ASTNode, Function, Object) -> Boolean
  */
-const processSearchNodeChild = (key, child, node, searchNode, findContext, state) => {
-    if (!Array.isArray(child)) return processNonArrayChild(key, child, node, searchNode, findContext, state)
+const processSearchNodeChild = (key, child, node, searchNode, findContext, tracker) => {
+    if (!Array.isArray(child)) return processNonArrayChild(key, child, node, searchNode, findContext, tracker)
 
     if (!processArrayChild(key, child, node, findContext)) return false
-    state.isCallback = true
+    tracker.isCallback = true
     return true
 }
 
@@ -108,13 +106,13 @@ const processSearchNodeChild = (key, child, node, searchNode, findContext, state
  * Search context recursively in AST node
  * @sig searchContextRecursively :: (ASTNode, ASTNode, Object) -> Void
  */
-const searchContextRecursively = (searchNode, node, state) => {
+const searchContextRecursively = (searchNode, node, tracker) => {
     if (!searchNode || typeof searchNode !== 'object') return
 
-    const findContext = currentNode => searchContextRecursively(currentNode, node, state)
+    const findContext = currentNode => searchContextRecursively(currentNode, node, tracker)
 
     Object.entries(searchNode).some(([key, child]) =>
-        processSearchNodeChild(key, child, node, searchNode, findContext, state),
+        processSearchNodeChild(key, child, node, searchNode, findContext, tracker),
     )
 }
 
@@ -123,9 +121,9 @@ const searchContextRecursively = (searchNode, node, state) => {
  * @sig findFunctionContext :: (ASTNode, ASTNode) -> Boolean
  */
 const findFunctionContext = (node, rootNode) => {
-    const state = { isCallback: false }
-    searchContextRecursively(rootNode, node, state)
-    return state.isCallback
+    const tracker = { isCallback: false }
+    searchContextRecursively(rootNode, node, tracker)
+    return tracker.isCallback
 }
 
 /**

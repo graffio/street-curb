@@ -1,11 +1,15 @@
+// ABOUTME: Main API for the style validator
+// ABOUTME: Orchestrates running all style rules on source files
+
 import { readFile } from 'fs/promises'
-import { checkLineLength } from './rules/line-length.js'
-import { checkExportPlacement } from './rules/export-placement.js'
-import { checkUnnecessaryBraces } from './rules/unnecessary-braces.js'
-import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
-import { checkSigDocumentation } from './rules/sig-documentation.js'
-import { checkFunctionalPatterns } from './rules/functional-patterns.js'
+import { checkAboutmeComment } from './rules/aboutme-comment.js'
+import { checkFileNaming } from './rules/file-naming.js'
 import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
+import { checkFunctionalPatterns } from './rules/functional-patterns.js'
+import { checkImportOrdering } from './rules/import-ordering.js'
+import { checkLineLength } from './rules/line-length.js'
+import { checkSigDocumentation } from './rules/sig-documentation.js'
+import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { parseCode } from './parser.js'
 
 /**
@@ -21,7 +25,6 @@ const checkFile = async filePath => {
     try {
         ast = parseCode(sourceCode)
     } catch (parseError) {
-        // If parsing fails, continue with string-based rules only
         console.warn(`AST parsing failed for ${filePath}: ${parseError.message}`)
     }
 
@@ -37,35 +40,15 @@ const checkFile = async filePath => {
 const runAllRules = (ast, sourceCode, filePath) => {
     const allViolations = []
 
-    // Run line-length rule (string-based)
-    const lineLengthViolations = checkLineLength(null, sourceCode, filePath)
-    allViolations.push(...lineLengthViolations)
+    allViolations.push(...checkAboutmeComment(ast, sourceCode, filePath))
+    allViolations.push(...checkFileNaming(ast, sourceCode, filePath))
+    allViolations.push(...checkFunctionDeclarationOrdering(ast, sourceCode, filePath))
+    allViolations.push(...checkFunctionalPatterns(ast, sourceCode, filePath))
+    allViolations.push(...checkImportOrdering(ast, sourceCode, filePath))
+    allViolations.push(...checkLineLength(ast, sourceCode, filePath))
+    allViolations.push(...checkSigDocumentation(ast, sourceCode, filePath))
+    allViolations.push(...checkSingleLevelIndentation(ast, sourceCode, filePath))
 
-    // Run export placement rule (string-based)
-    const exportViolations = checkExportPlacement(null, sourceCode, filePath)
-    allViolations.push(...exportViolations)
-
-    // Run unnecessary braces rule (AST-based)
-    const bracesViolations = checkUnnecessaryBraces(ast, sourceCode, filePath)
-    allViolations.push(...bracesViolations)
-
-    // Run single-level indentation rule (AST-based)
-    const indentationViolations = checkSingleLevelIndentation(ast, sourceCode, filePath)
-    allViolations.push(...indentationViolations)
-
-    // Run @sig documentation rule (AST-based)
-    const sigViolations = checkSigDocumentation(ast, sourceCode, filePath)
-    allViolations.push(...sigViolations)
-
-    // Run functional patterns rule (AST-based)
-    const functionalViolations = checkFunctionalPatterns(ast, sourceCode, filePath)
-    allViolations.push(...functionalViolations)
-
-    // Run function declaration ordering rule (AST-based)
-    const functionOrderingViolations = checkFunctionDeclarationOrdering(ast, sourceCode, filePath)
-    allViolations.push(...functionOrderingViolations)
-
-    // Sort violations by line number for consistent output
     return allViolations.sort((a, b) => a.line - b.line)
 }
 
