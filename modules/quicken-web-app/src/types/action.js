@@ -8,8 +8,11 @@
  *      splits      : "{Split:id}",
  *      transactions: "{Transaction:id}"
  *  SetTransactionFilter
- *      payload: "Object"
+ *      changes: "Object"
  *  ResetTransactionFilters
+ *  SetTableLayout
+ *      tableLayout: "TableLayout"
+ *  HydrateFromLocalStorage
  *
  */
 
@@ -20,6 +23,7 @@ import { Security } from './security.js'
 import { Tag } from './tag.js'
 import { Split } from './split.js'
 import { Transaction } from './transaction.js'
+import { TableLayout } from './table-layout.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -34,7 +38,9 @@ const Action = {
         return (
             constructor === Action.LoadFile ||
             constructor === Action.SetTransactionFilter ||
-            constructor === Action.ResetTransactionFilters
+            constructor === Action.ResetTransactionFilters ||
+            constructor === Action.SetTableLayout ||
+            constructor === Action.HydrateFromLocalStorage
         )
     },
 }
@@ -42,7 +48,7 @@ const Action = {
 // Add hidden properties
 Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
 Object.defineProperty(Action, '@@tagNames', {
-    value: ['LoadFile', 'SetTransactionFilter', 'ResetTransactionFilters'],
+    value: ['LoadFile', 'SetTransactionFilter', 'ResetTransactionFilters', 'SetTableLayout', 'HydrateFromLocalStorage'],
     enumerable: false,
 })
 
@@ -151,13 +157,13 @@ LoadFileConstructor.fromFirestore = LoadFileConstructor._fromFirestore
 // Variant Action.SetTransactionFilter
 //
 // -------------------------------------------------------------------------------------------------------------
-const SetTransactionFilterConstructor = function SetTransactionFilter(payload) {
-    const constructorName = 'Action.SetTransactionFilter(payload)'
+const SetTransactionFilterConstructor = function SetTransactionFilter(changes) {
+    const constructorName = 'Action.SetTransactionFilter(changes)'
     R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateObject(constructorName, 'payload', false, payload)
+    R.validateObject(constructorName, 'changes', false, changes)
 
     const result = Object.create(SetTransactionFilterPrototype)
-    result.payload = payload
+    result.changes = changes
     return result
 }
 
@@ -169,7 +175,7 @@ const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
 
     toString: {
         value: function () {
-            return `Action.SetTransactionFilter(${R._toString(this.payload)})`
+            return `Action.SetTransactionFilter(${R._toString(this.changes)})`
         },
         enumerable: false,
     },
@@ -192,7 +198,7 @@ const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
-SetTransactionFilterConstructor._from = o => Action.SetTransactionFilter(o.payload)
+SetTransactionFilterConstructor._from = o => Action.SetTransactionFilter(o.changes)
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
 
 SetTransactionFilterConstructor.toFirestore = o => ({ ...o })
@@ -249,6 +255,121 @@ ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._fr
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
 ResetTransactionFiltersConstructor.fromFirestore = ResetTransactionFiltersConstructor._from
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.SetTableLayout
+//
+// -------------------------------------------------------------------------------------------------------------
+const SetTableLayoutConstructor = function SetTableLayout(tableLayout) {
+    const constructorName = 'Action.SetTableLayout(tableLayout)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'TableLayout', 'tableLayout', false, tableLayout)
+
+    const result = Object.create(SetTableLayoutPrototype)
+    result.tableLayout = tableLayout
+    return result
+}
+
+Action.SetTableLayout = SetTableLayoutConstructor
+
+const SetTableLayoutPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTableLayout', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.SetTableLayout(${R._toString(this.tableLayout)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: SetTableLayoutConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
+SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
+SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
+SetTableLayoutConstructor._from = o => Action.SetTableLayout(o.tableLayout)
+SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
+
+SetTableLayoutConstructor._toFirestore = (o, encodeTimestamps) => ({
+    tableLayout: TableLayout.toFirestore(o.tableLayout, encodeTimestamps),
+})
+
+SetTableLayoutConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    SetTableLayoutConstructor._from({
+        tableLayout: TableLayout.fromFirestore
+            ? TableLayout.fromFirestore(doc.tableLayout, decodeTimestamps)
+            : TableLayout.from(doc.tableLayout),
+    })
+
+// Public aliases (can be overridden)
+SetTableLayoutConstructor.toFirestore = SetTableLayoutConstructor._toFirestore
+SetTableLayoutConstructor.fromFirestore = SetTableLayoutConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.HydrateFromLocalStorage
+//
+// -------------------------------------------------------------------------------------------------------------
+const HydrateFromLocalStorageConstructor = function HydrateFromLocalStorage() {
+    const constructorName = 'Action.HydrateFromLocalStorage()'
+    R.validateArgumentLength(constructorName, 0, arguments)
+
+    const result = Object.create(HydrateFromLocalStoragePrototype)
+
+    return result
+}
+
+Action.HydrateFromLocalStorage = HydrateFromLocalStorageConstructor
+
+const HydrateFromLocalStoragePrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'HydrateFromLocalStorage', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.HydrateFromLocalStorage()`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: HydrateFromLocalStorageConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+HydrateFromLocalStorageConstructor.prototype = HydrateFromLocalStoragePrototype
+HydrateFromLocalStorageConstructor.is = val => val && val.constructor === HydrateFromLocalStorageConstructor
+HydrateFromLocalStorageConstructor.toString = () => 'Action.HydrateFromLocalStorage'
+HydrateFromLocalStorageConstructor._from = o => Action.HydrateFromLocalStorage()
+HydrateFromLocalStorageConstructor.from = HydrateFromLocalStorageConstructor._from
+
+HydrateFromLocalStorageConstructor.toFirestore = o => ({ ...o })
+HydrateFromLocalStorageConstructor.fromFirestore = HydrateFromLocalStorageConstructor._from
+
 Action._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
     const variant = Action[tagName]
@@ -261,6 +382,9 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetTransactionFilter') return Action.SetTransactionFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ResetTransactionFilters')
         return Action.ResetTransactionFilters.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetTableLayout') return Action.SetTableLayout.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'HydrateFromLocalStorage')
+        return Action.HydrateFromLocalStorage.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 

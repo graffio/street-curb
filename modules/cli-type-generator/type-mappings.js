@@ -47,8 +47,7 @@ export const typeMappings = {
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
 
 
-    // design-system (Format must come before ColumnDefinition since ColumnDefinition references Format)
-    [`${sources.designSystem}/format.type.js`]            : [targets.designSystem],
+    // design-system
     [`${sources.designSystem}/column-definition.type.js`] : [targets.designSystem],
 
 
@@ -72,11 +71,14 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite, targets.quickenWebApp],
 
     // quicken-web-app (types must come before Action since Action references them)
+    [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/account.type.js`]         : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/category.type.js`]        : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/security.type.js`]        : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/tag.type.js`]             : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/split.type.js`]           : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/table-layout.type.js`]    : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 

@@ -20,7 +20,11 @@ export const Action = {
             splits      : '{Split:id}',
             transactions: '{Transaction:id}',
         },
-        SetTransactionFilter   : { payload: 'Object' },
+        SetTransactionFilter   : { changes: 'Object' },
         ResetTransactionFilters: {},
+
+        // Table layout actions
+        SetTableLayout         : { tableLayout: 'TableLayout' },
+        HydrateFromLocalStorage: {},
     }
 }
