@@ -56,7 +56,7 @@ const getFunctionName = node => {
  * Check if node is a block statement that can contain functions
  * @sig isBlockStatement :: ASTNode -> Boolean
  */
-const isBlockStatement = node => node.type === 'BlockStatement' || node.type === 'Program'
+const isBlockStatement = node => node.type === 'BlockStatement'
 
 /**
  * Check if declarator contains multi-line function
