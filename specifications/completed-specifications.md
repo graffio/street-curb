@@ -2,6 +2,20 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
+## Tab Groups & Account Navigation (2025-12-13)
+**Purpose:** WebStorm-style tab groups for viewing multiple registers/reports side-by-side
+
+- Added TabGroup, TabLayout, View tagged types with LookupTable storage
+- Created TabGroupContainer with horizontal flex layout and resize handles
+- Implemented TabGroup component with tab bar, drag-and-drop, and View.match() content rendering
+- Native HTML5 drag-and-drop for moving tabs between groups (no external library)
+- Lazy hydration via getInitialState() in reducer (moved from preloaded state)
+- Created dedicated hydration.js module for localStorage read logic
+- Auto-resize remaining groups when empty group removed (closeView, moveView)
+- Sidebar account click opens register tab (or brings existing to front)
+- Max 4 groups enforced; layout persists in localStorage
+- Deferred: TransactionRegisterPage style violations, hydration consolidation, rename groups→tabGroups
+
 ## F129 - Quicken-Web-App Redux Migration (2025-12-08)
 **Purpose:** Migrate quicken-web-app Redux actions from string literals to Tagged types
 
