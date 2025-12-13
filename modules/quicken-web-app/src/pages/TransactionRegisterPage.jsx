@@ -1,3 +1,6 @@
+// ABOUTME: Transaction register page with filtering, search, and table layout persistence
+// ABOUTME: Displays account transactions with sorting, column reordering, and running balances
+
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -9,20 +12,20 @@ import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 import { ColumnDescriptor, TableLayout } from '../types/index.js'
 
-// View identity for table layout (will be account-specific when tabs are implemented)
-// TODO: Replace with actual account ID like 'cols_account_abc123'
-const VIEW_ID = 'cols_bank_default'
+// Build view identity for table layout from account ID
+// @sig makeViewId :: String -> String
+const makeViewId = accountId => `cols_account_${accountId}`
 
 /**
  * Initialize TableLayout from column definitions (first-time setup)
- * @sig initializeFromColumns :: [ColumnDefinition] -> { tableLayout: TableLayout, idMap: Object }
+ * @sig initializeFromColumns :: (String, [ColumnDefinition]) -> { tableLayout: TableLayout, idMap: Object }
  */
-const initializeFromColumns = columns => {
+const initializeFromColumns = (viewId, columns) => {
     const descriptors = columns.map(col => ColumnDescriptor(`col_${col.id}`, col.size || 100, 'none'))
     // Store mapping from TanStack column id to our descriptor id
     const idMap = {}
     columns.forEach((col, i) => (idMap[col.id] = descriptors[i].id))
-    return { tableLayout: TableLayout(VIEW_ID, LookupTable(descriptors, ColumnDescriptor, 'id'), []), idMap }
+    return { tableLayout: TableLayout(viewId, LookupTable(descriptors, ColumnDescriptor, 'id'), []), idMap }
 }
 
 /**
@@ -30,28 +33,23 @@ const initializeFromColumns = columns => {
  * @sig toTanStackFormat :: (TableLayout?, Object) -> { sorting, columnSizing, columnOrder }
  */
 const toTanStackFormat = (tableLayout, idMap) => {
-    if (!tableLayout) return { sorting: [], columnSizing: {}, columnOrder: [] }
-
-    // Build reverse map: descriptor id -> TanStack column id
-    const reverseMap = Object.fromEntries(Object.entries(idMap).map(([k, v]) => [v, k]))
-
-    // LookupTable order = display order
-    const columnOrder = tableLayout.columnDescriptors.map(c => reverseMap[c.id])
-
-    // Build columnSizing
-    const columnSizing = {}
-    for (const col of tableLayout.columnDescriptors) {
-        const tanstackId = reverseMap[col.id]
-        if (tanstackId) columnSizing[tanstackId] = col.width
+    const toSizingEntry = (reverseMap, col) => [reverseMap[col.id], col.width]
+    const hasValidId = ([tanstackId]) => tanstackId
+    const toSortEntry = (reverseMap, descriptors, id) => {
+        const col = descriptors[id]
+        if (!col || col.sortDirection === 'none') return null
+        return { id: reverseMap[col.id], desc: col.sortDirection === 'desc' }
     }
 
-    // Build sorting from sortOrder + sortDirection
+    if (!tableLayout) return { sorting: [], columnSizing: {}, columnOrder: [] }
+
+    const reverseMap = Object.fromEntries(Object.entries(idMap).map(([k, v]) => [v, k]))
+    const columnOrder = tableLayout.columnDescriptors.map(c => reverseMap[c.id])
+    const columnSizing = Object.fromEntries(
+        tableLayout.columnDescriptors.map(col => toSizingEntry(reverseMap, col)).filter(hasValidId),
+    )
     const sorting = tableLayout.sortOrder
-        .map(id => {
-            const col = tableLayout.columnDescriptors[id]
-            if (!col || col.sortDirection === 'none') return null
-            return { id: reverseMap[col.id], desc: col.sortDirection === 'desc' }
-        })
+        .map(id => toSortEntry(reverseMap, tableLayout.columnDescriptors, id))
         .filter(Boolean)
 
     return { sorting, columnSizing, columnOrder }
@@ -88,11 +86,12 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
  *
  * @sig TransactionRegisterPage :: (TransactionRegisterPageProps) -> ReactElement
  *     TransactionRegisterPageProps = {
+ *         accountId: String,
  *         startingBalance?: Number,
  *         height?: Number
  *     }
  */
-const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) => {
+const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '100%' }) => {
     // -----------------------------------------------------------------------------------------------------------------
     // `post` Functions
     // -----------------------------------------------------------------------------------------------------------------
@@ -118,25 +117,34 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
         post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
     }
 
+    // @sig handleKeyDown :: KeyboardEvent -> void
+    // Handles Escape (clear search) and Arrow keys (navigate rows/matches)
     const handleKeyDown = event => {
-        const activeElement = document.activeElement
-        const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA'
-
-        if (event.key === 'Escape') {
+        // @sig handleEscape :: () -> void
+        const handleEscape = () => {
             event.preventDefault()
             if (searchQuery) post(Action.SetTransactionFilter({ searchQuery: '', currentSearchIndex: 0 }))
-            return
+        }
+        // @sig handleArrow :: () -> void
+        const handleArrow = () => {
+            event.preventDefault()
+            const inSearchMode = sortedSearchMatches.length > 0
+            if (event.key === 'ArrowDown') inSearchMode ? handleNextMatch() : moveToNextRow()
+            if (event.key === 'ArrowUp') inSearchMode ? handlePreviousMatch() : moveToPreviousRow()
         }
 
+        if (event.key === 'Escape') return handleEscape()
+
+        const activeElement = document.activeElement
+        const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA'
         if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return
         if (isInputFocused) return
 
-        event.preventDefault()
-        const inSearchMode = sortedSearchMatches.length > 0
-        if (event.key === 'ArrowDown') inSearchMode ? handleNextMatch() : moveToNextRow()
-        if (event.key === 'ArrowUp') inSearchMode ? handlePreviousMatch() : moveToPreviousRow()
+        handleArrow()
     }
 
+    // @sig setupInitialDateRangeEffect :: () -> void
+    // Sets default date range to last 12 months on first load
     const setupInitialDateRangeEffect = () => {
         if (dateRangeKey !== 'lastTwelveMonths' || dateRange) return
 
@@ -147,26 +155,35 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
         post(Action.SetTransactionFilter({ dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
     }
 
+    // @sig updateSorting :: (Updater | SortingState) -> void
+    // Converts TanStack sorting state to TableLayout and persists
     const updateSorting = updater => {
-        const newSorting = typeof updater === 'function' ? updater(sorting) : updater
-        const updatedColumns = tableLayout.columnDescriptors.map(col => {
+        // @sig applySort :: ColumnDescriptor -> ColumnDescriptor
+        const applySort = col => {
             const tanstackId = Object.entries(idMap).find(([, v]) => v === col.id)?.[0]
             const sortEntry = newSorting.find(s => s.id === tanstackId)
             const direction = sortEntry ? (sortEntry.desc ? 'desc' : 'asc') : 'none'
             return ColumnDescriptor(col.id, col.width, direction)
-        })
+        }
+
+        const newSorting = typeof updater === 'function' ? updater(sorting) : updater
+        const updatedColumns = tableLayout.columnDescriptors.map(applySort)
         const newSortOrder = newSorting.map(s => idMap[s.id])
         const newLayout = TableLayout(tableLayout.id, LookupTable(updatedColumns, ColumnDescriptor, 'id'), newSortOrder)
         post(Action.SetTableLayout(newLayout))
     }
 
+    // @sig updateColumnSizing :: (Updater | SizingState) -> void
+    // Converts TanStack column sizing to TableLayout and persists
     const updateColumnSizing = updater => {
-        const newSizing = typeof updater === 'function' ? updater(columnSizing) : updater
-        const updatedColumns = tableLayout.columnDescriptors.map(col => {
+        const applyWidth = col => {
             const tanstackId = Object.entries(idMap).find(([, v]) => v === col.id)?.[0]
             const width = newSizing[tanstackId] ?? col.width
             return ColumnDescriptor(col.id, width, col.sortDirection)
-        })
+        }
+
+        const newSizing = typeof updater === 'function' ? updater(columnSizing) : updater
+        const updatedColumns = tableLayout.columnDescriptors.map(applyWidth)
         const newLayout = TableLayout(
             tableLayout.id,
             LookupTable(updatedColumns, ColumnDescriptor, 'id'),
@@ -175,11 +192,12 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
         post(Action.SetTableLayout(newLayout))
     }
 
+    // @sig updateColumnOrder :: [String] -> void
+    // Reorders columns in TableLayout based on TanStack column order
     const updateColumnOrder = newOrder => {
-        const reorderedColumns = newOrder.map(tanstackId => {
-            const descriptorId = idMap[tanstackId]
-            return tableLayout.columnDescriptors[descriptorId]
-        })
+        const toDescriptor = tanstackId => tableLayout.columnDescriptors[idMap[tanstackId]]
+
+        const reorderedColumns = newOrder.map(toDescriptor)
         const newLayout = TableLayout(
             tableLayout.id,
             LookupTable(reorderedColumns, ColumnDescriptor, 'id'),
@@ -199,12 +217,12 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
         return () => document.removeEventListener('keydown', handleKeyDown)
     }
 
-    const hydrateLocalStorageEffect = () => post(Action.HydrateFromLocalStorage())
-
     // -----------------------------------------------------------------------------------------------------------------
     // computation functions
     // -----------------------------------------------------------------------------------------------------------------
 
+    // @sig compareStringsOrNumbers :: (a, b) -> Number
+    // Returns -1, 0, or 1 for sorting; handles both strings and numbers
     const compareStringsOrNumbers = (aVal, bVal) => {
         if (typeof aVal === 'string' && typeof bVal === 'string')
             return aVal.localeCompare(bVal, undefined, { sensitivity: 'base' })
@@ -217,24 +235,25 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
 
     const computeData = () => calculateRunningBalances(filteredTransactions, startingBalance)
 
+    // @sig computeSortedSearchMatches :: () -> [String]
+    // Returns search match IDs sorted by current table sort order
     const computeSortedSearchMatches = () => {
-        const compareFn = (a, b) => {
-            for (const { id, desc } of sorting) {
-                const key = accessorMap[id] || id
-                const aVal = a[key] ?? ''
-                const bVal = b[key] ?? ''
-                const result = compareStringsOrNumbers(aVal, bVal)
-                if (result !== 0) return desc ? -result : result
-            }
-            return 0
+        // @sig compareBySortKey :: (Object, Object, Number, {id: String, desc: Boolean}) -> Number
+        const compareBySortKey = (a, b, result, { id, desc }) => {
+            if (result !== 0) return result
+            const key = accessorMap[id] || id
+            const cmp = compareStringsOrNumbers(a[key] ?? '', b[key] ?? '')
+            return desc ? -cmp : cmp
         }
+        const compareBySort = (a, b) => sorting.reduce((result, spec) => compareBySortKey(a, b, result, spec), 0)
+        const byPosition = (idA, idB) => (positionMap.get(idA) ?? 0) - (positionMap.get(idB) ?? 0)
 
         if (searchMatches.length === 0 || sorting.length === 0) return searchMatches
 
         const accessorMap = Object.fromEntries(bankTransactionColumns.map(col => [col.id, col.accessorKey]))
-        const sortedData = [...data].sort(compareFn)
+        const sortedData = [...data].sort(compareBySort)
         const positionMap = new Map(sortedData.map((row, i) => [row.id, i]))
-        return [...searchMatches].sort((a, b) => (positionMap.get(a) ?? 0) - (positionMap.get(b) ?? 0))
+        return [...searchMatches].sort(byPosition)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -253,8 +272,12 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
     // -----------------------------------------------------------------------------------------------------------------
     // Memos
     // -----------------------------------------------------------------------------------------------------------------
-    const { tableLayout: initialLayout, idMap } = useMemo(() => initializeFromColumns(bankTransactionColumns), [])
-    const tableLayout = allTableLayouts?.[VIEW_ID] || initialLayout
+    const viewId = makeViewId(accountId)
+    const { tableLayout: initialLayout, idMap } = useMemo(
+        () => initializeFromColumns(viewId, bankTransactionColumns),
+        [viewId],
+    )
+    const tableLayout = allTableLayouts?.[viewId] || initialLayout
     const { sorting, columnSizing, columnOrder } = useMemo(computeTanStackFormat, [tableLayout, idMap])
     const data = useMemo(computeData, [filteredTransactions, startingBalance])
     const sortedSearchMatches = useMemo(computeSortedSearchMatches, [searchMatches, data, sorting])
@@ -271,7 +294,6 @@ const TransactionRegisterPage = ({ startingBalance = 5000, height = '100%' }) =>
     // -----------------------------------------------------------------------------------------------------------------
     useEffect(setupLayoutEffect, [setLayout])
     useEffect(setupInitialDateRangeEffect, [dateRangeKey, dateRange])
-    useEffect(hydrateLocalStorageEffect, [])
     useEffect(setupKeyboardEffect, [
         sortedSearchMatches.length,
         currentSearchIndex,

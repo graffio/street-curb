@@ -12,8 +12,28 @@
  *  ResetTransactionFilters
  *  SetTableLayout
  *      tableLayout: "TableLayout"
- *  HydrateFromLocalStorage
- *      tableLayouts: "{TableLayout:id}?"
+ *  OpenView
+ *      view   : "View",
+ *      groupId: "String?"
+ *  CloseView
+ *      viewId : "String",
+ *      groupId: "String"
+ *  MoveView
+ *      viewId     : "String",
+ *      fromGroupId: "String",
+ *      toGroupId  : "String",
+ *      toIndex    : "Number?"
+ *  CreateTabGroup
+ *  CloseTabGroup
+ *      groupId: "String"
+ *  SetActiveView
+ *      groupId: "String",
+ *      viewId : "String"
+ *  SetActiveTabGroup
+ *      groupId: "String"
+ *  SetTabGroupWidth
+ *      groupId: "String",
+ *      width  : "Number"
  *
  */
 
@@ -25,6 +45,7 @@ import { Tag } from './tag.js'
 import { Split } from './split.js'
 import { Transaction } from './transaction.js'
 import { TableLayout } from './table-layout.js'
+import { View } from './view.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -41,7 +62,14 @@ const Action = {
             constructor === Action.SetTransactionFilter ||
             constructor === Action.ResetTransactionFilters ||
             constructor === Action.SetTableLayout ||
-            constructor === Action.HydrateFromLocalStorage
+            constructor === Action.OpenView ||
+            constructor === Action.CloseView ||
+            constructor === Action.MoveView ||
+            constructor === Action.CreateTabGroup ||
+            constructor === Action.CloseTabGroup ||
+            constructor === Action.SetActiveView ||
+            constructor === Action.SetActiveTabGroup ||
+            constructor === Action.SetTabGroupWidth
         )
     },
 }
@@ -49,7 +77,20 @@ const Action = {
 // Add hidden properties
 Object.defineProperty(Action, '@@typeName', { value: 'Action', enumerable: false })
 Object.defineProperty(Action, '@@tagNames', {
-    value: ['LoadFile', 'SetTransactionFilter', 'ResetTransactionFilters', 'SetTableLayout', 'HydrateFromLocalStorage'],
+    value: [
+        'LoadFile',
+        'SetTransactionFilter',
+        'ResetTransactionFilters',
+        'SetTableLayout',
+        'OpenView',
+        'CloseView',
+        'MoveView',
+        'CreateTabGroup',
+        'CloseTabGroup',
+        'SetActiveView',
+        'SetActiveTabGroup',
+        'SetTabGroupWidth',
+    ],
     enumerable: false,
 })
 
@@ -322,28 +363,30 @@ SetTableLayoutConstructor.fromFirestore = SetTableLayoutConstructor._fromFiresto
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.HydrateFromLocalStorage
+// Variant Action.OpenView
 //
 // -------------------------------------------------------------------------------------------------------------
-const HydrateFromLocalStorageConstructor = function HydrateFromLocalStorage(tableLayouts) {
-    const constructorName = 'Action.HydrateFromLocalStorage(tableLayouts)'
+const OpenViewConstructor = function OpenView(view, groupId) {
+    const constructorName = 'Action.OpenView(view, groupId)'
 
-    R.validateLookupTable(constructorName, 'TableLayout', 'tableLayouts', true, tableLayouts)
+    R.validateTag(constructorName, 'View', 'view', false, view)
+    R.validateString(constructorName, 'groupId', true, groupId)
 
-    const result = Object.create(HydrateFromLocalStoragePrototype)
-    if (tableLayouts != null) result.tableLayouts = tableLayouts
+    const result = Object.create(OpenViewPrototype)
+    result.view = view
+    if (groupId != null) result.groupId = groupId
     return result
 }
 
-Action.HydrateFromLocalStorage = HydrateFromLocalStorageConstructor
+Action.OpenView = OpenViewConstructor
 
-const HydrateFromLocalStoragePrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'HydrateFromLocalStorage', enumerable: false },
+const OpenViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OpenView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
 
     toString: {
         value: function () {
-            return `Action.HydrateFromLocalStorage(${R._toString(this.tableLayouts)})`
+            return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})`
         },
         enumerable: false,
     },
@@ -356,33 +399,408 @@ const HydrateFromLocalStoragePrototype = Object.create(ActionPrototype, {
     },
 
     constructor: {
-        value: HydrateFromLocalStorageConstructor,
+        value: OpenViewConstructor,
         enumerable: false,
         writable: true,
         configurable: true,
     },
 })
 
-HydrateFromLocalStorageConstructor.prototype = HydrateFromLocalStoragePrototype
-HydrateFromLocalStorageConstructor.is = val => val && val.constructor === HydrateFromLocalStorageConstructor
-HydrateFromLocalStorageConstructor.toString = () => 'Action.HydrateFromLocalStorage'
-HydrateFromLocalStorageConstructor._from = o => Action.HydrateFromLocalStorage(o.tableLayouts)
-HydrateFromLocalStorageConstructor.from = HydrateFromLocalStorageConstructor._from
+OpenViewConstructor.prototype = OpenViewPrototype
+OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
+OpenViewConstructor.toString = () => 'Action.OpenView'
+OpenViewConstructor._from = o => Action.OpenView(o.view, o.groupId)
+OpenViewConstructor.from = OpenViewConstructor._from
 
-HydrateFromLocalStorageConstructor._toFirestore = (o, encodeTimestamps) => ({
-    tableLayouts: R.lookupTableToFirestore(TableLayout, 'id', encodeTimestamps, o.tableLayouts),
+OpenViewConstructor._toFirestore = (o, encodeTimestamps) => ({
+    view: View.toFirestore(o.view, encodeTimestamps),
+    groupId: o.groupId,
 })
 
-HydrateFromLocalStorageConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    HydrateFromLocalStorageConstructor._from({
-        tableLayouts: doc.tableLayouts
-            ? R.lookupTableFromFirestore(TableLayout, 'id', decodeTimestamps, doc.tableLayouts)
-            : undefined,
+OpenViewConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    OpenViewConstructor._from({
+        view: View.fromFirestore ? View.fromFirestore(doc.view, decodeTimestamps) : View.from(doc.view),
+        groupId: doc.groupId,
     })
 
 // Public aliases (can be overridden)
-HydrateFromLocalStorageConstructor.toFirestore = HydrateFromLocalStorageConstructor._toFirestore
-HydrateFromLocalStorageConstructor.fromFirestore = HydrateFromLocalStorageConstructor._fromFirestore
+OpenViewConstructor.toFirestore = OpenViewConstructor._toFirestore
+OpenViewConstructor.fromFirestore = OpenViewConstructor._fromFirestore
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.CloseView
+//
+// -------------------------------------------------------------------------------------------------------------
+const CloseViewConstructor = function CloseView(viewId, groupId) {
+    const constructorName = 'Action.CloseView(viewId, groupId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(CloseViewPrototype)
+    result.viewId = viewId
+    result.groupId = groupId
+    return result
+}
+
+Action.CloseView = CloseViewConstructor
+
+const CloseViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'CloseView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: CloseViewConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+CloseViewConstructor.prototype = CloseViewPrototype
+CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
+CloseViewConstructor.toString = () => 'Action.CloseView'
+CloseViewConstructor._from = o => Action.CloseView(o.viewId, o.groupId)
+CloseViewConstructor.from = CloseViewConstructor._from
+
+CloseViewConstructor.toFirestore = o => ({ ...o })
+CloseViewConstructor.fromFirestore = CloseViewConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.MoveView
+//
+// -------------------------------------------------------------------------------------------------------------
+const MoveViewConstructor = function MoveView(viewId, fromGroupId, toGroupId, toIndex) {
+    const constructorName = 'Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)'
+
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'fromGroupId', false, fromGroupId)
+    R.validateString(constructorName, 'toGroupId', false, toGroupId)
+    R.validateNumber(constructorName, 'toIndex', true, toIndex)
+
+    const result = Object.create(MoveViewPrototype)
+    result.viewId = viewId
+    result.fromGroupId = fromGroupId
+    result.toGroupId = toGroupId
+    if (toIndex != null) result.toIndex = toIndex
+    return result
+}
+
+Action.MoveView = MoveViewConstructor
+
+const MoveViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MoveView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: MoveViewConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+MoveViewConstructor.prototype = MoveViewPrototype
+MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
+MoveViewConstructor.toString = () => 'Action.MoveView'
+MoveViewConstructor._from = o => Action.MoveView(o.viewId, o.fromGroupId, o.toGroupId, o.toIndex)
+MoveViewConstructor.from = MoveViewConstructor._from
+
+MoveViewConstructor.toFirestore = o => ({ ...o })
+MoveViewConstructor.fromFirestore = MoveViewConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.CreateTabGroup
+//
+// -------------------------------------------------------------------------------------------------------------
+const CreateTabGroupConstructor = function CreateTabGroup() {
+    const constructorName = 'Action.CreateTabGroup()'
+    R.validateArgumentLength(constructorName, 0, arguments)
+
+    const result = Object.create(CreateTabGroupPrototype)
+
+    return result
+}
+
+Action.CreateTabGroup = CreateTabGroupConstructor
+
+const CreateTabGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'CreateTabGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.CreateTabGroup()`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: CreateTabGroupConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+CreateTabGroupConstructor.prototype = CreateTabGroupPrototype
+CreateTabGroupConstructor.is = val => val && val.constructor === CreateTabGroupConstructor
+CreateTabGroupConstructor.toString = () => 'Action.CreateTabGroup'
+CreateTabGroupConstructor._from = o => Action.CreateTabGroup()
+CreateTabGroupConstructor.from = CreateTabGroupConstructor._from
+
+CreateTabGroupConstructor.toFirestore = o => ({ ...o })
+CreateTabGroupConstructor.fromFirestore = CreateTabGroupConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.CloseTabGroup
+//
+// -------------------------------------------------------------------------------------------------------------
+const CloseTabGroupConstructor = function CloseTabGroup(groupId) {
+    const constructorName = 'Action.CloseTabGroup(groupId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(CloseTabGroupPrototype)
+    result.groupId = groupId
+    return result
+}
+
+Action.CloseTabGroup = CloseTabGroupConstructor
+
+const CloseTabGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'CloseTabGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.CloseTabGroup(${R._toString(this.groupId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: CloseTabGroupConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
+CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupConstructor
+CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
+CloseTabGroupConstructor._from = o => Action.CloseTabGroup(o.groupId)
+CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
+
+CloseTabGroupConstructor.toFirestore = o => ({ ...o })
+CloseTabGroupConstructor.fromFirestore = CloseTabGroupConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.SetActiveView
+//
+// -------------------------------------------------------------------------------------------------------------
+const SetActiveViewConstructor = function SetActiveView(groupId, viewId) {
+    const constructorName = 'Action.SetActiveView(groupId, viewId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+    R.validateString(constructorName, 'viewId', false, viewId)
+
+    const result = Object.create(SetActiveViewPrototype)
+    result.groupId = groupId
+    result.viewId = viewId
+    return result
+}
+
+Action.SetActiveView = SetActiveViewConstructor
+
+const SetActiveViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetActiveView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: SetActiveViewConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+SetActiveViewConstructor.prototype = SetActiveViewPrototype
+SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
+SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
+SetActiveViewConstructor._from = o => Action.SetActiveView(o.groupId, o.viewId)
+SetActiveViewConstructor.from = SetActiveViewConstructor._from
+
+SetActiveViewConstructor.toFirestore = o => ({ ...o })
+SetActiveViewConstructor.fromFirestore = SetActiveViewConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.SetActiveTabGroup
+//
+// -------------------------------------------------------------------------------------------------------------
+const SetActiveTabGroupConstructor = function SetActiveTabGroup(groupId) {
+    const constructorName = 'Action.SetActiveTabGroup(groupId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(SetActiveTabGroupPrototype)
+    result.groupId = groupId
+    return result
+}
+
+Action.SetActiveTabGroup = SetActiveTabGroupConstructor
+
+const SetActiveTabGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetActiveTabGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.SetActiveTabGroup(${R._toString(this.groupId)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: SetActiveTabGroupConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
+SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
+SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
+SetActiveTabGroupConstructor._from = o => Action.SetActiveTabGroup(o.groupId)
+SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
+
+SetActiveTabGroupConstructor.toFirestore = o => ({ ...o })
+SetActiveTabGroupConstructor.fromFirestore = SetActiveTabGroupConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Action.SetTabGroupWidth
+//
+// -------------------------------------------------------------------------------------------------------------
+const SetTabGroupWidthConstructor = function SetTabGroupWidth(groupId, width) {
+    const constructorName = 'Action.SetTabGroupWidth(groupId, width)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+    R.validateNumber(constructorName, 'width', false, width)
+
+    const result = Object.create(SetTabGroupWidthPrototype)
+    result.groupId = groupId
+    result.width = width
+    return result
+}
+
+Action.SetTabGroupWidth = SetTabGroupWidthConstructor
+
+const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTabGroupWidth', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+
+    toString: {
+        value: function () {
+            return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})`
+        },
+        enumerable: false,
+    },
+
+    toJSON: {
+        value: function () {
+            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+        },
+        enumerable: false,
+    },
+
+    constructor: {
+        value: SetTabGroupWidthConstructor,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+})
+
+SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
+SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
+SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
+SetTabGroupWidthConstructor._from = o => Action.SetTabGroupWidth(o.groupId, o.width)
+SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
+
+SetTabGroupWidthConstructor.toFirestore = o => ({ ...o })
+SetTabGroupWidthConstructor.fromFirestore = SetTabGroupWidthConstructor._from
 
 Action._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
@@ -397,8 +815,14 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'ResetTransactionFilters')
         return Action.ResetTransactionFilters.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTableLayout') return Action.SetTableLayout.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'HydrateFromLocalStorage')
-        return Action.HydrateFromLocalStorage.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'OpenView') return Action.OpenView.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'CloseView') return Action.CloseView.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'MoveView') return Action.MoveView.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'CreateTabGroup') return Action.CreateTabGroup.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'CloseTabGroup') return Action.CloseTabGroup.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetActiveView') return Action.SetActiveView.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetActiveTabGroup') return Action.SetActiveTabGroup.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetTabGroupWidth') return Action.SetTabGroupWidth.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 

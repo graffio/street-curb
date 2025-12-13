@@ -1,3 +1,6 @@
+// ABOUTME: Maps type definition files to their output directories
+// ABOUTME: Used by type generator to know where to write generated types
+
 // Simple mapping: source file -> array of target directories
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
@@ -79,6 +82,9 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/split.type.js`]           : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/table-layout.type.js`]    : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/view.type.js`]            : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/tab-group.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/tab-layout.type.js`]      : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 
