@@ -4,7 +4,10 @@ Run after finishing a feature/task.
 
 ## Steps
 
-1. **Architectural decisions?** → Add to `docs/architecture/` (patterns, rationale)
+1. **Architectural decisions?** → Add to project-local docs:
+   - `modules/curb-map/docs/architecture/` for curb-map
+   - `modules/quicken-web-app/docs/architecture/` for quicken-web-app
+   - `docs/architecture/` for shared infrastructure patterns
 2. **Outcome summary** → Append to `specifications/completed-specifications.md`
 3. **Delete current-task.json**
 4. **Delete plan file** (e.g., `~/.claude/plans/*.md` used for this feature)
