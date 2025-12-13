@@ -65,53 +65,64 @@ const isCommentLine = line => {
 }
 
 /**
- * Check line for @sig comment and determine if should continue search
- * @sig checkLineForSig :: String -> Object
+ * Check if line is a substantive comment (has content beyond markers)
+ * @sig isSubstantiveCommentLine :: String -> Boolean
  */
-const checkLineForSig = line => {
+const isSubstantiveCommentLine = line => {
     const trimmed = line.trim()
+    if (!isCommentLine(trimmed)) return false
 
-    // Stop if we hit a non-comment, non-empty line
-    if (trimmed && !isCommentLine(trimmed)) return { found: false, shouldStop: true }
+    const withoutMarkers = trimmed
+        .replace(/^\/\*\*?/, '')
+        .replace(/^\*\//, '')
+        .replace(/^\/\//, '')
+        .replace(/^\*/, '')
+        .trim()
 
-    // Check for @sig in comment
-    if (trimmed.includes('@sig')) return { found: true, shouldStop: false }
-
-    return { found: false, shouldStop: false }
+    return withoutMarkers.length > 0
 }
 
 /**
- * Process line in @sig search
- * @sig processLineInSigSearch :: (String) -> Boolean?
+ * Find the line index containing @sig in preceding comments (0-indexed)
+ * @sig findSigLineIndex :: (ASTNode, String) -> Number?
  */
-const processLineInSigSearch = line => {
-    const result = checkLineForSig(line)
-    if (result.found) return true
-    if (result.shouldStop) return false
-    return null
+const findSigLineIndex = (functionNode, sourceCode) => {
+    const isSigLine = line => line.includes('@sig')
+    const isNonCommentLine = line => {
+        const trimmed = line.trim()
+        return trimmed && !isCommentLine(trimmed)
+    }
+
+    const lines = sourceCode.split('\n')
+    const functionStartLine = functionNode.loc.start.line
+    const indicesToCheck = Array.from({ length: functionStartLine - 1 }, (_, i) => functionStartLine - 2 - i)
+
+    const sigIndex = indicesToCheck.find(i => isSigLine(lines[i]) || isNonCommentLine(lines[i]))
+    return sigIndex !== undefined && isSigLine(lines[sigIndex]) ? sigIndex : null
 }
 
 /**
  * Check if a function has @sig documentation in preceding comments
  * @sig hasSigDocumentation :: (ASTNode, String) -> Boolean
  */
-const hasSigDocumentation = (functionNode, sourceCode) => {
+const hasSigDocumentation = (functionNode, sourceCode) => findSigLineIndex(functionNode, sourceCode) !== null
+
+/**
+ * Check if @sig is last substantive comment before function
+ * @sig isSigLastInCommentBlock :: (ASTNode, String) -> Boolean
+ */
+const isSigLastInCommentBlock = (functionNode, sourceCode) => {
+    const sigLineIndex = findSigLineIndex(functionNode, sourceCode)
+    if (sigLineIndex === null) return true
+
     const lines = sourceCode.split('\n')
     const functionStartLine = functionNode.loc.start.line
+    const linesBetween = Array.from(
+        { length: functionStartLine - sigLineIndex - 2 },
+        (_, i) => lines[sigLineIndex + 1 + i],
+    )
 
-    // Create array of indices to check (from functionStartLine-2 down to 0)
-    const indicesToCheck = Array.from({ length: functionStartLine - 1 }, (_, i) => functionStartLine - 2 - i)
-
-    // Check if line gives definitive result
-    const hasDefinitiveResult = i => {
-        const searchResult = processLineInSigSearch(lines[i])
-        return searchResult !== null
-    }
-
-    // Find first line that gives a definitive result
-    const resultLine = indicesToCheck.find(hasDefinitiveResult)
-
-    return resultLine !== undefined ? processLineInSigSearch(lines[resultLine]) : false
+    return !linesBetween.some(isSubstantiveCommentLine)
 }
 
 /**
@@ -135,6 +146,11 @@ const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) 
     const requiresSig = requiresSigDocumentation(node, ast)
     const hasSig = hasSigDocumentation(node, sourceCode)
 
+    if (hasSig && !isSigLastInCommentBlock(node, sourceCode)) {
+        violations.push(createViolation(node, '@sig must be last in the comment block'))
+        return
+    }
+
     if (!requiresSig || hasSig) return
 
     const isTopLevel = isTopLevelFunction(node, ast)
@@ -143,11 +159,17 @@ const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) 
 }
 
 /**
+ * Check if file is a test file that should skip @sig validation
+ * @sig isTestFile :: String -> Boolean
+ */
+const isTestFile = filePath => filePath.includes('.tap.js') || filePath.includes('.integration-test.js')
+
+/**
  * Check for @sig documentation violations (coding standards)
  * @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
  */
 const checkSigDocumentation = (ast, sourceCode, filePath) => {
-    if (!ast) return []
+    if (!ast || isTestFile(filePath)) return []
 
     const violations = []
     const processedNodes = new Set()
