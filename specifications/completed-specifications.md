@@ -323,3 +323,12 @@ This document summarizes the specifications that were previously archived in `sp
 - Documented project structure and coding standards
 - Established workflow patterns and best practices
 - Superseded by CLAUDE.md consolidated project guide
+
+## [infrastructure] Enhanced @sig Documentation Validation (2025-12-13)
+**Purpose:** Enforce @sig comment placement and require paired @sig + description
+
+- Added rule: @sig must be last substantive line in comment block (backlog item 8)
+- Added rule: @sig requires accompanying description comment (backlog item 3)
+- Excluded test files (*.tap.js, *.integration-test.js) from @sig and single-level-indentation rules
+- Fixed function ordering violations in single-level-indentation.js uncovered by pre-commit hook
+- 96 total validator tests passing
