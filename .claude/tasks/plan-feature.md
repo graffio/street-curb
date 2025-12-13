@@ -8,6 +8,7 @@ Use after brainstorming to create a task spec.
 2. Identify which task templates in `.claude/tasks/` apply
 3. **Read each template** and incorporate its steps into the plan
 4. Write `current-task.json` (schema below)
+5. Keep plan file (e.g., `~/.claude/plans/*.md`) for reference during implementation
 
 ## Output Schema
 
@@ -17,8 +18,8 @@ Use after brainstorming to create a task spec.
   "goal": "One sentence - what are we building and why",
   "templates_used": ["add-redux-action.md", "commit-changes.md"],
   "steps": [
-    { "step": 1, "action": "Specific action from template or brainstorm", "done": false },
-    { "step": 2, "action": "Next specific action", "done": false }
+    { "step": 1, "action": "[CHECKPOINT] Specific action needing approval", "done": false },
+    { "step": 2, "action": "Specific action from template or brainstorm", "done": false }
   ],
   "verification": [
     "Tests pass",
@@ -31,17 +32,19 @@ Use after brainstorming to create a task spec.
 
 - **Inline template steps** - don't reference templates, copy their steps into the plan
 - Steps must be specific enough to follow without reading anything else
-- Always include commit step (from `commit-changes.md`) at the end
+- **Intermediate commits** - include `git add` + commit steps after each logical chunk (e.g., after creating types, after adding reducer logic). This triggers the style validator hook.
+- Always include final commit step (from `commit-changes.md`) at the end
 - If no template exists for a step, note it—we'll create one
+- **Keep plan for negotiation** - plan file survives until `record-completion.md`. If design issues arise during implementation, update plan → regenerate `current-task.json`
 
 ## Checkpoints
 
-Identify decision points in the plan that need user approval:
+Identify decision points that need user approval:
 - Type/data decomposition choices
 - Library vs custom implementation
 - Any step where multiple valid approaches exist
 
-Mark these in steps with `[CHECKPOINT]` prefix. During implementation, use `implementation-checkpoint.md` template at these points.
+Mark with `[CHECKPOINT]` prefix in the step's `action` text. During implementation, use `implementation-checkpoint.md` template at these points.
 
 ## Precedent Check
 

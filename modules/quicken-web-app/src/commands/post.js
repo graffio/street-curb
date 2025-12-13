@@ -2,20 +2,16 @@
 // ABOUTME: Dispatches Tagged actions to Redux as plain objects
 // ABOUTME: Handles localStorage persistence for table layouts
 
-import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Selectors as S, store } from '../store/index.js'
 import { Action } from '../types/action.js'
-import { ColumnDescriptor, TableLayout } from '../types/index.js'
 
 const TABLE_LAYOUTS_KEY = 'tableLayouts'
+const TAB_LAYOUT_KEY = 'tabLayout'
 
-/**
- * Dispatch action to Redux store
- * @sig dispatch :: Action -> ()
- */
+// @sig dispatch :: Action -> ()
 const dispatch = action => store.dispatch({ type: action.constructor.toString(), action })
 
-/** @sig handleSetTableLayout :: Action.SetTableLayout -> () */
+// @sig handleSetTableLayout :: Action.SetTableLayout -> ()
 const handleSetTableLayout = action => {
     dispatch(action)
 
@@ -26,33 +22,27 @@ const handleSetTableLayout = action => {
     }
 }
 
-/** @sig handleHydrateFromLocalStorage :: () -> () */
-const handleHydrateFromLocalStorage = () => {
-    // @sig hydrateTableLayout :: Object -> TableLayout
-    const hydrateTableLayout = fromLocalStorage => {
-        const { id, columns, columnDescriptors, sortOrder } = fromLocalStorage
-        const rawColumns = columnDescriptors || columns // support old localStorage format
-        const items = Object.values(rawColumns).map(c => ColumnDescriptor.from(c))
-        return TableLayout.from({ id, columnDescriptors: LookupTable(items, ColumnDescriptor, 'id'), sortOrder })
-    }
+// ---------------------------------------------------------------------------------------------------------------------
+// Tab layout localStorage persistence
+// ---------------------------------------------------------------------------------------------------------------------
 
+// @sig persistTabLayout :: () -> ()
+const persistTabLayout = () => {
     try {
-        const stored = window.localStorage.getItem(TABLE_LAYOUTS_KEY)
-        if (!stored) return
-
-        const tableLayouts = Object.values(JSON.parse(stored)).map(hydrateTableLayout)
-        dispatch(Action.HydrateFromLocalStorage(LookupTable(tableLayouts, TableLayout, 'id')))
+        const tabLayout = S.tabLayout(store.getState())
+        if (tabLayout) window.localStorage.setItem(TAB_LAYOUT_KEY, JSON.stringify(tabLayout))
     } catch {
-        console.warn('Failed to read tableLayouts from localStorage')
+        console.warn('Failed to write tabLayout to localStorage')
     }
 }
 
-/**
- * Post a domain Action to Redux
- * Routes to appropriate handler based on action type
- *
- * @sig post :: Action -> void
- */
+// @sig handleTabLayoutAction :: Action -> ()
+const handleTabLayoutAction = action => {
+    dispatch(action)
+    persistTabLayout()
+}
+
+// @sig post :: Action -> void
 const post = action => {
     if (!Action.is(action)) throw new Error('post requires an Action; found: ' + action)
 
@@ -62,7 +52,16 @@ const post = action => {
         SetTransactionFilter   : () => dispatch(action),
         ResetTransactionFilters: () => dispatch(action),
         SetTableLayout         : () => handleSetTableLayout(action),
-        HydrateFromLocalStorage: () => handleHydrateFromLocalStorage(),
+
+        // Tab layout actions (all persist to localStorage)
+        OpenView          : () => handleTabLayoutAction(action),
+        CloseView         : () => handleTabLayoutAction(action),
+        MoveView          : () => handleTabLayoutAction(action),
+        CreateTabGroup    : () => handleTabLayoutAction(action),
+        CloseTabGroup     : () => handleTabLayoutAction(action),
+        SetActiveView     : () => handleTabLayoutAction(action),
+        SetActiveTabGroup : () => handleTabLayoutAction(action),
+        SetTabGroupWidth  : () => handleTabLayoutAction(action),
     })
 }
 

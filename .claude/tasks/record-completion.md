@@ -7,6 +7,7 @@ Run after finishing a feature/task.
 1. **Architectural decisions?** → Add to `docs/architecture/` (patterns, rationale)
 2. **Outcome summary** → Append to `specifications/completed-specifications.md`
 3. **Delete current-task.json**
+4. **Delete plan file** (e.g., `~/.claude/plans/*.md` used for this feature)
 
 ## Outcome Format
 

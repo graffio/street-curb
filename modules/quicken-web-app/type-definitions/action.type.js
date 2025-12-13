@@ -25,6 +25,15 @@ export const Action = {
 
         // Table layout actions
         SetTableLayout         : { tableLayout: 'TableLayout' },
-        HydrateFromLocalStorage: { tableLayouts: '{TableLayout:id}?'},
+
+        // Tab layout actions
+        OpenView       : { view: 'View', groupId: 'String?' },
+        CloseView      : { viewId: 'String', groupId: 'String' },
+        MoveView       : { viewId: 'String', fromGroupId: 'String', toGroupId: 'String', toIndex: 'Number?' },
+        CreateTabGroup    : {},
+        CloseTabGroup     : { groupId: 'String' },
+        SetActiveView     : { groupId: 'String', viewId: 'String' },
+        SetActiveTabGroup : { groupId: 'String' },
+        SetTabGroupWidth  : { groupId: 'String', width: 'Number' },
     }
 }

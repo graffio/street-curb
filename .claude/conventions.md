@@ -34,6 +34,8 @@ Organize component internals in this order:
 5. **Effects** - `useEffect` side effects
 6. **Return** - JSX
 
+Note: This ordering is a readability convention, not enforced by the style validator. The style validator's "functions at top of block" rule applies to `function` declarations within function bodies, not to the organization of hooks vs callbacks.
+
 Keep functions INSIDE their parent component (not hoisted outside) when they use component state or props.
 
 ## Files
@@ -61,9 +63,17 @@ Keep functions INSIDE their parent component (not hoisted outside) when they use
 - No temporal references ("recently refactored", "moved from")
 - Never remove comments unless provably false
 - No instructional comments ("copy this pattern")
+- If a function needs `@sig`, it needs a description; if it needs a description, it needs `@sig`
 
 ## Testing
 
 - Framework: Node TAP (`*.tap.js`)
 - Structure: Given/When/Then with proper English articles
 - Commands: `yarn tap`, `yarn tap:file <path>`
+
+## Type System
+
+- LookupTable is both an array (preserves order) and a key-value object (lookup by id)
+- Prefer LookupTable over plain array when contained type is Tagged or TaggedSum
+- Syntax: `'{Type:idField}'` for LookupTable, `'[Type]'` for plain array
+- ID patterns go in `field-types.js`, not inline in type definitions

@@ -2,10 +2,12 @@ Brevity > thoroughness. Short, correct answers beat comprehensive ones. Bullet p
 
 @.claude/conventions.md
 @.claude/preferences.md
+@.claude/workflow.md
 
 ## How we work
 
-See `.claude/README.md` for the full workflow. Key files:
+See `.claude/README.md` for full protocol explanation. Key files:
+- `.claude/workflow.md` — Workflow rules (follow exactly)
 - `.claude/conventions.md` — Code style (always apply)
 - `.claude/preferences.md` — Architectural preferences (judgment calls)
 - `.claude/tasks/` — Step-by-step templates for common work

@@ -1,63 +1,98 @@
 // ABOUTME: Rule to detect file naming convention violations
-// ABOUTME: Enforces PascalCase.jsx for components, kebab-case.js for others
+// ABOUTME: Enforces PascalCase.jsx for component files, kebab-case for config/utility files
 
 import { basename } from 'path'
 
-/**
- * Create a file-naming violation object
- * @sig createViolation :: String -> Violation
- */
+// Create a file-naming violation object
+// @sig createViolation :: String -> Violation
 const createViolation = message => ({ type: 'file-naming', line: 1, column: 1, message, rule: 'file-naming' })
 
-/**
- * Check if filename is PascalCase
- * @sig isPascalCase :: String -> Boolean
- */
+// Check if filename is PascalCase
+// @sig isPascalCase :: String -> Boolean
 const isPascalCase = name => /^[A-Z][a-zA-Z0-9]*$/.test(name)
 
-/**
- * Check if filename is kebab-case
- * @sig isKebabCase :: String -> Boolean
- */
+// Check if filename is kebab-case
+// @sig isKebabCase :: String -> Boolean
 const isKebabCase = name => /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(name)
 
-/**
- * Check for file naming violations (coding standards)
- * @sig checkFileNaming :: (AST?, String, String) -> [Violation]
- */
+// Check if filename is lowercase (no hyphens)
+// @sig isLowerCase :: String -> Boolean
+const isLowerCase = name => /^[a-z][a-z0-9]*$/.test(name)
+
+// Extract names from export specifiers
+// @sig getSpecifierNames :: Node -> [String]
+const getSpecifierNames = node =>
+    node.type === 'ExportNamedDeclaration' && node.specifiers
+        ? node.specifiers.map(s => s.exported?.name).filter(Boolean)
+        : []
+
+// Extract name from default export
+// @sig getDefaultExportName :: Node -> [String]
+const getDefaultExportName = node =>
+    node.type === 'ExportDefaultDeclaration' && node.declaration?.name ? [node.declaration.name] : []
+
+// Extract exported names from AST to determine if file exports components
+// @sig getExportedNames :: AST -> [String]
+const getExportedNames = ast => {
+    if (!ast || !ast.body) return []
+    return ast.body.flatMap(node => [...getSpecifierNames(node), ...getDefaultExportName(node)])
+}
+
+// Check if file exports only React components (PascalCase names)
+// @sig exportsComponentsOnly :: AST -> Boolean
+const exportsComponentsOnly = ast => {
+    const names = getExportedNames(ast)
+    if (names.length === 0) return true // No exports, assume component if .jsx
+    return names.every(isPascalCase)
+}
+
+// Check if a file should be skipped (test/config files)
+// @sig shouldSkip :: String -> Boolean
+const shouldSkip = fileName =>
+    fileName.includes('.tap.') || fileName.includes('.test.') || fileName.includes('.config.')
+
+// Validate JSX component file naming
+// @sig checkJsxComponentNaming :: (String, String) -> [Violation]
+const checkJsxComponentNaming = (name, fileName) => {
+    if (isPascalCase(name)) return []
+    const suggestion = `${toPascalCase(name)}.jsx`
+    return [createViolation(`Component files must be PascalCase: ${fileName} should be ${suggestion}`)]
+}
+
+// Validate JSX config/utility file naming
+// @sig checkJsxConfigNaming :: (String, String) -> [Violation]
+const checkJsxConfigNaming = (name, fileName) => {
+    if (isKebabCase(name) || isLowerCase(name)) return []
+    return [createViolation(`Config/utility JSX files should be kebab-case or lowercase: ${fileName}`)]
+}
+
+// Validate JSX file naming based on exports
+// @sig checkJsxNaming :: (AST?, String) -> [Violation]
+const checkJsxNaming = (ast, fileName) => {
+    const name = fileName.slice(0, -4)
+    return exportsComponentsOnly(ast) ? checkJsxComponentNaming(name, fileName) : checkJsxConfigNaming(name, fileName)
+}
+
+// Validate JS file naming
+// @sig checkJsNaming :: String -> [Violation]
+const checkJsNaming = fileName => {
+    const name = fileName.slice(0, -3)
+    if (isKebabCase(name) || isPascalCase(name)) return []
+    return [createViolation(`JS files must be kebab-case: ${fileName}`)]
+}
+
+// Check for file naming violations based on export types
+// @sig checkFileNaming :: (AST?, String, String) -> [Violation]
 const checkFileNaming = (ast, sourceCode, filePath) => {
     const fileName = basename(filePath)
-
-    // Skip test files and config files
-    if (fileName.includes('.tap.') || fileName.includes('.test.') || fileName.includes('.config.')) return []
-
-    // Handle .jsx files - should be PascalCase
-    if (fileName.endsWith('.jsx')) {
-        const name = fileName.slice(0, -4)
-        if (!isPascalCase(name))
-            return [
-                createViolation(
-                    `JSX component files must be PascalCase: ${fileName} should be ${toPascalCase(name)}.jsx`,
-                ),
-            ]
-        return []
-    }
-
-    // Handle .js files - should be kebab-case
-    if (fileName.endsWith('.js')) {
-        const name = fileName.slice(0, -3)
-        if (!isKebabCase(name) && !isPascalCase(name))
-            return [createViolation(`JS files must be kebab-case: ${fileName}`)]
-        return []
-    }
-
+    if (shouldSkip(fileName)) return []
+    if (fileName.endsWith('.jsx')) return checkJsxNaming(ast, fileName)
+    if (fileName.endsWith('.js')) return checkJsNaming(fileName)
     return []
 }
 
-/**
- * Convert string to PascalCase (best effort)
- * @sig toPascalCase :: String -> String
- */
+// Convert string to PascalCase (best effort)
+// @sig toPascalCase :: String -> String
 const toPascalCase = str => {
     const capitalize = word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     return str.split(/[-_]/).map(capitalize).join('')
