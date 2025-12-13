@@ -12,13 +12,15 @@ Run after finishing a feature/task.
 ## Outcome Format
 
 ```markdown
-## YYYY-MM-DD - Feature Name
+## [project] Feature Name (YYYY-MM-DD)
 **Purpose:** One sentence
 
 - Bullet points of what was done
 - Key implementation details
 - Deferred items (if any)
 ```
+
+**Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
 ## Rules
 

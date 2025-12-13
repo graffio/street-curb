@@ -2,7 +2,9 @@
 
 This document summarizes the specifications that were previously archived in `specifications/archived/`. These represent completed or superseded work that has been integrated into the codebase.
 
-## Tab Groups & Account Navigation (2025-12-13)
+**Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
+
+## [quicken-web-app] Tab Groups & Account Navigation (2025-12-13)
 **Purpose:** WebStorm-style tab groups for viewing multiple registers/reports side-by-side
 
 - Added TabGroup, TabLayout, View tagged types with LookupTable storage
@@ -16,7 +18,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Max 4 groups enforced; layout persists in localStorage
 - Deferred: TransactionRegisterPage style violations, hydration consolidation, rename groups→tabGroups
 
-## F129 - Quicken-Web-App Redux Migration (2025-12-08)
+## [quicken-web-app] F129 - Redux Migration (2025-12-08)
 **Purpose:** Migrate quicken-web-app Redux actions from string literals to Tagged types
 
 - Defined Action type with SetTransactionFilter and ResetTransactionFilters variants
@@ -26,7 +28,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Added quicken-web-app to cli-type-generator type-mappings.js
 - Also: custom eslint rule 'arrow-expression-body', lint-staged order fix, PostToolUse hook for auto-formatting
 
-## F130 - Progressive Data Loading with Firestore Listeners (2025-11-20)
+## [curb-map] F130 - Progressive Data Loading with Firestore Listeners (2025-11-20)
 **Purpose:** Implement real-time data synchronization with progressive loading
 
 - Replaced `AllInitialDataLoaded` with progressive loading using three actions: `UserLoaded`, `OrganizationSynced`, `BlockfacesSynced`
@@ -40,7 +42,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Fixed `descendant()` bug in firestore-client-facade.js that was duplicating collection names in paths
 - Updated server-side handler to recognize renamed actions
 
-## F128 - Improve Metadata Handling (2025-11-20)
+## [curb-map] F128 - Improve Metadata Handling (2025-11-20)
 **Purpose:** Clarify that organizationId is request metadata, not action payload data
 
 - Removed organizationId field from 7 organization-scoped action variants (OrganizationCreated, OrganizationUpdated, OrganizationDeleted, OrganizationSuspended, MemberAdded, RoleChanged, MemberRemoved)
@@ -52,7 +54,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Special handling for UserCreated (user doesn't exist yet) and OrganizationCreated (user creating first org)
 - Pattern established: organizationId is ALWAYS request metadata, derived server-side from request context
 
-## F127 - Blockfaces to Firestore (2025-11-18)
+## [curb-map] F127 - Blockfaces to Firestore (2025-11-18)
 **Purpose:** Persist blockface edits to Firestore with debounced auto-save
 
 - Added SaveBlockface action with snapshot-based persistence (not event sourcing)
@@ -64,7 +66,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Implemented diff logic for change tracking in audit trail
 - All segment actions (SegmentUseUpdated, SegmentLengthUpdated, etc.) trigger debounced save
 
-## F126 - Application Routing (2025-11-13)
+## [curb-map] F126 - Application Routing (2025-11-13)
 **Purpose:** Add TanStack Router with MainLayout shell and lazy-loaded route components
 
 - Installed TanStack Router for client-side routing
@@ -83,7 +85,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Always-mounted EditorPanel with isVisible controlling slide animation
 - Deferred features: active route highlighting, route-level auth guards, breadcrumb navigation
 
-## F125 - User Management UI (2025-11-13)
+## [curb-map] F125 - User Management UI (2025-11-13)
 **Purpose:** User management interface for viewing and managing organization members with role-based access control
 
 - Created generic sortable Table component in design-system wrapping Radix Themes Table
@@ -97,7 +99,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Dimmed sort indicators for sortable-but-inactive columns (UX affordance)
 - Phase 2 features deferred: app routing, Firestore integration, toast notifications, error dialogs, invitation system
 
-## F122 - Type Generator Enhancements (2025-01-04)
+## [infrastructure] F122 - Type Generator Enhancements (2025-01-04)
 **Purpose:** Auto-generate Firestore serialization with LookupTable support
 
 - Added LookupTable field syntax '{Type:idField}' for type-safe collection fields
@@ -109,7 +111,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Eliminated manual timestampFields arrays - type information embedded in generated code
 - Fixed handlers to write full objects instead of scalar values to LookupTable fields
 
-## F121 - Phone Authentication (2025-11-03)
+## [curb-map] F121 - Phone Authentication (2025-11-03)
 **Purpose:** SMS-based passwordless authentication using Firebase Auth client SDK
 
 - Implemented AuthenticationCompleted action type with email and displayName fields
@@ -121,19 +123,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Updated security architecture documentation with correct Firebase Auth flow
 - No PII storage (phoneNumber not persisted in User document)
 
-## F122 - Type Generator Enhancements (2025-01-04)
-**Purpose:** Auto-generate Firestore serialization with LookupTable support
-
-- Added LookupTable field syntax '{Type:idField}' for type-safe collection fields
-- Generated toFirestore/fromFirestore methods with encode/decode timestamp parameters
-- Implemented underscore primitive pattern for overridable generated functions
-- LookupTables serialize to Firestore as object maps (key=ID, value=full object) for efficient lookups and atomic updates
-- Automatic nested serialization for Date fields and Tagged types
-- Updated facades to pass timestamp conversion functions to serialization methods
-- Eliminated manual timestampFields arrays - type information embedded in generated code
-- Fixed handlers to write full objects instead of scalar values to LookupTable fields
-
-## F110 - Multi-Tenant Data Model (2025-10-31)
+## [curb-map] F110 - Multi-Tenant Data Model (2025-10-31)
 **Purpose:** Core multi-tenant infrastructure with organizations, users, and RBAC
 
 - Implemented 10 Action types (OrganizationCreated/Updated/Suspended/Deleted, UserCreated/Updated/Forgotten, MemberAdded/Removed, RoleChanged)
@@ -148,7 +138,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Last-admin protection for MemberRemoved/RoleChanged
 - Comprehensive integration test coverage for all handlers and RBAC scenarios
 
-## F124 - Permission Checking (2025-10-31)
+## [curb-map] F124 - Permission Checking (2025-10-31)
 **Purpose:** Role-based access control (RBAC) for multi-tenant authorization
 
 - Implemented three-tier role hierarchy (admin > member > viewer)
@@ -160,7 +150,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Integration tests for all RBAC scenarios
 - Permission checking logic inline (extraction to reusable module deferred to backlog)
 
-## F108 - Event Sourcing Core (2025-10-31)
+## [curb-map] F108 - Event Sourcing Core (2025-10-31)
 **Purpose:** Implement core event sourcing infrastructure for CurbMap
 
 - Created ActionRequest and Action tagged types with Firestore integration helpers
@@ -172,7 +162,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Established write-once, immutable audit trail for SOC2 compliance
 - Built foundation for authorization (F110.5) and domain handlers (F110)
 
-## F107 - Firebase SOC2 Vanilla App (2025-01-29)
+## [curb-map] F107 - Firebase SOC2 Vanilla App (2025-01-29)
 **Purpose:** Complete Firebase-based application with SOC2 compliance
 
 - Implemented infrastructure foundation with orchestration system and migration framework
@@ -181,7 +171,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Established manual setup procedures, decision log, and testing strategies
 - All implementation details now live in individual F### specifications; see `docs/architecture/` for preserved architectural guidance
 
-## F115 - Redux Tagged Types (2025-08-26)
+## [curb-map] F115 - Redux Tagged Types (2025-08-26)
 **Purpose:** Refactor Redux store architecture with tagged types
 
 - Implemented tagged types for domain entities (Segment, Blockface)
@@ -190,7 +180,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Prepared for Firestore database integration
 - Added runtime type validation with tagged types
 
-## F114 - DividerLayer Pure JSX Migration (2025-08-21)
+## [curb-map] F114 - DividerLayer Pure JSX Migration (2025-08-21)
 **Purpose:** Migrate DividerLayer to pure JSX implementation
 
 - Converted DividerLayer from complex implementation to pure JSX
@@ -198,7 +188,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Simplified component logic
 - Better integration with React patterns
 
-## F113 - Minimal Token Migration (2025-08-26)
+## [curb-map] F113 - Minimal Token Migration (2025-08-26)
 **Purpose:** Minimal migration approach for SegmentedCurbEditor
 
 - Simplified migration approach compared to F110
@@ -206,7 +196,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Reduced risk and complexity
 - Superseded F110 with more practical approach
 
-## F112 - Simplify Segment Editor (2025-08-26)
+## [curb-map] F112 - Simplify Segment Editor (2025-08-26)
 **Purpose:** Simplify segment editor implementation
 
 - Reduced complexity of segment editing logic
@@ -214,7 +204,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Enhanced performance through simplified algorithms
 - Better integration with overall architecture
 
-## F110 - SegmentedCurbEditor Migration (2025-08-25)
+## [curb-map] F110 - SegmentedCurbEditor Migration (2025-08-25)
 **Purpose:** Migrate SegmentedCurbEditor to new architecture
 
 - Migrated SegmentedCurbEditor to use tagged types
@@ -222,7 +212,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Improved component maintainability
 - Superseded by F113 minimal token migration
 
-## F109 - Component Design System Migration (2025-08-20)
+## [curb-map] F109 - Component Design System Migration (2025-08-20)
 **Purpose:** Migrate components to use design system with Radix Themes
 
 - Migrated right-of-way-editor components to design system
@@ -231,7 +221,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Built Storybook stories comparing original vs migrated components
 - Used developer subagent for complex CurbTable migration
 
-## F108 - Infrastructure Testing Strategy (2025-08-15)
+## [infrastructure] F108 - Infrastructure Testing Strategy (2025-08-15)
 **Purpose:** Define testing strategy for infrastructure components
 
 - Created comprehensive testing approach for infrastructure modules
@@ -239,7 +229,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Established testing standards for CLI tools and utilities
 - Improved reliability of infrastructure components
 
-## F108 - Function Declaration Ordering (2025-08-01)
+## [infrastructure] F108 - Function Declaration Ordering (2025-08-01)
 **Purpose:** Implement coding standard for function declaration ordering
 
 - Implemented AST-based rule for function declaration ordering
@@ -247,7 +237,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Integrated with existing coding standards checker
 - Improved code readability and consistency
 
-## F106 - Label Positioning Simplification (2025-07-30)
+## [curb-map] F106 - Label Positioning Simplification (2025-07-30)
 **Purpose:** Simplify complex label positioning logic
 
 - Removed complex conditional positioning logic
@@ -255,7 +245,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Improved performance by reducing DOM calculations
 - Enhanced maintainability of UI components
 
-## F105 - Event Handling Unification (2025-07-29)
+## [curb-map] F105 - Event Handling Unification (2025-07-29)
 **Purpose:** Standardize event handling patterns across components
 
 - Unified event handling approaches across the application
@@ -263,7 +253,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Improved code consistency and maintainability
 - Reduced cognitive overhead for developers
 
-## F104 - Component Decomposition (2025-07-28)
+## [curb-map] F104 - Component Decomposition (2025-07-28)
 **Purpose:** Break down large components into smaller, focused components
 
 - Identified components that exceeded complexity thresholds
@@ -271,7 +261,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Improved maintainability and testability
 - Reduced cognitive load for developers
 
-## F103 - Coding Standards Checker (2025-07-28)
+## [infrastructure] F103 - Coding Standards Checker (2025-07-28)
 **Purpose:** Simple CLI tool to detect and report coding standards violations
 
 - Built minimal CLI tool using acorn AST parser
@@ -280,7 +270,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Designed testable API with core checking logic separate from CLI interface
 - Integrated with existing coding standards checker infrastructure
 
-## F102 - UI Business Separation (2025-07-27)
+## [curb-map] F102 - UI Business Separation (2025-07-27)
 **Purpose:** Extract business logic utilities from UI components
 
 - Separated business logic from UI presentation concerns
@@ -288,7 +278,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Improved testability by isolating business logic
 - Maintained clean separation between data operations and UI rendering
 
-## F101 - UI Simplification (2025-07-27)
+## [curb-map] F101 - UI Simplification (2025-07-27)
 **Purpose:** Remove Unknown label complexity from segment management UI
 
 - Removed complex positioning logic for Unknown floating label
@@ -297,7 +287,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Eliminated z-index conflicts and conditional positioning
 - Created clear empty state handling with prominent add buttons
 
-## F100 - Segment Management (2025-07-24)
+## [curb-map] F100 - Segment Management (2025-07-24)
 **Purpose:** Essential decisions for segment management refactor
 
 - Defined Unknown space as system state, not segment data
@@ -306,7 +296,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Defined three interaction modes: Field Collection, Precision Correction, Visual Adjustment
 - Established Unknown space lifecycle (starts at blockface length, shrinks during collection, disappears at 0)
 
-## NumberPad Component (2025-07-22)
+## [curb-map] NumberPad Component (2025-07-22)
 **Purpose:** Mobile-optimized number input component for CurbTable
 
 - Designed custom number pad with 3x4 button layout (0-9, ".", backspace, enter, cancel)
@@ -316,7 +306,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Integrated with CurbTable for length/start position editing
 - Built mobile touch optimization with accessibility considerations
 
-## CurbTable Component (2025-07-22)
+## [curb-map] CurbTable Component (2025-07-22)
 **Purpose:** Mobile-friendly table-based curb editor for field data collection
 
 - Created table interface optimized for one-handed phone use
@@ -326,7 +316,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Integrated with Redux store for state management
 - Created comprehensive Storybook stories for testing
 
-## A004 - Claude Onboarding (2025-07-29)
+## [infrastructure] A004 - Claude Onboarding (2025-07-29)
 **Purpose:** Onboarding documentation for Claude AI assistant
 
 - Created comprehensive onboarding guide for Claude
