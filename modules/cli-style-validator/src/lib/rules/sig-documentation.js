@@ -126,6 +126,33 @@ const isSigLastInCommentBlock = (functionNode, sourceCode) => {
 }
 
 /**
+ * Check if line is a description comment (substantive but not @sig)
+ * @sig isDescriptionLine :: String -> Boolean
+ */
+const isDescriptionLine = line => isSubstantiveCommentLine(line) && !line.includes('@sig')
+
+/**
+ * Check if function has description comment in preceding comments
+ * @sig hasDescriptionComment :: (ASTNode, String) -> Boolean
+ */
+const hasDescriptionComment = (functionNode, sourceCode) => {
+    const isNonCommentLine = line => {
+        const trimmed = line.trim()
+        return trimmed && !isCommentLine(trimmed)
+    }
+    const checkLineForDescription = (lines, i) => {
+        if (isNonCommentLine(lines[i])) return false
+        return isDescriptionLine(lines[i])
+    }
+
+    const lines = sourceCode.split('\n')
+    const functionStartLine = functionNode.loc.start.line
+    const indicesToCheck = Array.from({ length: functionStartLine - 1 }, (_, i) => functionStartLine - 2 - i)
+
+    return indicesToCheck.some(i => checkLineForDescription(lines, i))
+}
+
+/**
  * Check if function requires @sig documentation
  * @sig requiresSigDocumentation :: (ASTNode, ASTNode) -> Boolean
  */
@@ -145,9 +172,15 @@ const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) 
 
     const requiresSig = requiresSigDocumentation(node, ast)
     const hasSig = hasSigDocumentation(node, sourceCode)
+    const hasDescription = hasDescriptionComment(node, sourceCode)
 
     if (hasSig && !isSigLastInCommentBlock(node, sourceCode)) {
         violations.push(createViolation(node, '@sig must be last in the comment block'))
+        return
+    }
+
+    if (hasSig && !hasDescription) {
+        violations.push(createViolation(node, '@sig requires a description comment'))
         return
     }
 

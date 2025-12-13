@@ -213,3 +213,52 @@ const processData = (data) => {
 
     t.end()
 })
+
+t.test('Given paired @sig and description requirements', t => {
+    t.test('When @sig is present but description is missing', t => {
+        const code = `/**
+         * @sig processData :: [Item] -> [Item]
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.match(violations[0].message, /description/, 'Then the message should mention missing description')
+        t.end()
+    })
+
+    t.test('When description is present but @sig is missing for required function', t => {
+        const code = `/**
+         * Process array of data items
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for missing @sig')
+        t.match(violations[0].message, /@sig/, 'Then the message should mention @sig')
+        t.end()
+    })
+
+    t.test('When both @sig and description are present', t => {
+        const code = `/**
+         * Process array of data items
+         * @sig processData :: [Item] -> [Item]
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.end()
+})
