@@ -107,9 +107,9 @@ const processSearchNodeChild = (key, child, node, searchNode, findContext, track
  * @sig searchContextRecursively :: (ASTNode, ASTNode, Object) -> Void
  */
 const searchContextRecursively = (searchNode, node, tracker) => {
-    if (!searchNode || typeof searchNode !== 'object') return
-
     const findContext = currentNode => searchContextRecursively(currentNode, node, tracker)
+
+    if (!searchNode || typeof searchNode !== 'object') return
 
     Object.entries(searchNode).some(([key, child]) =>
         processSearchNodeChild(key, child, node, searchNode, findContext, tracker),
@@ -249,16 +249,6 @@ const processSingleChild = (child, nextDepth, findViolations) => {
  * @sig findNestedViolations :: (ASTNode, Number, Set, [Violation]) -> Void
  */
 const findNestedViolations = (node, depth, processedNodes, violations) => {
-    if (!node || typeof node !== 'object') return
-    if (processedNodes.has(node)) return
-    processedNodes.add(node)
-
-    // Check for forbidden nested statements beyond first level
-    if (depth > 0 && isIndentationStatement(node))
-        violations.push(
-            createViolation(node, 'Avoid nested indentation - extract to separate functions or use early returns'),
-        )
-
     /**
      * Process child node key for violations
      * @sig processChildKey :: (String, Number, Set, [Violation]) -> Void
@@ -270,6 +260,16 @@ const findNestedViolations = (node, depth, processedNodes, violations) => {
             findNestedViolations(childNode, childDepth, processedNodes, violations),
         )
     }
+
+    if (!node || typeof node !== 'object') return
+    if (processedNodes.has(node)) return
+    processedNodes.add(node)
+
+    // Check for forbidden nested statements beyond first level
+    if (depth > 0 && isIndentationStatement(node))
+        violations.push(
+            createViolation(node, 'Avoid nested indentation - extract to separate functions or use early returns'),
+        )
 
     // Always traverse child nodes, but adjust depth based on node type
     const nextDepth = isAllowedNesting(node) ? depth : isIndentationStatement(node) ? depth + 1 : depth
@@ -298,15 +298,16 @@ const checkFunctionNode = (node, processedNodes, violations) => {
 }
 
 /**
+ * Check if file is a test file that should skip indentation validation
+ * @sig isTestFile :: String -> Boolean
+ */
+const isTestFile = filePath => filePath.includes('.tap.js') || filePath.includes('.integration-test.js')
+
+/**
  * Check for single-level indentation violations (coding standards)
  * @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
  */
 const checkSingleLevelIndentation = (ast, sourceCode, filePath) => {
-    if (!ast) return []
-
-    const violations = []
-    const processedNodes = new Set()
-
     /**
      * Process AST node for violations
      * @sig processASTNode :: ASTNode -> Void
@@ -315,6 +316,11 @@ const checkSingleLevelIndentation = (ast, sourceCode, filePath) => {
         checkCallbackFunction(node, ast, violations)
         checkFunctionNode(node, processedNodes, violations)
     }
+
+    if (!ast || isTestFile(filePath)) return []
+
+    const violations = []
+    const processedNodes = new Set()
 
     traverseAST(ast, processASTNode)
 

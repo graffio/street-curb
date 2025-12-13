@@ -1,3 +1,6 @@
+// ABOUTME: Tests for @sig documentation validation rule
+// ABOUTME: Covers missing @sig, proper @sig placement, and exemptions
+
 import t from 'tap'
 import { checkSigDocumentation } from '../src/lib/rules/sig-documentation.js'
 import { parseCode } from '../src/lib/parser.js'
@@ -143,6 +146,117 @@ t.test('Given functions that do not require @sig documentation', t => {
         const violations = checkSigDocumentation(ast, code, 'test.js')
 
         t.equal(violations.length, 0, 'Then no violations should be detected for short nested functions')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given @sig comment placement in a block', t => {
+    t.test('When @sig is followed by more comment lines', t => {
+        const code = `/**
+         * @sig processData :: [Item] -> [Item]
+         * Process array of data items
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.match(violations[0].message, /last/, 'Then the message should mention @sig must be last')
+        t.end()
+    })
+
+    t.test('When @sig is the last line in the comment block', t => {
+        const code = `/**
+         * Process array of data items
+         * @sig processData :: [Item] -> [Item]
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.test('When @sig is followed by only the closing comment marker', t => {
+        const code = `// Process array of data items
+// @sig processData :: [Item] -> [Item]
+const processData = (data) => {
+    return data.filter(item => item.active)
+}`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for single-line comments')
+        t.end()
+    })
+
+    t.test('When @sig in single-line comment is followed by more comments', t => {
+        const code = `// @sig processData :: [Item] -> [Item]
+// Process array of data items
+const processData = (data) => {
+    return data.filter(item => item.active)
+}`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.match(violations[0].message, /last/, 'Then the message should mention @sig must be last')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given paired @sig and description requirements', t => {
+    t.test('When @sig is present but description is missing', t => {
+        const code = `/**
+         * @sig processData :: [Item] -> [Item]
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.match(violations[0].message, /description/, 'Then the message should mention missing description')
+        t.end()
+    })
+
+    t.test('When description is present but @sig is missing for required function', t => {
+        const code = `/**
+         * Process array of data items
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected for missing @sig')
+        t.match(violations[0].message, /@sig/, 'Then the message should mention @sig')
+        t.end()
+    })
+
+    t.test('When both @sig and description are present', t => {
+        const code = `/**
+         * Process array of data items
+         * @sig processData :: [Item] -> [Item]
+         */
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
         t.end()
     })
 
