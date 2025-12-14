@@ -296,10 +296,11 @@ const createTransactionForSlot = (generateId, dateStr, balance, payeeData) => {
  *     Accumulator = { transactions: [Transaction], balance: Number }
  */
 const processSlot = (generateId, dateStr) => (acc, _dateTime) => {
-    const payeeOptions = filterPayeesByBalance(SAMPLE_PAYEES, acc.balance)
+    const { balance, transactions } = acc
+    const payeeOptions = filterPayeesByBalance(SAMPLE_PAYEES, balance)
     const payeeData = getRandomItem(payeeOptions)
-    const { transaction, balanceChange } = createTransactionForSlot(generateId, dateStr, acc.balance, payeeData)
-    return { transactions: [...acc.transactions, transaction], balance: acc.balance + balanceChange }
+    const { transaction, balanceChange } = createTransactionForSlot(generateId, dateStr, balance, payeeData)
+    return { transactions: [...transactions, transaction], balance: balance + balanceChange }
 }
 
 /*

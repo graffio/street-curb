@@ -1,7 +1,7 @@
 // ABOUTME: Application entry point
 // ABOUTME: Configures Redux, Theme, and Router
 
-import { Theme } from '@radix-ui/themes'
+import { Theme } from '@graffio/design-system'
 import { RouterProvider } from '@tanstack/react-router'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -9,6 +9,7 @@ import { Provider } from 'react-redux'
 import { router } from './router.jsx'
 import { store } from './store/index.js'
 
+// @sig App :: () -> ReactElement
 const App = () => (
     <React.StrictMode>
         <Provider store={store}>

@@ -1,9 +1,5 @@
-/*
- * TransactionFiltersCard - Sidebar component for filtering transactions
- *
- * Fully connected component that reads all state from Redux selectors.
- * Zero props required - all data comes from the store.
- */
+// ABOUTME: Sidebar component for filtering transactions by date, category, and search
+// ABOUTME: Fully connected to Redux - reads all state from selectors, no props required
 
 import { Button, Card, CategorySelector, DateRangePicker, Flex, Text, TextField } from '@graffio/design-system'
 import React from 'react'
@@ -14,11 +10,49 @@ import { Action } from '../types/action.js'
 
 const filtersCardStyle = { width: '280px', flexShrink: 0 }
 
-/*
+/**
  * Filters sidebar card for transaction filtering, searching, and category selection
+ * @sig TransactionFiltersCard :: () -> ReactElement
  */
 const TransactionFiltersCard = () => {
-    // Read all state from Redux
+    // Action handlers (before hooks per coding standards)
+    const handleDateRangeChange = dateRange => post(Action.SetTransactionFilter({ dateRange }))
+    const handleDateRangeKeyChange = dateRangeKey => post(Action.SetTransactionFilter({ dateRangeKey }))
+    const handleCustomStartDateChange = customStartDate => post(Action.SetTransactionFilter({ customStartDate }))
+    const handleCustomEndDateChange = customEndDate => post(Action.SetTransactionFilter({ customEndDate }))
+    const handleFilterQueryChange = e => post(Action.SetTransactionFilter({ filterQuery: e.target.value }))
+    const handleClearFilters = () => post(Action.ResetTransactionFilters())
+
+    const handleSearchQueryChange = e =>
+        post(Action.SetTransactionFilter({ searchQuery: e.target.value, currentSearchIndex: 0 }))
+
+    const handleCategoryAdd = category =>
+        post(Action.SetTransactionFilter({ selectedCategories: [...selectedCategories, category] }))
+
+    const handleCategoryRemove = category =>
+        post(Action.SetTransactionFilter({ selectedCategories: selectedCategories.filter(c => c !== category) }))
+
+    /**
+     * Navigate to previous search match, wrapping to end if at beginning
+     * @sig handlePreviousMatch :: () -> void
+     */
+    const handlePreviousMatch = () => {
+        if (searchMatches.length === 0) return
+        const newIndex = currentSearchIndex === 0 ? searchMatches.length - 1 : currentSearchIndex - 1
+        post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
+    }
+
+    /**
+     * Navigate to next search match, wrapping to beginning if at end
+     * @sig handleNextMatch :: () -> void
+     */
+    const handleNextMatch = () => {
+        if (searchMatches.length === 0) return
+        const newIndex = currentSearchIndex === searchMatches.length - 1 ? 0 : currentSearchIndex + 1
+        post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
+    }
+
+    // Hooks - read all state from Redux
     const dateRange = useSelector(S.dateRange)
     const dateRangeKey = useSelector(S.dateRangeKey)
     const filterQuery = useSelector(S.filterQuery)
@@ -27,44 +61,12 @@ const TransactionFiltersCard = () => {
     const currentSearchIndex = useSelector(S.currentSearchIndex)
     const customStartDate = useSelector(S.customStartDate)
     const customEndDate = useSelector(S.customEndDate)
-
-    // Derived state from selectors
     const defaultStartDate = useSelector(S.defaultStartDate)
     const defaultEndDate = useSelector(S.defaultEndDate)
     const allCategories = useSelector(S.allCategoryNames)
     const searchMatches = useSelector(S.searchMatches)
     const filteredTransactions = useSelector(S.filteredTransactions)
     const filteredTransactionsCount = filteredTransactions.length
-
-    // Action handlers
-    const handleDateRangeChange = dateRange => post(Action.SetTransactionFilter({ dateRange }))
-    const handleDateRangeKeyChange = dateRangeKey => post(Action.SetTransactionFilter({ dateRangeKey }))
-    const handleCustomStartDateChange = customStartDate => post(Action.SetTransactionFilter({ customStartDate }))
-    const handleCustomEndDateChange = customEndDate => post(Action.SetTransactionFilter({ customEndDate }))
-    const handleFilterQueryChange = e => post(Action.SetTransactionFilter({ filterQuery: e.target.value }))
-    const handleSearchQueryChange = e =>
-        post(Action.SetTransactionFilter({ searchQuery: e.target.value, currentSearchIndex: 0 }))
-    const handleClearFilters = () => post(Action.ResetTransactionFilters())
-
-    const handleCategoryAdd = category =>
-        post(Action.SetTransactionFilter({ selectedCategories: [...selectedCategories, category] }))
-
-    const handleCategoryRemove = category =>
-        post(Action.SetTransactionFilter({ selectedCategories: selectedCategories.filter(c => c !== category) }))
-
-    const handlePreviousMatch = () => {
-        if (searchMatches.length > 0) {
-            const newIndex = currentSearchIndex === 0 ? searchMatches.length - 1 : currentSearchIndex - 1
-            post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
-        }
-    }
-
-    const handleNextMatch = () => {
-        if (searchMatches.length > 0) {
-            const newIndex = currentSearchIndex === searchMatches.length - 1 ? 0 : currentSearchIndex + 1
-            post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
-        }
-    }
 
     return (
         <Card style={filtersCardStyle}>

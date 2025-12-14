@@ -1,9 +1,5 @@
-/*
- * Cell Renderers for Transaction Register
- *
- * TanStack Table cell components for rendering transaction data.
- * Each renderer receives TanStack's cell context ({ getValue, row, column, table }).
- */
+// ABOUTME: Cell renderers for transaction register table columns
+// ABOUTME: TanStack Table components with search highlighting and formatting
 
 import React from 'react'
 import { useSelector } from 'react-redux'
@@ -44,29 +40,25 @@ const getRelativeTime = date => {
 // Cell renderers
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Text highlighting for search matches
- */
+// Find all occurrences of query in text, returning array of match segments
+// @sig findMatches :: (String, String, Number) -> [{ text: String, isMatch: Boolean }]
+const findMatches = (text, query, fromIndex = 0) => {
+    const index = text.toLowerCase().indexOf(query.toLowerCase(), fromIndex)
+    if (index === -1) return fromIndex < text.length ? [{ text: text.slice(fromIndex), isMatch: false }] : []
+
+    const before = index > fromIndex ? [{ text: text.slice(fromIndex, index), isMatch: false }] : []
+    const match = [{ text: text.slice(index, index + query.length), isMatch: true }]
+    const rest = findMatches(text, query, index + query.length)
+    return [...before, ...match, ...rest]
+}
+
+// Render text with search matches highlighted
+// @sig HighlightedText :: { text: String, searchQuery: String } -> ReactElement
 const HighlightedText = ({ text, searchQuery }) => {
     if (!searchQuery?.trim() || !text) return <span>{text || ''}</span>
+    if (!text.toLowerCase().includes(searchQuery.toLowerCase())) return <span>{text}</span>
 
-    const queryLower = searchQuery.toLowerCase()
-    const textLower = text.toLowerCase()
-
-    if (!textLower.includes(queryLower)) return <span>{text}</span>
-
-    const matches = []
-    let lastIndex = 0
-    let index = textLower.indexOf(queryLower, lastIndex)
-
-    while (index !== -1) {
-        if (index > lastIndex) matches.push({ text: text.slice(lastIndex, index), isMatch: false })
-        matches.push({ text: text.slice(index, index + searchQuery.length), isMatch: true })
-        lastIndex = index + searchQuery.length
-        index = textLower.indexOf(queryLower, lastIndex)
-    }
-
-    if (lastIndex < text.length) matches.push({ text: text.slice(lastIndex), isMatch: false })
+    const matches = findMatches(text, searchQuery)
 
     return (
         <span>
@@ -81,9 +73,8 @@ const HighlightedText = ({ text, searchQuery }) => {
 
 const ellipsisStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
 
-/*
- * Cell renderer for date column (shows relative date below)
- */
+// Cell renderer for date column with relative time below
+// @sig DateCell :: { getValue: Function, table: Table } -> ReactElement
 const DateCell = ({ getValue, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
@@ -101,9 +92,8 @@ const DateCell = ({ getValue, table }) => {
     )
 }
 
-/*
- * Cell renderer for payee column (shows memo below)
- */
+// Cell renderer for payee column with memo below
+// @sig PayeeCell :: { row: Row, table: Table } -> ReactElement
 const PayeeCell = ({ row, table }) => {
     const searchQuery = table.options.meta?.searchQuery
     const { payee, memo } = row.original
@@ -120,9 +110,8 @@ const PayeeCell = ({ row, table }) => {
     )
 }
 
-/*
- * Cell renderer for currency values (conditional coloring, right-aligned)
- */
+// Cell renderer for currency values with conditional coloring
+// @sig CurrencyCell :: { getValue: Function, table: Table } -> ReactElement
 const CurrencyCell = ({ getValue, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
@@ -136,9 +125,8 @@ const CurrencyCell = ({ getValue, table }) => {
     )
 }
 
-/*
- * Default cell - plain text with highlighting
- */
+// Default cell renderer with plain text and highlighting
+// @sig DefaultCell :: { getValue: Function, column: Column, table: Table } -> ReactElement
 const DefaultCell = ({ getValue, column, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
@@ -151,9 +139,8 @@ const DefaultCell = ({ getValue, column, table }) => {
     )
 }
 
-/*
- * Cell renderer for category column (fetches categories via useSelector)
- */
+// Cell renderer for category column, looks up name from Redux store
+// @sig CategoryCell :: { getValue: Function, table: Table } -> ReactElement
 const CategoryCell = ({ getValue, table }) => {
     const categories = useSelector(S.categories)
     const categoryId = getValue()

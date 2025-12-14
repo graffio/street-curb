@@ -1,9 +1,5 @@
-/*
- * Category hierarchy functions for working with hierarchical category structures
- *
- * Pure functions for hierarchical category strings using colon separators
- * (e.g., "food:restaurant:lunch"). Not transaction-specific.
- */
+// ABOUTME: Category hierarchy functions for hierarchical category strings
+// ABOUTME: Uses colon separators (e.g., "food:restaurant:lunch")
 
 /*
  * Generate all parent categories for a hierarchical category

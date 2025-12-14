@@ -29,16 +29,17 @@ const clampWidths = (leftWidth, rightWidth, totalWidth, minWidth) => {
 
 // @sig updateGroupWidths :: (Object, Number) -> void
 const updateGroupWidths = (drag, clientX) => {
-    const deltaX = clientX - drag.startX
-    const deltaPercent = (deltaX / drag.containerWidth) * 100
+    const { startX, containerWidth, startLeftWidth, startRightWidth, totalWidth, leftGroupId, rightGroupId } = drag
+    const deltaX = clientX - startX
+    const deltaPercent = (deltaX / containerWidth) * 100
     const { left, right } = clampWidths(
-        drag.startLeftWidth + deltaPercent,
-        drag.startRightWidth - deltaPercent,
-        drag.totalWidth,
+        startLeftWidth + deltaPercent,
+        startRightWidth - deltaPercent,
+        totalWidth,
         MIN_GROUP_WIDTH,
     )
-    post(Action.SetTabGroupWidth(drag.leftGroupId, left))
-    post(Action.SetTabGroupWidth(drag.rightGroupId, right))
+    post(Action.SetTabGroupWidth(leftGroupId, left))
+    post(Action.SetTabGroupWidth(rightGroupId, right))
 }
 
 // @sig cleanupDrag :: (Object, Function, Function) -> void
@@ -53,22 +54,25 @@ const cleanupDrag = (drag, onMove, onUp) => {
 const initDrag = (e, containerRef, dragStateRef, leftGroup, rightGroup, handleRef) => {
     const onMove = moveEvent =>
         dragStateRef.current.active && updateGroupWidths(dragStateRef.current, moveEvent.clientX)
+
     const onUp = () => cleanupDrag(dragStateRef.current, onMove, onUp)
 
     e.preventDefault()
     const container = containerRef.current
     if (!container) return
 
+    const { width: leftWidth, id: leftId } = leftGroup
+    const { width: rightWidth, id: rightId } = rightGroup
     const containerRect = container.getBoundingClientRect()
     dragStateRef.current = {
         active: true,
         startX: e.clientX,
         containerWidth: containerRect.width,
-        startLeftWidth: leftGroup.width,
-        startRightWidth: rightGroup.width,
-        totalWidth: leftGroup.width + rightGroup.width,
-        leftGroupId: leftGroup.id,
-        rightGroupId: rightGroup.id,
+        startLeftWidth: leftWidth,
+        startRightWidth: rightWidth,
+        totalWidth: leftWidth + rightWidth,
+        leftGroupId: leftId,
+        rightGroupId: rightId,
         handleRef,
     }
 

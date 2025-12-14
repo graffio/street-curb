@@ -14,21 +14,21 @@ import { Action } from './types/action.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 // @sig renderSidebarItem :: Object -> ReactElement
-const renderSidebarItem = item => (
-    <Button key={item.label} ml="3" mb="3" mr="3" variant="ghost" asChild style={{ justifyContent: 'flex-start' }}>
-        <Link to={item.to} activeProps={{ style: { backgroundColor: 'var(--accent-3)' } }}>
-            {item.label}
+const renderSidebarItem = ({ label, to }) => (
+    <Button key={label} ml="3" mb="3" mr="3" variant="ghost" asChild style={{ justifyContent: 'flex-start' }}>
+        <Link to={to} activeProps={{ style: { backgroundColor: 'var(--accent-3)' } }}>
+            {label}
         </Link>
     </Button>
 )
 
 // @sig renderSidebarSection :: Object -> ReactElement
-const renderSidebarSection = sectionData => (
-    <Box key={sectionData.title} mb="4">
+const renderSidebarSection = ({ title, items }) => (
+    <Box key={title} mb="4">
         <Heading as="h3" size="3" m="3" style={{ fontWeight: 'lighter' }}>
-            {sectionData.title}
+            {title}
         </Heading>
-        <Flex direction="column">{sectionData.items.map(renderSidebarItem)}</Flex>
+        <Flex direction="column">{items.map(renderSidebarItem)}</Flex>
     </Box>
 )
 

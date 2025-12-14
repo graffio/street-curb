@@ -1,9 +1,5 @@
-/*
- * Transaction Column Definitions
- *
- * Column configurations for bank and investment transaction registers.
- * Uses ColumnDefinition tagged type aligned with TanStack Table format.
- */
+// ABOUTME: Column definitions for bank and investment transaction registers
+// ABOUTME: Uses ColumnDefinition tagged type aligned with TanStack Table format
 
 import { ColumnDefinition } from '@graffio/design-system/src/types/column-definition.js'
 import { CategoryCell, CurrencyCell, DateCell, DefaultCell, PayeeCell } from './cell-renderers.jsx'

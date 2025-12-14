@@ -4,6 +4,18 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [infrastructure] Style Validator Cleanup for quicken-web-app (2025-12-14)
+**Purpose:** Fix all style violations in quicken-web-app JS/JSX files
+
+- Validated and fixed 17 files in `modules/quicken-web-app/src/`
+- Added ABOUTME comments to all files
+- Extracted memoizeReduxState callbacks to named functions with @sig
+- Replaced while loop with recursive `findMatches` in cell-renderers.jsx
+- Used destructuring aliases for snake_case DB fields (`account_id: accountId`)
+- Added Theme to design-system Radix re-exports (was missing)
+- Exempted design-system from radix import rule (it IS the facade)
+- Exempted cli-style-validator from self-validation (false positives on string literals)
+
 ## [quicken-web-app] Tab Groups & Account Navigation (2025-12-13)
 **Purpose:** WebStorm-style tab groups for viewing multiple registers/reports side-by-side
 
