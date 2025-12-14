@@ -3,6 +3,7 @@
 
 import { readFile } from 'fs/promises'
 import { checkAboutmeComment } from './rules/aboutme-comment.js'
+import { checkChainExtraction } from './rules/chain-extraction.js'
 import { checkFileNaming } from './rules/file-naming.js'
 import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
 import { checkFunctionalPatterns } from './rules/functional-patterns.js'
@@ -42,6 +43,7 @@ const runAllRules = (ast, sourceCode, filePath) => {
     const allViolations = []
 
     allViolations.push(...checkAboutmeComment(ast, sourceCode, filePath))
+    allViolations.push(...checkChainExtraction(ast, sourceCode, filePath))
     allViolations.push(...checkFileNaming(ast, sourceCode, filePath))
     allViolations.push(...checkFunctionDeclarationOrdering(ast, sourceCode, filePath))
     allViolations.push(...checkFunctionalPatterns(ast, sourceCode, filePath))
