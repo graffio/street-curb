@@ -4,6 +4,7 @@
 import { traverseAST, isFunctionNode } from '../traverse.js'
 
 const THRESHOLD = 3
+const PRIORITY = 1
 
 /**
  * Create a chain-extraction suggestion object
@@ -13,9 +14,30 @@ const createSuggestion = (line, base, properties) => ({
     type: 'chain-extraction',
     line,
     column: 1,
-    message: `"${base}" accessed ${properties.length} times. Consider: const { ${properties.join(', ')} } = ${base}`,
+    priority: PRIORITY,
+    message:
+        `"${base}" accessed ${properties.length} times. ` +
+        `FIX: Add \`const { ${properties.join(', ')} } = ${base}\` at the top of the function, ` +
+        `then use the destructured names.`,
     rule: 'chain-extraction',
 })
+
+/**
+ * Collect namespace import identifiers (import * as X from...)
+ * @sig collectNamespaceImports :: AST -> Set<String>
+ */
+const collectNamespaceImports = ast => {
+    const namespaces = new Set()
+    if (!ast?.body) return namespaces
+
+    ast.body
+        .filter(node => node.type === 'ImportDeclaration')
+        .flatMap(node => node.specifiers || [])
+        .filter(spec => spec.type === 'ImportNamespaceSpecifier')
+        .forEach(spec => namespaces.add(spec.local.name))
+
+    return namespaces
+}
 
 /**
  * Recursively find the base identifier of a MemberExpression chain
@@ -168,33 +190,41 @@ const collectBasesInFunction = funcNode => {
 }
 
 /**
- * Convert a base entry to a suggestion if it meets threshold
- * @sig entryToSuggestion :: (String, { count: Number, line: Number, properties: Set }) -> Violation?
+ * Check if base is a namespace import (should not suggest destructuring)
+ * @sig isNamespaceImport :: (String, Set<String>) -> Boolean
  */
-const entryToSuggestion = (base, { count, line, properties }) => {
+const isNamespaceImport = (base, namespaces) => namespaces.has(base.split('.')[0])
+
+/**
+ * Convert a base entry to a suggestion if it meets threshold and isn't a namespace import
+ * @sig entryToSuggestion :: (String, { count: Number, line: Number, properties: Set }, Set<String>) -> Violation?
+ */
+const entryToSuggestion = (base, { count, line, properties }, namespaces) => {
     if (count < THRESHOLD) return null
+    if (isNamespaceImport(base, namespaces)) return null
     return createSuggestion(line, base, [...properties].sort())
 }
 
 /**
  * Generate suggestions for a function based on repeated base accesses
- * @sig generateSuggestions :: Map<String, { count: Number, line: Number, properties: Set }> -> [Violation]
+ * @sig generateSuggestions :: (Map<String, BaseData>, Set<String>) -> [Violation]
+ *     BaseData = { count: Number, line: Number, properties: Set }
  */
-const generateSuggestions = bases =>
-    [...bases.entries()].map(([base, data]) => entryToSuggestion(base, data)).filter(Boolean)
+const generateSuggestions = (bases, namespaces) =>
+    [...bases.entries()].map(([base, data]) => entryToSuggestion(base, data, namespaces)).filter(Boolean)
 
 /**
  * Process a function node and return its suggestions
- * @sig processFunctionNode :: ASTNode -> [Violation]
+ * @sig processFunctionNode :: (ASTNode, Set<String>) -> [Violation]
  */
-const processFunctionNode = node => generateSuggestions(collectBasesInFunction(node))
+const processFunctionNode = (node, namespaces) => generateSuggestions(collectBasesInFunction(node), namespaces)
 
 /**
  * Collect suggestions from a function node if it is a function
- * @sig collectFromFunction :: ([Violation], ASTNode) -> Void
+ * @sig collectFromFunction :: ([Violation], ASTNode, Set<String>) -> Void
  */
-const collectFromFunction = (suggestions, node) => {
-    if (isFunctionNode(node)) suggestions.push(...processFunctionNode(node))
+const collectFromFunction = (suggestions, node, namespaces) => {
+    if (isFunctionNode(node)) suggestions.push(...processFunctionNode(node, namespaces))
 }
 
 /**
@@ -204,8 +234,9 @@ const collectFromFunction = (suggestions, node) => {
 const checkChainExtraction = (ast, sourceCode, filePath) => {
     if (!ast) return []
 
+    const namespaces = collectNamespaceImports(ast)
     const allSuggestions = []
-    traverseAST(ast, node => collectFromFunction(allSuggestions, node))
+    traverseAST(ast, node => collectFromFunction(allSuggestions, node, namespaces))
 
     return allSuggestions
 }

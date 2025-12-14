@@ -3,6 +3,8 @@
 
 import { traverseAST } from '../traverse.js'
 
+const PRIORITY = 4
+
 /**
  * Create a function-declaration-ordering violation object from AST node
  * @sig createViolation :: (ASTNode, String) -> Violation
@@ -11,6 +13,7 @@ const createViolation = (node, message) => ({
     type: 'function-declaration-ordering',
     line: node.loc.start.line,
     column: node.loc.start.column + 1,
+    priority: PRIORITY,
     message,
     rule: 'function-declaration-ordering',
 })
@@ -47,8 +50,9 @@ const isSingleLineFunctionExpression = node =>
  * @sig getFunctionName :: ASTNode -> String
  */
 const getFunctionName = node => {
-    if (node.type === 'FunctionDeclaration') return node.id ? node.id.name : '<anonymous>'
-    if (node.type === 'VariableDeclarator') return node.id ? node.id.name : '<anonymous>'
+    const { type, id } = node
+    if (type === 'FunctionDeclaration') return id ? id.name : '<anonymous>'
+    if (type === 'VariableDeclarator') return id ? id.name : '<anonymous>'
     return '<anonymous>'
 }
 
@@ -77,6 +81,24 @@ const isFunctionStatement = node => {
     return false
 }
 
+// Statement types that are not function declarations
+// @sig NON_FUNCTION_STATEMENT_TYPES :: Set<String>
+const NON_FUNCTION_STATEMENT_TYPES = new Set([
+    'VariableDeclaration',
+    'ExpressionStatement',
+    'ReturnStatement',
+    'IfStatement',
+    'ForStatement',
+    'WhileStatement',
+    'DoWhileStatement',
+    'ForInStatement',
+    'ForOfStatement',
+    'TryStatement',
+    'ThrowStatement',
+    'BreakStatement',
+    'ContinueStatement',
+])
+
 /**
  * Check if statement is a variable declaration or executable statement
  * @sig isNonFunctionStatement :: ASTNode -> Boolean
@@ -84,23 +106,16 @@ const isFunctionStatement = node => {
 const isNonFunctionStatement = node => {
     if (!node) return false
     if (isFunctionStatement(node)) return false
-
-    return (
-        node.type === 'VariableDeclaration' ||
-        node.type === 'ExpressionStatement' ||
-        node.type === 'ReturnStatement' ||
-        node.type === 'IfStatement' ||
-        node.type === 'ForStatement' ||
-        node.type === 'WhileStatement' ||
-        node.type === 'DoWhileStatement' ||
-        node.type === 'ForInStatement' ||
-        node.type === 'ForOfStatement' ||
-        node.type === 'TryStatement' ||
-        node.type === 'ThrowStatement' ||
-        node.type === 'BreakStatement' ||
-        node.type === 'ContinueStatement'
-    )
+    return NON_FUNCTION_STATEMENT_TYPES.has(node.type)
 }
+
+// Build message explaining why functions should be at top
+// @sig buildFunctionOrderingMessage :: (String, String) -> String
+const buildFunctionOrderingMessage = (funcType, funcName) =>
+    `${funcType} '${funcName}' must be defined before hooks. ` +
+    'FIX: Move the function definition above the first useSelector/useState call. ' +
+    'Safe because: closures capture variable bindings, not values - ' +
+    'variables will be initialized before the function is called.'
 
 /**
  * Process function declaration for violations
@@ -108,8 +123,7 @@ const isNonFunctionStatement = node => {
  */
 const processFunctionDeclaration = (statement, violations) => {
     const funcName = getFunctionName(statement)
-    const message = `Function '${funcName}' should be defined at the top of its containing block`
-    violations.push(createViolation(statement, message))
+    violations.push(createViolation(statement, buildFunctionOrderingMessage('Function', funcName)))
 }
 
 /**
@@ -122,8 +136,7 @@ const processDeclarator = (declarator, violations) => {
     const funcName = getFunctionName(declarator)
     const isArrow = declarator.init.type === 'ArrowFunctionExpression'
     const funcType = isArrow ? 'Arrow function' : 'Function'
-    const message = `${funcType} '${funcName}' should be defined at the top of its containing block`
-    violations.push(createViolation(declarator, message))
+    violations.push(createViolation(declarator, buildFunctionOrderingMessage(funcType, funcName)))
 }
 
 /**
@@ -147,20 +160,18 @@ const processMisplacedFunctionStatement = (statement, violations) => {
 }
 
 /**
- * Process individual statement in block
- * @sig processStatement :: (ASTNode, [Violation], Object) -> Void
+ * Process statement and return whether a non-function was found
+ * @sig processStatementReducer :: ([Violation], ASTNode, Boolean) -> Boolean
  */
-const processStatement = (statement, violations, tracker) => {
-    if (isNonFunctionStatement(statement)) {
-        tracker.foundNonFunction = true
-        return
-    }
+const processStatementReducer = (violations, statement, foundNonFunction) => {
+    if (isNonFunctionStatement(statement)) return true
 
-    if (isFunctionStatement(statement) && tracker.foundNonFunction)
-        processMisplacedFunctionStatement(statement, violations)
+    if (isFunctionStatement(statement) && foundNonFunction) processMisplacedFunctionStatement(statement, violations)
 
-    // Also check if this is a variable declaration with function that comes after non-function
-    if (statement.type === 'VariableDeclaration' && !isFunctionStatement(statement)) tracker.foundNonFunction = true
+    // Variable declarations without functions also mark as non-function found
+    if (statement.type === 'VariableDeclaration' && !isFunctionStatement(statement)) return true
+
+    return foundNonFunction
 }
 
 /**
@@ -170,10 +181,7 @@ const processStatement = (statement, violations, tracker) => {
 const processBlockForViolations = (block, violations) => {
     if (!isBlockStatement(block) || !block.body) return
 
-    const statements = block.body
-    const tracker = { foundNonFunction: false }
-
-    statements.forEach(statement => processStatement(statement, violations, tracker))
+    block.body.reduce((found, stmt) => processStatementReducer(violations, stmt, found), false)
 }
 
 /**

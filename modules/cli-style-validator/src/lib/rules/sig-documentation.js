@@ -3,6 +3,8 @@
 
 import { traverseAST, isFunctionNode } from '../traverse.js'
 
+const PRIORITY = 6
+
 /**
  * Create a sig-documentation violation object from AST node
  * @sig createViolation :: (ASTNode, String) -> Violation
@@ -11,6 +13,7 @@ const createViolation = (node, message) => ({
     type: 'sig-documentation',
     line: node.loc.start.line,
     column: node.loc.start.column + 1,
+    priority: PRIORITY,
     message,
     rule: 'sig-documentation',
 })
@@ -202,12 +205,14 @@ const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) 
     const hasDescription = hasDescriptionComment(node, sourceCode)
 
     if (hasSig && !isSigLastInCommentBlock(node, sourceCode)) {
-        violations.push(createViolation(node, '@sig must be last in the comment block'))
+        const msg = '@sig must be last in the comment block. FIX: Move @sig line to end of JSDoc, just before */.'
+        violations.push(createViolation(node, msg))
         return
     }
 
     if (hasSig && !hasDescription) {
-        violations.push(createViolation(node, '@sig requires a description comment'))
+        const msg = '@sig requires a description comment. FIX: Add a line describing what the function does above @sig.'
+        violations.push(createViolation(node, msg))
         return
     }
 
@@ -215,7 +220,11 @@ const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) 
 
     const isTopLevel = isTopLevelFunction(node, ast)
     const reason = isTopLevel ? 'top-level function' : 'function longer than 5 lines'
-    violations.push(createViolation(node, `Missing @sig documentation for ${reason}`))
+    const msg =
+        `Missing @sig documentation for ${reason}. ` +
+        'FIX: Add JSDoc with description and @sig type annotation. ' +
+        'If this is an inline callback, fix single-level-indentation first (extraction creates a named function).'
+    violations.push(createViolation(node, msg))
 }
 
 /**
