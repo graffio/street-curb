@@ -101,7 +101,10 @@ const findGroupContainingView = (tabLayout, viewId) => tabLayout.tabGroups.find(
 
 // Creates a copy of a tab group with a new width
 // @sig resizeGroupToWidth :: (TabGroup, Number) -> TabGroup
-const resizeGroupToWidth = (group, width) => TabGroup(group.id, group.views, group.activeViewId, width)
+const resizeGroupToWidth = (group, width) => {
+    const { activeViewId, id, views } = group
+    return TabGroup(id, views, activeViewId, width)
+}
 
 // Removes the specified group and resizes remaining groups evenly
 // @sig removeGroupAndResize :: (TabLayout, String) -> TabLayout
@@ -188,15 +191,15 @@ const moveViewToIndex = (views, viewId, toIndex) => {
 // @sig moveView :: (State, Action.MoveView) -> State
 const moveView = (state, action) => {
     const removeFromSource = () => {
-        const remainingViews = fromGroup.views.removeItemWithId(viewId)
+        const remainingViews = fromViews.removeItemWithId(viewId)
         const activeId = nextActiveViewId(fromGroup, viewId, remainingViews)
-        return TabGroup(fromGroup.id, remainingViews, activeId, fromGroup.width)
+        return TabGroup(fromId, remainingViews, activeId, fromWidth)
     }
 
     const addToTarget = () => {
-        let views = toGroup.views.addItemWithId(view)
+        let views = toViews.addItemWithId(view)
         if (toIndex != null) views = moveViewToIndex(views, viewId, toIndex)
-        return TabGroup(toGroup.id, views, view.id, toGroup.width)
+        return TabGroup(toId, views, view.id, toWidth)
     }
 
     const buildLayout = (from, to) => {
@@ -208,7 +211,9 @@ const moveView = (state, action) => {
     const { viewId, fromGroupId, toGroupId, toIndex } = action
     const fromGroup = tabGroups[fromGroupId]
     const toGroup = tabGroups[toGroupId]
-    const view = fromGroup.views[viewId]
+    const { id: fromId, views: fromViews, width: fromWidth } = fromGroup
+    const { id: toId, views: toViews, width: toWidth } = toGroup
+    const view = fromViews[viewId]
 
     const updatedFrom = removeFromSource()
     const updatedTo = addToTarget()
@@ -242,13 +247,15 @@ const createTabGroup = state => {
 const closeTabGroup = (state, action) => {
     // Transfers all views from closing group into target group
     // @sig mergeViewsInto :: TabGroup -> TabGroup
-    const mergeViewsInto = target =>
-        TabGroup(
-            target.id,
-            closingGroup.views.reduce((vs, v) => vs.addItemWithId(v), target.views),
-            target.activeViewId,
-            target.width,
+    const mergeViewsInto = target => {
+        const { activeViewId, id: targetId, views, width } = target
+        return TabGroup(
+            targetId,
+            closingGroup.views.reduce((vs, v) => vs.addItemWithId(v), views),
+            activeViewId,
+            width,
         )
+    }
 
     // Resizes groups evenly, substituting mergedTarget for its original
     // @sig resizeGroups :: ([TabGroup], TabGroup) -> LookupTable<TabGroup>

@@ -37,17 +37,18 @@ const hydrateTableLayouts = () => {
 
 // @sig hydrateView :: Object -> View
 const hydrateView = obj => {
-    const tagName = obj['@@tagName']
-    if (tagName === 'Register') return View.Register(obj.id, obj.accountId, obj.title)
-    if (tagName === 'Report') return View.Report(obj.id, obj.reportType, obj.title)
-    if (tagName === 'Reconciliation') return View.Reconciliation(obj.id, obj.accountId, obj.title)
+    const { '@@tagName': tagName, accountId, id, reportType, title } = obj
+    if (tagName === 'Register') return View.Register(id, accountId, title)
+    if (tagName === 'Report') return View.Report(id, reportType, title)
+    if (tagName === 'Reconciliation') return View.Reconciliation(id, accountId, title)
     throw new Error(`Unknown View variant: ${tagName}`)
 }
 
 // @sig hydrateTabGroup :: Object -> TabGroup
 const hydrateTabGroup = obj => {
-    const views = Object.values(obj.views).map(hydrateView)
-    return TabGroup(obj.id, LookupTable(views, View, 'id'), obj.activeViewId, obj.width)
+    const { activeViewId, id, views: rawViews, width } = obj
+    const views = Object.values(rawViews).map(hydrateView)
+    return TabGroup(id, LookupTable(views, View, 'id'), activeViewId, width)
 }
 
 // @sig hydrateTabLayout :: () -> TabLayout
@@ -56,9 +57,9 @@ const hydrateTabLayout = () => {
         const stored = window.localStorage.getItem(TAB_LAYOUT_KEY)
         if (!stored) return createDefaultTabLayout()
 
-        const obj = JSON.parse(stored)
-        const tabGroups = Object.values(obj.tabGroups).map(hydrateTabGroup)
-        return TabLayout(obj.id, LookupTable(tabGroups, TabGroup, 'id'), obj.activeTabGroupId, obj.nextTabGroupId)
+        const { activeTabGroupId, id, nextTabGroupId, tabGroups: rawGroups } = JSON.parse(stored)
+        const tabGroups = Object.values(rawGroups).map(hydrateTabGroup)
+        return TabLayout(id, LookupTable(tabGroups, TabGroup, 'id'), activeTabGroupId, nextTabGroupId)
     } catch {
         console.warn('Failed to read tabLayout from localStorage, using default')
         return createDefaultTabLayout()

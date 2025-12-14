@@ -36,6 +36,8 @@ const traverseAST = (node, visitor) => {
     Object.keys(node).forEach(key => processChild(node[key], visitor))
 }
 
+const PRIORITY = 2
+
 /**
  * Create a single-level-indentation violation object from AST node
  * @sig createViolation :: (ASTNode, String) -> Violation
@@ -44,6 +46,7 @@ const createViolation = (node, message) => ({
     type: 'single-level-indentation',
     line: node.loc.start.line,
     column: node.loc.start.column + 1,
+    priority: PRIORITY,
     message,
     rule: 'single-level-indentation',
 })
@@ -131,12 +134,13 @@ const findFunctionContext = (node, rootNode) => {
  * @sig isCallbackFunction :: (ASTNode, ASTNode) -> Boolean
  */
 const isCallbackFunction = (node, rootNode) => {
-    if (node.type === 'FunctionDeclaration') return false // Always has a name
+    const { type, id } = node
+    if (type === 'FunctionDeclaration') return false // Always has a name
 
     const isCallback = findFunctionContext(node, rootNode)
 
     // Additional check: function expressions without id are callbacks unless they're variable assignments
-    if (node.type === 'FunctionExpression' && !node.id && !isCallback) return true
+    if (type === 'FunctionExpression' && !id && !isCallback) return true
 
     return isCallback
 }
@@ -167,59 +171,83 @@ const hasJSXReturnStatement = statement => {
  * @sig isJSXFunction :: ASTNode -> Boolean
  */
 const isJSXFunction = functionNode => {
-    if (!functionNode.body) return false
+    const { body, expression } = functionNode
+    if (!body) return false
+
+    const { type, body: blockBody } = body
 
     // For expression bodies, check if it's JSX
-    if (
-        functionNode.expression &&
-        functionNode.body.type &&
-        (functionNode.body.type === 'JSXElement' || functionNode.body.type === 'JSXFragment')
-    )
-        return true
+    if (expression && type && (type === 'JSXElement' || type === 'JSXFragment')) return true
 
     // For block bodies, check if it contains JSX elements
-    if (functionNode.body.type === 'BlockStatement') return functionNode.body.body.some(hasJSXReturnStatement)
+    if (type === 'BlockStatement') return blockBody.some(hasJSXReturnStatement)
 
     return false
 }
+
+// Statement types that create indentation levels
+// @sig INDENTATION_STATEMENT_TYPES :: Set<String>
+const INDENTATION_STATEMENT_TYPES = new Set([
+    'IfStatement',
+    'ForStatement',
+    'WhileStatement',
+    'ForInStatement',
+    'ForOfStatement',
+    'SwitchStatement',
+])
 
 /**
  * Check if a node represents a statement that creates indentation levels
  * @sig isIndentationStatement :: ASTNode -> Boolean
  */
-const isIndentationStatement = node =>
-    node.type === 'IfStatement' ||
-    node.type === 'ForStatement' ||
-    node.type === 'WhileStatement' ||
-    node.type === 'ForInStatement' ||
-    node.type === 'ForOfStatement' ||
-    node.type === 'SwitchStatement'
+const isIndentationStatement = node => INDENTATION_STATEMENT_TYPES.has(node.type)
+
+// Node types where nesting is allowed per coding standards
+// @sig ALLOWED_NESTING_TYPES :: Set<String>
+const ALLOWED_NESTING_TYPES = new Set([
+    'TryStatement',
+    'CatchClause',
+    'ObjectExpression',
+    'ArrayExpression',
+    'JSXElement',
+    'JSXFragment',
+])
 
 /**
  * Check if nesting is allowed for this node type per coding standards
  * @sig isAllowedNesting :: ASTNode -> Boolean
  */
-const isAllowedNesting = node =>
-    node.type === 'TryStatement' ||
-    node.type === 'CatchClause' ||
-    node.type === 'ObjectExpression' ||
-    node.type === 'ArrayExpression' ||
-    node.type === 'JSXElement' ||
-    node.type === 'JSXFragment'
+const isAllowedNesting = node => ALLOWED_NESTING_TYPES.has(node.type)
 
 /**
- * Process child item for violations
- * @sig processChildItem :: (ASTNode, Number, Function) -> Void
+ * Check if node is valid for traversal
+ * @sig isValidNode :: Any -> Boolean
  */
-const processChildItem = (item, nextDepth, findViolations) => {
-    if (!item || typeof item !== 'object' || !item.type) return
+const isValidNode = node => node && typeof node === 'object' && node.type
 
-    if (isFunctionNode(item) && item.body && item.body.type === 'BlockStatement') {
-        findViolations(item.body, 0)
+/**
+ * Check if node is a function with block body
+ * @sig isFunctionWithBlockBody :: ASTNode -> Boolean
+ */
+const isFunctionWithBlockBody = node => {
+    if (!isFunctionNode(node)) return false
+    const { body } = node
+    return body && body.type === 'BlockStatement'
+}
+
+/**
+ * Process child node for violations (handles both single and array items)
+ * @sig processChildNode :: (ASTNode, Number, Function) -> Void
+ */
+const processChildNode = (node, nextDepth, findViolations) => {
+    if (!isValidNode(node)) return
+
+    if (isFunctionWithBlockBody(node)) {
+        findViolations(node.body, 0)
         return
     }
 
-    if (!isFunctionNode(item)) findViolations(item, nextDepth)
+    if (!isFunctionNode(node)) findViolations(node, nextDepth)
 }
 
 /**
@@ -227,22 +255,7 @@ const processChildItem = (item, nextDepth, findViolations) => {
  * @sig processChildArray :: ([ASTNode], Number, Function) -> Void
  */
 const processChildArray = (childArray, nextDepth, findViolations) =>
-    childArray.forEach(item => processChildItem(item, nextDepth, findViolations))
-
-/**
- * Process single child node for violations
- * @sig processSingleChild :: (ASTNode, Number, Function) -> Void
- */
-const processSingleChild = (child, nextDepth, findViolations) => {
-    if (!child || typeof child !== 'object' || !child.type) return
-
-    if (isFunctionNode(child) && child.body && child.body.type === 'BlockStatement') {
-        findViolations(child.body, 0)
-        return
-    }
-
-    if (!isFunctionNode(child)) findViolations(child, nextDepth)
-}
+    childArray.forEach(item => processChildNode(item, nextDepth, findViolations))
 
 /**
  * Find nested violations in AST node
@@ -255,7 +268,7 @@ const findNestedViolations = (node, depth, processedNodes, violations) => {
      */
     const processChildKey = (key, nextDepth, processedNodes, violations) => {
         const child = node[key]
-        const processChild = Array.isArray(child) ? processChildArray : processSingleChild
+        const processChild = Array.isArray(child) ? processChildArray : processChildNode
         processChild(child, nextDepth, (childNode, childDepth) =>
             findNestedViolations(childNode, childDepth, processedNodes, violations),
         )
@@ -266,16 +279,26 @@ const findNestedViolations = (node, depth, processedNodes, violations) => {
     processedNodes.add(node)
 
     // Check for forbidden nested statements beyond first level
-    if (depth > 0 && isIndentationStatement(node))
-        violations.push(
-            createViolation(node, 'Avoid nested indentation - extract to separate functions or use early returns'),
-        )
+    if (depth > 0 && isIndentationStatement(node)) {
+        const msg =
+            'Nested indentation detected. ' +
+            'FIX: Extract the nested block to a separate function, or use early returns to flatten the logic.'
+        violations.push(createViolation(node, msg))
+    }
 
     // Always traverse child nodes, but adjust depth based on node type
     const nextDepth = isAllowedNesting(node) ? depth : isIndentationStatement(node) ? depth + 1 : depth
 
     Object.keys(node).forEach(key => processChildKey(key, nextDepth, processedNodes, violations))
 }
+
+// Message for multi-line callback extraction
+// @sig CALLBACK_EXTRACTION_MESSAGE :: String
+const CALLBACK_EXTRACTION_MESSAGE =
+    'Extract multi-line unnamed function to a named function. ' +
+    'FIX: Move the callback body to a named function defined above. ' +
+    'For Promise executors: extract to a function that receives resolve/reject as parameters. ' +
+    "For .map() callbacks: if it doesn't fit on one line with .map(), extract it."
 
 /**
  * Check callback function for violations
@@ -285,7 +308,7 @@ const checkCallbackFunction = (node, ast, violations) => {
     if (!isFunctionNode(node) || !isCallbackFunction(node, ast) || isJSXFunction(node)) return
 
     const lineCount = countFunctionBodyLines(node)
-    if (lineCount > 1) violations.push(createViolation(node, 'Extract multi-line unnamed function to a named function'))
+    if (lineCount > 1) violations.push(createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
 }
 
 /**

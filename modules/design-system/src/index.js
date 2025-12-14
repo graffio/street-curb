@@ -1,3 +1,6 @@
+// ABOUTME: Design system facade re-exporting Radix Themes components
+// ABOUTME: Import from this package instead of @radix-ui/themes directly
+
 // Import Radix Themes CSS
 import '@radix-ui/themes/styles.css'
 
@@ -23,6 +26,7 @@ import {
     Tabs,
     Text,
     TextField,
+    Theme,
     Tooltip,
 } from '@radix-ui/themes'
 
@@ -64,6 +68,7 @@ export {
     Tabs,
     Text,
     TextField,
+    Theme,
     Tooltip,
 
     // ours

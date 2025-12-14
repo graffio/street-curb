@@ -26,15 +26,16 @@ const hasRequire = line => /\brequire\s*\(/.test(line)
 const importsRadixThemes = line => line.includes('@radix-ui/themes')
 
 /**
- * Process line for import violations
- * @sig processLine :: (String, Number, [Violation]) -> Void
+ * Check if file is within the design-system module (allowed to import from radix)
+ * @sig isDesignSystemFile :: String -> Boolean
  */
-const processLine = (line, index, violations) => {
-    const lineNum = index + 1
+const isDesignSystemFile = filePath => filePath.includes('modules/design-system/')
 
+// Collect violations for a single line (skipRadixCheck controls radix rule)
+// @sig collectLineViolations :: (String, Number, Boolean, [Violation]) -> Void
+const collectLineViolations = (line, lineNum, skipRadixCheck, violations) => {
     if (hasRequire(line)) violations.push(createViolation(lineNum, 'Use ES6 import syntax instead of require()'))
-
-    if (importsRadixThemes(line))
+    if (!skipRadixCheck && importsRadixThemes(line))
         violations.push(createViolation(lineNum, 'Import from @graffio/design-system instead of @radix-ui/themes'))
 }
 
@@ -45,8 +46,9 @@ const processLine = (line, index, violations) => {
 const checkImportOrdering = (ast, sourceCode, filePath) => {
     const violations = []
     const lines = sourceCode.split('\n')
+    const skipRadixCheck = isDesignSystemFile(filePath)
 
-    lines.forEach((line, index) => processLine(line, index, violations))
+    lines.forEach((line, index) => collectLineViolations(line, index + 1, skipRadixCheck, violations))
 
     return violations
 }

@@ -52,17 +52,18 @@ const Tab = ({ view, groupId, isActive }) => {
     const handleDragEnd = () => setIsDragging(false)
 
     const [isDragging, setIsDragging] = useState(false)
+    const { id, title } = view
 
     return (
         <Flex
             draggable
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            style={getTabStyle(view.id, isActive ? view.id : null, isDragging)}
+            style={getTabStyle(id, isActive ? id : null, isDragging)}
             onClick={handleClick}
         >
             <Text size="2" weight={isActive ? 'medium' : 'regular'}>
-                {view.title}
+                {title}
             </Text>
             <Button size="1" variant="ghost" onClick={handleClose} style={{ padding: '0 4px' }}>
                 ×
@@ -117,8 +118,9 @@ const TabBar = ({ group, groupCount }) => {
         setIsDropTarget(false)
         const dragData = parseDragData(e.dataTransfer.getData('application/json'))
         if (!dragData) return
-        if (dragData.groupId === group.id && group.views[dragData.viewId]) return // Same group, already there
-        post(Action.MoveView(dragData.viewId, dragData.groupId, group.id, null))
+        const { viewId, groupId: sourceGroupId } = dragData
+        if (sourceGroupId === group.id && group.views[viewId]) return // Same group, already there
+        post(Action.MoveView(viewId, sourceGroupId, group.id, null))
     }
 
     const [isDropTarget, setIsDropTarget] = useState(false)

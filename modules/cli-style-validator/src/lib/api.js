@@ -17,7 +17,17 @@ import { parseCode } from './parser.js'
 /**
  * Check single file for coding standards violations
  * CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
- * Violation = { type: String, line: Number, column: Number, message: String, rule: String }
+ * Violation = { type: String, line: Number, column: Number, message: String, rule: String, priority: Number }
+ *
+ * Priority determines fix order (lower = fix first):
+ *   1 = chain-extraction (shortens lines, may fix line-length)
+ *   2 = single-level-indentation (extracts functions, may fix line-length and sig-documentation)
+ *   3 = line-length (fix remaining after 1 and 2)
+ *   4 = function-declaration-ordering (just reordering)
+ *   5 = function-spacing (just blank lines)
+ *   6 = sig-documentation (depends on extraction being done first)
+ *   7 = file-naming (last - changes file paths)
+ *
  * @sig checkFile :: String -> Promise<CheckResult>
  */
 const checkFile = async filePath => {
@@ -53,7 +63,7 @@ const runAllRules = (ast, sourceCode, filePath) => {
     allViolations.push(...checkSigDocumentation(ast, sourceCode, filePath))
     allViolations.push(...checkSingleLevelIndentation(ast, sourceCode, filePath))
 
-    return allViolations.sort((a, b) => a.line - b.line)
+    return allViolations.sort((a, b) => a.priority - b.priority || a.line - b.line)
 }
 
 export { checkFile }

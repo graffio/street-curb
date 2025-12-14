@@ -5,7 +5,7 @@ import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-syst
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { bankTransactionColumns } from '../columns/transaction-columns.js'
+import { bankTransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { TransactionFiltersCard } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
@@ -37,22 +37,27 @@ const toTanStackFormat = (tableLayout, idMap) => {
     const toSizingEntry = (reverseMap, col) => [reverseMap[col.id], col.width]
     const hasValidId = ([tanstackId]) => tanstackId
 
+    /**
+     * Convert column descriptor to TanStack sort entry
+     * @sig toSortEntry :: (Object, Object, String) -> { id: String, desc: Boolean } | null
+     */
     const toSortEntry = (reverseMap, descriptors, id) => {
         const col = descriptors[id]
-        if (!col || col.sortDirection === 'none') return null
-        return { id: reverseMap[col.id], desc: col.sortDirection === 'desc' }
+        if (!col) return null
+        const { id: colId, sortDirection } = col
+        if (sortDirection === 'none') return null
+        return { id: reverseMap[colId], desc: sortDirection === 'desc' }
     }
 
     if (!tableLayout) return { sorting: [], columnSizing: {}, columnOrder: [] }
 
+    const { columnDescriptors, sortOrder } = tableLayout
     const reverseMap = Object.fromEntries(Object.entries(idMap).map(([k, v]) => [v, k]))
-    const columnOrder = tableLayout.columnDescriptors.map(c => reverseMap[c.id])
+    const columnOrder = columnDescriptors.map(c => reverseMap[c.id])
     const columnSizing = Object.fromEntries(
-        tableLayout.columnDescriptors.map(col => toSizingEntry(reverseMap, col)).filter(hasValidId),
+        columnDescriptors.map(col => toSizingEntry(reverseMap, col)).filter(hasValidId),
     )
-    const sorting = tableLayout.sortOrder
-        .map(id => toSortEntry(reverseMap, tableLayout.columnDescriptors, id))
-        .filter(Boolean)
+    const sorting = sortOrder.map(id => toSortEntry(reverseMap, columnDescriptors, id)).filter(Boolean)
 
     return { sorting, columnSizing, columnOrder }
 }
@@ -179,19 +184,21 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
     // Converts TanStack column sizing to TableLayout and persists
     // @sig updateColumnSizing :: (Updater | SizingState) -> void
     const updateColumnSizing = updater => {
+        /**
+         * Apply new width from sizing state to column descriptor
+         * @sig applyWidth :: ColumnDescriptor -> ColumnDescriptor
+         */
         const applyWidth = col => {
-            const tanstackId = Object.entries(idMap).find(([, v]) => v === col.id)?.[0]
-            const width = newSizing[tanstackId] ?? col.width
-            return ColumnDescriptor(col.id, width, col.sortDirection)
+            const { id, width, sortDirection } = col
+            const tanstackId = Object.entries(idMap).find(([, v]) => v === id)?.[0]
+            const newWidth = newSizing[tanstackId] ?? width
+            return ColumnDescriptor(id, newWidth, sortDirection)
         }
 
+        const { columnDescriptors, id: layoutId, sortOrder } = tableLayout
         const newSizing = typeof updater === 'function' ? updater(columnSizing) : updater
-        const updatedColumns = tableLayout.columnDescriptors.map(applyWidth)
-        const newLayout = TableLayout(
-            tableLayout.id,
-            LookupTable(updatedColumns, ColumnDescriptor, 'id'),
-            tableLayout.sortOrder,
-        )
+        const updatedColumns = columnDescriptors.map(applyWidth)
+        const newLayout = TableLayout(layoutId, LookupTable(updatedColumns, ColumnDescriptor, 'id'), sortOrder)
         post(Action.SetTableLayout(newLayout))
     }
 

@@ -3,6 +3,8 @@
 
 import { traverseAST, isFunctionNode } from '../traverse.js'
 
+const PRIORITY = 5
+
 /**
  * Create a function-spacing violation object
  * @sig createViolation :: (Number, String) -> Violation
@@ -11,6 +13,7 @@ const createViolation = (line, message) => ({
     type: 'function-spacing',
     line,
     column: 1,
+    priority: PRIORITY,
     message,
     rule: 'function-spacing',
 })
@@ -74,7 +77,8 @@ const findFunctionsInBlock = statements => {
 const checkFunction = (node, prevNode, sourceCode) => {
     if (!prevNode) return null
 
-    const prevLineContent = getPrevLineContent(node.loc.start.line, sourceCode)
+    const { line: startLine } = node.loc.start
+    const prevLineContent = getPrevLineContent(startLine, sourceCode)
 
     // If previous line is blank, no violation
     if (prevLineContent === '') return null
@@ -85,10 +89,17 @@ const checkFunction = (node, prevNode, sourceCode) => {
     const currentIsMultiline = isMultilineStatement(node)
     const prevIsMultiline = isMultilineStatement(prevNode)
 
-    if (currentIsMultiline) return createViolation(node.loc.start.line, 'Multiline function requires blank line above')
+    if (currentIsMultiline) {
+        const msg =
+            'Multiline function requires blank line above. FIX: Add a blank line before this function definition.'
+        return createViolation(startLine, msg)
+    }
 
-    if (prevIsMultiline)
-        return createViolation(node.loc.start.line, 'Function after multiline function requires blank line above')
+    if (prevIsMultiline) {
+        const msg =
+            'Function after multiline function requires blank line above. FIX: Add a blank line before this function.'
+        return createViolation(startLine, msg)
+    }
 
     return null
 }

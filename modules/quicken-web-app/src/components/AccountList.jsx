@@ -11,8 +11,9 @@ import { View } from '../types/view.js'
 
 // @sig handleAccountClick :: Account -> void
 const handleAccountClick = account => {
-    const viewId = `reg_${account.id}`
-    const view = View.Register(viewId, account.id, account.name)
+    const { id, name } = account
+    const viewId = `reg_${id}`
+    const view = View.Register(viewId, id, name)
     post(Action.OpenView(view))
 }
 
