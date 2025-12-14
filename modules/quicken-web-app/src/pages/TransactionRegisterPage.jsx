@@ -22,6 +22,7 @@ const makeViewId = accountId => `cols_account_${accountId}`
  */
 const initializeFromColumns = (viewId, columns) => {
     const descriptors = columns.map(col => ColumnDescriptor(`col_${col.id}`, col.size || 100, 'none'))
+
     // Store mapping from TanStack column id to our descriptor id
     const idMap = {}
     columns.forEach((col, i) => (idMap[col.id] = descriptors[i].id))

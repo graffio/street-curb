@@ -16,6 +16,7 @@
         "tap": "yarn workspaces run tap"
     },
     "devDependencies": {
+        "@stylistic/eslint-plugin": "^5.6.1",
         "eslint": "^9.28.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-config-standard": "^17.1.0",

@@ -4,10 +4,10 @@
 import { Box, Flex, layoutChannel, Text } from '@graffio/design-system'
 import { useEffect } from 'react'
 
+// Top-level dashboard
+// @sig DashboardPage :: () -> ReactElement
 const DashboardPage = () => {
-    useEffect(() => {
-        layoutChannel.setState({ title: 'Dashboard' })
-    }, [])
+    useEffect(() => layoutChannel.setState({ title: 'Dashboard' }), [])
 
     return (
         <Box p="4">

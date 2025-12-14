@@ -49,30 +49,13 @@ const isCommentLine = line => {
 }
 
 /**
- * Get the start line of a statement, accounting for leading comments
- * @sig getEffectiveStartLine :: (ASTNode, String) -> Number
+ * Check if there's a blank line or comment before a given line number
+ * @sig getPrevLineContent :: (Number, String) -> String
  */
-const getEffectiveStartLine = (node, sourceCode) => {
-    const findCommentStart = (lineIndex, lines) => {
-        if (lineIndex < 0) return lineIndex + 1
-        if (!isCommentLine(lines[lineIndex])) return lineIndex + 2
-        return findCommentStart(lineIndex - 1, lines)
-    }
-
+const getPrevLineContent = (lineNum, sourceCode) => {
+    if (lineNum <= 1) return ''
     const lines = sourceCode.split('\n')
-    const declStartLine = node.loc.start.line
-    return findCommentStart(declStartLine - 2, lines)
-}
-
-/**
- * Check if there's a blank line before a given line number
- * @sig hasBlankLineBefore :: (Number, String) -> Boolean
- */
-const hasBlankLineBefore = (lineNum, sourceCode) => {
-    if (lineNum <= 1) return true
-    const lines = sourceCode.split('\n')
-    const prevLine = lines[lineNum - 2]
-    return prevLine !== undefined && prevLine.trim() === ''
+    return lines[lineNum - 2]?.trim() || ''
 }
 
 /**
@@ -91,10 +74,13 @@ const findFunctionsInBlock = statements => {
 const checkFunction = (node, prevNode, sourceCode) => {
     if (!prevNode) return null
 
-    const effectiveStart = getEffectiveStartLine(node, sourceCode)
-    const hasBlankLine = hasBlankLineBefore(effectiveStart, sourceCode)
+    const prevLineContent = getPrevLineContent(node.loc.start.line, sourceCode)
 
-    if (hasBlankLine) return null
+    // If previous line is blank, no violation
+    if (prevLineContent === '') return null
+
+    // If previous line is a comment, eslint handles spacing - skip
+    if (isCommentLine(prevLineContent)) return null
 
     const currentIsMultiline = isMultilineStatement(node)
     const prevIsMultiline = isMultilineStatement(prevNode)

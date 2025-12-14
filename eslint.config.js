@@ -1,11 +1,36 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+// ABOUTME: ESLint configuration for the monorepo
+// ABOUTME: Includes stylistic rules, React, Storybook, and custom arrow-expression-body rule
 import { FlatCompat } from '@eslint/eslintrc'
+import stylistic from '@stylistic/eslint-plugin'
 import eslintPluginReact from 'eslint-plugin-react'
 import storybook from 'eslint-plugin-storybook'
 import { defineConfig } from 'eslint/config'
 import path from 'path'
 
 const compat = new FlatCompat({ baseDirectory: path.resolve() })
+
+// Checks if arrow function has unnecessary braces around single expression
+// @sig checkArrowBody :: (Context, Node) -> void
+const checkArrowBody = (context, node) => {
+    const hasUnnecessaryBraces =
+        node.body.type === 'BlockStatement' &&
+        node.body.body.length === 1 &&
+        node.body.body[0].type === 'ExpressionStatement'
+
+    if (hasUnnecessaryBraces)
+        context.report({
+            node,
+            message: 'Unnecessary braces around single expression',
+            fix: fixer => fixer.replaceText(node.body, context.sourceCode.getText(node.body.body[0].expression)),
+        })
+}
+
+// ESLint rule: enforce concise arrow function bodies
+// @sig arrowExpressionBodyRule :: { meta: Object, create: Context -> Object }
+const arrowExpressionBodyRule = {
+    meta: { type: 'suggestion', fixable: 'code' },
+    create: context => ({ ArrowFunctionExpression: node => checkArrowBody(context, node) }),
+}
 
 export default defineConfig([
     { ignores: ['**/dist/*.js', '**/docs/**/*.js', '**/src/types/*.js'] },
@@ -15,36 +40,22 @@ export default defineConfig([
         files: ['**/*.{js,jsx}'],
         languageOptions: { globals: { browser: true } },
         plugins: {
+            '@stylistic': stylistic,
             react: eslintPluginReact,
-            custom: {
-                rules: {
-                    'arrow-expression-body': {
-                        meta: { type: 'suggestion', fixable: 'code' },
-                        create(context) {
-                            return {
-                                ArrowFunctionExpression(node) {
-                                    if (
-                                        node.body.type === 'BlockStatement' &&
-                                        node.body.body.length === 1 &&
-                                        node.body.body[0].type === 'ExpressionStatement'
-                                    )
-                                        context.report({
-                                            node,
-                                            message: 'Unnecessary braces around single expression',
-                                            fix: fixer =>
-                                                fixer.replaceText(
-                                                    node.body,
-                                                    context.sourceCode.getText(node.body.body[0].expression),
-                                                ),
-                                        })
-                                },
-                            }
-                        },
-                    },
-                },
-            },
+            custom: { rules: { 'arrow-expression-body': arrowExpressionBodyRule } },
         },
         rules: {
+            '@stylistic/lines-around-comment': [
+                'error',
+                {
+                    beforeBlockComment: true,
+                    beforeLineComment: true,
+                    allowBlockStart: true,
+                    allowObjectStart: true,
+                    allowArrayStart: true,
+                    allowClassStart: true,
+                },
+            ],
             'custom/arrow-expression-body': 'error',
             semi: 'error',
             'react/jsx-uses-react': 'error',

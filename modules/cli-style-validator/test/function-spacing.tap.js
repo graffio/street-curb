@@ -124,7 +124,8 @@ const long = x => {
         const ast = parseCode(code)
         const violations = checkFunctionSpacing(ast, code, 'test.js')
 
-        t.equal(violations.length, 1, 'Then one violation should be detected for missing blank line before comment')
+        // eslint handles blank lines before comments, so validator skips this case
+        t.equal(violations.length, 0, 'Then no violations (eslint handles comment spacing)')
         t.end()
     })
 

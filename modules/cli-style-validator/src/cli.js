@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+// ABOUTME: CLI entry point for the style validator
+// ABOUTME: Parses arguments and runs validation on specified files
 
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
@@ -11,9 +12,9 @@ import { checkFile } from './lib/api.js'
 const main = async () => {
     const argv = yargs(hideBin(process.argv))
         .usage('Usage: $0 <file>')
-        .command('$0 <file>', 'Check JavaScript file for coding standards violations', yargs => {
-            yargs.positional('file', { describe: 'Path to JavaScript file to check', type: 'string' })
-        })
+        .command('$0 <file>', 'Check JavaScript file for coding standards violations', yargs =>
+            yargs.positional('file', { describe: 'Path to JavaScript file to check', type: 'string' }),
+        )
         .help().argv
 
     try {
@@ -30,7 +31,10 @@ const main = async () => {
     }
 }
 
-main().catch(error => {
+// handle reject
+// @sig onrejected :: Error -> ()
+const onrejected = error => {
     console.error('CLI error:', error.message)
     process.exit(1)
-})
+}
+main().catch(onrejected)

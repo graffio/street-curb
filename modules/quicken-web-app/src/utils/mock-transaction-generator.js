@@ -1,3 +1,6 @@
+// ABOUTME: Generates realistic financial transaction data for testing and demos
+// ABOUTME: Creates believable patterns including recurring bills, income, and seasonal variations
+
 /*
  * mock-transaction-generator.js - Realistic financial transaction data generator
  *
@@ -113,6 +116,7 @@ const TRANSACTION_CLUSTERS = [
             { name: 'State Farm Insurance', amount: -210.0, category: 'Insurance:Auto' },
         ],
     },
+
     // Shopping clusters
     {
         trigger: 'Target',
@@ -121,6 +125,7 @@ const TRANSACTION_CLUSTERS = [
             { name: 'Shell Gas Station', amount: -45.0, category: 'Transportation:Gas' },
         ],
     },
+
     // Weekend clusters
     {
         trigger: 'Safeway',
@@ -149,46 +154,51 @@ const addVariation = amount => {
 }
 
 /*
+ * Create a random transaction date within the given range
+ *
+ * @sig createRandomDate :: (Date, Number) -> Date
+ */
+const createRandomDate = (startDate, totalDays) => {
+    const randomDayOffset = Math.floor(Math.random() * totalDays)
+    const transactionDate = new Date(startDate)
+    transactionDate.setDate(transactionDate.getDate() + randomDayOffset)
+
+    // Add time variation (70% business hours, 30% any time)
+    const randomHour = Math.random() < 0.7 ? Math.floor(Math.random() * 12) + 8 : Math.floor(Math.random() * 24)
+    transactionDate.setHours(randomHour, Math.floor(Math.random() * 60), 0, 0)
+
+    return transactionDate
+}
+
+/*
  * Generate realistic transaction dates from the past only
  *
  * @sig generateTransactionDates :: Number -> [Date]
  */
 const generateTransactionDates = count => {
-    const createDateSequence = () => {
-        const dates = []
-        const today = new Date()
-        const startDate = new Date()
-        startDate.setFullYear(startDate.getFullYear() - 2) // Start 2 years ago
-        startDate.setMonth(0, 1) // January 1st, 2 years ago
+    const today = new Date()
+    const startDate = new Date()
+    startDate.setFullYear(startDate.getFullYear() - 2)
+    startDate.setMonth(0, 1)
 
-        // End a few days before today to ensure all dates are in the past
-        const endDate = new Date(today)
-        endDate.setDate(endDate.getDate() - 3) // 3 days ago
+    const endDate = new Date(today)
+    endDate.setDate(endDate.getDate() - 3)
 
-        // Calculate total days available for distribution (all in the past)
-        const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24))
+    const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24))
 
-        // Generate random dates within the past period only
-        for (let i = 0; i < count; i++) {
-            const randomDayOffset = Math.floor(Math.random() * totalDays)
-            const transactionDate = new Date(startDate)
-            transactionDate.setDate(transactionDate.getDate() + randomDayOffset)
+    return Array.from({ length: count }, () => createRandomDate(startDate, totalDays)).sort((a, b) => a - b)
+}
 
-            // Add some time variation within the day (business hours weighted)
-            const randomHour =
-                Math.random() < 0.7
-                    ? Math.floor(Math.random() * 12) + 8 // 70% during business hours (8am-8pm)
-                    : Math.floor(Math.random() * 24) // 30% any time of day
-            const randomMinute = Math.floor(Math.random() * 60)
-            transactionDate.setHours(randomHour, randomMinute, 0, 0)
-
-            dates.push(transactionDate)
-        }
-
-        return dates
-    }
-
-    return createDateSequence().sort((a, b) => a - b) // Sort ascending (oldest first)
+/*
+ * Add a date to the appropriate date-string bucket in the map
+ *
+ * @sig addDateToBucket :: (Map String [Date], Date) -> Map String [Date]
+ */
+const addDateToBucket = (map, date) => {
+    const dateStr = date.toISOString().split('T')[0]
+    if (!map.has(dateStr)) map.set(dateStr, [])
+    map.get(dateStr).push(date)
+    return map
 }
 
 /*
@@ -196,17 +206,7 @@ const generateTransactionDates = count => {
  *
  * @sig groupTransactionsByDate :: [Date] -> Map String [Date]
  */
-const groupTransactionsByDate = dates => {
-    const transactionsByDate = new Map()
-
-    dates.forEach(date => {
-        const dateStr = date.toISOString().split('T')[0]
-        if (!transactionsByDate.has(dateStr)) transactionsByDate.set(dateStr, [])
-        transactionsByDate.get(dateStr).push(date)
-    })
-
-    return transactionsByDate
-}
+const groupTransactionsByDate = dates => dates.reduce(addDateToBucket, new Map())
 
 /*
  * Filter payees based on current account balance to maintain realism
@@ -268,59 +268,82 @@ const createFollowUpTransaction = (generateId, followUp, dateStr, amount) => {
 }
 
 /*
+ * Create a transaction for a single time slot, handling overdraft prevention
+ *
+ * @sig createTransactionForSlot :: (IdGenerator, String, Number, PayeeTemplate) -> TransactionSlotResult
+ *     TransactionSlotResult = { transaction: Transaction, balanceChange: Number }
+ */
+const createTransactionForSlot = (generateId, dateStr, balance, payeeData) => {
+    const amount = addVariation(payeeData.amount)
+
+    // Prevent unrealistic overdrafts by forcing income
+    if (balance + amount < -10000) {
+        const incomePayee = getRandomItem(SAMPLE_PAYEES.filter(p => p.amount > 0))
+        const incomeAmount = addVariation(incomePayee.amount)
+        return {
+            transaction: createTransaction(generateId, incomePayee, dateStr, incomeAmount),
+            balanceChange: incomeAmount,
+        }
+    }
+
+    return { transaction: createTransaction(generateId, payeeData, dateStr, amount), balanceChange: amount }
+}
+
+/*
+ * Process a single date-time slot and accumulate result
+ *
+ * @sig processSlot :: (IdGenerator, String) -> (Accumulator, Date) -> Accumulator
+ *     Accumulator = { transactions: [Transaction], balance: Number }
+ */
+const processSlot = (generateId, dateStr) => (acc, _dateTime) => {
+    const payeeOptions = filterPayeesByBalance(SAMPLE_PAYEES, acc.balance)
+    const payeeData = getRandomItem(payeeOptions)
+    const { transaction, balanceChange } = createTransactionForSlot(generateId, dateStr, acc.balance, payeeData)
+    return { transactions: [...acc.transactions, transaction], balance: acc.balance + balanceChange }
+}
+
+/*
+ * Add cluster follow-up transactions if applicable
+ *
+ * @sig addClusterTransactions :: (IdGenerator, String, [Transaction], Number) -> TransactionResult
+ *     TransactionResult = { transactionsForDate: [Transaction], balance: Number }
+ */
+const addClusterTransactions = (generateId, dateStr, transactions, balance) => {
+    if (transactions.length <= 1) return { transactionsForDate: transactions, balance }
+
+    const cluster = TRANSACTION_CLUSTERS.find(c => c.trigger === transactions[0].payee)
+    if (!cluster || Math.random() >= 0.6) return { transactionsForDate: transactions, balance }
+
+    const followUp = getRandomItem(cluster.followUps)
+    const followUpAmount = addVariation(followUp.amount)
+    if (balance + followUpAmount <= -10000) return { transactionsForDate: transactions, balance }
+
+    const clusterTxn = createFollowUpTransaction(generateId, followUp, dateStr, followUpAmount)
+    return { transactionsForDate: [...transactions, clusterTxn], balance: balance + followUpAmount }
+}
+
+/*
  * Generate transactions for a single date with balance management
  *
  * @sig generateTransactionsForDate :: (IdGenerator, String, [Date], Number) -> TransactionResult
  *     TransactionResult = { transactions: [Transaction], newBalance: Number }
  */
 const generateTransactionsForDate = (generateId, dateStr, dateTimes, currentBalance) => {
-    const processDateTransactions = () => {
-        const transactionsForDate = []
-        let balance = currentBalance
-
-        for (let i = 0; i < dateTimes.length; i++) {
-            const payeeOptions = filterPayeesByBalance(SAMPLE_PAYEES, balance)
-            const payeeData = getRandomItem(payeeOptions)
-            const amount = addVariation(payeeData.amount)
-
-            // Prevent unrealistic overdrafts
-            if (balance + amount < -10000) {
-                const incomePayee = getRandomItem(SAMPLE_PAYEES.filter(p => p.amount > 0))
-                const incomeAmount = addVariation(incomePayee.amount)
-                balance += incomeAmount
-                transactionsForDate.push(createTransaction(generateId, incomePayee, dateStr, incomeAmount))
-            } else {
-                balance += amount
-                transactionsForDate.push(createTransaction(generateId, payeeData, dateStr, amount))
-            }
-        }
-
-        return { transactionsForDate, balance }
-    }
-
-    const processTransactionClusters = (transactionsForDate, balance) => {
-        if (transactionsForDate.length <= 1) return { transactionsForDate, balance }
-
-        const mainTransaction = transactionsForDate[0]
-        const cluster = TRANSACTION_CLUSTERS.find(c => c.trigger === mainTransaction.payee)
-
-        if (!cluster || Math.random() >= 0.6) return { transactionsForDate, balance }
-
-        const followUp = getRandomItem(cluster.followUps)
-        const followUpAmount = addVariation(followUp.amount)
-
-        if (balance + followUpAmount <= -10000) return { transactionsForDate, balance }
-
-        const newBalance = balance + followUpAmount
-        const clusterTransaction = createFollowUpTransaction(generateId, followUp, dateStr, followUpAmount)
-
-        return { transactionsForDate: [...transactionsForDate, clusterTransaction], balance: newBalance }
-    }
-
-    const { transactionsForDate, balance } = processDateTransactions()
-    const result = processTransactionClusters(transactionsForDate, balance)
-
+    const initial = { transactions: [], balance: currentBalance }
+    const { transactions, balance } = dateTimes.reduce(processSlot(generateId, dateStr), initial)
+    const result = addClusterTransactions(generateId, dateStr, transactions, balance)
     return { transactions: result.transactionsForDate, newBalance: result.balance }
+}
+
+/*
+ * Process a date entry and accumulate transactions
+ *
+ * @sig processDateEntryWithId :: (IdGenerator, Accumulator, [String, [Date]]) -> Accumulator
+ *     Accumulator = { transactions: [Transaction], balance: Number }
+ */
+const processDateEntryWithId = (generateId, acc, [dateStr, dateTimes]) => {
+    const result = generateTransactionsForDate(generateId, dateStr, dateTimes, acc.balance)
+    return { transactions: [...acc.transactions, ...result.transactions], balance: result.newBalance }
 }
 
 /*
@@ -333,16 +356,13 @@ const generateRealisticTransactions = (count = 10000) => {
     const dates = generateTransactionDates(count)
     const transactionsByDate = groupTransactionsByDate(dates)
 
-    let currentBalance = 5000.0
-    const allTransactions = []
+    const initial = { transactions: [], balance: 5000.0 }
+    const { transactions } = [...transactionsByDate].reduce(
+        (acc, entry) => processDateEntryWithId(generateId, acc, entry),
+        initial,
+    )
 
-    for (const [dateStr, dateTimes] of transactionsByDate) {
-        const result = generateTransactionsForDate(generateId, dateStr, dateTimes, currentBalance)
-        allTransactions.push(...result.transactions)
-        currentBalance = result.newBalance
-    }
-
-    return LookupTable(allTransactions.slice(0, count), Transaction, 'id')
+    return LookupTable(transactions.slice(0, count), Transaction, 'id')
 }
 
 export { generateRealisticTransactions }

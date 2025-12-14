@@ -37,15 +37,18 @@ const parseDragData = data => {
 // @sig Tab ::  { view: View, groupId: String, isActive: Boolean } -> ReactElement
 const Tab = ({ view, groupId, isActive }) => {
     const handleClick = () => post(Action.SetActiveView(groupId, view.id))
+
     const handleClose = e => {
         e.stopPropagation()
         post(Action.CloseView(view.id, groupId))
     }
+
     const handleDragStart = e => {
         setIsDragging(true)
         e.dataTransfer.setData('application/json', serializeDragData(view.id, groupId))
         e.dataTransfer.effectAllowed = 'move'
     }
+
     const handleDragEnd = () => setIsDragging(false)
 
     const [isDragging, setIsDragging] = useState(false)
@@ -102,9 +105,11 @@ const TabBar = ({ group, groupCount }) => {
         e.dataTransfer.dropEffect = 'move'
         setIsDropTarget(true)
     }
+
     const handleDragLeave = e => {
         if (!e.currentTarget.contains(e.relatedTarget)) setIsDropTarget(false)
     }
+
     // Handle tab drop - move view from source group to this group
     // @sig handleDrop :: DragEvent -> void
     const handleDrop = e => {

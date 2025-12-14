@@ -138,6 +138,7 @@ const activateView = (tabLayout, groupId, viewId) => {
 // @sig openView :: (State, Action.OpenView) -> State
 const openView = (state, action) => {
     const activateExisting = group => ({ ...state, tabLayout: activateView(tabLayout, group.id, view.id) })
+
     const addToGroup = targetId => {
         const layout = updatePath(tabLayout, ['tabGroups', targetId, 'views'], vs => vs.addItemWithId(view))
         return { ...state, tabLayout: activateView(layout, targetId, view.id) }
@@ -153,6 +154,7 @@ const openView = (state, action) => {
 // @sig closeView :: (State, Action.CloseView) -> State
 const closeView = (state, action) => {
     const removeEmptyGroup = () => ({ ...state, tabLayout: removeGroupAndResize(tabLayout, groupId) })
+
     // Updates group with view removed and selects next active view
     // @sig updateGroupWithoutView :: () -> State
     const updateGroupWithoutView = () => {
@@ -190,11 +192,13 @@ const moveView = (state, action) => {
         const activeId = nextActiveViewId(fromGroup, viewId, remainingViews)
         return TabGroup(fromGroup.id, remainingViews, activeId, fromGroup.width)
     }
+
     const addToTarget = () => {
         let views = toGroup.views.addItemWithId(view)
         if (toIndex != null) views = moveViewToIndex(views, viewId, toIndex)
         return TabGroup(toGroup.id, views, view.id, toGroup.width)
     }
+
     const buildLayout = (from, to) => {
         const groups = tabGroups.addItemWithId(from).addItemWithId(to)
         return TabLayout(id, groups, activeTabGroupId, nextTabGroupId)
@@ -245,6 +249,7 @@ const closeTabGroup = (state, action) => {
             target.activeViewId,
             target.width,
         )
+
     // Resizes groups evenly, substituting mergedTarget for its original
     // @sig resizeGroups :: ([TabGroup], TabGroup) -> LookupTable<TabGroup>
     const resizeGroups = (groups, mergedTarget) => {
@@ -254,6 +259,7 @@ const closeTabGroup = (state, action) => {
         )
         return LookupTable(resized, TabGroup, 'id')
     }
+
     const buildLayout = resizedGroups => {
         const activeId = activeTabGroupId === groupId ? resizedGroups[0].id : activeTabGroupId
         return TabLayout(id, resizedGroups, activeId, nextTabGroupId)
