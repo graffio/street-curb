@@ -77,11 +77,21 @@ const stripCommentMarkers = line =>
         .replace(/^\*/, '')
 
 /**
- * Check if line is a substantive comment (has content beyond markers)
+ * Check if line is a directive comment (prettier-ignore, eslint-disable, etc.)
+ * @sig isDirectiveComment :: String -> Boolean
+ */
+const isDirectiveComment = line => {
+    const content = stripCommentMarkers(line).trim().toLowerCase()
+    return content.startsWith('prettier-ignore') || content.startsWith('eslint-')
+}
+
+/**
+ * Check if line is a substantive comment (has content beyond markers and directives)
  * @sig isSubstantiveCommentLine :: String -> Boolean
  */
 const isSubstantiveCommentLine = line => {
     if (!isCommentLine(line.trim())) return false
+    if (isDirectiveComment(line)) return false
     return stripCommentMarkers(line).trim().length > 0
 }
 

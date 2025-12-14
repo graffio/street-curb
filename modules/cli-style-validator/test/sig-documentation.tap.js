@@ -2,8 +2,8 @@
 // ABOUTME: Covers missing @sig, proper @sig placement, and exemptions
 
 import t from 'tap'
-import { checkSigDocumentation } from '../src/lib/rules/sig-documentation.js'
 import { parseCode } from '../src/lib/parser.js'
+import { checkSigDocumentation } from '../src/lib/rules/sig-documentation.js'
 
 t.test('Given functions that require @sig documentation', t => {
     t.test('When a top-level function has no @sig comment', t => {
@@ -208,6 +208,38 @@ const processData = (data) => {
 
         t.equal(violations.length, 1, 'Then one violation should be detected')
         t.match(violations[0].message, /last/, 'Then the message should mention @sig must be last')
+        t.end()
+    })
+
+    t.test('When @sig is followed by prettier-ignore directive', t => {
+        const code = `/**
+         * Process array of data items
+         * @sig processData :: [Item] -> [Item]
+         */
+        //      prettier-ignore
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations (prettier-ignore is allowed after @sig)')
+        t.end()
+    })
+
+    t.test('When @sig is followed by eslint-disable directive', t => {
+        const code = `/**
+         * Process array of data items
+         * @sig processData :: [Item] -> [Item]
+         */
+        // eslint-disable-next-line max-len
+        const processData = (data) => {
+            return data.filter(item => item.active)
+        }`
+        const ast = parseCode(code)
+        const violations = checkSigDocumentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations (eslint directives are allowed after @sig)')
         t.end()
     })
 
