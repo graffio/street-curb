@@ -8,9 +8,12 @@ Run after finishing a feature/task.
    - `modules/curb-map/docs/architecture/` for curb-map
    - `modules/quicken-web-app/docs/architecture/` for quicken-web-app
    - `docs/architecture/` for shared infrastructure patterns
-2. **Outcome summary** → Append to `specifications/completed-specifications.md`
-3. **Delete current-task.json**
-4. **Delete plan file** (e.g., `~/.claude/plans/*.md` used for this feature)
+2. **Quick decisions?** → Append to project-local `docs/decisions.md`:
+   - "We chose X because Y" that doesn't warrant an architecture doc
+   - Format: `### YYYY-MM-DD: Title` + Context/Decision/Why (1 sentence each)
+3. **Outcome summary** → Append to `specifications/completed-specifications.md`
+4. **Delete current-task.json**
+5. **Delete plan file** (e.g., `~/.claude/plans/*.md` used for this feature)
 
 ## Outcome Format
 

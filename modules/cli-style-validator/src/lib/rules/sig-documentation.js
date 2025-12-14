@@ -65,21 +65,34 @@ const isCommentLine = line => {
 }
 
 /**
- * Check if line is a substantive comment (has content beyond markers)
- * @sig isSubstantiveCommentLine :: String -> Boolean
+ * Remove comment markers from a line, returning raw content
+ * @sig stripCommentMarkers :: String -> String
  */
-const isSubstantiveCommentLine = line => {
-    const trimmed = line.trim()
-    if (!isCommentLine(trimmed)) return false
-
-    const withoutMarkers = trimmed
+const stripCommentMarkers = line =>
+    line
+        .trim()
         .replace(/^\/\*\*?/, '')
         .replace(/^\*\//, '')
         .replace(/^\/\//, '')
         .replace(/^\*/, '')
-        .trim()
 
-    return withoutMarkers.length > 0
+/**
+ * Check if line is a substantive comment (has content beyond markers)
+ * @sig isSubstantiveCommentLine :: String -> Boolean
+ */
+const isSubstantiveCommentLine = line => {
+    if (!isCommentLine(line.trim())) return false
+    return stripCommentMarkers(line).trim().length > 0
+}
+
+/**
+ * Check if line is indented continuation of @sig type definition
+ * @sig isSigContinuationLine :: String -> Boolean
+ */
+const isSigContinuationLine = line => {
+    if (!isCommentLine(line.trim())) return false
+    const content = stripCommentMarkers(line)
+    return content.length > 0 && /^\s{4,}/.test(content)
 }
 
 /**
@@ -88,6 +101,7 @@ const isSubstantiveCommentLine = line => {
  */
 const findSigLineIndex = (functionNode, sourceCode) => {
     const isSigLine = line => line.includes('@sig')
+
     const isNonCommentLine = line => {
         const trimmed = line.trim()
         return trimmed && !isCommentLine(trimmed)
@@ -112,6 +126,8 @@ const hasSigDocumentation = (functionNode, sourceCode) => findSigLineIndex(funct
  * @sig isSigLastInCommentBlock :: (ASTNode, String) -> Boolean
  */
 const isSigLastInCommentBlock = (functionNode, sourceCode) => {
+    const isNonContinuationSubstantive = line => isSubstantiveCommentLine(line) && !isSigContinuationLine(line)
+
     const sigLineIndex = findSigLineIndex(functionNode, sourceCode)
     if (sigLineIndex === null) return true
 
@@ -122,7 +138,7 @@ const isSigLastInCommentBlock = (functionNode, sourceCode) => {
         (_, i) => lines[sigLineIndex + 1 + i],
     )
 
-    return !linesBetween.some(isSubstantiveCommentLine)
+    return !linesBetween.some(isNonContinuationSubstantive)
 }
 
 /**
@@ -140,6 +156,7 @@ const hasDescriptionComment = (functionNode, sourceCode) => {
         const trimmed = line.trim()
         return trimmed && !isCommentLine(trimmed)
     }
+
     const checkLineForDescription = (lines, i) => {
         if (isNonCommentLine(lines[i])) return false
         return isDescriptionLine(lines[i])

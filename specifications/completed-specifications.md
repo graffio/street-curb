@@ -332,3 +332,14 @@ This document summarizes the specifications that were previously archived in `sp
 - Excluded test files (*.tap.js, *.integration-test.js) from @sig and single-level-indentation rules
 - Fixed function ordering violations in single-level-indentation.js uncovered by pre-commit hook
 - 96 total validator tests passing
+
+## [infrastructure] Function Spacing Validation (2025-12-13)
+**Purpose:** Enforce visual separation between multiline functions (backlog item 5)
+
+- New function-spacing rule: multiline functions require blank line above
+- Single-line functions can group together without blank lines
+- Rule checks nested functions inside function bodies, not just top-level
+- Fixed @sig validator to recognize indented continuation lines as part of type definition block
+- Applied fixes to TransactionRegisterPage.jsx (@sig ordering, function spacing)
+- 106 total validator tests passing
+- Deferred: fixing all existing function-spacing violations across codebase (item 6)

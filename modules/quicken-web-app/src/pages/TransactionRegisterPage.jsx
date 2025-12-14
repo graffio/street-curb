@@ -35,6 +35,7 @@ const initializeFromColumns = (viewId, columns) => {
 const toTanStackFormat = (tableLayout, idMap) => {
     const toSizingEntry = (reverseMap, col) => [reverseMap[col.id], col.width]
     const hasValidId = ([tanstackId]) => tanstackId
+
     const toSortEntry = (reverseMap, descriptors, id) => {
         const col = descriptors[id]
         if (!col || col.sortDirection === 'none') return null
@@ -117,14 +118,15 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
     }
 
-    // @sig handleKeyDown :: KeyboardEvent -> void
     // Handles Escape (clear search) and Arrow keys (navigate rows/matches)
+    // @sig handleKeyDown :: KeyboardEvent -> void
     const handleKeyDown = event => {
         // @sig handleEscape :: () -> void
         const handleEscape = () => {
             event.preventDefault()
             if (searchQuery) post(Action.SetTransactionFilter({ searchQuery: '', currentSearchIndex: 0 }))
         }
+
         // @sig handleArrow :: () -> void
         const handleArrow = () => {
             event.preventDefault()
@@ -143,8 +145,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         handleArrow()
     }
 
-    // @sig setupInitialDateRangeEffect :: () -> void
     // Sets default date range to last 12 months on first load
+    // @sig setupInitialDateRangeEffect :: () -> void
     const setupInitialDateRangeEffect = () => {
         if (dateRangeKey !== 'lastTwelveMonths' || dateRange) return
 
@@ -155,8 +157,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         post(Action.SetTransactionFilter({ dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
     }
 
-    // @sig updateSorting :: (Updater | SortingState) -> void
     // Converts TanStack sorting state to TableLayout and persists
+    // @sig updateSorting :: (Updater | SortingState) -> void
     const updateSorting = updater => {
         // @sig applySort :: ColumnDescriptor -> ColumnDescriptor
         const applySort = col => {
@@ -173,8 +175,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         post(Action.SetTableLayout(newLayout))
     }
 
-    // @sig updateColumnSizing :: (Updater | SizingState) -> void
     // Converts TanStack column sizing to TableLayout and persists
+    // @sig updateColumnSizing :: (Updater | SizingState) -> void
     const updateColumnSizing = updater => {
         const applyWidth = col => {
             const tanstackId = Object.entries(idMap).find(([, v]) => v === col.id)?.[0]
@@ -192,8 +194,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         post(Action.SetTableLayout(newLayout))
     }
 
-    // @sig updateColumnOrder :: [String] -> void
     // Reorders columns in TableLayout based on TanStack column order
+    // @sig updateColumnOrder :: [String] -> void
     const updateColumnOrder = newOrder => {
         const toDescriptor = tanstackId => tableLayout.columnDescriptors[idMap[tanstackId]]
 
@@ -221,8 +223,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
     // computation functions
     // -----------------------------------------------------------------------------------------------------------------
 
-    // @sig compareStringsOrNumbers :: (a, b) -> Number
     // Returns -1, 0, or 1 for sorting; handles both strings and numbers
+    // @sig compareStringsOrNumbers :: (a, b) -> Number
     const compareStringsOrNumbers = (aVal, bVal) => {
         if (typeof aVal === 'string' && typeof bVal === 'string')
             return aVal.localeCompare(bVal, undefined, { sensitivity: 'base' })
@@ -235,9 +237,12 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
 
     const computeData = () => calculateRunningBalances(filteredTransactions, startingBalance)
 
-    // @sig computeSortedSearchMatches :: () -> [String]
     // Returns search match IDs sorted by current table sort order
+    // @sig computeSortedSearchMatches :: () -> [String]
     const computeSortedSearchMatches = () => {
+        const compareBySort = (a, b) => sorting.reduce((result, spec) => compareBySortKey(a, b, result, spec), 0)
+        const byPosition = (idA, idB) => (positionMap.get(idA) ?? 0) - (positionMap.get(idB) ?? 0)
+
         // @sig compareBySortKey :: (Object, Object, Number, {id: String, desc: Boolean}) -> Number
         const compareBySortKey = (a, b, result, { id, desc }) => {
             if (result !== 0) return result
@@ -245,8 +250,6 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
             const cmp = compareStringsOrNumbers(a[key] ?? '', b[key] ?? '')
             return desc ? -cmp : cmp
         }
-        const compareBySort = (a, b) => sorting.reduce((result, spec) => compareBySortKey(a, b, result, spec), 0)
-        const byPosition = (idA, idB) => (positionMap.get(idA) ?? 0) - (positionMap.get(idB) ?? 0)
 
         if (searchMatches.length === 0 || sorting.length === 0) return searchMatches
 
