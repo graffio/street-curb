@@ -1,6 +1,8 @@
 // ABOUTME: Rule to detect lines exceeding 120 characters
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
+import { traverseAST } from '../traverse.js'
+
 const PRIORITY = 3
 
 /**
@@ -19,60 +21,95 @@ const createViolation = (line, column) => ({
 })
 
 /**
- * Check if trimmed line is a block boundary (blank line)
- * @sig isBlockBoundary :: String -> Boolean
+ * Check if line is a comment line
+ * @sig isCommentLine :: String -> Boolean
  */
-const isBlockBoundary = trimmed => trimmed === ''
+const isCommentLine = line => {
+    const trimmed = line.trim()
+    return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')
+}
 
 /**
- * Check if trimmed line contains prettier-ignore directive
+ * Check if line contains prettier-ignore directive
  * @sig hasPrettierIgnore :: String -> Boolean
  */
-const hasPrettierIgnore = trimmed => trimmed.includes('prettier-ignore')
+const hasPrettierIgnore = line => line.includes('prettier-ignore')
 
 /**
- * Get lines to scan backwards (up to 30 lines before index)
- * @sig getLinesToScan :: ([String], Number) -> [String]
+ * Check if line is a boundary (blank or non-comment)
+ * @sig isBoundaryLine :: String -> Boolean
  */
-const getLinesToScan = (lines, index) => {
-    const start = Math.max(0, index - 30)
-    return lines.slice(start, index).reverse()
+const isBoundaryLine = line => line.trim() === '' || !isCommentLine(line)
+
+/**
+ * Get preceding comment lines up to boundary (blank or non-comment)
+ * @sig getPrecedingCommentLines :: ([String], Number) -> [String]
+ */
+const getPrecedingCommentLines = (lines, startIndex) => {
+    const preceding = lines.slice(0, startIndex).reverse()
+    const boundaryIndex = preceding.findIndex(isBoundaryLine)
+    return boundaryIndex === -1 ? preceding : preceding.slice(0, boundaryIndex)
 }
 
 /**
- * Check if line is within a prettier-ignored block
- * Scans backwards to find prettier-ignore, stops at blank lines
- * @sig isPrettierIgnored :: ([String], Number) -> Boolean
+ * Check if a node has prettier-ignore in its preceding comments
+ * @sig nodeHasPrettierIgnore :: (ASTNode, [String]) -> Boolean
  */
-const isPrettierIgnored = (lines, index) => {
-    const toScan = getLinesToScan(lines, index)
-    const blockEnd = toScan.findIndex(line => isBlockBoundary(line.trim()))
-    const searchRange = blockEnd === -1 ? toScan : toScan.slice(0, blockEnd)
-    return searchRange.some(line => hasPrettierIgnore(line.trim()))
+const nodeHasPrettierIgnore = (node, lines) => {
+    if (!node.loc) return false
+    const nodeStartLine = node.loc.start.line - 1
+    const precedingLines = getPrecedingCommentLines(lines, nodeStartLine)
+    return precedingLines.some(hasPrettierIgnore)
 }
 
 /**
- * Process line for length violations
- * @sig processLineForLength :: (String, Number, [Violation], [String]) -> Void
+ * Generate array of line numbers from start to end (inclusive)
+ * @sig lineRange :: (Number, Number) -> [Number]
  */
-const processLineForLength = (line, index, violations, allLines) => {
-    if (line.length <= 120) return
-    if (isPrettierIgnored(allLines, index)) return
+const lineRange = (start, end) => Array.from({ length: end - start + 1 }, (_, i) => start + i)
 
-    violations.push(createViolation(index + 1, 121))
+/**
+ * Get line numbers covered by a node
+ * @sig getNodeLineNumbers :: ASTNode -> [Number]
+ */
+const getNodeLineNumbers = node => (node.loc ? lineRange(node.loc.start.line, node.loc.end.line) : [])
+
+/**
+ * Process node for prettier-ignore and collect ignored lines
+ * @sig collectIgnoredLines :: ([String], ASTNode) -> [Number]
+ */
+const collectIgnoredLines = (lines, node) => (nodeHasPrettierIgnore(node, lines) ? getNodeLineNumbers(node) : [])
+
+/**
+ * Build set of line numbers that are prettier-ignored via AST analysis
+ * @sig buildIgnoredLinesSet :: (AST, [String]) -> Set<Number>
+ */
+const buildIgnoredLinesSet = (ast, lines) => {
+    if (!ast) return new Set()
+
+    const allIgnored = []
+    traverseAST(ast, node => allIgnored.push(...collectIgnoredLines(lines, node)))
+    return new Set(allIgnored)
 }
+
+/**
+ * Check if a line should trigger a violation
+ * @sig shouldReportLine :: (String, Number, Set<Number>) -> Boolean
+ */
+const shouldReportLine = (line, lineNumber, ignoredLines) => line.length > 120 && !ignoredLines.has(lineNumber)
 
 /**
  * Check for line length violations (coding standards: max 120 characters)
  * @sig checkLineLength :: (AST?, String, String) -> [Violation]
  */
 const checkLineLength = (ast, sourceCode, filePath) => {
-    const violations = []
     const lines = sourceCode.split('\n')
+    const ignoredLines = buildIgnoredLinesSet(ast, lines)
 
-    lines.forEach((line, index) => processLineForLength(line, index, violations, lines))
-
-    return violations
+    return lines
+        .map((line, index) => ({ line, lineNumber: index + 1 }))
+        .filter(({ line, lineNumber }) => shouldReportLine(line, lineNumber, ignoredLines))
+        .map(({ lineNumber }) => createViolation(lineNumber, 121))
 }
 
 export { checkLineLength }
