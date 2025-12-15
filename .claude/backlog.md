@@ -18,4 +18,4 @@
 ## Code generation
 
 9. [ ] Modify type generator to handle optional regexes imported from FieldTypes
-10. [ ] Generate code that complies with style validator
+10. [x] Generate code that complies with style validator
