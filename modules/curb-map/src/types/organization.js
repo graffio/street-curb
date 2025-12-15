@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Organization
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/organization.type.js - do not edit manually
+
 /** {@link module:Organization} */
 /*  Organization generated from: modules/curb-map/type-definitions/organization.type.js
  *
@@ -25,6 +28,10 @@ import { LookupTable } from '@graffio/functional'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Organization instance
+ * @sig Organization :: ([Object], String, [Object], {Member}, Date, [Object], Date, [Object], Date?, String?) -> Organization
+ */
 const Organization = function Organization(
     id,
     name,
@@ -67,32 +74,46 @@ const Organization = function Organization(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig organizationToString :: () -> String
+ */
+const organizationToString = function () {
+    return `Organization(
+        ${R._toString(this.id)},
+        ${R._toString(this.name)},
+        ${R._toString(this.defaultProjectId)},
+        ${R._toString(this.members)},
+        ${R._toString(this.createdAt)},
+        ${R._toString(this.createdBy)},
+        ${R._toString(this.updatedAt)},
+        ${R._toString(this.updatedBy)},
+        ${R._toString(this.deletedAt)},
+        ${R._toString(this.deletedBy)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig organizationToJSON :: () -> Object
+ */
+const organizationToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Organization', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Organization(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.defaultProjectId)}, ${R._toString(this.members)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)}, ${R._toString(this.deletedAt)}, ${R._toString(this.deletedBy)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Organization,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: organizationToString, enumerable: false },
+    toJSON: { value: organizationToJSON, enumerable: false },
+    constructor: { value: Organization, enumerable: false, writable: true, configurable: true },
 })
 
 Organization.prototype = prototype
@@ -105,19 +126,21 @@ Organization.prototype = prototype
 Organization.toString = () => 'Organization'
 Organization.is = v => v && v['@@typeName'] === 'Organization'
 
-Organization._from = o =>
-    Organization(
-        o.id,
-        o.name,
-        o.defaultProjectId,
-        o.members,
-        o.createdAt,
-        o.createdBy,
-        o.updatedAt,
-        o.updatedBy,
-        o.deletedAt,
-        o.deletedBy,
+Organization._from = o => {
+    const { id, name, defaultProjectId, members, createdAt, createdBy, updatedAt, updatedBy, deletedAt, deletedBy } = o
+    return Organization(
+        id,
+        name,
+        defaultProjectId,
+        members,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+        deletedAt,
+        deletedBy,
     )
+}
 Organization.from = Organization._from
 
 Organization._toFirestore = (o, encodeTimestamps) => {

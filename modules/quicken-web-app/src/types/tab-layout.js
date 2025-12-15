@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for TabLayout
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/tab-layout.type.js - do not edit manually
+
 /** {@link module:TabLayout} */
 /*  TabLayout generated from: modules/quicken-web-app/type-definitions/tab-layout.type.js
  *
@@ -19,6 +22,10 @@ import { TabGroup } from './tab-group.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a TabLayout instance
+ * @sig TabLayout :: ([Object], {TabGroup}, [Object], Number) -> TabLayout
+ */
 const TabLayout = function TabLayout(id, tabGroups, activeTabGroupId, nextTabGroupId) {
     const constructorName = 'TabLayout(id, tabGroups, activeTabGroupId, nextTabGroupId)'
     R.validateArgumentLength(constructorName, 4, arguments)
@@ -37,32 +44,40 @@ const TabLayout = function TabLayout(id, tabGroups, activeTabGroupId, nextTabGro
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig tablayoutToString :: () -> String
+ */
+const tablayoutToString = function () {
+    return `TabLayout(
+        ${R._toString(this.id)},
+        ${R._toString(this.tabGroups)},
+        ${R._toString(this.activeTabGroupId)},
+        ${R._toString(this.nextTabGroupId)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig tablayoutToJSON :: () -> Object
+ */
+const tablayoutToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'TabLayout', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `TabLayout(${R._toString(this.id)}, ${R._toString(this.tabGroups)}, ${R._toString(this.activeTabGroupId)}, ${R._toString(this.nextTabGroupId)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TabLayout,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: tablayoutToString, enumerable: false },
+    toJSON: { value: tablayoutToJSON, enumerable: false },
+    constructor: { value: TabLayout, enumerable: false, writable: true, configurable: true },
 })
 
 TabLayout.prototype = prototype
@@ -75,7 +90,10 @@ TabLayout.prototype = prototype
 TabLayout.toString = () => 'TabLayout'
 TabLayout.is = v => v && v['@@typeName'] === 'TabLayout'
 
-TabLayout._from = o => TabLayout(o.id, o.tabGroups, o.activeTabGroupId, o.nextTabGroupId)
+TabLayout._from = o => {
+    const { id, tabGroups, activeTabGroupId, nextTabGroupId } = o
+    return TabLayout(id, tabGroups, activeTabGroupId, nextTabGroupId)
+}
 TabLayout.from = TabLayout._from
 
 TabLayout._toFirestore = (o, encodeTimestamps) => {

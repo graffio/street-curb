@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Lot
+// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/lot.type.js - do not edit manually
+
 /** {@link module:Lot} */
 /*  Lot generated from: modules/cli-qif-to-sqlite/type-definitions/lot.type.js
  *
@@ -21,6 +24,14 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Lot instance
+ * @sig Lot :: (AccountId, Number, String, Id, String, Number, Number, SecurityId, CreatedByTransactionId, String?) -> Lot
+ *     AccountId = /^acc_[a-f0-9]{12}$/
+ *     Id = /^lot_[a-f0-9]{12}$/
+ *     SecurityId = /^sec_[a-f0-9]{12}$/
+ *     CreatedByTransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
+ */
 const Lot = function Lot(
     accountId,
     costBasis,
@@ -69,32 +80,46 @@ const Lot = function Lot(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig lotToString :: () -> String
+ */
+const lotToString = function () {
+    return `Lot(
+        ${R._toString(this.accountId)},
+        ${R._toString(this.costBasis)},
+        ${R._toString(this.createdAt)},
+        ${R._toString(this.id)},
+        ${R._toString(this.purchaseDate)},
+        ${R._toString(this.quantity)},
+        ${R._toString(this.remainingQuantity)},
+        ${R._toString(this.securityId)},
+        ${R._toString(this.createdByTransactionId)},
+        ${R._toString(this.closedDate)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig lotToJSON :: () -> Object
+ */
+const lotToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Lot', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Lot(${R._toString(this.accountId)}, ${R._toString(this.costBasis)}, ${R._toString(this.createdAt)}, ${R._toString(this.id)}, ${R._toString(this.purchaseDate)}, ${R._toString(this.quantity)}, ${R._toString(this.remainingQuantity)}, ${R._toString(this.securityId)}, ${R._toString(this.createdByTransactionId)}, ${R._toString(this.closedDate)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Lot,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: lotToString, enumerable: false },
+    toJSON: { value: lotToJSON, enumerable: false },
+    constructor: { value: Lot, enumerable: false, writable: true, configurable: true },
 })
 
 Lot.prototype = prototype
@@ -107,19 +132,32 @@ Lot.prototype = prototype
 Lot.toString = () => 'Lot'
 Lot.is = v => v && v['@@typeName'] === 'Lot'
 
-Lot._from = o =>
-    Lot(
-        o.accountId,
-        o.costBasis,
-        o.createdAt,
-        o.id,
-        o.purchaseDate,
-        o.quantity,
-        o.remainingQuantity,
-        o.securityId,
-        o.createdByTransactionId,
-        o.closedDate,
+Lot._from = o => {
+    const {
+        accountId,
+        costBasis,
+        createdAt,
+        id,
+        purchaseDate,
+        quantity,
+        remainingQuantity,
+        securityId,
+        createdByTransactionId,
+        closedDate,
+    } = o
+    return Lot(
+        accountId,
+        costBasis,
+        createdAt,
+        id,
+        purchaseDate,
+        quantity,
+        remainingQuantity,
+        securityId,
+        createdByTransactionId,
+        closedDate,
     )
+}
 Lot.from = Lot._from
 
 Lot._toFirestore = (o, encodeTimestamps) => ({ ...o })

@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for ImportInfo
+// ABOUTME: Auto-generated from modules/cli-type-generator/type-definitions/import-info.type.js - do not edit manually
+
 /** {@link module:ImportInfo} */
 /*  ImportInfo generated from: modules/cli-type-generator/type-definitions/import-info.type.js
  *
@@ -15,6 +18,10 @@ import { Array } from './array.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a ImportInfo instance
+ * @sig ImportInfo :: (String, Array) -> ImportInfo
+ */
 const ImportInfo = function ImportInfo(source, specifiers) {
     const constructorName = 'ImportInfo(source, specifiers)'
     R.validateArgumentLength(constructorName, 2, arguments)
@@ -29,32 +36,35 @@ const ImportInfo = function ImportInfo(source, specifiers) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig importinfoToString :: () -> String
+ */
+const importinfoToString = function () {
+    return `ImportInfo(${R._toString(this.source)}, ${R._toString(this.specifiers)})`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig importinfoToJSON :: () -> Object
+ */
+const importinfoToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'ImportInfo', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `ImportInfo(${R._toString(this.source)}, ${R._toString(this.specifiers)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: ImportInfo,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: importinfoToString, enumerable: false },
+    toJSON: { value: importinfoToJSON, enumerable: false },
+    constructor: { value: ImportInfo, enumerable: false, writable: true, configurable: true },
 })
 
 ImportInfo.prototype = prototype

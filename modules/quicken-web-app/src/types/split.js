@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Split
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/split.type.js - do not edit manually
+
 /** {@link module:Split} */
 /*  Split generated from: modules/quicken-web-app/type-definitions/split.type.js
  *
@@ -16,6 +19,11 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Split instance
+ * @sig Split :: (String, TransactionId, String?, Number, String?) -> Split
+ *     TransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
+ */
 const Split = function Split(id, transactionId, categoryId, amount, memo) {
     const constructorName = 'Split(id, transactionId, categoryId, amount, memo)'
 
@@ -36,32 +44,41 @@ const Split = function Split(id, transactionId, categoryId, amount, memo) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig splitToString :: () -> String
+ */
+const splitToString = function () {
+    return `Split(
+        ${R._toString(this.id)},
+        ${R._toString(this.transactionId)},
+        ${R._toString(this.categoryId)},
+        ${R._toString(this.amount)},
+        ${R._toString(this.memo)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig splitToJSON :: () -> Object
+ */
+const splitToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Split', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Split(${R._toString(this.id)}, ${R._toString(this.transactionId)}, ${R._toString(this.categoryId)}, ${R._toString(this.amount)}, ${R._toString(this.memo)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Split,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: splitToString, enumerable: false },
+    toJSON: { value: splitToJSON, enumerable: false },
+    constructor: { value: Split, enumerable: false, writable: true, configurable: true },
 })
 
 Split.prototype = prototype
@@ -74,7 +91,10 @@ Split.prototype = prototype
 Split.toString = () => 'Split'
 Split.is = v => v && v['@@typeName'] === 'Split'
 
-Split._from = o => Split(o.id, o.transactionId, o.categoryId, o.amount, o.memo)
+Split._from = o => {
+    const { id, transactionId, categoryId, amount, memo } = o
+    return Split(id, transactionId, categoryId, amount, memo)
+}
 Split.from = Split._from
 
 Split._toFirestore = (o, encodeTimestamps) => ({ ...o })

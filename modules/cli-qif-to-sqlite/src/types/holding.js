@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Holding
+// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/holding.type.js - do not edit manually
+
 /** {@link module:Holding} */
 /*  Holding generated from: modules/cli-qif-to-sqlite/type-definitions/holding.type.js
  *
@@ -17,6 +20,12 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Holding instance
+ * @sig Holding :: (AccountId, Number, Number, String, Number, SecurityId) -> Holding
+ *     AccountId = /^acc_[a-f0-9]{12}$/
+ *     SecurityId = /^sec_[a-f0-9]{12}$/
+ */
 const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId) {
     const constructorName = 'Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)'
     R.validateArgumentLength(constructorName, 6, arguments)
@@ -39,32 +48,42 @@ const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpda
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig holdingToString :: () -> String
+ */
+const holdingToString = function () {
+    return `Holding(
+        ${R._toString(this.accountId)},
+        ${R._toString(this.avgCostPerShare)},
+        ${R._toString(this.costBasis)},
+        ${R._toString(this.lastUpdated)},
+        ${R._toString(this.quantity)},
+        ${R._toString(this.securityId)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig holdingToJSON :: () -> Object
+ */
+const holdingToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Holding', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Holding(${R._toString(this.accountId)}, ${R._toString(this.avgCostPerShare)}, ${R._toString(this.costBasis)}, ${R._toString(this.lastUpdated)}, ${R._toString(this.quantity)}, ${R._toString(this.securityId)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Holding,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: holdingToString, enumerable: false },
+    toJSON: { value: holdingToJSON, enumerable: false },
+    constructor: { value: Holding, enumerable: false, writable: true, configurable: true },
 })
 
 Holding.prototype = prototype
@@ -77,7 +96,10 @@ Holding.prototype = prototype
 Holding.toString = () => 'Holding'
 Holding.is = v => v && v['@@typeName'] === 'Holding'
 
-Holding._from = o => Holding(o.accountId, o.avgCostPerShare, o.costBasis, o.lastUpdated, o.quantity, o.securityId)
+Holding._from = o => {
+    const { accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId } = o
+    return Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)
+}
 Holding.from = Holding._from
 
 Holding._toFirestore = (o, encodeTimestamps) => ({ ...o })

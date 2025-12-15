@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for FilterSpec
+// ABOUTME: Auto-generated from modules/functional/type-definitions/filter-spec.type.js - do not edit manually
+
 /*  FilterSpec generated from: modules/functional/type-definitions/filter-spec.type.js
  *
  *  TextMatch
@@ -25,16 +28,6 @@ import * as R from '@graffio/cli-type-generator'
 // -------------------------------------------------------------------------------------------------------------
 const FilterSpec = {
     toString: () => 'FilterSpec',
-    is: v => {
-        if (typeof v !== 'object') return false
-        const constructor = Object.getPrototypeOf(v).constructor
-        return (
-            constructor === FilterSpec.TextMatch ||
-            constructor === FilterSpec.DateRange ||
-            constructor === FilterSpec.CategoryMatch ||
-            constructor === FilterSpec.Compound
-        )
-    },
 }
 
 // Add hidden properties
@@ -66,6 +59,26 @@ FilterSpec.prototype = FilterSpecPrototype
 // Variant FilterSpec.TextMatch
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig textMatchToString :: () -> String
+ */
+const textMatchToString = function () {
+    return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig textMatchToJSON :: () -> Object
+ */
+const textMatchToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a FilterSpec.TextMatch instance
+ * @sig TextMatch :: ([String], String) -> FilterSpec.TextMatch
+ */
 const TextMatchConstructor = function TextMatch(fields, query) {
     const constructorName = 'FilterSpec.TextMatch(fields, query)'
     R.validateArgumentLength(constructorName, 2, arguments)
@@ -83,27 +96,9 @@ FilterSpec.TextMatch = TextMatchConstructor
 const TextMatchPrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'TextMatch', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TextMatchConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: textMatchToString, enumerable: false },
+    toJSON: { value: textMatchToJSON, enumerable: false },
+    constructor: { value: TextMatchConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 TextMatchConstructor.prototype = TextMatchPrototype
@@ -120,6 +115,26 @@ TextMatchConstructor.fromFirestore = TextMatchConstructor._from
 // Variant FilterSpec.DateRange
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig dateRangeToString :: () -> String
+ */
+const dateRangeToString = function () {
+    return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig dateRangeToJSON :: () -> Object
+ */
+const dateRangeToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a FilterSpec.DateRange instance
+ * @sig DateRange :: (String, Date, Date) -> FilterSpec.DateRange
+ */
 const DateRangeConstructor = function DateRange(field, start, end) {
     const constructorName = 'FilterSpec.DateRange(field, start, end)'
     R.validateArgumentLength(constructorName, 3, arguments)
@@ -139,47 +154,45 @@ FilterSpec.DateRange = DateRangeConstructor
 const DateRangePrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'DateRange', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: DateRangeConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: dateRangeToString, enumerable: false },
+    toJSON: { value: dateRangeToJSON, enumerable: false },
+    constructor: { value: DateRangeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 DateRangeConstructor.prototype = DateRangePrototype
 DateRangeConstructor.is = val => val && val.constructor === DateRangeConstructor
 DateRangeConstructor.toString = () => 'FilterSpec.DateRange'
-DateRangeConstructor._from = o => FilterSpec.DateRange(o.field, o.start, o.end)
+DateRangeConstructor._from = o => {
+    const { field, start, end } = o
+    return FilterSpec.DateRange(field, start, end)
+}
 DateRangeConstructor.from = DateRangeConstructor._from
 
-DateRangeConstructor._toFirestore = (o, encodeTimestamps) => ({
-    field: o.field,
-    start: encodeTimestamps(o.start),
-    end: encodeTimestamps(o.end),
-})
+/**
+ * Serialize to Firestore format
+ * @sig _toFirestore :: (DateRange, Function) -> Object
+ */
+DateRangeConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { field, start, end } = o
+    return {
+        field: field,
+        start: encodeTimestamps(start),
+        end: encodeTimestamps(end),
+    }
+}
 
-DateRangeConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    DateRangeConstructor._from({
-        field: doc.field,
-        start: decodeTimestamps(doc.start),
-        end: decodeTimestamps(doc.end),
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> DateRange
+ */
+DateRangeConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { field, start, end } = doc
+    return DateRangeConstructor._from({
+        field: field,
+        start: decodeTimestamps(start),
+        end: decodeTimestamps(end),
     })
+}
 
 // Public aliases (can be overridden)
 DateRangeConstructor.toFirestore = DateRangeConstructor._toFirestore
@@ -190,6 +203,26 @@ DateRangeConstructor.fromFirestore = DateRangeConstructor._fromFirestore
 // Variant FilterSpec.CategoryMatch
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig categoryMatchToString :: () -> String
+ */
+const categoryMatchToString = function () {
+    return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig categoryMatchToJSON :: () -> Object
+ */
+const categoryMatchToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a FilterSpec.CategoryMatch instance
+ * @sig CategoryMatch :: (String, [String]) -> FilterSpec.CategoryMatch
+ */
 const CategoryMatchConstructor = function CategoryMatch(field, categories) {
     const constructorName = 'FilterSpec.CategoryMatch(field, categories)'
     R.validateArgumentLength(constructorName, 2, arguments)
@@ -207,27 +240,9 @@ FilterSpec.CategoryMatch = CategoryMatchConstructor
 const CategoryMatchPrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'CategoryMatch', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: CategoryMatchConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: categoryMatchToString, enumerable: false },
+    toJSON: { value: categoryMatchToJSON, enumerable: false },
+    constructor: { value: CategoryMatchConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 CategoryMatchConstructor.prototype = CategoryMatchPrototype
@@ -244,6 +259,27 @@ CategoryMatchConstructor.fromFirestore = CategoryMatchConstructor._from
 // Variant FilterSpec.Compound
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig compoundToString :: () -> String
+ */
+const compoundToString = function () {
+    return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig compoundToJSON :: () -> Object
+ */
+const compoundToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a FilterSpec.Compound instance
+ * @sig Compound :: ([FilterSpec], Mode) -> FilterSpec.Compound
+ *     Mode = /^(all|any)$/
+ */
 const CompoundConstructor = function Compound(filters, mode) {
     const constructorName = 'FilterSpec.Compound(filters, mode)'
     R.validateArgumentLength(constructorName, 2, arguments)
@@ -261,27 +297,9 @@ FilterSpec.Compound = CompoundConstructor
 const CompoundPrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'Compound', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: CompoundConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: compoundToString, enumerable: false },
+    toJSON: { value: compoundToJSON, enumerable: false },
+    constructor: { value: CompoundConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 CompoundConstructor.prototype = CompoundPrototype
@@ -290,35 +308,74 @@ CompoundConstructor.toString = () => 'FilterSpec.Compound'
 CompoundConstructor._from = o => FilterSpec.Compound(o.filters, o.mode)
 CompoundConstructor.from = CompoundConstructor._from
 
-CompoundConstructor._toFirestore = (o, encodeTimestamps) => ({
-    filters: o.filters.map(item1 => FilterSpec.toFirestore(item1, encodeTimestamps)),
-    mode: o.mode,
-})
+/**
+ * Serialize to Firestore format
+ * @sig _toFirestore :: (Compound, Function) -> Object
+ */
+CompoundConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { filters, mode } = o
+    return {
+        filters: filters.map(item1 => FilterSpec.toFirestore(item1, encodeTimestamps)),
+        mode: mode,
+    }
+}
 
-CompoundConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    CompoundConstructor._from({
-        filters: doc.filters.map(item1 =>
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> Compound
+ */
+CompoundConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { filters, mode } = doc
+    return CompoundConstructor._from({
+        filters: filters.map(item1 =>
             FilterSpec.fromFirestore ? FilterSpec.fromFirestore(item1, decodeTimestamps) : FilterSpec.from(item1),
         ),
-        mode: doc.mode,
+        mode: mode,
     })
+}
 
 // Public aliases (can be overridden)
 CompoundConstructor.toFirestore = CompoundConstructor._toFirestore
 CompoundConstructor.fromFirestore = CompoundConstructor._fromFirestore
 
+// Define is method after variants are attached (allows destructuring)
+/**
+ * Check if value is a FilterSpec instance
+ * @sig is :: Any -> Boolean
+ */
+FilterSpec.is = v => {
+    const { TextMatch, DateRange, CategoryMatch, Compound } = FilterSpec
+    if (typeof v !== 'object') return false
+    const constructor = Object.getPrototypeOf(v).constructor
+    return (
+        constructor === TextMatch ||
+        constructor === DateRange ||
+        constructor === CategoryMatch ||
+        constructor === Compound
+    )
+}
+
+/**
+ * Serialize FilterSpec to Firestore format
+ * @sig _toFirestore :: (FilterSpec, Function) -> Object
+ */
 FilterSpec._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
     const variant = FilterSpec[tagName]
     return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
 }
 
+/**
+ * Deserialize FilterSpec from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> FilterSpec
+ */
 FilterSpec._fromFirestore = (doc, decodeTimestamps) => {
+    const { TextMatch, DateRange, CategoryMatch, Compound } = FilterSpec
     const tagName = doc['@@tagName']
-    if (tagName === 'TextMatch') return FilterSpec.TextMatch.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'DateRange') return FilterSpec.DateRange.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'CategoryMatch') return FilterSpec.CategoryMatch.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Compound') return FilterSpec.Compound.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'TextMatch') return TextMatch.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'DateRange') return DateRange.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'CategoryMatch') return CategoryMatch.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Compound') return Compound.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized FilterSpec variant: ${tagName}`)
 }
 

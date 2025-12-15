@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for TabGroup
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/tab-group.type.js - do not edit manually
+
 /** {@link module:TabGroup} */
 /*  TabGroup generated from: modules/quicken-web-app/type-definitions/tab-group.type.js
  *
@@ -19,6 +22,11 @@ import { View } from './view.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a TabGroup instance
+ * @sig TabGroup :: ([Object], {View}, ActiveViewId?, Number) -> TabGroup
+ *     ActiveViewId = /^(reg|rpt|rec)_[a-z0-9_]+$/
+ */
 const TabGroup = function TabGroup(id, views, activeViewId, width) {
     const constructorName = 'TabGroup(id, views, activeViewId, width)'
 
@@ -37,32 +45,40 @@ const TabGroup = function TabGroup(id, views, activeViewId, width) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig tabgroupToString :: () -> String
+ */
+const tabgroupToString = function () {
+    return `TabGroup(
+        ${R._toString(this.id)},
+        ${R._toString(this.views)},
+        ${R._toString(this.activeViewId)},
+        ${R._toString(this.width)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig tabgroupToJSON :: () -> Object
+ */
+const tabgroupToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'TabGroup', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `TabGroup(${R._toString(this.id)}, ${R._toString(this.views)}, ${R._toString(this.activeViewId)}, ${R._toString(this.width)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TabGroup,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: tabgroupToString, enumerable: false },
+    toJSON: { value: tabgroupToJSON, enumerable: false },
+    constructor: { value: TabGroup, enumerable: false, writable: true, configurable: true },
 })
 
 TabGroup.prototype = prototype
@@ -75,7 +91,10 @@ TabGroup.prototype = prototype
 TabGroup.toString = () => 'TabGroup'
 TabGroup.is = v => v && v['@@typeName'] === 'TabGroup'
 
-TabGroup._from = o => TabGroup(o.id, o.views, o.activeViewId, o.width)
+TabGroup._from = o => {
+    const { id, views, activeViewId, width } = o
+    return TabGroup(id, views, activeViewId, width)
+}
 TabGroup.from = TabGroup._from
 
 TabGroup._toFirestore = (o, encodeTimestamps) => {

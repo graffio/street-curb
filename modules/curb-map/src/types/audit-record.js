@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for AuditRecord
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/audit-record.type.js - do not edit manually
+
 /** {@link module:AuditRecord} */
 /*  AuditRecord generated from: modules/curb-map/type-definitions/audit-record.type.js
  *
@@ -28,6 +31,11 @@ import { OperationDetails } from './operation-details.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a AuditRecord instance
+ * @sig AuditRecord :: ([Object], [Object], [Object], [Object], [Object], [Object], Outcome, [Object], [Object], OperationDetails, String?, [Object], [Object]) -> AuditRecord
+ *     Outcome = /^(success|failure|pending)$/
+ */
 const AuditRecord = function AuditRecord(
     id,
     timestamp,
@@ -79,32 +87,49 @@ const AuditRecord = function AuditRecord(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig auditrecordToString :: () -> String
+ */
+const auditrecordToString = function () {
+    return `AuditRecord(
+        ${R._toString(this.id)},
+        ${R._toString(this.timestamp)},
+        ${R._toString(this.eventType)},
+        ${R._toString(this.userId)},
+        ${R._toString(this.resource)},
+        ${R._toString(this.action)},
+        ${R._toString(this.outcome)},
+        ${R._toString(this.sourceIP)},
+        ${R._toString(this.auditVersion)},
+        ${R._toString(this.operationDetails)},
+        ${R._toString(this.errorMessage)},
+        ${R._toString(this.correlationId)},
+        ${R._toString(this.environment)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig auditrecordToJSON :: () -> Object
+ */
+const auditrecordToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'AuditRecord', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `AuditRecord(${R._toString(this.id)}, ${R._toString(this.timestamp)}, ${R._toString(this.eventType)}, ${R._toString(this.userId)}, ${R._toString(this.resource)}, ${R._toString(this.action)}, ${R._toString(this.outcome)}, ${R._toString(this.sourceIP)}, ${R._toString(this.auditVersion)}, ${R._toString(this.operationDetails)}, ${R._toString(this.errorMessage)}, ${R._toString(this.correlationId)}, ${R._toString(this.environment)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: AuditRecord,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: auditrecordToString, enumerable: false },
+    toJSON: { value: auditrecordToJSON, enumerable: false },
+    constructor: { value: AuditRecord, enumerable: false, writable: true, configurable: true },
 })
 
 AuditRecord.prototype = prototype
@@ -117,22 +142,38 @@ AuditRecord.prototype = prototype
 AuditRecord.toString = () => 'AuditRecord'
 AuditRecord.is = v => v && v['@@typeName'] === 'AuditRecord'
 
-AuditRecord._from = o =>
-    AuditRecord(
-        o.id,
-        o.timestamp,
-        o.eventType,
-        o.userId,
-        o.resource,
-        o.action,
-        o.outcome,
-        o.sourceIP,
-        o.auditVersion,
-        o.operationDetails,
-        o.errorMessage,
-        o.correlationId,
-        o.environment,
+AuditRecord._from = o => {
+    const {
+        id,
+        timestamp,
+        eventType,
+        userId,
+        resource,
+        action,
+        outcome,
+        sourceIP,
+        auditVersion,
+        operationDetails,
+        errorMessage,
+        correlationId,
+        environment,
+    } = o
+    return AuditRecord(
+        id,
+        timestamp,
+        eventType,
+        userId,
+        resource,
+        action,
+        outcome,
+        sourceIP,
+        auditVersion,
+        operationDetails,
+        errorMessage,
+        correlationId,
+        environment,
     )
+}
 AuditRecord.from = AuditRecord._from
 
 AuditRecord._toFirestore = (o, encodeTimestamps) => {

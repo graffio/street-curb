@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Blockface
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/blockface.type.js - do not edit manually
+
 /** {@link module:Blockface} */
 /*  Blockface generated from: modules/curb-map/type-definitions/blockface.type.js
  *
@@ -27,6 +30,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Blockface instance
+ * @sig Blockface :: ([Object], String, Object, String, {Segment}, [Object], [Object], Date, [Object], Date, [Object]) -> Blockface
+ */
 const Blockface = function Blockface(
     id,
     sourceId,
@@ -72,32 +79,47 @@ const Blockface = function Blockface(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig blockfaceToString :: () -> String
+ */
+const blockfaceToString = function () {
+    return `Blockface(
+        ${R._toString(this.id)},
+        ${R._toString(this.sourceId)},
+        ${R._toString(this.geometry)},
+        ${R._toString(this.streetName)},
+        ${R._toString(this.segments)},
+        ${R._toString(this.organizationId)},
+        ${R._toString(this.projectId)},
+        ${R._toString(this.createdAt)},
+        ${R._toString(this.createdBy)},
+        ${R._toString(this.updatedAt)},
+        ${R._toString(this.updatedBy)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig blockfaceToJSON :: () -> Object
+ */
+const blockfaceToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Blockface', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Blockface(${R._toString(this.id)}, ${R._toString(this.sourceId)}, ${R._toString(this.geometry)}, ${R._toString(this.streetName)}, ${R._toString(this.segments)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Blockface,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: blockfaceToString, enumerable: false },
+    toJSON: { value: blockfaceToJSON, enumerable: false },
+    constructor: { value: Blockface, enumerable: false, writable: true, configurable: true },
 })
 
 Blockface.prototype = prototype
@@ -110,20 +132,34 @@ Blockface.prototype = prototype
 Blockface.toString = () => 'Blockface'
 Blockface.is = v => v && v['@@typeName'] === 'Blockface'
 
-Blockface._from = o =>
-    Blockface(
-        o.id,
-        o.sourceId,
-        o.geometry,
-        o.streetName,
-        o.segments,
-        o.organizationId,
-        o.projectId,
-        o.createdAt,
-        o.createdBy,
-        o.updatedAt,
-        o.updatedBy,
+Blockface._from = o => {
+    const {
+        id,
+        sourceId,
+        geometry,
+        streetName,
+        segments,
+        organizationId,
+        projectId,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
+    } = o
+    return Blockface(
+        id,
+        sourceId,
+        geometry,
+        streetName,
+        segments,
+        organizationId,
+        projectId,
+        createdAt,
+        createdBy,
+        updatedAt,
+        updatedBy,
     )
+}
 Blockface.from = Blockface._from
 
 Blockface._toFirestore = (o, encodeTimestamps) => {

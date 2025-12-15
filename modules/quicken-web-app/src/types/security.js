@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Security
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/security.type.js - do not edit manually
+
 /** {@link module:Security} */
 /*  Security generated from: modules/quicken-web-app/type-definitions/security.type.js
  *
@@ -16,6 +19,11 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Security instance
+ * @sig Security :: (Id, String, String?, String?, String?) -> Security
+ *     Id = /^sec_[a-f0-9]{12}$/
+ */
 const Security = function Security(id, name, symbol, type, goal) {
     const constructorName = 'Security(id, name, symbol, type, goal)'
 
@@ -36,32 +44,41 @@ const Security = function Security(id, name, symbol, type, goal) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig securityToString :: () -> String
+ */
+const securityToString = function () {
+    return `Security(
+        ${R._toString(this.id)},
+        ${R._toString(this.name)},
+        ${R._toString(this.symbol)},
+        ${R._toString(this.type)},
+        ${R._toString(this.goal)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig securityToJSON :: () -> Object
+ */
+const securityToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Security', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Security(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.symbol)}, ${R._toString(this.type)}, ${R._toString(this.goal)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Security,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: securityToString, enumerable: false },
+    toJSON: { value: securityToJSON, enumerable: false },
+    constructor: { value: Security, enumerable: false, writable: true, configurable: true },
 })
 
 Security.prototype = prototype
@@ -74,7 +91,10 @@ Security.prototype = prototype
 Security.toString = () => 'Security'
 Security.is = v => v && v['@@typeName'] === 'Security'
 
-Security._from = o => Security(o.id, o.name, o.symbol, o.type, o.goal)
+Security._from = o => {
+    const { id, name, symbol, type, goal } = o
+    return Security(id, name, symbol, type, goal)
+}
 Security.from = Security._from
 
 Security._toFirestore = (o, encodeTimestamps) => ({ ...o })

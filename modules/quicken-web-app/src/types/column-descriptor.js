@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for ColumnDescriptor
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/column-descriptor.type.js - do not edit manually
+
 /** {@link module:ColumnDescriptor} */
 /*  ColumnDescriptor generated from: modules/quicken-web-app/type-definitions/column-descriptor.type.js
  *
@@ -16,6 +19,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a ColumnDescriptor instance
+ * @sig ColumnDescriptor :: ([Object], Number, [Object]) -> ColumnDescriptor
+ */
 const ColumnDescriptor = function ColumnDescriptor(id, width, sortDirection) {
     const constructorName = 'ColumnDescriptor(id, width, sortDirection)'
     R.validateArgumentLength(constructorName, 3, arguments)
@@ -32,32 +39,35 @@ const ColumnDescriptor = function ColumnDescriptor(id, width, sortDirection) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig columndescriptorToString :: () -> String
+ */
+const columndescriptorToString = function () {
+    return `ColumnDescriptor(${R._toString(this.id)}, ${R._toString(this.width)}, ${R._toString(this.sortDirection)})`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig columndescriptorToJSON :: () -> Object
+ */
+const columndescriptorToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'ColumnDescriptor', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `ColumnDescriptor(${R._toString(this.id)}, ${R._toString(this.width)}, ${R._toString(this.sortDirection)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: ColumnDescriptor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: columndescriptorToString, enumerable: false },
+    toJSON: { value: columndescriptorToJSON, enumerable: false },
+    constructor: { value: ColumnDescriptor, enumerable: false, writable: true, configurable: true },
 })
 
 ColumnDescriptor.prototype = prototype
@@ -70,7 +80,10 @@ ColumnDescriptor.prototype = prototype
 ColumnDescriptor.toString = () => 'ColumnDescriptor'
 ColumnDescriptor.is = v => v && v['@@typeName'] === 'ColumnDescriptor'
 
-ColumnDescriptor._from = o => ColumnDescriptor(o.id, o.width, o.sortDirection)
+ColumnDescriptor._from = o => {
+    const { id, width, sortDirection } = o
+    return ColumnDescriptor(id, width, sortDirection)
+}
 ColumnDescriptor.from = ColumnDescriptor._from
 
 ColumnDescriptor._toFirestore = (o, encodeTimestamps) => ({ ...o })

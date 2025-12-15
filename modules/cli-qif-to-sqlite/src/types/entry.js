@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Entry
+// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/entry.type.js - do not edit manually
+
 /*  Entry generated from: modules/cli-qif-to-sqlite/type-definitions/entry.type.js
  *
  *  Account
@@ -75,21 +78,6 @@ import { Split } from './split.js'
 // -------------------------------------------------------------------------------------------------------------
 const Entry = {
     toString: () => 'Entry',
-    is: v => {
-        if (typeof v !== 'object') return false
-        const constructor = Object.getPrototypeOf(v).constructor
-        return (
-            constructor === Entry.Account ||
-            constructor === Entry.Category ||
-            constructor === Entry.Class ||
-            constructor === Entry.Payee ||
-            constructor === Entry.Price ||
-            constructor === Entry.Security ||
-            constructor === Entry.Tag ||
-            constructor === Entry.TransactionBank ||
-            constructor === Entry.TransactionInvestment
-        )
-    },
 }
 
 // Add hidden properties
@@ -131,6 +119,32 @@ Entry.prototype = EntryPrototype
 // Variant Entry.Account
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig accountToString :: () -> String
+ */
+const accountToString = function () {
+    return `Entry.Account(
+        ${R._toString(this.name)},
+        ${R._toString(this.type)},
+        ${R._toString(this.description)},
+        ${R._toString(this.creditLimit)},
+    )`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig accountToJSON :: () -> Object
+ */
+const accountToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Account instance
+ * @sig Account :: (String, Type, String?, Number?) -> Entry.Account
+ *     Type = /^(Bank|Cash|Credit Card|Investment|Mutual|Other Asset|Other Liability|Portfolio|401.k..403.b.)$/
+ */
 const AccountConstructor = function Account(name, type, description, creditLimit) {
     const constructorName = 'Entry.Account(name, type, description, creditLimit)'
 
@@ -158,33 +172,18 @@ Entry.Account = AccountConstructor
 const AccountPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Account', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Account(${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: AccountConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: accountToString, enumerable: false },
+    toJSON: { value: accountToJSON, enumerable: false },
+    constructor: { value: AccountConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 AccountConstructor.prototype = AccountPrototype
 AccountConstructor.is = val => val && val.constructor === AccountConstructor
 AccountConstructor.toString = () => 'Entry.Account'
-AccountConstructor._from = o => Entry.Account(o.name, o.type, o.description, o.creditLimit)
+AccountConstructor._from = o => {
+    const { name, type, description, creditLimit } = o
+    return Entry.Account(name, type, description, creditLimit)
+}
 AccountConstructor.from = AccountConstructor._from
 
 AccountConstructor.toFirestore = o => ({ ...o })
@@ -195,6 +194,34 @@ AccountConstructor.fromFirestore = AccountConstructor._from
 // Variant Entry.Category
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig categoryToString :: () -> String
+ */
+const categoryToString = function () {
+    return `Entry.Category(
+        ${R._toString(this.name)},
+        ${R._toString(this.budgetAmount)},
+        ${R._toString(this.description)},
+        ${R._toString(this.excluded)},
+        ${R._toString(this.isIncomeCategory)},
+        ${R._toString(this.isTaxRelated)},
+        ${R._toString(this.taxSchedule)},
+    )`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig categoryToJSON :: () -> Object
+ */
+const categoryToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Category instance
+ * @sig Category :: (String, Number?, String?, Boolean?, Boolean?, Boolean?, String?) -> Entry.Category
+ */
 const CategoryConstructor = function Category(
     name,
     budgetAmount,
@@ -231,34 +258,18 @@ Entry.Category = CategoryConstructor
 const CategoryPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Category', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Category(${R._toString(this.name)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.description)}, ${R._toString(this.excluded)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: CategoryConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: categoryToString, enumerable: false },
+    toJSON: { value: categoryToJSON, enumerable: false },
+    constructor: { value: CategoryConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 CategoryConstructor.prototype = CategoryPrototype
 CategoryConstructor.is = val => val && val.constructor === CategoryConstructor
 CategoryConstructor.toString = () => 'Entry.Category'
-CategoryConstructor._from = o =>
-    Entry.Category(o.name, o.budgetAmount, o.description, o.excluded, o.isIncomeCategory, o.isTaxRelated, o.taxSchedule)
+CategoryConstructor._from = o => {
+    const { name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule } = o
+    return Entry.Category(name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule)
+}
 CategoryConstructor.from = CategoryConstructor._from
 
 CategoryConstructor.toFirestore = o => ({ ...o })
@@ -269,6 +280,26 @@ CategoryConstructor.fromFirestore = CategoryConstructor._from
 // Variant Entry.Class
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig classToString :: () -> String
+ */
+const classToString = function () {
+    return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig classToJSON :: () -> Object
+ */
+const classToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Class instance
+ * @sig Class :: (String, String?, String?) -> Entry.Class
+ */
 const ClassConstructor = function Class(name, subclass, description) {
     const constructorName = 'Entry.Class(name, subclass, description)'
 
@@ -288,33 +319,18 @@ Entry.Class = ClassConstructor
 const ClassPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Class', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: ClassConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: classToString, enumerable: false },
+    toJSON: { value: classToJSON, enumerable: false },
+    constructor: { value: ClassConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 ClassConstructor.prototype = ClassPrototype
 ClassConstructor.is = val => val && val.constructor === ClassConstructor
 ClassConstructor.toString = () => 'Entry.Class'
-ClassConstructor._from = o => Entry.Class(o.name, o.subclass, o.description)
+ClassConstructor._from = o => {
+    const { name, subclass, description } = o
+    return Entry.Class(name, subclass, description)
+}
 ClassConstructor.from = ClassConstructor._from
 
 ClassConstructor.toFirestore = o => ({ ...o })
@@ -325,6 +341,31 @@ ClassConstructor.fromFirestore = ClassConstructor._from
 // Variant Entry.Payee
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig payeeToString :: () -> String
+ */
+const payeeToString = function () {
+    return `Entry.Payee(
+        ${R._toString(this.name)},
+        ${R._toString(this.address)},
+        ${R._toString(this.memo)},
+        ${R._toString(this.defaultCategory)},
+    )`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig payeeToJSON :: () -> Object
+ */
+const payeeToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Payee instance
+ * @sig Payee :: (String, [String]?, String?, String?) -> Entry.Payee
+ */
 const PayeeConstructor = function Payee(name, address, memo, defaultCategory) {
     const constructorName = 'Entry.Payee(name, address, memo, defaultCategory)'
 
@@ -346,33 +387,18 @@ Entry.Payee = PayeeConstructor
 const PayeePrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Payee', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Payee(${R._toString(this.name)}, ${R._toString(this.address)}, ${R._toString(this.memo)}, ${R._toString(this.defaultCategory)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: PayeeConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: payeeToString, enumerable: false },
+    toJSON: { value: payeeToJSON, enumerable: false },
+    constructor: { value: PayeeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 PayeeConstructor.prototype = PayeePrototype
 PayeeConstructor.is = val => val && val.constructor === PayeeConstructor
 PayeeConstructor.toString = () => 'Entry.Payee'
-PayeeConstructor._from = o => Entry.Payee(o.name, o.address, o.memo, o.defaultCategory)
+PayeeConstructor._from = o => {
+    const { name, address, memo, defaultCategory } = o
+    return Entry.Payee(name, address, memo, defaultCategory)
+}
 PayeeConstructor.from = PayeeConstructor._from
 
 PayeeConstructor.toFirestore = o => ({ ...o })
@@ -383,6 +409,26 @@ PayeeConstructor.fromFirestore = PayeeConstructor._from
 // Variant Entry.Price
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig priceToString :: () -> String
+ */
+const priceToString = function () {
+    return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig priceToJSON :: () -> Object
+ */
+const priceToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Price instance
+ * @sig Price :: (String, Number, Object) -> Entry.Price
+ */
 const PriceConstructor = function Price(symbol, price, date) {
     const constructorName = 'Entry.Price(symbol, price, date)'
     R.validateArgumentLength(constructorName, 3, arguments)
@@ -402,33 +448,18 @@ Entry.Price = PriceConstructor
 const PricePrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Price', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: PriceConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: priceToString, enumerable: false },
+    toJSON: { value: priceToJSON, enumerable: false },
+    constructor: { value: PriceConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 PriceConstructor.prototype = PricePrototype
 PriceConstructor.is = val => val && val.constructor === PriceConstructor
 PriceConstructor.toString = () => 'Entry.Price'
-PriceConstructor._from = o => Entry.Price(o.symbol, o.price, o.date)
+PriceConstructor._from = o => {
+    const { symbol, price, date } = o
+    return Entry.Price(symbol, price, date)
+}
 PriceConstructor.from = PriceConstructor._from
 
 PriceConstructor.toFirestore = o => ({ ...o })
@@ -439,6 +470,31 @@ PriceConstructor.fromFirestore = PriceConstructor._from
 // Variant Entry.Security
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig securityToString :: () -> String
+ */
+const securityToString = function () {
+    return `Entry.Security(
+        ${R._toString(this.name)},
+        ${R._toString(this.goal)},
+        ${R._toString(this.symbol)},
+        ${R._toString(this.type)},
+    )`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig securityToJSON :: () -> Object
+ */
+const securityToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Security instance
+ * @sig Security :: (String, String?, String?, String?) -> Entry.Security
+ */
 const SecurityConstructor = function Security(name, goal, symbol, type) {
     const constructorName = 'Entry.Security(name, goal, symbol, type)'
 
@@ -460,33 +516,18 @@ Entry.Security = SecurityConstructor
 const SecurityPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Security', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Security(${R._toString(this.name)}, ${R._toString(this.goal)}, ${R._toString(this.symbol)}, ${R._toString(this.type)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: SecurityConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: securityToString, enumerable: false },
+    toJSON: { value: securityToJSON, enumerable: false },
+    constructor: { value: SecurityConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 SecurityConstructor.prototype = SecurityPrototype
 SecurityConstructor.is = val => val && val.constructor === SecurityConstructor
 SecurityConstructor.toString = () => 'Entry.Security'
-SecurityConstructor._from = o => Entry.Security(o.name, o.goal, o.symbol, o.type)
+SecurityConstructor._from = o => {
+    const { name, goal, symbol, type } = o
+    return Entry.Security(name, goal, symbol, type)
+}
 SecurityConstructor.from = SecurityConstructor._from
 
 SecurityConstructor.toFirestore = o => ({ ...o })
@@ -497,6 +538,26 @@ SecurityConstructor.fromFirestore = SecurityConstructor._from
 // Variant Entry.Tag
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig tagToString :: () -> String
+ */
+const tagToString = function () {
+    return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig tagToJSON :: () -> Object
+ */
+const tagToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.Tag instance
+ * @sig Tag :: (String, String?, String?) -> Entry.Tag
+ */
 const TagConstructor = function Tag(name, color, description) {
     const constructorName = 'Entry.Tag(name, color, description)'
 
@@ -516,33 +577,18 @@ Entry.Tag = TagConstructor
 const TagPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Tag', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TagConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: tagToString, enumerable: false },
+    toJSON: { value: tagToJSON, enumerable: false },
+    constructor: { value: TagConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 TagConstructor.prototype = TagPrototype
 TagConstructor.is = val => val && val.constructor === TagConstructor
 TagConstructor.toString = () => 'Entry.Tag'
-TagConstructor._from = o => Entry.Tag(o.name, o.color, o.description)
+TagConstructor._from = o => {
+    const { name, color, description } = o
+    return Entry.Tag(name, color, description)
+}
 TagConstructor.from = TagConstructor._from
 
 TagConstructor.toFirestore = o => ({ ...o })
@@ -553,6 +599,39 @@ TagConstructor.fromFirestore = TagConstructor._from
 // Variant Entry.TransactionBank
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig transactionBankToString :: () -> String
+ */
+const transactionBankToString = function () {
+    return `Entry.TransactionBank(
+        ${R._toString(this.account)},
+        ${R._toString(this.amount)},
+        ${R._toString(this.date)},
+        ${R._toString(this.transactionType)},
+        ${R._toString(this.address)},
+        ${R._toString(this.category)},
+        ${R._toString(this.cleared)},
+        ${R._toString(this.memo)},
+        ${R._toString(this.number)},
+        ${R._toString(this.payee)},
+        ${R._toString(this.splits)},
+    )`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig transactionBankToJSON :: () -> Object
+ */
+const transactionBankToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.TransactionBank instance
+ * @sig TransactionBank :: (String, Number, Object, TransactionType, [String]?, String?, String?, String?, String?, String?, [Split]?) -> Entry.TransactionBank
+ *     TransactionType = /^(Bank|Cash|Credit Card|Invoice|Other Asset|Other Liability)$/
+ */
 const TransactionBankConstructor = function TransactionBank(
     account,
     amount,
@@ -607,78 +686,75 @@ Entry.TransactionBank = TransactionBankConstructor
 const TransactionBankPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'TransactionBank', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.TransactionBank(${R._toString(this.account)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.splits)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TransactionBankConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: transactionBankToString, enumerable: false },
+    toJSON: { value: transactionBankToJSON, enumerable: false },
+    constructor: { value: TransactionBankConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 TransactionBankConstructor.prototype = TransactionBankPrototype
 TransactionBankConstructor.is = val => val && val.constructor === TransactionBankConstructor
 TransactionBankConstructor.toString = () => 'Entry.TransactionBank'
-TransactionBankConstructor._from = o =>
-    Entry.TransactionBank(
-        o.account,
-        o.amount,
-        o.date,
-        o.transactionType,
-        o.address,
-        o.category,
-        o.cleared,
-        o.memo,
-        o.number,
-        o.payee,
-        o.splits,
+TransactionBankConstructor._from = o => {
+    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = o
+    return Entry.TransactionBank(
+        account,
+        amount,
+        date,
+        transactionType,
+        address,
+        category,
+        cleared,
+        memo,
+        number,
+        payee,
+        splits,
     )
+}
 TransactionBankConstructor.from = TransactionBankConstructor._from
 
-TransactionBankConstructor._toFirestore = (o, encodeTimestamps) => ({
-    account: o.account,
-    amount: o.amount,
-    date: o.date,
-    transactionType: o.transactionType,
-    address: o.address,
-    category: o.category,
-    cleared: o.cleared,
-    memo: o.memo,
-    number: o.number,
-    payee: o.payee,
-    splits: o.splits.map(item1 => Split.toFirestore(item1, encodeTimestamps)),
-})
+/**
+ * Serialize to Firestore format
+ * @sig _toFirestore :: (TransactionBank, Function) -> Object
+ */
+TransactionBankConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = o
+    return {
+        account: account,
+        amount: amount,
+        date: date,
+        transactionType: transactionType,
+        address: address,
+        category: category,
+        cleared: cleared,
+        memo: memo,
+        number: number,
+        payee: payee,
+        splits: splits.map(item1 => Split.toFirestore(item1, encodeTimestamps)),
+    }
+}
 
-TransactionBankConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    TransactionBankConstructor._from({
-        account: doc.account,
-        amount: doc.amount,
-        date: doc.date,
-        transactionType: doc.transactionType,
-        address: doc.address,
-        category: doc.category,
-        cleared: doc.cleared,
-        memo: doc.memo,
-        number: doc.number,
-        payee: doc.payee,
-        splits: doc.splits.map(item1 =>
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> TransactionBank
+ */
+TransactionBankConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = doc
+    return TransactionBankConstructor._from({
+        account: account,
+        amount: amount,
+        date: date,
+        transactionType: transactionType,
+        address: address,
+        category: category,
+        cleared: cleared,
+        memo: memo,
+        number: number,
+        payee: payee,
+        splits: splits.map(item1 =>
             Split.fromFirestore ? Split.fromFirestore(item1, decodeTimestamps) : Split.from(item1),
         ),
     })
+}
 
 // Public aliases (can be overridden)
 TransactionBankConstructor.toFirestore = TransactionBankConstructor._toFirestore
@@ -689,6 +765,42 @@ TransactionBankConstructor.fromFirestore = TransactionBankConstructor._fromFires
 // Variant Entry.TransactionInvestment
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig transactionInvestmentToString :: () -> String
+ */
+const transactionInvestmentToString = function () {
+    return `Entry.TransactionInvestment(
+        ${R._toString(this.account)},
+        ${R._toString(this.date)},
+        ${R._toString(this.transactionType)},
+        ${R._toString(this.number)},
+        ${R._toString(this.address)},
+        ${R._toString(this.amount)},
+        ${R._toString(this.category)},
+        ${R._toString(this.cleared)},
+        ${R._toString(this.commission)},
+        ${R._toString(this.memo)},
+        ${R._toString(this.payee)},
+        ${R._toString(this.price)},
+        ${R._toString(this.quantity)},
+        ${R._toString(this.security)},
+    )`
+}
+
+/**
+ * Convert to JSON representation with tag
+ * @sig transactionInvestmentToJSON :: () -> Object
+ */
+const transactionInvestmentToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/**
+ * Construct a Entry.TransactionInvestment instance
+ * @sig TransactionInvestment :: (String, Object, TransactionType, String?, [String]?, Number?, String?, String?, Number?, String?, String?, Number?, Number?, String?) -> Entry.TransactionInvestment
+ *     TransactionType = /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|XIn|XOut|WithdrwX)$/
+ */
 const TransactionInvestmentConstructor = function TransactionInvestment(
     account,
     date,
@@ -752,71 +864,101 @@ Entry.TransactionInvestment = TransactionInvestmentConstructor
 const TransactionInvestmentPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'TransactionInvestment', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Entry.TransactionInvestment(${R._toString(this.account)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.number)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.security)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TransactionInvestmentConstructor,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: transactionInvestmentToString, enumerable: false },
+    toJSON: { value: transactionInvestmentToJSON, enumerable: false },
+    constructor: { value: TransactionInvestmentConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 TransactionInvestmentConstructor.prototype = TransactionInvestmentPrototype
 TransactionInvestmentConstructor.is = val => val && val.constructor === TransactionInvestmentConstructor
 TransactionInvestmentConstructor.toString = () => 'Entry.TransactionInvestment'
-TransactionInvestmentConstructor._from = o =>
-    Entry.TransactionInvestment(
-        o.account,
-        o.date,
-        o.transactionType,
-        o.number,
-        o.address,
-        o.amount,
-        o.category,
-        o.cleared,
-        o.commission,
-        o.memo,
-        o.payee,
-        o.price,
-        o.quantity,
-        o.security,
+TransactionInvestmentConstructor._from = o => {
+    const {
+        account,
+        date,
+        transactionType,
+        number,
+        address,
+        amount,
+        category,
+        cleared,
+        commission,
+        memo,
+        payee,
+        price,
+        quantity,
+        security,
+    } = o
+    return Entry.TransactionInvestment(
+        account,
+        date,
+        transactionType,
+        number,
+        address,
+        amount,
+        category,
+        cleared,
+        commission,
+        memo,
+        payee,
+        price,
+        quantity,
+        security,
     )
+}
 TransactionInvestmentConstructor.from = TransactionInvestmentConstructor._from
 
 TransactionInvestmentConstructor.toFirestore = o => ({ ...o })
 TransactionInvestmentConstructor.fromFirestore = TransactionInvestmentConstructor._from
 
+// Define is method after variants are attached (allows destructuring)
+/**
+ * Check if value is a Entry instance
+ * @sig is :: Any -> Boolean
+ */
+Entry.is = v => {
+    const { Account, Category, Class, Payee, Price, Security, Tag, TransactionBank, TransactionInvestment } = Entry
+    if (typeof v !== 'object') return false
+    const constructor = Object.getPrototypeOf(v).constructor
+    return (
+        constructor === Account ||
+        constructor === Category ||
+        constructor === Class ||
+        constructor === Payee ||
+        constructor === Price ||
+        constructor === Security ||
+        constructor === Tag ||
+        constructor === TransactionBank ||
+        constructor === TransactionInvestment
+    )
+}
+
+/**
+ * Serialize Entry to Firestore format
+ * @sig _toFirestore :: (Entry, Function) -> Object
+ */
 Entry._toFirestore = (o, encodeTimestamps) => {
     const tagName = o['@@tagName']
     const variant = Entry[tagName]
     return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
 }
 
+/**
+ * Deserialize Entry from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> Entry
+ */
 Entry._fromFirestore = (doc, decodeTimestamps) => {
+    const { Account, Category, Class, Payee, Price, Security, Tag, TransactionBank, TransactionInvestment } = Entry
     const tagName = doc['@@tagName']
-    if (tagName === 'Account') return Entry.Account.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Category') return Entry.Category.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Class') return Entry.Class.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Payee') return Entry.Payee.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Price') return Entry.Price.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Security') return Entry.Security.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Tag') return Entry.Tag.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'TransactionBank') return Entry.TransactionBank.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'TransactionInvestment') return Entry.TransactionInvestment.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Account') return Account.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Category') return Category.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Class') return Class.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Payee') return Payee.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Price') return Price.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Security') return Security.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'Tag') return Tag.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'TransactionBank') return TransactionBank.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'TransactionInvestment') return TransactionInvestment.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Entry variant: ${tagName}`)
 }
 
