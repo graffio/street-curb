@@ -1,3 +1,6 @@
+// ABOUTME: Generators for type constructor code and related toString/from functions
+// ABOUTME: These generate JavaScript code strings that are eval'd to create runtime type constructors
+
 /* ---------------------------------------------------------------------------------------------------------------------
  * Generators
  *
@@ -67,8 +70,9 @@
  *       if (arguments.length !== 1) throw new TypeError('Expected 1 arguments, found ' + arguments.length)
  *
  *       if (typeof id !== 'string') throw new TypeError('Expected id to be a String; found ' + id)
- *       if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i))
- *           throw new TypeError('Expected id to match /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i; found ' + id)
+ *       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+ *       if (!id.match(uuidRegex))
+ *           throw new TypeError('Expected id to match UUID regex; found ' + id)
  *
  *       const result = Object.create(prototype)
  *       result.id = id
@@ -102,16 +106,17 @@ import TaggedFieldType from './tagged-field-type.js'
 // Helpers
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
+/**
  * Generate a Type Constructor function given its name and its fields. See description at top of file
- *
- * @sig generateTypeConstructor = (String, String, { FieldName: fieldType }) -> String
- *  FieldName = String
- *  fieldType = String
+ * @sig generateTypeConstructor :: (String, String, { FieldName: fieldType }) -> String
+ *     FieldName = String
+ *     fieldType = String
  */
 const generateTypeConstructor = (typeName, fullTypeName, fields) => {
-    // generate "if (x) result.x = x" if x is an optional argument and simply "result.x = x" otherwise
-    // this eliminates getting results like: { rotation: undefined }
+    /**
+     * Generate assignment code for a field - handles optional fields
+     * @sig generateAssignment :: String -> String
+     */
     const generateAssignment = f => {
         const type = fields[f].toString() // might be a regex
         const isOptional = type.match(/\?/)
@@ -144,8 +149,9 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
     `
 }
 
-/*
+/**
  * Generate guards that validate the type of an actual parameter to a constructor versus its "declared" type
+ * @sig generateTypeCheck :: (String, String, FieldType) -> String
  */
 // prettier-ignore
 const generateTypeCheck = (constructorName, name, fieldType) => {
@@ -163,24 +169,21 @@ const generateTypeCheck = (constructorName, name, fieldType) => {
     if (typeof fieldType === 'string' || fieldType instanceof RegExp) fieldType = TaggedFieldType.fromString(fieldType)
 
     const { baseType, optional, regex, arrayDepth, taggedType } = fieldType
-    const containedTag = taggedType ? `"${taggedType}"` : undefined
-
-    if (baseType === 'Any')     return ''
-    if (arrayDepth)             return `R.validateArray(constructorName, ${arrayDepth}, '${baseType}', ${containedTag}, '${name}', ${optional}, ${name})`
-
-    // Check for LookupTable before other checks
+    const tag = taggedType ? `"${taggedType}"` : undefined
+    
+    if (baseType === 'Any')         return ''
+    if (arrayDepth)                 return `R.validateArray(constructorName, ${arrayDepth}, '${baseType}', ${tag}, '${name}', ${optional}, ${name})`
     if (baseType === 'LookupTable') return `R.validateLookupTable(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
-
-    if (regex)                  return `R.validateRegex(constructorName, ${regex}, '${name}', ${optional}, ${name})`
-    if (baseType === 'String')  return `R.validateString(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Number')  return `R.validateNumber(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Boolean') return `R.validateBoolean(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Object')  return `R.validateObject(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Date')    return `R.validateDate(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Tagged')  return `R.validateTag(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
+    if (regex)                      return `R.validateRegex(constructorName, ${regex}, '${name}', ${optional}, ${name})`
+    if (baseType === 'String')      return `R.validateString(constructorName, '${name}', ${optional}, ${name})`
+    if (baseType === 'Number')      return `R.validateNumber(constructorName, '${name}', ${optional}, ${name})`
+    if (baseType === 'Boolean')     return `R.validateBoolean(constructorName, '${name}', ${optional}, ${name})`
+    if (baseType === 'Object')      return `R.validateObject(constructorName, '${name}', ${optional}, ${name})`
+    if (baseType === 'Date')        return `R.validateDate(constructorName, '${name}', ${optional}, ${name})`
+    if (baseType === 'Tagged')      return `R.validateTag(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
 }
 
-/*
+/**
  * Generate a TypeConstructor.from function given the prototype to use, the name of the Type Constructor and the fields
  *
  * Example:
@@ -193,14 +196,23 @@ const generateTypeCheck = (constructorName, name, fieldType) => {
  *
  *       return Square(o.topLeft, o.bottomRight)
  *   })
+ *
+ * @sig generateFrom :: (String, String, String, Fields) -> String
  */
 const generateFrom = (protoName, typeName, fullName, fields) => {
     const fieldNames = Object.keys(fields)
+
+    // If 3+ fields, destructure to avoid chain-extraction violations in generated code
+    if (fieldNames.length >= 3) {
+        const destructure = `const { ${fieldNames.join(', ')} } = o`
+        return `o => {\n    ${destructure}\n    return ${fullName}(${fieldNames.join(', ')})\n}`
+    }
+
     const params = fieldNames.map(f => `o.${f}`)
     return `o => ${fullName}(${params.join(', ')})`
 }
 
-/*
+/**
  * Generate a 'toString' function given the name of the Type Constructor and the fields. See tagged/taggedSum
  *
  * Example:
@@ -214,6 +226,8 @@ const generateFrom = (protoName, typeName, fullName, fields) => {
  *  }
  *
  * Where _toString is a predefined types-generation function
+ *
+ * @sig generateToString :: (String, Fields) -> String
  */
 const generateToString = (fieldType, fields) => {
     const generateValueString = name => `\${R._toString(this.${name})}`

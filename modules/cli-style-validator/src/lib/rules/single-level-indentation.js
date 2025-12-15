@@ -134,15 +134,10 @@ const findFunctionContext = (node, rootNode) => {
  * @sig isCallbackFunction :: (ASTNode, ASTNode) -> Boolean
  */
 const isCallbackFunction = (node, rootNode) => {
-    const { type, id } = node
+    const { type } = node
     if (type === 'FunctionDeclaration') return false // Always has a name
 
-    const isCallback = findFunctionContext(node, rootNode)
-
-    // Additional check: function expressions without id are callbacks unless they're variable assignments
-    if (type === 'FunctionExpression' && !id && !isCallback) return true
-
-    return isCallback
+    return findFunctionContext(node, rootNode)
 }
 
 /**

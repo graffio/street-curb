@@ -1,7 +1,128 @@
+// ABOUTME: Main type generator for Tagged and TaggedSum types
+// ABOUTME: Generates JavaScript files with constructors, prototypes, and Firestore serialization
+
 import { getExistingStandardFunctions } from './parse-type-definition-file.js'
 import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
 import TaggedFieldType from './tagged-field-type.js'
 import Generator from './tagged-type-function-generators.js'
+
+/*
+ * Generate ABOUTME header comments for a type file
+ * @sig generateAboutMe :: (String, String) -> String
+ */
+const generateAboutMe = (typeName, relativePath) => {
+    const sourcePath = relativePath.replace(/.*modules/, 'modules')
+    return `// ABOUTME: Generated type definition for ${typeName}
+// ABOUTME: Auto-generated from ${sourcePath} - do not edit manually`
+}
+
+/*
+ * Capitalize first letter of a string
+ * @sig capitalize :: String -> String
+ */
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1)
+
+/*
+ * Generate @sig comment for a constructor function
+ * @sig generateConstructorSig :: (String, FieldMap) -> String
+ */
+const generateConstructorSig = (fullTypeName, fields) => {
+    /**
+     * Format a field entry as a type signature parameter
+     * @sig formatFieldEntry :: ([String, FieldType]) -> String
+     */
+    const formatFieldEntry = ([fieldName, fieldType]) => {
+        const parsed = TaggedFieldType.fromString(fieldType.toString())
+        const { baseType, taggedType, optional, arrayDepth, regex } = parsed
+
+        // For regex fields, create a type alias from the field name
+        if (regex) {
+            const typeName = capitalize(fieldName)
+            regexDefs.push(`${typeName} = ${regex}`)
+            const wrapped = arrayDepth > 0 ? '['.repeat(arrayDepth) + typeName + ']'.repeat(arrayDepth) : typeName
+            return optional ? `${wrapped}?` : wrapped
+        }
+
+        // For LookupTable fields, show {Type} syntax
+        if (baseType === 'LookupTable') {
+            const base = `{${taggedType}}`
+            return optional ? `${base}?` : base
+        }
+
+        const base = taggedType || baseType
+        const wrapped = arrayDepth > 0 ? '['.repeat(arrayDepth) + base + ']'.repeat(arrayDepth) : base
+        return optional ? `${wrapped}?` : wrapped
+    }
+
+    const regexDefs = []
+    const fieldTypes = Object.entries(fields).map(formatFieldEntry)
+    const params = fieldTypes.length > 0 ? `(${fieldTypes.join(', ')})` : '()'
+    const regexLines = regexDefs.length > 0 ? `\n *     ${regexDefs.join('\n *     ')}` : ''
+
+    return `/**
+ * Construct a ${fullTypeName} instance
+ * @sig ${fullTypeName.split('.').pop()} :: ${params} -> ${fullTypeName}${regexLines}
+ */`
+}
+
+/*
+ * Generate named toString function for a type
+ * @sig generateNamedToString :: (String, String, FieldMap) -> String
+ */
+const generateNamedToString = (funcName, typeName, fields) => {
+    const fieldKeys = Object.keys(fields)
+    const fieldStrings = fieldKeys.map(f => `\${R._toString(this.${f})}`)
+
+    // Estimate line length: "    return `TypeName(" + fields + ")`"
+    const singleLineReturn = `${typeName}(${fieldStrings.join(', ')})`
+    const estimatedLength = 12 + singleLineReturn.length // "    return `" + content + "`"
+
+    // If too long, split across multiple lines
+    if (estimatedLength > 120) {
+        const indentedFields = fieldStrings.map(s => `        ${s}`).join(',\n')
+        return `/**
+ * Convert to string representation
+ * @sig ${funcName} :: () -> String
+ */
+const ${funcName} = function () {
+    return \`${typeName}(
+${indentedFields},
+    )\`
+}`
+    }
+
+    return `/**
+ * Convert to string representation
+ * @sig ${funcName} :: () -> String
+ */
+const ${funcName} = function () {
+    return \`${typeName}(${fieldStrings.join(', ')})\`
+}`
+}
+
+/*
+ * Generate named toJSON function for a simple tagged type
+ * @sig generateNamedToJSON :: String -> String
+ */
+const generateNamedToJSON = funcName => `/**
+ * Convert to JSON representation
+ * @sig ${funcName} :: () -> Object
+ */
+const ${funcName} = function () {
+    return this
+}`
+
+/*
+ * Generate named toJSON function for a tagged sum variant (includes tagName)
+ * @sig generateNamedVariantToJSON :: String -> String
+ */
+const generateNamedVariantToJSON = funcName => `/**
+ * Convert to JSON representation with tag
+ * @sig ${funcName} :: () -> Object
+ */
+const ${funcName} = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}`
 
 /*
  * Validate that no fields use [Date] arrays, which are not supported by Firestore facade
@@ -25,6 +146,40 @@ const needsFirestoreSerialization = fieldType =>
     ['Date', 'Tagged', 'LookupTable'].includes(TaggedFieldType.fromString(fieldType).baseType)
 
 /*
+ * Check if a field type is a LookupTable
+ * @sig isLookupTableField :: FieldType -> Boolean
+ */
+const isLookupTableField = fieldType => TaggedFieldType.fromString(fieldType.toString()).baseType === 'LookupTable'
+
+/*
+ * Extract child type name from a field (for LookupTable or Tagged types)
+ * @sig getChildType :: FieldType -> String?
+ */
+const getChildType = fieldType => {
+    const { baseType, taggedType } = TaggedFieldType.fromString(fieldType.toString())
+    if (baseType !== 'LookupTable' && baseType !== 'Tagged') return undefined
+    return taggedType
+}
+
+/*
+ * Get array of child type names from a fields object
+ * @sig childTypesFromFields :: FieldMap -> [String]
+ */
+const childTypesFromFields = fields => Object.values(fields).map(getChildType).filter(Boolean)
+
+/*
+ * Collect unique child types from a fields object as a Set
+ * @sig collectChildTypesFromFields :: FieldMap -> Set<String>
+ */
+const collectChildTypesFromFields = fields => new Set(childTypesFromFields(fields))
+
+/*
+ * Collect unique child types from all variants of a TaggedSum type
+ * @sig collectChildTypesFromVariants :: VariantMap -> Set<String>
+ */
+const collectChildTypesFromVariants = variants => new Set(Object.values(variants).flatMap(childTypesFromFields))
+
+/*
  * Generate the field serialization expression for toFirestore
  * @sig generateToFirestoreField :: (String, FieldType) -> String
  */
@@ -35,7 +190,10 @@ const generateToFirestoreValue = (fieldName, fieldType) => {
     // Handle Tagged type fields (might have nested serialization)
     const processTagged = () => `${parsed.taggedType}.toFirestore(o.${fieldName}, encodeTimestamps)`
 
-    // Handle arrays of Tagged types
+    /**
+     * Handle arrays of Tagged types
+     * @sig processArrayOfTagged :: () -> String
+     */
     const processArrayOfTagged = () => {
         // Build nested map calls for each array level
         const possiblyRecurse = (level, accessor) =>
@@ -47,16 +205,21 @@ const generateToFirestoreValue = (fieldName, fieldType) => {
     }
 
     const parsed = TaggedFieldType.fromString(fieldType.toString())
+    const { baseType, arrayDepth } = parsed
 
     // Handle Date fields
-    if (parsed.baseType === 'Date') return `encodeTimestamps(o.${fieldName})`
-    if (parsed.baseType === 'LookupTable') return processLookupTable()
-    if (parsed.baseType === 'Tagged' && parsed.arrayDepth === 0) return processTagged()
-    if (parsed.baseType === 'Tagged' && parsed.arrayDepth > 0) return processArrayOfTagged()
+    if (baseType === 'Date') return `encodeTimestamps(o.${fieldName})`
+    if (baseType === 'LookupTable') return processLookupTable()
+    if (baseType === 'Tagged' && arrayDepth === 0) return processTagged()
+    if (baseType === 'Tagged' && arrayDepth > 0) return processArrayOfTagged()
 
     return `o.${fieldName}`
 }
 
+/*
+ * Generate a single field entry for toFirestore object literal
+ * @sig generateToFirestoreField :: (String, FieldType) -> String
+ */
 const generateToFirestoreField = (fieldName, fieldType) =>
     `${fieldName}: ${generateToFirestoreValue(fieldName, fieldType)}`
 
@@ -65,6 +228,15 @@ const generateToFirestoreField = (fieldName, fieldType) =>
  * @sig generateToFirestore :: (String, FieldMap) -> String
  */
 const generateToFirestore = (typeName, fields) => {
+    const isOptionalField = ([_, fieldType]) => TaggedFieldType.fromString(fieldType).optional
+
+    const formatRequired = ([fieldName, fieldType]) => `${fieldName}: ${generateToFirestoreValue(fieldName, fieldType)}`
+
+    const formatOptional = ([fieldName, fieldType]) => ({
+        fieldName,
+        code: generateToFirestoreValue(fieldName, fieldType),
+    })
+
     const fieldEntries = Object.entries(fields)
     const needsSerialization = fieldEntries.some(([_, fieldType]) => needsFirestoreSerialization(fieldType))
 
@@ -72,16 +244,11 @@ const generateToFirestore = (typeName, fields) => {
     if (!needsSerialization) return `${typeName}._toFirestore = (o, encodeTimestamps) => ({ ...o })`
 
     // Separate required and optional fields
-    const requiredFields = []
-    const optionalFields = []
+    const requiredEntries = fieldEntries.filter(entry => !isOptionalField(entry))
+    const optionalEntries = fieldEntries.filter(isOptionalField)
 
-    for (const [fieldName, fieldType] of fieldEntries) {
-        const fieldValue = generateToFirestoreValue(fieldName, fieldType)
-
-        TaggedFieldType.fromString(fieldType).optional
-            ? optionalFields.push({ fieldName, code: fieldValue })
-            : requiredFields.push(`${fieldName}: ${fieldValue}`)
-    }
+    const requiredFields = requiredEntries.map(formatRequired)
+    const optionalFields = optionalEntries.map(formatOptional)
 
     // Generate function body with explicit conditionals for optional fields
     const optionalFieldIfs = optionalFields.map(
@@ -104,6 +271,13 @@ const generateToFirestore = (typeName, fields) => {
  * @sig generateFromFirestoreField :: (String, FieldType) -> String
  */
 const generateFromFirestoreField = (fieldName, fieldType) => {
+    // Generate fromFirestore call with fallback to from()
+    const fromFirestoreCall = (type, acc) => {
+        const firestoreCall = `${type}.fromFirestore(${acc}, decodeTimestamps)`
+        const fromCall = `${type}.from(${acc})`
+        return `${type}.fromFirestore ? ${firestoreCall} : ${fromCall}`
+    }
+
     const processDate = () =>
         parsed.optional
             ? `${fieldName}: ${accessor} != null ? decodeTimestamps(${accessor}) : undefined`
@@ -118,31 +292,33 @@ const generateFromFirestoreField = (fieldName, fieldType) => {
 
     const processTagged = () => {
         const { taggedType } = parsed
-        return `${fieldName}: ${taggedType}.fromFirestore ? ${taggedType}.fromFirestore(${accessor}, decodeTimestamps) : ${taggedType}.from(${accessor})`
+        return `${fieldName}: ${fromFirestoreCall(taggedType, accessor)}`
     }
 
-    // Handle arrays of Tagged types
+    /**
+     * Handle arrays of Tagged types
+     * @sig processArrayOfTagged :: () -> String
+     */
     const processArrayOfTagged = () => {
+        const buildMapper = (level, acc) => {
+            if (level === 0) return fromFirestoreCall(taggedType, acc)
+            return `${acc}.map(item${level} => ${buildMapper(level - 1, `item${level}`)})`
+        }
+
         const { taggedType } = parsed
         const depth = parsed.arrayDepth
-
-        const buildMapper = (level, accessor) => {
-            if (level === 0)
-                return `${taggedType}.fromFirestore ? ${taggedType}.fromFirestore(${accessor}, decodeTimestamps) : ${taggedType}.from(${accessor})`
-
-            return `${accessor}.map(item${level} => ${buildMapper(level - 1, `item${level}`)})`
-        }
 
         return `${fieldName}: ${buildMapper(depth, accessor)}`
     }
 
     const parsed = TaggedFieldType.fromString(fieldType.toString())
+    const { baseType, arrayDepth } = parsed
     const accessor = `doc.${fieldName}`
 
-    if (parsed.baseType === 'Date') return processDate()
-    if (parsed.baseType === 'LookupTable') return processLookupTable()
-    if (parsed.baseType === 'Tagged' && parsed.arrayDepth === 0) return processTagged()
-    if (parsed.baseType === 'Tagged' && parsed.arrayDepth > 0) return processArrayOfTagged()
+    if (baseType === 'Date') return processDate()
+    if (baseType === 'LookupTable') return processLookupTable()
+    if (baseType === 'Tagged' && arrayDepth === 0) return processTagged()
+    if (baseType === 'Tagged' && arrayDepth > 0) return processArrayOfTagged()
 
     // Primitive fields pass through unchanged
     return `${fieldName}: ${accessor}`
@@ -180,7 +356,7 @@ const shouldGenerate = (functionName, existingFunctions) => !existingFunctions.i
  * @sig generateStaticTaggedType :: TypeDefinition -> Promise<String>
  */
 const generateStaticTaggedType = async typeDefinition => {
-    const { name, fields, imports = [], functions = [] } = typeDefinition
+    const { name, fields, relativePath, imports = [], functions = [] } = typeDefinition
 
     const existingStandard = getExistingStandardFunctions(functions)
 
@@ -192,20 +368,10 @@ const generateStaticTaggedType = async typeDefinition => {
     const existingImports = new Set(imports.flatMap(imp => imp.specifiers.map(spec => spec.local)))
 
     // Check if we need LookupTable import (and user hasn't already imported it)
-    const needsLookupTable =
-        !existingImports.has('LookupTable') &&
-        Object.values(fields).some(fieldType => {
-            const parsed = TaggedFieldType.fromString(fieldType.toString())
-            return parsed.baseType === 'LookupTable'
-        })
+    const needsLookupTable = !existingImports.has('LookupTable') && Object.values(fields).some(isLookupTableField)
 
     // Collect child types from LookupTable and Tagged fields for import
-    const childTypes = new Set()
-    Object.values(fields).forEach(fieldType => {
-        const parsed = TaggedFieldType.fromString(fieldType.toString())
-        if (parsed.baseType === 'LookupTable' || parsed.baseType === 'Tagged')
-            if (parsed.taggedType) childTypes.add(parsed.taggedType)
-    })
+    const childTypes = collectChildTypesFromFields(fields)
 
     // Filter out types already imported and self-references (recursive types)
     const newChildTypes = Array.from(childTypes)
@@ -221,7 +387,9 @@ const generateStaticTaggedType = async typeDefinition => {
         .join('\n        ')
 
     const code = `
-        ${stringifyObjectAsMultilineComment(typeDefinition.fields, typeDefinition.relativePath, name)}
+        ${generateAboutMe(name, relativePath)}
+
+        ${stringifyObjectAsMultilineComment(fields, relativePath, name)}
 
         ${generateImportsSection(imports)}
         
@@ -234,7 +402,17 @@ const generateStaticTaggedType = async typeDefinition => {
         // main constructor
         //
         // -------------------------------------------------------------------------------------------------------------
+        ${generateConstructorSig(name, fields)}
         const ${name} = ${Generator.generateTypeConstructor(name, name, fields)}
+
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // prototype methods
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${generateNamedToString(name.toLowerCase() + 'ToString', name, fields)}
+
+        ${generateNamedToJSON(name.toLowerCase() + 'ToJSON')}
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -243,23 +421,9 @@ const generateStaticTaggedType = async typeDefinition => {
         // -------------------------------------------------------------------------------------------------------------
         const prototype = Object.create(Object.prototype, {
             '@@typeName': { value: '${name}', enumerable: false },
-
-            toString: {
-                value: ${Generator.generateToString(name, fields)},
-                enumerable: false
-            },
-
-            toJSON: {
-                value: function() { return this },
-                enumerable: false
-            },
-
-            constructor: {
-                value: ${name},
-                enumerable: false,
-                writable: true,
-                configurable: true
-            }
+            toString: { value: ${name.toLowerCase()}ToString, enumerable: false },
+            toJSON: { value: ${name.toLowerCase()}ToJSON, enumerable: false },
+            constructor: { value: ${name}, enumerable: false, writable: true, configurable: true }
         })
 
         ${name}.prototype = prototype
@@ -319,21 +483,45 @@ const constructorForVariant = (name, variants, variantName) => {
  * @sig generateStaticTaggedSumType :: TypeDefinition -> Promise<String>
  */
 const generateStaticTaggedSumType = async typeDefinition => {
-    const { name, variants, imports = [], functions = [] } = typeDefinition
+    /**
+     * Generate is method - use destructuring if 3+ variants
+     * @sig generateIsMethod :: (String, [String]) -> String
+     */
+    const generateIsMethod = (typeName, variants) => {
+        if (variants.length >= 3) {
+            const destructure = `const { ${variants.join(', ')} } = ${typeName}`
+            const checks = variants.map(v => `constructor === ${v}`).join(' || ')
+            return `/**
+         * Check if value is a ${typeName} instance
+         * @sig is :: Any -> Boolean
+         */
+        ${typeName}.is = v => {
+            ${destructure}
+            if (typeof v !== 'object') return false
+            const constructor = Object.getPrototypeOf(v).constructor
+            return ${checks}
+        }`
+        }
+        const checks = variants.map(v => `constructor === ${typeName}.${v}`).join(' || ')
+        return `/**
+         * Check if value is a ${typeName} instance
+         * @sig is :: Any -> Boolean
+         */
+        ${typeName}.is = v => {
+            if (typeof v !== 'object') return false
+            const constructor = Object.getPrototypeOf(v).constructor
+            return ${checks}
+        }`
+    }
+
+    const { name, variants, relativePath, imports = [], functions = [] } = typeDefinition
     const variantNames = Object.keys(variants)
     const constructorsForVariants = variantNames
         .map(variantName => constructorForVariant(name, variants, variantName))
         .join('\n\n')
 
     // Collect child types from all variant fields for imports
-    const childTypes = new Set()
-    Object.values(variants).forEach(variantFields =>
-        Object.values(variantFields).forEach(fieldType => {
-            const parsed = TaggedFieldType.fromString(fieldType.toString())
-            if (parsed.baseType === 'LookupTable' || parsed.baseType === 'Tagged')
-                if (parsed.taggedType) childTypes.add(parsed.taggedType)
-        }),
-    )
+    const childTypes = collectChildTypesFromVariants(variants)
 
     // Filter out types already imported and self-references (recursive types like FilterSpec.Compound.filters)
     const existingImports = new Set(imports.flatMap(imp => imp.specifiers.map(spec => spec.local)))
@@ -349,8 +537,13 @@ const generateStaticTaggedSumType = async typeDefinition => {
         )
         .join('\n        ')
 
+    // Pre-compute tag names list for the template
+    const tagNamesList = variantNames.map(v => `'${v}'`).join(', ')
+
     const code = `
-        ${stringifyObjectAsMultilineComment(typeDefinition.variants, typeDefinition.relativePath, name)}
+        ${generateAboutMe(name, relativePath)}
+
+        ${stringifyObjectAsMultilineComment(variants, relativePath, name)}
 
         ${generateImportsSection(imports)}
         import * as R from '@graffio/cli-type-generator'
@@ -362,17 +555,12 @@ const generateStaticTaggedSumType = async typeDefinition => {
         //
         // -------------------------------------------------------------------------------------------------------------
         const ${name} = {
-            toString: () => '${name}',
-            is: v => {
-                if (typeof v !== 'object') return false
-                const constructor = Object.getPrototypeOf(v).constructor
-                return ${variantNames.map(v => `constructor === ${name}.${v}`).join(' || ')}
-            }
+            toString: () => '${name}'
         }
 
         // Add hidden properties
         Object.defineProperty(${name}, '@@typeName', { value: '${name}', enumerable: false })
-        Object.defineProperty(${name}, '@@tagNames', { value: [${variantNames.map(v => `'${v}'`).join(', ')}], enumerable: false })
+        Object.defineProperty(${name}, '@@tagNames', { value: [${tagNamesList}], enumerable: false })
 
         // Type prototype with match method
         const ${name}Prototype = {}
@@ -392,6 +580,9 @@ const generateStaticTaggedSumType = async typeDefinition => {
         ${name}.prototype = ${name}Prototype
 
         ${constructorsForVariants}
+
+        // Define is method after variants are attached (allows destructuring)
+        ${generateIsMethod(name, variantNames)}
 
         ${generateTaggedSumFirestoreSerialization(name, variants)}
 
@@ -423,12 +614,51 @@ const generateVariantFirestoreSerialization = (variantName, fields) => {
         ${variantName}Constructor.fromFirestore = ${variantName}Constructor._from
         `
 
+    const fieldNames = Object.keys(fields)
     const toFirestoreFields = Object.entries(fields).map(([fieldName, fieldType]) =>
         generateToFirestoreField(fieldName, fieldType),
     )
     const fromFirestoreFields = Object.entries(fields).map(([fieldName, fieldType]) =>
         generateFromFirestoreField(fieldName, fieldType),
     )
+
+    // Use block body with destructuring if 2+ fields to avoid chain-extraction violations
+    if (fieldNames.length >= 2) {
+        const oDestructure = `const { ${fieldNames.join(', ')} } = o`
+        const docDestructure = `const { ${fieldNames.join(', ')} } = doc`
+
+        // Replace o.fieldName with fieldName in serialization
+        const toFieldsDestructured = toFirestoreFields.map(f => f.replace(/o\.(\w+)/g, '$1'))
+        const fromFieldsDestructured = fromFirestoreFields.map(f => f.replace(/doc\.(\w+)/g, '$1'))
+
+        return `
+        /**
+         * Serialize to Firestore format
+         * @sig _toFirestore :: (${variantName}, Function) -> Object
+         */
+        ${variantName}Constructor._toFirestore = (o, encodeTimestamps) => {
+            ${oDestructure}
+            return {
+                ${toFieldsDestructured.join(',\n                ')}
+            }
+        }
+
+        /**
+         * Deserialize from Firestore format
+         * @sig _fromFirestore :: (Object, Function) -> ${variantName}
+         */
+        ${variantName}Constructor._fromFirestore = (doc, decodeTimestamps) => {
+            ${docDestructure}
+            return ${variantName}Constructor._from({
+                ${fromFieldsDestructured.join(',\n                ')}
+            })
+        }
+
+        // Public aliases (can be overridden)
+        ${variantName}Constructor.toFirestore = ${variantName}Constructor._toFirestore
+        ${variantName}Constructor.fromFirestore = ${variantName}Constructor._fromFirestore
+    `
+    }
 
     return `
         ${variantName}Constructor._toFirestore = (o, encodeTimestamps) => ({
@@ -452,17 +682,61 @@ const generateVariantFirestoreSerialization = (variantName, fields) => {
  */
 const generateTaggedSumFirestoreSerialization = (typeName, variants) => {
     const variantNames = Object.keys(variants)
-    const fromFirestoreCases = variantNames
-        .map(v => `if (tagName === '${v}') return ${typeName}.${v}.fromFirestore(doc, decodeTimestamps)`)
-        .join('\n        ')
 
-    return `
+    // If 3+ variants, destructure to avoid chain-extraction violations
+    if (variantNames.length >= 3) {
+        const destructure = `const { ${variantNames.join(', ')} } = ${typeName}`
+        const fromFirestoreCases = variantNames
+            .map(v => `if (tagName === '${v}') return ${v}.fromFirestore(doc, decodeTimestamps)`)
+            .join('\n            ')
+
+        return `
+        /**
+         * Serialize ${typeName} to Firestore format
+         * @sig _toFirestore :: (${typeName}, Function) -> Object
+         */
         ${typeName}._toFirestore = (o, encodeTimestamps) => {
             const tagName = o['@@tagName']
             const variant = ${typeName}[tagName]
             return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
         }
 
+        /**
+         * Deserialize ${typeName} from Firestore format
+         * @sig _fromFirestore :: (Object, Function) -> ${typeName}
+         */
+        ${typeName}._fromFirestore = (doc, decodeTimestamps) => {
+            ${destructure}
+            const tagName = doc['@@tagName']
+            ${fromFirestoreCases}
+            throw new Error(\`Unrecognized ${typeName} variant: \${tagName}\`)
+        }
+
+        // Public aliases (can be overridden)
+        ${typeName}.toFirestore = ${typeName}._toFirestore
+        ${typeName}.fromFirestore = ${typeName}._fromFirestore
+    `
+    }
+
+    const fromFirestoreCases = variantNames
+        .map(v => `if (tagName === '${v}') return ${typeName}.${v}.fromFirestore(doc, decodeTimestamps)`)
+        .join('\n        ')
+
+    return `
+        /**
+         * Serialize ${typeName} to Firestore format
+         * @sig _toFirestore :: (${typeName}, Function) -> Object
+         */
+        ${typeName}._toFirestore = (o, encodeTimestamps) => {
+            const tagName = o['@@tagName']
+            const variant = ${typeName}[tagName]
+            return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
+        }
+
+        /**
+         * Deserialize ${typeName} from Firestore format
+         * @sig _fromFirestore :: (Object, Function) -> ${typeName}
+         */
         ${typeName}._fromFirestore = (doc, decodeTimestamps) => {
             const tagName = doc['@@tagName']
             ${fromFirestoreCases}
@@ -481,12 +755,12 @@ const generateTaggedSumFirestoreSerialization = (typeName, variants) => {
  */
 const generateVariantConstructor = (typeName, variantName, fields) => {
     const fullName = `${typeName}.${variantName}`
+    const lowerVariant = variantName.charAt(0).toLowerCase() + variantName.slice(1)
 
     // Validate no [Date] arrays since Firestore facade can't handle them
     validateNoDateArrays(fullName, fields)
 
     const constructorCode = Generator.generateTypeConstructor(variantName, fullName, fields)
-    const toStringCode = Generator.generateToString(fullName, fields)
     const fromCode = Generator.generateFrom('prototype', variantName, fullName, fields)
 
     return `
@@ -495,30 +769,21 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
         // Variant ${typeName}.${variantName}
         //
         // -------------------------------------------------------------------------------------------------------------
+        ${generateNamedToString(lowerVariant + 'ToString', fullName, fields)}
+
+        ${generateNamedVariantToJSON(lowerVariant + 'ToJSON')}
+
+        ${generateConstructorSig(fullName, fields)}
         const ${variantName}Constructor = ${constructorCode.replace('prototype', `${variantName}Prototype`)}
 
         ${typeName}.${variantName} = ${variantName}Constructor
 
         const ${variantName}Prototype = Object.create(${typeName}Prototype, {
-            '@@tagName' : { value: '${variantName}', enumerable: false },
-            '@@typeName': { value: '${typeName}', enumerable: false    },
-
-            toString: {
-                value: ${toStringCode},
-                enumerable: false
-            },
-
-            toJSON: {
-                value: function() { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-                enumerable: false
-            },
-
-            constructor: {
-                value: ${variantName}Constructor,
-                enumerable: false,
-                writable: true,
-                configurable: true
-            }
+            '@@tagName': { value: '${variantName}', enumerable: false },
+            '@@typeName': { value: '${typeName}', enumerable: false },
+            toString: { value: ${lowerVariant}ToString, enumerable: false },
+            toJSON: { value: ${lowerVariant}ToJSON, enumerable: false },
+            constructor: { value: ${variantName}Constructor, enumerable: false, writable: true, configurable: true }
         })
 
         ${variantName}Constructor.prototype = ${variantName}Prototype
@@ -536,6 +801,22 @@ const generateVariantConstructor = (typeName, variantName, fields) => {
  * @sig generateImportsSection :: [ImportInfo] -> String
  */
 const generateImportsSection = imports => {
+    /**
+     * Format an import specifier for code generation
+     * @sig formatSpecifier :: ImportSpecifier -> String
+     */
+    const formatSpecifier = spec => {
+        const { type, imported, local } = spec
+        if (type === 'ImportDefaultSpecifier') return local
+        if (type === 'ImportNamespaceSpecifier') return `* as ${local}`
+        return imported === local ? imported : `${imported} as ${local}`
+    }
+
+    const formatImport = imp => {
+        const specifiers = imp.specifiers.map(formatSpecifier).join(', ')
+        return `import { ${specifiers} } from '${imp.source}'`
+    }
+
     if (!imports || imports.length === 0) return ''
 
     // Filter out internal imports (like string-types) that don't need to be in generated files
@@ -543,19 +824,7 @@ const generateImportsSection = imports => {
 
     if (externalImports.length === 0) return ''
 
-    const importStatements = externalImports
-        .map(imp => {
-            const specifiers = imp.specifiers
-                .map(spec => {
-                    if (spec.type === 'ImportDefaultSpecifier') return spec.local
-                    else if (spec.type === 'ImportNamespaceSpecifier') return `* as ${spec.local}`
-                    else return spec.imported === spec.local ? spec.imported : `${spec.imported} as ${spec.local}`
-                })
-                .join(', ')
-
-            return `import { ${specifiers} } from '${imp.source}'`
-        })
-        .join('\n')
+    const importStatements = externalImports.map(formatImport).join('\n')
 
     return importStatements + '\n'
 }
