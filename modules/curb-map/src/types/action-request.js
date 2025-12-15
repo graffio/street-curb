@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for ActionRequest
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/action-request.type.js - do not edit manually
+
 /** {@link module:ActionRequest} */
 /*  ActionRequest generated from: modules/curb-map/type-definitions/action-request.type.js
  *
@@ -29,6 +32,13 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a ActionRequest instance
+ * @sig ActionRequest :: ([Object], Action, [Object], [Object], SubjectType, OrganizationId?, ProjectId?, [Object], Object?, String?, [Object], Number, Date, Date?) -> ActionRequest
+ *     SubjectType = /^(blockface|user|organization|project)$/
+ *     OrganizationId = /^org_[a-z0-9]{12,}$/
+ *     ProjectId = /^prj_[a-z0-9]{12,}$/
+ */
 const ActionRequest = function ActionRequest(
     id,
     action,
@@ -83,32 +93,50 @@ const ActionRequest = function ActionRequest(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig actionrequestToString :: () -> String
+ */
+const actionrequestToString = function () {
+    return `ActionRequest(
+        ${R._toString(this.id)},
+        ${R._toString(this.action)},
+        ${R._toString(this.actorId)},
+        ${R._toString(this.subjectId)},
+        ${R._toString(this.subjectType)},
+        ${R._toString(this.organizationId)},
+        ${R._toString(this.projectId)},
+        ${R._toString(this.idempotencyKey)},
+        ${R._toString(this.resultData)},
+        ${R._toString(this.error)},
+        ${R._toString(this.correlationId)},
+        ${R._toString(this.schemaVersion)},
+        ${R._toString(this.createdAt)},
+        ${R._toString(this.processedAt)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig actionrequestToJSON :: () -> Object
+ */
+const actionrequestToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'ActionRequest', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `ActionRequest(${R._toString(this.id)}, ${R._toString(this.action)}, ${R._toString(this.actorId)}, ${R._toString(this.subjectId)}, ${R._toString(this.subjectType)}, ${R._toString(this.organizationId)}, ${R._toString(this.projectId)}, ${R._toString(this.idempotencyKey)}, ${R._toString(this.resultData)}, ${R._toString(this.error)}, ${R._toString(this.correlationId)}, ${R._toString(this.schemaVersion)}, ${R._toString(this.createdAt)}, ${R._toString(this.processedAt)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: ActionRequest,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: actionrequestToString, enumerable: false },
+    toJSON: { value: actionrequestToJSON, enumerable: false },
+    constructor: { value: ActionRequest, enumerable: false, writable: true, configurable: true },
 })
 
 ActionRequest.prototype = prototype
@@ -121,23 +149,40 @@ ActionRequest.prototype = prototype
 ActionRequest.toString = () => 'ActionRequest'
 ActionRequest.is = v => v && v['@@typeName'] === 'ActionRequest'
 
-ActionRequest._from = o =>
-    ActionRequest(
-        o.id,
-        o.action,
-        o.actorId,
-        o.subjectId,
-        o.subjectType,
-        o.organizationId,
-        o.projectId,
-        o.idempotencyKey,
-        o.resultData,
-        o.error,
-        o.correlationId,
-        o.schemaVersion,
-        o.createdAt,
-        o.processedAt,
+ActionRequest._from = o => {
+    const {
+        id,
+        action,
+        actorId,
+        subjectId,
+        subjectType,
+        organizationId,
+        projectId,
+        idempotencyKey,
+        resultData,
+        error,
+        correlationId,
+        schemaVersion,
+        createdAt,
+        processedAt,
+    } = o
+    return ActionRequest(
+        id,
+        action,
+        actorId,
+        subjectId,
+        subjectType,
+        organizationId,
+        projectId,
+        idempotencyKey,
+        resultData,
+        error,
+        correlationId,
+        schemaVersion,
+        createdAt,
+        processedAt,
     )
+}
 ActionRequest.from = ActionRequest._from
 
 ActionRequest._toFirestore = (o, encodeTimestamps) => {

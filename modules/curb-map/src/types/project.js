@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Project
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/project.type.js - do not edit manually
+
 /** {@link module:Project} */
 /*  Project generated from: modules/curb-map/type-definitions/project.type.js
  *
@@ -20,6 +23,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Project instance
+ * @sig Project :: ([Object], [Object], String, Date, [Object], Date, [Object]) -> Project
+ */
 const Project = function Project(id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy) {
     const constructorName = 'Project(id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy)'
     R.validateArgumentLength(constructorName, 7, arguments)
@@ -44,32 +51,43 @@ const Project = function Project(id, organizationId, name, createdAt, createdBy,
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig projectToString :: () -> String
+ */
+const projectToString = function () {
+    return `Project(
+        ${R._toString(this.id)},
+        ${R._toString(this.organizationId)},
+        ${R._toString(this.name)},
+        ${R._toString(this.createdAt)},
+        ${R._toString(this.createdBy)},
+        ${R._toString(this.updatedAt)},
+        ${R._toString(this.updatedBy)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig projectToJSON :: () -> Object
+ */
+const projectToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Project', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Project(${R._toString(this.id)}, ${R._toString(this.organizationId)}, ${R._toString(this.name)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Project,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: projectToString, enumerable: false },
+    toJSON: { value: projectToJSON, enumerable: false },
+    constructor: { value: Project, enumerable: false, writable: true, configurable: true },
 })
 
 Project.prototype = prototype
@@ -82,7 +100,10 @@ Project.prototype = prototype
 Project.toString = () => 'Project'
 Project.is = v => v && v['@@typeName'] === 'Project'
 
-Project._from = o => Project(o.id, o.organizationId, o.name, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
+Project._from = o => {
+    const { id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy } = o
+    return Project(id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy)
+}
 Project.from = Project._from
 
 Project._toFirestore = (o, encodeTimestamps) => {

@@ -355,3 +355,15 @@ This document summarizes the specifications that were previously archived in `sp
 - Applied fixes to TransactionRegisterPage.jsx (@sig ordering, function spacing)
 - 106 total validator tests passing
 - Deferred: fixing all existing function-spacing violations across codebase (item 6)
+
+## [infrastructure] Type Generator Style Compliance (2025-12-15)
+**Purpose:** Make cli-type-generator produce style-compliant code (backlog item 10)
+
+- Fixed chain-extraction rule to exclude assignment targets (can't destructure LHS)
+- Added AST-aware prettier-ignore support to line-length rule (function-level)
+- Updated type generator to emit @sig documentation on Firestore functions
+- Added destructuring in generated code when 2+ fields to avoid chain-extraction violations
+- Split long toString lines and parameterized generateIsMethod for compliance
+- Regenerated all 41 type files with updated generator
+- Fixed test assertions to match updated message formats
+- 127 style validator tests passing

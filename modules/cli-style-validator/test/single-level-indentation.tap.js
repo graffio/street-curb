@@ -21,7 +21,7 @@ t.test('Given a function with nested indentation violations', t => {
             'Then the violation type should be single-level-indentation',
         )
         t.equal(violations[0].rule, 'single-level-indentation', 'Then the rule field should be set correctly')
-        t.match(violations[0].message, /nested indentation/, 'Then the message should mention nested indentation')
+        t.match(violations[0].message, /nested indentation/i, 'Then the message should mention nested indentation')
         t.end()
     })
 
@@ -37,7 +37,7 @@ t.test('Given a function with nested indentation violations', t => {
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
         t.equal(violations.length, 1, 'Then one violation should be detected for the nested loop')
-        t.match(violations[0].message, /nested indentation/, 'Then the message should mention nested indentation')
+        t.match(violations[0].message, /nested indentation/i, 'Then the message should mention nested indentation')
         t.end()
     })
 
@@ -305,7 +305,7 @@ t.test('Given a function with nested callback functions', t => {
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
         t.equal(violations.length, 2, 'Then two violations should be detected')
-        const nestedViolation = violations.find(v => v.message.includes('nested indentation'))
+        const nestedViolation = violations.find(v => v.message.toLowerCase().includes('nested indentation'))
         const unnamedViolation = violations.find(v => v.message.includes('multi-line unnamed function'))
         t.ok(nestedViolation, 'Then one violation should be for nested indentation')
         t.ok(unnamedViolation, 'Then one violation should be for multi-line unnamed function')

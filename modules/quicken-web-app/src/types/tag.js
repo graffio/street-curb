@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Tag
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/tag.type.js - do not edit manually
+
 /** {@link module:Tag} */
 /*  Tag generated from: modules/quicken-web-app/type-definitions/tag.type.js
  *
@@ -15,6 +18,11 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Tag instance
+ * @sig Tag :: (Id, String, String?, String?) -> Tag
+ *     Id = /^tag_[a-f0-9]{12}$/
+ */
 const Tag = function Tag(id, name, color, description) {
     const constructorName = 'Tag(id, name, color, description)'
 
@@ -33,32 +41,40 @@ const Tag = function Tag(id, name, color, description) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig tagToString :: () -> String
+ */
+const tagToString = function () {
+    return `Tag(
+        ${R._toString(this.id)},
+        ${R._toString(this.name)},
+        ${R._toString(this.color)},
+        ${R._toString(this.description)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig tagToJSON :: () -> Object
+ */
+const tagToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Tag', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Tag(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Tag,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: tagToString, enumerable: false },
+    toJSON: { value: tagToJSON, enumerable: false },
+    constructor: { value: Tag, enumerable: false, writable: true, configurable: true },
 })
 
 Tag.prototype = prototype
@@ -71,7 +87,10 @@ Tag.prototype = prototype
 Tag.toString = () => 'Tag'
 Tag.is = v => v && v['@@typeName'] === 'Tag'
 
-Tag._from = o => Tag(o.id, o.name, o.color, o.description)
+Tag._from = o => {
+    const { id, name, color, description } = o
+    return Tag(id, name, color, description)
+}
 Tag.from = Tag._from
 
 Tag._toFirestore = (o, encodeTimestamps) => ({ ...o })

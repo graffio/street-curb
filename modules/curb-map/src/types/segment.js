@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Segment
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/segment.type.js - do not edit manually
+
 /** {@link module:Segment} */
 /*  Segment generated from: modules/curb-map/type-definitions/segment.type.js
  *
@@ -16,6 +19,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Segment instance
+ * @sig Segment :: ([Object], String, Number) -> Segment
+ */
 const Segment = function Segment(id, use, length) {
     const constructorName = 'Segment(id, use, length)'
     R.validateArgumentLength(constructorName, 3, arguments)
@@ -32,32 +39,35 @@ const Segment = function Segment(id, use, length) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig segmentToString :: () -> String
+ */
+const segmentToString = function () {
+    return `Segment(${R._toString(this.id)}, ${R._toString(this.use)}, ${R._toString(this.length)})`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig segmentToJSON :: () -> Object
+ */
+const segmentToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Segment', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Segment(${R._toString(this.id)}, ${R._toString(this.use)}, ${R._toString(this.length)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Segment,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: segmentToString, enumerable: false },
+    toJSON: { value: segmentToJSON, enumerable: false },
+    constructor: { value: Segment, enumerable: false, writable: true, configurable: true },
 })
 
 Segment.prototype = prototype
@@ -70,7 +80,10 @@ Segment.prototype = prototype
 Segment.toString = () => 'Segment'
 Segment.is = v => v && v['@@typeName'] === 'Segment'
 
-Segment._from = o => Segment(o.id, o.use, o.length)
+Segment._from = o => {
+    const { id, use, length } = o
+    return Segment(id, use, length)
+}
 Segment.from = Segment._from
 
 Segment._toFirestore = (o, encodeTimestamps) => ({ ...o })

@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Category
+// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/category.type.js - do not edit manually
+
 /** {@link module:Category} */
 /*  Category generated from: modules/cli-qif-to-sqlite/type-definitions/category.type.js
  *
@@ -18,6 +21,11 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Category instance
+ * @sig Category :: (Id, String, String?, Number?, Boolean?, Boolean?, String?) -> Category
+ *     Id = /^cat_[a-f0-9]{12}$/
+ */
 const Category = function Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule) {
     const constructorName = 'Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)'
 
@@ -42,32 +50,43 @@ const Category = function Category(id, name, description, budgetAmount, isIncome
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig categoryToString :: () -> String
+ */
+const categoryToString = function () {
+    return `Category(
+        ${R._toString(this.id)},
+        ${R._toString(this.name)},
+        ${R._toString(this.description)},
+        ${R._toString(this.budgetAmount)},
+        ${R._toString(this.isIncomeCategory)},
+        ${R._toString(this.isTaxRelated)},
+        ${R._toString(this.taxSchedule)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig categoryToJSON :: () -> Object
+ */
+const categoryToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Category', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Category(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.description)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Category,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: categoryToString, enumerable: false },
+    toJSON: { value: categoryToJSON, enumerable: false },
+    constructor: { value: Category, enumerable: false, writable: true, configurable: true },
 })
 
 Category.prototype = prototype
@@ -80,8 +99,10 @@ Category.prototype = prototype
 Category.toString = () => 'Category'
 Category.is = v => v && v['@@typeName'] === 'Category'
 
-Category._from = o =>
-    Category(o.id, o.name, o.description, o.budgetAmount, o.isIncomeCategory, o.isTaxRelated, o.taxSchedule)
+Category._from = o => {
+    const { id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule } = o
+    return Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
+}
 Category.from = Category._from
 
 Category._toFirestore = (o, encodeTimestamps) => ({ ...o })

@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for ColumnDefinition
+// ABOUTME: Auto-generated from modules/design-system/type-definitions/column-definition.type.js - do not edit manually
+
 /** {@link module:ColumnDefinition} */
 /*  ColumnDefinition generated from: modules/design-system/type-definitions/column-definition.type.js
  *
@@ -22,6 +25,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a ColumnDefinition instance
+ * @sig ColumnDefinition :: (String, String?, String, Number?, Number?, Number?, String?, Boolean?, Boolean?, Object?, Any) -> ColumnDefinition
+ */
 const ColumnDefinition = function ColumnDefinition(
     id,
     accessorKey,
@@ -66,32 +73,47 @@ const ColumnDefinition = function ColumnDefinition(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig columndefinitionToString :: () -> String
+ */
+const columndefinitionToString = function () {
+    return `ColumnDefinition(
+        ${R._toString(this.id)},
+        ${R._toString(this.accessorKey)},
+        ${R._toString(this.header)},
+        ${R._toString(this.size)},
+        ${R._toString(this.minSize)},
+        ${R._toString(this.maxSize)},
+        ${R._toString(this.textAlign)},
+        ${R._toString(this.enableSorting)},
+        ${R._toString(this.enableResizing)},
+        ${R._toString(this.meta)},
+        ${R._toString(this.cell)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig columndefinitionToJSON :: () -> Object
+ */
+const columndefinitionToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'ColumnDefinition', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `ColumnDefinition(${R._toString(this.id)}, ${R._toString(this.accessorKey)}, ${R._toString(this.header)}, ${R._toString(this.size)}, ${R._toString(this.minSize)}, ${R._toString(this.maxSize)}, ${R._toString(this.textAlign)}, ${R._toString(this.enableSorting)}, ${R._toString(this.enableResizing)}, ${R._toString(this.meta)}, ${R._toString(this.cell)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: ColumnDefinition,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: columndefinitionToString, enumerable: false },
+    toJSON: { value: columndefinitionToJSON, enumerable: false },
+    constructor: { value: ColumnDefinition, enumerable: false, writable: true, configurable: true },
 })
 
 ColumnDefinition.prototype = prototype
@@ -104,20 +126,22 @@ ColumnDefinition.prototype = prototype
 ColumnDefinition.toString = () => 'ColumnDefinition'
 ColumnDefinition.is = v => v && v['@@typeName'] === 'ColumnDefinition'
 
-ColumnDefinition._from = o =>
-    ColumnDefinition(
-        o.id,
-        o.accessorKey,
-        o.header,
-        o.size,
-        o.minSize,
-        o.maxSize,
-        o.textAlign,
-        o.enableSorting,
-        o.enableResizing,
-        o.meta,
-        o.cell,
+ColumnDefinition._from = o => {
+    const { id, accessorKey, header, size, minSize, maxSize, textAlign, enableSorting, enableResizing, meta, cell } = o
+    return ColumnDefinition(
+        id,
+        accessorKey,
+        header,
+        size,
+        minSize,
+        maxSize,
+        textAlign,
+        enableSorting,
+        enableResizing,
+        meta,
+        cell,
     )
+}
 ColumnDefinition.from = ColumnDefinition._from
 
 ColumnDefinition._toFirestore = (o, encodeTimestamps) => ({ ...o })

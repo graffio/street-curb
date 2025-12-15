@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for TableLayout
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/table-layout.type.js - do not edit manually
+
 /** {@link module:TableLayout} */
 /*  TableLayout generated from: modules/quicken-web-app/type-definitions/table-layout.type.js
  *
@@ -18,6 +21,11 @@ import { ColumnDescriptor } from './column-descriptor.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a TableLayout instance
+ * @sig TableLayout :: ([Object], {ColumnDescriptor}, [SortOrder]) -> TableLayout
+ *     SortOrder = /^col_[a-zA-Z][a-zA-Z0-9_]*$/
+ */
 const TableLayout = function TableLayout(id, columnDescriptors, sortOrder) {
     const constructorName = 'TableLayout(id, columnDescriptors, sortOrder)'
     R.validateArgumentLength(constructorName, 3, arguments)
@@ -34,32 +42,35 @@ const TableLayout = function TableLayout(id, columnDescriptors, sortOrder) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig tablelayoutToString :: () -> String
+ */
+const tablelayoutToString = function () {
+    return `TableLayout(${R._toString(this.id)}, ${R._toString(this.columnDescriptors)}, ${R._toString(this.sortOrder)})`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig tablelayoutToJSON :: () -> Object
+ */
+const tablelayoutToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'TableLayout', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `TableLayout(${R._toString(this.id)}, ${R._toString(this.columnDescriptors)}, ${R._toString(this.sortOrder)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: TableLayout,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: tablelayoutToString, enumerable: false },
+    toJSON: { value: tablelayoutToJSON, enumerable: false },
+    constructor: { value: TableLayout, enumerable: false, writable: true, configurable: true },
 })
 
 TableLayout.prototype = prototype
@@ -72,7 +83,10 @@ TableLayout.prototype = prototype
 TableLayout.toString = () => 'TableLayout'
 TableLayout.is = v => v && v['@@typeName'] === 'TableLayout'
 
-TableLayout._from = o => TableLayout(o.id, o.columnDescriptors, o.sortOrder)
+TableLayout._from = o => {
+    const { id, columnDescriptors, sortOrder } = o
+    return TableLayout(id, columnDescriptors, sortOrder)
+}
 TableLayout.from = TableLayout._from
 
 TableLayout._toFirestore = (o, encodeTimestamps) => {

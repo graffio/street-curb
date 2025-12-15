@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for DailyPortfolio
+// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/daily-portfolio.type.js - do not edit manually
+
 /** {@link module:DailyPortfolio} */
 /*  DailyPortfolio generated from: modules/cli-qif-to-sqlite/type-definitions/daily-portfolio.type.js
  *
@@ -19,6 +22,11 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a DailyPortfolio instance
+ * @sig DailyPortfolio :: (AccountId, String, String, Number, Number, Number, Number, [Object]) -> DailyPortfolio
+ *     AccountId = /^acc_[a-f0-9]{12}$/
+ */
 const DailyPortfolio = function DailyPortfolio(
     accountId,
     accountName,
@@ -55,32 +63,44 @@ const DailyPortfolio = function DailyPortfolio(
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig dailyportfolioToString :: () -> String
+ */
+const dailyportfolioToString = function () {
+    return `DailyPortfolio(
+        ${R._toString(this.accountId)},
+        ${R._toString(this.accountName)},
+        ${R._toString(this.date)},
+        ${R._toString(this.cashBalance)},
+        ${R._toString(this.totalMarketValue)},
+        ${R._toString(this.totalCostBasis)},
+        ${R._toString(this.unrealizedGainLoss)},
+        ${R._toString(this.holdings)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig dailyportfolioToJSON :: () -> Object
+ */
+const dailyportfolioToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'DailyPortfolio', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `DailyPortfolio(${R._toString(this.accountId)}, ${R._toString(this.accountName)}, ${R._toString(this.date)}, ${R._toString(this.cashBalance)}, ${R._toString(this.totalMarketValue)}, ${R._toString(this.totalCostBasis)}, ${R._toString(this.unrealizedGainLoss)}, ${R._toString(this.holdings)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: DailyPortfolio,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: dailyportfolioToString, enumerable: false },
+    toJSON: { value: dailyportfolioToJSON, enumerable: false },
+    constructor: { value: DailyPortfolio, enumerable: false, writable: true, configurable: true },
 })
 
 DailyPortfolio.prototype = prototype
@@ -93,17 +113,28 @@ DailyPortfolio.prototype = prototype
 DailyPortfolio.toString = () => 'DailyPortfolio'
 DailyPortfolio.is = v => v && v['@@typeName'] === 'DailyPortfolio'
 
-DailyPortfolio._from = o =>
-    DailyPortfolio(
-        o.accountId,
-        o.accountName,
-        o.date,
-        o.cashBalance,
-        o.totalMarketValue,
-        o.totalCostBasis,
-        o.unrealizedGainLoss,
-        o.holdings,
+DailyPortfolio._from = o => {
+    const {
+        accountId,
+        accountName,
+        date,
+        cashBalance,
+        totalMarketValue,
+        totalCostBasis,
+        unrealizedGainLoss,
+        holdings,
+    } = o
+    return DailyPortfolio(
+        accountId,
+        accountName,
+        date,
+        cashBalance,
+        totalMarketValue,
+        totalCostBasis,
+        unrealizedGainLoss,
+        holdings,
     )
+}
 DailyPortfolio.from = DailyPortfolio._from
 
 DailyPortfolio._toFirestore = (o, encodeTimestamps) => ({ ...o })

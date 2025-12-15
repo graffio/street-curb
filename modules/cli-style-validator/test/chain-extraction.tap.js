@@ -118,6 +118,42 @@ t.test('Given nested functions', t => {
     t.end()
 })
 
+t.test('Given assignment targets', t => {
+    t.test('When same base is assigned to 3+ times', t => {
+        const code = `const fn = () => {
+    const result = {}
+    result.a = 1
+    result.b = 2
+    result.c = 3
+    return result
+}`
+        const ast = parseCode(code)
+        const violations = checkChainExtraction(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no suggestions (cannot destructure assignment targets)')
+        t.end()
+    })
+
+    t.test('When mixing reads and writes to same base', t => {
+        const code = `const fn = obj => {
+    const result = {}
+    result.a = obj.x
+    result.b = obj.y
+    result.c = obj.z
+    return result
+}`
+        const ast = parseCode(code)
+        const violations = checkChainExtraction(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then only reads should be flagged')
+        t.match(violations[0].message, /obj/, 'Then the message mentions the read base')
+        t.notMatch(violations[0].message, /result/, 'Then the message does not mention the write base')
+        t.end()
+    })
+
+    t.end()
+})
+
 t.test('Given edge cases', t => {
     t.test('When the AST is null', t => {
         const violations = checkChainExtraction(null, '', 'test.js')

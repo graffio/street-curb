@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Member
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/member.type.js - do not edit manually
+
 /** {@link module:Member} */
 /*  Member generated from: modules/curb-map/type-definitions/member.type.js
  *
@@ -20,6 +23,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Member instance
+ * @sig Member :: ([Object], String, [Object], Date, [Object], Date?, String?) -> Member
+ */
 const Member = function Member(userId, displayName, role, addedAt, addedBy, removedAt, removedBy) {
     const constructorName = 'Member(userId, displayName, role, addedAt, addedBy, removedAt, removedBy)'
 
@@ -44,32 +51,43 @@ const Member = function Member(userId, displayName, role, addedAt, addedBy, remo
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig memberToString :: () -> String
+ */
+const memberToString = function () {
+    return `Member(
+        ${R._toString(this.userId)},
+        ${R._toString(this.displayName)},
+        ${R._toString(this.role)},
+        ${R._toString(this.addedAt)},
+        ${R._toString(this.addedBy)},
+        ${R._toString(this.removedAt)},
+        ${R._toString(this.removedBy)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig memberToJSON :: () -> Object
+ */
+const memberToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Member', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Member(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.role)}, ${R._toString(this.addedAt)}, ${R._toString(this.addedBy)}, ${R._toString(this.removedAt)}, ${R._toString(this.removedBy)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Member,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: memberToString, enumerable: false },
+    toJSON: { value: memberToJSON, enumerable: false },
+    constructor: { value: Member, enumerable: false, writable: true, configurable: true },
 })
 
 Member.prototype = prototype
@@ -82,7 +100,10 @@ Member.prototype = prototype
 Member.toString = () => 'Member'
 Member.is = v => v && v['@@typeName'] === 'Member'
 
-Member._from = o => Member(o.userId, o.displayName, o.role, o.addedAt, o.addedBy, o.removedAt, o.removedBy)
+Member._from = o => {
+    const { userId, displayName, role, addedAt, addedBy, removedAt, removedBy } = o
+    return Member(userId, displayName, role, addedAt, addedBy, removedAt, removedBy)
+}
 Member.from = Member._from
 
 Member._toFirestore = (o, encodeTimestamps) => {

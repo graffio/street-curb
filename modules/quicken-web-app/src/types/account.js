@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for Account
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/account.type.js - do not edit manually
+
 /** {@link module:Account} */
 /*  Account generated from: modules/quicken-web-app/type-definitions/account.type.js
  *
@@ -16,6 +19,12 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a Account instance
+ * @sig Account :: (Id, String, Type, String?, Number?) -> Account
+ *     Id = /^acc_[a-f0-9]{12}$/
+ *     Type = /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/
+ */
 const Account = function Account(id, name, type, description, creditLimit) {
     const constructorName = 'Account(id, name, type, description, creditLimit)'
 
@@ -42,32 +51,41 @@ const Account = function Account(id, name, type, description, creditLimit) {
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig accountToString :: () -> String
+ */
+const accountToString = function () {
+    return `Account(
+        ${R._toString(this.id)},
+        ${R._toString(this.name)},
+        ${R._toString(this.type)},
+        ${R._toString(this.description)},
+        ${R._toString(this.creditLimit)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig accountToJSON :: () -> Object
+ */
+const accountToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'Account', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `Account(${R._toString(this.id)}, ${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: Account,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: accountToString, enumerable: false },
+    toJSON: { value: accountToJSON, enumerable: false },
+    constructor: { value: Account, enumerable: false, writable: true, configurable: true },
 })
 
 Account.prototype = prototype
@@ -80,7 +98,10 @@ Account.prototype = prototype
 Account.toString = () => 'Account'
 Account.is = v => v && v['@@typeName'] === 'Account'
 
-Account._from = o => Account(o.id, o.name, o.type, o.description, o.creditLimit)
+Account._from = o => {
+    const { id, name, type, description, creditLimit } = o
+    return Account(id, name, type, description, creditLimit)
+}
 Account.from = Account._from
 
 Account._toFirestore = (o, encodeTimestamps) => ({ ...o })

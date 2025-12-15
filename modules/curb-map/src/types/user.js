@@ -1,3 +1,6 @@
+// ABOUTME: Generated type definition for User
+// ABOUTME: Auto-generated from modules/curb-map/type-definitions/user.type.js - do not edit manually
+
 /** {@link module:User} */
 /*  User generated from: modules/curb-map/type-definitions/user.type.js
  *
@@ -23,6 +26,10 @@ import { OrganizationMember } from './organization-member.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
+/**
+ * Construct a User instance
+ * @sig User :: ([Object], [Object], String, {OrganizationMember}, Date, [Object], Date, [Object]) -> User
+ */
 const User = function User(id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy) {
     const constructorName = 'User(id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy)'
     R.validateArgumentLength(constructorName, 8, arguments)
@@ -49,32 +56,44 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
 
 // -------------------------------------------------------------------------------------------------------------
 //
+// prototype methods
+//
+// -------------------------------------------------------------------------------------------------------------
+/**
+ * Convert to string representation
+ * @sig userToString :: () -> String
+ */
+const userToString = function () {
+    return `User(
+        ${R._toString(this.id)},
+        ${R._toString(this.email)},
+        ${R._toString(this.displayName)},
+        ${R._toString(this.organizations)},
+        ${R._toString(this.createdAt)},
+        ${R._toString(this.createdBy)},
+        ${R._toString(this.updatedAt)},
+        ${R._toString(this.updatedBy)},
+    )`
+}
+
+/**
+ * Convert to JSON representation
+ * @sig userToJSON :: () -> Object
+ */
+const userToJSON = function () {
+    return this
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
 // prototype
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
     '@@typeName': { value: 'User', enumerable: false },
-
-    toString: {
-        value: function () {
-            return `User(${R._toString(this.id)}, ${R._toString(this.email)}, ${R._toString(this.displayName)}, ${R._toString(this.organizations)}, ${R._toString(this.createdAt)}, ${R._toString(this.createdBy)}, ${R._toString(this.updatedAt)}, ${R._toString(this.updatedBy)})`
-        },
-        enumerable: false,
-    },
-
-    toJSON: {
-        value: function () {
-            return this
-        },
-        enumerable: false,
-    },
-
-    constructor: {
-        value: User,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-    },
+    toString: { value: userToString, enumerable: false },
+    toJSON: { value: userToJSON, enumerable: false },
+    constructor: { value: User, enumerable: false, writable: true, configurable: true },
 })
 
 User.prototype = prototype
@@ -87,8 +106,10 @@ User.prototype = prototype
 User.toString = () => 'User'
 User.is = v => v && v['@@typeName'] === 'User'
 
-User._from = o =>
-    User(o.id, o.email, o.displayName, o.organizations, o.createdAt, o.createdBy, o.updatedAt, o.updatedBy)
+User._from = o => {
+    const { id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy } = o
+    return User(id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy)
+}
 User.from = User._from
 
 User._toFirestore = (o, encodeTimestamps) => {
