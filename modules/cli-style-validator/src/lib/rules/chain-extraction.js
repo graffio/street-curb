@@ -107,6 +107,16 @@ const isOutermostMemberExpression = (node, parent) => {
 }
 
 /**
+ * Check if this MemberExpression is an assignment target (left side of =)
+ * @sig isAssignmentTarget :: (ASTNode, ASTNode?) -> Boolean
+ */
+const isAssignmentTarget = (node, parent) => {
+    if (!parent) return false
+    if (parent.type === 'AssignmentExpression' && parent.left === node) return true
+    return false
+}
+
+/**
  * Check if a node is an AST child worth traversing
  * @sig isTraversableChild :: Any -> Boolean
  */
@@ -154,6 +164,7 @@ const addToMap = (map, base, property, line) => {
  */
 const processMemberExpression = (bases, node, parent) => {
     if (!isOutermostMemberExpression(node, parent)) return
+    if (isAssignmentTarget(node, parent)) return
 
     const isMethodCall = parent && parent.type === 'CallExpression' && parent.callee === node
     const targetNode = isMethodCall ? node.object : node
