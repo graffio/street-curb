@@ -1,3 +1,6 @@
+// ABOUTME: Main test suite for cli-type-generator
+// ABOUTME: Tests generated types, constructors, validation, Firestore serialization, and LookupTable operations
+
 import { LookupTable } from '@graffio/functional'
 import fs from 'fs'
 import path from 'path'
@@ -36,12 +39,13 @@ const generateTypes = async () => {
             'triple-nested-coord',
             'tuple',
             'many-lookup-tables',
+            'optional-field-types-test',
         ]
 
         const inputDirectory = `test/type-definitions`
         const outputDirectory = `test/generated`
 
-        for (const n of names) await generateOne(`${inputDirectory}/${n}.type.js`, `${outputDirectory}/${n}.js`)
+        await Promise.all(names.map(n => generateOne(`${inputDirectory}/${n}.type.js`, `${outputDirectory}/${n}.js`)))
 
         await generateIndexFile('test/generated')
     } catch (error) {
@@ -80,8 +84,12 @@ const {
     TripleNestedArray,
     TripleNestedCoord,
     Tuple,
-    UseLookupTable,
+    ManyLookupTables,
+    OptionalFieldTypesTest,
 } = generatedTypes
+
+// Alias for backward compatibility with tests
+const UseLookupTable = ManyLookupTables
 
 // Add prototype method to Tuple to match original test setup
 Tuple.prototype.foo = 'foo'
@@ -234,15 +242,16 @@ tap.test('Enhanced Types - Function Attachment', t => {
         t.test('When I test integration between functions', t => {
             // Create random instance
             const randomInstance = HasIdEnhanced.createRandom()
+            const { id } = randomInstance
 
             // Verify it's valid
-            t.ok(HasIdEnhanced.isValidId(randomInstance.id), 'Then createRandom output passes isValidId')
+            t.ok(HasIdEnhanced.isValidId(id), 'Then createRandom output passes isValidId')
 
             // Convert to object and back
-            const asObject = { id: randomInstance.id, extra: 'test' }
+            const asObject = { id, extra: 'test' }
             const fromObjectInstance = HasIdEnhanced.fromObject(asObject)
 
-            t.equal(fromObjectInstance.id, randomInstance.id, 'Then roundtrip preserves ID')
+            t.equal(fromObjectInstance.id, id, 'Then roundtrip preserves ID')
             t.ok(HasIdEnhanced.is(fromObjectInstance), 'Then fromObject result is valid instance')
             t.end()
         })
@@ -417,12 +426,13 @@ tap.test('Tagged Types Static Migration - TaggedSum Functionality', t => {
             t.end()
         })
         t.test('When I test type checking', t => {
-            t.ok(Shape.is(square), 'Then Shape.is(square) is true')
-            t.ok(Shape.is(circle), 'Then Shape.is(circle) is true')
-            t.ok(Shape.Square.is(square), 'Then Shape.Square.is(square) is true')
-            t.ok(Shape.Circle.is(circle), 'Then Shape.Circle.is(circle) is true')
-            t.notOk(Shape.Square.is(circle), 'Then Shape.Square.is(circle) is false')
-            t.notOk(Shape.Circle.is(square), 'Then Shape.Circle.is(square) is false')
+            const { Circle, Square, is } = Shape
+            t.ok(is(square), 'Then Shape.is(square) is true')
+            t.ok(is(circle), 'Then Shape.is(circle) is true')
+            t.ok(Square.is(square), 'Then Shape.Square.is(square) is true')
+            t.ok(Circle.is(circle), 'Then Shape.Circle.is(circle) is true')
+            t.notOk(Square.is(circle), 'Then Shape.Square.is(circle) is false')
+            t.notOk(Circle.is(square), 'Then Shape.Circle.is(square) is false')
             t.end()
         })
         t.test('When I use match functionality', t => {
@@ -446,10 +456,11 @@ tap.test('Tagged Types Static Migration - Complex Type Validation', t => {
         })
         t.test('When I test Bob with multiple field types', t => {
             const bob = Bob(4, 'four', { n: 4 }, 4)
-            t.equal(bob.num, 4, 'Then Bob.num is correct')
-            t.equal(bob.s, 'four', 'Then Bob.s is correct')
-            t.same(bob.o, { n: 4 }, 'Then Bob.o is correct')
-            t.equal(bob.a, 4, 'Then Bob.a is correct')
+            const { a, num, o, s } = bob
+            t.equal(num, 4, 'Then Bob.num is correct')
+            t.equal(s, 'four', 'Then Bob.s is correct')
+            t.same(o, { n: 4 }, 'Then Bob.o is correct')
+            t.equal(a, 4, 'Then Bob.a is correct')
             t.throws(
                 () => Bob('uh-oh', 'four', { n: 4 }, 'a'),
                 /expected num to have type Number/,
@@ -478,9 +489,10 @@ tap.test('Tagged Types Static Migration - Date Type Validation', t => {
         t.test('When I test required Date field', t => {
             const now = new Date()
             const event = Event('Conference', now, undefined)
-            t.equal(event.name, 'Conference', 'Then Event.name is correct')
-            t.equal(event.occurredAt, now, 'Then Event.occurredAt accepts Date')
-            t.equal(event.scheduledFor, undefined, 'Then optional Date can be undefined')
+            const { name, occurredAt, scheduledFor } = event
+            t.equal(name, 'Conference', 'Then Event.name is correct')
+            t.equal(occurredAt, now, 'Then Event.occurredAt accepts Date')
+            t.equal(scheduledFor, undefined, 'Then optional Date can be undefined')
             t.end()
         })
 
@@ -731,26 +743,28 @@ tap.test("Given Coord = tagged('Coord', { x: 'Number', y: 'Number' })", t => {
     t.end()
 })
 
-/* ---------------------------------------------------------------------------------------------------------------------
+/*
  * Test taggedSum
- * ------------------------------------------------------------------------------------------------------------------- */
+ */
 tap.test('Given Shape as a taggedSum with Square and Circle constructors', t => {
     t.test('Then', t => {
+        const { Square, prototype } = Shape
         t.same(typeof Shape, 'object', 'Shape is an object')
         t.same(Shape['@@typeName'], 'Shape', "Shape's '@@typeName' is 'Shape'")
         t.same(Shape['@@tagNames'], ['Square', 'Circle'], "Shape's '@@tagNames' are ['Square', 'Circle']")
-        t.same(typeof Shape.Square, 'function', 'Shape.Square is a function')
+        t.same(typeof Square, 'function', 'Shape.Square is a function')
 
-        t.ok(typeof Shape.prototype.match === 'function', 'Shape.prototype.match is a function')
-        t.ok(typeof Shape.prototype.constructor === 'object', 'Shape.prototype.constructor exists')
-        t.same(Object.keys(Shape.prototype), [], 'Shape.prototype has no enumerable properties')
+        t.ok(typeof prototype.match === 'function', 'Shape.prototype.match is a function')
+        t.ok(typeof prototype.constructor === 'object', 'Shape.prototype.constructor exists')
+        t.same(Object.keys(prototype), [], 'Shape.prototype has no enumerable properties')
 
-        t.same(Shape.Square.toString(), `Shape.Square`, 'Shape.Square.toString() returns "Shape.Square"')
-        t.notOk(Shape.Square.is({}), 'Shape.Square.is({}) correctly returns false')
+        t.same(Square.toString(), `Shape.Square`, 'Shape.Square.toString() returns "Shape.Square"')
+        t.notOk(Square.is({}), 'Shape.Square.is({}) correctly returns false')
         t.end()
     })
 
     t.test('When I create square = Shape.Square(Coord(0, 0), Coord(4, 4) circle = Shape.Circle(Coord(0, 0), 2)', t => {
+        const { Circle, Square, is, prototype } = Shape
         t.same(square.topLeft, Coord(0, 0), 'square.topLeft is Coord(0, 0)')
         t.same(square.bottomRight, Coord(4, 4), 'square.bottomRight is Coord(4, 4)')
         t.same(circle.centre, Coord(0, 0), 'circle.center is Coord(0, 0)')
@@ -763,24 +777,24 @@ tap.test('Given Shape as a taggedSum with Square and Circle constructors', t => 
         )
         t.same(circle.toString(), 'Shape.Circle(Coord(0, 0), 2)', 'circle.toString() is Shape.Circle(Coord(0, 0), 2)')
 
-        t.ok(Shape.is(square), 'Shape.is(square) is true')
-        t.ok(Shape.is(circle), 'Shape.is(circle) is true')
-        t.ok(Shape.Square.is(square), 'Shape.Square.is(square) is true')
-        t.ok(Shape.Circle.is(circle), 'Shape.Circle.is(circle) is true')
-        t.notOk(Shape.Square.is(circle), 'Shape.Square.is(circle) is false')
-        t.notOk(Shape.Circle.is(square), 'Shape.Circle.is(square) is false')
+        t.ok(is(square), 'Shape.is(square) is true')
+        t.ok(is(circle), 'Shape.is(circle) is true')
+        t.ok(Square.is(square), 'Shape.Square.is(square) is true')
+        t.ok(Circle.is(circle), 'Shape.Circle.is(circle) is true')
+        t.notOk(Square.is(circle), 'Shape.Square.is(circle) is false')
+        t.notOk(Circle.is(square), 'Shape.Circle.is(square) is false')
 
         t.ok(
-            Object.prototype.isPrototypeOf.call(Shape.prototype, square),
+            Object.prototype.isPrototypeOf.call(prototype, square),
             'Shape.prototype is in the prototype chain for square',
         )
         t.ok(
-            Object.prototype.isPrototypeOf.call(Shape.prototype, circle),
+            Object.prototype.isPrototypeOf.call(prototype, circle),
             'Shape.prototype is in the prototype chain for circle',
         )
         t.same(
             Object.getPrototypeOf(Object.getPrototypeOf(square)),
-            Shape.prototype,
+            prototype,
             "square's prototype's prototype is Square.prototype",
         )
         t.end()
@@ -822,9 +836,9 @@ tap.test('Given Shape as a taggedSum with Square and Circle constructors', t => 
     t.end()
 })
 
-/* ---------------------------------------------------------------------------------------------------------------------
+/*
  * Type checking
- * ------------------------------------------------------------------------------------------------------------------- */
+ */
 
 tap.test('Type Checking', t => {
     t.test("Given HasId = tagged('Id', { id: Id )) ", t => {
@@ -835,8 +849,8 @@ tap.test('Type Checking', t => {
         })
 
         t.test('When I try to create a = HasId("50")', t => {
-            const expected =
-                'In constructor HasId(id): expected id to match /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i; found "50"'
+            const uuidRegex = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i'
+            const expected = `In constructor HasId(id): expected id to match ${uuidRegex}; found "50"`
             t.throws(() => HasId('50'), new TypeError(expected), 'It should throw since the given id is not a UUID')
             t.end()
         })
@@ -907,8 +921,9 @@ tap.test('Type Checking', t => {
         })
 
         t.test('When I try to create an Event with a string instead of Date', t => {
+            const ctor = 'Event(name, occurredAt, scheduledFor)'
             const expected = new Error(
-                'In constructor Event(name, occurredAt, scheduledFor): expected occurredAt to have type Date; found "2024-01-15"',
+                `In constructor ${ctor}: expected occurredAt to have type Date; found "2024-01-15"`,
             )
             t.throws(
                 () => Event('Launch', '2024-01-15', undefined),
@@ -919,8 +934,9 @@ tap.test('Type Checking', t => {
         })
 
         t.test('When I try to create an Event with a number instead of Date', t => {
+            const ctor = 'Event(name, occurredAt, scheduledFor)'
             const expected = new Error(
-                'In constructor Event(name, occurredAt, scheduledFor): expected occurredAt to have type Date; found 1705315800000',
+                `In constructor ${ctor}: expected occurredAt to have type Date; found 1705315800000`,
             )
             t.throws(
                 () => Event('Launch', 1705315800000, undefined),
@@ -1070,10 +1086,11 @@ tap.test('Array Type Checking', t => {
             const expected = new Error(
                 'In constructor TripleNestedArray(p): expected p to have type [[[Number]]]; found [[["a", "b"]]]',
             )
+            const reason = 'though triple-nested, still not [[[Number]]]'
             t.throws(
                 () => TripleNestedArray([[['a', 'b']]]),
                 expected,
-                `It should throw because [[["a", "b"]]] -- though now properly triple-nested -- is still not a [[[Number]]]`,
+                `It should throw because [[["a", "b"]]] -- ${reason}`,
             )
             t.end()
         })
@@ -1156,39 +1173,37 @@ tap.test('Array Type Checking', t => {
 })
 
 tap.test('Conditional Type Checking', t => {
-    t.test(
-        "Given a conditional type descriptor (ending in '?'): OptionalCoord = tagged('OptionalCoord', { p: 'Coord?' }) ",
-        t => {
-            t.test('When I create a = OptionalCoord(Coord(1, 2))', t => {
-                const expected = 'OptionalCoord(Coord(1, 2))'
-                const a = OptionalCoord(Coord(1, 2))
-                t.same(a.toString(), expected, `Then a should equal ${a.toString()}`)
-                t.end()
-            })
-
-            t.test('When I create a = OptionalCoord(undefined)', t => {
-                const expected = 'OptionalCoord(undefined)'
-                const a = OptionalCoord(undefined)
-                t.same(a.toString(), expected, `Then a should equal ${a.toString()}`)
-                t.end()
-            })
-
-            t.test('When I try to create a = OptionalCoord()', t => {
-                const expected = 'OptionalCoord(undefined)'
-                const a = OptionalCoord()
-                t.same(a.toString(), expected, `Then a should equal ${a.toString()}`)
-                t.end()
-            })
-
-            t.test('When I try to create a = OptionalCoord(1)', t => {
-                const expected = new Error('In constructor OptionalCoord(p): expected p to have type Coord; found 1')
-                t.throws(() => OptionalCoord(1), expected, 'It should throw because 1 is not a Coord')
-                t.end()
-            })
-
+    const typeDesc = "OptionalCoord = tagged('OptionalCoord', { p: 'Coord?' })"
+    t.test(`Given a conditional type descriptor (ending in '?'): ${typeDesc}`, t => {
+        t.test('When I create a = OptionalCoord(Coord(1, 2))', t => {
+            const expected = 'OptionalCoord(Coord(1, 2))'
+            const a = OptionalCoord(Coord(1, 2))
+            t.same(a.toString(), expected, `Then a should equal ${a.toString()}`)
             t.end()
-        },
-    )
+        })
+
+        t.test('When I create a = OptionalCoord(undefined)', t => {
+            const expected = 'OptionalCoord(undefined)'
+            const a = OptionalCoord(undefined)
+            t.same(a.toString(), expected, `Then a should equal ${a.toString()}`)
+            t.end()
+        })
+
+        t.test('When I try to create a = OptionalCoord()', t => {
+            const expected = 'OptionalCoord(undefined)'
+            const a = OptionalCoord()
+            t.same(a.toString(), expected, `Then a should equal ${a.toString()}`)
+            t.end()
+        })
+
+        t.test('When I try to create a = OptionalCoord(1)', t => {
+            const expected = new Error('In constructor OptionalCoord(p): expected p to have type Coord; found 1')
+            t.throws(() => OptionalCoord(1), expected, 'It should throw because 1 is not a Coord')
+            t.end()
+        })
+
+        t.end()
+    })
 
     t.test(
         "Given a conditional string type descriptor : OptionalString = tagged('OptionalString', { p: 'String?' }) ",
@@ -1343,10 +1358,11 @@ tap.test('Tagged sum type with Date fields and timestampFields generation', t =>
         t.test('When I create a Scheduled notification', t => {
             const scheduledDate = new Date('2025-01-15T10:00:00Z')
             const scheduled = Notification.Scheduled('Reminder', scheduledDate)
+            const { message, scheduledFor } = scheduled
 
-            t.equal(scheduled.message, 'Reminder', 'Then message is set correctly')
-            t.equal(scheduled.scheduledFor, scheduledDate, 'Then scheduledFor Date is set correctly')
-            t.ok(scheduled.scheduledFor instanceof Date, 'Then scheduledFor is a Date instance')
+            t.equal(message, 'Reminder', 'Then message is set correctly')
+            t.equal(scheduledFor, scheduledDate, 'Then scheduledFor Date is set correctly')
+            t.ok(scheduledFor instanceof Date, 'Then scheduledFor is a Date instance')
             t.end()
         })
 
@@ -1354,10 +1370,11 @@ tap.test('Tagged sum type with Date fields and timestampFields generation', t =>
             const sentDate = new Date('2025-01-15T10:05:00Z')
             const deliveredDate = new Date('2025-01-15T10:06:00Z')
             const sent = Notification.Sent('Alert', sentDate, deliveredDate)
+            const { deliveredAt, message, sentAt } = sent
 
-            t.equal(sent.message, 'Alert', 'Then message is set correctly')
-            t.equal(sent.sentAt, sentDate, 'Then sentAt Date is set correctly')
-            t.equal(sent.deliveredAt, deliveredDate, 'Then deliveredAt Date is set correctly')
+            t.equal(message, 'Alert', 'Then message is set correctly')
+            t.equal(sentAt, sentDate, 'Then sentAt Date is set correctly')
+            t.equal(deliveredAt, deliveredDate, 'Then deliveredAt Date is set correctly')
             t.end()
         })
 
@@ -1642,18 +1659,16 @@ tap.test('Given ManyLookupTables with toFirestore/fromFirestore serialization fo
 
         // Serialize to Firestore format
         const firestoreDoc = UseLookupTable.toFirestore(original, encodeTimestamp)
+        const { notifications } = firestoreDoc
 
         // Verify Firestore format
-        t.ok(typeof firestoreDoc.notifications === 'object', 'notifications serialized to map')
-        t.notOk(Array.isArray(firestoreDoc.notifications), 'notifications not an array')
-        t.equal(Object.keys(firestoreDoc.notifications).length, 2, 'map has 2 entries')
-        t.ok(firestoreDoc.notifications['First message'], 'first item keyed by message')
-        t.ok(firestoreDoc.notifications['Second message'], 'second item keyed by message')
-        t.equal(firestoreDoc.notifications['First message']['@@tagName'], 'Scheduled', 'tagName preserved')
-        t.ok(
-            typeof firestoreDoc.notifications['First message'].scheduledFor.seconds === 'number',
-            'Date encoded as timestamp',
-        )
+        t.ok(typeof notifications === 'object', 'notifications serialized to map')
+        t.notOk(Array.isArray(notifications), 'notifications not an array')
+        t.equal(Object.keys(notifications).length, 2, 'map has 2 entries')
+        t.ok(notifications['First message'], 'first item keyed by message')
+        t.ok(notifications['Second message'], 'second item keyed by message')
+        t.equal(notifications['First message']['@@tagName'], 'Scheduled', 'tagName preserved')
+        t.ok(typeof notifications['First message'].scheduledFor.seconds === 'number', 'Date encoded as timestamp')
 
         // Deserialize back
         const roundtrip = UseLookupTable.fromFirestore(firestoreDoc, decodeTimestamp)
@@ -1670,10 +1685,11 @@ tap.test('Given ManyLookupTables with toFirestore/fromFirestore serialization fo
 
         // Verify second item
         const second = roundtrip.notifications.getById('Second message')
+        const { deliveredAt, message: secondMessage, sentAt } = second
         t.ok(Notification.Sent.is(second), 'second item is Notification.Sent')
-        t.equal(second.message, 'Second message', 'second message correct')
-        t.equal(second.sentAt.toISOString(), '2025-01-02T00:00:00.000Z', 'sentAt correct')
-        t.equal(second.deliveredAt.toISOString(), '2025-01-03T00:00:00.000Z', 'deliveredAt correct')
+        t.equal(secondMessage, 'Second message', 'second message correct')
+        t.equal(sentAt.toISOString(), '2025-01-02T00:00:00.000Z', 'sentAt correct')
+        t.equal(deliveredAt.toISOString(), '2025-01-03T00:00:00.000Z', 'deliveredAt correct')
 
         t.end()
     })
@@ -1706,6 +1722,7 @@ tap.test('Given ManyLookupTables with toFirestore/fromFirestore serialization fo
 
         const msg1 = reconstructed.notifications.getById('Message 1')
         t.equal(msg1['@@tagName'], 'Scheduled', 'first message has correct tag')
+
         // Note: TaggedSum types don't have toFirestore/fromFirestore yet, so Dates pass through as-is
         t.ok(msg1.scheduledFor instanceof Date, 'first message date is preserved')
         t.equal(msg1.scheduledFor.getTime(), new Date('2025-01-01T12:30:45Z').getTime(), 'first message date preserved')
@@ -1727,10 +1744,11 @@ tap.test('Given ManyLookupTables with toFirestore/fromFirestore serialization fo
         })
 
         const firestoreDoc = UseLookupTable.toFirestore(original, encodeTimestamp)
+        const { notifications } = firestoreDoc
 
-        t.ok(typeof firestoreDoc.notifications === 'object', 'empty LookupTable serializes to map')
-        t.notOk(Array.isArray(firestoreDoc.notifications), 'not an array')
-        t.equal(Object.keys(firestoreDoc.notifications).length, 0, 'serialized map is empty')
+        t.ok(typeof notifications === 'object', 'empty LookupTable serializes to map')
+        t.notOk(Array.isArray(notifications), 'not an array')
+        t.equal(Object.keys(notifications).length, 0, 'serialized map is empty')
 
         const roundtrip = UseLookupTable.fromFirestore(firestoreDoc, decodeTimestamp)
         t.ok(roundtrip.notifications.idField === 'message', 'deserialized as LookupTable')
@@ -1771,13 +1789,14 @@ tap.test('Given ManyLookupTables with toFirestore/fromFirestore serialization fo
 
         // Serialize to Firestore
         const firestoreDoc = UseLookupTable.toFirestore(original, encodeTimestamp)
+        const { events } = firestoreDoc
 
         // Verify map format
-        t.ok(typeof firestoreDoc.events === 'object', 'events serialized to map')
-        t.notOk(Array.isArray(firestoreDoc.events), 'events not an array')
-        t.equal(Object.keys(firestoreDoc.events).length, 2, 'map has 2 entries')
-        t.ok(firestoreDoc.events['Event 1'], 'first event keyed by name')
-        t.ok(typeof firestoreDoc.events['Event 1'].occurredAt.seconds === 'number', 'Date fields encoded as timestamps')
+        t.ok(typeof events === 'object', 'events serialized to map')
+        t.notOk(Array.isArray(events), 'events not an array')
+        t.equal(Object.keys(events).length, 2, 'map has 2 entries')
+        t.ok(events['Event 1'], 'first event keyed by name')
+        t.ok(typeof events['Event 1'].occurredAt.seconds === 'number', 'Date fields encoded as timestamps')
 
         // Deserialize back
         const roundtrip = UseLookupTable.fromFirestore(firestoreDoc, decodeTimestamp)
@@ -1832,29 +1851,27 @@ tap.test('Given ManyLookupTables with toFirestore/fromFirestore serialization fo
         t.equal(reconstructed.optionalEvents.length, 2, 'optionalEvents has correct length')
 
         const meeting = reconstructed.events.getById('Meeting')
-        t.equal(meeting.name, 'Meeting', 'meeting event has correct name')
-        t.ok(meeting.occurredAt instanceof Date, 'meeting occurredAt is a Date')
+        const { name: meetingName, occurredAt: meetingOccurredAt, scheduledFor: meetingScheduledFor } = meeting
+        t.equal(meetingName, 'Meeting', 'meeting event has correct name')
+        t.ok(meetingOccurredAt instanceof Date, 'meeting occurredAt is a Date')
+        t.equal(meetingOccurredAt.getTime(), new Date('2025-03-15T09:00:00Z').getTime(), 'meeting occurredAt preserved')
+        t.ok(meetingScheduledFor instanceof Date, 'meeting scheduledFor is a Date')
         t.equal(
-            meeting.occurredAt.getTime(),
-            new Date('2025-03-15T09:00:00Z').getTime(),
-            'meeting occurredAt preserved',
-        )
-        t.ok(meeting.scheduledFor instanceof Date, 'meeting scheduledFor is a Date')
-        t.equal(
-            meeting.scheduledFor.getTime(),
+            meetingScheduledFor.getTime(),
             new Date('2025-03-15T09:00:00Z').getTime(),
             'meeting scheduledFor preserved',
         )
 
         const deadline = reconstructed.events.getById('Deadline')
-        t.equal(deadline.name, 'Deadline', 'deadline event has correct name')
-        t.ok(deadline.occurredAt instanceof Date, 'deadline occurredAt is a Date')
+        const { name: deadlineName, occurredAt: deadlineOccurredAt, scheduledFor: deadlineScheduledFor } = deadline
+        t.equal(deadlineName, 'Deadline', 'deadline event has correct name')
+        t.ok(deadlineOccurredAt instanceof Date, 'deadline occurredAt is a Date')
         t.equal(
-            deadline.occurredAt.getTime(),
+            deadlineOccurredAt.getTime(),
             new Date('2025-04-01T23:59:59Z').getTime(),
             'deadline occurredAt preserved',
         )
-        t.equal(deadline.scheduledFor, undefined, 'deadline scheduledFor is undefined')
+        t.equal(deadlineScheduledFor, undefined, 'deadline scheduledFor is undefined')
 
         t.end()
     })
@@ -1866,10 +1883,11 @@ tap.test('Given CustomSerialization with custom toFirestore override', t => {
     const encodeTimestamp = date => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 })
 
     t.test('When I check generated code structure', t => {
-        t.ok(CustomSerialization._toFirestore, '_toFirestore primitive exists')
-        t.ok(CustomSerialization.toFirestore, 'toFirestore public function exists')
-        t.ok(CustomSerialization._from, '_from primitive exists')
-        t.ok(CustomSerialization.from, 'from public function exists')
+        const { _from, _toFirestore, from, toFirestore } = CustomSerialization
+        t.ok(_toFirestore, '_toFirestore primitive exists')
+        t.ok(toFirestore, 'toFirestore public function exists')
+        t.ok(_from, '_from primitive exists')
+        t.ok(from, 'from public function exists')
         t.end()
     })
 
@@ -1881,11 +1899,12 @@ tap.test('Given CustomSerialization with custom toFirestore override', t => {
         })
 
         const firestoreDoc = CustomSerialization.toFirestore(obj, encodeTimestamp)
+        const { createdAt, customField, id, value } = firestoreDoc
 
-        t.equal(firestoreDoc.id, 'test1', 'id field from primitive')
-        t.equal(firestoreDoc.value, 'hello', 'value field from primitive')
-        t.ok(firestoreDoc.createdAt.seconds, 'createdAt converted by primitive')
-        t.equal(firestoreDoc.customField, 'added-by-custom-logic', 'customField added by override')
+        t.equal(id, 'test1', 'id field from primitive')
+        t.equal(value, 'hello', 'value field from primitive')
+        t.ok(createdAt.seconds, 'createdAt converted by primitive')
+        t.equal(customField, 'added-by-custom-logic', 'customField added by override')
 
         t.end()
     })
@@ -1898,12 +1917,77 @@ tap.test('Given CustomSerialization with custom toFirestore override', t => {
         })
 
         const firestoreDoc = CustomSerialization._toFirestore(obj, encodeTimestamp)
+        const { createdAt, customField, id, value } = firestoreDoc
 
-        t.equal(firestoreDoc.id, 'test2', 'id field present')
-        t.equal(firestoreDoc.value, 'world', 'value field present')
-        t.ok(firestoreDoc.createdAt.seconds, 'createdAt converted')
-        t.notOk(firestoreDoc.customField, 'customField NOT added by primitive')
+        t.equal(id, 'test2', 'id field present')
+        t.equal(value, 'world', 'value field present')
+        t.ok(createdAt.seconds, 'createdAt converted')
+        t.notOk(customField, 'customField NOT added by primitive')
 
+        t.end()
+    })
+
+    t.end()
+})
+
+/*
+ * Integration tests for optional FieldTypes syntax
+ */
+tap.test('Given OptionalFieldTypesTest with { pattern: FieldTypes.X, optional: true } fields', t => {
+    const validEmail = 'test@example.com'
+    const validCorrelationId = 'cor_abc123def456'
+
+    t.test('When I create with all fields provided', t => {
+        const obj = OptionalFieldTypesTest(validEmail, validEmail, validCorrelationId, validCorrelationId)
+        const { requiredEmail, optionalEmail, requiredCorrelationId, optionalCorrelationId } = obj
+
+        t.equal(requiredEmail, validEmail, 'Then requiredEmail is set')
+        t.equal(optionalEmail, validEmail, 'Then optionalEmail is set')
+        t.equal(requiredCorrelationId, validCorrelationId, 'Then requiredCorrelationId is set')
+        t.equal(optionalCorrelationId, validCorrelationId, 'Then optionalCorrelationId is set')
+        t.end()
+    })
+
+    t.test('When I create with optional fields as undefined', t => {
+        const obj = OptionalFieldTypesTest(validEmail, undefined, validCorrelationId, undefined)
+        const { requiredEmail, optionalEmail, requiredCorrelationId, optionalCorrelationId } = obj
+
+        t.equal(requiredEmail, validEmail, 'Then requiredEmail is set')
+        t.equal(optionalEmail, undefined, 'Then optionalEmail is undefined')
+        t.equal(requiredCorrelationId, validCorrelationId, 'Then requiredCorrelationId is set')
+        t.equal(optionalCorrelationId, undefined, 'Then optionalCorrelationId is undefined')
+        t.end()
+    })
+
+    t.test('When I try to create with required field as undefined', t => {
+        t.throws(
+            () => OptionalFieldTypesTest(undefined, validEmail, validCorrelationId, validCorrelationId),
+            /expected requiredEmail to have type String/,
+            'Then it throws for undefined required field',
+        )
+        t.end()
+    })
+
+    t.test('When I try to create with invalid value for optional field', t => {
+        t.throws(
+            () => OptionalFieldTypesTest(validEmail, 'not-an-email', validCorrelationId, validCorrelationId),
+            /expected optionalEmail to match/,
+            'Then it throws for invalid optional field value',
+        )
+        t.end()
+    })
+
+    t.test('When I use from() with optional fields omitted', t => {
+        const obj = OptionalFieldTypesTest.from({
+            requiredEmail: validEmail,
+            requiredCorrelationId: validCorrelationId,
+        })
+        const { requiredEmail, optionalEmail, requiredCorrelationId, optionalCorrelationId } = obj
+
+        t.equal(requiredEmail, validEmail, 'Then requiredEmail is set')
+        t.equal(optionalEmail, undefined, 'Then optionalEmail is undefined')
+        t.equal(requiredCorrelationId, validCorrelationId, 'Then requiredCorrelationId is set')
+        t.equal(optionalCorrelationId, undefined, 'Then optionalCorrelationId is undefined')
         t.end()
     })
 
