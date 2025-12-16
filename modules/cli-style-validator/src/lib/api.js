@@ -7,6 +7,7 @@ import { checkChainExtraction } from './rules/chain-extraction.js'
 import { checkFileNaming } from './rules/file-naming.js'
 import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
 import { checkFunctionalPatterns } from './rules/functional-patterns.js'
+import { checkFunctionNesting } from './rules/function-nesting.js'
 import { checkFunctionSpacing } from './rules/function-spacing.js'
 import { checkImportOrdering } from './rules/import-ordering.js'
 import { checkLineLength } from './rules/line-length.js'
@@ -57,6 +58,7 @@ const runAllRules = (ast, sourceCode, filePath) => {
     allViolations.push(...checkFileNaming(ast, sourceCode, filePath))
     allViolations.push(...checkFunctionDeclarationOrdering(ast, sourceCode, filePath))
     allViolations.push(...checkFunctionalPatterns(ast, sourceCode, filePath))
+    allViolations.push(...checkFunctionNesting(ast, sourceCode, filePath))
     allViolations.push(...checkFunctionSpacing(ast, sourceCode, filePath))
     allViolations.push(...checkImportOrdering(ast, sourceCode, filePath))
     allViolations.push(...checkLineLength(ast, sourceCode, filePath))
