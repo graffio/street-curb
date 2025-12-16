@@ -88,8 +88,8 @@ ParseResult.prototype = prototype
 ParseResult.toString = () => 'ParseResult'
 ParseResult.is = v => v && v['@@typeName'] === 'ParseResult'
 
-ParseResult._from = o => {
-    const { typeDefinition, imports, functions, sourceContent } = o
+ParseResult._from = _input => {
+    const { typeDefinition, imports, functions, sourceContent } = _input
     return ParseResult(typeDefinition, imports, functions, sourceContent)
 }
 ParseResult.from = ParseResult._from

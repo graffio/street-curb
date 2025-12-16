@@ -161,8 +161,8 @@ const LoadFilePrototype = Object.create(ActionPrototype, {
 LoadFileConstructor.prototype = LoadFilePrototype
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
 LoadFileConstructor.toString = () => 'Action.LoadFile'
-LoadFileConstructor._from = o => {
-    const { accounts, categories, securities, tags, splits, transactions } = o
+LoadFileConstructor._from = _input => {
+    const { accounts, categories, securities, tags, splits, transactions } = _input
     return Action.LoadFile(accounts, categories, securities, tags, splits, transactions)
 }
 LoadFileConstructor.from = LoadFileConstructor._from
@@ -251,7 +251,7 @@ const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
-SetTransactionFilterConstructor._from = o => Action.SetTransactionFilter(o.changes)
+SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.changes)
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
 
 SetTransactionFilterConstructor.toFirestore = o => ({ ...o })
@@ -304,7 +304,7 @@ const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
 ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
 ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
 ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
-ResetTransactionFiltersConstructor._from = o => Action.ResetTransactionFilters()
+ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters()
 ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
 
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
@@ -358,7 +358,7 @@ const SetTableLayoutPrototype = Object.create(ActionPrototype, {
 SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
 SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
 SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
-SetTableLayoutConstructor._from = o => Action.SetTableLayout(o.tableLayout)
+SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
 SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
 
 SetTableLayoutConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -426,7 +426,7 @@ const OpenViewPrototype = Object.create(ActionPrototype, {
 OpenViewConstructor.prototype = OpenViewPrototype
 OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
 OpenViewConstructor.toString = () => 'Action.OpenView'
-OpenViewConstructor._from = o => Action.OpenView(o.view, o.groupId)
+OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
 OpenViewConstructor.from = OpenViewConstructor._from
 
 /**
@@ -507,7 +507,7 @@ const CloseViewPrototype = Object.create(ActionPrototype, {
 CloseViewConstructor.prototype = CloseViewPrototype
 CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
 CloseViewConstructor.toString = () => 'Action.CloseView'
-CloseViewConstructor._from = o => Action.CloseView(o.viewId, o.groupId)
+CloseViewConstructor._from = _input => Action.CloseView(_input.viewId, _input.groupId)
 CloseViewConstructor.from = CloseViewConstructor._from
 
 CloseViewConstructor.toFirestore = o => ({ ...o })
@@ -572,8 +572,8 @@ const MoveViewPrototype = Object.create(ActionPrototype, {
 MoveViewConstructor.prototype = MoveViewPrototype
 MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
 MoveViewConstructor.toString = () => 'Action.MoveView'
-MoveViewConstructor._from = o => {
-    const { viewId, fromGroupId, toGroupId, toIndex } = o
+MoveViewConstructor._from = _input => {
+    const { viewId, fromGroupId, toGroupId, toIndex } = _input
     return Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)
 }
 MoveViewConstructor.from = MoveViewConstructor._from
@@ -628,7 +628,7 @@ const CreateTabGroupPrototype = Object.create(ActionPrototype, {
 CreateTabGroupConstructor.prototype = CreateTabGroupPrototype
 CreateTabGroupConstructor.is = val => val && val.constructor === CreateTabGroupConstructor
 CreateTabGroupConstructor.toString = () => 'Action.CreateTabGroup'
-CreateTabGroupConstructor._from = o => Action.CreateTabGroup()
+CreateTabGroupConstructor._from = _input => Action.CreateTabGroup()
 CreateTabGroupConstructor.from = CreateTabGroupConstructor._from
 
 CreateTabGroupConstructor.toFirestore = o => ({ ...o })
@@ -682,7 +682,7 @@ const CloseTabGroupPrototype = Object.create(ActionPrototype, {
 CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
 CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupConstructor
 CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
-CloseTabGroupConstructor._from = o => Action.CloseTabGroup(o.groupId)
+CloseTabGroupConstructor._from = _input => Action.CloseTabGroup(_input.groupId)
 CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
 
 CloseTabGroupConstructor.toFirestore = o => ({ ...o })
@@ -738,7 +738,7 @@ const SetActiveViewPrototype = Object.create(ActionPrototype, {
 SetActiveViewConstructor.prototype = SetActiveViewPrototype
 SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
 SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
-SetActiveViewConstructor._from = o => Action.SetActiveView(o.groupId, o.viewId)
+SetActiveViewConstructor._from = _input => Action.SetActiveView(_input.groupId, _input.viewId)
 SetActiveViewConstructor.from = SetActiveViewConstructor._from
 
 SetActiveViewConstructor.toFirestore = o => ({ ...o })
@@ -792,7 +792,7 @@ const SetActiveTabGroupPrototype = Object.create(ActionPrototype, {
 SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
 SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
 SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
-SetActiveTabGroupConstructor._from = o => Action.SetActiveTabGroup(o.groupId)
+SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.groupId)
 SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
 
 SetActiveTabGroupConstructor.toFirestore = o => ({ ...o })
@@ -848,7 +848,7 @@ const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
 SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
 SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
 SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
-SetTabGroupWidthConstructor._from = o => Action.SetTabGroupWidth(o.groupId, o.width)
+SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
 SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
 
 SetTabGroupWidthConstructor.toFirestore = o => ({ ...o })

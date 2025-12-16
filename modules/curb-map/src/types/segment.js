@@ -80,8 +80,8 @@ Segment.prototype = prototype
 Segment.toString = () => 'Segment'
 Segment.is = v => v && v['@@typeName'] === 'Segment'
 
-Segment._from = o => {
-    const { id, use, length } = o
+Segment._from = _input => {
+    const { id, use, length } = _input
     return Segment(id, use, length)
 }
 Segment.from = Segment._from

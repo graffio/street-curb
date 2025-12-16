@@ -56,7 +56,7 @@ const Organization = function Organization(
     R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
     R.validateDate(constructorName, 'deletedAt', true, deletedAt)
-    R.validateString(constructorName, 'deletedBy', true, deletedBy)
+    R.validateTag(constructorName, '^usr_[a-z0-9]{12,}$/', 'deletedBy', true, deletedBy)
 
     const result = Object.create(prototype)
     result.id = id
@@ -126,8 +126,9 @@ Organization.prototype = prototype
 Organization.toString = () => 'Organization'
 Organization.is = v => v && v['@@typeName'] === 'Organization'
 
-Organization._from = o => {
-    const { id, name, defaultProjectId, members, createdAt, createdBy, updatedAt, updatedBy, deletedAt, deletedBy } = o
+Organization._from = _input => {
+    const { id, name, defaultProjectId, members, createdAt, createdBy, updatedAt, updatedBy, deletedAt, deletedBy } =
+        _input
     return Organization(
         id,
         name,

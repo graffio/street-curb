@@ -91,8 +91,8 @@ TabGroup.prototype = prototype
 TabGroup.toString = () => 'TabGroup'
 TabGroup.is = v => v && v['@@typeName'] === 'TabGroup'
 
-TabGroup._from = o => {
-    const { id, views, activeViewId, width } = o
+TabGroup._from = _input => {
+    const { id, views, activeViewId, width } = _input
     return TabGroup(id, views, activeViewId, width)
 }
 TabGroup.from = TabGroup._from

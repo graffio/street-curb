@@ -86,8 +86,8 @@ FunctionInfo.prototype = prototype
 FunctionInfo.toString = () => 'FunctionInfo'
 FunctionInfo.is = v => v && v['@@typeName'] === 'FunctionInfo'
 
-FunctionInfo._from = o => {
-    const { typeName, functionName, node, sourceCode } = o
+FunctionInfo._from = _input => {
+    const { typeName, functionName, node, sourceCode } = _input
     return FunctionInfo(typeName, functionName, node, sourceCode)
 }
 FunctionInfo.from = FunctionInfo._from

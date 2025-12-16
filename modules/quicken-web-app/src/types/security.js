@@ -91,8 +91,8 @@ Security.prototype = prototype
 Security.toString = () => 'Security'
 Security.is = v => v && v['@@typeName'] === 'Security'
 
-Security._from = o => {
-    const { id, name, symbol, type, goal } = o
+Security._from = _input => {
+    const { id, name, symbol, type, goal } = _input
     return Security(id, name, symbol, type, goal)
 }
 Security.from = Security._from

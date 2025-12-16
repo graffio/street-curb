@@ -73,7 +73,7 @@ const Lot = function Lot(
     result.quantity = quantity
     result.remainingQuantity = remainingQuantity
     result.securityId = securityId
-    if (createdByTransactionId != null) result.createdByTransactionId = createdByTransactionId
+    result.createdByTransactionId = createdByTransactionId
     if (closedDate != null) result.closedDate = closedDate
     return result
 }
@@ -132,7 +132,7 @@ Lot.prototype = prototype
 Lot.toString = () => 'Lot'
 Lot.is = v => v && v['@@typeName'] === 'Lot'
 
-Lot._from = o => {
+Lot._from = _input => {
     const {
         accountId,
         costBasis,
@@ -144,7 +144,7 @@ Lot._from = o => {
         securityId,
         createdByTransactionId,
         closedDate,
-    } = o
+    } = _input
     return Lot(
         accountId,
         costBasis,

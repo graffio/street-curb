@@ -99,8 +99,8 @@ Category.prototype = prototype
 Category.toString = () => 'Category'
 Category.is = v => v && v['@@typeName'] === 'Category'
 
-Category._from = o => {
-    const { id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule } = o
+Category._from = _input => {
+    const { id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule } = _input
     return Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
 }
 Category.from = Category._from

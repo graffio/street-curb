@@ -87,8 +87,8 @@ Tag.prototype = prototype
 Tag.toString = () => 'Tag'
 Tag.is = v => v && v['@@typeName'] === 'Tag'
 
-Tag._from = o => {
-    const { id, name, color, description } = o
+Tag._from = _input => {
+    const { id, name, color, description } = _input
     return Tag(id, name, color, description)
 }
 Tag.from = Tag._from

@@ -104,8 +104,8 @@ const RegisterPrototype = Object.create(ViewPrototype, {
 RegisterConstructor.prototype = RegisterPrototype
 RegisterConstructor.is = val => val && val.constructor === RegisterConstructor
 RegisterConstructor.toString = () => 'View.Register'
-RegisterConstructor._from = o => {
-    const { id, accountId, title } = o
+RegisterConstructor._from = _input => {
+    const { id, accountId, title } = _input
     return View.Register(id, accountId, title)
 }
 RegisterConstructor.from = RegisterConstructor._from
@@ -165,8 +165,8 @@ const ReportPrototype = Object.create(ViewPrototype, {
 ReportConstructor.prototype = ReportPrototype
 ReportConstructor.is = val => val && val.constructor === ReportConstructor
 ReportConstructor.toString = () => 'View.Report'
-ReportConstructor._from = o => {
-    const { id, reportType, title } = o
+ReportConstructor._from = _input => {
+    const { id, reportType, title } = _input
     return View.Report(id, reportType, title)
 }
 ReportConstructor.from = ReportConstructor._from
@@ -226,8 +226,8 @@ const ReconciliationPrototype = Object.create(ViewPrototype, {
 ReconciliationConstructor.prototype = ReconciliationPrototype
 ReconciliationConstructor.is = val => val && val.constructor === ReconciliationConstructor
 ReconciliationConstructor.toString = () => 'View.Reconciliation'
-ReconciliationConstructor._from = o => {
-    const { id, accountId, title } = o
+ReconciliationConstructor._from = _input => {
+    const { id, accountId, title } = _input
     return View.Reconciliation(id, accountId, title)
 }
 ReconciliationConstructor.from = ReconciliationConstructor._from

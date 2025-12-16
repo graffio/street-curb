@@ -77,7 +77,7 @@ ImportInfo.prototype = prototype
 ImportInfo.toString = () => 'ImportInfo'
 ImportInfo.is = v => v && v['@@typeName'] === 'ImportInfo'
 
-ImportInfo._from = o => ImportInfo(o.source, o.specifiers)
+ImportInfo._from = _input => ImportInfo(_input.source, _input.specifiers)
 ImportInfo.from = ImportInfo._from
 
 ImportInfo._toFirestore = (o, encodeTimestamps) => {

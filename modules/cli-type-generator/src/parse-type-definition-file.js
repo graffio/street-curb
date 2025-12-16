@@ -1,3 +1,6 @@
+// ABOUTME: AST-based parser for .type.js files
+// ABOUTME: Extracts type definitions, imports, and attached functions using acorn
+
 import { parse } from 'acorn'
 import { generate } from 'escodegen'
 import { walk } from 'estree-walker'
@@ -47,6 +50,11 @@ import fs from 'fs'
  * Generated types are available in ./generated/ for production use.
  * This is "eating our own dog food" - using our type system to define itself!
  */
+
+/**
+ * Validate a type definition object has required structure
+ * @sig validateTypeDefinition :: TypeDefinition -> TypeDefinition | throws Error
+ */
 const validateTypeDefinition = typeDefinition => {
     if (!typeDefinition || typeof typeDefinition !== 'object') throw new Error('Type definition must be an object')
 
@@ -61,7 +69,7 @@ const validateTypeDefinition = typeDefinition => {
     return typeDefinition
 }
 
-/*
+/**
  * Validate tagged type definition
  * @sig validateTaggedType :: TypeDefinition -> TypeDefinition | throws Error
  */
@@ -72,7 +80,7 @@ const validateTaggedType = typeDefinition => {
     return typeDefinition
 }
 
-/*
+/**
  * Validate tagged sum type definition
  * @sig validateTaggedSumType :: TypeDefinition -> TypeDefinition | throws Error
  */
@@ -84,7 +92,7 @@ const validateTaggedSumType = typeDefinition => {
     return typeDefinition
 }
 
-/*
+/**
  * Validate a map of field names to field types
  * @sig validateFieldMap :: (FieldMap, String) -> void | throws Error
  */
@@ -97,7 +105,7 @@ const validateFieldMap = (fields, context) => {
     fieldNames.map(fieldName => validateFieldInMap(fieldName, fields[fieldName], context))
 }
 
-/*
+/**
  * Validate a single field in a field map
  * @sig validateFieldInMap :: (String, FieldType, String) -> void | throws Error
  */
@@ -106,7 +114,7 @@ const validateFieldInMap = (fieldName, fieldType, context) => {
     if (!isValidFieldType(fieldType)) throw new Error(`Invalid field type for ${context}.${fieldName}: ${fieldType}`)
 }
 
-/*
+/**
  * Validate a map of variant names to field maps
  * @sig validateVariantMap :: (VariantMap, String) -> void | throws Error
  */
@@ -118,7 +126,7 @@ const validateVariantMap = (variants, context) => {
     variantNames.map(variantName => validateVariantInMap(variantName, variants[variantName], context))
 }
 
-/*
+/**
  * Validate a single variant in a variant map
  * @sig validateVariantInMap :: (String, FieldMap, String) -> void | throws Error
  */
@@ -129,31 +137,46 @@ const validateVariantInMap = (variantName, variantFields, context) => {
     validateFieldMap(variantFields, `${context}.${variantName}`)
 }
 
-/*
+/**
  * Check if a value is a valid field type
  * @sig isValidFieldType :: Any -> Boolean
  */
 const isValidFieldType = fieldType => {
     if (typeof fieldType === 'string') return true
     if (fieldType instanceof RegExp) return true
-    if (typeof fieldType === 'object' && fieldType !== null) return true // Handle complex field type objects (from imports)
+
+    // Handle complex field type objects (from imports)
+    if (typeof fieldType === 'object' && fieldType !== null) return true
     return false
 }
 
-/*
+/**
+ * Convert import specifier AST node to ImportSpecifier object
+ * @sig specifierToInfo :: ASTNode -> ImportSpecifier
+ */
+const specifierToInfo = spec => ({
+    type: spec.type, // ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier
+    imported: spec.imported?.name || 'default',
+    local: spec.local.name,
+})
+
+/**
  * Extract import information from ImportDeclaration AST node
  * @sig extractImportInfo :: ASTNode -> ImportInfo
  */
-const extractImportInfo = node => ({
-    source: node.source.value,
-    specifiers: node.specifiers.map(spec => ({
-        type: spec.type, // ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier
-        imported: spec.imported?.name || 'default',
-        local: spec.local.name,
-    })),
-})
+const extractImportInfo = node => ({ source: node.source.value, specifiers: node.specifiers.map(specifierToInfo) })
 
-/*
+/**
+ * Convert property AST node to key-value pair on target object
+ * @sig assignPropertyToObject :: ([ImportInfo], Object) -> ASTNode -> ASTNode
+ */
+const assignPropertyToObject = (imports, target) => prop => {
+    if (prop.type === 'Property' && prop.key.type === 'Identifier')
+        target[prop.key.name] = resolvePropertyValue(prop.value, imports)
+    return prop
+}
+
+/**
  * Extract type definition from export declaration
  * @sig extractTypeDefinition :: (ASTNode, [ImportInfo]) -> TypeDefinition | null
  */
@@ -169,32 +192,28 @@ const extractTypeDefinition = (node, imports) => {
     const typeDefinition = { name: typeName }
 
     // Convert AST object to plain object, resolving imports
-    init.properties.map(prop => {
-        if (prop.type === 'Property' && prop.key.type === 'Identifier')
-            typeDefinition[prop.key.name] = resolvePropertyValue(prop.value, imports)
-        return prop
-    })
+    init.properties.map(assignPropertyToObject(imports, typeDefinition))
 
     return typeDefinition
 }
 
-/*
+/**
  * Extract function information from assignment expressions
  * @sig extractFunctionInfo :: (ASTNode, String) -> FunctionInfo | null
  */
 const extractFunctionInfo = (node, expectedTypeName) => {
-    const left = node.left
-    if (left.object?.type === 'Identifier' && left.property?.type === 'Identifier') {
-        const typeName = left.object.name
+    const { left } = node
+    if (left.object?.type !== 'Identifier' || left.property?.type !== 'Identifier') return null
 
-        // Only extract functions that belong to our type
-        if (!expectedTypeName || typeName === expectedTypeName)
-            return { typeName, functionName: left.property.name, node, sourceCode: generate(node) }
-    }
-    return null
+    const typeName = left.object.name
+
+    // Only extract functions that belong to our type
+    if (expectedTypeName && typeName !== expectedTypeName) return null
+
+    return { typeName, functionName: left.property.name, node, sourceCode: generate(node) }
 }
 
-/*
+/**
  * Extract information from standalone function declarations
  * @sig extractStandaloneFunctionInfo :: (ASTNode, String) -> FunctionInfo | null
  */
@@ -203,20 +222,21 @@ const extractStandaloneFunctionInfo = (node, expectedTypeName) =>
     // This could be enhanced to analyze the function body for type references
     null
 
-/*
+/**
  * Resolve property values in type definitions, handling imports
  * @sig resolvePropertyValue :: (ASTNode, [ImportInfo]) -> Any
  */
 const resolvePropertyValue = (node, imports) => {
-    if (node.type === 'Literal') return node.value
-    if (node.type === 'Identifier') return resolveIdentifierValue(node, imports)
-    if (node.type === 'MemberExpression') return resolveMemberExpressionValue(node, imports)
-    if (node.type === 'ObjectExpression') return resolveObjectExpressionValue(node, imports)
+    const { type, value } = node
+    if (type === 'Literal') return value
+    if (type === 'Identifier') return resolveIdentifierValue(node, imports)
+    if (type === 'MemberExpression') return resolveMemberExpressionValue(node, imports)
+    if (type === 'ObjectExpression') return resolveObjectExpressionValue(node, imports)
 
     return null
 }
 
-/*
+/**
  * Resolve identifier values from imports
  * @sig resolveIdentifierValue :: (ASTNode, [ImportInfo]) -> Any
  */
@@ -227,12 +247,12 @@ const resolveIdentifierValue = (node, imports) => {
     return node.name
 }
 
-/*
+/**
  * Resolve member expression values
  * @sig resolveMemberExpressionValue :: (ASTNode, [ImportInfo]) -> Any
  */
 const resolveMemberExpressionValue = (node, imports) => {
-    const fieldType = { __fieldTypesReference: true, source: '@graffio/types' }
+    const fieldType = { isFieldTypesReference: true, source: '@graffio/types' }
 
     const object = resolvePropertyValue(node.object, imports)
     const property = node.property.name
@@ -246,21 +266,26 @@ const resolveMemberExpressionValue = (node, imports) => {
     throw new Error(`Don't understand ${JSON.stringify(object)} node: ${JSON.stringify(node)}!`)
 }
 
-/*
+/**
+ * Convert object expression property to key-value pair
+ * @sig objectPropertyToKeyValue :: ([ImportInfo], Object) -> ASTNode -> ASTNode
+ */
+const objectPropertyToKeyValue = (imports, result) => prop => {
+    if (prop.type === 'Property') result[prop.key.name] = resolvePropertyValue(prop.value, imports)
+    return prop
+}
+
+/**
  * Resolve object expression values
  * @sig resolveObjectExpressionValue :: (ASTNode, [ImportInfo]) -> Object
  */
 const resolveObjectExpressionValue = (node, imports) => {
     const result = {}
-    node.properties.map(prop => {
-        if (prop.type === 'Property') result[prop.key.name] = resolvePropertyValue(prop.value, imports)
-
-        return prop
-    })
+    node.properties.map(objectPropertyToKeyValue(imports, result))
     return result
 }
 
-/*
+/**
  * Resolve import values for known modules
  * @sig resolveImportValue :: (String, ImportInfo) -> Any
  */
@@ -276,9 +301,56 @@ const resolveImportValue = (localName, importInfo) => {
     return { __importPlaceholder: true, source: importInfo.source, localName }
 }
 
-/*
+/**
+ * Process ImportDeclaration node
+ * @sig processImportDeclaration :: Object -> ASTNode -> void
+ */
+const processImportDeclaration = result => node => result.imports.push(extractImportInfo(node))
+
+/**
+ * Process ExportNamedDeclaration node for type definitions
+ * @sig processExportDeclaration :: Object -> ASTNode -> void
+ */
+const processExportDeclaration = result => node => {
+    const typeDefinition = extractTypeDefinition(node, result.imports)
+    if (typeDefinition) result.typeDefinition = typeDefinition
+}
+
+/**
+ * Process AssignmentExpression node for attached functions
+ * @sig processAssignmentExpression :: Object -> ASTNode -> void
+ */
+const processAssignmentExpression = result => node => {
+    const functionInfo = extractFunctionInfo(node, result.typeDefinition?.name)
+    if (functionInfo) result.functions.push(functionInfo)
+}
+
+/**
+ * Process FunctionDeclaration node for standalone functions
+ * @sig processFunctionDeclaration :: Object -> ASTNode -> void
+ */
+const processFunctionDeclaration = result => node => {
+    const functionInfo = extractStandaloneFunctionInfo(node, result.typeDefinition?.name)
+    if (functionInfo) result.functions.push(functionInfo)
+}
+
+/**
+ * Create AST walker enter callback
+ * @sig createWalkerCallback :: Object -> ASTNode -> void
+ */
+const createWalkerCallback = result => node => {
+    const { type } = node
+    if (type === 'ImportDeclaration') return processImportDeclaration(result)(node)
+    if (type === 'ExportNamedDeclaration' && node.declaration?.type === 'VariableDeclaration')
+        return processExportDeclaration(result)(node)
+    if (type === 'AssignmentExpression' && node.left?.type === 'MemberExpression')
+        return processAssignmentExpression(result)(node)
+    if (type === 'FunctionDeclaration') return processFunctionDeclaration(result)(node)
+}
+
+/**
  * Parse a .type.js file using AST parsing and extract type definition + functions
- * @sig parseTypeDefinitionFile :: String -> { typeDefinition: TypeDefinition, imports: [ImportInfo], functions: [FunctionInfo] }
+ * @sig parseTypeDefinitionFile :: String -> ParseResult
  */
 const parseTypeDefinitionFile = filePath => {
     try {
@@ -288,30 +360,7 @@ const parseTypeDefinitionFile = filePath => {
         const result = { typeDefinition: null, imports: [], functions: [], sourceContent: content }
 
         // Walk the AST to extract information
-        walk(ast, {
-            enter(node) {
-                // Extract imports
-                if (node.type === 'ImportDeclaration') result.imports.push(extractImportInfo(node))
-
-                // Extract type definition export
-                if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'VariableDeclaration') {
-                    const typeDefinition = extractTypeDefinition(node, result.imports)
-                    if (typeDefinition) result.typeDefinition = typeDefinition
-                }
-
-                // Extract functions that reference the type (property assignments)
-                if (node.type === 'AssignmentExpression' && node.left?.type === 'MemberExpression') {
-                    const functionInfo = extractFunctionInfo(node, result.typeDefinition?.name)
-                    if (functionInfo) result.functions.push(functionInfo)
-                }
-
-                // Also extract standalone function declarations that might reference the type
-                if (node.type === 'FunctionDeclaration') {
-                    const functionInfo = extractStandaloneFunctionInfo(node, result.typeDefinition?.name)
-                    if (functionInfo) result.functions.push(functionInfo)
-                }
-            },
-        })
+        walk(ast, { enter: createWalkerCallback(result) })
 
         if (!result.typeDefinition) throw new Error(`No valid type definition export found in ${filePath}`)
 
@@ -321,7 +370,7 @@ const parseTypeDefinitionFile = filePath => {
     }
 }
 
-/*
+/**
  * Check if a function name is a "standard" generated function
  * @sig isStandardFunction :: String -> Boolean
  */
@@ -339,7 +388,7 @@ const isStandardFunction = functionName => {
     return standardFunctions.includes(functionName)
 }
 
-/*
+/**
  * Get list of standard functions that exist in the type definition
  * @sig getExistingStandardFunctions :: [FunctionInfo] -> [String]
  */

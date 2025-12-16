@@ -126,8 +126,9 @@ ColumnDefinition.prototype = prototype
 ColumnDefinition.toString = () => 'ColumnDefinition'
 ColumnDefinition.is = v => v && v['@@typeName'] === 'ColumnDefinition'
 
-ColumnDefinition._from = o => {
-    const { id, accessorKey, header, size, minSize, maxSize, textAlign, enableSorting, enableResizing, meta, cell } = o
+ColumnDefinition._from = _input => {
+    const { id, accessorKey, header, size, minSize, maxSize, textAlign, enableSorting, enableResizing, meta, cell } =
+        _input
     return ColumnDefinition(
         id,
         accessorKey,

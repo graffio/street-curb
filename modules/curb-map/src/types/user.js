@@ -106,8 +106,8 @@ User.prototype = prototype
 User.toString = () => 'User'
 User.is = v => v && v['@@typeName'] === 'User'
 
-User._from = o => {
-    const { id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy } = o
+User._from = _input => {
+    const { id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy } = _input
     return User(id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy)
 }
 User.from = User._from

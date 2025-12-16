@@ -100,8 +100,8 @@ Project.prototype = prototype
 Project.toString = () => 'Project'
 Project.is = v => v && v['@@typeName'] === 'Project'
 
-Project._from = o => {
-    const { id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy } = o
+Project._from = _input => {
+    const { id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy } = _input
     return Project(id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy)
 }
 Project.from = Project._from

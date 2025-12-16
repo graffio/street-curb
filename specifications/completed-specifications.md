@@ -367,3 +367,17 @@ This document summarizes the specifications that were previously archived in `sp
 - Regenerated all 41 type files with updated generator
 - Fixed test assertions to match updated message formats
 - 127 style validator tests passing
+
+## [infrastructure] Type Generator IR Rewrite Phase 1 (2025-12-15)
+**Purpose:** Create FieldTypeIR foundation and fix optional FieldTypes validation bug
+
+- Created `src/ir/field-type-ir.js` with unified parsing for all field type inputs
+- FieldTypeIR.fromAny normalizes strings, regexes, and objects to IR schema
+- IR schema: `{ baseType, optional, arrayDepth, taggedType, idField, regex, fieldTypesReference }`
+- Functional style: `createIR(overrides)` takes optional fields with defaults
+- Integrated FieldTypeIR into `tagged-type-function-generators.js` for validation codegen
+- Fixed optional FieldTypes bug: `{ pattern: FieldTypes.X, optional: true }` now generates `true` for optional parameter
+- Standardized on `isFieldTypesReference` marker (replaced `__fieldTypesReference`)
+- Fixed style violations in `parse-type-definition-file.js` and `prettier-code.js`
+- Added integration test for optional FieldTypes syntax
+- Deferred: Phase 2-6 (ImportIR, TypeDefinitionIR, FunctionIR, testing infrastructure, integration)

@@ -104,7 +104,7 @@ const TextMatchPrototype = Object.create(FilterSpecPrototype, {
 TextMatchConstructor.prototype = TextMatchPrototype
 TextMatchConstructor.is = val => val && val.constructor === TextMatchConstructor
 TextMatchConstructor.toString = () => 'FilterSpec.TextMatch'
-TextMatchConstructor._from = o => FilterSpec.TextMatch(o.fields, o.query)
+TextMatchConstructor._from = _input => FilterSpec.TextMatch(_input.fields, _input.query)
 TextMatchConstructor.from = TextMatchConstructor._from
 
 TextMatchConstructor.toFirestore = o => ({ ...o })
@@ -162,8 +162,8 @@ const DateRangePrototype = Object.create(FilterSpecPrototype, {
 DateRangeConstructor.prototype = DateRangePrototype
 DateRangeConstructor.is = val => val && val.constructor === DateRangeConstructor
 DateRangeConstructor.toString = () => 'FilterSpec.DateRange'
-DateRangeConstructor._from = o => {
-    const { field, start, end } = o
+DateRangeConstructor._from = _input => {
+    const { field, start, end } = _input
     return FilterSpec.DateRange(field, start, end)
 }
 DateRangeConstructor.from = DateRangeConstructor._from
@@ -248,7 +248,7 @@ const CategoryMatchPrototype = Object.create(FilterSpecPrototype, {
 CategoryMatchConstructor.prototype = CategoryMatchPrototype
 CategoryMatchConstructor.is = val => val && val.constructor === CategoryMatchConstructor
 CategoryMatchConstructor.toString = () => 'FilterSpec.CategoryMatch'
-CategoryMatchConstructor._from = o => FilterSpec.CategoryMatch(o.field, o.categories)
+CategoryMatchConstructor._from = _input => FilterSpec.CategoryMatch(_input.field, _input.categories)
 CategoryMatchConstructor.from = CategoryMatchConstructor._from
 
 CategoryMatchConstructor.toFirestore = o => ({ ...o })
@@ -305,7 +305,7 @@ const CompoundPrototype = Object.create(FilterSpecPrototype, {
 CompoundConstructor.prototype = CompoundPrototype
 CompoundConstructor.is = val => val && val.constructor === CompoundConstructor
 CompoundConstructor.toString = () => 'FilterSpec.Compound'
-CompoundConstructor._from = o => FilterSpec.Compound(o.filters, o.mode)
+CompoundConstructor._from = _input => FilterSpec.Compound(_input.filters, _input.mode)
 CompoundConstructor.from = CompoundConstructor._from
 
 /**

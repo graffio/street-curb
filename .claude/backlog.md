@@ -17,5 +17,11 @@
 
 ## Code generation
 
-9. [ ] Modify type generator to handle optional regexes imported from FieldTypes
+9. [~] Rewrite type generator with IR-based architecture (spec: `specifications/cli-type-generator-rewrite/`)
+    - [x] Phase 1: FieldTypeIR foundation + optional FieldTypes fix
+    - [ ] Phase 2: ImportIR + import resolution
+    - [ ] Phase 3: TypeDefinitionIR + complete normalization
+    - [ ] Phase 4: FunctionIR + code generation
+    - [ ] Phase 5: Testing infrastructure
+    - [ ] Phase 6: Integration
 10. [x] Generate code that complies with style validator
