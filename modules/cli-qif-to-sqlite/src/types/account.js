@@ -98,8 +98,8 @@ Account.prototype = prototype
 Account.toString = () => 'Account'
 Account.is = v => v && v['@@typeName'] === 'Account'
 
-Account._from = o => {
-    const { id, name, type, description, creditLimit } = o
+Account._from = _input => {
+    const { id, name, type, description, creditLimit } = _input
     return Account(id, name, type, description, creditLimit)
 }
 Account.from = Account._from

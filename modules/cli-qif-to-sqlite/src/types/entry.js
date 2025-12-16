@@ -180,8 +180,8 @@ const AccountPrototype = Object.create(EntryPrototype, {
 AccountConstructor.prototype = AccountPrototype
 AccountConstructor.is = val => val && val.constructor === AccountConstructor
 AccountConstructor.toString = () => 'Entry.Account'
-AccountConstructor._from = o => {
-    const { name, type, description, creditLimit } = o
+AccountConstructor._from = _input => {
+    const { name, type, description, creditLimit } = _input
     return Entry.Account(name, type, description, creditLimit)
 }
 AccountConstructor.from = AccountConstructor._from
@@ -266,8 +266,8 @@ const CategoryPrototype = Object.create(EntryPrototype, {
 CategoryConstructor.prototype = CategoryPrototype
 CategoryConstructor.is = val => val && val.constructor === CategoryConstructor
 CategoryConstructor.toString = () => 'Entry.Category'
-CategoryConstructor._from = o => {
-    const { name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule } = o
+CategoryConstructor._from = _input => {
+    const { name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule } = _input
     return Entry.Category(name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule)
 }
 CategoryConstructor.from = CategoryConstructor._from
@@ -327,8 +327,8 @@ const ClassPrototype = Object.create(EntryPrototype, {
 ClassConstructor.prototype = ClassPrototype
 ClassConstructor.is = val => val && val.constructor === ClassConstructor
 ClassConstructor.toString = () => 'Entry.Class'
-ClassConstructor._from = o => {
-    const { name, subclass, description } = o
+ClassConstructor._from = _input => {
+    const { name, subclass, description } = _input
     return Entry.Class(name, subclass, description)
 }
 ClassConstructor.from = ClassConstructor._from
@@ -395,8 +395,8 @@ const PayeePrototype = Object.create(EntryPrototype, {
 PayeeConstructor.prototype = PayeePrototype
 PayeeConstructor.is = val => val && val.constructor === PayeeConstructor
 PayeeConstructor.toString = () => 'Entry.Payee'
-PayeeConstructor._from = o => {
-    const { name, address, memo, defaultCategory } = o
+PayeeConstructor._from = _input => {
+    const { name, address, memo, defaultCategory } = _input
     return Entry.Payee(name, address, memo, defaultCategory)
 }
 PayeeConstructor.from = PayeeConstructor._from
@@ -456,8 +456,8 @@ const PricePrototype = Object.create(EntryPrototype, {
 PriceConstructor.prototype = PricePrototype
 PriceConstructor.is = val => val && val.constructor === PriceConstructor
 PriceConstructor.toString = () => 'Entry.Price'
-PriceConstructor._from = o => {
-    const { symbol, price, date } = o
+PriceConstructor._from = _input => {
+    const { symbol, price, date } = _input
     return Entry.Price(symbol, price, date)
 }
 PriceConstructor.from = PriceConstructor._from
@@ -524,8 +524,8 @@ const SecurityPrototype = Object.create(EntryPrototype, {
 SecurityConstructor.prototype = SecurityPrototype
 SecurityConstructor.is = val => val && val.constructor === SecurityConstructor
 SecurityConstructor.toString = () => 'Entry.Security'
-SecurityConstructor._from = o => {
-    const { name, goal, symbol, type } = o
+SecurityConstructor._from = _input => {
+    const { name, goal, symbol, type } = _input
     return Entry.Security(name, goal, symbol, type)
 }
 SecurityConstructor.from = SecurityConstructor._from
@@ -585,8 +585,8 @@ const TagPrototype = Object.create(EntryPrototype, {
 TagConstructor.prototype = TagPrototype
 TagConstructor.is = val => val && val.constructor === TagConstructor
 TagConstructor.toString = () => 'Entry.Tag'
-TagConstructor._from = o => {
-    const { name, color, description } = o
+TagConstructor._from = _input => {
+    const { name, color, description } = _input
     return Entry.Tag(name, color, description)
 }
 TagConstructor.from = TagConstructor._from
@@ -694,8 +694,8 @@ const TransactionBankPrototype = Object.create(EntryPrototype, {
 TransactionBankConstructor.prototype = TransactionBankPrototype
 TransactionBankConstructor.is = val => val && val.constructor === TransactionBankConstructor
 TransactionBankConstructor.toString = () => 'Entry.TransactionBank'
-TransactionBankConstructor._from = o => {
-    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = o
+TransactionBankConstructor._from = _input => {
+    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = _input
     return Entry.TransactionBank(
         account,
         amount,
@@ -872,7 +872,7 @@ const TransactionInvestmentPrototype = Object.create(EntryPrototype, {
 TransactionInvestmentConstructor.prototype = TransactionInvestmentPrototype
 TransactionInvestmentConstructor.is = val => val && val.constructor === TransactionInvestmentConstructor
 TransactionInvestmentConstructor.toString = () => 'Entry.TransactionInvestment'
-TransactionInvestmentConstructor._from = o => {
+TransactionInvestmentConstructor._from = _input => {
     const {
         account,
         date,
@@ -888,7 +888,7 @@ TransactionInvestmentConstructor._from = o => {
         price,
         quantity,
         security,
-    } = o
+    } = _input
     return Entry.TransactionInvestment(
         account,
         date,

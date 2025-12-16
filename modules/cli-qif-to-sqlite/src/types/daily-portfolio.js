@@ -113,7 +113,7 @@ DailyPortfolio.prototype = prototype
 DailyPortfolio.toString = () => 'DailyPortfolio'
 DailyPortfolio.is = v => v && v['@@typeName'] === 'DailyPortfolio'
 
-DailyPortfolio._from = o => {
+DailyPortfolio._from = _input => {
     const {
         accountId,
         accountName,
@@ -123,7 +123,7 @@ DailyPortfolio._from = o => {
         totalCostBasis,
         unrealizedGainLoss,
         holdings,
-    } = o
+    } = _input
     return DailyPortfolio(
         accountId,
         accountName,

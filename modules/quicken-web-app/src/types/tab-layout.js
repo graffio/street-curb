@@ -90,8 +90,8 @@ TabLayout.prototype = prototype
 TabLayout.toString = () => 'TabLayout'
 TabLayout.is = v => v && v['@@typeName'] === 'TabLayout'
 
-TabLayout._from = o => {
-    const { id, tabGroups, activeTabGroupId, nextTabGroupId } = o
+TabLayout._from = _input => {
+    const { id, tabGroups, activeTabGroupId, nextTabGroupId } = _input
     return TabLayout(id, tabGroups, activeTabGroupId, nextTabGroupId)
 }
 TabLayout.from = TabLayout._from

@@ -132,7 +132,7 @@ Blockface.prototype = prototype
 Blockface.toString = () => 'Blockface'
 Blockface.is = v => v && v['@@typeName'] === 'Blockface'
 
-Blockface._from = o => {
+Blockface._from = _input => {
     const {
         id,
         sourceId,
@@ -145,7 +145,7 @@ Blockface._from = o => {
         createdBy,
         updatedAt,
         updatedBy,
-    } = o
+    } = _input
     return Blockface(
         id,
         sourceId,

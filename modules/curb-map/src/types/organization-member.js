@@ -4,12 +4,12 @@
 /*  OrganizationMember generated from: modules/curb-map/type-definitions/organization-member.type.js
  *
  *  organizationId
- *      __fieldTypesReference: true,
+ *      isFieldTypesReference: true,
  *      source               : "@graffio/types",
  *      property             : "organizationId",
  *      fullReference        : "FieldTypes.organizationId"
  *  role
- *      __fieldTypesReference: true,
+ *      isFieldTypesReference: true,
  *      source               : "@graffio/types",
  *      property             : "role",
  *      fullReference        : "FieldTypes.role"
@@ -84,7 +84,7 @@ OrganizationMember.prototype = prototype
 OrganizationMember.toString = () => 'OrganizationMember'
 OrganizationMember.is = v => v && v['@@typeName'] === 'OrganizationMember'
 
-OrganizationMember._from = o => OrganizationMember(o.organizationId, o.role)
+OrganizationMember._from = _input => OrganizationMember(_input.organizationId, _input.role)
 OrganizationMember.from = OrganizationMember._from
 
 OrganizationMember._toFirestore = (o, encodeTimestamps) => ({ ...o })

@@ -149,7 +149,7 @@ ActionRequest.prototype = prototype
 ActionRequest.toString = () => 'ActionRequest'
 ActionRequest.is = v => v && v['@@typeName'] === 'ActionRequest'
 
-ActionRequest._from = o => {
+ActionRequest._from = _input => {
     const {
         id,
         action,
@@ -165,7 +165,7 @@ ActionRequest._from = o => {
         schemaVersion,
         createdAt,
         processedAt,
-    } = o
+    } = _input
     return ActionRequest(
         id,
         action,

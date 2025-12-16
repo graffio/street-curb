@@ -36,7 +36,7 @@ const Member = function Member(userId, displayName, role, addedAt, addedBy, remo
     R.validateDate(constructorName, 'addedAt', false, addedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'addedBy', false, addedBy)
     R.validateDate(constructorName, 'removedAt', true, removedAt)
-    R.validateString(constructorName, 'removedBy', true, removedBy)
+    R.validateTag(constructorName, '^usr_[a-z0-9]{12,}$/', 'removedBy', true, removedBy)
 
     const result = Object.create(prototype)
     result.userId = userId
@@ -100,8 +100,8 @@ Member.prototype = prototype
 Member.toString = () => 'Member'
 Member.is = v => v && v['@@typeName'] === 'Member'
 
-Member._from = o => {
-    const { userId, displayName, role, addedAt, addedBy, removedAt, removedBy } = o
+Member._from = _input => {
+    const { userId, displayName, role, addedAt, addedBy, removedAt, removedBy } = _input
     return Member(userId, displayName, role, addedAt, addedBy, removedAt, removedBy)
 }
 Member.from = Member._from

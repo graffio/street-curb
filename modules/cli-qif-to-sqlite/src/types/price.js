@@ -88,8 +88,8 @@ Price.prototype = prototype
 Price.toString = () => 'Price'
 Price.is = v => v && v['@@typeName'] === 'Price'
 
-Price._from = o => {
-    const { id, securityId, date, price } = o
+Price._from = _input => {
+    const { id, securityId, date, price } = _input
     return Price(id, securityId, date, price)
 }
 Price.from = Price._from

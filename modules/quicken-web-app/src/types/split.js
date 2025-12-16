@@ -35,7 +35,7 @@ const Split = function Split(id, transactionId, categoryId, amount, memo) {
 
     const result = Object.create(prototype)
     result.id = id
-    if (transactionId != null) result.transactionId = transactionId
+    result.transactionId = transactionId
     if (categoryId != null) result.categoryId = categoryId
     result.amount = amount
     if (memo != null) result.memo = memo
@@ -91,8 +91,8 @@ Split.prototype = prototype
 Split.toString = () => 'Split'
 Split.is = v => v && v['@@typeName'] === 'Split'
 
-Split._from = o => {
-    const { id, transactionId, categoryId, amount, memo } = o
+Split._from = _input => {
+    const { id, transactionId, categoryId, amount, memo } = _input
     return Split(id, transactionId, categoryId, amount, memo)
 }
 Split.from = Split._from

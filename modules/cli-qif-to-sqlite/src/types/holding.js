@@ -96,8 +96,8 @@ Holding.prototype = prototype
 Holding.toString = () => 'Holding'
 Holding.is = v => v && v['@@typeName'] === 'Holding'
 
-Holding._from = o => {
-    const { accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId } = o
+Holding._from = _input => {
+    const { accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId } = _input
     return Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)
 }
 Holding.from = Holding._from

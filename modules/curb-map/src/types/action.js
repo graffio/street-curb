@@ -172,7 +172,7 @@ const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
 OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
 OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
 OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
-OrganizationCreatedConstructor._from = o => Action.OrganizationCreated(o.name, o.projectId)
+OrganizationCreatedConstructor._from = _input => Action.OrganizationCreated(_input.name, _input.projectId)
 OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
 
 OrganizationCreatedConstructor.toFirestore = o => ({ ...o })
@@ -226,7 +226,7 @@ const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
 OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
 OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
-OrganizationUpdatedConstructor._from = o => Action.OrganizationUpdated(o.name)
+OrganizationUpdatedConstructor._from = _input => Action.OrganizationUpdated(_input.name)
 OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
 
 OrganizationUpdatedConstructor.toFirestore = o => ({ ...o })
@@ -279,7 +279,7 @@ const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
 OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
 OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
 OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
-OrganizationDeletedConstructor._from = o => Action.OrganizationDeleted()
+OrganizationDeletedConstructor._from = _input => Action.OrganizationDeleted()
 OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
 
 OrganizationDeletedConstructor.toFirestore = o => ({ ...o })
@@ -337,8 +337,8 @@ const MemberAddedPrototype = Object.create(ActionPrototype, {
 MemberAddedConstructor.prototype = MemberAddedPrototype
 MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
 MemberAddedConstructor.toString = () => 'Action.MemberAdded'
-MemberAddedConstructor._from = o => {
-    const { userId, role, displayName } = o
+MemberAddedConstructor._from = _input => {
+    const { userId, role, displayName } = _input
     return Action.MemberAdded(userId, role, displayName)
 }
 MemberAddedConstructor.from = MemberAddedConstructor._from
@@ -396,7 +396,7 @@ const RoleChangedPrototype = Object.create(ActionPrototype, {
 RoleChangedConstructor.prototype = RoleChangedPrototype
 RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
 RoleChangedConstructor.toString = () => 'Action.RoleChanged'
-RoleChangedConstructor._from = o => Action.RoleChanged(o.userId, o.role)
+RoleChangedConstructor._from = _input => Action.RoleChanged(_input.userId, _input.role)
 RoleChangedConstructor.from = RoleChangedConstructor._from
 
 RoleChangedConstructor.toFirestore = o => ({ ...o })
@@ -450,7 +450,7 @@ const MemberRemovedPrototype = Object.create(ActionPrototype, {
 MemberRemovedConstructor.prototype = MemberRemovedPrototype
 MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
 MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
-MemberRemovedConstructor._from = o => Action.MemberRemoved(o.userId)
+MemberRemovedConstructor._from = _input => Action.MemberRemoved(_input.userId)
 MemberRemovedConstructor.from = MemberRemovedConstructor._from
 
 MemberRemovedConstructor.toFirestore = o => ({ ...o })
@@ -512,8 +512,8 @@ const UserCreatedPrototype = Object.create(ActionPrototype, {
 UserCreatedConstructor.prototype = UserCreatedPrototype
 UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
 UserCreatedConstructor.toString = () => 'Action.UserCreated'
-UserCreatedConstructor._from = o => {
-    const { userId, displayName, email } = o
+UserCreatedConstructor._from = _input => {
+    const { userId, displayName, email } = _input
     return Action.UserCreated(userId, displayName, email)
 }
 UserCreatedConstructor.from = UserCreatedConstructor._from
@@ -571,7 +571,7 @@ const UserUpdatedPrototype = Object.create(ActionPrototype, {
 UserUpdatedConstructor.prototype = UserUpdatedPrototype
 UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
 UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
-UserUpdatedConstructor._from = o => Action.UserUpdated(o.userId, o.displayName)
+UserUpdatedConstructor._from = _input => Action.UserUpdated(_input.userId, _input.displayName)
 UserUpdatedConstructor.from = UserUpdatedConstructor._from
 
 UserUpdatedConstructor.toFirestore = o => ({ ...o })
@@ -627,7 +627,7 @@ const UserForgottenPrototype = Object.create(ActionPrototype, {
 UserForgottenConstructor.prototype = UserForgottenPrototype
 UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
 UserForgottenConstructor.toString = () => 'Action.UserForgotten'
-UserForgottenConstructor._from = o => Action.UserForgotten(o.userId, o.reason)
+UserForgottenConstructor._from = _input => Action.UserForgotten(_input.userId, _input.reason)
 UserForgottenConstructor.from = UserForgottenConstructor._from
 
 UserForgottenConstructor.toFirestore = o => ({ ...o })
@@ -683,7 +683,7 @@ const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
 AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
 AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
 AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
-AuthenticationCompletedConstructor._from = o => Action.AuthenticationCompleted(o.email, o.displayName)
+AuthenticationCompletedConstructor._from = _input => Action.AuthenticationCompleted(_input.email, _input.displayName)
 AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
 
 AuthenticationCompletedConstructor.toFirestore = o => ({ ...o })
@@ -737,7 +737,7 @@ const UserLoadedPrototype = Object.create(ActionPrototype, {
 UserLoadedConstructor.prototype = UserLoadedPrototype
 UserLoadedConstructor.is = val => val && val.constructor === UserLoadedConstructor
 UserLoadedConstructor.toString = () => 'Action.UserLoaded'
-UserLoadedConstructor._from = o => Action.UserLoaded(o.user)
+UserLoadedConstructor._from = _input => Action.UserLoaded(_input.user)
 UserLoadedConstructor.from = UserLoadedConstructor._from
 
 UserLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -801,7 +801,7 @@ const OrganizationSyncedPrototype = Object.create(ActionPrototype, {
 OrganizationSyncedConstructor.prototype = OrganizationSyncedPrototype
 OrganizationSyncedConstructor.is = val => val && val.constructor === OrganizationSyncedConstructor
 OrganizationSyncedConstructor.toString = () => 'Action.OrganizationSynced'
-OrganizationSyncedConstructor._from = o => Action.OrganizationSynced(o.organization)
+OrganizationSyncedConstructor._from = _input => Action.OrganizationSynced(_input.organization)
 OrganizationSyncedConstructor.from = OrganizationSyncedConstructor._from
 
 OrganizationSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -867,7 +867,7 @@ const BlockfacesSyncedPrototype = Object.create(ActionPrototype, {
 BlockfacesSyncedConstructor.prototype = BlockfacesSyncedPrototype
 BlockfacesSyncedConstructor.is = val => val && val.constructor === BlockfacesSyncedConstructor
 BlockfacesSyncedConstructor.toString = () => 'Action.BlockfacesSynced'
-BlockfacesSyncedConstructor._from = o => Action.BlockfacesSynced(o.blockfaces)
+BlockfacesSyncedConstructor._from = _input => Action.BlockfacesSynced(_input.blockfaces)
 BlockfacesSyncedConstructor.from = BlockfacesSyncedConstructor._from
 
 BlockfacesSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -933,7 +933,7 @@ const BlockfaceCreatedPrototype = Object.create(ActionPrototype, {
 BlockfaceCreatedConstructor.prototype = BlockfaceCreatedPrototype
 BlockfaceCreatedConstructor.is = val => val && val.constructor === BlockfaceCreatedConstructor
 BlockfaceCreatedConstructor.toString = () => 'Action.BlockfaceCreated'
-BlockfaceCreatedConstructor._from = o => Action.BlockfaceCreated(o.blockface)
+BlockfaceCreatedConstructor._from = _input => Action.BlockfaceCreated(_input.blockface)
 BlockfaceCreatedConstructor.from = BlockfaceCreatedConstructor._from
 
 BlockfaceCreatedConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -999,7 +999,7 @@ const BlockfaceSelectedPrototype = Object.create(ActionPrototype, {
 BlockfaceSelectedConstructor.prototype = BlockfaceSelectedPrototype
 BlockfaceSelectedConstructor.is = val => val && val.constructor === BlockfaceSelectedConstructor
 BlockfaceSelectedConstructor.toString = () => 'Action.BlockfaceSelected'
-BlockfaceSelectedConstructor._from = o => Action.BlockfaceSelected(o.blockface)
+BlockfaceSelectedConstructor._from = _input => Action.BlockfaceSelected(_input.blockface)
 BlockfaceSelectedConstructor.from = BlockfaceSelectedConstructor._from
 
 BlockfaceSelectedConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -1065,7 +1065,7 @@ const BlockfaceSavedPrototype = Object.create(ActionPrototype, {
 BlockfaceSavedConstructor.prototype = BlockfaceSavedPrototype
 BlockfaceSavedConstructor.is = val => val && val.constructor === BlockfaceSavedConstructor
 BlockfaceSavedConstructor.toString = () => 'Action.BlockfaceSaved'
-BlockfaceSavedConstructor._from = o => Action.BlockfaceSaved(o.blockface)
+BlockfaceSavedConstructor._from = _input => Action.BlockfaceSaved(_input.blockface)
 BlockfaceSavedConstructor.from = BlockfaceSavedConstructor._from
 
 BlockfaceSavedConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -1133,7 +1133,7 @@ const SegmentUseUpdatedPrototype = Object.create(ActionPrototype, {
 SegmentUseUpdatedConstructor.prototype = SegmentUseUpdatedPrototype
 SegmentUseUpdatedConstructor.is = val => val && val.constructor === SegmentUseUpdatedConstructor
 SegmentUseUpdatedConstructor.toString = () => 'Action.SegmentUseUpdated'
-SegmentUseUpdatedConstructor._from = o => Action.SegmentUseUpdated(o.index, o.use)
+SegmentUseUpdatedConstructor._from = _input => Action.SegmentUseUpdated(_input.index, _input.use)
 SegmentUseUpdatedConstructor.from = SegmentUseUpdatedConstructor._from
 
 SegmentUseUpdatedConstructor.toFirestore = o => ({ ...o })
@@ -1189,7 +1189,7 @@ const SegmentLengthUpdatedPrototype = Object.create(ActionPrototype, {
 SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
 SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLengthUpdatedConstructor
 SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
-SegmentLengthUpdatedConstructor._from = o => Action.SegmentLengthUpdated(o.index, o.newLength)
+SegmentLengthUpdatedConstructor._from = _input => Action.SegmentLengthUpdated(_input.index, _input.newLength)
 SegmentLengthUpdatedConstructor.from = SegmentLengthUpdatedConstructor._from
 
 SegmentLengthUpdatedConstructor.toFirestore = o => ({ ...o })
@@ -1245,7 +1245,7 @@ const SegmentAddedLeftPrototype = Object.create(ActionPrototype, {
 SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
 SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
 SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
-SegmentAddedLeftConstructor._from = o => Action.SegmentAddedLeft(o.index, o.desiredLength)
+SegmentAddedLeftConstructor._from = _input => Action.SegmentAddedLeft(_input.index, _input.desiredLength)
 SegmentAddedLeftConstructor.from = SegmentAddedLeftConstructor._from
 
 SegmentAddedLeftConstructor.toFirestore = o => ({ ...o })
@@ -1299,7 +1299,7 @@ const SegmentAddedPrototype = Object.create(ActionPrototype, {
 SegmentAddedConstructor.prototype = SegmentAddedPrototype
 SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
 SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
-SegmentAddedConstructor._from = o => Action.SegmentAdded(o.targetIndex)
+SegmentAddedConstructor._from = _input => Action.SegmentAdded(_input.targetIndex)
 SegmentAddedConstructor.from = SegmentAddedConstructor._from
 
 SegmentAddedConstructor.toFirestore = o => ({ ...o })
@@ -1353,7 +1353,7 @@ const SegmentsReplacedPrototype = Object.create(ActionPrototype, {
 SegmentsReplacedConstructor.prototype = SegmentsReplacedPrototype
 SegmentsReplacedConstructor.is = val => val && val.constructor === SegmentsReplacedConstructor
 SegmentsReplacedConstructor.toString = () => 'Action.SegmentsReplaced'
-SegmentsReplacedConstructor._from = o => Action.SegmentsReplaced(o.segments)
+SegmentsReplacedConstructor._from = _input => Action.SegmentsReplaced(_input.segments)
 SegmentsReplacedConstructor.from = SegmentsReplacedConstructor._from
 
 SegmentsReplacedConstructor._toFirestore = (o, encodeTimestamps) => ({

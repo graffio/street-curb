@@ -78,8 +78,8 @@ Split.prototype = prototype
 Split.toString = () => 'Split'
 Split.is = v => v && v['@@typeName'] === 'Split'
 
-Split._from = o => {
-    const { amount, category, memo } = o
+Split._from = _input => {
+    const { amount, category, memo } = _input
     return Split(amount, category, memo)
 }
 Split.from = Split._from

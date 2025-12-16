@@ -80,8 +80,8 @@ ColumnDescriptor.prototype = prototype
 ColumnDescriptor.toString = () => 'ColumnDescriptor'
 ColumnDescriptor.is = v => v && v['@@typeName'] === 'ColumnDescriptor'
 
-ColumnDescriptor._from = o => {
-    const { id, width, sortDirection } = o
+ColumnDescriptor._from = _input => {
+    const { id, width, sortDirection } = _input
     return ColumnDescriptor(id, width, sortDirection)
 }
 ColumnDescriptor.from = ColumnDescriptor._from

@@ -98,7 +98,7 @@ const StringTypePrototype = Object.create(FieldTypePrototype, {
 StringTypeConstructor.prototype = StringTypePrototype
 StringTypeConstructor.is = val => val && val.constructor === StringTypeConstructor
 StringTypeConstructor.toString = () => 'FieldType.StringType'
-StringTypeConstructor._from = o => FieldType.StringType(o.value)
+StringTypeConstructor._from = _input => FieldType.StringType(_input.value)
 StringTypeConstructor.from = StringTypeConstructor._from
 
 StringTypeConstructor.toFirestore = o => ({ ...o })
@@ -152,7 +152,7 @@ const RegexTypePrototype = Object.create(FieldTypePrototype, {
 RegexTypeConstructor.prototype = RegexTypePrototype
 RegexTypeConstructor.is = val => val && val.constructor === RegexTypeConstructor
 RegexTypeConstructor.toString = () => 'FieldType.RegexType'
-RegexTypeConstructor._from = o => FieldType.RegexType(o.value)
+RegexTypeConstructor._from = _input => FieldType.RegexType(_input.value)
 RegexTypeConstructor.from = RegexTypeConstructor._from
 
 RegexTypeConstructor._toFirestore = (o, encodeTimestamps) => ({
@@ -224,8 +224,8 @@ const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
 ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
 ImportPlaceholderConstructor.is = val => val && val.constructor === ImportPlaceholderConstructor
 ImportPlaceholderConstructor.toString = () => 'FieldType.ImportPlaceholder'
-ImportPlaceholderConstructor._from = o => {
-    const { __importPlaceholder, source, localName } = o
+ImportPlaceholderConstructor._from = _input => {
+    const { __importPlaceholder, source, localName } = _input
     return FieldType.ImportPlaceholder(__importPlaceholder, source, localName)
 }
 ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from

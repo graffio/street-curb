@@ -83,8 +83,8 @@ TableLayout.prototype = prototype
 TableLayout.toString = () => 'TableLayout'
 TableLayout.is = v => v && v['@@typeName'] === 'TableLayout'
 
-TableLayout._from = o => {
-    const { id, columnDescriptors, sortOrder } = o
+TableLayout._from = _input => {
+    const { id, columnDescriptors, sortOrder } = _input
     return TableLayout(id, columnDescriptors, sortOrder)
 }
 TableLayout.from = TableLayout._from

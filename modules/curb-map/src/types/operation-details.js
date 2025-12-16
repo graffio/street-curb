@@ -109,8 +109,8 @@ const ShellExecutionPrototype = Object.create(OperationDetailsPrototype, {
 ShellExecutionConstructor.prototype = ShellExecutionPrototype
 ShellExecutionConstructor.is = val => val && val.constructor === ShellExecutionConstructor
 ShellExecutionConstructor.toString = () => 'OperationDetails.ShellExecution'
-ShellExecutionConstructor._from = o => {
-    const { command, duration, outputPreview } = o
+ShellExecutionConstructor._from = _input => {
+    const { command, duration, outputPreview } = _input
     return OperationDetails.ShellExecution(command, duration, outputPreview)
 }
 ShellExecutionConstructor.from = ShellExecutionConstructor._from
@@ -174,8 +174,8 @@ const FirestoreOperationPrototype = Object.create(OperationDetailsPrototype, {
 FirestoreOperationConstructor.prototype = FirestoreOperationPrototype
 FirestoreOperationConstructor.is = val => val && val.constructor === FirestoreOperationConstructor
 FirestoreOperationConstructor.toString = () => 'OperationDetails.FirestoreOperation'
-FirestoreOperationConstructor._from = o => {
-    const { operation, collection, documentId } = o
+FirestoreOperationConstructor._from = _input => {
+    const { operation, collection, documentId } = _input
     return OperationDetails.FirestoreOperation(operation, collection, documentId)
 }
 FirestoreOperationConstructor.from = FirestoreOperationConstructor._from
@@ -239,8 +239,8 @@ const GcpProjectOperationPrototype = Object.create(OperationDetailsPrototype, {
 GcpProjectOperationConstructor.prototype = GcpProjectOperationPrototype
 GcpProjectOperationConstructor.is = val => val && val.constructor === GcpProjectOperationConstructor
 GcpProjectOperationConstructor.toString = () => 'OperationDetails.GcpProjectOperation'
-GcpProjectOperationConstructor._from = o => {
-    const { projectId, folderId, region } = o
+GcpProjectOperationConstructor._from = _input => {
+    const { projectId, folderId, region } = _input
     return OperationDetails.GcpProjectOperation(projectId, folderId, region)
 }
 GcpProjectOperationConstructor.from = GcpProjectOperationConstructor._from

@@ -138,7 +138,7 @@ const BankConstructor = function Bank(
     result.accountId = accountId
     result.amount = amount
     result.date = date
-    if (id != null) result.id = id
+    result.id = id
     result.transactionType = transactionType
     if (address != null) result.address = address
     if (categoryId != null) result.categoryId = categoryId
@@ -162,8 +162,8 @@ const BankPrototype = Object.create(TransactionPrototype, {
 BankConstructor.prototype = BankPrototype
 BankConstructor.is = val => val && val.constructor === BankConstructor
 BankConstructor.toString = () => 'Transaction.Bank'
-BankConstructor._from = o => {
-    const { accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee } = o
+BankConstructor._from = _input => {
+    const { accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee } = _input
     return Transaction.Bank(
         accountId,
         amount,
@@ -273,7 +273,7 @@ const InvestmentConstructor = function Investment(
     const result = Object.create(InvestmentPrototype)
     result.accountId = accountId
     result.date = date
-    if (id != null) result.id = id
+    result.id = id
     result.transactionType = transactionType
     if (address != null) result.address = address
     if (amount != null) result.amount = amount
@@ -302,7 +302,7 @@ const InvestmentPrototype = Object.create(TransactionPrototype, {
 InvestmentConstructor.prototype = InvestmentPrototype
 InvestmentConstructor.is = val => val && val.constructor === InvestmentConstructor
 InvestmentConstructor.toString = () => 'Transaction.Investment'
-InvestmentConstructor._from = o => {
+InvestmentConstructor._from = _input => {
     const {
         accountId,
         date,
@@ -319,7 +319,7 @@ InvestmentConstructor._from = o => {
         price,
         quantity,
         securityId,
-    } = o
+    } = _input
     return Transaction.Investment(
         accountId,
         date,

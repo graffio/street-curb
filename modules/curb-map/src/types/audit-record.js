@@ -142,7 +142,7 @@ AuditRecord.prototype = prototype
 AuditRecord.toString = () => 'AuditRecord'
 AuditRecord.is = v => v && v['@@typeName'] === 'AuditRecord'
 
-AuditRecord._from = o => {
+AuditRecord._from = _input => {
     const {
         id,
         timestamp,
@@ -157,7 +157,7 @@ AuditRecord._from = o => {
         errorMessage,
         correlationId,
         environment,
-    } = o
+    } = _input
     return AuditRecord(
         id,
         timestamp,

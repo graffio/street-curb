@@ -98,8 +98,8 @@ const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
 TaggedConstructor.prototype = TaggedPrototype
 TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
 TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
-TaggedConstructor._from = o => {
-    const { name, kind, fields } = o
+TaggedConstructor._from = _input => {
+    const { name, kind, fields } = _input
     return TypeDefinition.Tagged(name, kind, fields)
 }
 TaggedConstructor.from = TaggedConstructor._from
@@ -163,8 +163,8 @@ const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
 TaggedSumConstructor.prototype = TaggedSumPrototype
 TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
 TaggedSumConstructor.toString = () => 'TypeDefinition.TaggedSum'
-TaggedSumConstructor._from = o => {
-    const { name, kind, variants } = o
+TaggedSumConstructor._from = _input => {
+    const { name, kind, variants } = _input
     return TypeDefinition.TaggedSum(name, kind, variants)
 }
 TaggedSumConstructor.from = TaggedSumConstructor._from
