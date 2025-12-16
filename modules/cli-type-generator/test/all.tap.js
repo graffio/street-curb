@@ -318,19 +318,16 @@ tap.test('Enhanced Types - Import Handling', t => {
             // Read the generated file to verify import handling
             const generatedCode = fs.readFileSync('test/generated/has-id-enhanced.js', 'utf8')
 
-            // Should not contain internal imports in generated code
-            t.notOk(
-                generatedCode.includes("import StringTypes from './string-types.js'"),
-                'Then internal imports are filtered out',
-            )
+            // Should contain FieldTypes import for regex patterns
+            t.ok(generatedCode.includes('FieldTypes'), 'Then FieldTypes import is included')
 
             // Should contain the generated type functionality
             t.ok(generatedCode.includes('HasIdEnhanced.createRandom'), 'Then attached functions are included')
             t.ok(generatedCode.includes('HasIdEnhanced.isValidId'), 'Then all attached functions are included')
             t.ok(generatedCode.includes('HasIdEnhanced.fromObject'), 'Then all attached functions are included')
 
-            // Should contain regex validation from import resolution
-            t.ok(generatedCode.includes('/^[0-9a-f]{8}-[0-9a-f]{4}'), 'Then import values are resolved')
+            // Should reference FieldTypes.Id for validation
+            t.ok(generatedCode.includes('FieldTypes.Id'), 'Then FieldTypes reference is preserved')
             t.end()
         })
 

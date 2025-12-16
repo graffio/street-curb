@@ -818,15 +818,7 @@ const generateImportsSection = imports => {
     }
 
     if (!imports || imports.length === 0) return ''
-
-    // Filter out internal imports (like string-types) that don't need to be in generated files
-    const externalImports = imports.filter(imp => !imp.source.startsWith('./string-types'))
-
-    if (externalImports.length === 0) return ''
-
-    const importStatements = externalImports.map(formatImport).join('\n')
-
-    return importStatements + '\n'
+    return imports.map(formatImport).join('\n') + '\n'
 }
 
 export { generateStaticTaggedType, generateStaticTaggedSumType }

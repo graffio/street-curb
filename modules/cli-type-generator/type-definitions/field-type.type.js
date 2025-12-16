@@ -9,6 +9,6 @@ export const FieldType = {
     variants: {
         StringType: { value: 'String' },
         RegexType: { value: 'RegExp' },
-        ImportPlaceholder: { __importPlaceholder: 'Boolean', source: 'String', localName: 'String' },
+        ImportPlaceholder: { isImportPlaceholder: 'Boolean', source: 'String', localName: 'String' },
     },
 }
