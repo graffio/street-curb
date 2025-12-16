@@ -1,7 +1,7 @@
 // Enhanced Tagged type definition for HasId with imports and functions
-import StringTypes from './string-types.js'
+import { FieldTypes } from './field-types.js'
 
-export const HasIdEnhanced = { name: 'HasIdEnhanced', kind: 'tagged', fields: { id: StringTypes.Id } }
+export const HasIdEnhanced = { name: 'HasIdEnhanced', kind: 'tagged', fields: { id: FieldTypes.Id } }
 
 // Additional functions attached to the type
 HasIdEnhanced.createRandom = () => {

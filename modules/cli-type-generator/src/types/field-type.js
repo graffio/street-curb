@@ -8,7 +8,7 @@
  *  RegexType
  *      value: "RegExp"
  *  ImportPlaceholder
- *      __importPlaceholder: "Boolean",
+ *      isImportPlaceholder: "Boolean",
  *      source             : "String",
  *      localName          : "String"
  *
@@ -179,7 +179,7 @@ RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
  */
 const importPlaceholderToString = function () {
     return `FieldType.ImportPlaceholder(
-        ${R._toString(this.__importPlaceholder)},
+        ${R._toString(this.isImportPlaceholder)},
         ${R._toString(this.source)},
         ${R._toString(this.localName)},
     )`
@@ -197,15 +197,15 @@ const importPlaceholderToJSON = function () {
  * Construct a FieldType.ImportPlaceholder instance
  * @sig ImportPlaceholder :: (Boolean, String, String) -> FieldType.ImportPlaceholder
  */
-const ImportPlaceholderConstructor = function ImportPlaceholder(__importPlaceholder, source, localName) {
-    const constructorName = 'FieldType.ImportPlaceholder(__importPlaceholder, source, localName)'
+const ImportPlaceholderConstructor = function ImportPlaceholder(isImportPlaceholder, source, localName) {
+    const constructorName = 'FieldType.ImportPlaceholder(isImportPlaceholder, source, localName)'
     R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateBoolean(constructorName, '__importPlaceholder', false, __importPlaceholder)
+    R.validateBoolean(constructorName, 'isImportPlaceholder', false, isImportPlaceholder)
     R.validateString(constructorName, 'source', false, source)
     R.validateString(constructorName, 'localName', false, localName)
 
     const result = Object.create(ImportPlaceholderPrototype)
-    result.__importPlaceholder = __importPlaceholder
+    result.isImportPlaceholder = isImportPlaceholder
     result.source = source
     result.localName = localName
     return result
@@ -225,8 +225,8 @@ ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
 ImportPlaceholderConstructor.is = val => val && val.constructor === ImportPlaceholderConstructor
 ImportPlaceholderConstructor.toString = () => 'FieldType.ImportPlaceholder'
 ImportPlaceholderConstructor._from = _input => {
-    const { __importPlaceholder, source, localName } = _input
-    return FieldType.ImportPlaceholder(__importPlaceholder, source, localName)
+    const { isImportPlaceholder, source, localName } = _input
+    return FieldType.ImportPlaceholder(isImportPlaceholder, source, localName)
 }
 ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from
 

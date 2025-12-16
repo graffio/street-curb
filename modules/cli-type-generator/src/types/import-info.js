@@ -4,14 +4,16 @@
 /** {@link module:ImportInfo} */
 /*  ImportInfo generated from: modules/cli-type-generator/type-definitions/import-info.type.js
  *
- *  source    : "String",
- *  specifiers: "Array"
+ *  source    : FieldTypes.modulePath,
+ *  specifiers: "[ImportSpecifier]"
  *
  */
 
+import { FieldTypes } from './field-types.js'
+
 import * as R from '@graffio/cli-type-generator'
 
-import { Array } from './array.js'
+import { ImportSpecifier } from './import-specifier.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -20,13 +22,13 @@ import { Array } from './array.js'
 // -------------------------------------------------------------------------------------------------------------
 /**
  * Construct a ImportInfo instance
- * @sig ImportInfo :: (String, Array) -> ImportInfo
+ * @sig ImportInfo :: ([Object], [ImportSpecifier]) -> ImportInfo
  */
 const ImportInfo = function ImportInfo(source, specifiers) {
     const constructorName = 'ImportInfo(source, specifiers)'
     R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'source', false, source)
-    R.validateTag(constructorName, 'Array', 'specifiers', false, specifiers)
+    R.validateRegex(constructorName, FieldTypes.modulePath, 'source', false, source)
+    R.validateArray(constructorName, 1, 'Tagged', 'ImportSpecifier', 'specifiers', false, specifiers)
 
     const result = Object.create(prototype)
     result.source = source
@@ -83,7 +85,7 @@ ImportInfo.from = ImportInfo._from
 ImportInfo._toFirestore = (o, encodeTimestamps) => {
     const result = {
         source: o.source,
-        specifiers: Array.toFirestore(o.specifiers, encodeTimestamps),
+        specifiers: o.specifiers.map(item1 => ImportSpecifier.toFirestore(item1, encodeTimestamps)),
     }
 
     return result
@@ -92,9 +94,11 @@ ImportInfo._toFirestore = (o, encodeTimestamps) => {
 ImportInfo._fromFirestore = (doc, decodeTimestamps) =>
     ImportInfo._from({
         source: doc.source,
-        specifiers: Array.fromFirestore
-            ? Array.fromFirestore(doc.specifiers, decodeTimestamps)
-            : Array.from(doc.specifiers),
+        specifiers: doc.specifiers.map(item1 =>
+            ImportSpecifier.fromFirestore
+                ? ImportSpecifier.fromFirestore(item1, decodeTimestamps)
+                : ImportSpecifier.from(item1),
+        ),
     })
 
 // Public aliases (override if necessary)

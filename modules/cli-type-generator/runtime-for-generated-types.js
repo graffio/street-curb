@@ -1,21 +1,29 @@
+// ABOUTME: Runtime utilities for generated Tagged types
+// ABOUTME: Validation, serialization, and PII redaction functions
+
 import { LookupTable } from '@graffio/functional'
 
-/*
+/**
+ * Check that all TaggedSum variants are handled, throw if missing
+ * @sig validateVariants :: ([String], Object) -> void | throws TypeError
+ */
+const validateVariants = (tagNames, variants) => {
+    const missing = tagNames.find(variant => !variants[variant])
+    if (missing) throw new TypeError(`Constructors given to match didn't include: ${missing}`)
+}
+
+/**
  * Create a match function for TaggedSum types
  * @sig match :: [String] -> (Object -> Any)
  */
 const match = tagNames =>
     function (variants) {
-        // Validate all variants are handled
-        for (const variant of tagNames)
-            if (!variants[variant]) throw new TypeError(`Constructors given to match didn't include: ${variant}`)
-
-        // Call the appropriate variant handler
+        validateVariants(tagNames, variants)
         const variant = variants[this['@@tagName']]
         return variant.call(variants, this)
     }
 
-/*
+/**
  * Convert any value to a readable string representation for error messages
  * @sig _toString :: Any -> String
  */
@@ -31,27 +39,45 @@ const _toString = value => {
     return value
 }
 
-const lookupTableToFirestore = (Type, idField, encodeTimestamps, lookupTable) =>
-    Object.fromEntries(
-        lookupTable.map((item, index) => [
-            item[idField],
-            { ...Type.toFirestore(item, encodeTimestamps), _order: index },
-        ]),
-    )
+/**
+ * Convert a LookupTable item to Firestore format with order index
+ * @sig itemToFirestoreEntry :: (Type, String, Boolean) -> (item, index) -> [String, Object]
+ */
+const itemToFirestoreEntry = (Type, idField, encodeTimestamps) => (item, index) => [
+    item[idField],
+    { ...Type.toFirestore(item, encodeTimestamps), _order: index },
+]
 
+/**
+ * Convert LookupTable to Firestore map format with order preservation
+ * @sig lookupTableToFirestore :: (Type, String, Boolean, LookupTable) -> Object
+ */
+const lookupTableToFirestore = (Type, idField, encodeTimestamps, lookupTable) =>
+    Object.fromEntries(lookupTable.map(itemToFirestoreEntry(Type, idField, encodeTimestamps)))
+
+/**
+ * Convert a Firestore item back to domain type (strips _order)
+ * @sig firestoreItemToDomain :: (Type, Boolean) -> Object -> Tagged
+ */
+const firestoreItemToDomain = (Type, decodeTimestamps) => item => {
+    const { _order, ...rest } = item
+    return Type.fromFirestore(rest, decodeTimestamps)
+}
+
+/**
+ * Convert Firestore map back to LookupTable with order restoration
+ * @sig lookupTableFromFirestore :: (Type, String, Boolean, Object) -> LookupTable
+ */
 const lookupTableFromFirestore = (Type, idField, decodeTimestamps, o) =>
     LookupTable(
         Object.values(o || {})
             .sort((a, b) => (a._order ?? 0) - (b._order ?? 0))
-            .map(item => {
-                const { _order, ...rest } = item
-                return Type.fromFirestore(rest, decodeTimestamps)
-            }),
+            .map(firestoreItemToDomain(Type, decodeTimestamps)),
         Type,
         idField,
     )
 
-/*
+/**
  * Validate that a constructor was called with the correct number of arguments
  * @sig validateArgumentLength :: (String, Number, Arguments) -> void
  */
@@ -64,7 +90,7 @@ const validateArgumentLength = (constructorName, expectedCount, args) => {
     throw new TypeError(message)
 }
 
-/*
+/**
  * Validate that a string field matches a regular expression
  * @sig validateRegex :: (String, RegExp, String, Boolean, String) -> void
  */
@@ -80,7 +106,7 @@ const validateRegex = (constructorName, regex, field, optional, s) => {
     throw new TypeError(message)
 }
 
-/*
+/**
  * Validate that a field is a number
  * @sig validateNumber :: (String, String, Boolean, Any) -> void
  */
@@ -94,7 +120,7 @@ const validateNumber = (constructorName, field, optional, n) => {
     throw new TypeError(message)
 }
 
-/*
+/**
  * Validate that a field is a string
  * @sig validateString :: (String, String, Boolean, Any) -> void
  */
@@ -112,10 +138,6 @@ const validateString = (constructorName, field, optional, s) => {
  * Validate that a field is an object
  * @sig validateObject :: (String, String, Boolean, Any) -> void
  */
-/*
- * Validate that a field is an object
- * @sig validateObject :: (String, String, Boolean, Any) -> void
- */
 const validateObject = (constructorName, field, optional, o) => {
     if (optional && o == null) return
     if (typeof o === 'object') return
@@ -126,7 +148,7 @@ const validateObject = (constructorName, field, optional, o) => {
     throw new TypeError(message)
 }
 
-/*
+/**
  * Validate that a field is a Date
  * @sig validateDate :: (String, String, Boolean, Any) -> void
  */
@@ -140,7 +162,7 @@ const validateDate = (constructorName, field, optional, d) => {
     throw new TypeError(message)
 }
 
-/*
+/**
  * Validate that a field is a boolean
  * @sig validateBoolean :: (String, String, Boolean, Any) -> void
  */
@@ -154,7 +176,7 @@ const validateBoolean = (constructorName, field, optional, b) => {
     throw new TypeError(message)
 }
 
-/*
+/**
  * Validate that a field is a tagged type with specific @@typeName
  * @sig validateTag :: (String, String, String, Boolean, Any) -> void
  */
@@ -164,63 +186,78 @@ const validateTag = (constructorName, expectedType, field, optional, o) => {
 
     // eslint-disable-next-line no-debugger
     debugger
-    const message = `In constructor ${constructorName}: expected ${field} to have type ${expectedType}; found ${_toString(o)}`
+    const found = _toString(o)
+    const message = `In constructor ${constructorName}: expected ${field} to have type ${expectedType}; found ${found}`
     throw new TypeError(message)
 }
 
-/*
+/**
  * Repeat a character n times - used for generating nested array type strings like [[[Type]]]
  * @sig repeatCharacter :: (String, Number) -> String
  */
 const repeatCharacter = (char, n) => Array(n).fill(char).join('')
 
-/*
+/**
+ * Build nested type string like [[[Number]]]
+ * @sig buildNestedTypeString :: (Number, String) -> String
+ */
+const buildNestedTypeString = (arrayDepth, baseType) =>
+    repeatCharacter('[', arrayDepth) + baseType + repeatCharacter(']', arrayDepth)
+
+/**
+ * Check if value at current depth is a valid array, return error info if not
+ * @sig checkArrayAtDepth :: (Any, Number, Number) -> { valid: Boolean, element: Any }
+ */
+const checkArrayAtDepth = (value, currentDepth, targetDepth) => {
+    if (!Array.isArray(value)) return { valid: false, element: null }
+    if (value.length === 0) return { valid: true, element: null, empty: true }
+    if (currentDepth + 1 >= targetDepth) return { valid: true, element: value[0] }
+    return checkArrayAtDepth(value[0], currentDepth + 1, targetDepth)
+}
+
+/**
+ * Check if the deepest element matches expected base type
+ * @sig isValidBaseType :: (Any, String, String?) -> Boolean
+ */
+const isValidBaseType = (element, baseType, taggedType) => {
+    if (baseType === 'String') return typeof element === 'string'
+    if (baseType === 'Number') return typeof element === 'number'
+    if (baseType === 'Object') return typeof element === 'object'
+    if (baseType === 'Date') return element instanceof Date
+    if (baseType === 'Any') return true
+    if (baseType === 'Tagged') return element?.['@@typeName'] === taggedType
+    return false
+}
+
+/**
  * Validate nested array types like [Number], [[String]], [[[Coord]]]
- * Validates both array nesting depth and the type of the deepest element
- *
- * Algorithm:
- * 1. Check each nesting level is actually an array
- * 2. Drill down to the first element at the target depth
- * 3. Validate the deepest element matches the expected base type
- *
  * @sig validateArray :: (String, Number, String, String?, String, Boolean, Any) -> void
  */
 const validateArray = (constructorName, arrayDepth, baseType, taggedType, field, optional, a) => {
     if (optional && a == null) return
 
-    let d = 0
-    let o = a
-    do {
-        if (!Array.isArray(o)) {
-            // eslint-disable-next-line no-debugger
-            debugger
-            const nestedType = repeatCharacter('[', arrayDepth) + baseType + repeatCharacter(']', arrayDepth)
-            const message = `In constructor ${constructorName}: expected ${field} to have type ${nestedType}; found ${_toString(a)}`
-            throw new TypeError(message)
-        }
+    const { valid, empty, element } = checkArrayAtDepth(a, 0, arrayDepth)
+    const nestedType = buildNestedTypeString(arrayDepth, taggedType ?? baseType)
+    const found = _toString(a)
 
-        // Empty arrays are always valid regardless of declared element type
-        if (o.length === 0) return
+    const prefix = `In constructor ${constructorName}`
+    const expected = `expected ${field} to have type ${nestedType}`
 
-        o = o[0]
-        d++
-    } while (d < arrayDepth)
+    if (!valid) {
+        // eslint-disable-next-line no-debugger
+        debugger
+        throw new TypeError(`${prefix}: ${expected}; found ${found}`)
+    }
 
-    if (baseType === 'String' && typeof o === 'string') return
-    if (baseType === 'Number' && typeof o === 'number') return
-    if (baseType === 'Object' && typeof o === 'object') return
-    if (baseType === 'Date' && o instanceof Date) return
-    if (baseType === 'Any') return
-    if (baseType === 'Tagged' && o?.['@@typeName'] === taggedType) return
+    if (empty) return
+    if (isValidBaseType(element, baseType, taggedType)) return
 
     // eslint-disable-next-line no-debugger
     debugger
-    const nestedType = repeatCharacter('[', arrayDepth) + (taggedType ?? baseType) + repeatCharacter(']', arrayDepth)
-    const message = `In constructor ${constructorName}: expected ${field} to have type ${nestedType}; found ${_toString(a)}`
-    throw new TypeError(message)
+    throw new TypeError(`${prefix}: ${expected}; found ${found}`)
 }
 
-/*
+/**
  * Validate that a field is a LookupTable with specific item type
  * @sig validateLookupTable :: (String, String, String, Boolean, Any) -> void
  */
@@ -231,7 +268,8 @@ const validateLookupTable = (constructorName, expectedItemType, field, optional,
     if (!lt || typeof lt !== 'object' || !lt.idField) {
         // eslint-disable-next-line no-debugger
         debugger
-        const message = `In constructor ${constructorName}: expected ${field} to be a LookupTable; found ${_toString(lt)}`
+        const found = _toString(lt)
+        const message = `In constructor ${constructorName}: expected ${field} to be a LookupTable; found ${found}`
         throw new TypeError(message)
     }
 
@@ -244,13 +282,13 @@ const validateLookupTable = (constructorName, expectedItemType, field, optional,
 
     // eslint-disable-next-line no-debugger
     debugger
-    const message = `In constructor ${constructorName}: expected ${field} to be a LookupTable<${expectedItemType}>; found LookupTable<${firstItem?.['@@typeName'] || 'unknown'}>`
-    throw new TypeError(message)
+    const actualType = firstItem?.['@@typeName'] || 'unknown'
+    const expected = `a LookupTable<${expectedItemType}>`
+    const actual = `LookupTable<${actualType}>`
+    throw new TypeError(`In constructor ${constructorName}: expected ${field} to be ${expected}; found ${actual}`)
 }
 
-/*
- * Redaction patterns for known PII fields
- */
+// Redaction patterns for known PII fields
 // prettier-ignore
 const piiRedactions = {
     email      : v => v.replace(/(.).*(@.*)/                                                   , '$1***$2'),
@@ -258,7 +296,17 @@ const piiRedactions = {
     phoneNumber: v => v.replace(/(\+?\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)(\d{3}[-.\s]?)(\d{4})/, '***-***-$4'),
 }
 
-/*
+/**
+ * Check if a single field value contains PII (recursively)
+ * @sig fieldHasPii :: Any -> Boolean
+ */
+const fieldHasPii = fieldValue => {
+    if (Array.isArray(fieldValue)) return fieldValue.some(hasPii)
+    if (typeof fieldValue === 'object') return hasPii(fieldValue)
+    return false
+}
+
+/**
  * Check if a value contains PII anywhere in its tree (recursively)
  * @sig hasPii :: Tagged -> Boolean
  */
@@ -270,27 +318,23 @@ const hasPii = value => {
     if (hasDirectPii) return true
 
     // Check nested structures recursively
-    return Object.values(value).some(fieldValue => {
-        if (Array.isArray(fieldValue)) return fieldValue.some(hasPii) // recurse into array/LookupTable
-        if (typeof fieldValue === 'object') return hasPii(fieldValue) // recurse into object/Tagged type
-        return false
-    })
+    return Object.values(value).some(fieldHasPii)
 }
 
-/*
+/**
  * Redact a single field value (recursively for nested types)
  * @sig redactField :: (String, Any, Tagged) -> Any
  */
 const redactField = (k, v, originalValue) => {
-    if (piiRedactions[k] && typeof v === 'string') return piiRedactions[k](v) // Redact PII fields
-    if (v?.['@@tagName']) return redact(v) // Recurse into Tagged types
-    if (LookupTable.is(v)) return LookupTable(v.map(redact), v.ItemType, v.idField) // Recurse into LookupTables
-    if (Array.isArray(v) && v[0]?.['@@tagName']) return v.map(redact) // Recurse into arrays of Tagged types
+    if (piiRedactions[k] && typeof v === 'string') return piiRedactions[k](v)
+    if (v?.['@@typeName']) return redact(v)
+    if (LookupTable.is(v)) return LookupTable(v.map(redact), v.ItemType, v.idField)
+    if (Array.isArray(v) && v[0]?.['@@typeName']) return v.map(redact)
 
     return v
 }
 
-/*
+/**
  * Mark an object as redacted (mutates and returns object)
  * @sig markAsRedacted :: Tagged -> Tagged
  */
@@ -299,20 +343,17 @@ const markAsRedacted = obj => {
     return obj
 }
 
-/*
+/**
  * Universal PII redaction function for Tagged types
  * Redacts email, displayName, and phoneNumber fields recursively
  * Returns same object if already redacted (idempotent)
- *
  * @sig redact :: Tagged -> Tagged
  */
 const redact = value => {
-    if (value?.__redacted) return value // Already redacted - return same object
-    if (!value?.['@@tagName']) return value // Not a Tagged type - return unchanged
-    if (!hasPii(value)) return markAsRedacted(value) // Early exit: no PII found - mark and return original
+    if (value?.__redacted) return value
+    if (!value?.['@@typeName']) return value
+    if (!hasPii(value)) return markAsRedacted(value)
 
-    // PII found - create redacted version
-    // Reconstruct Tagged type with redacted fields
     const redactedObject = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, redactField(k, v, value)]))
     const constructor = Object.getPrototypeOf(value).constructor
     return markAsRedacted(constructor.from(redactedObject))

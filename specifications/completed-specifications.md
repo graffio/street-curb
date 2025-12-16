@@ -4,6 +4,13 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [infrastructure] Style Validator: Allow for..of with await (2025-12-16)
+**Purpose:** Fix false positive in functional-patterns rule
+
+- Added `containsAwait()` helper to detect await expressions in loop bodies
+- `for..of` with `await` inside is now allowed (legitimate for sequential async)
+- `for..of` without `await` still flagged as style violation
+
 ## [infrastructure] Style Validator Cleanup for quicken-web-app (2025-12-14)
 **Purpose:** Fix all style violations in quicken-web-app JS/JSX files
 

@@ -23,6 +23,8 @@ Brevity > thoroughness. When in doubt, match existing code.
 - `const` preferred, `let` if needed, never `var`
 - Define functions at the TOP of their containing block, before usage
 - This is safe: functions can reference variables declared later because the variables are initialized before the function is *called*, not when it's defined
+- Indentation resets to 0 inside ANY function body, including nested/inline functions
+- "Nested indentation" means control flow nesting (`if` inside `if`), not function-inside-function
 
 ## React Components
 
@@ -56,6 +58,8 @@ Keep functions INSIDE their parent component (not hoisted outside) when they use
 - No unnecessary pattern suffixes (`Tool` not `ToolFactory`)
 - Good: `Tool`, `Registry`, `execute()`
 - Bad: `AbstractToolInterface`, `ToolRegistryManager`, `executeWithValidation()`
+- Boolean properties use `is` prefix (e.g., `isImportPlaceholder`), never `__` prefix
+- `@@` is reserved for hidden type metadata (`@@typeName`, `@@tagName`); `__` has no legitimate use
 
 ## Comments
 

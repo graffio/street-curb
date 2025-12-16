@@ -277,7 +277,8 @@ const findNestedViolations = (node, depth, processedNodes, violations) => {
     if (depth > 0 && isIndentationStatement(node)) {
         const msg =
             'Nested indentation detected. ' +
-            'FIX: Extract the nested block to a separate function, or use early returns to flatten the logic.'
+            'FIX: Extract the nested block to a separate function at the top of the enclosing function ' +
+            '(not module level, unless used by multiple module-level functions), or use early returns to flatten the logic.'
         violations.push(createViolation(node, msg))
     }
 
@@ -291,7 +292,8 @@ const findNestedViolations = (node, depth, processedNodes, violations) => {
 // @sig CALLBACK_EXTRACTION_MESSAGE :: String
 const CALLBACK_EXTRACTION_MESSAGE =
     'Extract multi-line unnamed function to a named function. ' +
-    'FIX: Move the callback body to a named function defined above. ' +
+    'FIX: Move the callback body to a named function at the top of the enclosing function ' +
+    '(not module level, unless used by multiple module-level functions). ' +
     'For Promise executors: extract to a function that receives resolve/reject as parameters. ' +
     "For .map() callbacks: if it doesn't fit on one line with .map(), extract it."
 
