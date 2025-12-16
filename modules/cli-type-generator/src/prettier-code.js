@@ -1,9 +1,12 @@
-/*
- * Format generated code with prettier
- * @sig formatCode :: String -> String
- */
+// ABOUTME: Code formatting utilities for generated type files
+// ABOUTME: Uses prettier for JS formatting and custom utilities for comment blocks
+
 import prettier from 'prettier'
 
+/**
+ * Format generated code with prettier
+ * @sig prettierCode :: String -> Promise String
+ */
 const prettierCode = async code => {
     try {
         return await prettier.format(code, {
@@ -20,12 +23,8 @@ const prettierCode = async code => {
     }
 }
 
-/*
+/**
  * JSON.stringify without the clutter: no quotes around keys and spaces after the commas
- *
- *   {"num":"Number","s":"String","o":"Object","a":"Any"}  =>
- *   { num: 'Number', s: 'String', o: 'Object', a: 'Any' }
- *
  * @sig stringifyObject :: {k:v} -> String
  */
 const stringifyObject = o =>
@@ -35,12 +34,20 @@ const stringifyObject = o =>
         .replace(/{/g, '{ ') // add a space just inside starting braces
         .replace(/([^}])}/g, '$1 }') // add a space just inside closing braces
 
+/**
+ * Format a value for display in a comment block
+ * @sig formatValueForComment :: Any -> String
+ */
 const formatValueForComment = v => {
-    if (v && v.__fieldTypesReference) return v.fullReference
+    if (v && v.isFieldTypesReference) return v.fullReference
     if (v instanceof RegExp) return v.toString()
     return JSON.stringify(v)
 }
 
+/**
+ * Format a single field line for a comment block
+ * @sig formatFieldLine :: (String, Any, Number, Number, Boolean) -> String
+ */
 const formatFieldLine = (key, value, maxKeyLen, indent, isLast) => {
     const padded = key.padEnd(maxKeyLen, ' ')
     const comma = isLast ? '' : ','
@@ -48,7 +55,15 @@ const formatFieldLine = (key, value, maxKeyLen, indent, isLast) => {
     return `${spacing}${padded}: ${formatValueForComment(value)}${comma}`
 }
 
+/**
+ * Convert an object to a multiline JSDoc comment block
+ * @sig stringifyObjectAsMultilineComment :: (Object, String, String) -> String
+ */
 const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
+    /**
+     * Process a tagged type into comment lines
+     * @sig processTagged :: () -> String
+     */
     const processTagged = () => {
         const maxKeyLen = Math.max(...entries.map(([k]) => k.length))
         const fieldCount = entries.length
@@ -58,6 +73,10 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
         return [link, header, ' *', ...fieldLines, footer].join('\n')
     }
 
+    /**
+     * Process a single taggedSum variant into comment lines
+     * @sig processTaggedSumVariant :: [String, Object] -> String
+     */
     const processTaggedSumVariant = ([variantName, fields]) => {
         const fieldEntries = Object.entries(fields)
         const fieldCount = fieldEntries.length

@@ -100,7 +100,7 @@
  *
  * TODO: check that type names start with Capital letters
  * ----------------------------------------------------------------------------------------------------------------- */
-import TaggedFieldType from './tagged-field-type.js'
+import FieldTypeIR from './ir/field-type-ir.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Helpers
@@ -118,11 +118,10 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
      * @sig generateAssignment :: String -> String
      */
     const generateAssignment = f => {
-        const type = fields[f].toString() // might be a regex
-        const isOptional = type.match(/\?/)
+        const { optional } = FieldTypeIR.fromAny(fields[f])
 
         // x != is JavaScript magic for NEITHER null NOR undefined
-        return isOptional ? `if (${f} != null) result.${f} = ${f}` : `result.${f} = ${f}`
+        return optional ? `if (${f} != null) result.${f} = ${f}` : `result.${f} = ${f}`
     }
 
     const keys = Object.keys(fields)
@@ -133,7 +132,7 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
     const assignments = keys.map(generateAssignment)
 
     // if there are optional values, skip the parameter count check
-    const hasOptional = Object.values(fields).some(f => (typeof f === 'string' ? f.match(/\?/) : f.optional))
+    const hasOptional = Object.values(fields).some(f => FieldTypeIR.fromAny(f).optional)
     const countCheck = hasOptional ? '' : `R.validateArgumentLength(constructorName, ${keys.length}, arguments)`
 
     return `
@@ -155,22 +154,14 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
  */
 // prettier-ignore
 const generateTypeCheck = (constructorName, name, fieldType) => {
-    // Handle FieldTypes references specially
-    if (typeof fieldType === 'object' && fieldType.__fieldTypesReference)
-        return `R.validateRegex(constructorName, ${fieldType.fullReference}, '${name}', false, ${name})`
-
-    /*
-     * Checking an array involves 2 separate tests: is the value an array to the proper arrayDepth
-     * Does the first completely-nested element match the fieldType?
-     *
-     * generate a check for the first 'real' element -- no matter how deeply nested it is -- against the
-     * fieldType, after first removing the outer brackets
-     */
-    if (typeof fieldType === 'string' || fieldType instanceof RegExp) fieldType = TaggedFieldType.fromString(fieldType)
-
-    const { baseType, optional, regex, arrayDepth, taggedType } = fieldType
+    // Normalize all field types to IR
+    const ir = FieldTypeIR.fromAny(fieldType)
+    const { arrayDepth, baseType, fieldTypesReference, optional, regex, taggedType } = ir
     const tag = taggedType ? `"${taggedType}"` : undefined
-    
+
+    // Handle FieldTypes references (regex patterns imported from FieldTypes)
+    if (fieldTypesReference) return `R.validateRegex(constructorName, ${fieldTypesReference.fullReference}, '${name}', ${optional}, ${name})`
+
     if (baseType === 'Any')         return ''
     if (arrayDepth)                 return `R.validateArray(constructorName, ${arrayDepth}, '${baseType}', ${tag}, '${name}', ${optional}, ${name})`
     if (baseType === 'LookupTable') return `R.validateLookupTable(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
@@ -203,13 +194,14 @@ const generateFrom = (protoName, typeName, fullName, fields) => {
     const fieldNames = Object.keys(fields)
 
     // If 3+ fields, destructure to avoid chain-extraction violations in generated code
+    // Use _input to avoid collision with fields named 'o'
     if (fieldNames.length >= 3) {
-        const destructure = `const { ${fieldNames.join(', ')} } = o`
-        return `o => {\n    ${destructure}\n    return ${fullName}(${fieldNames.join(', ')})\n}`
+        const destructure = `const { ${fieldNames.join(', ')} } = _input`
+        return `_input => {\n    ${destructure}\n    return ${fullName}(${fieldNames.join(', ')})\n}`
     }
 
-    const params = fieldNames.map(f => `o.${f}`)
-    return `o => ${fullName}(${params.join(', ')})`
+    const params = fieldNames.map(f => `_input.${f}`)
+    return `_input => ${fullName}(${params.join(', ')})`
 }
 
 /**
