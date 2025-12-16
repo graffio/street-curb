@@ -89,9 +89,11 @@ export const typeMappings = {
 
 
     // for the cli-type-generator itself (all internal types)
-    [`${sources.typesGeneration}/field-type.type.js`]     : [targets.typesGeneration],
-    [`${sources.typesGeneration}/function-info.type.js`]  : [targets.typesGeneration],
-    [`${sources.typesGeneration}/import-info.type.js`]    : [targets.typesGeneration],
-    [`${sources.typesGeneration}/parse-result.type.js`]   : [targets.typesGeneration],
-    [`${sources.typesGeneration}/type-definition.type.js`]: [targets.typesGeneration],
+    [`${sources.typesGeneration}/field-types.js`]          : [targets.typesGeneration],
+    [`${sources.typesGeneration}/field-type.type.js`]      : [targets.typesGeneration],
+    [`${sources.typesGeneration}/function-info.type.js`]   : [targets.typesGeneration],
+    [`${sources.typesGeneration}/import-info.type.js`]     : [targets.typesGeneration],
+    [`${sources.typesGeneration}/import-specifier.type.js`]: [targets.typesGeneration],
+    [`${sources.typesGeneration}/parse-result.type.js`]    : [targets.typesGeneration],
+    [`${sources.typesGeneration}/type-definition.type.js`] : [targets.typesGeneration],
 }
