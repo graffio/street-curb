@@ -93,23 +93,22 @@ const getFunctionBody = node => {
 }
 
 /**
- * Collect all function call names within a function body (excluding recursive calls)
- * @sig collectCallsInFunction :: (ASTNode, String, Set<String>) -> Set<String>
+ * Collect all references to module-level functions within a function body
+ * Includes both direct calls and callback passing (e.g., arr.some(fn))
+ * @sig collectReferencesInFunction :: (ASTNode, String, Set<String>) -> Set<String>
  */
-const collectCallsInFunction = (body, ownName, moduleFunctionNames) => {
-    const calls = new Set()
+const collectReferencesInFunction = (body, ownName, moduleFunctionNames) => {
+    const refs = new Set()
 
     traverseAST(body, node => {
-        if (node.type !== 'CallExpression') return
-        const callee = node.callee
-        if (callee?.type !== 'Identifier') return
+        if (node.type !== 'Identifier') return
 
-        const calledName = callee.name
-        if (calledName === ownName) return
-        if (moduleFunctionNames.has(calledName)) calls.add(calledName)
+        const name = node.name
+        if (name === ownName) return
+        if (moduleFunctionNames.has(name)) refs.add(name)
     })
 
-    return calls
+    return refs
 }
 
 /**
@@ -129,8 +128,8 @@ const buildCallerMap = (ast, moduleFunctions) => {
             const body = getFunctionBody(node)
             if (!body) return
 
-            const calls = collectCallsInFunction(body, callerName, moduleFunctions)
-            calls.forEach(calledName => callerMap.get(calledName)?.add(callerName))
+            const refs = collectReferencesInFunction(body, callerName, moduleFunctions)
+            refs.forEach(refName => callerMap.get(refName)?.add(callerName))
         })
 
     return callerMap
