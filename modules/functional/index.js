@@ -1,3 +1,6 @@
+// ABOUTME: Main entry point for @graffio/functional utilities
+// ABOUTME: Re-exports Ramda-like helpers, date utils, LookupTable, and Tagged type utilities
+
 import { PromiseCache, PromiseCacheWithCacheBusting } from './promise-cache.js'
 import LookupTable from './src/lookup-table.js'
 import addOrReplaceAtPath from './src/ramda-like/add-or-replace-at-path.js'
@@ -59,6 +62,7 @@ import type from './src/ramda-like/type.js'
 import uniqBy from './src/ramda-like/uniq-by.js'
 import uniq from './src/ramda-like/uniq.js'
 import update from './src/ramda-like/update.js'
+import { updateLookupTablePath } from './src/update-lookup-table-path.js'
 import without from './src/ramda-like/without.js'
 import zipObject from './src/ramda-like/zip-object.js'
 
@@ -154,6 +158,7 @@ export {
     uniq,
     uniqBy,
     update,
+    updateLookupTablePath,
     without,
     zipObject,
 

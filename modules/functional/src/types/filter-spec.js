@@ -59,6 +59,7 @@ FilterSpec.prototype = FilterSpecPrototype
 // Variant FilterSpec.TextMatch
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig textMatchToString :: () -> String
@@ -67,7 +68,7 @@ const textMatchToString = function () {
     return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig textMatchToJSON :: () -> Object
  */
@@ -75,7 +76,7 @@ const textMatchToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FilterSpec.TextMatch instance
  * @sig TextMatch :: ([String], String) -> FilterSpec.TextMatch
  */
@@ -115,6 +116,7 @@ TextMatchConstructor.fromFirestore = TextMatchConstructor._from
 // Variant FilterSpec.DateRange
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig dateRangeToString :: () -> String
@@ -123,7 +125,7 @@ const dateRangeToString = function () {
     return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig dateRangeToJSON :: () -> Object
  */
@@ -131,7 +133,7 @@ const dateRangeToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FilterSpec.DateRange instance
  * @sig DateRange :: (String, Date, Date) -> FilterSpec.DateRange
  */
@@ -203,6 +205,7 @@ DateRangeConstructor.fromFirestore = DateRangeConstructor._fromFirestore
 // Variant FilterSpec.CategoryMatch
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig categoryMatchToString :: () -> String
@@ -211,7 +214,7 @@ const categoryMatchToString = function () {
     return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig categoryMatchToJSON :: () -> Object
  */
@@ -219,7 +222,7 @@ const categoryMatchToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FilterSpec.CategoryMatch instance
  * @sig CategoryMatch :: (String, [String]) -> FilterSpec.CategoryMatch
  */
@@ -259,6 +262,7 @@ CategoryMatchConstructor.fromFirestore = CategoryMatchConstructor._from
 // Variant FilterSpec.Compound
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig compoundToString :: () -> String
@@ -267,7 +271,7 @@ const compoundToString = function () {
     return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig compoundToJSON :: () -> Object
  */
@@ -275,7 +279,7 @@ const compoundToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FilterSpec.Compound instance
  * @sig Compound :: ([FilterSpec], Mode) -> FilterSpec.Compound
  *     Mode = /^(all|any)$/
@@ -339,7 +343,8 @@ CompoundConstructor.toFirestore = CompoundConstructor._toFirestore
 CompoundConstructor.fromFirestore = CompoundConstructor._fromFirestore
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a FilterSpec instance
  * @sig is :: Any -> Boolean
  */

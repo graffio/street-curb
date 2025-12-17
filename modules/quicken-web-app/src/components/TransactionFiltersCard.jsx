@@ -1,5 +1,5 @@
 // ABOUTME: Sidebar component for filtering transactions by date, category, and search
-// ABOUTME: Fully connected to Redux - reads all state from selectors, no props required
+// ABOUTME: Connected to Redux with viewId-scoped filters
 
 import { Button, Card, CategorySelector, DateRangePicker, Flex, Text, TextField } from '@graffio/design-system'
 import React from 'react'
@@ -10,62 +10,65 @@ import { Action } from '../types/action.js'
 
 const filtersCardStyle = { width: '280px', flexShrink: 0 }
 
-/**
+/*
  * Filters sidebar card for transaction filtering, searching, and category selection
- * @sig TransactionFiltersCard :: () -> ReactElement
+ * Each instance is scoped to a specific view via viewId prop
+ *
+ * @sig TransactionFiltersCard :: ({ viewId: String }) -> ReactElement
  */
-const TransactionFiltersCard = () => {
-    // Action handlers (before hooks per coding standards)
-    const handleDateRangeChange = dateRange => post(Action.SetTransactionFilter({ dateRange }))
-    const handleDateRangeKeyChange = dateRangeKey => post(Action.SetTransactionFilter({ dateRangeKey }))
-    const handleCustomStartDateChange = customStartDate => post(Action.SetTransactionFilter({ customStartDate }))
-    const handleCustomEndDateChange = customEndDate => post(Action.SetTransactionFilter({ customEndDate }))
-    const handleFilterQueryChange = e => post(Action.SetTransactionFilter({ filterQuery: e.target.value }))
-    const handleClearFilters = () => post(Action.ResetTransactionFilters())
+const TransactionFiltersCard = ({ viewId }) => {
+    // Action handlers - all include viewId to scope changes to this view
+    const handleDateRangeChange = dateRange => post(Action.SetTransactionFilter(viewId, { dateRange }))
+    const handleDateRangeKeyChange = dateRangeKey => post(Action.SetTransactionFilter(viewId, { dateRangeKey }))
+
+    const handleCustomStartDateChange = customStartDate =>
+        post(Action.SetTransactionFilter(viewId, { customStartDate }))
+
+    const handleCustomEndDateChange = customEndDate => post(Action.SetTransactionFilter(viewId, { customEndDate }))
+    const handleFilterQueryChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
+    const handleClearFilters = () => post(Action.ResetTransactionFilters(viewId))
 
     const handleSearchQueryChange = e =>
-        post(Action.SetTransactionFilter({ searchQuery: e.target.value, currentSearchIndex: 0 }))
+        post(Action.SetTransactionFilter(viewId, { searchQuery: e.target.value, currentSearchIndex: 0 }))
 
     const handleCategoryAdd = category =>
-        post(Action.SetTransactionFilter({ selectedCategories: [...selectedCategories, category] }))
+        post(Action.SetTransactionFilter(viewId, { selectedCategories: [...selectedCategories, category] }))
 
     const handleCategoryRemove = category =>
-        post(Action.SetTransactionFilter({ selectedCategories: selectedCategories.filter(c => c !== category) }))
+        post(
+            Action.SetTransactionFilter(viewId, { selectedCategories: selectedCategories.filter(c => c !== category) }),
+        )
 
-    /**
-     * Navigate to previous search match, wrapping to end if at beginning
-     * @sig handlePreviousMatch :: () -> void
-     */
+    // Navigate to previous search match, wrapping to end if at beginning
+    // @sig handlePreviousMatch :: () -> void
     const handlePreviousMatch = () => {
         if (searchMatches.length === 0) return
         const newIndex = currentSearchIndex === 0 ? searchMatches.length - 1 : currentSearchIndex - 1
-        post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
+        post(Action.SetTransactionFilter(viewId, { currentSearchIndex: newIndex }))
     }
 
-    /**
-     * Navigate to next search match, wrapping to beginning if at end
-     * @sig handleNextMatch :: () -> void
-     */
+    // Navigate to next search match, wrapping to beginning if at end
+    // @sig handleNextMatch :: () -> void
     const handleNextMatch = () => {
         if (searchMatches.length === 0) return
         const newIndex = currentSearchIndex === searchMatches.length - 1 ? 0 : currentSearchIndex + 1
-        post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
+        post(Action.SetTransactionFilter(viewId, { currentSearchIndex: newIndex }))
     }
 
-    // Hooks - read all state from Redux
-    const dateRange = useSelector(S.dateRange)
-    const dateRangeKey = useSelector(S.dateRangeKey)
-    const filterQuery = useSelector(S.filterQuery)
-    const searchQuery = useSelector(S.searchQuery)
-    const selectedCategories = useSelector(S.selectedCategories)
-    const currentSearchIndex = useSelector(S.currentSearchIndex)
-    const customStartDate = useSelector(S.customStartDate)
-    const customEndDate = useSelector(S.customEndDate)
+    // Hooks - read view-scoped state from Redux
+    const dateRange = useSelector(state => S.dateRange(state, viewId))
+    const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
+    const filterQuery = useSelector(state => S.filterQuery(state, viewId))
+    const searchQuery = useSelector(state => S.searchQuery(state, viewId))
+    const selectedCategories = useSelector(state => S.selectedCategories(state, viewId))
+    const currentSearchIndex = useSelector(state => S.currentSearchIndex(state, viewId))
+    const customStartDate = useSelector(state => S.customStartDate(state, viewId))
+    const customEndDate = useSelector(state => S.customEndDate(state, viewId))
     const defaultStartDate = useSelector(S.defaultStartDate)
     const defaultEndDate = useSelector(S.defaultEndDate)
     const allCategories = useSelector(S.allCategoryNames)
-    const searchMatches = useSelector(S.searchMatches)
-    const filteredTransactions = useSelector(S.filteredTransactions)
+    const searchMatches = useSelector(state => S.searchMatches(state, viewId))
+    const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
     const filteredTransactionsCount = filteredTransactions.length
 
     return (
