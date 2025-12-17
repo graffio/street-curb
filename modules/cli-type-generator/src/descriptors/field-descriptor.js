@@ -183,9 +183,42 @@ const fromString = input => fromAny(input)
 const fromObject = input => fromAny(input)
 
 // ---------------------------------------------------------------------------------------------------------------------
+// toSyntax - Convert descriptor back to concise syntax for display
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * Convert a FieldDescriptor back to the concise type definition syntax
+ * @sig toSyntax :: FieldDescriptor -> String | RegExp | Object
+ */
+const toSyntax = descriptor => {
+    const { baseType, optional, arrayDepth, taggedType, idField, regex, fieldTypesReference } = descriptor
+
+    // FieldTypes reference - return object with isFieldTypesReference flag for formatValueForComment
+    if (fieldTypesReference) return { isFieldTypesReference: true, fullReference: fieldTypesReference.fullReference }
+
+    // Regex field - return the regex directly
+    if (regex) return regex
+
+    // LookupTable - {Type:idField}
+    if (baseType === 'LookupTable') {
+        const core = `{${taggedType}:${idField}}`
+        return optional ? `${core}?` : core
+    }
+
+    // Build the type string
+    let core = baseType === 'Tagged' ? taggedType : baseType
+
+    // Wrap in array brackets
+    core = '['.repeat(arrayDepth) + core + ']'.repeat(arrayDepth)
+
+    // Add optional marker
+    return optional ? `${core}?` : core
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------------------------------------------------
 
-const FieldDescriptor = { fromString, fromObject, fromAny }
+const FieldDescriptor = { fromString, fromObject, fromAny, toSyntax }
 
 export default FieldDescriptor

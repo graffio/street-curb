@@ -3,6 +3,8 @@
 
 import prettier from 'prettier'
 
+import FieldDescriptor from './descriptors/field-descriptor.js'
+
 /**
  * Format generated code with prettier
  * @sig prettierCode :: String -> Promise String
@@ -35,32 +37,41 @@ const stringifyObject = o =>
         .replace(/([^}])}/g, '$1 }') // add a space just inside closing braces
 
 /**
- * Format a value for display in a comment block
- * @sig formatValueForComment :: Any -> String
- */
-const formatValueForComment = v => {
-    if (v && v.isFieldTypesReference) return v.fullReference
-    if (v instanceof RegExp) return v.toString()
-    return JSON.stringify(v)
-}
-
-/**
- * Format a single field line for a comment block
- * @sig formatFieldLine :: (String, Any, Number, Number, Boolean) -> String
- */
-const formatFieldLine = (key, value, maxKeyLen, indent, isLast) => {
-    const padded = key.padEnd(maxKeyLen, ' ')
-    const comma = isLast ? '' : ','
-    const spacing = '    '.repeat(indent)
-    return `${spacing}${padded}: ${formatValueForComment(value)}${comma}`
-}
-
-/**
  * Convert an object to a multiline JSDoc comment block
  * @sig stringifyObjectAsMultilineComment :: (Object, String, String) -> String
  */
 const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
-    /**
+    /*
+     * Check if value looks like a FieldDescriptor (has baseType property)
+     * @sig isFieldDescriptor :: Any -> Boolean
+     */
+    const isFieldDescriptor = v => v && typeof v === 'object' && typeof v.baseType === 'string'
+
+    /*
+     * Format a single field line for a comment block
+     * @sig formatFieldLine :: (String, Any, Number, Number, Boolean) -> String
+     */
+    const formatFieldLine = (key, value, maxKeyLen, indent, isLast) => {
+        /*
+         * Format a value for display in a comment block
+         * @sig formatValueForComment :: Any -> String
+         */
+        const formatValueForComment = v => {
+            // Convert FieldDescriptor to concise syntax first
+            if (isFieldDescriptor(v)) v = FieldDescriptor.toSyntax(v)
+
+            if (v && v.isFieldTypesReference) return v.fullReference
+            if (v instanceof RegExp) return v.toString()
+            return JSON.stringify(v)
+        }
+
+        const padded = key.padEnd(maxKeyLen, ' ')
+        const comma = isLast ? '' : ','
+        const spacing = '    '.repeat(indent)
+        return `${spacing}${padded}: ${formatValueForComment(value)}${comma}`
+    }
+
+    /*
      * Process a tagged type into comment lines
      * @sig processTagged :: () -> String
      */
@@ -73,7 +84,7 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
         return [link, header, ' *', ...fieldLines, footer].join('\n')
     }
 
-    /**
+    /*
      * Process a single taggedSum variant into comment lines
      * @sig processTaggedSumVariant :: [String, Object] -> String
      */
@@ -95,9 +106,13 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
     const header = `/*  ${typeName} generated from: ${generatedFrom.replace(/.*modules/, 'modules')}`
     const footer = ' *\n*/'
 
-    return entries.length > 1 && entries.every(([k, v]) => typeof v === 'object' && v !== null)
-        ? processTaggedSum()
-        : processTagged()
+    // TaggedSum has variants as values (objects containing fields)
+    // Tagged has FieldDescriptors as values directly
+    // If any value is a FieldDescriptor, it's Tagged; if values are objects with field entries, it's TaggedSum
+    const isTaggedSum =
+        entries.length > 1 && entries.every(([, v]) => typeof v === 'object' && v !== null && !isFieldDescriptor(v))
+
+    return isTaggedSum ? processTaggedSum() : processTagged()
 }
 
 export { prettierCode, stringifyObject, stringifyObjectAsMultilineComment }
