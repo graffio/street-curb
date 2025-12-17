@@ -11,8 +11,10 @@
  *      splits      : "{Split:id}",
  *      transactions: "{Transaction:id}"
  *  SetTransactionFilter
+ *      viewId : "String",
  *      changes: "Object"
  *  ResetTransactionFilters
+ *      viewId: "String"
  *  SetTableLayout
  *      tableLayout: "TableLayout"
  *  OpenView
@@ -101,22 +103,21 @@ Action.prototype = ActionPrototype
 // Variant Action.LoadFile
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig loadFileToString :: () -> String
  */
 const loadFileToString = function () {
-    return `Action.LoadFile(
-        ${R._toString(this.accounts)},
+    return `Action.LoadFile(${R._toString(this.accounts)},
         ${R._toString(this.categories)},
         ${R._toString(this.securities)},
         ${R._toString(this.tags)},
         ${R._toString(this.splits)},
-        ${R._toString(this.transactions)},
-    )`
+        ${R._toString(this.transactions)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig loadFileToJSON :: () -> Object
  */
@@ -124,7 +125,7 @@ const loadFileToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.LoadFile instance
  * @sig LoadFile :: ({Account}, {Category}, {Security}, {Tag}, {Split}, {Transaction}) -> Action.LoadFile
  */
@@ -208,15 +209,16 @@ LoadFileConstructor.fromFirestore = LoadFileConstructor._fromFirestore
 // Variant Action.SetTransactionFilter
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig setTransactionFilterToString :: () -> String
  */
 const setTransactionFilterToString = function () {
-    return `Action.SetTransactionFilter(${R._toString(this.changes)})`
+    return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig setTransactionFilterToJSON :: () -> Object
  */
@@ -224,16 +226,18 @@ const setTransactionFilterToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SetTransactionFilter instance
- * @sig SetTransactionFilter :: (Object) -> Action.SetTransactionFilter
+ * @sig SetTransactionFilter :: (String, Object) -> Action.SetTransactionFilter
  */
-const SetTransactionFilterConstructor = function SetTransactionFilter(changes) {
-    const constructorName = 'Action.SetTransactionFilter(changes)'
-    R.validateArgumentLength(constructorName, 1, arguments)
+const SetTransactionFilterConstructor = function SetTransactionFilter(viewId, changes) {
+    const constructorName = 'Action.SetTransactionFilter(viewId, changes)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
     R.validateObject(constructorName, 'changes', false, changes)
 
     const result = Object.create(SetTransactionFilterPrototype)
+    result.viewId = viewId
     result.changes = changes
     return result
 }
@@ -251,7 +255,7 @@ const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
-SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.changes)
+SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
 
 SetTransactionFilterConstructor.toFirestore = o => ({ ...o })
@@ -262,15 +266,16 @@ SetTransactionFilterConstructor.fromFirestore = SetTransactionFilterConstructor.
 // Variant Action.ResetTransactionFilters
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig resetTransactionFiltersToString :: () -> String
  */
 const resetTransactionFiltersToString = function () {
-    return `Action.ResetTransactionFilters()`
+    return `Action.ResetTransactionFilters(${R._toString(this.viewId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig resetTransactionFiltersToJSON :: () -> Object
  */
@@ -278,16 +283,17 @@ const resetTransactionFiltersToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.ResetTransactionFilters instance
- * @sig ResetTransactionFilters :: () -> Action.ResetTransactionFilters
+ * @sig ResetTransactionFilters :: (String) -> Action.ResetTransactionFilters
  */
-const ResetTransactionFiltersConstructor = function ResetTransactionFilters() {
-    const constructorName = 'Action.ResetTransactionFilters()'
-    R.validateArgumentLength(constructorName, 0, arguments)
+const ResetTransactionFiltersConstructor = function ResetTransactionFilters(viewId) {
+    const constructorName = 'Action.ResetTransactionFilters(viewId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
 
     const result = Object.create(ResetTransactionFiltersPrototype)
-
+    result.viewId = viewId
     return result
 }
 
@@ -304,7 +310,7 @@ const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
 ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
 ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
 ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
-ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters()
+ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
 ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
 
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
@@ -315,6 +321,7 @@ ResetTransactionFiltersConstructor.fromFirestore = ResetTransactionFiltersConstr
 // Variant Action.SetTableLayout
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig setTableLayoutToString :: () -> String
@@ -323,7 +330,7 @@ const setTableLayoutToString = function () {
     return `Action.SetTableLayout(${R._toString(this.tableLayout)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig setTableLayoutToJSON :: () -> Object
  */
@@ -331,7 +338,7 @@ const setTableLayoutToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SetTableLayout instance
  * @sig SetTableLayout :: (TableLayout) -> Action.SetTableLayout
  */
@@ -381,6 +388,7 @@ SetTableLayoutConstructor.fromFirestore = SetTableLayoutConstructor._fromFiresto
 // Variant Action.OpenView
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig openViewToString :: () -> String
@@ -389,7 +397,7 @@ const openViewToString = function () {
     return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig openViewToJSON :: () -> Object
  */
@@ -397,7 +405,7 @@ const openViewToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.OpenView instance
  * @sig OpenView :: (View, String?) -> Action.OpenView
  */
@@ -462,6 +470,7 @@ OpenViewConstructor.fromFirestore = OpenViewConstructor._fromFirestore
 // Variant Action.CloseView
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig closeViewToString :: () -> String
@@ -470,7 +479,7 @@ const closeViewToString = function () {
     return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig closeViewToJSON :: () -> Object
  */
@@ -478,7 +487,7 @@ const closeViewToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.CloseView instance
  * @sig CloseView :: (String, String) -> Action.CloseView
  */
@@ -518,20 +527,19 @@ CloseViewConstructor.fromFirestore = CloseViewConstructor._from
 // Variant Action.MoveView
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig moveViewToString :: () -> String
  */
 const moveViewToString = function () {
-    return `Action.MoveView(
-        ${R._toString(this.viewId)},
+    return `Action.MoveView(${R._toString(this.viewId)},
         ${R._toString(this.fromGroupId)},
         ${R._toString(this.toGroupId)},
-        ${R._toString(this.toIndex)},
-    )`
+        ${R._toString(this.toIndex)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig moveViewToJSON :: () -> Object
  */
@@ -539,7 +547,7 @@ const moveViewToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.MoveView instance
  * @sig MoveView :: (String, String, String, Number?) -> Action.MoveView
  */
@@ -586,6 +594,7 @@ MoveViewConstructor.fromFirestore = MoveViewConstructor._from
 // Variant Action.CreateTabGroup
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig createTabGroupToString :: () -> String
@@ -594,7 +603,7 @@ const createTabGroupToString = function () {
     return `Action.CreateTabGroup()`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig createTabGroupToJSON :: () -> Object
  */
@@ -602,7 +611,7 @@ const createTabGroupToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.CreateTabGroup instance
  * @sig CreateTabGroup :: () -> Action.CreateTabGroup
  */
@@ -639,6 +648,7 @@ CreateTabGroupConstructor.fromFirestore = CreateTabGroupConstructor._from
 // Variant Action.CloseTabGroup
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig closeTabGroupToString :: () -> String
@@ -647,7 +657,7 @@ const closeTabGroupToString = function () {
     return `Action.CloseTabGroup(${R._toString(this.groupId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig closeTabGroupToJSON :: () -> Object
  */
@@ -655,7 +665,7 @@ const closeTabGroupToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.CloseTabGroup instance
  * @sig CloseTabGroup :: (String) -> Action.CloseTabGroup
  */
@@ -693,6 +703,7 @@ CloseTabGroupConstructor.fromFirestore = CloseTabGroupConstructor._from
 // Variant Action.SetActiveView
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig setActiveViewToString :: () -> String
@@ -701,7 +712,7 @@ const setActiveViewToString = function () {
     return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig setActiveViewToJSON :: () -> Object
  */
@@ -709,7 +720,7 @@ const setActiveViewToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SetActiveView instance
  * @sig SetActiveView :: (String, String) -> Action.SetActiveView
  */
@@ -749,6 +760,7 @@ SetActiveViewConstructor.fromFirestore = SetActiveViewConstructor._from
 // Variant Action.SetActiveTabGroup
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig setActiveTabGroupToString :: () -> String
@@ -757,7 +769,7 @@ const setActiveTabGroupToString = function () {
     return `Action.SetActiveTabGroup(${R._toString(this.groupId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig setActiveTabGroupToJSON :: () -> Object
  */
@@ -765,7 +777,7 @@ const setActiveTabGroupToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SetActiveTabGroup instance
  * @sig SetActiveTabGroup :: (String) -> Action.SetActiveTabGroup
  */
@@ -803,6 +815,7 @@ SetActiveTabGroupConstructor.fromFirestore = SetActiveTabGroupConstructor._from
 // Variant Action.SetTabGroupWidth
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig setTabGroupWidthToString :: () -> String
@@ -811,7 +824,7 @@ const setTabGroupWidthToString = function () {
     return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig setTabGroupWidthToJSON :: () -> Object
  */
@@ -819,7 +832,7 @@ const setTabGroupWidthToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SetTabGroupWidth instance
  * @sig SetTabGroupWidth :: (String, Number) -> Action.SetTabGroupWidth
  */
@@ -855,7 +868,8 @@ SetTabGroupWidthConstructor.toFirestore = o => ({ ...o })
 SetTabGroupWidthConstructor.fromFirestore = SetTabGroupWidthConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a Action instance
  * @sig is :: Any -> Boolean
  */

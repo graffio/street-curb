@@ -19,7 +19,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Split instance
  * @sig Split :: (String, TransactionId, String?, Number, String?) -> Split
  *     TransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
@@ -47,21 +48,20 @@ const Split = function Split(id, transactionId, categoryId, amount, memo) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig splitToString :: () -> String
  */
 const splitToString = function () {
-    return `Split(
-        ${R._toString(this.id)},
+    return `Split(${R._toString(this.id)},
         ${R._toString(this.transactionId)},
         ${R._toString(this.categoryId)},
         ${R._toString(this.amount)},
-        ${R._toString(this.memo)},
-    )`
+        ${R._toString(this.memo)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig splitToJSON :: () -> Object
  */

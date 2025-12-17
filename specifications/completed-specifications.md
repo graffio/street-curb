@@ -388,3 +388,15 @@ This document summarizes the specifications that were previously archived in `sp
 - Fixed style violations in `parse-type-definition-file.js` and `prettier-code.js`
 - Added integration test for optional FieldTypes syntax
 - Deferred: Phase 2-6 (ImportIR, TypeDefinitionIR, FunctionIR, testing infrastructure, integration)
+
+## [infrastructure] Type Generator Phases 2-3 Complete (2025-12-17)
+**Purpose:** Separate parsing from code generation for easier maintenance and future features
+
+- Phase 2: Created TypeDescriptor and FieldDescriptor in `src/descriptors/`
+- Phase 3: Extracted 6 codegen modules to `src/codegen/`:
+  - `to-string.js`, `to-json.js`, `serialization.js`, `is-method.js`, `imports.js`, `constructor-sig.js`
+- `tagged-type-generator.js` reduced from ~790 to ~540 lines (orchestration only)
+- Added `FieldDescriptor.toSyntax()` for concise comment format in generated files
+- Deleted obsolete `tagged-field-type.js`
+- Phases 4 (reorganize TaggedSum output) and 5 (default values) now enabled
+- All 487 tests pass

@@ -55,6 +55,7 @@ FieldType.prototype = FieldTypePrototype
 // Variant FieldType.StringType
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig stringTypeToString :: () -> String
@@ -63,7 +64,7 @@ const stringTypeToString = function () {
     return `FieldType.StringType(${R._toString(this.value)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig stringTypeToJSON :: () -> Object
  */
@@ -71,7 +72,7 @@ const stringTypeToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FieldType.StringType instance
  * @sig StringType :: (String) -> FieldType.StringType
  */
@@ -109,6 +110,7 @@ StringTypeConstructor.fromFirestore = StringTypeConstructor._from
 // Variant FieldType.RegexType
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig regexTypeToString :: () -> String
@@ -117,7 +119,7 @@ const regexTypeToString = function () {
     return `FieldType.RegexType(${R._toString(this.value)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig regexTypeToJSON :: () -> Object
  */
@@ -125,7 +127,7 @@ const regexTypeToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FieldType.RegexType instance
  * @sig RegexType :: (RegExp) -> FieldType.RegexType
  */
@@ -173,19 +175,18 @@ RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
 // Variant FieldType.ImportPlaceholder
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig importPlaceholderToString :: () -> String
  */
 const importPlaceholderToString = function () {
-    return `FieldType.ImportPlaceholder(
-        ${R._toString(this.isImportPlaceholder)},
+    return `FieldType.ImportPlaceholder(${R._toString(this.isImportPlaceholder)},
         ${R._toString(this.source)},
-        ${R._toString(this.localName)},
-    )`
+        ${R._toString(this.localName)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig importPlaceholderToJSON :: () -> Object
  */
@@ -193,7 +194,7 @@ const importPlaceholderToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a FieldType.ImportPlaceholder instance
  * @sig ImportPlaceholder :: (Boolean, String, String) -> FieldType.ImportPlaceholder
  */
@@ -234,7 +235,8 @@ ImportPlaceholderConstructor.toFirestore = o => ({ ...o })
 ImportPlaceholderConstructor.fromFirestore = ImportPlaceholderConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a FieldType instance
  * @sig is :: Any -> Boolean
  */

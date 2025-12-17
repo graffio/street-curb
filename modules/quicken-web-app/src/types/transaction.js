@@ -71,13 +71,13 @@ Transaction.prototype = TransactionPrototype
 // Variant Transaction.Bank
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig bankToString :: () -> String
  */
 const bankToString = function () {
-    return `Transaction.Bank(
-        ${R._toString(this.accountId)},
+    return `Transaction.Bank(${R._toString(this.accountId)},
         ${R._toString(this.amount)},
         ${R._toString(this.date)},
         ${R._toString(this.id)},
@@ -87,11 +87,10 @@ const bankToString = function () {
         ${R._toString(this.cleared)},
         ${R._toString(this.memo)},
         ${R._toString(this.number)},
-        ${R._toString(this.payee)},
-    )`
+        ${R._toString(this.payee)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig bankToJSON :: () -> Object
  */
@@ -99,7 +98,7 @@ const bankToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Transaction.Bank instance
  * @sig Bank :: (AccountId, Number, String, Id, TransactionType, String?, String?, String?, String?, String?, String?) -> Transaction.Bank
  *     AccountId = /^acc_[a-f0-9]{12}$/
@@ -188,13 +187,13 @@ BankConstructor.fromFirestore = BankConstructor._from
 // Variant Transaction.Investment
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig investmentToString :: () -> String
  */
 const investmentToString = function () {
-    return `Transaction.Investment(
-        ${R._toString(this.accountId)},
+    return `Transaction.Investment(${R._toString(this.accountId)},
         ${R._toString(this.date)},
         ${R._toString(this.id)},
         ${R._toString(this.transactionType)},
@@ -208,11 +207,10 @@ const investmentToString = function () {
         ${R._toString(this.payee)},
         ${R._toString(this.price)},
         ${R._toString(this.quantity)},
-        ${R._toString(this.securityId)},
-    )`
+        ${R._toString(this.securityId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig investmentToJSON :: () -> Object
  */
@@ -220,7 +218,7 @@ const investmentToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Transaction.Investment instance
  * @sig Investment :: (AccountId, String, Id, TransactionType, String?, Number?, String?, String?, Number?, InvestmentAction, String?, String?, Number?, Number?, String?) -> Transaction.Investment
  *     AccountId = /^acc_[a-f0-9]{12}$/
@@ -344,7 +342,8 @@ InvestmentConstructor.toFirestore = o => ({ ...o })
 InvestmentConstructor.fromFirestore = InvestmentConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a Transaction instance
  * @sig is :: Any -> Boolean
  */

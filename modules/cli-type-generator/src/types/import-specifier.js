@@ -52,6 +52,7 @@ ImportSpecifier.prototype = ImportSpecifierPrototype
 // Variant ImportSpecifier.Default
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig defaultToString :: () -> String
@@ -60,7 +61,7 @@ const defaultToString = function () {
     return `ImportSpecifier.Default(${R._toString(this.local)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig defaultToJSON :: () -> Object
  */
@@ -68,9 +69,9 @@ const defaultToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a ImportSpecifier.Default instance
- * @sig Default :: ([Object]) -> ImportSpecifier.Default
+ * @sig Default :: (String) -> ImportSpecifier.Default
  */
 const DefaultConstructor = function Default(local) {
     const constructorName = 'ImportSpecifier.Default(local)'
@@ -106,6 +107,7 @@ DefaultConstructor.fromFirestore = DefaultConstructor._from
 // Variant ImportSpecifier.Namespace
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig namespaceToString :: () -> String
@@ -114,7 +116,7 @@ const namespaceToString = function () {
     return `ImportSpecifier.Namespace(${R._toString(this.local)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig namespaceToJSON :: () -> Object
  */
@@ -122,9 +124,9 @@ const namespaceToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a ImportSpecifier.Namespace instance
- * @sig Namespace :: ([Object]) -> ImportSpecifier.Namespace
+ * @sig Namespace :: (String) -> ImportSpecifier.Namespace
  */
 const NamespaceConstructor = function Namespace(local) {
     const constructorName = 'ImportSpecifier.Namespace(local)'
@@ -160,6 +162,7 @@ NamespaceConstructor.fromFirestore = NamespaceConstructor._from
 // Variant ImportSpecifier.Named
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig namedToString :: () -> String
@@ -168,7 +171,7 @@ const namedToString = function () {
     return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig namedToJSON :: () -> Object
  */
@@ -176,9 +179,9 @@ const namedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a ImportSpecifier.Named instance
- * @sig Named :: ([Object], [Object]) -> ImportSpecifier.Named
+ * @sig Named :: (String, String) -> ImportSpecifier.Named
  */
 const NamedConstructor = function Named(imported, local) {
     const constructorName = 'ImportSpecifier.Named(imported, local)'
@@ -212,7 +215,8 @@ NamedConstructor.toFirestore = o => ({ ...o })
 NamedConstructor.fromFirestore = NamedConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a ImportSpecifier instance
  * @sig is :: Any -> Boolean
  */

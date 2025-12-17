@@ -57,6 +57,7 @@ View.prototype = ViewPrototype
 // Variant View.Register
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig registerToString :: () -> String
@@ -65,7 +66,7 @@ const registerToString = function () {
     return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig registerToJSON :: () -> Object
  */
@@ -73,9 +74,9 @@ const registerToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a View.Register instance
- * @sig Register :: ([Object], String, String) -> View.Register
+ * @sig Register :: (String, String, String) -> View.Register
  */
 const RegisterConstructor = function Register(id, accountId, title) {
     const constructorName = 'View.Register(id, accountId, title)'
@@ -118,6 +119,7 @@ RegisterConstructor.fromFirestore = RegisterConstructor._from
 // Variant View.Report
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig reportToString :: () -> String
@@ -126,7 +128,7 @@ const reportToString = function () {
     return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig reportToJSON :: () -> Object
  */
@@ -134,9 +136,9 @@ const reportToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a View.Report instance
- * @sig Report :: ([Object], String, String) -> View.Report
+ * @sig Report :: (String, String, String) -> View.Report
  */
 const ReportConstructor = function Report(id, reportType, title) {
     const constructorName = 'View.Report(id, reportType, title)'
@@ -179,6 +181,7 @@ ReportConstructor.fromFirestore = ReportConstructor._from
 // Variant View.Reconciliation
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig reconciliationToString :: () -> String
@@ -187,7 +190,7 @@ const reconciliationToString = function () {
     return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig reconciliationToJSON :: () -> Object
  */
@@ -195,9 +198,9 @@ const reconciliationToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a View.Reconciliation instance
- * @sig Reconciliation :: ([Object], String, String) -> View.Reconciliation
+ * @sig Reconciliation :: (String, String, String) -> View.Reconciliation
  */
 const ReconciliationConstructor = function Reconciliation(id, accountId, title) {
     const constructorName = 'View.Reconciliation(id, accountId, title)'
@@ -236,7 +239,8 @@ ReconciliationConstructor.toFirestore = o => ({ ...o })
 ReconciliationConstructor.fromFirestore = ReconciliationConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a View instance
  * @sig is :: Any -> Boolean
  */

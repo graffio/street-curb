@@ -51,6 +51,7 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 // Variant TypeDefinition.Tagged
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig taggedToString :: () -> String
@@ -59,7 +60,7 @@ const taggedToString = function () {
     return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig taggedToJSON :: () -> Object
  */
@@ -67,7 +68,7 @@ const taggedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a TypeDefinition.Tagged instance
  * @sig Tagged :: (String, String, Object) -> TypeDefinition.Tagged
  */
@@ -112,19 +113,18 @@ TaggedConstructor.fromFirestore = TaggedConstructor._from
 // Variant TypeDefinition.TaggedSum
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig taggedSumToString :: () -> String
  */
 const taggedSumToString = function () {
-    return `TypeDefinition.TaggedSum(
-        ${R._toString(this.name)},
+    return `TypeDefinition.TaggedSum(${R._toString(this.name)},
         ${R._toString(this.kind)},
-        ${R._toString(this.variants)},
-    )`
+        ${R._toString(this.variants)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig taggedSumToJSON :: () -> Object
  */
@@ -132,7 +132,7 @@ const taggedSumToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a TypeDefinition.TaggedSum instance
  * @sig TaggedSum :: (String, String, Object) -> TypeDefinition.TaggedSum
  */
@@ -173,7 +173,8 @@ TaggedSumConstructor.toFirestore = o => ({ ...o })
 TaggedSumConstructor.fromFirestore = TaggedSumConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a TypeDefinition instance
  * @sig is :: Any -> Boolean
  */

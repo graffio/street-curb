@@ -58,19 +58,18 @@ OperationDetails.prototype = OperationDetailsPrototype
 // Variant OperationDetails.ShellExecution
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig shellExecutionToString :: () -> String
  */
 const shellExecutionToString = function () {
-    return `OperationDetails.ShellExecution(
-        ${R._toString(this.command)},
+    return `OperationDetails.ShellExecution(${R._toString(this.command)},
         ${R._toString(this.duration)},
-        ${R._toString(this.outputPreview)},
-    )`
+        ${R._toString(this.outputPreview)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig shellExecutionToJSON :: () -> Object
  */
@@ -78,7 +77,7 @@ const shellExecutionToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a OperationDetails.ShellExecution instance
  * @sig ShellExecution :: (String, Number?, String?) -> OperationDetails.ShellExecution
  */
@@ -123,19 +122,18 @@ ShellExecutionConstructor.fromFirestore = ShellExecutionConstructor._from
 // Variant OperationDetails.FirestoreOperation
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig firestoreOperationToString :: () -> String
  */
 const firestoreOperationToString = function () {
-    return `OperationDetails.FirestoreOperation(
-        ${R._toString(this.operation)},
+    return `OperationDetails.FirestoreOperation(${R._toString(this.operation)},
         ${R._toString(this.collection)},
-        ${R._toString(this.documentId)},
-    )`
+        ${R._toString(this.documentId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig firestoreOperationToJSON :: () -> Object
  */
@@ -143,7 +141,7 @@ const firestoreOperationToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a OperationDetails.FirestoreOperation instance
  * @sig FirestoreOperation :: (String, String, String?) -> OperationDetails.FirestoreOperation
  */
@@ -188,19 +186,18 @@ FirestoreOperationConstructor.fromFirestore = FirestoreOperationConstructor._fro
 // Variant OperationDetails.GcpProjectOperation
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig gcpProjectOperationToString :: () -> String
  */
 const gcpProjectOperationToString = function () {
-    return `OperationDetails.GcpProjectOperation(
-        ${R._toString(this.projectId)},
+    return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)},
         ${R._toString(this.folderId)},
-        ${R._toString(this.region)},
-    )`
+        ${R._toString(this.region)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig gcpProjectOperationToJSON :: () -> Object
  */
@@ -208,7 +205,7 @@ const gcpProjectOperationToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a OperationDetails.GcpProjectOperation instance
  * @sig GcpProjectOperation :: (String, String?, String?) -> OperationDetails.GcpProjectOperation
  */
@@ -249,7 +246,8 @@ GcpProjectOperationConstructor.toFirestore = o => ({ ...o })
 GcpProjectOperationConstructor.fromFirestore = GcpProjectOperationConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a OperationDetails instance
  * @sig is :: Any -> Boolean
  */

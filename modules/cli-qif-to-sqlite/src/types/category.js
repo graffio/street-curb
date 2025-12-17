@@ -21,7 +21,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Category instance
  * @sig Category :: (Id, String, String?, Number?, Boolean?, Boolean?, String?) -> Category
  *     Id = /^cat_[a-f0-9]{12}$/
@@ -53,23 +54,22 @@ const Category = function Category(id, name, description, budgetAmount, isIncome
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig categoryToString :: () -> String
  */
 const categoryToString = function () {
-    return `Category(
-        ${R._toString(this.id)},
+    return `Category(${R._toString(this.id)},
         ${R._toString(this.name)},
         ${R._toString(this.description)},
         ${R._toString(this.budgetAmount)},
         ${R._toString(this.isIncomeCategory)},
         ${R._toString(this.isTaxRelated)},
-        ${R._toString(this.taxSchedule)},
-    )`
+        ${R._toString(this.taxSchedule)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig categoryToJSON :: () -> Object
  */

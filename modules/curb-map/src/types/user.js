@@ -26,9 +26,10 @@ import { OrganizationMember } from './organization-member.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a User instance
- * @sig User :: ([Object], [Object], String, {OrganizationMember}, Date, [Object], Date, [Object]) -> User
+ * @sig User :: (String, String, String, {OrganizationMember}, Date, String, Date, String) -> User
  */
 const User = function User(id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy) {
     const constructorName = 'User(id, email, displayName, organizations, createdAt, createdBy, updatedAt, updatedBy)'
@@ -59,24 +60,23 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig userToString :: () -> String
  */
 const userToString = function () {
-    return `User(
-        ${R._toString(this.id)},
+    return `User(${R._toString(this.id)},
         ${R._toString(this.email)},
         ${R._toString(this.displayName)},
         ${R._toString(this.organizations)},
         ${R._toString(this.createdAt)},
         ${R._toString(this.createdBy)},
         ${R._toString(this.updatedAt)},
-        ${R._toString(this.updatedBy)},
-    )`
+        ${R._toString(this.updatedBy)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig userToJSON :: () -> Object
  */

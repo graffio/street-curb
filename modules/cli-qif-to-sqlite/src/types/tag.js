@@ -18,7 +18,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Tag instance
  * @sig Tag :: (Id, String, String?, String?) -> Tag
  *     Id = /^tag_[a-f0-9]{12}$/
@@ -44,20 +45,19 @@ const Tag = function Tag(id, name, color, description) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig tagToString :: () -> String
  */
 const tagToString = function () {
-    return `Tag(
-        ${R._toString(this.id)},
+    return `Tag(${R._toString(this.id)},
         ${R._toString(this.name)},
         ${R._toString(this.color)},
-        ${R._toString(this.description)},
-    )`
+        ${R._toString(this.description)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig tagToJSON :: () -> Object
  */

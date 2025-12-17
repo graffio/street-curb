@@ -22,7 +22,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a DailyPortfolio instance
  * @sig DailyPortfolio :: (AccountId, String, String, Number, Number, Number, Number, [Object]) -> DailyPortfolio
  *     AccountId = /^acc_[a-f0-9]{12}$/
@@ -66,24 +67,23 @@ const DailyPortfolio = function DailyPortfolio(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig dailyportfolioToString :: () -> String
  */
 const dailyportfolioToString = function () {
-    return `DailyPortfolio(
-        ${R._toString(this.accountId)},
+    return `DailyPortfolio(${R._toString(this.accountId)},
         ${R._toString(this.accountName)},
         ${R._toString(this.date)},
         ${R._toString(this.cashBalance)},
         ${R._toString(this.totalMarketValue)},
         ${R._toString(this.totalCostBasis)},
         ${R._toString(this.unrealizedGainLoss)},
-        ${R._toString(this.holdings)},
-    )`
+        ${R._toString(this.holdings)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig dailyportfolioToJSON :: () -> Object
  */

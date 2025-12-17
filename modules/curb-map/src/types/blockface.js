@@ -30,9 +30,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Blockface instance
- * @sig Blockface :: ([Object], String, Object, String, {Segment}, [Object], [Object], Date, [Object], Date, [Object]) -> Blockface
+ * @sig Blockface :: (String, String, Object, String, {Segment}, String, String, Date, String, Date, String) -> Blockface
  */
 const Blockface = function Blockface(
     id,
@@ -82,13 +83,13 @@ const Blockface = function Blockface(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig blockfaceToString :: () -> String
  */
 const blockfaceToString = function () {
-    return `Blockface(
-        ${R._toString(this.id)},
+    return `Blockface(${R._toString(this.id)},
         ${R._toString(this.sourceId)},
         ${R._toString(this.geometry)},
         ${R._toString(this.streetName)},
@@ -98,11 +99,10 @@ const blockfaceToString = function () {
         ${R._toString(this.createdAt)},
         ${R._toString(this.createdBy)},
         ${R._toString(this.updatedAt)},
-        ${R._toString(this.updatedBy)},
-    )`
+        ${R._toString(this.updatedBy)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig blockfaceToJSON :: () -> Object
  */

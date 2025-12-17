@@ -1,18 +1,11 @@
 // ABOUTME: Generated type definition for OrganizationMember
 // ABOUTME: Auto-generated from modules/curb-map/type-definitions/organization-member.type.js - do not edit manually
 
+/** {@link module:OrganizationMember} */
 /*  OrganizationMember generated from: modules/curb-map/type-definitions/organization-member.type.js
  *
- *  organizationId
- *      isFieldTypesReference: true,
- *      source               : "@graffio/types",
- *      property             : "organizationId",
- *      fullReference        : "FieldTypes.organizationId"
- *  role
- *      isFieldTypesReference: true,
- *      source               : "@graffio/types",
- *      property             : "role",
- *      fullReference        : "FieldTypes.role"
+ *  organizationId: FieldTypes.organizationId,
+ *  role          : FieldTypes.role
  *
  */
 
@@ -25,9 +18,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a OrganizationMember instance
- * @sig OrganizationMember :: ([Object], [Object]) -> OrganizationMember
+ * @sig OrganizationMember :: (String, String) -> OrganizationMember
  */
 const OrganizationMember = function OrganizationMember(organizationId, role) {
     const constructorName = 'OrganizationMember(organizationId, role)'
@@ -46,6 +40,7 @@ const OrganizationMember = function OrganizationMember(organizationId, role) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig organizationmemberToString :: () -> String
@@ -54,7 +49,7 @@ const organizationmemberToString = function () {
     return `OrganizationMember(${R._toString(this.organizationId)}, ${R._toString(this.role)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig organizationmemberToJSON :: () -> Object
  */

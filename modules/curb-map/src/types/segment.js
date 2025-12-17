@@ -19,9 +19,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Segment instance
- * @sig Segment :: ([Object], String, Number) -> Segment
+ * @sig Segment :: (String, String, Number) -> Segment
  */
 const Segment = function Segment(id, use, length) {
     const constructorName = 'Segment(id, use, length)'
@@ -42,6 +43,7 @@ const Segment = function Segment(id, use, length) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig segmentToString :: () -> String
@@ -50,7 +52,7 @@ const segmentToString = function () {
     return `Segment(${R._toString(this.id)}, ${R._toString(this.use)}, ${R._toString(this.length)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig segmentToJSON :: () -> Object
  */

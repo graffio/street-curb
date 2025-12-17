@@ -21,7 +21,7 @@ export const Organization = {
         updatedAt       : 'Date',
         updatedBy       : FieldTypes.userId,
         deletedAt       : 'Date?',
-        deletedBy       : '^usr_[a-z0-9]{12,}$/?',
+        deletedBy       : { pattern: FieldTypes.userId, optional: true },
     }
 }
 

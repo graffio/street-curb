@@ -20,9 +20,10 @@ import { ImportSpecifier } from './import-specifier.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a ImportInfo instance
- * @sig ImportInfo :: ([Object], [ImportSpecifier]) -> ImportInfo
+ * @sig ImportInfo :: (String, [ImportSpecifier]) -> ImportInfo
  */
 const ImportInfo = function ImportInfo(source, specifiers) {
     const constructorName = 'ImportInfo(source, specifiers)'
@@ -41,6 +42,7 @@ const ImportInfo = function ImportInfo(source, specifiers) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig importinfoToString :: () -> String
@@ -49,7 +51,7 @@ const importinfoToString = function () {
     return `ImportInfo(${R._toString(this.source)}, ${R._toString(this.specifiers)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig importinfoToJSON :: () -> Object
  */

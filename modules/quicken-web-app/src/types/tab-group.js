@@ -6,7 +6,7 @@
  *
  *  id          : FieldTypes.tabGroupId,
  *  views       : "{View:id}",
- *  activeViewId: "/^(reg|rpt|rec)_[a-z0-9_]+$/?",
+ *  activeViewId: /^(reg|rpt|rec)_[a-z0-9_]+$/,
  *  width       : "Number"
  *
  */
@@ -22,9 +22,10 @@ import { View } from './view.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a TabGroup instance
- * @sig TabGroup :: ([Object], {View}, ActiveViewId?, Number) -> TabGroup
+ * @sig TabGroup :: (String, {View}, ActiveViewId?, Number) -> TabGroup
  *     ActiveViewId = /^(reg|rpt|rec)_[a-z0-9_]+$/
  */
 const TabGroup = function TabGroup(id, views, activeViewId, width) {
@@ -48,20 +49,19 @@ const TabGroup = function TabGroup(id, views, activeViewId, width) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig tabgroupToString :: () -> String
  */
 const tabgroupToString = function () {
-    return `TabGroup(
-        ${R._toString(this.id)},
+    return `TabGroup(${R._toString(this.id)},
         ${R._toString(this.views)},
         ${R._toString(this.activeViewId)},
-        ${R._toString(this.width)},
-    )`
+        ${R._toString(this.width)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig tabgroupToJSON :: () -> Object
  */

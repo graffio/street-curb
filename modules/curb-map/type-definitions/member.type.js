@@ -16,7 +16,7 @@ export const Member = {
         addedAt    : 'Date',
         addedBy    : FieldTypes.userId,
         removedAt  : 'Date?',
-        removedBy  : '^usr_[a-z0-9]{12,}$/?',
+        removedBy  : { pattern: FieldTypes.userId, optional: true },
     },
 }
 

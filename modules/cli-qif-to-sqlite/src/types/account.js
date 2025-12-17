@@ -19,7 +19,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Account instance
  * @sig Account :: (Id, String, Type, String?, Number?) -> Account
  *     Id = /^acc_[a-f0-9]{12}$/
@@ -54,21 +55,20 @@ const Account = function Account(id, name, type, description, creditLimit) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig accountToString :: () -> String
  */
 const accountToString = function () {
-    return `Account(
-        ${R._toString(this.id)},
+    return `Account(${R._toString(this.id)},
         ${R._toString(this.name)},
         ${R._toString(this.type)},
         ${R._toString(this.description)},
-        ${R._toString(this.creditLimit)},
-    )`
+        ${R._toString(this.creditLimit)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig accountToJSON :: () -> Object
  */

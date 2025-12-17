@@ -42,21 +42,21 @@ const makeWriteable = filePath => setFileMode(filePath, WRITABLE_MODE)
 const makeReadOnly = filePath => setFileMode(filePath, READ_ONLY_MODE)
 
 /**
- * Generate code for a type definition based on its kind
- * @sig generateCodeForType :: TypeDefinition -> Promise<String>
- */
-const generateCodeForType = async typeDefinition => {
-    const { kind } = typeDefinition
-    if (kind === 'tagged') return await generateStaticTaggedType(typeDefinition)
-    if (kind === 'taggedSum') return await generateStaticTaggedSumType(typeDefinition)
-    throw new Error(`Unknown type kind: ${kind}`)
-}
-
-/**
  * Convert type definition file to generated output file
  * @sig generateOne :: (String, String) -> Promise<String>
  */
 const generateOne = async (inputFile, outputFile) => {
+    /**
+     * Generate code for a type definition based on its kind
+     * @sig generateCodeForType :: TypeDefinition -> Promise<String>
+     */
+    const generateCodeForType = async typeDefinition => {
+        const { kind } = typeDefinition
+        if (kind === 'tagged') return await generateStaticTaggedType(typeDefinition)
+        if (kind === 'taggedSum') return await generateStaticTaggedSumType(typeDefinition)
+        throw new Error(`Unknown type kind: ${kind}`)
+    }
+
     const isTypeDefinition = inputFile.endsWith('.type.js')
 
     // Some files (FieldTypes.js) need to be copied without processing
@@ -67,17 +67,9 @@ const generateOne = async (inputFile, outputFile) => {
         return path.basename(outputFile, '.js')
     }
 
-    // Parse the type definition file
-    const parseResult = parseTypeDefinitionFile(inputFile)
-    const { functions, imports, sourceContent, typeDefinition: parsedDef } = parseResult
-    const typeDefinition = {
-        ...parsedDef,
-        sourceFile: inputFile,
-        relativePath: inputFile,
-        imports,
-        functions,
-        sourceContent,
-    }
+    // Parse the type definition file (returns normalized TypeDescriptor)
+    const descriptor = parseTypeDefinitionFile(inputFile)
+    const typeDefinition = { ...descriptor, sourceFile: inputFile, relativePath: inputFile }
 
     const generatedCode = await generateCodeForType(typeDefinition)
 
@@ -94,16 +86,6 @@ const generateOne = async (inputFile, outputFile) => {
 }
 
 /**
- * Generate type and index files for a single target directory
- * @sig generateForTarget :: (String, String, String) -> Promise<void>
- */
-const generateForTarget = async (sourceFile, leafName, targetDir) => {
-    const outputFile = `${targetDir}/${leafName}`
-    console.log(`    ${sourceFile} to ${outputFile}`)
-    await generateOne(sourceFile, outputFile)
-}
-
-/**
  * Update index file for a target directory
  * @sig updateIndexForTarget :: String -> Promise<void>
  */
@@ -117,6 +99,16 @@ const updateIndexForTarget = async targetDir => {
  * @sig generate :: String -> Promise<void>
  */
 const generate = async sourceFile => {
+    /**
+     * Generate type and index files for a single target directory
+     * @sig generateForTarget :: (String, String, String) -> Promise<void>
+     */
+    const generateForTarget = async (src, leafName, targetDir) => {
+        const outputFile = `${targetDir}/${leafName}`
+        console.log(`    ${src} to ${outputFile}`)
+        await generateOne(src, outputFile)
+    }
+
     if (!sourceFile) {
         console.error('Error: file required')
         showUsage()
@@ -193,33 +185,33 @@ Commands:
 `)
 
 /**
- * Extract type export from file content
- * @sig extractTypeExport :: (String, String) -> String
- */
-const extractTypeExport = (file, content) => {
-    const exportMatch = content.match(/export\s+{\s*(\w+)\s*}/)
-    if (!exportMatch) throw new Error(`Could not find export in ${file}`)
-
-    const typeName = exportMatch[1]
-    const fileName = path.basename(file, '.js')
-    return `export { ${typeName} } from './${fileName}.js'`
-}
-
-/**
- * Read file and extract its type export statement
- * @sig readAndExtractExport :: (String, String) -> String
- */
-const readAndExtractExport = (outputDir, file) => {
-    const filePath = path.join(outputDir, file)
-    const content = fs.readFileSync(filePath, 'utf8')
-    return extractTypeExport(file, content)
-}
-
-/**
  * Generate index.js file for a types directory
  * @sig generateIndexFile :: String -> Promise<Number>
  */
 const generateIndexFile = async outputDir => {
+    /**
+     * Read file and extract its type export statement
+     * @sig readAndExtractExport :: String -> String
+     */
+    const readAndExtractExport = file => {
+        /**
+         * Extract type export from file content
+         * @sig extractTypeExport :: (String, String) -> String
+         */
+        const extractTypeExport = (f, content) => {
+            const exportMatch = content.match(/export\s+{\s*(\w+)\s*}/)
+            if (!exportMatch) throw new Error(`Could not find export in ${f}`)
+
+            const typeName = exportMatch[1]
+            const fileName = path.basename(f, '.js')
+            return `export { ${typeName} } from './${fileName}.js'`
+        }
+
+        const filePath = path.join(outputDir, file)
+        const content = fs.readFileSync(filePath, 'utf8')
+        return extractTypeExport(file, content)
+    }
+
     // Find all .js files (excluding index.js itself)
     const files = fs.readdirSync(outputDir).filter(file => file.endsWith('.js') && file !== 'index.js')
 
@@ -229,7 +221,7 @@ const generateIndexFile = async outputDir => {
     }
 
     // Extract type names from generated files
-    const exports = files.map(file => readAndExtractExport(outputDir, file)).join('\n')
+    const exports = files.map(readAndExtractExport).join('\n')
 
     const indexContent = `// Auto-generated module index
 // This file exports all generated types for this module

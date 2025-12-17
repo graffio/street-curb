@@ -1,15 +1,15 @@
-// ABOUTME: Tests for FieldTypeIR - the intermediate representation for field types
+// ABOUTME: Tests for FieldDescriptor - the normalized descriptor for field types
 // ABOUTME: Covers fromString, fromObject, and fromAny parsing
 
 import t from 'tap'
-import FieldTypeIR from '../src/ir/field-type-ir.js'
+import FieldDescriptor from '../src/descriptors/field-descriptor.js'
 
-t.test('FieldTypeIR', t => {
+t.test('FieldDescriptor', t => {
     t.test('fromString', t => {
         t.test('Given a primitive type string', t => {
             t.test('When parsing "String"', t => {
                 const { arrayDepth, baseType, fieldTypesReference, optional, regex, taggedType } =
-                    FieldTypeIR.fromString('String')
+                    FieldDescriptor.fromString('String')
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(optional, false, 'Then optional is false')
@@ -21,7 +21,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "Number"', t => {
-                const ir = FieldTypeIR.fromString('Number')
+                const ir = FieldDescriptor.fromString('Number')
 
                 t.equal(ir.baseType, 'Number', 'Then baseType is Number')
                 t.equal(ir.optional, false, 'Then optional is false')
@@ -29,28 +29,28 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "Boolean"', t => {
-                const ir = FieldTypeIR.fromString('Boolean')
+                const ir = FieldDescriptor.fromString('Boolean')
 
                 t.equal(ir.baseType, 'Boolean', 'Then baseType is Boolean')
                 t.end()
             })
 
             t.test('When parsing "Object"', t => {
-                const ir = FieldTypeIR.fromString('Object')
+                const ir = FieldDescriptor.fromString('Object')
 
                 t.equal(ir.baseType, 'Object', 'Then baseType is Object')
                 t.end()
             })
 
             t.test('When parsing "Date"', t => {
-                const ir = FieldTypeIR.fromString('Date')
+                const ir = FieldDescriptor.fromString('Date')
 
                 t.equal(ir.baseType, 'Date', 'Then baseType is Date')
                 t.end()
             })
 
             t.test('When parsing "Any"', t => {
-                const ir = FieldTypeIR.fromString('Any')
+                const ir = FieldDescriptor.fromString('Any')
 
                 t.equal(ir.baseType, 'Any', 'Then baseType is Any')
                 t.end()
@@ -61,7 +61,7 @@ t.test('FieldTypeIR', t => {
 
         t.test('Given an optional type string', t => {
             t.test('When parsing "String?"', t => {
-                const ir = FieldTypeIR.fromString('String?')
+                const ir = FieldDescriptor.fromString('String?')
 
                 t.equal(ir.baseType, 'String', 'Then baseType is String')
                 t.equal(ir.optional, true, 'Then optional is true')
@@ -69,7 +69,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "Number?"', t => {
-                const ir = FieldTypeIR.fromString('Number?')
+                const ir = FieldDescriptor.fromString('Number?')
 
                 t.equal(ir.baseType, 'Number', 'Then baseType is Number')
                 t.equal(ir.optional, true, 'Then optional is true')
@@ -81,7 +81,7 @@ t.test('FieldTypeIR', t => {
 
         t.test('Given a Tagged type string', t => {
             t.test('When parsing "Account"', t => {
-                const { baseType, optional, taggedType } = FieldTypeIR.fromString('Account')
+                const { baseType, optional, taggedType } = FieldDescriptor.fromString('Account')
 
                 t.equal(baseType, 'Tagged', 'Then baseType is Tagged')
                 t.equal(taggedType, 'Account', 'Then taggedType is Account')
@@ -90,7 +90,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "Account?"', t => {
-                const { baseType, optional, taggedType } = FieldTypeIR.fromString('Account?')
+                const { baseType, optional, taggedType } = FieldDescriptor.fromString('Account?')
 
                 t.equal(baseType, 'Tagged', 'Then baseType is Tagged')
                 t.equal(taggedType, 'Account', 'Then taggedType is Account')
@@ -103,7 +103,7 @@ t.test('FieldTypeIR', t => {
 
         t.test('Given an array type string', t => {
             t.test('When parsing "[String]"', t => {
-                const { arrayDepth, baseType, optional } = FieldTypeIR.fromString('[String]')
+                const { arrayDepth, baseType, optional } = FieldDescriptor.fromString('[String]')
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(arrayDepth, 1, 'Then arrayDepth is 1')
@@ -112,7 +112,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "[Account]"', t => {
-                const { arrayDepth, baseType, taggedType } = FieldTypeIR.fromString('[Account]')
+                const { arrayDepth, baseType, taggedType } = FieldDescriptor.fromString('[Account]')
 
                 t.equal(baseType, 'Tagged', 'Then baseType is Tagged')
                 t.equal(taggedType, 'Account', 'Then taggedType is Account')
@@ -121,7 +121,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "[[Number]]"', t => {
-                const { arrayDepth, baseType } = FieldTypeIR.fromString('[[Number]]')
+                const { arrayDepth, baseType } = FieldDescriptor.fromString('[[Number]]')
 
                 t.equal(baseType, 'Number', 'Then baseType is Number')
                 t.equal(arrayDepth, 2, 'Then arrayDepth is 2')
@@ -129,7 +129,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "[String]?"', t => {
-                const { arrayDepth, baseType, optional } = FieldTypeIR.fromString('[String]?')
+                const { arrayDepth, baseType, optional } = FieldDescriptor.fromString('[String]?')
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(arrayDepth, 1, 'Then arrayDepth is 1')
@@ -142,7 +142,7 @@ t.test('FieldTypeIR', t => {
 
         t.test('Given a LookupTable type string', t => {
             t.test('When parsing "{Account:id}"', t => {
-                const { baseType, idField, optional, taggedType } = FieldTypeIR.fromString('{Account:id}')
+                const { baseType, idField, optional, taggedType } = FieldDescriptor.fromString('{Account:id}')
 
                 t.equal(baseType, 'LookupTable', 'Then baseType is LookupTable')
                 t.equal(taggedType, 'Account', 'Then taggedType is Account')
@@ -153,7 +153,7 @@ t.test('FieldTypeIR', t => {
 
             t.test('When parsing "{Transaction:transactionId}?"', t => {
                 const { baseType, idField, optional, taggedType } =
-                    FieldTypeIR.fromString('{Transaction:transactionId}?')
+                    FieldDescriptor.fromString('{Transaction:transactionId}?')
 
                 t.equal(baseType, 'LookupTable', 'Then baseType is LookupTable')
                 t.equal(taggedType, 'Transaction', 'Then taggedType is Transaction')
@@ -167,7 +167,7 @@ t.test('FieldTypeIR', t => {
 
         t.test('Given a regex type string', t => {
             t.test('When parsing "/abc/"', t => {
-                const { baseType, optional, regex } = FieldTypeIR.fromString('/abc/')
+                const { baseType, optional, regex } = FieldDescriptor.fromString('/abc/')
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.ok(regex instanceof RegExp, 'Then regex is a RegExp')
@@ -177,7 +177,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "/^[0-9]+$/i"', t => {
-                const { baseType, regex } = FieldTypeIR.fromString('/^[0-9]+$/i')
+                const { baseType, regex } = FieldDescriptor.fromString('/^[0-9]+$/i')
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(regex.source, '^[0-9]+$', 'Then regex source is correct')
@@ -186,7 +186,7 @@ t.test('FieldTypeIR', t => {
             })
 
             t.test('When parsing "/abc/?"', t => {
-                const { baseType, optional, regex } = FieldTypeIR.fromString('/abc/?')
+                const { baseType, optional, regex } = FieldDescriptor.fromString('/abc/?')
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.ok(regex instanceof RegExp, 'Then regex is a RegExp')
@@ -208,7 +208,7 @@ t.test('FieldTypeIR', t => {
                     property: 'E164Phone',
                     fullReference: 'FieldTypes.E164Phone',
                 }
-                const { baseType, fieldTypesReference, optional, regex } = FieldTypeIR.fromObject(input)
+                const { baseType, fieldTypesReference, optional, regex } = FieldDescriptor.fromObject(input)
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(optional, false, 'Then optional is false')
@@ -234,7 +234,7 @@ t.test('FieldTypeIR', t => {
                     },
                     optional: true,
                 }
-                const { baseType, fieldTypesReference, optional } = FieldTypeIR.fromObject(input)
+                const { baseType, fieldTypesReference, optional } = FieldDescriptor.fromObject(input)
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(optional, true, 'Then optional is true')
@@ -255,7 +255,7 @@ t.test('FieldTypeIR', t => {
                     },
                     optional: false,
                 }
-                const { fieldTypesReference, optional } = FieldTypeIR.fromObject(input)
+                const { fieldTypesReference, optional } = FieldDescriptor.fromObject(input)
 
                 t.equal(optional, false, 'Then optional is false')
                 t.same(
@@ -275,7 +275,7 @@ t.test('FieldTypeIR', t => {
     t.test('fromAny', t => {
         t.test('Given a string input', t => {
             t.test('When calling fromAny with "Number?"', t => {
-                const { baseType, optional } = FieldTypeIR.fromAny('Number?')
+                const { baseType, optional } = FieldDescriptor.fromAny('Number?')
 
                 t.equal(baseType, 'Number', 'Then baseType is Number')
                 t.equal(optional, true, 'Then optional is true')
@@ -287,7 +287,7 @@ t.test('FieldTypeIR', t => {
 
         t.test('Given a RegExp input', t => {
             t.test('When calling fromAny with /^[a-z]+$/', t => {
-                const { baseType, optional, regex } = FieldTypeIR.fromAny(/^[a-z]+$/)
+                const { baseType, optional, regex } = FieldDescriptor.fromAny(/^[a-z]+$/)
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.equal(regex.source, '^[a-z]+$', 'Then regex source is preserved')
@@ -301,7 +301,7 @@ t.test('FieldTypeIR', t => {
         t.test('Given an object input', t => {
             t.test('When calling fromAny with a FieldTypes reference', t => {
                 const input = { isFieldTypesReference: true, property: 'email', fullReference: 'FieldTypes.email' }
-                const { baseType, fieldTypesReference } = FieldTypeIR.fromAny(input)
+                const { baseType, fieldTypesReference } = FieldDescriptor.fromAny(input)
 
                 t.equal(baseType, 'String', 'Then baseType is String')
                 t.same(
@@ -321,7 +321,7 @@ t.test('FieldTypeIR', t => {
                     },
                     optional: true,
                 }
-                const { fieldTypesReference, optional } = FieldTypeIR.fromAny(input)
+                const { fieldTypesReference, optional } = FieldDescriptor.fromAny(input)
 
                 t.equal(optional, true, 'Then optional is true')
                 t.ok(fieldTypesReference, 'Then fieldTypesReference exists')

@@ -19,9 +19,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a ColumnDescriptor instance
- * @sig ColumnDescriptor :: ([Object], Number, [Object]) -> ColumnDescriptor
+ * @sig ColumnDescriptor :: (String, Number, String) -> ColumnDescriptor
  */
 const ColumnDescriptor = function ColumnDescriptor(id, width, sortDirection) {
     const constructorName = 'ColumnDescriptor(id, width, sortDirection)'
@@ -42,6 +43,7 @@ const ColumnDescriptor = function ColumnDescriptor(id, width, sortDirection) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig columndescriptorToString :: () -> String
@@ -50,7 +52,7 @@ const columndescriptorToString = function () {
     return `ColumnDescriptor(${R._toString(this.id)}, ${R._toString(this.width)}, ${R._toString(this.sortDirection)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig columndescriptorToJSON :: () -> Object
  */
