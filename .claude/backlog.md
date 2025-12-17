@@ -24,9 +24,8 @@
 
 9. [~] Rewrite type generator with IR-based architecture (spec: `specifications/cli-type-generator-rewrite/`)
     - [x] Phase 1: FieldTypeIR foundation + optional FieldTypes fix
-    - [ ] Phase 2: ImportIR + import resolution
-    - [ ] Phase 3: TypeDefinitionIR + complete normalization
-    - [ ] Phase 4: FunctionIR + code generation
-    - [ ] Phase 5: Testing infrastructure
-    - [ ] Phase 6: Integration
+    - [ ] Phase 2: TypeDefinitionIR + normalize early (eliminate TaggedFieldType.fromString calls)
+    - [ ] Phase 3: Extract codegen modules (toString, serialization, variant)
+    - [ ] Phase 4: Reorganize TaggedSum output (group by concern, not variant)
+    - [ ] Phase 5: Support default values for `from()`
 10. [x] Generate code that complies with style validator

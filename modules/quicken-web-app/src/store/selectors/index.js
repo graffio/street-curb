@@ -28,18 +28,18 @@ const splits = state => state.splits
 // @sig transactions :: State -> LookupTable<Transaction>
 const transactions = state => state.transactions
 
-// UI state
+// UI state (all selectors now take viewId as second parameter)
 export {
-    transactionFilters,
+    currentRowIndex,
+    currentSearchIndex,
+    customEndDate,
+    customStartDate,
     dateRange,
     dateRangeKey,
     filterQuery,
     searchQuery,
     selectedCategories,
-    currentSearchIndex,
-    currentRowIndex,
-    customStartDate,
-    customEndDate,
+    transactionFilter,
 } from './ui.js'
 
 export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches } from './transactions/index.js'

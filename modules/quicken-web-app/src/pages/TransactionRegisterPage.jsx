@@ -9,6 +9,7 @@ import { bankTransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { TransactionFiltersCard } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
+import { filterByAccount } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
 import { ColumnDescriptor, TableLayout } from '../types/index.js'
 
@@ -99,29 +100,42 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
  *     }
  */
 const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '100%' }) => {
+    // Compute viewId early - needed by action handlers
+    // Use reg_ prefix to match View.Register's id pattern (FieldTypes.viewId)
+    const viewId = `reg_${accountId}`
+    const tableLayoutId = makeViewId(accountId)
+
     // -----------------------------------------------------------------------------------------------------------------
     // `post` Functions
     // -----------------------------------------------------------------------------------------------------------------
     const moveToNextRow = () => {
-        const maxIndex = filteredTransactions.length - 1
-        post(Action.SetTransactionFilter({ currentRowIndex: currentRowIndex >= maxIndex ? 0 : currentRowIndex + 1 }))
+        const maxIndex = accountTransactions.length - 1
+        post(
+            Action.SetTransactionFilter(viewId, {
+                currentRowIndex: currentRowIndex >= maxIndex ? 0 : currentRowIndex + 1,
+            }),
+        )
     }
 
     const moveToPreviousRow = () => {
-        const maxIndex = filteredTransactions.length - 1
-        post(Action.SetTransactionFilter({ currentRowIndex: currentRowIndex <= 0 ? maxIndex : currentRowIndex - 1 }))
+        const maxIndex = accountTransactions.length - 1
+        post(
+            Action.SetTransactionFilter(viewId, {
+                currentRowIndex: currentRowIndex <= 0 ? maxIndex : currentRowIndex - 1,
+            }),
+        )
     }
 
     const handlePreviousMatch = () => {
         if (sortedSearchMatches.length <= 0) return
         const newIndex = currentSearchIndex === 0 ? sortedSearchMatches.length - 1 : currentSearchIndex - 1
-        post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
+        post(Action.SetTransactionFilter(viewId, { currentSearchIndex: newIndex }))
     }
 
     const handleNextMatch = () => {
         if (sortedSearchMatches.length <= 0) return
         const newIndex = currentSearchIndex === sortedSearchMatches.length - 1 ? 0 : currentSearchIndex + 1
-        post(Action.SetTransactionFilter({ currentSearchIndex: newIndex }))
+        post(Action.SetTransactionFilter(viewId, { currentSearchIndex: newIndex }))
     }
 
     // Handles Escape (clear search) and Arrow keys (navigate rows/matches)
@@ -130,7 +144,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         // @sig handleEscape :: () -> void
         const handleEscape = () => {
             event.preventDefault()
-            if (searchQuery) post(Action.SetTransactionFilter({ searchQuery: '', currentSearchIndex: 0 }))
+            if (searchQuery) post(Action.SetTransactionFilter(viewId, { searchQuery: '', currentSearchIndex: 0 }))
         }
 
         // @sig handleArrow :: () -> void
@@ -160,7 +174,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
         const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-        post(Action.SetTransactionFilter({ dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
+        post(Action.SetTransactionFilter(viewId, { dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
     }
 
     // Converts TanStack sorting state to TableLayout and persists
@@ -243,7 +257,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
 
     const computeTanStackFormat = () => toTanStackFormat(tableLayout, idMap)
 
-    const computeData = () => calculateRunningBalances(filteredTransactions, startingBalance)
+    const computeData = () => calculateRunningBalances(accountTransactions, startingBalance)
 
     // Returns search match IDs sorted by current table sort order
     // @sig computeSortedSearchMatches :: () -> [String]
@@ -271,26 +285,29 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
     // Hooks
     // -----------------------------------------------------------------------------------------------------------------
     const [, setLayout] = useChannel(layoutChannel)
-    const dateRange = useSelector(S.dateRange)
-    const dateRangeKey = useSelector(S.dateRangeKey)
-    const searchQuery = useSelector(S.searchQuery)
-    const currentSearchIndex = useSelector(S.currentSearchIndex)
-    const currentRowIndex = useSelector(S.currentRowIndex)
+    const dateRange = useSelector(state => S.dateRange(state, viewId))
+    const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
+    const searchQuery = useSelector(state => S.searchQuery(state, viewId))
+    const currentSearchIndex = useSelector(state => S.currentSearchIndex(state, viewId))
+    const currentRowIndex = useSelector(state => S.currentRowIndex(state, viewId))
     const allTableLayouts = useSelector(S.tableLayouts)
-    const filteredTransactions = useSelector(S.filteredTransactions)
-    const searchMatches = useSelector(S.searchMatches)
+    const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
+    const searchMatches = useSelector(state => S.searchMatches(state, viewId))
 
     // -----------------------------------------------------------------------------------------------------------------
     // Memos
     // -----------------------------------------------------------------------------------------------------------------
-    const viewId = makeViewId(accountId)
-    const { tableLayout: initialLayout, idMap } = useMemo(
-        () => initializeFromColumns(viewId, bankTransactionColumns),
-        [viewId],
+    const accountTransactions = useMemo(
+        () => filterByAccount(filteredTransactions, accountId),
+        [filteredTransactions, accountId],
     )
-    const tableLayout = allTableLayouts?.[viewId] || initialLayout
+    const { tableLayout: initialLayout, idMap } = useMemo(
+        () => initializeFromColumns(tableLayoutId, bankTransactionColumns),
+        [tableLayoutId],
+    )
+    const tableLayout = allTableLayouts?.[tableLayoutId] || initialLayout
     const { sorting, columnSizing, columnOrder } = useMemo(computeTanStackFormat, [tableLayout, idMap])
-    const data = useMemo(computeData, [filteredTransactions, startingBalance])
+    const data = useMemo(computeData, [accountTransactions, startingBalance])
     const sortedSearchMatches = useMemo(computeSortedSearchMatches, [searchMatches, data, sorting])
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -309,17 +326,17 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
         sortedSearchMatches.length,
         currentSearchIndex,
         currentRowIndex,
-        filteredTransactions.length,
+        accountTransactions.length,
     ])
 
     const highlightedId =
         sortedSearchMatches.length > 0
             ? sortedSearchMatches[currentSearchIndex]
-            : filteredTransactions[currentRowIndex]?.id
+            : accountTransactions[currentRowIndex]?.id
 
     return (
         <Flex gap="4" style={pageContainerStyle}>
-            <TransactionFiltersCard />
+            <TransactionFiltersCard viewId={viewId} />
 
             <div style={mainContentStyle}>
                 <DataTable

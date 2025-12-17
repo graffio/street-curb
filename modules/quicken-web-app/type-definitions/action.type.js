@@ -20,8 +20,8 @@ export const Action = {
             splits      : '{Split:id}',
             transactions: '{Transaction:id}',
         },
-        SetTransactionFilter   : { changes: 'Object' },
-        ResetTransactionFilters: {},
+        SetTransactionFilter   : { viewId: 'String', changes: 'Object' },
+        ResetTransactionFilters: { viewId: 'String' },
 
         // Table layout actions
         SetTableLayout         : { tableLayout: 'TableLayout' },

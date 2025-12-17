@@ -1,7 +1,7 @@
 // ABOUTME: Memoized derived selectors for transaction data
 // ABOUTME: Combines UI state with transaction filtering
 
-import memoizeReduxState from '@graffio/functional/src/ramda-like/memoize-redux-state.js'
+import memoizeReduxState, { memoizeReduxStatePerKey } from '@graffio/functional/src/ramda-like/memoize-redux-state.js'
 import { dateRange, filterQuery, searchQuery, selectedCategories } from '../ui.js'
 import {
     filterByCategories,
@@ -36,41 +36,46 @@ const _defaultEndDate = new Date()
 const defaultEndDate = () => _defaultEndDate
 
 // Apply all transaction filters in sequence: text -> date -> category
-// @sig computeFilteredTransactions :: ReduxState -> [Transaction]
-const computeFilteredTransactions = state => {
+// @sig computeFilteredTransactions :: (ReduxState, String) -> [Transaction]
+const computeFilteredTransactions = (state, viewId) => {
     const { categories, transactions } = state
-    const textFiltered = filterByText(transactions, filterQuery(state), categories)
-    const dateFiltered = filterByDateRange(textFiltered, dateRange(state) || {})
-    return filterByCategories(dateFiltered, selectedCategories(state), categories)
+    const textFiltered = filterByText(transactions, filterQuery(state, viewId), categories)
+    const dateFiltered = filterByDateRange(textFiltered, dateRange(state, viewId) || {})
+    return filterByCategories(dateFiltered, selectedCategories(state, viewId), categories)
 }
 
 /*
- * Transactions filtered by text query, date range, and selected categories
+ * Transactions filtered by text query, date range, and selected categories for a specific view
  * Applies filters from UI state in sequence: text -> date -> category
  *
- * @sig filteredTransactions :: ReduxState -> [Transaction]
+ * @sig filteredTransactions :: (ReduxState, String) -> [Transaction]
  */
-const filteredTransactions = memoizeReduxState(
-    ['transactions', 'transactionFilters', 'categories'],
+const filteredTransactions = memoizeReduxStatePerKey(
+    ['transactions', 'categories'],
+    'transactionFilters',
     computeFilteredTransactions,
 )
 
-// Compute IDs of transactions matching the current search query
-// @sig computeSearchMatches :: ReduxState -> [TransactionId]
-const computeSearchMatches = state => {
+// Compute IDs of transactions matching the current search query for a specific view
+// @sig computeSearchMatches :: (ReduxState, String) -> [TransactionId]
+const computeSearchMatches = (state, viewId) => {
     const { categories } = state
-    const query = searchQuery(state)
-    return filteredTransactions(state)
+    const query = searchQuery(state, viewId)
+    return filteredTransactions(state, viewId)
         .filter(txn => transactionMatchesSearch(txn, query, categories))
         .map(txn => txn.id)
 }
 
 /*
- * IDs of filtered transactions matching the search query
+ * IDs of filtered transactions matching the search query for a specific view
  * Used for search navigation (previous/next) and highlighting
  *
- * @sig searchMatches :: ReduxState -> [TransactionId]
+ * @sig searchMatches :: (ReduxState, String) -> [TransactionId]
  */
-const searchMatches = memoizeReduxState(['transactions', 'transactionFilters', 'categories'], computeSearchMatches)
+const searchMatches = memoizeReduxStatePerKey(
+    ['transactions', 'categories'],
+    'transactionFilters',
+    computeSearchMatches,
+)
 
-export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches }
+export { defaultEndDate, defaultStartDate, filteredTransactions, searchMatches }

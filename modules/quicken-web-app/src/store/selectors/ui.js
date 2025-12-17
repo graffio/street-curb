@@ -1,45 +1,61 @@
 // ABOUTME: UI state selectors for ephemeral display state
 // ABOUTME: Not persisted - resets on refresh
 
-// @sig transactionFilters :: ReduxState -> TransactionFilters
-const transactionFilters = state => state.transactionFilters
+// Default values for filter fields when no filter exists for a viewId
+const defaults = {
+    dateRange: null,
+    dateRangeKey: 'lastTwelveMonths',
+    filterQuery: '',
+    searchQuery: '',
+    selectedCategories: [],
+    currentSearchIndex: 0,
+    currentRowIndex: 0,
+    customStartDate: null,
+    customEndDate: null,
+}
 
-// @sig dateRange :: ReduxState -> { start: Date, end: Date }?
-const dateRange = state => state.transactionFilters.dateRange
+// Get the TransactionFilter for a viewId, or undefined if none exists
+// @sig transactionFilter :: (ReduxState, String) -> TransactionFilter?
+const transactionFilter = (state, viewId) => state.transactionFilters.get(viewId)
 
-// @sig dateRangeKey :: ReduxState -> String
-const dateRangeKey = state => state.transactionFilters.dateRangeKey
+// @sig dateRange :: (ReduxState, String) -> { start: Date, end: Date }?
+const dateRange = (state, viewId) => transactionFilter(state, viewId)?.dateRange ?? defaults.dateRange
 
-// @sig filterQuery :: ReduxState -> String
-const filterQuery = state => state.transactionFilters.filterQuery
+// @sig dateRangeKey :: (ReduxState, String) -> String
+const dateRangeKey = (state, viewId) => transactionFilter(state, viewId)?.dateRangeKey ?? defaults.dateRangeKey
 
-// @sig searchQuery :: ReduxState -> String
-const searchQuery = state => state.transactionFilters.searchQuery
+// @sig filterQuery :: (ReduxState, String) -> String
+const filterQuery = (state, viewId) => transactionFilter(state, viewId)?.filterQuery ?? defaults.filterQuery
 
-// @sig selectedCategories :: ReduxState -> [String]
-const selectedCategories = state => state.transactionFilters.selectedCategories
+// @sig searchQuery :: (ReduxState, String) -> String
+const searchQuery = (state, viewId) => transactionFilter(state, viewId)?.searchQuery ?? defaults.searchQuery
 
-// @sig currentSearchIndex :: ReduxState -> Number
-const currentSearchIndex = state => state.transactionFilters.currentSearchIndex
+// @sig selectedCategories :: (ReduxState, String) -> [String]
+const selectedCategories = (state, viewId) =>
+    transactionFilter(state, viewId)?.selectedCategories ?? defaults.selectedCategories
 
-// @sig currentRowIndex :: ReduxState -> Number
-const currentRowIndex = state => state.transactionFilters.currentRowIndex
+// @sig currentSearchIndex :: (ReduxState, String) -> Number
+const currentSearchIndex = (state, viewId) =>
+    transactionFilter(state, viewId)?.currentSearchIndex ?? defaults.currentSearchIndex
 
-// @sig customStartDate :: ReduxState -> Date?
-const customStartDate = state => state.transactionFilters.customStartDate
+// @sig currentRowIndex :: (ReduxState, String) -> Number
+const currentRowIndex = (state, viewId) => transactionFilter(state, viewId)?.currentRowIndex ?? defaults.currentRowIndex
 
-// @sig customEndDate :: ReduxState -> Date?
-const customEndDate = state => state.transactionFilters.customEndDate
+// @sig customStartDate :: (ReduxState, String) -> Date?
+const customStartDate = (state, viewId) => transactionFilter(state, viewId)?.customStartDate ?? defaults.customStartDate
+
+// @sig customEndDate :: (ReduxState, String) -> Date?
+const customEndDate = (state, viewId) => transactionFilter(state, viewId)?.customEndDate ?? defaults.customEndDate
 
 export {
-    transactionFilters,
+    currentRowIndex,
+    currentSearchIndex,
+    customEndDate,
+    customStartDate,
     dateRange,
     dateRangeKey,
     filterQuery,
     searchQuery,
     selectedCategories,
-    currentSearchIndex,
-    currentRowIndex,
-    customStartDate,
-    customEndDate,
+    transactionFilter,
 }
