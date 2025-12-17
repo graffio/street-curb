@@ -1,7 +1,11 @@
 // ABOUTME: Main type generator for Tagged and TaggedSum types
-// ABOUTME: Generates JavaScript files with constructors, prototypes, and Firestore serialization
+// ABOUTME: Orchestrates code generation modules to produce JavaScript type files
 
+import { generateConstructorSig } from './codegen/constructor-sig.js'
+import { generateImportsSection } from './codegen/imports.js'
+import { generateIsMethod } from './codegen/is-method.js'
 import { generateFromFirestoreField, generateToFirestoreValue } from './codegen/serialization.js'
+import { generateNamedToJSON, generateNamedVariantToJSON } from './codegen/to-json.js'
 import { generateNamedToString } from './codegen/to-string.js'
 import FieldDescriptor from './descriptors/field-descriptor.js'
 import { getExistingStandardFunctions } from './parse-type-definition-file.js'
@@ -16,55 +20,6 @@ const generateAboutMe = (typeName, relativePath) => {
     const sourcePath = relativePath.replace(/.*modules/, 'modules')
     return `// ABOUTME: Generated type definition for ${typeName}
 // ABOUTME: Auto-generated from ${sourcePath} - do not edit manually`
-}
-
-/*
- * Generate @sig comment for a constructor function
- * @sig generateConstructorSig :: (String, FieldMap) -> String
- */
-const generateConstructorSig = (fullTypeName, fields) => {
-    /*
-     * Capitalize first letter of a string
-     * @sig capitalize :: String -> String
-     */
-    const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1)
-
-    /**
-     * Format a field entry as a type signature parameter
-     * @sig formatFieldEntry :: ([String, FieldType]) -> String
-     */
-    const formatFieldEntry = ([fieldName, fieldType]) => {
-        const parsed = FieldDescriptor.fromAny(fieldType)
-        const { baseType, taggedType, optional, arrayDepth, regex } = parsed
-
-        // For regex fields, create a type alias from the field name
-        if (regex) {
-            const typeName = capitalize(fieldName)
-            regexDefs.push(`${typeName} = ${regex}`)
-            const wrapped = arrayDepth > 0 ? '['.repeat(arrayDepth) + typeName + ']'.repeat(arrayDepth) : typeName
-            return optional ? `${wrapped}?` : wrapped
-        }
-
-        // For LookupTable fields, show {Type} syntax
-        if (baseType === 'LookupTable') {
-            const base = `{${taggedType}}`
-            return optional ? `${base}?` : base
-        }
-
-        const base = taggedType || baseType
-        const wrapped = arrayDepth > 0 ? '['.repeat(arrayDepth) + base + ']'.repeat(arrayDepth) : base
-        return optional ? `${wrapped}?` : wrapped
-    }
-
-    const regexDefs = []
-    const fieldTypes = Object.entries(fields).map(formatFieldEntry)
-    const params = fieldTypes.length > 0 ? `(${fieldTypes.join(', ')})` : '()'
-    const regexLines = regexDefs.length > 0 ? `\n *     ${regexDefs.join('\n *     ')}` : ''
-
-    return `/**
- * Construct a ${fullTypeName} instance
- * @sig ${fullTypeName.split('.').pop()} :: ${params} -> ${fullTypeName}${regexLines}
- */`
 }
 
 /*
@@ -114,18 +69,6 @@ const generateStaticTaggedType = async typeDefinition => {
      */
     const needsFirestoreSerialization = ft =>
         ['Date', 'Tagged', 'LookupTable'].includes(FieldDescriptor.fromAny(ft).baseType)
-
-    /*
-     * Generate named toJSON function for a simple tagged type
-     * @sig generateNamedToJSON :: String -> String
-     */
-    const generateNamedToJSON = funcName => `/**
- * Convert to JSON representation
- * @sig ${funcName} :: () -> Object
- */
-const ${funcName} = function () {
-    return this
-}`
 
     /*
      * Generate toFirestore function code
@@ -289,37 +232,6 @@ const ${funcName} = function () {
  * @sig generateStaticTaggedSumType :: TypeDefinition -> Promise<String>
  */
 const generateStaticTaggedSumType = async typeDefinition => {
-    /**
-     * Generate is method - use destructuring if 3+ variants
-     * @sig generateIsMethod :: (String, [String]) -> String
-     */
-    const generateIsMethod = (typeName, variants) => {
-        if (variants.length >= 3) {
-            const destructure = `const { ${variants.join(', ')} } = ${typeName}`
-            const checks = variants.map(v => `constructor === ${v}`).join(' || ')
-            return `/**
-         * Check if value is a ${typeName} instance
-         * @sig is :: Any -> Boolean
-         */
-        ${typeName}.is = v => {
-            ${destructure}
-            if (typeof v !== 'object') return false
-            const constructor = Object.getPrototypeOf(v).constructor
-            return ${checks}
-        }`
-        }
-        const checks = variants.map(v => `constructor === ${typeName}.${v}`).join(' || ')
-        return `/**
-         * Check if value is a ${typeName} instance
-         * @sig is :: Any -> Boolean
-         */
-        ${typeName}.is = v => {
-            if (typeof v !== 'object') return false
-            const constructor = Object.getPrototypeOf(v).constructor
-            return ${checks}
-        }`
-    }
-
     /*
      * Generate constructor for a specific variant of a tagged sum type
      * @sig constructorForVariant :: (String, VariantMap, String) -> String
@@ -330,18 +242,6 @@ const generateStaticTaggedSumType = async typeDefinition => {
          * @sig generateVariantConstructor :: (String, String, FieldMap) -> String
          */
         const generateVariantConstructor = (typeName, vName, flds) => {
-            /*
-             * Generate named toJSON function for a tagged sum variant (includes tagName)
-             * @sig generateNamedVariantToJSON :: String -> String
-             */
-            const generateNamedVariantToJSON = funcName => `/**
- * Convert to JSON representation with tag
- * @sig ${funcName} :: () -> Object
- */
-const ${funcName} = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}`
-
             /*
              * Generate Firestore serialization for a variant
              * @sig generateVariantFirestoreSerialization :: (String, FieldMap) -> String
@@ -632,31 +532,6 @@ const ${funcName} = function () {
     `
 
     return await prettierCode(code)
-}
-
-/*
- * Generate imports section for generated file
- * @sig generateImportsSection :: [ImportInfo] -> String
- */
-const generateImportsSection = imports => {
-    /**
-     * Format an import specifier for code generation
-     * @sig formatSpecifier :: ImportSpecifier -> String
-     */
-    const formatSpecifier = spec => {
-        const { type, imported, local } = spec
-        if (type === 'ImportDefaultSpecifier') return local
-        if (type === 'ImportNamespaceSpecifier') return `* as ${local}`
-        return imported === local ? imported : `${imported} as ${local}`
-    }
-
-    const formatImport = imp => {
-        const specifiers = imp.specifiers.map(formatSpecifier).join(', ')
-        return `import { ${specifiers} } from '${imp.source}'`
-    }
-
-    if (!imports || imports.length === 0) return ''
-    return imports.map(formatImport).join('\n') + '\n'
 }
 
 export { generateStaticTaggedType, generateStaticTaggedSumType }
