@@ -20,7 +20,8 @@ import { Array } from './array.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a ParseResult instance
  * @sig ParseResult :: (Object, Array, Array, String) -> ParseResult
  */
@@ -45,20 +46,19 @@ const ParseResult = function ParseResult(typeDefinition, imports, functions, sou
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig parseresultToString :: () -> String
  */
 const parseresultToString = function () {
-    return `ParseResult(
-        ${R._toString(this.typeDefinition)},
+    return `ParseResult(${R._toString(this.typeDefinition)},
         ${R._toString(this.imports)},
         ${R._toString(this.functions)},
-        ${R._toString(this.sourceContent)},
-    )`
+        ${R._toString(this.sourceContent)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig parseresultToJSON :: () -> Object
  */

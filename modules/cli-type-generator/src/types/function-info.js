@@ -18,7 +18,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a FunctionInfo instance
  * @sig FunctionInfo :: (String, String, Object, String) -> FunctionInfo
  */
@@ -43,20 +44,19 @@ const FunctionInfo = function FunctionInfo(typeName, functionName, node, sourceC
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig functioninfoToString :: () -> String
  */
 const functioninfoToString = function () {
-    return `FunctionInfo(
-        ${R._toString(this.typeName)},
+    return `FunctionInfo(${R._toString(this.typeName)},
         ${R._toString(this.functionName)},
         ${R._toString(this.node)},
-        ${R._toString(this.sourceCode)},
-    )`
+        ${R._toString(this.sourceCode)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig functioninfoToJSON :: () -> Object
  */

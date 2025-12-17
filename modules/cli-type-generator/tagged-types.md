@@ -41,17 +41,18 @@ export const Shape = {
 
 Field expressions may reference primitives, other tagged types, regexes, arrays, LookupTables, or optionals:
 
-| Pattern                                         | Meaning                          | Example                   |
-|-------------------------------------------------|----------------------------------|---------------------------|
-| `'Number'`, `'String'`, `'Boolean'`, `'Object'` | Primitive fields                 | `x: 'Number'`             |
-| `'Date'`                                        | Date field                       | `createdAt: 'Date'`       |
-| `'Type'`                                        | Reference to another tagged type | `centre: 'Coord'`         |
-| `'Type?'`                                       | Optional field (any type)        | `description: 'String?'`  |
-| `'{Type:idField}'`                              | LookupTable (preferred for collections) | `members: '{User:id}'` |
-| `'[Type]'`, `'[[Type]]'`, …                     | Arrays / nested arrays           | `rows: '[[Number]]'`      |
-| `/regexp/`                                      | Regex string validation          | `id: /^[0-9a-f-]{36}$/i`  |
+| Pattern                                         | Meaning                                 | Example                  |
+|-------------------------------------------------|-----------------------------------------|--------------------------|
+| `'Number'`, `'String'`, `'Boolean'`, `'Object'` | Primitive fields                        | `x: 'Number'`            |
+| `'Date'`                                        | Date field                              | `createdAt: 'Date'`      |
+| `'Type'`                                        | Reference to another tagged type        | `centre: 'Coord'`        |
+| `'Type?'`                                       | Optional field (any type)               | `description: 'String?'` |
+| `'{Type:idField}'`                              | LookupTable (preferred for collections) | `members: '{User:id}'`   |
+| `'[Type]'`, `'[[Type]]'`, …                     | Arrays / nested arrays                  | `rows: '[[Number]]'`     |
+| `/regexp/`                                      | Regex string validation                 | `id: /^[0-9a-f-]{36}$/i` |
 
-**Note:** Prefer LookupTable (`{Type:idField}`) over arrays when items have unique IDs. LookupTables provide O(1) lookup by ID and integrate with `@graffio/functional`.
+**Note:** Prefer LookupTable (`{Type:idField}`) over arrays when items have unique IDs. LookupTables provide O(1) lookup
+by ID and integrate with `@graffio/functional`.
 
 Other (test) examples in the repo:
 
@@ -149,12 +150,12 @@ src/
 ├── cli-api.js                  # Commands: generate, generate-all, watch
 ├── parse-type-definition-file.js  # Parser: reads .type.js → TypeDescriptor
 ├── tagged-type-generator.js    # Orchestrator: assembles output from codegen modules
-├── tagged-type-function-generators.js  # Low-level: constructor bodies, type checks
 ├── prettier-code.js            # Formatting utilities
 ├── descriptors/
 │   ├── field-descriptor.js     # Normalized field type representation
 │   └── type-descriptor.js      # Normalized type definition representation
 └── codegen/
+    ├── expressions.js          # Constructor bodies, type checks, from() functions
     ├── to-string.js            # toString method generation
     ├── to-json.js              # toJSON method generation
     ├── serialization.js        # Firestore toFirestore/fromFirestore expressions
@@ -174,7 +175,6 @@ TypeDescriptor (normalized)
     ↓
 tagged-type-generator.js (orchestrator)
     ├── calls codegen/* modules for each concern
-    ├── calls tagged-type-function-generators.js for constructor bodies
     └── assembles sections in order
     ↓
 prettier-code.js
@@ -189,16 +189,29 @@ All field types normalize to this structure at parse time:
 ```js
 {
     baseType: 'String' | 'Number' | 'Boolean' | 'Object' | 'Date' | 'Any' | 'Tagged' | 'LookupTable',
-    optional: false,           // trailing ? in syntax
-    arrayDepth: 0,             // nesting level: '[Type]' = 1, '[[Type]]' = 2
-    taggedType: null,          // 'Account' for Tagged/LookupTable fields
-    idField: null,             // 'id' for LookupTable fields
-    regex: null,               // /pattern/ for regex-validated strings
-    fieldTypesReference: null  // { property, fullReference } for FieldTypes.X
+        optional
+:
+    false,           // trailing ? in syntax
+        arrayDepth
+:
+    0,             // nesting level: '[Type]' = 1, '[[Type]]' = 2
+        taggedType
+:
+    null,          // 'Account' for Tagged/LookupTable fields
+        idField
+:
+    null,             // 'id' for LookupTable fields
+        regex
+:
+    null,               // /pattern/ for regex-validated strings
+        fieldTypesReference
+:
+    null  // { property, fullReference } for FieldTypes.X
 }
 ```
 
-`FieldDescriptor.fromAny(input)` accepts strings (`'String?'`), regexes (`/pattern/`), or objects and returns this normalized form. `FieldDescriptor.toSyntax(descriptor)` converts back to concise syntax for display.
+`FieldDescriptor.fromAny(input)` accepts strings (`'String?'`), regexes (`/pattern/`), or objects and returns this
+normalized form. `FieldDescriptor.toSyntax(descriptor)` converts back to concise syntax for display.
 
 ### TypeDescriptor schema
 
@@ -206,27 +219,65 @@ All field types normalize to this structure at parse time:
 // Tagged type
 {
     kind: 'Tagged',
-    name: 'Account',
-    relativePath: 'modules/.../account.type.js',
-    fields: { id: FieldDescriptor, name: FieldDescriptor, ... },
+        name
+:
+    'Account',
+        relativePath
+:
+    'modules/.../account.type.js',
+        fields
+:
+    {
+        id: FieldDescriptor, name
+    :
+        FieldDescriptor,
+    ...
+    }
+,
     childTypes: ['Category'],      // types needing import
-    needsLookupTable: false,
-    imports: [...],                // preserved from source
-    functions: [...]               // preserved from source
+        needsLookupTable
+:
+    false,
+        imports
+:
+    [...],                // preserved from source
+        functions
+:
+    [...]               // preserved from source
 }
 
 // TaggedSum type
 {
     kind: 'TaggedSum',
-    name: 'Action',
-    relativePath: '...',
-    variants: {
-        Created: { fields: {...}, childTypes: [] },
-        Updated: { fields: {...}, childTypes: [] }
-    },
+        name
+:
+    'Action',
+        relativePath
+:
+    '...',
+        variants
+:
+    {
+        Created: {
+            fields: {...}
+        ,
+            childTypes: []
+        }
+    ,
+        Updated: {
+            fields: {...}
+        ,
+            childTypes: []
+        }
+    }
+,
     needsLookupTable: false,
-    imports: [...],
-    functions: [...]
+        imports
+:
+    [...],
+        functions
+:
+    [...]
 }
 ```
 
@@ -248,12 +299,14 @@ The orchestrator (`tagged-type-generator.js`) calls these modules and assembles 
 ### Firestore serialization
 
 Generated types include `toFirestore` and `fromFirestore` methods that handle:
+
 - **Date fields**: encode/decode via passed timestamp functions
 - **Tagged fields**: call nested `Type.toFirestore()`/`Type.fromFirestore()`
 - **LookupTable fields**: serialize as `{ id: fullObject }` maps for efficient Firestore queries
 - **Arrays of Tagged**: recursive `.map()` calls at each nesting level
 
-The underscore-prefix pattern (`_toFirestore`, `_fromFirestore`) allows types to define custom public methods that delegate to the generated ones.
+The underscore-prefix pattern (`_toFirestore`, `_fromFirestore`) allows types to define custom public methods that
+delegate to the generated ones.
 
 ### Key design decisions
 

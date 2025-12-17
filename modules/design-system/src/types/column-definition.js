@@ -25,7 +25,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a ColumnDefinition instance
  * @sig ColumnDefinition :: (String, String?, String, Number?, Number?, Number?, String?, Boolean?, Boolean?, Object?, Any) -> ColumnDefinition
  */
@@ -76,13 +77,13 @@ const ColumnDefinition = function ColumnDefinition(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig columndefinitionToString :: () -> String
  */
 const columndefinitionToString = function () {
-    return `ColumnDefinition(
-        ${R._toString(this.id)},
+    return `ColumnDefinition(${R._toString(this.id)},
         ${R._toString(this.accessorKey)},
         ${R._toString(this.header)},
         ${R._toString(this.size)},
@@ -92,11 +93,10 @@ const columndefinitionToString = function () {
         ${R._toString(this.enableSorting)},
         ${R._toString(this.enableResizing)},
         ${R._toString(this.meta)},
-        ${R._toString(this.cell)},
-    )`
+        ${R._toString(this.cell)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig columndefinitionToJSON :: () -> Object
  */

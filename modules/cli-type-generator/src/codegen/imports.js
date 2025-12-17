@@ -22,8 +22,7 @@ const generateImportsSection = imports => {
         return `import { ${specifiers} } from '${imp.source}'`
     }
 
-    if (!imports || imports.length === 0) return ''
-    return imports.map(formatImport).join('\n') + '\n'
+    return imports && imports.length ? imports.map(formatImport).join('\n') + '\n' : ''
 }
 
 export { generateImportsSection }

@@ -6,31 +6,47 @@
  * @sig generateIsMethod :: (String, [String]) -> String
  */
 const generateIsMethod = (typeName, variants) => {
-    if (variants.length >= 3) {
-        const destructure = `const { ${variants.join(', ')} } = ${typeName}`
-        const checks = variants.map(v => `constructor === ${v}`).join(' || ')
-        return `/**
-     * Check if value is a ${typeName} instance
-     * @sig is :: Any -> Boolean
+    /*
+     * Output X.is function without destructuring
+     * @sig skipDestrcturing :: () -> String
      */
-    ${typeName}.is = v => {
-        ${destructure}
-        if (typeof v !== 'object') return false
-        const constructor = Object.getPrototypeOf(v).constructor
-        return ${checks}
-    }`
+    const skipDestrcturing = () => {
+        const checksWithPrefix = variants.map(v => `constructor === ${typeName}.${v}`).join(' || ')
+        return `
+
+            /*
+             * Check if value is a ${typeName} instance
+             * @sig is :: Any -> Boolean
+             */
+            ${typeName}.is = v => {
+                if (typeof v !== 'object') return false
+                const constructor = Object.getPrototypeOf(v).constructor
+                return ${checksWithPrefix}
+            }`
     }
 
-    const checks = variants.map(v => `constructor === ${typeName}.${v}`).join(' || ')
-    return `/**
-     * Check if value is a ${typeName} instance
-     * @sig is :: Any -> Boolean
+    /*
+     * Output X.is function with destructuring
+     * @sig skipDestrcturing :: () -> String
      */
-    ${typeName}.is = v => {
-        if (typeof v !== 'object') return false
-        const constructor = Object.getPrototypeOf(v).constructor
-        return ${checks}
-    }`
+    const includeDestructuring = () => {
+        const destructure = `const { ${variants.join(', ')} } = ${typeName}`
+        const checks = variants.map(v => `constructor === ${v}`).join(' || ')
+        return `
+
+            /*
+             * Check if value is a ${typeName} instance
+             * @sig is :: Any -> Boolean
+             */
+            ${typeName}.is = v => {
+                ${destructure}
+                if (typeof v !== 'object') return false
+                const constructor = Object.getPrototypeOf(v).constructor
+                return ${checks}
+            }`
+    }
+
+    return variants.length >= 3 ? includeDestructuring() : skipDestrcturing()
 }
 
 export { generateIsMethod }

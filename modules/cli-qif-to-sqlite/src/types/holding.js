@@ -20,7 +20,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Holding instance
  * @sig Holding :: (AccountId, Number, Number, String, Number, SecurityId) -> Holding
  *     AccountId = /^acc_[a-f0-9]{12}$/
@@ -51,22 +52,21 @@ const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpda
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig holdingToString :: () -> String
  */
 const holdingToString = function () {
-    return `Holding(
-        ${R._toString(this.accountId)},
+    return `Holding(${R._toString(this.accountId)},
         ${R._toString(this.avgCostPerShare)},
         ${R._toString(this.costBasis)},
         ${R._toString(this.lastUpdated)},
         ${R._toString(this.quantity)},
-        ${R._toString(this.securityId)},
-    )`
+        ${R._toString(this.securityId)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig holdingToJSON :: () -> Object
  */

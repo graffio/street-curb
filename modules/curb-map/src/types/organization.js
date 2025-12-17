@@ -13,7 +13,7 @@
  *  updatedAt       : "Date",
  *  updatedBy       : FieldTypes.userId,
  *  deletedAt       : "Date?",
- *  deletedBy       : "^usr_[a-z0-9]{12,}$/?"
+ *  deletedBy       : FieldTypes.userId
  *
  */
 
@@ -28,9 +28,10 @@ import { LookupTable } from '@graffio/functional'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Organization instance
- * @sig Organization :: ([Object], String, [Object], {Member}, Date, [Object], Date, [Object], Date?, String?) -> Organization
+ * @sig Organization :: (String, String, String, {Member}, Date, String, Date, String, Date?, String?) -> Organization
  */
 const Organization = function Organization(
     id,
@@ -56,7 +57,7 @@ const Organization = function Organization(
     R.validateDate(constructorName, 'updatedAt', false, updatedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'updatedBy', false, updatedBy)
     R.validateDate(constructorName, 'deletedAt', true, deletedAt)
-    R.validateTag(constructorName, '^usr_[a-z0-9]{12,}$/', 'deletedBy', true, deletedBy)
+    R.validateRegex(constructorName, FieldTypes.userId, 'deletedBy', true, deletedBy)
 
     const result = Object.create(prototype)
     result.id = id
@@ -77,13 +78,13 @@ const Organization = function Organization(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig organizationToString :: () -> String
  */
 const organizationToString = function () {
-    return `Organization(
-        ${R._toString(this.id)},
+    return `Organization(${R._toString(this.id)},
         ${R._toString(this.name)},
         ${R._toString(this.defaultProjectId)},
         ${R._toString(this.members)},
@@ -92,11 +93,10 @@ const organizationToString = function () {
         ${R._toString(this.updatedAt)},
         ${R._toString(this.updatedBy)},
         ${R._toString(this.deletedAt)},
-        ${R._toString(this.deletedBy)},
-    )`
+        ${R._toString(this.deletedBy)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig organizationToJSON :: () -> Object
  */

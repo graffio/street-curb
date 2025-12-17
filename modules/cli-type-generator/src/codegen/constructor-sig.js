@@ -31,10 +31,7 @@ const generateConstructorSig = (fullTypeName, fields) => {
         }
 
         // For LookupTable fields, show {Type} syntax
-        if (baseType === 'LookupTable') {
-            const base = `{${taggedType}}`
-            return optional ? `${base}?` : base
-        }
+        if (baseType === 'LookupTable') return optional ? `{${taggedType}}?` : `{${taggedType}}`
 
         const base = taggedType || baseType
         const wrapped = arrayDepth > 0 ? '['.repeat(arrayDepth) + base + ']'.repeat(arrayDepth) : base
@@ -45,11 +42,13 @@ const generateConstructorSig = (fullTypeName, fields) => {
     const fieldTypes = Object.entries(fields).map(formatFieldEntry)
     const params = fieldTypes.length > 0 ? `(${fieldTypes.join(', ')})` : '()'
     const regexLines = regexDefs.length > 0 ? `\n *     ${regexDefs.join('\n *     ')}` : ''
+    const shortName = fullTypeName.split('.').pop()
 
-    return `/**
- * Construct a ${fullTypeName} instance
- * @sig ${fullTypeName.split('.').pop()} :: ${params} -> ${fullTypeName}${regexLines}
- */`
+    return `
+        /*
+         * Construct a ${fullTypeName} instance
+         * @sig ${shortName} :: ${params} -> ${fullTypeName}${regexLines}
+         */`
 }
 
 export { generateConstructorSig }

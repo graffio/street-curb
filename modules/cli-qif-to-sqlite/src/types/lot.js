@@ -24,7 +24,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Lot instance
  * @sig Lot :: (AccountId, Number, String, Id, String, Number, Number, SecurityId, CreatedByTransactionId, String?) -> Lot
  *     AccountId = /^acc_[a-f0-9]{12}$/
@@ -83,13 +84,13 @@ const Lot = function Lot(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig lotToString :: () -> String
  */
 const lotToString = function () {
-    return `Lot(
-        ${R._toString(this.accountId)},
+    return `Lot(${R._toString(this.accountId)},
         ${R._toString(this.costBasis)},
         ${R._toString(this.createdAt)},
         ${R._toString(this.id)},
@@ -98,11 +99,10 @@ const lotToString = function () {
         ${R._toString(this.remainingQuantity)},
         ${R._toString(this.securityId)},
         ${R._toString(this.createdByTransactionId)},
-        ${R._toString(this.closedDate)},
-    )`
+        ${R._toString(this.closedDate)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig lotToJSON :: () -> Object
  */

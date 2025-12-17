@@ -6,7 +6,7 @@
  *
  *  id               : FieldTypes.tableLayoutId,
  *  columnDescriptors: "{ColumnDescriptor:id}",
- *  sortOrder        : "[/^col_[a-zA-Z][a-zA-Z0-9_]*$/]"
+ *  sortOrder        : /^col_[a-zA-Z][a-zA-Z0-9_]*$/
  *
  */
 
@@ -21,9 +21,10 @@ import { ColumnDescriptor } from './column-descriptor.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a TableLayout instance
- * @sig TableLayout :: ([Object], {ColumnDescriptor}, [SortOrder]) -> TableLayout
+ * @sig TableLayout :: (String, {ColumnDescriptor}, [SortOrder]) -> TableLayout
  *     SortOrder = /^col_[a-zA-Z][a-zA-Z0-9_]*$/
  */
 const TableLayout = function TableLayout(id, columnDescriptors, sortOrder) {
@@ -45,6 +46,7 @@ const TableLayout = function TableLayout(id, columnDescriptors, sortOrder) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig tablelayoutToString :: () -> String
@@ -53,7 +55,7 @@ const tablelayoutToString = function () {
     return `TableLayout(${R._toString(this.id)}, ${R._toString(this.columnDescriptors)}, ${R._toString(this.sortOrder)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig tablelayoutToJSON :: () -> Object
  */

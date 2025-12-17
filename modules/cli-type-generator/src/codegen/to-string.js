@@ -6,6 +6,37 @@
  * @sig generateNamedToString :: (String, String, FieldMap) -> String
  */
 const generateNamedToString = (funcName, typeName, fields) => {
+    /*
+     * Return a string on a single line < 120 characters
+     * @sig singleLineReturnStatement = () -> String
+     */
+    const singleLineReturnStatement = () => `
+
+        /**
+         * Convert to string representation
+         * @sig ${funcName} :: () -> String
+         */
+        const ${funcName} = function () {
+            return \`${typeName}(${fieldStrings.join(', ')})\`
+        }`
+
+    /*
+     * Return a string on a multiple lines to keep the line length < 120 characters
+     * @sig multipleLineReturnStatement = () -> String
+     */
+    const multipleLineReturnStatement = () => {
+        const indentedFields = fieldStrings.join(',\n        ')
+        return `
+
+            /** JMG
+             * Convert to string representation
+             * @sig ${funcName} :: () -> String
+             */
+            const ${funcName} = function () {
+                return \`${typeName}(${indentedFields})\`
+            }`
+    }
+
     const fieldKeys = Object.keys(fields)
     const fieldStrings = fieldKeys.map(f => `\${R._toString(this.${f})}`)
 
@@ -14,26 +45,7 @@ const generateNamedToString = (funcName, typeName, fields) => {
     const estimatedLength = 12 + singleLineReturn.length // "    return `" + content + "`"
 
     // If too long, split across multiple lines
-    if (estimatedLength > 120) {
-        const indentedFields = fieldStrings.map(s => `        ${s}`).join(',\n')
-        return `/**
- * Convert to string representation
- * @sig ${funcName} :: () -> String
- */
-const ${funcName} = function () {
-    return \`${typeName}(
-${indentedFields},
-    )\`
-}`
-    }
-
-    return `/**
- * Convert to string representation
- * @sig ${funcName} :: () -> String
- */
-const ${funcName} = function () {
-    return \`${typeName}(${fieldStrings.join(', ')})\`
-}`
+    return estimatedLength > 120 ? multipleLineReturnStatement() : singleLineReturnStatement()
 }
 
 export { generateNamedToString }

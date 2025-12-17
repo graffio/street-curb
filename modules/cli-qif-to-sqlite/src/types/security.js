@@ -19,7 +19,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Security instance
  * @sig Security :: (Id, String, String?, String?, String?) -> Security
  *     Id = /^sec_[a-f0-9]{12}$/
@@ -47,21 +48,20 @@ const Security = function Security(id, name, symbol, type, goal) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig securityToString :: () -> String
  */
 const securityToString = function () {
-    return `Security(
-        ${R._toString(this.id)},
+    return `Security(${R._toString(this.id)},
         ${R._toString(this.name)},
         ${R._toString(this.symbol)},
         ${R._toString(this.type)},
-        ${R._toString(this.goal)},
-    )`
+        ${R._toString(this.goal)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig securityToJSON :: () -> Object
  */

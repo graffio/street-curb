@@ -2,6 +2,7 @@
 // ABOUTME: Orchestrates code generation modules to produce JavaScript type files
 
 import { generateConstructorSig } from './codegen/constructor-sig.js'
+import { generateFrom, generateTypeConstructor } from './codegen/expressions.js'
 import { generateImportsSection } from './codegen/imports.js'
 import { generateIsMethod } from './codegen/is-method.js'
 import { generateFromFirestoreField, generateToFirestoreValue } from './codegen/serialization.js'
@@ -10,7 +11,6 @@ import { generateNamedToString } from './codegen/to-string.js'
 import FieldDescriptor from './descriptors/field-descriptor.js'
 import { getExistingStandardFunctions } from './parse-type-definition-file.js'
 import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
-import Generator from './tagged-type-function-generators.js'
 
 /*
  * Generate ABOUTME header comments for a type file
@@ -169,7 +169,7 @@ const generateStaticTaggedType = async typeDefinition => {
         //
         // -------------------------------------------------------------------------------------------------------------
         ${generateConstructorSig(name, fields)}
-        const ${name} = ${Generator.generateTypeConstructor(name, name, fields)}
+        const ${name} = ${generateTypeConstructor(name, name, fields)}
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -202,7 +202,7 @@ const generateStaticTaggedType = async typeDefinition => {
         ${name}.toString = () => '${name}'
         ${name}.is = v => v && v['@@typeName'] === '${name}'
 
-        ${`${name}._from = ${Generator.generateFrom('prototype', name, name, fields)}`}
+        ${`${name}._from = ${generateFrom('prototype', name, name, fields)}`}
         ${shouldGenerate('from', existingStandard) ? `${name}.from = ${name}._from` : ''}
 
         ${generateToFirestore(name, fields)}
@@ -333,8 +333,8 @@ const generateStaticTaggedSumType = async typeDefinition => {
             // Validate no [Date] arrays since Firestore facade can't handle them
             validateNoDateArrays(fullName, flds)
 
-            const constructorCode = Generator.generateTypeConstructor(vName, fullName, flds)
-            const fromCode = Generator.generateFrom('prototype', vName, fullName, flds)
+            const constructorCode = generateTypeConstructor(vName, fullName, flds)
+            const fromCode = generateFrom('prototype', vName, fullName, flds)
 
             return `
         // -------------------------------------------------------------------------------------------------------------

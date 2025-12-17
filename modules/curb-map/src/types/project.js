@@ -23,9 +23,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Project instance
- * @sig Project :: ([Object], [Object], String, Date, [Object], Date, [Object]) -> Project
+ * @sig Project :: (String, String, String, Date, String, Date, String) -> Project
  */
 const Project = function Project(id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy) {
     const constructorName = 'Project(id, organizationId, name, createdAt, createdBy, updatedAt, updatedBy)'
@@ -54,23 +55,22 @@ const Project = function Project(id, organizationId, name, createdAt, createdBy,
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig projectToString :: () -> String
  */
 const projectToString = function () {
-    return `Project(
-        ${R._toString(this.id)},
+    return `Project(${R._toString(this.id)},
         ${R._toString(this.organizationId)},
         ${R._toString(this.name)},
         ${R._toString(this.createdAt)},
         ${R._toString(this.createdBy)},
         ${R._toString(this.updatedAt)},
-        ${R._toString(this.updatedBy)},
-    )`
+        ${R._toString(this.updatedBy)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig projectToJSON :: () -> Object
  */

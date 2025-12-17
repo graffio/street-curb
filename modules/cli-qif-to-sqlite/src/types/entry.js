@@ -119,20 +119,19 @@ Entry.prototype = EntryPrototype
 // Variant Entry.Account
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig accountToString :: () -> String
  */
 const accountToString = function () {
-    return `Entry.Account(
-        ${R._toString(this.name)},
+    return `Entry.Account(${R._toString(this.name)},
         ${R._toString(this.type)},
         ${R._toString(this.description)},
-        ${R._toString(this.creditLimit)},
-    )`
+        ${R._toString(this.creditLimit)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig accountToJSON :: () -> Object
  */
@@ -140,7 +139,7 @@ const accountToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Account instance
  * @sig Account :: (String, Type, String?, Number?) -> Entry.Account
  *     Type = /^(Bank|Cash|Credit Card|Investment|Mutual|Other Asset|Other Liability|Portfolio|401.k..403.b.)$/
@@ -194,23 +193,22 @@ AccountConstructor.fromFirestore = AccountConstructor._from
 // Variant Entry.Category
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig categoryToString :: () -> String
  */
 const categoryToString = function () {
-    return `Entry.Category(
-        ${R._toString(this.name)},
+    return `Entry.Category(${R._toString(this.name)},
         ${R._toString(this.budgetAmount)},
         ${R._toString(this.description)},
         ${R._toString(this.excluded)},
         ${R._toString(this.isIncomeCategory)},
         ${R._toString(this.isTaxRelated)},
-        ${R._toString(this.taxSchedule)},
-    )`
+        ${R._toString(this.taxSchedule)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig categoryToJSON :: () -> Object
  */
@@ -218,7 +216,7 @@ const categoryToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Category instance
  * @sig Category :: (String, Number?, String?, Boolean?, Boolean?, Boolean?, String?) -> Entry.Category
  */
@@ -280,6 +278,7 @@ CategoryConstructor.fromFirestore = CategoryConstructor._from
 // Variant Entry.Class
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig classToString :: () -> String
@@ -288,7 +287,7 @@ const classToString = function () {
     return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig classToJSON :: () -> Object
  */
@@ -296,7 +295,7 @@ const classToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Class instance
  * @sig Class :: (String, String?, String?) -> Entry.Class
  */
@@ -341,20 +340,19 @@ ClassConstructor.fromFirestore = ClassConstructor._from
 // Variant Entry.Payee
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig payeeToString :: () -> String
  */
 const payeeToString = function () {
-    return `Entry.Payee(
-        ${R._toString(this.name)},
+    return `Entry.Payee(${R._toString(this.name)},
         ${R._toString(this.address)},
         ${R._toString(this.memo)},
-        ${R._toString(this.defaultCategory)},
-    )`
+        ${R._toString(this.defaultCategory)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig payeeToJSON :: () -> Object
  */
@@ -362,7 +360,7 @@ const payeeToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Payee instance
  * @sig Payee :: (String, [String]?, String?, String?) -> Entry.Payee
  */
@@ -409,6 +407,7 @@ PayeeConstructor.fromFirestore = PayeeConstructor._from
 // Variant Entry.Price
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig priceToString :: () -> String
@@ -417,7 +416,7 @@ const priceToString = function () {
     return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig priceToJSON :: () -> Object
  */
@@ -425,7 +424,7 @@ const priceToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Price instance
  * @sig Price :: (String, Number, Object) -> Entry.Price
  */
@@ -470,20 +469,19 @@ PriceConstructor.fromFirestore = PriceConstructor._from
 // Variant Entry.Security
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig securityToString :: () -> String
  */
 const securityToString = function () {
-    return `Entry.Security(
-        ${R._toString(this.name)},
+    return `Entry.Security(${R._toString(this.name)},
         ${R._toString(this.goal)},
         ${R._toString(this.symbol)},
-        ${R._toString(this.type)},
-    )`
+        ${R._toString(this.type)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig securityToJSON :: () -> Object
  */
@@ -491,7 +489,7 @@ const securityToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Security instance
  * @sig Security :: (String, String?, String?, String?) -> Entry.Security
  */
@@ -538,6 +536,7 @@ SecurityConstructor.fromFirestore = SecurityConstructor._from
 // Variant Entry.Tag
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig tagToString :: () -> String
@@ -546,7 +545,7 @@ const tagToString = function () {
     return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig tagToJSON :: () -> Object
  */
@@ -554,7 +553,7 @@ const tagToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.Tag instance
  * @sig Tag :: (String, String?, String?) -> Entry.Tag
  */
@@ -599,13 +598,13 @@ TagConstructor.fromFirestore = TagConstructor._from
 // Variant Entry.TransactionBank
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig transactionBankToString :: () -> String
  */
 const transactionBankToString = function () {
-    return `Entry.TransactionBank(
-        ${R._toString(this.account)},
+    return `Entry.TransactionBank(${R._toString(this.account)},
         ${R._toString(this.amount)},
         ${R._toString(this.date)},
         ${R._toString(this.transactionType)},
@@ -615,11 +614,10 @@ const transactionBankToString = function () {
         ${R._toString(this.memo)},
         ${R._toString(this.number)},
         ${R._toString(this.payee)},
-        ${R._toString(this.splits)},
-    )`
+        ${R._toString(this.splits)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig transactionBankToJSON :: () -> Object
  */
@@ -627,7 +625,7 @@ const transactionBankToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.TransactionBank instance
  * @sig TransactionBank :: (String, Number, Object, TransactionType, [String]?, String?, String?, String?, String?, String?, [Split]?) -> Entry.TransactionBank
  *     TransactionType = /^(Bank|Cash|Credit Card|Invoice|Other Asset|Other Liability)$/
@@ -765,13 +763,13 @@ TransactionBankConstructor.fromFirestore = TransactionBankConstructor._fromFires
 // Variant Entry.TransactionInvestment
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig transactionInvestmentToString :: () -> String
  */
 const transactionInvestmentToString = function () {
-    return `Entry.TransactionInvestment(
-        ${R._toString(this.account)},
+    return `Entry.TransactionInvestment(${R._toString(this.account)},
         ${R._toString(this.date)},
         ${R._toString(this.transactionType)},
         ${R._toString(this.number)},
@@ -784,11 +782,10 @@ const transactionInvestmentToString = function () {
         ${R._toString(this.payee)},
         ${R._toString(this.price)},
         ${R._toString(this.quantity)},
-        ${R._toString(this.security)},
-    )`
+        ${R._toString(this.security)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig transactionInvestmentToJSON :: () -> Object
  */
@@ -796,7 +793,7 @@ const transactionInvestmentToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Entry.TransactionInvestment instance
  * @sig TransactionInvestment :: (String, Object, TransactionType, String?, [String]?, Number?, String?, String?, Number?, String?, String?, Number?, Number?, String?) -> Entry.TransactionInvestment
  *     TransactionType = /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|XIn|XOut|WithdrwX)$/
@@ -912,7 +909,8 @@ TransactionInvestmentConstructor.toFirestore = o => ({ ...o })
 TransactionInvestmentConstructor.fromFirestore = TransactionInvestmentConstructor._from
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a Entry instance
  * @sig is :: Any -> Boolean
  */

@@ -127,6 +127,7 @@ Action.prototype = ActionPrototype
 // Variant Action.OrganizationCreated
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig organizationCreatedToString :: () -> String
@@ -135,7 +136,7 @@ const organizationCreatedToString = function () {
     return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig organizationCreatedToJSON :: () -> Object
  */
@@ -143,9 +144,9 @@ const organizationCreatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.OrganizationCreated instance
- * @sig OrganizationCreated :: (String, [Object]) -> Action.OrganizationCreated
+ * @sig OrganizationCreated :: (String, String) -> Action.OrganizationCreated
  */
 const OrganizationCreatedConstructor = function OrganizationCreated(name, projectId) {
     const constructorName = 'Action.OrganizationCreated(name, projectId)'
@@ -183,6 +184,7 @@ OrganizationCreatedConstructor.fromFirestore = OrganizationCreatedConstructor._f
 // Variant Action.OrganizationUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig organizationUpdatedToString :: () -> String
@@ -191,7 +193,7 @@ const organizationUpdatedToString = function () {
     return `Action.OrganizationUpdated(${R._toString(this.name)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig organizationUpdatedToJSON :: () -> Object
  */
@@ -199,7 +201,7 @@ const organizationUpdatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.OrganizationUpdated instance
  * @sig OrganizationUpdated :: (String?) -> Action.OrganizationUpdated
  */
@@ -237,6 +239,7 @@ OrganizationUpdatedConstructor.fromFirestore = OrganizationUpdatedConstructor._f
 // Variant Action.OrganizationDeleted
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig organizationDeletedToString :: () -> String
@@ -245,7 +248,7 @@ const organizationDeletedToString = function () {
     return `Action.OrganizationDeleted()`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig organizationDeletedToJSON :: () -> Object
  */
@@ -253,7 +256,7 @@ const organizationDeletedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.OrganizationDeleted instance
  * @sig OrganizationDeleted :: () -> Action.OrganizationDeleted
  */
@@ -290,6 +293,7 @@ OrganizationDeletedConstructor.fromFirestore = OrganizationDeletedConstructor._f
 // Variant Action.MemberAdded
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig memberAddedToString :: () -> String
@@ -298,7 +302,7 @@ const memberAddedToString = function () {
     return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig memberAddedToJSON :: () -> Object
  */
@@ -306,9 +310,9 @@ const memberAddedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.MemberAdded instance
- * @sig MemberAdded :: ([Object], [Object], String) -> Action.MemberAdded
+ * @sig MemberAdded :: (String, String, String) -> Action.MemberAdded
  */
 const MemberAddedConstructor = function MemberAdded(userId, role, displayName) {
     const constructorName = 'Action.MemberAdded(userId, role, displayName)'
@@ -351,6 +355,7 @@ MemberAddedConstructor.fromFirestore = MemberAddedConstructor._from
 // Variant Action.RoleChanged
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig roleChangedToString :: () -> String
@@ -359,7 +364,7 @@ const roleChangedToString = function () {
     return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig roleChangedToJSON :: () -> Object
  */
@@ -367,9 +372,9 @@ const roleChangedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.RoleChanged instance
- * @sig RoleChanged :: ([Object], [Object]) -> Action.RoleChanged
+ * @sig RoleChanged :: (String, String) -> Action.RoleChanged
  */
 const RoleChangedConstructor = function RoleChanged(userId, role) {
     const constructorName = 'Action.RoleChanged(userId, role)'
@@ -407,6 +412,7 @@ RoleChangedConstructor.fromFirestore = RoleChangedConstructor._from
 // Variant Action.MemberRemoved
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig memberRemovedToString :: () -> String
@@ -415,7 +421,7 @@ const memberRemovedToString = function () {
     return `Action.MemberRemoved(${R._toString(this.userId)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig memberRemovedToJSON :: () -> Object
  */
@@ -423,9 +429,9 @@ const memberRemovedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.MemberRemoved instance
- * @sig MemberRemoved :: ([Object]) -> Action.MemberRemoved
+ * @sig MemberRemoved :: (String) -> Action.MemberRemoved
  */
 const MemberRemovedConstructor = function MemberRemoved(userId) {
     const constructorName = 'Action.MemberRemoved(userId)'
@@ -461,19 +467,18 @@ MemberRemovedConstructor.fromFirestore = MemberRemovedConstructor._from
 // Variant Action.UserCreated
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig userCreatedToString :: () -> String
  */
 const userCreatedToString = function () {
-    return `Action.UserCreated(
-        ${R._toString(this.userId)},
+    return `Action.UserCreated(${R._toString(this.userId)},
         ${R._toString(this.displayName)},
-        ${R._toString(this.email)},
-    )`
+        ${R._toString(this.email)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig userCreatedToJSON :: () -> Object
  */
@@ -481,9 +486,9 @@ const userCreatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.UserCreated instance
- * @sig UserCreated :: ([Object], String, [Object]) -> Action.UserCreated
+ * @sig UserCreated :: (String, String, String) -> Action.UserCreated
  */
 const UserCreatedConstructor = function UserCreated(userId, displayName, email) {
     const constructorName = 'Action.UserCreated(userId, displayName, email)'
@@ -526,6 +531,7 @@ UserCreatedConstructor.fromFirestore = UserCreatedConstructor._from
 // Variant Action.UserUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig userUpdatedToString :: () -> String
@@ -534,7 +540,7 @@ const userUpdatedToString = function () {
     return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig userUpdatedToJSON :: () -> Object
  */
@@ -542,9 +548,9 @@ const userUpdatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.UserUpdated instance
- * @sig UserUpdated :: ([Object], String?) -> Action.UserUpdated
+ * @sig UserUpdated :: (String, String?) -> Action.UserUpdated
  */
 const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
     const constructorName = 'Action.UserUpdated(userId, displayName)'
@@ -582,6 +588,7 @@ UserUpdatedConstructor.fromFirestore = UserUpdatedConstructor._from
 // Variant Action.UserForgotten
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig userForgottenToString :: () -> String
@@ -590,7 +597,7 @@ const userForgottenToString = function () {
     return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig userForgottenToJSON :: () -> Object
  */
@@ -598,9 +605,9 @@ const userForgottenToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.UserForgotten instance
- * @sig UserForgotten :: ([Object], String) -> Action.UserForgotten
+ * @sig UserForgotten :: (String, String) -> Action.UserForgotten
  */
 const UserForgottenConstructor = function UserForgotten(userId, reason) {
     const constructorName = 'Action.UserForgotten(userId, reason)'
@@ -638,6 +645,7 @@ UserForgottenConstructor.fromFirestore = UserForgottenConstructor._from
 // Variant Action.AuthenticationCompleted
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig authenticationCompletedToString :: () -> String
@@ -646,7 +654,7 @@ const authenticationCompletedToString = function () {
     return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig authenticationCompletedToJSON :: () -> Object
  */
@@ -654,9 +662,9 @@ const authenticationCompletedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.AuthenticationCompleted instance
- * @sig AuthenticationCompleted :: ([Object], String) -> Action.AuthenticationCompleted
+ * @sig AuthenticationCompleted :: (String, String) -> Action.AuthenticationCompleted
  */
 const AuthenticationCompletedConstructor = function AuthenticationCompleted(email, displayName) {
     const constructorName = 'Action.AuthenticationCompleted(email, displayName)'
@@ -694,6 +702,7 @@ AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstr
 // Variant Action.UserLoaded
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig userLoadedToString :: () -> String
@@ -702,7 +711,7 @@ const userLoadedToString = function () {
     return `Action.UserLoaded(${R._toString(this.user)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig userLoadedToJSON :: () -> Object
  */
@@ -710,7 +719,7 @@ const userLoadedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.UserLoaded instance
  * @sig UserLoaded :: (User) -> Action.UserLoaded
  */
@@ -758,6 +767,7 @@ UserLoadedConstructor.fromFirestore = UserLoadedConstructor._fromFirestore
 // Variant Action.OrganizationSynced
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig organizationSyncedToString :: () -> String
@@ -766,7 +776,7 @@ const organizationSyncedToString = function () {
     return `Action.OrganizationSynced(${R._toString(this.organization)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig organizationSyncedToJSON :: () -> Object
  */
@@ -774,7 +784,7 @@ const organizationSyncedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.OrganizationSynced instance
  * @sig OrganizationSynced :: (Organization) -> Action.OrganizationSynced
  */
@@ -824,6 +834,7 @@ OrganizationSyncedConstructor.fromFirestore = OrganizationSyncedConstructor._fro
 // Variant Action.BlockfacesSynced
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig blockfacesSyncedToString :: () -> String
@@ -832,7 +843,7 @@ const blockfacesSyncedToString = function () {
     return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig blockfacesSyncedToJSON :: () -> Object
  */
@@ -840,7 +851,7 @@ const blockfacesSyncedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.BlockfacesSynced instance
  * @sig BlockfacesSynced :: ([Blockface]) -> Action.BlockfacesSynced
  */
@@ -890,6 +901,7 @@ BlockfacesSyncedConstructor.fromFirestore = BlockfacesSyncedConstructor._fromFir
 // Variant Action.BlockfaceCreated
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig blockfaceCreatedToString :: () -> String
@@ -898,7 +910,7 @@ const blockfaceCreatedToString = function () {
     return `Action.BlockfaceCreated(${R._toString(this.blockface)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig blockfaceCreatedToJSON :: () -> Object
  */
@@ -906,7 +918,7 @@ const blockfaceCreatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.BlockfaceCreated instance
  * @sig BlockfaceCreated :: (Blockface) -> Action.BlockfaceCreated
  */
@@ -956,6 +968,7 @@ BlockfaceCreatedConstructor.fromFirestore = BlockfaceCreatedConstructor._fromFir
 // Variant Action.BlockfaceSelected
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig blockfaceSelectedToString :: () -> String
@@ -964,7 +977,7 @@ const blockfaceSelectedToString = function () {
     return `Action.BlockfaceSelected(${R._toString(this.blockface)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig blockfaceSelectedToJSON :: () -> Object
  */
@@ -972,7 +985,7 @@ const blockfaceSelectedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.BlockfaceSelected instance
  * @sig BlockfaceSelected :: (Blockface) -> Action.BlockfaceSelected
  */
@@ -1022,6 +1035,7 @@ BlockfaceSelectedConstructor.fromFirestore = BlockfaceSelectedConstructor._fromF
 // Variant Action.BlockfaceSaved
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig blockfaceSavedToString :: () -> String
@@ -1030,7 +1044,7 @@ const blockfaceSavedToString = function () {
     return `Action.BlockfaceSaved(${R._toString(this.blockface)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig blockfaceSavedToJSON :: () -> Object
  */
@@ -1038,7 +1052,7 @@ const blockfaceSavedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.BlockfaceSaved instance
  * @sig BlockfaceSaved :: (Blockface) -> Action.BlockfaceSaved
  */
@@ -1088,6 +1102,7 @@ BlockfaceSavedConstructor.fromFirestore = BlockfaceSavedConstructor._fromFiresto
 // Variant Action.SegmentUseUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig segmentUseUpdatedToString :: () -> String
@@ -1096,7 +1111,7 @@ const segmentUseUpdatedToString = function () {
     return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig segmentUseUpdatedToJSON :: () -> Object
  */
@@ -1104,7 +1119,7 @@ const segmentUseUpdatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SegmentUseUpdated instance
  * @sig SegmentUseUpdated :: (Number, String) -> Action.SegmentUseUpdated
  */
@@ -1144,6 +1159,7 @@ SegmentUseUpdatedConstructor.fromFirestore = SegmentUseUpdatedConstructor._from
 // Variant Action.SegmentLengthUpdated
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig segmentLengthUpdatedToString :: () -> String
@@ -1152,7 +1168,7 @@ const segmentLengthUpdatedToString = function () {
     return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig segmentLengthUpdatedToJSON :: () -> Object
  */
@@ -1160,7 +1176,7 @@ const segmentLengthUpdatedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SegmentLengthUpdated instance
  * @sig SegmentLengthUpdated :: (Number, Number) -> Action.SegmentLengthUpdated
  */
@@ -1200,6 +1216,7 @@ SegmentLengthUpdatedConstructor.fromFirestore = SegmentLengthUpdatedConstructor.
 // Variant Action.SegmentAddedLeft
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig segmentAddedLeftToString :: () -> String
@@ -1208,7 +1225,7 @@ const segmentAddedLeftToString = function () {
     return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig segmentAddedLeftToJSON :: () -> Object
  */
@@ -1216,7 +1233,7 @@ const segmentAddedLeftToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SegmentAddedLeft instance
  * @sig SegmentAddedLeft :: (Number, Number) -> Action.SegmentAddedLeft
  */
@@ -1256,6 +1273,7 @@ SegmentAddedLeftConstructor.fromFirestore = SegmentAddedLeftConstructor._from
 // Variant Action.SegmentAdded
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig segmentAddedToString :: () -> String
@@ -1264,7 +1282,7 @@ const segmentAddedToString = function () {
     return `Action.SegmentAdded(${R._toString(this.targetIndex)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig segmentAddedToJSON :: () -> Object
  */
@@ -1272,7 +1290,7 @@ const segmentAddedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SegmentAdded instance
  * @sig SegmentAdded :: (Number) -> Action.SegmentAdded
  */
@@ -1310,6 +1328,7 @@ SegmentAddedConstructor.fromFirestore = SegmentAddedConstructor._from
 // Variant Action.SegmentsReplaced
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig segmentsReplacedToString :: () -> String
@@ -1318,7 +1337,7 @@ const segmentsReplacedToString = function () {
     return `Action.SegmentsReplaced(${R._toString(this.segments)})`
 }
 
-/**
+/*
  * Convert to JSON representation with tag
  * @sig segmentsReplacedToJSON :: () -> Object
  */
@@ -1326,7 +1345,7 @@ const segmentsReplacedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
 
-/**
+/*
  * Construct a Action.SegmentsReplaced instance
  * @sig SegmentsReplaced :: ([Segment]) -> Action.SegmentsReplaced
  */
@@ -1372,7 +1391,8 @@ SegmentsReplacedConstructor.toFirestore = SegmentsReplacedConstructor._toFiresto
 SegmentsReplacedConstructor.fromFirestore = SegmentsReplacedConstructor._fromFirestore
 
 // Define is method after variants are attached (allows destructuring)
-/**
+
+/*
  * Check if value is a Action instance
  * @sig is :: Any -> Boolean
  */

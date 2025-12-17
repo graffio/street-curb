@@ -85,6 +85,7 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/view.type.js`]            : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/tab-group.type.js`]       : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/tab-layout.type.js`]      : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/transaction-filter.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 

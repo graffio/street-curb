@@ -14,7 +14,7 @@ const generateToFirestoreValue = (fieldName, fieldType) => {
     // Handle Tagged type fields (might have nested serialization)
     const processTagged = () => `${parsed.taggedType}.toFirestore(o.${fieldName}, encodeTimestamps)`
 
-    /**
+    /*
      * Handle arrays of Tagged types
      * @sig processArrayOfTagged :: () -> String
      */
@@ -69,7 +69,7 @@ const generateFromFirestoreField = (fieldName, fieldType) => {
         return `${fieldName}: ${fromFirestoreCall(taggedType, accessor)}`
     }
 
-    /**
+    /*
      * Handle arrays of Tagged types
      * @sig processArrayOfTagged :: () -> String
      */

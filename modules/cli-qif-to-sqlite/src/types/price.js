@@ -18,7 +18,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Price instance
  * @sig Price :: (Id, SecurityId, String, Number) -> Price
  *     Id = /^prc_[a-f0-9]{12}$/
@@ -45,20 +46,19 @@ const Price = function Price(id, securityId, date, price) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig priceToString :: () -> String
  */
 const priceToString = function () {
-    return `Price(
-        ${R._toString(this.id)},
+    return `Price(${R._toString(this.id)},
         ${R._toString(this.securityId)},
         ${R._toString(this.date)},
-        ${R._toString(this.price)},
-    )`
+        ${R._toString(this.price)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig priceToJSON :: () -> Object
  */

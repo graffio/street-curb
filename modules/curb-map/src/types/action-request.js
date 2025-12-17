@@ -9,8 +9,8 @@
  *  actorId       : FieldTypes.actorId,
  *  subjectId     : FieldTypes.subjectId,
  *  subjectType   : /^(blockface|user|organization|project)$/,
- *  organizationId: "/^org_[a-z0-9]{12,}$/?",
- *  projectId     : "/^prj_[a-z0-9]{12,}$/?",
+ *  organizationId: /^org_[a-z0-9]{12,}$/,
+ *  projectId     : /^prj_[a-z0-9]{12,}$/,
  *  idempotencyKey: FieldTypes.idempotencyKey,
  *  resultData    : "Object?",
  *  error         : "String?",
@@ -32,9 +32,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a ActionRequest instance
- * @sig ActionRequest :: ([Object], Action, [Object], [Object], SubjectType, OrganizationId?, ProjectId?, [Object], Object?, String?, [Object], Number, Date, Date?) -> ActionRequest
+ * @sig ActionRequest :: (String, Action, String, String, SubjectType, OrganizationId?, ProjectId?, String, Object?, String?, String, Number, Date, Date?) -> ActionRequest
  *     SubjectType = /^(blockface|user|organization|project)$/
  *     OrganizationId = /^org_[a-z0-9]{12,}$/
  *     ProjectId = /^prj_[a-z0-9]{12,}$/
@@ -96,13 +97,13 @@ const ActionRequest = function ActionRequest(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig actionrequestToString :: () -> String
  */
 const actionrequestToString = function () {
-    return `ActionRequest(
-        ${R._toString(this.id)},
+    return `ActionRequest(${R._toString(this.id)},
         ${R._toString(this.action)},
         ${R._toString(this.actorId)},
         ${R._toString(this.subjectId)},
@@ -115,11 +116,10 @@ const actionrequestToString = function () {
         ${R._toString(this.correlationId)},
         ${R._toString(this.schemaVersion)},
         ${R._toString(this.createdAt)},
-        ${R._toString(this.processedAt)},
-    )`
+        ${R._toString(this.processedAt)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig actionrequestToJSON :: () -> Object
  */

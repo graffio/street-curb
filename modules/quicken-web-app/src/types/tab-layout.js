@@ -22,9 +22,10 @@ import { TabGroup } from './tab-group.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a TabLayout instance
- * @sig TabLayout :: ([Object], {TabGroup}, [Object], Number) -> TabLayout
+ * @sig TabLayout :: (String, {TabGroup}, String, Number) -> TabLayout
  */
 const TabLayout = function TabLayout(id, tabGroups, activeTabGroupId, nextTabGroupId) {
     const constructorName = 'TabLayout(id, tabGroups, activeTabGroupId, nextTabGroupId)'
@@ -47,20 +48,19 @@ const TabLayout = function TabLayout(id, tabGroups, activeTabGroupId, nextTabGro
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig tablayoutToString :: () -> String
  */
 const tablayoutToString = function () {
-    return `TabLayout(
-        ${R._toString(this.id)},
+    return `TabLayout(${R._toString(this.id)},
         ${R._toString(this.tabGroups)},
         ${R._toString(this.activeTabGroupId)},
-        ${R._toString(this.nextTabGroupId)},
-    )`
+        ${R._toString(this.nextTabGroupId)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig tablayoutToJSON :: () -> Object
  */

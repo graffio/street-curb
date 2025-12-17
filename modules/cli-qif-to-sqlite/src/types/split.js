@@ -17,7 +17,8 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Split instance
  * @sig Split :: (Number, String, String?) -> Split
  */
@@ -40,6 +41,7 @@ const Split = function Split(amount, category, memo) {
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
+
 /**
  * Convert to string representation
  * @sig splitToString :: () -> String
@@ -48,7 +50,7 @@ const splitToString = function () {
     return `Split(${R._toString(this.amount)}, ${R._toString(this.category)}, ${R._toString(this.memo)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig splitToJSON :: () -> Object
  */

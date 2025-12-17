@@ -10,7 +10,7 @@
  *  addedAt    : "Date",
  *  addedBy    : FieldTypes.userId,
  *  removedAt  : "Date?",
- *  removedBy  : "^usr_[a-z0-9]{12,}$/?"
+ *  removedBy  : FieldTypes.userId
  *
  */
 
@@ -23,9 +23,10 @@ import * as R from '@graffio/cli-type-generator'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a Member instance
- * @sig Member :: ([Object], String, [Object], Date, [Object], Date?, String?) -> Member
+ * @sig Member :: (String, String, String, Date, String, Date?, String?) -> Member
  */
 const Member = function Member(userId, displayName, role, addedAt, addedBy, removedAt, removedBy) {
     const constructorName = 'Member(userId, displayName, role, addedAt, addedBy, removedAt, removedBy)'
@@ -36,7 +37,7 @@ const Member = function Member(userId, displayName, role, addedAt, addedBy, remo
     R.validateDate(constructorName, 'addedAt', false, addedAt)
     R.validateRegex(constructorName, FieldTypes.userId, 'addedBy', false, addedBy)
     R.validateDate(constructorName, 'removedAt', true, removedAt)
-    R.validateTag(constructorName, '^usr_[a-z0-9]{12,}$/', 'removedBy', true, removedBy)
+    R.validateRegex(constructorName, FieldTypes.userId, 'removedBy', true, removedBy)
 
     const result = Object.create(prototype)
     result.userId = userId
@@ -54,23 +55,22 @@ const Member = function Member(userId, displayName, role, addedAt, addedBy, remo
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig memberToString :: () -> String
  */
 const memberToString = function () {
-    return `Member(
-        ${R._toString(this.userId)},
+    return `Member(${R._toString(this.userId)},
         ${R._toString(this.displayName)},
         ${R._toString(this.role)},
         ${R._toString(this.addedAt)},
         ${R._toString(this.addedBy)},
         ${R._toString(this.removedAt)},
-        ${R._toString(this.removedBy)},
-    )`
+        ${R._toString(this.removedBy)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig memberToJSON :: () -> Object
  */

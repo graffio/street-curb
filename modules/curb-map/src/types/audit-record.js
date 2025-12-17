@@ -31,9 +31,10 @@ import { OperationDetails } from './operation-details.js'
 // main constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/*
  * Construct a AuditRecord instance
- * @sig AuditRecord :: ([Object], [Object], [Object], [Object], [Object], [Object], Outcome, [Object], [Object], OperationDetails, String?, [Object], [Object]) -> AuditRecord
+ * @sig AuditRecord :: (String, String, String, String, String, String, Outcome, String, String, OperationDetails, String?, String, String) -> AuditRecord
  *     Outcome = /^(success|failure|pending)$/
  */
 const AuditRecord = function AuditRecord(
@@ -90,13 +91,13 @@ const AuditRecord = function AuditRecord(
 // prototype methods
 //
 // -------------------------------------------------------------------------------------------------------------
-/**
+
+/** JMG
  * Convert to string representation
  * @sig auditrecordToString :: () -> String
  */
 const auditrecordToString = function () {
-    return `AuditRecord(
-        ${R._toString(this.id)},
+    return `AuditRecord(${R._toString(this.id)},
         ${R._toString(this.timestamp)},
         ${R._toString(this.eventType)},
         ${R._toString(this.userId)},
@@ -108,11 +109,10 @@ const auditrecordToString = function () {
         ${R._toString(this.operationDetails)},
         ${R._toString(this.errorMessage)},
         ${R._toString(this.correlationId)},
-        ${R._toString(this.environment)},
-    )`
+        ${R._toString(this.environment)})`
 }
 
-/**
+/*
  * Convert to JSON representation
  * @sig auditrecordToJSON :: () -> Object
  */
