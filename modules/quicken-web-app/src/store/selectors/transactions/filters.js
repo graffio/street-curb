@@ -34,41 +34,28 @@ const transactionMatchesSearch = (transaction, searchQuery, categories) => {
 }
 
 /*
- * Check if a transaction matches a text query in any searchable field
- *
- * @sig matchesTextQuery :: (Transaction, String, LookupTable<Category>?) -> Boolean
- */
-const matchesTextQuery = (transaction, queryLower, categories) => {
-    const { description, memo, payee } = transaction
-
-    // Short-circuit: check each field individually, no array/string allocation
-    if (description?.toLowerCase().includes(queryLower)) return true
-    if (memo?.toLowerCase().includes(queryLower)) return true
-    if (payee?.toLowerCase().includes(queryLower)) return true
-    const categoryName = getCategoryName(transaction, categories)
-    if (categoryName?.toLowerCase().includes(queryLower)) return true
-    return false
-}
-
-/*
  * Filter transactions by text content
  *
  * @sig filterByText :: ([Transaction], String, LookupTable<Category>?) -> [Transaction]
  */
 const filterByText = (transactions, query, categories) => {
+    // @sig matchesTextQuery :: Transaction -> Boolean
+    const matchesTextQuery = transaction => {
+        const { description, memo, payee } = transaction
+
+        // Short-circuit: check each field individually, no array/string allocation
+        if (description?.toLowerCase().includes(queryLower)) return true
+        if (memo?.toLowerCase().includes(queryLower)) return true
+        if (payee?.toLowerCase().includes(queryLower)) return true
+        const categoryName = getCategoryName(transaction, categories)
+        if (categoryName?.toLowerCase().includes(queryLower)) return true
+        return false
+    }
+
     if (!query.trim()) return transactions
-
     const queryLower = query.toLowerCase()
-    return transactions.filter(t => matchesTextQuery(t, queryLower, categories))
-}
 
-// Check if a transaction date is within the given range bounds
-// @sig isInDateRange :: (Transaction, String?, String?) -> Boolean
-const isInDateRange = (transaction, startStr, endStr) => {
-    const dateStr = transaction.date // Already ISO string like "2024-06-15"
-    if (startStr && dateStr < startStr) return false
-    if (endStr && dateStr > endStr) return false
-    return true
+    return transactions.filter(matchesTextQuery)
 }
 
 /*
@@ -79,6 +66,14 @@ const isInDateRange = (transaction, startStr, endStr) => {
  *     DateRange = { start: Date?, end: Date? }
  */
 const filterByDateRange = (transactions, dateRange) => {
+    // @sig isInDateRange :: Transaction -> Boolean
+    const isInDateRange = transaction => {
+        const dateStr = transaction.date // Already ISO string like "2024-06-15"
+        if (startStr && dateStr < startStr) return false
+        if (endStr && dateStr > endStr) return false
+        return true
+    }
+
     const { end, start } = dateRange
     if (!start && !end) return transactions
 
@@ -86,7 +81,7 @@ const filterByDateRange = (transactions, dateRange) => {
     const startStr = start?.toISOString().slice(0, 10)
     const endStr = end?.toISOString().slice(0, 10)
 
-    return transactions.filter(t => isInDateRange(t, startStr, endStr))
+    return transactions.filter(isInDateRange)
 }
 
 /*
@@ -132,12 +127,23 @@ const getEarliestTransactionDate = transactions => {
     return transactions.reduce(findEarlier, new Date(transactions[0].date))
 }
 
+/*
+ * Filter transactions by account ID
+ *
+ * @sig filterByAccount :: ([Transaction], String) -> [Transaction]
+ */
+const filterByAccount = (transactions, accountId) => {
+    if (!accountId) return transactions
+    return transactions.filter(t => t.accountId === accountId)
+}
+
 export {
-    transactionMatchesSearch,
-    filterByText,
-    filterByDateRange,
-    filterByCategories,
     categoryMatches,
+    filterByAccount,
+    filterByCategories,
+    filterByDateRange,
+    filterByText,
     getCategoryName,
     getEarliestTransactionDate,
+    transactionMatchesSearch,
 }
