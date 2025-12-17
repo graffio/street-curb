@@ -100,7 +100,7 @@
  *
  * TODO: check that type names start with Capital letters
  * ----------------------------------------------------------------------------------------------------------------- */
-import FieldTypeIR from './ir/field-type-ir.js'
+import FieldDescriptor from './descriptors/field-descriptor.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Helpers
@@ -114,11 +114,36 @@ import FieldTypeIR from './ir/field-type-ir.js'
  */
 const generateTypeConstructor = (typeName, fullTypeName, fields) => {
     /**
+     * Generate guards that validate the type of an actual parameter to a constructor versus its "declared" type
+     * @sig generateTypeCheck :: (String, String, FieldType) -> String
+     */
+    // prettier-ignore
+    const generateTypeCheck = (cName, name, fieldType) => {
+        const descriptor = FieldDescriptor.fromAny(fieldType)
+        const { arrayDepth, baseType, fieldTypesReference, optional, regex, taggedType } = descriptor
+        const tag = taggedType ? `"${taggedType}"` : undefined
+
+        // Handle FieldTypes references (regex patterns imported from FieldTypes)
+        if (fieldTypesReference) return `R.validateRegex(constructorName, ${fieldTypesReference.fullReference}, '${name}', ${optional}, ${name})`
+
+        if (baseType === 'Any')         return ''
+        if (arrayDepth)                 return `R.validateArray(constructorName, ${arrayDepth}, '${baseType}', ${tag}, '${name}', ${optional}, ${name})`
+        if (baseType === 'LookupTable') return `R.validateLookupTable(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
+        if (regex)                      return `R.validateRegex(constructorName, ${regex}, '${name}', ${optional}, ${name})`
+        if (baseType === 'String')      return `R.validateString(constructorName, '${name}', ${optional}, ${name})`
+        if (baseType === 'Number')      return `R.validateNumber(constructorName, '${name}', ${optional}, ${name})`
+        if (baseType === 'Boolean')     return `R.validateBoolean(constructorName, '${name}', ${optional}, ${name})`
+        if (baseType === 'Object')      return `R.validateObject(constructorName, '${name}', ${optional}, ${name})`
+        if (baseType === 'Date')        return `R.validateDate(constructorName, '${name}', ${optional}, ${name})`
+        if (baseType === 'Tagged')      return `R.validateTag(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
+    }
+
+    /**
      * Generate assignment code for a field - handles optional fields
      * @sig generateAssignment :: String -> String
      */
     const generateAssignment = f => {
-        const { optional } = FieldTypeIR.fromAny(fields[f])
+        const { optional } = FieldDescriptor.fromAny(fields[f])
 
         // x != is JavaScript magic for NEITHER null NOR undefined
         return optional ? `if (${f} != null) result.${f} = ${f}` : `result.${f} = ${f}`
@@ -132,7 +157,7 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
     const assignments = keys.map(generateAssignment)
 
     // if there are optional values, skip the parameter count check
-    const hasOptional = Object.values(fields).some(f => FieldTypeIR.fromAny(f).optional)
+    const hasOptional = Object.values(fields).some(f => FieldDescriptor.fromAny(f).optional)
     const countCheck = hasOptional ? '' : `R.validateArgumentLength(constructorName, ${keys.length}, arguments)`
 
     return `
@@ -146,32 +171,6 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
             return result
         }
     `
-}
-
-/**
- * Generate guards that validate the type of an actual parameter to a constructor versus its "declared" type
- * @sig generateTypeCheck :: (String, String, FieldType) -> String
- */
-// prettier-ignore
-const generateTypeCheck = (constructorName, name, fieldType) => {
-    // Normalize all field types to IR
-    const ir = FieldTypeIR.fromAny(fieldType)
-    const { arrayDepth, baseType, fieldTypesReference, optional, regex, taggedType } = ir
-    const tag = taggedType ? `"${taggedType}"` : undefined
-
-    // Handle FieldTypes references (regex patterns imported from FieldTypes)
-    if (fieldTypesReference) return `R.validateRegex(constructorName, ${fieldTypesReference.fullReference}, '${name}', ${optional}, ${name})`
-
-    if (baseType === 'Any')         return ''
-    if (arrayDepth)                 return `R.validateArray(constructorName, ${arrayDepth}, '${baseType}', ${tag}, '${name}', ${optional}, ${name})`
-    if (baseType === 'LookupTable') return `R.validateLookupTable(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
-    if (regex)                      return `R.validateRegex(constructorName, ${regex}, '${name}', ${optional}, ${name})`
-    if (baseType === 'String')      return `R.validateString(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Number')      return `R.validateNumber(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Boolean')     return `R.validateBoolean(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Object')      return `R.validateObject(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Date')        return `R.validateDate(constructorName, '${name}', ${optional}, ${name})`
-    if (baseType === 'Tagged')      return `R.validateTag(constructorName, '${taggedType}', '${name}', ${optional}, ${name})`
 }
 
 /**

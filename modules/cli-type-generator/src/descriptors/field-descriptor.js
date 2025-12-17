@@ -1,8 +1,8 @@
-// ABOUTME: Intermediate representation for field types in type definitions
-// ABOUTME: Normalizes string, regex, and object inputs into a consistent IR schema
+// ABOUTME: Normalized descriptor for field types in type definitions
+// ABOUTME: Normalizes string, regex, and object inputs into a consistent schema
 
 // ---------------------------------------------------------------------------------------------------------------------
-// IR Schema
+// FieldDescriptor Schema
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // {
@@ -18,10 +18,10 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Create an IR object with defaults for any unspecified fields
- * @sig createIR :: Object? -> FieldTypeIR
+ * Create a descriptor with defaults for any unspecified fields
+ * @sig create :: Object? -> FieldDescriptor
  */
-const createIR = (overrides = {}) => ({
+const create = (overrides = {}) => ({
     baseType: null,
     optional: false,
     arrayDepth: 0,
@@ -77,8 +77,8 @@ const checkLookupTable = s => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Parse a string field type into IR
- * @sig fromString :: String -> FieldTypeIR
+ * Parse a string field type into a descriptor
+ * @sig fromString :: String -> FieldDescriptor
  */
 const fromString = input => {
     let s = String(input)
@@ -90,7 +90,7 @@ const fromString = input => {
     // Check LookupTable before array (it uses {} not [])
     const lookupTable = checkLookupTable(s)
     if (lookupTable)
-        return createIR({
+        return create({
             baseType: 'LookupTable',
             optional,
             taggedType: lookupTable.typeName,
@@ -103,18 +103,18 @@ const fromString = input => {
 
     // Check regex
     const regex = checkRegex(s)
-    if (regex) return createIR({ baseType: 'String', optional, arrayDepth, regex })
+    if (regex) return create({ baseType: 'String', optional, arrayDepth, regex })
 
     // Check primitives
-    if (s === 'String') return createIR({ baseType: 'String', optional, arrayDepth })
-    if (s === 'Number') return createIR({ baseType: 'Number', optional, arrayDepth })
-    if (s === 'Boolean') return createIR({ baseType: 'Boolean', optional, arrayDepth })
-    if (s === 'Object') return createIR({ baseType: 'Object', optional, arrayDepth })
-    if (s === 'Date') return createIR({ baseType: 'Date', optional, arrayDepth })
-    if (s === 'Any') return createIR({ baseType: 'Any', optional, arrayDepth })
+    if (s === 'String') return create({ baseType: 'String', optional, arrayDepth })
+    if (s === 'Number') return create({ baseType: 'Number', optional, arrayDepth })
+    if (s === 'Boolean') return create({ baseType: 'Boolean', optional, arrayDepth })
+    if (s === 'Object') return create({ baseType: 'Object', optional, arrayDepth })
+    if (s === 'Date') return create({ baseType: 'Date', optional, arrayDepth })
+    if (s === 'Any') return create({ baseType: 'Any', optional, arrayDepth })
 
     // Default: Tagged type
-    return createIR({ baseType: 'Tagged', optional, arrayDepth, taggedType: s })
+    return create({ baseType: 'Tagged', optional, arrayDepth, taggedType: s })
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -122,9 +122,9 @@ const fromString = input => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Parse an object field type into IR
+ * Parse an object field type into a descriptor
  * Handles FieldTypes references and wrapper objects
- * @sig fromObject :: Object -> FieldTypeIR
+ * @sig fromObject :: Object -> FieldDescriptor
  */
 const fromObject = input => {
     const { isFieldTypesReference, optional, pattern, property, fullReference } = input
@@ -132,7 +132,7 @@ const fromObject = input => {
     // Check for wrapper syntax: { pattern: FieldTypes.X, optional: true }
     if (pattern?.isFieldTypesReference) {
         const { fullReference: patternRef, property: patternProp } = pattern
-        return createIR({
+        return create({
             baseType: 'String',
             optional: optional === true,
             fieldTypesReference: { property: patternProp, fullReference: patternRef },
@@ -141,7 +141,7 @@ const fromObject = input => {
 
     // Check for direct FieldTypes reference
     if (isFieldTypesReference)
-        return createIR({
+        return create({
             baseType: 'String',
             optional: optional === true,
             fieldTypesReference: { property, fullReference },
@@ -155,13 +155,13 @@ const fromObject = input => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Parse any field type input into IR
+ * Parse any field type input into a descriptor
  * Handles strings, RegExp, and objects
- * @sig fromAny :: (String | RegExp | Object) -> FieldTypeIR
+ * @sig fromAny :: (String | RegExp | Object) -> FieldDescriptor
  */
 const fromAny = input => {
     if (typeof input === 'string') return fromString(input)
-    if (input instanceof RegExp) return createIR({ baseType: 'String', regex: input })
+    if (input instanceof RegExp) return create({ baseType: 'String', regex: input })
     if (typeof input === 'object' && input !== null) return fromObject(input)
 
     throw new Error(`Unknown field type input: ${input}`)
@@ -171,6 +171,6 @@ const fromAny = input => {
 // Exports
 // ---------------------------------------------------------------------------------------------------------------------
 
-const FieldTypeIR = { fromString, fromObject, fromAny }
+const FieldDescriptor = { fromString, fromObject, fromAny }
 
-export default FieldTypeIR
+export default FieldDescriptor
