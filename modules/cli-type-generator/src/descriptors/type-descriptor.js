@@ -9,7 +9,7 @@ import FieldDescriptor from './field-descriptor.js'
 //
 // Tagged:
 // {
-//     kind: 'Tagged',
+//     kind: 'tagged',
 //     name: 'Account',
 //     fields: { id: FieldDescriptor, balance: FieldDescriptor },
 //     childTypes: ['Category'],      // Referenced Tagged types (for imports)
@@ -20,15 +20,13 @@ import FieldDescriptor from './field-descriptor.js'
 //
 // TaggedSum:
 // {
-//     kind: 'TaggedSum',
+//     kind: 'taggedSum',
 //     name: 'View',
 //     variants: {
-//         Register: {
-//             fields: { id: FieldDescriptor, accountId: FieldDescriptor },
-//             childTypes: [],
-//         },
-//         ...
+//         Register: { id: FieldDescriptor, accountId: FieldDescriptor },  // flat field map
+//         Report: { id: FieldDescriptor, reportType: FieldDescriptor },
 //     },
+//     childTypes: ['Account'],      // Union of all variant childTypes
 //     needsLookupTable: false,
 //     imports: [...],
 //     functions: [...]
@@ -75,21 +73,32 @@ const normalize = parseResult => {
         const { name, fields: rawFields } = typeDefinition
         const { fields, childTypes, hasLookupTable } = normalizeFields(rawFields)
 
-        return { kind: 'Tagged', name, fields, childTypes, needsLookupTable: hasLookupTable, imports, functions }
+        return { kind: 'tagged', name, fields, childTypes, needsLookupTable: hasLookupTable, imports, functions }
     }
 
     /**
      * Normalize a TaggedSum type definition
+     * For backward compatibility, variants are flat field maps (not wrapped in { fields, childTypes })
+     * childTypes is aggregated at the type level as union of all variants
      * @sig normalizeTaggedSum :: ParseResult -> TypeDescriptor
      */
     const normalizeTaggedSum = pr => {
         /**
-         * Process a single variant, mutating the variants object
+         * Add a child type to the collection if not already present
+         * @sig addChildType :: String -> void
+         */
+        const addChildType = t => {
+            if (!childTypes.includes(t)) childTypes.push(t)
+        }
+
+        /**
+         * Process a single variant, returning normalized fields and tracking childTypes
          * @sig processVariant :: [String, Object] -> void
          */
         const processVariant = ([variantName, variantFields]) => {
-            const { fields, childTypes, hasLookupTable } = normalizeFields(variantFields)
-            variants[variantName] = { fields, childTypes }
+            const { fields, childTypes: variantChildTypes, hasLookupTable } = normalizeFields(variantFields)
+            variants[variantName] = fields
+            variantChildTypes.forEach(addChildType)
             if (hasLookupTable) needsLookupTable = true
         }
 
@@ -97,10 +106,11 @@ const normalize = parseResult => {
         const { name, variants: rawVariants } = typeDefinition
 
         const variants = {}
+        const childTypes = []
         let needsLookupTable = false
         Object.entries(rawVariants).forEach(processVariant)
 
-        return { kind: 'TaggedSum', name, variants, needsLookupTable, imports, functions }
+        return { kind: 'taggedSum', name, variants, childTypes, needsLookupTable, imports, functions }
     }
 
     const { kind } = parseResult.typeDefinition

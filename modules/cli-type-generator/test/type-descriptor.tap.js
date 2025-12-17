@@ -17,7 +17,7 @@ t.test('TypeDescriptor', t => {
                 const descriptor = TypeDescriptor.normalize(parseResult)
                 const { childTypes, fields, kind, name, needsLookupTable } = descriptor
 
-                t.equal(kind, 'Tagged', 'Then kind is Tagged')
+                t.equal(kind, 'tagged', 'Then kind is tagged')
                 t.equal(name, 'Account', 'Then name is Account')
                 t.equal(fields.id.baseType, 'String', 'Then id field baseType is String')
                 t.equal(fields.balance.baseType, 'Number', 'Then balance field baseType is Number')
@@ -39,7 +39,7 @@ t.test('TypeDescriptor', t => {
 
                 const descriptor = TypeDescriptor.normalize(parseResult)
 
-                t.equal(descriptor.kind, 'Tagged', 'Then kind is Tagged')
+                t.equal(descriptor.kind, 'tagged', 'Then kind is tagged')
                 t.equal(descriptor.fields.account.baseType, 'Tagged', 'Then account field baseType is Tagged')
                 t.equal(descriptor.fields.account.taggedType, 'Account', 'Then account taggedType is Account')
                 t.equal(descriptor.fields.category.optional, true, 'Then category field is optional')
@@ -98,21 +98,20 @@ t.test('TypeDescriptor', t => {
                 }
 
                 const descriptor = TypeDescriptor.normalize(parseResult)
-                const { kind, name, needsLookupTable, variants } = descriptor
+                const { childTypes, kind, name, needsLookupTable, variants } = descriptor
 
-                t.equal(kind, 'TaggedSum', 'Then kind is TaggedSum')
+                t.equal(kind, 'taggedSum', 'Then kind is taggedSum')
                 t.equal(name, 'Shape', 'Then name is Shape')
                 t.ok(variants.Circle, 'Then Circle variant exists')
                 t.ok(variants.Square, 'Then Square variant exists')
-                t.equal(variants.Circle.fields.radius.baseType, 'Number', 'Then Circle.radius is Number')
-                t.equal(variants.Square.fields.side.baseType, 'Number', 'Then Square.side is Number')
-                t.same(variants.Circle.childTypes, [], 'Then Circle childTypes is empty')
-                t.same(variants.Square.childTypes, [], 'Then Square childTypes is empty')
+                t.equal(variants.Circle.radius.baseType, 'Number', 'Then Circle.radius is Number')
+                t.equal(variants.Square.side.baseType, 'Number', 'Then Square.side is Number')
+                t.same(childTypes, [], 'Then childTypes is empty')
                 t.equal(needsLookupTable, false, 'Then needsLookupTable is false')
                 t.end()
             })
 
-            t.test('When normalizing a TaggedSum with variant-specific child types', t => {
+            t.test('When normalizing a TaggedSum with child types', t => {
                 const parseResult = {
                     typeDefinition: {
                         name: 'View',
@@ -128,12 +127,8 @@ t.test('TypeDescriptor', t => {
 
                 const descriptor = TypeDescriptor.normalize(parseResult)
 
-                t.same(
-                    descriptor.variants.Register.childTypes,
-                    ['Account'],
-                    'Then Register childTypes contains Account',
-                )
-                t.same(descriptor.variants.Report.childTypes, [], 'Then Report childTypes is empty')
+                t.same(descriptor.childTypes, ['Account'], 'Then childTypes contains Account')
+                t.equal(descriptor.variants.Register.account.taggedType, 'Account', 'Then Register.account is Account')
                 t.end()
             })
 
@@ -150,8 +145,8 @@ t.test('TypeDescriptor', t => {
 
                 const descriptor = TypeDescriptor.normalize(parseResult)
 
-                t.equal(descriptor.variants.WithItems.fields.items.baseType, 'LookupTable', 'Then items is LookupTable')
-                t.same(descriptor.variants.WithItems.childTypes, ['Item'], 'Then WithItems childTypes contains Item')
+                t.equal(descriptor.variants.WithItems.items.baseType, 'LookupTable', 'Then items is LookupTable')
+                t.same(descriptor.childTypes, ['Item'], 'Then childTypes contains Item')
                 t.equal(descriptor.needsLookupTable, true, 'Then needsLookupTable is true')
                 t.end()
             })
