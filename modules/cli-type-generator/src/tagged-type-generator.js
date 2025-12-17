@@ -12,6 +12,11 @@ import { generateImportsSection } from './codegen/imports.js'
 import { generateIsMethod } from './codegen/is-method.js'
 import { generateNamedToJSON, generateNamedVariantToJSON } from './codegen/to-json.js'
 import { generateNamedToString } from './codegen/to-string.js'
+import {
+    generateVariantConstructorDef,
+    generateVariantPrototype,
+    generateVariantStaticMethods,
+} from './codegen/variant.js'
 import FieldDescriptor from './descriptors/field-descriptor.js'
 import { getExistingStandardFunctions } from './parse-type-definition-file.js'
 import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
@@ -182,7 +187,6 @@ const generateStaticTaggedSumType = async typeDefinition => {
         validateNoDateArrays(fullName, flds)
 
         const constructorCode = generateTypeConstructor(vName, fullName, flds)
-        const fromCode = generateFrom('prototype', vName, fullName, flds)
 
         return `
         // -------------------------------------------------------------------------------------------------------------
@@ -195,23 +199,11 @@ const generateStaticTaggedSumType = async typeDefinition => {
         ${generateNamedVariantToJSON(lowerVariant + 'ToJSON')}
 
         ${generateConstructorSig(fullName, flds)}
-        const ${vName}Constructor = ${constructorCode.replace('prototype', `${vName}Prototype`)}
+        ${generateVariantConstructorDef(typeName, vName, constructorCode)}
 
-        ${typeName}.${vName} = ${vName}Constructor
+        ${generateVariantPrototype(typeName, vName)}
 
-        const ${vName}Prototype = Object.create(${typeName}Prototype, {
-            '@@tagName': { value: '${vName}', enumerable: false },
-            '@@typeName': { value: '${typeName}', enumerable: false },
-            toString: { value: ${lowerVariant}ToString, enumerable: false },
-            toJSON: { value: ${lowerVariant}ToJSON, enumerable: false },
-            constructor: { value: ${vName}Constructor, enumerable: false, writable: true, configurable: true }
-        })
-
-        ${vName}Constructor.prototype = ${vName}Prototype
-        ${vName}Constructor.is = val => val && val.constructor === ${vName}Constructor
-        ${vName}Constructor.toString = () => '${fullName}'
-        ${vName}Constructor._from = ${fromCode}
-        ${vName}Constructor.from = ${vName}Constructor._from
+        ${generateVariantStaticMethods(typeName, vName, flds)}
 
         ${generateFirestoreSerializationForTaggedSumVariant(vName, flds)}
     `
