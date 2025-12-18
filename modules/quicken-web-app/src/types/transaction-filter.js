@@ -77,7 +77,7 @@ const TransactionFilter = function TransactionFilter(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig transactionfilterToString :: () -> String
  */

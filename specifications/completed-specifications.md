@@ -4,6 +4,16 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [infrastructure] cli-type-generator Phase 4: Reorganize TaggedSum Output (2025-12-17)
+**Purpose:** Improve readability of generated TaggedSum type files
+
+- Reorganized output from per-variant to per-concern grouping
+- Converted variant toString/toJSON to object literals with `// prettier-ignore` for alignment
+- Grouped static methods by type (all .prototype together, then .is, then .toString, etc.)
+- Added section headers for each static method group
+- Created `codegen/variant.js` and `codegen/firestore-serialization.js` modules
+- Deferred: Phase 5 (default values support)
+
 ## [infrastructure] Style Validator: Allow for..of with await (2025-12-16)
 **Purpose:** Fix false positive in functional-patterns rule
 

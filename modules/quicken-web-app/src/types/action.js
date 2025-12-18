@@ -100,30 +100,51 @@ Action.prototype = ActionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.LoadFile
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig loadFileToString :: () -> String
- */
-const loadFileToString = function () {
-    return `Action.LoadFile(${R._toString(this.accounts)},
-        ${R._toString(this.categories)},
-        ${R._toString(this.securities)},
-        ${R._toString(this.tags)},
-        ${R._toString(this.splits)},
-        ${R._toString(this.transactions)})`
+// prettier-ignore
+const toString = {
+    loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
+    setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
+    resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
+    setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
+    openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
+    closeView              : function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
+    moveView               : function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
+    createTabGroup         : function () { return `Action.CreateTabGroup()` },
+    closeTabGroup          : function () { return `Action.CloseTabGroup(${R._toString(this.groupId)})` },
+    setActiveView          : function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
+    setActiveTabGroup      : function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
+    setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
 }
 
-/*
- * Convert to JSON representation with tag
- * @sig loadFileToJSON :: () -> Object
- */
-const loadFileToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toJSON = {
+    loadFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTransactionFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    openView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    closeView              : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    moveView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    createTabGroup         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    closeTabGroup          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setActiveView          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setActiveTabGroup      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTabGroupWidth       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a Action.LoadFile instance
@@ -151,22 +172,385 @@ const LoadFileConstructor = function LoadFile(accounts, categories, securities, 
 
 Action.LoadFile = LoadFileConstructor
 
+/*
+ * Construct a Action.SetTransactionFilter instance
+ * @sig SetTransactionFilter :: (String, Object) -> Action.SetTransactionFilter
+ */
+const SetTransactionFilterConstructor = function SetTransactionFilter(viewId, changes) {
+    const constructorName = 'Action.SetTransactionFilter(viewId, changes)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateObject(constructorName, 'changes', false, changes)
+
+    const result = Object.create(SetTransactionFilterPrototype)
+    result.viewId = viewId
+    result.changes = changes
+    return result
+}
+
+Action.SetTransactionFilter = SetTransactionFilterConstructor
+
+/*
+ * Construct a Action.ResetTransactionFilters instance
+ * @sig ResetTransactionFilters :: (String) -> Action.ResetTransactionFilters
+ */
+const ResetTransactionFiltersConstructor = function ResetTransactionFilters(viewId) {
+    const constructorName = 'Action.ResetTransactionFilters(viewId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+
+    const result = Object.create(ResetTransactionFiltersPrototype)
+    result.viewId = viewId
+    return result
+}
+
+Action.ResetTransactionFilters = ResetTransactionFiltersConstructor
+
+/*
+ * Construct a Action.SetTableLayout instance
+ * @sig SetTableLayout :: (TableLayout) -> Action.SetTableLayout
+ */
+const SetTableLayoutConstructor = function SetTableLayout(tableLayout) {
+    const constructorName = 'Action.SetTableLayout(tableLayout)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'TableLayout', 'tableLayout', false, tableLayout)
+
+    const result = Object.create(SetTableLayoutPrototype)
+    result.tableLayout = tableLayout
+    return result
+}
+
+Action.SetTableLayout = SetTableLayoutConstructor
+
+/*
+ * Construct a Action.OpenView instance
+ * @sig OpenView :: (View, String?) -> Action.OpenView
+ */
+const OpenViewConstructor = function OpenView(view, groupId) {
+    const constructorName = 'Action.OpenView(view, groupId)'
+
+    R.validateTag(constructorName, 'View', 'view', false, view)
+    R.validateString(constructorName, 'groupId', true, groupId)
+
+    const result = Object.create(OpenViewPrototype)
+    result.view = view
+    if (groupId != null) result.groupId = groupId
+    return result
+}
+
+Action.OpenView = OpenViewConstructor
+
+/*
+ * Construct a Action.CloseView instance
+ * @sig CloseView :: (String, String) -> Action.CloseView
+ */
+const CloseViewConstructor = function CloseView(viewId, groupId) {
+    const constructorName = 'Action.CloseView(viewId, groupId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(CloseViewPrototype)
+    result.viewId = viewId
+    result.groupId = groupId
+    return result
+}
+
+Action.CloseView = CloseViewConstructor
+
+/*
+ * Construct a Action.MoveView instance
+ * @sig MoveView :: (String, String, String, Number?) -> Action.MoveView
+ */
+const MoveViewConstructor = function MoveView(viewId, fromGroupId, toGroupId, toIndex) {
+    const constructorName = 'Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)'
+
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'fromGroupId', false, fromGroupId)
+    R.validateString(constructorName, 'toGroupId', false, toGroupId)
+    R.validateNumber(constructorName, 'toIndex', true, toIndex)
+
+    const result = Object.create(MoveViewPrototype)
+    result.viewId = viewId
+    result.fromGroupId = fromGroupId
+    result.toGroupId = toGroupId
+    if (toIndex != null) result.toIndex = toIndex
+    return result
+}
+
+Action.MoveView = MoveViewConstructor
+
+/*
+ * Construct a Action.CreateTabGroup instance
+ * @sig CreateTabGroup :: () -> Action.CreateTabGroup
+ */
+const CreateTabGroupConstructor = function CreateTabGroup() {
+    const constructorName = 'Action.CreateTabGroup()'
+    R.validateArgumentLength(constructorName, 0, arguments)
+
+    const result = Object.create(CreateTabGroupPrototype)
+
+    return result
+}
+
+Action.CreateTabGroup = CreateTabGroupConstructor
+
+/*
+ * Construct a Action.CloseTabGroup instance
+ * @sig CloseTabGroup :: (String) -> Action.CloseTabGroup
+ */
+const CloseTabGroupConstructor = function CloseTabGroup(groupId) {
+    const constructorName = 'Action.CloseTabGroup(groupId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(CloseTabGroupPrototype)
+    result.groupId = groupId
+    return result
+}
+
+Action.CloseTabGroup = CloseTabGroupConstructor
+
+/*
+ * Construct a Action.SetActiveView instance
+ * @sig SetActiveView :: (String, String) -> Action.SetActiveView
+ */
+const SetActiveViewConstructor = function SetActiveView(groupId, viewId) {
+    const constructorName = 'Action.SetActiveView(groupId, viewId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+    R.validateString(constructorName, 'viewId', false, viewId)
+
+    const result = Object.create(SetActiveViewPrototype)
+    result.groupId = groupId
+    result.viewId = viewId
+    return result
+}
+
+Action.SetActiveView = SetActiveViewConstructor
+
+/*
+ * Construct a Action.SetActiveTabGroup instance
+ * @sig SetActiveTabGroup :: (String) -> Action.SetActiveTabGroup
+ */
+const SetActiveTabGroupConstructor = function SetActiveTabGroup(groupId) {
+    const constructorName = 'Action.SetActiveTabGroup(groupId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(SetActiveTabGroupPrototype)
+    result.groupId = groupId
+    return result
+}
+
+Action.SetActiveTabGroup = SetActiveTabGroupConstructor
+
+/*
+ * Construct a Action.SetTabGroupWidth instance
+ * @sig SetTabGroupWidth :: (String, Number) -> Action.SetTabGroupWidth
+ */
+const SetTabGroupWidthConstructor = function SetTabGroupWidth(groupId, width) {
+    const constructorName = 'Action.SetTabGroupWidth(groupId, width)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'groupId', false, groupId)
+    R.validateNumber(constructorName, 'width', false, width)
+
+    const result = Object.create(SetTabGroupWidthPrototype)
+    result.groupId = groupId
+    result.width = width
+    return result
+}
+
+Action.SetTabGroupWidth = SetTabGroupWidthConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
 const LoadFilePrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'LoadFile', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: loadFileToString, enumerable: false },
-    toJSON: { value: loadFileToJSON, enumerable: false },
+    toString: { value: toString.loadFile, enumerable: false },
+    toJSON: { value: toJSON.loadFile, enumerable: false },
     constructor: { value: LoadFileConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTransactionFilter', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setTransactionFilter, enumerable: false },
+    toJSON: { value: toJSON.setTransactionFilter, enumerable: false },
+    constructor: { value: SetTransactionFilterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ResetTransactionFilters', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.resetTransactionFilters, enumerable: false },
+    toJSON: { value: toJSON.resetTransactionFilters, enumerable: false },
+    constructor: { value: ResetTransactionFiltersConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetTableLayoutPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTableLayout', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setTableLayout, enumerable: false },
+    toJSON: { value: toJSON.setTableLayout, enumerable: false },
+    constructor: { value: SetTableLayoutConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const OpenViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OpenView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.openView, enumerable: false },
+    toJSON: { value: toJSON.openView, enumerable: false },
+    constructor: { value: OpenViewConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const CloseViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'CloseView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.closeView, enumerable: false },
+    toJSON: { value: toJSON.closeView, enumerable: false },
+    constructor: { value: CloseViewConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const MoveViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MoveView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.moveView, enumerable: false },
+    toJSON: { value: toJSON.moveView, enumerable: false },
+    constructor: { value: MoveViewConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const CreateTabGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'CreateTabGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.createTabGroup, enumerable: false },
+    toJSON: { value: toJSON.createTabGroup, enumerable: false },
+    constructor: { value: CreateTabGroupConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const CloseTabGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'CloseTabGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.closeTabGroup, enumerable: false },
+    toJSON: { value: toJSON.closeTabGroup, enumerable: false },
+    constructor: { value: CloseTabGroupConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetActiveViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetActiveView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setActiveView, enumerable: false },
+    toJSON: { value: toJSON.setActiveView, enumerable: false },
+    constructor: { value: SetActiveViewConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetActiveTabGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetActiveTabGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setActiveTabGroup, enumerable: false },
+    toJSON: { value: toJSON.setActiveTabGroup, enumerable: false },
+    constructor: { value: SetActiveTabGroupConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTabGroupWidth', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setTabGroupWidth, enumerable: false },
+    toJSON: { value: toJSON.setTabGroupWidth, enumerable: false },
+    constructor: { value: SetTabGroupWidthConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+// -------------------------------------------------------------------------------------------------------------
+// Variant static prototype
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.prototype = LoadFilePrototype
+SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
+ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
+SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
+OpenViewConstructor.prototype = OpenViewPrototype
+CloseViewConstructor.prototype = CloseViewPrototype
+MoveViewConstructor.prototype = MoveViewPrototype
+CreateTabGroupConstructor.prototype = CreateTabGroupPrototype
+CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
+SetActiveViewConstructor.prototype = SetActiveViewPrototype
+SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
+SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
+SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
+ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
+SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
+OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
+CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
+MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
+CreateTabGroupConstructor.is = val => val && val.constructor === CreateTabGroupConstructor
+CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupConstructor
+SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
+SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
+SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.toString = () => 'Action.LoadFile'
+SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
+ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
+SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
+OpenViewConstructor.toString = () => 'Action.OpenView'
+CloseViewConstructor.toString = () => 'Action.CloseView'
+MoveViewConstructor.toString = () => 'Action.MoveView'
+CreateTabGroupConstructor.toString = () => 'Action.CreateTabGroup'
+CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
+SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
+SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
+SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor._from = _input => {
     const { accounts, categories, securities, tags, splits, transactions } = _input
     return Action.LoadFile(accounts, categories, securities, tags, splits, transactions)
 }
+SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
+ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
+SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
+OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
+CloseViewConstructor._from = _input => Action.CloseView(_input.viewId, _input.groupId)
+MoveViewConstructor._from = _input => {
+    const { viewId, fromGroupId, toGroupId, toIndex } = _input
+    return Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)
+}
+CreateTabGroupConstructor._from = _input => Action.CreateTabGroup()
+CloseTabGroupConstructor._from = _input => Action.CloseTabGroup(_input.groupId)
+SetActiveViewConstructor._from = _input => Action.SetActiveView(_input.groupId, _input.viewId)
+SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.groupId)
+SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.from = LoadFileConstructor._from
+SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
+ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
+SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
+OpenViewConstructor.from = OpenViewConstructor._from
+CloseViewConstructor.from = CloseViewConstructor._from
+MoveViewConstructor.from = MoveViewConstructor._from
+CreateTabGroupConstructor.from = CreateTabGroupConstructor._from
+CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
+SetActiveViewConstructor.from = SetActiveViewConstructor._from
+SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
+SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /**
  * Serialize to Firestore format
@@ -204,169 +588,11 @@ LoadFileConstructor._fromFirestore = (doc, decodeTimestamps) => {
 LoadFileConstructor.toFirestore = LoadFileConstructor._toFirestore
 LoadFileConstructor.fromFirestore = LoadFileConstructor._fromFirestore
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SetTransactionFilter
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig setTransactionFilterToString :: () -> String
- */
-const setTransactionFilterToString = function () {
-    return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setTransactionFilterToJSON :: () -> Object
- */
-const setTransactionFilterToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.SetTransactionFilter instance
- * @sig SetTransactionFilter :: (String, Object) -> Action.SetTransactionFilter
- */
-const SetTransactionFilterConstructor = function SetTransactionFilter(viewId, changes) {
-    const constructorName = 'Action.SetTransactionFilter(viewId, changes)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateObject(constructorName, 'changes', false, changes)
-
-    const result = Object.create(SetTransactionFilterPrototype)
-    result.viewId = viewId
-    result.changes = changes
-    return result
-}
-
-Action.SetTransactionFilter = SetTransactionFilterConstructor
-
-const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetTransactionFilter', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setTransactionFilterToString, enumerable: false },
-    toJSON: { value: setTransactionFilterToJSON, enumerable: false },
-    constructor: { value: SetTransactionFilterConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
-SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
-SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
-SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
-SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
-
 SetTransactionFilterConstructor.toFirestore = o => ({ ...o })
 SetTransactionFilterConstructor.fromFirestore = SetTransactionFilterConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.ResetTransactionFilters
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig resetTransactionFiltersToString :: () -> String
- */
-const resetTransactionFiltersToString = function () {
-    return `Action.ResetTransactionFilters(${R._toString(this.viewId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig resetTransactionFiltersToJSON :: () -> Object
- */
-const resetTransactionFiltersToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.ResetTransactionFilters instance
- * @sig ResetTransactionFilters :: (String) -> Action.ResetTransactionFilters
- */
-const ResetTransactionFiltersConstructor = function ResetTransactionFilters(viewId) {
-    const constructorName = 'Action.ResetTransactionFilters(viewId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-
-    const result = Object.create(ResetTransactionFiltersPrototype)
-    result.viewId = viewId
-    return result
-}
-
-Action.ResetTransactionFilters = ResetTransactionFiltersConstructor
-
-const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'ResetTransactionFilters', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: resetTransactionFiltersToString, enumerable: false },
-    toJSON: { value: resetTransactionFiltersToJSON, enumerable: false },
-    constructor: { value: ResetTransactionFiltersConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
-ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
-ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
-ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
-ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
-
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
 ResetTransactionFiltersConstructor.fromFirestore = ResetTransactionFiltersConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SetTableLayout
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig setTableLayoutToString :: () -> String
- */
-const setTableLayoutToString = function () {
-    return `Action.SetTableLayout(${R._toString(this.tableLayout)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setTableLayoutToJSON :: () -> Object
- */
-const setTableLayoutToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.SetTableLayout instance
- * @sig SetTableLayout :: (TableLayout) -> Action.SetTableLayout
- */
-const SetTableLayoutConstructor = function SetTableLayout(tableLayout) {
-    const constructorName = 'Action.SetTableLayout(tableLayout)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateTag(constructorName, 'TableLayout', 'tableLayout', false, tableLayout)
-
-    const result = Object.create(SetTableLayoutPrototype)
-    result.tableLayout = tableLayout
-    return result
-}
-
-Action.SetTableLayout = SetTableLayoutConstructor
-
-const SetTableLayoutPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetTableLayout', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setTableLayoutToString, enumerable: false },
-    toJSON: { value: setTableLayoutToJSON, enumerable: false },
-    constructor: { value: SetTableLayoutConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
-SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
-SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
-SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
-SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
 
 SetTableLayoutConstructor._toFirestore = (o, encodeTimestamps) => ({
     tableLayout: TableLayout.toFirestore(o.tableLayout, encodeTimestamps),
@@ -382,60 +608,6 @@ SetTableLayoutConstructor._fromFirestore = (doc, decodeTimestamps) =>
 // Public aliases (can be overridden)
 SetTableLayoutConstructor.toFirestore = SetTableLayoutConstructor._toFirestore
 SetTableLayoutConstructor.fromFirestore = SetTableLayoutConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OpenView
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig openViewToString :: () -> String
- */
-const openViewToString = function () {
-    return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig openViewToJSON :: () -> Object
- */
-const openViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.OpenView instance
- * @sig OpenView :: (View, String?) -> Action.OpenView
- */
-const OpenViewConstructor = function OpenView(view, groupId) {
-    const constructorName = 'Action.OpenView(view, groupId)'
-
-    R.validateTag(constructorName, 'View', 'view', false, view)
-    R.validateString(constructorName, 'groupId', true, groupId)
-
-    const result = Object.create(OpenViewPrototype)
-    result.view = view
-    if (groupId != null) result.groupId = groupId
-    return result
-}
-
-Action.OpenView = OpenViewConstructor
-
-const OpenViewPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'OpenView', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: openViewToString, enumerable: false },
-    toJSON: { value: openViewToJSON, enumerable: false },
-    constructor: { value: OpenViewConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-OpenViewConstructor.prototype = OpenViewPrototype
-OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
-OpenViewConstructor.toString = () => 'Action.OpenView'
-OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
-OpenViewConstructor.from = OpenViewConstructor._from
 
 /**
  * Serialize to Firestore format
@@ -465,404 +637,23 @@ OpenViewConstructor._fromFirestore = (doc, decodeTimestamps) => {
 OpenViewConstructor.toFirestore = OpenViewConstructor._toFirestore
 OpenViewConstructor.fromFirestore = OpenViewConstructor._fromFirestore
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.CloseView
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig closeViewToString :: () -> String
- */
-const closeViewToString = function () {
-    return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig closeViewToJSON :: () -> Object
- */
-const closeViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.CloseView instance
- * @sig CloseView :: (String, String) -> Action.CloseView
- */
-const CloseViewConstructor = function CloseView(viewId, groupId) {
-    const constructorName = 'Action.CloseView(viewId, groupId)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateString(constructorName, 'groupId', false, groupId)
-
-    const result = Object.create(CloseViewPrototype)
-    result.viewId = viewId
-    result.groupId = groupId
-    return result
-}
-
-Action.CloseView = CloseViewConstructor
-
-const CloseViewPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'CloseView', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: closeViewToString, enumerable: false },
-    toJSON: { value: closeViewToJSON, enumerable: false },
-    constructor: { value: CloseViewConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-CloseViewConstructor.prototype = CloseViewPrototype
-CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
-CloseViewConstructor.toString = () => 'Action.CloseView'
-CloseViewConstructor._from = _input => Action.CloseView(_input.viewId, _input.groupId)
-CloseViewConstructor.from = CloseViewConstructor._from
-
 CloseViewConstructor.toFirestore = o => ({ ...o })
 CloseViewConstructor.fromFirestore = CloseViewConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.MoveView
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig moveViewToString :: () -> String
- */
-const moveViewToString = function () {
-    return `Action.MoveView(${R._toString(this.viewId)},
-        ${R._toString(this.fromGroupId)},
-        ${R._toString(this.toGroupId)},
-        ${R._toString(this.toIndex)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig moveViewToJSON :: () -> Object
- */
-const moveViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.MoveView instance
- * @sig MoveView :: (String, String, String, Number?) -> Action.MoveView
- */
-const MoveViewConstructor = function MoveView(viewId, fromGroupId, toGroupId, toIndex) {
-    const constructorName = 'Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)'
-
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateString(constructorName, 'fromGroupId', false, fromGroupId)
-    R.validateString(constructorName, 'toGroupId', false, toGroupId)
-    R.validateNumber(constructorName, 'toIndex', true, toIndex)
-
-    const result = Object.create(MoveViewPrototype)
-    result.viewId = viewId
-    result.fromGroupId = fromGroupId
-    result.toGroupId = toGroupId
-    if (toIndex != null) result.toIndex = toIndex
-    return result
-}
-
-Action.MoveView = MoveViewConstructor
-
-const MoveViewPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'MoveView', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: moveViewToString, enumerable: false },
-    toJSON: { value: moveViewToJSON, enumerable: false },
-    constructor: { value: MoveViewConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-MoveViewConstructor.prototype = MoveViewPrototype
-MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
-MoveViewConstructor.toString = () => 'Action.MoveView'
-MoveViewConstructor._from = _input => {
-    const { viewId, fromGroupId, toGroupId, toIndex } = _input
-    return Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)
-}
-MoveViewConstructor.from = MoveViewConstructor._from
 
 MoveViewConstructor.toFirestore = o => ({ ...o })
 MoveViewConstructor.fromFirestore = MoveViewConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.CreateTabGroup
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig createTabGroupToString :: () -> String
- */
-const createTabGroupToString = function () {
-    return `Action.CreateTabGroup()`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig createTabGroupToJSON :: () -> Object
- */
-const createTabGroupToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.CreateTabGroup instance
- * @sig CreateTabGroup :: () -> Action.CreateTabGroup
- */
-const CreateTabGroupConstructor = function CreateTabGroup() {
-    const constructorName = 'Action.CreateTabGroup()'
-    R.validateArgumentLength(constructorName, 0, arguments)
-
-    const result = Object.create(CreateTabGroupPrototype)
-
-    return result
-}
-
-Action.CreateTabGroup = CreateTabGroupConstructor
-
-const CreateTabGroupPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'CreateTabGroup', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: createTabGroupToString, enumerable: false },
-    toJSON: { value: createTabGroupToJSON, enumerable: false },
-    constructor: { value: CreateTabGroupConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-CreateTabGroupConstructor.prototype = CreateTabGroupPrototype
-CreateTabGroupConstructor.is = val => val && val.constructor === CreateTabGroupConstructor
-CreateTabGroupConstructor.toString = () => 'Action.CreateTabGroup'
-CreateTabGroupConstructor._from = _input => Action.CreateTabGroup()
-CreateTabGroupConstructor.from = CreateTabGroupConstructor._from
-
 CreateTabGroupConstructor.toFirestore = o => ({ ...o })
 CreateTabGroupConstructor.fromFirestore = CreateTabGroupConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.CloseTabGroup
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig closeTabGroupToString :: () -> String
- */
-const closeTabGroupToString = function () {
-    return `Action.CloseTabGroup(${R._toString(this.groupId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig closeTabGroupToJSON :: () -> Object
- */
-const closeTabGroupToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.CloseTabGroup instance
- * @sig CloseTabGroup :: (String) -> Action.CloseTabGroup
- */
-const CloseTabGroupConstructor = function CloseTabGroup(groupId) {
-    const constructorName = 'Action.CloseTabGroup(groupId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateString(constructorName, 'groupId', false, groupId)
-
-    const result = Object.create(CloseTabGroupPrototype)
-    result.groupId = groupId
-    return result
-}
-
-Action.CloseTabGroup = CloseTabGroupConstructor
-
-const CloseTabGroupPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'CloseTabGroup', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: closeTabGroupToString, enumerable: false },
-    toJSON: { value: closeTabGroupToJSON, enumerable: false },
-    constructor: { value: CloseTabGroupConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
-CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupConstructor
-CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
-CloseTabGroupConstructor._from = _input => Action.CloseTabGroup(_input.groupId)
-CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
 
 CloseTabGroupConstructor.toFirestore = o => ({ ...o })
 CloseTabGroupConstructor.fromFirestore = CloseTabGroupConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SetActiveView
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig setActiveViewToString :: () -> String
- */
-const setActiveViewToString = function () {
-    return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setActiveViewToJSON :: () -> Object
- */
-const setActiveViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.SetActiveView instance
- * @sig SetActiveView :: (String, String) -> Action.SetActiveView
- */
-const SetActiveViewConstructor = function SetActiveView(groupId, viewId) {
-    const constructorName = 'Action.SetActiveView(groupId, viewId)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'groupId', false, groupId)
-    R.validateString(constructorName, 'viewId', false, viewId)
-
-    const result = Object.create(SetActiveViewPrototype)
-    result.groupId = groupId
-    result.viewId = viewId
-    return result
-}
-
-Action.SetActiveView = SetActiveViewConstructor
-
-const SetActiveViewPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetActiveView', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setActiveViewToString, enumerable: false },
-    toJSON: { value: setActiveViewToJSON, enumerable: false },
-    constructor: { value: SetActiveViewConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SetActiveViewConstructor.prototype = SetActiveViewPrototype
-SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
-SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
-SetActiveViewConstructor._from = _input => Action.SetActiveView(_input.groupId, _input.viewId)
-SetActiveViewConstructor.from = SetActiveViewConstructor._from
-
 SetActiveViewConstructor.toFirestore = o => ({ ...o })
 SetActiveViewConstructor.fromFirestore = SetActiveViewConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SetActiveTabGroup
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig setActiveTabGroupToString :: () -> String
- */
-const setActiveTabGroupToString = function () {
-    return `Action.SetActiveTabGroup(${R._toString(this.groupId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setActiveTabGroupToJSON :: () -> Object
- */
-const setActiveTabGroupToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.SetActiveTabGroup instance
- * @sig SetActiveTabGroup :: (String) -> Action.SetActiveTabGroup
- */
-const SetActiveTabGroupConstructor = function SetActiveTabGroup(groupId) {
-    const constructorName = 'Action.SetActiveTabGroup(groupId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateString(constructorName, 'groupId', false, groupId)
-
-    const result = Object.create(SetActiveTabGroupPrototype)
-    result.groupId = groupId
-    return result
-}
-
-Action.SetActiveTabGroup = SetActiveTabGroupConstructor
-
-const SetActiveTabGroupPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetActiveTabGroup', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setActiveTabGroupToString, enumerable: false },
-    toJSON: { value: setActiveTabGroupToJSON, enumerable: false },
-    constructor: { value: SetActiveTabGroupConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
-SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
-SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
-SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.groupId)
-SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
-
 SetActiveTabGroupConstructor.toFirestore = o => ({ ...o })
 SetActiveTabGroupConstructor.fromFirestore = SetActiveTabGroupConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SetTabGroupWidth
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig setTabGroupWidthToString :: () -> String
- */
-const setTabGroupWidthToString = function () {
-    return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setTabGroupWidthToJSON :: () -> Object
- */
-const setTabGroupWidthToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a Action.SetTabGroupWidth instance
- * @sig SetTabGroupWidth :: (String, Number) -> Action.SetTabGroupWidth
- */
-const SetTabGroupWidthConstructor = function SetTabGroupWidth(groupId, width) {
-    const constructorName = 'Action.SetTabGroupWidth(groupId, width)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'groupId', false, groupId)
-    R.validateNumber(constructorName, 'width', false, width)
-
-    const result = Object.create(SetTabGroupWidthPrototype)
-    result.groupId = groupId
-    result.width = width
-    return result
-}
-
-Action.SetTabGroupWidth = SetTabGroupWidthConstructor
-
-const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetTabGroupWidth', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setTabGroupWidthToString, enumerable: false },
-    toJSON: { value: setTabGroupWidthToJSON, enumerable: false },
-    constructor: { value: SetTabGroupWidthConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
-SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
-SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
-SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
-SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
 
 SetTabGroupWidthConstructor.toFirestore = o => ({ ...o })
 SetTabGroupWidthConstructor.fromFirestore = SetTabGroupWidthConstructor._from

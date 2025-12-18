@@ -124,25 +124,69 @@ Action.prototype = ActionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Action.OrganizationCreated
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig organizationCreatedToString :: () -> String
- */
-const organizationCreatedToString = function () {
-    return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})`
+// prettier-ignore
+const toString = {
+    organizationCreated    : function () { return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})` },
+    organizationUpdated    : function () { return `Action.OrganizationUpdated(${R._toString(this.name)})` },
+    organizationDeleted    : function () { return `Action.OrganizationDeleted()` },
+    memberAdded            : function () { return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})` },
+    roleChanged            : function () { return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})` },
+    memberRemoved          : function () { return `Action.MemberRemoved(${R._toString(this.userId)})` },
+    userCreated            : function () { return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.email)})` },
+    userUpdated            : function () { return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})` },
+    userForgotten          : function () { return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})` },
+    authenticationCompleted: function () { return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})` },
+    userLoaded             : function () { return `Action.UserLoaded(${R._toString(this.user)})` },
+    organizationSynced     : function () { return `Action.OrganizationSynced(${R._toString(this.organization)})` },
+    blockfacesSynced       : function () { return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})` },
+    blockfaceCreated       : function () { return `Action.BlockfaceCreated(${R._toString(this.blockface)})` },
+    blockfaceSelected      : function () { return `Action.BlockfaceSelected(${R._toString(this.blockface)})` },
+    blockfaceSaved         : function () { return `Action.BlockfaceSaved(${R._toString(this.blockface)})` },
+    segmentUseUpdated      : function () { return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})` },
+    segmentLengthUpdated   : function () { return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})` },
+    segmentAddedLeft       : function () { return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})` },
+    segmentAdded           : function () { return `Action.SegmentAdded(${R._toString(this.targetIndex)})` },
+    segmentsReplaced       : function () { return `Action.SegmentsReplaced(${R._toString(this.segments)})` },
 }
 
-/*
- * Convert to JSON representation with tag
- * @sig organizationCreatedToJSON :: () -> Object
- */
-const organizationCreatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toJSON = {
+    organizationCreated    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    organizationUpdated    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    organizationDeleted    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    memberAdded            : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    roleChanged            : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    memberRemoved          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    userCreated            : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    userUpdated            : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    userForgotten          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    authenticationCompleted: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    userLoaded             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    organizationSynced     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    blockfacesSynced       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    blockfaceCreated       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    blockfaceSelected      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    blockfaceSaved         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    segmentUseUpdated      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    segmentLengthUpdated   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    segmentAddedLeft       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    segmentAdded           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    segmentsReplaced       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a Action.OrganizationCreated instance
@@ -162,45 +206,6 @@ const OrganizationCreatedConstructor = function OrganizationCreated(name, projec
 
 Action.OrganizationCreated = OrganizationCreatedConstructor
 
-const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'OrganizationCreated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationCreatedToString, enumerable: false },
-    toJSON: { value: organizationCreatedToJSON, enumerable: false },
-    constructor: { value: OrganizationCreatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
-OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
-OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
-OrganizationCreatedConstructor._from = _input => Action.OrganizationCreated(_input.name, _input.projectId)
-OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
-
-OrganizationCreatedConstructor.toFirestore = o => ({ ...o })
-OrganizationCreatedConstructor.fromFirestore = OrganizationCreatedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationUpdated
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig organizationUpdatedToString :: () -> String
- */
-const organizationUpdatedToString = function () {
-    return `Action.OrganizationUpdated(${R._toString(this.name)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationUpdatedToJSON :: () -> Object
- */
-const organizationUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.OrganizationUpdated instance
  * @sig OrganizationUpdated :: (String?) -> Action.OrganizationUpdated
@@ -217,45 +222,6 @@ const OrganizationUpdatedConstructor = function OrganizationUpdated(name) {
 
 Action.OrganizationUpdated = OrganizationUpdatedConstructor
 
-const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'OrganizationUpdated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationUpdatedToString, enumerable: false },
-    toJSON: { value: organizationUpdatedToJSON, enumerable: false },
-    constructor: { value: OrganizationUpdatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
-OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
-OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
-OrganizationUpdatedConstructor._from = _input => Action.OrganizationUpdated(_input.name)
-OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
-
-OrganizationUpdatedConstructor.toFirestore = o => ({ ...o })
-OrganizationUpdatedConstructor.fromFirestore = OrganizationUpdatedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationDeleted
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig organizationDeletedToString :: () -> String
- */
-const organizationDeletedToString = function () {
-    return `Action.OrganizationDeleted()`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationDeletedToJSON :: () -> Object
- */
-const organizationDeletedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.OrganizationDeleted instance
  * @sig OrganizationDeleted :: () -> Action.OrganizationDeleted
@@ -270,45 +236,6 @@ const OrganizationDeletedConstructor = function OrganizationDeleted() {
 }
 
 Action.OrganizationDeleted = OrganizationDeletedConstructor
-
-const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'OrganizationDeleted', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationDeletedToString, enumerable: false },
-    toJSON: { value: organizationDeletedToJSON, enumerable: false },
-    constructor: { value: OrganizationDeletedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
-OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
-OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
-OrganizationDeletedConstructor._from = _input => Action.OrganizationDeleted()
-OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
-
-OrganizationDeletedConstructor.toFirestore = o => ({ ...o })
-OrganizationDeletedConstructor.fromFirestore = OrganizationDeletedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.MemberAdded
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig memberAddedToString :: () -> String
- */
-const memberAddedToString = function () {
-    return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig memberAddedToJSON :: () -> Object
- */
-const memberAddedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.MemberAdded instance
@@ -330,48 +257,6 @@ const MemberAddedConstructor = function MemberAdded(userId, role, displayName) {
 
 Action.MemberAdded = MemberAddedConstructor
 
-const MemberAddedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'MemberAdded', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: memberAddedToString, enumerable: false },
-    toJSON: { value: memberAddedToJSON, enumerable: false },
-    constructor: { value: MemberAddedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-MemberAddedConstructor.prototype = MemberAddedPrototype
-MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
-MemberAddedConstructor.toString = () => 'Action.MemberAdded'
-MemberAddedConstructor._from = _input => {
-    const { userId, role, displayName } = _input
-    return Action.MemberAdded(userId, role, displayName)
-}
-MemberAddedConstructor.from = MemberAddedConstructor._from
-
-MemberAddedConstructor.toFirestore = o => ({ ...o })
-MemberAddedConstructor.fromFirestore = MemberAddedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.RoleChanged
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig roleChangedToString :: () -> String
- */
-const roleChangedToString = function () {
-    return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig roleChangedToJSON :: () -> Object
- */
-const roleChangedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.RoleChanged instance
  * @sig RoleChanged :: (String, String) -> Action.RoleChanged
@@ -390,45 +275,6 @@ const RoleChangedConstructor = function RoleChanged(userId, role) {
 
 Action.RoleChanged = RoleChangedConstructor
 
-const RoleChangedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'RoleChanged', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: roleChangedToString, enumerable: false },
-    toJSON: { value: roleChangedToJSON, enumerable: false },
-    constructor: { value: RoleChangedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-RoleChangedConstructor.prototype = RoleChangedPrototype
-RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
-RoleChangedConstructor.toString = () => 'Action.RoleChanged'
-RoleChangedConstructor._from = _input => Action.RoleChanged(_input.userId, _input.role)
-RoleChangedConstructor.from = RoleChangedConstructor._from
-
-RoleChangedConstructor.toFirestore = o => ({ ...o })
-RoleChangedConstructor.fromFirestore = RoleChangedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.MemberRemoved
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig memberRemovedToString :: () -> String
- */
-const memberRemovedToString = function () {
-    return `Action.MemberRemoved(${R._toString(this.userId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig memberRemovedToJSON :: () -> Object
- */
-const memberRemovedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.MemberRemoved instance
  * @sig MemberRemoved :: (String) -> Action.MemberRemoved
@@ -444,47 +290,6 @@ const MemberRemovedConstructor = function MemberRemoved(userId) {
 }
 
 Action.MemberRemoved = MemberRemovedConstructor
-
-const MemberRemovedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'MemberRemoved', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: memberRemovedToString, enumerable: false },
-    toJSON: { value: memberRemovedToJSON, enumerable: false },
-    constructor: { value: MemberRemovedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-MemberRemovedConstructor.prototype = MemberRemovedPrototype
-MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
-MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
-MemberRemovedConstructor._from = _input => Action.MemberRemoved(_input.userId)
-MemberRemovedConstructor.from = MemberRemovedConstructor._from
-
-MemberRemovedConstructor.toFirestore = o => ({ ...o })
-MemberRemovedConstructor.fromFirestore = MemberRemovedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserCreated
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig userCreatedToString :: () -> String
- */
-const userCreatedToString = function () {
-    return `Action.UserCreated(${R._toString(this.userId)},
-        ${R._toString(this.displayName)},
-        ${R._toString(this.email)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userCreatedToJSON :: () -> Object
- */
-const userCreatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.UserCreated instance
@@ -506,48 +311,6 @@ const UserCreatedConstructor = function UserCreated(userId, displayName, email) 
 
 Action.UserCreated = UserCreatedConstructor
 
-const UserCreatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UserCreated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userCreatedToString, enumerable: false },
-    toJSON: { value: userCreatedToJSON, enumerable: false },
-    constructor: { value: UserCreatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-UserCreatedConstructor.prototype = UserCreatedPrototype
-UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
-UserCreatedConstructor.toString = () => 'Action.UserCreated'
-UserCreatedConstructor._from = _input => {
-    const { userId, displayName, email } = _input
-    return Action.UserCreated(userId, displayName, email)
-}
-UserCreatedConstructor.from = UserCreatedConstructor._from
-
-UserCreatedConstructor.toFirestore = o => ({ ...o })
-UserCreatedConstructor.fromFirestore = UserCreatedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserUpdated
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig userUpdatedToString :: () -> String
- */
-const userUpdatedToString = function () {
-    return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userUpdatedToJSON :: () -> Object
- */
-const userUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.UserUpdated instance
  * @sig UserUpdated :: (String, String?) -> Action.UserUpdated
@@ -565,45 +328,6 @@ const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
 }
 
 Action.UserUpdated = UserUpdatedConstructor
-
-const UserUpdatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UserUpdated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userUpdatedToString, enumerable: false },
-    toJSON: { value: userUpdatedToJSON, enumerable: false },
-    constructor: { value: UserUpdatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-UserUpdatedConstructor.prototype = UserUpdatedPrototype
-UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
-UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
-UserUpdatedConstructor._from = _input => Action.UserUpdated(_input.userId, _input.displayName)
-UserUpdatedConstructor.from = UserUpdatedConstructor._from
-
-UserUpdatedConstructor.toFirestore = o => ({ ...o })
-UserUpdatedConstructor.fromFirestore = UserUpdatedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserForgotten
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig userForgottenToString :: () -> String
- */
-const userForgottenToString = function () {
-    return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userForgottenToJSON :: () -> Object
- */
-const userForgottenToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.UserForgotten instance
@@ -623,45 +347,6 @@ const UserForgottenConstructor = function UserForgotten(userId, reason) {
 
 Action.UserForgotten = UserForgottenConstructor
 
-const UserForgottenPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UserForgotten', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userForgottenToString, enumerable: false },
-    toJSON: { value: userForgottenToJSON, enumerable: false },
-    constructor: { value: UserForgottenConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-UserForgottenConstructor.prototype = UserForgottenPrototype
-UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
-UserForgottenConstructor.toString = () => 'Action.UserForgotten'
-UserForgottenConstructor._from = _input => Action.UserForgotten(_input.userId, _input.reason)
-UserForgottenConstructor.from = UserForgottenConstructor._from
-
-UserForgottenConstructor.toFirestore = o => ({ ...o })
-UserForgottenConstructor.fromFirestore = UserForgottenConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.AuthenticationCompleted
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig authenticationCompletedToString :: () -> String
- */
-const authenticationCompletedToString = function () {
-    return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig authenticationCompletedToJSON :: () -> Object
- */
-const authenticationCompletedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.AuthenticationCompleted instance
  * @sig AuthenticationCompleted :: (String, String) -> Action.AuthenticationCompleted
@@ -680,45 +365,6 @@ const AuthenticationCompletedConstructor = function AuthenticationCompleted(emai
 
 Action.AuthenticationCompleted = AuthenticationCompletedConstructor
 
-const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'AuthenticationCompleted', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: authenticationCompletedToString, enumerable: false },
-    toJSON: { value: authenticationCompletedToJSON, enumerable: false },
-    constructor: { value: AuthenticationCompletedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
-AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
-AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
-AuthenticationCompletedConstructor._from = _input => Action.AuthenticationCompleted(_input.email, _input.displayName)
-AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
-
-AuthenticationCompletedConstructor.toFirestore = o => ({ ...o })
-AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.UserLoaded
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig userLoadedToString :: () -> String
- */
-const userLoadedToString = function () {
-    return `Action.UserLoaded(${R._toString(this.user)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userLoadedToJSON :: () -> Object
- */
-const userLoadedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.UserLoaded instance
  * @sig UserLoaded :: (User) -> Action.UserLoaded
@@ -734,55 +380,6 @@ const UserLoadedConstructor = function UserLoaded(user) {
 }
 
 Action.UserLoaded = UserLoadedConstructor
-
-const UserLoadedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UserLoaded', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userLoadedToString, enumerable: false },
-    toJSON: { value: userLoadedToJSON, enumerable: false },
-    constructor: { value: UserLoadedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-UserLoadedConstructor.prototype = UserLoadedPrototype
-UserLoadedConstructor.is = val => val && val.constructor === UserLoadedConstructor
-UserLoadedConstructor.toString = () => 'Action.UserLoaded'
-UserLoadedConstructor._from = _input => Action.UserLoaded(_input.user)
-UserLoadedConstructor.from = UserLoadedConstructor._from
-
-UserLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    user: User.toFirestore(o.user, encodeTimestamps),
-})
-
-UserLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    UserLoadedConstructor._from({
-        user: User.fromFirestore ? User.fromFirestore(doc.user, decodeTimestamps) : User.from(doc.user),
-    })
-
-// Public aliases (can be overridden)
-UserLoadedConstructor.toFirestore = UserLoadedConstructor._toFirestore
-UserLoadedConstructor.fromFirestore = UserLoadedConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.OrganizationSynced
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig organizationSyncedToString :: () -> String
- */
-const organizationSyncedToString = function () {
-    return `Action.OrganizationSynced(${R._toString(this.organization)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationSyncedToJSON :: () -> Object
- */
-const organizationSyncedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.OrganizationSynced instance
@@ -800,57 +397,6 @@ const OrganizationSyncedConstructor = function OrganizationSynced(organization) 
 
 Action.OrganizationSynced = OrganizationSyncedConstructor
 
-const OrganizationSyncedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'OrganizationSynced', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationSyncedToString, enumerable: false },
-    toJSON: { value: organizationSyncedToJSON, enumerable: false },
-    constructor: { value: OrganizationSyncedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-OrganizationSyncedConstructor.prototype = OrganizationSyncedPrototype
-OrganizationSyncedConstructor.is = val => val && val.constructor === OrganizationSyncedConstructor
-OrganizationSyncedConstructor.toString = () => 'Action.OrganizationSynced'
-OrganizationSyncedConstructor._from = _input => Action.OrganizationSynced(_input.organization)
-OrganizationSyncedConstructor.from = OrganizationSyncedConstructor._from
-
-OrganizationSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    organization: Organization.toFirestore(o.organization, encodeTimestamps),
-})
-
-OrganizationSyncedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    OrganizationSyncedConstructor._from({
-        organization: Organization.fromFirestore
-            ? Organization.fromFirestore(doc.organization, decodeTimestamps)
-            : Organization.from(doc.organization),
-    })
-
-// Public aliases (can be overridden)
-OrganizationSyncedConstructor.toFirestore = OrganizationSyncedConstructor._toFirestore
-OrganizationSyncedConstructor.fromFirestore = OrganizationSyncedConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.BlockfacesSynced
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig blockfacesSyncedToString :: () -> String
- */
-const blockfacesSyncedToString = function () {
-    return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfacesSyncedToJSON :: () -> Object
- */
-const blockfacesSyncedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.BlockfacesSynced instance
  * @sig BlockfacesSynced :: ([Blockface]) -> Action.BlockfacesSynced
@@ -866,57 +412,6 @@ const BlockfacesSyncedConstructor = function BlockfacesSynced(blockfaces) {
 }
 
 Action.BlockfacesSynced = BlockfacesSyncedConstructor
-
-const BlockfacesSyncedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'BlockfacesSynced', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfacesSyncedToString, enumerable: false },
-    toJSON: { value: blockfacesSyncedToJSON, enumerable: false },
-    constructor: { value: BlockfacesSyncedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-BlockfacesSyncedConstructor.prototype = BlockfacesSyncedPrototype
-BlockfacesSyncedConstructor.is = val => val && val.constructor === BlockfacesSyncedConstructor
-BlockfacesSyncedConstructor.toString = () => 'Action.BlockfacesSynced'
-BlockfacesSyncedConstructor._from = _input => Action.BlockfacesSynced(_input.blockfaces)
-BlockfacesSyncedConstructor.from = BlockfacesSyncedConstructor._from
-
-BlockfacesSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    blockfaces: o.blockfaces.map(item1 => Blockface.toFirestore(item1, encodeTimestamps)),
-})
-
-BlockfacesSyncedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    BlockfacesSyncedConstructor._from({
-        blockfaces: doc.blockfaces.map(item1 =>
-            Blockface.fromFirestore ? Blockface.fromFirestore(item1, decodeTimestamps) : Blockface.from(item1),
-        ),
-    })
-
-// Public aliases (can be overridden)
-BlockfacesSyncedConstructor.toFirestore = BlockfacesSyncedConstructor._toFirestore
-BlockfacesSyncedConstructor.fromFirestore = BlockfacesSyncedConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.BlockfaceCreated
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig blockfaceCreatedToString :: () -> String
- */
-const blockfaceCreatedToString = function () {
-    return `Action.BlockfaceCreated(${R._toString(this.blockface)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfaceCreatedToJSON :: () -> Object
- */
-const blockfaceCreatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.BlockfaceCreated instance
@@ -934,57 +429,6 @@ const BlockfaceCreatedConstructor = function BlockfaceCreated(blockface) {
 
 Action.BlockfaceCreated = BlockfaceCreatedConstructor
 
-const BlockfaceCreatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'BlockfaceCreated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfaceCreatedToString, enumerable: false },
-    toJSON: { value: blockfaceCreatedToJSON, enumerable: false },
-    constructor: { value: BlockfaceCreatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-BlockfaceCreatedConstructor.prototype = BlockfaceCreatedPrototype
-BlockfaceCreatedConstructor.is = val => val && val.constructor === BlockfaceCreatedConstructor
-BlockfaceCreatedConstructor.toString = () => 'Action.BlockfaceCreated'
-BlockfaceCreatedConstructor._from = _input => Action.BlockfaceCreated(_input.blockface)
-BlockfaceCreatedConstructor.from = BlockfaceCreatedConstructor._from
-
-BlockfaceCreatedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
-})
-
-BlockfaceCreatedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    BlockfaceCreatedConstructor._from({
-        blockface: Blockface.fromFirestore
-            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
-            : Blockface.from(doc.blockface),
-    })
-
-// Public aliases (can be overridden)
-BlockfaceCreatedConstructor.toFirestore = BlockfaceCreatedConstructor._toFirestore
-BlockfaceCreatedConstructor.fromFirestore = BlockfaceCreatedConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.BlockfaceSelected
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig blockfaceSelectedToString :: () -> String
- */
-const blockfaceSelectedToString = function () {
-    return `Action.BlockfaceSelected(${R._toString(this.blockface)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfaceSelectedToJSON :: () -> Object
- */
-const blockfaceSelectedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.BlockfaceSelected instance
  * @sig BlockfaceSelected :: (Blockface) -> Action.BlockfaceSelected
@@ -1001,57 +445,6 @@ const BlockfaceSelectedConstructor = function BlockfaceSelected(blockface) {
 
 Action.BlockfaceSelected = BlockfaceSelectedConstructor
 
-const BlockfaceSelectedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'BlockfaceSelected', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfaceSelectedToString, enumerable: false },
-    toJSON: { value: blockfaceSelectedToJSON, enumerable: false },
-    constructor: { value: BlockfaceSelectedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-BlockfaceSelectedConstructor.prototype = BlockfaceSelectedPrototype
-BlockfaceSelectedConstructor.is = val => val && val.constructor === BlockfaceSelectedConstructor
-BlockfaceSelectedConstructor.toString = () => 'Action.BlockfaceSelected'
-BlockfaceSelectedConstructor._from = _input => Action.BlockfaceSelected(_input.blockface)
-BlockfaceSelectedConstructor.from = BlockfaceSelectedConstructor._from
-
-BlockfaceSelectedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
-})
-
-BlockfaceSelectedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    BlockfaceSelectedConstructor._from({
-        blockface: Blockface.fromFirestore
-            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
-            : Blockface.from(doc.blockface),
-    })
-
-// Public aliases (can be overridden)
-BlockfaceSelectedConstructor.toFirestore = BlockfaceSelectedConstructor._toFirestore
-BlockfaceSelectedConstructor.fromFirestore = BlockfaceSelectedConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.BlockfaceSaved
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig blockfaceSavedToString :: () -> String
- */
-const blockfaceSavedToString = function () {
-    return `Action.BlockfaceSaved(${R._toString(this.blockface)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfaceSavedToJSON :: () -> Object
- */
-const blockfaceSavedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.BlockfaceSaved instance
  * @sig BlockfaceSaved :: (Blockface) -> Action.BlockfaceSaved
@@ -1067,57 +460,6 @@ const BlockfaceSavedConstructor = function BlockfaceSaved(blockface) {
 }
 
 Action.BlockfaceSaved = BlockfaceSavedConstructor
-
-const BlockfaceSavedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'BlockfaceSaved', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfaceSavedToString, enumerable: false },
-    toJSON: { value: blockfaceSavedToJSON, enumerable: false },
-    constructor: { value: BlockfaceSavedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-BlockfaceSavedConstructor.prototype = BlockfaceSavedPrototype
-BlockfaceSavedConstructor.is = val => val && val.constructor === BlockfaceSavedConstructor
-BlockfaceSavedConstructor.toString = () => 'Action.BlockfaceSaved'
-BlockfaceSavedConstructor._from = _input => Action.BlockfaceSaved(_input.blockface)
-BlockfaceSavedConstructor.from = BlockfaceSavedConstructor._from
-
-BlockfaceSavedConstructor._toFirestore = (o, encodeTimestamps) => ({
-    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
-})
-
-BlockfaceSavedConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    BlockfaceSavedConstructor._from({
-        blockface: Blockface.fromFirestore
-            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
-            : Blockface.from(doc.blockface),
-    })
-
-// Public aliases (can be overridden)
-BlockfaceSavedConstructor.toFirestore = BlockfaceSavedConstructor._toFirestore
-BlockfaceSavedConstructor.fromFirestore = BlockfaceSavedConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SegmentUseUpdated
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig segmentUseUpdatedToString :: () -> String
- */
-const segmentUseUpdatedToString = function () {
-    return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentUseUpdatedToJSON :: () -> Object
- */
-const segmentUseUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.SegmentUseUpdated instance
@@ -1137,45 +479,6 @@ const SegmentUseUpdatedConstructor = function SegmentUseUpdated(index, use) {
 
 Action.SegmentUseUpdated = SegmentUseUpdatedConstructor
 
-const SegmentUseUpdatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SegmentUseUpdated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentUseUpdatedToString, enumerable: false },
-    toJSON: { value: segmentUseUpdatedToJSON, enumerable: false },
-    constructor: { value: SegmentUseUpdatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SegmentUseUpdatedConstructor.prototype = SegmentUseUpdatedPrototype
-SegmentUseUpdatedConstructor.is = val => val && val.constructor === SegmentUseUpdatedConstructor
-SegmentUseUpdatedConstructor.toString = () => 'Action.SegmentUseUpdated'
-SegmentUseUpdatedConstructor._from = _input => Action.SegmentUseUpdated(_input.index, _input.use)
-SegmentUseUpdatedConstructor.from = SegmentUseUpdatedConstructor._from
-
-SegmentUseUpdatedConstructor.toFirestore = o => ({ ...o })
-SegmentUseUpdatedConstructor.fromFirestore = SegmentUseUpdatedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SegmentLengthUpdated
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig segmentLengthUpdatedToString :: () -> String
- */
-const segmentLengthUpdatedToString = function () {
-    return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentLengthUpdatedToJSON :: () -> Object
- */
-const segmentLengthUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.SegmentLengthUpdated instance
  * @sig SegmentLengthUpdated :: (Number, Number) -> Action.SegmentLengthUpdated
@@ -1193,45 +496,6 @@ const SegmentLengthUpdatedConstructor = function SegmentLengthUpdated(index, new
 }
 
 Action.SegmentLengthUpdated = SegmentLengthUpdatedConstructor
-
-const SegmentLengthUpdatedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SegmentLengthUpdated', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentLengthUpdatedToString, enumerable: false },
-    toJSON: { value: segmentLengthUpdatedToJSON, enumerable: false },
-    constructor: { value: SegmentLengthUpdatedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
-SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLengthUpdatedConstructor
-SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
-SegmentLengthUpdatedConstructor._from = _input => Action.SegmentLengthUpdated(_input.index, _input.newLength)
-SegmentLengthUpdatedConstructor.from = SegmentLengthUpdatedConstructor._from
-
-SegmentLengthUpdatedConstructor.toFirestore = o => ({ ...o })
-SegmentLengthUpdatedConstructor.fromFirestore = SegmentLengthUpdatedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SegmentAddedLeft
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig segmentAddedLeftToString :: () -> String
- */
-const segmentAddedLeftToString = function () {
-    return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentAddedLeftToJSON :: () -> Object
- */
-const segmentAddedLeftToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.SegmentAddedLeft instance
@@ -1251,45 +515,6 @@ const SegmentAddedLeftConstructor = function SegmentAddedLeft(index, desiredLeng
 
 Action.SegmentAddedLeft = SegmentAddedLeftConstructor
 
-const SegmentAddedLeftPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SegmentAddedLeft', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentAddedLeftToString, enumerable: false },
-    toJSON: { value: segmentAddedLeftToJSON, enumerable: false },
-    constructor: { value: SegmentAddedLeftConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
-SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
-SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
-SegmentAddedLeftConstructor._from = _input => Action.SegmentAddedLeft(_input.index, _input.desiredLength)
-SegmentAddedLeftConstructor.from = SegmentAddedLeftConstructor._from
-
-SegmentAddedLeftConstructor.toFirestore = o => ({ ...o })
-SegmentAddedLeftConstructor.fromFirestore = SegmentAddedLeftConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SegmentAdded
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig segmentAddedToString :: () -> String
- */
-const segmentAddedToString = function () {
-    return `Action.SegmentAdded(${R._toString(this.targetIndex)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentAddedToJSON :: () -> Object
- */
-const segmentAddedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a Action.SegmentAdded instance
  * @sig SegmentAdded :: (Number) -> Action.SegmentAdded
@@ -1305,45 +530,6 @@ const SegmentAddedConstructor = function SegmentAdded(targetIndex) {
 }
 
 Action.SegmentAdded = SegmentAddedConstructor
-
-const SegmentAddedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SegmentAdded', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentAddedToString, enumerable: false },
-    toJSON: { value: segmentAddedToJSON, enumerable: false },
-    constructor: { value: SegmentAddedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-SegmentAddedConstructor.prototype = SegmentAddedPrototype
-SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
-SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
-SegmentAddedConstructor._from = _input => Action.SegmentAdded(_input.targetIndex)
-SegmentAddedConstructor.from = SegmentAddedConstructor._from
-
-SegmentAddedConstructor.toFirestore = o => ({ ...o })
-SegmentAddedConstructor.fromFirestore = SegmentAddedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Action.SegmentsReplaced
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig segmentsReplacedToString :: () -> String
- */
-const segmentsReplacedToString = function () {
-    return `Action.SegmentsReplaced(${R._toString(this.segments)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentsReplacedToJSON :: () -> Object
- */
-const segmentsReplacedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Action.SegmentsReplaced instance
@@ -1361,19 +547,441 @@ const SegmentsReplacedConstructor = function SegmentsReplaced(segments) {
 
 Action.SegmentsReplaced = SegmentsReplacedConstructor
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationCreated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.organizationCreated, enumerable: false },
+    toJSON: { value: toJSON.organizationCreated, enumerable: false },
+    constructor: { value: OrganizationCreatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationUpdated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.organizationUpdated, enumerable: false },
+    toJSON: { value: toJSON.organizationUpdated, enumerable: false },
+    constructor: { value: OrganizationUpdatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationDeleted', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.organizationDeleted, enumerable: false },
+    toJSON: { value: toJSON.organizationDeleted, enumerable: false },
+    constructor: { value: OrganizationDeletedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const MemberAddedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MemberAdded', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.memberAdded, enumerable: false },
+    toJSON: { value: toJSON.memberAdded, enumerable: false },
+    constructor: { value: MemberAddedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const RoleChangedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'RoleChanged', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.roleChanged, enumerable: false },
+    toJSON: { value: toJSON.roleChanged, enumerable: false },
+    constructor: { value: RoleChangedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const MemberRemovedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MemberRemoved', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.memberRemoved, enumerable: false },
+    toJSON: { value: toJSON.memberRemoved, enumerable: false },
+    constructor: { value: MemberRemovedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const UserCreatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserCreated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.userCreated, enumerable: false },
+    toJSON: { value: toJSON.userCreated, enumerable: false },
+    constructor: { value: UserCreatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const UserUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserUpdated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.userUpdated, enumerable: false },
+    toJSON: { value: toJSON.userUpdated, enumerable: false },
+    constructor: { value: UserUpdatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const UserForgottenPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserForgotten', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.userForgotten, enumerable: false },
+    toJSON: { value: toJSON.userForgotten, enumerable: false },
+    constructor: { value: UserForgottenConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'AuthenticationCompleted', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.authenticationCompleted, enumerable: false },
+    toJSON: { value: toJSON.authenticationCompleted, enumerable: false },
+    constructor: { value: AuthenticationCompletedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const UserLoadedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'UserLoaded', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.userLoaded, enumerable: false },
+    toJSON: { value: toJSON.userLoaded, enumerable: false },
+    constructor: { value: UserLoadedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const OrganizationSyncedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'OrganizationSynced', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.organizationSynced, enumerable: false },
+    toJSON: { value: toJSON.organizationSynced, enumerable: false },
+    constructor: { value: OrganizationSyncedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const BlockfacesSyncedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfacesSynced', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.blockfacesSynced, enumerable: false },
+    toJSON: { value: toJSON.blockfacesSynced, enumerable: false },
+    constructor: { value: BlockfacesSyncedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const BlockfaceCreatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfaceCreated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.blockfaceCreated, enumerable: false },
+    toJSON: { value: toJSON.blockfaceCreated, enumerable: false },
+    constructor: { value: BlockfaceCreatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const BlockfaceSelectedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfaceSelected', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.blockfaceSelected, enumerable: false },
+    toJSON: { value: toJSON.blockfaceSelected, enumerable: false },
+    constructor: { value: BlockfaceSelectedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const BlockfaceSavedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'BlockfaceSaved', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.blockfaceSaved, enumerable: false },
+    toJSON: { value: toJSON.blockfaceSaved, enumerable: false },
+    constructor: { value: BlockfaceSavedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SegmentUseUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentUseUpdated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.segmentUseUpdated, enumerable: false },
+    toJSON: { value: toJSON.segmentUseUpdated, enumerable: false },
+    constructor: { value: SegmentUseUpdatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SegmentLengthUpdatedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentLengthUpdated', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.segmentLengthUpdated, enumerable: false },
+    toJSON: { value: toJSON.segmentLengthUpdated, enumerable: false },
+    constructor: { value: SegmentLengthUpdatedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SegmentAddedLeftPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentAddedLeft', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.segmentAddedLeft, enumerable: false },
+    toJSON: { value: toJSON.segmentAddedLeft, enumerable: false },
+    constructor: { value: SegmentAddedLeftConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SegmentAddedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SegmentAdded', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.segmentAdded, enumerable: false },
+    toJSON: { value: toJSON.segmentAdded, enumerable: false },
+    constructor: { value: SegmentAddedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SegmentsReplacedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SegmentsReplaced', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentsReplacedToString, enumerable: false },
-    toJSON: { value: segmentsReplacedToJSON, enumerable: false },
+    toString: { value: toString.segmentsReplaced, enumerable: false },
+    toJSON: { value: toJSON.segmentsReplaced, enumerable: false },
     constructor: { value: SegmentsReplacedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+// -------------------------------------------------------------------------------------------------------------
+// Variant static prototype
+// -------------------------------------------------------------------------------------------------------------
+OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
+OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
+OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
+MemberAddedConstructor.prototype = MemberAddedPrototype
+RoleChangedConstructor.prototype = RoleChangedPrototype
+MemberRemovedConstructor.prototype = MemberRemovedPrototype
+UserCreatedConstructor.prototype = UserCreatedPrototype
+UserUpdatedConstructor.prototype = UserUpdatedPrototype
+UserForgottenConstructor.prototype = UserForgottenPrototype
+AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
+UserLoadedConstructor.prototype = UserLoadedPrototype
+OrganizationSyncedConstructor.prototype = OrganizationSyncedPrototype
+BlockfacesSyncedConstructor.prototype = BlockfacesSyncedPrototype
+BlockfaceCreatedConstructor.prototype = BlockfaceCreatedPrototype
+BlockfaceSelectedConstructor.prototype = BlockfaceSelectedPrototype
+BlockfaceSavedConstructor.prototype = BlockfaceSavedPrototype
+SegmentUseUpdatedConstructor.prototype = SegmentUseUpdatedPrototype
+SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
+SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
+SegmentAddedConstructor.prototype = SegmentAddedPrototype
 SegmentsReplacedConstructor.prototype = SegmentsReplacedPrototype
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
+OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
+OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
+OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
+MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
+RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
+MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
+UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
+UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
+UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
+AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
+UserLoadedConstructor.is = val => val && val.constructor === UserLoadedConstructor
+OrganizationSyncedConstructor.is = val => val && val.constructor === OrganizationSyncedConstructor
+BlockfacesSyncedConstructor.is = val => val && val.constructor === BlockfacesSyncedConstructor
+BlockfaceCreatedConstructor.is = val => val && val.constructor === BlockfaceCreatedConstructor
+BlockfaceSelectedConstructor.is = val => val && val.constructor === BlockfaceSelectedConstructor
+BlockfaceSavedConstructor.is = val => val && val.constructor === BlockfaceSavedConstructor
+SegmentUseUpdatedConstructor.is = val => val && val.constructor === SegmentUseUpdatedConstructor
+SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLengthUpdatedConstructor
+SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
+SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
 SegmentsReplacedConstructor.is = val => val && val.constructor === SegmentsReplacedConstructor
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
+OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
+OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
+OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
+MemberAddedConstructor.toString = () => 'Action.MemberAdded'
+RoleChangedConstructor.toString = () => 'Action.RoleChanged'
+MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
+UserCreatedConstructor.toString = () => 'Action.UserCreated'
+UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
+UserForgottenConstructor.toString = () => 'Action.UserForgotten'
+AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
+UserLoadedConstructor.toString = () => 'Action.UserLoaded'
+OrganizationSyncedConstructor.toString = () => 'Action.OrganizationSynced'
+BlockfacesSyncedConstructor.toString = () => 'Action.BlockfacesSynced'
+BlockfaceCreatedConstructor.toString = () => 'Action.BlockfaceCreated'
+BlockfaceSelectedConstructor.toString = () => 'Action.BlockfaceSelected'
+BlockfaceSavedConstructor.toString = () => 'Action.BlockfaceSaved'
+SegmentUseUpdatedConstructor.toString = () => 'Action.SegmentUseUpdated'
+SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
+SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
+SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
 SegmentsReplacedConstructor.toString = () => 'Action.SegmentsReplaced'
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
+OrganizationCreatedConstructor._from = _input => Action.OrganizationCreated(_input.name, _input.projectId)
+OrganizationUpdatedConstructor._from = _input => Action.OrganizationUpdated(_input.name)
+OrganizationDeletedConstructor._from = _input => Action.OrganizationDeleted()
+MemberAddedConstructor._from = _input => {
+    const { userId, role, displayName } = _input
+    return Action.MemberAdded(userId, role, displayName)
+}
+RoleChangedConstructor._from = _input => Action.RoleChanged(_input.userId, _input.role)
+MemberRemovedConstructor._from = _input => Action.MemberRemoved(_input.userId)
+UserCreatedConstructor._from = _input => {
+    const { userId, displayName, email } = _input
+    return Action.UserCreated(userId, displayName, email)
+}
+UserUpdatedConstructor._from = _input => Action.UserUpdated(_input.userId, _input.displayName)
+UserForgottenConstructor._from = _input => Action.UserForgotten(_input.userId, _input.reason)
+AuthenticationCompletedConstructor._from = _input => Action.AuthenticationCompleted(_input.email, _input.displayName)
+UserLoadedConstructor._from = _input => Action.UserLoaded(_input.user)
+OrganizationSyncedConstructor._from = _input => Action.OrganizationSynced(_input.organization)
+BlockfacesSyncedConstructor._from = _input => Action.BlockfacesSynced(_input.blockfaces)
+BlockfaceCreatedConstructor._from = _input => Action.BlockfaceCreated(_input.blockface)
+BlockfaceSelectedConstructor._from = _input => Action.BlockfaceSelected(_input.blockface)
+BlockfaceSavedConstructor._from = _input => Action.BlockfaceSaved(_input.blockface)
+SegmentUseUpdatedConstructor._from = _input => Action.SegmentUseUpdated(_input.index, _input.use)
+SegmentLengthUpdatedConstructor._from = _input => Action.SegmentLengthUpdated(_input.index, _input.newLength)
+SegmentAddedLeftConstructor._from = _input => Action.SegmentAddedLeft(_input.index, _input.desiredLength)
+SegmentAddedConstructor._from = _input => Action.SegmentAdded(_input.targetIndex)
 SegmentsReplacedConstructor._from = _input => Action.SegmentsReplaced(_input.segments)
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
+OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
+OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
+OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
+MemberAddedConstructor.from = MemberAddedConstructor._from
+RoleChangedConstructor.from = RoleChangedConstructor._from
+MemberRemovedConstructor.from = MemberRemovedConstructor._from
+UserCreatedConstructor.from = UserCreatedConstructor._from
+UserUpdatedConstructor.from = UserUpdatedConstructor._from
+UserForgottenConstructor.from = UserForgottenConstructor._from
+AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
+UserLoadedConstructor.from = UserLoadedConstructor._from
+OrganizationSyncedConstructor.from = OrganizationSyncedConstructor._from
+BlockfacesSyncedConstructor.from = BlockfacesSyncedConstructor._from
+BlockfaceCreatedConstructor.from = BlockfaceCreatedConstructor._from
+BlockfaceSelectedConstructor.from = BlockfaceSelectedConstructor._from
+BlockfaceSavedConstructor.from = BlockfaceSavedConstructor._from
+SegmentUseUpdatedConstructor.from = SegmentUseUpdatedConstructor._from
+SegmentLengthUpdatedConstructor.from = SegmentLengthUpdatedConstructor._from
+SegmentAddedLeftConstructor.from = SegmentAddedLeftConstructor._from
+SegmentAddedConstructor.from = SegmentAddedConstructor._from
 SegmentsReplacedConstructor.from = SegmentsReplacedConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+OrganizationCreatedConstructor.toFirestore = o => ({ ...o })
+OrganizationCreatedConstructor.fromFirestore = OrganizationCreatedConstructor._from
+
+OrganizationUpdatedConstructor.toFirestore = o => ({ ...o })
+OrganizationUpdatedConstructor.fromFirestore = OrganizationUpdatedConstructor._from
+
+OrganizationDeletedConstructor.toFirestore = o => ({ ...o })
+OrganizationDeletedConstructor.fromFirestore = OrganizationDeletedConstructor._from
+
+MemberAddedConstructor.toFirestore = o => ({ ...o })
+MemberAddedConstructor.fromFirestore = MemberAddedConstructor._from
+
+RoleChangedConstructor.toFirestore = o => ({ ...o })
+RoleChangedConstructor.fromFirestore = RoleChangedConstructor._from
+
+MemberRemovedConstructor.toFirestore = o => ({ ...o })
+MemberRemovedConstructor.fromFirestore = MemberRemovedConstructor._from
+
+UserCreatedConstructor.toFirestore = o => ({ ...o })
+UserCreatedConstructor.fromFirestore = UserCreatedConstructor._from
+
+UserUpdatedConstructor.toFirestore = o => ({ ...o })
+UserUpdatedConstructor.fromFirestore = UserUpdatedConstructor._from
+
+UserForgottenConstructor.toFirestore = o => ({ ...o })
+UserForgottenConstructor.fromFirestore = UserForgottenConstructor._from
+
+AuthenticationCompletedConstructor.toFirestore = o => ({ ...o })
+AuthenticationCompletedConstructor.fromFirestore = AuthenticationCompletedConstructor._from
+
+UserLoadedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    user: User.toFirestore(o.user, encodeTimestamps),
+})
+
+UserLoadedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    UserLoadedConstructor._from({
+        user: User.fromFirestore ? User.fromFirestore(doc.user, decodeTimestamps) : User.from(doc.user),
+    })
+
+// Public aliases (can be overridden)
+UserLoadedConstructor.toFirestore = UserLoadedConstructor._toFirestore
+UserLoadedConstructor.fromFirestore = UserLoadedConstructor._fromFirestore
+
+OrganizationSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    organization: Organization.toFirestore(o.organization, encodeTimestamps),
+})
+
+OrganizationSyncedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    OrganizationSyncedConstructor._from({
+        organization: Organization.fromFirestore
+            ? Organization.fromFirestore(doc.organization, decodeTimestamps)
+            : Organization.from(doc.organization),
+    })
+
+// Public aliases (can be overridden)
+OrganizationSyncedConstructor.toFirestore = OrganizationSyncedConstructor._toFirestore
+OrganizationSyncedConstructor.fromFirestore = OrganizationSyncedConstructor._fromFirestore
+
+BlockfacesSyncedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockfaces: o.blockfaces.map(item1 => Blockface.toFirestore(item1, encodeTimestamps)),
+})
+
+BlockfacesSyncedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfacesSyncedConstructor._from({
+        blockfaces: doc.blockfaces.map(item1 =>
+            Blockface.fromFirestore ? Blockface.fromFirestore(item1, decodeTimestamps) : Blockface.from(item1),
+        ),
+    })
+
+// Public aliases (can be overridden)
+BlockfacesSyncedConstructor.toFirestore = BlockfacesSyncedConstructor._toFirestore
+BlockfacesSyncedConstructor.fromFirestore = BlockfacesSyncedConstructor._fromFirestore
+
+BlockfaceCreatedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
+})
+
+BlockfaceCreatedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfaceCreatedConstructor._from({
+        blockface: Blockface.fromFirestore
+            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
+            : Blockface.from(doc.blockface),
+    })
+
+// Public aliases (can be overridden)
+BlockfaceCreatedConstructor.toFirestore = BlockfaceCreatedConstructor._toFirestore
+BlockfaceCreatedConstructor.fromFirestore = BlockfaceCreatedConstructor._fromFirestore
+
+BlockfaceSelectedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
+})
+
+BlockfaceSelectedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfaceSelectedConstructor._from({
+        blockface: Blockface.fromFirestore
+            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
+            : Blockface.from(doc.blockface),
+    })
+
+// Public aliases (can be overridden)
+BlockfaceSelectedConstructor.toFirestore = BlockfaceSelectedConstructor._toFirestore
+BlockfaceSelectedConstructor.fromFirestore = BlockfaceSelectedConstructor._fromFirestore
+
+BlockfaceSavedConstructor._toFirestore = (o, encodeTimestamps) => ({
+    blockface: Blockface.toFirestore(o.blockface, encodeTimestamps),
+})
+
+BlockfaceSavedConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    BlockfaceSavedConstructor._from({
+        blockface: Blockface.fromFirestore
+            ? Blockface.fromFirestore(doc.blockface, decodeTimestamps)
+            : Blockface.from(doc.blockface),
+    })
+
+// Public aliases (can be overridden)
+BlockfaceSavedConstructor.toFirestore = BlockfaceSavedConstructor._toFirestore
+BlockfaceSavedConstructor.fromFirestore = BlockfaceSavedConstructor._fromFirestore
+
+SegmentUseUpdatedConstructor.toFirestore = o => ({ ...o })
+SegmentUseUpdatedConstructor.fromFirestore = SegmentUseUpdatedConstructor._from
+
+SegmentLengthUpdatedConstructor.toFirestore = o => ({ ...o })
+SegmentLengthUpdatedConstructor.fromFirestore = SegmentLengthUpdatedConstructor._from
+
+SegmentAddedLeftConstructor.toFirestore = o => ({ ...o })
+SegmentAddedLeftConstructor.fromFirestore = SegmentAddedLeftConstructor._from
+
+SegmentAddedConstructor.toFirestore = o => ({ ...o })
+SegmentAddedConstructor.fromFirestore = SegmentAddedConstructor._from
 
 SegmentsReplacedConstructor._toFirestore = (o, encodeTimestamps) => ({
     segments: o.segments.map(item1 => Segment.toFirestore(item1, encodeTimestamps)),

@@ -78,7 +78,7 @@ const ColumnDefinition = function ColumnDefinition(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig columndefinitionToString :: () -> String
  */

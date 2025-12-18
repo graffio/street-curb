@@ -68,7 +68,7 @@ const DailyPortfolio = function DailyPortfolio(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig dailyportfolioToString :: () -> String
  */

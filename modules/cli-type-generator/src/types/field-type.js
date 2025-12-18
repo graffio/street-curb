@@ -52,25 +52,33 @@ FieldType.prototype = FieldTypePrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant FieldType.StringType
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig stringTypeToString :: () -> String
- */
-const stringTypeToString = function () {
-    return `FieldType.StringType(${R._toString(this.value)})`
+// prettier-ignore
+const toString = {
+    stringType       : function () { return `FieldType.StringType(${R._toString(this.value)})` },
+    regexType        : function () { return `FieldType.RegexType(${R._toString(this.value)})` },
+    importPlaceholder: function () { return `FieldType.ImportPlaceholder(${R._toString(this.isImportPlaceholder)}, ${R._toString(this.source)}, ${R._toString(this.localName)})` },
 }
 
-/*
- * Convert to JSON representation with tag
- * @sig stringTypeToJSON :: () -> Object
- */
-const stringTypeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toJSON = {
+    stringType       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    regexType        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    importPlaceholder: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a FieldType.StringType instance
@@ -88,45 +96,6 @@ const StringTypeConstructor = function StringType(value) {
 
 FieldType.StringType = StringTypeConstructor
 
-const StringTypePrototype = Object.create(FieldTypePrototype, {
-    '@@tagName': { value: 'StringType', enumerable: false },
-    '@@typeName': { value: 'FieldType', enumerable: false },
-    toString: { value: stringTypeToString, enumerable: false },
-    toJSON: { value: stringTypeToJSON, enumerable: false },
-    constructor: { value: StringTypeConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-StringTypeConstructor.prototype = StringTypePrototype
-StringTypeConstructor.is = val => val && val.constructor === StringTypeConstructor
-StringTypeConstructor.toString = () => 'FieldType.StringType'
-StringTypeConstructor._from = _input => FieldType.StringType(_input.value)
-StringTypeConstructor.from = StringTypeConstructor._from
-
-StringTypeConstructor.toFirestore = o => ({ ...o })
-StringTypeConstructor.fromFirestore = StringTypeConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FieldType.RegexType
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig regexTypeToString :: () -> String
- */
-const regexTypeToString = function () {
-    return `FieldType.RegexType(${R._toString(this.value)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig regexTypeToJSON :: () -> Object
- */
-const regexTypeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a FieldType.RegexType instance
  * @sig RegexType :: (RegExp) -> FieldType.RegexType
@@ -142,57 +111,6 @@ const RegexTypeConstructor = function RegexType(value) {
 }
 
 FieldType.RegexType = RegexTypeConstructor
-
-const RegexTypePrototype = Object.create(FieldTypePrototype, {
-    '@@tagName': { value: 'RegexType', enumerable: false },
-    '@@typeName': { value: 'FieldType', enumerable: false },
-    toString: { value: regexTypeToString, enumerable: false },
-    toJSON: { value: regexTypeToJSON, enumerable: false },
-    constructor: { value: RegexTypeConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-RegexTypeConstructor.prototype = RegexTypePrototype
-RegexTypeConstructor.is = val => val && val.constructor === RegexTypeConstructor
-RegexTypeConstructor.toString = () => 'FieldType.RegexType'
-RegexTypeConstructor._from = _input => FieldType.RegexType(_input.value)
-RegexTypeConstructor.from = RegexTypeConstructor._from
-
-RegexTypeConstructor._toFirestore = (o, encodeTimestamps) => ({
-    value: RegExp.toFirestore(o.value, encodeTimestamps),
-})
-
-RegexTypeConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    RegexTypeConstructor._from({
-        value: RegExp.fromFirestore ? RegExp.fromFirestore(doc.value, decodeTimestamps) : RegExp.from(doc.value),
-    })
-
-// Public aliases (can be overridden)
-RegexTypeConstructor.toFirestore = RegexTypeConstructor._toFirestore
-RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FieldType.ImportPlaceholder
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig importPlaceholderToString :: () -> String
- */
-const importPlaceholderToString = function () {
-    return `FieldType.ImportPlaceholder(${R._toString(this.isImportPlaceholder)},
-        ${R._toString(this.source)},
-        ${R._toString(this.localName)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig importPlaceholderToJSON :: () -> Object
- */
-const importPlaceholderToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a FieldType.ImportPlaceholder instance
@@ -214,22 +132,90 @@ const ImportPlaceholderConstructor = function ImportPlaceholder(isImportPlacehol
 
 FieldType.ImportPlaceholder = ImportPlaceholderConstructor
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const StringTypePrototype = Object.create(FieldTypePrototype, {
+    '@@tagName': { value: 'StringType', enumerable: false },
+    '@@typeName': { value: 'FieldType', enumerable: false },
+    toString: { value: toString.stringType, enumerable: false },
+    toJSON: { value: toJSON.stringType, enumerable: false },
+    constructor: { value: StringTypeConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const RegexTypePrototype = Object.create(FieldTypePrototype, {
+    '@@tagName': { value: 'RegexType', enumerable: false },
+    '@@typeName': { value: 'FieldType', enumerable: false },
+    toString: { value: toString.regexType, enumerable: false },
+    toJSON: { value: toJSON.regexType, enumerable: false },
+    constructor: { value: RegexTypeConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'ImportPlaceholder', enumerable: false },
     '@@typeName': { value: 'FieldType', enumerable: false },
-    toString: { value: importPlaceholderToString, enumerable: false },
-    toJSON: { value: importPlaceholderToJSON, enumerable: false },
+    toString: { value: toString.importPlaceholder, enumerable: false },
+    toJSON: { value: toJSON.importPlaceholder, enumerable: false },
     constructor: { value: ImportPlaceholderConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+// -------------------------------------------------------------------------------------------------------------
+// Variant static prototype
+// -------------------------------------------------------------------------------------------------------------
+StringTypeConstructor.prototype = StringTypePrototype
+RegexTypeConstructor.prototype = RegexTypePrototype
 ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
+StringTypeConstructor.is = val => val && val.constructor === StringTypeConstructor
+RegexTypeConstructor.is = val => val && val.constructor === RegexTypeConstructor
 ImportPlaceholderConstructor.is = val => val && val.constructor === ImportPlaceholderConstructor
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
+StringTypeConstructor.toString = () => 'FieldType.StringType'
+RegexTypeConstructor.toString = () => 'FieldType.RegexType'
 ImportPlaceholderConstructor.toString = () => 'FieldType.ImportPlaceholder'
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
+StringTypeConstructor._from = _input => FieldType.StringType(_input.value)
+RegexTypeConstructor._from = _input => FieldType.RegexType(_input.value)
 ImportPlaceholderConstructor._from = _input => {
     const { isImportPlaceholder, source, localName } = _input
     return FieldType.ImportPlaceholder(isImportPlaceholder, source, localName)
 }
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
+StringTypeConstructor.from = StringTypeConstructor._from
+RegexTypeConstructor.from = RegexTypeConstructor._from
 ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+StringTypeConstructor.toFirestore = o => ({ ...o })
+StringTypeConstructor.fromFirestore = StringTypeConstructor._from
+
+RegexTypeConstructor._toFirestore = (o, encodeTimestamps) => ({
+    value: RegExp.toFirestore(o.value, encodeTimestamps),
+})
+
+RegexTypeConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    RegexTypeConstructor._from({
+        value: RegExp.fromFirestore ? RegExp.fromFirestore(doc.value, decodeTimestamps) : RegExp.from(doc.value),
+    })
+
+// Public aliases (can be overridden)
+RegexTypeConstructor.toFirestore = RegexTypeConstructor._toFirestore
+RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
 
 ImportPlaceholderConstructor.toFirestore = o => ({ ...o })
 ImportPlaceholderConstructor.fromFirestore = ImportPlaceholderConstructor._from

@@ -49,25 +49,33 @@ ImportSpecifier.prototype = ImportSpecifierPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant ImportSpecifier.Default
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig defaultToString :: () -> String
- */
-const defaultToString = function () {
-    return `ImportSpecifier.Default(${R._toString(this.local)})`
+// prettier-ignore
+const toString = {
+    default  : function () { return `ImportSpecifier.Default(${R._toString(this.local)})` },
+    namespace: function () { return `ImportSpecifier.Namespace(${R._toString(this.local)})` },
+    named    : function () { return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})` },
 }
 
-/*
- * Convert to JSON representation with tag
- * @sig defaultToJSON :: () -> Object
- */
-const defaultToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toJSON = {
+    default  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    namespace: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    named    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a ImportSpecifier.Default instance
@@ -85,45 +93,6 @@ const DefaultConstructor = function Default(local) {
 
 ImportSpecifier.Default = DefaultConstructor
 
-const DefaultPrototype = Object.create(ImportSpecifierPrototype, {
-    '@@tagName': { value: 'Default', enumerable: false },
-    '@@typeName': { value: 'ImportSpecifier', enumerable: false },
-    toString: { value: defaultToString, enumerable: false },
-    toJSON: { value: defaultToJSON, enumerable: false },
-    constructor: { value: DefaultConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-DefaultConstructor.prototype = DefaultPrototype
-DefaultConstructor.is = val => val && val.constructor === DefaultConstructor
-DefaultConstructor.toString = () => 'ImportSpecifier.Default'
-DefaultConstructor._from = _input => ImportSpecifier.Default(_input.local)
-DefaultConstructor.from = DefaultConstructor._from
-
-DefaultConstructor.toFirestore = o => ({ ...o })
-DefaultConstructor.fromFirestore = DefaultConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant ImportSpecifier.Namespace
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig namespaceToString :: () -> String
- */
-const namespaceToString = function () {
-    return `ImportSpecifier.Namespace(${R._toString(this.local)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig namespaceToJSON :: () -> Object
- */
-const namespaceToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a ImportSpecifier.Namespace instance
  * @sig Namespace :: (String) -> ImportSpecifier.Namespace
@@ -139,45 +108,6 @@ const NamespaceConstructor = function Namespace(local) {
 }
 
 ImportSpecifier.Namespace = NamespaceConstructor
-
-const NamespacePrototype = Object.create(ImportSpecifierPrototype, {
-    '@@tagName': { value: 'Namespace', enumerable: false },
-    '@@typeName': { value: 'ImportSpecifier', enumerable: false },
-    toString: { value: namespaceToString, enumerable: false },
-    toJSON: { value: namespaceToJSON, enumerable: false },
-    constructor: { value: NamespaceConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-NamespaceConstructor.prototype = NamespacePrototype
-NamespaceConstructor.is = val => val && val.constructor === NamespaceConstructor
-NamespaceConstructor.toString = () => 'ImportSpecifier.Namespace'
-NamespaceConstructor._from = _input => ImportSpecifier.Namespace(_input.local)
-NamespaceConstructor.from = NamespaceConstructor._from
-
-NamespaceConstructor.toFirestore = o => ({ ...o })
-NamespaceConstructor.fromFirestore = NamespaceConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant ImportSpecifier.Named
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig namedToString :: () -> String
- */
-const namedToString = function () {
-    return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig namedToJSON :: () -> Object
- */
-const namedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a ImportSpecifier.Named instance
@@ -197,19 +127,77 @@ const NamedConstructor = function Named(imported, local) {
 
 ImportSpecifier.Named = NamedConstructor
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const DefaultPrototype = Object.create(ImportSpecifierPrototype, {
+    '@@tagName': { value: 'Default', enumerable: false },
+    '@@typeName': { value: 'ImportSpecifier', enumerable: false },
+    toString: { value: toString.default, enumerable: false },
+    toJSON: { value: toJSON.default, enumerable: false },
+    constructor: { value: DefaultConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const NamespacePrototype = Object.create(ImportSpecifierPrototype, {
+    '@@tagName': { value: 'Namespace', enumerable: false },
+    '@@typeName': { value: 'ImportSpecifier', enumerable: false },
+    toString: { value: toString.namespace, enumerable: false },
+    toJSON: { value: toJSON.namespace, enumerable: false },
+    constructor: { value: NamespaceConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const NamedPrototype = Object.create(ImportSpecifierPrototype, {
     '@@tagName': { value: 'Named', enumerable: false },
     '@@typeName': { value: 'ImportSpecifier', enumerable: false },
-    toString: { value: namedToString, enumerable: false },
-    toJSON: { value: namedToJSON, enumerable: false },
+    toString: { value: toString.named, enumerable: false },
+    toJSON: { value: toJSON.named, enumerable: false },
     constructor: { value: NamedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+// -------------------------------------------------------------------------------------------------------------
+// Variant static prototype
+// -------------------------------------------------------------------------------------------------------------
+DefaultConstructor.prototype = DefaultPrototype
+NamespaceConstructor.prototype = NamespacePrototype
 NamedConstructor.prototype = NamedPrototype
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
+DefaultConstructor.is = val => val && val.constructor === DefaultConstructor
+NamespaceConstructor.is = val => val && val.constructor === NamespaceConstructor
 NamedConstructor.is = val => val && val.constructor === NamedConstructor
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
+DefaultConstructor.toString = () => 'ImportSpecifier.Default'
+NamespaceConstructor.toString = () => 'ImportSpecifier.Namespace'
 NamedConstructor.toString = () => 'ImportSpecifier.Named'
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
+DefaultConstructor._from = _input => ImportSpecifier.Default(_input.local)
+NamespaceConstructor._from = _input => ImportSpecifier.Namespace(_input.local)
 NamedConstructor._from = _input => ImportSpecifier.Named(_input.imported, _input.local)
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
+DefaultConstructor.from = DefaultConstructor._from
+NamespaceConstructor.from = NamespaceConstructor._from
 NamedConstructor.from = NamedConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+DefaultConstructor.toFirestore = o => ({ ...o })
+DefaultConstructor.fromFirestore = DefaultConstructor._from
+
+NamespaceConstructor.toFirestore = o => ({ ...o })
+NamespaceConstructor.fromFirestore = NamespaceConstructor._from
 
 NamedConstructor.toFirestore = o => ({ ...o })
 NamedConstructor.fromFirestore = NamedConstructor._from

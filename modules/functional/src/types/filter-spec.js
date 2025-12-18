@@ -56,25 +56,35 @@ FilterSpec.prototype = FilterSpecPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant FilterSpec.TextMatch
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig textMatchToString :: () -> String
- */
-const textMatchToString = function () {
-    return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})`
+// prettier-ignore
+const toString = {
+    textMatch    : function () { return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})` },
+    dateRange    : function () { return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})` },
+    categoryMatch: function () { return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})` },
+    compound     : function () { return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})` },
 }
 
-/*
- * Convert to JSON representation with tag
- * @sig textMatchToJSON :: () -> Object
- */
-const textMatchToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+// prettier-ignore
+const toJSON = {
+    textMatch    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    dateRange    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    categoryMatch: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    compound     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a FilterSpec.TextMatch instance
@@ -93,45 +103,6 @@ const TextMatchConstructor = function TextMatch(fields, query) {
 }
 
 FilterSpec.TextMatch = TextMatchConstructor
-
-const TextMatchPrototype = Object.create(FilterSpecPrototype, {
-    '@@tagName': { value: 'TextMatch', enumerable: false },
-    '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: textMatchToString, enumerable: false },
-    toJSON: { value: textMatchToJSON, enumerable: false },
-    constructor: { value: TextMatchConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-TextMatchConstructor.prototype = TextMatchPrototype
-TextMatchConstructor.is = val => val && val.constructor === TextMatchConstructor
-TextMatchConstructor.toString = () => 'FilterSpec.TextMatch'
-TextMatchConstructor._from = _input => FilterSpec.TextMatch(_input.fields, _input.query)
-TextMatchConstructor.from = TextMatchConstructor._from
-
-TextMatchConstructor.toFirestore = o => ({ ...o })
-TextMatchConstructor.fromFirestore = TextMatchConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FilterSpec.DateRange
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig dateRangeToString :: () -> String
- */
-const dateRangeToString = function () {
-    return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig dateRangeToJSON :: () -> Object
- */
-const dateRangeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a FilterSpec.DateRange instance
@@ -153,22 +124,127 @@ const DateRangeConstructor = function DateRange(field, start, end) {
 
 FilterSpec.DateRange = DateRangeConstructor
 
+/*
+ * Construct a FilterSpec.CategoryMatch instance
+ * @sig CategoryMatch :: (String, [String]) -> FilterSpec.CategoryMatch
+ */
+const CategoryMatchConstructor = function CategoryMatch(field, categories) {
+    const constructorName = 'FilterSpec.CategoryMatch(field, categories)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'field', false, field)
+    R.validateArray(constructorName, 1, 'String', undefined, 'categories', false, categories)
+
+    const result = Object.create(CategoryMatchPrototype)
+    result.field = field
+    result.categories = categories
+    return result
+}
+
+FilterSpec.CategoryMatch = CategoryMatchConstructor
+
+/*
+ * Construct a FilterSpec.Compound instance
+ * @sig Compound :: ([FilterSpec], Mode) -> FilterSpec.Compound
+ *     Mode = /^(all|any)$/
+ */
+const CompoundConstructor = function Compound(filters, mode) {
+    const constructorName = 'FilterSpec.Compound(filters, mode)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateArray(constructorName, 1, 'Tagged', 'FilterSpec', 'filters', false, filters)
+    R.validateRegex(constructorName, /^(all|any)$/, 'mode', false, mode)
+
+    const result = Object.create(CompoundPrototype)
+    result.filters = filters
+    result.mode = mode
+    return result
+}
+
+FilterSpec.Compound = CompoundConstructor
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const TextMatchPrototype = Object.create(FilterSpecPrototype, {
+    '@@tagName': { value: 'TextMatch', enumerable: false },
+    '@@typeName': { value: 'FilterSpec', enumerable: false },
+    toString: { value: toString.textMatch, enumerable: false },
+    toJSON: { value: toJSON.textMatch, enumerable: false },
+    constructor: { value: TextMatchConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const DateRangePrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'DateRange', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: dateRangeToString, enumerable: false },
-    toJSON: { value: dateRangeToJSON, enumerable: false },
+    toString: { value: toString.dateRange, enumerable: false },
+    toJSON: { value: toJSON.dateRange, enumerable: false },
     constructor: { value: DateRangeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const CategoryMatchPrototype = Object.create(FilterSpecPrototype, {
+    '@@tagName': { value: 'CategoryMatch', enumerable: false },
+    '@@typeName': { value: 'FilterSpec', enumerable: false },
+    toString: { value: toString.categoryMatch, enumerable: false },
+    toJSON: { value: toJSON.categoryMatch, enumerable: false },
+    constructor: { value: CategoryMatchConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const CompoundPrototype = Object.create(FilterSpecPrototype, {
+    '@@tagName': { value: 'Compound', enumerable: false },
+    '@@typeName': { value: 'FilterSpec', enumerable: false },
+    toString: { value: toString.compound, enumerable: false },
+    toJSON: { value: toJSON.compound, enumerable: false },
+    constructor: { value: CompoundConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+// -------------------------------------------------------------------------------------------------------------
+// Variant static prototype
+// -------------------------------------------------------------------------------------------------------------
+TextMatchConstructor.prototype = TextMatchPrototype
 DateRangeConstructor.prototype = DateRangePrototype
+CategoryMatchConstructor.prototype = CategoryMatchPrototype
+CompoundConstructor.prototype = CompoundPrototype
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
+TextMatchConstructor.is = val => val && val.constructor === TextMatchConstructor
 DateRangeConstructor.is = val => val && val.constructor === DateRangeConstructor
+CategoryMatchConstructor.is = val => val && val.constructor === CategoryMatchConstructor
+CompoundConstructor.is = val => val && val.constructor === CompoundConstructor
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
+TextMatchConstructor.toString = () => 'FilterSpec.TextMatch'
 DateRangeConstructor.toString = () => 'FilterSpec.DateRange'
+CategoryMatchConstructor.toString = () => 'FilterSpec.CategoryMatch'
+CompoundConstructor.toString = () => 'FilterSpec.Compound'
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
+TextMatchConstructor._from = _input => FilterSpec.TextMatch(_input.fields, _input.query)
 DateRangeConstructor._from = _input => {
     const { field, start, end } = _input
     return FilterSpec.DateRange(field, start, end)
 }
+CategoryMatchConstructor._from = _input => FilterSpec.CategoryMatch(_input.field, _input.categories)
+CompoundConstructor._from = _input => FilterSpec.Compound(_input.filters, _input.mode)
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
+TextMatchConstructor.from = TextMatchConstructor._from
 DateRangeConstructor.from = DateRangeConstructor._from
+CategoryMatchConstructor.from = CategoryMatchConstructor._from
+CompoundConstructor.from = CompoundConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+TextMatchConstructor.toFirestore = o => ({ ...o })
+TextMatchConstructor.fromFirestore = TextMatchConstructor._from
 
 /**
  * Serialize to Firestore format
@@ -200,117 +276,8 @@ DateRangeConstructor._fromFirestore = (doc, decodeTimestamps) => {
 DateRangeConstructor.toFirestore = DateRangeConstructor._toFirestore
 DateRangeConstructor.fromFirestore = DateRangeConstructor._fromFirestore
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FilterSpec.CategoryMatch
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig categoryMatchToString :: () -> String
- */
-const categoryMatchToString = function () {
-    return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig categoryMatchToJSON :: () -> Object
- */
-const categoryMatchToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a FilterSpec.CategoryMatch instance
- * @sig CategoryMatch :: (String, [String]) -> FilterSpec.CategoryMatch
- */
-const CategoryMatchConstructor = function CategoryMatch(field, categories) {
-    const constructorName = 'FilterSpec.CategoryMatch(field, categories)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'field', false, field)
-    R.validateArray(constructorName, 1, 'String', undefined, 'categories', false, categories)
-
-    const result = Object.create(CategoryMatchPrototype)
-    result.field = field
-    result.categories = categories
-    return result
-}
-
-FilterSpec.CategoryMatch = CategoryMatchConstructor
-
-const CategoryMatchPrototype = Object.create(FilterSpecPrototype, {
-    '@@tagName': { value: 'CategoryMatch', enumerable: false },
-    '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: categoryMatchToString, enumerable: false },
-    toJSON: { value: categoryMatchToJSON, enumerable: false },
-    constructor: { value: CategoryMatchConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-CategoryMatchConstructor.prototype = CategoryMatchPrototype
-CategoryMatchConstructor.is = val => val && val.constructor === CategoryMatchConstructor
-CategoryMatchConstructor.toString = () => 'FilterSpec.CategoryMatch'
-CategoryMatchConstructor._from = _input => FilterSpec.CategoryMatch(_input.field, _input.categories)
-CategoryMatchConstructor.from = CategoryMatchConstructor._from
-
 CategoryMatchConstructor.toFirestore = o => ({ ...o })
 CategoryMatchConstructor.fromFirestore = CategoryMatchConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant FilterSpec.Compound
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig compoundToString :: () -> String
- */
-const compoundToString = function () {
-    return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig compoundToJSON :: () -> Object
- */
-const compoundToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Construct a FilterSpec.Compound instance
- * @sig Compound :: ([FilterSpec], Mode) -> FilterSpec.Compound
- *     Mode = /^(all|any)$/
- */
-const CompoundConstructor = function Compound(filters, mode) {
-    const constructorName = 'FilterSpec.Compound(filters, mode)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateArray(constructorName, 1, 'Tagged', 'FilterSpec', 'filters', false, filters)
-    R.validateRegex(constructorName, /^(all|any)$/, 'mode', false, mode)
-
-    const result = Object.create(CompoundPrototype)
-    result.filters = filters
-    result.mode = mode
-    return result
-}
-
-FilterSpec.Compound = CompoundConstructor
-
-const CompoundPrototype = Object.create(FilterSpecPrototype, {
-    '@@tagName': { value: 'Compound', enumerable: false },
-    '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: compoundToString, enumerable: false },
-    toJSON: { value: compoundToJSON, enumerable: false },
-    constructor: { value: CompoundConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-CompoundConstructor.prototype = CompoundPrototype
-CompoundConstructor.is = val => val && val.constructor === CompoundConstructor
-CompoundConstructor.toString = () => 'FilterSpec.Compound'
-CompoundConstructor._from = _input => FilterSpec.Compound(_input.filters, _input.mode)
-CompoundConstructor.from = CompoundConstructor._from
 
 /**
  * Serialize to Firestore format

@@ -56,7 +56,7 @@ const Account = function Account(id, name, type, description, creditLimit) {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig accountToString :: () -> String
  */

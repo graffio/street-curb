@@ -50,7 +50,7 @@ const TabGroup = function TabGroup(id, views, activeViewId, width) {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig tabgroupToString :: () -> String
  */

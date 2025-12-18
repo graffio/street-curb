@@ -49,7 +49,7 @@ const TabLayout = function TabLayout(id, tabGroups, activeTabGroupId, nextTabGro
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig tablayoutToString :: () -> String
  */

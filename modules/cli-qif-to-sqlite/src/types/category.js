@@ -55,7 +55,7 @@ const Category = function Category(id, name, description, budgetAmount, isIncome
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig categoryToString :: () -> String
  */

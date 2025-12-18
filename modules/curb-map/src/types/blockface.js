@@ -84,7 +84,7 @@ const Blockface = function Blockface(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig blockfaceToString :: () -> String
  */

@@ -49,7 +49,7 @@ const Split = function Split(id, transactionId, categoryId, amount, memo) {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig splitToString :: () -> String
  */

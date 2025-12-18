@@ -98,7 +98,7 @@ const ActionRequest = function ActionRequest(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig actionrequestToString :: () -> String
  */

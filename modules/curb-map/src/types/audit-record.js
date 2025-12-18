@@ -92,7 +92,7 @@ const AuditRecord = function AuditRecord(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig auditrecordToString :: () -> String
  */

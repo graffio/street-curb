@@ -47,7 +47,7 @@ const ParseResult = function ParseResult(typeDefinition, imports, functions, sou
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig parseresultToString :: () -> String
  */
