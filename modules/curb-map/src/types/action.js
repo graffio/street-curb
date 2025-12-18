@@ -721,9 +721,7 @@ const SegmentsReplacedPrototype = Object.create(ActionPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
@@ -746,7 +744,9 @@ SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
 SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
 SegmentAddedConstructor.prototype = SegmentAddedPrototype
 SegmentsReplacedConstructor.prototype = SegmentsReplacedPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
 OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
 OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
@@ -768,7 +768,9 @@ SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLe
 SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
 SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
 SegmentsReplacedConstructor.is = val => val && val.constructor === SegmentsReplacedConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
 OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
 OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
@@ -790,7 +792,9 @@ SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
 SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
 SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
 SegmentsReplacedConstructor.toString = () => 'Action.SegmentsReplaced'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor._from = _input => Action.OrganizationCreated(_input.name, _input.projectId)
 OrganizationUpdatedConstructor._from = _input => Action.OrganizationUpdated(_input.name)
 OrganizationDeletedConstructor._from = _input => Action.OrganizationDeleted()
@@ -818,7 +822,9 @@ SegmentLengthUpdatedConstructor._from = _input => Action.SegmentLengthUpdated(_i
 SegmentAddedLeftConstructor._from = _input => Action.SegmentAddedLeft(_input.index, _input.desiredLength)
 SegmentAddedConstructor._from = _input => Action.SegmentAdded(_input.targetIndex)
 SegmentsReplacedConstructor._from = _input => Action.SegmentsReplaced(_input.segments)
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
 OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
 OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from

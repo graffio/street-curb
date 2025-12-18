@@ -173,22 +173,26 @@ const GcpProjectOperationPrototype = Object.create(OperationDetailsPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor.prototype = ShellExecutionPrototype
 FirestoreOperationConstructor.prototype = FirestoreOperationPrototype
 GcpProjectOperationConstructor.prototype = GcpProjectOperationPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor.is = val => val && val.constructor === ShellExecutionConstructor
 FirestoreOperationConstructor.is = val => val && val.constructor === FirestoreOperationConstructor
 GcpProjectOperationConstructor.is = val => val && val.constructor === GcpProjectOperationConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor.toString = () => 'OperationDetails.ShellExecution'
 FirestoreOperationConstructor.toString = () => 'OperationDetails.FirestoreOperation'
 GcpProjectOperationConstructor.toString = () => 'OperationDetails.GcpProjectOperation'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor._from = _input => {
     const { command, duration, outputPreview } = _input
     return OperationDetails.ShellExecution(command, duration, outputPreview)
@@ -201,7 +205,9 @@ GcpProjectOperationConstructor._from = _input => {
     const { projectId, folderId, region } = _input
     return OperationDetails.GcpProjectOperation(projectId, folderId, region)
 }
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor.from = ShellExecutionConstructor._from
 FirestoreOperationConstructor.from = FirestoreOperationConstructor._from
 GcpProjectOperationConstructor.from = GcpProjectOperationConstructor._from

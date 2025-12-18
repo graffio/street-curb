@@ -162,29 +162,35 @@ const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor.prototype = StringTypePrototype
 RegexTypeConstructor.prototype = RegexTypePrototype
 ImportPlaceholderConstructor.prototype = ImportPlaceholderPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor.is = val => val && val.constructor === StringTypeConstructor
 RegexTypeConstructor.is = val => val && val.constructor === RegexTypeConstructor
 ImportPlaceholderConstructor.is = val => val && val.constructor === ImportPlaceholderConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor.toString = () => 'FieldType.StringType'
 RegexTypeConstructor.toString = () => 'FieldType.RegexType'
 ImportPlaceholderConstructor.toString = () => 'FieldType.ImportPlaceholder'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor._from = _input => FieldType.StringType(_input.value)
 RegexTypeConstructor._from = _input => FieldType.RegexType(_input.value)
 ImportPlaceholderConstructor._from = _input => {
     const { isImportPlaceholder, source, localName } = _input
     return FieldType.ImportPlaceholder(isImportPlaceholder, source, localName)
 }
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 StringTypeConstructor.from = StringTypeConstructor._from
 RegexTypeConstructor.from = RegexTypeConstructor._from
 ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from

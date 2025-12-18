@@ -136,19 +136,23 @@ const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.prototype = TaggedPrototype
 TaggedSumConstructor.prototype = TaggedSumPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
 TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
 TaggedSumConstructor.toString = () => 'TypeDefinition.TaggedSum'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 TaggedConstructor._from = _input => {
     const { name, kind, fields } = _input
     return TypeDefinition.Tagged(name, kind, fields)
@@ -157,7 +161,9 @@ TaggedSumConstructor._from = _input => {
     const { name, kind, variants } = _input
     return TypeDefinition.TaggedSum(name, kind, variants)
 }
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.from = TaggedConstructor._from
 TaggedSumConstructor.from = TaggedSumConstructor._from
 

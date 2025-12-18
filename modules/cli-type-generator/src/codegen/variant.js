@@ -25,6 +25,15 @@ const generateVariantPrototype = (typeName, variantName) => {
  */
 const generateAllStaticMethods = (typeName, variantNames, variants) => {
     /*
+     * Generate section header for a static method group
+     * @sig sectionHeader :: String -> String
+     */
+    const sectionHeader = label => {
+        const sep = '// ' + '-'.repeat(109)
+        return `${sep}\n// Variant static ${label}\n${sep}`
+    }
+
+    /*
      * Generate _from method assignment for a variant
      * @sig generateFromMethod :: String -> String
      */
@@ -45,12 +54,17 @@ const generateAllStaticMethods = (typeName, variantNames, variants) => {
     const fromMethods = variantNames.map(vn => `${vn}Constructor.from = ${vn}Constructor._from`)
 
     return [
+        sectionHeader('prototype'),
         prototypes.join('\n'),
+        sectionHeader('is'),
         isMethods.join('\n'),
+        sectionHeader('toString'),
         toStrings.join('\n'),
+        sectionHeader('_from'),
         _fromMethods.join('\n'),
+        sectionHeader('from'),
         fromMethods.join('\n'),
-    ].join('\n\n')
+    ].join('\n')
 }
 
 /*

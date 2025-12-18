@@ -199,25 +199,29 @@ const CompoundPrototype = Object.create(FilterSpecPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 TextMatchConstructor.prototype = TextMatchPrototype
 DateRangeConstructor.prototype = DateRangePrototype
 CategoryMatchConstructor.prototype = CategoryMatchPrototype
 CompoundConstructor.prototype = CompoundPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 TextMatchConstructor.is = val => val && val.constructor === TextMatchConstructor
 DateRangeConstructor.is = val => val && val.constructor === DateRangeConstructor
 CategoryMatchConstructor.is = val => val && val.constructor === CategoryMatchConstructor
 CompoundConstructor.is = val => val && val.constructor === CompoundConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 TextMatchConstructor.toString = () => 'FilterSpec.TextMatch'
 DateRangeConstructor.toString = () => 'FilterSpec.DateRange'
 CategoryMatchConstructor.toString = () => 'FilterSpec.CategoryMatch'
 CompoundConstructor.toString = () => 'FilterSpec.Compound'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 TextMatchConstructor._from = _input => FilterSpec.TextMatch(_input.fields, _input.query)
 DateRangeConstructor._from = _input => {
     const { field, start, end } = _input
@@ -225,7 +229,9 @@ DateRangeConstructor._from = _input => {
 }
 CategoryMatchConstructor._from = _input => FilterSpec.CategoryMatch(_input.field, _input.categories)
 CompoundConstructor._from = _input => FilterSpec.Compound(_input.filters, _input.mode)
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 TextMatchConstructor.from = TextMatchConstructor._from
 DateRangeConstructor.from = DateRangeConstructor._from
 CategoryMatchConstructor.from = CategoryMatchConstructor._from

@@ -157,26 +157,32 @@ const NamedPrototype = Object.create(ImportSpecifierPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 DefaultConstructor.prototype = DefaultPrototype
 NamespaceConstructor.prototype = NamespacePrototype
 NamedConstructor.prototype = NamedPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 DefaultConstructor.is = val => val && val.constructor === DefaultConstructor
 NamespaceConstructor.is = val => val && val.constructor === NamespaceConstructor
 NamedConstructor.is = val => val && val.constructor === NamedConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 DefaultConstructor.toString = () => 'ImportSpecifier.Default'
 NamespaceConstructor.toString = () => 'ImportSpecifier.Namespace'
 NamedConstructor.toString = () => 'ImportSpecifier.Named'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 DefaultConstructor._from = _input => ImportSpecifier.Default(_input.local)
 NamespaceConstructor._from = _input => ImportSpecifier.Namespace(_input.local)
 NamedConstructor._from = _input => ImportSpecifier.Named(_input.imported, _input.local)
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 DefaultConstructor.from = DefaultConstructor._from
 NamespaceConstructor.from = NamespaceConstructor._from
 NamedConstructor.from = NamedConstructor._from

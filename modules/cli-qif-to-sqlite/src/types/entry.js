@@ -525,9 +525,7 @@ const TransactionInvestmentPrototype = Object.create(EntryPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 AccountConstructor.prototype = AccountPrototype
 CategoryConstructor.prototype = CategoryPrototype
@@ -538,7 +536,9 @@ SecurityConstructor.prototype = SecurityPrototype
 TagConstructor.prototype = TagPrototype
 TransactionBankConstructor.prototype = TransactionBankPrototype
 TransactionInvestmentConstructor.prototype = TransactionInvestmentPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 AccountConstructor.is = val => val && val.constructor === AccountConstructor
 CategoryConstructor.is = val => val && val.constructor === CategoryConstructor
 ClassConstructor.is = val => val && val.constructor === ClassConstructor
@@ -548,7 +548,9 @@ SecurityConstructor.is = val => val && val.constructor === SecurityConstructor
 TagConstructor.is = val => val && val.constructor === TagConstructor
 TransactionBankConstructor.is = val => val && val.constructor === TransactionBankConstructor
 TransactionInvestmentConstructor.is = val => val && val.constructor === TransactionInvestmentConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 AccountConstructor.toString = () => 'Entry.Account'
 CategoryConstructor.toString = () => 'Entry.Category'
 ClassConstructor.toString = () => 'Entry.Class'
@@ -558,7 +560,9 @@ SecurityConstructor.toString = () => 'Entry.Security'
 TagConstructor.toString = () => 'Entry.Tag'
 TransactionBankConstructor.toString = () => 'Entry.TransactionBank'
 TransactionInvestmentConstructor.toString = () => 'Entry.TransactionInvestment'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 AccountConstructor._from = _input => {
     const { name, type, description, creditLimit } = _input
     return Entry.Account(name, type, description, creditLimit)
@@ -637,7 +641,9 @@ TransactionInvestmentConstructor._from = _input => {
         security,
     )
 }
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 AccountConstructor.from = AccountConstructor._from
 CategoryConstructor.from = CategoryConstructor._from
 ClassConstructor.from = ClassConstructor._from

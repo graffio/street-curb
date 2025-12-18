@@ -239,19 +239,23 @@ const InvestmentPrototype = Object.create(TransactionPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 BankConstructor.prototype = BankPrototype
 InvestmentConstructor.prototype = InvestmentPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 BankConstructor.is = val => val && val.constructor === BankConstructor
 InvestmentConstructor.is = val => val && val.constructor === InvestmentConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 BankConstructor.toString = () => 'Transaction.Bank'
 InvestmentConstructor.toString = () => 'Transaction.Investment'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 BankConstructor._from = _input => {
     const { accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee } = _input
     return Transaction.Bank(
@@ -304,7 +308,9 @@ InvestmentConstructor._from = _input => {
         securityId,
     )
 }
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 BankConstructor.from = BankConstructor._from
 InvestmentConstructor.from = InvestmentConstructor._from
 

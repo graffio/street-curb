@@ -172,22 +172,26 @@ const ReconciliationPrototype = Object.create(ViewPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 RegisterConstructor.prototype = RegisterPrototype
 ReportConstructor.prototype = ReportPrototype
 ReconciliationConstructor.prototype = ReconciliationPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 RegisterConstructor.is = val => val && val.constructor === RegisterConstructor
 ReportConstructor.is = val => val && val.constructor === ReportConstructor
 ReconciliationConstructor.is = val => val && val.constructor === ReconciliationConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 RegisterConstructor.toString = () => 'View.Register'
 ReportConstructor.toString = () => 'View.Report'
 ReconciliationConstructor.toString = () => 'View.Reconciliation'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 RegisterConstructor._from = _input => {
     const { id, accountId, title } = _input
     return View.Register(id, accountId, title)
@@ -200,7 +204,9 @@ ReconciliationConstructor._from = _input => {
     const { id, accountId, title } = _input
     return View.Reconciliation(id, accountId, title)
 }
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 RegisterConstructor.from = RegisterConstructor._from
 ReportConstructor.from = ReportConstructor._from
 ReconciliationConstructor.from = ReconciliationConstructor._from

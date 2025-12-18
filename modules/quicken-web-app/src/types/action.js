@@ -465,9 +465,7 @@ const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
 })
 
 // -------------------------------------------------------------------------------------------------------------
-//
-// Variant static methods
-//
+// Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.prototype = LoadFilePrototype
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
@@ -481,7 +479,9 @@ CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
 SetActiveViewConstructor.prototype = SetActiveViewPrototype
 SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
 SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static is
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
 ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
@@ -494,7 +494,9 @@ CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupCon
 SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
 SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
 SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static toString
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.toString = () => 'Action.LoadFile'
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
 ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
@@ -507,7 +509,9 @@ CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
 SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
 SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
 SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static _from
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor._from = _input => {
     const { accounts, categories, securities, tags, splits, transactions } = _input
     return Action.LoadFile(accounts, categories, securities, tags, splits, transactions)
@@ -526,7 +530,9 @@ CloseTabGroupConstructor._from = _input => Action.CloseTabGroup(_input.groupId)
 SetActiveViewConstructor._from = _input => Action.SetActiveView(_input.groupId, _input.viewId)
 SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.groupId)
 SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
-
+// -------------------------------------------------------------------------------------------------------------
+// Variant static from
+// -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.from = LoadFileConstructor._from
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
 ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
