@@ -1,3 +1,6 @@
+// ABOUTME: Array with id-based lookup - items accessible by index or by id field value
+// ABOUTME: Methods: get, filter, sort, pick, addItem, removeItem, toggleItem, moveElement, updateAll, updateWhere
+
 /*
  * Extend Array filled with objects that each have some id field, by adding non-enumerable
  * elements to the array. Given:
@@ -28,36 +31,38 @@
 
 import { equals, without } from '../index.js'
 
-// Add a non-enumerable key/value entry to target
-const addNonEnumerable = (target, key, value) => Object.defineProperty(target, key, { value, enumerable: false })
-
 // ---------------------------------------------------------------------------------------------------------------------
 // LookupTable
 // ---------------------------------------------------------------------------------------------------------------------
-const validateTypes = (items, ItemType) => {
-    if (!ItemType || !ItemType.is) {
-        console.error(`You must pass a tagged Type when creating a LookupTable`)
-        return
-    }
-
-    if (items.every(item => ItemType.is(item))) return // each item is an ItemType
-
-    const found = JSON.stringify(items)
-    const w = `Expected each item passed to LookupTable to be a(n) '${ItemType.toString()}'; found ${found}.`
-
-    // for now: just yell, don't throw an error
-    console.error(w)
-}
 
 /*
  * @sig LookupTable :: ([A]|{k:A}, TaggedType, idField = 'id') -> LookupTable
  */
 const LookupTable = (items, ItemType, idField = 'id') => {
+    const addNonEnumerable = (target, key, value) => Object.defineProperty(target, key, { value, enumerable: false })
+
+    // Warn if items aren't all of ItemType (doesn't throw, just logs)
+    // @sig validateTypes :: () -> ()
+    const validateTypes = () => {
+        if (!ItemType || !ItemType.is) {
+            console.error(`You must pass a tagged Type when creating a LookupTable`)
+            return
+        }
+
+        if (items.every(item => ItemType.is(item))) return // each item is an ItemType
+
+        const found = JSON.stringify(items)
+        const w = `Expected each item passed to LookupTable to be a(n) '${ItemType.toString()}'; found ${found}.`
+
+        // for now: just yell, don't throw an error
+        console.error(w)
+    }
+
     // if items is not an array, assume it's an object whose values we should use as the array
     if (!Array.isArray(items)) items = Object.values(items)
 
     // validate types
-    validateTypes(items, ItemType)
+    validateTypes()
 
     // Copy the items into a new array
     const array = Array.from(items)
@@ -229,6 +234,23 @@ LookupTablePrototype.moveElement = function (fromIndex, toIndex) {
     const [item] = newArray.splice(fromIndex, 1) // remove from the old position, saving the item
     newArray.splice(toIndex, 0, item) // add in at the new position
     return LookupTable(newArray, this.ItemType, this.idField)
+}
+
+/*
+ * Return a new LookupTable with fn applied to every item (endomorphism - same type in and out)
+ * @sig LookupTablePrototype.updateAll :: (Item -> Item) -> LookupTable
+ */
+LookupTablePrototype.updateAll = function (fn) {
+    return LookupTable(Array.prototype.map.call(this, fn), this.ItemType, this.idField)
+}
+
+/*
+ * Return a new LookupTable with fn applied only to items matching predicate
+ * @sig LookupTablePrototype.updateWhere :: (Item -> Boolean, Item -> Item) -> LookupTable
+ */
+LookupTablePrototype.updateWhere = function (predicate, fn) {
+    const updated = Array.prototype.map.call(this, item => (predicate(item) ? fn(item) : item))
+    return LookupTable(updated, this.ItemType, this.idField)
 }
 
 LookupTablePrototype.idForItem = function (item) {
