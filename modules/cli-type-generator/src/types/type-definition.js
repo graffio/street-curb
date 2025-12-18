@@ -53,9 +53,9 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            tagged   : function () { return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})` },
-            taggedSum: function () { return `TypeDefinition.TaggedSum(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.variants)})` },
-        }
+    tagged   : function () { return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})` },
+    taggedSum: function () { return `TypeDefinition.TaggedSum(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.variants)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -141,21 +141,24 @@ const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 TaggedConstructor.prototype = TaggedPrototype
+TaggedSumConstructor.prototype = TaggedSumPrototype
+
 TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
+TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
+
 TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
+TaggedSumConstructor.toString = () => 'TypeDefinition.TaggedSum'
+
 TaggedConstructor._from = _input => {
     const { name, kind, fields } = _input
     return TypeDefinition.Tagged(name, kind, fields)
 }
-TaggedConstructor.from = TaggedConstructor._from
-
-TaggedSumConstructor.prototype = TaggedSumPrototype
-TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
-TaggedSumConstructor.toString = () => 'TypeDefinition.TaggedSum'
 TaggedSumConstructor._from = _input => {
     const { name, kind, variants } = _input
     return TypeDefinition.TaggedSum(name, kind, variants)
 }
+
+TaggedConstructor.from = TaggedConstructor._from
 TaggedSumConstructor.from = TaggedSumConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

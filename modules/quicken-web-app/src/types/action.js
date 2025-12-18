@@ -105,19 +105,19 @@ Action.prototype = ActionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
-            setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
-            resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
-            setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
-            openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
-            closeView              : function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
-            moveView               : function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
-            createTabGroup         : function () { return `Action.CreateTabGroup()` },
-            closeTabGroup          : function () { return `Action.CloseTabGroup(${R._toString(this.groupId)})` },
-            setActiveView          : function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
-            setActiveTabGroup      : function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
-            setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
-        }
+    loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
+    setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
+    resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
+    setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
+    openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
+    closeView              : function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
+    moveView               : function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
+    createTabGroup         : function () { return `Action.CreateTabGroup()` },
+    closeTabGroup          : function () { return `Action.CloseTabGroup(${R._toString(this.groupId)})` },
+    setActiveView          : function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
+    setActiveTabGroup      : function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
+    setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -470,81 +470,74 @@ const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.prototype = LoadFilePrototype
+SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
+ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
+SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
+OpenViewConstructor.prototype = OpenViewPrototype
+CloseViewConstructor.prototype = CloseViewPrototype
+MoveViewConstructor.prototype = MoveViewPrototype
+CreateTabGroupConstructor.prototype = CreateTabGroupPrototype
+CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
+SetActiveViewConstructor.prototype = SetActiveViewPrototype
+SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
+SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
+
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
+SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
+ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
+SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
+OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
+CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
+MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
+CreateTabGroupConstructor.is = val => val && val.constructor === CreateTabGroupConstructor
+CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupConstructor
+SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
+SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
+SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
+
 LoadFileConstructor.toString = () => 'Action.LoadFile'
+SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
+ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
+SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
+OpenViewConstructor.toString = () => 'Action.OpenView'
+CloseViewConstructor.toString = () => 'Action.CloseView'
+MoveViewConstructor.toString = () => 'Action.MoveView'
+CreateTabGroupConstructor.toString = () => 'Action.CreateTabGroup'
+CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
+SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
+SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
+SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
+
 LoadFileConstructor._from = _input => {
     const { accounts, categories, securities, tags, splits, transactions } = _input
     return Action.LoadFile(accounts, categories, securities, tags, splits, transactions)
 }
-LoadFileConstructor.from = LoadFileConstructor._from
-
-SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
-SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
-SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
 SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
-SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
-
-ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
-ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
-ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
 ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
-ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
-
-SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
-SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
-SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
 SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
-SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
-
-OpenViewConstructor.prototype = OpenViewPrototype
-OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
-OpenViewConstructor.toString = () => 'Action.OpenView'
 OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
-OpenViewConstructor.from = OpenViewConstructor._from
-
-CloseViewConstructor.prototype = CloseViewPrototype
-CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
-CloseViewConstructor.toString = () => 'Action.CloseView'
 CloseViewConstructor._from = _input => Action.CloseView(_input.viewId, _input.groupId)
-CloseViewConstructor.from = CloseViewConstructor._from
-
-MoveViewConstructor.prototype = MoveViewPrototype
-MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
-MoveViewConstructor.toString = () => 'Action.MoveView'
 MoveViewConstructor._from = _input => {
     const { viewId, fromGroupId, toGroupId, toIndex } = _input
     return Action.MoveView(viewId, fromGroupId, toGroupId, toIndex)
 }
-MoveViewConstructor.from = MoveViewConstructor._from
-
-CreateTabGroupConstructor.prototype = CreateTabGroupPrototype
-CreateTabGroupConstructor.is = val => val && val.constructor === CreateTabGroupConstructor
-CreateTabGroupConstructor.toString = () => 'Action.CreateTabGroup'
 CreateTabGroupConstructor._from = _input => Action.CreateTabGroup()
-CreateTabGroupConstructor.from = CreateTabGroupConstructor._from
-
-CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
-CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupConstructor
-CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
 CloseTabGroupConstructor._from = _input => Action.CloseTabGroup(_input.groupId)
-CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
-
-SetActiveViewConstructor.prototype = SetActiveViewPrototype
-SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
-SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
 SetActiveViewConstructor._from = _input => Action.SetActiveView(_input.groupId, _input.viewId)
-SetActiveViewConstructor.from = SetActiveViewConstructor._from
-
-SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
-SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
-SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
 SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.groupId)
-SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
-
-SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
-SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
-SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
 SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
+
+LoadFileConstructor.from = LoadFileConstructor._from
+SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
+ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
+SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
+OpenViewConstructor.from = OpenViewConstructor._from
+CloseViewConstructor.from = CloseViewConstructor._from
+MoveViewConstructor.from = MoveViewConstructor._from
+CreateTabGroupConstructor.from = CreateTabGroupConstructor._from
+CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
+SetActiveViewConstructor.from = SetActiveViewConstructor._from
+SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
 SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

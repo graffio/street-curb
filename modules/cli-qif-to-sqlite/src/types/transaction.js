@@ -73,9 +73,9 @@ Transaction.prototype = TransactionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            bank      : function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)})` },
-            investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.securityId)})` },
-        }
+    bank      : function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)})` },
+    investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.securityId)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -244,8 +244,14 @@ const InvestmentPrototype = Object.create(TransactionPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 BankConstructor.prototype = BankPrototype
+InvestmentConstructor.prototype = InvestmentPrototype
+
 BankConstructor.is = val => val && val.constructor === BankConstructor
+InvestmentConstructor.is = val => val && val.constructor === InvestmentConstructor
+
 BankConstructor.toString = () => 'Transaction.Bank'
+InvestmentConstructor.toString = () => 'Transaction.Investment'
+
 BankConstructor._from = _input => {
     const { accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee } = _input
     return Transaction.Bank(
@@ -262,11 +268,6 @@ BankConstructor._from = _input => {
         payee,
     )
 }
-BankConstructor.from = BankConstructor._from
-
-InvestmentConstructor.prototype = InvestmentPrototype
-InvestmentConstructor.is = val => val && val.constructor === InvestmentConstructor
-InvestmentConstructor.toString = () => 'Transaction.Investment'
 InvestmentConstructor._from = _input => {
     const {
         accountId,
@@ -303,6 +304,8 @@ InvestmentConstructor._from = _input => {
         securityId,
     )
 }
+
+BankConstructor.from = BankConstructor._from
 InvestmentConstructor.from = InvestmentConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

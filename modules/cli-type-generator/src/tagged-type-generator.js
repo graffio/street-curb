@@ -12,11 +12,7 @@ import { generateImportsSection } from './codegen/imports.js'
 import { generateIsMethod } from './codegen/is-method.js'
 import { generateNamedToJSON, generateToJSONObject } from './codegen/to-json.js'
 import { generateNamedToString, generateToStringObject } from './codegen/to-string.js'
-import {
-    generateVariantConstructorDef,
-    generateVariantPrototype,
-    generateVariantStaticMethods,
-} from './codegen/variant.js'
+import { generateAllStaticMethods, generateVariantConstructorDef, generateVariantPrototype } from './codegen/variant.js'
 import FieldDescriptor from './descriptors/field-descriptor.js'
 import { getExistingStandardFunctions } from './parse-type-definition-file.js'
 import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
@@ -198,7 +194,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
     const prototypes = variantNames.map(vn => generateVariantPrototype(name, vn)).join('\n\n')
 
-    const staticMethods = variantNames.map(vn => generateVariantStaticMethods(name, vn, variants[vn])).join('\n\n')
+    const staticMethods = generateAllStaticMethods(name, variantNames, variants)
 
     const firestoreMethods = variantNames
         .map(vn => generateFirestoreSerializationForTaggedSumVariant(vn, variants[vn]))

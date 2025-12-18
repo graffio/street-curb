@@ -121,16 +121,16 @@ Entry.prototype = EntryPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            account              : function () { return `Entry.Account(${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})` },
-            category             : function () { return `Entry.Category(${R._toString(this.name)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.description)}, ${R._toString(this.excluded)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})` },
-            class                : function () { return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})` },
-            payee                : function () { return `Entry.Payee(${R._toString(this.name)}, ${R._toString(this.address)}, ${R._toString(this.memo)}, ${R._toString(this.defaultCategory)})` },
-            price                : function () { return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})` },
-            security             : function () { return `Entry.Security(${R._toString(this.name)}, ${R._toString(this.goal)}, ${R._toString(this.symbol)}, ${R._toString(this.type)})` },
-            tag                  : function () { return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})` },
-            transactionBank      : function () { return `Entry.TransactionBank(${R._toString(this.account)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.splits)})` },
-            transactionInvestment: function () { return `Entry.TransactionInvestment(${R._toString(this.account)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.number)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.security)})` },
-        }
+    account              : function () { return `Entry.Account(${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})` },
+    category             : function () { return `Entry.Category(${R._toString(this.name)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.description)}, ${R._toString(this.excluded)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})` },
+    class                : function () { return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})` },
+    payee                : function () { return `Entry.Payee(${R._toString(this.name)}, ${R._toString(this.address)}, ${R._toString(this.memo)}, ${R._toString(this.defaultCategory)})` },
+    price                : function () { return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})` },
+    security             : function () { return `Entry.Security(${R._toString(this.name)}, ${R._toString(this.goal)}, ${R._toString(this.symbol)}, ${R._toString(this.type)})` },
+    tag                  : function () { return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})` },
+    transactionBank      : function () { return `Entry.TransactionBank(${R._toString(this.account)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.splits)})` },
+    transactionInvestment: function () { return `Entry.TransactionInvestment(${R._toString(this.account)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.number)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.security)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -530,71 +530,63 @@ const TransactionInvestmentPrototype = Object.create(EntryPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 AccountConstructor.prototype = AccountPrototype
+CategoryConstructor.prototype = CategoryPrototype
+ClassConstructor.prototype = ClassPrototype
+PayeeConstructor.prototype = PayeePrototype
+PriceConstructor.prototype = PricePrototype
+SecurityConstructor.prototype = SecurityPrototype
+TagConstructor.prototype = TagPrototype
+TransactionBankConstructor.prototype = TransactionBankPrototype
+TransactionInvestmentConstructor.prototype = TransactionInvestmentPrototype
+
 AccountConstructor.is = val => val && val.constructor === AccountConstructor
+CategoryConstructor.is = val => val && val.constructor === CategoryConstructor
+ClassConstructor.is = val => val && val.constructor === ClassConstructor
+PayeeConstructor.is = val => val && val.constructor === PayeeConstructor
+PriceConstructor.is = val => val && val.constructor === PriceConstructor
+SecurityConstructor.is = val => val && val.constructor === SecurityConstructor
+TagConstructor.is = val => val && val.constructor === TagConstructor
+TransactionBankConstructor.is = val => val && val.constructor === TransactionBankConstructor
+TransactionInvestmentConstructor.is = val => val && val.constructor === TransactionInvestmentConstructor
+
 AccountConstructor.toString = () => 'Entry.Account'
+CategoryConstructor.toString = () => 'Entry.Category'
+ClassConstructor.toString = () => 'Entry.Class'
+PayeeConstructor.toString = () => 'Entry.Payee'
+PriceConstructor.toString = () => 'Entry.Price'
+SecurityConstructor.toString = () => 'Entry.Security'
+TagConstructor.toString = () => 'Entry.Tag'
+TransactionBankConstructor.toString = () => 'Entry.TransactionBank'
+TransactionInvestmentConstructor.toString = () => 'Entry.TransactionInvestment'
+
 AccountConstructor._from = _input => {
     const { name, type, description, creditLimit } = _input
     return Entry.Account(name, type, description, creditLimit)
 }
-AccountConstructor.from = AccountConstructor._from
-
-CategoryConstructor.prototype = CategoryPrototype
-CategoryConstructor.is = val => val && val.constructor === CategoryConstructor
-CategoryConstructor.toString = () => 'Entry.Category'
 CategoryConstructor._from = _input => {
     const { name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule } = _input
     return Entry.Category(name, budgetAmount, description, excluded, isIncomeCategory, isTaxRelated, taxSchedule)
 }
-CategoryConstructor.from = CategoryConstructor._from
-
-ClassConstructor.prototype = ClassPrototype
-ClassConstructor.is = val => val && val.constructor === ClassConstructor
-ClassConstructor.toString = () => 'Entry.Class'
 ClassConstructor._from = _input => {
     const { name, subclass, description } = _input
     return Entry.Class(name, subclass, description)
 }
-ClassConstructor.from = ClassConstructor._from
-
-PayeeConstructor.prototype = PayeePrototype
-PayeeConstructor.is = val => val && val.constructor === PayeeConstructor
-PayeeConstructor.toString = () => 'Entry.Payee'
 PayeeConstructor._from = _input => {
     const { name, address, memo, defaultCategory } = _input
     return Entry.Payee(name, address, memo, defaultCategory)
 }
-PayeeConstructor.from = PayeeConstructor._from
-
-PriceConstructor.prototype = PricePrototype
-PriceConstructor.is = val => val && val.constructor === PriceConstructor
-PriceConstructor.toString = () => 'Entry.Price'
 PriceConstructor._from = _input => {
     const { symbol, price, date } = _input
     return Entry.Price(symbol, price, date)
 }
-PriceConstructor.from = PriceConstructor._from
-
-SecurityConstructor.prototype = SecurityPrototype
-SecurityConstructor.is = val => val && val.constructor === SecurityConstructor
-SecurityConstructor.toString = () => 'Entry.Security'
 SecurityConstructor._from = _input => {
     const { name, goal, symbol, type } = _input
     return Entry.Security(name, goal, symbol, type)
 }
-SecurityConstructor.from = SecurityConstructor._from
-
-TagConstructor.prototype = TagPrototype
-TagConstructor.is = val => val && val.constructor === TagConstructor
-TagConstructor.toString = () => 'Entry.Tag'
 TagConstructor._from = _input => {
     const { name, color, description } = _input
     return Entry.Tag(name, color, description)
 }
-TagConstructor.from = TagConstructor._from
-
-TransactionBankConstructor.prototype = TransactionBankPrototype
-TransactionBankConstructor.is = val => val && val.constructor === TransactionBankConstructor
-TransactionBankConstructor.toString = () => 'Entry.TransactionBank'
 TransactionBankConstructor._from = _input => {
     const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = _input
     return Entry.TransactionBank(
@@ -611,11 +603,6 @@ TransactionBankConstructor._from = _input => {
         splits,
     )
 }
-TransactionBankConstructor.from = TransactionBankConstructor._from
-
-TransactionInvestmentConstructor.prototype = TransactionInvestmentPrototype
-TransactionInvestmentConstructor.is = val => val && val.constructor === TransactionInvestmentConstructor
-TransactionInvestmentConstructor.toString = () => 'Entry.TransactionInvestment'
 TransactionInvestmentConstructor._from = _input => {
     const {
         account,
@@ -650,6 +637,15 @@ TransactionInvestmentConstructor._from = _input => {
         security,
     )
 }
+
+AccountConstructor.from = AccountConstructor._from
+CategoryConstructor.from = CategoryConstructor._from
+ClassConstructor.from = ClassConstructor._from
+PayeeConstructor.from = PayeeConstructor._from
+PriceConstructor.from = PriceConstructor._from
+SecurityConstructor.from = SecurityConstructor._from
+TagConstructor.from = TagConstructor._from
+TransactionBankConstructor.from = TransactionBankConstructor._from
 TransactionInvestmentConstructor.from = TransactionInvestmentConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

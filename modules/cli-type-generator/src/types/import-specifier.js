@@ -54,10 +54,10 @@ ImportSpecifier.prototype = ImportSpecifierPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            default  : function () { return `ImportSpecifier.Default(${R._toString(this.local)})` },
-            namespace: function () { return `ImportSpecifier.Namespace(${R._toString(this.local)})` },
-            named    : function () { return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})` },
-        }
+    default  : function () { return `ImportSpecifier.Default(${R._toString(this.local)})` },
+    namespace: function () { return `ImportSpecifier.Namespace(${R._toString(this.local)})` },
+    named    : function () { return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -162,21 +162,23 @@ const NamedPrototype = Object.create(ImportSpecifierPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 DefaultConstructor.prototype = DefaultPrototype
-DefaultConstructor.is = val => val && val.constructor === DefaultConstructor
-DefaultConstructor.toString = () => 'ImportSpecifier.Default'
-DefaultConstructor._from = _input => ImportSpecifier.Default(_input.local)
-DefaultConstructor.from = DefaultConstructor._from
-
 NamespaceConstructor.prototype = NamespacePrototype
-NamespaceConstructor.is = val => val && val.constructor === NamespaceConstructor
-NamespaceConstructor.toString = () => 'ImportSpecifier.Namespace'
-NamespaceConstructor._from = _input => ImportSpecifier.Namespace(_input.local)
-NamespaceConstructor.from = NamespaceConstructor._from
-
 NamedConstructor.prototype = NamedPrototype
+
+DefaultConstructor.is = val => val && val.constructor === DefaultConstructor
+NamespaceConstructor.is = val => val && val.constructor === NamespaceConstructor
 NamedConstructor.is = val => val && val.constructor === NamedConstructor
+
+DefaultConstructor.toString = () => 'ImportSpecifier.Default'
+NamespaceConstructor.toString = () => 'ImportSpecifier.Namespace'
 NamedConstructor.toString = () => 'ImportSpecifier.Named'
+
+DefaultConstructor._from = _input => ImportSpecifier.Default(_input.local)
+NamespaceConstructor._from = _input => ImportSpecifier.Namespace(_input.local)
 NamedConstructor._from = _input => ImportSpecifier.Named(_input.imported, _input.local)
+
+DefaultConstructor.from = DefaultConstructor._from
+NamespaceConstructor.from = NamespaceConstructor._from
 NamedConstructor.from = NamedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

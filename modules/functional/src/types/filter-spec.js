@@ -61,11 +61,11 @@ FilterSpec.prototype = FilterSpecPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            textMatch    : function () { return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})` },
-            dateRange    : function () { return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})` },
-            categoryMatch: function () { return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})` },
-            compound     : function () { return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})` },
-        }
+    textMatch    : function () { return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})` },
+    dateRange    : function () { return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})` },
+    categoryMatch: function () { return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})` },
+    compound     : function () { return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -204,30 +204,31 @@ const CompoundPrototype = Object.create(FilterSpecPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 TextMatchConstructor.prototype = TextMatchPrototype
-TextMatchConstructor.is = val => val && val.constructor === TextMatchConstructor
-TextMatchConstructor.toString = () => 'FilterSpec.TextMatch'
-TextMatchConstructor._from = _input => FilterSpec.TextMatch(_input.fields, _input.query)
-TextMatchConstructor.from = TextMatchConstructor._from
-
 DateRangeConstructor.prototype = DateRangePrototype
+CategoryMatchConstructor.prototype = CategoryMatchPrototype
+CompoundConstructor.prototype = CompoundPrototype
+
+TextMatchConstructor.is = val => val && val.constructor === TextMatchConstructor
 DateRangeConstructor.is = val => val && val.constructor === DateRangeConstructor
+CategoryMatchConstructor.is = val => val && val.constructor === CategoryMatchConstructor
+CompoundConstructor.is = val => val && val.constructor === CompoundConstructor
+
+TextMatchConstructor.toString = () => 'FilterSpec.TextMatch'
 DateRangeConstructor.toString = () => 'FilterSpec.DateRange'
+CategoryMatchConstructor.toString = () => 'FilterSpec.CategoryMatch'
+CompoundConstructor.toString = () => 'FilterSpec.Compound'
+
+TextMatchConstructor._from = _input => FilterSpec.TextMatch(_input.fields, _input.query)
 DateRangeConstructor._from = _input => {
     const { field, start, end } = _input
     return FilterSpec.DateRange(field, start, end)
 }
-DateRangeConstructor.from = DateRangeConstructor._from
-
-CategoryMatchConstructor.prototype = CategoryMatchPrototype
-CategoryMatchConstructor.is = val => val && val.constructor === CategoryMatchConstructor
-CategoryMatchConstructor.toString = () => 'FilterSpec.CategoryMatch'
 CategoryMatchConstructor._from = _input => FilterSpec.CategoryMatch(_input.field, _input.categories)
-CategoryMatchConstructor.from = CategoryMatchConstructor._from
-
-CompoundConstructor.prototype = CompoundPrototype
-CompoundConstructor.is = val => val && val.constructor === CompoundConstructor
-CompoundConstructor.toString = () => 'FilterSpec.Compound'
 CompoundConstructor._from = _input => FilterSpec.Compound(_input.filters, _input.mode)
+
+TextMatchConstructor.from = TextMatchConstructor._from
+DateRangeConstructor.from = DateRangeConstructor._from
+CategoryMatchConstructor.from = CategoryMatchConstructor._from
 CompoundConstructor.from = CompoundConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

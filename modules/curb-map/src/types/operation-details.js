@@ -60,10 +60,10 @@ OperationDetails.prototype = OperationDetailsPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            shellExecution     : function () { return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})` },
-            firestoreOperation : function () { return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})` },
-            gcpProjectOperation: function () { return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)}, ${R._toString(this.folderId)}, ${R._toString(this.region)})` },
-        }
+    shellExecution     : function () { return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})` },
+    firestoreOperation : function () { return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})` },
+    gcpProjectOperation: function () { return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)}, ${R._toString(this.folderId)}, ${R._toString(this.region)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -178,30 +178,32 @@ const GcpProjectOperationPrototype = Object.create(OperationDetailsPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 ShellExecutionConstructor.prototype = ShellExecutionPrototype
+FirestoreOperationConstructor.prototype = FirestoreOperationPrototype
+GcpProjectOperationConstructor.prototype = GcpProjectOperationPrototype
+
 ShellExecutionConstructor.is = val => val && val.constructor === ShellExecutionConstructor
+FirestoreOperationConstructor.is = val => val && val.constructor === FirestoreOperationConstructor
+GcpProjectOperationConstructor.is = val => val && val.constructor === GcpProjectOperationConstructor
+
 ShellExecutionConstructor.toString = () => 'OperationDetails.ShellExecution'
+FirestoreOperationConstructor.toString = () => 'OperationDetails.FirestoreOperation'
+GcpProjectOperationConstructor.toString = () => 'OperationDetails.GcpProjectOperation'
+
 ShellExecutionConstructor._from = _input => {
     const { command, duration, outputPreview } = _input
     return OperationDetails.ShellExecution(command, duration, outputPreview)
 }
-ShellExecutionConstructor.from = ShellExecutionConstructor._from
-
-FirestoreOperationConstructor.prototype = FirestoreOperationPrototype
-FirestoreOperationConstructor.is = val => val && val.constructor === FirestoreOperationConstructor
-FirestoreOperationConstructor.toString = () => 'OperationDetails.FirestoreOperation'
 FirestoreOperationConstructor._from = _input => {
     const { operation, collection, documentId } = _input
     return OperationDetails.FirestoreOperation(operation, collection, documentId)
 }
-FirestoreOperationConstructor.from = FirestoreOperationConstructor._from
-
-GcpProjectOperationConstructor.prototype = GcpProjectOperationPrototype
-GcpProjectOperationConstructor.is = val => val && val.constructor === GcpProjectOperationConstructor
-GcpProjectOperationConstructor.toString = () => 'OperationDetails.GcpProjectOperation'
 GcpProjectOperationConstructor._from = _input => {
     const { projectId, folderId, region } = _input
     return OperationDetails.GcpProjectOperation(projectId, folderId, region)
 }
+
+ShellExecutionConstructor.from = ShellExecutionConstructor._from
+FirestoreOperationConstructor.from = FirestoreOperationConstructor._from
 GcpProjectOperationConstructor.from = GcpProjectOperationConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

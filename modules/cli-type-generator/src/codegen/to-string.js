@@ -21,8 +21,8 @@ const generateToStringObject = variants => {
     const entries = variants.map(([key, typeName, fields]) => toStringEntry(key, typeName, fields, maxKeyLen))
     return `// prettier-ignore
         const toString = {
-            ${entries.join(',\n            ')},
-        }`
+    ${entries.join(',\n    ')},
+}`
 }
 
 /*

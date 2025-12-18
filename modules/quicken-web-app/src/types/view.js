@@ -59,10 +59,10 @@ View.prototype = ViewPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            register      : function () { return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
-            report        : function () { return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})` },
-            reconciliation: function () { return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
-        }
+    register      : function () { return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
+    report        : function () { return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})` },
+    reconciliation: function () { return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -177,30 +177,32 @@ const ReconciliationPrototype = Object.create(ViewPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 RegisterConstructor.prototype = RegisterPrototype
+ReportConstructor.prototype = ReportPrototype
+ReconciliationConstructor.prototype = ReconciliationPrototype
+
 RegisterConstructor.is = val => val && val.constructor === RegisterConstructor
+ReportConstructor.is = val => val && val.constructor === ReportConstructor
+ReconciliationConstructor.is = val => val && val.constructor === ReconciliationConstructor
+
 RegisterConstructor.toString = () => 'View.Register'
+ReportConstructor.toString = () => 'View.Report'
+ReconciliationConstructor.toString = () => 'View.Reconciliation'
+
 RegisterConstructor._from = _input => {
     const { id, accountId, title } = _input
     return View.Register(id, accountId, title)
 }
-RegisterConstructor.from = RegisterConstructor._from
-
-ReportConstructor.prototype = ReportPrototype
-ReportConstructor.is = val => val && val.constructor === ReportConstructor
-ReportConstructor.toString = () => 'View.Report'
 ReportConstructor._from = _input => {
     const { id, reportType, title } = _input
     return View.Report(id, reportType, title)
 }
-ReportConstructor.from = ReportConstructor._from
-
-ReconciliationConstructor.prototype = ReconciliationPrototype
-ReconciliationConstructor.is = val => val && val.constructor === ReconciliationConstructor
-ReconciliationConstructor.toString = () => 'View.Reconciliation'
 ReconciliationConstructor._from = _input => {
     const { id, accountId, title } = _input
     return View.Reconciliation(id, accountId, title)
 }
+
+RegisterConstructor.from = RegisterConstructor._from
+ReportConstructor.from = ReportConstructor._from
 ReconciliationConstructor.from = ReconciliationConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

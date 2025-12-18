@@ -129,28 +129,28 @@ Action.prototype = ActionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            organizationCreated    : function () { return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})` },
-            organizationUpdated    : function () { return `Action.OrganizationUpdated(${R._toString(this.name)})` },
-            organizationDeleted    : function () { return `Action.OrganizationDeleted()` },
-            memberAdded            : function () { return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})` },
-            roleChanged            : function () { return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})` },
-            memberRemoved          : function () { return `Action.MemberRemoved(${R._toString(this.userId)})` },
-            userCreated            : function () { return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.email)})` },
-            userUpdated            : function () { return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})` },
-            userForgotten          : function () { return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})` },
-            authenticationCompleted: function () { return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})` },
-            userLoaded             : function () { return `Action.UserLoaded(${R._toString(this.user)})` },
-            organizationSynced     : function () { return `Action.OrganizationSynced(${R._toString(this.organization)})` },
-            blockfacesSynced       : function () { return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})` },
-            blockfaceCreated       : function () { return `Action.BlockfaceCreated(${R._toString(this.blockface)})` },
-            blockfaceSelected      : function () { return `Action.BlockfaceSelected(${R._toString(this.blockface)})` },
-            blockfaceSaved         : function () { return `Action.BlockfaceSaved(${R._toString(this.blockface)})` },
-            segmentUseUpdated      : function () { return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})` },
-            segmentLengthUpdated   : function () { return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})` },
-            segmentAddedLeft       : function () { return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})` },
-            segmentAdded           : function () { return `Action.SegmentAdded(${R._toString(this.targetIndex)})` },
-            segmentsReplaced       : function () { return `Action.SegmentsReplaced(${R._toString(this.segments)})` },
-        }
+    organizationCreated    : function () { return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})` },
+    organizationUpdated    : function () { return `Action.OrganizationUpdated(${R._toString(this.name)})` },
+    organizationDeleted    : function () { return `Action.OrganizationDeleted()` },
+    memberAdded            : function () { return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})` },
+    roleChanged            : function () { return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})` },
+    memberRemoved          : function () { return `Action.MemberRemoved(${R._toString(this.userId)})` },
+    userCreated            : function () { return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.email)})` },
+    userUpdated            : function () { return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})` },
+    userForgotten          : function () { return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})` },
+    authenticationCompleted: function () { return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})` },
+    userLoaded             : function () { return `Action.UserLoaded(${R._toString(this.user)})` },
+    organizationSynced     : function () { return `Action.OrganizationSynced(${R._toString(this.organization)})` },
+    blockfacesSynced       : function () { return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})` },
+    blockfaceCreated       : function () { return `Action.BlockfaceCreated(${R._toString(this.blockface)})` },
+    blockfaceSelected      : function () { return `Action.BlockfaceSelected(${R._toString(this.blockface)})` },
+    blockfaceSaved         : function () { return `Action.BlockfaceSaved(${R._toString(this.blockface)})` },
+    segmentUseUpdated      : function () { return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})` },
+    segmentLengthUpdated   : function () { return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})` },
+    segmentAddedLeft       : function () { return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})` },
+    segmentAdded           : function () { return `Action.SegmentAdded(${R._toString(this.targetIndex)})` },
+    segmentsReplaced       : function () { return `Action.SegmentsReplaced(${R._toString(this.segments)})` },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -726,135 +726,119 @@ const SegmentsReplacedPrototype = Object.create(ActionPrototype, {
 //
 // -------------------------------------------------------------------------------------------------------------
 OrganizationCreatedConstructor.prototype = OrganizationCreatedPrototype
-OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
-OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
-OrganizationCreatedConstructor._from = _input => Action.OrganizationCreated(_input.name, _input.projectId)
-OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
-
 OrganizationUpdatedConstructor.prototype = OrganizationUpdatedPrototype
-OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
-OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
-OrganizationUpdatedConstructor._from = _input => Action.OrganizationUpdated(_input.name)
-OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
-
 OrganizationDeletedConstructor.prototype = OrganizationDeletedPrototype
-OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
-OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
-OrganizationDeletedConstructor._from = _input => Action.OrganizationDeleted()
-OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
-
 MemberAddedConstructor.prototype = MemberAddedPrototype
+RoleChangedConstructor.prototype = RoleChangedPrototype
+MemberRemovedConstructor.prototype = MemberRemovedPrototype
+UserCreatedConstructor.prototype = UserCreatedPrototype
+UserUpdatedConstructor.prototype = UserUpdatedPrototype
+UserForgottenConstructor.prototype = UserForgottenPrototype
+AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
+UserLoadedConstructor.prototype = UserLoadedPrototype
+OrganizationSyncedConstructor.prototype = OrganizationSyncedPrototype
+BlockfacesSyncedConstructor.prototype = BlockfacesSyncedPrototype
+BlockfaceCreatedConstructor.prototype = BlockfaceCreatedPrototype
+BlockfaceSelectedConstructor.prototype = BlockfaceSelectedPrototype
+BlockfaceSavedConstructor.prototype = BlockfaceSavedPrototype
+SegmentUseUpdatedConstructor.prototype = SegmentUseUpdatedPrototype
+SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
+SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
+SegmentAddedConstructor.prototype = SegmentAddedPrototype
+SegmentsReplacedConstructor.prototype = SegmentsReplacedPrototype
+
+OrganizationCreatedConstructor.is = val => val && val.constructor === OrganizationCreatedConstructor
+OrganizationUpdatedConstructor.is = val => val && val.constructor === OrganizationUpdatedConstructor
+OrganizationDeletedConstructor.is = val => val && val.constructor === OrganizationDeletedConstructor
 MemberAddedConstructor.is = val => val && val.constructor === MemberAddedConstructor
+RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
+MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
+UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
+UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
+UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
+AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
+UserLoadedConstructor.is = val => val && val.constructor === UserLoadedConstructor
+OrganizationSyncedConstructor.is = val => val && val.constructor === OrganizationSyncedConstructor
+BlockfacesSyncedConstructor.is = val => val && val.constructor === BlockfacesSyncedConstructor
+BlockfaceCreatedConstructor.is = val => val && val.constructor === BlockfaceCreatedConstructor
+BlockfaceSelectedConstructor.is = val => val && val.constructor === BlockfaceSelectedConstructor
+BlockfaceSavedConstructor.is = val => val && val.constructor === BlockfaceSavedConstructor
+SegmentUseUpdatedConstructor.is = val => val && val.constructor === SegmentUseUpdatedConstructor
+SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLengthUpdatedConstructor
+SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
+SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
+SegmentsReplacedConstructor.is = val => val && val.constructor === SegmentsReplacedConstructor
+
+OrganizationCreatedConstructor.toString = () => 'Action.OrganizationCreated'
+OrganizationUpdatedConstructor.toString = () => 'Action.OrganizationUpdated'
+OrganizationDeletedConstructor.toString = () => 'Action.OrganizationDeleted'
 MemberAddedConstructor.toString = () => 'Action.MemberAdded'
+RoleChangedConstructor.toString = () => 'Action.RoleChanged'
+MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
+UserCreatedConstructor.toString = () => 'Action.UserCreated'
+UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
+UserForgottenConstructor.toString = () => 'Action.UserForgotten'
+AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
+UserLoadedConstructor.toString = () => 'Action.UserLoaded'
+OrganizationSyncedConstructor.toString = () => 'Action.OrganizationSynced'
+BlockfacesSyncedConstructor.toString = () => 'Action.BlockfacesSynced'
+BlockfaceCreatedConstructor.toString = () => 'Action.BlockfaceCreated'
+BlockfaceSelectedConstructor.toString = () => 'Action.BlockfaceSelected'
+BlockfaceSavedConstructor.toString = () => 'Action.BlockfaceSaved'
+SegmentUseUpdatedConstructor.toString = () => 'Action.SegmentUseUpdated'
+SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
+SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
+SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
+SegmentsReplacedConstructor.toString = () => 'Action.SegmentsReplaced'
+
+OrganizationCreatedConstructor._from = _input => Action.OrganizationCreated(_input.name, _input.projectId)
+OrganizationUpdatedConstructor._from = _input => Action.OrganizationUpdated(_input.name)
+OrganizationDeletedConstructor._from = _input => Action.OrganizationDeleted()
 MemberAddedConstructor._from = _input => {
     const { userId, role, displayName } = _input
     return Action.MemberAdded(userId, role, displayName)
 }
-MemberAddedConstructor.from = MemberAddedConstructor._from
-
-RoleChangedConstructor.prototype = RoleChangedPrototype
-RoleChangedConstructor.is = val => val && val.constructor === RoleChangedConstructor
-RoleChangedConstructor.toString = () => 'Action.RoleChanged'
 RoleChangedConstructor._from = _input => Action.RoleChanged(_input.userId, _input.role)
-RoleChangedConstructor.from = RoleChangedConstructor._from
-
-MemberRemovedConstructor.prototype = MemberRemovedPrototype
-MemberRemovedConstructor.is = val => val && val.constructor === MemberRemovedConstructor
-MemberRemovedConstructor.toString = () => 'Action.MemberRemoved'
 MemberRemovedConstructor._from = _input => Action.MemberRemoved(_input.userId)
-MemberRemovedConstructor.from = MemberRemovedConstructor._from
-
-UserCreatedConstructor.prototype = UserCreatedPrototype
-UserCreatedConstructor.is = val => val && val.constructor === UserCreatedConstructor
-UserCreatedConstructor.toString = () => 'Action.UserCreated'
 UserCreatedConstructor._from = _input => {
     const { userId, displayName, email } = _input
     return Action.UserCreated(userId, displayName, email)
 }
-UserCreatedConstructor.from = UserCreatedConstructor._from
-
-UserUpdatedConstructor.prototype = UserUpdatedPrototype
-UserUpdatedConstructor.is = val => val && val.constructor === UserUpdatedConstructor
-UserUpdatedConstructor.toString = () => 'Action.UserUpdated'
 UserUpdatedConstructor._from = _input => Action.UserUpdated(_input.userId, _input.displayName)
-UserUpdatedConstructor.from = UserUpdatedConstructor._from
-
-UserForgottenConstructor.prototype = UserForgottenPrototype
-UserForgottenConstructor.is = val => val && val.constructor === UserForgottenConstructor
-UserForgottenConstructor.toString = () => 'Action.UserForgotten'
 UserForgottenConstructor._from = _input => Action.UserForgotten(_input.userId, _input.reason)
-UserForgottenConstructor.from = UserForgottenConstructor._from
-
-AuthenticationCompletedConstructor.prototype = AuthenticationCompletedPrototype
-AuthenticationCompletedConstructor.is = val => val && val.constructor === AuthenticationCompletedConstructor
-AuthenticationCompletedConstructor.toString = () => 'Action.AuthenticationCompleted'
 AuthenticationCompletedConstructor._from = _input => Action.AuthenticationCompleted(_input.email, _input.displayName)
-AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
-
-UserLoadedConstructor.prototype = UserLoadedPrototype
-UserLoadedConstructor.is = val => val && val.constructor === UserLoadedConstructor
-UserLoadedConstructor.toString = () => 'Action.UserLoaded'
 UserLoadedConstructor._from = _input => Action.UserLoaded(_input.user)
-UserLoadedConstructor.from = UserLoadedConstructor._from
-
-OrganizationSyncedConstructor.prototype = OrganizationSyncedPrototype
-OrganizationSyncedConstructor.is = val => val && val.constructor === OrganizationSyncedConstructor
-OrganizationSyncedConstructor.toString = () => 'Action.OrganizationSynced'
 OrganizationSyncedConstructor._from = _input => Action.OrganizationSynced(_input.organization)
-OrganizationSyncedConstructor.from = OrganizationSyncedConstructor._from
-
-BlockfacesSyncedConstructor.prototype = BlockfacesSyncedPrototype
-BlockfacesSyncedConstructor.is = val => val && val.constructor === BlockfacesSyncedConstructor
-BlockfacesSyncedConstructor.toString = () => 'Action.BlockfacesSynced'
 BlockfacesSyncedConstructor._from = _input => Action.BlockfacesSynced(_input.blockfaces)
-BlockfacesSyncedConstructor.from = BlockfacesSyncedConstructor._from
-
-BlockfaceCreatedConstructor.prototype = BlockfaceCreatedPrototype
-BlockfaceCreatedConstructor.is = val => val && val.constructor === BlockfaceCreatedConstructor
-BlockfaceCreatedConstructor.toString = () => 'Action.BlockfaceCreated'
 BlockfaceCreatedConstructor._from = _input => Action.BlockfaceCreated(_input.blockface)
-BlockfaceCreatedConstructor.from = BlockfaceCreatedConstructor._from
-
-BlockfaceSelectedConstructor.prototype = BlockfaceSelectedPrototype
-BlockfaceSelectedConstructor.is = val => val && val.constructor === BlockfaceSelectedConstructor
-BlockfaceSelectedConstructor.toString = () => 'Action.BlockfaceSelected'
 BlockfaceSelectedConstructor._from = _input => Action.BlockfaceSelected(_input.blockface)
-BlockfaceSelectedConstructor.from = BlockfaceSelectedConstructor._from
-
-BlockfaceSavedConstructor.prototype = BlockfaceSavedPrototype
-BlockfaceSavedConstructor.is = val => val && val.constructor === BlockfaceSavedConstructor
-BlockfaceSavedConstructor.toString = () => 'Action.BlockfaceSaved'
 BlockfaceSavedConstructor._from = _input => Action.BlockfaceSaved(_input.blockface)
-BlockfaceSavedConstructor.from = BlockfaceSavedConstructor._from
-
-SegmentUseUpdatedConstructor.prototype = SegmentUseUpdatedPrototype
-SegmentUseUpdatedConstructor.is = val => val && val.constructor === SegmentUseUpdatedConstructor
-SegmentUseUpdatedConstructor.toString = () => 'Action.SegmentUseUpdated'
 SegmentUseUpdatedConstructor._from = _input => Action.SegmentUseUpdated(_input.index, _input.use)
-SegmentUseUpdatedConstructor.from = SegmentUseUpdatedConstructor._from
-
-SegmentLengthUpdatedConstructor.prototype = SegmentLengthUpdatedPrototype
-SegmentLengthUpdatedConstructor.is = val => val && val.constructor === SegmentLengthUpdatedConstructor
-SegmentLengthUpdatedConstructor.toString = () => 'Action.SegmentLengthUpdated'
 SegmentLengthUpdatedConstructor._from = _input => Action.SegmentLengthUpdated(_input.index, _input.newLength)
-SegmentLengthUpdatedConstructor.from = SegmentLengthUpdatedConstructor._from
-
-SegmentAddedLeftConstructor.prototype = SegmentAddedLeftPrototype
-SegmentAddedLeftConstructor.is = val => val && val.constructor === SegmentAddedLeftConstructor
-SegmentAddedLeftConstructor.toString = () => 'Action.SegmentAddedLeft'
 SegmentAddedLeftConstructor._from = _input => Action.SegmentAddedLeft(_input.index, _input.desiredLength)
-SegmentAddedLeftConstructor.from = SegmentAddedLeftConstructor._from
-
-SegmentAddedConstructor.prototype = SegmentAddedPrototype
-SegmentAddedConstructor.is = val => val && val.constructor === SegmentAddedConstructor
-SegmentAddedConstructor.toString = () => 'Action.SegmentAdded'
 SegmentAddedConstructor._from = _input => Action.SegmentAdded(_input.targetIndex)
-SegmentAddedConstructor.from = SegmentAddedConstructor._from
-
-SegmentsReplacedConstructor.prototype = SegmentsReplacedPrototype
-SegmentsReplacedConstructor.is = val => val && val.constructor === SegmentsReplacedConstructor
-SegmentsReplacedConstructor.toString = () => 'Action.SegmentsReplaced'
 SegmentsReplacedConstructor._from = _input => Action.SegmentsReplaced(_input.segments)
+
+OrganizationCreatedConstructor.from = OrganizationCreatedConstructor._from
+OrganizationUpdatedConstructor.from = OrganizationUpdatedConstructor._from
+OrganizationDeletedConstructor.from = OrganizationDeletedConstructor._from
+MemberAddedConstructor.from = MemberAddedConstructor._from
+RoleChangedConstructor.from = RoleChangedConstructor._from
+MemberRemovedConstructor.from = MemberRemovedConstructor._from
+UserCreatedConstructor.from = UserCreatedConstructor._from
+UserUpdatedConstructor.from = UserUpdatedConstructor._from
+UserForgottenConstructor.from = UserForgottenConstructor._from
+AuthenticationCompletedConstructor.from = AuthenticationCompletedConstructor._from
+UserLoadedConstructor.from = UserLoadedConstructor._from
+OrganizationSyncedConstructor.from = OrganizationSyncedConstructor._from
+BlockfacesSyncedConstructor.from = BlockfacesSyncedConstructor._from
+BlockfaceCreatedConstructor.from = BlockfaceCreatedConstructor._from
+BlockfaceSelectedConstructor.from = BlockfaceSelectedConstructor._from
+BlockfaceSavedConstructor.from = BlockfaceSavedConstructor._from
+SegmentUseUpdatedConstructor.from = SegmentUseUpdatedConstructor._from
+SegmentLengthUpdatedConstructor.from = SegmentLengthUpdatedConstructor._from
+SegmentAddedLeftConstructor.from = SegmentAddedLeftConstructor._from
+SegmentAddedConstructor.from = SegmentAddedConstructor._from
 SegmentsReplacedConstructor.from = SegmentsReplacedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------

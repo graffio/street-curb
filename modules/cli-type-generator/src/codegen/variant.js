@@ -20,18 +20,37 @@ const generateVariantPrototype = (typeName, variantName) => {
 }
 
 /*
- * Generate static method assignments for a TaggedSum variant
- * @sig generateVariantStaticMethods :: (String, String, FieldMap) -> String
+ * Generate all static method assignments grouped by method type
+ * @sig generateAllStaticMethods :: (String, [String], VariantsMap) -> String
  */
-const generateVariantStaticMethods = (typeName, variantName, fields) => {
-    const fullName = `${typeName}.${variantName}`
-    const fromCode = generateFrom('prototype', variantName, fullName, fields)
+const generateAllStaticMethods = (typeName, variantNames, variants) => {
+    /*
+     * Generate _from method assignment for a variant
+     * @sig generateFromMethod :: String -> String
+     */
+    const generateFromMethod = vn => {
+        const fullName = `${typeName}.${vn}`
+        const fromCode = generateFrom('prototype', vn, fullName, variants[vn])
+        return `${vn}Constructor._from = ${fromCode}`
+    }
 
-    return `${variantName}Constructor.prototype = ${variantName}Prototype
-        ${variantName}Constructor.is = val => val && val.constructor === ${variantName}Constructor
-        ${variantName}Constructor.toString = () => '${fullName}'
-        ${variantName}Constructor._from = ${fromCode}
-        ${variantName}Constructor.from = ${variantName}Constructor._from`
+    const prototypes = variantNames.map(vn => `${vn}Constructor.prototype = ${vn}Prototype`)
+
+    const isMethods = variantNames.map(vn => `${vn}Constructor.is = val => val && val.constructor === ${vn}Constructor`)
+
+    const toStrings = variantNames.map(vn => `${vn}Constructor.toString = () => '${typeName}.${vn}'`)
+
+    const _fromMethods = variantNames.map(generateFromMethod)
+
+    const fromMethods = variantNames.map(vn => `${vn}Constructor.from = ${vn}Constructor._from`)
+
+    return [
+        prototypes.join('\n'),
+        isMethods.join('\n'),
+        toStrings.join('\n'),
+        _fromMethods.join('\n'),
+        fromMethods.join('\n'),
+    ].join('\n\n')
 }
 
 /*
@@ -43,4 +62,4 @@ const generateVariantConstructorDef = (typeName, variantName, constructorCode) =
 
         ${typeName}.${variantName} = ${variantName}Constructor`
 
-export { generateVariantPrototype, generateVariantStaticMethods, generateVariantConstructorDef }
+export { generateVariantPrototype, generateAllStaticMethods, generateVariantConstructorDef }
