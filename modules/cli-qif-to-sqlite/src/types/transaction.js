@@ -68,7 +68,7 @@ Transaction.prototype = TransactionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant Transaction.Bank
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
 
@@ -90,6 +90,34 @@ const bankToString = function () {
         ${R._toString(this.payee)})`
 }
 
+/** JMG
+ * Convert to string representation
+ * @sig investmentToString :: () -> String
+ */
+const investmentToString = function () {
+    return `Transaction.Investment(${R._toString(this.accountId)},
+        ${R._toString(this.date)},
+        ${R._toString(this.id)},
+        ${R._toString(this.transactionType)},
+        ${R._toString(this.address)},
+        ${R._toString(this.amount)},
+        ${R._toString(this.categoryId)},
+        ${R._toString(this.cleared)},
+        ${R._toString(this.commission)},
+        ${R._toString(this.investmentAction)},
+        ${R._toString(this.memo)},
+        ${R._toString(this.payee)},
+        ${R._toString(this.price)},
+        ${R._toString(this.quantity)},
+        ${R._toString(this.securityId)})`
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+
 /*
  * Convert to JSON representation with tag
  * @sig bankToJSON :: () -> Object
@@ -97,6 +125,20 @@ const bankToString = function () {
 const bankToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
+
+/*
+ * Convert to JSON representation with tag
+ * @sig investmentToJSON :: () -> Object
+ */
+const investmentToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a Transaction.Bank instance
@@ -149,74 +191,6 @@ const BankConstructor = function Bank(
 }
 
 Transaction.Bank = BankConstructor
-
-const BankPrototype = Object.create(TransactionPrototype, {
-    '@@tagName': { value: 'Bank', enumerable: false },
-    '@@typeName': { value: 'Transaction', enumerable: false },
-    toString: { value: bankToString, enumerable: false },
-    toJSON: { value: bankToJSON, enumerable: false },
-    constructor: { value: BankConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-BankConstructor.prototype = BankPrototype
-BankConstructor.is = val => val && val.constructor === BankConstructor
-BankConstructor.toString = () => 'Transaction.Bank'
-BankConstructor._from = _input => {
-    const { accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee } = _input
-    return Transaction.Bank(
-        accountId,
-        amount,
-        date,
-        id,
-        transactionType,
-        address,
-        categoryId,
-        cleared,
-        memo,
-        number,
-        payee,
-    )
-}
-BankConstructor.from = BankConstructor._from
-
-BankConstructor.toFirestore = o => ({ ...o })
-BankConstructor.fromFirestore = BankConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Transaction.Investment
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig investmentToString :: () -> String
- */
-const investmentToString = function () {
-    return `Transaction.Investment(${R._toString(this.accountId)},
-        ${R._toString(this.date)},
-        ${R._toString(this.id)},
-        ${R._toString(this.transactionType)},
-        ${R._toString(this.address)},
-        ${R._toString(this.amount)},
-        ${R._toString(this.categoryId)},
-        ${R._toString(this.cleared)},
-        ${R._toString(this.commission)},
-        ${R._toString(this.investmentAction)},
-        ${R._toString(this.memo)},
-        ${R._toString(this.payee)},
-        ${R._toString(this.price)},
-        ${R._toString(this.quantity)},
-        ${R._toString(this.securityId)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig investmentToJSON :: () -> Object
- */
-const investmentToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a Transaction.Investment instance
@@ -289,6 +263,19 @@ const InvestmentConstructor = function Investment(
 
 Transaction.Investment = InvestmentConstructor
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const BankPrototype = Object.create(TransactionPrototype, {
+    '@@tagName': { value: 'Bank', enumerable: false },
+    '@@typeName': { value: 'Transaction', enumerable: false },
+    toString: { value: bankToString, enumerable: false },
+    toJSON: { value: bankToJSON, enumerable: false },
+    constructor: { value: BankConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const InvestmentPrototype = Object.create(TransactionPrototype, {
     '@@tagName': { value: 'Investment', enumerable: false },
     '@@typeName': { value: 'Transaction', enumerable: false },
@@ -296,6 +283,32 @@ const InvestmentPrototype = Object.create(TransactionPrototype, {
     toJSON: { value: investmentToJSON, enumerable: false },
     constructor: { value: InvestmentConstructor, enumerable: false, writable: true, configurable: true },
 })
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant static methods
+//
+// -------------------------------------------------------------------------------------------------------------
+BankConstructor.prototype = BankPrototype
+BankConstructor.is = val => val && val.constructor === BankConstructor
+BankConstructor.toString = () => 'Transaction.Bank'
+BankConstructor._from = _input => {
+    const { accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee } = _input
+    return Transaction.Bank(
+        accountId,
+        amount,
+        date,
+        id,
+        transactionType,
+        address,
+        categoryId,
+        cleared,
+        memo,
+        number,
+        payee,
+    )
+}
+BankConstructor.from = BankConstructor._from
 
 InvestmentConstructor.prototype = InvestmentPrototype
 InvestmentConstructor.is = val => val && val.constructor === InvestmentConstructor
@@ -337,6 +350,15 @@ InvestmentConstructor._from = _input => {
     )
 }
 InvestmentConstructor.from = InvestmentConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+BankConstructor.toFirestore = o => ({ ...o })
+BankConstructor.fromFirestore = BankConstructor._from
 
 InvestmentConstructor.toFirestore = o => ({ ...o })
 InvestmentConstructor.fromFirestore = InvestmentConstructor._from

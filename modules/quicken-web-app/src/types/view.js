@@ -54,7 +54,7 @@ View.prototype = ViewPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant View.Register
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
 
@@ -66,6 +66,28 @@ const registerToString = function () {
     return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
 }
 
+/**
+ * Convert to string representation
+ * @sig reportToString :: () -> String
+ */
+const reportToString = function () {
+    return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})`
+}
+
+/**
+ * Convert to string representation
+ * @sig reconciliationToString :: () -> String
+ */
+const reconciliationToString = function () {
+    return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+
 /*
  * Convert to JSON representation with tag
  * @sig registerToJSON :: () -> Object
@@ -73,6 +95,28 @@ const registerToString = function () {
 const registerToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
+
+/*
+ * Convert to JSON representation with tag
+ * @sig reportToJSON :: () -> Object
+ */
+const reportToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+/*
+ * Convert to JSON representation with tag
+ * @sig reconciliationToJSON :: () -> Object
+ */
+const reconciliationToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a View.Register instance
@@ -94,48 +138,6 @@ const RegisterConstructor = function Register(id, accountId, title) {
 
 View.Register = RegisterConstructor
 
-const RegisterPrototype = Object.create(ViewPrototype, {
-    '@@tagName': { value: 'Register', enumerable: false },
-    '@@typeName': { value: 'View', enumerable: false },
-    toString: { value: registerToString, enumerable: false },
-    toJSON: { value: registerToJSON, enumerable: false },
-    constructor: { value: RegisterConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-RegisterConstructor.prototype = RegisterPrototype
-RegisterConstructor.is = val => val && val.constructor === RegisterConstructor
-RegisterConstructor.toString = () => 'View.Register'
-RegisterConstructor._from = _input => {
-    const { id, accountId, title } = _input
-    return View.Register(id, accountId, title)
-}
-RegisterConstructor.from = RegisterConstructor._from
-
-RegisterConstructor.toFirestore = o => ({ ...o })
-RegisterConstructor.fromFirestore = RegisterConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant View.Report
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig reportToString :: () -> String
- */
-const reportToString = function () {
-    return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig reportToJSON :: () -> Object
- */
-const reportToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a View.Report instance
  * @sig Report :: (String, String, String) -> View.Report
@@ -155,48 +157,6 @@ const ReportConstructor = function Report(id, reportType, title) {
 }
 
 View.Report = ReportConstructor
-
-const ReportPrototype = Object.create(ViewPrototype, {
-    '@@tagName': { value: 'Report', enumerable: false },
-    '@@typeName': { value: 'View', enumerable: false },
-    toString: { value: reportToString, enumerable: false },
-    toJSON: { value: reportToJSON, enumerable: false },
-    constructor: { value: ReportConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-ReportConstructor.prototype = ReportPrototype
-ReportConstructor.is = val => val && val.constructor === ReportConstructor
-ReportConstructor.toString = () => 'View.Report'
-ReportConstructor._from = _input => {
-    const { id, reportType, title } = _input
-    return View.Report(id, reportType, title)
-}
-ReportConstructor.from = ReportConstructor._from
-
-ReportConstructor.toFirestore = o => ({ ...o })
-ReportConstructor.fromFirestore = ReportConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant View.Reconciliation
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig reconciliationToString :: () -> String
- */
-const reconciliationToString = function () {
-    return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig reconciliationToJSON :: () -> Object
- */
-const reconciliationToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
 
 /*
  * Construct a View.Reconciliation instance
@@ -218,6 +178,27 @@ const ReconciliationConstructor = function Reconciliation(id, accountId, title) 
 
 View.Reconciliation = ReconciliationConstructor
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const RegisterPrototype = Object.create(ViewPrototype, {
+    '@@tagName': { value: 'Register', enumerable: false },
+    '@@typeName': { value: 'View', enumerable: false },
+    toString: { value: registerToString, enumerable: false },
+    toJSON: { value: registerToJSON, enumerable: false },
+    constructor: { value: RegisterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const ReportPrototype = Object.create(ViewPrototype, {
+    '@@tagName': { value: 'Report', enumerable: false },
+    '@@typeName': { value: 'View', enumerable: false },
+    toString: { value: reportToString, enumerable: false },
+    toJSON: { value: reportToJSON, enumerable: false },
+    constructor: { value: ReportConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const ReconciliationPrototype = Object.create(ViewPrototype, {
     '@@tagName': { value: 'Reconciliation', enumerable: false },
     '@@typeName': { value: 'View', enumerable: false },
@@ -225,6 +206,29 @@ const ReconciliationPrototype = Object.create(ViewPrototype, {
     toJSON: { value: reconciliationToJSON, enumerable: false },
     constructor: { value: ReconciliationConstructor, enumerable: false, writable: true, configurable: true },
 })
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant static methods
+//
+// -------------------------------------------------------------------------------------------------------------
+RegisterConstructor.prototype = RegisterPrototype
+RegisterConstructor.is = val => val && val.constructor === RegisterConstructor
+RegisterConstructor.toString = () => 'View.Register'
+RegisterConstructor._from = _input => {
+    const { id, accountId, title } = _input
+    return View.Register(id, accountId, title)
+}
+RegisterConstructor.from = RegisterConstructor._from
+
+ReportConstructor.prototype = ReportPrototype
+ReportConstructor.is = val => val && val.constructor === ReportConstructor
+ReportConstructor.toString = () => 'View.Report'
+ReportConstructor._from = _input => {
+    const { id, reportType, title } = _input
+    return View.Report(id, reportType, title)
+}
+ReportConstructor.from = ReportConstructor._from
 
 ReconciliationConstructor.prototype = ReconciliationPrototype
 ReconciliationConstructor.is = val => val && val.constructor === ReconciliationConstructor
@@ -234,6 +238,18 @@ ReconciliationConstructor._from = _input => {
     return View.Reconciliation(id, accountId, title)
 }
 ReconciliationConstructor.from = ReconciliationConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+RegisterConstructor.toFirestore = o => ({ ...o })
+RegisterConstructor.fromFirestore = RegisterConstructor._from
+
+ReportConstructor.toFirestore = o => ({ ...o })
+ReportConstructor.fromFirestore = ReportConstructor._from
 
 ReconciliationConstructor.toFirestore = o => ({ ...o })
 ReconciliationConstructor.fromFirestore = ReconciliationConstructor._from

@@ -176,43 +176,32 @@ const generateStaticTaggedType = async typeDefinition => {
  * @sig generateStaticTaggedSumType :: TypeDefinition -> Promise<String>
  */
 const generateStaticTaggedSumType = async typeDefinition => {
-    /*
-     * Generate variant constructor for TaggedSum
-     * @sig generateVariantConstructor :: (String, String, FieldMap) -> String
-     */
-    const generateVariantConstructor = (typeName, vName, flds) => {
-        const fullName = `${typeName}.${vName}`
-        const lowerVariant = vName.charAt(0).toLowerCase() + vName.slice(1)
+    const lowerFirst = str => str.charAt(0).toLowerCase() + str.slice(1)
 
-        validateNoDateArrays(fullName, flds)
-
-        const constructorCode = generateTypeConstructor(vName, fullName, flds)
-
-        return `
-        // -------------------------------------------------------------------------------------------------------------
-        //
-        // Variant ${typeName}.${vName}
-        //
-        // -------------------------------------------------------------------------------------------------------------
-        ${generateNamedToString(lowerVariant + 'ToString', fullName, flds)}
-
-        ${generateNamedVariantToJSON(lowerVariant + 'ToJSON')}
-
-        ${generateConstructorSig(fullName, flds)}
-        ${generateVariantConstructorDef(typeName, vName, constructorCode)}
-
-        ${generateVariantPrototype(typeName, vName)}
-
-        ${generateVariantStaticMethods(typeName, vName, flds)}
-
-        ${generateFirestoreSerializationForTaggedSumVariant(vName, flds)}
-    `
-    }
+    const variantConstructorWithSig = vn => `${generateConstructorSig(`${name}.${vn}`, variants[vn])}
+        ${generateVariantConstructorDef(name, vn, generateTypeConstructor(vn, `${name}.${vn}`, variants[vn]))}`
 
     const { name, variants, relativePath, imports = [], functions = [] } = typeDefinition
     const variantNames = Object.keys(variants)
-    const constructorsForVariants = variantNames
-        .map(variantName => generateVariantConstructor(name, variantName, variants[variantName]))
+
+    // Validate all variants upfront
+    variantNames.forEach(vn => validateNoDateArrays(`${name}.${vn}`, variants[vn]))
+
+    // Generate each concern across all variants
+    const toStrings = variantNames
+        .map(vn => generateNamedToString(lowerFirst(vn) + 'ToString', `${name}.${vn}`, variants[vn]))
+        .join('\n\n')
+
+    const toJSONs = variantNames.map(vn => generateNamedVariantToJSON(lowerFirst(vn) + 'ToJSON')).join('\n\n')
+
+    const constructorDefs = variantNames.map(variantConstructorWithSig).join('\n\n')
+
+    const prototypes = variantNames.map(vn => generateVariantPrototype(name, vn)).join('\n\n')
+
+    const staticMethods = variantNames.map(vn => generateVariantStaticMethods(name, vn, variants[vn])).join('\n\n')
+
+    const firestoreMethods = variantNames
+        .map(vn => generateFirestoreSerializationForTaggedSumVariant(vn, variants[vn]))
         .join('\n\n')
 
     // Collect child types from all variant fields for imports
@@ -276,7 +265,47 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
         ${name}.prototype = ${name}Prototype
 
-        ${constructorsForVariants}
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // Variant toString methods
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${toStrings}
+
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // Variant toJSON methods
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${toJSONs}
+
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // Variant constructors
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${constructorDefs}
+
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // Variant prototypes
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${prototypes}
+
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // Variant static methods
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${staticMethods}
+
+        // -------------------------------------------------------------------------------------------------------------
+        //
+        // Variant Firestore serialization
+        //
+        // -------------------------------------------------------------------------------------------------------------
+        ${firestoreMethods}
 
         // Define is method after variants are attached (allows destructuring)
         ${generateIsMethod(name, variantNames)}

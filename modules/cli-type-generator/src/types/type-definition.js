@@ -48,7 +48,7 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Variant TypeDefinition.Tagged
+// Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
 
@@ -60,6 +60,22 @@ const taggedToString = function () {
     return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})`
 }
 
+/** JMG
+ * Convert to string representation
+ * @sig taggedSumToString :: () -> String
+ */
+const taggedSumToString = function () {
+    return `TypeDefinition.TaggedSum(${R._toString(this.name)},
+        ${R._toString(this.kind)},
+        ${R._toString(this.variants)})`
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant toJSON methods
+//
+// -------------------------------------------------------------------------------------------------------------
+
 /*
  * Convert to JSON representation with tag
  * @sig taggedToJSON :: () -> Object
@@ -67,6 +83,20 @@ const taggedToString = function () {
 const taggedToJSON = function () {
     return Object.assign({ '@@tagName': this['@@tagName'] }, this)
 }
+
+/*
+ * Convert to JSON representation with tag
+ * @sig taggedSumToJSON :: () -> Object
+ */
+const taggedSumToJSON = function () {
+    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
+}
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant constructors
+//
+// -------------------------------------------------------------------------------------------------------------
 
 /*
  * Construct a TypeDefinition.Tagged instance
@@ -88,50 +118,6 @@ const TaggedConstructor = function Tagged(name, kind, fields) {
 
 TypeDefinition.Tagged = TaggedConstructor
 
-const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
-    '@@tagName': { value: 'Tagged', enumerable: false },
-    '@@typeName': { value: 'TypeDefinition', enumerable: false },
-    toString: { value: taggedToString, enumerable: false },
-    toJSON: { value: taggedToJSON, enumerable: false },
-    constructor: { value: TaggedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-TaggedConstructor.prototype = TaggedPrototype
-TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
-TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
-TaggedConstructor._from = _input => {
-    const { name, kind, fields } = _input
-    return TypeDefinition.Tagged(name, kind, fields)
-}
-TaggedConstructor.from = TaggedConstructor._from
-
-TaggedConstructor.toFirestore = o => ({ ...o })
-TaggedConstructor.fromFirestore = TaggedConstructor._from
-
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant TypeDefinition.TaggedSum
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig taggedSumToString :: () -> String
- */
-const taggedSumToString = function () {
-    return `TypeDefinition.TaggedSum(${R._toString(this.name)},
-        ${R._toString(this.kind)},
-        ${R._toString(this.variants)})`
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig taggedSumToJSON :: () -> Object
- */
-const taggedSumToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
 /*
  * Construct a TypeDefinition.TaggedSum instance
  * @sig TaggedSum :: (String, String, Object) -> TypeDefinition.TaggedSum
@@ -152,6 +138,19 @@ const TaggedSumConstructor = function TaggedSum(name, kind, variants) {
 
 TypeDefinition.TaggedSum = TaggedSumConstructor
 
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant prototypes
+//
+// -------------------------------------------------------------------------------------------------------------
+const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
+    '@@tagName': { value: 'Tagged', enumerable: false },
+    '@@typeName': { value: 'TypeDefinition', enumerable: false },
+    toString: { value: taggedToString, enumerable: false },
+    toJSON: { value: taggedToJSON, enumerable: false },
+    constructor: { value: TaggedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
     '@@tagName': { value: 'TaggedSum', enumerable: false },
     '@@typeName': { value: 'TypeDefinition', enumerable: false },
@@ -159,6 +158,20 @@ const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
     toJSON: { value: taggedSumToJSON, enumerable: false },
     constructor: { value: TaggedSumConstructor, enumerable: false, writable: true, configurable: true },
 })
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant static methods
+//
+// -------------------------------------------------------------------------------------------------------------
+TaggedConstructor.prototype = TaggedPrototype
+TaggedConstructor.is = val => val && val.constructor === TaggedConstructor
+TaggedConstructor.toString = () => 'TypeDefinition.Tagged'
+TaggedConstructor._from = _input => {
+    const { name, kind, fields } = _input
+    return TypeDefinition.Tagged(name, kind, fields)
+}
+TaggedConstructor.from = TaggedConstructor._from
 
 TaggedSumConstructor.prototype = TaggedSumPrototype
 TaggedSumConstructor.is = val => val && val.constructor === TaggedSumConstructor
@@ -168,6 +181,15 @@ TaggedSumConstructor._from = _input => {
     return TypeDefinition.TaggedSum(name, kind, variants)
 }
 TaggedSumConstructor.from = TaggedSumConstructor._from
+
+// -------------------------------------------------------------------------------------------------------------
+//
+// Variant Firestore serialization
+//
+// -------------------------------------------------------------------------------------------------------------
+
+TaggedConstructor.toFirestore = o => ({ ...o })
+TaggedConstructor.fromFirestore = TaggedConstructor._from
 
 TaggedSumConstructor.toFirestore = o => ({ ...o })
 TaggedSumConstructor.fromFirestore = TaggedSumConstructor._from
