@@ -9,6 +9,7 @@ import {
     initializeTableLayout,
     toDataTableProps,
 } from '../../src/utils/table-layout.js'
+import { SortOrder } from '../../src/types/index.js'
 
 const mockColumns = [
     { id: 'date', size: 100 },
@@ -23,7 +24,7 @@ tap.test('initializeTableLayout', t => {
 
             t.equal(layout.id, 'cols_test', 'Then id should match viewId')
             t.equal(layout.columnDescriptors.length, 3, 'Then it should have 3 column descriptors')
-            t.same(layout.sortOrder, [], 'Then sortOrder should be empty')
+            t.equal(layout.sortOrder.length, 0, 'Then sortOrder should be empty')
 
             const { id, width, sortDirection } = layout.columnDescriptors[0]
             t.equal(id, 'date', 'Then first column id should be date')
@@ -66,9 +67,14 @@ tap.test('applySortingChange', t => {
                 { id: 'payee', desc: true },
             ])
 
-            t.same(sorted.sortOrder, ['date', 'payee'], 'Then sortOrder should have both columns')
-            t.equal(sorted.columnDescriptors.date.sortDirection, 'asc', 'Then date should be asc')
-            t.equal(sorted.columnDescriptors.payee.sortDirection, 'desc', 'Then payee should be desc')
+            t.equal(sorted.sortOrder.length, 2, 'Then sortOrder should have 2 entries')
+            t.ok(SortOrder.is(sorted.sortOrder[0]), 'Then first entry should be a SortOrder')
+            t.equal(sorted.sortOrder[0].id, 'date', 'Then first sort column should be date')
+            t.equal(sorted.sortOrder[0].isDescending, false, 'Then date should be ascending')
+            t.equal(sorted.sortOrder[1].id, 'payee', 'Then second sort column should be payee')
+            t.equal(sorted.sortOrder[1].isDescending, true, 'Then payee should be descending')
+            t.equal(sorted.columnDescriptors.date.sortDirection, 'asc', 'Then date descriptor should be asc')
+            t.equal(sorted.columnDescriptors.payee.sortDirection, 'desc', 'Then payee descriptor should be desc')
             t.equal(sorted.columnDescriptors.amount.sortDirection, 'none', 'Then amount should be none')
 
             t.end()

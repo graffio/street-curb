@@ -6,7 +6,7 @@
  *
  *  id               : FieldTypes.tableLayoutId,
  *  columnDescriptors: "{ColumnDescriptor:id}",
- *  sortOrder        : /^[a-zA-Z][a-zA-Z0-9_]*$/
+ *  sortOrder        : "{SortOrder:id}"
  *
  */
 
@@ -15,6 +15,7 @@ import { FieldTypes } from './field-types.js'
 import * as R from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
 import { ColumnDescriptor } from './column-descriptor.js'
+import { SortOrder } from './sort-order.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -24,15 +25,14 @@ import { ColumnDescriptor } from './column-descriptor.js'
 
 /*
  * Construct a TableLayout instance
- * @sig TableLayout :: (String, {ColumnDescriptor}, [SortOrder]) -> TableLayout
- *     SortOrder = /^[a-zA-Z][a-zA-Z0-9_]*$/
+ * @sig TableLayout :: (String, {ColumnDescriptor}, {SortOrder}) -> TableLayout
  */
 const TableLayout = function TableLayout(id, columnDescriptors, sortOrder) {
     const constructorName = 'TableLayout(id, columnDescriptors, sortOrder)'
     R.validateArgumentLength(constructorName, 3, arguments)
     R.validateRegex(constructorName, FieldTypes.tableLayoutId, 'id', false, id)
     R.validateLookupTable(constructorName, 'ColumnDescriptor', 'columnDescriptors', false, columnDescriptors)
-    R.validateArray(constructorName, 1, 'String', undefined, 'sortOrder', false, sortOrder)
+    R.validateLookupTable(constructorName, 'SortOrder', 'sortOrder', false, sortOrder)
 
     const result = Object.create(prototype)
     result.id = id
@@ -95,7 +95,7 @@ TableLayout._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,
         columnDescriptors: R.lookupTableToFirestore(ColumnDescriptor, 'id', encodeTimestamps, o.columnDescriptors),
-        sortOrder: o.sortOrder,
+        sortOrder: R.lookupTableToFirestore(SortOrder, 'id', encodeTimestamps, o.sortOrder),
     }
 
     return result
@@ -105,7 +105,7 @@ TableLayout._fromFirestore = (doc, decodeTimestamps) =>
     TableLayout._from({
         id: doc.id,
         columnDescriptors: R.lookupTableFromFirestore(ColumnDescriptor, 'id', decodeTimestamps, doc.columnDescriptors),
-        sortOrder: doc.sortOrder,
+        sortOrder: R.lookupTableFromFirestore(SortOrder, 'id', decodeTimestamps, doc.sortOrder),
     })
 
 // Public aliases (override if necessary)

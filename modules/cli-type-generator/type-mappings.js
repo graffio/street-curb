@@ -81,6 +81,7 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/tag.type.js`]             : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/split.type.js`]           : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/sort-order.type.js`]      : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/table-layout.type.js`]    : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/view.type.js`]            : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/tab-group.type.js`]       : [targets.quickenWebApp],
