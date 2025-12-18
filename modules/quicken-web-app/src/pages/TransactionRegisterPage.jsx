@@ -2,6 +2,7 @@
 // ABOUTME: Displays account transactions with sorting, column reordering, and running balances
 
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
+import { calculateRunningBalances } from '@graffio/financial-computations/banking'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { bankTransactionColumns } from '../columns/index.js'
@@ -30,12 +31,6 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
  */
 const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100%' }) => {
     const makeViewId = id => `cols_account_${id}`
-
-    // @sig calculateRunningBalances :: ([Transaction], Number) -> [Transaction]
-    const calculateRunningBalances = (transactions, balance) => {
-        let runningBalance = balance
-        return transactions.map(tx => ({ ...tx, runningBalance: (runningBalance += tx.amount) }))
-    }
 
     // Initializes the date range to last 12 months when first loading
     // @sig initializeDateRange :: () -> void
