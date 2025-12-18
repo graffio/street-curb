@@ -85,7 +85,7 @@ const Lot = function Lot(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig lotToString :: () -> String
  */

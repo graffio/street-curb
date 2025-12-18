@@ -56,7 +56,7 @@ const Project = function Project(id, organizationId, name, createdAt, createdBy,
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig projectToString :: () -> String
  */

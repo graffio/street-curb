@@ -45,7 +45,7 @@ const FunctionInfo = function FunctionInfo(typeName, functionName, node, sourceC
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig functioninfoToString :: () -> String
  */

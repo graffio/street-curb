@@ -47,7 +47,7 @@ const Price = function Price(id, securityId, date, price) {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig priceToString :: () -> String
  */

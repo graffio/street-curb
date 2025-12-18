@@ -59,76 +59,26 @@ FilterSpec.prototype = FilterSpecPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig textMatchToString :: () -> String
- */
-const textMatchToString = function () {
-    return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})`
-}
-
-/**
- * Convert to string representation
- * @sig dateRangeToString :: () -> String
- */
-const dateRangeToString = function () {
-    return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})`
-}
-
-/**
- * Convert to string representation
- * @sig categoryMatchToString :: () -> String
- */
-const categoryMatchToString = function () {
-    return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})`
-}
-
-/**
- * Convert to string representation
- * @sig compoundToString :: () -> String
- */
-const compoundToString = function () {
-    return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})`
-}
+// prettier-ignore
+const toString = {
+            textMatch: function () { return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})` },
+            dateRange: function () { return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})` },
+            categoryMatch: function () { return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})` },
+            compound: function () { return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig textMatchToJSON :: () -> Object
- */
-const textMatchToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig dateRangeToJSON :: () -> Object
- */
-const dateRangeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig categoryMatchToJSON :: () -> Object
- */
-const categoryMatchToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig compoundToJSON :: () -> Object
- */
-const compoundToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            textMatch: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            dateRange: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            categoryMatch: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            compound: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -219,32 +169,32 @@ FilterSpec.Compound = CompoundConstructor
 const TextMatchPrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'TextMatch', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: textMatchToString, enumerable: false },
-    toJSON: { value: textMatchToJSON, enumerable: false },
+    toString: { value: toString.textMatch, enumerable: false },
+    toJSON: { value: toJSON.textMatch, enumerable: false },
     constructor: { value: TextMatchConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const DateRangePrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'DateRange', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: dateRangeToString, enumerable: false },
-    toJSON: { value: dateRangeToJSON, enumerable: false },
+    toString: { value: toString.dateRange, enumerable: false },
+    toJSON: { value: toJSON.dateRange, enumerable: false },
     constructor: { value: DateRangeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const CategoryMatchPrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'CategoryMatch', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: categoryMatchToString, enumerable: false },
-    toJSON: { value: categoryMatchToJSON, enumerable: false },
+    toString: { value: toString.categoryMatch, enumerable: false },
+    toJSON: { value: toJSON.categoryMatch, enumerable: false },
     constructor: { value: CategoryMatchConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const CompoundPrototype = Object.create(FilterSpecPrototype, {
     '@@tagName': { value: 'Compound', enumerable: false },
     '@@typeName': { value: 'FilterSpec', enumerable: false },
-    toString: { value: compoundToString, enumerable: false },
-    toJSON: { value: compoundToJSON, enumerable: false },
+    toString: { value: toString.compound, enumerable: false },
+    toJSON: { value: toJSON.compound, enumerable: false },
     constructor: { value: CompoundConstructor, enumerable: false, writable: true, configurable: true },
 })
 

@@ -55,62 +55,24 @@ FieldType.prototype = FieldTypePrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig stringTypeToString :: () -> String
- */
-const stringTypeToString = function () {
-    return `FieldType.StringType(${R._toString(this.value)})`
-}
-
-/**
- * Convert to string representation
- * @sig regexTypeToString :: () -> String
- */
-const regexTypeToString = function () {
-    return `FieldType.RegexType(${R._toString(this.value)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig importPlaceholderToString :: () -> String
- */
-const importPlaceholderToString = function () {
-    return `FieldType.ImportPlaceholder(${R._toString(this.isImportPlaceholder)},
-        ${R._toString(this.source)},
-        ${R._toString(this.localName)})`
-}
+// prettier-ignore
+const toString = {
+            stringType: function () { return `FieldType.StringType(${R._toString(this.value)})` },
+            regexType: function () { return `FieldType.RegexType(${R._toString(this.value)})` },
+            importPlaceholder: function () { return `FieldType.ImportPlaceholder(${R._toString(this.isImportPlaceholder)}, ${R._toString(this.source)}, ${R._toString(this.localName)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig stringTypeToJSON :: () -> Object
- */
-const stringTypeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig regexTypeToJSON :: () -> Object
- */
-const regexTypeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig importPlaceholderToJSON :: () -> Object
- */
-const importPlaceholderToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            stringType: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            regexType: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            importPlaceholder: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -178,24 +140,24 @@ FieldType.ImportPlaceholder = ImportPlaceholderConstructor
 const StringTypePrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'StringType', enumerable: false },
     '@@typeName': { value: 'FieldType', enumerable: false },
-    toString: { value: stringTypeToString, enumerable: false },
-    toJSON: { value: stringTypeToJSON, enumerable: false },
+    toString: { value: toString.stringType, enumerable: false },
+    toJSON: { value: toJSON.stringType, enumerable: false },
     constructor: { value: StringTypeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const RegexTypePrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'RegexType', enumerable: false },
     '@@typeName': { value: 'FieldType', enumerable: false },
-    toString: { value: regexTypeToString, enumerable: false },
-    toJSON: { value: regexTypeToJSON, enumerable: false },
+    toString: { value: toString.regexType, enumerable: false },
+    toJSON: { value: toJSON.regexType, enumerable: false },
     constructor: { value: RegexTypeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ImportPlaceholderPrototype = Object.create(FieldTypePrototype, {
     '@@tagName': { value: 'ImportPlaceholder', enumerable: false },
     '@@typeName': { value: 'FieldType', enumerable: false },
-    toString: { value: importPlaceholderToString, enumerable: false },
-    toJSON: { value: importPlaceholderToJSON, enumerable: false },
+    toString: { value: toString.importPlaceholder, enumerable: false },
+    toJSON: { value: toJSON.importPlaceholder, enumerable: false },
     constructor: { value: ImportPlaceholderConstructor, enumerable: false, writable: true, configurable: true },
 })
 

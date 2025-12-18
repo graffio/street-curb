@@ -52,60 +52,24 @@ ImportSpecifier.prototype = ImportSpecifierPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig defaultToString :: () -> String
- */
-const defaultToString = function () {
-    return `ImportSpecifier.Default(${R._toString(this.local)})`
-}
-
-/**
- * Convert to string representation
- * @sig namespaceToString :: () -> String
- */
-const namespaceToString = function () {
-    return `ImportSpecifier.Namespace(${R._toString(this.local)})`
-}
-
-/**
- * Convert to string representation
- * @sig namedToString :: () -> String
- */
-const namedToString = function () {
-    return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})`
-}
+// prettier-ignore
+const toString = {
+            default: function () { return `ImportSpecifier.Default(${R._toString(this.local)})` },
+            namespace: function () { return `ImportSpecifier.Namespace(${R._toString(this.local)})` },
+            named: function () { return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig defaultToJSON :: () -> Object
- */
-const defaultToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig namespaceToJSON :: () -> Object
- */
-const namespaceToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig namedToJSON :: () -> Object
- */
-const namedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            default: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            namespace: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            named: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -171,24 +135,24 @@ ImportSpecifier.Named = NamedConstructor
 const DefaultPrototype = Object.create(ImportSpecifierPrototype, {
     '@@tagName': { value: 'Default', enumerable: false },
     '@@typeName': { value: 'ImportSpecifier', enumerable: false },
-    toString: { value: defaultToString, enumerable: false },
-    toJSON: { value: defaultToJSON, enumerable: false },
+    toString: { value: toString.default, enumerable: false },
+    toJSON: { value: toJSON.default, enumerable: false },
     constructor: { value: DefaultConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const NamespacePrototype = Object.create(ImportSpecifierPrototype, {
     '@@tagName': { value: 'Namespace', enumerable: false },
     '@@typeName': { value: 'ImportSpecifier', enumerable: false },
-    toString: { value: namespaceToString, enumerable: false },
-    toJSON: { value: namespaceToJSON, enumerable: false },
+    toString: { value: toString.namespace, enumerable: false },
+    toJSON: { value: toJSON.namespace, enumerable: false },
     constructor: { value: NamespaceConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const NamedPrototype = Object.create(ImportSpecifierPrototype, {
     '@@tagName': { value: 'Named', enumerable: false },
     '@@typeName': { value: 'ImportSpecifier', enumerable: false },
-    toString: { value: namedToString, enumerable: false },
-    toJSON: { value: namedToJSON, enumerable: false },
+    toString: { value: toString.named, enumerable: false },
+    toJSON: { value: toJSON.named, enumerable: false },
     constructor: { value: NamedConstructor, enumerable: false, writable: true, configurable: true },
 })
 

@@ -58,66 +58,24 @@ OperationDetails.prototype = OperationDetailsPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig shellExecutionToString :: () -> String
- */
-const shellExecutionToString = function () {
-    return `OperationDetails.ShellExecution(${R._toString(this.command)},
-        ${R._toString(this.duration)},
-        ${R._toString(this.outputPreview)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig firestoreOperationToString :: () -> String
- */
-const firestoreOperationToString = function () {
-    return `OperationDetails.FirestoreOperation(${R._toString(this.operation)},
-        ${R._toString(this.collection)},
-        ${R._toString(this.documentId)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig gcpProjectOperationToString :: () -> String
- */
-const gcpProjectOperationToString = function () {
-    return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)},
-        ${R._toString(this.folderId)},
-        ${R._toString(this.region)})`
-}
+// prettier-ignore
+const toString = {
+            shellExecution: function () { return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})` },
+            firestoreOperation: function () { return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})` },
+            gcpProjectOperation: function () { return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)}, ${R._toString(this.folderId)}, ${R._toString(this.region)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig shellExecutionToJSON :: () -> Object
- */
-const shellExecutionToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig firestoreOperationToJSON :: () -> Object
- */
-const firestoreOperationToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig gcpProjectOperationToJSON :: () -> Object
- */
-const gcpProjectOperationToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            shellExecution: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            firestoreOperation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            gcpProjectOperation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -193,24 +151,24 @@ OperationDetails.GcpProjectOperation = GcpProjectOperationConstructor
 const ShellExecutionPrototype = Object.create(OperationDetailsPrototype, {
     '@@tagName': { value: 'ShellExecution', enumerable: false },
     '@@typeName': { value: 'OperationDetails', enumerable: false },
-    toString: { value: shellExecutionToString, enumerable: false },
-    toJSON: { value: shellExecutionToJSON, enumerable: false },
+    toString: { value: toString.shellExecution, enumerable: false },
+    toJSON: { value: toJSON.shellExecution, enumerable: false },
     constructor: { value: ShellExecutionConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const FirestoreOperationPrototype = Object.create(OperationDetailsPrototype, {
     '@@tagName': { value: 'FirestoreOperation', enumerable: false },
     '@@typeName': { value: 'OperationDetails', enumerable: false },
-    toString: { value: firestoreOperationToString, enumerable: false },
-    toJSON: { value: firestoreOperationToJSON, enumerable: false },
+    toString: { value: toString.firestoreOperation, enumerable: false },
+    toJSON: { value: toJSON.firestoreOperation, enumerable: false },
     constructor: { value: FirestoreOperationConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const GcpProjectOperationPrototype = Object.create(OperationDetailsPrototype, {
     '@@tagName': { value: 'GcpProjectOperation', enumerable: false },
     '@@typeName': { value: 'OperationDetails', enumerable: false },
-    toString: { value: gcpProjectOperationToString, enumerable: false },
-    toJSON: { value: gcpProjectOperationToJSON, enumerable: false },
+    toString: { value: toString.gcpProjectOperation, enumerable: false },
+    toJSON: { value: toJSON.gcpProjectOperation, enumerable: false },
     constructor: { value: GcpProjectOperationConstructor, enumerable: false, writable: true, configurable: true },
 })
 

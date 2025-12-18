@@ -127,350 +127,60 @@ Action.prototype = ActionPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig organizationCreatedToString :: () -> String
- */
-const organizationCreatedToString = function () {
-    return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})`
-}
-
-/**
- * Convert to string representation
- * @sig organizationUpdatedToString :: () -> String
- */
-const organizationUpdatedToString = function () {
-    return `Action.OrganizationUpdated(${R._toString(this.name)})`
-}
-
-/**
- * Convert to string representation
- * @sig organizationDeletedToString :: () -> String
- */
-const organizationDeletedToString = function () {
-    return `Action.OrganizationDeleted()`
-}
-
-/**
- * Convert to string representation
- * @sig memberAddedToString :: () -> String
- */
-const memberAddedToString = function () {
-    return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})`
-}
-
-/**
- * Convert to string representation
- * @sig roleChangedToString :: () -> String
- */
-const roleChangedToString = function () {
-    return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})`
-}
-
-/**
- * Convert to string representation
- * @sig memberRemovedToString :: () -> String
- */
-const memberRemovedToString = function () {
-    return `Action.MemberRemoved(${R._toString(this.userId)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig userCreatedToString :: () -> String
- */
-const userCreatedToString = function () {
-    return `Action.UserCreated(${R._toString(this.userId)},
-        ${R._toString(this.displayName)},
-        ${R._toString(this.email)})`
-}
-
-/**
- * Convert to string representation
- * @sig userUpdatedToString :: () -> String
- */
-const userUpdatedToString = function () {
-    return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})`
-}
-
-/**
- * Convert to string representation
- * @sig userForgottenToString :: () -> String
- */
-const userForgottenToString = function () {
-    return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})`
-}
-
-/**
- * Convert to string representation
- * @sig authenticationCompletedToString :: () -> String
- */
-const authenticationCompletedToString = function () {
-    return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})`
-}
-
-/**
- * Convert to string representation
- * @sig userLoadedToString :: () -> String
- */
-const userLoadedToString = function () {
-    return `Action.UserLoaded(${R._toString(this.user)})`
-}
-
-/**
- * Convert to string representation
- * @sig organizationSyncedToString :: () -> String
- */
-const organizationSyncedToString = function () {
-    return `Action.OrganizationSynced(${R._toString(this.organization)})`
-}
-
-/**
- * Convert to string representation
- * @sig blockfacesSyncedToString :: () -> String
- */
-const blockfacesSyncedToString = function () {
-    return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})`
-}
-
-/**
- * Convert to string representation
- * @sig blockfaceCreatedToString :: () -> String
- */
-const blockfaceCreatedToString = function () {
-    return `Action.BlockfaceCreated(${R._toString(this.blockface)})`
-}
-
-/**
- * Convert to string representation
- * @sig blockfaceSelectedToString :: () -> String
- */
-const blockfaceSelectedToString = function () {
-    return `Action.BlockfaceSelected(${R._toString(this.blockface)})`
-}
-
-/**
- * Convert to string representation
- * @sig blockfaceSavedToString :: () -> String
- */
-const blockfaceSavedToString = function () {
-    return `Action.BlockfaceSaved(${R._toString(this.blockface)})`
-}
-
-/**
- * Convert to string representation
- * @sig segmentUseUpdatedToString :: () -> String
- */
-const segmentUseUpdatedToString = function () {
-    return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})`
-}
-
-/**
- * Convert to string representation
- * @sig segmentLengthUpdatedToString :: () -> String
- */
-const segmentLengthUpdatedToString = function () {
-    return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})`
-}
-
-/**
- * Convert to string representation
- * @sig segmentAddedLeftToString :: () -> String
- */
-const segmentAddedLeftToString = function () {
-    return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})`
-}
-
-/**
- * Convert to string representation
- * @sig segmentAddedToString :: () -> String
- */
-const segmentAddedToString = function () {
-    return `Action.SegmentAdded(${R._toString(this.targetIndex)})`
-}
-
-/**
- * Convert to string representation
- * @sig segmentsReplacedToString :: () -> String
- */
-const segmentsReplacedToString = function () {
-    return `Action.SegmentsReplaced(${R._toString(this.segments)})`
-}
+// prettier-ignore
+const toString = {
+            organizationCreated: function () { return `Action.OrganizationCreated(${R._toString(this.name)}, ${R._toString(this.projectId)})` },
+            organizationUpdated: function () { return `Action.OrganizationUpdated(${R._toString(this.name)})` },
+            organizationDeleted: function () { return `Action.OrganizationDeleted()` },
+            memberAdded: function () { return `Action.MemberAdded(${R._toString(this.userId)}, ${R._toString(this.role)}, ${R._toString(this.displayName)})` },
+            roleChanged: function () { return `Action.RoleChanged(${R._toString(this.userId)}, ${R._toString(this.role)})` },
+            memberRemoved: function () { return `Action.MemberRemoved(${R._toString(this.userId)})` },
+            userCreated: function () { return `Action.UserCreated(${R._toString(this.userId)}, ${R._toString(this.displayName)}, ${R._toString(this.email)})` },
+            userUpdated: function () { return `Action.UserUpdated(${R._toString(this.userId)}, ${R._toString(this.displayName)})` },
+            userForgotten: function () { return `Action.UserForgotten(${R._toString(this.userId)}, ${R._toString(this.reason)})` },
+            authenticationCompleted: function () { return `Action.AuthenticationCompleted(${R._toString(this.email)}, ${R._toString(this.displayName)})` },
+            userLoaded: function () { return `Action.UserLoaded(${R._toString(this.user)})` },
+            organizationSynced: function () { return `Action.OrganizationSynced(${R._toString(this.organization)})` },
+            blockfacesSynced: function () { return `Action.BlockfacesSynced(${R._toString(this.blockfaces)})` },
+            blockfaceCreated: function () { return `Action.BlockfaceCreated(${R._toString(this.blockface)})` },
+            blockfaceSelected: function () { return `Action.BlockfaceSelected(${R._toString(this.blockface)})` },
+            blockfaceSaved: function () { return `Action.BlockfaceSaved(${R._toString(this.blockface)})` },
+            segmentUseUpdated: function () { return `Action.SegmentUseUpdated(${R._toString(this.index)}, ${R._toString(this.use)})` },
+            segmentLengthUpdated: function () { return `Action.SegmentLengthUpdated(${R._toString(this.index)}, ${R._toString(this.newLength)})` },
+            segmentAddedLeft: function () { return `Action.SegmentAddedLeft(${R._toString(this.index)}, ${R._toString(this.desiredLength)})` },
+            segmentAdded: function () { return `Action.SegmentAdded(${R._toString(this.targetIndex)})` },
+            segmentsReplaced: function () { return `Action.SegmentsReplaced(${R._toString(this.segments)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationCreatedToJSON :: () -> Object
- */
-const organizationCreatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationUpdatedToJSON :: () -> Object
- */
-const organizationUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationDeletedToJSON :: () -> Object
- */
-const organizationDeletedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig memberAddedToJSON :: () -> Object
- */
-const memberAddedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig roleChangedToJSON :: () -> Object
- */
-const roleChangedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig memberRemovedToJSON :: () -> Object
- */
-const memberRemovedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userCreatedToJSON :: () -> Object
- */
-const userCreatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userUpdatedToJSON :: () -> Object
- */
-const userUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userForgottenToJSON :: () -> Object
- */
-const userForgottenToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig authenticationCompletedToJSON :: () -> Object
- */
-const authenticationCompletedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig userLoadedToJSON :: () -> Object
- */
-const userLoadedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig organizationSyncedToJSON :: () -> Object
- */
-const organizationSyncedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfacesSyncedToJSON :: () -> Object
- */
-const blockfacesSyncedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfaceCreatedToJSON :: () -> Object
- */
-const blockfaceCreatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfaceSelectedToJSON :: () -> Object
- */
-const blockfaceSelectedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig blockfaceSavedToJSON :: () -> Object
- */
-const blockfaceSavedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentUseUpdatedToJSON :: () -> Object
- */
-const segmentUseUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentLengthUpdatedToJSON :: () -> Object
- */
-const segmentLengthUpdatedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentAddedLeftToJSON :: () -> Object
- */
-const segmentAddedLeftToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentAddedToJSON :: () -> Object
- */
-const segmentAddedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig segmentsReplacedToJSON :: () -> Object
- */
-const segmentsReplacedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            organizationCreated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            organizationUpdated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            organizationDeleted: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            memberAdded: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            roleChanged: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            memberRemoved: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            userCreated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            userUpdated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            userForgotten: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            authenticationCompleted: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            userLoaded: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            organizationSynced: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            blockfacesSynced: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            blockfaceCreated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            blockfaceSelected: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            blockfaceSaved: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            segmentUseUpdated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            segmentLengthUpdated: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            segmentAddedLeft: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            segmentAdded: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            segmentsReplaced: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -845,168 +555,168 @@ Action.SegmentsReplaced = SegmentsReplacedConstructor
 const OrganizationCreatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationCreated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationCreatedToString, enumerable: false },
-    toJSON: { value: organizationCreatedToJSON, enumerable: false },
+    toString: { value: toString.organizationCreated, enumerable: false },
+    toJSON: { value: toJSON.organizationCreated, enumerable: false },
     constructor: { value: OrganizationCreatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const OrganizationUpdatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationUpdated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationUpdatedToString, enumerable: false },
-    toJSON: { value: organizationUpdatedToJSON, enumerable: false },
+    toString: { value: toString.organizationUpdated, enumerable: false },
+    toJSON: { value: toJSON.organizationUpdated, enumerable: false },
     constructor: { value: OrganizationUpdatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const OrganizationDeletedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationDeleted', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationDeletedToString, enumerable: false },
-    toJSON: { value: organizationDeletedToJSON, enumerable: false },
+    toString: { value: toString.organizationDeleted, enumerable: false },
+    toJSON: { value: toJSON.organizationDeleted, enumerable: false },
     constructor: { value: OrganizationDeletedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const MemberAddedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'MemberAdded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: memberAddedToString, enumerable: false },
-    toJSON: { value: memberAddedToJSON, enumerable: false },
+    toString: { value: toString.memberAdded, enumerable: false },
+    toJSON: { value: toJSON.memberAdded, enumerable: false },
     constructor: { value: MemberAddedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const RoleChangedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'RoleChanged', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: roleChangedToString, enumerable: false },
-    toJSON: { value: roleChangedToJSON, enumerable: false },
+    toString: { value: toString.roleChanged, enumerable: false },
+    toJSON: { value: toJSON.roleChanged, enumerable: false },
     constructor: { value: RoleChangedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const MemberRemovedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'MemberRemoved', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: memberRemovedToString, enumerable: false },
-    toJSON: { value: memberRemovedToJSON, enumerable: false },
+    toString: { value: toString.memberRemoved, enumerable: false },
+    toJSON: { value: toJSON.memberRemoved, enumerable: false },
     constructor: { value: MemberRemovedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const UserCreatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserCreated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userCreatedToString, enumerable: false },
-    toJSON: { value: userCreatedToJSON, enumerable: false },
+    toString: { value: toString.userCreated, enumerable: false },
+    toJSON: { value: toJSON.userCreated, enumerable: false },
     constructor: { value: UserCreatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const UserUpdatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserUpdated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userUpdatedToString, enumerable: false },
-    toJSON: { value: userUpdatedToJSON, enumerable: false },
+    toString: { value: toString.userUpdated, enumerable: false },
+    toJSON: { value: toJSON.userUpdated, enumerable: false },
     constructor: { value: UserUpdatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const UserForgottenPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserForgotten', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userForgottenToString, enumerable: false },
-    toJSON: { value: userForgottenToJSON, enumerable: false },
+    toString: { value: toString.userForgotten, enumerable: false },
+    toJSON: { value: toJSON.userForgotten, enumerable: false },
     constructor: { value: UserForgottenConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const AuthenticationCompletedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'AuthenticationCompleted', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: authenticationCompletedToString, enumerable: false },
-    toJSON: { value: authenticationCompletedToJSON, enumerable: false },
+    toString: { value: toString.authenticationCompleted, enumerable: false },
+    toJSON: { value: toJSON.authenticationCompleted, enumerable: false },
     constructor: { value: AuthenticationCompletedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const UserLoadedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'UserLoaded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: userLoadedToString, enumerable: false },
-    toJSON: { value: userLoadedToJSON, enumerable: false },
+    toString: { value: toString.userLoaded, enumerable: false },
+    toJSON: { value: toJSON.userLoaded, enumerable: false },
     constructor: { value: UserLoadedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const OrganizationSyncedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OrganizationSynced', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: organizationSyncedToString, enumerable: false },
-    toJSON: { value: organizationSyncedToJSON, enumerable: false },
+    toString: { value: toString.organizationSynced, enumerable: false },
+    toJSON: { value: toJSON.organizationSynced, enumerable: false },
     constructor: { value: OrganizationSyncedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const BlockfacesSyncedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'BlockfacesSynced', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfacesSyncedToString, enumerable: false },
-    toJSON: { value: blockfacesSyncedToJSON, enumerable: false },
+    toString: { value: toString.blockfacesSynced, enumerable: false },
+    toJSON: { value: toJSON.blockfacesSynced, enumerable: false },
     constructor: { value: BlockfacesSyncedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const BlockfaceCreatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'BlockfaceCreated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfaceCreatedToString, enumerable: false },
-    toJSON: { value: blockfaceCreatedToJSON, enumerable: false },
+    toString: { value: toString.blockfaceCreated, enumerable: false },
+    toJSON: { value: toJSON.blockfaceCreated, enumerable: false },
     constructor: { value: BlockfaceCreatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const BlockfaceSelectedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'BlockfaceSelected', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfaceSelectedToString, enumerable: false },
-    toJSON: { value: blockfaceSelectedToJSON, enumerable: false },
+    toString: { value: toString.blockfaceSelected, enumerable: false },
+    toJSON: { value: toJSON.blockfaceSelected, enumerable: false },
     constructor: { value: BlockfaceSelectedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const BlockfaceSavedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'BlockfaceSaved', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: blockfaceSavedToString, enumerable: false },
-    toJSON: { value: blockfaceSavedToJSON, enumerable: false },
+    toString: { value: toString.blockfaceSaved, enumerable: false },
+    toJSON: { value: toJSON.blockfaceSaved, enumerable: false },
     constructor: { value: BlockfaceSavedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SegmentUseUpdatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SegmentUseUpdated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentUseUpdatedToString, enumerable: false },
-    toJSON: { value: segmentUseUpdatedToJSON, enumerable: false },
+    toString: { value: toString.segmentUseUpdated, enumerable: false },
+    toJSON: { value: toJSON.segmentUseUpdated, enumerable: false },
     constructor: { value: SegmentUseUpdatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SegmentLengthUpdatedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SegmentLengthUpdated', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentLengthUpdatedToString, enumerable: false },
-    toJSON: { value: segmentLengthUpdatedToJSON, enumerable: false },
+    toString: { value: toString.segmentLengthUpdated, enumerable: false },
+    toJSON: { value: toJSON.segmentLengthUpdated, enumerable: false },
     constructor: { value: SegmentLengthUpdatedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SegmentAddedLeftPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SegmentAddedLeft', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentAddedLeftToString, enumerable: false },
-    toJSON: { value: segmentAddedLeftToJSON, enumerable: false },
+    toString: { value: toString.segmentAddedLeft, enumerable: false },
+    toJSON: { value: toJSON.segmentAddedLeft, enumerable: false },
     constructor: { value: SegmentAddedLeftConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SegmentAddedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SegmentAdded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentAddedToString, enumerable: false },
-    toJSON: { value: segmentAddedToJSON, enumerable: false },
+    toString: { value: toString.segmentAdded, enumerable: false },
+    toJSON: { value: toJSON.segmentAdded, enumerable: false },
     constructor: { value: SegmentAddedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SegmentsReplacedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SegmentsReplaced', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: segmentsReplacedToString, enumerable: false },
-    toJSON: { value: segmentsReplacedToJSON, enumerable: false },
+    toString: { value: toString.segmentsReplaced, enumerable: false },
+    toJSON: { value: toJSON.segmentsReplaced, enumerable: false },
     constructor: { value: SegmentsReplacedConstructor, enumerable: false, writable: true, configurable: true },
 })
 

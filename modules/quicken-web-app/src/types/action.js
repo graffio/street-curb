@@ -103,212 +103,42 @@ Action.prototype = ActionPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig loadFileToString :: () -> String
- */
-const loadFileToString = function () {
-    return `Action.LoadFile(${R._toString(this.accounts)},
-        ${R._toString(this.categories)},
-        ${R._toString(this.securities)},
-        ${R._toString(this.tags)},
-        ${R._toString(this.splits)},
-        ${R._toString(this.transactions)})`
-}
-
-/**
- * Convert to string representation
- * @sig setTransactionFilterToString :: () -> String
- */
-const setTransactionFilterToString = function () {
-    return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})`
-}
-
-/**
- * Convert to string representation
- * @sig resetTransactionFiltersToString :: () -> String
- */
-const resetTransactionFiltersToString = function () {
-    return `Action.ResetTransactionFilters(${R._toString(this.viewId)})`
-}
-
-/**
- * Convert to string representation
- * @sig setTableLayoutToString :: () -> String
- */
-const setTableLayoutToString = function () {
-    return `Action.SetTableLayout(${R._toString(this.tableLayout)})`
-}
-
-/**
- * Convert to string representation
- * @sig openViewToString :: () -> String
- */
-const openViewToString = function () {
-    return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})`
-}
-
-/**
- * Convert to string representation
- * @sig closeViewToString :: () -> String
- */
-const closeViewToString = function () {
-    return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig moveViewToString :: () -> String
- */
-const moveViewToString = function () {
-    return `Action.MoveView(${R._toString(this.viewId)},
-        ${R._toString(this.fromGroupId)},
-        ${R._toString(this.toGroupId)},
-        ${R._toString(this.toIndex)})`
-}
-
-/**
- * Convert to string representation
- * @sig createTabGroupToString :: () -> String
- */
-const createTabGroupToString = function () {
-    return `Action.CreateTabGroup()`
-}
-
-/**
- * Convert to string representation
- * @sig closeTabGroupToString :: () -> String
- */
-const closeTabGroupToString = function () {
-    return `Action.CloseTabGroup(${R._toString(this.groupId)})`
-}
-
-/**
- * Convert to string representation
- * @sig setActiveViewToString :: () -> String
- */
-const setActiveViewToString = function () {
-    return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})`
-}
-
-/**
- * Convert to string representation
- * @sig setActiveTabGroupToString :: () -> String
- */
-const setActiveTabGroupToString = function () {
-    return `Action.SetActiveTabGroup(${R._toString(this.groupId)})`
-}
-
-/**
- * Convert to string representation
- * @sig setTabGroupWidthToString :: () -> String
- */
-const setTabGroupWidthToString = function () {
-    return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})`
-}
+// prettier-ignore
+const toString = {
+            loadFile: function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
+            setTransactionFilter: function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
+            resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
+            setTableLayout: function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
+            openView: function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
+            closeView: function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
+            moveView: function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
+            createTabGroup: function () { return `Action.CreateTabGroup()` },
+            closeTabGroup: function () { return `Action.CloseTabGroup(${R._toString(this.groupId)})` },
+            setActiveView: function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
+            setActiveTabGroup: function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
+            setTabGroupWidth: function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig loadFileToJSON :: () -> Object
- */
-const loadFileToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setTransactionFilterToJSON :: () -> Object
- */
-const setTransactionFilterToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig resetTransactionFiltersToJSON :: () -> Object
- */
-const resetTransactionFiltersToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setTableLayoutToJSON :: () -> Object
- */
-const setTableLayoutToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig openViewToJSON :: () -> Object
- */
-const openViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig closeViewToJSON :: () -> Object
- */
-const closeViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig moveViewToJSON :: () -> Object
- */
-const moveViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig createTabGroupToJSON :: () -> Object
- */
-const createTabGroupToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig closeTabGroupToJSON :: () -> Object
- */
-const closeTabGroupToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setActiveViewToJSON :: () -> Object
- */
-const setActiveViewToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setActiveTabGroupToJSON :: () -> Object
- */
-const setActiveTabGroupToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig setTabGroupWidthToJSON :: () -> Object
- */
-const setTabGroupWidthToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            loadFile: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            setTransactionFilter: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            setTableLayout: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            openView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            closeView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            moveView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            createTabGroup: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            closeTabGroup: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            setActiveView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            setActiveTabGroup: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            setTabGroupWidth: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -541,96 +371,96 @@ Action.SetTabGroupWidth = SetTabGroupWidthConstructor
 const LoadFilePrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'LoadFile', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: loadFileToString, enumerable: false },
-    toJSON: { value: loadFileToJSON, enumerable: false },
+    toString: { value: toString.loadFile, enumerable: false },
+    toJSON: { value: toJSON.loadFile, enumerable: false },
     constructor: { value: LoadFileConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetTransactionFilter', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setTransactionFilterToString, enumerable: false },
-    toJSON: { value: setTransactionFilterToJSON, enumerable: false },
+    toString: { value: toString.setTransactionFilter, enumerable: false },
+    toJSON: { value: toJSON.setTransactionFilter, enumerable: false },
     constructor: { value: SetTransactionFilterConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'ResetTransactionFilters', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: resetTransactionFiltersToString, enumerable: false },
-    toJSON: { value: resetTransactionFiltersToJSON, enumerable: false },
+    toString: { value: toString.resetTransactionFilters, enumerable: false },
+    toJSON: { value: toJSON.resetTransactionFilters, enumerable: false },
     constructor: { value: ResetTransactionFiltersConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetTableLayoutPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetTableLayout', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setTableLayoutToString, enumerable: false },
-    toJSON: { value: setTableLayoutToJSON, enumerable: false },
+    toString: { value: toString.setTableLayout, enumerable: false },
+    toJSON: { value: toJSON.setTableLayout, enumerable: false },
     constructor: { value: SetTableLayoutConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const OpenViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OpenView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: openViewToString, enumerable: false },
-    toJSON: { value: openViewToJSON, enumerable: false },
+    toString: { value: toString.openView, enumerable: false },
+    toJSON: { value: toJSON.openView, enumerable: false },
     constructor: { value: OpenViewConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const CloseViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'CloseView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: closeViewToString, enumerable: false },
-    toJSON: { value: closeViewToJSON, enumerable: false },
+    toString: { value: toString.closeView, enumerable: false },
+    toJSON: { value: toJSON.closeView, enumerable: false },
     constructor: { value: CloseViewConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const MoveViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'MoveView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: moveViewToString, enumerable: false },
-    toJSON: { value: moveViewToJSON, enumerable: false },
+    toString: { value: toString.moveView, enumerable: false },
+    toJSON: { value: toJSON.moveView, enumerable: false },
     constructor: { value: MoveViewConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const CreateTabGroupPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'CreateTabGroup', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: createTabGroupToString, enumerable: false },
-    toJSON: { value: createTabGroupToJSON, enumerable: false },
+    toString: { value: toString.createTabGroup, enumerable: false },
+    toJSON: { value: toJSON.createTabGroup, enumerable: false },
     constructor: { value: CreateTabGroupConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const CloseTabGroupPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'CloseTabGroup', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: closeTabGroupToString, enumerable: false },
-    toJSON: { value: closeTabGroupToJSON, enumerable: false },
+    toString: { value: toString.closeTabGroup, enumerable: false },
+    toJSON: { value: toJSON.closeTabGroup, enumerable: false },
     constructor: { value: CloseTabGroupConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetActiveViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetActiveView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setActiveViewToString, enumerable: false },
-    toJSON: { value: setActiveViewToJSON, enumerable: false },
+    toString: { value: toString.setActiveView, enumerable: false },
+    toJSON: { value: toJSON.setActiveView, enumerable: false },
     constructor: { value: SetActiveViewConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetActiveTabGroupPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetActiveTabGroup', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setActiveTabGroupToString, enumerable: false },
-    toJSON: { value: setActiveTabGroupToJSON, enumerable: false },
+    toString: { value: toString.setActiveTabGroup, enumerable: false },
+    toJSON: { value: toJSON.setActiveTabGroup, enumerable: false },
     constructor: { value: SetActiveTabGroupConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetTabGroupWidth', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: setTabGroupWidthToString, enumerable: false },
-    toJSON: { value: setTabGroupWidthToJSON, enumerable: false },
+    toString: { value: toString.setTabGroupWidth, enumerable: false },
+    toJSON: { value: toJSON.setTabGroupWidth, enumerable: false },
     constructor: { value: SetTabGroupWidthConstructor, enumerable: false, writable: true, configurable: true },
 })
 

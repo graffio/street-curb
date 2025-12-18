@@ -2,6 +2,24 @@
 // ABOUTME: Generates named toString functions for Tagged and TaggedSum types
 
 /*
+ * Generate toString object containing all variant toString methods
+ * @sig generateToStringObject :: ([(String, String, FieldMap)]) -> String
+ */
+const generateToStringObject = variants => {
+    const toStringEntry = (variantKey, typeName, fields) => {
+        const fieldKeys = Object.keys(fields)
+        const fieldStrings = fieldKeys.map(f => `\${R._toString(this.${f})}`)
+        return `${variantKey}: function () { return \`${typeName}(${fieldStrings.join(', ')})\` }`
+    }
+
+    const entries = variants.map(([key, typeName, fields]) => toStringEntry(key, typeName, fields))
+    return `// prettier-ignore
+        const toString = {
+            ${entries.join(',\n            ')},
+        }`
+}
+
+/*
  * Generate named toString function for a type
  * @sig generateNamedToString :: (String, String, FieldMap) -> String
  */
@@ -28,7 +46,7 @@ const generateNamedToString = (funcName, typeName, fields) => {
         const indentedFields = fieldStrings.join(',\n        ')
         return `
 
-            /** JMG
+            /*
              * Convert to string representation
              * @sig ${funcName} :: () -> String
              */
@@ -48,4 +66,4 @@ const generateNamedToString = (funcName, typeName, fields) => {
     return estimatedLength > 120 ? multipleLineReturnStatement() : singleLineReturnStatement()
 }
 
-export { generateNamedToString }
+export { generateNamedToString, generateToStringObject }

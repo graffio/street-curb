@@ -57,60 +57,24 @@ View.prototype = ViewPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig registerToString :: () -> String
- */
-const registerToString = function () {
-    return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
-}
-
-/**
- * Convert to string representation
- * @sig reportToString :: () -> String
- */
-const reportToString = function () {
-    return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})`
-}
-
-/**
- * Convert to string representation
- * @sig reconciliationToString :: () -> String
- */
-const reconciliationToString = function () {
-    return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})`
-}
+// prettier-ignore
+const toString = {
+            register: function () { return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
+            report: function () { return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})` },
+            reconciliation: function () { return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig registerToJSON :: () -> Object
- */
-const registerToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig reportToJSON :: () -> Object
- */
-const reportToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig reconciliationToJSON :: () -> Object
- */
-const reconciliationToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            register: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            report: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            reconciliation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -186,24 +150,24 @@ View.Reconciliation = ReconciliationConstructor
 const RegisterPrototype = Object.create(ViewPrototype, {
     '@@tagName': { value: 'Register', enumerable: false },
     '@@typeName': { value: 'View', enumerable: false },
-    toString: { value: registerToString, enumerable: false },
-    toJSON: { value: registerToJSON, enumerable: false },
+    toString: { value: toString.register, enumerable: false },
+    toJSON: { value: toJSON.register, enumerable: false },
     constructor: { value: RegisterConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ReportPrototype = Object.create(ViewPrototype, {
     '@@tagName': { value: 'Report', enumerable: false },
     '@@typeName': { value: 'View', enumerable: false },
-    toString: { value: reportToString, enumerable: false },
-    toJSON: { value: reportToJSON, enumerable: false },
+    toString: { value: toString.report, enumerable: false },
+    toJSON: { value: toJSON.report, enumerable: false },
     constructor: { value: ReportConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ReconciliationPrototype = Object.create(ViewPrototype, {
     '@@tagName': { value: 'Reconciliation', enumerable: false },
     '@@typeName': { value: 'View', enumerable: false },
-    toString: { value: reconciliationToString, enumerable: false },
-    toJSON: { value: reconciliationToJSON, enumerable: false },
+    toString: { value: toString.reconciliation, enumerable: false },
+    toJSON: { value: toJSON.reconciliation, enumerable: false },
     constructor: { value: ReconciliationConstructor, enumerable: false, writable: true, configurable: true },
 })
 

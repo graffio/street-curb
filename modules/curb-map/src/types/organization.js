@@ -79,7 +79,7 @@ const Organization = function Organization(
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig organizationToString :: () -> String
  */

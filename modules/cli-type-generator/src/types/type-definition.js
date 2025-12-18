@@ -51,46 +51,22 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/**
- * Convert to string representation
- * @sig taggedToString :: () -> String
- */
-const taggedToString = function () {
-    return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig taggedSumToString :: () -> String
- */
-const taggedSumToString = function () {
-    return `TypeDefinition.TaggedSum(${R._toString(this.name)},
-        ${R._toString(this.kind)},
-        ${R._toString(this.variants)})`
-}
+// prettier-ignore
+const toString = {
+            tagged: function () { return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})` },
+            taggedSum: function () { return `TypeDefinition.TaggedSum(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.variants)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig taggedToJSON :: () -> Object
- */
-const taggedToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig taggedSumToJSON :: () -> Object
- */
-const taggedSumToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            tagged: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            taggedSum: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -146,16 +122,16 @@ TypeDefinition.TaggedSum = TaggedSumConstructor
 const TaggedPrototype = Object.create(TypeDefinitionPrototype, {
     '@@tagName': { value: 'Tagged', enumerable: false },
     '@@typeName': { value: 'TypeDefinition', enumerable: false },
-    toString: { value: taggedToString, enumerable: false },
-    toJSON: { value: taggedToJSON, enumerable: false },
+    toString: { value: toString.tagged, enumerable: false },
+    toJSON: { value: toJSON.tagged, enumerable: false },
     constructor: { value: TaggedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const TaggedSumPrototype = Object.create(TypeDefinitionPrototype, {
     '@@tagName': { value: 'TaggedSum', enumerable: false },
     '@@typeName': { value: 'TypeDefinition', enumerable: false },
-    toString: { value: taggedSumToString, enumerable: false },
-    toJSON: { value: taggedSumToJSON, enumerable: false },
+    toString: { value: toString.taggedSum, enumerable: false },
+    toJSON: { value: toJSON.taggedSum, enumerable: false },
     constructor: { value: TaggedSumConstructor, enumerable: false, writable: true, configurable: true },
 })
 

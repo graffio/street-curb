@@ -56,7 +56,7 @@ const Member = function Member(userId, displayName, role, addedAt, addedBy, remo
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig memberToString :: () -> String
  */

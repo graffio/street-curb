@@ -49,7 +49,7 @@ const Security = function Security(id, name, symbol, type, goal) {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig securityToString :: () -> String
  */

@@ -71,68 +71,22 @@ Transaction.prototype = TransactionPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig bankToString :: () -> String
- */
-const bankToString = function () {
-    return `Transaction.Bank(${R._toString(this.accountId)},
-        ${R._toString(this.amount)},
-        ${R._toString(this.date)},
-        ${R._toString(this.id)},
-        ${R._toString(this.transactionType)},
-        ${R._toString(this.address)},
-        ${R._toString(this.categoryId)},
-        ${R._toString(this.cleared)},
-        ${R._toString(this.memo)},
-        ${R._toString(this.number)},
-        ${R._toString(this.payee)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig investmentToString :: () -> String
- */
-const investmentToString = function () {
-    return `Transaction.Investment(${R._toString(this.accountId)},
-        ${R._toString(this.date)},
-        ${R._toString(this.id)},
-        ${R._toString(this.transactionType)},
-        ${R._toString(this.address)},
-        ${R._toString(this.amount)},
-        ${R._toString(this.categoryId)},
-        ${R._toString(this.cleared)},
-        ${R._toString(this.commission)},
-        ${R._toString(this.investmentAction)},
-        ${R._toString(this.memo)},
-        ${R._toString(this.payee)},
-        ${R._toString(this.price)},
-        ${R._toString(this.quantity)},
-        ${R._toString(this.securityId)})`
-}
+// prettier-ignore
+const toString = {
+            bank: function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)})` },
+            investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.securityId)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig bankToJSON :: () -> Object
- */
-const bankToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig investmentToJSON :: () -> Object
- */
-const investmentToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            bank: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            investment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -271,16 +225,16 @@ Transaction.Investment = InvestmentConstructor
 const BankPrototype = Object.create(TransactionPrototype, {
     '@@tagName': { value: 'Bank', enumerable: false },
     '@@typeName': { value: 'Transaction', enumerable: false },
-    toString: { value: bankToString, enumerable: false },
-    toJSON: { value: bankToJSON, enumerable: false },
+    toString: { value: toString.bank, enumerable: false },
+    toJSON: { value: toJSON.bank, enumerable: false },
     constructor: { value: BankConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const InvestmentPrototype = Object.create(TransactionPrototype, {
     '@@tagName': { value: 'Investment', enumerable: false },
     '@@typeName': { value: 'Transaction', enumerable: false },
-    toString: { value: investmentToString, enumerable: false },
-    toJSON: { value: investmentToJSON, enumerable: false },
+    toString: { value: toString.investment, enumerable: false },
+    toJSON: { value: toJSON.investment, enumerable: false },
     constructor: { value: InvestmentConstructor, enumerable: false, writable: true, configurable: true },
 })
 

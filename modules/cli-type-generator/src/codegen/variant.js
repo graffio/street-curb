@@ -13,8 +13,8 @@ const generateVariantPrototype = (typeName, variantName) => {
     return `const ${variantName}Prototype = Object.create(${typeName}Prototype, {
             '@@tagName': { value: '${variantName}', enumerable: false },
             '@@typeName': { value: '${typeName}', enumerable: false },
-            toString: { value: ${lowerVariant}ToString, enumerable: false },
-            toJSON: { value: ${lowerVariant}ToJSON, enumerable: false },
+            toString: { value: toString.${lowerVariant}, enumerable: false },
+            toJSON: { value: toJSON.${lowerVariant}, enumerable: false },
             constructor: { value: ${variantName}Constructor, enumerable: false, writable: true, configurable: true }
         })`
 }

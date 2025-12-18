@@ -10,8 +10,8 @@ import {
 } from './codegen/firestore-serialization.js'
 import { generateImportsSection } from './codegen/imports.js'
 import { generateIsMethod } from './codegen/is-method.js'
-import { generateNamedToJSON, generateNamedVariantToJSON } from './codegen/to-json.js'
-import { generateNamedToString } from './codegen/to-string.js'
+import { generateNamedToJSON, generateToJSONObject } from './codegen/to-json.js'
+import { generateNamedToString, generateToStringObject } from './codegen/to-string.js'
 import {
     generateVariantConstructorDef,
     generateVariantPrototype,
@@ -188,11 +188,11 @@ const generateStaticTaggedSumType = async typeDefinition => {
     variantNames.forEach(vn => validateNoDateArrays(`${name}.${vn}`, variants[vn]))
 
     // Generate each concern across all variants
-    const toStrings = variantNames
-        .map(vn => generateNamedToString(lowerFirst(vn) + 'ToString', `${name}.${vn}`, variants[vn]))
-        .join('\n\n')
+    const toStringVariants = variantNames.map(vn => [lowerFirst(vn), `${name}.${vn}`, variants[vn]])
+    const toStrings = generateToStringObject(toStringVariants)
 
-    const toJSONs = variantNames.map(vn => generateNamedVariantToJSON(lowerFirst(vn) + 'ToJSON')).join('\n\n')
+    const toJSONKeys = variantNames.map(lowerFirst)
+    const toJSONs = generateToJSONObject(toJSONKeys)
 
     const constructorDefs = variantNames.map(variantConstructorWithSig).join('\n\n')
 

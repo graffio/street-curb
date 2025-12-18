@@ -119,194 +119,36 @@ Entry.prototype = EntryPrototype
 // Variant toString methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/** JMG
- * Convert to string representation
- * @sig accountToString :: () -> String
- */
-const accountToString = function () {
-    return `Entry.Account(${R._toString(this.name)},
-        ${R._toString(this.type)},
-        ${R._toString(this.description)},
-        ${R._toString(this.creditLimit)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig categoryToString :: () -> String
- */
-const categoryToString = function () {
-    return `Entry.Category(${R._toString(this.name)},
-        ${R._toString(this.budgetAmount)},
-        ${R._toString(this.description)},
-        ${R._toString(this.excluded)},
-        ${R._toString(this.isIncomeCategory)},
-        ${R._toString(this.isTaxRelated)},
-        ${R._toString(this.taxSchedule)})`
-}
-
-/**
- * Convert to string representation
- * @sig classToString :: () -> String
- */
-const classToString = function () {
-    return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig payeeToString :: () -> String
- */
-const payeeToString = function () {
-    return `Entry.Payee(${R._toString(this.name)},
-        ${R._toString(this.address)},
-        ${R._toString(this.memo)},
-        ${R._toString(this.defaultCategory)})`
-}
-
-/**
- * Convert to string representation
- * @sig priceToString :: () -> String
- */
-const priceToString = function () {
-    return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig securityToString :: () -> String
- */
-const securityToString = function () {
-    return `Entry.Security(${R._toString(this.name)},
-        ${R._toString(this.goal)},
-        ${R._toString(this.symbol)},
-        ${R._toString(this.type)})`
-}
-
-/**
- * Convert to string representation
- * @sig tagToString :: () -> String
- */
-const tagToString = function () {
-    return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig transactionBankToString :: () -> String
- */
-const transactionBankToString = function () {
-    return `Entry.TransactionBank(${R._toString(this.account)},
-        ${R._toString(this.amount)},
-        ${R._toString(this.date)},
-        ${R._toString(this.transactionType)},
-        ${R._toString(this.address)},
-        ${R._toString(this.category)},
-        ${R._toString(this.cleared)},
-        ${R._toString(this.memo)},
-        ${R._toString(this.number)},
-        ${R._toString(this.payee)},
-        ${R._toString(this.splits)})`
-}
-
-/** JMG
- * Convert to string representation
- * @sig transactionInvestmentToString :: () -> String
- */
-const transactionInvestmentToString = function () {
-    return `Entry.TransactionInvestment(${R._toString(this.account)},
-        ${R._toString(this.date)},
-        ${R._toString(this.transactionType)},
-        ${R._toString(this.number)},
-        ${R._toString(this.address)},
-        ${R._toString(this.amount)},
-        ${R._toString(this.category)},
-        ${R._toString(this.cleared)},
-        ${R._toString(this.commission)},
-        ${R._toString(this.memo)},
-        ${R._toString(this.payee)},
-        ${R._toString(this.price)},
-        ${R._toString(this.quantity)},
-        ${R._toString(this.security)})`
-}
+// prettier-ignore
+const toString = {
+            account: function () { return `Entry.Account(${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})` },
+            category: function () { return `Entry.Category(${R._toString(this.name)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.description)}, ${R._toString(this.excluded)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})` },
+            class: function () { return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})` },
+            payee: function () { return `Entry.Payee(${R._toString(this.name)}, ${R._toString(this.address)}, ${R._toString(this.memo)}, ${R._toString(this.defaultCategory)})` },
+            price: function () { return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})` },
+            security: function () { return `Entry.Security(${R._toString(this.name)}, ${R._toString(this.goal)}, ${R._toString(this.symbol)}, ${R._toString(this.type)})` },
+            tag: function () { return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})` },
+            transactionBank: function () { return `Entry.TransactionBank(${R._toString(this.account)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.splits)})` },
+            transactionInvestment: function () { return `Entry.TransactionInvestment(${R._toString(this.account)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.number)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.security)})` },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant toJSON methods
 //
 // -------------------------------------------------------------------------------------------------------------
-
-/*
- * Convert to JSON representation with tag
- * @sig accountToJSON :: () -> Object
- */
-const accountToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig categoryToJSON :: () -> Object
- */
-const categoryToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig classToJSON :: () -> Object
- */
-const classToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig payeeToJSON :: () -> Object
- */
-const payeeToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig priceToJSON :: () -> Object
- */
-const priceToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig securityToJSON :: () -> Object
- */
-const securityToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig tagToJSON :: () -> Object
- */
-const tagToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig transactionBankToJSON :: () -> Object
- */
-const transactionBankToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
-
-/*
- * Convert to JSON representation with tag
- * @sig transactionInvestmentToJSON :: () -> Object
- */
-const transactionInvestmentToJSON = function () {
-    return Object.assign({ '@@tagName': this['@@tagName'] }, this)
-}
+// prettier-ignore
+const toJSON = {
+            account: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            category: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            class: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            payee: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            price: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            security: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            tag: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            transactionBank: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+            transactionInvestment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+        }
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -613,72 +455,72 @@ Entry.TransactionInvestment = TransactionInvestmentConstructor
 const AccountPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Account', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: accountToString, enumerable: false },
-    toJSON: { value: accountToJSON, enumerable: false },
+    toString: { value: toString.account, enumerable: false },
+    toJSON: { value: toJSON.account, enumerable: false },
     constructor: { value: AccountConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const CategoryPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Category', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: categoryToString, enumerable: false },
-    toJSON: { value: categoryToJSON, enumerable: false },
+    toString: { value: toString.category, enumerable: false },
+    toJSON: { value: toJSON.category, enumerable: false },
     constructor: { value: CategoryConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ClassPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Class', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: classToString, enumerable: false },
-    toJSON: { value: classToJSON, enumerable: false },
+    toString: { value: toString.class, enumerable: false },
+    toJSON: { value: toJSON.class, enumerable: false },
     constructor: { value: ClassConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const PayeePrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Payee', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: payeeToString, enumerable: false },
-    toJSON: { value: payeeToJSON, enumerable: false },
+    toString: { value: toString.payee, enumerable: false },
+    toJSON: { value: toJSON.payee, enumerable: false },
     constructor: { value: PayeeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const PricePrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Price', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: priceToString, enumerable: false },
-    toJSON: { value: priceToJSON, enumerable: false },
+    toString: { value: toString.price, enumerable: false },
+    toJSON: { value: toJSON.price, enumerable: false },
     constructor: { value: PriceConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SecurityPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Security', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: securityToString, enumerable: false },
-    toJSON: { value: securityToJSON, enumerable: false },
+    toString: { value: toString.security, enumerable: false },
+    toJSON: { value: toJSON.security, enumerable: false },
     constructor: { value: SecurityConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const TagPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'Tag', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: tagToString, enumerable: false },
-    toJSON: { value: tagToJSON, enumerable: false },
+    toString: { value: toString.tag, enumerable: false },
+    toJSON: { value: toJSON.tag, enumerable: false },
     constructor: { value: TagConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const TransactionBankPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'TransactionBank', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: transactionBankToString, enumerable: false },
-    toJSON: { value: transactionBankToJSON, enumerable: false },
+    toString: { value: toString.transactionBank, enumerable: false },
+    toJSON: { value: toJSON.transactionBank, enumerable: false },
     constructor: { value: TransactionBankConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const TransactionInvestmentPrototype = Object.create(EntryPrototype, {
     '@@tagName': { value: 'TransactionInvestment', enumerable: false },
     '@@typeName': { value: 'Entry', enumerable: false },
-    toString: { value: transactionInvestmentToString, enumerable: false },
-    toJSON: { value: transactionInvestmentToJSON, enumerable: false },
+    toString: { value: toString.transactionInvestment, enumerable: false },
+    toJSON: { value: toJSON.transactionInvestment, enumerable: false },
     constructor: { value: TransactionInvestmentConstructor, enumerable: false, writable: true, configurable: true },
 })
 

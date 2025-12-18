@@ -53,7 +53,7 @@ const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpda
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig holdingToString :: () -> String
  */

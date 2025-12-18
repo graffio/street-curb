@@ -61,7 +61,7 @@ const User = function User(id, email, displayName, organizations, createdAt, cre
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig userToString :: () -> String
  */

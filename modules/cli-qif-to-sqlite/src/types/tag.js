@@ -46,7 +46,7 @@ const Tag = function Tag(id, name, color, description) {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-/** JMG
+/*
  * Convert to string representation
  * @sig tagToString :: () -> String
  */
