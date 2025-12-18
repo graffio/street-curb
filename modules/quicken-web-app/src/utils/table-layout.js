@@ -32,7 +32,7 @@ const applySortingChange = (tableLayout, newSorting) => {
     }
 
     const { id, columnDescriptors } = tableLayout
-    const updatedDescriptors = LookupTable(columnDescriptors.map(applySort), ColumnDescriptor, 'id')
+    const updatedDescriptors = columnDescriptors.updateAll(applySort)
     const newSortOrder = LookupTable(
         newSorting.map(s => SortOrder(s.id, s.desc)),
         SortOrder,
@@ -51,7 +51,7 @@ const applySizingChange = (tableLayout, newSizing) => {
     }
 
     const { id, columnDescriptors, sortOrder } = tableLayout
-    const updatedDescriptors = LookupTable(columnDescriptors.map(applyWidth), ColumnDescriptor, 'id')
+    const updatedDescriptors = columnDescriptors.updateAll(applyWidth)
     return TableLayout(id, updatedDescriptors, sortOrder)
 }
 
@@ -59,12 +59,7 @@ const applySizingChange = (tableLayout, newSizing) => {
 // @sig applyOrderChange :: (TableLayout, [String]) -> TableLayout
 const applyOrderChange = (tableLayout, newOrder) => {
     const { id, columnDescriptors, sortOrder } = tableLayout
-    const reorderedDescriptors = LookupTable(
-        newOrder.map(colId => columnDescriptors[colId]),
-        ColumnDescriptor,
-        'id',
-    )
-    return TableLayout(id, reorderedDescriptors, sortOrder)
+    return TableLayout(id, columnDescriptors.pick(newOrder), sortOrder)
 }
 
 export { applyOrderChange, applySizingChange, applySortingChange, initializeTableLayout, toDataTableProps }

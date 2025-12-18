@@ -10,6 +10,7 @@ import { TransactionFiltersCard } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { filterByAccount } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
+import { sortTransactions } from '../utils/sort-transactions.js'
 import {
     applyOrderChange,
     applySizingChange,
@@ -17,7 +18,6 @@ import {
     initializeTableLayout,
     toDataTableProps,
 } from '../utils/table-layout.js'
-import { sortTransactions } from '../utils/sort-transactions.js'
 
 const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
@@ -28,11 +28,7 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
  * @sig TransactionRegisterPage :: (TransactionRegisterPageProps) -> ReactElement
  *     TransactionRegisterPageProps = { accountId: String, startingBalance?: Number, height?: Number }
  */
-const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '100%' }) => {
-    // -----------------------------------------------------------------------------------------------------------------
-    // Functions (closures capture bindings - variables initialized before function is called)
-    // -----------------------------------------------------------------------------------------------------------------
-    // @sig makeViewId :: String -> String
+const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100%' }) => {
     const makeViewId = id => `cols_account_${id}`
 
     // @sig calculateRunningBalances :: ([Transaction], Number) -> [Transaction]
@@ -189,14 +185,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 5000, height = '
 
     useEffect(initializeDateRange, [dateRangeKey, dateRange, viewId])
 
-    useEffect(setupKeyboardNavigation, [
-        viewId,
-        currentRowIndex,
-        maxRowIndex,
-        currentSearchIndex,
-        matchCount,
-        searchQuery,
-    ])
+    const dependencies = [viewId, currentRowIndex, maxRowIndex, currentSearchIndex, matchCount, searchQuery]
+    useEffect(setupKeyboardNavigation, dependencies)
 
     return (
         <Flex gap="4" style={pageContainerStyle}>
