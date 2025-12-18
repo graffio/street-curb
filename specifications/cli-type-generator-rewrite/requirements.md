@@ -210,3 +210,14 @@ codegen/
 - Added `FieldDescriptor.toSyntax()` to restore concise comment format
 - Deleted obsolete `tagged-field-type.js`
 - All tests pass
+
+### Phase 4: Reorganize TaggedSum Output (Done)
+
+- Reorganized from per-variant to per-concern grouping
+- Converted variant toString/toJSON to object literals with `// prettier-ignore`
+- Aligned colons in toString/toJSON objects based on longest variant name
+- Grouped static methods by type (all .prototype, then .is, then .toString, etc.)
+- Added section headers for each static method group
+- Created `src/codegen/variant.js` for variant prototype/static method generation
+- Created `src/codegen/firestore-serialization.js` for Firestore serialization
+- All tests pass
