@@ -57,8 +57,8 @@ FieldType.prototype = FieldTypePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            stringType: function () { return `FieldType.StringType(${R._toString(this.value)})` },
-            regexType: function () { return `FieldType.RegexType(${R._toString(this.value)})` },
+            stringType       : function () { return `FieldType.StringType(${R._toString(this.value)})` },
+            regexType        : function () { return `FieldType.RegexType(${R._toString(this.value)})` },
             importPlaceholder: function () { return `FieldType.ImportPlaceholder(${R._toString(this.isImportPlaceholder)}, ${R._toString(this.source)}, ${R._toString(this.localName)})` },
         }
 
@@ -69,10 +69,10 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            stringType: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            regexType: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            importPlaceholder: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    stringType       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    regexType        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    importPlaceholder: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

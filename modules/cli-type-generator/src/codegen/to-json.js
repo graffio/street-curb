@@ -6,13 +6,15 @@
  * @sig generateToJSONObject :: [String] -> String
  */
 const generateToJSONObject = variantKeys => {
+    const maxKeyLen = Math.max(...variantKeys.map(key => key.length))
     const entries = variantKeys.map(
-        key => `${key}: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) }`,
+        key =>
+            `${key.padEnd(maxKeyLen)}: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) }`,
     )
     return `// prettier-ignore
         const toJSON = {
-            ${entries.join(',\n            ')},
-        }`
+    ${entries.join(',\n    ')},
+}`
 }
 
 /*

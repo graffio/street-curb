@@ -53,7 +53,7 @@ TypeDefinition.prototype = TypeDefinitionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            tagged: function () { return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})` },
+            tagged   : function () { return `TypeDefinition.Tagged(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.fields)})` },
             taggedSum: function () { return `TypeDefinition.TaggedSum(${R._toString(this.name)}, ${R._toString(this.kind)}, ${R._toString(this.variants)})` },
         }
 
@@ -64,9 +64,9 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            tagged: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            taggedSum: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    tagged   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    taggedSum: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

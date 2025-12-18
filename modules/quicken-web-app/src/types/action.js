@@ -105,18 +105,18 @@ Action.prototype = ActionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            loadFile: function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
-            setTransactionFilter: function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
+            loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
+            setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
             resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
-            setTableLayout: function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
-            openView: function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
-            closeView: function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
-            moveView: function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
-            createTabGroup: function () { return `Action.CreateTabGroup()` },
-            closeTabGroup: function () { return `Action.CloseTabGroup(${R._toString(this.groupId)})` },
-            setActiveView: function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
-            setActiveTabGroup: function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
-            setTabGroupWidth: function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
+            setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
+            openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
+            closeView              : function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
+            moveView               : function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
+            createTabGroup         : function () { return `Action.CreateTabGroup()` },
+            closeTabGroup          : function () { return `Action.CloseTabGroup(${R._toString(this.groupId)})` },
+            setActiveView          : function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
+            setActiveTabGroup      : function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
+            setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
         }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -126,19 +126,19 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            loadFile: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            setTransactionFilter: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            setTableLayout: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            openView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            closeView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            moveView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            createTabGroup: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            closeTabGroup: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            setActiveView: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            setActiveTabGroup: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            setTabGroupWidth: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    loadFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTransactionFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    openView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    closeView              : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    moveView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    createTabGroup         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    closeTabGroup          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setActiveView          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setActiveTabGroup      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTabGroupWidth       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

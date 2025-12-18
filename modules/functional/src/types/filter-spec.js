@@ -61,10 +61,10 @@ FilterSpec.prototype = FilterSpecPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            textMatch: function () { return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})` },
-            dateRange: function () { return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})` },
+            textMatch    : function () { return `FilterSpec.TextMatch(${R._toString(this.fields)}, ${R._toString(this.query)})` },
+            dateRange    : function () { return `FilterSpec.DateRange(${R._toString(this.field)}, ${R._toString(this.start)}, ${R._toString(this.end)})` },
             categoryMatch: function () { return `FilterSpec.CategoryMatch(${R._toString(this.field)}, ${R._toString(this.categories)})` },
-            compound: function () { return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})` },
+            compound     : function () { return `FilterSpec.Compound(${R._toString(this.filters)}, ${R._toString(this.mode)})` },
         }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -74,11 +74,11 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            textMatch: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            dateRange: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            categoryMatch: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            compound: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    textMatch    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    dateRange    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    categoryMatch: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    compound     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

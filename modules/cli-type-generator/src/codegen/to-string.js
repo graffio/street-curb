@@ -6,13 +6,19 @@
  * @sig generateToStringObject :: ([(String, String, FieldMap)]) -> String
  */
 const generateToStringObject = variants => {
-    const toStringEntry = (variantKey, typeName, fields) => {
+    /*
+     * Generate a single toString entry for a variant
+     * @sig toStringEntry :: (String, String, FieldMap, Number) -> String
+     */
+    const toStringEntry = (variantKey, typeName, fields, maxKeyLen) => {
         const fieldKeys = Object.keys(fields)
         const fieldStrings = fieldKeys.map(f => `\${R._toString(this.${f})}`)
-        return `${variantKey}: function () { return \`${typeName}(${fieldStrings.join(', ')})\` }`
+        const paddedKey = variantKey.padEnd(maxKeyLen)
+        return `${paddedKey}: function () { return \`${typeName}(${fieldStrings.join(', ')})\` }`
     }
 
-    const entries = variants.map(([key, typeName, fields]) => toStringEntry(key, typeName, fields))
+    const maxKeyLen = Math.max(...variants.map(([key]) => key.length))
+    const entries = variants.map(([key, typeName, fields]) => toStringEntry(key, typeName, fields, maxKeyLen))
     return `// prettier-ignore
         const toString = {
             ${entries.join(',\n            ')},

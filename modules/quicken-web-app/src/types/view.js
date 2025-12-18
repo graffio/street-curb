@@ -59,8 +59,8 @@ View.prototype = ViewPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            register: function () { return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
-            report: function () { return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})` },
+            register      : function () { return `View.Register(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
+            report        : function () { return `View.Report(${R._toString(this.id)}, ${R._toString(this.reportType)}, ${R._toString(this.title)})` },
             reconciliation: function () { return `View.Reconciliation(${R._toString(this.id)}, ${R._toString(this.accountId)}, ${R._toString(this.title)})` },
         }
 
@@ -71,10 +71,10 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            register: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            report: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            reconciliation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    register      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    report        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    reconciliation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

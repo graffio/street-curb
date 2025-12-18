@@ -60,8 +60,8 @@ OperationDetails.prototype = OperationDetailsPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            shellExecution: function () { return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})` },
-            firestoreOperation: function () { return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})` },
+            shellExecution     : function () { return `OperationDetails.ShellExecution(${R._toString(this.command)}, ${R._toString(this.duration)}, ${R._toString(this.outputPreview)})` },
+            firestoreOperation : function () { return `OperationDetails.FirestoreOperation(${R._toString(this.operation)}, ${R._toString(this.collection)}, ${R._toString(this.documentId)})` },
             gcpProjectOperation: function () { return `OperationDetails.GcpProjectOperation(${R._toString(this.projectId)}, ${R._toString(this.folderId)}, ${R._toString(this.region)})` },
         }
 
@@ -72,10 +72,10 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            shellExecution: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            firestoreOperation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            gcpProjectOperation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    shellExecution     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    firestoreOperation : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    gcpProjectOperation: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

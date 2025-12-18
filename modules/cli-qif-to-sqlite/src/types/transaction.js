@@ -73,7 +73,7 @@ Transaction.prototype = TransactionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            bank: function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)})` },
+            bank      : function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)})` },
             investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.securityId)})` },
         }
 
@@ -84,9 +84,9 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            bank: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            investment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    bank      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    investment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

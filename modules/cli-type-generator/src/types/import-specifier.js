@@ -54,9 +54,9 @@ ImportSpecifier.prototype = ImportSpecifierPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            default: function () { return `ImportSpecifier.Default(${R._toString(this.local)})` },
+            default  : function () { return `ImportSpecifier.Default(${R._toString(this.local)})` },
             namespace: function () { return `ImportSpecifier.Namespace(${R._toString(this.local)})` },
-            named: function () { return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})` },
+            named    : function () { return `ImportSpecifier.Named(${R._toString(this.imported)}, ${R._toString(this.local)})` },
         }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -66,10 +66,10 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            default: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            namespace: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            named: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    default  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    namespace: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    named    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //

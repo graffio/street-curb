@@ -121,14 +121,14 @@ Entry.prototype = EntryPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-            account: function () { return `Entry.Account(${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})` },
-            category: function () { return `Entry.Category(${R._toString(this.name)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.description)}, ${R._toString(this.excluded)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})` },
-            class: function () { return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})` },
-            payee: function () { return `Entry.Payee(${R._toString(this.name)}, ${R._toString(this.address)}, ${R._toString(this.memo)}, ${R._toString(this.defaultCategory)})` },
-            price: function () { return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})` },
-            security: function () { return `Entry.Security(${R._toString(this.name)}, ${R._toString(this.goal)}, ${R._toString(this.symbol)}, ${R._toString(this.type)})` },
-            tag: function () { return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})` },
-            transactionBank: function () { return `Entry.TransactionBank(${R._toString(this.account)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.splits)})` },
+            account              : function () { return `Entry.Account(${R._toString(this.name)}, ${R._toString(this.type)}, ${R._toString(this.description)}, ${R._toString(this.creditLimit)})` },
+            category             : function () { return `Entry.Category(${R._toString(this.name)}, ${R._toString(this.budgetAmount)}, ${R._toString(this.description)}, ${R._toString(this.excluded)}, ${R._toString(this.isIncomeCategory)}, ${R._toString(this.isTaxRelated)}, ${R._toString(this.taxSchedule)})` },
+            class                : function () { return `Entry.Class(${R._toString(this.name)}, ${R._toString(this.subclass)}, ${R._toString(this.description)})` },
+            payee                : function () { return `Entry.Payee(${R._toString(this.name)}, ${R._toString(this.address)}, ${R._toString(this.memo)}, ${R._toString(this.defaultCategory)})` },
+            price                : function () { return `Entry.Price(${R._toString(this.symbol)}, ${R._toString(this.price)}, ${R._toString(this.date)})` },
+            security             : function () { return `Entry.Security(${R._toString(this.name)}, ${R._toString(this.goal)}, ${R._toString(this.symbol)}, ${R._toString(this.type)})` },
+            tag                  : function () { return `Entry.Tag(${R._toString(this.name)}, ${R._toString(this.color)}, ${R._toString(this.description)})` },
+            transactionBank      : function () { return `Entry.TransactionBank(${R._toString(this.account)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.splits)})` },
             transactionInvestment: function () { return `Entry.TransactionInvestment(${R._toString(this.account)}, ${R._toString(this.date)}, ${R._toString(this.transactionType)}, ${R._toString(this.number)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.category)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.security)})` },
         }
 
@@ -139,16 +139,16 @@ const toString = {
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toJSON = {
-            account: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            category: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            class: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            payee: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            price: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            security: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            tag: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            transactionBank: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-            transactionInvestment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-        }
+    account              : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    category             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    class                : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    payee                : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    price                : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    security             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    tag                  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    transactionBank      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    transactionInvestment: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+}
 
 // -------------------------------------------------------------------------------------------------------------
 //
