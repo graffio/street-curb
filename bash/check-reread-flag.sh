@@ -6,7 +6,7 @@ flag_file="$CLAUDE_PROJECT_DIR/.claude/.needs-reread"
 
 if [ -f "$flag_file" ]; then
     rm "$flag_file"
-    echo "Post-commit reminder: Reread .claude/conventions.md and .claude/preferences.md before continuing."
+    echo "Post-commit reminder: Reread CLAUDE.md, .claude/conventions.md, .claude/preferences.md, and .claude/workflow.md before continuing."
 fi
 
 exit 0

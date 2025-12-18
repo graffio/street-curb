@@ -36,6 +36,10 @@ Stop and ask for approval when:
 - About to create a new type decomposition
 - Unsure if your style matches mine
 
+## LookupTable
+
+LookupTable has a rich API. Read its ABOUTME before using it.
+
 ## Style Uncertainty
 
 When you don't have explicit guidance:
