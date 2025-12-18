@@ -16,6 +16,7 @@ import byFieldStringComparator from './src/ramda-like/by-field-string-comparator
 import clone from './src/ramda-like/clone.js'
 import compactMap from './src/ramda-like/compact-map.js'
 import compact from './src/ramda-like/compact.js'
+import debounce from './src/ramda-like/debounce.js'
 import diffObjects from './src/ramda-like/diff-objects.js'
 import dissocPath from './src/ramda-like/dissoc-path.js'
 import dissoc from './src/ramda-like/dissoc.js'
@@ -111,6 +112,7 @@ export {
     byFieldStringComparator,
     clone,
     compact,
+    debounce,
     diffObjects,
     dissoc,
     dissocPath,
