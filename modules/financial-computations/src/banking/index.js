@@ -1,4 +1,5 @@
 // ABOUTME: Banking computation exports (running balance, balance queries)
-// ABOUTME: Populated in 01-banking phase
+// ABOUTME: Pure functions for bank/credit account calculations
 
-// Placeholder - functions added in 01-banking.md
+export { calculateRunningBalances } from './running-balance.js'
+export { balanceAsOf, balanceBreakdown, currentBalance, reconciliationDifference } from './balance-queries.js'
