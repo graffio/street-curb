@@ -6,7 +6,7 @@
  *
  *  id               : FieldTypes.tableLayoutId,
  *  columnDescriptors: "{ColumnDescriptor:id}",
- *  sortOrder        : /^col_[a-zA-Z][a-zA-Z0-9_]*$/
+ *  sortOrder        : /^[a-zA-Z][a-zA-Z0-9_]*$/
  *
  */
 
@@ -25,7 +25,7 @@ import { ColumnDescriptor } from './column-descriptor.js'
 /*
  * Construct a TableLayout instance
  * @sig TableLayout :: (String, {ColumnDescriptor}, [SortOrder]) -> TableLayout
- *     SortOrder = /^col_[a-zA-Z][a-zA-Z0-9_]*$/
+ *     SortOrder = /^[a-zA-Z][a-zA-Z0-9_]*$/
  */
 const TableLayout = function TableLayout(id, columnDescriptors, sortOrder) {
     const constructorName = 'TableLayout(id, columnDescriptors, sortOrder)'

@@ -14,6 +14,6 @@ export const TableLayout = {
     fields: {
         id               : FieldTypes.tableLayoutId,
         columnDescriptors: '{ColumnDescriptor:id}',
-        sortOrder        : '[/^col_[a-zA-Z][a-zA-Z0-9_]*$/]',
+        sortOrder        : '[/^[a-zA-Z][a-zA-Z0-9_]*$/]',
     },
 }
