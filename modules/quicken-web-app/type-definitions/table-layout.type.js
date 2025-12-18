@@ -4,8 +4,8 @@ import { FieldTypes } from './field-types.js'
 
 /**
  * TableLayout represents all column state for a table view
- * LookupTable order = display order, sortOrder = sort priority
- * @sig TableLayout :: { id: tableLayoutId, columnDescriptors: {ColumnDescriptor:id}, sortOrder: [columnDescriptorId] }
+ * columnDescriptors order = display order, sortOrder = sort priority
+ * @sig TableLayout :: { id: tableLayoutId, columnDescriptors: {ColumnDescriptor:id}, sortOrder: {SortOrder:id} }
  */
 // prettier-ignore
 export const TableLayout = {
@@ -14,6 +14,6 @@ export const TableLayout = {
     fields: {
         id               : FieldTypes.tableLayoutId,
         columnDescriptors: '{ColumnDescriptor:id}',
-        sortOrder        : '[/^col_[a-zA-Z][a-zA-Z0-9_]*$/]',
+        sortOrder        : '{SortOrder:id}',
     },
 }

@@ -4,6 +4,20 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [quicken-web-app] Table Layout Refactoring & SortOrder Type (2025-12-18)
+**Purpose:** Multi-column sorting support and reusable table layout utilities
+
+- Created SortOrder tagged type (`id`, `isDescending`) for proper sort state
+- Changed TableLayout.sortOrder from `[String]` to `'{SortOrder:id}'` (LookupTable)
+- Created `src/utils/table-layout.js` with pure functions: `initializeTableLayout`, `toDataTableProps`, `applySortingChange`, `applySizingChange`, `applyOrderChange`
+- Created `src/utils/sort-transactions.js` for multi-column sorting
+- Added `updateAll` and `updateWhere` methods to LookupTable (endomorphism operations)
+- Updated hydration.js to convert old sortOrder format and nest single-use functions
+- Added LookupTable ABOUTME listing key methods for quick API reference
+- Updated `.claude/preferences.md` with LookupTable guidance
+- Expanded `check-reread-flag.sh` to include CLAUDE.md and workflow.md
+- Deferred: Transaction filter/search count bug (awaiting Reports architecture)
+
 ## [infrastructure] cli-type-generator Phase 4: Reorganize TaggedSum Output (2025-12-17)
 **Purpose:** Improve readability of generated TaggedSum type files
 

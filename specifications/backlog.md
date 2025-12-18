@@ -101,6 +101,25 @@ Items here should be reconsidered when the appropriate context exists.
   - Build invitation system for adding new members
 - **Notes**: UI components complete in design-system and curb-map; integration work only
 
+## Known Bugs (Awaiting Architecture Decision)
+
+### Transaction Filter/Search Counts Wrong for Single-Account Views
+- **From**: TransactionRegisterPage, TransactionFiltersCard
+- **Why Deferred**: Fix depends on Reports architecture (ReportFilter vs TransactionFilter)
+- **When**: When designing Reports filtering
+- **Symptom**: Filter for "Target" shows "28 transactions" but only displays 9
+- **Root Cause**: `filteredTransactions` selector applies text/date/category filters but NOT account filter. Account filtering happens in component AFTER selector runs.
+- **Affected**:
+  - `filteredTransactionsCount` in TransactionFiltersCard (line 72)
+  - `searchMatches.length` in TransactionFiltersCard (line 124)
+  - `matchCount` in TransactionRegisterPage (line 152)
+- **Options**:
+  1. Add accountId to filter state - use in selector
+  2. Extract accountId from viewId in selector (fragile)
+  3. Pass accountId to components, filter locally (duplicates logic)
+  4. Create `filteredTransactionsForAccount(state, viewId, accountId)` selector
+- **Notes**: Reports will have multi-account selection (accountIds array). Solution should handle both single-account (Register) and multi-account (Reports) cases.
+
 ## Future Capabilities (Nice-to-Have)
 
 ### Real-Time Subscriptions
