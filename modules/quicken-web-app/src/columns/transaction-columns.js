@@ -1,8 +1,8 @@
 // ABOUTME: Column definitions for bank and investment transaction registers
 // ABOUTME: Uses ColumnDefinition tagged type aligned with TanStack Table format
 
-import { LookupTable } from '@graffio/functional'
 import { ColumnDefinition } from '@graffio/design-system/src/types/column-definition.js'
+import { LookupTable } from '@graffio/functional'
 import { CategoryCell, CurrencyCell, DateCell, DefaultCell, PayeeCell } from './cell-renderers.jsx'
 
 /*
@@ -11,12 +11,12 @@ import { CategoryCell, CurrencyCell, DateCell, DefaultCell, PayeeCell } from './
  */
 // prettier-ignore
 const bankTransactionColumns = LookupTable([
-    ColumnDefinition.from({ id: 'date'          , accessorKey: 'transaction.date'      , header: 'Date'        , size: 100, minSize: 100, cell: DateCell    , enableResizing: false,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'number'        , accessorKey: 'transaction.number'    , header: 'Number'      , size: 80 , minSize: 80 , cell: DefaultCell , enableResizing: false,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'cleared'       , accessorKey: 'transaction.cleared'   , header: 'Clr'         , size: 30 , minSize: 30 , cell: DefaultCell , enableResizing: false, textAlign: 'center', meta: { searchable: false                         }}),
-    ColumnDefinition.from({ id: 'payee'         , accessorKey: 'transaction.payee'     , header: 'Payee / Memo', size: 300, minSize: 120, cell: PayeeCell   , enableResizing: true ,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'category'      , accessorKey: 'transaction.categoryId', header: 'Category'    , size: 140, minSize: 80 , cell: CategoryCell, enableResizing: true ,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'amount'        , accessorKey: 'transaction.amount'    , header: 'Amount'      , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false                         }}),
+    ColumnDefinition.from({ id: 'date'          , accessorKey: 'transaction.date'       , header: 'Date'        , size: 100, minSize: 100, cell: DateCell    , enableResizing: false,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'number'        , accessorKey: 'transaction.number'     , header: 'Number'      , size: 80 , minSize: 80 , cell: DefaultCell , enableResizing: false,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'cleared'       , accessorKey: 'transaction.cleared'    , header: 'Clr'         , size: 30 , minSize: 30 , cell: DefaultCell , enableResizing: false, textAlign: 'center', meta: { searchable: false                         }}),
+    ColumnDefinition.from({ id: 'payee'         , accessorKey: 'transaction.payee'      , header: 'Payee / Memo', size: 300, minSize: 120, cell: PayeeCell   , enableResizing: true ,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'category'      , accessorKey: 'transaction.categoryId' , header: 'Category'    , size: 140, minSize: 80 , cell: CategoryCell, enableResizing: true ,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'amount'        , accessorKey: 'transaction.amount'     , header: 'Amount'      , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false                         }}),
     ColumnDefinition.from({ id: 'runningBalance', accessorKey: 'computed.runningBalance', header: 'Balance'     , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false, showRunningTotal: true }}),
 ], ColumnDefinition, 'id')
 

@@ -213,6 +213,16 @@ const DataTable = ({
     onRowClick,
     context = {},
 }) => {
+    // Hack: convert nested accessorKey paths to accessorFn to avoid TanStack "deeply nested key" warnings
+    // @sig toSafeAccessor :: ColumnDefinition -> ColumnDefinition
+    const toSafeAccessor = col => {
+        const path = (row, path) => path.split('.').reduce((obj, key) => obj?.[key], row)
+
+        return col.accessorKey?.includes('.')
+            ? { ...col, accessorFn: row => path(row, col.accessorKey), accessorKey: undefined }
+            : col
+    }
+
     // Toggles sort on a column
     // @sig sortColumn :: (Column, Boolean) -> void
     const sortColumn = (column, isMulti) => {
@@ -324,9 +334,11 @@ const DataTable = ({
         ...(columnOrder && columnOrder.length > 0                && { columnOrder }),
     }
 
+    const safeColumns = columns.map(toSafeAccessor)
+
     const table = useReactTable({
         data,
-        columns,
+        columns: safeColumns,
         columnResizeMode: 'onChange',
         defaultColumn: { enableResizing: false },
         getCoreRowModel: getCoreRowModel(),
