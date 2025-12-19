@@ -1,17 +1,20 @@
 // ABOUTME: Sequential running balance calculation for sorted transactions
-// ABOUTME: Returns new array with runningBalance property added to each transaction
+// ABOUTME: Returns ViewRow.Detail pairing each transaction with computed runningBalance
 
-// Calculates running balance for pre-sorted transactions
-// Transactions must already be sorted in display order
-// @sig calculateRunningBalances :: ([Transaction], Number) -> [TransactionWithBalance]
+import { ViewRow } from '../types/index.js'
+
+// Calculates running balance for pre-sorted transactions -- must already be sorted in display order
+// @sig calculateRunningBalances :: ([Transaction], Number) -> [ViewRow.Detail]
 const calculateRunningBalances = (sortedTransactions, startingBalance = 0) => {
-    const addRunningBalance = txn => {
+    // Wraps transaction with computed running balance
+    // @sig wrapWithBalance :: Transaction -> ViewRow.Detail
+    const wrapWithBalance = txn => {
         balance += txn.amount
-        return { ...txn, runningBalance: balance }
+        return ViewRow.Detail(txn, { runningBalance: balance })
     }
 
     let balance = startingBalance
-    return sortedTransactions.map(addRunningBalance)
+    return sortedTransactions.map(wrapWithBalance)
 }
 
 export { calculateRunningBalances }
