@@ -28,6 +28,7 @@ import findInValues from './src/ramda-like/find-in-values.js'
 import firstKey from './src/ramda-like/first-key.js'
 import forEachObject from './src/ramda-like/for-each-object.js'
 import groupBy from './src/ramda-like/group-by.js'
+import groupByMulti from './src/ramda-like/group-by-multi.js'
 import invertObj from './src/ramda-like/invertObject.js'
 import isNil from './src/ramda-like/isNil.js'
 import keys from './src/ramda-like/keys.js'
@@ -51,6 +52,7 @@ import path from './src/ramda-like/path.js'
 import pick from './src/ramda-like/pick.js'
 import pipe from './src/ramda-like/pipe.js'
 import pluck from './src/ramda-like/pluck.js'
+import pushToKey from './src/ramda-like/push-to-key.js'
 import range from './src/ramda-like/range.js'
 import reindent from './src/ramda-like/reindent.js'
 import removeNilValues from './src/ramda-like/remove-nil-values.js'
@@ -124,6 +126,7 @@ export {
     firstKey,
     forEachObject,
     groupBy,
+    groupByMulti,
     invertObj,
     isNil,
     keys,
@@ -148,6 +151,7 @@ export {
     pick,
     pipe,
     pluck,
+    pushToKey,
     range,
     reindent,
     removeNilValues,

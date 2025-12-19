@@ -8,7 +8,9 @@
     "exports": {
         ".": "./src/index.js",
         "./banking": "./src/banking/index.js",
-        "./reporting": "./src/reporting/index.js"
+        "./query": "./src/query/index.js",
+        "./reporting": "./src/reporting/index.js",
+        "./types": "./src/types/index.js"
     },
     "scripts": {
         "tap": "TAP_DISABLE_COVERAGE=1 tap test/**/*.tap.js -R tap | tap-mocha-reporter spec",

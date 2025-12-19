@@ -11,22 +11,24 @@ const REPO_ROOT = resolve(__dirname, '../..')
 
 // prettier-ignore
 const sources = {
-    curbMap        : `${REPO_ROOT}/modules/curb-map/type-definitions`,
-    cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
-    designSystem   : `${REPO_ROOT}/modules/design-system/type-definitions`,
-    functional     : `${REPO_ROOT}/modules/functional/type-definitions`,
-    quickenWebApp  : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
-    typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
+    curbMap              : `${REPO_ROOT}/modules/curb-map/type-definitions`,
+    cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
+    designSystem         : `${REPO_ROOT}/modules/design-system/type-definitions`,
+    financialComputations: `${REPO_ROOT}/modules/financial-computations/type-definitions`,
+    functional           : `${REPO_ROOT}/modules/functional/type-definitions`,
+    quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
+    typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
 
 // prettier-ignore
 const targets = {
-    curbMap        : `${REPO_ROOT}/modules/curb-map/src/types`,
-    cliQifToSqlite : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
-    designSystem   : `${REPO_ROOT}/modules/design-system/src/types`,
-    functional     : `${REPO_ROOT}/modules/functional/src/types`,
-    quickenWebApp  : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
-    typesGeneration: `${REPO_ROOT}/modules/cli-type-generator/src/types`
+    curbMap              : `${REPO_ROOT}/modules/curb-map/src/types`,
+    cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
+    designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
+    financialComputations: `${REPO_ROOT}/modules/financial-computations/src/types`,
+    functional           : `${REPO_ROOT}/modules/functional/src/types`,
+    quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
+    typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
 
 // prettier-ignore
@@ -64,14 +66,14 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/daily-portfolio.type.js`] : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/entry.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/holding.type.js`]         : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/lot.type.js`]             : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/lot.type.js`]             : [targets.cliQifToSqlite, targets.financialComputations],
     [`${sources.cliQifToSqlite}/price.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
     
     // multiple targets
-    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite, targets.quickenWebApp],
+    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite, targets.quickenWebApp, targets.financialComputations],
 
     // quicken-web-app (types must come before Action since Action references them)
     [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
@@ -88,6 +90,10 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/tab-layout.type.js`]      : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/transaction-filter.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
+
+
+    // financial-computations
+    [`${sources.financialComputations}/view-row.type.js`]: [targets.financialComputations],
 
 
     // for the cli-type-generator itself (all internal types)
