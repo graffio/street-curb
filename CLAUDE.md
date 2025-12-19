@@ -12,6 +12,7 @@ See `.claude/README.md` for full protocol explanation. Key files:
 - `.claude/preferences.md` — Architectural preferences (judgment calls)
 - `.claude/tasks/` — Step-by-step templates for common work
 - `.claude/current-task.json` — Active task spec (follow exactly during implementation)
+- `.claude/api-cheatsheets/` — API quick reference (read before using a module)
 
 ## Our relationship
 
