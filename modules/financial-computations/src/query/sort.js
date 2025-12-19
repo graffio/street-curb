@@ -1,5 +1,5 @@
 // ABOUTME: Multi-column stable sort for transactions
-// ABOUTME: Works with TanStack Table sorting state format
+// ABOUTME: Works with TanStack Table sorting state format (SortSpec = { id, desc })
 
 // Compares two values, handling strings (case-insensitive) and numbers
 // @sig compareValues :: (Any, Any) -> Number
@@ -14,28 +14,34 @@ const compareValues = (a, b) => {
 }
 
 // Creates a comparator for multi-column sorting
-// @sig sortBy :: ([SortSpec], [Column]?) -> (a, b) -> Number
+// SortSpec is TanStack Table's { id, desc } format
+// @sig sortBy :: ([SortSpec], LookupTable<ColumnDefinition>?) -> (a, b) -> Number
 const sortBy = (sorting, columns = []) => {
+    // Gets column definition by id (supports LookupTable or plain array)
+    // @sig getColumn :: String -> ColumnDefinition?
+    const getColumn = id => (columns.get ? columns.get(id) : columns.find(c => c.id === id))
+
     // Gets the accessor key for a column, handling accessorKey vs id
-    // @sig getAccessorKey :: (Column, String) -> String
+    // @sig getAccessorKey :: (ColumnDefinition?, String) -> String
     const getAccessorKey = (column, columnId) => (column ? column.accessorKey || column.id : columnId)
 
-    // Accumulates comparison result for one sort column
-    // @sig compareOneColumn :: (Number, { id, desc }, Object, Object, Object) -> Number
-    const compareOneColumn = (result, { id, desc }, a, b, columnMap) => {
-        if (result !== 0) return result
-        const key = getAccessorKey(columnMap[id], id)
+    // Compares two items by one sort column
+    // @sig compareByColumn :: ({ id, desc }, a, b) -> Number
+    const compareByColumn = ({ id, desc }, a, b) => {
+        const key = getAccessorKey(getColumn(id), id)
         const cmp = compareValues(a[key], b[key])
         return desc ? -cmp : cmp
     }
 
-    const columnMap = Object.fromEntries(columns.map(c => [c.id, c]))
+    // @sig compareAll :: (a, b) -> Number
+    const compareAll = (a, b) =>
+        sorting.reduce((result, spec) => (result !== 0 ? result : compareByColumn(spec, a, b)), 0)
 
-    return (a, b) => sorting.reduce((result, spec) => compareOneColumn(result, spec, a, b, columnMap), 0)
+    return compareAll
 }
 
 // Sorts items by multiple columns
-// @sig applySort :: ([SortSpec], [a], [Column]?) -> [a]
+// @sig applySort :: ([SortSpec], [a], LookupTable<ColumnDefinition>?) -> [a]
 const applySort = (sorting, items, columns = []) => {
     if (!sorting || sorting.length === 0) return items
     return [...items].sort(sortBy(sorting, columns))

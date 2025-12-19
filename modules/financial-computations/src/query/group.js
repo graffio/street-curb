@@ -1,21 +1,13 @@
 // ABOUTME: Group transactions by field or function
 // ABOUTME: Returns object with group keys mapping to arrays
 
-// Group items by field value or key function
+import { groupBy as functionalGroupBy, groupByMulti } from '@graffio/functional'
+
+// Group items by field value or key function (extends functional's groupBy with string accessor support)
 // @sig groupBy :: (String | Function, [a]) -> { [key]: [a] }
 const groupBy = (keyFn, items) => {
-    // Accumulates item into the appropriate group
-    // @sig addToGroup :: ({ [key]: [a] }, a) -> { [key]: [a] }
-    const addToGroup = (result, item) => {
-        const key = getKey(item) ?? 'undefined'
-        if (!result[key]) result[key] = []
-        result[key].push(item)
-        return result
-    }
-
-    const getKey = typeof keyFn === 'string' ? item => item[keyFn] : keyFn
-
-    return items.reduce(addToGroup, {})
+    const getKey = typeof keyFn === 'string' ? item => item[keyFn] ?? 'undefined' : item => keyFn(item) ?? 'undefined'
+    return functionalGroupBy(getKey, items)
 }
 
 // Expand category path into all ancestor paths
@@ -31,22 +23,8 @@ const expandCategoryHierarchy = categoryName => {
 // Transaction in "food:restaurant" appears in groups for both "food" and "food:restaurant"
 // @sig groupByCategoryHierarchy :: [Transaction] -> { [categoryPath]: [Transaction] }
 const groupByCategoryHierarchy = transactions => {
-    // Adds transaction to a single path group
-    // @sig addToPath :: ({ [path]: [Transaction] }, String, Transaction) -> void
-    const addToPath = (result, path, txn) => {
-        if (!result[path]) result[path] = []
-        result[path].push(txn)
-    }
-
-    // Accumulates transaction into all ancestor category groups
-    // @sig addToHierarchyGroups :: ({ [path]: [Transaction] }, Transaction) -> { [path]: [Transaction] }
-    const addToHierarchyGroups = (result, txn) => {
-        const paths = expandCategoryHierarchy(txn.categoryName || 'Uncategorized')
-        paths.forEach(path => addToPath(result, path, txn))
-        return result
-    }
-
-    return transactions.reduce(addToHierarchyGroups, {})
+    const getCategoryPaths = txn => expandCategoryHierarchy(txn.categoryName || 'Uncategorized')
+    return groupByMulti(getCategoryPaths, transactions)
 }
 
 export { groupBy, expandCategoryHierarchy, groupByCategoryHierarchy }
