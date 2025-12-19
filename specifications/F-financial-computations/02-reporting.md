@@ -2,208 +2,200 @@
 
 ## Goal
 
-Add reporting computations for category aggregation with hierarchy rollup and flexible period grouping. Enables spending reports, budget comparison, and trend analysis on banking transactions.
+Reporting computations that produce mixed row types: ViewRow.Detail for transactions, ViewRow.Summary for totals. Handles category hierarchy rollup and period grouping.
 
 ## Prerequisites
 
-- Module structure from 00-module-setup.md
-- Banking functions from 01-banking.md (optional, but establishes patterns)
+- ViewRow type from 00-module-setup
+- Query primitives from 01a-query-primitives
+- Aggregation functions
+
+## Key Insight: Mixed Row Types
+
+A category report shows:
+
+```
+Food                     -$500.00   ← ViewRow.Summary
+  Groceries              -$300.00   ← ViewRow.Summary
+    Whole Foods          -$150.00   ← ViewRow.Detail
+    Trader Joe's         -$150.00   ← ViewRow.Detail
+  Restaurants            -$200.00   ← ViewRow.Summary
+Transport                -$100.00   ← ViewRow.Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total                    -$600.00   ← ViewRow.Summary (depth: 0)
+```
+
+This requires:
+1. Grouping transactions by category hierarchy
+2. Computing aggregates per group
+3. Flattening into a list of ViewRow (mixed Detail + Summary)
+4. Tracking depth for indentation
+
+## ViewRow for Reports
+
+```javascript
+const ViewRow = TaggedSum('ViewRow', {
+    Detail: {
+        transaction: 'Transaction',
+        computed: 'Object',  // { percentOfTotal, ... }
+    },
+    Summary: {
+        groupKey: 'String',      // "food:restaurant" or period "2024-03"
+        aggregates: 'Object',    // { total, count, average, ... }
+        depth: 'Number',         // 0 = grand total, 1 = top category, etc.
+    },
+})
+```
 
 ## Functions
 
-### category-aggregation.js
+### category-report.js
 
 ```javascript
-// ABOUTME: Category aggregation with hierarchy rollup
-// ABOUTME: Handles colon-separated category names (e.g., "food:restaurant:lunch")
+// ABOUTME: Category report generation with hierarchy rollup
+// ABOUTME: Returns mixed ViewRow.Detail and ViewRow.Summary
 
-// Generates all parent categories from a colon-separated name
-// @sig expandCategoryHierarchy :: String -> [String]
-// "food:restaurant:lunch" -> ["food", "food:restaurant", "food:restaurant:lunch"]
-const expandCategoryHierarchy = categoryName => {
-    if (!categoryName) return []
-    const parts = categoryName.split(':')
-    return parts.map((_, i) => parts.slice(0, i + 1).join(':'))
+// Generates a category report with expandable groups
+// @sig categoryReport :: ([Transaction], Options) -> [ViewRow]
+const categoryReport = (transactions, options = {}) => {
+    const { showTransactions = false, maxDepth = Infinity } = options
+
+    // 1. Group by category hierarchy
+    const groups = groupByCategoryHierarchy(transactions)
+
+    // 2. Build tree structure with aggregates
+    const tree = buildCategoryTree(groups)
+
+    // 3. Flatten to ViewRow list
+    return flattenCategoryTree(tree, { showTransactions, maxDepth })
 }
 
-// Sums transaction amounts by category
-// Does NOT roll up hierarchy (use sumByCategoryWithRollup for that)
-// @sig sumByCategory :: [Transaction] -> { [categoryName]: Number }
-const sumByCategory = transactions => {
-    const result = {}
-    transactions.forEach(txn => {
-        const cat = txn.categoryName || 'Uncategorized'
-        result[cat] = (result[cat] || 0) + txn.amount
+// Build tree from grouped transactions
+// @sig buildCategoryTree :: ({ [path]: [Transaction] }) -> CategoryNode
+const buildCategoryTree = groups => { ... }
+
+// Flatten tree to ViewRow list (depth-first)
+// @sig flattenCategoryTree :: (CategoryNode, Options) -> [ViewRow]
+const flattenCategoryTree = (node, options, depth = 0) => {
+    const rows = []
+
+    // Add summary row for this node
+    rows.push(ViewRow.Summary({
+        groupKey: node.path,
+        aggregates: { total: node.total, count: node.count },
+        depth,
+    }))
+
+    // Recurse into children
+    node.children.forEach(child => {
+        rows.push(...flattenCategoryTree(child, options, depth + 1))
     })
-    return result
-}
 
-// Sums amounts by category WITH hierarchy rollup
-// Each transaction contributes to its category AND all parent categories
-// @sig sumByCategoryWithRollup :: [Transaction] -> { [categoryName]: Number }
-const sumByCategoryWithRollup = transactions => {
-    const result = {}
-    transactions.forEach(txn => {
-        const categories = expandCategoryHierarchy(txn.categoryName || 'Uncategorized')
-        categories.forEach(cat => {
-            result[cat] = (result[cat] || 0) + txn.amount
+    // Optionally add detail rows
+    if (options.showTransactions && depth >= options.maxDepth) {
+        node.transactions.forEach(txn => {
+            rows.push(ViewRow.Detail({
+                transaction: txn,
+                computed: { percentOfTotal: txn.amount / node.total },
+            }))
         })
-    })
-    return result
-}
+    }
 
-// Groups transactions by category (returns arrays, not sums)
-// @sig groupByCategory :: [Transaction] -> { [categoryName]: [Transaction] }
-const groupByCategory = transactions => {
-    const result = {}
-    transactions.forEach(txn => {
-        const cat = txn.categoryName || 'Uncategorized'
-        if (!result[cat]) result[cat] = []
-        result[cat].push(txn)
-    })
-    return result
+    return rows
 }
 ```
 
-### period-grouping.js
+### period-report.js
 
 ```javascript
-// ABOUTME: Time period grouping for transactions
-// ABOUTME: Supports week, month, quarter, year groupings
+// ABOUTME: Period-based reports (monthly, quarterly, yearly)
+// ABOUTME: Returns ViewRow.Summary per period
 
-// Formats date to period key
+// @sig periodReport :: (PeriodType, [Transaction]) -> [ViewRow.Summary]
+const periodReport = (periodType, transactions) => {
+    const groups = groupByPeriod(periodType, transactions)
+    const sortedKeys = Object.keys(groups).sort()
+
+    return sortedKeys.map(key => ViewRow.Summary({
+        groupKey: key,
+        aggregates: computeAggregates(groups[key]),
+        depth: 0,
+    }))
+}
+
 // @sig toPeriodKey :: (PeriodType, String) -> String
-// PeriodType = 'week' | 'month' | 'quarter' | 'year'
 const toPeriodKey = (periodType, isoDate) => {
     const date = new Date(isoDate)
     const year = date.getFullYear()
-    const month = date.getMonth() // 0-indexed
+    const month = date.getMonth()
 
     if (periodType === 'year') return `${year}`
     if (periodType === 'quarter') return `${year}-Q${Math.floor(month / 3) + 1}`
     if (periodType === 'month') return `${year}-${String(month + 1).padStart(2, '0')}`
-    if (periodType === 'week') {
-        // ISO week number calculation
-        const jan1 = new Date(year, 0, 1)
-        const days = Math.floor((date - jan1) / (24 * 60 * 60 * 1000))
-        const week = Math.ceil((days + jan1.getDay() + 1) / 7)
-        return `${year}-W${String(week).padStart(2, '0')}`
-    }
-    throw new Error(`Unknown period type: ${periodType}`)
+    if (periodType === 'week') { /* ISO week calculation */ }
 }
 
-// Groups transactions by time period
 // @sig groupByPeriod :: (PeriodType, [Transaction]) -> { [periodKey]: [Transaction] }
-const groupByPeriod = (periodType, transactions) => {
-    const result = {}
-    transactions.forEach(txn => {
-        const key = toPeriodKey(periodType, txn.date)
-        if (!result[key]) result[key] = []
-        result[key].push(txn)
-    })
-    return result
-}
-
-// Sums transaction amounts by period
-// @sig sumByPeriod :: (PeriodType, [Transaction]) -> { [periodKey]: Number }
-const sumByPeriod = (periodType, transactions) => {
-    const groups = groupByPeriod(periodType, transactions)
-    const result = {}
-    Object.entries(groups).forEach(([key, txns]) => {
-        result[key] = txns.reduce((sum, txn) => sum + txn.amount, 0)
-    })
-    return result
-}
-
-// Gets sorted period keys for a grouping (chronological order)
-// @sig sortedPeriodKeys :: Object -> [String]
-const sortedPeriodKeys = groupedData =>
-    Object.keys(groupedData).sort()
+const groupByPeriod = (periodType, transactions) =>
+    groupBy(txn => toPeriodKey(periodType, txn.date), transactions)
 ```
 
-## Combining Functions
-
-Common patterns for reports:
+### aggregations.js
 
 ```javascript
-// Spending by category for a month
-const marchTransactions = transactions.filter(t => t.date.startsWith('2024-03'))
-const spendingByCategory = sumByCategoryWithRollup(marchTransactions)
+// ABOUTME: Aggregation functions for groups
+// ABOUTME: Returns aggregate object for ViewRow.Summary
 
-// Monthly spending trend for a category
-const foodTransactions = transactions.filter(t => t.categoryName?.startsWith('food'))
-const monthlyFood = sumByPeriod('month', foodTransactions)
+// @sig computeAggregates :: [Transaction] -> Aggregates
+const computeAggregates = transactions => ({
+    total: sum(transactions, 'amount'),
+    count: transactions.length,
+    average: average(transactions, 'amount'),
+    min: min(transactions, 'amount'),
+    max: max(transactions, 'amount'),
+})
 
-// Category breakdown by quarter
-const grouped = groupByPeriod('quarter', transactions)
-const quarterlyByCategory = Object.fromEntries(
-    Object.entries(grouped).map(([quarter, txns]) => [quarter, sumByCategory(txns)])
-)
+// Generic aggregation helpers
+const sum = (items, field) => items.reduce((acc, item) => acc + (item[field] || 0), 0)
+const average = (items, field) => items.length ? sum(items, field) / items.length : 0
+const min = (items, field) => Math.min(...items.map(item => item[field]))
+const max = (items, field) => Math.max(...items.map(item => item[field]))
+```
+
+## TanStack Table Integration
+
+With manual grouping, we pass flat ViewRow array to DataTable:
+
+```javascript
+const reportData = categoryReport(transactions, { showTransactions: true })
+
+// Cell renderers handle both types:
+const AmountCell = ({ row }) => ViewRow.match(row, {
+    Detail: ({ transaction }) => formatCurrency(transaction.amount),
+    Summary: ({ aggregates }) => formatCurrency(aggregates.total),
+})
+
+const NameCell = ({ row }) => ViewRow.match(row, {
+    Detail: ({ transaction }) => transaction.payee,
+    Summary: ({ groupKey, depth }) => (
+        <span style={{ paddingLeft: depth * 16 }}>{groupKey}</span>
+    ),
+})
 ```
 
 ## Implementation Steps
 
-1. Create `src/reporting/category-aggregation.js`
-2. Create `src/reporting/period-grouping.js`
-3. Create `src/reporting/index.js` exporting all functions
-4. Update `src/index.js` to re-export reporting
-5. Write `test/reporting/category-aggregation.tap.js`
-6. Write `test/reporting/period-grouping.tap.js`
-7. git add and commit: "Add reporting computation functions"
-
-## Test Cases
-
-### category-aggregation.tap.js
-
-```javascript
-// Given "food:restaurant:lunch"
-// When expandCategoryHierarchy is called
-// Then it returns ["food", "food:restaurant", "food:restaurant:lunch"]
-
-// Given empty string
-// When expandCategoryHierarchy is called
-// Then it returns []
-
-// Given transactions with categories ["food", "food", "transport"]
-// When sumByCategory is called
-// Then food and transport have separate totals
-
-// Given transaction with category "food:restaurant" amount -50
-// When sumByCategoryWithRollup is called
-// Then both "food" and "food:restaurant" include -50
-
-// Given transaction with no categoryName
-// When sumByCategory is called
-// Then it goes into "Uncategorized"
-```
-
-### period-grouping.tap.js
-
-```javascript
-// Given date "2024-03-15"
-// When toPeriodKey('month', date) is called
-// Then it returns "2024-03"
-
-// Given date "2024-03-15"
-// When toPeriodKey('quarter', date) is called
-// Then it returns "2024-Q1"
-
-// Given date "2024-03-15"
-// When toPeriodKey('year', date) is called
-// Then it returns "2024"
-
-// Given transactions spanning Jan-Mar 2024
-// When groupByPeriod('month', transactions) is called
-// Then it returns { '2024-01': [...], '2024-02': [...], '2024-03': [...] }
-
-// Given grouped data with keys ['2024-03', '2024-01', '2024-02']
-// When sortedPeriodKeys is called
-// Then it returns ['2024-01', '2024-02', '2024-03']
-```
+1. Create `src/aggregations/index.js` with sum, average, min, max
+2. Create `src/reporting/category-report.js`
+3. Create `src/reporting/period-report.js`
+4. Create `src/reporting/index.js`
+5. Write tests with mixed ViewRow types
+6. Commit: "Add reporting functions with ViewRow.Summary"
 
 ## Verification
 
-- [ ] All tests pass
-- [ ] Category hierarchy rollup works correctly
+- [ ] Category hierarchy rollup correct (parent includes children)
+- [ ] ViewRow.Summary has correct depth
 - [ ] Period grouping handles all period types
-- [ ] Can combine functions for common report patterns
+- [ ] Can render mixed ViewRow types in DataTable
+- [ ] Grand total row has depth 0
