@@ -31,9 +31,8 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import PropTypes from 'prop-types'
 import React, { useCallback, useEffect, useRef } from 'react'
 
-/*
- * Sort indicator component - shows direction and priority for multi-sort
- */
+// Sort indicator component - shows direction and priority for multi-sort
+// @sig SortIndicator :: { direction: String, priority: Number } -> ReactElement
 const SortIndicator = ({ direction, priority }) => {
     if (!direction) return null
     const arrow = direction === 'asc' ? '↑' : '↓'
@@ -41,9 +40,8 @@ const SortIndicator = ({ direction, priority }) => {
     return <span style={{ marginLeft: 4, fontWeight: 600 }}>{label}</span>
 }
 
-/*
- * Drag handle icon
- */
+// Drag handle icon for column reordering
+// @sig DragHandle :: { listeners: Object, attributes: Object } -> ReactElement
 const DragHandle = ({ listeners, attributes }) => (
     <Box
         {...listeners}
@@ -61,25 +59,23 @@ const DragHandle = ({ listeners, attributes }) => (
     </Box>
 )
 
-/*
- * Sortable header cell component
- */
+// Sortable header cell with drag-n-drop and resize support
+// @sig SortableHeaderCell :: { header: Header, sorting: Array, onSort: Function, isEven: Boolean } -> ReactElement
 const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: header.column.id,
-    })
+    const { column, id } = header
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: column.id })
 
-    const canSort = header.column.getCanSort()
-    const sortDirection = header.column.getIsSorted()
-    const sortIndex = sorting?.findIndex(s => s.id === header.column.id) ?? -1
+    const canSort = column.getCanSort()
+    const sortDirection = column.getIsSorted()
+    const sortIndex = sorting?.findIndex(s => s.id === column.id) ?? -1
     const sortPriority = sorting?.length > 1 && sortIndex >= 0 ? sortIndex + 1 : 0
-    const canResize = header.column.getCanResize()
+    const canResize = column.getCanResize()
 
     const style = {
-        width: `calc(var(--header-${header.id}-size) * 1px)`,
+        width: `calc(var(--header-${id}-size) * 1px)`,
         flexShrink: 0,
         position: 'relative',
-        textAlign: header.column.columnDef.textAlign || 'left',
+        textAlign: column.columnDef.textAlign || 'left',
         userSelect: 'none',
         opacity: isDragging ? 0.5 : 1,
         transform: CSS.Transform.toString(transform),
@@ -106,10 +102,10 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
         <Box ref={setNodeRef} style={style}>
             <Flex align="center" justify="between">
                 <Box
-                    onClick={canSort ? e => onSort(header.column, e.shiftKey) : undefined}
+                    onClick={canSort ? e => onSort(column, e.shiftKey) : undefined}
                     style={{ cursor: canSort ? 'pointer' : 'default', flex: 1 }}
                 >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(column.columnDef.header, header.getContext())}
                     <SortIndicator direction={sortDirection} priority={sortPriority} />
                 </Box>
                 <DragHandle listeners={listeners} attributes={attributes} />
@@ -128,10 +124,11 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
     )
 }
 
-/*
- * Table header component with @dnd-kit drag-n-drop
- */
+// Table header component with @dnd-kit drag-n-drop
+// @sig TableHeader :: { headerGroups, columnSizeVars, onSort, sorting, columnOrder, onColumnReorder } -> ReactElement
 const TableHeader = ({ headerGroups, columnSizeVars, onSort, sorting, columnOrder, onColumnReorder }) => {
+    // Renders individual header cell
+    // @sig renderHeader :: (Header, Number) -> ReactElement
     const renderHeader = (header, index) => (
         <SortableHeaderCell
             key={header.id}
@@ -163,13 +160,15 @@ const TableHeader = ({ headerGroups, columnSizeVars, onSort, sorting, columnOrde
     )
 }
 
-/*
- * Table row component
- */
+// Table row component with zebra striping and highlight support
+// @sig TableRow :: { row, rowIndex, columnSizeVars, isHighlighted, onClick } -> ReactElement
 const TableRow = ({ row, rowIndex, columnSizeVars, isHighlighted, onClick }) => {
+    // Renders individual cell with column sizing
+    // @sig renderCell :: Cell -> ReactElement
     const renderCell = cell => {
+        const { column, id } = cell
         const style = {
-            width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+            width: `calc(var(--col-${column.id}-size) * 1px)`,
             flexShrink: 0,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -178,8 +177,8 @@ const TableRow = ({ row, rowIndex, columnSizeVars, isHighlighted, onClick }) => 
         }
 
         return (
-            <Box key={cell.id} style={style}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            <Box key={id} style={style}>
+                {flexRender(column.columnDef.cell, cell.getContext())}
             </Box>
         )
     }
@@ -195,9 +194,8 @@ const TableRow = ({ row, rowIndex, columnSizeVars, isHighlighted, onClick }) => 
     )
 }
 
-/*
- * Main DataTable component
- */
+// Main DataTable component with TanStack Table, virtualization, and drag-n-drop
+// @sig DataTable :: Props -> ReactElement
 const DataTable = ({
     columns,
     data,
@@ -215,14 +213,19 @@ const DataTable = ({
     onRowClick,
     context = {},
 }) => {
-    // Functions
+    // Toggles sort on a column
+    // @sig sortColumn :: (Column, Boolean) -> void
     const sortColumn = (column, isMulti) => {
         if (!onSortingChange) return
         column.toggleSorting(undefined, isMulti)
     }
 
+    // Creates click handler for a row
+    // @sig createRowClickHandler :: Row -> Function
     const createRowClickHandler = row => () => onRowClick?.(row.original, row.index)
 
+    // Reorders columns by moving draggedId to targetId position
+    // @sig reorderColumns :: (String, String) -> void
     const reorderColumns = (draggedId, targetId) => {
         if (!onColumnOrderChange) return
 
@@ -239,30 +242,35 @@ const DataTable = ({
         onColumnOrderChange(newOrder)
     }
 
+    // Computes CSS variables for column widths
+    // @sig computeColumnSizeVars :: () -> Object
     const computeColumnSizeVars = () => {
-        const headers = table.getFlatHeaders()
-        const colSizes = {}
-        for (const header of headers) {
-            colSizes[`--header-${header.id}-size`] = header.getSize()
-            colSizes[`--col-${header.column.id}-size`] = header.column.getSize()
-        }
-        return colSizes
+        const addHeaderVars = (vars, header) => ({
+            ...vars,
+            [`--header-${header.id}-size`]: header.getSize(),
+            [`--col-${header.column.id}-size`]: header.column.getSize(),
+        })
+
+        return table.getFlatHeaders().reduce(addHeaderVars, {})
     }
 
+    // Finds index of highlighted row in current row list
+    // @sig findHighlightedRowIndex :: () -> Number
     const findHighlightedRowIndex = () => {
+        // Gets row id, handling both plain objects and ViewRow.Detail structure
+        // @sig getRowId :: Object -> String | undefined
+        const getRowId = original => original.id ?? original.transaction?.id
+
         if (highlightedId == null) return -1
-        return rows.findIndex(row => row.original.id === highlightedId)
+        return rows.findIndex(row => getRowId(row.original) === highlightedId)
     }
 
+    // Scrolls to highlighted row if not visible
+    // @sig scrollToHighlightedRow :: () -> Function | undefined
     const scrollToHighlightedRow = () => {
-        const highlightedRowIndex = findHighlightedRowIndex()
-        if (highlightedRowIndex < 0 || highlightedRowIndex >= rows.length) return
-
-        // Skip scroll if row is already visible
-        const { startIndex, endIndex } = virtualizer.range ?? {}
-        if (highlightedRowIndex >= startIndex && highlightedRowIndex <= endIndex) return
-
-        const scrollToIndex = () => {
+        // Performs the scroll with error handling
+        // @sig doScroll :: () -> void
+        const doScroll = () => {
             try {
                 virtualizer.scrollToIndex(highlightedRowIndex, { align: 'center' })
             } catch {
@@ -270,28 +278,32 @@ const DataTable = ({
             }
         }
 
-        const timeout = setTimeout(scrollToIndex, 50)
+        const highlightedRowIndex = findHighlightedRowIndex()
+        if (highlightedRowIndex < 0 || highlightedRowIndex >= rows.length) return
+
+        // Skip scroll if row is already visible
+        const { startIndex, endIndex } = virtualizer.range ?? {}
+        if (highlightedRowIndex >= startIndex && highlightedRowIndex <= endIndex) return
+
+        const timeout = setTimeout(doScroll, 50)
         return () => clearTimeout(timeout)
     }
 
+    // Renders a virtualized row at the correct position
+    // @sig renderVirtualRow :: VirtualRow -> ReactElement
     const renderVirtualRow = virtualRow => {
+        const { index, start } = virtualRow
         const highlightedRowIndex = findHighlightedRowIndex()
-        const style = {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            transform: `translateY(${virtualRow.start}px)`,
-        }
+        const style = { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` }
 
-        const row = rows[virtualRow.index]
+        const row = rows[index]
         return (
             <Box key={row.id} style={style}>
                 <TableRow
                     row={row}
-                    rowIndex={virtualRow.index}
+                    rowIndex={index}
                     columnSizeVars={columnSizeVars}
-                    isHighlighted={virtualRow.index === highlightedRowIndex}
+                    isHighlighted={index === highlightedRowIndex}
                     onClick={onRowClick ? handleRowClick(row) : undefined}
                 />
             </Box>
