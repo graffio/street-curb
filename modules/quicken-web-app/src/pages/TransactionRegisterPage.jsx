@@ -11,7 +11,7 @@ import { TransactionFiltersCard } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { filterByAccount } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
-import { sortTransactions } from '../utils/sort-transactions.js'
+import { applySort } from '@graffio/financial-computations/query'
 import {
     applyOrderChange,
     applySizingChange,
@@ -134,7 +134,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     // Sort transactions, then calculate running balances
     const sortedTransactions = useMemo(
-        () => sortTransactions(accountTransactions, sorting, bankTransactionColumns),
+        () => applySort(sorting, accountTransactions, bankTransactionColumns),
         [accountTransactions, sorting],
     )
 
