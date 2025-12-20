@@ -1,11 +1,9 @@
 // ABOUTME: Tests for running balance calculation
-// ABOUTME: Verifies ViewRow.Detail output with sequential balance accumulation
+// ABOUTME: Verifies RegisterRow output with sequential balance accumulation
 
 import t from 'tap'
 import { calculateRunningBalances } from '../../src/banking/running-balance.js'
-import { ViewRow, Transaction } from '../../src/types/index.js'
-
-const { Detail } = ViewRow
+import { RegisterRow, Transaction } from '../../src/types/index.js'
 
 // Helper to create minimal bank transactions for testing
 // Transaction.Bank(accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee)
@@ -39,15 +37,15 @@ t.test('Given transactions with amounts [100, -50, 200] and startingBalance 0', 
     t.test('When calculateRunningBalances is called', t => {
         const result = calculateRunningBalances(transactions, 0)
 
-        t.test('Then each result is a ViewRow.Detail', t => {
-            t.ok(Detail.is(result[0]))
-            t.ok(Detail.is(result[1]))
-            t.ok(Detail.is(result[2]))
+        t.test('Then each result is a RegisterRow', t => {
+            t.ok(RegisterRow.is(result[0]))
+            t.ok(RegisterRow.is(result[1]))
+            t.ok(RegisterRow.is(result[2]))
             t.end()
         })
 
         t.test('Then running balances accumulate correctly', t => {
-            const balances = result.map(r => r.computed.runningBalance)
+            const balances = result.map(r => r.runningBalance)
             t.same(balances, [100, 50, 250])
             t.end()
         })
@@ -61,8 +59,8 @@ t.test('Given transactions with amounts [100, -50] and startingBalance 1000', t 
 
     t.test('When calculateRunningBalances is called', t => {
         const result = calculateRunningBalances(transactions, 1000)
-        t.equal(result[0].computed.runningBalance, 1100, 'Then first runningBalance includes starting')
-        t.equal(result[1].computed.runningBalance, 1050, 'Then second runningBalance accumulates')
+        t.equal(result[0].runningBalance, 1100, 'Then first runningBalance includes starting')
+        t.equal(result[1].runningBalance, 1050, 'Then second runningBalance accumulates')
         t.end()
     })
     t.end()
@@ -73,7 +71,7 @@ t.test('Given transactions without explicit startingBalance', t => {
 
     t.test('When calculateRunningBalances is called with no second argument', t => {
         const result = calculateRunningBalances(transactions)
-        t.equal(result[0].computed.runningBalance, 100, 'Then startingBalance defaults to 0')
+        t.equal(result[0].runningBalance, 100, 'Then startingBalance defaults to 0')
         t.end()
     })
     t.end()
@@ -98,7 +96,7 @@ t.test('Given transactions with extra properties', t => {
         const result = calculateRunningBalances(transactions)
         t.equal(result[0].transaction.payee, 'Store', 'Then transaction properties are accessible')
         t.equal(result[0].transaction.memo, 'Groceries', 'Then all transaction properties are preserved')
-        t.equal(result[0].computed.runningBalance, 100, 'Then runningBalance is in computed')
+        t.equal(result[0].runningBalance, 100, 'Then runningBalance is a direct field')
         t.end()
     })
     t.end()

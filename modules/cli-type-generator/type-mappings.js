@@ -94,6 +94,7 @@ export const typeMappings = {
 
     // financial-computations
     [`${sources.financialComputations}/view-row.type.js`]: [targets.financialComputations],
+    [`${sources.financialComputations}/register-row.type.js`]: [targets.financialComputations],
 
 
     // for the cli-type-generator itself (all internal types)

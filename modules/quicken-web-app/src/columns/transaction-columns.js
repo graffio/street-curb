@@ -7,17 +7,17 @@ import { CategoryCell, CurrencyCell, DateCell, DefaultCell, PayeeCell } from './
 
 /*
  * Column definitions for bank transactions (checking, savings, credit card)
- * Row structure is ViewRow.Detail with { transaction, computed } fields
+ * Row structure is RegisterRow with { transaction, runningBalance } fields
  */
 // prettier-ignore
 const bankTransactionColumns = LookupTable([
-    ColumnDefinition.from({ id: 'date'          , accessorKey: 'transaction.date'       , header: 'Date'        , size: 100, minSize: 100, cell: DateCell    , enableResizing: false,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'number'        , accessorKey: 'transaction.number'     , header: 'Number'      , size: 80 , minSize: 80 , cell: DefaultCell , enableResizing: false,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'cleared'       , accessorKey: 'transaction.cleared'    , header: 'Clr'         , size: 30 , minSize: 30 , cell: DefaultCell , enableResizing: false, textAlign: 'center', meta: { searchable: false                         }}),
-    ColumnDefinition.from({ id: 'payee'         , accessorKey: 'transaction.payee'      , header: 'Payee / Memo', size: 300, minSize: 120, cell: PayeeCell   , enableResizing: true ,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'category'      , accessorKey: 'transaction.categoryId' , header: 'Category'    , size: 140, minSize: 80 , cell: CategoryCell, enableResizing: true ,                      meta: { searchable: true                          }}),
-    ColumnDefinition.from({ id: 'amount'        , accessorKey: 'transaction.amount'     , header: 'Amount'      , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false                         }}),
-    ColumnDefinition.from({ id: 'runningBalance', accessorKey: 'computed.runningBalance', header: 'Balance'     , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false, showRunningTotal: true }}),
+    ColumnDefinition.from({ id: 'date'          , accessorKey: 'transaction.date'      , header: 'Date'        , size: 100, minSize: 100, cell: DateCell    , enableResizing: false,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'number'        , accessorKey: 'transaction.number'    , header: 'Number'      , size: 80 , minSize: 80 , cell: DefaultCell , enableResizing: false,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'cleared'       , accessorKey: 'transaction.cleared'   , header: 'Clr'         , size: 30 , minSize: 30 , cell: DefaultCell , enableResizing: false, textAlign: 'center', meta: { searchable: false                         }}),
+    ColumnDefinition.from({ id: 'payee'         , accessorKey: 'transaction.payee'     , header: 'Payee / Memo', size: 300, minSize: 120, cell: PayeeCell   , enableResizing: true ,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'category'      , accessorKey: 'transaction.categoryId', header: 'Category'    , size: 140, minSize: 80 , cell: CategoryCell, enableResizing: true ,                      meta: { searchable: true                          }}),
+    ColumnDefinition.from({ id: 'amount'        , accessorKey: 'transaction.amount'    , header: 'Amount'      , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false                         }}),
+    ColumnDefinition.from({ id: 'runningBalance', accessorKey: 'runningBalance'        , header: 'Balance'     , size: 100, minSize: 80 , cell: CurrencyCell, enableResizing: false,                      meta: { searchable: false, showRunningTotal: true }}),
 ], ColumnDefinition, 'id')
 
 /*

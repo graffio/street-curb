@@ -42,9 +42,7 @@ const sortBy = (sorting, columns = []) => {
 
 // Sorts items by multiple columns
 // @sig applySort :: ([SortSpec], [a], LookupTable<ColumnDefinition>?) -> [a]
-const applySort = (sorting, items, columns = []) => {
-    if (!sorting || sorting.length === 0) return items
-    return [...items].sort(sortBy(sorting, columns))
-}
+const applySort = (sorting, items, columns = []) =>
+    sorting?.length ? [...items].sort(sortBy(sorting, columns)) : items
 
 export { compareValues, sortBy, applySort }
