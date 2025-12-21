@@ -1,5 +1,5 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
-// ABOUTME: Provides sorting, column resizing, reordering, row virtualization, and tree data support
+// ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
 
 /*
  * DataTable - TanStack Table integration for the design system
@@ -215,6 +215,8 @@ const DataTable = ({
     columnOrder,
     expanded,
     getChildRows,
+    getRowCanExpand,
+    renderSubComponent,
     onColumnSizingChange,
     onColumnVisibilityChange,
     onSortingChange,
@@ -317,8 +319,11 @@ const DataTable = ({
         const style = { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` }
 
         const row = rows[index]
+        const isLeaf = !row.subRows || row.subRows.length === 0
+        const showSubComponent = renderSubComponent && row.getIsExpanded() && isLeaf
+
         return (
-            <Box key={row.id} style={style}>
+            <Box key={row.id} data-index={index} ref={virtualizer.measureElement} style={style}>
                 <TableRow
                     row={row}
                     rowIndex={index}
@@ -326,6 +331,11 @@ const DataTable = ({
                     isHighlighted={index === highlightedRowIndex}
                     onClick={onRowClick ? handleRowClick(row) : undefined}
                 />
+                {showSubComponent && (
+                    <Box px="2" py="2" style={{ backgroundColor: 'var(--gray-2)' }}>
+                        {renderSubComponent({ row })}
+                    </Box>
+                )}
             </Box>
         )
     }
@@ -354,7 +364,9 @@ const DataTable = ({
         defaultColumn: { enableResizing: false },
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        ...(getChildRows && { getSubRows: getChildRows, getExpandedRowModel: getExpandedRowModel() }),
+        ...(getChildRows && { getSubRows: getChildRows }),
+        ...((getChildRows || getRowCanExpand) && { getExpandedRowModel: getExpandedRowModel() }),
+        ...(getRowCanExpand && { getRowCanExpand }),
         state,
         onColumnSizingChange,
         onColumnVisibilityChange,
@@ -423,6 +435,8 @@ DataTable.propTypes = {
     columnOrder: PropTypes.array,
     expanded: PropTypes.object,
     getChildRows: PropTypes.func,
+    getRowCanExpand: PropTypes.func,
+    renderSubComponent: PropTypes.func,
     onColumnSizingChange: PropTypes.func,
     onColumnVisibilityChange: PropTypes.func,
     onSortingChange: PropTypes.func,
