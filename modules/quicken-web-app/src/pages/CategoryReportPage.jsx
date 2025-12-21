@@ -5,6 +5,7 @@ import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-syst
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { categoryReportColumns } from '../columns/index.js'
+import { TransactionSubTable } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { buildCategoryTree } from '../utils/category-tree.js'
 
@@ -19,6 +20,19 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     // Get children from a tree node for DataTable getChildRows prop
     // @sig getChildRows :: TreeNode -> [TreeNode]
     const getChildRows = row => row.children
+
+    // Leaf nodes with transactions can be expanded to show transaction list
+    // @sig getRowCanExpand :: Row -> Boolean
+    const getRowCanExpand = row => {
+        const { children, value } = row.original
+        const isLeaf = !children || children.length === 0
+        const hasTransactions = value && value.length > 0
+        return isLeaf && hasTransactions
+    }
+
+    // Render transaction list when leaf category is expanded
+    // @sig renderSubComponent :: { row: Row } -> ReactElement
+    const renderSubComponent = ({ row }) => <TransactionSubTable transactions={row.original.value} />
 
     // Transform transactions to include categoryName from categories lookup
     // @sig addCategoryNames :: ([Transaction], LookupTable) -> [TransactionWithCategoryName]
@@ -77,6 +91,8 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
                 height={height}
                 rowHeight={40}
                 getChildRows={getChildRows}
+                getRowCanExpand={getRowCanExpand}
+                renderSubComponent={renderSubComponent}
                 expanded={expanded}
                 onExpandedChange={handleExpandedChange}
             />
