@@ -63,7 +63,6 @@ Extract shared architecture after 2-3 implementations, not before.
 |---------|----------|
 | Banking computations | `@graffio/financial-computations` |
 | Tree utilities | `@graffio/functional` (tree.js) |
-| TanStack adapter | `quicken-web-app/src/utils/tree-to-table.js` |
 | UI components | `quicken-web-app/src/components/` |
 
 ---

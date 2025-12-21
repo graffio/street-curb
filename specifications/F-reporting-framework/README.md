@@ -2,13 +2,13 @@
 
 ## Documents
 
-| Document | Contents |
-|----------|----------|
-| [00-vision.md](00-vision.md) | Three capability types, plugin pattern, UI components |
-| [01-banking.md](01-banking.md) | @graffio/financial-computations banking functions |
-| [02-tree-data.md](02-tree-data.md) | TreeNode pattern, aggregation, TanStack adapter |
-| [03-investments.md](03-investments.md) | Future: lot tracking, holdings, gains |
-| [04-user-preferences.md](04-user-preferences.md) | Persisting user data across QIF reimports |
+| Document                                         | Contents                                              |
+|--------------------------------------------------|-------------------------------------------------------|
+| [00-vision.md](00-vision.md)                     | Three capability types, plugin pattern, UI components |
+| [01-banking.md](01-banking.md)                   | @graffio/financial-computations banking functions     |
+| [02-tree-data.md](02-tree-data.md)               | TreeNode pattern, aggregation, TanStack adapter       |
+| [03-investments.md](03-investments.md)           | Future: lot tracking, holdings, gains                 |
+| [04-user-preferences.md](04-user-preferences.md) | Persisting user data across QIF reimports             |
 
 ---
 
@@ -22,12 +22,11 @@
 
 ## Module Locations
 
-| Concern | Location |
-|---------|----------|
+| Concern              | Location                          |
+|----------------------|-----------------------------------|
 | Banking computations | `@graffio/financial-computations` |
-| Tree utilities | `@graffio/functional` (tree.js) |
-| TanStack adapter | `quicken-web-app/src/utils/tree-to-table.js` |
-| Report components | `quicken-web-app/src/components/` |
+| Tree utilities       | `@graffio/functional` (tree.js)   |
+| Report components    | `quicken-web-app/src/components/` |
 
 ## Open Questions
 

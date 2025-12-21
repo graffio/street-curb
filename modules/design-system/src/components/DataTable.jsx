@@ -1,5 +1,5 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
-// ABOUTME: Provides sorting, column resizing, reordering, and row virtualization
+// ABOUTME: Provides sorting, column resizing, reordering, row virtualization, and tree data support
 
 /*
  * DataTable - TanStack Table integration for the design system
@@ -13,6 +13,7 @@
  * - Virtualization for large datasets
  * - Row highlighting
  * - Custom cell renderers via column.cell
+ * - Tree data with expand/collapse via getChildRows prop
  *
  * Usage:
  *   <Table
@@ -26,7 +27,13 @@ import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from 
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Box, Flex } from '@radix-ui/themes'
-import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
+import {
+    flexRender,
+    getCoreRowModel,
+    getExpandedRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import PropTypes from 'prop-types'
 import React, { useCallback, useEffect, useRef } from 'react'
@@ -206,10 +213,13 @@ const DataTable = ({
     columnVisibility,
     sorting,
     columnOrder,
+    expanded,
+    getChildRows,
     onColumnSizingChange,
     onColumnVisibilityChange,
     onSortingChange,
     onColumnOrderChange,
+    onExpandedChange,
     onRowClick,
     context = {},
 }) => {
@@ -332,6 +342,7 @@ const DataTable = ({
         ...(columnVisibility                                     && { columnVisibility }),
         ...(sorting && sorting.length > 0                        && { sorting }),
         ...(columnOrder && columnOrder.length > 0                && { columnOrder }),
+        ...(expanded                                             && { expanded }),
     }
 
     const safeColumns = columns.map(toSafeAccessor)
@@ -343,11 +354,13 @@ const DataTable = ({
         defaultColumn: { enableResizing: false },
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        ...(getChildRows && { getSubRows: getChildRows, getExpandedRowModel: getExpandedRowModel() }),
         state,
         onColumnSizingChange,
         onColumnVisibilityChange,
         onSortingChange,
         onColumnOrderChange,
+        onExpandedChange,
         meta: context,
     })
 
@@ -408,10 +421,13 @@ DataTable.propTypes = {
     columnVisibility: PropTypes.object,
     sorting: PropTypes.array,
     columnOrder: PropTypes.array,
+    expanded: PropTypes.object,
+    getChildRows: PropTypes.func,
     onColumnSizingChange: PropTypes.func,
     onColumnVisibilityChange: PropTypes.func,
     onSortingChange: PropTypes.func,
     onColumnOrderChange: PropTypes.func,
+    onExpandedChange: PropTypes.func,
     onRowClick: PropTypes.func,
     context: PropTypes.object,
 }

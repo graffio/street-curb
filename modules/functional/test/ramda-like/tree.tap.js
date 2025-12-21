@@ -1,8 +1,14 @@
-// ABOUTME: Tests for tree utilities (parentOfPath, depthOfPath, buildTree, aggregateTree, flattenTree)
-// ABOUTME: Verifies hierarchical path parsing, tree construction, bottom-up aggregation, and flattening
+// ABOUTME: Tests for tree utilities (buildTree, aggregateTree, flattenTree)
+// ABOUTME: Verifies tree construction, bottom-up aggregation, and flattening
 
 import t from 'tap'
-import { parentOfPath, depthOfPath, buildTree, aggregateTree, flattenTree } from '../../src/ramda-like/tree.js'
+import { buildTree, aggregateTree, flattenTree } from '../../src/ramda-like/tree.js'
+
+// Test helper: derive parent from colon-delimited path (e.g., 'food:restaurant' -> 'food')
+const colonParent = key => {
+    const idx = key.lastIndexOf(':')
+    return idx === -1 ? null : key.slice(0, idx)
+}
 
 // Aggregation helpers for tests
 const sumAgg = (values, childAggs) => {
@@ -16,24 +22,7 @@ const complexAgg = (txns, childAggs) => ({
     count: txns.length + childAggs.reduce((a, c) => a + c.count, 0),
 })
 
-t.test('parentOfPath', t => {
-    t.equal(parentOfPath(':', 'food:restaurant:lunch'), 'food:restaurant', 'nested path')
-    t.equal(parentOfPath(':', 'food:restaurant'), 'food', 'two-level path')
-    t.equal(parentOfPath(':', 'food'), null, 'root path returns null')
-    t.equal(parentOfPath('/', 'assets/bank'), 'assets', 'slash delimiter')
-    t.end()
-})
-
-t.test('depthOfPath', t => {
-    t.equal(depthOfPath(':', 'food'), 1, 'root is depth 1')
-    t.equal(depthOfPath(':', 'food:restaurant'), 2, 'two levels is depth 2')
-    t.equal(depthOfPath(':', 'food:restaurant:lunch'), 3, 'three levels is depth 3')
-    t.end()
-})
-
 t.test('buildTree', t => {
-    const colonParent = key => parentOfPath(':', key)
-
     t.test('Given groups with explicit parent and child keys', t => {
         const groups = { food: [1], 'food:restaurant': [2] }
         const tree = buildTree(colonParent, groups)
@@ -77,8 +66,6 @@ t.test('buildTree', t => {
 })
 
 t.test('aggregateTree', t => {
-    const colonParent = key => parentOfPath(':', key)
-
     t.test('Given tree with values at leaves only', t => {
         const groups = { 'food:restaurant': [100], 'food:grocery': [50] }
         const tree = buildTree(colonParent, groups)
@@ -113,8 +100,6 @@ t.test('aggregateTree', t => {
 })
 
 t.test('flattenTree', t => {
-    const colonParent = key => parentOfPath(':', key)
-
     t.test('Given aggregated tree', t => {
         const groups = { 'food:restaurant': [100], 'food:grocery': [50] }
         const tree = buildTree(colonParent, groups)

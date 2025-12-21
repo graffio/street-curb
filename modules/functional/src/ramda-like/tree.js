@@ -9,20 +9,9 @@
 //
 // Pipeline for hierarchical reports:
 //   1. Group source data by leaf key: groupBy(t => t.category, transactions)
-//   2. Build tree (auto-creates parents): buildTree(k => parentOfPath(':', k), groups)
+//   2. Build tree with caller-provided getParent: buildTree(getParent, groups)
 //   3. Compute aggregates bottom-up: aggregateTree(aggregateFn, tree)
 //   4. Adapt for display: pass tree to TanStack Table with getSubRows: n => n.children
-
-// Get parent path by removing last segment
-// @sig parentOfPath :: (String, String) -> String?
-const parentOfPath = (delimiter, path) => {
-    const idx = path.lastIndexOf(delimiter)
-    return idx === -1 ? null : path.slice(0, idx)
-}
-
-// Count path segments
-// @sig depthOfPath :: (String, String) -> Number
-const depthOfPath = (delimiter, path) => path.split(delimiter).length
 
 // Build tree from flat groups, auto-creating parent nodes as needed
 // @sig buildTree :: ((String -> String?), {String: a}) -> [TreeNode a]
@@ -70,4 +59,4 @@ const flattenTree = (transform, roots) => {
     return roots.flatMap(root => flatten(root, 1))
 }
 
-export { parentOfPath, depthOfPath, buildTree, aggregateTree, flattenTree }
+export { buildTree, aggregateTree, flattenTree }

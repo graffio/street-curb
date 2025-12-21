@@ -21,7 +21,7 @@ TreeNode a = { key: String, value: a, children: [TreeNode a], aggregate?: b }
    → { 'Food:Groceries': [txn1, txn2], 'Food:Restaurants': [txn3] }
 
 2. Build tree (auto-creates parents)
-   buildTree(k => parentOfPath(':', k), groups)
+   buildTree(getParent, groups)  // getParent: 'Food:Groceries' → 'Food'
    → [{ key: 'Food', value: [], children: [
         { key: 'Food:Groceries', value: [txn1, txn2], children: [] },
         { key: 'Food:Restaurants', value: [txn3], children: [] }
@@ -54,26 +54,25 @@ const computeAggregates = (transactions, childAggregates) => {
 
 ---
 
-## TanStack Table Adapter
+## TanStack Table Integration
 
-From `quicken-web-app/src/utils/tree-to-table.js`:
+TanStack Table handles tree data natively. Key options:
 
 ```javascript
-// Flatten aggregate fields to top level for column access
-const prepareForTable = tree => {
-    const processNode = node => ({
-        ...node,
-        ...node.aggregate,
-        children: node.children.map(processNode),
-    })
-    return tree.map(processNode)
-}
-
-// Standard options for tree data
-const getTreeTableOptions = () => ({
+const table = useReactTable({
+    data: aggregatedTree,
+    columns,
     getSubRows: row => row.children,
     getRowId: row => row.key,
     getRowCanExpand: row => row.children?.length > 0,
+})
+```
+
+If columns need direct access to aggregate fields, spread them at the component level:
+
+```javascript
+const rows = aggregatedTree.map(function processNode(node) {
+    return { ...node, ...node.aggregate, children: node.children.map(processNode) }
 })
 ```
 
@@ -100,6 +99,12 @@ const getTreeTableOptions = () => ({
 const categorySpendingReport = (transactions, options = {}) => {
     const { dateRange, accounts } = options
 
+    // Derive parent from colon-delimited category path
+    const getParent = key => {
+        const idx = key.lastIndexOf(':')
+        return idx === -1 ? null : key.slice(0, idx)
+    }
+
     // 1. Filter
     const filtered = transactions
         .filter(byDateRange(dateRange.start, dateRange.end))
@@ -109,19 +114,19 @@ const categorySpendingReport = (transactions, options = {}) => {
     const groups = groupBy(t => t.categoryName || 'Uncategorized', filtered)
 
     // 3. Build tree with aggregates
-    const tree = buildTree(k => parentOfPath(':', k), groups)
-    const aggregated = aggregateTree(computeAggregates, tree)
-
-    // 4. Prepare for TanStack Table
-    return prepareForTable(aggregated)
+    const tree = buildTree(getParent, groups)
+    return aggregateTree(computeAggregates, tree)
 }
 ```
 
 Usage:
 ```jsx
+const data = categorySpendingReport(transactions, options)
 const table = useReactTable({
-    data: categorySpendingReport(transactions, options),
+    data,
     columns: reportColumns,
-    ...getTreeTableOptions(),
+    getSubRows: row => row.children,
+    getRowId: row => row.key,
+    getRowCanExpand: row => row.children?.length > 0,
 })
 ```
