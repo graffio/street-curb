@@ -21,24 +21,30 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     // @sig getChildRows :: TreeNode -> [TreeNode]
     const getChildRows = row => row.children
 
-    // Leaf nodes with transactions can be expanded to show transaction list
+    // Rows can expand if they have children (tree) or are leaves with transactions (sub-component)
     // @sig getRowCanExpand :: Row -> Boolean
     const getRowCanExpand = row => {
         const { children, value } = row.original
-        const isLeaf = !children || children.length === 0
+        const hasChildren = children && children.length > 0
         const hasTransactions = value && value.length > 0
-        return isLeaf && hasTransactions
+        return hasChildren || hasTransactions
     }
 
     // Render transaction list when leaf category is expanded
     // @sig renderSubComponent :: { row: Row } -> ReactElement
     const renderSubComponent = ({ row }) => <TransactionSubTable transactions={row.original.value} />
 
-    // Transform transactions to include categoryName from categories lookup
-    // @sig addCategoryNames :: ([Transaction], LookupTable) -> [TransactionWithCategoryName]
-    const addCategoryNames = (txns, cats) => {
-        if (!txns || !cats) return []
-        return txns.map(txn => ({ ...txn, categoryName: cats.get(txn.categoryId)?.name || 'Uncategorized' }))
+    // Transform transactions to include categoryName and accountName from lookups
+    // @sig enrichTransactions :: ([Transaction], LookupTable, LookupTable) -> [EnrichedTransaction]
+    const enrichTransactions = (txns, cats, accts) => {
+        const addNames = txn => ({
+            ...txn,
+            categoryName: cats.get(txn.categoryId)?.name || 'Uncategorized',
+            accountName: accts.get(txn.accountId)?.name || '',
+        })
+
+        if (!txns || !cats || !accts) return []
+        return txns.map(addNames)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -47,6 +53,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
     const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
     const categories = useSelector(S.categories)
+    const accounts = useSelector(S.accounts)
 
     // -----------------------------------------------------------------------------------------------------------------
     // Local state for expanded rows
@@ -56,16 +63,13 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     // -----------------------------------------------------------------------------------------------------------------
     // Memos (data transformations)
     // -----------------------------------------------------------------------------------------------------------------
-    const transactionsWithCategoryNames = useMemo(
-        () => addCategoryNames(filteredTransactions, categories),
-        [filteredTransactions, categories],
+    const enrichedTransactions = useMemo(
+        () => enrichTransactions(filteredTransactions, categories, accounts),
+        [filteredTransactions, categories, accounts],
     )
 
     // Build aggregated category tree from transactions
-    const categoryTree = useMemo(
-        () => buildCategoryTree(transactionsWithCategoryNames),
-        [transactionsWithCategoryNames],
-    )
+    const categoryTree = useMemo(() => buildCategoryTree(enrichedTransactions), [enrichedTransactions])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Callbacks
