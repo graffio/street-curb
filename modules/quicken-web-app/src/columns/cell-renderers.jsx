@@ -153,4 +153,29 @@ const CategoryCell = ({ getValue, table }) => {
     )
 }
 
-export { DateCell, PayeeCell, CurrencyCell, DefaultCell, CategoryCell }
+// Cell renderer for expandable tree row with category name
+// @sig ExpandableCategoryCell :: { row: Row, getValue: Function } -> ReactElement
+const ExpandableCategoryCell = ({ row, getValue }) => {
+    const canExpand = row.getCanExpand()
+    const isExpanded = row.getIsExpanded()
+    const depth = row.depth
+    const value = getValue()
+
+    // Show last segment of path for display (e.g., "Food:Groceries" -> "Groceries")
+    const displayName = value?.includes(':') ? value.split(':').pop() : value
+
+    const chevronStyle = { cursor: 'pointer', userSelect: 'none', width: 16, display: 'inline-block' }
+
+    const indentStyle = { paddingLeft: depth * 16 }
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', ...indentStyle }}>
+            <span style={chevronStyle} onClick={() => canExpand && row.toggleExpanded()}>
+                {canExpand ? (isExpanded ? '▼' : '▶') : ''}
+            </span>
+            <span style={{ marginLeft: 4, fontWeight: depth === 0 ? 600 : 400 }}>{displayName}</span>
+        </div>
+    )
+}
+
+export { DateCell, PayeeCell, CurrencyCell, DefaultCell, CategoryCell, ExpandableCategoryCell }
