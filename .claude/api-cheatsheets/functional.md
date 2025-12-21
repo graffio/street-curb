@@ -121,6 +121,29 @@ table.get('abc123') // same as above
 | `includesWithId`   | `id -> Bool`                    | Has item with id?                 |
 | `hasItemEqualTo`   | `item -> Bool`                  | Has equal item?                   |
 
+## Tree Operations
+
+Build trees from flat hierarchical data (e.g., categories `food:restaurant:lunch`).
+
+| Function        | Signature                                       | Description                  |
+|-----------------|-------------------------------------------------|------------------------------|
+| `buildTree`     | `((k -> k?), {k: v}) -> [TreeNode]`             | Build tree from flat groups  |
+| `aggregateTree` | `((v, [agg]) -> agg, [TreeNode]) -> [TreeNode]` | Compute aggregates bottom-up |
+| `flattenTree`   | `((TreeNode, depth) -> a, [TreeNode]) -> [a]`   | Flatten tree depth-first     |
+
+```javascript
+// TreeNode = { key: String, value: a, children: [TreeNode], aggregate?: b }
+// Caller provides getParent function (derive from path, lookup table, etc.)
+const getParent = key => {
+    const idx = key.lastIndexOf(':')
+    return idx === -1 ? null : key.slice(0, idx)
+}
+const groups = { food: [...], 'food:restaurant': [...] }
+const tree = buildTree(getParent, groups)
+const aggregated = aggregateTree((items, childAggs) => sum(items) + sum(childAggs), tree)
+const flat = flattenTree((node, depth) => ({ name: node.key, depth }), aggregated)
+```
+
 ## Date Utils
 
 ```javascript

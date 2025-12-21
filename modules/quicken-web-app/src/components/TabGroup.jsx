@@ -5,37 +5,28 @@ import { Box, Button, Flex, Text } from '@graffio/design-system'
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
+import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
-// @sig getTabStyle :: (String, String, Boolean) -> Object
-const getTabStyle = (viewId, activeViewId, isDragging) => ({
-    padding: '4px 12px',
-    borderBottom: viewId === activeViewId ? '2px solid var(--accent-9)' : '2px solid transparent',
-    cursor: isDragging ? 'grabbing' : 'grab',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    opacity: isDragging ? 0.5 : 1,
-})
-
-// Serialize drag data for transfer between components
-// @sig serializeDragData :: (String, String) -> String
-const serializeDragData = (viewId, groupId) => JSON.stringify({ viewId, groupId })
-
-// Parse drag data from transfer
-// @sig parseDragData :: String -> { viewId: String, groupId: String } | null
-const parseDragData = data => {
-    try {
-        return JSON.parse(data)
-    } catch {
-        return null
-    }
-}
-
 // @sig Tab ::  { view: View, groupId: String, isActive: Boolean } -> ReactElement
 const Tab = ({ view, groupId, isActive }) => {
+    // @sig getTabStyle :: (String, String, Boolean) -> Object
+    const getTabStyle = (viewId, activeViewId, isDragging) => ({
+        padding: '4px 12px',
+        borderBottom: viewId === activeViewId ? '2px solid var(--accent-9)' : '2px solid transparent',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        opacity: isDragging ? 0.5 : 1,
+    })
+
+    // Serialize drag data for transfer between components
+    // @sig serializeDragData :: (String, String) -> String
+    const serializeDragData = (vid, gid) => JSON.stringify({ viewId: vid, groupId: gid })
+
     const handleClick = () => post(Action.SetActiveView(groupId, view.id))
 
     const handleClose = e => {
@@ -72,11 +63,6 @@ const Tab = ({ view, groupId, isActive }) => {
     )
 }
 
-// @sig renderTab :: (View, String, String) -> ReactElement
-const renderTab = (view, groupId, activeViewId) => (
-    <Tab key={view.id} view={view} groupId={groupId} isActive={view.id === activeViewId} />
-)
-
 const MAX_GROUPS = 4
 
 // @sig SplitButton :: { groupCount: Number } -> ReactElement|null
@@ -101,6 +87,21 @@ const SplitButton = ({ groupCount }) => {
 // Handle drop of a tab onto this tab bar
 // @sig TabBar :: { group: TabGroup, groupCount: Number } -> ReactElement
 const TabBar = ({ group, groupCount }) => {
+    // Parse drag data from transfer
+    // @sig parseDragData :: String -> { viewId: String, groupId: String } | null
+    const parseDragData = data => {
+        try {
+            return JSON.parse(data)
+        } catch {
+            return null
+        }
+    }
+
+    // @sig renderTab :: (View, String, String) -> ReactElement
+    const renderTab = (view, gid, activeViewId) => (
+        <Tab key={view.id} view={view} groupId={gid} isActive={view.id === activeViewId} />
+    )
+
     const handleDragOver = e => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'move'
@@ -155,24 +156,20 @@ const EmptyState = () => (
     </Flex>
 )
 
-// @sig renderViewContent :: View -> ReactElement
-const renderViewContent = view =>
-    view.match({
-        Register: () => <TransactionRegisterPage accountId={view.accountId} />,
-        Report: () => (
-            <Flex align="center" justify="center" style={{ height: '100%' }}>
-                <Text>Report: {view.reportType}</Text>
-            </Flex>
-        ),
-        Reconciliation: () => (
-            <Flex align="center" justify="center" style={{ height: '100%' }}>
-                <Text>Reconciliation: {view.accountId}</Text>
-            </Flex>
-        ),
-    })
-
 // @sig ViewContent :: { group: TabGroup } -> ReactElement
 const ViewContent = ({ group }) => {
+    // @sig renderViewContent :: View -> ReactElement
+    const renderViewContent = view =>
+        view.match({
+            Register: () => <TransactionRegisterPage accountId={view.accountId} />,
+            Report: () => <CategoryReportPage viewId={view.id} />,
+            Reconciliation: () => (
+                <Flex align="center" justify="center" style={{ height: '100%' }}>
+                    <Text>Reconciliation: {view.accountId}</Text>
+                </Flex>
+            ),
+        })
+
     if (!group.activeViewId) return <EmptyState />
 
     const activeView = group.views[group.activeViewId]

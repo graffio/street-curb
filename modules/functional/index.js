@@ -12,6 +12,7 @@ import assocPathString from './src/ramda-like/assoc-path-string.js'
 import assocPath from './src/ramda-like/assoc-path.js'
 import assoc from './src/ramda-like/assoc.js'
 import asyncMapObject from './src/ramda-like/async-map-object.js'
+import { aggregateTree, buildTree, flattenTree } from './src/ramda-like/tree.js'
 import byFieldStringComparator from './src/ramda-like/by-field-string-comparator.js'
 import clone from './src/ramda-like/clone.js'
 import compactMap from './src/ramda-like/compact-map.js'
@@ -103,6 +104,7 @@ export {
 
     // functions
     addOrReplaceAtPath,
+    aggregateTree,
     aperture,
     appendIfMissing,
     arrayToLookupTable,
@@ -111,6 +113,7 @@ export {
     assocPathIfDifferent,
     assocPathString,
     asyncMapObject,
+    buildTree,
     byFieldStringComparator,
     clone,
     compact,
@@ -122,6 +125,7 @@ export {
     evolve,
     filterObject,
     filterValues,
+    flattenTree,
     findInValues,
     firstKey,
     forEachObject,

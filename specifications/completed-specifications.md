@@ -424,3 +424,13 @@ This document summarizes the specifications that were previously archived in `sp
 - Deleted obsolete `tagged-field-type.js`
 - Phases 4 (reorganize TaggedSum output) and 5 (default values) now enabled
 - All 487 tests pass
+
+## [quicken-web-app] Transaction Drill-Down in Category Report (2025-12-21)
+**Purpose:** Expand leaf categories to show individual transactions using TanStack's renderSubComponent
+
+- Added `renderSubComponent` and `getRowCanExpand` props to DataTable component
+- Created TransactionSubTable component showing Date, Account, Payee, Memo, Amount columns
+- Fixed TanStack Table behavior: `getRowCanExpand` replaces default sub-rows check, not extends it
+  - Solution: return `hasChildren || hasTransactions` to support both tree and sub-component expansion
+- Updated CategoryReportPage with `enrichTransactions` to add both categoryName and accountName
+- Tree hierarchy expansion and leaf transaction drill-down now work together seamlessly

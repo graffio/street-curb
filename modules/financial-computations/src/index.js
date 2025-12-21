@@ -1,5 +1,14 @@
 // ABOUTME: Main entry point for @graffio/financial-computations
-// ABOUTME: Re-exports banking and reporting computation functions
+// ABOUTME: Exports banking computation functions and result types
 
-export * from './banking/index.js'
-export * from './reporting/index.js'
+// Banking computations
+export {
+    calculateRunningBalances,
+    currentBalance,
+    balanceAsOf,
+    balanceBreakdown,
+    reconciliationDifference,
+} from './banking/index.js'
+
+// Result types
+export { RegisterRow } from './types/index.js'
