@@ -5,11 +5,18 @@ import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-syst
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { categoryReportColumns } from '../columns/index.js'
-import { TransactionSubTable } from '../components/index.js'
+import { FilterChipRow, TransactionSubTable } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
-import { buildCategoryTree } from '../utils/category-tree.js'
+import { buildTransactionTree } from '../utils/category-tree.js'
 
 const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
+
+const dimensionLayouts = {
+    category: { title: 'Spending by Category', subtitle: 'View spending breakdown by category hierarchy' },
+    account: { title: 'Spending by Account', subtitle: 'View spending breakdown by account' },
+    payee: { title: 'Spending by Payee', subtitle: 'View spending breakdown by payee' },
+    month: { title: 'Spending by Month', subtitle: 'View spending breakdown by month' },
+}
 
 /*
  * Category spending report with hierarchical tree display
@@ -29,10 +36,6 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         const hasTransactions = value && value.length > 0
         return hasChildren || hasTransactions
     }
-
-    // Render transaction list when leaf category is expanded
-    // @sig renderSubComponent :: { row: Row } -> ReactElement
-    const renderSubComponent = ({ row }) => <TransactionSubTable transactions={row.original.value} />
 
     // Transform transactions to include categoryName and accountName from lookups
     // @sig enrichTransactions :: ([Transaction], LookupTable, LookupTable) -> [EnrichedTransaction]
@@ -54,6 +57,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
     const categories = useSelector(S.categories)
     const accounts = useSelector(S.accounts)
+    const groupBy = useSelector(state => S.groupBy(state, viewId))
 
     // -----------------------------------------------------------------------------------------------------------------
     // Local state for expanded rows
@@ -68,8 +72,11 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         [filteredTransactions, categories, accounts],
     )
 
-    // Build aggregated category tree from transactions
-    const categoryTree = useMemo(() => buildCategoryTree(enrichedTransactions), [enrichedTransactions])
+    // Build aggregated tree from transactions by selected dimension
+    const transactionTree = useMemo(
+        () => buildTransactionTree(groupBy, enrichedTransactions),
+        [groupBy, enrichedTransactions],
+    )
 
     // -----------------------------------------------------------------------------------------------------------------
     // Callbacks
@@ -79,19 +86,24 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         [],
     )
 
+    // Render transaction list when leaf row is expanded (needs groupBy to hide redundant column)
+    // @sig renderSubComponent :: { row: Row } -> ReactElement
+    const renderSubComponent = useCallback(
+        ({ row }) => <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />,
+        [groupBy],
+    )
+
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
-    useEffect(
-        () => setLayout({ title: 'Spending by Category', subtitle: 'View spending breakdown by category hierarchy' }),
-        [setLayout],
-    )
+    useEffect(() => setLayout(dimensionLayouts[groupBy] || dimensionLayouts.category), [setLayout, groupBy])
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
+            <FilterChipRow viewId={viewId} showGroupBy />
             <DataTable
                 columns={categoryReportColumns}
-                data={categoryTree}
+                data={transactionTree}
                 height={height}
                 rowHeight={40}
                 getChildRows={getChildRows}

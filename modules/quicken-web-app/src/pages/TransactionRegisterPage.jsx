@@ -3,15 +3,15 @@
 
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
 import { calculateRunningBalances } from '@graffio/financial-computations/banking'
+import { applySort } from '@graffio/financial-computations/query'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { bankTransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
-import { TransactionFiltersCard } from '../components/index.js'
+import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { filterByAccount } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
-import { applySort } from '@graffio/financial-computations/query'
 import {
     applyOrderChange,
     applySizingChange,
@@ -184,8 +184,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     useEffect(setupKeyboardNavigation, dependencies)
 
     return (
-        <Flex gap="4" style={pageContainerStyle}>
-            <TransactionFiltersCard viewId={viewId} />
+        <Flex direction="column" style={pageContainerStyle}>
+            <FilterChipRow viewId={viewId} />
             <div style={mainContentStyle}>
                 <DataTable
                     columns={bankTransactionColumns}

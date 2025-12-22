@@ -1,5 +1,5 @@
-// ABOUTME: Sub-table for displaying transactions within expanded category rows
-// ABOUTME: Simple list view with Date, Payee, Amount columns
+// ABOUTME: Sub-table for displaying transactions within expanded report rows
+// ABOUTME: Hides the column matching groupBy dimension (redundant when grouped)
 
 import { Box, Flex, Text } from '@graffio/design-system'
 import React from 'react'
@@ -7,10 +7,10 @@ import React from 'react'
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 
-// Render a single transaction row
-// @sig TransactionRow :: { transaction: Transaction } -> ReactElement
-const TransactionRow = ({ transaction }) => {
-    const { date, payee, memo, accountName, amount } = transaction
+// Render a single transaction row, hiding column for groupBy dimension
+// @sig TransactionRow :: { transaction: Transaction, groupBy: String? } -> ReactElement
+const TransactionRow = ({ transaction, groupBy }) => {
+    const { date, payee, memo, accountName, categoryName, amount } = transaction
     const formattedDate = date ? dateFormatter.format(new Date(date)) : ''
     const formattedAmount = currencyFormatter.format(amount)
     const amountColor = amount >= 0 ? 'var(--green-11)' : 'var(--red-11)'
@@ -20,12 +20,21 @@ const TransactionRow = ({ transaction }) => {
             <Text size="1" style={{ width: 90, color: 'var(--gray-11)' }}>
                 {formattedDate}
             </Text>
-            <Text size="1" style={{ width: 120, color: 'var(--gray-11)' }}>
-                {accountName || ''}
-            </Text>
-            <Text size="1" style={{ flex: 1, color: 'var(--gray-12)' }}>
-                {payee || 'Unknown'}
-            </Text>
+            {groupBy !== 'account' && (
+                <Text size="1" style={{ width: 120, color: 'var(--gray-11)' }}>
+                    {accountName || ''}
+                </Text>
+            )}
+            {groupBy !== 'category' && (
+                <Text size="1" style={{ width: 120, color: 'var(--gray-11)' }}>
+                    {categoryName || ''}
+                </Text>
+            )}
+            {groupBy !== 'payee' && (
+                <Text size="1" style={{ flex: 1, color: 'var(--gray-12)' }}>
+                    {payee || 'Unknown'}
+                </Text>
+            )}
             <Text size="1" style={{ flex: 1, color: 'var(--gray-10)', fontStyle: 'italic' }}>
                 {memo || ''}
             </Text>
@@ -36,9 +45,9 @@ const TransactionRow = ({ transaction }) => {
     )
 }
 
-// Table showing transactions for an expanded category row
-// @sig TransactionSubTable :: { transactions: [Transaction] } -> ReactElement
-const TransactionSubTable = ({ transactions }) => {
+// Table showing transactions for an expanded report row
+// @sig TransactionSubTable :: { transactions: [Transaction], groupBy: String? } -> ReactElement
+const TransactionSubTable = ({ transactions, groupBy }) => {
     if (!transactions || transactions.length === 0)
         return (
             <Text size="1" color="gray">
@@ -52,12 +61,21 @@ const TransactionSubTable = ({ transactions }) => {
                 <Text size="1" weight="medium" style={{ width: 90 }}>
                     Date
                 </Text>
-                <Text size="1" weight="medium" style={{ width: 120 }}>
-                    Account
-                </Text>
-                <Text size="1" weight="medium" style={{ flex: 1 }}>
-                    Payee
-                </Text>
+                {groupBy !== 'account' && (
+                    <Text size="1" weight="medium" style={{ width: 120 }}>
+                        Account
+                    </Text>
+                )}
+                {groupBy !== 'category' && (
+                    <Text size="1" weight="medium" style={{ width: 120 }}>
+                        Category
+                    </Text>
+                )}
+                {groupBy !== 'payee' && (
+                    <Text size="1" weight="medium" style={{ flex: 1 }}>
+                        Payee
+                    </Text>
+                )}
                 <Text size="1" weight="medium" style={{ flex: 1 }}>
                     Memo
                 </Text>
@@ -66,7 +84,7 @@ const TransactionSubTable = ({ transactions }) => {
                 </Text>
             </Flex>
             {transactions.map((txn, i) => (
-                <TransactionRow key={txn.id || i} transaction={txn} />
+                <TransactionRow key={txn.id || i} transaction={txn} groupBy={groupBy} />
             ))}
         </Box>
     )
