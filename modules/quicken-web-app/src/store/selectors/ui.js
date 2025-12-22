@@ -8,6 +8,8 @@ const defaults = {
     filterQuery: '',
     searchQuery: '',
     selectedCategories: [],
+    selectedAccounts: [],
+    groupBy: null,
     currentSearchIndex: 0,
     currentRowIndex: 0,
     customStartDate: null,
@@ -34,6 +36,13 @@ const searchQuery = (state, viewId) => transactionFilter(state, viewId)?.searchQ
 const selectedCategories = (state, viewId) =>
     transactionFilter(state, viewId)?.selectedCategories ?? defaults.selectedCategories
 
+// @sig selectedAccounts :: (ReduxState, String) -> [String]
+const selectedAccounts = (state, viewId) =>
+    transactionFilter(state, viewId)?.selectedAccounts ?? defaults.selectedAccounts
+
+// @sig groupBy :: (ReduxState, String) -> String?
+const groupBy = (state, viewId) => transactionFilter(state, viewId)?.groupBy ?? defaults.groupBy
+
 // @sig currentSearchIndex :: (ReduxState, String) -> Number
 const currentSearchIndex = (state, viewId) =>
     transactionFilter(state, viewId)?.currentSearchIndex ?? defaults.currentSearchIndex
@@ -55,7 +64,9 @@ export {
     dateRange,
     dateRangeKey,
     filterQuery,
+    groupBy,
     searchQuery,
+    selectedAccounts,
     selectedCategories,
     transactionFilter,
 }

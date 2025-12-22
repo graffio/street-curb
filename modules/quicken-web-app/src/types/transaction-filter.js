@@ -10,6 +10,8 @@
  *  filterQuery       : "String",
  *  searchQuery       : "String",
  *  selectedCategories: "[String]",
+ *  selectedAccounts  : "[String]",
+ *  groupBy           : "String?",
  *  currentSearchIndex: "Number",
  *  currentRowIndex   : "Number",
  *  customStartDate   : "Object?",
@@ -29,7 +31,7 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a TransactionFilter instance
- * @sig TransactionFilter :: (String, Object?, String, String, String, [String], Number, Number, Object?, Object?) -> TransactionFilter
+ * @sig TransactionFilter :: (String, Object?, String, String, String, [String], [String], String?, Number, Number, Object?, Object?) -> TransactionFilter
  */
 const TransactionFilter = function TransactionFilter(
     id,
@@ -38,13 +40,15 @@ const TransactionFilter = function TransactionFilter(
     filterQuery,
     searchQuery,
     selectedCategories,
+    selectedAccounts,
+    groupBy,
     currentSearchIndex,
     currentRowIndex,
     customStartDate,
     customEndDate,
 ) {
     const constructorName =
-        'TransactionFilter(id, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
+        'TransactionFilter(id, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
 
     R.validateRegex(constructorName, FieldTypes.viewId, 'id', false, id)
     R.validateObject(constructorName, 'dateRange', true, dateRange)
@@ -52,6 +56,8 @@ const TransactionFilter = function TransactionFilter(
     R.validateString(constructorName, 'filterQuery', false, filterQuery)
     R.validateString(constructorName, 'searchQuery', false, searchQuery)
     R.validateArray(constructorName, 1, 'String', undefined, 'selectedCategories', false, selectedCategories)
+    R.validateArray(constructorName, 1, 'String', undefined, 'selectedAccounts', false, selectedAccounts)
+    R.validateString(constructorName, 'groupBy', true, groupBy)
     R.validateNumber(constructorName, 'currentSearchIndex', false, currentSearchIndex)
     R.validateNumber(constructorName, 'currentRowIndex', false, currentRowIndex)
     R.validateObject(constructorName, 'customStartDate', true, customStartDate)
@@ -64,6 +70,8 @@ const TransactionFilter = function TransactionFilter(
     result.filterQuery = filterQuery
     result.searchQuery = searchQuery
     result.selectedCategories = selectedCategories
+    result.selectedAccounts = selectedAccounts
+    if (groupBy != null) result.groupBy = groupBy
     result.currentSearchIndex = currentSearchIndex
     result.currentRowIndex = currentRowIndex
     if (customStartDate != null) result.customStartDate = customStartDate
@@ -88,6 +96,8 @@ const transactionfilterToString = function () {
         ${R._toString(this.filterQuery)},
         ${R._toString(this.searchQuery)},
         ${R._toString(this.selectedCategories)},
+        ${R._toString(this.selectedAccounts)},
+        ${R._toString(this.groupBy)},
         ${R._toString(this.currentSearchIndex)},
         ${R._toString(this.currentRowIndex)},
         ${R._toString(this.customStartDate)},
@@ -132,6 +142,8 @@ TransactionFilter._from = _input => {
         filterQuery,
         searchQuery,
         selectedCategories,
+        selectedAccounts,
+        groupBy,
         currentSearchIndex,
         currentRowIndex,
         customStartDate,
@@ -144,6 +156,8 @@ TransactionFilter._from = _input => {
         filterQuery,
         searchQuery,
         selectedCategories,
+        selectedAccounts,
+        groupBy,
         currentSearchIndex,
         currentRowIndex,
         customStartDate,

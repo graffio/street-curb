@@ -10,6 +10,8 @@ export const TransactionFilter = {
         filterQuery: 'String',
         searchQuery: 'String',
         selectedCategories: '[String]',
+        selectedAccounts: '[String]',
+        groupBy: 'String?',
         currentSearchIndex: 'Number',
         currentRowIndex: 'Number',
         customStartDate: 'Object?',

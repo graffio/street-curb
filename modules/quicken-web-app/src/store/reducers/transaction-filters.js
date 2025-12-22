@@ -13,6 +13,8 @@ const defaultFilterForView = viewId =>
         '', // filterQuery
         '', // searchQuery
         [], // selectedCategories
+        [], // selectedAccounts
+        null, // groupBy
         0, // currentSearchIndex
         0, // currentRowIndex
         null, // customStartDate
