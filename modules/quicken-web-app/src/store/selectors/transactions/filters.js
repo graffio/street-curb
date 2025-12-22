@@ -110,19 +110,19 @@ const filterByCategories = (transactions, selectedCategories, categories) => {
     return transactions.filter(transaction => categoryMatches(transaction, selectedCategories, categories))
 }
 
-// Compare two dates and return the earlier one
-// @sig findEarlier :: (Date, Transaction) -> Date
-const findEarlier = (earliest, transaction) => {
-    const transactionDate = new Date(transaction.date)
-    return transactionDate < earliest ? transactionDate : earliest
-}
-
 /*
  * Get the earliest transaction date for default start date
  *
  * @sig getEarliestTransactionDate :: [Transaction] -> Date?
  */
 const getEarliestTransactionDate = transactions => {
+    // Compare two dates and return the earlier one
+    // @sig findEarlier :: (Date, Transaction) -> Date
+    const findEarlier = (earliest, transaction) => {
+        const transactionDate = new Date(transaction.date)
+        return transactionDate < earliest ? transactionDate : earliest
+    }
+
     if (!transactions || transactions.length === 0) return null
     return transactions.reduce(findEarlier, new Date(transactions[0].date))
 }
@@ -137,9 +137,20 @@ const filterByAccount = (transactions, accountId) => {
     return transactions.filter(t => t.accountId === accountId)
 }
 
+/*
+ * Filter transactions by multiple account IDs
+ *
+ * @sig filterByAccounts :: ([Transaction], [String]) -> [Transaction]
+ */
+const filterByAccounts = (transactions, accountIds) => {
+    if (!accountIds || accountIds.length === 0) return transactions
+    return transactions.filter(t => accountIds.includes(t.accountId))
+}
+
 export {
     categoryMatches,
     filterByAccount,
+    filterByAccounts,
     filterByCategories,
     filterByDateRange,
     filterByText,

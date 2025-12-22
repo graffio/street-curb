@@ -2,8 +2,9 @@
 // ABOUTME: Combines UI state with transaction filtering
 
 import memoizeReduxState, { memoizeReduxStatePerKey } from '@graffio/functional/src/ramda-like/memoize-redux-state.js'
-import { dateRange, filterQuery, searchQuery, selectedCategories } from '../ui.js'
+import { dateRange, filterQuery, searchQuery, selectedAccounts, selectedCategories } from '../ui.js'
 import {
+    filterByAccounts,
     filterByCategories,
     filterByDateRange,
     filterByText,
@@ -35,13 +36,14 @@ const _defaultEndDate = new Date()
 // @sig defaultEndDate :: () -> Date
 const defaultEndDate = () => _defaultEndDate
 
-// Apply all transaction filters in sequence: text -> date -> category
+// Apply all transaction filters in sequence: text -> date -> category -> account
 // @sig computeFilteredTransactions :: (ReduxState, String) -> [Transaction]
 const computeFilteredTransactions = (state, viewId) => {
     const { categories, transactions } = state
     const textFiltered = filterByText(transactions, filterQuery(state, viewId), categories)
     const dateFiltered = filterByDateRange(textFiltered, dateRange(state, viewId) || {})
-    return filterByCategories(dateFiltered, selectedCategories(state, viewId), categories)
+    const categoryFiltered = filterByCategories(dateFiltered, selectedCategories(state, viewId), categories)
+    return filterByAccounts(categoryFiltered, selectedAccounts(state, viewId))
 }
 
 /*
