@@ -4,6 +4,19 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [quicken-web-app] FilterBar Consolidation with Inline Chip Popovers (2025-12-22)
+**Purpose:** Replace sidebar filters with top-aligned chip row where each chip opens its own dropdown
+
+- Created individual chip components: DateFilterChip, CategoryFilterChip, AccountFilterChip, GroupByFilterChip, SearchFilterChip
+- Each chip uses Radix Popover with inline options (no separate panel)
+- FilterChipRow shows chips in columns with filter details below each (up to 3 lines, then "+N more")
+- Wired groupBy to actually change report aggregation (category/account/payee/month hierarchies)
+- Added filterByAccounts to filter chain (text → date → category → account)
+- TransactionSubTable hides redundant column based on groupBy dimension
+- Exported DATE_RANGES and calculateDateRange from design-system for chip reuse
+- Deleted FilterBar wrapper, FilterChip, FilterPanel, TransactionFiltersCard (dead code)
+- Both TransactionRegisterPage and CategoryReportPage use FilterChipRow directly
+
 ## [quicken-web-app] Table Layout Refactoring & SortOrder Type (2025-12-18)
 **Purpose:** Multi-column sorting support and reusable table layout utilities
 
@@ -434,3 +447,18 @@ This document summarizes the specifications that were previously archived in `sp
   - Solution: return `hasChildren || hasTransactions` to support both tree and sub-component expansion
 - Updated CategoryReportPage with `enrichTransactions` to add both categoryName and accountName
 - Tree hierarchy expansion and leaf transaction drill-down now work together seamlessly
+
+## [quicken-web-app] FilterBar Consolidation (2025-12-22)
+**Purpose:** Consolidate filter UI into reusable top-aligned FilterBar for both register and report pages
+
+- Created FilterChip component (reusable chip with label, value, optional clear button)
+- Created FilterChipRow component (horizontal row of chips with expand toggle)
+- Created FilterPanel component (expanded filter controls with conditional sections)
+- Created FilterBar component (manages expanded state, renders chip row + panel)
+- Added `groupBy` and `selectedAccounts` fields to TransactionFilter type and selectors
+- Updated TransactionRegisterPage to use FilterBar (showSearch=true)
+- Updated CategoryReportPage to use FilterBar (showGroupBy=true, showAccounts=true)
+- Deleted TransactionFiltersCard component (sidebar filter UI)
+- Deferred: Wiring groupBy to change aggregation dimension (currently always category)
+- Deferred: Rename CategoryReportPage to TransactionReportPage (after groupBy is functional)
+- Deferred: Filter persistence to storage (user wants to decide storage strategy later)

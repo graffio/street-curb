@@ -15,6 +15,7 @@ import {
     Flex,
     Grid,
     Heading,
+    Popover,
     Progress,
     ScrollArea,
     Section,
@@ -43,6 +44,7 @@ import { Table } from './components/Table.jsx'
 import { TitleAndSubtitle } from './components/TitleAndSubtitle.jsx'
 import { DateRangePicker } from './DateRangePicker.jsx'
 import { lookupTablePropType } from './prop-types/lookup-table-prop-type.js'
+import { calculateDateRange, DATE_RANGES } from './utils/date-range-utils.js'
 
 export {
     // facade for Radix Themes
@@ -56,6 +58,7 @@ export {
     Flex,
     Grid,
     Heading,
+    Popover,
     Progress,
     RadixTable,
     ScrollArea,
@@ -89,4 +92,8 @@ export {
 
     // PropTypes
     lookupTablePropType,
+
+    // Date range utilities
+    calculateDateRange,
+    DATE_RANGES,
 }
