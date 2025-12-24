@@ -14,10 +14,9 @@ Use at design decision points during implementation to get user approval before 
 
 1. **Reread** `.claude/conventions.md`
 2. **Reread** `.claude/preferences.md`
-3. **Search episodic memory** for similar past decisions
-4. **State the decision point** clearly
-5. **Present options** with trade-offs
-6. **Wait for approval** before proceeding
+3. **State the decision point** clearly
+4. **Present options** with trade-offs
+5. **Wait for approval** before proceeding
 
 ## Output Format
 

@@ -28,6 +28,25 @@ const splits = state => state.splits
 // @sig transactions :: State -> LookupTable<Transaction>
 const transactions = state => state.transactions
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Entity lookup selectors (parameterized by ID)
+// ---------------------------------------------------------------------------------------------------------------------
+
+// @sig accountName :: (State, String) -> String
+const accountName = (state, id) => accounts(state)?.get(id)?.name ?? ''
+
+// @sig accountType :: (State, String) -> String
+const accountType = (state, id) => accounts(state)?.get(id)?.type ?? ''
+
+// @sig securitySymbol :: (State, String) -> String
+const securitySymbol = (state, id) => securities(state)?.get(id)?.symbol ?? id
+
+// @sig securityName :: (State, String) -> String
+const securityName = (state, id) => securities(state)?.get(id)?.name ?? id
+
+// @sig categoryName :: (State, String) -> String
+const categoryName = (state, id) => categories(state)?.get(id)?.name ?? 'Uncategorized'
+
 // UI state (all selectors now take viewId as second parameter)
 export {
     currentRowIndex,
@@ -48,4 +67,22 @@ export {
 
 export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches } from './transactions/index.js'
 export { allCategoryNames } from './categories/index.js'
-export { initialized, accounts, categories, securities, tableLayouts, tabLayout, tags, splits, transactions }
+export {
+    // Base state
+    accounts,
+    categories,
+    initialized,
+    securities,
+    splits,
+    tabLayout,
+    tableLayouts,
+    tags,
+    transactions,
+
+    // Entity lookups
+    accountName,
+    accountType,
+    categoryName,
+    securityName,
+    securitySymbol,
+}

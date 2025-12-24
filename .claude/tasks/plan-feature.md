@@ -4,11 +4,10 @@ Use after brainstorming to create a task spec.
 
 ## Steps
 
-1. Check episodic memory for prior work on this feature
-2. Identify which task templates in `.claude/tasks/` apply
-3. **Read each template** and incorporate its steps into the plan
-4. Write `current-task.json` (schema below)
-5. Keep plan file (e.g., `~/.claude/plans/*.md`) for reference during implementation
+1. Identify which task templates in `.claude/tasks/` apply
+2. **Read each template** and incorporate its steps into the plan
+3. Write `current-task.json` (schema below)
+4. Keep plan file (e.g., `~/.claude/plans/*.md`) for reference during implementation
 
 ## Output Schema
 

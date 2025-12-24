@@ -1,16 +1,11 @@
 // ABOUTME: Cell renderers for transaction register table columns
 // ABOUTME: TanStack Table components with search highlighting and formatting
 
+import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors/index.js'
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Formatting helpers
-// ---------------------------------------------------------------------------------------------------------------------
-
-const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
+import { formatCurrency, formatDate, formatPrice, formatQuantity } from '../utils/formatters.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Cell renderers
@@ -32,7 +27,7 @@ const HighlightedText = ({ text, searchQuery }) => {
     }
 
     if (!searchQuery?.trim() || !text) return <span>{text || ''}</span>
-    if (!text.toLowerCase().includes(searchQuery.toLowerCase())) return <span>{text}</span>
+    if (!containsIgnoreCase(searchQuery)(text)) return <span>{text}</span>
 
     const matches = findMatches(text, searchQuery)
 
@@ -77,7 +72,7 @@ const DateCell = ({ getValue, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
     const date = typeof value === 'string' ? new Date(value) : value
-    const formatted = dateFormatter.format(date)
+    const formatted = formatDate(value)
     const relative = getRelativeTime(date)
 
     return (
@@ -117,7 +112,7 @@ const CurrencyCell = ({ getValue, table }) => {
 
     if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
-    const formatted = currencyFormatter.format(value)
+    const formatted = formatCurrency(value)
     const color = value >= 0 ? 'var(--green-11)' : 'var(--red-11)'
 
     return (
@@ -144,14 +139,13 @@ const DefaultCell = ({ getValue, column, table }) => {
 // Cell renderer for category column, looks up name from Redux store
 // @sig CategoryCell :: { getValue: Function, table: Table } -> ReactElement
 const CategoryCell = ({ getValue, table }) => {
-    const categories = useSelector(S.categories)
     const categoryId = getValue()
+    const name = useSelector(state => S.categoryName(state, categoryId))
     const searchQuery = table.options.meta?.searchQuery
-    const categoryName = categories?.get(categoryId)?.name ?? ''
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={categoryName} searchQuery={searchQuery} />
+            <HighlightedText text={name} searchQuery={searchQuery} />
         </span>
     )
 }
@@ -220,15 +214,13 @@ const ExpandableCategoryCell = ({ row, getValue }) => {
 // Cell renderer for security column, looks up symbol from Redux store
 // @sig SecurityCell :: { getValue: Function, table: Table } -> ReactElement
 const SecurityCell = ({ getValue, table }) => {
-    const securities = useSelector(S.securities)
     const securityId = getValue()
+    const symbol = useSelector(state => S.securitySymbol(state, securityId))
     const searchQuery = table.options.meta?.searchQuery
-    const security = securities?.get(securityId)
-    const displayText = security ? security.symbol : securityId || ''
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={displayText} searchQuery={searchQuery} />
+            <HighlightedText text={symbol} searchQuery={searchQuery} />
         </span>
     )
 }
@@ -236,15 +228,13 @@ const SecurityCell = ({ getValue, table }) => {
 // Cell renderer for account column, looks up name from Redux store
 // @sig AccountCell :: { getValue: Function, table: Table } -> ReactElement
 const AccountCell = ({ getValue, table }) => {
-    const accounts = useSelector(S.accounts)
     const accountId = getValue()
+    const name = useSelector(state => S.accountName(state, accountId))
     const searchQuery = table.options.meta?.searchQuery
-    const account = accounts?.get(accountId)
-    const displayText = account ? account.name : accountId || ''
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={displayText} searchQuery={searchQuery} />
+            <HighlightedText text={name || accountId || ''} searchQuery={searchQuery} />
         </span>
     )
 }
@@ -254,22 +244,15 @@ const AccountCell = ({ getValue, table }) => {
 const QuantityCell = ({ getValue }) => {
     const value = getValue()
     if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
-    const formatted = value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-    return <span style={{ textAlign: 'right', display: 'block' }}>{formatted}</span>
+    return <span style={{ textAlign: 'right', display: 'block' }}>{formatQuantity(value)}</span>
 }
 
 // Cell renderer for prices with 2-4 decimal places (trailing zeros after cents stripped)
 // @sig PriceCell :: { getValue: Function } -> ReactElement
 const PriceCell = ({ getValue }) => {
-    // Strip trailing zeros after cents: $454.3400 → $454.34, $454.3450 → $454.345
-    // @sig stripTrailingZeros :: String -> String
-    const stripTrailingZeros = str => str.replace(/(\.\d{2})0+$/, '$1').replace(/(\.\d{3})0$/, '$1')
-
     const value = getValue()
     if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
-    const raw = value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 })
-    const formatted = stripTrailingZeros(raw)
-    return <span style={{ textAlign: 'right', display: 'block' }}>{formatted}</span>
+    return <span style={{ textAlign: 'right', display: 'block' }}>{formatPrice(value)}</span>
 }
 
 export {

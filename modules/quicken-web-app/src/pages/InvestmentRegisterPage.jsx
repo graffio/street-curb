@@ -7,7 +7,13 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { ACTION_LABELS, investmentTransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
-import { ActionFilterChip, DateFilterChip, SearchFilterChip, SecurityFilterChip } from '../components/index.js'
+import {
+    ActionFilterChip,
+    DateFilterChip,
+    FilterColumn,
+    SearchFilterChip,
+    SecurityFilterChip,
+} from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import {
     filterByAccount,
@@ -15,6 +21,7 @@ import {
     filterBySecurities,
 } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
+import { formatDateRange } from '../utils/formatters.js'
 import {
     applyOrderChange,
     applySizingChange,
@@ -25,35 +32,9 @@ import {
 
 const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
-
 const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
-const columnStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
-
-const detailTextStyle = {
-    fontSize: 'var(--font-size-1)',
-    color: 'var(--gray-11)',
-    lineHeight: 1.3,
-    paddingLeft: 'var(--space-2)',
-}
-
 const MAX_DETAIL_LINES = 3
-
-/*
- * A filter column with chip and detail lines below
- *
- * @sig FilterColumn :: { chip: ReactElement, details: [String] } -> ReactElement
- */
-const FilterColumn = ({ chip, details }) => (
-    <div style={columnStyle}>
-        {chip}
-        {details.map((line, i) => (
-            <span key={i} style={detailTextStyle}>
-                {line}
-            </span>
-        ))}
-    </div>
-)
 
 /*
  * Investment Transaction Register page with filtering, search, and navigation
@@ -63,21 +44,6 @@ const FilterColumn = ({ chip, details }) => (
  */
 const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%' }) => {
     const makeViewId = id => `cols_investment_${id}`
-
-    // Format a date range for display
-    // @sig formatDateRange :: (Date, Date) -> String?
-    const formatDateRange = (start, end) => {
-        // @sig formatDate :: Date -> String?
-        const formatDate = date => {
-            if (!date || !(date instanceof Date)) return null
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        }
-
-        const startStr = formatDate(start)
-        const endStr = formatDate(end)
-        if (!startStr || !endStr) return null
-        return `${startStr} – ${endStr}`
-    }
 
     // Build detail lines for a list (up to MAX_DETAIL_LINES, then +N more)
     // @sig buildDetailLines :: [String] -> [String]
@@ -197,7 +163,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const selectedSecurities = useSelector(state => S.selectedSecurities(state, viewId))
     const selectedInvestmentActions = useSelector(state => S.selectedInvestmentActions(state, viewId))
     const filterQuery = useSelector(state => S.filterQuery(state, viewId))
-    const accounts = useSelector(S.accounts)
     const securities = useSelector(S.securities)
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -242,7 +207,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const data = useMemo(() => sortRegisterRows(sorting, withBalances), [withBalances, sorting])
 
     // Get account name for header
-    const accountName = useMemo(() => accounts?.get(accountId)?.name || 'Investment Account', [accounts, accountId])
+    const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
     // With manual sorting, search matches are already in display order
     const matchCount = searchMatches.length

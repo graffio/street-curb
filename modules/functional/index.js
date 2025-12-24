@@ -4,6 +4,7 @@
 import { PromiseCache, PromiseCacheWithCacheBusting } from './promise-cache.js'
 import LookupTable from './src/lookup-table.js'
 import addOrReplaceAtPath from './src/ramda-like/add-or-replace-at-path.js'
+import anyFieldContains from './src/ramda-like/any-field-contains.js'
 import aperture from './src/ramda-like/aperture.js'
 import appendIfMissing from './src/ramda-like/append-if-missing.js'
 import arrayToLookupTable from './src/ramda-like/array-to-lookup-table.js'
@@ -17,6 +18,7 @@ import byFieldStringComparator from './src/ramda-like/by-field-string-comparator
 import clone from './src/ramda-like/clone.js'
 import compactMap from './src/ramda-like/compact-map.js'
 import compact from './src/ramda-like/compact.js'
+import containsIgnoreCase from './src/ramda-like/contains-ignore-case.js'
 import debounce from './src/ramda-like/debounce.js'
 import diffObjects from './src/ramda-like/diff-objects.js'
 import dissocPath from './src/ramda-like/dissoc-path.js'
@@ -105,6 +107,7 @@ export {
     // functions
     addOrReplaceAtPath,
     aggregateTree,
+    anyFieldContains,
     aperture,
     appendIfMissing,
     arrayToLookupTable,
@@ -117,6 +120,7 @@ export {
     byFieldStringComparator,
     clone,
     compact,
+    containsIgnoreCase,
     debounce,
     diffObjects,
     dissoc,
