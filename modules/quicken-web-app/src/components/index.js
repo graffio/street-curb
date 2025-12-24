@@ -8,6 +8,7 @@ export {
     ActionFilterChip,
     CategoryFilterChip,
     DateFilterChip,
+    FilterColumn,
     GroupByFilterChip,
     SearchFilterChip,
     SecurityFilterChip,

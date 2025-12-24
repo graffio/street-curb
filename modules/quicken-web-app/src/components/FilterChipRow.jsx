@@ -5,43 +5,19 @@ import { Flex, Text } from '@graffio/design-system'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors/index.js'
-import { formatShortDate } from '../utils/formatters.js'
+import { formatDateRange } from '../utils/formatters.js'
 import {
     AccountFilterChip,
     CategoryFilterChip,
     DateFilterChip,
+    FilterColumn,
     GroupByFilterChip,
     SearchFilterChip,
 } from './filter-chips.jsx'
 
 const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
-const columnStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
-
-const detailTextStyle = {
-    fontSize: 'var(--font-size-1)',
-    color: 'var(--gray-11)',
-    lineHeight: 1.3,
-    paddingLeft: 'var(--space-2)', // Align with text inside chip (matches chip's horizontal padding)
-}
-
 const MAX_DETAIL_LINES = 3
-
-/*
- * A filter column with chip and detail lines below
- *
- * @sig FilterColumn :: { chip: ReactElement, details: [String] } -> ReactElement
- */
-const FilterColumn = ({ chip, details }) => (
-    <div style={columnStyle}>
-        {chip}
-        {details.map((line, i) => (
-            <span key={i} style={detailTextStyle}>
-                {line}
-            </span>
-        ))}
-    </div>
-)
 
 /*
  * Row of filter chips organized in columns with details below each chip
@@ -50,15 +26,6 @@ const FilterColumn = ({ chip, details }) => (
  *     FilterChipRowProps = { viewId, showGroupBy?, accountId? }
  */
 const FilterChipRow = ({ viewId, showGroupBy = false, accountId = null }) => {
-    // Format a date range for display
-    // @sig formatDateRange :: (Date, Date) -> String?
-    const formatDateRange = (start, end) => {
-        const startStr = formatShortDate(start)
-        const endStr = formatShortDate(end)
-        if (!startStr || !endStr) return null
-        return `${startStr} – ${endStr}`
-    }
-
     // Build detail lines for categories (up to MAX_DETAIL_LINES, then +N more)
     // @sig buildCategoryDetails :: [String] -> [String]
     const buildCategoryDetails = categories => {

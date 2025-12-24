@@ -56,6 +56,30 @@ const itemRowStyle = { padding: 'var(--space-2)', borderBottom: '1px solid var(-
 const optionStyle = { padding: 'var(--space-2) var(--space-3)', cursor: 'pointer', borderRadius: 'var(--radius-1)' }
 const separatorStyle = { padding: 'var(--space-1) var(--space-3)', userSelect: 'none' }
 
+const columnStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
+const detailTextStyle = {
+    fontSize: 'var(--font-size-1)',
+    color: 'var(--gray-11)',
+    lineHeight: 1.3,
+    paddingLeft: 'var(--space-2)',
+}
+
+/*
+ * A filter column with chip and detail lines below
+ *
+ * @sig FilterColumn :: { chip: ReactElement, details: [String] } -> ReactElement
+ */
+const FilterColumn = ({ chip, details }) => (
+    <div style={columnStyle}>
+        {chip}
+        {details.map((line, i) => (
+            <span key={i} style={detailTextStyle}>
+                {line}
+            </span>
+        ))}
+    </div>
+)
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------------------------------------------------
@@ -644,6 +668,7 @@ export {
     ActionFilterChip,
     CategoryFilterChip,
     DateFilterChip,
+    FilterColumn,
     GroupByFilterChip,
     SearchFilterChip,
     SecurityFilterChip,

@@ -29,6 +29,18 @@ const formatShortDate = date => {
 }
 
 /*
+ * Format a date range for display (e.g., "Dec 1, 2025 – Dec 24, 2025")
+ *
+ * @sig formatDateRange :: (Date?, Date?) -> String?
+ */
+const formatDateRange = (start, end) => {
+    const startStr = formatShortDate(start)
+    const endStr = formatShortDate(end)
+    if (!startStr || !endStr) return null
+    return `${startStr} – ${endStr}`
+}
+
+/*
  * Format a number with up to 3 decimal places (for share quantities)
  *
  * @sig formatQuantity :: Number -> String
@@ -45,4 +57,4 @@ const formatPrice = value => {
     return raw.replace(/(\.\d{2})00$/, '$1').replace(/(\.\d{2}\d)0$/, '$1')
 }
 
-export { formatCurrency, formatDate, formatPrice, formatQuantity, formatShortDate }
+export { formatCurrency, formatDate, formatDateRange, formatPrice, formatQuantity, formatShortDate }
