@@ -114,6 +114,9 @@ const PayeeCell = ({ row, table }) => {
 const CurrencyCell = ({ getValue, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
+
+    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+
     const formatted = currencyFormatter.format(value)
     const color = value >= 0 ? 'var(--green-11)' : 'var(--red-11)'
 
@@ -153,6 +156,42 @@ const CategoryCell = ({ getValue, table }) => {
     )
 }
 
+// Map QIF action codes to human-readable labels
+const ACTION_LABELS = {
+    Buy: 'Buy',
+    Sell: 'Sell',
+    Div: 'Dividend',
+    ReinvDiv: 'Reinvest Div',
+    XIn: 'Transfer In',
+    XOut: 'Transfer Out',
+    ContribX: 'Contribution',
+    WithdrwX: 'Withdrawal',
+    ShtSell: 'Short Sell',
+    CvrShrt: 'Cover Short',
+    CGLong: 'LT Cap Gain',
+    CGShort: 'ST Cap Gain',
+    MargInt: 'Margin Int',
+    ShrsIn: 'Shares In',
+    ShrsOut: 'Shares Out',
+    StkSplit: 'Stock Split',
+    Exercise: 'Exercise',
+    Expire: 'Expire',
+}
+
+// Cell renderer for investment action column with human-readable labels
+// @sig ActionCell :: { getValue: Function, table: Table } -> ReactElement
+const ActionCell = ({ getValue, table }) => {
+    const code = getValue()
+    const searchQuery = table.options.meta?.searchQuery
+    const label = ACTION_LABELS[code] || code || ''
+
+    return (
+        <span style={{ display: 'block' }}>
+            <HighlightedText text={label} searchQuery={searchQuery} />
+        </span>
+    )
+}
+
 // Cell renderer for expandable tree row with category name
 // @sig ExpandableCategoryCell :: { row: Row, getValue: Function } -> ReactElement
 const ExpandableCategoryCell = ({ row, getValue }) => {
@@ -178,4 +217,72 @@ const ExpandableCategoryCell = ({ row, getValue }) => {
     )
 }
 
-export { DateCell, PayeeCell, CurrencyCell, DefaultCell, CategoryCell, ExpandableCategoryCell }
+// Cell renderer for security column, looks up symbol from Redux store
+// @sig SecurityCell :: { getValue: Function, table: Table } -> ReactElement
+const SecurityCell = ({ getValue, table }) => {
+    const securities = useSelector(S.securities)
+    const securityId = getValue()
+    const searchQuery = table.options.meta?.searchQuery
+    const security = securities?.get(securityId)
+    const displayText = security ? security.symbol : securityId || ''
+
+    return (
+        <span style={{ display: 'block' }}>
+            <HighlightedText text={displayText} searchQuery={searchQuery} />
+        </span>
+    )
+}
+
+// Cell renderer for account column, looks up name from Redux store
+// @sig AccountCell :: { getValue: Function, table: Table } -> ReactElement
+const AccountCell = ({ getValue, table }) => {
+    const accounts = useSelector(S.accounts)
+    const accountId = getValue()
+    const searchQuery = table.options.meta?.searchQuery
+    const account = accounts?.get(accountId)
+    const displayText = account ? account.name : accountId || ''
+
+    return (
+        <span style={{ display: 'block' }}>
+            <HighlightedText text={displayText} searchQuery={searchQuery} />
+        </span>
+    )
+}
+
+// Cell renderer for share quantity with 3 decimal places
+// @sig QuantityCell :: { getValue: Function } -> ReactElement
+const QuantityCell = ({ getValue }) => {
+    const value = getValue()
+    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    const formatted = value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+    return <span style={{ textAlign: 'right', display: 'block' }}>{formatted}</span>
+}
+
+// Cell renderer for prices with 2-4 decimal places (trailing zeros after cents stripped)
+// @sig PriceCell :: { getValue: Function } -> ReactElement
+const PriceCell = ({ getValue }) => {
+    // Strip trailing zeros after cents: $454.3400 → $454.34, $454.3450 → $454.345
+    // @sig stripTrailingZeros :: String -> String
+    const stripTrailingZeros = str => str.replace(/(\.\d{2})0+$/, '$1').replace(/(\.\d{3})0$/, '$1')
+
+    const value = getValue()
+    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    const raw = value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 })
+    const formatted = stripTrailingZeros(raw)
+    return <span style={{ textAlign: 'right', display: 'block' }}>{formatted}</span>
+}
+
+export {
+    AccountCell,
+    ACTION_LABELS,
+    ActionCell,
+    CategoryCell,
+    CurrencyCell,
+    DateCell,
+    DefaultCell,
+    ExpandableCategoryCell,
+    PayeeCell,
+    PriceCell,
+    QuantityCell,
+    SecurityCell,
+}

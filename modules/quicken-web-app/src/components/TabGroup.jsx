@@ -6,6 +6,7 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
+import { InvestmentRegisterPage } from '../pages/InvestmentRegisterPage.jsx'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
@@ -158,17 +159,29 @@ const EmptyState = () => (
 
 // @sig ViewContent :: { group: TabGroup } -> ReactElement
 const ViewContent = ({ group }) => {
+    // Determine if an account is an investment type
+    // @sig isInvestmentAccount :: Account -> Boolean
+    const isInvestmentAccount = account => account?.type === 'Investment' || account?.type === '401(k)/403(b)'
+
     // @sig renderViewContent :: View -> ReactElement
-    const renderViewContent = view =>
-        view.match({
-            Register: () => <TransactionRegisterPage accountId={view.accountId} />,
-            Report: () => <CategoryReportPage viewId={view.id} />,
+    const renderViewContent = view => {
+        const { accountId, id } = view
+        return view.match({
+            Register: () => {
+                const account = accounts.get(accountId)
+                if (isInvestmentAccount(account)) return <InvestmentRegisterPage accountId={accountId} />
+                return <TransactionRegisterPage accountId={accountId} />
+            },
+            Report: () => <CategoryReportPage viewId={id} />,
             Reconciliation: () => (
                 <Flex align="center" justify="center" style={{ height: '100%' }}>
-                    <Text>Reconciliation: {view.accountId}</Text>
+                    <Text>Reconciliation: {accountId}</Text>
                 </Flex>
             ),
         })
+    }
+
+    const accounts = useSelector(S.accounts)
 
     if (!group.activeViewId) return <EmptyState />
 

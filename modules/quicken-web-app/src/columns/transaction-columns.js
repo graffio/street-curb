@@ -3,7 +3,17 @@
 
 import { ColumnDefinition } from '@graffio/design-system/src/types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
-import { CategoryCell, CurrencyCell, DateCell, DefaultCell, PayeeCell } from './cell-renderers.jsx'
+import {
+    ActionCell,
+    CategoryCell,
+    CurrencyCell,
+    DateCell,
+    DefaultCell,
+    PayeeCell,
+    PriceCell,
+    QuantityCell,
+    SecurityCell,
+} from './cell-renderers.jsx'
 
 /*
  * Column definitions for bank transactions (checking, savings, credit card)
@@ -22,16 +32,18 @@ const bankTransactionColumns = LookupTable([
 
 /*
  * Column definitions for investment transactions (brokerage, 401k, IRA)
+ * Row structure is RegisterRow with { transaction, runningBalance } fields
  */
 // prettier-ignore
 const investmentTransactionColumns = LookupTable([
-    ColumnDefinition.from({ id: 'date'      , accessorKey: 'date'            , header: 'Date'    , size: 110, cell: DateCell    ,                       meta: { searchable: true  }}),
-    ColumnDefinition.from({ id: 'action'    , accessorKey: 'investmentAction', header: 'Action'  , size: 80 , cell: DefaultCell ,                       meta: { searchable: true  }}),
-    ColumnDefinition.from({ id: 'security'  , accessorKey: 'securityId'      , header: 'Security', size: 200, cell: DefaultCell , enableResizing: true, meta: { searchable: true  }}),
-    ColumnDefinition.from({ id: 'quantity'  , accessorKey: 'quantity'        , header: 'Qty'     , size: 80 , cell: DefaultCell , textAlign: 'right',   meta: { searchable: false }}),
-    ColumnDefinition.from({ id: 'price'     , accessorKey: 'price'           , header: 'Price'   , size: 90 , cell: CurrencyCell,                       meta: { searchable: false }}),
-    ColumnDefinition.from({ id: 'commission', accessorKey: 'commission'      , header: 'Comm'    , size: 70 , cell: CurrencyCell,                       meta: { searchable: false }}),
-    ColumnDefinition.from({ id: 'amount'    , accessorKey: 'amount'          , header: 'Amount'  , size: 100, cell: CurrencyCell,                       meta: { searchable: false }}),
+    ColumnDefinition.from({ id: 'date'       , accessorKey: 'transaction.date'            , header: 'Date'    , size: 110, cell: DateCell    , enableResizing: false, meta: { searchable: true                           }}),
+    ColumnDefinition.from({ id: 'security'   , accessorKey: 'transaction.securityId'      , header: 'Security', size: 100, cell: SecurityCell, enableResizing: true , meta: { searchable: true                           }}),
+    ColumnDefinition.from({ id: 'action'     , accessorKey: 'transaction.investmentAction', header: 'Action'  , size: 100, cell: ActionCell  , enableResizing: false, meta: { searchable: true                           }}),
+    ColumnDefinition.from({ id: 'quantity'   , accessorKey: 'transaction.quantity'        , header: 'Shares'  , size: 80 , cell: QuantityCell, enableResizing: false, meta: { searchable: false                          }}),
+    ColumnDefinition.from({ id: 'price'      , accessorKey: 'transaction.price'           , header: 'Price'   , size: 110, cell: PriceCell   , enableResizing: false, meta: { searchable: false                          }}),
+    ColumnDefinition.from({ id: 'amount'     , accessorKey: 'transaction.amount'          , header: 'Amount'  , size: 100, cell: CurrencyCell, enableResizing: false, meta: { searchable: false                          }}),
+    ColumnDefinition.from({ id: 'commission' , accessorKey: 'transaction.commission'      , header: 'Comm'    , size: 80 , cell: CurrencyCell, enableResizing: false, meta: { searchable: false                          }}),
+    ColumnDefinition.from({ id: 'cashBalance', accessorKey: 'runningBalance'              , header: 'Balance' , size: 100, cell: CurrencyCell, enableResizing: false, meta: { searchable: false, showRunningTotal: true  }}),
 ], ColumnDefinition, 'id')
 
 export { bankTransactionColumns, investmentTransactionColumns }

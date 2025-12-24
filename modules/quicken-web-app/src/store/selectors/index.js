@@ -41,6 +41,8 @@ export {
     searchQuery,
     selectedAccounts,
     selectedCategories,
+    selectedInvestmentActions,
+    selectedSecurities,
     transactionFilter,
 } from './ui.js'
 
