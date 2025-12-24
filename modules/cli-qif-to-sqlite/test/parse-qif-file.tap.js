@@ -1,3 +1,6 @@
+// ABOUTME: Integration tests for QIF parser
+// ABOUTME: Verifies parsing of accounts, transactions, categories, securities, prices, and edge cases
+
 import tap from 'tap'
 import parseQifData from '../src/qif/parse-qif-data.js'
 
@@ -166,21 +169,34 @@ tap.test('QIF Parser Comprehensive Test', async t => {
     t.test('Investment transaction parsing', t => {
         t.equal(result.investmentTransactions.length, 8, 'Should parse eight investment transactions')
 
-        const buy = result.investmentTransactions[0]
-        t.same(buy.date, new Date('01/15/2023'), 'Should parse date correctly')
-        t.equal(buy.transactionType, 'Buy', 'Should identify transaction type as Buy')
-        t.equal(buy.security, 'APL', 'Should parse security symbol')
-        t.equal(buy.price, 150.25, 'Should parse price correctly')
-        t.equal(buy.quantity, 10, 'Should parse quantity correctly')
-        t.equal(buy.amount, 1502.5, 'Should calculate total amount correctly')
-        t.equal(buy.cleared, 'X', 'Should parse cleared status')
-        t.equal(buy.number, '123', 'Should parse transaction number')
-        t.equal(buy.category, '[Brokerage Account]', 'Should parse category/transfer account')
-        t.equal(buy.memo, 'Bought 10 shares of Apple Inc.', 'Should parse memo correctly')
-        t.equal(buy.commission, 14.99, 'Should parse commission')
+        const {
+            amount,
+            category,
+            cleared,
+            commission,
+            date,
+            memo,
+            number,
+            price,
+            quantity,
+            security,
+            transactionType,
+        } = result.investmentTransactions[0]
+        t.same(date, new Date('01/15/2023'), 'Should parse date correctly')
+        t.equal(transactionType, 'Buy', 'Should identify transaction type as Buy')
+        t.equal(security, 'APL', 'Should parse security symbol')
+        t.equal(price, 150.25, 'Should parse price correctly')
+        t.equal(quantity, 10, 'Should parse quantity correctly')
+        t.equal(amount, -1502.5, 'Should calculate total amount correctly (negative = cash outflow)')
+        t.equal(cleared, 'X', 'Should parse cleared status')
+        t.equal(number, '123', 'Should parse transaction number')
+        t.equal(category, '[Brokerage Account]', 'Should parse category/transfer account')
+        t.equal(memo, 'Bought 10 shares of Apple Inc.', 'Should parse memo correctly')
+        t.equal(commission, 14.99, 'Should parse commission')
 
         const sell = result.investmentTransactions[1]
         t.equal(sell.transactionType, 'Sell', 'Should identify transaction type as Sell')
+
         // t.equal(sellTransaction.splits.length, 2, 'Should parse two splits for sell transaction')
         // t.equal(sellTransaction.splits[0].amount, 1000.0, 'Should parse first split amount')
         // t.equal(sellTransaction.splits[1].amount, 502.5, 'Should parse second split amount')
@@ -209,10 +225,10 @@ tap.test('QIF Parser Comprehensive Test', async t => {
     t.test('Bank transaction parsing', t => {
         t.equal(result.bankTransactions.length, 5, 'Should parse five non-investment transactions')
 
-        const transaction = result.bankTransactions[0]
-        t.equal(transaction.amount, -1000.0, 'Should parse amount correctly')
-        t.equal(transaction.payee, 'Check 101', 'Should parse payee correctly')
-        t.equal(transaction.number, '101', 'Should parse check number correctly')
+        const { amount, number, payee } = result.bankTransactions[0]
+        t.equal(amount, -1000.0, 'Should parse amount correctly')
+        t.equal(payee, 'Check 101', 'Should parse payee correctly')
+        t.equal(number, '101', 'Should parse check number correctly')
         t.end()
     })
 
@@ -280,15 +296,6 @@ tap.test('QIF Parser Comprehensive Test', async t => {
         t.equal(result.classes[0].description, 'Personal expenses', 'Should parse class description correctly')
         t.end()
     })
-
-    // t.test('Memorized transaction parsing', t => {
-    //     t.equal(result.memorized.length, 1, 'Should parse one memorized transaction')
-    //     t.equal(result.memorized[0].kind, 'Payment', 'Should parse memorized transaction type correctly')
-    //     t.equal(result.memorized[0].amount, -50.0, 'Should parse memorized transaction amount correctly')
-    //     t.equal(result.memorized[0].payee, 'Monthly Subscription', 'Should parse memorized transaction payee correctly')
-    //     t.equal(result.memorized[0].memo, 'Netflix subscription', 'Should parse memorized transaction memo correctly')
-    //     t.end()
-    // })
 
     t.test('Payee parsing', t => {
         t.equal(result.payees.length, 1, 'Should parse one payee')
@@ -376,6 +383,7 @@ RUnknown Field
     t.test('Edge case category parsing', t => {
         t.equal(result.categories.length, 1, 'Should parse one edge case category')
         t.equal(result.categories[0].name, 'UnknownCategory', 'Should parse category name')
+
         // t.equal(result.categories[0].X, 'Unknown Field', 'Should store unknown field')
         t.end()
     })
@@ -383,6 +391,7 @@ RUnknown Field
     t.test('Edge case class parsing', t => {
         t.equal(result.classes.length, 1, 'Should parse one edge case class')
         t.equal(result.classes[0].name, 'UnknownClass', 'Should parse class name')
+
         // t.equal(result.classes[0].Y, 'Unknown Field', 'Should store unknown field')
         t.end()
     })
@@ -390,6 +399,7 @@ RUnknown Field
     t.test('Edge case tag parsing', t => {
         t.equal(result.tags.length, 1, 'Should parse one edge case tag')
         t.equal(result.tags[0].name, 'UnknownTag', 'Should parse tag name')
+
         // t.equal(result.tags[0].Z, 'Unknown Field', 'Should store unknown field')
         t.end()
     })
@@ -397,6 +407,7 @@ RUnknown Field
     t.test('Edge case payee parsing', t => {
         t.equal(result.payees.length, 1, 'Should parse one edge case payee')
         t.equal(result.payees[0].name, 'UnknownPayee', 'Should parse payee name')
+
         // t.equal(result.payees[0].B, 'Unknown Field', 'Should store unknown field')
         t.end()
     })
@@ -404,6 +415,7 @@ RUnknown Field
     t.test('Edge case security parsing', t => {
         t.equal(result.securities.length, 1, 'Should parse one edge case security')
         t.equal(result.securities[0].name, 'UnknownSecurity', 'Should parse security name')
+
         // t.equal(result.securities[0].R, 'Unknown Field', 'Should store unknown field')
         t.end()
     })
