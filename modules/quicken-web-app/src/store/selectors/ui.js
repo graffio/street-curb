@@ -9,6 +9,8 @@ const defaults = {
     searchQuery: '',
     selectedCategories: [],
     selectedAccounts: [],
+    selectedSecurities: [],
+    selectedInvestmentActions: [],
     groupBy: null,
     currentSearchIndex: 0,
     currentRowIndex: 0,
@@ -40,6 +42,14 @@ const selectedCategories = (state, viewId) =>
 const selectedAccounts = (state, viewId) =>
     transactionFilter(state, viewId)?.selectedAccounts ?? defaults.selectedAccounts
 
+// @sig selectedSecurities :: (ReduxState, String) -> [String]
+const selectedSecurities = (state, viewId) =>
+    transactionFilter(state, viewId)?.selectedSecurities ?? defaults.selectedSecurities
+
+// @sig selectedInvestmentActions :: (ReduxState, String) -> [String]
+const selectedInvestmentActions = (state, viewId) =>
+    transactionFilter(state, viewId)?.selectedInvestmentActions ?? defaults.selectedInvestmentActions
+
 // @sig groupBy :: (ReduxState, String) -> String?
 const groupBy = (state, viewId) => transactionFilter(state, viewId)?.groupBy ?? defaults.groupBy
 
@@ -68,5 +78,7 @@ export {
     searchQuery,
     selectedAccounts,
     selectedCategories,
+    selectedInvestmentActions,
+    selectedSecurities,
     transactionFilter,
 }

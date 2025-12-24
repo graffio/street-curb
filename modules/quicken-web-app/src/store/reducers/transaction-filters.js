@@ -14,6 +14,8 @@ const defaultFilterForView = viewId =>
         '', // searchQuery
         [], // selectedCategories
         [], // selectedAccounts
+        [], // selectedSecurities
+        [], // selectedInvestmentActions
         null, // groupBy
         0, // currentSearchIndex
         0, // currentRowIndex

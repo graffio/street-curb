@@ -1,4 +1,4 @@
 // ABOUTME: Investment computation exports (lots, holdings, gains)
-// ABOUTME: Populated in 03-investments phase
+// ABOUTME: Running cash balance, holdings, and portfolio computations
 
-// Placeholder - functions added in 03-investments.md
+export { calculateRunningCashBalances } from './running-cash-balance.js'

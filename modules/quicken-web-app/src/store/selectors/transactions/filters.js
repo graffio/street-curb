@@ -35,20 +35,31 @@ const transactionMatchesSearch = (transaction, searchQuery, categories) => {
 
 /*
  * Filter transactions by text content
+ * Checks both bank fields (payee, memo, description) and investment fields (action, security)
  *
- * @sig filterByText :: ([Transaction], String, LookupTable<Category>?) -> [Transaction]
+ * @sig filterByText :: ([Transaction], String, LookupTable<Category>?, LookupTable<Security>?) -> [Transaction]
  */
-const filterByText = (transactions, query, categories) => {
+const filterByText = (transactions, query, categories, securities) => {
+    // @sig getSecurityName :: (Transaction, LookupTable<Security>) -> String?
+    const getSecurityName = (transaction, secs) => {
+        if (!transaction.securityId || !secs) return null
+        const security = secs.get(transaction.securityId)
+        return security ? security.symbol || security.name : null
+    }
+
     // @sig matchesTextQuery :: Transaction -> Boolean
     const matchesTextQuery = transaction => {
-        const { description, memo, payee } = transaction
+        const { description, investmentAction, memo, payee } = transaction
 
         // Short-circuit: check each field individually, no array/string allocation
         if (description?.toLowerCase().includes(queryLower)) return true
         if (memo?.toLowerCase().includes(queryLower)) return true
         if (payee?.toLowerCase().includes(queryLower)) return true
+        if (investmentAction?.toLowerCase().includes(queryLower)) return true
         const categoryName = getCategoryName(transaction, categories)
         if (categoryName?.toLowerCase().includes(queryLower)) return true
+        const securityName = getSecurityName(transaction, securities)
+        if (securityName?.toLowerCase().includes(queryLower)) return true
         return false
     }
 
@@ -147,12 +158,34 @@ const filterByAccounts = (transactions, accountIds) => {
     return transactions.filter(t => accountIds.includes(t.accountId))
 }
 
+/*
+ * Filter transactions by security IDs (for investment transactions)
+ *
+ * @sig filterBySecurities :: ([Transaction], [String]) -> [Transaction]
+ */
+const filterBySecurities = (transactions, securityIds) => {
+    if (!securityIds || securityIds.length === 0) return transactions
+    return transactions.filter(t => securityIds.includes(t.securityId))
+}
+
+/*
+ * Filter transactions by investment action types
+ *
+ * @sig filterByInvestmentActions :: ([Transaction], [String]) -> [Transaction]
+ */
+const filterByInvestmentActions = (transactions, actions) => {
+    if (!actions || actions.length === 0) return transactions
+    return transactions.filter(t => actions.includes(t.investmentAction))
+}
+
 export {
     categoryMatches,
     filterByAccount,
     filterByAccounts,
     filterByCategories,
     filterByDateRange,
+    filterByInvestmentActions,
+    filterBySecurities,
     filterByText,
     getCategoryName,
     getEarliestTransactionDate,
