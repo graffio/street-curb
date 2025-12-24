@@ -15,6 +15,7 @@ import {
     filterBySecurities,
 } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
+import { formatShortDate } from '../utils/formatters.js'
 import {
     applyOrderChange,
     applySizingChange,
@@ -67,14 +68,8 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     // Format a date range for display
     // @sig formatDateRange :: (Date, Date) -> String?
     const formatDateRange = (start, end) => {
-        // @sig formatDate :: Date -> String?
-        const formatDate = date => {
-            if (!date || !(date instanceof Date)) return null
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        }
-
-        const startStr = formatDate(start)
-        const endStr = formatDate(end)
+        const startStr = formatShortDate(start)
+        const endStr = formatShortDate(end)
         if (!startStr || !endStr) return null
         return `${startStr} – ${endStr}`
     }

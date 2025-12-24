@@ -4,16 +4,14 @@
 import { Box, Flex, Text } from '@graffio/design-system'
 import React from 'react'
 import { ACTION_LABELS } from '../columns/cell-renderers.jsx'
-
-const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
+import { formatCurrency, formatDate } from '../utils/formatters.js'
 
 // Render a single transaction row, hiding column for groupBy dimension
 // @sig TransactionRow :: { transaction: Transaction, groupBy: String? } -> ReactElement
 const TransactionRow = ({ transaction, groupBy }) => {
     const { date, payee, memo, accountName, categoryName, amount, investmentAction } = transaction
-    const formattedDate = date ? dateFormatter.format(new Date(date)) : ''
-    const formattedAmount = amount != null ? currencyFormatter.format(amount) : '—'
+    const formattedDate = date ? formatDate(date) : ''
+    const formattedAmount = amount != null ? formatCurrency(amount) : '—'
     const amountColor = amount >= 0 ? 'var(--green-11)' : 'var(--red-11)'
     const actionLabel = investmentAction ? ACTION_LABELS[investmentAction] || investmentAction : ''
 
