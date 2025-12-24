@@ -3,6 +3,7 @@
 
 import { Box, Flex, Text } from '@graffio/design-system'
 import React from 'react'
+import { ACTION_LABELS } from '../columns/cell-renderers.jsx'
 
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
@@ -10,10 +11,11 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 // Render a single transaction row, hiding column for groupBy dimension
 // @sig TransactionRow :: { transaction: Transaction, groupBy: String? } -> ReactElement
 const TransactionRow = ({ transaction, groupBy }) => {
-    const { date, payee, memo, accountName, categoryName, amount } = transaction
+    const { date, payee, memo, accountName, categoryName, amount, investmentAction } = transaction
     const formattedDate = date ? dateFormatter.format(new Date(date)) : ''
-    const formattedAmount = currencyFormatter.format(amount)
+    const formattedAmount = amount != null ? currencyFormatter.format(amount) : '—'
     const amountColor = amount >= 0 ? 'var(--green-11)' : 'var(--red-11)'
+    const actionLabel = investmentAction ? ACTION_LABELS[investmentAction] || investmentAction : ''
 
     return (
         <Flex gap="4" py="1" style={{ borderBottom: '1px solid var(--gray-4)' }}>
@@ -32,9 +34,12 @@ const TransactionRow = ({ transaction, groupBy }) => {
             )}
             {groupBy !== 'payee' && (
                 <Text size="1" style={{ flex: 1, color: 'var(--gray-12)' }}>
-                    {payee || 'Unknown'}
+                    {payee || ''}
                 </Text>
             )}
+            <Text size="1" style={{ width: 80, color: 'var(--gray-11)' }}>
+                {actionLabel}
+            </Text>
             <Text size="1" style={{ flex: 1, color: 'var(--gray-10)', fontStyle: 'italic' }}>
                 {memo || ''}
             </Text>
@@ -44,6 +49,9 @@ const TransactionRow = ({ transaction, groupBy }) => {
         </Flex>
     )
 }
+
+const headerStyle = { borderBottom: '1px solid var(--gray-6)', backgroundColor: 'var(--gray-2)' }
+const bodyStyle = { height: 200, overflow: 'auto', resize: 'vertical', minHeight: 80 }
 
 // Table showing transactions for an expanded report row
 // @sig TransactionSubTable :: { transactions: [Transaction], groupBy: String? } -> ReactElement
@@ -56,8 +64,8 @@ const TransactionSubTable = ({ transactions, groupBy }) => {
         )
 
     return (
-        <Box style={{ maxHeight: 200, overflow: 'auto' }}>
-            <Flex gap="4" py="1" style={{ borderBottom: '1px solid var(--gray-6)' }}>
+        <Box>
+            <Flex gap="4" py="1" style={headerStyle}>
                 <Text size="1" weight="medium" style={{ width: 90 }}>
                     Date
                 </Text>
@@ -76,6 +84,9 @@ const TransactionSubTable = ({ transactions, groupBy }) => {
                         Payee
                     </Text>
                 )}
+                <Text size="1" weight="medium" style={{ width: 80 }}>
+                    Action
+                </Text>
                 <Text size="1" weight="medium" style={{ flex: 1 }}>
                     Memo
                 </Text>
@@ -83,9 +94,11 @@ const TransactionSubTable = ({ transactions, groupBy }) => {
                     Amount
                 </Text>
             </Flex>
-            {transactions.map((txn, i) => (
-                <TransactionRow key={txn.id || i} transaction={txn} groupBy={groupBy} />
-            ))}
+            <Box style={bodyStyle}>
+                {transactions.map((txn, i) => (
+                    <TransactionRow key={txn.id || i} transaction={txn} groupBy={groupBy} />
+                ))}
+            </Box>
         </Box>
     )
 }

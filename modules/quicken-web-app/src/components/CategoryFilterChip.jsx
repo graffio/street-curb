@@ -8,12 +8,11 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
-const triggerStyle = {
+const baseTriggerStyle = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 'var(--space-1)',
     padding: 'var(--space-1) var(--space-2)',
-    backgroundColor: 'var(--accent-3)',
     borderRadius: 'var(--radius-4)',
     cursor: 'pointer',
     userSelect: 'none',
@@ -36,9 +35,9 @@ const clearButtonStyle = {
 /*
  * Category filter chip with inline category selector popover
  *
- * @sig CategoryFilterChip :: { viewId: String } -> ReactElement
+ * @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
  */
-const CategoryFilterChip = ({ viewId }) => {
+const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const handleCategoryAdd = category =>
         post(Action.SetTransactionFilter(viewId, { selectedCategories: [...selectedCategories, category] }))
 
@@ -55,6 +54,7 @@ const CategoryFilterChip = ({ viewId }) => {
     const selectedCategories = useSelector(state => S.selectedCategories(state, viewId))
     const allCategories = useSelector(S.allCategoryNames)
 
+    const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
     const { length: count } = selectedCategories
     const label = count > 0 ? `${count} selected` : 'All'
 

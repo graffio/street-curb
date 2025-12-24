@@ -11,11 +11,7 @@ import { DateFilterChip } from './DateFilterChip.jsx'
 import { GroupByFilterChip } from './GroupByFilterChip.jsx'
 import { SearchFilterChip } from './SearchFilterChip.jsx'
 
-const containerStyle = {
-    padding: 'var(--space-2) var(--space-3)',
-    backgroundColor: 'var(--gray-2)',
-    borderBottom: '1px solid var(--gray-4)',
-}
+const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
 const columnStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
 
@@ -48,9 +44,9 @@ const FilterColumn = ({ chip, details }) => (
  * Row of filter chips organized in columns with details below each chip
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
- *     FilterChipRowProps = { viewId, showGroupBy? }
+ *     FilterChipRowProps = { viewId, showGroupBy?, accountId? }
  */
-const FilterChipRow = ({ viewId, showGroupBy = false }) => {
+const FilterChipRow = ({ viewId, showGroupBy = false, accountId = null }) => {
     // Format a date range for display
     // @sig formatDateRange :: (Date, Date) -> String?
     const formatDateRange = (start, end) => {
@@ -90,8 +86,11 @@ const FilterChipRow = ({ viewId, showGroupBy = false }) => {
         return [...shown, `+${remaining} more`]
     }
 
+    const allTransactions = useSelector(S.transactions)
     const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
     const dateRange = useSelector(state => S.dateRange(state, viewId))
+    const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
+    const filterQuery = useSelector(state => S.filterQuery(state, viewId))
     const selectedCategories = useSelector(state => S.selectedCategories(state, viewId))
     const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
     const accounts = useSelector(S.accounts)
@@ -100,24 +99,54 @@ const FilterChipRow = ({ viewId, showGroupBy = false }) => {
     const categoryDetails = buildCategoryDetails(selectedCategories)
     const accountDetails = buildAccountDetails(selectedAccounts, accounts)
 
+    // Determine which filters are active
+    const isDateActive = dateRangeKey !== 'all'
+    const isCategoriesActive = selectedCategories.length > 0
+    const isAccountsActive = selectedAccounts.length > 0
+    const isTextActive = filterQuery?.length > 0
+
+    // Determine if any filtering is happening
+    // For registers, compare to account transactions; for reports, compare to all
+    const baseTransactions = accountId
+        ? (allTransactions?.filter(t => t.accountId === accountId) ?? [])
+        : (allTransactions ?? [])
+    const filteredCount = filteredTransactions.length
+    const totalCount = baseTransactions.length
+    const isFiltering = filteredCount < totalCount || isDateActive || isTextActive
+
+    const containerStyle = { ...baseContainerStyle, backgroundColor: isFiltering ? 'var(--ruby-3)' : 'var(--gray-2)' }
+
     return (
-        <Flex align="start" gap="3" wrap="wrap" style={containerStyle}>
-            <FilterColumn chip={<DateFilterChip viewId={viewId} />} details={dateDetails} />
-            <FilterColumn chip={<CategoryFilterChip viewId={viewId} />} details={categoryDetails} />
-
-            {showGroupBy && (
-                <>
-                    <FilterColumn chip={<AccountFilterChip viewId={viewId} />} details={accountDetails} />
-                    <FilterColumn chip={<GroupByFilterChip viewId={viewId} />} details={[]} />
-                </>
-            )}
-
-            <FilterColumn chip={<SearchFilterChip viewId={viewId} />} details={[]} />
-
-            <Flex align="center" style={{ marginLeft: 'auto' }}>
+        <Flex direction="column" gap="2" style={containerStyle}>
+            <Flex align="center" gap="2" style={{ paddingLeft: 'var(--space-2)' }}>
                 <Text size="1" color="gray">
-                    {filteredTransactions.length} transactions
+                    {filteredCount} transactions
                 </Text>
+                {isFiltering && (
+                    <Text size="1" color="ruby" weight="medium">
+                        (filtered from {totalCount})
+                    </Text>
+                )}
+            </Flex>
+
+            <Flex align="start" gap="3" wrap="wrap">
+                <FilterColumn chip={<DateFilterChip viewId={viewId} isActive={isDateActive} />} details={dateDetails} />
+                <FilterColumn
+                    chip={<CategoryFilterChip viewId={viewId} isActive={isCategoriesActive} />}
+                    details={categoryDetails}
+                />
+
+                {showGroupBy && (
+                    <>
+                        <FilterColumn
+                            chip={<AccountFilterChip viewId={viewId} isActive={isAccountsActive} />}
+                            details={accountDetails}
+                        />
+                        <FilterColumn chip={<GroupByFilterChip viewId={viewId} />} details={[]} />
+                    </>
+                )}
+
+                <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isTextActive} />} details={[]} />
             </Flex>
         </Flex>
     )

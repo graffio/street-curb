@@ -1,15 +1,5 @@
-/*
- * date-range-utils.js - Date range calculations and business logic
- *
- * This module provides utilities for calculating date ranges based on business
- * requirements. It includes predefined ranges and range calculation functions.
- *
- * FUNCTIONAL APPROACH:
- * - All functions are pure with no side effects
- * - Immutable data structures throughout
- * - Composable and easily testable
- * - Follows Hindley-Milner type documentation
- */
+// ABOUTME: Date range calculations and business logic for filters
+// ABOUTME: Provides predefined ranges and range calculation functions
 
 import {
     endOfDay,
@@ -42,10 +32,10 @@ const DATE_RANGES = {
     thisQuarter: 'This Quarter',
     thisYear: 'This Year',
     separator2: '───────────────',
-    weekToDate: 'This Week to date',
-    monthToDate: 'This Month to date',
-    quarterToDate: 'This Quarter to date',
-    yearToDate: 'This Year to date',
+    weekToDate: 'Week to date',
+    monthToDate: 'Month to date',
+    quarterToDate: 'Quarter to date',
+    yearToDate: 'Year to date',
     separator3: '───────────────',
     yesterday: 'Yesterday',
     lastWeek: 'Last week',
@@ -117,6 +107,7 @@ const lastTwelveMonthsRange = (now, today) => ({
  */
 // prettier-ignore
 const calculateDateRange = key => {
+    // @sig startEndDateTimes :: String -> { start: Date?, end: Date? }
     const startEndDateTimes = key => {
         const now = new Date()
 

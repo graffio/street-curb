@@ -8,12 +8,11 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
-const triggerStyle = {
+const baseTriggerStyle = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 'var(--space-1)',
     padding: 'var(--space-1) var(--space-2)',
-    backgroundColor: 'var(--accent-3)',
     borderRadius: 'var(--radius-4)',
     cursor: 'pointer',
     userSelect: 'none',
@@ -36,9 +35,9 @@ const clearButtonStyle = {
 /*
  * Search filter chip with inline text input popover
  *
- * @sig SearchFilterChip :: { viewId: String } -> ReactElement
+ * @sig SearchFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
  */
-const SearchFilterChip = ({ viewId }) => {
+const SearchFilterChip = ({ viewId, isActive = false }) => {
     const handleChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
 
     const handleClear = e => {
@@ -51,8 +50,8 @@ const SearchFilterChip = ({ viewId }) => {
     }
 
     const inputRef = useRef(null)
-
     const filterQuery = useSelector(state => S.filterQuery(state, viewId))
+    const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
 
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
