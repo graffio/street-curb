@@ -6,11 +6,13 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors/index.js'
 import { formatShortDate } from '../utils/formatters.js'
-import { AccountFilterChip } from './AccountFilterChip.jsx'
-import { CategoryFilterChip } from './CategoryFilterChip.jsx'
-import { DateFilterChip } from './DateFilterChip.jsx'
-import { GroupByFilterChip } from './GroupByFilterChip.jsx'
-import { SearchFilterChip } from './SearchFilterChip.jsx'
+import {
+    AccountFilterChip,
+    CategoryFilterChip,
+    DateFilterChip,
+    GroupByFilterChip,
+    SearchFilterChip,
+} from './filter-chips.jsx'
 
 const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
