@@ -1,6 +1,7 @@
 // ABOUTME: Hierarchical category filtering component with search
 // ABOUTME: Allows users to select categories with incremental search and keyboard navigation
 
+import { containsIgnoreCase } from '@graffio/functional'
 import { Badge, Box, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef, useState } from 'react'
@@ -38,8 +39,7 @@ const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) =
     // @sig filterCategories :: ([String], String) -> [String]
     const filterCategories = (cats, searchText) => {
         if (!searchText.trim()) return cats
-        const searchLower = searchText.toLowerCase()
-        return cats.filter(category => category.toLowerCase().includes(searchLower))
+        return cats.filter(containsIgnoreCase(searchText))
     }
 
     const resetHighlightedIndex = () => setHighlightedIndex(0)

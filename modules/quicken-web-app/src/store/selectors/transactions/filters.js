@@ -1,6 +1,8 @@
 // ABOUTME: Transaction filtering functions for various criteria
 // ABOUTME: Pure functions with no Redux dependency - can be used anywhere
 
+import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+
 /*
  * Resolve a transaction's categoryId to category name
  * @sig getCategoryName :: (Transaction, LookupTable<Category>) -> String?
@@ -19,17 +21,12 @@ const getCategoryName = (transaction, categories) => {
 const transactionMatchesSearch = (transaction, searchQuery, categories) => {
     if (!searchQuery.trim()) return false
 
-    const { address, amount, memo, number, payee } = transaction
-    const queryLower = searchQuery.toLowerCase()
+    const matchesFields = anyFieldContains(['payee', 'memo', 'address', 'number'])(searchQuery)
+    const matchesText = containsIgnoreCase(searchQuery)
 
-    // Short-circuit: check each field individually, no array allocation
-    if (payee?.toLowerCase().includes(queryLower)) return true
-    if (memo?.toLowerCase().includes(queryLower)) return true
-    if (address?.toLowerCase().includes(queryLower)) return true
-    if (number?.toLowerCase().includes(queryLower)) return true
-    if (String(amount).includes(queryLower)) return true
-    const categoryName = getCategoryName(transaction, categories)
-    if (categoryName?.toLowerCase().includes(queryLower)) return true
+    if (matchesFields(transaction)) return true
+    if (matchesText(String(transaction.amount))) return true
+    if (matchesText(getCategoryName(transaction, categories))) return true
     return false
 }
 
@@ -49,22 +46,16 @@ const filterByText = (transactions, query, categories, securities) => {
 
     // @sig matchesTextQuery :: Transaction -> Boolean
     const matchesTextQuery = transaction => {
-        const { description, investmentAction, memo, payee } = transaction
-
-        // Short-circuit: check each field individually, no array/string allocation
-        if (description?.toLowerCase().includes(queryLower)) return true
-        if (memo?.toLowerCase().includes(queryLower)) return true
-        if (payee?.toLowerCase().includes(queryLower)) return true
-        if (investmentAction?.toLowerCase().includes(queryLower)) return true
-        const categoryName = getCategoryName(transaction, categories)
-        if (categoryName?.toLowerCase().includes(queryLower)) return true
-        const securityName = getSecurityName(transaction, securities)
-        if (securityName?.toLowerCase().includes(queryLower)) return true
+        if (matchesFields(transaction)) return true
+        if (matchesText(getCategoryName(transaction, categories))) return true
+        if (matchesText(getSecurityName(transaction, securities))) return true
         return false
     }
 
     if (!query.trim()) return transactions
-    const queryLower = query.toLowerCase()
+
+    const matchesFields = anyFieldContains(['description', 'memo', 'payee', 'investmentAction'])(query)
+    const matchesText = containsIgnoreCase(query)
 
     return transactions.filter(matchesTextQuery)
 }

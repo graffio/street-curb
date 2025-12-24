@@ -1,6 +1,7 @@
 // ABOUTME: Cell renderers for transaction register table columns
 // ABOUTME: TanStack Table components with search highlighting and formatting
 
+import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors/index.js'
@@ -32,7 +33,7 @@ const HighlightedText = ({ text, searchQuery }) => {
     }
 
     if (!searchQuery?.trim() || !text) return <span>{text || ''}</span>
-    if (!text.toLowerCase().includes(searchQuery.toLowerCase())) return <span>{text}</span>
+    if (!containsIgnoreCase(searchQuery)(text)) return <span>{text}</span>
 
     const matches = findMatches(text, searchQuery)
 
