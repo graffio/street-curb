@@ -4,18 +4,20 @@
 /** {@link module:TransactionFilter} */
 /*  TransactionFilter generated from: modules/quicken-web-app/type-definitions/transaction-filter.type.js
  *
- *  id                : FieldTypes.viewId,
- *  dateRange         : "Object?",
- *  dateRangeKey      : "String",
- *  filterQuery       : "String",
- *  searchQuery       : "String",
- *  selectedCategories: "[String]",
- *  selectedAccounts  : "[String]",
- *  groupBy           : "String?",
- *  currentSearchIndex: "Number",
- *  currentRowIndex   : "Number",
- *  customStartDate   : "Object?",
- *  customEndDate     : "Object?"
+ *  id                       : FieldTypes.viewId,
+ *  dateRange                : "Object?",
+ *  dateRangeKey             : "String",
+ *  filterQuery              : "String",
+ *  searchQuery              : "String",
+ *  selectedCategories       : "[String]",
+ *  selectedAccounts         : "[String]",
+ *  selectedSecurities       : "[String]",
+ *  selectedInvestmentActions: "[String]",
+ *  groupBy                  : "String?",
+ *  currentSearchIndex       : "Number",
+ *  currentRowIndex          : "Number",
+ *  customStartDate          : "Object?",
+ *  customEndDate            : "Object?"
  *
  */
 
@@ -31,7 +33,7 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a TransactionFilter instance
- * @sig TransactionFilter :: (String, Object?, String, String, String, [String], [String], String?, Number, Number, Object?, Object?) -> TransactionFilter
+ * @sig TransactionFilter :: (String, Object?, String, String, String, [String], [String], [String], [String], String?, Number, Number, Object?, Object?) -> TransactionFilter
  */
 const TransactionFilter = function TransactionFilter(
     id,
@@ -41,6 +43,8 @@ const TransactionFilter = function TransactionFilter(
     searchQuery,
     selectedCategories,
     selectedAccounts,
+    selectedSecurities,
+    selectedInvestmentActions,
     groupBy,
     currentSearchIndex,
     currentRowIndex,
@@ -48,7 +52,7 @@ const TransactionFilter = function TransactionFilter(
     customEndDate,
 ) {
     const constructorName =
-        'TransactionFilter(id, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
+        'TransactionFilter(id, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
 
     R.validateRegex(constructorName, FieldTypes.viewId, 'id', false, id)
     R.validateObject(constructorName, 'dateRange', true, dateRange)
@@ -57,6 +61,16 @@ const TransactionFilter = function TransactionFilter(
     R.validateString(constructorName, 'searchQuery', false, searchQuery)
     R.validateArray(constructorName, 1, 'String', undefined, 'selectedCategories', false, selectedCategories)
     R.validateArray(constructorName, 1, 'String', undefined, 'selectedAccounts', false, selectedAccounts)
+    R.validateArray(constructorName, 1, 'String', undefined, 'selectedSecurities', false, selectedSecurities)
+    R.validateArray(
+        constructorName,
+        1,
+        'String',
+        undefined,
+        'selectedInvestmentActions',
+        false,
+        selectedInvestmentActions,
+    )
     R.validateString(constructorName, 'groupBy', true, groupBy)
     R.validateNumber(constructorName, 'currentSearchIndex', false, currentSearchIndex)
     R.validateNumber(constructorName, 'currentRowIndex', false, currentRowIndex)
@@ -71,6 +85,8 @@ const TransactionFilter = function TransactionFilter(
     result.searchQuery = searchQuery
     result.selectedCategories = selectedCategories
     result.selectedAccounts = selectedAccounts
+    result.selectedSecurities = selectedSecurities
+    result.selectedInvestmentActions = selectedInvestmentActions
     if (groupBy != null) result.groupBy = groupBy
     result.currentSearchIndex = currentSearchIndex
     result.currentRowIndex = currentRowIndex
@@ -97,6 +113,8 @@ const transactionfilterToString = function () {
         ${R._toString(this.searchQuery)},
         ${R._toString(this.selectedCategories)},
         ${R._toString(this.selectedAccounts)},
+        ${R._toString(this.selectedSecurities)},
+        ${R._toString(this.selectedInvestmentActions)},
         ${R._toString(this.groupBy)},
         ${R._toString(this.currentSearchIndex)},
         ${R._toString(this.currentRowIndex)},
@@ -143,6 +161,8 @@ TransactionFilter._from = _input => {
         searchQuery,
         selectedCategories,
         selectedAccounts,
+        selectedSecurities,
+        selectedInvestmentActions,
         groupBy,
         currentSearchIndex,
         currentRowIndex,
@@ -157,6 +177,8 @@ TransactionFilter._from = _input => {
         searchQuery,
         selectedCategories,
         selectedAccounts,
+        selectedSecurities,
+        selectedInvestmentActions,
         groupBy,
         currentSearchIndex,
         currentRowIndex,

@@ -185,7 +185,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
-            <FilterChipRow viewId={viewId} />
+            <FilterChipRow viewId={viewId} accountId={accountId} />
             <div style={mainContentStyle}>
                 <DataTable
                     columns={bankTransactionColumns}

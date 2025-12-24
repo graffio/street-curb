@@ -9,15 +9,28 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
-const triggerStyle = {
+const baseTriggerStyle = {
     display: 'inline-flex',
     alignItems: 'center',
+    gap: 'var(--space-1)',
     padding: 'var(--space-1) var(--space-2)',
-    backgroundColor: 'var(--accent-3)',
     borderRadius: 'var(--radius-4)',
     cursor: 'pointer',
     userSelect: 'none',
     width: 180,
+}
+
+const clearButtonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 16,
+    height: 16,
+    borderRadius: '50%',
+    backgroundColor: 'var(--gray-6)',
+    color: 'var(--gray-11)',
+    fontSize: 10,
+    cursor: 'pointer',
 }
 
 const optionStyle = { padding: 'var(--space-2) var(--space-3)', cursor: 'pointer', borderRadius: 'var(--radius-1)' }
@@ -30,12 +43,17 @@ const dateRangeOptions = Object.entries(DATE_RANGES).map(([key, label]) => ({ ke
 /*
  * Date filter chip with inline date range options popover
  *
- * @sig DateFilterChip :: { viewId: String } -> ReactElement
+ * @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
  */
-const DateFilterChip = ({ viewId }) => {
+const DateFilterChip = ({ viewId, isActive = false }) => {
     const handleSelect = key => {
         const dateRange = calculateDateRange(key)
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
+    }
+
+    const handleClear = e => {
+        e.stopPropagation()
+        post(Action.SetTransactionFilter(viewId, { dateRangeKey: 'all', dateRange: null }))
     }
 
     const handleCustomStartChange = date => {
@@ -89,6 +107,7 @@ const DateFilterChip = ({ viewId }) => {
     const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.customEndDate(state, viewId))
+    const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
 
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
 
@@ -99,6 +118,11 @@ const DateFilterChip = ({ viewId }) => {
                     <Text size="1" weight="medium">
                         Date: {currentLabel}
                     </Text>
+                    {isActive && (
+                        <Box style={clearButtonStyle} onClick={handleClear}>
+                            ×
+                        </Box>
+                    )}
                 </Box>
             </Popover.Trigger>
             <Popover.Content style={{ padding: 'var(--space-1)', width: 220 }}>

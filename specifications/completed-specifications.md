@@ -462,3 +462,20 @@ This document summarizes the specifications that were previously archived in `sp
 - Deferred: Wiring groupBy to change aggregation dimension (currently always category)
 - Deferred: Rename CategoryReportPage to TransactionReportPage (after groupBy is functional)
 - Deferred: Filter persistence to storage (user wants to decide storage strategy later)
+
+## [quicken-web-app] Investment Transaction Register (2025-12-24)
+**Purpose:** Display investment account transactions with security/action filtering and running cash balance
+
+- Created InvestmentRegisterPage with investment-specific filter chain (account → securities → actions)
+- Created SecurityFilterChip and ActionFilterChip with multi-select popovers
+- Created mock-investment-generator.js with realistic investment data (stocks, ETFs, mutual funds, options)
+- Added running cash balance calculation (amount field only, not shares/prices)
+- Unified filter chip styling: red chips when active, red background when filtering, "(filtered from X)" indicator
+- Filter summary details below each chip (date range, security names, action labels with "+N more" truncation)
+- Added clear button (×) to DateFilterChip across all pages
+- Shortened date range labels ("Quarter to date" not "This Quarter to date")
+- Transaction count row at top of filter area, aligned with Date chip
+- Fixed $NaN bug in category report (investment transactions have optional amount)
+- Added Action column to TransactionSubTable with human-readable labels
+- Made TransactionSubTable header sticky and body resizable
+- Deferred: Phase 2 (Portfolio Value Report with holdings and gain/loss)

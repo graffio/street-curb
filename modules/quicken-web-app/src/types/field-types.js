@@ -1,7 +1,7 @@
 // ABOUTME: Field type validators for quicken-web-app
 // ABOUTME: Contains regex patterns for tagged type field validation
 
-const viewIdRegex = /^(reg|rpt|rec)_[a-z0-9_]+$/
+const viewIdRegex = /^(reg|rpt|rec|inv)_[a-z0-9_]+$/
 
 // prettier-ignore
 const FieldTypes = {

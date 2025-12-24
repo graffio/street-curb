@@ -11,6 +11,8 @@ export const TransactionFilter = {
         searchQuery: 'String',
         selectedCategories: '[String]',
         selectedAccounts: '[String]',
+        selectedSecurities: '[String]',
+        selectedInvestmentActions: '[String]',
         groupBy: 'String?',
         currentSearchIndex: 'Number',
         currentRowIndex: 'Number',

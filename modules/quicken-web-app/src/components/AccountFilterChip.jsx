@@ -8,12 +8,11 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
-const triggerStyle = {
+const baseTriggerStyle = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 'var(--space-1)',
     padding: 'var(--space-1) var(--space-2)',
-    backgroundColor: 'var(--accent-3)',
     borderRadius: 'var(--radius-4)',
     cursor: 'pointer',
     userSelect: 'none',
@@ -38,9 +37,9 @@ const accountRowStyle = { padding: 'var(--space-2)', borderBottom: '1px solid va
 /*
  * Account filter chip with inline account multi-select popover
  *
- * @sig AccountFilterChip :: { viewId: String } -> ReactElement
+ * @sig AccountFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
  */
-const AccountFilterChip = ({ viewId }) => {
+const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleAccount = accountId => {
         const isSelected = selectedAccounts.includes(accountId)
         const updated = isSelected ? selectedAccounts.filter(id => id !== accountId) : [...selectedAccounts, accountId]
@@ -74,6 +73,8 @@ const AccountFilterChip = ({ viewId }) => {
 
     const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
     const accounts = useSelector(S.accounts)
+
+    const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
 
     // Convert LookupTable to array of {id, name}
     const accountList = accounts ? Array.from(accounts).map(a => ({ id: a.id, name: a.name })) : []
