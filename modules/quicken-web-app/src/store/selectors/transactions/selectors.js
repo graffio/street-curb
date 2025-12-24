@@ -39,8 +39,8 @@ const defaultEndDate = () => _defaultEndDate
 // Apply all transaction filters in sequence: text -> date -> category -> account
 // @sig computeFilteredTransactions :: (ReduxState, String) -> [Transaction]
 const computeFilteredTransactions = (state, viewId) => {
-    const { categories, transactions } = state
-    const textFiltered = filterByText(transactions, filterQuery(state, viewId), categories)
+    const { categories, securities, transactions } = state
+    const textFiltered = filterByText(transactions, filterQuery(state, viewId), categories, securities)
     const dateFiltered = filterByDateRange(textFiltered, dateRange(state, viewId) || {})
     const categoryFiltered = filterByCategories(dateFiltered, selectedCategories(state, viewId), categories)
     return filterByAccounts(categoryFiltered, selectedAccounts(state, viewId))
@@ -53,7 +53,7 @@ const computeFilteredTransactions = (state, viewId) => {
  * @sig filteredTransactions :: (ReduxState, String) -> [Transaction]
  */
 const filteredTransactions = memoizeReduxStatePerKey(
-    ['transactions', 'categories'],
+    ['transactions', 'categories', 'securities'],
     'transactionFilters',
     computeFilteredTransactions,
 )

@@ -38,7 +38,7 @@ const dimensionConfig = {
 // Default aggregation: sum amounts and count transactions
 // @sig sumTransactions :: ([Transaction], [Aggregate]) -> Aggregate
 const sumTransactions = (transactions, childAggregates) => {
-    const ownTotal = transactions.reduce((sum, t) => sum + t.amount, 0)
+    const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
     const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
     const ownCount = transactions.length
     const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
