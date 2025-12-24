@@ -43,6 +43,5 @@ LookupTable has a rich API. Read its ABOUTME before using it.
 ## Style Uncertainty
 
 When you don't have explicit guidance:
-- Search episodic memory for similar past decisions
 - Ask rather than assume
 - State your reasoning so I can correct it
