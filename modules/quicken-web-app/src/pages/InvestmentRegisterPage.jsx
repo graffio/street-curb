@@ -197,7 +197,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const selectedSecurities = useSelector(state => S.selectedSecurities(state, viewId))
     const selectedInvestmentActions = useSelector(state => S.selectedInvestmentActions(state, viewId))
     const filterQuery = useSelector(state => S.filterQuery(state, viewId))
-    const accounts = useSelector(S.accounts)
     const securities = useSelector(S.securities)
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -242,7 +241,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const data = useMemo(() => sortRegisterRows(sorting, withBalances), [withBalances, sorting])
 
     // Get account name for header
-    const accountName = useMemo(() => accounts?.get(accountId)?.name || 'Investment Account', [accounts, accountId])
+    const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
     // With manual sorting, search matches are already in display order
     const matchCount = searchMatches.length

@@ -145,14 +145,13 @@ const DefaultCell = ({ getValue, column, table }) => {
 // Cell renderer for category column, looks up name from Redux store
 // @sig CategoryCell :: { getValue: Function, table: Table } -> ReactElement
 const CategoryCell = ({ getValue, table }) => {
-    const categories = useSelector(S.categories)
     const categoryId = getValue()
+    const name = useSelector(state => S.categoryName(state, categoryId))
     const searchQuery = table.options.meta?.searchQuery
-    const categoryName = categories?.get(categoryId)?.name ?? ''
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={categoryName} searchQuery={searchQuery} />
+            <HighlightedText text={name} searchQuery={searchQuery} />
         </span>
     )
 }
@@ -221,15 +220,13 @@ const ExpandableCategoryCell = ({ row, getValue }) => {
 // Cell renderer for security column, looks up symbol from Redux store
 // @sig SecurityCell :: { getValue: Function, table: Table } -> ReactElement
 const SecurityCell = ({ getValue, table }) => {
-    const securities = useSelector(S.securities)
     const securityId = getValue()
+    const symbol = useSelector(state => S.securitySymbol(state, securityId))
     const searchQuery = table.options.meta?.searchQuery
-    const security = securities?.get(securityId)
-    const displayText = security ? security.symbol : securityId || ''
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={displayText} searchQuery={searchQuery} />
+            <HighlightedText text={symbol} searchQuery={searchQuery} />
         </span>
     )
 }
@@ -237,15 +234,13 @@ const SecurityCell = ({ getValue, table }) => {
 // Cell renderer for account column, looks up name from Redux store
 // @sig AccountCell :: { getValue: Function, table: Table } -> ReactElement
 const AccountCell = ({ getValue, table }) => {
-    const accounts = useSelector(S.accounts)
     const accountId = getValue()
+    const name = useSelector(state => S.accountName(state, accountId))
     const searchQuery = table.options.meta?.searchQuery
-    const account = accounts?.get(accountId)
-    const displayText = account ? account.name : accountId || ''
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={displayText} searchQuery={searchQuery} />
+            <HighlightedText text={name || accountId || ''} searchQuery={searchQuery} />
         </span>
     )
 }
