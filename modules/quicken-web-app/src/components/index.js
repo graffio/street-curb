@@ -10,6 +10,7 @@ export {
     DateFilterChip,
     FilterColumn,
     GroupByFilterChip,
+    investmentGroupByOptions,
     SearchFilterChip,
     SecurityFilterChip,
 } from './filter-chips.jsx'

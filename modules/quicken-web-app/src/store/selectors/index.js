@@ -28,6 +28,12 @@ const splits = state => state.splits
 // @sig transactions :: State -> LookupTable<Transaction>
 const transactions = state => state.transactions
 
+// @sig lots :: State -> LookupTable<Lot>
+const lots = state => state.lots
+
+// @sig prices :: State -> LookupTable<Price>
+const prices = state => state.prices
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Entity lookup selectors (parameterized by ID)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,6 +55,7 @@ const categoryName = (state, id) => categories(state)?.get(id)?.name ?? 'Uncateg
 
 // UI state (all selectors now take viewId as second parameter)
 export {
+    asOfDate,
     currentRowIndex,
     currentSearchIndex,
     customEndDate,
@@ -67,11 +74,14 @@ export {
 
 export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches } from './transactions/index.js'
 export { allCategoryNames } from './categories/index.js'
+export { enrichedHoldingsAsOf } from './holdings-selectors.js'
 export {
     // Base state
     accounts,
     categories,
     initialized,
+    lots,
+    prices,
     securities,
     splits,
     tabLayout,

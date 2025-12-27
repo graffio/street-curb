@@ -3,4 +3,5 @@
 
 export { bankTransactionColumns, investmentTransactionColumns } from './transaction-columns.js'
 export { categoryReportColumns } from './category-report-columns.jsx'
+export { investmentReportColumns } from './investment-report-columns.jsx'
 export { ACTION_LABELS } from './cell-renderers.jsx'

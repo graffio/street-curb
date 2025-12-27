@@ -8,6 +8,7 @@ import * as S from '../store/selectors/index.js'
 import { formatDateRange } from '../utils/formatters.js'
 import {
     AccountFilterChip,
+    AsOfDateChip,
     CategoryFilterChip,
     DateFilterChip,
     FilterColumn,
@@ -23,9 +24,9 @@ const MAX_DETAIL_LINES = 3
  * Row of filter chips organized in columns with details below each chip
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
- *     FilterChipRowProps = { viewId, showGroupBy?, accountId? }
+ *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, accountId?, groupByOptions? }
  */
-const FilterChipRow = ({ viewId, showGroupBy = false, accountId = null }) => {
+const FilterChipRow = props => {
     // Build detail lines for categories (up to MAX_DETAIL_LINES, then +N more)
     // @sig buildCategoryDetails :: [String] -> [String]
     const buildCategoryDetails = categories => {
@@ -48,6 +49,9 @@ const FilterChipRow = ({ viewId, showGroupBy = false, accountId = null }) => {
         const remaining = names.length - shown.length
         return [...shown, `+${remaining} more`]
     }
+
+    const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
+    const { accountId = null, groupByOptions = null } = props
 
     const allTransactions = useSelector(S.transactions)
     const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
@@ -93,11 +97,21 @@ const FilterChipRow = ({ viewId, showGroupBy = false, accountId = null }) => {
             </Flex>
 
             <Flex align="start" gap="3" wrap="wrap">
-                <FilterColumn chip={<DateFilterChip viewId={viewId} isActive={isDateActive} />} details={dateDetails} />
-                <FilterColumn
-                    chip={<CategoryFilterChip viewId={viewId} isActive={isCategoriesActive} />}
-                    details={categoryDetails}
-                />
+                {showAsOfDate ? (
+                    <FilterColumn chip={<AsOfDateChip viewId={viewId} />} details={[]} />
+                ) : (
+                    <FilterColumn
+                        chip={<DateFilterChip viewId={viewId} isActive={isDateActive} />}
+                        details={dateDetails}
+                    />
+                )}
+
+                {showCategories && (
+                    <FilterColumn
+                        chip={<CategoryFilterChip viewId={viewId} isActive={isCategoriesActive} />}
+                        details={categoryDetails}
+                    />
+                )}
 
                 {showGroupBy && (
                     <>
@@ -105,7 +119,10 @@ const FilterChipRow = ({ viewId, showGroupBy = false, accountId = null }) => {
                             chip={<AccountFilterChip viewId={viewId} isActive={isAccountsActive} />}
                             details={accountDetails}
                         />
-                        <FilterColumn chip={<GroupByFilterChip viewId={viewId} />} details={[]} />
+                        <FilterColumn
+                            chip={<GroupByFilterChip viewId={viewId} options={groupByOptions} />}
+                            details={[]}
+                        />
                     </>
                 )}
 

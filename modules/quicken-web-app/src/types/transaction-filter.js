@@ -5,6 +5,7 @@
 /*  TransactionFilter generated from: modules/quicken-web-app/type-definitions/transaction-filter.type.js
  *
  *  id                       : FieldTypes.viewId,
+ *  asOfDate                 : "String?",
  *  dateRange                : "Object?",
  *  dateRangeKey             : "String",
  *  filterQuery              : "String",
@@ -33,10 +34,11 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a TransactionFilter instance
- * @sig TransactionFilter :: (String, Object?, String, String, String, [String], [String], [String], [String], String?, Number, Number, Object?, Object?) -> TransactionFilter
+ * @sig TransactionFilter :: (String, String?, Object?, String, String, String, [String], [String], [String], [String], String?, Number, Number, Object?, Object?) -> TransactionFilter
  */
 const TransactionFilter = function TransactionFilter(
     id,
+    asOfDate,
     dateRange,
     dateRangeKey,
     filterQuery,
@@ -52,9 +54,10 @@ const TransactionFilter = function TransactionFilter(
     customEndDate,
 ) {
     const constructorName =
-        'TransactionFilter(id, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
+        'TransactionFilter(id, asOfDate, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
 
     R.validateRegex(constructorName, FieldTypes.viewId, 'id', false, id)
+    R.validateString(constructorName, 'asOfDate', true, asOfDate)
     R.validateObject(constructorName, 'dateRange', true, dateRange)
     R.validateString(constructorName, 'dateRangeKey', false, dateRangeKey)
     R.validateString(constructorName, 'filterQuery', false, filterQuery)
@@ -79,6 +82,7 @@ const TransactionFilter = function TransactionFilter(
 
     const result = Object.create(prototype)
     result.id = id
+    if (asOfDate != null) result.asOfDate = asOfDate
     if (dateRange != null) result.dateRange = dateRange
     result.dateRangeKey = dateRangeKey
     result.filterQuery = filterQuery
@@ -107,6 +111,7 @@ const TransactionFilter = function TransactionFilter(
  */
 const transactionfilterToString = function () {
     return `TransactionFilter(${R._toString(this.id)},
+        ${R._toString(this.asOfDate)},
         ${R._toString(this.dateRange)},
         ${R._toString(this.dateRangeKey)},
         ${R._toString(this.filterQuery)},
@@ -155,6 +160,7 @@ TransactionFilter.is = v => v && v['@@typeName'] === 'TransactionFilter'
 TransactionFilter._from = _input => {
     const {
         id,
+        asOfDate,
         dateRange,
         dateRangeKey,
         filterQuery,
@@ -171,6 +177,7 @@ TransactionFilter._from = _input => {
     } = _input
     return TransactionFilter(
         id,
+        asOfDate,
         dateRange,
         dateRangeKey,
         filterQuery,

@@ -7,6 +7,9 @@ import LookupTable from '@graffio/functional/src/lookup-table.js'
 import initSqlJs from 'sql.js'
 import { Account } from '../types/account.js'
 import { Category } from '../types/category.js'
+import { Lot } from '../types/lot.js'
+import { LotAllocation } from '../types/lot-allocation.js'
+import { Price } from '../types/price.js'
 import { Security } from '../types/security.js'
 import { Split } from '../types/split.js'
 import { Tag } from '../types/tag.js'
@@ -26,235 +29,196 @@ const isSqliteFile = buffer => {
     return SQLITE_MAGIC.every((byte, i) => header[i] === byte)
 }
 
-// Set up FileReader to read file and resolve/reject promise
-// @sig setupFileReader :: (File, Function, Function) -> void
-const setupFileReader = (file, resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`))
-    reader.readAsArrayBuffer(file)
-}
-
-// Read a File object as ArrayBuffer
-// @sig readFileAsArrayBuffer :: File -> Promise<ArrayBuffer>
-const readFileAsArrayBuffer = file => new Promise((resolve, reject) => setupFileReader(file, resolve, reject))
-
 /*
- * Initialize sql.js and load database from ArrayBuffer
- * @sig loadDatabase :: ArrayBuffer -> Promise<Database>
- */
-const loadDatabase = async buffer => {
-    const SQL = await initSqlJs({
-        // Load WASM from CDN (sql.js bundles it but Vite needs explicit path)
-        locateFile: file => `https://sql.js.org/dist/${file}`,
-    })
-    return new SQL.Database(new Uint8Array(buffer))
-}
-
-// Convert a single row array to object using column names
-// @sig rowToObject :: ([String], [Any]) -> Object
-const rowToObject = (columns, row) => Object.fromEntries(columns.map((col, i) => [col, row[i]]))
-
-// Convert sql.js result rows to objects
-// @sig rowsToObjects :: { columns: [String], values: [[Any]] } -> [Object]
-const rowsToObjects = result => {
-    if (!result || result.length === 0) return []
-    const { columns, values } = result[0]
-    return values.map(row => rowToObject(columns, row))
-}
-
-// Map database row to Account
-// @sig mapAccountRow :: Object -> Account
-const mapAccountRow = row => {
-    const { credit_limit: creditLimit, description, id, name, type } = row
-    return Account.from({ id, name, type, description: description || null, creditLimit: creditLimit || null })
-}
-
-// Query all accounts from database
-// @sig queryAccounts :: Database -> LookupTable<Account>
-const queryAccounts = db => {
-    const results = db.exec('SELECT id, name, type, description, credit_limit FROM accounts')
-    const rows = rowsToObjects(results)
-    return LookupTable(rows.map(mapAccountRow), Account, 'id')
-}
-
-// Convert SQLite integer to boolean (1=true, 0=false, null=null)
-// @sig sqliteBool :: Number? -> Boolean?
-const sqliteBool = val => (val === 1 ? true : val === 0 ? false : null)
-
-// Map database row to Category
-// @sig mapCategoryRow :: Object -> Category
-const mapCategoryRow = row => {
-    const {
-        budget_amount: budgetAmount,
-        description,
-        id,
-        is_income_category: isIncome,
-        is_tax_related: isTax,
-        name,
-        tax_schedule: taxSchedule,
-    } = row
-    return Category.from({
-        id,
-        name,
-        description: description || null,
-        budgetAmount: budgetAmount || null,
-        isIncomeCategory: sqliteBool(isIncome),
-        isTaxRelated: sqliteBool(isTax),
-        taxSchedule: taxSchedule || null,
-    })
-}
-
-// Query all categories from database
-// @sig queryCategories :: Database -> LookupTable<Category>
-const queryCategories = db => {
-    const results = db.exec(
-        'SELECT id, name, description, budget_amount, is_income_category, is_tax_related, tax_schedule FROM categories',
-    )
-    const rows = rowsToObjects(results)
-    return LookupTable(rows.map(mapCategoryRow), Category, 'id')
-}
-
-// Map database row to Security
-// @sig mapSecurityRow :: Object -> Security
-const mapSecurityRow = row => {
-    const { goal, id, name, symbol, type } = row
-    return Security.from({ id, name, symbol: symbol || null, type: type || null, goal: goal || null })
-}
-
-// Query all securities from database
-// @sig querySecurities :: Database -> LookupTable<Security>
-const querySecurities = db => {
-    const results = db.exec('SELECT id, name, symbol, type, goal FROM securities')
-    const rows = rowsToObjects(results)
-    return LookupTable(rows.map(mapSecurityRow), Security, 'id')
-}
-
-// Map database row to Tag
-// @sig mapTagRow :: Object -> Tag
-const mapTagRow = row => {
-    const { color, description, id, name } = row
-    return Tag.from({ id, name, color: color || null, description: description || null })
-}
-
-// Query all tags from database
-// @sig queryTags :: Database -> LookupTable<Tag>
-const queryTags = db => {
-    const results = db.exec('SELECT id, name, color, description FROM tags')
-    const rows = rowsToObjects(results)
-    return LookupTable(rows.map(mapTagRow), Tag, 'id')
-}
-
-// Map database row to Split
-// @sig mapSplitRow :: Object -> Split
-const mapSplitRow = row => {
-    const { amount, category_id: categoryId, id, memo, transaction_id: transactionId } = row
-    return Split.from({ id, transactionId, categoryId: categoryId || null, amount, memo: memo || null })
-}
-
-// Query all transaction splits from database
-// @sig querySplits :: Database -> LookupTable<Split>
-const querySplits = db => {
-    const results = db.exec('SELECT id, transaction_id, category_id, amount, memo FROM transaction_splits')
-    const rows = rowsToObjects(results)
-    return LookupTable(rows.map(mapSplitRow), Split, 'id')
-}
-
-// Map database row to Transaction.Bank
-// @sig mapBankRow :: Object -> Transaction.Bank
-const mapBankRow = row => {
-    const {
-        account_id: accountId,
-        address,
-        amount,
-        category_id: categoryId,
-        cleared,
-        date,
-        id,
-        memo,
-        number,
-        payee,
-    } = row
-    return Transaction.Bank.from({
-        accountId,
-        amount,
-        date,
-        id,
-        transactionType: 'bank',
-        address: address || null,
-        categoryId: categoryId || null,
-        cleared: cleared || null,
-        memo: memo || null,
-        number: number || null,
-        payee: payee || null,
-    })
-}
-
-// Map database row to Transaction.Investment
-// @sig mapInvestmentRow :: Object -> Transaction.Investment
-const mapInvestmentRow = row => {
-    const {
-        account_id: accountId,
-        address,
-        amount,
-        category_id: categoryId,
-        cleared,
-        commission,
-        date,
-        id,
-        investment_action: investmentAction,
-        memo,
-        payee,
-        price,
-        quantity,
-        security_id: securityId,
-    } = row
-    return Transaction.Investment.from({
-        accountId,
-        date,
-        id,
-        transactionType: 'investment',
-        address: address || null,
-        amount: amount || null,
-        categoryId: categoryId || null,
-        cleared: cleared || null,
-        commission: commission || null,
-        investmentAction,
-        memo: memo || null,
-        payee: payee || null,
-        price: price || null,
-        quantity: quantity || null,
-        securityId: securityId || null,
-    })
-}
-
-/*
- * Query all transactions from database
- * @sig queryTransactions :: Database -> LookupTable<Transaction>
- */
-const queryTransactions = db => {
-    const sql = `
-        SELECT id, account_id, date, amount, transaction_type, payee, memo, number, cleared,
-               category_id, security_id, quantity, price, commission, investment_action, address
-        FROM transactions
-        ORDER BY date DESC, id DESC
-    `
-
-    const results = db.exec(sql)
-    const rows = rowsToObjects(results)
-    const transactions = rows.map(row => (row.transaction_type === 'bank' ? mapBankRow(row) : mapInvestmentRow(row)))
-    return LookupTable(transactions, Transaction, 'id')
-}
-
-/*
- * Load a SQLite file and extract all entities as LookupTables
- * @sig loadEntitiesFromFile :: File -> Promise<{ accounts, categories, securities, tags, splits, transactions }>
+ * Load a SQLite file and extract all entities
+ * @sig loadEntitiesFromFile :: File -> Promise<Entities>
+ *     Entities = { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
  */
 const loadEntitiesFromFile = async file => {
+    // @sig rowsToObjects :: { columns: [String], values: [[Any]] } -> [Object]
+    const rowsToObjects = result => {
+        const rowToObject = (columns, row) => Object.fromEntries(columns.map((col, i) => [col, row[i]]))
+        if (!result || result.length === 0) return []
+        const { columns, values } = result[0]
+        return values.map(row => rowToObject(columns, row))
+    }
+
+    // @sig readFileAsArrayBuffer :: File -> Promise<ArrayBuffer>
+    const readFileAsArrayBuffer = f => {
+        // @sig setupFileReader :: (File, Function, Function) -> void
+        const setupFileReader = (fileToRead, resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = () => reject(new Error(`Failed to read file: ${fileToRead.name}`))
+            reader.readAsArrayBuffer(fileToRead)
+        }
+
+        return new Promise((resolve, reject) => setupFileReader(f, resolve, reject))
+    }
+
+    // @sig loadDatabase :: ArrayBuffer -> Promise<Database>
+    const loadDatabase = async buffer => {
+        const SQL = await initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
+        return new SQL.Database(new Uint8Array(buffer))
+    }
+
+    // @sig queryAccounts :: Database -> LookupTable<Account>
+    const queryAccounts = db => {
+        const mapRow = row =>
+            Account.from({ ...row, description: row.description || null, creditLimit: row.creditLimit || null })
+        const results = db.exec('SELECT id, name, type, description, creditLimit FROM accounts')
+        return LookupTable(rowsToObjects(results).map(mapRow), Account, 'id')
+    }
+
+    // @sig queryCategories :: Database -> LookupTable<Category>
+    const queryCategories = db => {
+        const sqliteBool = val => (val === 1 ? true : val === 0 ? false : null)
+
+        // @sig mapRow :: Object -> Category
+        const mapRow = row => {
+            const { budgetAmount, description, id, isIncomeCategory, isTaxRelated, name, taxSchedule } = row
+            return Category.from({
+                id,
+                name,
+                description: description || null,
+                budgetAmount: budgetAmount || null,
+                isIncomeCategory: sqliteBool(isIncomeCategory),
+                isTaxRelated: sqliteBool(isTaxRelated),
+                taxSchedule: taxSchedule || null,
+            })
+        }
+
+        const categoryCols = 'id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule'
+        const results = db.exec(`SELECT ${categoryCols} FROM categories`)
+        return LookupTable(rowsToObjects(results).map(mapRow), Category, 'id')
+    }
+
+    // @sig querySecurities :: Database -> LookupTable<Security>
+    const querySecurities = db => {
+        // Note: DB schema has name/symbol swapped - name contains ticker, symbol contains full name
+        // @sig mapRow :: Object -> Security
+        const mapRow = row => {
+            const { goal, id, name: ticker, symbol: fullName, type } = row
+            return Security.from({
+                id,
+                name: fullName || null,
+                symbol: ticker || null,
+                type: type || null,
+                goal: goal || null,
+            })
+        }
+
+        const results = db.exec('SELECT id, name, symbol, type, goal FROM securities')
+        return LookupTable(rowsToObjects(results).map(mapRow), Security, 'id')
+    }
+
+    // @sig queryTags :: Database -> LookupTable<Tag>
+    const queryTags = db => {
+        const mapRow = row => {
+            const { color, description, id, name } = row
+            return Tag.from({ id, name, color: color || null, description: description || null })
+        }
+        const results = db.exec('SELECT id, name, color, description FROM tags')
+        return LookupTable(rowsToObjects(results).map(mapRow), Tag, 'id')
+    }
+
+    // @sig querySplits :: Database -> LookupTable<Split>
+    const querySplits = db => {
+        const mapRow = row => {
+            const { amount, categoryId, id, memo, transactionId } = row
+            return Split.from({ id, transactionId, categoryId: categoryId || null, amount, memo: memo || null })
+        }
+        const results = db.exec('SELECT id, transactionId, categoryId, amount, memo FROM transactionSplits')
+        return LookupTable(rowsToObjects(results).map(mapRow), Split, 'id')
+    }
+
+    // @sig queryTransactions :: Database -> LookupTable<Transaction>
+    const queryTransactions = db => {
+        // @sig mapBankRow :: Object -> Transaction.Bank
+        const mapBankRow = row => {
+            const { accountId, address, amount, categoryId, cleared, date, id, memo, number, payee } = row
+            return Transaction.Bank.from({
+                id,
+                accountId,
+                date,
+                amount,
+                transactionType: 'bank',
+                address: address || null,
+                categoryId: categoryId || null,
+                cleared: cleared || null,
+                memo: memo || null,
+                number: number || null,
+                payee: payee || null,
+            })
+        }
+
+        // @sig mapInvestmentRow :: Object -> Transaction.Investment
+        const mapInvestmentRow = row => {
+            const { accountId, address, amount, categoryId, cleared, commission, date, id } = row
+            const { investmentAction, memo, payee, price, quantity, securityId } = row
+            return Transaction.Investment.from({
+                id,
+                accountId,
+                date,
+                transactionType: 'investment',
+                address: address || null,
+                amount: amount || null,
+                categoryId: categoryId || null,
+                cleared: cleared || null,
+                commission: commission || null,
+                investmentAction,
+                memo: memo || null,
+                payee: payee || null,
+                price: price || null,
+                quantity: quantity || null,
+                securityId: securityId || null,
+            })
+        }
+
+        const sql = `
+            SELECT id, accountId, date, amount, transactionType, payee, memo, number, cleared,
+                   categoryId, securityId, quantity, price, commission, investmentAction, address
+            FROM transactions
+            ORDER BY date DESC, id DESC
+        `
+        const results = db.exec(sql)
+        const rows = rowsToObjects(results)
+        const transactions = rows.map(row => (row.transactionType === 'bank' ? mapBankRow(row) : mapInvestmentRow(row)))
+        return LookupTable(transactions, Transaction, 'id')
+    }
+
+    // @sig queryPrices :: Database -> LookupTable<Price>
+    const queryPrices = db => {
+        const results = db.exec('SELECT id, securityId, date, price FROM prices ORDER BY securityId, date DESC')
+        return LookupTable(rowsToObjects(results).map(Price.from), Price, 'id')
+    }
+
+    // @sig queryLots :: Database -> LookupTable<Lot>
+    const queryLots = db => {
+        const mapRow = row => Lot.from({ ...row, closedDate: row.closedDate || null })
+        const sql = `
+            SELECT id, accountId, securityId, purchaseDate, quantity, costBasis,
+                   remainingQuantity, closedDate, createdByTransactionId, createdAt
+            FROM lots
+            ORDER BY accountId, securityId, purchaseDate
+        `
+        const results = db.exec(sql)
+        return LookupTable(rowsToObjects(results).map(mapRow), Lot, 'id')
+    }
+
+    // @sig queryLotAllocations :: Database -> LookupTable<LotAllocation>
+    const queryLotAllocations = db => {
+        const sql = `
+            SELECT id, lotId, transactionId, sharesAllocated, costBasisAllocated, date
+            FROM lotAllocations
+            ORDER BY lotId, date
+        `
+        const results = db.exec(sql)
+        return LookupTable(rowsToObjects(results).map(LotAllocation.from), LotAllocation, 'id')
+    }
+
     const buffer = await readFileAsArrayBuffer(file)
-
     if (!isSqliteFile(buffer)) throw new Error(`Not a valid SQLite file: ${file.name}`)
-
     const db = await loadDatabase(buffer)
 
     try {
@@ -265,6 +229,9 @@ const loadEntitiesFromFile = async file => {
             tags: queryTags(db),
             splits: querySplits(db),
             transactions: queryTransactions(db),
+            lots: queryLots(db),
+            lotAllocations: queryLotAllocations(db),
+            prices: queryPrices(db),
         }
     } finally {
         db.close()
