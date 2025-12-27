@@ -1,3 +1,6 @@
+// ABOUTME: Main database service for QIF import operations
+// ABOUTME: Handles database initialization, schema creation, and QIF data import
+
 import { map } from '@graffio/functional'
 import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
@@ -24,25 +27,16 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 /*
- * Create database connection
- * @sig createDatabase :: String -> Database
- */
-const createDatabase = databasePath => Database(databasePath)
-
-/*
- * Check if database has tables
- * @sig hasTables :: Database -> Boolean
- */
-const hasTables = db => {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all()
-    return tables.length > 0
-}
-
-/*
  * Initialize database with schema if needed
  * @sig initializeSchema :: Database -> Database
  */
 const initializeSchema = db => {
+    // @sig hasTables :: Database -> Boolean
+    const hasTables = d => {
+        const tables = d.prepare("SELECT name FROM sqlite_master WHERE type='table'").all()
+        return tables.length > 0
+    }
+
     if (hasTables(db)) return db
 
     console.log('Creating new database with schema...')
@@ -54,45 +48,38 @@ const initializeSchema = db => {
 }
 
 /*
- * Initialize database with schema if it doesn't exist
- * @sig initializeDatabase :: String -> Database
- */
-const initializeDatabase = databasePath => initializeSchema(createDatabase(databasePath))
-
-/*
  * Get database connection, creating if necessary
  * @sig getDatabase :: String -> Database
  */
 const getDatabase = databasePath => {
+    const createAndInitialize = path => initializeSchema(Database(path))
+
     try {
-        return initializeDatabase(databasePath)
+        return createAndInitialize(databasePath)
     } catch (error) {
         throw new Error(`Failed to initialize database: ${error.message}`)
     }
 }
 
 /*
- * Get table information for a single table
- * @sig getTableInfo :: (Database, String) -> TableInfo
+ * Get schema information from database
  * TableInfo = {name: String, columns: [ColumnInfo]}
  * ColumnInfo = {name: String, type: String, nullable: Boolean, primaryKey: Boolean}
- */
-const getTableInfo = (db, tableName) => {
-    const columns = db.prepare(`PRAGMA table_info(${tableName})`).all()
-    const columnInfo = map(
-        col => ({ name: col.name, type: col.type, nullable: col.notnull === 0, primaryKey: col.pk === 1 }),
-        columns,
-    )
-
-    return { name: tableName, columns: columnInfo }
-}
-
-/*
- * Get schema information from database
- * @sig getSchemaInfo :: String -> SchemaInfo
  * SchemaInfo = {tables: [TableInfo], views: [ViewInfo], indexes: [IndexInfo]}
+ * @sig getSchemaInfo :: String -> SchemaInfo
  */
 const getSchemaInfo = databasePath => {
+    // @sig getTableInfo :: (Database, String) -> TableInfo
+    const getTableInfo = (db, tableName) => {
+        const toColumnInfo = col => {
+            const { name, notnull, pk, type } = col
+            return { name, type, nullable: notnull === 0, primaryKey: pk === 1 }
+        }
+
+        const columns = db.prepare(`PRAGMA table_info(${tableName})`).all()
+        return { name: tableName, columns: map(toColumnInfo, columns) }
+    }
+
     if (!databasePath) throw new Error('Database path is required')
     const db = getDatabase(databasePath)
 
@@ -110,21 +97,18 @@ const getSchemaInfo = databasePath => {
 }
 
 /*
- * Get count for a single table
- * @sig getTableCount :: (Database, String) -> Number
- */
-const getTableCount = (db, tableName) => {
-    const result = db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).get()
-    return result.count
-}
-
-/*
  * Get database statistics
- * @sig getDatabaseStats :: String -> DatabaseStats
  * DatabaseStats = {accounts: Number, securities: Number, transactions: Number, prices: Number,
  *                  categories: Number, tags: Number, lots: Number, holdings: Number, dailyPortfolios: Number}
+ * @sig getDatabaseStats :: String -> DatabaseStats
  */
 const getDatabaseStats = databasePath => {
+    // @sig getTableCount :: (Database, String) -> Number
+    const getTableCount = (db, tableName) => {
+        const result = db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).get()
+        return result.count
+    }
+
     if (!databasePath) throw new Error('Database path is required')
     const db = getDatabase(databasePath)
 
@@ -145,115 +129,93 @@ const getDatabaseStats = databasePath => {
 }
 
 /*
- * Clear existing data from all tables
- * @sig clearExistingData :: Database -> void
- */
-const clearExistingData = db => {
-    const deleteStatements = [
-        'DELETE FROM transaction_splits',
-        'DELETE FROM lots',
-        'DELETE FROM transactions',
-        'DELETE FROM prices',
-        'DELETE FROM tags',
-        'DELETE FROM categories',
-        'DELETE FROM securities',
-        'DELETE FROM accounts',
-    ]
-
-    map(stmt => db.exec(stmt), deleteStatements)
-}
-
-/*
- * Group transactions by date
- * @sig groupTransactionsByDate :: [Transaction] -> Object
- */
-const groupTransactionsByDate = transactions => {
-    const transactionsByDate = {}
-    transactions.forEach(transaction => {
-        const date = transaction.date
-        if (!transactionsByDate[date]) transactionsByDate[date] = []
-        transactionsByDate[date].push(transaction)
-    })
-    return transactionsByDate
-}
-
-/*
- * Get transaction priority for sorting
- * @sig getTransactionPriority :: Transaction -> Number
- */
-const getTransactionPriority = transaction => {
-    if (transaction.amount > 0) return 1 // Cash inflows first
-    if (transaction.amount < 0) return 2 // Cash outflows second
-    return 3 // Zero amounts last
-}
-
-/*
- * Sort transactions by type within each day to ensure cash flows happen before purchases
- * @sig sortTransactionsByType :: [Transaction] -> [Transaction]
- */
-const sortTransactionsByType = transactions => {
-    const byPriority = (a, b) => {
-        const priorityA = getTransactionPriority(a)
-        const priorityB = getTransactionPriority(b)
-        return priorityA !== priorityB ? priorityA - priorityB : 0
-    }
-
-    const sortDayTransactions = dayTransactions => {
-        dayTransactions.sort(byPriority)
-        return dayTransactions
-    }
-
-    const transactionsByDate = groupTransactionsByDate(transactions)
-    const sortedTransactions = []
-
-    Object.keys(transactionsByDate)
-        .sort()
-        .forEach(date => {
-            const dayTransactions = sortDayTransactions(transactionsByDate[date])
-            sortedTransactions.push(...dayTransactions)
-        })
-
-    return sortedTransactions
-}
-
-/*
  * Import all QIF data into database
- * @sig importQifData :: (String, QifData) -> void
  * QifData = {accounts: [Account], securities: [Security], categories: [Category], tags: [Tag],
  *           bankTransactions: [BankTransaction], investmentTransactions: [InvestmentTransaction], prices: [Price]}
+ * @sig importQifData :: (String, QifData) -> void
  */
 const importQifData = (databasePath, qifData) => {
-    if (!databasePath) throw new Error('Database path is required')
+    // @sig clearExistingData :: Database -> void
+    const clearExistingData = db => {
+        const deleteStatements = [
+            'DELETE FROM transactionSplits',
+            'DELETE FROM lotAllocations',
+            'DELETE FROM lots',
+            'DELETE FROM transactions',
+            'DELETE FROM prices',
+            'DELETE FROM tags',
+            'DELETE FROM categories',
+            'DELETE FROM securities',
+            'DELETE FROM accounts',
+        ]
 
-    const db = getDatabase(databasePath)
+        map(stmt => db.exec(stmt), deleteStatements)
+    }
 
+    // @sig sortTransactionsByType :: [Transaction] -> [Transaction]
+    const sortTransactionsByType = transactions => {
+        // @sig getTransactionPriority :: Transaction -> Number
+        const getTransactionPriority = transaction => {
+            if (transaction.amount > 0) return 1
+            if (transaction.amount < 0) return 2
+            return 3
+        }
+
+        // @sig groupTransactionsByDate :: [Transaction] -> Object
+        const groupTransactionsByDate = txns => {
+            const addToDate = (byDate, txn) => {
+                const { date } = txn
+                if (!byDate[date]) byDate[date] = []
+                byDate[date].push(txn)
+            }
+
+            const byDate = {}
+            txns.forEach(txn => addToDate(byDate, txn))
+            return byDate
+        }
+
+        const byPriority = (a, b) => getTransactionPriority(a) - getTransactionPriority(b)
+        const sortDay = dayTxns => dayTxns.sort(byPriority)
+        const byDate = groupTransactionsByDate(transactions)
+        const sorted = []
+
+        Object.keys(byDate)
+            .sort()
+            .forEach(date => sorted.push(...sortDay(byDate[date])))
+
+        return sorted
+    }
+
+    // @sig importData :: () -> void
     const importData = () => {
+        const { accounts, bankTransactions, categories, investmentTransactions, prices, securities, tags } = qifData
+
         console.log('Importing accounts')
-        importAccounts(db, qifData.accounts)
-        const accounts = getAllAccounts(db)
+        importAccounts(db, accounts)
+        const accts = getAllAccounts(db)
 
         console.log('Importing securities')
-        importSecurities(db, qifData.securities)
-        const securities = getAllSecurities(db)
+        importSecurities(db, securities)
+        const secs = getAllSecurities(db)
 
         console.log('Importing categories')
-        importCategories(db, qifData.categories)
+        importCategories(db, categories)
 
         console.log('Importing tags')
-        importTags(db, qifData.tags)
+        importTags(db, tags)
 
         console.log('Importing prices')
-        importPrices(db, qifData.prices, securities)
+        importPrices(db, prices, secs)
 
         console.log('Sorting transactions by type within each day')
-        const sortedBankTransactions = sortTransactionsByType(qifData.bankTransactions)
-        const sortedInvestmentTransactions = sortTransactionsByType(qifData.investmentTransactions)
+        const sortedBank = sortTransactionsByType(bankTransactions)
+        const sortedInv = sortTransactionsByType(investmentTransactions)
 
         console.log('Importing bank transactions')
-        importBankTransactions(db, sortedBankTransactions, accounts)
+        importBankTransactions(db, sortedBank, accts)
 
         console.log('Importing investment transactions')
-        importInvestmentTransactions(db, sortedInvestmentTransactions, accounts, securities)
+        importInvestmentTransactions(db, sortedInv, accts, secs)
 
         console.log('Populating prices from transaction data')
         populatePricesFromTransactions(db)
@@ -261,6 +223,9 @@ const importQifData = (databasePath, qifData) => {
         console.log('Importing investment lots')
         importLots(db)
     }
+
+    if (!databasePath) throw new Error('Database path is required')
+    const db = getDatabase(databasePath)
 
     try {
         db.exec('BEGIN TRANSACTION')

@@ -1,35 +1,30 @@
+// ABOUTME: Category database operations for QIF import
+// ABOUTME: Handles category CRUD with budget and tax tracking fields
+
 import { map } from '@graffio/functional'
 import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Category, Entry } from '../../types/index.js'
-
-/*
- * Generate deterministic category ID from name
- * @sig generateCategoryId :: String -> String
- */
-const generateCategoryId = name => `cat_${hashFields({ name })}`
 
 /*
  * Insert category into database (dedupes on collision)
  * @sig insertCategory :: (Database, Entry.Category) -> String
  */
 const insertCategory = (db, categoryEntry) => {
+    const generateId = n => `cat_${hashFields({ name: n })}`
+
     if (!Entry.Category.is(categoryEntry))
         throw new Error(`Expected Entry.Category; found: ${JSON.stringify(categoryEntry)}`)
 
-    const id = generateCategoryId(categoryEntry.name)
+    const id = generateId(categoryEntry.name)
 
-    // Check if category already exists (dedupe)
     const existing = db.prepare('SELECT id FROM categories WHERE id = ?').get(id)
     if (existing) return existing.id
 
-    const stmt = db.prepare(`
-        INSERT INTO categories (id, name, description, budget_amount, is_income_category, is_tax_related, tax_schedule)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `)
+    const cols = 'id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule'
+    const stmt = db.prepare(`INSERT INTO categories (${cols}) VALUES (?, ?, ?, ?, ?, ?, ?)`)
 
     let { name, description, budgetAmount, isIncomeCategory = false, isTaxRelated = false, taxSchedule } = categoryEntry
 
-    // Coerce booleans to numbers
     isIncomeCategory = isIncomeCategory ? 1 : 0
     isTaxRelated = isTaxRelated ? 1 : 0
 
@@ -43,6 +38,10 @@ const insertCategory = (db, categoryEntry) => {
  */
 const importCategories = (db, categories) => map(category => insertCategory(db, category), categories)
 
+/*
+ * Convert raw database record to Category type, coercing 0/1 to boolean
+ * @sig convertCategory :: Object? -> Category?
+ */
 const convertCategory = record => {
     if (!record) return null
 
@@ -56,13 +55,8 @@ const convertCategory = record => {
  * @sig findCategoryByName :: (Database, String) -> Category?
  */
 const findCategoryByName = (db, categoryName) => {
-    const record = db
-        .prepare(
-            'SELECT id, name, description, budget_amount AS budgetAmount, is_income_category AS isIncomeCategory, is_tax_related AS isTaxRelated, tax_schedule AS taxSchedule FROM categories WHERE name = ?',
-        )
-        .get(categoryName)
-
-    // convert from 0|1 to false|true
+    const cols = 'id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule'
+    const record = db.prepare(`SELECT ${cols} FROM categories WHERE name = ?`).get(categoryName)
     return convertCategory(record)
 }
 
@@ -71,12 +65,8 @@ const findCategoryByName = (db, categoryName) => {
  * @sig getAllCategories :: (Database) -> [Category]
  */
 const getAllCategories = db => {
-    const records = db
-        .prepare(
-            'SELECT id, name, description, budget_amount AS budgetAmount, is_income_category AS isIncomeCategory, is_tax_related AS isTaxRelated, tax_schedule AS taxSchedule FROM categories ORDER BY name',
-        )
-        .all()
-
+    const cols = 'id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule'
+    const records = db.prepare(`SELECT ${cols} FROM categories ORDER BY name`).all()
     return map(convertCategory, records)
 }
 
