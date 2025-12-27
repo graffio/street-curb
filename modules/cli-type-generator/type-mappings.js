@@ -67,6 +67,7 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/entry.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/holding.type.js`]         : [targets.cliQifToSqlite, targets.quickenWebApp],
     [`${sources.cliQifToSqlite}/lot.type.js`]             : [targets.cliQifToSqlite, targets.financialComputations, targets.quickenWebApp],
+    [`${sources.cliQifToSqlite}/lot-allocation.type.js`] : [targets.cliQifToSqlite, targets.quickenWebApp],
     [`${sources.cliQifToSqlite}/price.type.js`]           : [targets.cliQifToSqlite, targets.quickenWebApp],
     [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
@@ -93,7 +94,6 @@ export const typeMappings = {
 
 
     // financial-computations
-    [`${sources.financialComputations}/view-row.type.js`]: [targets.financialComputations],
     [`${sources.financialComputations}/register-row.type.js`]: [targets.financialComputations],
 
 
