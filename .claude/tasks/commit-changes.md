@@ -16,13 +16,10 @@ Goal: Message understandable 6 months later without reading the diff.
 
 Problem: What was wrong/missing and why it matters (2-3 sentences)
 
-Solution: The approach with enough detail to understand without the diff.
+Solution: The approach with enough detail to understand without the diff. Use bullet points.
 
 Impact: What this enables, prevents, or improves.
-```
 
-For complex commits, add:
-```
 Changes by purpose:
 - component/dir: What and why
 - component/dir: What and why

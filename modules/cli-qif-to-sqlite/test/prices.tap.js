@@ -17,6 +17,8 @@ import {
 import { insertAccount, insertSecurity, findAccountByName, findSecurityByName } from '../src/services/database/index.js'
 import { Entry, Price } from '../src/types/index.js'
 
+const { Price: EntryPrice } = Entry
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
@@ -71,7 +73,7 @@ test('Prices Repository', t => {
         t.test('When I insert a basic price', t => {
             const db = createTestDatabase()
             const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
-            const priceEntry = Price.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') })
+            const priceEntry = EntryPrice.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') })
 
             const priceId = insertPrice(db, priceEntry, security)
 
@@ -96,7 +98,7 @@ test('Prices Repository', t => {
         t.test('When I insert a price with minimal data', t => {
             const db = createTestDatabase()
             const security = createSecurityInDb(db, { name: 'Microsoft Corp.', symbol: 'MSFT' })
-            const priceEntry = Price.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') })
+            const priceEntry = EntryPrice.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') })
 
             const priceId = insertPrice(db, priceEntry, security)
 
@@ -168,9 +170,9 @@ test('Prices Repository', t => {
         ]
 
         const prices = [
-            Price.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') }),
-            Price.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') }),
-            Price.from({ symbol: 'TSLA', price: 250.75, date: new Date('2024-01-17') }),
+            EntryPrice.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') }),
+            EntryPrice.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') }),
+            EntryPrice.from({ symbol: 'TSLA', price: 250.75, date: new Date('2024-01-17') }),
         ]
 
         prices.forEach((price, index) => insertPrice(db, price, securities[index]))
@@ -219,8 +221,8 @@ test('Prices Repository', t => {
             ]
 
             const newPrices = [
-                Price.from({ symbol: 'GOOGL', price: 2800.0, date: new Date('2024-01-18') }),
-                Price.from({ symbol: 'AMZN', price: 3200.5, date: new Date('2024-01-19') }),
+                EntryPrice.from({ symbol: 'GOOGL', price: 2800.0, date: new Date('2024-01-18') }),
+                EntryPrice.from({ symbol: 'AMZN', price: 3200.5, date: new Date('2024-01-19') }),
             ]
 
             const priceIds = importPrices(db, newPrices, newSecurities)
@@ -289,7 +291,7 @@ test('Prices Repository', t => {
 
         t.test('When I try to import prices with missing security', t => {
             const db = createTestDatabase()
-            const prices = [Price.from({ symbol: 'MISSING', price: 100, date: new Date() })]
+            const prices = [EntryPrice.from({ symbol: 'MISSING', price: 100, date: new Date() })]
             const securities = [createSecurityInDb(db, { name: 'Test Security', symbol: 'TEST' })]
 
             t.test('Then it throws an error for missing security', t => {
@@ -520,7 +522,7 @@ test('Prices Repository', t => {
             const { id: securityId } = security
 
             // Insert an existing price
-            const existingPrice = Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
+            const existingPrice = EntryPrice.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
             insertPrice(db, existingPrice, security)
 
             // Create a transaction with a newer price
@@ -641,7 +643,7 @@ test('Prices Repository', t => {
             const { id: securityId } = security
 
             // Insert an existing price for 2023-06-15
-            const existingPrice = Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-06-15') })
+            const existingPrice = EntryPrice.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-06-15') })
             insertPrice(db, existingPrice, security)
 
             // Insert a transaction for the same day with a different price
@@ -676,7 +678,7 @@ test('Prices Repository', t => {
             const { id: securityId } = security
 
             // Insert an existing price for 2023-01-01
-            const existingPrice = Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
+            const existingPrice = EntryPrice.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
             insertPrice(db, existingPrice, security)
 
             // Insert a transaction for a later day
