@@ -1,3 +1,6 @@
+// ABOUTME: Holdings database operations for investment portfolio tracking
+// ABOUTME: Computes current and historical holdings from lot data
+
 import { map } from '@graffio/functional'
 import { Holding } from '../../types/index.js'
 
@@ -6,12 +9,12 @@ import { Holding } from '../../types/index.js'
  *
  * This query aggregates open lots to calculate current holdings per account/security:
  *
- * - Only considers lots where closed_date IS NULL (open lots)
- * - Groups by account_id and security_id to aggregate multiple lots
- * - Sums remaining_quantity and cost_basis across all open lots
- * - Calculates weighted average cost per share: total_cost_basis / total_quantity
+ * - Only considers lots where closedDate IS NULL (open lots)
+ * - Groups by accountId and securityId to aggregate multiple lots
+ * - Sums remainingQuantity and costBasis across all open lots
+ * - Calculates weighted average cost per share: total costBasis / total quantity
  * - Filters out holdings with zero quantity (HAVING quantity != 0)
- * - Uses MAX(created_at) to show when the most recent lot was created
+ * - Uses MAX(createdAt) to show when the most recent lot was created
  *
  * The weighted average ensures that larger lots have more influence on the average
  * cost per share, which is important for accurate cost basis calculations.
@@ -21,18 +24,18 @@ import { Holding } from '../../types/index.js'
  */
 const getCurrentHoldings = db => {
     const statement = `
-        WITH open_lots AS (SELECT * FROM lots WHERE closed_date IS NULL AND remaining_quantity != 0)
+        WITH open_lots AS (SELECT * FROM lots WHERE closedDate IS NULL AND remainingQuantity != 0)
 
         SELECT
-            l.account_id AS accountId,
-            l.security_id AS securityId,
-            SUM(l.remaining_quantity) AS quantity,
-            SUM(l.cost_basis) AS costBasis,
-            SUM(l.cost_basis) / SUM(l.remaining_quantity) AS avgCostPerShare,
-            MAX(l.created_at) AS lastUpdated
+            l.accountId,
+            l.securityId,
+            SUM(l.remainingQuantity) AS quantity,
+            SUM(l.costBasis) AS costBasis,
+            SUM(l.costBasis) / SUM(l.remainingQuantity) AS avgCostPerShare,
+            MAX(l.createdAt) AS lastUpdated
         FROM open_lots l
-        GROUP BY l.account_id, l.security_id
-        ORDER BY l.account_id, l.security_id;    `
+        GROUP BY l.accountId, l.securityId
+        ORDER BY l.accountId, l.securityId;    `
 
     const records = db.prepare(statement).all()
     return map(Holding.from, records)
@@ -42,14 +45,14 @@ const getCurrentHoldings = db => {
  * Get holdings as of a specific date
  *
  * This query calculates holdings at a point in time by considering lot lifecycle:
- * - Only includes lots purchased on or before the target date (purchase_date <= ?)
+ * - Only includes lots purchased on or before the target date (purchaseDate <= ?)
  * - For each lot, determines if it was still open on the target date:
- *   * If closed_date IS NULL, the lot is still open
- *   * If closed_date > target_date, the lot was still open on target date
- *   * If closed_date <= target_date, the lot was closed before target date
+ *   * If closedDate IS NULL, the lot is still open
+ *   * If closedDate > target_date, the lot was still open on target date
+ *   * If closedDate <= target_date, the lot was closed before target date
  * - Uses CASE statements to conditionally include quantities and cost basis
  * - Calculates weighted average cost per share only for lots that were open
- * - Groups by account_id and security_id to aggregate across multiple lots
+ * - Groups by accountId and securityId to aggregate across multiple lots
  * - Filters out holdings with zero quantity after date filtering
  * - Now supports both long (positive) and short (negative) positions
  *
@@ -62,21 +65,21 @@ const getHoldingsAsOf = (db, date) => {
     const statement = `
         WITH open_lots AS (SELECT *
             FROM lots
-            WHERE purchase_date <= ?
-              AND (closed_date IS NULL OR closed_date > ?)
+            WHERE purchaseDate <= ?
+              AND (closedDate IS NULL OR closedDate > ?)
               AND quantity != 0
         )
-        
+
         SELECT
-            l.account_id AS accountId,
-            l.security_id AS securityId,
+            l.accountId,
+            l.securityId,
             SUM(l.quantity) AS quantity,
-            SUM(l.cost_basis) AS costBasis,
-            SUM(l.cost_basis) * 1.0 / SUM(l.quantity) AS avgCostPerShare,
-            MAX(l.created_at) AS lastUpdated
+            SUM(l.costBasis) AS costBasis,
+            SUM(l.costBasis) * 1.0 / SUM(l.quantity) AS avgCostPerShare,
+            MAX(l.createdAt) AS lastUpdated
         FROM open_lots l
-        GROUP BY l.account_id, l.security_id
-        ORDER BY l.account_id, l.security_id;    `
+        GROUP BY l.accountId, l.securityId
+        ORDER BY l.accountId, l.securityId;    `
 
     const records = db.prepare(statement).all(date, date)
     return map(Holding.from, records)
@@ -85,11 +88,11 @@ const getHoldingsAsOf = (db, date) => {
 /*
  * Get holdings for a specific account
  *
- * Similar to getCurrentHoldings but filters by account_id.
+ * Similar to getCurrentHoldings but filters by accountId.
  * Aggregates all open lots for a specific account across all securities.
  *
  * The query structure ensures that:
- * - Only open lots (closed_date IS NULL) are considered
+ * - Only open lots (closedDate IS NULL) are considered
  * - Multiple lots of the same security are aggregated together
  * - Weighted average cost per share is calculated correctly
  * - Holdings with zero quantity are excluded
@@ -99,19 +102,19 @@ const getHoldingsAsOf = (db, date) => {
  */
 const getHoldingsByAccount = (db, accountId) => {
     const statement = `
-        WITH open_lots AS (SELECT * FROM lots WHERE closed_date IS NULL AND remaining_quantity != 0)
-        
+        WITH open_lots AS (SELECT * FROM lots WHERE closedDate IS NULL AND remainingQuantity != 0)
+
         SELECT
-            l.account_id AS accountId,
-            l.security_id AS securityId,
-            SUM(l.remaining_quantity) AS quantity,
-            SUM(l.cost_basis) AS costBasis,
-            SUM(l.cost_basis) / SUM(l.remaining_quantity) AS avgCostPerShare,
-            MAX(l.created_at) AS lastUpdated
+            l.accountId,
+            l.securityId,
+            SUM(l.remainingQuantity) AS quantity,
+            SUM(l.costBasis) AS costBasis,
+            SUM(l.costBasis) / SUM(l.remainingQuantity) AS avgCostPerShare,
+            MAX(l.createdAt) AS lastUpdated
         FROM open_lots l
-        WHERE l.account_id = ?
-        GROUP BY l.security_id
-        ORDER BY l.security_id;
+        WHERE l.accountId = ?
+        GROUP BY l.securityId
+        ORDER BY l.securityId;
     `
 
     const records = db.prepare(statement).all(accountId)
@@ -124,7 +127,7 @@ const getHoldingsByAccount = (db, accountId) => {
  * Aggregates all open lots for a specific security across all accounts.
  * Useful for seeing total ownership of a security across the entire portfolio.
  *
- * The query groups by account_id to show holdings per account for the given security,
+ * The query groups by accountId to show holdings per account for the given security,
  * allowing analysis of how a security is distributed across different accounts.
  * Now supports both long (positive) and short (negative) positions.
  *
@@ -132,19 +135,19 @@ const getHoldingsByAccount = (db, accountId) => {
  */
 const getHoldingsBySecurity = (db, securityId) => {
     const statement = `
-        WITH open_lots AS (SELECT *FROM lots WHERE closed_date IS NULL AND remaining_quantity != 0)
+        WITH open_lots AS (SELECT * FROM lots WHERE closedDate IS NULL AND remainingQuantity != 0)
 
         SELECT
-            l.account_id AS accountId,
-            l.security_id AS securityId,
-            SUM(l.remaining_quantity) AS quantity,
-            SUM(l.cost_basis) AS costBasis,
-            SUM(l.cost_basis) / SUM(l.remaining_quantity) AS avgCostPerShare,
-            MAX(l.created_at) AS lastUpdated
+            l.accountId,
+            l.securityId,
+            SUM(l.remainingQuantity) AS quantity,
+            SUM(l.costBasis) AS costBasis,
+            SUM(l.costBasis) / SUM(l.remainingQuantity) AS avgCostPerShare,
+            MAX(l.createdAt) AS lastUpdated
         FROM open_lots l
-        WHERE l.security_id = ?
-        GROUP BY l.account_id, l.security_id
-        ORDER BY l.security_id;    `
+        WHERE l.securityId = ?
+        GROUP BY l.accountId, l.securityId
+        ORDER BY l.securityId;    `
 
     const records = db.prepare(statement).all(securityId)
     return map(Holding.from, records)
@@ -168,21 +171,21 @@ const getHoldingByAccountAndSecurity = (db, accountId, securityId) => {
         WITH open_lots AS (
             SELECT *
             FROM lots
-            WHERE closed_date IS NULL
-              AND account_id = ?
-              AND security_id = ?
-              AND remaining_quantity != 0
+            WHERE closedDate IS NULL
+              AND accountId = ?
+              AND securityId = ?
+              AND remainingQuantity != 0
         )
 
         SELECT
-            l.account_id AS accountId,
-            l.security_id AS securityId,
-            SUM(l.remaining_quantity) AS quantity,
-            SUM(l.cost_basis) AS costBasis,
-            SUM(l.cost_basis) / SUM(l.remaining_quantity) AS avgCostPerShare,
-            MAX(l.created_at) AS lastUpdated
+            l.accountId,
+            l.securityId,
+            SUM(l.remainingQuantity) AS quantity,
+            SUM(l.costBasis) AS costBasis,
+            SUM(l.costBasis) / SUM(l.remainingQuantity) AS avgCostPerShare,
+            MAX(l.createdAt) AS lastUpdated
         FROM open_lots l
-        GROUP BY l.account_id, l.security_id;
+        GROUP BY l.accountId, l.securityId;
     `
 
     const record = db.prepare(statement).get(accountId, securityId)
@@ -205,12 +208,12 @@ const getHoldingByAccountAndSecurity = (db, accountId, securityId) => {
 const getHoldingsCount = db => {
     const statement = `
         WITH open_lot_pairs AS (
-            SELECT account_id, security_id
+            SELECT accountId, securityId
             FROM lots
-            WHERE closed_date IS NULL AND remaining_quantity != 0
-            GROUP BY account_id, security_id
+            WHERE closedDate IS NULL AND remainingQuantity != 0
+            GROUP BY accountId, securityId
         )
-        
+
         SELECT COUNT(*) AS count
         FROM open_lot_pairs;    `
 
@@ -224,22 +227,110 @@ const getHoldingsCount = db => {
  */
 const getAllCurrentHoldings = db => {
     const statement = `
-        SELECT l.account_id AS accountId, l.security_id AS securityId, SUM(l.remaining_quantity) AS quantity
+        SELECT l.accountId, l.securityId, SUM(l.remainingQuantity) AS quantity
         FROM lots l
-        WHERE l.closed_date IS NULL
-        GROUP BY l.account_id, l.security_id
-        HAVING SUM(l.remaining_quantity) != 0
-        ORDER BY l.account_id, l.security_id
+        WHERE l.closedDate IS NULL
+        GROUP BY l.accountId, l.securityId
+        HAVING SUM(l.remainingQuantity) != 0
+        ORDER BY l.accountId, l.securityId
     `
     return db.prepare(statement).all()
 }
 
+/*
+ * Get lots as of a specific date with accurate remaining quantity
+ *
+ * Computes remainingQuantityAsOf by subtracting lot allocations that occurred
+ * on or before the target date. This gives accurate historical lot state.
+ *
+ * Returns lots that were open on the target date (purchased before date,
+ * not yet closed or closed after date) with their computed remaining quantity.
+ *
+ * LotAsOf = {id, accountId, securityId, purchaseDate, quantity, costBasis, remainingQuantityAsOf}
+ * @sig getLotsAsOf :: (Database, String) -> [LotAsOf]
+ */
+const getLotsAsOf = (db, date) => {
+    const statement = `
+        SELECT
+            l.id,
+            l.accountId,
+            l.securityId,
+            l.purchaseDate,
+            l.quantity,
+            l.costBasis,
+            l.quantity - COALESCE(
+                (SELECT SUM(la.sharesAllocated)
+                 FROM lotAllocations la
+                 WHERE la.lotId = l.id AND la.date <= ?),
+                0
+            ) AS remainingQuantityAsOf
+        FROM lots l
+        WHERE l.purchaseDate <= ?
+          AND (l.closedDate IS NULL OR l.closedDate > ?)
+        ORDER BY l.accountId, l.securityId, l.purchaseDate
+    `
+    return db.prepare(statement).all(date, date, date)
+}
+
+/*
+ * Get accurate holdings as of a specific date
+ *
+ * Uses lot allocations to compute accurate historical holdings.
+ * Unlike getHoldingsAsOf which uses remainingQuantity (current state),
+ * this computes quantity by subtracting allocations up to the target date.
+ *
+ * @sig getAccurateHoldingsAsOf :: (Database, String) -> [Holding]
+ */
+const getAccurateHoldingsAsOf = (db, date) => {
+    const statement = `
+        WITH lots_as_of AS (
+            SELECT
+                l.accountId,
+                l.securityId,
+                l.quantity,
+                l.costBasis,
+                l.quantity - COALESCE(
+                    (SELECT SUM(la.sharesAllocated)
+                     FROM lotAllocations la
+                     WHERE la.lotId = l.id AND la.date <= ?),
+                    0
+                ) AS remainingQuantityAsOf,
+                l.costBasis - COALESCE(
+                    (SELECT SUM(la.costBasisAllocated)
+                     FROM lotAllocations la
+                     WHERE la.lotId = l.id AND la.date <= ?),
+                    0
+                ) AS costBasisAsOf
+            FROM lots l
+            WHERE l.purchaseDate <= ?
+              AND (l.closedDate IS NULL OR l.closedDate > ?)
+        )
+        SELECT
+            accountId,
+            securityId,
+            SUM(remainingQuantityAsOf) AS quantity,
+            SUM(costBasisAsOf) AS costBasis,
+            CASE
+                WHEN SUM(remainingQuantityAsOf) != 0
+                THEN SUM(costBasisAsOf) * 1.0 / SUM(remainingQuantityAsOf)
+                ELSE 0
+            END AS avgCostPerShare
+        FROM lots_as_of
+        WHERE remainingQuantityAsOf > 0
+        GROUP BY accountId, securityId
+        ORDER BY accountId, securityId
+    `
+    return db.prepare(statement).all(date, date, date, date)
+}
+
 export {
+    getAccurateHoldingsAsOf,
+    getAllCurrentHoldings,
     getCurrentHoldings,
+    getHoldingByAccountAndSecurity,
     getHoldingsAsOf,
     getHoldingsByAccount,
     getHoldingsBySecurity,
-    getHoldingByAccountAndSecurity,
     getHoldingsCount,
-    getAllCurrentHoldings,
+    getLotsAsOf,
 }
