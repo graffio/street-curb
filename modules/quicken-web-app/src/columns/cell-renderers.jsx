@@ -211,17 +211,23 @@ const ExpandableCategoryCell = ({ row, getValue }) => {
     )
 }
 
-// Cell renderer for security column, looks up symbol from Redux store
+// Cell renderer for security column, shows ticker and name (e.g., "VTIVX - Vanguard Target Retirement 2045")
 // @sig SecurityCell :: { getValue: Function, table: Table } -> ReactElement
 const SecurityCell = ({ getValue, table }) => {
     const securityId = getValue()
     const symbol = useSelector(state => S.securitySymbol(state, securityId))
+    const name = useSelector(state => S.securityName(state, securityId))
     const searchQuery = table.options.meta?.searchQuery
 
     return (
-        <span style={{ display: 'block' }}>
-            <HighlightedText text={symbol} searchQuery={searchQuery} />
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
+                <HighlightedText text={symbol || ''} searchQuery={searchQuery} />
+            </div>
+            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>
+                <HighlightedText text={name || ''} searchQuery={searchQuery} />
+            </div>
+        </div>
     )
 }
 

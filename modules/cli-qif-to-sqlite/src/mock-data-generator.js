@@ -188,6 +188,9 @@ const generateMockData = (seed = 12345) => {
             const quantity = Math.ceil(random() * 20)
             const commission = maybeCommission()
             const amount = round2(-(quantity * price) - (commission ?? 0))
+
+            // Track position for sell validation
+            positions.set(symbol, (positions.get(symbol) ?? 0) + quantity)
             transactions.push(
                 Entry.TransactionInvestment.from({
                     account: brokerage,
@@ -206,11 +209,18 @@ const generateMockData = (seed = 12345) => {
         // @sig maybeGenerateSell :: Date -> void
         const maybeGenerateSell = date => {
             if (random() >= 0.1) return
-            const { symbol } = SECURITIES[Math.floor(random() * SECURITIES.length)]
+
+            // Only sell securities we actually own
+            const ownedSymbols = [...positions.entries()].filter(([, qty]) => qty > 0)
+            if (ownedSymbols.length === 0) return
+            const [symbol, ownedQty] = ownedSymbols[Math.floor(random() * ownedSymbols.length)]
             const price = roundPrice(symbol, BASE_PRICES[symbol] * (0.9 + random() * 0.2))
-            const quantity = Math.ceil(random() * 10)
+
+            // Sell up to what we own
+            const quantity = Math.min(Math.ceil(random() * 10), ownedQty)
             const commission = maybeCommission()
             const amount = round2(quantity * price - (commission ?? 0))
+            positions.set(symbol, ownedQty - quantity)
             transactions.push(
                 Entry.TransactionInvestment.from({
                     account: brokerage,
@@ -315,16 +325,20 @@ const generateMockData = (seed = 12345) => {
             if (date.getDay() !== 5 || random() >= 0.5) return
             const price = roundPrice('VFIAX', BASE_PRICES.VFIAX * (0.95 + random() * 0.1))
             const contribution = 750
+            const quantity = Math.round((contribution / price) * 1000) / 1000
+
+            // Use BuyX (buy with transfer) - ContribX is cash-only per QIF spec
             transactions.push(
                 Entry.TransactionInvestment.from({
                     account: k401,
                     date: new Date(date),
-                    transactionType: 'ContribX',
+                    transactionType: 'BuyX',
                     security: 'VFIAX',
                     price,
-                    quantity: Math.round((contribution / price) * 1000) / 1000,
-                    amount: contribution,
+                    quantity,
+                    amount: -(quantity * price), // Negative for buy
                     memo: '401k contribution',
+                    category: '[Primary Checking]',
                 }),
             )
         }
@@ -376,6 +390,7 @@ const generateMockData = (seed = 12345) => {
         const brokerage = 'Fidelity Brokerage'
         const k401 = '401k Retirement'
         const transactions = []
+        const positions = new Map() // Track long positions for sell validation
         const openShorts = new Map()
         let cashBalance = 50000
 
@@ -469,7 +484,7 @@ const serializeToQif = data => {
         // @sig securityToQif :: Entry.Security -> String
         const securityToQif = s => {
             const { name, symbol, type } = s
-            return `!Type:Security\nN${symbol}\nS${name}\nT${type}\n^\n`
+            return `!Type:Security\nN${name}\nS${symbol}\nT${type}\n^\n`
         }
 
         return securities.map(securityToQif).join('')

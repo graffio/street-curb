@@ -41,7 +41,7 @@ import mapReturningFirst from './src/ramda-like/map-returning-first.js'
 import mapValues from './src/ramda-like/map-values.js'
 import memoizeOnceWithIdenticalParams from './src/ramda-like/memoize-once-with-identical-params.js'
 import memoizeOnce from './src/ramda-like/memoize-once.js'
-import memoizeReduxState from './src/ramda-like/memoize-redux-state.js'
+import memoizeReduxState, { memoizeReduxStatePerKey } from './src/ramda-like/memoize-redux-state.js'
 import mergeDeepRight from './src/ramda-like/merge-deep-right.js'
 import mergeDeepWithKey from './src/ramda-like/merge-deep-with-key.js'
 import mergeRight from './src/ramda-like/merge-right.js'
@@ -146,6 +146,7 @@ export {
     memoizeOnce,
     memoizeOnceWithIdenticalParams,
     memoizeReduxState,
+    memoizeReduxStatePerKey,
     mergeDeepRight,
     mergeDeepWithKey,
     mergeRight,

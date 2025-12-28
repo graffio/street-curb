@@ -50,8 +50,22 @@ const RootLayout = () => {
     // @sig handleFileSelect :: File -> Promise<void>
     const handleFileSelect = async file => {
         try {
-            const { accounts, categories, securities, tags, splits, transactions } = await loadEntitiesFromFile(file)
-            post(Action.LoadFile(accounts, categories, securities, tags, splits, transactions))
+            const entities = await loadEntitiesFromFile(file)
+            const { accounts, categories, lotAllocations, lots, prices, securities, splits, tags, transactions } =
+                entities
+            post(
+                Action.LoadFile(
+                    accounts,
+                    categories,
+                    securities,
+                    tags,
+                    splits,
+                    transactions,
+                    lots,
+                    lotAllocations,
+                    prices,
+                ),
+            )
         } catch (error) {
             // TODO: Show error in UI instead of console
             console.error('Failed to load file:', error.message)

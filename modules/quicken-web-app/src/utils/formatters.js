@@ -13,10 +13,15 @@ const formatCurrency = value => currencyFormatter.format(value)
 
 /*
  * Format a date string using medium date style (e.g., "Dec 24, 2025")
+ * Parses YYYY-MM-DD as local date to avoid timezone shift
  *
  * @sig formatDate :: String -> String
  */
-const formatDate = dateStr => dateFormatter.format(new Date(dateStr))
+const formatDate = dateStr => {
+    // Parse YYYY-MM-DD as local date (not UTC) by replacing hyphens with slashes
+    const localDate = dateStr.includes('-') ? new Date(dateStr.replace(/-/g, '/')) : new Date(dateStr)
+    return dateFormatter.format(localDate)
+}
 
 /*
  * Format a Date object as short date (e.g., "Dec 24, 2025")
@@ -57,4 +62,15 @@ const formatPrice = value => {
     return raw.replace(/(\.\d{2})00$/, '$1').replace(/(\.\d{2}\d)0$/, '$1')
 }
 
-export { formatCurrency, formatDate, formatDateRange, formatPrice, formatQuantity, formatShortDate }
+/*
+ * Format a decimal as a percentage (e.g., 0.1234 -> "12.34%")
+ *
+ * @sig formatPercentage :: Number -> String
+ */
+const formatPercentage = value => {
+    const pct = value * 100
+    const formatted = pct.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return `${formatted}%`
+}
+
+export { formatCurrency, formatDate, formatDateRange, formatPercentage, formatPrice, formatQuantity, formatShortDate }

@@ -105,11 +105,18 @@ const INVESTMENT_ACTIONS = [
     { id: 'Expire', label: 'Expire Option' },
 ]
 
-const groupByOptions = [
+const defaultGroupByOptions = [
     { value: 'category', label: 'Category' },
     { value: 'account', label: 'Account' },
     { value: 'payee', label: 'Payee' },
     { value: 'month', label: 'Month' },
+]
+
+const investmentGroupByOptions = [
+    { value: 'account', label: 'Account' },
+    { value: 'security', label: 'Security' },
+    { value: 'securityType', label: 'Type' },
+    { value: 'goal', label: 'Goal' },
 ]
 
 // Convert DATE_RANGES object to array of {key, label} entries
@@ -334,6 +341,58 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// AsOfDateChip
+// ---------------------------------------------------------------------------------------------------------------------
+
+/*
+ * As-of date filter chip with single date picker for holdings view
+ *
+ * @sig AsOfDateChip :: { viewId: String } -> ReactElement
+ */
+const AsOfDateChip = ({ viewId }) => {
+    // @sig handleDateChange :: Date? -> void
+    const handleDateChange = date => {
+        if (date) {
+            // Format as local YYYY-MM-DD (not UTC) to avoid timezone shift
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            post(Action.SetTransactionFilter(viewId, { asOfDate: `${year}-${month}-${day}` }))
+        }
+    }
+
+    const asOfDate = useSelector(state => S.asOfDate(state, viewId))
+    const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
+    const dateInputRef = useRef(null)
+
+    const baseTriggerStyle = makeChipTriggerStyle(180)
+    const triggerStyle = { ...baseTriggerStyle, backgroundColor: 'var(--accent-3)' }
+
+    // Format date for display
+    const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+    return (
+        <Popover.Root onOpenChange={open => open && setTimeout(() => dateInputRef.current?.focus('month'), 0)}>
+            <Popover.Trigger>
+                <Box style={triggerStyle}>
+                    <Text size="1" weight="medium">
+                        As of: {displayDate}
+                    </Text>
+                </Box>
+            </Popover.Trigger>
+            <Popover.Content style={{ padding: 'var(--space-3)', width: 200 }}>
+                <Flex direction="column" gap="2">
+                    <Text size="1" color="gray" weight="medium">
+                        Show holdings as of date
+                    </Text>
+                    <KeyboardDateInput ref={dateInputRef} value={dateValue} onChange={handleDateChange} />
+                </Flex>
+            </Popover.Content>
+        </Popover.Root>
+    )
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // DateFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -465,15 +524,15 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 /*
  * Group by filter chip with inline dimension selector popover
  *
- * @sig GroupByFilterChip :: { viewId: String } -> ReactElement
+ * @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
  */
-const GroupByFilterChip = ({ viewId }) => {
+const GroupByFilterChip = ({ viewId, options }) => {
     const handleSelect = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
 
     // Render a group by option row
     // @sig renderOption :: { value: String, label: String } -> ReactElement
     const renderOption = ({ value, label }) => {
-        const isSelected = value === (groupBy || 'category')
+        const isSelected = value === (groupBy || resolvedOptions[0]?.value)
         const style = { ...optionStyle, backgroundColor: isSelected ? 'var(--accent-3)' : 'transparent' }
         return (
             <Popover.Close key={value}>
@@ -486,11 +545,12 @@ const GroupByFilterChip = ({ viewId }) => {
         )
     }
 
+    const resolvedOptions = options ?? defaultGroupByOptions
     const groupBy = useSelector(state => S.groupBy(state, viewId))
 
     const baseTriggerStyle = makeChipTriggerStyle(155)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: 'var(--accent-3)' }
-    const currentOption = groupByOptions.find(o => o.value === groupBy) || groupByOptions[0]
+    const currentOption = resolvedOptions.find(o => o.value === groupBy) || resolvedOptions[0]
 
     return (
         <Popover.Root>
@@ -502,7 +562,7 @@ const GroupByFilterChip = ({ viewId }) => {
                 </Box>
             </Popover.Trigger>
             <Popover.Content style={{ padding: 'var(--space-1)' }}>
-                <Flex direction="column">{groupByOptions.map(renderOption)}</Flex>
+                <Flex direction="column">{resolvedOptions.map(renderOption)}</Flex>
             </Popover.Content>
         </Popover.Root>
     )
@@ -666,10 +726,12 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
 export {
     AccountFilterChip,
     ActionFilterChip,
+    AsOfDateChip,
     CategoryFilterChip,
     DateFilterChip,
     FilterColumn,
     GroupByFilterChip,
+    investmentGroupByOptions,
     SearchFilterChip,
     SecurityFilterChip,
 }

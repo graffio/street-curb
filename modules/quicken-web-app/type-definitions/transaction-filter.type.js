@@ -5,6 +5,7 @@ export const TransactionFilter = {
     kind: 'tagged',
     fields: {
         id: FieldTypes.viewId,
+        asOfDate: 'String?',
         dateRange: 'Object?',
         dateRangeKey: 'String',
         filterQuery: 'String',

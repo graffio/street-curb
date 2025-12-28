@@ -4,12 +4,15 @@
 /*  Action generated from: modules/quicken-web-app/type-definitions/action.type.js
  *
  *  LoadFile
- *      accounts    : "{Account:id}",
- *      categories  : "{Category:id}",
- *      securities  : "{Security:id}",
- *      tags        : "{Tag:id}",
- *      splits      : "{Split:id}",
- *      transactions: "{Transaction:id}"
+ *      accounts      : "{Account:id}",
+ *      categories    : "{Category:id}",
+ *      securities    : "{Security:id}",
+ *      tags          : "{Tag:id}",
+ *      splits        : "{Split:id}",
+ *      transactions  : "{Transaction:id}",
+ *      lots          : "{Lot:id}",
+ *      lotAllocations: "{LotAllocation:id}",
+ *      prices        : "{Price:id}"
  *  SetTransactionFilter
  *      viewId : "String",
  *      changes: "Object"
@@ -49,6 +52,9 @@ import { Security } from './security.js'
 import { Tag } from './tag.js'
 import { Split } from './split.js'
 import { Transaction } from './transaction.js'
+import { Lot } from './lot.js'
+import { LotAllocation } from './lot-allocation.js'
+import { Price } from './price.js'
 import { TableLayout } from './table-layout.js'
 import { View } from './view.js'
 
@@ -105,7 +111,7 @@ Action.prototype = ActionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)})` },
+    loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)}, ${R._toString(this.lots)}, ${R._toString(this.lotAllocations)}, ${R._toString(this.prices)})` },
     setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
     resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
     setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
@@ -148,17 +154,31 @@ const toJSON = {
 
 /*
  * Construct a Action.LoadFile instance
- * @sig LoadFile :: ({Account}, {Category}, {Security}, {Tag}, {Split}, {Transaction}) -> Action.LoadFile
+ * @sig LoadFile :: ({Account}, {Category}, {Security}, {Tag}, {Split}, {Transaction}, {Lot}, {LotAllocation}, {Price}) -> Action.LoadFile
  */
-const LoadFileConstructor = function LoadFile(accounts, categories, securities, tags, splits, transactions) {
-    const constructorName = 'Action.LoadFile(accounts, categories, securities, tags, splits, transactions)'
-    R.validateArgumentLength(constructorName, 6, arguments)
+const LoadFileConstructor = function LoadFile(
+    accounts,
+    categories,
+    securities,
+    tags,
+    splits,
+    transactions,
+    lots,
+    lotAllocations,
+    prices,
+) {
+    const constructorName =
+        'Action.LoadFile(accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices)'
+    R.validateArgumentLength(constructorName, 9, arguments)
     R.validateLookupTable(constructorName, 'Account', 'accounts', false, accounts)
     R.validateLookupTable(constructorName, 'Category', 'categories', false, categories)
     R.validateLookupTable(constructorName, 'Security', 'securities', false, securities)
     R.validateLookupTable(constructorName, 'Tag', 'tags', false, tags)
     R.validateLookupTable(constructorName, 'Split', 'splits', false, splits)
     R.validateLookupTable(constructorName, 'Transaction', 'transactions', false, transactions)
+    R.validateLookupTable(constructorName, 'Lot', 'lots', false, lots)
+    R.validateLookupTable(constructorName, 'LotAllocation', 'lotAllocations', false, lotAllocations)
+    R.validateLookupTable(constructorName, 'Price', 'prices', false, prices)
 
     const result = Object.create(LoadFilePrototype)
     result.accounts = accounts
@@ -167,6 +187,9 @@ const LoadFileConstructor = function LoadFile(accounts, categories, securities, 
     result.tags = tags
     result.splits = splits
     result.transactions = transactions
+    result.lots = lots
+    result.lotAllocations = lotAllocations
+    result.prices = prices
     return result
 }
 
@@ -513,8 +536,8 @@ SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor._from = _input => {
-    const { accounts, categories, securities, tags, splits, transactions } = _input
-    return Action.LoadFile(accounts, categories, securities, tags, splits, transactions)
+    const { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices } = _input
+    return Action.LoadFile(accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices)
 }
 SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
 ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
@@ -557,7 +580,7 @@ SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
  * @sig _toFirestore :: (LoadFile, Function) -> Object
  */
 LoadFileConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { accounts, categories, securities, tags, splits, transactions } = o
+    const { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices } = o
     return {
         accounts: R.lookupTableToFirestore(Account, 'id', encodeTimestamps, accounts),
         categories: R.lookupTableToFirestore(Category, 'id', encodeTimestamps, categories),
@@ -565,6 +588,9 @@ LoadFileConstructor._toFirestore = (o, encodeTimestamps) => {
         tags: R.lookupTableToFirestore(Tag, 'id', encodeTimestamps, tags),
         splits: R.lookupTableToFirestore(Split, 'id', encodeTimestamps, splits),
         transactions: R.lookupTableToFirestore(Transaction, 'id', encodeTimestamps, transactions),
+        lots: R.lookupTableToFirestore(Lot, 'id', encodeTimestamps, lots),
+        lotAllocations: R.lookupTableToFirestore(LotAllocation, 'id', encodeTimestamps, lotAllocations),
+        prices: R.lookupTableToFirestore(Price, 'id', encodeTimestamps, prices),
     }
 }
 
@@ -573,7 +599,7 @@ LoadFileConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> LoadFile
  */
 LoadFileConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { accounts, categories, securities, tags, splits, transactions } = doc
+    const { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices } = doc
     return LoadFileConstructor._from({
         accounts: R.lookupTableFromFirestore(Account, 'id', decodeTimestamps, accounts),
         categories: R.lookupTableFromFirestore(Category, 'id', decodeTimestamps, categories),
@@ -581,6 +607,9 @@ LoadFileConstructor._fromFirestore = (doc, decodeTimestamps) => {
         tags: R.lookupTableFromFirestore(Tag, 'id', decodeTimestamps, tags),
         splits: R.lookupTableFromFirestore(Split, 'id', decodeTimestamps, splits),
         transactions: R.lookupTableFromFirestore(Transaction, 'id', decodeTimestamps, transactions),
+        lots: R.lookupTableFromFirestore(Lot, 'id', decodeTimestamps, lots),
+        lotAllocations: R.lookupTableFromFirestore(LotAllocation, 'id', decodeTimestamps, lotAllocations),
+        prices: R.lookupTableFromFirestore(Price, 'id', decodeTimestamps, prices),
     })
 }
 

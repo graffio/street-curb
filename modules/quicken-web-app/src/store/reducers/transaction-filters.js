@@ -8,6 +8,7 @@ import { TransactionFilter } from '../../types/index.js'
 const defaultFilterForView = viewId =>
     TransactionFilter(
         viewId,
+        null, // asOfDate (defaults to today in selector)
         null, // dateRange
         'lastTwelveMonths', // dateRangeKey
         '', // filterQuery

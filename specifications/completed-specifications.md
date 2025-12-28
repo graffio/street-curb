@@ -479,3 +479,17 @@ This document summarizes the specifications that were previously archived in `sp
 - Added Action column to TransactionSubTable with human-readable labels
 - Made TransactionSubTable header sticky and body resizable
 - Deferred: Phase 2 (Portfolio Value Report with holdings and gain/loss)
+
+## [quicken-web-app] Investment Holdings Report (2025-12-27)
+**Purpose:** Display portfolio holdings as of a specific date with market values and gain/loss
+
+- Created InvestmentReportPage showing holdings computed from lots as of selected date
+- Lots and lotAllocations loaded as LookupTables (not arrays) with proper id fields
+- Holdings computed by selector from lots: `purchaseDate <= asOfDate AND (closedDate IS NULL OR closedDate > asOfDate)`
+- Cost basis calculated with FIFO lot allocation tracking via lotAllocations table
+- Created AsOfDateChip for single-date filter (vs range filter on other pages)
+- Added priceAsOf lookup for historical pricing (most recent price ≤ asOfDate)
+- Hierarchical tree display: Account → Security Type → Security with expand/collapse
+- Shows quantity, cost basis, market value, unrealized gain/loss, day change
+- Added memoizeReduxStatePerKey export to @graffio/functional for per-view selector caching
+- Fixed stale type-mappings.js reference to deleted view-row.type.js

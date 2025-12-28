@@ -1,3 +1,6 @@
+// ABOUTME: Tests for transaction database operations
+// ABOUTME: Validates bank and investment transaction import and querying
+
 import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
@@ -213,19 +216,13 @@ test('Transactions Repository', t => {
             })
 
             t.test('And each transaction has the correct structure', t => {
-                allTransactions.forEach(transaction => {
-                    t.ok(Transaction.is(transaction), 'Each item should be a Transaction type')
-                    t.match(transaction.id, /^txn_[a-f0-9]{12}(-\d+)?$/, 'Each transaction should have a valid ID')
-                    t.match(
-                        transaction.accountId,
-                        /^acc_[a-f0-9]{12}$/,
-                        'Each transaction should have a valid account ID',
-                    )
-                    t.ok(typeof transaction.date === 'string', 'Each transaction should have a string date')
-                    t.ok(
-                        typeof transaction.transactionType === 'string',
-                        'Each transaction should have a string transaction type',
-                    )
+                allTransactions.forEach(txn => {
+                    const { id, accountId, date, transactionType } = txn
+                    t.ok(Transaction.is(txn), 'Each item should be a Transaction type')
+                    t.match(id, /^txn_[a-f0-9]{12}(-\d+)?$/, 'Each transaction should have a valid ID')
+                    t.match(accountId, /^acc_[a-f0-9]{12}$/, 'Each transaction should have a valid account ID')
+                    t.ok(typeof date === 'string', 'Each transaction should have a string date')
+                    t.ok(typeof transactionType === 'string', 'Each transaction should have a string transaction type')
                 })
                 t.end()
             })
@@ -375,13 +372,13 @@ test('Transactions Repository', t => {
 
                 t.test('Then both investment transactions exist with correct data', t => {
                     const transactions = db
-                        .prepare('SELECT amount, investment_action FROM transactions ORDER BY date ASC')
+                        .prepare('SELECT amount, investmentAction FROM transactions ORDER BY date ASC')
                         .all()
 
                     t.same(transactions.length, 2, 'Should have 2 investment transactions')
 
-                    const buyTxn = transactions.find(t => t.investment_action === 'Buy')
-                    const intTxn = transactions.find(t => t.investment_action === 'IntInc')
+                    const buyTxn = transactions.find(t => t.investmentAction === 'Buy')
+                    const intTxn = transactions.find(t => t.investmentAction === 'IntInc')
 
                     t.ok(buyTxn, 'Buy transaction should exist')
                     t.ok(intTxn, 'Interest transaction should exist')

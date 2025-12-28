@@ -2,7 +2,19 @@
 // ABOUTME: Manages all entities (LookupTables) and transaction filter state
 
 import { LookupTable } from '@graffio/functional'
-import { Account, Action, Category, Security, Split, Tag, Transaction, TransactionFilter } from '../types/index.js'
+import {
+    Account,
+    Action,
+    Category,
+    Lot,
+    LotAllocation,
+    Price,
+    Security,
+    Split,
+    Tag,
+    Transaction,
+    TransactionFilter,
+} from '../types/index.js'
 import { hydrateTabLayout, hydrateTableLayouts } from './hydration.js'
 import {
     closeTabGroup,
@@ -22,6 +34,9 @@ const getInitialState = () => ({
     initialized: true,
     accounts: LookupTable([], Account, 'id'),
     categories: LookupTable([], Category, 'id'),
+    lots: LookupTable([], Lot, 'id'),
+    lotAllocations: LookupTable([], LotAllocation, 'id'),
+    prices: LookupTable([], Price, 'id'),
     securities: LookupTable([], Security, 'id'),
     tableLayouts: hydrateTableLayouts(),
     tags: LookupTable([], Tag, 'id'),

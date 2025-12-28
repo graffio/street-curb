@@ -8,7 +8,10 @@ import { Action } from '../types/action.js'
 import { View } from '../types/view.js'
 
 // Available reports
-const reports = [{ id: 'spending', type: 'spending', name: 'Spending by Category' }]
+const reports = [
+    { id: 'spending', type: 'spending', name: 'Spending by Category' },
+    { id: 'holdings', type: 'holdings', name: 'Investment Holdings' },
+]
 
 // @sig ReportButton :: { report: Object } -> ReactElement
 const ReportButton = ({ report }) => {

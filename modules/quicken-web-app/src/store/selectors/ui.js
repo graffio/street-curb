@@ -3,6 +3,7 @@
 
 // Default values for filter fields when no filter exists for a viewId
 const defaults = {
+    asOfDate: null, // Will use today's date when accessed if null
     dateRange: null,
     dateRangeKey: 'lastTwelveMonths',
     filterQuery: '',
@@ -53,6 +54,14 @@ const selectedInvestmentActions = (state, viewId) =>
 // @sig groupBy :: (ReduxState, String) -> String?
 const groupBy = (state, viewId) => transactionFilter(state, viewId)?.groupBy ?? defaults.groupBy
 
+// @sig asOfDate :: (ReduxState, String) -> String
+const asOfDate = (state, viewId) => {
+    // @sig todayIso :: () -> String
+    const todayIso = () => new Date().toISOString().slice(0, 10)
+
+    return transactionFilter(state, viewId)?.asOfDate ?? todayIso()
+}
+
 // @sig currentSearchIndex :: (ReduxState, String) -> Number
 const currentSearchIndex = (state, viewId) =>
     transactionFilter(state, viewId)?.currentSearchIndex ?? defaults.currentSearchIndex
@@ -67,6 +76,7 @@ const customStartDate = (state, viewId) => transactionFilter(state, viewId)?.cus
 const customEndDate = (state, viewId) => transactionFilter(state, viewId)?.customEndDate ?? defaults.customEndDate
 
 export {
+    asOfDate,
     currentRowIndex,
     currentSearchIndex,
     customEndDate,

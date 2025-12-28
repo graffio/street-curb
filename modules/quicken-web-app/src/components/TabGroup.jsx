@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
 import { InvestmentRegisterPage } from '../pages/InvestmentRegisterPage.jsx'
+import { InvestmentReportPage } from '../pages/InvestmentReportPage.jsx'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
@@ -165,14 +166,17 @@ const ViewContent = ({ group }) => {
 
     // @sig renderViewContent :: View -> ReactElement
     const renderViewContent = view => {
-        const { accountId, id } = view
+        const { accountId, id, reportType } = view
         return view.match({
             Register: () => {
                 const account = accounts.get(accountId)
                 if (isInvestmentAccount(account)) return <InvestmentRegisterPage accountId={accountId} />
                 return <TransactionRegisterPage accountId={accountId} />
             },
-            Report: () => <CategoryReportPage viewId={id} />,
+            Report: () => {
+                if (reportType === 'holdings') return <InvestmentReportPage viewId={id} />
+                return <CategoryReportPage viewId={id} />
+            },
             Reconciliation: () => (
                 <Flex align="center" justify="center" style={{ height: '100%' }}>
                     <Text>Reconciliation: {accountId}</Text>
