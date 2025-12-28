@@ -1,3 +1,6 @@
+// ABOUTME: Tests for price database operations
+// ABOUTME: Validates price import, querying, and historical price lookups
+
 import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
@@ -38,25 +41,27 @@ const createAccountInDb = (db, account) => {
 }
 
 const createInvestmentTransactionInDb = (db, transaction) => {
-    const stmt = db.prepare(`
-        INSERT INTO transactions (account_id, date, amount, transaction_type, payee, memo, cleared,
-            category_id, security_id, quantity, price, commission, investment_action, address)
-        VALUES (?, ?, ?, 'investment', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
+    const { accountId, date, amount, payee, memo, cleared, securityId, quantity, price, commission, investmentAction } =
+        transaction
+    const cols = `accountId, date, amount, transactionType, payee, memo, cleared,
+            categoryId, securityId, quantity, price, commission, investmentAction, address`
+    const stmt = db.prepare(
+        `INSERT INTO transactions (${cols}) VALUES (?, ?, ?, 'investment', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
     const result = stmt.run(
-        transaction.accountId,
-        transaction.date,
-        transaction.amount || null,
-        transaction.payee || null,
-        transaction.memo || null,
-        transaction.cleared || null,
-        null, // category_id
-        transaction.securityId,
-        transaction.quantity || null,
-        transaction.price || null,
-        transaction.commission || null,
-        transaction.investmentAction || null,
-        null, // address
+        accountId,
+        date,
+        amount || null,
+        payee || null,
+        memo || null,
+        cleared || null,
+        null,
+        securityId,
+        quantity || null,
+        price || null,
+        commission || null,
+        investmentAction || null,
+        null,
     )
     return result.lastInsertRowid
 }
@@ -66,7 +71,7 @@ test('Prices Repository', t => {
         t.test('When I insert a basic price', t => {
             const db = createTestDatabase()
             const security = createSecurityInDb(db, { name: 'Apple Inc.', symbol: 'AAPL' })
-            const priceEntry = Entry.Price.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') })
+            const priceEntry = Price.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') })
 
             const priceId = insertPrice(db, priceEntry, security)
 
@@ -91,7 +96,7 @@ test('Prices Repository', t => {
         t.test('When I insert a price with minimal data', t => {
             const db = createTestDatabase()
             const security = createSecurityInDb(db, { name: 'Microsoft Corp.', symbol: 'MSFT' })
-            const priceEntry = Entry.Price.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') })
+            const priceEntry = Price.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') })
 
             const priceId = insertPrice(db, priceEntry, security)
 
@@ -163,9 +168,9 @@ test('Prices Repository', t => {
         ]
 
         const prices = [
-            Entry.Price.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') }),
-            Entry.Price.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') }),
-            Entry.Price.from({ symbol: 'TSLA', price: 250.75, date: new Date('2024-01-17') }),
+            Price.from({ symbol: 'AAPL', price: 150.25, date: new Date('2024-01-15') }),
+            Price.from({ symbol: 'MSFT', price: 300.5, date: new Date('2024-01-16') }),
+            Price.from({ symbol: 'TSLA', price: 250.75, date: new Date('2024-01-17') }),
         ]
 
         prices.forEach((price, index) => insertPrice(db, price, securities[index]))
@@ -182,12 +187,13 @@ test('Prices Repository', t => {
             })
 
             t.test('And each price has the correct structure', t => {
-                allPrices.forEach(price => {
-                    t.ok(Price.is(price), 'Each item should be a Price type')
-                    t.match(price.id, /^prc_[a-f0-9]{12}$/, 'Each price should have a valid ID')
-                    t.match(price.securityId, /^sec_[a-f0-9]{12}$/, 'Each price should have a valid security ID')
-                    t.ok(typeof price.price === 'number', 'Each price should have a numeric price')
-                    t.ok(typeof price.date === 'string', 'Each price should have a string date')
+                allPrices.forEach(p => {
+                    const { id, securityId, price: priceValue, date } = p
+                    t.ok(Price.is(p), 'Each item should be a Price type')
+                    t.match(id, /^prc_[a-f0-9]{12}$/, 'Each price should have a valid ID')
+                    t.match(securityId, /^sec_[a-f0-9]{12}$/, 'Each price should have a valid security ID')
+                    t.ok(typeof priceValue === 'number', 'Each price should have a numeric price')
+                    t.ok(typeof date === 'string', 'Each price should have a string date')
                 })
                 t.end()
             })
@@ -213,8 +219,8 @@ test('Prices Repository', t => {
             ]
 
             const newPrices = [
-                Entry.Price.from({ symbol: 'GOOGL', price: 2800.0, date: new Date('2024-01-18') }),
-                Entry.Price.from({ symbol: 'AMZN', price: 3200.5, date: new Date('2024-01-19') }),
+                Price.from({ symbol: 'GOOGL', price: 2800.0, date: new Date('2024-01-18') }),
+                Price.from({ symbol: 'AMZN', price: 3200.5, date: new Date('2024-01-19') }),
             ]
 
             const priceIds = importPrices(db, newPrices, newSecurities)
@@ -283,7 +289,7 @@ test('Prices Repository', t => {
 
         t.test('When I try to import prices with missing security', t => {
             const db = createTestDatabase()
-            const prices = [Entry.Price.from({ symbol: 'MISSING', price: 100, date: new Date() })]
+            const prices = [Price.from({ symbol: 'MISSING', price: 100, date: new Date() })]
             const securities = [createSecurityInDb(db, { name: 'Test Security', symbol: 'TEST' })]
 
             t.test('Then it throws an error for missing security', t => {
@@ -302,14 +308,14 @@ test('Prices Repository', t => {
             const db = createTestDatabase()
 
             // Create test data
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
-            const security = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: securityId } = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
 
             // Create transactions with prices (similar to user's example)
             const transactions = [
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2017-08-25',
                     investmentAction: 'ShrsIn',
                     quantity: 6000.0,
@@ -317,8 +323,8 @@ test('Prices Repository', t => {
                     amount: 60000.0,
                 },
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2020-12-31',
                     investmentAction: 'ShrsIn',
                     quantity: 618.7051,
@@ -326,8 +332,8 @@ test('Prices Repository', t => {
                     amount: 6187.05,
                 },
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2021-12-09',
                     investmentAction: 'ShrsIn',
                     quantity: 1647.4425,
@@ -335,8 +341,8 @@ test('Prices Repository', t => {
                     amount: 22224.0,
                 },
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2023-08-27',
                     investmentAction: 'ShrsIn',
                     quantity: 3200.0,
@@ -351,18 +357,21 @@ test('Prices Repository', t => {
             t.test('And I populate prices from transactions', t => {
                 populatePricesFromTransactions(db)
 
-                t.test('Then a price record is created for the security', t => {
+                t.test('Then price records are created for all transaction dates', t => {
                     const allPrices = getAllPrices(db)
-                    t.same(allPrices.length, 1, 'Should have one price record')
-                    t.same(allPrices[0].securityId, security.id, 'Security ID should match')
+                    t.same(allPrices.length, 4, 'Should have four price records (one per date)')
+                    t.ok(
+                        allPrices.every(p => p.securityId === securityId),
+                        'All prices should match security ID',
+                    )
                     t.end()
                 })
 
-                t.test('And the price is from the latest transaction', t => {
+                t.test('And the latest price is from the most recent transaction', t => {
                     const allPrices = getAllPrices(db)
-                    const price = allPrices[0]
-                    t.same(price.price, 12.5, 'Price should be from latest transaction (2023-08-27)')
-                    t.same(price.date, '2023-08-27', 'Date should be from latest transaction')
+                    const latestPrice = allPrices[0] // Already sorted DESC by date
+                    t.same(latestPrice.price, 12.5, 'Price should be from latest transaction (2023-08-27)')
+                    t.same(latestPrice.date, '2023-08-27', 'Date should be from latest transaction')
                     t.end()
                 })
 
@@ -376,14 +385,14 @@ test('Prices Repository', t => {
             const db = createTestDatabase()
 
             // Create test data
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security1 = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
             const security2 = createSecurityInDb(db, { name: 'BAR Inc', symbol: 'BAR' })
 
             // Create transactions for both securities
             const transactions = [
                 {
-                    accountId: account.id,
+                    accountId,
                     securityId: security1.id,
                     date: '2023-01-15',
                     investmentAction: 'Buy',
@@ -392,7 +401,7 @@ test('Prices Repository', t => {
                     amount: 2500.0,
                 },
                 {
-                    accountId: account.id,
+                    accountId,
                     securityId: security1.id,
                     date: '2023-06-15',
                     investmentAction: 'Buy',
@@ -401,7 +410,7 @@ test('Prices Repository', t => {
                     amount: 1500.0,
                 },
                 {
-                    accountId: account.id,
+                    accountId,
                     securityId: security2.id,
                     date: '2023-02-15',
                     investmentAction: 'Buy',
@@ -410,7 +419,7 @@ test('Prices Repository', t => {
                     amount: 3000.0,
                 },
                 {
-                    accountId: account.id,
+                    accountId,
                     securityId: security2.id,
                     date: '2023-08-15',
                     investmentAction: 'Sell',
@@ -426,16 +435,18 @@ test('Prices Repository', t => {
             t.test('And I populate prices from transactions', t => {
                 populatePricesFromTransactions(db)
 
-                t.test('Then price records are created for both securities', t => {
+                t.test('Then price records are created for all transaction dates', t => {
                     const allPrices = getAllPrices(db)
-                    t.same(allPrices.length, 2, 'Should have two price records')
+                    t.same(allPrices.length, 4, 'Should have four price records (2 dates per security)')
                     t.end()
                 })
 
                 t.test('And each security has the latest price', t => {
                     const allPrices = getAllPrices(db)
-                    const fooPrice = allPrices.find(p => p.securityId === security1.id)
-                    const barPrice = allPrices.find(p => p.securityId === security2.id)
+                    const fooPrices = allPrices.filter(p => p.securityId === security1.id)
+                    const barPrices = allPrices.filter(p => p.securityId === security2.id)
+                    const fooPrice = fooPrices.find(p => p.date === '2023-06-15') // Latest FOO price
+                    const barPrice = barPrices.find(p => p.date === '2023-08-15') // Latest BAR price
 
                     t.ok(fooPrice, 'FOO price should exist')
                     t.ok(barPrice, 'BAR price should exist')
@@ -456,22 +467,23 @@ test('Prices Repository', t => {
             const db = createTestDatabase()
 
             // Create test data
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
-            const security = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: securityId } = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
 
             // Create transactions without prices
             const transactions = [
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2023-01-15',
                     investmentAction: 'Div',
                     amount: 100.0,
+
                     // No price or quantity
                 },
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2023-06-15',
                     investmentAction: 'Buy',
                     quantity: 100,
@@ -503,17 +515,18 @@ test('Prices Repository', t => {
             const db = createTestDatabase()
 
             // Create test data
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
+            const { id: securityId } = security
 
             // Insert an existing price
-            const existingPrice = Entry.Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
+            const existingPrice = Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
             insertPrice(db, existingPrice, security)
 
             // Create a transaction with a newer price
             const transaction = {
-                accountId: account.id,
-                securityId: security.id,
+                accountId,
+                securityId,
                 date: '2023-06-15',
                 investmentAction: 'Buy',
                 quantity: 100,
@@ -568,14 +581,14 @@ test('Prices Repository', t => {
             const db = createTestDatabase()
 
             // Create test data
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
-            const security = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: securityId } = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
 
             // Create transactions with invalid prices
             const transactions = [
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2023-01-15',
                     investmentAction: 'Buy',
                     quantity: 100,
@@ -583,8 +596,8 @@ test('Prices Repository', t => {
                     amount: 0,
                 },
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2023-06-15',
                     investmentAction: 'Buy',
                     quantity: 100,
@@ -592,8 +605,8 @@ test('Prices Repository', t => {
                     amount: -1000.0,
                 },
                 {
-                    accountId: account.id,
-                    securityId: security.id,
+                    accountId,
+                    securityId,
                     date: '2023-12-15',
                     investmentAction: 'Buy',
                     quantity: 100,
@@ -623,15 +636,18 @@ test('Prices Repository', t => {
 
         t.test('When I have an existing price and a transaction on the same day', t => {
             const db = createTestDatabase()
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
+            const { id: securityId } = security
+
             // Insert an existing price for 2023-06-15
-            const existingPrice = Entry.Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-06-15') })
+            const existingPrice = Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-06-15') })
             insertPrice(db, existingPrice, security)
+
             // Insert a transaction for the same day with a different price
             const transaction = {
-                accountId: account.id,
-                securityId: security.id,
+                accountId,
+                securityId,
                 date: '2023-06-15',
                 investmentAction: 'Buy',
                 quantity: 100,
@@ -655,15 +671,18 @@ test('Prices Repository', t => {
 
         t.test('When I have an existing price and a transaction on a different day', t => {
             const db = createTestDatabase()
-            const account = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
+            const { id: accountId } = createAccountInDb(db, { name: 'Investment Account', type: 'Investment' })
             const security = createSecurityInDb(db, { name: 'FOO Corp', symbol: 'FOO' })
+            const { id: securityId } = security
+
             // Insert an existing price for 2023-01-01
-            const existingPrice = Entry.Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
+            const existingPrice = Price.from({ symbol: 'FOO', price: 20.0, date: new Date('2023-01-01') })
             insertPrice(db, existingPrice, security)
+
             // Insert a transaction for a later day
             const transaction = {
-                accountId: account.id,
-                securityId: security.id,
+                accountId,
+                securityId,
                 date: '2023-12-31',
                 investmentAction: 'Buy',
                 quantity: 100,
