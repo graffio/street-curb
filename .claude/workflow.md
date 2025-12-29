@@ -9,6 +9,38 @@
 - Address blocking issues from subagent reviewers before proceeding
 - Always spawn reviewers as specified — don't skip them
 
+## Commands
+
+### review \<file\>
+Run both checks on a file:
+1. Style validator (mechanical: @sig, line length, file naming, complexity budgets)
+2. Complexity review (structural: cohesion grouping, patterns, simplification opportunities)
+
+Report all findings together.
+
+### review staged
+Run both checks on all staged files together:
+1. Style validator on each file
+2. Complexity review across all staged files (can detect cross-file patterns)
+
+Use before commit to catch issues across related changes. More context than single-file review, but focused on files you're actually changing.
+
+## Complexity-Budget Failures
+
+When the style validator reports a complexity-budget violation ("exceeds budget"), this is a **CHECKPOINT**, not a quick fix:
+
+1. **Stop** — don't try to "fix" by shuffling code around
+2. **Run complexity review** — understand the structural issues
+3. **Reassess approach** — might need to:
+   - Move logic to its proper architectural layer (React → selectors, selectors → business modules)
+   - Use a different pattern (Action, LookupTable, selectors)
+   - Revise `current-task.json` with a new approach
+
+   Note: "Split file" means moving logic to where it belongs architecturally, not arbitrarily splitting to reduce line count. Decide together where logic should live.
+4. **Get approval** — if the plan changes significantly, confirm with user
+
+Complexity-budget failures often signal architectural issues that require rethinking, not just refactoring.
+
 ## Phases
 
 ### 1. Brainstorm
@@ -78,3 +110,27 @@ Discuss freely. No templates.
 - Complexity: Unnecessary abstraction or over-engineering?
 
 **Output:** List of issues (blocking/non-blocking) or "LGTM"
+
+### complexity-reviewer
+**Reads:** Target file, `.claude/pattern-catalog.md`, `.claude/tasks/review-complexity.md`
+
+**When to spawn:**
+- Pre-commit hook reports complexity-budget violation
+- User requests assessment of a file
+- Before planning changes to an existing file over 100 lines
+
+**Checks:**
+- Measurements: Lines, style objects, functions against context budgets
+- Cohesion: Are all functions in P/T/F/V/A namespace objects? Any uncategorized?
+- Patterns: Could existing tactical patterns (LookupTable, TaggedSum, Action) apply?
+- Styles: Should style objects become CSS variables or move to shared module?
+- Components: Should render functions become actual components?
+- Layer: Is business logic in React files? Should it move to selectors or business modules?
+
+**Output format:**
+- Observations (what seems off, even if unsure)
+- Questions for the Developer (requires global knowledge)
+- Clear Wins (unambiguous improvements that pass litmus test)
+- Patterns to Investigate (from catalog, flagged for human review)
+
+**Key principle:** Surface concerns and questions rather than prescribe automatic fixes. The human has global context Claude doesn't.
