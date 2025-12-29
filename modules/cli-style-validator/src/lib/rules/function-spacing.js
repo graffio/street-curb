@@ -6,18 +6,9 @@ import { PS } from '../predicates.js'
 
 const PRIORITY = 5
 
-/**
- * Create a function-spacing violation object
- * @sig createViolation :: (Number, String) -> Violation
- */
-const createViolation = (line, message) => ({
-    type: 'function-spacing',
-    line,
-    column: 1,
-    priority: PRIORITY,
-    message,
-    rule: 'function-spacing',
-})
+// ============================================================================
+// P: Predicates
+// ============================================================================
 
 /**
  * Check if a node is a variable declaration containing a function
@@ -43,8 +34,14 @@ const isMultilineStatement = node => {
     return node.loc.end.line > node.loc.start.line
 }
 
+const P = { isFunctionVariableDeclaration, isFunctionStatement, isMultilineStatement }
+
+// ============================================================================
+// T: Transformers
+// ============================================================================
+
 /**
- * Check if there's a blank line or comment before a given line number
+ * Get trimmed content of the line before a given line number
  * @sig getPrevLineContent :: (Number, String) -> String
  */
 const getPrevLineContent = (lineNum, sourceCode) => {
@@ -53,14 +50,64 @@ const getPrevLineContent = (lineNum, sourceCode) => {
     return lines[lineNum - 2]?.trim() || ''
 }
 
+const T = { getPrevLineContent }
+
+// ============================================================================
+// F: Factories
+// ============================================================================
+
+/**
+ * Create a function-spacing violation object
+ * @sig createViolation :: (Number, String) -> Violation
+ */
+const createViolation = (line, message) => ({
+    type: 'function-spacing',
+    line,
+    column: 1,
+    priority: PRIORITY,
+    message,
+    rule: 'function-spacing',
+})
+
+const F = { createViolation }
+
+// ============================================================================
+// A: Aggregators
+// ============================================================================
+
 /**
  * Find function statements in a block's body array
  * @sig findFunctionsInBlock :: [ASTNode] -> [ASTNode]
  */
 const findFunctionsInBlock = statements => {
     if (!statements || !Array.isArray(statements)) return []
-    return statements.filter(isFunctionStatement)
+    return statements.filter(P.isFunctionStatement)
 }
+
+/**
+ * Check functions in a block for spacing violations
+ * @sig checkBlockFunctions :: ([ASTNode], String) -> [Violation]
+ */
+const checkBlockFunctions = (functions, sourceCode) => {
+    const checkWithPrev = (node, index) => V.checkFunction(node, functions[index - 1], sourceCode)
+    return functions.map(checkWithPrev).filter(v => v !== null)
+}
+
+/**
+ * Check inner functions within a function node
+ * @sig checkInnerFunctions :: (ASTNode, String) -> [Violation]
+ */
+const checkInnerFunctions = (node, sourceCode) => {
+    if (!PS.isFunctionNode(node) || !node.body) return []
+    if (node.body.type !== 'BlockStatement') return []
+    return checkBlockFunctions(findFunctionsInBlock(node.body.body), sourceCode)
+}
+
+const A = { findFunctionsInBlock, checkBlockFunctions, checkInnerFunctions }
+
+// ============================================================================
+// V: Validators
+// ============================================================================
 
 /**
  * Check a single function for spacing violations
@@ -70,39 +117,27 @@ const checkFunction = (node, prevNode, sourceCode) => {
     if (!prevNode) return null
 
     const { line: startLine } = node.loc.start
-    const prevLineContent = getPrevLineContent(startLine, sourceCode)
+    const prevLineContent = T.getPrevLineContent(startLine, sourceCode)
 
-    // If previous line is blank, no violation
     if (prevLineContent === '') return null
-
-    // If previous line is a comment, eslint handles spacing - skip
     if (PS.isCommentLine(prevLineContent)) return null
 
-    const currentIsMultiline = isMultilineStatement(node)
-    const prevIsMultiline = isMultilineStatement(prevNode)
+    const currentIsMultiline = P.isMultilineStatement(node)
+    const prevIsMultiline = P.isMultilineStatement(prevNode)
 
     if (currentIsMultiline) {
         const msg =
             'Multiline function requires blank line above. FIX: Add a blank line before this function definition.'
-        return createViolation(startLine, msg)
+        return F.createViolation(startLine, msg)
     }
 
     if (prevIsMultiline) {
         const msg =
             'Function after multiline function requires blank line above. FIX: Add a blank line before this function.'
-        return createViolation(startLine, msg)
+        return F.createViolation(startLine, msg)
     }
 
     return null
-}
-
-/**
- * Check functions in a block for spacing violations
- * @sig checkBlockFunctions :: ([ASTNode], String) -> [Violation]
- */
-const checkBlockFunctions = (functions, sourceCode) => {
-    const checkWithPrev = (node, index) => checkFunction(node, functions[index - 1], sourceCode)
-    return functions.map(checkWithPrev).filter(v => v !== null)
 }
 
 /**
@@ -110,19 +145,15 @@ const checkBlockFunctions = (functions, sourceCode) => {
  * @sig checkFunctionSpacing :: (AST?, String, String) -> [Violation]
  */
 const checkFunctionSpacing = (ast, sourceCode, filePath) => {
-    const checkInnerFunctions = node => {
-        if (!PS.isFunctionNode(node) || !node.body) return []
-        if (node.body.type !== 'BlockStatement') return []
-        return checkBlockFunctions(findFunctionsInBlock(node.body.body), sourceCode)
-    }
-
     if (!ast || PS.isTestFile(filePath)) return []
 
-    const topLevelViolations = checkBlockFunctions(findFunctionsInBlock(ast.body), sourceCode)
+    const topLevelViolations = A.checkBlockFunctions(A.findFunctionsInBlock(ast.body), sourceCode)
     const nestedViolations = []
-    AS.traverseAST(ast, node => nestedViolations.push(...checkInnerFunctions(node)))
+    AS.traverseAST(ast, node => nestedViolations.push(...A.checkInnerFunctions(node, sourceCode)))
 
     return [...topLevelViolations, ...nestedViolations]
 }
+
+const V = { checkFunction, checkFunctionSpacing }
 
 export { checkFunctionSpacing }
