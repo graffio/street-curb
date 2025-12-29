@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect lines exceeding 120 characters
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
-import { traverseAST } from '../traverse.js'
+import { traverseAST } from '../aggregators.js'
 
 const PRIORITY = 3
 

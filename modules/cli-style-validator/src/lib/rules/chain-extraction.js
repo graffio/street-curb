@@ -1,7 +1,7 @@
 // ABOUTME: Rule to suggest extracting repeated property chains into variables
 // ABOUTME: Flags when base.* appears 3+ times and suggests const { props } = base
 
-import { traverseAST, isFunctionNode } from '../traverse.js'
+import { traverseAST, isFunctionNode } from '../aggregators.js'
 
 const THRESHOLD = 3
 const PRIORITY = 1

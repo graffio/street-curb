@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce P/T/F/V/A cohesion group structure
 // ABOUTME: Detects uncategorized functions and triggers CHECKPOINTs on high counts
 
-import { isFunctionNode } from '../traverse.js'
+import { isFunctionNode } from '../aggregators.js'
 
 const PRIORITY = 0 // High priority - structural issue
 

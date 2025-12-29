@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { isFunctionNode } from '../traverse.js'
+import { isFunctionNode } from '../aggregators.js'
 
 /**
  * Visit child node if it exists and has a type

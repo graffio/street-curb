@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { traverseAST } from '../traverse.js'
+import { traverseAST } from '../aggregators.js'
 
 const PRIORITY = 4
 

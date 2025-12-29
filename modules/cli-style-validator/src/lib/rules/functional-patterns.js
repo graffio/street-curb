@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect imperative loop patterns
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
-import { traverseAST } from '../traverse.js'
+import { traverseAST } from '../aggregators.js'
 
 /**
  * Create a functional-patterns violation object from AST node

@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
 
-import { traverseAST, isFunctionNode } from '../traverse.js'
+import { traverseAST, isFunctionNode } from '../aggregators.js'
 
 const PRIORITY = 0 // Highest priority - fix complexity first
 

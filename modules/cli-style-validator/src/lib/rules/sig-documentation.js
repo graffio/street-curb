@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
-import { traverseAST, isFunctionNode } from '../traverse.js'
+import { traverseAST, isFunctionNode } from '../aggregators.js'
 
 const PRIORITY = 6
 

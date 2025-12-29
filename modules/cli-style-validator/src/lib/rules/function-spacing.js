@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce blank lines before multiline function declarations
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
-import { traverseAST, isFunctionNode } from '../traverse.js'
+import { traverseAST, isFunctionNode } from '../aggregators.js'
 
 const PRIORITY = 5
 

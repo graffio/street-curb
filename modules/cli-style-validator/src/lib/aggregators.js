@@ -1,5 +1,7 @@
-// ABOUTME: Shared AST traversal utilities for style validator rules
-// ABOUTME: Provides reusable traverseAST function to avoid duplication across rules
+// ABOUTME: Shared AST traversal/aggregation utilities for style validator rules
+// ABOUTME: Provides reusable traverseAST function to collect/visit nodes
+
+import { isFunctionNode } from './predicates.js'
 
 /**
  * Process child node in AST traversal
@@ -25,11 +27,7 @@ const traverseAST = (node, visitor) => {
     Object.values(node).forEach(child => processChildNode(child, visitor))
 }
 
-/**
- * Check if a node represents a function
- * @sig isFunctionNode :: ASTNode -> Boolean
- */
-const isFunctionNode = node =>
-    node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression'
+const A = { traverseAST }
 
-export { traverseAST, isFunctionNode }
+// Re-export isFunctionNode for backward compatibility with existing imports
+export { traverseAST, isFunctionNode, A }
