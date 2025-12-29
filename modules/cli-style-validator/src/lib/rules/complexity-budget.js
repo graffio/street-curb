@@ -4,10 +4,8 @@
 import { AS } from '../aggregators.js'
 import { PS } from '../predicates.js'
 
-const PRIORITY = 0 // Highest priority - fix complexity first
+const PRIORITY = 0
 
-// Context-specific budgets from .claude/pattern-catalog.md
-// Note: "functions" counts all function definitions, not just nested ones
 const BUDGETS = {
     cli: { lines: 150, styleObjects: 0, functions: 10 },
     'react-page': { lines: 200, styleObjects: 5, functions: 8 },
@@ -16,7 +14,6 @@ const BUDGETS = {
     utility: { lines: 150, styleObjects: 0, functions: 10 },
 }
 
-// CSS-like property names that indicate a style object
 const STYLE_PROPERTIES = new Set([
     'padding',
     'margin',
@@ -68,230 +65,188 @@ const STYLE_PROPERTIES = new Set([
     'borderCollapse',
 ])
 
-/**
- * Determine context from file path
- * @sig getContext :: String -> String
- */
-const getContext = filePath => {
-    if (filePath.includes('/cli-')) return 'cli'
-    if (filePath.includes('/pages/') && filePath.endsWith('.jsx')) return 'react-page'
-    if (filePath.includes('/components/') && filePath.endsWith('.jsx')) return 'react-component'
-    if (filePath.includes('/selectors/')) return 'selector'
-    return 'utility'
-}
-
-/**
- * Check if file is generated (should skip validation)
- * @sig isGeneratedFile :: String -> Boolean
- */
-// Note: Split strings to avoid self-matching (this file contains these patterns as literals)
+// Split strings to avoid self-matching
 const GENERATED_MARKERS = ['do not edit ' + 'manually', 'Auto-' + 'generated']
-const isGeneratedFile = sourceCode => GENERATED_MARKERS.some(marker => sourceCode.includes(marker))
 
-/**
- * Check if an object expression looks like a style object
- * @sig isStyleObject :: ASTNode -> Boolean
- */
-const isStyleObject = node => {
-    if (node.type !== 'ObjectExpression') return false
-    if (node.properties.length === 0) return false
+const P = {
+    // @sig isPascalCase :: String -> Boolean
+    isPascalCase: name => name && /^[A-Z]/.test(name),
 
-    const propertyNames = node.properties
-        .filter(p => p.key && (p.key.name || p.key.value))
-        .map(p => p.key.name || p.key.value)
+    // @sig isGeneratedFile :: String -> Boolean
+    isGeneratedFile: sourceCode => GENERATED_MARKERS.some(marker => sourceCode.includes(marker)),
 
-    // If more than half the properties are CSS-like, it's a style object
-    const cssCount = propertyNames.filter(name => STYLE_PROPERTIES.has(name)).length
-    return cssCount >= Math.ceil(propertyNames.length / 2) && cssCount >= 2
+    // @sig isStyleObject :: ASTNode -> Boolean
+    isStyleObject: node => {
+        if (node.type !== 'ObjectExpression' || node.properties.length === 0) return false
+        const names = node.properties.filter(p => p.key?.name || p.key?.value).map(p => p.key.name || p.key.value)
+        const cssCount = names.filter(name => STYLE_PROPERTIES.has(name)).length
+        return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
+    },
+
+    // @sig isReactContext :: String -> Boolean
+    isReactContext: context => context === 'react-page' || context === 'react-component',
 }
 
-/**
- * Count style objects in AST
- * @sig countStyleObjects :: AST -> Number
- */
-const countStyleObjects = ast => {
-    let count = 0
-    AS.traverseAST(ast, node => {
-        if (isStyleObject(node)) count++
-    })
-    return count
+const T = {
+    // @sig getContext :: String -> String
+    getContext: filePath => {
+        if (filePath.includes('/cli-')) return 'cli'
+        if (filePath.includes('/pages/') && filePath.endsWith('.jsx')) return 'react-page'
+        if (filePath.includes('/components/') && filePath.endsWith('.jsx')) return 'react-component'
+        if (filePath.includes('/selectors/')) return 'selector'
+        return 'utility'
+    },
+
+    // @sig getComponentBudget :: String -> Budget
+    getComponentBudget: compName => (compName.endsWith('Page') ? BUDGETS['react-page'] : BUDGETS['react-component']),
+
+    // @sig getComponentContext :: String -> String
+    getComponentContext: compName => (compName.endsWith('Page') ? 'react-page' : 'react-component'),
 }
 
-/**
- * Find React component functions (PascalCase arrow functions or function declarations)
- * @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
- */
-const findComponents = ast => {
-    const components = []
-    if (!ast?.body) return components
+const F = {
+    // @sig createViolation :: (Number, String, String, Number, Number) -> Violation
+    createViolation: (line, metric, context, actual, budget) => ({
+        type: 'complexity-budget',
+        line,
+        column: 1,
+        priority: PRIORITY,
+        message:
+            `${metric} (${actual}) exceeds ${context} budget (${budget}). ` +
+            `CHECKPOINT: Run complexity review before proceeding. This may require revising your implementation approach.`,
+        rule: 'complexity-budget',
+    }),
+}
 
-    const isPascalCase = name => name && /^[A-Z]/.test(name)
+const V = {
+    // @sig checkComponentBudget :: ({ name, node, startLine, endLine }) -> [Violation]
+    checkComponentBudget: comp => {
+        const violations = []
+        const budget = T.getComponentBudget(comp.name)
+        const context = T.getComponentContext(comp.name)
+        const compLines = comp.endLine - comp.startLine + 1
 
-    ast.body.forEach(node => {
-        // const Foo = () => ...
-        if (node.type === 'VariableDeclaration') {
-            const decl = node.declarations[0]
-            if (decl?.id?.name && isPascalCase(decl.id.name) && decl.init && PS.isFunctionNode(decl.init))
+        if (compLines > budget.lines)
+            violations.push(
+                F.createViolation(comp.startLine, `Component "${comp.name}" lines`, context, compLines, budget.lines),
+            )
+
+        const funcCount = A.countFunctions(comp.node)
+        if (funcCount > budget.functions)
+            violations.push(
+                F.createViolation(
+                    comp.startLine,
+                    `Component "${comp.name}" functions`,
+                    context,
+                    funcCount,
+                    budget.functions,
+                ),
+            )
+
+        const styleCount = A.countStyleObjects(comp.node)
+        if (styleCount > budget.styleObjects)
+            violations.push(
+                F.createViolation(
+                    comp.startLine,
+                    `Component "${comp.name}" style objects`,
+                    context,
+                    styleCount,
+                    budget.styleObjects,
+                ),
+            )
+
+        return violations
+    },
+
+    // @sig checkReactBudget :: (AST, String, Budget) -> [Violation]
+    checkReactBudget: (ast, sourceCode, budget) => {
+        const components = A.findComponents(ast)
+        if (components.length === 0) {
+            const totalLines = sourceCode.split('\n').length
+            if (totalLines > budget.lines)
+                return [F.createViolation(1, 'Lines', 'react-component', totalLines, budget.lines)]
+            return []
+        }
+        return components.flatMap(V.checkComponentBudget)
+    },
+
+    // @sig checkNonReactBudget :: (AST, String, String, Budget) -> [Violation]
+    checkNonReactBudget: (ast, sourceCode, context, budget) => {
+        const violations = []
+        const totalLines = sourceCode.split('\n').length
+
+        if (totalLines > budget.lines) violations.push(F.createViolation(1, 'Lines', context, totalLines, budget.lines))
+
+        const styleCount = A.countStyleObjects(ast)
+        if (styleCount > budget.styleObjects)
+            violations.push(F.createViolation(1, 'Style objects', context, styleCount, budget.styleObjects))
+
+        const totalFunctions = A.countFunctions(ast)
+        if (totalFunctions > budget.functions)
+            violations.push(F.createViolation(1, 'Functions', context, totalFunctions, budget.functions))
+
+        return violations
+    },
+
+    // @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
+    checkComplexityBudget: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath) || P.isGeneratedFile(sourceCode)) return []
+
+        const context = T.getContext(filePath)
+        const budget = BUDGETS[context]
+
+        if (P.isReactContext(context)) return V.checkReactBudget(ast, sourceCode, budget)
+        return V.checkNonReactBudget(ast, sourceCode, context, budget)
+    },
+}
+
+const A = {
+    // @sig countStyleObjects :: ASTNode -> Number
+    countStyleObjects: node => {
+        let count = 0
+        AS.traverseAST(node, n => {
+            if (P.isStyleObject(n)) count++
+        })
+        return count
+    },
+
+    // @sig countFunctions :: ASTNode -> Number
+    countFunctions: node => {
+        let count = 0
+        AS.traverseAST(node, n => {
+            if (PS.isFunctionNode(n)) count++
+        })
+        return count
+    },
+
+    // @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
+    findComponents: ast => {
+        const components = []
+        if (!ast?.body) return components
+
+        ast.body.forEach(node => {
+            if (node.type === 'VariableDeclaration') {
+                const decl = node.declarations[0]
+                if (decl?.id?.name && P.isPascalCase(decl.id.name) && decl.init && PS.isFunctionNode(decl.init))
+                    components.push({
+                        name: decl.id.name,
+                        node: decl.init,
+                        startLine: node.loc?.start?.line || 1,
+                        endLine: node.loc?.end?.line || 1,
+                    })
+            }
+            if (node.type === 'FunctionDeclaration' && P.isPascalCase(node.id?.name))
                 components.push({
-                    name: decl.id.name,
-                    node: decl.init,
+                    name: node.id.name,
+                    node,
                     startLine: node.loc?.start?.line || 1,
                     endLine: node.loc?.end?.line || 1,
                 })
-        }
-
-        // function Foo() { ... }
-        if (node.type === 'FunctionDeclaration' && isPascalCase(node.id?.name))
-            components.push({
-                name: node.id.name,
-                node,
-                startLine: node.loc?.start?.line || 1,
-                endLine: node.loc?.end?.line || 1,
-            })
-    })
-
-    return components
-}
-
-/**
- * Count all functions within a component (including the component itself)
- * @sig countFunctions :: ASTNode -> Number
- */
-const countFunctions = componentNode => {
-    let count = 0
-    AS.traverseAST(componentNode, node => {
-        if (PS.isFunctionNode(node)) count++
-    })
-    return count
-}
-
-/**
- * Count style objects within a specific component
- * @sig countStyleObjectsInComponent :: ASTNode -> Number
- */
-const countStyleObjectsInComponent = componentNode => {
-    let count = 0
-    AS.traverseAST(componentNode, node => {
-        if (isStyleObject(node)) count++
-    })
-    return count
-}
-
-/**
- * Create a budget violation
- * @sig createViolation :: (Number, String, String, Number, Number) -> Violation
- */
-const createViolation = (line, metric, context, actual, budget) => ({
-    type: 'complexity-budget',
-    line,
-    column: 1,
-    priority: PRIORITY,
-    message:
-        `${metric} (${actual}) exceeds ${context} budget (${budget}). ` +
-        `CHECKPOINT: Run complexity review before proceeding. This may require revising your implementation approach.`,
-    rule: 'complexity-budget',
-})
-
-/**
- * Check complexity budgets for a file
- * @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
- */
-const checkComplexityBudget = (ast, sourceCode, filePath) => {
-    if (!ast) return []
-    if (PS.isTestFile(filePath)) return []
-    if (isGeneratedFile(sourceCode)) return []
-
-    const context = getContext(filePath)
-    const budget = BUDGETS[context]
-    const violations = []
-    const lines = sourceCode.split('\n')
-    const totalLines = lines.length
-
-    // For React files, check per-component
-    if (context === 'react-page' || context === 'react-component') {
-        const components = findComponents(ast)
-
-        if (components.length === 0) {
-            // No components found, check file-level
-            if (totalLines > budget.lines)
-                violations.push(createViolation(1, 'Lines', context, totalLines, budget.lines))
-        } else {
-            // Check each component
-            components.forEach(comp => {
-                const compLines = comp.endLine - comp.startLine + 1
-                const compBudget = comp.name.endsWith('Page') ? BUDGETS['react-page'] : BUDGETS['react-component']
-
-                if (compLines > compBudget.lines)
-                    violations.push(
-                        createViolation(
-                            comp.startLine,
-                            `Component "${comp.name}" lines`,
-                            comp.name.endsWith('Page') ? 'react-page' : 'react-component',
-                            compLines,
-                            compBudget.lines,
-                        ),
-                    )
-
-                const funcCount = countFunctions(comp.node)
-                if (funcCount > compBudget.functions)
-                    violations.push(
-                        createViolation(
-                            comp.startLine,
-                            `Component "${comp.name}" functions`,
-                            comp.name.endsWith('Page') ? 'react-page' : 'react-component',
-                            funcCount,
-                            compBudget.functions,
-                        ),
-                    )
-
-                const styleCount = countStyleObjectsInComponent(comp.node)
-                if (styleCount > compBudget.styleObjects)
-                    violations.push(
-                        createViolation(
-                            comp.startLine,
-                            `Component "${comp.name}" style objects`,
-                            comp.name.endsWith('Page') ? 'react-page' : 'react-component',
-                            styleCount,
-                            compBudget.styleObjects,
-                        ),
-                    )
-            })
-        }
-
-        // Also check file-level style objects (outside components)
-        const totalStyleObjects = countStyleObjects(ast)
-        const componentStyleObjects = components.reduce((sum, c) => sum + countStyleObjectsInComponent(c.node), 0)
-        const moduleLevelStyles = totalStyleObjects - componentStyleObjects
-
-        // Module-level styles count toward page budget
-        if (moduleLevelStyles > 0) {
-            const pageComponent = components.find(c => c.name.endsWith('Page'))
-            if (pageComponent) {
-                const totalForPage = moduleLevelStyles + countStyleObjectsInComponent(pageComponent.node)
-                if (totalForPage > BUDGETS['react-page'].styleObjects) {
-                    // Already reported in component check, skip
-                }
-            }
-        }
-    } else {
-        // Non-React files: check file-level metrics
-        if (totalLines > budget.lines) violations.push(createViolation(1, 'Lines', context, totalLines, budget.lines))
-
-        const styleCount = countStyleObjects(ast)
-        if (styleCount > budget.styleObjects)
-            violations.push(createViolation(1, 'Style objects', context, styleCount, budget.styleObjects))
-
-        // For non-React, count total functions in file
-        let totalFunctions = 0
-        AS.traverseAST(ast, node => {
-            if (PS.isFunctionNode(node)) totalFunctions++
         })
 
-        if (totalFunctions > budget.functions)
-            violations.push(createViolation(1, 'Functions', context, totalFunctions, budget.functions))
-    }
-
-    return violations
+        return components
+    },
 }
 
+const checkComplexityBudget = V.checkComplexityBudget
 export { checkComplexityBudget }

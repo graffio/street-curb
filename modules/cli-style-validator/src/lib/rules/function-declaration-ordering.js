@@ -5,18 +5,26 @@ import { AS } from '../aggregators.js'
 
 const PRIORITY = 4
 
-/**
- * Create a function-declaration-ordering violation object from AST node
- * @sig createViolation :: (ASTNode, String) -> Violation
- */
-const createViolation = (node, message) => ({
-    type: 'function-declaration-ordering',
-    line: node.loc.start.line,
-    column: node.loc.start.column + 1,
-    priority: PRIORITY,
-    message,
-    rule: 'function-declaration-ordering',
-})
+// Statement types that are not function declarations
+const NON_FUNCTION_STATEMENT_TYPES = new Set([
+    'VariableDeclaration',
+    'ExpressionStatement',
+    'ReturnStatement',
+    'IfStatement',
+    'ForStatement',
+    'WhileStatement',
+    'DoWhileStatement',
+    'ForInStatement',
+    'ForOfStatement',
+    'TryStatement',
+    'ThrowStatement',
+    'BreakStatement',
+    'ContinueStatement',
+])
+
+// ============================================================================
+// P: Predicates
+// ============================================================================
 
 /**
  * Check if node is a function declaration
@@ -35,26 +43,9 @@ const isVariableWithFunctionExpression = node =>
 
 /**
  * Check if function expression is single-line anonymous (allowed inline per coding standards)
- * Named function variables should always be treated as function declarations
- * Only truly anonymous inline functions (callbacks) are allowed to remain inline
  * @sig isSingleLineFunctionExpression :: ASTNode -> Boolean
  */
-const isSingleLineFunctionExpression = node =>
-    // Named function variables (const funcName = () => {}) should never be considered inline
-    // This function should return false for all VariableDeclarator nodes
-    // Only anonymous callbacks like data.filter(user => user.isActive) should be inline
-    false
-
-/**
- * Get function name from node
- * @sig getFunctionName :: ASTNode -> String
- */
-const getFunctionName = node => {
-    const { type, id } = node
-    if (type === 'FunctionDeclaration') return id ? id.name : '<anonymous>'
-    if (type === 'VariableDeclarator') return id ? id.name : '<anonymous>'
-    return '<anonymous>'
-}
+const isSingleLineFunctionExpression = node => false
 
 /**
  * Check if node is a block statement that can contain functions
@@ -75,29 +66,9 @@ const isMultiLineFunctionDeclarator = declarator =>
  */
 const isFunctionStatement = node => {
     if (isFunctionDeclaration(node)) return true
-
     if (node.type === 'VariableDeclaration') return node.declarations.some(isMultiLineFunctionDeclarator)
-
     return false
 }
-
-// Statement types that are not function declarations
-// @sig NON_FUNCTION_STATEMENT_TYPES :: Set<String>
-const NON_FUNCTION_STATEMENT_TYPES = new Set([
-    'VariableDeclaration',
-    'ExpressionStatement',
-    'ReturnStatement',
-    'IfStatement',
-    'ForStatement',
-    'WhileStatement',
-    'DoWhileStatement',
-    'ForInStatement',
-    'ForOfStatement',
-    'TryStatement',
-    'ThrowStatement',
-    'BreakStatement',
-    'ContinueStatement',
-])
 
 /**
  * Check if statement is a variable declaration or executable statement
@@ -109,21 +80,73 @@ const isNonFunctionStatement = node => {
     return NON_FUNCTION_STATEMENT_TYPES.has(node.type)
 }
 
-// Build message explaining why functions should be at top
-// @sig buildFunctionOrderingMessage :: (String, String) -> String
+const P = {
+    isFunctionDeclaration,
+    isVariableWithFunctionExpression,
+    isSingleLineFunctionExpression,
+    isBlockStatement,
+    isMultiLineFunctionDeclarator,
+    isFunctionStatement,
+    isNonFunctionStatement,
+}
+
+// ============================================================================
+// T: Transformers
+// ============================================================================
+
+/**
+ * Get function name from node
+ * @sig getFunctionName :: ASTNode -> String
+ */
+const getFunctionName = node => {
+    const { type, id } = node
+    if (type === 'FunctionDeclaration') return id ? id.name : '<anonymous>'
+    if (type === 'VariableDeclarator') return id ? id.name : '<anonymous>'
+    return '<anonymous>'
+}
+
+/**
+ * Build message explaining why functions should be at top
+ * @sig buildFunctionOrderingMessage :: (String, String) -> String
+ */
 const buildFunctionOrderingMessage = (funcType, funcName) =>
     `${funcType} '${funcName}' must be defined before hooks. ` +
     'FIX: Move the function definition above the first useSelector/useState call. ' +
     'Safe because: closures capture variable bindings, not values - ' +
     'variables will be initialized before the function is called.'
 
+const T = { getFunctionName, buildFunctionOrderingMessage }
+
+// ============================================================================
+// F: Factories
+// ============================================================================
+
+/**
+ * Create a function-declaration-ordering violation object from AST node
+ * @sig createViolation :: (ASTNode, String) -> Violation
+ */
+const createViolation = (node, message) => ({
+    type: 'function-declaration-ordering',
+    line: node.loc.start.line,
+    column: node.loc.start.column + 1,
+    priority: PRIORITY,
+    message,
+    rule: 'function-declaration-ordering',
+})
+
+const F = { createViolation }
+
+// ============================================================================
+// A: Aggregators
+// ============================================================================
+
 /**
  * Process function declaration for violations
  * @sig processFunctionDeclaration :: (ASTNode, [Violation]) -> Void
  */
 const processFunctionDeclaration = (statement, violations) => {
-    const funcName = getFunctionName(statement)
-    violations.push(createViolation(statement, buildFunctionOrderingMessage('Function', funcName)))
+    const funcName = T.getFunctionName(statement)
+    violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
 }
 
 /**
@@ -131,12 +154,12 @@ const processFunctionDeclaration = (statement, violations) => {
  * @sig processDeclarator :: (ASTNode, [Violation]) -> Void
  */
 const processDeclarator = (declarator, violations) => {
-    if (!isVariableWithFunctionExpression(declarator) || isSingleLineFunctionExpression(declarator)) return
+    if (!P.isVariableWithFunctionExpression(declarator) || P.isSingleLineFunctionExpression(declarator)) return
 
-    const funcName = getFunctionName(declarator)
+    const funcName = T.getFunctionName(declarator)
     const isArrow = declarator.init.type === 'ArrowFunctionExpression'
     const funcType = isArrow ? 'Arrow function' : 'Function'
-    violations.push(createViolation(declarator, buildFunctionOrderingMessage(funcType, funcName)))
+    violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
 }
 
 /**
@@ -155,7 +178,6 @@ const processMisplacedFunctionStatement = (statement, violations) => {
         processFunctionDeclaration(statement, violations)
         return
     }
-
     if (statement.type === 'VariableDeclaration') processVariableDeclarationWithFunctions(statement, violations)
 }
 
@@ -164,13 +186,9 @@ const processMisplacedFunctionStatement = (statement, violations) => {
  * @sig processStatementReducer :: ([Violation], ASTNode, Boolean) -> Boolean
  */
 const processStatementReducer = (violations, statement, foundNonFunction) => {
-    if (isNonFunctionStatement(statement)) return true
-
-    if (isFunctionStatement(statement) && foundNonFunction) processMisplacedFunctionStatement(statement, violations)
-
-    // Variable declarations without functions also mark as non-function found
-    if (statement.type === 'VariableDeclaration' && !isFunctionStatement(statement)) return true
-
+    if (P.isNonFunctionStatement(statement)) return true
+    if (P.isFunctionStatement(statement) && foundNonFunction) processMisplacedFunctionStatement(statement, violations)
+    if (statement.type === 'VariableDeclaration' && !P.isFunctionStatement(statement)) return true
     return foundNonFunction
 }
 
@@ -179,10 +197,22 @@ const processStatementReducer = (violations, statement, foundNonFunction) => {
  * @sig processBlockForViolations :: (ASTNode, [Violation]) -> Void
  */
 const processBlockForViolations = (block, violations) => {
-    if (!isBlockStatement(block) || !block.body) return
-
+    if (!P.isBlockStatement(block) || !block.body) return
     block.body.reduce((found, stmt) => processStatementReducer(violations, stmt, found), false)
 }
+
+const A = {
+    processFunctionDeclaration,
+    processDeclarator,
+    processVariableDeclarationWithFunctions,
+    processMisplacedFunctionStatement,
+    processStatementReducer,
+    processBlockForViolations,
+}
+
+// ============================================================================
+// V: Validators
+// ============================================================================
 
 /**
  * Check for function declaration ordering violations (coding standards)
@@ -192,8 +222,7 @@ const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) => {
     if (!ast) return []
 
     const violations = []
-
-    AS.traverseAST(ast, node => processBlockForViolations(node, violations))
+    AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
 
     return violations
 }

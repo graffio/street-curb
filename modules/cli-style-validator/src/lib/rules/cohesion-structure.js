@@ -1,5 +1,5 @@
 // ABOUTME: Rule to enforce P/T/F/V/A cohesion group structure
-// ABOUTME: Detects uncategorized functions and triggers CHECKPOINTs on high counts
+// ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
 
 import { PS } from '../predicates.js'
 
@@ -11,20 +11,25 @@ const COHESION_PATTERNS = {
     T: /^(to|get|extract|parse|format)[A-Z]/,
     F: /^(create|make|build)[A-Z]/,
     V: /^(check|validate)[A-Z]/,
-    A: /^(collect|count|gather|find)[A-Z]/,
+    A: /^(collect|count|gather|find|process)[A-Z]/,
 }
+
+// Required declaration order
+const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A']
 
 // Thresholds for triggering CHECKPOINTs
 const THRESHOLDS = { totalFunctions: 12, perGroup: 5 }
 
 const P = {
+    // @sig isTestFile :: String -> Boolean
     isTestFile: filePath =>
         filePath.includes('.tap.js') || filePath.includes('.test.js') || filePath.includes('/test/'),
 
-    isCohesionGroup: name => ['P', 'T', 'F', 'V', 'A'].includes(name),
+    // @sig isCohesionGroup :: String -> Boolean
+    isCohesionGroup: name => COHESION_ORDER.includes(name),
 
+    // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
     isInCohesionGroup: (node, ast) => {
-        // Check if this function is a property of a P/T/F/V/A object
         if (!ast?.body) return false
         return ast.body.some(stmt => {
             if (stmt.type !== 'VariableDeclaration') return false
@@ -35,6 +40,13 @@ const P = {
         })
     },
 
+    // @sig isFunctionDefinition :: ASTNode -> Boolean
+    isFunctionDefinition: node => PS.isFunctionNode(node),
+
+    // @sig isIdentifierReference :: ASTNode -> Boolean
+    isIdentifierReference: node => node?.type === 'Identifier',
+
+    // @sig matchesCohesionPattern :: String -> String?
     matchesCohesionPattern: name => {
         for (const [group, pattern] of Object.entries(COHESION_PATTERNS)) if (pattern.test(name)) return group
         return null
@@ -42,16 +54,15 @@ const P = {
 }
 
 const A = {
+    // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
     collectModuleLevelFunctions: ast => {
         const functions = []
         if (!ast?.body) return functions
 
         ast.body.forEach(stmt => {
-            // Function declarations
             if (stmt.type === 'FunctionDeclaration' && stmt.id)
                 functions.push({ name: stmt.id.name, line: stmt.loc?.start?.line || 1, node: stmt })
 
-            // Arrow functions: const foo = () => ...
             if (stmt.type === 'VariableDeclaration')
                 stmt.declarations.forEach(decl => {
                     if (decl.init && PS.isFunctionNode(decl.init) && decl.id?.name)
@@ -62,6 +73,7 @@ const A = {
         return functions
     },
 
+    // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...] }
     collectCohesionGroups: ast => {
         const groups = { P: [], T: [], F: [], V: [], A: [] }
         if (!ast?.body) return groups
@@ -82,6 +94,50 @@ const A = {
         return groups
     },
 
+    // @sig collectCohesionDeclarationOrder :: AST -> [{ name: String, line: Number }]
+    collectCohesionDeclarationOrder: ast => {
+        const declarations = []
+        if (!ast?.body) return declarations
+
+        ast.body.forEach(stmt => {
+            if (stmt.type !== 'VariableDeclaration') return
+            const decl = stmt.declarations[0]
+            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
+            if (decl.init?.type !== 'ObjectExpression') return
+            declarations.push({ name: decl.id.name, line: stmt.loc?.start?.line || 1 })
+        })
+
+        return declarations
+    },
+
+    // @sig collectExternalReferences :: AST -> [{ group: String, propName: String, refName: String, line: Number }]
+    collectExternalReferences: ast => {
+        const references = []
+        if (!ast?.body) return references
+
+        ast.body.forEach(stmt => {
+            if (stmt.type !== 'VariableDeclaration') return
+            const decl = stmt.declarations[0]
+            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
+            if (decl.init?.type !== 'ObjectExpression') return
+
+            const groupName = decl.id.name
+            decl.init.properties.forEach(prop => {
+                if (!prop.key?.name || !prop.value) return
+                if (P.isIdentifierReference(prop.value) && !P.isFunctionDefinition(prop.value))
+                    references.push({
+                        group: groupName,
+                        propName: prop.key.name,
+                        refName: prop.value.name,
+                        line: prop.loc?.start?.line || 1,
+                    })
+            })
+        })
+
+        return references
+    },
+
+    // @sig findComplexityComments :: String -> [{ line: Number, reason: String }]
     findComplexityComments: sourceCode => {
         const comments = []
         const lines = sourceCode.split('\n')

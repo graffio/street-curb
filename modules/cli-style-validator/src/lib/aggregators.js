@@ -1,26 +1,31 @@
 // ABOUTME: Shared AST traversal/aggregation utilities for style validator rules
-// ABOUTME: Provides reusable traverseAST function to collect/visit nodes
+// ABOUTME: Provides traverseAST and child node utilities for rule implementations
 
-// Process child node in AST traversal
-// @sig processChildNode :: (Any, (ASTNode) -> Void) -> Void
-const processChildNode = (child, visitor) => {
-    if (Array.isArray(child)) {
-        child.forEach(item => traverseAST(item, visitor))
-        return
-    }
-    if (child && typeof child === 'object' && child.type) traverseAST(child, visitor)
+const AS = {
+    // @sig isASTNode :: Any -> Boolean
+    isASTNode: child => child && typeof child === 'object' && child.type,
+
+    // @sig extractChildNodes :: Any -> [ASTNode]
+    extractChildNodes: value => {
+        if (Array.isArray(value)) return value.filter(AS.isASTNode)
+        if (AS.isASTNode(value)) return [value]
+        return []
+    },
+
+    // @sig getChildNodes :: ASTNode -> [ASTNode]
+    getChildNodes: node => {
+        const skip = new Set(['type', 'loc', 'range', 'start', 'end'])
+        return Object.entries(node)
+            .filter(([key]) => !skip.has(key))
+            .flatMap(([, value]) => AS.extractChildNodes(value))
+    },
+
+    // @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
+    traverseAST: (node, visitor) => {
+        if (!node || typeof node !== 'object') return
+        visitor(node)
+        AS.getChildNodes(node).forEach(child => AS.traverseAST(child, visitor))
+    },
 }
-
-// Traverse AST node and visit all child nodes
-// @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
-const traverseAST = (node, visitor) => {
-    if (!node || typeof node !== 'object') return
-
-    visitor(node)
-
-    Object.values(node).forEach(child => processChildNode(child, visitor))
-}
-
-const AS = { traverseAST }
 
 export { AS }
