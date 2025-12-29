@@ -21,10 +21,6 @@ const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A']
 const THRESHOLDS = { totalFunctions: 12, perGroup: 5 }
 
 const P = {
-    // @sig isTestFile :: String -> Boolean
-    isTestFile: filePath =>
-        filePath.includes('.tap.js') || filePath.includes('.test.js') || filePath.includes('/test/'),
-
     // @sig isCohesionGroup :: String -> Boolean
     isCohesionGroup: name => COHESION_ORDER.includes(name),
 
@@ -229,7 +225,7 @@ const V = {
 
     // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
     checkCohesionStructure: (ast, sourceCode, filePath) => {
-        if (!ast || P.isTestFile(filePath)) return []
+        if (!ast || PS.isTestFile(filePath)) return []
 
         const violations = []
         const complexityComments = A.findComplexityComments(sourceCode)

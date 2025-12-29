@@ -65,15 +65,9 @@ const STYLE_PROPERTIES = new Set([
     'borderCollapse',
 ])
 
-// Split strings to avoid self-matching
-const GENERATED_MARKERS = ['do not edit ' + 'manually', 'Auto-' + 'generated']
-
 const P = {
     // @sig isPascalCase :: String -> Boolean
     isPascalCase: name => name && /^[A-Z]/.test(name),
-
-    // @sig isGeneratedFile :: String -> Boolean
-    isGeneratedFile: sourceCode => GENERATED_MARKERS.some(marker => sourceCode.includes(marker)),
 
     // @sig isStyleObject :: ASTNode -> Boolean
     isStyleObject: node => {
@@ -190,7 +184,7 @@ const V = {
 
     // @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
     checkComplexityBudget: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath) || P.isGeneratedFile(sourceCode)) return []
+        if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
 
         const context = T.getContext(filePath)
         const budget = BUDGETS[context]

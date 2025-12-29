@@ -37,9 +37,6 @@ const P = {
     // @sig isAllowedNesting :: ASTNode -> Boolean
     isAllowedNesting: node => ALLOWED_NESTING_TYPES.has(node.type),
 
-    // @sig isValidNode :: Any -> Boolean
-    isValidNode: node => node && typeof node === 'object' && node.type,
-
     // @sig isFunctionWithBlockBody :: ASTNode -> Boolean
     isFunctionWithBlockBody: node => PS.isFunctionNode(node) && node.body?.type === 'BlockStatement',
 
@@ -74,14 +71,6 @@ const P = {
     },
 }
 
-const T = {
-    // @sig countFunctionBodyLines :: ASTNode -> Number
-    countFunctionBodyLines: node => {
-        if (!node.body?.loc) return 0
-        return node.body.loc.end.line - node.body.loc.start.line + 1
-    },
-}
-
 const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
@@ -98,7 +87,7 @@ const V = {
     // @sig checkCallbackFunction :: (ASTNode, ASTNode, [Violation]) -> Void
     checkCallbackFunction: (node, ast, violations) => {
         if (!PS.isFunctionNode(node) || !P.isCallbackFunction(node, ast) || P.isJSXFunction(node)) return
-        if (T.countFunctionBodyLines(node) > 1) violations.push(F.createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
+        if (AS.countFunctionLines(node) > 1) violations.push(F.createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
     },
 
     // @sig checkFunctionNode :: (ASTNode, Set, [Violation]) -> Void
@@ -152,7 +141,7 @@ const A = {
 
     // @sig processChildForViolations :: (ASTNode, Number, Function) -> Void
     processChildForViolations: (node, nextDepth, findViolations) => {
-        if (!P.isValidNode(node)) return
+        if (!PS.isValidNode(node)) return
         if (P.isFunctionWithBlockBody(node)) {
             findViolations(node.body, 0)
             return

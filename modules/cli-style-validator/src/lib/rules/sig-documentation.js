@@ -7,12 +7,6 @@ import { PS } from '../predicates.js'
 const PRIORITY = 6
 
 const T = {
-    // @sig countFunctionLines :: ASTNode -> Number
-    countFunctionLines: functionNode => {
-        if (!functionNode.body || !functionNode.body.loc) return 0
-        return functionNode.body.loc.end.line - functionNode.body.loc.start.line + 1
-    },
-
     // @sig stripCommentMarkers :: String -> String
     stripCommentMarkers: line =>
         line
@@ -82,7 +76,7 @@ const P = {
     isDescriptionLine: line => P.isSubstantiveCommentLine(line) && !line.includes('@sig'),
 
     // @sig requiresSigDocumentation :: (ASTNode, ASTNode) -> Boolean
-    requiresSigDocumentation: (node, ast) => P.isTopLevelFunction(node, ast) || T.countFunctionLines(node) > 5,
+    requiresSigDocumentation: (node, ast) => P.isTopLevelFunction(node, ast) || AS.countFunctionLines(node) > 5,
 }
 
 const A = {

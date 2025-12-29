@@ -5,6 +5,12 @@ const AS = {
     // @sig isASTNode :: Any -> Boolean
     isASTNode: child => child && typeof child === 'object' && child.type,
 
+    // @sig countFunctionLines :: ASTNode -> Number
+    countFunctionLines: node => {
+        if (!node.body?.loc) return 0
+        return node.body.loc.end.line - node.body.loc.start.line + 1
+    },
+
     // @sig extractChildNodes :: Any -> [ASTNode]
     extractChildNodes: value => {
         if (Array.isArray(value)) return value.filter(AS.isASTNode)
