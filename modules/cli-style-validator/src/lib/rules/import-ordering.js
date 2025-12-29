@@ -1,17 +1,9 @@
 // ABOUTME: Rule to detect import violations
 // ABOUTME: Enforces ES6 imports, no require(), and @graffio/design-system over @radix-ui/themes
 
-/**
- * Create an import-ordering violation object
- * @sig createViolation :: (Number, String) -> Violation
- */
-const createViolation = (line, message) => ({
-    type: 'import-ordering',
-    line,
-    column: 1,
-    message,
-    rule: 'import-ordering',
-})
+// ============================================================================
+// P: Predicates
+// ============================================================================
 
 /**
  * Check if line contains require() call
@@ -31,13 +23,45 @@ const importsRadixThemes = line => line.includes('@radix-ui/themes')
  */
 const isDesignSystemFile = filePath => filePath.includes('modules/design-system/')
 
-// Collect violations for a single line (skipRadixCheck controls radix rule)
-// @sig collectLineViolations :: (String, Number, Boolean, [Violation]) -> Void
+const P = { hasRequire, importsRadixThemes, isDesignSystemFile }
+
+// ============================================================================
+// F: Factories
+// ============================================================================
+
+/**
+ * Create an import-ordering violation object
+ * @sig createViolation :: (Number, String) -> Violation
+ */
+const createViolation = (line, message) => ({
+    type: 'import-ordering',
+    line,
+    column: 1,
+    message,
+    rule: 'import-ordering',
+})
+
+const F = { createViolation }
+
+// ============================================================================
+// A: Aggregators
+// ============================================================================
+
+/**
+ * Collect violations for a single line
+ * @sig collectLineViolations :: (String, Number, Boolean, [Violation]) -> Void
+ */
 const collectLineViolations = (line, lineNum, skipRadixCheck, violations) => {
-    if (hasRequire(line)) violations.push(createViolation(lineNum, 'Use ES6 import syntax instead of require()'))
-    if (!skipRadixCheck && importsRadixThemes(line))
-        violations.push(createViolation(lineNum, 'Import from @graffio/design-system instead of @radix-ui/themes'))
+    if (P.hasRequire(line)) violations.push(F.createViolation(lineNum, 'Use ES6 import syntax instead of require()'))
+    if (!skipRadixCheck && P.importsRadixThemes(line))
+        violations.push(F.createViolation(lineNum, 'Import from @graffio/design-system instead of @radix-ui/themes'))
 }
+
+const A = { collectLineViolations }
+
+// ============================================================================
+// V: Validators
+// ============================================================================
 
 /**
  * Check for import violations (coding standards)
@@ -46,9 +70,9 @@ const collectLineViolations = (line, lineNum, skipRadixCheck, violations) => {
 const checkImportOrdering = (ast, sourceCode, filePath) => {
     const violations = []
     const lines = sourceCode.split('\n')
-    const skipRadixCheck = isDesignSystemFile(filePath)
+    const skipRadixCheck = P.isDesignSystemFile(filePath)
 
-    lines.forEach((line, index) => collectLineViolations(line, index + 1, skipRadixCheck, violations))
+    lines.forEach((line, index) => A.collectLineViolations(line, index + 1, skipRadixCheck, violations))
 
     return violations
 }

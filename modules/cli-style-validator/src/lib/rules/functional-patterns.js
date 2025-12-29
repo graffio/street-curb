@@ -3,17 +3,9 @@
 
 import { AS } from '../aggregators.js'
 
-/**
- * Create a functional-patterns violation object from AST node
- * @sig createViolation :: (ASTNode, String) -> Violation
- */
-const createViolation = (node, message) => ({
-    type: 'functional-patterns',
-    line: node.loc.start.line,
-    column: node.loc.start.column + 1,
-    message,
-    rule: 'functional-patterns',
-})
+// ============================================================================
+// P: Predicates
+// ============================================================================
 
 /**
  * Check if node body contains an await expression (recursive)
@@ -38,7 +30,6 @@ const containsAwait = node => {
  * @sig isImperativeLoop :: ASTNode -> Boolean
  */
 const isImperativeLoop = node => {
-    // for..of with await is legitimate for sequential async operations
     if (node.type === 'ForOfStatement' && containsAwait(node.body)) return false
 
     return (
@@ -49,6 +40,12 @@ const isImperativeLoop = node => {
         node.type === 'ForOfStatement'
     )
 }
+
+const P = { containsAwait, isImperativeLoop }
+
+// ============================================================================
+// T: Transformers
+// ============================================================================
 
 /**
  * Get suggestion message for imperative loop type
@@ -64,16 +61,46 @@ const getSuggestionForLoop = nodeType => {
     return 'Replace imperative loop with functional patterns'
 }
 
+const T = { getSuggestionForLoop }
+
+// ============================================================================
+// F: Factories
+// ============================================================================
+
+/**
+ * Create a functional-patterns violation object from AST node
+ * @sig createViolation :: (ASTNode, String) -> Violation
+ */
+const createViolation = (node, message) => ({
+    type: 'functional-patterns',
+    line: node.loc.start.line,
+    column: node.loc.start.column + 1,
+    message,
+    rule: 'functional-patterns',
+})
+
+const F = { createViolation }
+
+// ============================================================================
+// A: Aggregators
+// ============================================================================
+
 /**
  * Process AST node for functional pattern violations
  * @sig processNodeForViolations :: (ASTNode, [Violation]) -> Void
  */
 const processNodeForViolations = (node, violations) => {
-    if (!isImperativeLoop(node)) return
+    if (!P.isImperativeLoop(node)) return
 
-    const suggestion = getSuggestionForLoop(node.type)
-    violations.push(createViolation(node, suggestion))
+    const suggestion = T.getSuggestionForLoop(node.type)
+    violations.push(F.createViolation(node, suggestion))
 }
+
+const A = { processNodeForViolations }
+
+// ============================================================================
+// V: Validators
+// ============================================================================
 
 /**
  * Check for functional pattern violations (coding standards)
@@ -84,7 +111,7 @@ const checkFunctionalPatterns = (ast, sourceCode, filePath) => {
 
     const violations = []
 
-    AS.traverseAST(ast, node => processNodeForViolations(node, violations))
+    AS.traverseAST(ast, node => A.processNodeForViolations(node, violations))
 
     return violations
 }
