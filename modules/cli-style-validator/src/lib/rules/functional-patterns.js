@@ -3,117 +3,72 @@
 
 import { AS } from '../aggregators.js'
 
-// ============================================================================
-// P: Predicates
-// ============================================================================
+const P = {
+    // @sig containsAwait :: ASTNode -> Boolean
+    containsAwait: node => {
+        if (!node) return false
+        if (node.type === 'AwaitExpression') return true
+        if (node.type === 'BlockStatement') return node.body.some(P.containsAwait)
+        if (node.type === 'ExpressionStatement') return P.containsAwait(node.expression)
+        if (node.type === 'VariableDeclaration') return node.declarations.some(d => P.containsAwait(d.init))
+        if (node.type === 'AssignmentExpression') return P.containsAwait(node.right)
+        if (node.type === 'CallExpression') return P.containsAwait(node.callee) || node.arguments.some(P.containsAwait)
+        if (node.type === 'MemberExpression') return P.containsAwait(node.object)
+        if (node.type === 'IfStatement')
+            return P.containsAwait(node.test) || P.containsAwait(node.consequent) || P.containsAwait(node.alternate)
+        return false
+    },
 
-/**
- * Check if node body contains an await expression (recursive)
- * @sig containsAwait :: ASTNode -> Boolean
- */
-const containsAwait = node => {
-    if (!node) return false
-    if (node.type === 'AwaitExpression') return true
-    if (node.type === 'BlockStatement') return node.body.some(containsAwait)
-    if (node.type === 'ExpressionStatement') return containsAwait(node.expression)
-    if (node.type === 'VariableDeclaration') return node.declarations.some(d => containsAwait(d.init))
-    if (node.type === 'AssignmentExpression') return containsAwait(node.right)
-    if (node.type === 'CallExpression') return containsAwait(node.callee) || node.arguments.some(containsAwait)
-    if (node.type === 'MemberExpression') return containsAwait(node.object)
-    if (node.type === 'IfStatement')
-        return containsAwait(node.test) || containsAwait(node.consequent) || containsAwait(node.alternate)
-    return false
+    // @sig isImperativeLoop :: ASTNode -> Boolean
+    isImperativeLoop: node => {
+        if (node.type === 'ForOfStatement' && P.containsAwait(node.body)) return false
+        return ['ForStatement', 'WhileStatement', 'DoWhileStatement', 'ForInStatement', 'ForOfStatement'].includes(
+            node.type,
+        )
+    },
 }
 
-/**
- * Check if node is an imperative loop statement (excludes for..of with await)
- * @sig isImperativeLoop :: ASTNode -> Boolean
- */
-const isImperativeLoop = node => {
-    if (node.type === 'ForOfStatement' && containsAwait(node.body)) return false
-
-    return (
-        node.type === 'ForStatement' ||
-        node.type === 'WhileStatement' ||
-        node.type === 'DoWhileStatement' ||
-        node.type === 'ForInStatement' ||
-        node.type === 'ForOfStatement'
-    )
+const T = {
+    // @sig getSuggestionForLoop :: String -> String
+    getSuggestionForLoop: nodeType => {
+        if (nodeType === 'ForStatement') return 'Replace for loop with map/filter/reduce functional patterns'
+        if (nodeType === 'WhileStatement') return 'Replace while loop with map/filter/reduce or early returns'
+        if (nodeType === 'DoWhileStatement') return 'Replace do-while loop with map/filter/reduce or early returns'
+        if (nodeType === 'ForInStatement')
+            return 'Replace for-in loop with Object.entries/keys/values and functional patterns'
+        if (nodeType === 'ForOfStatement') return 'Replace for-of loop with map/filter/reduce functional patterns'
+        return 'Replace imperative loop with functional patterns'
+    },
 }
 
-const P = { containsAwait, isImperativeLoop }
-
-// ============================================================================
-// T: Transformers
-// ============================================================================
-
-/**
- * Get suggestion message for imperative loop type
- * @sig getSuggestionForLoop :: String -> String
- */
-const getSuggestionForLoop = nodeType => {
-    if (nodeType === 'ForStatement') return 'Replace for loop with map/filter/reduce functional patterns'
-    if (nodeType === 'WhileStatement') return 'Replace while loop with map/filter/reduce or early returns'
-    if (nodeType === 'DoWhileStatement') return 'Replace do-while loop with map/filter/reduce or early returns'
-    if (nodeType === 'ForInStatement')
-        return 'Replace for-in loop with Object.entries/keys/values and functional patterns'
-    if (nodeType === 'ForOfStatement') return 'Replace for-of loop with map/filter/reduce functional patterns'
-    return 'Replace imperative loop with functional patterns'
+const F = {
+    // @sig createViolation :: (ASTNode, String) -> Violation
+    createViolation: (node, message) => ({
+        type: 'functional-patterns',
+        line: node.loc.start.line,
+        column: node.loc.start.column + 1,
+        message,
+        rule: 'functional-patterns',
+    }),
 }
 
-const T = { getSuggestionForLoop }
-
-// ============================================================================
-// F: Factories
-// ============================================================================
-
-/**
- * Create a functional-patterns violation object from AST node
- * @sig createViolation :: (ASTNode, String) -> Violation
- */
-const createViolation = (node, message) => ({
-    type: 'functional-patterns',
-    line: node.loc.start.line,
-    column: node.loc.start.column + 1,
-    message,
-    rule: 'functional-patterns',
-})
-
-const F = { createViolation }
-
-// ============================================================================
-// A: Aggregators
-// ============================================================================
-
-/**
- * Process AST node for functional pattern violations
- * @sig processNodeForViolations :: (ASTNode, [Violation]) -> Void
- */
-const processNodeForViolations = (node, violations) => {
-    if (!P.isImperativeLoop(node)) return
-
-    const suggestion = T.getSuggestionForLoop(node.type)
-    violations.push(F.createViolation(node, suggestion))
+const A = {
+    // @sig processNodeForViolations :: (ASTNode, [Violation]) -> Void
+    processNodeForViolations: (node, violations) => {
+        if (!P.isImperativeLoop(node)) return
+        violations.push(F.createViolation(node, T.getSuggestionForLoop(node.type)))
+    },
 }
 
-const A = { processNodeForViolations }
-
-// ============================================================================
-// V: Validators
-// ============================================================================
-
-/**
- * Check for functional pattern violations (coding standards)
- * @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
- */
-const checkFunctionalPatterns = (ast, sourceCode, filePath) => {
-    if (!ast) return []
-
-    const violations = []
-
-    AS.traverseAST(ast, node => A.processNodeForViolations(node, violations))
-
-    return violations
+const V = {
+    // @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
+    checkFunctionalPatterns: (ast, sourceCode, filePath) => {
+        if (!ast) return []
+        const violations = []
+        AS.traverseAST(ast, node => A.processNodeForViolations(node, violations))
+        return violations
+    },
 }
 
+const checkFunctionalPatterns = V.checkFunctionalPatterns
 export { checkFunctionalPatterns }

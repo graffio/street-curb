@@ -150,6 +150,7 @@ const A = {
 }
 
 const F = {
+    // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, message) => ({
         type: 'cohesion-structure',
         line,
@@ -159,6 +160,7 @@ const F = {
         rule: 'cohesion-structure',
     }),
 
+    // @sig createUncategorizedViolation :: (Number, String, String?) -> Violation
     createUncategorizedViolation: (line, name, suggestedGroup) => {
         const suggestion = suggestedGroup
             ? `Naming suggests ${suggestedGroup} group.`
@@ -170,6 +172,7 @@ const F = {
         )
     },
 
+    // @sig createHighCountViolation :: (Number, Number, Number, String) -> Violation
     createHighCountViolation: (line, count, threshold, context) =>
         F.createViolation(
             line,
@@ -177,15 +180,54 @@ const F = {
                 `This may indicate a design issue. Consider whether the mental model is right.`,
         ),
 
+    // @sig createLargeGroupViolation :: (Number, String, Number) -> Violation
     createLargeGroupViolation: (line, groupName, count) =>
         F.createViolation(
             line,
             `CHECKPOINT: ${groupName} group has ${count} functions (threshold: ${THRESHOLDS.perGroup}). ` +
                 `Consider whether these share a pattern that could be unified.`,
         ),
+
+    // @sig createOrderingViolation :: (Number, String, String) -> Violation
+    createOrderingViolation: (line, actual, expected) =>
+        F.createViolation(
+            line,
+            `Cohesion group "${actual}" declared out of order. Expected order: P → T → F → V → A. ` +
+                `FIX: Move "${actual}" ${expected ? `after "${expected}"` : 'to correct position'}.`,
+        ),
+
+    // @sig createExternalReferenceViolation :: (Number, String, String, String) -> Violation
+    createExternalReferenceViolation: (line, group, propName, refName) =>
+        F.createViolation(
+            line,
+            `${group}.${propName} references external function "${refName}". ` +
+                `FIX: Define the function inside the ${group} object, not outside with a later reference.`,
+        ),
 }
 
 const V = {
+    // @sig checkOrdering :: ([{ name: String, line: Number }], [Violation]) -> Void
+    checkOrdering: (declarations, violations) => {
+        if (declarations.length < 2) return
+
+        declarations.forEach((decl, index) => {
+            if (index === 0) return
+            const prevDecl = declarations[index - 1]
+            const expectedIndex = COHESION_ORDER.indexOf(decl.name)
+            const prevIndex = COHESION_ORDER.indexOf(prevDecl.name)
+
+            if (expectedIndex < prevIndex)
+                violations.push(F.createOrderingViolation(decl.line, decl.name, prevDecl.name))
+        })
+    },
+
+    // @sig checkExternalReferences :: ([{ group, propName, refName, line }], [Violation]) -> Void
+    checkExternalReferences: (references, violations) =>
+        references.forEach(({ group, propName, refName, line }) =>
+            violations.push(F.createExternalReferenceViolation(line, group, propName, refName)),
+        ),
+
+    // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
     checkCohesionStructure: (ast, sourceCode, filePath) => {
         if (!ast || P.isTestFile(filePath)) return []
 
@@ -193,16 +235,20 @@ const V = {
         const complexityComments = A.findComplexityComments(sourceCode)
         const moduleFunctions = A.collectModuleLevelFunctions(ast)
         const cohesionGroups = A.collectCohesionGroups(ast)
+        const declarations = A.collectCohesionDeclarationOrder(ast)
+        const externalRefs = A.collectExternalReferences(ast)
+
+        // Check cohesion group ordering (P → T → F → V → A)
+        V.checkOrdering(declarations, violations)
+
+        // Check for external function references in cohesion groups
+        V.checkExternalReferences(externalRefs, violations)
 
         // Check for uncategorized module-level functions
         moduleFunctions.forEach(({ name, line }) => {
-            // Skip cohesion group definitions themselves (P, T, F, V, A)
             if (P.isCohesionGroup(name)) return
 
-            // Skip if there's a COMPLEXITY comment for this
-            const hasJustification = complexityComments.some(
-                c => c.line < line && c.line > line - 5, // Comment within 5 lines above
-            )
+            const hasJustification = complexityComments.some(c => c.line < line && c.line > line - 5)
             if (hasJustification) return
 
             const suggestedGroup = P.matchesCohesionPattern(name)
