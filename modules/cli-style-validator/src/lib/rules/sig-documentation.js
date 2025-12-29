@@ -60,15 +60,6 @@ const countFunctionLines = functionNode => {
 }
 
 /**
- * Check if line is comment
- * @sig isCommentLine :: String -> Boolean
- */
-const isCommentLine = line => {
-    const trimmed = line.trim()
-    return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('*/')
-}
-
-/**
  * Remove comment markers from a line, returning raw content
  * @sig stripCommentMarkers :: String -> String
  */
@@ -94,7 +85,7 @@ const isDirectiveComment = line => {
  * @sig isSubstantiveCommentLine :: String -> Boolean
  */
 const isSubstantiveCommentLine = line => {
-    if (!isCommentLine(line.trim())) return false
+    if (!PS.isCommentLine(line.trim())) return false
     if (isDirectiveComment(line)) return false
     return stripCommentMarkers(line).trim().length > 0
 }
@@ -104,7 +95,7 @@ const isSubstantiveCommentLine = line => {
  * @sig isSigContinuationLine :: String -> Boolean
  */
 const isSigContinuationLine = line => {
-    if (!isCommentLine(line.trim())) return false
+    if (!PS.isCommentLine(line.trim())) return false
     const content = stripCommentMarkers(line)
     return content.length > 0 && /^\s{4,}/.test(content)
 }
@@ -118,7 +109,7 @@ const findSigLineIndex = (functionNode, sourceCode) => {
 
     const isNonCommentLine = line => {
         const trimmed = line.trim()
-        return trimmed && !isCommentLine(trimmed)
+        return trimmed && !PS.isCommentLine(trimmed)
     }
 
     const lines = sourceCode.split('\n')
@@ -168,7 +159,7 @@ const isDescriptionLine = line => isSubstantiveCommentLine(line) && !line.includ
 const hasDescriptionComment = (functionNode, sourceCode) => {
     const isNonCommentLine = line => {
         const trimmed = line.trim()
-        return trimmed && !isCommentLine(trimmed)
+        return trimmed && !PS.isCommentLine(trimmed)
     }
 
     const checkLineForDescription = (lines, i) => {

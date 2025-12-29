@@ -2,6 +2,7 @@
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
 import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 3
 
@@ -21,15 +22,6 @@ const createViolation = (line, column) => ({
 })
 
 /**
- * Check if line is a comment line
- * @sig isCommentLine :: String -> Boolean
- */
-const isCommentLine = line => {
-    const trimmed = line.trim()
-    return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')
-}
-
-/**
  * Check if line contains prettier-ignore directive
  * @sig hasPrettierIgnore :: String -> Boolean
  */
@@ -39,7 +31,7 @@ const hasPrettierIgnore = line => line.includes('prettier-ignore')
  * Check if line is a boundary (blank or non-comment)
  * @sig isBoundaryLine :: String -> Boolean
  */
-const isBoundaryLine = line => line.trim() === '' || !isCommentLine(line)
+const isBoundaryLine = line => line.trim() === '' || !PS.isCommentLine(line)
 
 /**
  * Get preceding comment lines up to boundary (blank or non-comment)

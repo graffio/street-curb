@@ -44,15 +44,6 @@ const isMultilineStatement = node => {
 }
 
 /**
- * Check if a line is a comment line
- * @sig isCommentLine :: String -> Boolean
- */
-const isCommentLine = line => {
-    const trimmed = line.trim()
-    return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('*/')
-}
-
-/**
  * Check if there's a blank line or comment before a given line number
  * @sig getPrevLineContent :: (Number, String) -> String
  */
@@ -85,7 +76,7 @@ const checkFunction = (node, prevNode, sourceCode) => {
     if (prevLineContent === '') return null
 
     // If previous line is a comment, eslint handles spacing - skip
-    if (isCommentLine(prevLineContent)) return null
+    if (PS.isCommentLine(prevLineContent)) return null
 
     const currentIsMultiline = isMultilineStatement(node)
     const prevIsMultiline = isMultilineStatement(prevNode)
