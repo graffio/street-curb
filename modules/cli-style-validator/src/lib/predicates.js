@@ -47,7 +47,7 @@ const isGeneratedFile = sourceCode => {
 // @sig isValidNode :: Any -> Boolean
 const isValidNode = node => node && typeof node === 'object' && node.type
 
-const P = {
+const PS = {
     isTestFile,
     isCommentLine,
     isFunctionNode,
@@ -58,14 +58,4 @@ const P = {
     isValidNode,
 }
 
-export {
-    isTestFile,
-    isCommentLine,
-    isFunctionNode,
-    isFunctionDeclaration,
-    isFunctionVariableDeclaration,
-    isFunctionStatement,
-    isGeneratedFile,
-    isValidNode,
-    P,
-}
+export { PS }

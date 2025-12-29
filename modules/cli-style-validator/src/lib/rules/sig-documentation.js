@@ -1,7 +1,8 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
-import { traverseAST, isFunctionNode } from '../aggregators.js'
+import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 6
 
@@ -197,7 +198,7 @@ const requiresSigDocumentation = (node, ast) => {
  * @sig checkFunctionForSig :: (ASTNode, ASTNode, String, Set, [Violation]) -> Void
  */
 const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) => {
-    if (!isFunctionNode(node) || processedNodes.has(node)) return
+    if (!PS.isFunctionNode(node) || processedNodes.has(node)) return
     processedNodes.add(node)
 
     const requiresSig = requiresSigDocumentation(node, ast)
@@ -228,22 +229,16 @@ const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) 
 }
 
 /**
- * Check if file is a test file that should skip @sig validation
- * @sig isTestFile :: String -> Boolean
- */
-const isTestFile = filePath => filePath.includes('.tap.js') || filePath.includes('.integration-test.js')
-
-/**
  * Check for @sig documentation violations (coding standards)
  * @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
  */
 const checkSigDocumentation = (ast, sourceCode, filePath) => {
-    if (!ast || isTestFile(filePath)) return []
+    if (!ast || PS.isTestFile(filePath)) return []
 
     const violations = []
     const processedNodes = new Set()
 
-    traverseAST(ast, node => checkFunctionForSig(node, ast, sourceCode, processedNodes, violations))
+    AS.traverseAST(ast, node => checkFunctionForSig(node, ast, sourceCode, processedNodes, violations))
 
     return violations
 }

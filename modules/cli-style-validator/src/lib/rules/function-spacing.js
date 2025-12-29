@@ -1,7 +1,8 @@
 // ABOUTME: Rule to enforce blank lines before multiline function declarations
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
-import { traverseAST, isFunctionNode } from '../aggregators.js'
+import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 5
 
@@ -24,7 +25,7 @@ const createViolation = (line, message) => ({
  */
 const isFunctionVariableDeclaration = node => {
     if (node.type !== 'VariableDeclaration') return false
-    return node.declarations.some(d => d.init && isFunctionNode(d.init))
+    return node.declarations.some(d => d.init && PS.isFunctionNode(d.init))
 }
 
 /**
@@ -114,27 +115,21 @@ const checkBlockFunctions = (functions, sourceCode) => {
 }
 
 /**
- * Check if file is a test file that should skip validation
- * @sig isTestFile :: String -> Boolean
- */
-const isTestFile = filePath => filePath.includes('.tap.js') || filePath.includes('.integration-test.js')
-
-/**
  * Check for function spacing violations in all blocks
  * @sig checkFunctionSpacing :: (AST?, String, String) -> [Violation]
  */
 const checkFunctionSpacing = (ast, sourceCode, filePath) => {
     const checkInnerFunctions = node => {
-        if (!isFunctionNode(node) || !node.body) return []
+        if (!PS.isFunctionNode(node) || !node.body) return []
         if (node.body.type !== 'BlockStatement') return []
         return checkBlockFunctions(findFunctionsInBlock(node.body.body), sourceCode)
     }
 
-    if (!ast || isTestFile(filePath)) return []
+    if (!ast || PS.isTestFile(filePath)) return []
 
     const topLevelViolations = checkBlockFunctions(findFunctionsInBlock(ast.body), sourceCode)
     const nestedViolations = []
-    traverseAST(ast, node => nestedViolations.push(...checkInnerFunctions(node)))
+    AS.traverseAST(ast, node => nestedViolations.push(...checkInnerFunctions(node)))
 
     return [...topLevelViolations, ...nestedViolations]
 }

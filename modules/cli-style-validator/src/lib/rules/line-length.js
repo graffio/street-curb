@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect lines exceeding 120 characters
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
-import { traverseAST } from '../aggregators.js'
+import { AS } from '../aggregators.js'
 
 const PRIORITY = 3
 
@@ -88,7 +88,7 @@ const buildIgnoredLinesSet = (ast, lines) => {
     if (!ast) return new Set()
 
     const allIgnored = []
-    traverseAST(ast, node => allIgnored.push(...collectIgnoredLines(lines, node)))
+    AS.traverseAST(ast, node => allIgnored.push(...collectIgnoredLines(lines, node)))
     return new Set(allIgnored)
 }
 

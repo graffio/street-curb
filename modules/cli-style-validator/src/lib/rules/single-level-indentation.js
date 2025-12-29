@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { isFunctionNode } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 /**
  * Visit child node if it exists and has a type
@@ -225,7 +225,7 @@ const isValidNode = node => node && typeof node === 'object' && node.type
  * @sig isFunctionWithBlockBody :: ASTNode -> Boolean
  */
 const isFunctionWithBlockBody = node => {
-    if (!isFunctionNode(node)) return false
+    if (!PS.isFunctionNode(node)) return false
     const { body } = node
     return body && body.type === 'BlockStatement'
 }
@@ -242,7 +242,7 @@ const processChildNode = (node, nextDepth, findViolations) => {
         return
     }
 
-    if (!isFunctionNode(node)) findViolations(node, nextDepth)
+    if (!PS.isFunctionNode(node)) findViolations(node, nextDepth)
 }
 
 /**
@@ -301,7 +301,7 @@ const CALLBACK_EXTRACTION_MESSAGE =
  * @sig checkCallbackFunction :: (ASTNode, ASTNode, [Violation]) -> Void
  */
 const checkCallbackFunction = (node, ast, violations) => {
-    if (!isFunctionNode(node) || !isCallbackFunction(node, ast) || isJSXFunction(node)) return
+    if (!PS.isFunctionNode(node) || !isCallbackFunction(node, ast) || isJSXFunction(node)) return
 
     const lineCount = countFunctionBodyLines(node)
     if (lineCount > 1) violations.push(createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
@@ -312,15 +312,9 @@ const checkCallbackFunction = (node, ast, violations) => {
  * @sig checkFunctionNode :: (ASTNode, Set, [Violation]) -> Void
  */
 const checkFunctionNode = (node, processedNodes, violations) => {
-    if (!isFunctionNode(node) || !node.body || node.body.type !== 'BlockStatement') return
+    if (!PS.isFunctionNode(node) || !node.body || node.body.type !== 'BlockStatement') return
     findNestedViolations(node.body, 0, processedNodes, violations)
 }
-
-/**
- * Check if file is a test file that should skip indentation validation
- * @sig isTestFile :: String -> Boolean
- */
-const isTestFile = filePath => filePath.includes('.tap.js') || filePath.includes('.integration-test.js')
 
 /**
  * Check for single-level indentation violations (coding standards)
@@ -336,7 +330,7 @@ const checkSingleLevelIndentation = (ast, sourceCode, filePath) => {
         checkFunctionNode(node, processedNodes, violations)
     }
 
-    if (!ast || isTestFile(filePath)) return []
+    if (!ast || PS.isTestFile(filePath)) return []
 
     const violations = []
     const processedNodes = new Set()

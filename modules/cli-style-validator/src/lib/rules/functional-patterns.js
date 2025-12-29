@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect imperative loop patterns
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
-import { traverseAST } from '../aggregators.js'
+import { AS } from '../aggregators.js'
 
 /**
  * Create a functional-patterns violation object from AST node
@@ -84,7 +84,7 @@ const checkFunctionalPatterns = (ast, sourceCode, filePath) => {
 
     const violations = []
 
-    traverseAST(ast, node => processNodeForViolations(node, violations))
+    AS.traverseAST(ast, node => processNodeForViolations(node, violations))
 
     return violations
 }

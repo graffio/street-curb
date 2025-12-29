@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce P/T/F/V/A cohesion group structure
 // ABOUTME: Detects uncategorized functions and triggers CHECKPOINTs on high counts
 
-import { isFunctionNode } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -54,7 +54,7 @@ const A = {
             // Arrow functions: const foo = () => ...
             if (stmt.type === 'VariableDeclaration')
                 stmt.declarations.forEach(decl => {
-                    if (decl.init && isFunctionNode(decl.init) && decl.id?.name)
+                    if (decl.init && PS.isFunctionNode(decl.init) && decl.id?.name)
                         functions.push({ name: decl.id.name, line: stmt.loc?.start?.line || 1, node: decl.init })
                 })
         })
@@ -74,7 +74,7 @@ const A = {
 
             const groupName = decl.id.name
             decl.init.properties.forEach(prop => {
-                if (prop.key?.name && prop.value && isFunctionNode(prop.value))
+                if (prop.key?.name && prop.value && PS.isFunctionNode(prop.value))
                     groups[groupName].push({ name: prop.key.name, line: prop.loc?.start?.line || 1 })
             })
         })

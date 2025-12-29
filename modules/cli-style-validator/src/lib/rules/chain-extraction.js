@@ -1,7 +1,8 @@
 // ABOUTME: Rule to suggest extracting repeated property chains into variables
 // ABOUTME: Flags when base.* appears 3+ times and suggests const { props } = base
 
-import { traverseAST, isFunctionNode } from '../aggregators.js'
+import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const THRESHOLD = 3
 const PRIORITY = 1
@@ -187,7 +188,7 @@ const collectBasesInFunction = funcNode => {
     const processNode = (node, parent) => {
         if (visited.has(node)) return
         visited.add(node)
-        if (isFunctionNode(node) && node !== funcNode) return
+        if (PS.isFunctionNode(node) && node !== funcNode) return
         if (node.type === 'MemberExpression') processMemberExpression(bases, node, parent)
         getChildNodes(node).forEach(child => processNode(child, node))
     }
@@ -235,7 +236,7 @@ const processFunctionNode = (node, namespaces) => generateSuggestions(collectBas
  * @sig collectFromFunction :: ([Violation], ASTNode, Set<String>) -> Void
  */
 const collectFromFunction = (suggestions, node, namespaces) => {
-    if (isFunctionNode(node)) suggestions.push(...processFunctionNode(node, namespaces))
+    if (PS.isFunctionNode(node)) suggestions.push(...processFunctionNode(node, namespaces))
 }
 
 /**
@@ -247,7 +248,7 @@ const checkChainExtraction = (ast, sourceCode, filePath) => {
 
     const namespaces = collectNamespaceImports(ast)
     const allSuggestions = []
-    traverseAST(ast, node => collectFromFunction(allSuggestions, node, namespaces))
+    AS.traverseAST(ast, node => collectFromFunction(allSuggestions, node, namespaces))
 
     return allSuggestions
 }

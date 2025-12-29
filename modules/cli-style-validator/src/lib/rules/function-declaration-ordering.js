@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { traverseAST } from '../aggregators.js'
+import { AS } from '../aggregators.js'
 
 const PRIORITY = 4
 
@@ -193,7 +193,7 @@ const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) => {
 
     const violations = []
 
-    traverseAST(ast, node => processBlockForViolations(node, violations))
+    AS.traverseAST(ast, node => processBlockForViolations(node, violations))
 
     return violations
 }

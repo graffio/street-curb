@@ -1,7 +1,8 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
 
-import { traverseAST, isFunctionNode } from '../aggregators.js'
+import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 0 // Highest priority - fix complexity first
 
@@ -80,13 +81,6 @@ const getContext = filePath => {
 }
 
 /**
- * Check if file is a test file that should skip validation
- * @sig isTestFile :: String -> Boolean
- */
-const isTestFile = filePath =>
-    filePath.includes('.tap.js') || filePath.includes('.test.js') || filePath.includes('/test/')
-
-/**
  * Check if file is generated (should skip validation)
  * @sig isGeneratedFile :: String -> Boolean
  */
@@ -117,7 +111,7 @@ const isStyleObject = node => {
  */
 const countStyleObjects = ast => {
     let count = 0
-    traverseAST(ast, node => {
+    AS.traverseAST(ast, node => {
         if (isStyleObject(node)) count++
     })
     return count
@@ -137,7 +131,7 @@ const findComponents = ast => {
         // const Foo = () => ...
         if (node.type === 'VariableDeclaration') {
             const decl = node.declarations[0]
-            if (decl?.id?.name && isPascalCase(decl.id.name) && decl.init && isFunctionNode(decl.init))
+            if (decl?.id?.name && isPascalCase(decl.id.name) && decl.init && PS.isFunctionNode(decl.init))
                 components.push({
                     name: decl.id.name,
                     node: decl.init,
@@ -165,8 +159,8 @@ const findComponents = ast => {
  */
 const countFunctions = componentNode => {
     let count = 0
-    traverseAST(componentNode, node => {
-        if (isFunctionNode(node)) count++
+    AS.traverseAST(componentNode, node => {
+        if (PS.isFunctionNode(node)) count++
     })
     return count
 }
@@ -177,7 +171,7 @@ const countFunctions = componentNode => {
  */
 const countStyleObjectsInComponent = componentNode => {
     let count = 0
-    traverseAST(componentNode, node => {
+    AS.traverseAST(componentNode, node => {
         if (isStyleObject(node)) count++
     })
     return count
@@ -204,7 +198,7 @@ const createViolation = (line, metric, context, actual, budget) => ({
  */
 const checkComplexityBudget = (ast, sourceCode, filePath) => {
     if (!ast) return []
-    if (isTestFile(filePath)) return []
+    if (PS.isTestFile(filePath)) return []
     if (isGeneratedFile(sourceCode)) return []
 
     const context = getContext(filePath)
@@ -289,8 +283,8 @@ const checkComplexityBudget = (ast, sourceCode, filePath) => {
 
         // For non-React, count total functions in file
         let totalFunctions = 0
-        traverseAST(ast, node => {
-            if (isFunctionNode(node)) totalFunctions++
+        AS.traverseAST(ast, node => {
+            if (PS.isFunctionNode(node)) totalFunctions++
         })
 
         if (totalFunctions > budget.functions)
