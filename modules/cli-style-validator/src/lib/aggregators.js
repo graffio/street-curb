@@ -4,15 +4,18 @@
 import { PS } from './predicates.js'
 
 const AS = {
+    // Check if value is an AST node (has type property)
     // @sig isASTNode :: Any -> Boolean
     isASTNode: child => child && typeof child === 'object' && child.type,
 
+    // Count lines in a function's body (for length checks)
     // @sig countFunctionLines :: ASTNode -> Number
     countFunctionLines: node => {
         if (!node.body?.loc) return 0
         return node.body.loc.end.line - node.body.loc.start.line + 1
     },
 
+    // Extract AST nodes from a value (handles arrays and single nodes)
     // @sig extractChildNodes :: Any -> [ASTNode]
     extractChildNodes: value => {
         if (Array.isArray(value)) return value.filter(AS.isASTNode)
@@ -20,6 +23,7 @@ const AS = {
         return []
     },
 
+    // Get all child AST nodes from a parent node
     // @sig getChildNodes :: ASTNode -> [ASTNode]
     getChildNodes: node => {
         const skip = new Set(['type', 'loc', 'range', 'start', 'end'])
@@ -28,6 +32,7 @@ const AS = {
             .flatMap(([, value]) => AS.extractChildNodes(value))
     },
 
+    // Recursively visit all nodes in an AST
     // @sig traverseAST :: (ASTNode, (ASTNode) -> Void) -> Void
     traverseAST: (node, visitor) => {
         if (!node || typeof node !== 'object') return
@@ -35,6 +40,7 @@ const AS = {
         AS.getChildNodes(node).forEach(child => AS.traverseAST(child, visitor))
     },
 
+    // Get the name of a function from its AST node
     // @sig getFunctionName :: ASTNode -> String
     getFunctionName: node => {
         if (node.type === 'FunctionDeclaration') return node.id?.name || '<anonymous>'
@@ -42,6 +48,7 @@ const AS = {
         return '<anonymous>'
     },
 
+    // Count all function nodes in an AST subtree
     // @sig countFunctions :: ASTNode -> Number
     countFunctions: node => {
         let count = 0
