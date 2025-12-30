@@ -46,6 +46,85 @@ Keep functions INSIDE their parent component (not hoisted outside) when they use
 - Other: `kebab-case.js`
 - ABOUTME comment at top of each file (two lines starting with `// ABOUTME:`)
 
+## File Structure (Cohesion Groups)
+
+Organize functions into single-letter namespace objects by cohesion type:
+
+| Letter | Type | Naming Patterns |
+|--------|------|-----------------|
+| P | Predicates | `is*`, `has*`, `should*`, `can*`, `exports*` |
+| T | Transformers | `to*`, `get*`, `extract*`, `parse*`, `format*` |
+| F | Factories | `create*`, `make*`, `build*` |
+| V | Validators | `check*`, `validate*` (return violations/errors) |
+| A | Aggregators | `collect*`, `count*`, `gather*`, `find*` |
+
+**Rules:**
+- Every function goes in a cohesion group, even if it's the only one of its type
+- Single letters (P, T, F, V, A) for brevity: `P.isPascalCase` not `predicates.isPascalCase`
+- Same letters across all files for consistency
+- Exported function(s) at bottom, outside namespace objects
+- Configuration constants at top, before cohesion groups
+
+**Ordering:** Configuration → P → T → F → V → A → Exports
+
+**Example:**
+```javascript
+// ABOUTME: Rule to check file naming conventions
+// ABOUTME: Enforces PascalCase for components, kebab-case for utilities
+
+const PRIORITY = 7
+
+const P = {
+    isPascalCase: name => /^[A-Z][a-zA-Z0-9]*$/.test(name),
+    isKebabCase: name => /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(name),
+}
+
+const T = {
+    getBaseName: filePath => filePath.split('/').pop(),
+}
+
+const V = {
+    checkNaming: (ast, sourceCode, filePath) => {
+        // ... returns violations
+    },
+}
+
+const checkFileNaming = V.checkNaming
+export { checkFileNaming }
+```
+
+**Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and decide: rename it to match a cohesion type, or justify the exception with a `// COMPLEXITY:` comment. This requires judgment, so it's a checkpoint.
+
+## Shared Modules (cli-style-validator)
+
+Utilities used across multiple rules go in shared modules with namespace prefixes:
+- `PS` (predicates.js) - Boolean checks on AST nodes, strings, file paths
+- `AS` (aggregators.js) - AST traversal, collection, counting utilities
+- `FS` (factories.js) - Violation/object creation helpers
+
+**When to extract immediately:**
+- Function is **general-purpose** - operates on AST/strings/arrays without rule-specific logic
+- Function is **named generically** - name makes sense outside the rule context
+- Test: "Would another rule plausibly need this exact function?"
+
+**When NOT to extract:**
+- Rule-specific factories with hardcoded rule name/priority
+- Domain predicates tied to one rule's purpose (e.g., `isStyleObject`, `isCohesionGroup`)
+
+**During periodic reviews:** Extract duplicates found when scanning multiple files.
+
+## Layer Rules
+
+Different file types have different responsibilities:
+
+| Layer | Should contain | Should NOT contain |
+|-------|---------------|-------------------|
+| React components | Local state, `post(Action.X)`, presentation, JSX | Business logic, complex derivations |
+| Selectors | Redux mechanics, simple derived state | Business logic (delegate to modules) |
+| Business modules | Pure domain logic, computations | Redux awareness, UI concerns |
+
+When a file contains logic belonging to a different layer, that's a signal to move it—not to split the file arbitrarily, but to place logic in its proper architectural home (decided together).
+
 ## Imports
 
 - ES6 `import` only (no `require`)

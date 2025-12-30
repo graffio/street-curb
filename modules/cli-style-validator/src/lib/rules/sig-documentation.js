@@ -1,251 +1,209 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
-import { traverseAST, isFunctionNode } from '../traverse.js'
+import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 6
 
-/**
- * Create a sig-documentation violation object from AST node
- * @sig createViolation :: (ASTNode, String) -> Violation
- */
-const createViolation = (node, message) => ({
-    type: 'sig-documentation',
-    line: node.loc.start.line,
-    column: node.loc.start.column + 1,
-    priority: PRIORITY,
-    message,
-    rule: 'sig-documentation',
-})
+const T = {
+    // Remove //, /*, *, */ from comment line to get content
+    // @sig stripCommentMarkers :: String -> String
+    stripCommentMarkers: line =>
+        line
+            .trim()
+            .replace(/^\/\*\*?/, '')
+            .replace(/^\*\//, '')
+            .replace(/^\/\//, '')
+            .replace(/^\*/, ''),
 
-/**
- * Check if statement is function declaration
- * @sig isFunctionDeclarationStatement :: (Statement, ASTNode) -> Boolean
- */
-const isFunctionDeclarationStatement = (statement, functionNode) =>
-    statement.type === 'FunctionDeclaration' && statement === functionNode
-
-/**
- * Check if statement contains function in variable declaration
- * @sig isVariableDeclarationWithFunction :: (Statement, ASTNode) -> Boolean
- */
-const isVariableDeclarationWithFunction = (statement, functionNode) => {
-    if (statement.type !== 'VariableDeclaration') return false
-    return statement.declarations.some(declarator => declarator.init === functionNode)
+    // Get lines before a given line number, reversed
+    // @sig getLinesBefore :: (String, Number) -> [String]
+    getLinesBefore: (sourceCode, lineNum) =>
+        sourceCode
+            .split('\n')
+            .slice(0, lineNum - 1)
+            .reverse(),
 }
 
-/**
- * Check if a function is at the top level of the file
- * @sig isTopLevelFunction :: (ASTNode, ASTNode) -> Boolean
- */
-const isTopLevelFunction = (functionNode, rootNode) => {
-    const checkStatement = statement =>
-        isFunctionDeclarationStatement(statement, functionNode) ||
-        isVariableDeclarationWithFunction(statement, functionNode)
+const P = {
+    // Check if statement is a function declaration matching the node
+    // @sig isFunctionDeclarationStatement :: (Statement, ASTNode) -> Boolean
+    isFunctionDeclarationStatement: (statement, functionNode) =>
+        statement.type === 'FunctionDeclaration' && statement === functionNode,
 
-    return rootNode.body.some(checkStatement)
-}
+    // Check if statement is a variable declaration containing the function
+    // @sig isVariableDeclarationWithFunction :: (Statement, ASTNode) -> Boolean
+    isVariableDeclarationWithFunction: (statement, functionNode) => {
+        if (statement.type !== 'VariableDeclaration') return false
+        return statement.declarations.some(declarator => declarator.init === functionNode)
+    },
 
-/**
- * Count the number of lines in a function body
- * @sig countFunctionLines :: ASTNode -> Number
- */
-const countFunctionLines = functionNode => {
-    if (!functionNode.body || !functionNode.body.loc) return 0
+    // Check if function is at module top level
+    // @sig isTopLevelFunction :: (ASTNode, ASTNode) -> Boolean
+    isTopLevelFunction: (functionNode, rootNode) =>
+        rootNode.body.some(
+            stmt =>
+                P.isFunctionDeclarationStatement(stmt, functionNode) ||
+                P.isVariableDeclarationWithFunction(stmt, functionNode),
+        ),
 
-    const startLine = functionNode.body.loc.start.line
-    const endLine = functionNode.body.loc.end.line
-    return endLine - startLine + 1
-}
+    // Check if line is a prettier-ignore or eslint directive
+    // @sig isDirectiveComment :: String -> Boolean
+    isDirectiveComment: line => {
+        const content = T.stripCommentMarkers(line).trim().toLowerCase()
+        return content.startsWith('prettier-ignore') || content.startsWith('eslint-')
+    },
 
-/**
- * Check if line is comment
- * @sig isCommentLine :: String -> Boolean
- */
-const isCommentLine = line => {
-    const trimmed = line.trim()
-    return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('*/')
-}
+    // Check if line is a meaningful comment (not directive, not empty)
+    // @sig isSubstantiveCommentLine :: String -> Boolean
+    isSubstantiveCommentLine: line => {
+        if (!PS.isCommentLine(line.trim())) return false
+        if (P.isDirectiveComment(line)) return false
+        return T.stripCommentMarkers(line).trim().length > 0
+    },
 
-/**
- * Remove comment markers from a line, returning raw content
- * @sig stripCommentMarkers :: String -> String
- */
-const stripCommentMarkers = line =>
-    line
-        .trim()
-        .replace(/^\/\*\*?/, '')
-        .replace(/^\*\//, '')
-        .replace(/^\/\//, '')
-        .replace(/^\*/, '')
+    // Check if line is an indented continuation of @sig
+    // @sig isSigContinuationLine :: String -> Boolean
+    isSigContinuationLine: line => {
+        if (!PS.isCommentLine(line.trim())) return false
+        const content = T.stripCommentMarkers(line)
+        return content.length > 0 && /^\s{4,}/.test(content)
+    },
 
-/**
- * Check if line is a directive comment (prettier-ignore, eslint-disable, etc.)
- * @sig isDirectiveComment :: String -> Boolean
- */
-const isDirectiveComment = line => {
-    const content = stripCommentMarkers(line).trim().toLowerCase()
-    return content.startsWith('prettier-ignore') || content.startsWith('eslint-')
-}
+    // Check if line contains @sig marker
+    // @sig isSigLine :: String -> Boolean
+    isSigLine: line => line.includes('@sig'),
 
-/**
- * Check if line is a substantive comment (has content beyond markers and directives)
- * @sig isSubstantiveCommentLine :: String -> Boolean
- */
-const isSubstantiveCommentLine = line => {
-    if (!isCommentLine(line.trim())) return false
-    if (isDirectiveComment(line)) return false
-    return stripCommentMarkers(line).trim().length > 0
-}
-
-/**
- * Check if line is indented continuation of @sig type definition
- * @sig isSigContinuationLine :: String -> Boolean
- */
-const isSigContinuationLine = line => {
-    if (!isCommentLine(line.trim())) return false
-    const content = stripCommentMarkers(line)
-    return content.length > 0 && /^\s{4,}/.test(content)
-}
-
-/**
- * Find the line index containing @sig in preceding comments (0-indexed)
- * @sig findSigLineIndex :: (ASTNode, String) -> Number?
- */
-const findSigLineIndex = (functionNode, sourceCode) => {
-    const isSigLine = line => line.includes('@sig')
-
-    const isNonCommentLine = line => {
+    // Check if line is not a comment (actual code)
+    // @sig isNonCommentLine :: String -> Boolean
+    isNonCommentLine: line => {
         const trimmed = line.trim()
-        return trimmed && !isCommentLine(trimmed)
-    }
+        return trimmed && !PS.isCommentLine(trimmed)
+    },
 
-    const lines = sourceCode.split('\n')
-    const functionStartLine = functionNode.loc.start.line
-    const indicesToCheck = Array.from({ length: functionStartLine - 1 }, (_, i) => functionStartLine - 2 - i)
+    // Check if line is a description comment (not @sig)
+    // @sig isDescriptionLine :: String -> Boolean
+    isDescriptionLine: line => P.isSubstantiveCommentLine(line) && !line.includes('@sig'),
 
-    const sigIndex = indicesToCheck.find(i => isSigLine(lines[i]) || isNonCommentLine(lines[i]))
-    return sigIndex !== undefined && isSigLine(lines[sigIndex]) ? sigIndex : null
+    // Check if function requires @sig documentation
+    // @sig requiresSigDocumentation :: (ASTNode, ASTNode) -> Boolean
+    requiresSigDocumentation: (node, ast) => P.isTopLevelFunction(node, ast) || AS.countFunctionLines(node) > 5,
 }
 
-/**
- * Check if a function has @sig documentation in preceding comments
- * @sig hasSigDocumentation :: (ASTNode, String) -> Boolean
- */
-const hasSigDocumentation = (functionNode, sourceCode) => findSigLineIndex(functionNode, sourceCode) !== null
+const A = {
+    // Find line index of @sig comment before function
+    // @sig findSigLineIndex :: (ASTNode, String) -> Number?
+    findSigLineIndex: (functionNode, sourceCode) => {
+        const lines = sourceCode.split('\n')
+        const indices = Array.from(
+            { length: functionNode.loc.start.line - 1 },
+            (_, i) => functionNode.loc.start.line - 2 - i,
+        )
+        const found = indices.find(i => P.isSigLine(lines[i]) || P.isNonCommentLine(lines[i]))
+        return found !== undefined && P.isSigLine(lines[found]) ? found : null
+    },
 
-/**
- * Check if @sig is last substantive comment before function
- * @sig isSigLastInCommentBlock :: (ASTNode, String) -> Boolean
- */
-const isSigLastInCommentBlock = (functionNode, sourceCode) => {
-    const isNonContinuationSubstantive = line => isSubstantiveCommentLine(line) && !isSigContinuationLine(line)
+    // Check if function has @sig comment above it
+    // @sig hasSigDocumentation :: (ASTNode, String) -> Boolean
+    hasSigDocumentation: (functionNode, sourceCode) => A.findSigLineIndex(functionNode, sourceCode) !== null,
 
-    const sigLineIndex = findSigLineIndex(functionNode, sourceCode)
-    if (sigLineIndex === null) return true
+    // Check if @sig is the last line in comment block
+    // @sig isSigLastInCommentBlock :: (ASTNode, String) -> Boolean
+    isSigLastInCommentBlock: (functionNode, sourceCode) => {
+        const sigLineIndex = A.findSigLineIndex(functionNode, sourceCode)
+        if (sigLineIndex === null) return true
 
-    const lines = sourceCode.split('\n')
-    const functionStartLine = functionNode.loc.start.line
-    const linesBetween = Array.from(
-        { length: functionStartLine - sigLineIndex - 2 },
-        (_, i) => lines[sigLineIndex + 1 + i],
-    )
+        const lines = sourceCode.split('\n')
+        const linesBetween = Array.from(
+            { length: functionNode.loc.start.line - sigLineIndex - 2 },
+            (_, i) => lines[sigLineIndex + 1 + i],
+        )
+        const isNonContinuationSubstantive = line => P.isSubstantiveCommentLine(line) && !P.isSigContinuationLine(line)
+        return !linesBetween.some(isNonContinuationSubstantive)
+    },
 
-    return !linesBetween.some(isNonContinuationSubstantive)
+    // Check if function has description comment above @sig
+    // @sig hasDescriptionComment :: (ASTNode, String) -> Boolean
+    hasDescriptionComment: (functionNode, sourceCode) => {
+        const lines = sourceCode.split('\n')
+        const indices = Array.from(
+            { length: functionNode.loc.start.line - 1 },
+            (_, i) => functionNode.loc.start.line - 2 - i,
+        )
+        return indices.some(i => !P.isNonCommentLine(lines[i]) && P.isDescriptionLine(lines[i]))
+    },
 }
 
-/**
- * Check if line is a description comment (substantive but not @sig)
- * @sig isDescriptionLine :: String -> Boolean
- */
-const isDescriptionLine = line => isSubstantiveCommentLine(line) && !line.includes('@sig')
-
-/**
- * Check if function has description comment in preceding comments
- * @sig hasDescriptionComment :: (ASTNode, String) -> Boolean
- */
-const hasDescriptionComment = (functionNode, sourceCode) => {
-    const isNonCommentLine = line => {
-        const trimmed = line.trim()
-        return trimmed && !isCommentLine(trimmed)
-    }
-
-    const checkLineForDescription = (lines, i) => {
-        if (isNonCommentLine(lines[i])) return false
-        return isDescriptionLine(lines[i])
-    }
-
-    const lines = sourceCode.split('\n')
-    const functionStartLine = functionNode.loc.start.line
-    const indicesToCheck = Array.from({ length: functionStartLine - 1 }, (_, i) => functionStartLine - 2 - i)
-
-    return indicesToCheck.some(i => checkLineForDescription(lines, i))
+const F = {
+    // Create a violation object from an AST node
+    // @sig createViolation :: (ASTNode, String) -> Violation
+    createViolation: (node, message) => ({
+        type: 'sig-documentation',
+        line: node.loc.start.line,
+        column: node.loc.start.column + 1,
+        priority: PRIORITY,
+        message,
+        rule: 'sig-documentation',
+    }),
 }
 
-/**
- * Check if function requires @sig documentation
- * @sig requiresSigDocumentation :: (ASTNode, ASTNode) -> Boolean
- */
-const requiresSigDocumentation = (node, ast) => {
-    const isTopLevel = isTopLevelFunction(node, ast)
-    const lineCount = countFunctionLines(node)
-    return isTopLevel || lineCount > 5
+const V = {
+    // Validate @sig documentation for a single function
+    // @sig checkFunctionForSig :: (ASTNode, ASTNode, String, Set, [Violation]) -> Void
+    checkFunctionForSig: (node, ast, sourceCode, processedNodes, violations) => {
+        if (!PS.isFunctionNode(node) || processedNodes.has(node)) return
+        processedNodes.add(node)
+
+        const requiresSig = P.requiresSigDocumentation(node, ast)
+        const hasSig = A.hasSigDocumentation(node, sourceCode)
+        const hasDescription = A.hasDescriptionComment(node, sourceCode)
+
+        if (hasSig && !A.isSigLastInCommentBlock(node, sourceCode)) {
+            violations.push(
+                F.createViolation(
+                    node,
+                    '@sig must be last in the comment block. FIX: Move @sig line to end of JSDoc, just before */.',
+                ),
+            )
+            return
+        }
+
+        if (hasSig && !hasDescription) {
+            violations.push(
+                F.createViolation(
+                    node,
+                    '@sig requires a description comment. FIX: Add a line describing what the function does above @sig.',
+                ),
+            )
+            return
+        }
+
+        if (!requiresSig || hasSig) return
+
+        const reason = P.isTopLevelFunction(node, ast) ? 'top-level function' : 'function longer than 5 lines'
+        violations.push(
+            F.createViolation(
+                node,
+                `Missing @sig documentation for ${reason}. ` +
+                    'FIX: Add JSDoc with description and @sig type annotation. ' +
+                    'If this is an inline callback, fix single-level-indentation first (extraction creates a named function).',
+            ),
+        )
+    },
+
+    // Validate @sig documentation in source file
+    // @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
+    checkSigDocumentation: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath)) return []
+
+        const violations = []
+        const processedNodes = new Set()
+        AS.traverseAST(ast, node => V.checkFunctionForSig(node, ast, sourceCode, processedNodes, violations))
+
+        return violations
+    },
 }
 
-/**
- * Check function node for @sig violations
- * @sig checkFunctionForSig :: (ASTNode, ASTNode, String, Set, [Violation]) -> Void
- */
-const checkFunctionForSig = (node, ast, sourceCode, processedNodes, violations) => {
-    if (!isFunctionNode(node) || processedNodes.has(node)) return
-    processedNodes.add(node)
-
-    const requiresSig = requiresSigDocumentation(node, ast)
-    const hasSig = hasSigDocumentation(node, sourceCode)
-    const hasDescription = hasDescriptionComment(node, sourceCode)
-
-    if (hasSig && !isSigLastInCommentBlock(node, sourceCode)) {
-        const msg = '@sig must be last in the comment block. FIX: Move @sig line to end of JSDoc, just before */.'
-        violations.push(createViolation(node, msg))
-        return
-    }
-
-    if (hasSig && !hasDescription) {
-        const msg = '@sig requires a description comment. FIX: Add a line describing what the function does above @sig.'
-        violations.push(createViolation(node, msg))
-        return
-    }
-
-    if (!requiresSig || hasSig) return
-
-    const isTopLevel = isTopLevelFunction(node, ast)
-    const reason = isTopLevel ? 'top-level function' : 'function longer than 5 lines'
-    const msg =
-        `Missing @sig documentation for ${reason}. ` +
-        'FIX: Add JSDoc with description and @sig type annotation. ' +
-        'If this is an inline callback, fix single-level-indentation first (extraction creates a named function).'
-    violations.push(createViolation(node, msg))
-}
-
-/**
- * Check if file is a test file that should skip @sig validation
- * @sig isTestFile :: String -> Boolean
- */
-const isTestFile = filePath => filePath.includes('.tap.js') || filePath.includes('.integration-test.js')
-
-/**
- * Check for @sig documentation violations (coding standards)
- * @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
- */
-const checkSigDocumentation = (ast, sourceCode, filePath) => {
-    if (!ast || isTestFile(filePath)) return []
-
-    const violations = []
-    const processedNodes = new Set()
-
-    traverseAST(ast, node => checkFunctionForSig(node, ast, sourceCode, processedNodes, violations))
-
-    return violations
-}
-
+const checkSigDocumentation = V.checkSigDocumentation
 export { checkSigDocumentation }

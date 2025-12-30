@@ -13,3 +13,8 @@ Quick decisions that don't warrant full architecture docs. For patterns, see `do
 **Context:** Action names (`CreateGroup`, `CloseGroup`, etc.) were ambiguous.
 **Decision:** Renamed to `CreateTabGroup`, `CloseTabGroup`, `SetActiveTabGroup`, `SetTabGroupWidth`.
 **Why:** Clarity—"Group" could mean many things; "TabGroup" is specific.
+
+### 2025-12-27: Lots loaded into Redux for historical holdings computation
+**Context:** Investment Holdings report needs "as of date" filtering with instant response.
+**Decision:** Load all lots into Redux state; compute holdings in JS via selector filtering.
+**Why:** Avoids database round-trip on each date change; selector memoization gives instant updates.

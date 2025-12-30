@@ -493,3 +493,15 @@ This document summarizes the specifications that were previously archived in `sp
 - Shows quantity, cost basis, market value, unrealized gain/loss, day change
 - Added memoizeReduxStatePerKey export to @graffio/functional for per-view selector caching
 - Fixed stale type-mappings.js reference to deleted view-row.type.js
+
+## [infrastructure] Style Validator P/T/F/V/A Refactoring (2025-12-29)
+**Purpose:** Bring all cli-style-validator rules into P/T/F/V/A cohesion group compliance
+
+- Refactored 11 rule files to P/T/F/V/A cohesion structure (Predicates, Transformers, Factories, Validators, Aggregators)
+- Created shared modules: predicates.js (PS namespace) and aggregators.js (AS namespace)
+- Extracted common utilities: isPascalCase, isMultilineNode, getFunctionName, countFunctions, countFunctionLines
+- Added cohesion-structure.js rule checks: P→T→F→V→A ordering, functions defined inside objects (not referenced externally)
+- Added description comments above all @sig annotations per convention
+- Documented extraction rules in conventions.md (when to extract to shared modules)
+- All 12 rule files now compliant; 154 tests passing
+- Some files exceed 150-line budget but justified by COMPLEXITY comments or genuine complexity

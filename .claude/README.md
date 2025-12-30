@@ -17,6 +17,18 @@ To resume implementation:
 Continue implementing current-task.json
 ```
 
+To review a file before modifying it (> 100 lines):
+
+```
+review <file>
+```
+
+To review all staged files before a PR:
+
+```
+review staged
+```
+
 To finish:
 
 ```
@@ -81,6 +93,7 @@ Archive the work using `tasks/record-completion.md`:
 | `preferences.md`    | Architectural preferences (judgment calls)                   |
 | `current-task.json` | Active task spec                                             |
 | `tasks/*.md`        | Templates for specific activities                            |
+| `pattern-catalog.md`| Tactical patterns and complexity budgets                     |
 | `settings.json`     | Claude hook configuration                                    |
 
 ## Task Templates
@@ -95,32 +108,77 @@ Archive the work using `tasks/record-completion.md`:
 | `write-tests.md`               | Writing tests                 |
 | `debug-issue.md`               | Debugging                     |
 | `start-work.md`                | Session startup checks        |
+| `review-complexity.md`         | Complexity assessment         |
 
-## Enforcement Mechanisms
+## Two Kinds of Code Checks
 
-### Style Validator (Git Pre-commit Hook)
+We have two different tools that serve different purposes:
 
-`bash/pre-commit-validate.sh` runs as a git pre-commit hook:
+### Style Validator (mechanical, automatic)
 
+Runs automatically on every commit via pre-commit hook. Checks:
+- Line length, @sig documentation, file naming, spacing
+- **complexity-budget**: function count, line count, style object count
+
+**When it fails**: Fix the issue and retry commit. Most violations are quick fixes.
+
+**Exception**: complexity-budget failures are different — see below.
+
+### Complexity Review (structural, manual)
+
+Run manually with `review <file>` or `review staged`. Checks:
+- **Cohesion grouping**: Are all functions in P/T/F/V/A namespace objects?
+- **Layer violations**: Is business logic in React files? Should it move to selectors or business modules?
+- **Pattern opportunities**: Could Action, LookupTable, or selectors apply?
+- **Simplification strategies**: What to extract, where to move it
+
+**P/T/F/V/A**: Single-letter namespaces for function cohesion types:
+- **P** (Predicates): `is*`, `has*`, `should*`, `can*`, `exports*`
+- **T** (Transformers): `to*`, `get*`, `extract*`, `parse*`, `format*`
+- **F** (Factories): `create*`, `make*`, `build*`
+- **V** (Validators): `check*`, `validate*`
+- **A** (Aggregators): `collect*`, `count*`, `gather*`, `find*`
+
+Every function goes in a namespace, even if it's the only one of its type. See `conventions.md` for full spec.
+
+**When to run**:
+- Before modifying a file > 100 lines (during planning)
+- When complexity-budget fails (as a checkpoint)
+- Before creating a PR (`review staged`)
+
+### Complexity-Budget Failures = CHECKPOINT
+
+When the style validator reports "exceeds budget", this is NOT a quick fix:
+
+1. **Stop** — don't shuffle code around hoping to pass
+2. **Run `review <file>`** — understand the structural issues
+3. **Rethink approach** — might need to:
+   - Move logic to proper architectural layer (React → selectors → business modules)
+   - Apply a different pattern (Action, LookupTable, selectors)
+   - Revise the plan with a new approach
+4. **Get approval** — if the plan changes, confirm with user
+
+"Split file" means moving logic to where it architecturally belongs, not arbitrarily splitting to reduce line count. This decision is made together.
+
+## Git Hooks
+
+### Pre-commit Hook
+
+`bash/pre-commit-validate.sh`:
 1. Finds staged JS/JSX files
 2. Runs `cli-style-validator` on each
-3. If violations: blocks commit with error output
+3. If violations: blocks commit
 4. If clean: creates `.claude/.needs-reread` flag
 
-### Reread Reminder (Claude UserPromptSubmit Hook)
+### Reread Reminder Hook
 
 `bash/check-reread-flag.sh` runs on every user message:
+1. If `.needs-reread` flag exists: reminds Claude to reread conventions
+2. Deletes flag after reminder
 
-1. Checks if `.claude/.needs-reread` flag exists
-2. If yes: outputs reminder to reread conventions, deletes flag
-3. If no: exits silently
-
-This ensures Claude rereads conventions after every successful commit.
-
-### Why JSON for current-task.json?
+## Why JSON for current-task.json?
 
 Markdown allows interpretation. JSON forces structure:
-
 - Steps are enumerable and checkable
 - `done` flag is boolean, not prose
 - No "wriggle room" for Claude to reinterpret instructions
