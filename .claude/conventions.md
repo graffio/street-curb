@@ -95,6 +95,24 @@ export { checkFileNaming }
 
 **Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and decide: rename it to match a cohesion type, or justify the exception with a `// COMPLEXITY:` comment. This requires judgment, so it's a checkpoint.
 
+## Shared Modules (cli-style-validator)
+
+Utilities used across multiple rules go in shared modules with namespace prefixes:
+- `PS` (predicates.js) - Boolean checks on AST nodes, strings, file paths
+- `AS` (aggregators.js) - AST traversal, collection, counting utilities
+- `FS` (factories.js) - Violation/object creation helpers
+
+**When to extract immediately:**
+- Function is **general-purpose** - operates on AST/strings/arrays without rule-specific logic
+- Function is **named generically** - name makes sense outside the rule context
+- Test: "Would another rule plausibly need this exact function?"
+
+**When NOT to extract:**
+- Rule-specific factories with hardcoded rule name/priority
+- Domain predicates tied to one rule's purpose (e.g., `isStyleObject`, `isCohesionGroup`)
+
+**During periodic reviews:** Extract duplicates found when scanning multiple files.
+
 ## Layer Rules
 
 Different file types have different responsibilities:

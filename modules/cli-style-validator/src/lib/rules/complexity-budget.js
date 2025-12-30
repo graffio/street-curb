@@ -66,9 +66,6 @@ const STYLE_PROPERTIES = new Set([
 ])
 
 const P = {
-    // @sig isPascalCase :: String -> Boolean
-    isPascalCase: name => name && /^[A-Z]/.test(name),
-
     // @sig isStyleObject :: ASTNode -> Boolean
     isStyleObject: node => {
         if (node.type !== 'ObjectExpression' || node.properties.length === 0) return false
@@ -125,7 +122,7 @@ const V = {
                 F.createViolation(comp.startLine, `Component "${comp.name}" lines`, context, compLines, budget.lines),
             )
 
-        const funcCount = A.countFunctions(comp.node)
+        const funcCount = AS.countFunctions(comp.node)
         if (funcCount > budget.functions)
             violations.push(
                 F.createViolation(
@@ -175,7 +172,7 @@ const V = {
         if (styleCount > budget.styleObjects)
             violations.push(F.createViolation(1, 'Style objects', context, styleCount, budget.styleObjects))
 
-        const totalFunctions = A.countFunctions(ast)
+        const totalFunctions = AS.countFunctions(ast)
         if (totalFunctions > budget.functions)
             violations.push(F.createViolation(1, 'Functions', context, totalFunctions, budget.functions))
 
@@ -204,15 +201,6 @@ const A = {
         return count
     },
 
-    // @sig countFunctions :: ASTNode -> Number
-    countFunctions: node => {
-        let count = 0
-        AS.traverseAST(node, n => {
-            if (PS.isFunctionNode(n)) count++
-        })
-        return count
-    },
-
     // @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
     findComponents: ast => {
         const components = []
@@ -221,7 +209,7 @@ const A = {
         ast.body.forEach(node => {
             if (node.type === 'VariableDeclaration') {
                 const decl = node.declarations[0]
-                if (decl?.id?.name && P.isPascalCase(decl.id.name) && decl.init && PS.isFunctionNode(decl.init))
+                if (decl?.id?.name && PS.isPascalCase(decl.id.name) && decl.init && PS.isFunctionNode(decl.init))
                     components.push({
                         name: decl.id.name,
                         node: decl.init,
@@ -229,7 +217,7 @@ const A = {
                         endLine: node.loc?.end?.line || 1,
                     })
             }
-            if (node.type === 'FunctionDeclaration' && P.isPascalCase(node.id?.name))
+            if (node.type === 'FunctionDeclaration' && PS.isPascalCase(node.id?.name))
                 components.push({
                     name: node.id.name,
                     node,

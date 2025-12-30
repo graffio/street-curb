@@ -15,9 +15,6 @@ const P = {
 
     // @sig isFunctionStatement :: ASTNode -> Boolean
     isFunctionStatement: node => node.type === 'FunctionDeclaration' || P.isFunctionVariableDeclaration(node),
-
-    // @sig isMultilineStatement :: ASTNode -> Boolean
-    isMultilineStatement: node => node.loc && node.loc.end.line > node.loc.start.line,
 }
 
 const T = {
@@ -51,8 +48,8 @@ const V = {
 
         if (prevLineContent === '' || PS.isCommentLine(prevLineContent)) return null
 
-        const currentIsMultiline = P.isMultilineStatement(node)
-        const prevIsMultiline = P.isMultilineStatement(prevNode)
+        const currentIsMultiline = PS.isMultilineNode(node)
+        const prevIsMultiline = PS.isMultilineNode(prevNode)
 
         if (currentIsMultiline)
             return F.createViolation(

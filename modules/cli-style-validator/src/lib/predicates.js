@@ -47,6 +47,14 @@ const isGeneratedFile = sourceCode => {
 // @sig isValidNode :: Any -> Boolean
 const isValidNode = node => node && typeof node === 'object' && node.type
 
+// Check if a name is PascalCase (starts with uppercase, alphanumeric)
+// @sig isPascalCase :: String -> Boolean
+const isPascalCase = name => /^[A-Z][a-zA-Z0-9]*$/.test(name)
+
+// Check if a node spans multiple lines
+// @sig isMultilineNode :: ASTNode -> Boolean
+const isMultilineNode = node => node.loc && node.loc.end.line > node.loc.start.line
+
 const PS = {
     isTestFile,
     isCommentLine,
@@ -56,6 +64,8 @@ const PS = {
     isFunctionStatement,
     isGeneratedFile,
     isValidNode,
+    isPascalCase,
+    isMultilineNode,
 }
 
 export { PS }

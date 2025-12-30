@@ -1,6 +1,8 @@
 // ABOUTME: Shared AST traversal/aggregation utilities for style validator rules
 // ABOUTME: Provides traverseAST and child node utilities for rule implementations
 
+import { PS } from './predicates.js'
+
 const AS = {
     // @sig isASTNode :: Any -> Boolean
     isASTNode: child => child && typeof child === 'object' && child.type,
@@ -31,6 +33,22 @@ const AS = {
         if (!node || typeof node !== 'object') return
         visitor(node)
         AS.getChildNodes(node).forEach(child => AS.traverseAST(child, visitor))
+    },
+
+    // @sig getFunctionName :: ASTNode -> String
+    getFunctionName: node => {
+        if (node.type === 'FunctionDeclaration') return node.id?.name || '<anonymous>'
+        if (node.type === 'VariableDeclarator') return node.id?.name || '<anonymous>'
+        return '<anonymous>'
+    },
+
+    // @sig countFunctions :: ASTNode -> Number
+    countFunctions: node => {
+        let count = 0
+        AS.traverseAST(node, n => {
+            if (PS.isFunctionNode(n)) count++
+        })
+        return count
     },
 }
 

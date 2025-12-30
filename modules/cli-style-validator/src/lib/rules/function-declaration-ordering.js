@@ -56,13 +56,6 @@ const P = {
 }
 
 const T = {
-    // @sig getFunctionName :: ASTNode -> String
-    getFunctionName: node => {
-        if (node.type === 'FunctionDeclaration') return node.id?.name || '<anonymous>'
-        if (node.type === 'VariableDeclarator') return node.id?.name || '<anonymous>'
-        return '<anonymous>'
-    },
-
     // @sig buildFunctionOrderingMessage :: (String, String) -> String
     buildFunctionOrderingMessage: (funcType, funcName) =>
         `${funcType} '${funcName}' must be defined before hooks. ` +
@@ -96,14 +89,14 @@ const V = {
 const A = {
     // @sig processFunctionDeclaration :: (ASTNode, [Violation]) -> Void
     processFunctionDeclaration: (statement, violations) => {
-        const funcName = T.getFunctionName(statement)
+        const funcName = AS.getFunctionName(statement)
         violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
     },
 
     // @sig processDeclarator :: (ASTNode, [Violation]) -> Void
     processDeclarator: (declarator, violations) => {
         if (!P.isVariableWithFunctionExpression(declarator) || P.isSingleLineFunctionExpression(declarator)) return
-        const funcName = T.getFunctionName(declarator)
+        const funcName = AS.getFunctionName(declarator)
         const funcType = declarator.init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
         violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
     },
