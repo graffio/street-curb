@@ -66,6 +66,7 @@ const STYLE_PROPERTIES = new Set([
 ])
 
 const P = {
+    // Check if object expression appears to be a style object (>50% CSS properties)
     // @sig isStyleObject :: ASTNode -> Boolean
     isStyleObject: node => {
         if (node.type !== 'ObjectExpression' || node.properties.length === 0) return false
@@ -74,11 +75,13 @@ const P = {
         return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
     },
 
+    // Check if context is a React file type (page or component)
     // @sig isReactContext :: String -> Boolean
     isReactContext: context => context === 'react-page' || context === 'react-component',
 }
 
 const T = {
+    // Determine file context based on path patterns
     // @sig getContext :: String -> String
     getContext: filePath => {
         if (filePath.includes('/cli-')) return 'cli'
@@ -88,14 +91,17 @@ const T = {
         return 'utility'
     },
 
+    // Get budget for a component based on its name (Page suffix = page budget)
     // @sig getComponentBudget :: String -> Budget
     getComponentBudget: compName => (compName.endsWith('Page') ? BUDGETS['react-page'] : BUDGETS['react-component']),
 
+    // Get context string for a component based on its name
     // @sig getComponentContext :: String -> String
     getComponentContext: compName => (compName.endsWith('Page') ? 'react-page' : 'react-component'),
 }
 
 const F = {
+    // Create a complexity-budget violation with metric details
     // @sig createViolation :: (Number, String, String, Number, Number) -> Violation
     createViolation: (line, metric, context, actual, budget) => ({
         type: 'complexity-budget',
@@ -110,6 +116,7 @@ const F = {
 }
 
 const V = {
+    // Validate a single React component against its budget
     // @sig checkComponentBudget :: ({ name, node, startLine, endLine }) -> [Violation]
     checkComponentBudget: comp => {
         const violations = []
@@ -149,6 +156,7 @@ const V = {
         return violations
     },
 
+    // Validate React file budget (per-component or file-level)
     // @sig checkReactBudget :: (AST, String, Budget) -> [Violation]
     checkReactBudget: (ast, sourceCode, budget) => {
         const components = A.findComponents(ast)
@@ -161,6 +169,7 @@ const V = {
         return components.flatMap(V.checkComponentBudget)
     },
 
+    // Validate non-React file budget (utility, selector, cli)
     // @sig checkNonReactBudget :: (AST, String, String, Budget) -> [Violation]
     checkNonReactBudget: (ast, sourceCode, context, budget) => {
         const violations = []
@@ -179,6 +188,7 @@ const V = {
         return violations
     },
 
+    // Validate complexity budget for entire file
     // @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
     checkComplexityBudget: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
@@ -192,6 +202,7 @@ const V = {
 }
 
 const A = {
+    // Count style objects in an AST subtree
     // @sig countStyleObjects :: ASTNode -> Number
     countStyleObjects: node => {
         let count = 0
@@ -201,6 +212,7 @@ const A = {
         return count
     },
 
+    // Find all PascalCase component declarations at module level
     // @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
     findComponents: ast => {
         const components = []

@@ -2,17 +2,21 @@
 // ABOUTME: Enforces ES6 imports, no require(), and @graffio/design-system over @radix-ui/themes
 
 const P = {
+    // Check if line uses CommonJS require()
     // @sig hasRequire :: String -> Boolean
     hasRequire: line => /\brequire\s*\(/.test(line),
 
+    // Check if line imports from @radix-ui/themes directly
     // @sig importsRadixThemes :: String -> Boolean
     importsRadixThemes: line => line.includes('@radix-ui/themes'),
 
+    // Check if file is in design-system module (allowed to use radix)
     // @sig isDesignSystemFile :: String -> Boolean
     isDesignSystemFile: filePath => filePath.includes('modules/design-system/'),
 }
 
 const F = {
+    // Create a violation object for this rule
     // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, message) => ({
         type: 'import-ordering',
@@ -24,6 +28,7 @@ const F = {
 }
 
 const A = {
+    // Check a single line for import violations and add to array
     // @sig collectLineViolations :: (String, Number, Boolean, [Violation]) -> Void
     collectLineViolations: (line, lineNum, skipRadixCheck, violations) => {
         if (P.hasRequire(line))
@@ -36,6 +41,7 @@ const A = {
 }
 
 const V = {
+    // Validate import statements in source file
     // @sig checkImportOrdering :: (AST?, String, String) -> [Violation]
     checkImportOrdering: (ast, sourceCode, filePath) => {
         const violations = []

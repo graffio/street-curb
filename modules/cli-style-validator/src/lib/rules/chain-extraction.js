@@ -8,12 +8,14 @@ const THRESHOLD = 3
 const PRIORITY = 1
 
 const P = {
+    // Check if node is the outermost in a chain (not nested)
     // @sig isOutermostMemberExpression :: (ASTNode, ASTNode?) -> Boolean
     isOutermostMemberExpression: (node, parent) => {
         if (parent && parent.type === 'MemberExpression' && parent.object === node) return false
         return true
     },
 
+    // Check if node is on left side of assignment
     // @sig isAssignmentTarget :: (ASTNode, ASTNode?) -> Boolean
     isAssignmentTarget: (node, parent) => {
         if (!parent) return false
@@ -21,14 +23,17 @@ const P = {
         return false
     },
 
+    // Check if base is a namespace import (PS, AS, etc.)
     // @sig isNamespaceImport :: (String, Set<String>) -> Boolean
     isNamespaceImport: (base, namespaces) => namespaces.has(base.split('.')[0]),
 
+    // Check if node is being called as a method
     // @sig isMethodCall :: (ASTNode, ASTNode?) -> Boolean
     isMethodCall: (node, parent) => parent && parent.type === 'CallExpression' && parent.callee === node,
 }
 
 const T = {
+    // Recursively find the base identifier of a member expression
     // @sig findBase :: ASTNode -> ASTNode?
     findBase: node => {
         if (!node) return null
@@ -37,6 +42,7 @@ const T = {
         return null
     },
 
+    // Collect property names in a chain (a.b.c -> ['a', 'b', 'c'])
     // @sig collectChainParts :: (ASTNode, [String]) -> [String]
     collectChainParts: (node, parts) => {
         if (node.type === 'Identifier') return [node.name, ...parts]
@@ -45,6 +51,7 @@ const T = {
         return T.collectChainParts(node.object, [node.property.name, ...parts])
     },
 
+    // Get base and property from nested chain
     // @sig getNestedChain :: (ASTNode, String) -> { base: String, property: String }?
     getNestedChain: (object, propertyName) => {
         const baseNode = T.findBase(object)
@@ -54,6 +61,7 @@ const T = {
         return { base: parts.join('.'), property: propertyName }
     },
 
+    // Extract base and property from a member expression
     // @sig getBaseAndProperty :: ASTNode -> { base: String, property: String }?
     getBaseAndProperty: node => {
         if (!node || node.type !== 'MemberExpression' || node.computed) return null
@@ -67,6 +75,7 @@ const T = {
 }
 
 const F = {
+    // Create a suggestion to destructure repeated property access
     // @sig createSuggestion :: (Number, String, [String]) -> Violation
     createSuggestion: (line, base, properties) => ({
         type: 'chain-extraction',
@@ -82,6 +91,7 @@ const F = {
 }
 
 const V = {
+    // Validate repeated property chains that could be destructured
     // @sig checkChainExtraction :: (AST?, String, String) -> [Violation]
     checkChainExtraction: (ast, sourceCode, filePath) => {
         if (!ast) return []
@@ -97,6 +107,7 @@ const V = {
 }
 
 const A = {
+    // Collect all namespace import identifiers (import * as X)
     // @sig collectNamespaceImports :: AST -> Set<String>
     collectNamespaceImports: ast => {
         const namespaces = new Set()
@@ -111,6 +122,7 @@ const A = {
         return namespaces
     },
 
+    // Add base.property access to tracking map
     // @sig addToMap :: (Map, String, String, Number) -> Void
     addToMap: (map, base, property, line) => {
         if (!base || !property) return
@@ -123,6 +135,7 @@ const A = {
         }
     },
 
+    // Process a member expression and track its base
     // @sig processMemberExpression :: (Map, ASTNode, ASTNode?) -> Void
     processMemberExpression: (bases, node, parent) => {
         if (!P.isOutermostMemberExpression(node, parent)) return
@@ -135,6 +148,7 @@ const A = {
         A.addToMap(bases, result.base, result.property, node.loc?.start?.line || 1)
     },
 
+    // Collect all base accesses within a function scope
     // @sig collectBasesInFunction :: ASTNode -> Map<String, { count: Number, line: Number, properties: Set }>
     collectBasesInFunction: funcNode => {
         const bases = new Map()
@@ -152,6 +166,7 @@ const A = {
         return bases
     },
 
+    // Convert a tracked base to a suggestion if threshold met
     // @sig entryToSuggestion :: (String, { count: Number, line: Number, properties: Set }, Set<String>) -> Violation?
     entryToSuggestion: (base, { count, line, properties }, namespaces) => {
         if (count < THRESHOLD) return null
@@ -159,6 +174,7 @@ const A = {
         return F.createSuggestion(line, base, [...properties].sort())
     },
 
+    // Process a function and return extraction suggestions
     // @sig processFunctionNode :: (ASTNode, Set<String>) -> [Violation]
     processFunctionNode: (node, namespaces) => {
         const bases = A.collectBasesInFunction(node)

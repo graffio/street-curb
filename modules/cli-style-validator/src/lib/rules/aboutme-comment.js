@@ -2,9 +2,11 @@
 // ABOUTME: Enforces two-line ABOUTME header in all source files
 
 const P = {
+    // Check if line starts with ABOUTME marker
     // @sig isAboutmeComment :: String -> Boolean
     isAboutmeComment: line => line.trim().startsWith('// ABOUTME:'),
 
+    // Check if line contains actual code (not empty/comment)
     // @sig isCodeLine :: String -> Boolean
     isCodeLine: line => {
         const trimmed = line.trim()
@@ -15,11 +17,13 @@ const P = {
         return true
     },
 
+    // Check if line is a shebang (#!/usr/bin/env node)
     // @sig isShebang :: String -> Boolean
     isShebang: line => line.trim().startsWith('#!'),
 }
 
 const F = {
+    // Create a violation object for this rule
     // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, message) => ({
         type: 'aboutme-comment',
@@ -31,6 +35,7 @@ const F = {
 }
 
 const V = {
+    // Validate ABOUTME comments at file top
     // @sig checkAboutmeComment :: (AST?, String, String) -> [Violation]
     checkAboutmeComment: (ast, sourceCode, filePath) => {
         const lines = sourceCode.split('\n')
@@ -62,6 +67,7 @@ const V = {
 }
 
 const A = {
+    // Find index of first non-comment line in file
     // @sig findFirstCodeLine :: [String] -> Number
     findFirstCodeLine: lines => {
         const index = lines.findIndex(P.isCodeLine)

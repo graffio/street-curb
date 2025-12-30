@@ -21,9 +21,11 @@ const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A']
 const THRESHOLDS = { totalFunctions: 12, perGroup: 5 }
 
 const P = {
+    // Check if name is a cohesion group identifier (P, T, F, V, A)
     // @sig isCohesionGroup :: String -> Boolean
     isCohesionGroup: name => COHESION_ORDER.includes(name),
 
+    // Check if node is defined inside a cohesion group object
     // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
     isInCohesionGroup: (node, ast) => {
         if (!ast?.body) return false
@@ -36,12 +38,15 @@ const P = {
         })
     },
 
+    // Check if node is a function definition
     // @sig isFunctionDefinition :: ASTNode -> Boolean
     isFunctionDefinition: node => PS.isFunctionNode(node),
 
+    // Check if node is an identifier reference (not function definition)
     // @sig isIdentifierReference :: ASTNode -> Boolean
     isIdentifierReference: node => node?.type === 'Identifier',
 
+    // Match function name to suggested cohesion group based on prefix
     // @sig matchesCohesionPattern :: String -> String?
     matchesCohesionPattern: name => {
         for (const [group, pattern] of Object.entries(COHESION_PATTERNS)) if (pattern.test(name)) return group
@@ -50,6 +55,7 @@ const P = {
 }
 
 const A = {
+    // Collect all function declarations at module level (outside cohesion groups)
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
     collectModuleLevelFunctions: ast => {
         const functions = []
@@ -69,6 +75,7 @@ const A = {
         return functions
     },
 
+    // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...] }
     collectCohesionGroups: ast => {
         const groups = { P: [], T: [], F: [], V: [], A: [] }
@@ -90,6 +97,7 @@ const A = {
         return groups
     },
 
+    // Collect the order in which cohesion groups are declared
     // @sig collectCohesionDeclarationOrder :: AST -> [{ name: String, line: Number }]
     collectCohesionDeclarationOrder: ast => {
         const declarations = []
@@ -106,6 +114,7 @@ const A = {
         return declarations
     },
 
+    // Find properties that reference external functions instead of defining inline
     // @sig collectExternalReferences :: AST -> [{ group: String, propName: String, refName: String, line: Number }]
     collectExternalReferences: ast => {
         const references = []
@@ -133,6 +142,7 @@ const A = {
         return references
     },
 
+    // Find COMPLEXITY: comments that justify structural decisions
     // @sig findComplexityComments :: String -> [{ line: Number, reason: String }]
     findComplexityComments: sourceCode => {
         const comments = []
@@ -146,6 +156,7 @@ const A = {
 }
 
 const F = {
+    // Create a cohesion-structure violation at given line
     // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, message) => ({
         type: 'cohesion-structure',
@@ -156,6 +167,7 @@ const F = {
         rule: 'cohesion-structure',
     }),
 
+    // Create violation for function not in any cohesion group
     // @sig createUncategorizedViolation :: (Number, String, String?) -> Violation
     createUncategorizedViolation: (line, name, suggestedGroup) => {
         const suggestion = suggestedGroup
@@ -168,6 +180,7 @@ const F = {
         )
     },
 
+    // Create violation for exceeding function count threshold
     // @sig createHighCountViolation :: (Number, Number, Number, String) -> Violation
     createHighCountViolation: (line, count, threshold, context) =>
         F.createViolation(
@@ -176,6 +189,7 @@ const F = {
                 `This may indicate a design issue. Consider whether the mental model is right.`,
         ),
 
+    // Create violation for cohesion group with too many functions
     // @sig createLargeGroupViolation :: (Number, String, Number) -> Violation
     createLargeGroupViolation: (line, groupName, count) =>
         F.createViolation(
@@ -184,6 +198,7 @@ const F = {
                 `Consider whether these share a pattern that could be unified.`,
         ),
 
+    // Create violation for cohesion groups declared out of order
     // @sig createOrderingViolation :: (Number, String, String) -> Violation
     createOrderingViolation: (line, actual, expected) =>
         F.createViolation(
@@ -192,6 +207,7 @@ const F = {
                 `FIX: Move "${actual}" ${expected ? `after "${expected}"` : 'to correct position'}.`,
         ),
 
+    // Create violation for property referencing external function
     // @sig createExternalReferenceViolation :: (Number, String, String, String) -> Violation
     createExternalReferenceViolation: (line, group, propName, refName) =>
         F.createViolation(
@@ -202,6 +218,7 @@ const F = {
 }
 
 const V = {
+    // Validate that cohesion groups are declared in correct order
     // @sig checkOrdering :: ([{ name: String, line: Number }], [Violation]) -> Void
     checkOrdering: (declarations, violations) => {
         if (declarations.length < 2) return
@@ -217,12 +234,14 @@ const V = {
         })
     },
 
+    // Validate that cohesion group properties define functions inline
     // @sig checkExternalReferences :: ([{ group, propName, refName, line }], [Violation]) -> Void
     checkExternalReferences: (references, violations) =>
         references.forEach(({ group, propName, refName, line }) =>
             violations.push(F.createExternalReferenceViolation(line, group, propName, refName)),
         ),
 
+    // Validate cohesion structure for entire file
     // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
     checkCohesionStructure: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []

@@ -4,6 +4,7 @@
 import { AS } from '../aggregators.js'
 
 const P = {
+    // Recursively check if node contains an await expression
     // @sig containsAwait :: ASTNode -> Boolean
     containsAwait: node => {
         if (!node) return false
@@ -19,6 +20,7 @@ const P = {
         return false
     },
 
+    // Check if node is a loop (for/while/do-while), excluding async for-of
     // @sig isImperativeLoop :: ASTNode -> Boolean
     isImperativeLoop: node => {
         if (node.type === 'ForOfStatement' && P.containsAwait(node.body)) return false
@@ -29,6 +31,7 @@ const P = {
 }
 
 const T = {
+    // Get fix suggestion message based on loop type
     // @sig getSuggestionForLoop :: String -> String
     getSuggestionForLoop: nodeType => {
         if (nodeType === 'ForStatement') return 'Replace for loop with map/filter/reduce functional patterns'
@@ -42,6 +45,7 @@ const T = {
 }
 
 const F = {
+    // Create a violation object from an AST node
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'functional-patterns',
@@ -53,6 +57,7 @@ const F = {
 }
 
 const A = {
+    // Check node for loop violations and add to array
     // @sig processNodeForViolations :: (ASTNode, [Violation]) -> Void
     processNodeForViolations: (node, violations) => {
         if (!P.isImperativeLoop(node)) return
@@ -61,6 +66,7 @@ const A = {
 }
 
 const V = {
+    // Validate that code uses functional patterns instead of loops
     // @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
     checkFunctionalPatterns: (ast, sourceCode, filePath) => {
         if (!ast) return []
