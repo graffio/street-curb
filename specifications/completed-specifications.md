@@ -494,6 +494,17 @@ This document summarizes the specifications that were previously archived in `sp
 - Added memoizeReduxStatePerKey export to @graffio/functional for per-view selector caching
 - Fixed stale type-mappings.js reference to deleted view-row.type.js
 
+## [quicken-web-app] IndexedDB Persistence + File Reopen (2025-12-31)
+**Purpose:** Unify persistence to IndexedDB and add "reopen last file" feature
+
+- Replaced localStorage with IndexedDB via new `storage.js` module (get/set with JSON, getRaw/setRaw with structured cloning)
+- Async store initialization: `initializeStore()` hydrates from IndexedDB before render
+- FileSystemFileHandle stored via `setRaw()` for file reopen (can't be JSON serialized)
+- Modal dialog on startup offers "Reopen Last" or "Open New..." when previous file exists
+- Added router and storage context types to complexity-budget validator rule
+- Updated cohesion-structure rule to respect COMPLEXITY comments for vague prefix exceptions
+- Deferred: Reviewing all COMPLEXITY comments for validity, adding E (Effects) cohesion group
+
 ## [infrastructure] Style Validator P/T/F/V/A Refactoring (2025-12-29)
 **Purpose:** Bring all cli-style-validator rules into P/T/F/V/A cohesion group compliance
 
