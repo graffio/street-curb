@@ -33,29 +33,39 @@ Brevity > thoroughness. When in doubt, match existing code.
 - Avoid: `items.forEach(item => { results.push(...) })`
 - When iteration callbacks are unavoidable, keep them as single-line delegation calls
 
-## React Components
+## React Component Files
 
-React components use P/T/F/V/A/E cohesion groups internally, same as module-level code:
+React component files follow the same structure as other modules:
 
 ```javascript
-const MyComponent = ({ prop }) => {
-    const P = { canExpand: row => row.children?.length > 0 }
-    const T = { toLabel: item => item.name.toUpperCase() }
-    const E = { handleClick: () => setOpen(!open) }
+// Configuration constants
+const COLUMN_WIDTHS = { name: 200, value: 100 }
 
+// Cohesion groups at module level
+const P = { canExpand: row => row.children?.length > 0 }
+const T = { toLabel: item => item.name.toUpperCase() }
+
+// Helper components (not exported)
+const HelperRow = ({ item }) => <tr>{T.toLabel(item)}</tr>
+
+// Exported component LAST
+const MyComponent = ({ prop }) => {
     const [open, setOpen] = useState(false)
     const data = useSelector(S.getData)
 
-    useEffect(() => E.handleClick(), [])
+    const handleClick = useCallback(() => setOpen(!open), [open])
 
-    return <div onClick={E.handleClick}>{P.canExpand(data) && T.toLabel(data)}</div>
+    return <div onClick={handleClick}>{P.canExpand(data) && <HelperRow item={data} />}</div>
 }
+
+export { MyComponent }
 ```
 
 **Rules:**
-- Cohesion groups first, then hooks, then `useEffect`, then return
-- `render*` functions should be extracted to actual components (no R group)
-- Keep cohesion groups INSIDE the component when they use state/props
+- P/T/F/V/A/E cohesion groups at module level (not inside components)
+- Exported component(s) at bottom of file
+- `render*` functions → extract to actual `<Component />`
+- Event handlers: use `useCallback` directly, not E group (needs component state)
 
 ## Files
 

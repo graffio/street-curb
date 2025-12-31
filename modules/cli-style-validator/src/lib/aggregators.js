@@ -56,9 +56,9 @@ const AS = {
         return nodes
     },
 
-    // Count all function nodes in an AST subtree
+    // Count complex functions in an AST subtree (excludes single-line anonymous callbacks)
     // @sig countFunctions :: ASTNode -> Number
-    countFunctions: node => AS.collectNodes(node).filter(PS.isFunctionNode).length,
+    countFunctions: node => AS.collectNodes(node).filter(PS.isComplexFunction).length,
 }
 
 export { AS }

@@ -55,6 +55,15 @@ const isPascalCase = name => /^[A-Z][a-zA-Z0-9]*$/.test(name)
 // @sig isMultilineNode :: ASTNode -> Boolean
 const isMultilineNode = node => node.loc && node.loc.end.line > node.loc.start.line
 
+// Check if function counts toward complexity (named or multi-line)
+// Single-line anonymous callbacks (filter/map) don't add complexity
+// @sig isComplexFunction :: ASTNode -> Boolean
+const isComplexFunction = node => {
+    if (!isFunctionNode(node)) return false
+    if (node.id?.name) return true
+    return isMultilineNode(node)
+}
+
 const PS = {
     isTestFile,
     isCommentLine,
@@ -66,6 +75,7 @@ const PS = {
     isValidNode,
     isPascalCase,
     isMultilineNode,
+    isComplexFunction,
 }
 
 export { PS }
