@@ -10,7 +10,10 @@ const BUDGETS = {
     cli: { lines: 150, styleObjects: 0, functions: 10 },
     'react-page': { lines: 200, styleObjects: 5, functions: 8 },
     'react-component': { lines: 100, styleObjects: 3, functions: 5 },
+    router: { lines: 200, styleObjects: 3, functions: 15 },
     selector: { lines: 80, styleObjects: 0, functions: 5 },
+    reducer: { lines: 150, styleObjects: 0, functions: 20 },
+    storage: { lines: 100, styleObjects: 0, functions: 15 },
     utility: { lines: 150, styleObjects: 0, functions: 10 },
 }
 
@@ -87,7 +90,10 @@ const T = {
         if (filePath.includes('/cli-')) return 'cli'
         if (filePath.includes('/pages/') && filePath.endsWith('.jsx')) return 'react-page'
         if (filePath.includes('/components/') && filePath.endsWith('.jsx')) return 'react-component'
+        if (filePath.endsWith('router.jsx')) return 'router'
         if (filePath.includes('/selectors/')) return 'selector'
+        if (filePath.includes('/store/') && filePath.endsWith('reducer.js')) return 'reducer'
+        if (filePath.includes('/services/') && filePath.endsWith('storage.js')) return 'storage'
         return 'utility'
     },
 

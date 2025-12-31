@@ -8,11 +8,14 @@ const PRIORITY = 0 // High priority - structural issue
 // Cohesion group names and their naming patterns
 const COHESION_PATTERNS = {
     P: /^(is|has|should|can|exports)[A-Z]/,
-    T: /^(to|get|extract|parse|format)[A-Z]/,
+    T: /^(to|parse|format)[A-Z]/,
     F: /^(create|make|build)[A-Z]/,
     V: /^(check|validate)[A-Z]/,
     A: /^(collect|count|gather|find|process)[A-Z]/,
 }
+
+// Vague prefixes that should be replaced with more specific names
+const VAGUE_PREFIXES = /^(get|extract|derive|select|fetch)[A-Z]/
 
 // Required declaration order
 const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A']
@@ -20,10 +23,21 @@ const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A']
 // Thresholds for triggering CHECKPOINTs
 const THRESHOLDS = { totalFunctions: 12, perGroup: 5 }
 
+// Names that are exempt from cohesion group requirements
+const EXEMPT_NAMES = ['rootReducer']
+
 const P = {
     // Check if name is a cohesion group identifier (P, T, F, V, A)
     // @sig isCohesionGroup :: String -> Boolean
     isCohesionGroup: name => COHESION_ORDER.includes(name),
+
+    // Check if name is PascalCase (React component)
+    // @sig isPascalCase :: String -> Boolean
+    isPascalCase: name => /^[A-Z][a-zA-Z0-9]*$/.test(name),
+
+    // Check if name is exempt from cohesion requirements
+    // @sig isExemptName :: String -> Boolean
+    isExemptName: name => EXEMPT_NAMES.includes(name) || P.isPascalCase(name),
 
     // Check if node is defined inside a cohesion group object
     // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
@@ -52,6 +66,10 @@ const P = {
         for (const [group, pattern] of Object.entries(COHESION_PATTERNS)) if (pattern.test(name)) return group
         return null
     },
+
+    // Check if name has a vague prefix
+    // @sig hasVaguePrefix :: String -> Boolean
+    hasVaguePrefix: name => VAGUE_PREFIXES.test(name),
 }
 
 const A = {
@@ -153,6 +171,23 @@ const A = {
         })
         return comments
     },
+
+    // Collect exported names from export statements
+    // @sig collectExports :: AST -> [{ name: String, line: Number }]
+    collectExports: ast => {
+        const exports = []
+        if (!ast?.body) return exports
+
+        ast.body.forEach(stmt => {
+            if (stmt.type !== 'ExportNamedDeclaration') return
+            if (!stmt.specifiers) return
+            stmt.specifiers.forEach(spec => {
+                if (spec.exported?.name) exports.push({ name: spec.exported.name, line: stmt.loc?.start?.line || 1 })
+            })
+        })
+
+        return exports
+    },
 }
 
 const F = {
@@ -176,7 +211,7 @@ const F = {
         return F.createViolation(
             line,
             `CHECKPOINT: "${name}" is not in a P/T/F/V/A cohesion group. ${suggestion} ` +
-                `Or justify with // COMPLEXITY: comment.`,
+                `If justified, propose a COMPLEXITY comment for user approval.`,
         )
     },
 
@@ -215,6 +250,34 @@ const F = {
             `${group}.${propName} references external function "${refName}". ` +
                 `FIX: Define the function inside the ${group} object, not outside with a later reference.`,
         ),
+
+    // Create violation for multiple exports
+    // @sig createMultipleExportsViolation :: (Number, Number) -> Violation
+    createMultipleExportsViolation: (line, count) =>
+        F.createViolation(
+            line,
+            `CHECKPOINT: File has ${count} exports. Multiple exports may indicate the file should be split. ` +
+                `If justified, add a COMPLEXITY comment explaining why these belong together.`,
+        ),
+
+    // Create violation for export defined inside cohesion group
+    // @sig createExportInsideCohesionViolation :: (Number, String, String) -> Violation
+    createExportInsideCohesionViolation: (line, name, group) =>
+        F.createViolation(
+            line,
+            `Exported function "${name}" is defined inside ${group} group. ` +
+                `FIX: Define exported functions at module level (outside cohesion groups). ` +
+                `Cohesion groups are for internal helpers.`,
+        ),
+
+    // Create violation for vague function prefix
+    // @sig createVaguePrefixViolation :: (Number, String) -> Violation
+    createVaguePrefixViolation: (line, name) =>
+        F.createViolation(
+            line,
+            `"${name}" uses a vague prefix (get/extract/derive/select/fetch). ` +
+                `FIX: Use a more specific name that describes what the function actually does.`,
+        ),
 }
 
 const V = {
@@ -252,6 +315,8 @@ const V = {
         const cohesionGroups = A.collectCohesionGroups(ast)
         const declarations = A.collectCohesionDeclarationOrder(ast)
         const externalRefs = A.collectExternalReferences(ast)
+        const exports = A.collectExports(ast)
+        const exportedNames = new Set(exports.map(e => e.name))
 
         // Check cohesion group ordering (P → T → F → V → A)
         V.checkOrdering(declarations, violations)
@@ -259,15 +324,25 @@ const V = {
         // Check for external function references in cohesion groups
         V.checkExternalReferences(externalRefs, violations)
 
-        // Check for uncategorized module-level functions
+        // Check for uncategorized module-level functions (exported functions are exempt)
         moduleFunctions.forEach(({ name, line }) => {
             if (P.isCohesionGroup(name)) return
+            if (P.isExemptName(name)) return
+            if (exportedNames.has(name)) return
 
             const hasJustification = complexityComments.some(c => c.line < line && c.line > line - 5)
             if (hasJustification) return
 
             const suggestedGroup = P.matchesCohesionPattern(name)
             violations.push(F.createUncategorizedViolation(line, name, suggestedGroup))
+        })
+
+        // Check for vague prefixes in all functions (skip if COMPLEXITY comment mentions function name)
+        const allFunctions = [...moduleFunctions, ...Object.values(cohesionGroups).flat()]
+        allFunctions.forEach(({ name, line }) => {
+            if (!P.hasVaguePrefix(name)) return
+            const hasJustification = complexityComments.some(c => c.reason.includes(`"${name}"`))
+            if (!hasJustification) violations.push(F.createVaguePrefixViolation(line, name))
         })
 
         // Count total functions in cohesion groups
@@ -285,6 +360,20 @@ const V = {
                 violations.push(F.createLargeGroupViolation(firstLine, groupName, members.length))
             }
         })
+
+        // Check for multiple exports (CHECKPOINT)
+        if (exports.length > 1) {
+            const hasJustification = complexityComments.some(c => c.reason.toLowerCase().includes('export'))
+            if (!hasJustification) violations.push(F.createMultipleExportsViolation(exports[0].line, exports.length))
+        }
+
+        // Check that exported functions are defined outside cohesion groups
+        exports.forEach(({ name, line }) =>
+            Object.entries(cohesionGroups).forEach(([groupName, members]) => {
+                const inGroup = members.find(m => m.name === name)
+                if (inGroup) violations.push(F.createExportInsideCohesionViolation(inGroup.line, name, groupName))
+            }),
+        )
 
         // Add reminder about existing COMPLEXITY comments
         if (complexityComments.length > 0 && violations.length > 0) {
