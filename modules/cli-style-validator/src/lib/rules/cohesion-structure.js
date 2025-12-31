@@ -1,4 +1,4 @@
-// ABOUTME: Rule to enforce P/T/F/V/A cohesion group structure
+// ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
 
 import { PS } from '../predicates.js'
@@ -12,13 +12,14 @@ const COHESION_PATTERNS = {
     F: /^(create|make|build)[A-Z]/,
     V: /^(check|validate)[A-Z]/,
     A: /^(collect|count|gather|find|process)[A-Z]/,
+    E: /^(persist|handle|dispatch|emit|send)[A-Z]/,
 }
 
 // Vague prefixes that should be replaced with more specific names
 const VAGUE_PREFIXES = /^(get|extract|derive|select|fetch)[A-Z]/
 
 // Required declaration order
-const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A']
+const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A', 'E']
 
 // Thresholds for triggering CHECKPOINTs
 const THRESHOLDS = { totalFunctions: 12, perGroup: 5 }
@@ -94,9 +95,9 @@ const A = {
     },
 
     // Collect all functions defined inside each cohesion group object
-    // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...] }
+    // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
     collectCohesionGroups: ast => {
-        const groups = { P: [], T: [], F: [], V: [], A: [] }
+        const groups = { P: [], T: [], F: [], V: [], A: [], E: [] }
         if (!ast?.body) return groups
 
         ast.body.forEach(stmt => {
@@ -210,7 +211,7 @@ const F = {
             : 'Rename to match a cohesion pattern (is*, get*, create*, check*, collect*).'
         return F.createViolation(
             line,
-            `CHECKPOINT: "${name}" is not in a P/T/F/V/A cohesion group. ${suggestion} ` +
+            `CHECKPOINT: "${name}" is not in a P/T/F/V/A/E cohesion group. ${suggestion} ` +
                 `If justified, propose a COMPLEXITY comment for user approval.`,
         )
     },
@@ -238,7 +239,7 @@ const F = {
     createOrderingViolation: (line, actual, expected) =>
         F.createViolation(
             line,
-            `Cohesion group "${actual}" declared out of order. Expected order: P → T → F → V → A. ` +
+            `Cohesion group "${actual}" declared out of order. Expected order: P → T → F → V → A → E. ` +
                 `FIX: Move "${actual}" ${expected ? `after "${expected}"` : 'to correct position'}.`,
         ),
 

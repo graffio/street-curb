@@ -28,17 +28,27 @@ Brevity > thoroughness. When in doubt, match existing code.
 
 ## React Components
 
-Organize component internals in this order:
-1. **Functions** - Helper functions used by hooks/callbacks
-2. **Hooks** - `useState`, `useSelector`, custom hooks
-3. **Memos** - `useMemo` computations
-4. **Callbacks** - `useCallback` handlers
-5. **Effects** - `useEffect` side effects
-6. **Return** - JSX
+React components use P/T/F/V/A/E cohesion groups internally, same as module-level code:
 
-Note: This ordering is a readability convention, not enforced by the style validator. The style validator's "functions at top of block" rule applies to `function` declarations within function bodies, not to the organization of hooks vs callbacks.
+```javascript
+const MyComponent = ({ prop }) => {
+    const P = { canExpand: row => row.children?.length > 0 }
+    const T = { toLabel: item => item.name.toUpperCase() }
+    const E = { handleClick: () => setOpen(!open) }
 
-Keep functions INSIDE their parent component (not hoisted outside) when they use component state or props.
+    const [open, setOpen] = useState(false)
+    const data = useSelector(S.getData)
+
+    useEffect(() => E.handleClick(), [])
+
+    return <div onClick={E.handleClick}>{P.canExpand(data) && T.toLabel(data)}</div>
+}
+```
+
+**Rules:**
+- Cohesion groups first, then hooks, then `useEffect`, then return
+- `render*` functions should be extracted to actual components (no R group)
+- Keep cohesion groups INSIDE the component when they use state/props
 
 ## Files
 
@@ -57,15 +67,16 @@ Organize functions into single-letter namespace objects by cohesion type:
 | F | Factories | `create*`, `make*`, `build*` |
 | V | Validators | `check*`, `validate*` (return violations/errors) |
 | A | Aggregators | `collect*`, `count*`, `gather*`, `find*` |
+| E | Effects | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*` |
 
 **Rules:**
 - Every function goes in a cohesion group, even if it's the only one of its type
-- Single letters (P, T, F, V, A) for brevity: `P.isPascalCase` not `predicates.isPascalCase`
+- Single letters (P, T, F, V, A, E) for brevity: `P.isPascalCase` not `predicates.isPascalCase`
 - Same letters across all files for consistency
 - Exported function(s) at bottom, outside namespace objects
 - Configuration constants at top, before cohesion groups
 
-**Ordering:** Configuration → P → T → F → V → A → Exports
+**Ordering:** Configuration → P → T → F → V → A → E → Exports
 
 **Example:**
 ```javascript
