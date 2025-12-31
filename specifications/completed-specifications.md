@@ -516,3 +516,13 @@ This document summarizes the specifications that were previously archived in `sp
 - Documented extraction rules in conventions.md (when to extract to shared modules)
 - All 12 rule files now compliant; 154 tests passing
 - Some files exceed 150-line budget but justified by COMPLEXITY comments or genuine complexity
+
+## [infrastructure] E Cohesion Group + React Component Cohesion (2025-12-31)
+**Purpose:** Add E (Effects) cohesion group and enforce cohesion patterns inside React components
+
+- Added E group to conventions.md with patterns: persist*, handle*, dispatch*, emit*, send*
+- Created react-component-cohesion.js rule: detects P/T/F/V/A/E inside components (should be at module level), flags render* functions (should be extracted to components)
+- Updated conventions.md with React component file structure: cohesion groups at module level, exported component last, useCallback handlers stay inside (need state)
+- Added PS.isComplexFunction predicate: excludes single-line anonymous callbacks from function counts (filter/map callbacks reduce complexity, not increase it)
+- Refactored InvestmentReportPage.jsx: moved P/T to module level, extracted HoldingRow/HoldingsSubTable as sibling components
+- Added commit-msg hook (bash/commit-msg-validate.sh) to enforce Problem/Solution/Impact message format
