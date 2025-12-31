@@ -15,6 +15,7 @@ import { checkImportOrdering } from './rules/import-ordering.js'
 import { checkLineLength } from './rules/line-length.js'
 import { checkSigDocumentation } from './rules/sig-documentation.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
+import { checkReactComponentCohesion } from './rules/react-component-cohesion.js'
 
 /**
  * Check single file for coding standards violations
@@ -56,6 +57,7 @@ const checkFile = async filePath => {
         ...checkLineLength(ast, sourceCode, filePath),
         ...checkSigDocumentation(ast, sourceCode, filePath),
         ...checkSingleLevelIndentation(ast, sourceCode, filePath),
+        ...checkReactComponentCohesion(ast, sourceCode, filePath),
     ]
 
     const violations = allViolations.sort((a, b) => a.priority - b.priority || a.line - b.line)
