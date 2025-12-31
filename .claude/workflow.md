@@ -69,8 +69,9 @@ Discuss freely. No templates.
 2. Execute steps in order, marking `done: true` as completed
 3. At `[CHECKPOINT]` steps: stop, present options, wait for approval
 4. Before each `git commit`:
+   - **Run style validator** on changed files while developing (catch issues early, before pre-commit rejects)
    - **Spawn code-reviewer subagent** on staged changes — address blocking issues
-   - Then commit (style validator runs via pre-commit hook; fix violations if needed)
+   - Then commit (pre-commit hook runs style validator as safety net)
 
 ### 4. Record
 **Invoke:** User says "Record completion following .claude/tasks/record-completion.md"
