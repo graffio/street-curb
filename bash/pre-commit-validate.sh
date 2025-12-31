@@ -39,4 +39,7 @@ fi
 # Validation passed - create flag for Claude reread reminder
 touch "$project_dir/.claude/.needs-reread"
 
+# Remind Claude of commit message format
+echo "Commit message format: Problem/Solution/Impact (see .claude/tasks/commit-changes.md)"
+
 exit 0
