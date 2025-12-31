@@ -48,15 +48,17 @@ const AS = {
         return '<anonymous>'
     },
 
+    // Collect all nodes in an AST into a flat array (enables filter/map chains)
+    // @sig collectNodes :: ASTNode -> [ASTNode]
+    collectNodes: node => {
+        const nodes = []
+        AS.traverseAST(node, n => nodes.push(n))
+        return nodes
+    },
+
     // Count all function nodes in an AST subtree
     // @sig countFunctions :: ASTNode -> Number
-    countFunctions: node => {
-        let count = 0
-        AS.traverseAST(node, n => {
-            if (PS.isFunctionNode(n)) count++
-        })
-        return count
-    },
+    countFunctions: node => AS.collectNodes(node).filter(PS.isFunctionNode).length,
 }
 
 export { AS }

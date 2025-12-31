@@ -26,6 +26,13 @@ Brevity > thoroughness. When in doubt, match existing code.
 - Indentation resets to 0 inside ANY function body, including nested/inline functions
 - "Nested indentation" means control flow nesting (`if` inside `if`), not function-inside-function
 
+## Callbacks
+
+- Prefer filter/map chains over forEach with mutation
+- Good: `AS.collectNodes(ast).filter(P.isRenderNode).map(F.createViolation)`
+- Avoid: `items.forEach(item => { results.push(...) })`
+- When iteration callbacks are unavoidable, keep them as single-line delegation calls
+
 ## React Components
 
 React components use P/T/F/V/A/E cohesion groups internally, same as module-level code:
