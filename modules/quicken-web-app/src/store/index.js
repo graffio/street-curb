@@ -1,14 +1,32 @@
-// ABOUTME: Redux store configuration
-// ABOUTME: Hydration happens lazily in reducer via getInitialState()
+// ABOUTME: Redux store configuration with async initialization
+// ABOUTME: Exports initializeStore() which hydrates from IndexedDB before creating store
+// COMPLEXITY: Exports both store access and initialization - both needed by app and commands
 
 import { createStore } from 'redux'
-import { rootReducer } from './reducer.js'
+import { hydrateTabLayout, hydrateTableLayouts } from './hydration.js'
+import { createEmptyState, rootReducer } from './reducer.js'
 
-const store = createStore(
-    rootReducer,
-    undefined,
-    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
-)
+let store = null
+
+// Hydrates state from IndexedDB and creates the Redux store
+// @sig initializeStore :: () -> Promise<Store>
+const initializeStore = async () => {
+    const [tableLayouts, tabLayout] = await Promise.all([hydrateTableLayouts(), hydrateTabLayout()])
+
+    const preloadedState = { ...createEmptyState(), initialized: true, tableLayouts, tabLayout }
+
+    store = createStore(
+        rootReducer,
+        preloadedState,
+        window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
+    )
+
+    return store
+}
+
+// Returns the store (available after initializeStore completes)
+// @sig currentStore :: () -> Store
+const currentStore = () => store
 
 export * as Selectors from './selectors'
-export { store }
+export { currentStore, initializeStore }

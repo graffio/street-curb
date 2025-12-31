@@ -1,5 +1,5 @@
 // ABOUTME: Application entry point
-// ABOUTME: Configures Redux, Theme, and Router
+// ABOUTME: Initializes store from IndexedDB, then renders React app
 
 import { Theme } from '@graffio/design-system'
 import { RouterProvider } from '@tanstack/react-router'
@@ -7,10 +7,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { router } from './router.jsx'
-import { store } from './store/index.js'
+import { initializeStore } from './store/index.js'
 
-// @sig App :: () -> ReactElement
-const App = () => (
+// @sig App :: Store -> ReactElement
+const App = ({ store }) => (
     <React.StrictMode>
         <Provider store={store}>
             <Theme appearance="light" accentColor="blue" grayColor="slate" radius="medium" scaling="100%">
@@ -20,4 +20,4 @@ const App = () => (
     </React.StrictMode>
 )
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+initializeStore().then(store => ReactDOM.createRoot(document.getElementById('root')).render(<App store={store} />))

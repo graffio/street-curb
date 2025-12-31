@@ -1,14 +1,17 @@
-// ABOUTME: Hydrates Redux state from localStorage on startup
-// ABOUTME: Provides getInitialState() for lazy initialization in reducer
+// ABOUTME: Hydrates Redux state from IndexedDB on startup
+// ABOUTME: Provides async hydration functions called before store creation
+// COMPLEXITY: Exports both table and tab layout hydration - single responsibility per entity type
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
+import { get } from '../services/storage.js'
 import { ColumnDescriptor, SortOrder, TabGroup, TabLayout, TableLayout, View } from '../types/index.js'
 
 const TABLE_LAYOUTS_KEY = 'tableLayouts'
 const TAB_LAYOUT_KEY = 'tabLayout'
 
-// @sig hydrateTableLayouts :: () -> LookupTable<TableLayout>
-const hydrateTableLayouts = () => {
+// COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
+// @sig hydrateTableLayouts :: () -> Promise<LookupTable<TableLayout>>
+const hydrateTableLayouts = async () => {
     // @sig hydrateTableLayout :: Object -> TableLayout
     const hydrateTableLayout = obj => {
         // Converts old sortOrder format (array of column IDs) to new LookupTable<SortOrder>
@@ -41,19 +44,20 @@ const hydrateTableLayouts = () => {
     }
 
     try {
-        const stored = window.localStorage.getItem(TABLE_LAYOUTS_KEY)
+        const stored = await get(TABLE_LAYOUTS_KEY)
         if (!stored) return LookupTable([], TableLayout, 'id')
 
-        const layouts = Object.values(JSON.parse(stored)).map(hydrateTableLayout)
+        const layouts = Object.values(stored).map(hydrateTableLayout)
         return LookupTable(layouts, TableLayout, 'id')
-    } catch {
-        console.warn('Failed to read tableLayouts from localStorage')
+    } catch (e) {
+        console.warn('Failed to read tableLayouts from IndexedDB', e)
         return LookupTable([], TableLayout, 'id')
     }
 }
 
-// @sig hydrateTabLayout :: () -> TabLayout
-const hydrateTabLayout = () => {
+// COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
+// @sig hydrateTabLayout :: () -> Promise<TabLayout>
+const hydrateTabLayout = async () => {
     // @sig createDefaultTabLayout :: () -> TabLayout
     const createDefaultTabLayout = () => {
         const emptyGroup = TabGroup('tg_1', LookupTable([], View, 'id'), null, 100)
@@ -77,14 +81,14 @@ const hydrateTabLayout = () => {
     }
 
     try {
-        const stored = window.localStorage.getItem(TAB_LAYOUT_KEY)
+        const stored = await get(TAB_LAYOUT_KEY)
         if (!stored) return createDefaultTabLayout()
 
-        const { activeTabGroupId, id, nextTabGroupId, tabGroups: rawGroups } = JSON.parse(stored)
+        const { activeTabGroupId, id, nextTabGroupId, tabGroups: rawGroups } = stored
         const tabGroups = Object.values(rawGroups).map(hydrateTabGroup)
         return TabLayout(id, LookupTable(tabGroups, TabGroup, 'id'), activeTabGroupId, nextTabGroupId)
-    } catch {
-        console.warn('Failed to read tabLayout from localStorage, using default')
+    } catch (e) {
+        console.warn('Failed to read tabLayout from IndexedDB, using default', e)
         return createDefaultTabLayout()
     }
 }
