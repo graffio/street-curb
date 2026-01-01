@@ -30,6 +30,11 @@ const CALLBACK_EXTRACTION_MESSAGE =
     'For Promise executors: extract to a function that receives resolve/reject as parameters. ' +
     "For .map() callbacks: if it doesn't fit on one line with .map(), extract it."
 
+const NESTED_INDENTATION_MESSAGE =
+    'Nested indentation detected. ' +
+    'FIX: Extract the nested block to a named function in the appropriate cohesion group ' +
+    '(P/T/F/V/A), or use early returns to flatten the logic.'
+
 const P = {
     // Check if node is a control flow statement that increases indentation
     // @sig isIndentationStatement :: ASTNode -> Boolean
@@ -38,44 +43,15 @@ const P = {
     // Check if node type is allowed to nest without counting as indentation
     // @sig isAllowedNesting :: ASTNode -> Boolean
     isAllowedNesting: node => ALLOWED_NESTING_TYPES.has(node.type),
+}
 
-    // Check if node is a function with a block body (not expression)
-    // @sig isFunctionWithBlockBody :: ASTNode -> Boolean
-    isFunctionWithBlockBody: node => PS.isFunctionNode(node) && node.body?.type === 'BlockStatement',
-
-    // Check if statement returns JSX element or fragment
-    // @sig hasJSXReturnStatement :: Statement -> Boolean
-    hasJSXReturnStatement: stmt => {
-        if (stmt.type !== 'ReturnStatement' || !stmt.argument) return false
-        return stmt.argument.type === 'JSXElement' || stmt.argument.type === 'JSXFragment'
-    },
-
-    // Check if function returns JSX (arrow expression or block return)
-    // @sig isJSXFunction :: ASTNode -> Boolean
-    isJSXFunction: node => {
-        if (!node.body) return false
-        if (node.expression && (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment')) return true
-        if (node.body.type === 'BlockStatement') return node.body.body.some(P.hasJSXReturnStatement)
-        return false
-    },
-
-    // Check if node is in an arguments array context
-    // @sig isArgumentsContext :: (String, [Any], ASTNode) -> Boolean
-    isArgumentsContext: (key, child, node) => key === 'arguments' && child.includes(node),
-
-    // Check if node is in a callback context (callee or non-declarator init)
-    // @sig isCallbackContext :: (String, ASTNode) -> Boolean
-    isCallbackContext: (key, searchNode) => {
-        if (key !== 'callee' && key !== 'init') return false
-        if (key === 'init' && searchNode.type === 'VariableDeclarator') return false
-        return true
-    },
-
-    // Check if node is a callback function (not declaration)
-    // @sig isCallbackFunction :: (ASTNode, ASTNode) -> Boolean
-    isCallbackFunction: (node, rootNode) => {
-        if (node.type === 'FunctionDeclaration') return false
-        return A.findFunctionContext(node, rootNode)
+const T = {
+    // Calculate next depth based on node type
+    // @sig toNextDepth :: (ASTNode, Number) -> Number
+    toNextDepth: (node, depth) => {
+        if (P.isAllowedNesting(node)) return depth
+        if (P.isIndentationStatement(node)) return depth + 1
+        return depth
     },
 }
 
@@ -96,72 +72,29 @@ const V = {
     // Validate callback functions should be extracted if multiline
     // @sig checkCallbackFunction :: (ASTNode, ASTNode, [Violation]) -> Void
     checkCallbackFunction: (node, ast, violations) => {
-        if (!PS.isFunctionNode(node) || !P.isCallbackFunction(node, ast) || P.isJSXFunction(node)) return
+        if (!PS.isFunctionNode(node) || !AS.isCallbackFunction(node, ast) || PS.isJSXFunction(node)) return
         if (AS.countFunctionLines(node) > 1) violations.push(F.createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
     },
 
     // Validate a function node for nested indentation violations
     // @sig checkFunctionNode :: (ASTNode, Set, [Violation]) -> Void
     checkFunctionNode: (node, processedNodes, violations) => {
-        if (!P.isFunctionWithBlockBody(node)) return
+        if (!PS.isFunctionWithBlockBody(node)) return
         A.findNestedViolations(node.body, 0, processedNodes, violations)
-    },
-
-    // Validate single-level indentation throughout the file
-    // @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
-    checkSingleLevelIndentation: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath)) return []
-
-        const violations = []
-        const processedNodes = new Set()
-
-        AS.traverseAST(ast, node => {
-            V.checkCallbackFunction(node, ast, violations)
-            V.checkFunctionNode(node, processedNodes, violations)
-        })
-
-        return violations
     },
 }
 
 const A = {
-    // Recursively search AST to find if node is in callback context
-    // @sig searchContextRecursively :: (ASTNode, ASTNode, { isCallback: Boolean }) -> Void
-    searchContextRecursively: (searchNode, node, tracker) => {
-        if (!searchNode || typeof searchNode !== 'object') return
-
-        Object.entries(searchNode).some(([key, child]) => {
-            if (Array.isArray(child)) {
-                if (P.isArgumentsContext(key, child, node)) {
-                    tracker.isCallback = true
-                    return true
-                }
-                child.forEach(item => A.searchContextRecursively(item, node, tracker))
-                return false
-            }
-            if (child === node && P.isCallbackContext(key, searchNode)) tracker.isCallback = true
-            if (child && typeof child === 'object') A.searchContextRecursively(child, node, tracker)
-            return false
-        })
-    },
-
-    // Find whether a function is used as a callback in the AST
-    // @sig findFunctionContext :: (ASTNode, ASTNode) -> Boolean
-    findFunctionContext: (node, rootNode) => {
-        const tracker = { isCallback: false }
-        A.searchContextRecursively(rootNode, node, tracker)
-        return tracker.isCallback
-    },
+    // Flatten node properties into array of child values
+    // @sig collectChildValues :: ASTNode -> [Any]
+    collectChildValues: node => Object.keys(node).flatMap(key => (Array.isArray(node[key]) ? node[key] : [node[key]])),
 
     // Process a child node for violations, resetting depth at function boundaries
-    // @sig processChildForViolations :: (ASTNode, Number, Function) -> Void
-    processChildForViolations: (node, nextDepth, findViolations) => {
+    // @sig processChildForViolations :: (ASTNode, Number, Set, [Violation]) -> Void
+    processChildForViolations: (node, nextDepth, processedNodes, violations) => {
         if (!PS.isValidNode(node)) return
-        if (P.isFunctionWithBlockBody(node)) {
-            findViolations(node.body, 0)
-            return
-        }
-        if (!PS.isFunctionNode(node)) findViolations(node, nextDepth)
+        if (PS.isFunctionWithBlockBody(node)) return A.findNestedViolations(node.body, 0, processedNodes, violations)
+        if (!PS.isFunctionNode(node)) A.findNestedViolations(node, nextDepth, processedNodes, violations)
     },
 
     // Recursively find nested indentation violations in a node subtree
@@ -171,32 +104,26 @@ const A = {
         processedNodes.add(node)
 
         if (depth > 0 && P.isIndentationStatement(node))
-            violations.push(
-                F.createViolation(
-                    node,
-                    'Nested indentation detected. ' +
-                        'FIX: Extract the nested block to a named function in the appropriate module-level cohesion group ' +
-                        '(P/T/F/V/A), or use early returns to flatten the logic.',
-                ),
-            )
+            violations.push(F.createViolation(node, NESTED_INDENTATION_MESSAGE))
 
-        const nextDepth = P.isAllowedNesting(node) ? depth : P.isIndentationStatement(node) ? depth + 1 : depth
+        const nextDepth = T.toNextDepth(node, depth)
+        A.collectChildValues(node).forEach(c => A.processChildForViolations(c, nextDepth, processedNodes, violations))
+    },
 
-        Object.keys(node).forEach(key => {
-            const child = node[key]
-            if (Array.isArray(child))
-                child.forEach(item =>
-                    A.processChildForViolations(item, nextDepth, (n, d) =>
-                        A.findNestedViolations(n, d, processedNodes, violations),
-                    ),
-                )
-            else
-                A.processChildForViolations(child, nextDepth, (n, d) =>
-                    A.findNestedViolations(n, d, processedNodes, violations),
-                )
-        })
+    // Collect all violations from the AST
+    // @sig collectViolations :: (AST, [Violation]) -> [Violation]
+    collectViolations: (ast, violations, processedNodes) => {
+        AS.traverseAST(ast, node => V.checkCallbackFunction(node, ast, violations))
+        AS.traverseAST(ast, node => V.checkFunctionNode(node, processedNodes, violations))
+        return violations
     },
 }
 
-const checkSingleLevelIndentation = V.checkSingleLevelIndentation
+// Validate single-level indentation throughout the file
+// @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
+const checkSingleLevelIndentation = (ast, sourceCode, filePath) => {
+    if (!ast || PS.isTestFile(filePath) || PS.hasComplexityComment(sourceCode)) return []
+    return A.collectViolations(ast, [], new Set())
+}
+
 export { checkSingleLevelIndentation }

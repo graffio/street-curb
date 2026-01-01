@@ -95,6 +95,7 @@ const V = {
     // @sig checkChainExtraction :: (AST?, String, String) -> [Violation]
     checkChainExtraction: (ast, sourceCode, filePath) => {
         if (!ast) return []
+        if (PS.hasComplexityComment(sourceCode)) return []
 
         const namespaces = A.collectNamespaceImports(ast)
         const allSuggestions = []

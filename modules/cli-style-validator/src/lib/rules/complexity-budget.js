@@ -198,6 +198,7 @@ const V = {
     // @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
     checkComplexityBudget: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
+        if (PS.hasComplexityComment(sourceCode)) return []
 
         const context = T.getContext(filePath)
         const budget = BUDGETS[context]
