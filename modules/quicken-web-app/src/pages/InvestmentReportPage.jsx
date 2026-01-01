@@ -10,7 +10,7 @@ import { enrichedHoldingsAsOf } from '../store/selectors/index.js'
 import * as S from '../store/selectors/index.js'
 import { buildHoldingsTree } from '../utils/holdings-tree.js'
 
-const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
+const pageContainerStyle = { height: '100%' }
 
 const dimensionLayouts = {
     account: { title: 'Holdings by Account', subtitle: 'View portfolio positions by account' },

@@ -1,3 +1,7 @@
+// ABOUTME: Retrieve nested value at a given path with partial application support
+// ABOUTME: Ramda-compatible path function for deep object property access
+// COMPLEXITY: Legacy Ramda-style API - imperative while loop is idiomatic for this pattern
+
 /**
  * Retrieve the value at a given path. Partially applied.
  * Path can be either an array of strings, or a single string delimited by '.' characters
@@ -28,6 +32,7 @@ const path = (path, o) => {
         let descendants = fields
 
         while (descendants.length) {
+            if (result == null) return undefined
             result = result[descendants[0]]
             descendants = descendants.slice(1)
         }

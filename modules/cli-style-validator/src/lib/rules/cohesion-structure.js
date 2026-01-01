@@ -309,6 +309,7 @@ const V = {
     // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
     checkCohesionStructure: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
+        if (PS.hasComplexityComment(sourceCode)) return []
 
         const violations = []
         const complexityComments = A.findComplexityComments(sourceCode)

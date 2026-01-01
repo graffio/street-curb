@@ -526,3 +526,27 @@ This document summarizes the specifications that were previously archived in `sp
 - Added PS.isComplexFunction predicate: excludes single-line anonymous callbacks from function counts (filter/map callbacks reduce complexity, not increase it)
 - Refactored InvestmentReportPage.jsx: moved P/T to module level, extracted HoldingRow/HoldingsSubTable as sibling components
 - Added commit-msg hook (bash/commit-msg-validate.sh) to enforce Problem/Solution/Impact message format
+
+## [infrastructure] createSelector + Style Validator Curried Function Support (2026-01-01)
+**Purpose:** Auto-currying createSelector for Redux and fix style validator false positives on curried functions
+
+**createSelector:**
+- TDD implementation in @graffio/functional: works curried `S.foo(arg)(state)` and uncurried `S.foo(state, arg)`
+- Arity-based detection: 2+ args = uncurried call, 1 arg = returns curried selector
+- Adopted YAGNI: only wrap selectors that actually need currying
+
+**Style validator curried function fixes:**
+- Fixed sig-documentation false positive: inner functions like `foo: a => b => ...` no longer flagged
+- Added `isInnerCurriedFunction` predicate to PS (checks if parent is ArrowFunctionExpression)
+- Extracted to shared PS: `isNonCommentLine`, `toCommentContent`, `isDirectiveComment`
+- Consolidated duplicates in function-declaration-ordering.js using PS predicates
+- Restructured sig-documentation.js: predicates in P, transformers in T, only `findSigLineIndex` in A
+
+**DataTable keyboard navigation:**
+- Moved keyboard nav from both register pages into DataTable component
+- Props: `onHighlightChange`, `focusableIds` for arrow key navigation
+- Simplified InvestmentRegisterPage and TransactionRegisterPage (now under complexity budgets)
+
+**User cleanup (post-session):**
+- Simplified traverseAST signature (removed parent parameter)
+- Removed COMPLEXITY comments from aggregators.js and sig-documentation.js after simplification

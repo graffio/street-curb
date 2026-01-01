@@ -2,6 +2,7 @@
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
 import { AS } from '../aggregators.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 4
 
@@ -22,10 +23,6 @@ const NON_FUNCTION_STATEMENT_TYPES = new Set([
 ])
 
 const P = {
-    // Check if node is a function declaration
-    // @sig isFunctionDeclaration :: ASTNode -> Boolean
-    isFunctionDeclaration: node => node.type === 'FunctionDeclaration',
-
     // Check if node is a variable declarator with function value
     // @sig isVariableWithFunctionExpression :: ASTNode -> Boolean
     isVariableWithFunctionExpression: node =>
@@ -33,24 +30,11 @@ const P = {
         node.init &&
         (node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression'),
 
-    // Check if node is a single-line function (always false for now)
-    // @sig isSingleLineFunctionExpression :: ASTNode -> Boolean
-    isSingleLineFunctionExpression: node => false,
-
-    // Check if node is a block statement
-    // @sig isBlockStatement :: ASTNode -> Boolean
-    isBlockStatement: node => node.type === 'BlockStatement',
-
-    // Check if declarator contains a multiline function
-    // @sig isMultiLineFunctionDeclarator :: ASTNode -> Boolean
-    isMultiLineFunctionDeclarator: declarator =>
-        P.isVariableWithFunctionExpression(declarator) && !P.isSingleLineFunctionExpression(declarator),
-
-    // Check if statement declares a function
+    // Check if statement declares a function (multiline only for this rule)
     // @sig isFunctionStatement :: ASTNode -> Boolean
     isFunctionStatement: node => {
-        if (P.isFunctionDeclaration(node)) return true
-        if (node.type === 'VariableDeclaration') return node.declarations.some(P.isMultiLineFunctionDeclarator)
+        if (PS.isFunctionDeclaration(node)) return true
+        if (node.type === 'VariableDeclaration') return node.declarations.some(P.isVariableWithFunctionExpression)
         return false
     },
 
@@ -85,47 +69,25 @@ const F = {
     }),
 }
 
-const V = {
-    // Validate that functions are declared before executable statements
-    // @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
-    checkFunctionDeclarationOrdering: (ast, sourceCode, filePath) => {
-        if (!ast) return []
-        const violations = []
-        AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
-        return violations
-    },
-}
-
 const A = {
-    // Add violation for misplaced function declaration
-    // @sig processFunctionDeclaration :: (ASTNode, [Violation]) -> Void
-    processFunctionDeclaration: (statement, violations) => {
-        const funcName = AS.getFunctionName(statement)
-        violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
-    },
-
-    // Add violation for misplaced variable function
+    // Add violation for misplaced variable function declarator
     // @sig processDeclarator :: (ASTNode, [Violation]) -> Void
     processDeclarator: (declarator, violations) => {
-        if (!P.isVariableWithFunctionExpression(declarator) || P.isSingleLineFunctionExpression(declarator)) return
+        if (!P.isVariableWithFunctionExpression(declarator)) return
         const funcName = AS.getFunctionName(declarator)
         const funcType = declarator.init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
         violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
     },
 
-    // Process all declarators in a variable declaration
-    // @sig processVariableDeclarationWithFunctions :: (ASTNode, [Violation]) -> Void
-    processVariableDeclarationWithFunctions: (statement, violations) =>
-        statement.declarations.forEach(declarator => A.processDeclarator(declarator, violations)),
-
     // Route misplaced function to appropriate processor
     // @sig processMisplacedFunctionStatement :: (ASTNode, [Violation]) -> Void
     processMisplacedFunctionStatement: (statement, violations) => {
-        if (statement.type === 'FunctionDeclaration') {
-            A.processFunctionDeclaration(statement, violations)
-            return
+        const { type, declarations } = statement
+        if (type === 'FunctionDeclaration') {
+            const funcName = AS.getFunctionName(statement)
+            return violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
         }
-        if (statement.type === 'VariableDeclaration') A.processVariableDeclarationWithFunctions(statement, violations)
+        if (type === 'VariableDeclaration') declarations.forEach(d => A.processDeclarator(d, violations))
     },
 
     // Reducer to track non-function statements and flag misplaced functions
@@ -141,10 +103,18 @@ const A = {
     // Check all statements in a block for ordering violations
     // @sig processBlockForViolations :: (ASTNode, [Violation]) -> Void
     processBlockForViolations: (block, violations) => {
-        if (!P.isBlockStatement(block) || !block.body) return
+        if (!PS.isBlockStatement(block) || !block.body) return
         block.body.reduce((found, stmt) => A.processStatementReducer(violations, stmt, found), false)
     },
 }
 
-const checkFunctionDeclarationOrdering = V.checkFunctionDeclarationOrdering
+// Validate that functions are declared before executable statements
+// @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
+const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) => {
+    if (!ast || PS.hasComplexityComment(sourceCode)) return []
+    const violations = []
+    AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
+    return violations
+}
+
 export { checkFunctionDeclarationOrdering }

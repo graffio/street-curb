@@ -1,48 +1,45 @@
-// ABOUTME: Multi-column stable sort for transactions
-// ABOUTME: Works with TanStack Table sorting state format (SortSpec = { id, desc })
+// ABOUTME: Multi-column sort with nested key support
+// ABOUTME: SortSpec = { id: String, desc: Boolean } - compatible with TanStack Table
 
-// Compares two values, handling strings (case-insensitive) and numbers
-// @sig compareValues :: (Any, Any) -> Number
-const compareValues = (a, b) => {
-    if (a == null && b == null) return 0
-    if (a == null) return 1
-    if (b == null) return -1
-    if (typeof a === 'string' && typeof b === 'string') return a.localeCompare(b, undefined, { sensitivity: 'base' })
-    if (a < b) return -1
-    if (a > b) return 1
-    return 0
+import { path } from '@graffio/functional'
+
+const P = {
+    // @sig isNullish :: Any -> Boolean
+    isNullish: v => v == null,
 }
 
-// Creates a comparator for multi-column sorting
-// SortSpec is TanStack Table's { id, desc } format
-// @sig sortBy :: ([SortSpec], LookupTable<ColumnDefinition>?) -> (a, b) -> Number
-const sortBy = (sorting, columns = []) => {
-    // Gets column definition by id (supports LookupTable or plain array)
-    // @sig getColumn :: String -> ColumnDefinition?
-    const getColumn = id => (columns.get ? columns.get(id) : columns.find(c => c.id === id))
+const T = {
+    // @sig toCompareResult :: (Any, Any) -> Number
+    toCompareResult: (a, b) => {
+        if (P.isNullish(a) && P.isNullish(b)) return 0
+        if (P.isNullish(a)) return 1
+        if (P.isNullish(b)) return -1
+        if (typeof a === 'string' && typeof b === 'string')
+            return a.localeCompare(b, undefined, { sensitivity: 'base' })
 
-    // Gets the accessor key for a column, handling accessorKey vs id
-    // @sig getAccessorKey :: (ColumnDefinition?, String) -> String
-    const getAccessorKey = (column, columnId) => (column ? column.accessorKey || column.id : columnId)
+        if (a < b) return -1
+        if (a > b) return 1
+        return 0
+    },
 
-    // Compares two items by one sort column
-    // @sig compareByColumn :: ({ id, desc }, a, b) -> Number
-    const compareByColumn = ({ id, desc }, a, b) => {
-        const key = getAccessorKey(getColumn(id), id)
-        const cmp = compareValues(a[key], b[key])
+    // @sig toAccessorKey :: (LookupTable?, String) -> String
+    toAccessorKey: (columns, id) => {
+        const column = columns?.get ? columns.get(id) : columns?.find(c => c.id === id)
+        return column?.accessorKey || column?.id || id
+    },
+
+    // @sig toComparator :: ([SortSpec], LookupTable?) -> (a, b) -> Number
+    toComparator: (sorting, columns) => (a, b) => {
+        const { id, desc } = sorting[0]
+        const key = T.toAccessorKey(columns, id)
+        const cmp = T.toCompareResult(path(key, a), path(key, b))
         return desc ? -cmp : cmp
-    }
-
-    // @sig compareAll :: (a, b) -> Number
-    const compareAll = (a, b) =>
-        sorting.reduce((result, spec) => (result !== 0 ? result : compareByColumn(spec, a, b)), 0)
-
-    return compareAll
+    },
 }
 
-// Sorts items by multiple columns
-// @sig applySort :: ([SortSpec], [a], LookupTable<ColumnDefinition>?) -> [a]
-const applySort = (sorting, items, columns = []) =>
-    sorting?.length ? [...items].sort(sortBy(sorting, columns)) : items
+// Sorts items by SortSpec array (first spec wins)
+// @sig applySort :: ([SortSpec], [a], LookupTable?) -> [a]
+const applySort = (sorting, items, columns) =>
+    sorting?.length ? [...items].sort(T.toComparator(sorting, columns)) : items
 
-export { compareValues, sortBy, applySort }
+export { applySort }

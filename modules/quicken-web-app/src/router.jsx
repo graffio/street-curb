@@ -32,27 +32,31 @@ const redirectToDefaultRoute = () => {
     throw redirect({ to: '/dashboard' })
 }
 
+// @sig SidebarItem :: { label: String, to: String } -> ReactElement
+const SidebarItem = ({ label, to }) => (
+    <Button ml="3" mb="3" mr="3" variant="ghost" asChild style={{ justifyContent: 'flex-start' }}>
+        <Link to={to} activeProps={{ style: { backgroundColor: 'var(--accent-3)' } }}>
+            {label}
+        </Link>
+    </Button>
+)
+
+// @sig SidebarSection :: { title: String, items: [{ label: String, to: String }] } -> ReactElement
+const SidebarSection = ({ title, items }) => (
+    <Box mb="4">
+        <Heading as="h3" size="3" m="3" style={{ fontWeight: 'lighter' }}>
+            {title}
+        </Heading>
+        <Flex direction="column">
+            {items.map(item => (
+                <SidebarItem key={item.label} label={item.label} to={item.to} />
+            ))}
+        </Flex>
+    </Box>
+)
+
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
-    // @sig renderSidebarItem :: Object -> ReactElement
-    const renderSidebarItem = ({ label, to }) => (
-        <Button key={label} ml="3" mb="3" mr="3" variant="ghost" asChild style={{ justifyContent: 'flex-start' }}>
-            <Link to={to} activeProps={{ style: { backgroundColor: 'var(--accent-3)' } }}>
-                {label}
-            </Link>
-        </Button>
-    )
-
-    // @sig renderSidebarSection :: Object -> ReactElement
-    const renderSidebarSection = ({ title, items }) => (
-        <Box key={title} mb="4">
-            <Heading as="h3" size="3" m="3" style={{ fontWeight: 'lighter' }}>
-                {title}
-            </Heading>
-            <Flex direction="column">{items.map(renderSidebarItem)}</Flex>
-        </Box>
-    )
-
     // @sig loadFileFromHandle :: FileSystemFileHandle -> Promise<void>
     const loadFileFromHandle = async handle => {
         const file = await handle.getFile()
@@ -103,9 +107,11 @@ const RootLayout = () => {
                 <Dialog.Overlay />
                 <Dialog.Content maxWidth="320px">
                     <Dialog.Title>Open File</Dialog.Title>
-                    <Text size="2" style={{ marginBottom: 'var(--space-4)' }}>
-                        Would you like to reopen your last file or choose a new one?
-                    </Text>
+                    <Dialog.Description asChild>
+                        <Text size="2" style={{ marginBottom: 'var(--space-4)' }}>
+                            Would you like to reopen your last file or choose a new one?
+                        </Text>
+                    </Dialog.Description>
                     <Flex gap="3" justify="end">
                         <Button variant="soft" onClick={handleOpenNew}>
                             Open New...
@@ -141,7 +147,9 @@ const RootLayout = () => {
     return (
         <MainLayout>
             <MainLayout.Sidebar>
-                {sidebarSections.map(renderSidebarSection)}
+                {sidebarSections.map(s => (
+                    <SidebarSection key={s.title} title={s.title} items={s.items} />
+                ))}
                 <Separator size="4" my="3" />
                 <AccountList />
                 <Separator size="4" my="3" />
