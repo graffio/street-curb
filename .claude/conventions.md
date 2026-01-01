@@ -65,7 +65,8 @@ export { MyComponent }
 - P/T/F/V/A/E cohesion groups at module level (not inside components)
 - Exported component(s) at bottom of file
 - `render*` functions → extract to actual `<Component />`
-- Event handlers: use `useCallback` directly, not E group (needs component state)
+- Event handlers: use `useCallback` directly for simple `set()`/`post()` calls
+- E group at module level: pass setters as parameters for testable effect functions
 
 ## Files
 
@@ -123,6 +124,41 @@ export { checkFileNaming }
 
 **Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and decide: rename it to match a cohesion type, or justify the exception with a `// COMPLEXITY:` comment. This requires judgment, so it's a checkpoint.
 
+**E Group (Handlers) Rules:**
+
+Handlers that do anything other than call `set()` or `post()` are code smell:
+
+```javascript
+// BAD - handler does "preparation" work
+const handleSelect = id => {
+    const item = items.find(i => i.id === id)
+    const transformed = { ...item, selected: true }
+    post(Action.SelectItem(transformed))
+}
+
+// GOOD - preparation is a selector, handler just calls post
+const handleSelect = id => post(Action.SelectItem(id))
+// Selector: S.selectedItem(state, id) handles the transformation
+```
+
+For complex effects needing local state, pass setters as parameters:
+
+```javascript
+// Module level - testable without React
+const E = {
+    startDrag: (viewId, setIsDragging) => {
+        setIsDragging(true)
+        // Effect logic here
+    },
+}
+
+// Component - just wires up the effect
+const handleDragStart = useCallback(
+    () => E.startDrag(viewId, setIsDragging),
+    [viewId],
+)
+```
+
 ## Shared Modules (cli-style-validator)
 
 Utilities used across multiple rules go in shared modules with namespace prefixes:
@@ -152,6 +188,25 @@ Different file types have different responsibilities:
 | Business modules | Pure domain logic, computations | Redux awareness, UI concerns |
 
 When a file contains logic belonging to a different layer, that's a signal to move it—not to split the file arbitrarily, but to place logic in its proper architectural home (decided together).
+
+**Selectors with Parameters:**
+
+Use `createSelector` from `@graffio/functional` when a selector needs to work both curried and uncurried:
+
+```javascript
+import { createSelector } from '@graffio/functional'
+
+// Works both ways:
+const selectItem = createSelector((state, id) => state.items[id])
+
+// Uncurried - in other selectors, tests, business logic
+selectItem(state, 'foo')
+
+// Curried - with useSelector in components
+useSelector(selectItem('foo'))
+```
+
+Only wrap selectors that actually need curried usage (YAGNI). Simple state-only selectors don't need `createSelector`.
 
 ## Imports
 
