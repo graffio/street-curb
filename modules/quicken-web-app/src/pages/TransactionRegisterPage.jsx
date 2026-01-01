@@ -20,18 +20,33 @@ import {
     toDataTableProps,
 } from '../utils/table-layout.js'
 
-const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
+const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
+
+const T = {
+    // @sig toTableLayoutId :: String -> String
+    toTableLayoutId: id => `cols_account_${id}`,
+}
+
+const E = {
+    // Dispatches highlight change, resolving ID to index based on search mode
+    // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+    dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
+        const inSearchMode = matchCount > 0
+        const idx = inSearchMode ? searchMatches.indexOf(newId) : data.findIndex(r => r.transaction?.id === newId)
+        if (idx < 0) return
+        post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
+    },
+}
 
 /*
  * Transaction Register page with filtering, search, and navigation
  *
  * @sig TransactionRegisterPage :: (TransactionRegisterPageProps) -> ReactElement
- *     TransactionRegisterPageProps = { accountId: String, startingBalance?: Number, height?: Number }
+ *     TransactionRegisterPageProps = { accountId: String, startingBalance?: Number, height?: Number,
+ *         isActive?: Boolean }
  */
-const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100%' }) => {
-    const makeViewId = id => `cols_account_${id}`
-
+const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100%', isActive = false }) => {
     // Initializes the date range to last 12 months when first loading
     // @sig initializeDateRange :: () -> void
     const initializeDateRange = () => {
@@ -43,66 +58,12 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
         post(Action.SetTransactionFilter(viewId, { dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
     }
 
-    // Sets up keyboard navigation for transaction list and search matches
-    // @sig setupKeyboardNavigation :: () -> (() -> void)
-    const setupKeyboardNavigation = () => {
-        // @sig moveToNextRow :: () -> void
-        const moveToNextRow = () => {
-            const nextIndex = currentRowIndex >= maxRowIndex ? 0 : currentRowIndex + 1
-            post(Action.SetTransactionFilter(viewId, { currentRowIndex: nextIndex }))
-        }
-
-        // @sig moveToPreviousRow :: () -> void
-        const moveToPreviousRow = () => {
-            const prevIndex = currentRowIndex <= 0 ? maxRowIndex : currentRowIndex - 1
-            post(Action.SetTransactionFilter(viewId, { currentRowIndex: prevIndex }))
-        }
-
-        // @sig handleNextMatch :: () -> void
-        const handleNextMatch = () => {
-            if (matchCount <= 0) return
-            const nextIndex = currentSearchIndex === matchCount - 1 ? 0 : currentSearchIndex + 1
-            post(Action.SetTransactionFilter(viewId, { currentSearchIndex: nextIndex }))
-        }
-
-        // @sig handlePreviousMatch :: () -> void
-        const handlePreviousMatch = () => {
-            if (matchCount <= 0) return
-            const prevIndex = currentSearchIndex === 0 ? matchCount - 1 : currentSearchIndex - 1
-            post(Action.SetTransactionFilter(viewId, { currentSearchIndex: prevIndex }))
-        }
-
-        // @sig handleArrowKey :: (String, Event) -> void
-        const handleArrowKey = (key, event) => {
-            const { tagName } = document.activeElement
-            if (tagName === 'INPUT' || tagName === 'TEXTAREA') return
-            event.preventDefault()
-            const inSearchMode = matchCount > 0
-            if (key === 'ArrowDown') inSearchMode ? handleNextMatch() : moveToNextRow()
-            if (key === 'ArrowUp') inSearchMode ? handlePreviousMatch() : moveToPreviousRow()
-        }
-
-        // @sig handleKeyDown :: KeyboardEvent -> void
-        const handleKeyDown = event => {
-            const { key } = event
-            if (key === 'Escape') {
-                event.preventDefault()
-                searchQuery && post(Action.SetTransactionFilter(viewId, { searchQuery: '', currentSearchIndex: 0 }))
-                return
-            }
-            if (['ArrowUp', 'ArrowDown'].includes(key)) handleArrowKey(key, event)
-        }
-
-        document.addEventListener('keydown', handleKeyDown)
-        return () => document.removeEventListener('keydown', handleKeyDown)
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // Derived values (computed from props)
     // -----------------------------------------------------------------------------------------------------------------
     // Use reg_ prefix to match View.Register's id pattern (FieldTypes.viewId)
     const viewId = `reg_${accountId}`
-    const tableLayoutId = makeViewId(accountId)
+    const tableLayoutId = T.toTableLayoutId(accountId)
 
     // -----------------------------------------------------------------------------------------------------------------
     // Hooks (selectors)
@@ -145,7 +106,6 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     // With manual sorting, search matches are already in display order (indices into sortedTransactions)
     const matchCount = searchMatches.length
-    const maxRowIndex = sortedTransactions.length - 1
 
     const highlightedId = useMemo(
         () => (matchCount > 0 ? searchMatches[currentSearchIndex] : sortedTransactions[currentRowIndex]?.id),
@@ -170,6 +130,20 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
         [tableLayout],
     )
 
+    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, data, viewId), [
+        matchCount,
+        searchMatches,
+        data,
+        viewId,
+    ])
+
+    const handleEscape = useCallback(
+        () => searchQuery && post(Action.SetTransactionFilter(viewId, { searchQuery: '', currentSearchIndex: 0 })),
+        [searchQuery, viewId],
+    )
+
+    const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
+
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
@@ -179,9 +153,6 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     )
 
     useEffect(initializeDateRange, [dateRangeKey, dateRange, viewId])
-
-    const dependencies = [viewId, currentRowIndex, maxRowIndex, currentSearchIndex, matchCount, searchQuery]
-    useEffect(setupKeyboardNavigation, dependencies)
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
@@ -193,12 +164,17 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
                     height={height}
                     rowHeight={60}
                     highlightedId={highlightedId}
+                    focusableIds={matchCount > 0 ? searchMatches : undefined}
                     sorting={sorting}
                     columnSizing={columnSizing}
                     columnOrder={columnOrder}
                     onSortingChange={handleSortingChange}
                     onColumnSizingChange={handleColumnSizingChange}
                     onColumnOrderChange={handleColumnOrderChange}
+                    onRowClick={handleRowClick}
+                    onHighlightChange={handleHighlightChange}
+                    onEscape={handleEscape}
+                    enableKeyboardNav={isActive}
                     context={{ searchQuery }}
                 />
             </div>

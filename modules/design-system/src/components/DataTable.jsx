@@ -1,5 +1,6 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
 // ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
+// COMPLEXITY: Design system component integrating TanStack Table + Virtual + dnd-kit - inherent complexity
 
 /*
  * DataTable - TanStack Table integration for the design system
@@ -37,6 +38,64 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual'
 import PropTypes from 'prop-types'
 import React, { useCallback, useEffect, useRef } from 'react'
+
+const T = {
+    // Gets row id, handling both plain objects and ViewRow.Detail structure
+    // @sig getRowId :: Object -> String | undefined
+    getRowId: row => row.id ?? row.transaction?.id,
+
+    // Get the list of navigable IDs (focusableIds if provided, otherwise all row IDs)
+    // @sig toNavigableIds :: ([String]?, [Row]) -> [String]
+    toNavigableIds: (focusableIds, rows) =>
+        focusableIds?.length > 0 ? focusableIds : rows.map(r => T.getRowId(r.original)),
+
+    // Calculate next index for keyboard navigation (wraps around)
+    // @sig toNextIndex :: (String, [String], String?) -> Number
+    toNextIndex: (direction, ids, highlightedId) => {
+        const currentIndex = highlightedId != null ? ids.indexOf(highlightedId) : -1
+        return direction === 'ArrowDown'
+            ? currentIndex >= ids.length - 1
+                ? 0
+                : currentIndex + 1
+            : currentIndex <= 0
+              ? ids.length - 1
+              : currentIndex - 1
+    },
+}
+
+const E = {
+    // Handles keyboard navigation events for DataTable
+    // @sig handleKeyDown :: (Function, Function?, String?, [String]?, [Row]) -> Event -> void
+    handleKeyDown: (onHighlightChange, onEscape, highlightedId, focusableIds, rows) => event => {
+        const { tagName } = document.activeElement
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA') return
+
+        const { key } = event
+        if (key === 'Escape') {
+            event.preventDefault()
+            onEscape?.()
+            return
+        }
+
+        if (key !== 'ArrowUp' && key !== 'ArrowDown') return
+        event.preventDefault()
+
+        const ids = T.toNavigableIds(focusableIds, rows)
+        if (ids.length === 0) return
+
+        const nextIndex = T.toNextIndex(key, ids, highlightedId)
+        onHighlightChange(ids[nextIndex])
+    },
+
+    // Sets up keyboard navigation for DataTable rows, returns cleanup function
+    // @sig setupKeyboardNav :: (Function, Function?, String?, [String]?, [Row]) -> (() -> void)?
+    setupKeyboardNav: (onHighlightChange, onEscape, highlightedId, focusableIds, rows) => {
+        if (!onHighlightChange) return undefined
+        const handler = E.handleKeyDown(onHighlightChange, onEscape, highlightedId, focusableIds, rows)
+        document.addEventListener('keydown', handler)
+        return () => document.removeEventListener('keydown', handler)
+    },
+}
 
 // Sort indicator component - shows direction and priority for multi-sort
 // @sig SortIndicator :: { direction: String, priority: Number } -> ReactElement
@@ -134,18 +193,6 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
 // Table header component with @dnd-kit drag-n-drop
 // @sig TableHeader :: { headerGroups, columnSizeVars, onSort, sorting, columnOrder, onColumnReorder } -> ReactElement
 const TableHeader = ({ headerGroups, columnSizeVars, onSort, sorting, columnOrder, onColumnReorder }) => {
-    // Renders individual header cell
-    // @sig renderHeader :: (Header, Number) -> ReactElement
-    const renderHeader = (header, index) => (
-        <SortableHeaderCell
-            key={header.id}
-            header={header}
-            sorting={sorting}
-            onSort={onSort}
-            isEven={index % 2 === 0}
-        />
-    )
-
     const handleDragEnd = event => {
         const { active, over } = event
         if (active && over && active.id !== over.id) onColumnReorder?.(active.id, over.id)
@@ -160,43 +207,87 @@ const TableHeader = ({ headerGroups, columnSizeVars, onSort, sorting, columnOrde
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                 <Flex align="center" gap="1" px="2" py="1" style={style}>
-                    {headers.map(renderHeader)}
+                    {headers.map((header, index) => (
+                        <SortableHeaderCell
+                            key={header.id}
+                            header={header}
+                            sorting={sorting}
+                            onSort={onSort}
+                            isEven={index % 2 === 0}
+                        />
+                    ))}
                 </Flex>
             </SortableContext>
         </DndContext>
     )
 }
 
+// Individual table cell with column sizing
+// @sig TableCell :: { cell: Cell } -> ReactElement
+const TableCell = ({ cell }) => {
+    const { column, id } = cell
+    const style = {
+        width: `calc(var(--col-${column.id}-size) * 1px)`,
+        flexShrink: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        color: 'var(--gray-11)',
+    }
+
+    return (
+        <Box key={id} style={style}>
+            {flexRender(column.columnDef.cell, cell.getContext())}
+        </Box>
+    )
+}
+
+// Virtualized row wrapper with absolute positioning
+// @sig VirtualRow :: Props -> ReactElement
+const VirtualRow = ({
+    virtualRow,
+    row,
+    highlightedRowIndex,
+    columnSizeVars,
+    renderSubComponent,
+    measureElement,
+    onClick,
+}) => {
+    const { index, start } = virtualRow
+    const style = { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` }
+    const isLeaf = !row.subRows || row.subRows.length === 0
+    const showSubComponent = renderSubComponent && row.getIsExpanded() && isLeaf
+
+    return (
+        <Box data-index={index} ref={measureElement} style={style}>
+            <TableRow
+                row={row}
+                rowIndex={index}
+                columnSizeVars={columnSizeVars}
+                isHighlighted={index === highlightedRowIndex}
+                onClick={onClick}
+            />
+            {showSubComponent && (
+                <Box px="2" py="2" style={{ backgroundColor: 'var(--gray-2)' }}>
+                    {renderSubComponent({ row })}
+                </Box>
+            )}
+        </Box>
+    )
+}
+
 // Table row component with zebra striping and highlight support
 // @sig TableRow :: { row, rowIndex, columnSizeVars, isHighlighted, onClick } -> ReactElement
 const TableRow = ({ row, rowIndex, columnSizeVars, isHighlighted, onClick }) => {
-    // Renders individual cell with column sizing
-    // @sig renderCell :: Cell -> ReactElement
-    const renderCell = cell => {
-        const { column, id } = cell
-        const style = {
-            width: `calc(var(--col-${column.id}-size) * 1px)`,
-            flexShrink: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            color: 'var(--gray-11)',
-        }
-
-        return (
-            <Box key={id} style={style}>
-                {flexRender(column.columnDef.cell, cell.getContext())}
-            </Box>
-        )
-    }
-
     const zebraColor = rowIndex % 2 === 0 ? 'var(--gray-1)' : 'var(--gray-2)'
     const backgroundColor = isHighlighted ? 'var(--yellow-5)' : zebraColor
     const style = { ...columnSizeVars, backgroundColor, cursor: onClick ? 'pointer' : undefined }
 
     return (
         <Flex align="start" gap="1" px="2" py="1" onClick={onClick} style={style}>
-            {row.getVisibleCells().map(renderCell)}
+            {row.getVisibleCells().map(cell => (
+                <TableCell key={cell.id} cell={cell} />
+            ))}
         </Flex>
     )
 }
@@ -209,6 +300,7 @@ const DataTable = ({
     height = 600,
     rowHeight = 48,
     highlightedId,
+    focusableIds,
     columnSizing,
     columnVisibility,
     sorting,
@@ -223,6 +315,9 @@ const DataTable = ({
     onColumnOrderChange,
     onExpandedChange,
     onRowClick,
+    onHighlightChange,
+    onEscape,
+    enableKeyboardNav = false,
     context = {},
 }) => {
     // Hack: convert nested accessorKey paths to accessorFn to avoid TanStack "deeply nested key" warnings
@@ -311,33 +406,10 @@ const DataTable = ({
         return () => clearTimeout(timeout)
     }
 
-    // Renders a virtualized row at the correct position
-    // @sig renderVirtualRow :: VirtualRow -> ReactElement
-    const renderVirtualRow = virtualRow => {
-        const { index, start } = virtualRow
-        const highlightedRowIndex = findHighlightedRowIndex()
-        const style = { position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${start}px)` }
-
-        const row = rows[index]
-        const isLeaf = !row.subRows || row.subRows.length === 0
-        const showSubComponent = renderSubComponent && row.getIsExpanded() && isLeaf
-
-        return (
-            <Box key={row.id} data-index={index} ref={virtualizer.measureElement} style={style}>
-                <TableRow
-                    row={row}
-                    rowIndex={index}
-                    columnSizeVars={columnSizeVars}
-                    isHighlighted={index === highlightedRowIndex}
-                    onClick={onRowClick ? handleRowClick(row) : undefined}
-                />
-                {showSubComponent && (
-                    <Box px="2" py="2" style={{ backgroundColor: 'var(--gray-2)' }}>
-                        {renderSubComponent({ row })}
-                    </Box>
-                )}
-            </Box>
-        )
+    // Keyboard navigation for row highlighting (only when this DataTable is active)
+    const setupKeyboardNavEffect = () => {
+        if (!enableKeyboardNav) return undefined
+        return E.setupKeyboardNav(onHighlightChange, onEscape, highlightedId, focusableIds, rows)
     }
 
     // Refs
@@ -396,7 +468,16 @@ const DataTable = ({
     const handleRowClick = useCallback(createRowClickHandler, [onRowClick])
     const handleColumnReorder = useCallback(reorderColumns, [onColumnOrderChange, table, columns])
     const columnSizeVars = React.useMemo(computeColumnSizeVars, [columnSizing, columns, table])
+    const highlightedRowIndex = React.useMemo(findHighlightedRowIndex, [highlightedId, rows])
     useEffect(scrollToHighlightedRow, [highlightedId, rows.length, virtualizer])
+    useEffect(setupKeyboardNavEffect, [
+        enableKeyboardNav,
+        onHighlightChange,
+        onEscape,
+        highlightedId,
+        focusableIds,
+        rows,
+    ])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Main
@@ -415,7 +496,18 @@ const DataTable = ({
             <Box style={{ flex: 1, position: 'relative', minHeight: 0 }}>
                 <Box ref={tableContainerRef} style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
                     <Box style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-                        {virtualizer.getVirtualItems().map(renderVirtualRow)}
+                        {virtualizer.getVirtualItems().map(virtualRow => (
+                            <VirtualRow
+                                key={rows[virtualRow.index].id}
+                                virtualRow={virtualRow}
+                                row={rows[virtualRow.index]}
+                                highlightedRowIndex={highlightedRowIndex}
+                                columnSizeVars={columnSizeVars}
+                                renderSubComponent={renderSubComponent}
+                                measureElement={virtualizer.measureElement}
+                                onClick={onRowClick ? handleRowClick(rows[virtualRow.index]) : undefined}
+                            />
+                        ))}
                     </Box>
                 </Box>
             </Box>
@@ -429,6 +521,7 @@ DataTable.propTypes = {
     height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     rowHeight: PropTypes.number,
     highlightedId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    focusableIds: PropTypes.array,
     columnSizing: PropTypes.object,
     columnVisibility: PropTypes.object,
     sorting: PropTypes.array,
@@ -443,6 +536,9 @@ DataTable.propTypes = {
     onColumnOrderChange: PropTypes.func,
     onExpandedChange: PropTypes.func,
     onRowClick: PropTypes.func,
+    onHighlightChange: PropTypes.func,
+    onEscape: PropTypes.func,
+    enableKeyboardNav: PropTypes.bool,
     context: PropTypes.object,
 }
 

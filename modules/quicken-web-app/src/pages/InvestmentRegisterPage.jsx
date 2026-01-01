@@ -3,6 +3,7 @@
 
 import { DataTable, Flex, layoutChannel, Text, useChannel } from '@graffio/design-system'
 import { calculateRunningCashBalances } from '@graffio/financial-computations/investments'
+import { applySort } from '@graffio/financial-computations/query'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { ACTION_LABELS, investmentTransactionColumns } from '../columns/index.js'
@@ -30,52 +31,45 @@ import {
     toDataTableProps,
 } from '../utils/table-layout.js'
 
-const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
+const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
 const MAX_DETAIL_LINES = 3
 
-/*
- * Investment Transaction Register page with filtering, search, and navigation
- *
- * @sig InvestmentRegisterPage :: (InvestmentRegisterPageProps) -> ReactElement
- *     InvestmentRegisterPageProps = { accountId: String, startingBalance?: Number, height?: Number }
- */
-const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%' }) => {
-    const makeViewId = id => `cols_investment_${id}`
+const T = {
+    // @sig toTableLayoutId :: String -> String
+    toTableLayoutId: id => `cols_investment_${id}`,
 
-    // Build detail lines for a list (up to MAX_DETAIL_LINES, then +N more)
-    // @sig buildDetailLines :: [String] -> [String]
-    const buildDetailLines = items => {
+    // @sig toDetailLines :: [String] -> [String]
+    toDetailLines: items => {
         const { length } = items
         if (length === 0) return []
         if (length <= MAX_DETAIL_LINES) return items
         const shown = items.slice(0, MAX_DETAIL_LINES - 1)
-        const remaining = length - shown.length
-        return [...shown, `+${remaining} more`]
-    }
+        return [...shown, `+${length - shown.length} more`]
+    },
+}
 
-    // Compares two values for sorting, handling nulls
-    // @sig compareNullable :: (Any, Any, Boolean) -> Number
-    const compareNullable = (a, b, desc) => {
-        if (a == null && b == null) return 0
-        if (a == null) return 1
-        if (b == null) return -1
-        return desc ? (a > b ? -1 : a < b ? 1 : 0) : a < b ? -1 : a > b ? 1 : 0
-    }
+const E = {
+    // Dispatches highlight change, resolving ID to index based on search mode
+    // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+    dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
+        const inSearchMode = matchCount > 0
+        const idx = inSearchMode ? searchMatches.indexOf(newId) : data.findIndex(r => r.transaction?.id === newId)
+        if (idx < 0) return
+        post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
+    },
+}
 
-    // Sorts RegisterRows by a column's accessor, handling nested paths like "transaction.date"
-    // @sig sortRegisterRows :: ([SortSpec], [RegisterRow]) -> [RegisterRow]
-    const sortRegisterRows = (sortSpecs, rows) => {
-        if (!sortSpecs?.length) return rows
-        const { id, desc } = sortSpecs[0]
-        const key = investmentTransactionColumns.get(id)?.accessorKey || id
-        const [first, second] = key.split('.')
-        const getValue = second ? row => row[first]?.[second] : row => row[first]
-        return [...rows].sort((a, b) => compareNullable(getValue(a), getValue(b), desc))
-    }
-
+/*
+ * Investment Transaction Register page with filtering, search, and navigation
+ *
+ * @sig InvestmentRegisterPage :: (InvestmentRegisterPageProps) -> ReactElement
+ *     InvestmentRegisterPageProps = { accountId: String, startingBalance?: Number, height?: Number,
+ *         isActive?: Boolean }
+ */
+const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%', isActive = false }) => {
     // Initializes the date range to last 12 months when first loading
     // @sig initializeDateRange :: () -> void
     const initializeDateRange = () => {
@@ -87,66 +81,12 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
         post(Action.SetTransactionFilter(viewId, { dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
     }
 
-    // Sets up keyboard navigation for transaction list and search matches
-    // @sig setupKeyboardNavigation :: () -> (() -> void)
-    const setupKeyboardNavigation = () => {
-        // @sig moveToNextRow :: () -> void
-        const moveToNextRow = () => {
-            const nextIndex = currentRowIndex >= maxRowIndex ? 0 : currentRowIndex + 1
-            post(Action.SetTransactionFilter(viewId, { currentRowIndex: nextIndex }))
-        }
-
-        // @sig moveToPreviousRow :: () -> void
-        const moveToPreviousRow = () => {
-            const prevIndex = currentRowIndex <= 0 ? maxRowIndex : currentRowIndex - 1
-            post(Action.SetTransactionFilter(viewId, { currentRowIndex: prevIndex }))
-        }
-
-        // @sig handleNextMatch :: () -> void
-        const handleNextMatch = () => {
-            if (matchCount <= 0) return
-            const nextIndex = currentSearchIndex === matchCount - 1 ? 0 : currentSearchIndex + 1
-            post(Action.SetTransactionFilter(viewId, { currentSearchIndex: nextIndex }))
-        }
-
-        // @sig handlePreviousMatch :: () -> void
-        const handlePreviousMatch = () => {
-            if (matchCount <= 0) return
-            const prevIndex = currentSearchIndex === 0 ? matchCount - 1 : currentSearchIndex - 1
-            post(Action.SetTransactionFilter(viewId, { currentSearchIndex: prevIndex }))
-        }
-
-        // @sig handleArrowKey :: (String, Event) -> void
-        const handleArrowKey = (key, event) => {
-            const { tagName } = document.activeElement
-            if (tagName === 'INPUT' || tagName === 'TEXTAREA') return
-            event.preventDefault()
-            const inSearchMode = matchCount > 0
-            if (key === 'ArrowDown') inSearchMode ? handleNextMatch() : moveToNextRow()
-            if (key === 'ArrowUp') inSearchMode ? handlePreviousMatch() : moveToPreviousRow()
-        }
-
-        // @sig handleKeyDown :: KeyboardEvent -> void
-        const handleKeyDown = event => {
-            const { key } = event
-            if (key === 'Escape') {
-                event.preventDefault()
-                searchQuery && post(Action.SetTransactionFilter(viewId, { searchQuery: '', currentSearchIndex: 0 }))
-                return
-            }
-            if (['ArrowUp', 'ArrowDown'].includes(key)) handleArrowKey(key, event)
-        }
-
-        document.addEventListener('keydown', handleKeyDown)
-        return () => document.removeEventListener('keydown', handleKeyDown)
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // Derived values (computed from props)
     // -----------------------------------------------------------------------------------------------------------------
     // Use inv_ prefix to distinguish from bank registers
     const viewId = `inv_${accountId}`
-    const tableLayoutId = makeViewId(accountId)
+    const tableLayoutId = T.toTableLayoutId(accountId)
 
     // -----------------------------------------------------------------------------------------------------------------
     // Hooks (selectors)
@@ -204,14 +144,13 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
 
     // Apply user's display sort to RegisterRows
-    const data = useMemo(() => sortRegisterRows(sorting, withBalances), [withBalances, sorting])
+    const data = useMemo(() => applySort(sorting, withBalances, investmentTransactionColumns), [withBalances, sorting])
 
     // Get account name for header
     const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
     // With manual sorting, search matches are already in display order
     const matchCount = searchMatches.length
-    const maxRowIndex = data.length - 1
 
     const highlightedId = useMemo(
         () => (matchCount > 0 ? searchMatches[currentSearchIndex] : data[currentRowIndex]?.transaction?.id),
@@ -230,9 +169,9 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     // Build detail lines for each filter chip
     const dateDetails = dateRange ? [formatDateRange(dateRange.start, dateRange.end)].filter(Boolean) : []
     const securityNames = selectedSecurities.map(id => securities?.get(id)?.name || id)
-    const securityDetails = buildDetailLines(securityNames)
+    const securityDetails = T.toDetailLines(securityNames)
     const actionNames = selectedInvestmentActions.map(code => ACTION_LABELS[code] || code)
-    const actionDetails = buildDetailLines(actionNames)
+    const actionDetails = T.toDetailLines(actionNames)
 
     const filterRowStyle = { ...filterRowBaseStyle, backgroundColor: isFiltering ? 'var(--ruby-3)' : 'var(--gray-2)' }
 
@@ -254,6 +193,19 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
         [tableLayout],
     )
 
+    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, data, viewId), [
+        matchCount,
+        searchMatches,
+        data,
+        viewId,
+    ])
+
+    const handleEscape = useCallback(
+        () => searchQuery && post(Action.SetTransactionFilter(viewId, { searchQuery: '', currentSearchIndex: 0 })),
+        [searchQuery, viewId],
+    )
+    const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
+
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
@@ -263,9 +215,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
 
     useEffect(initializeDateRange, [dateRangeKey, dateRange, viewId])
-
-    const dependencies = [viewId, currentRowIndex, maxRowIndex, currentSearchIndex, matchCount, searchQuery]
-    useEffect(setupKeyboardNavigation, dependencies)
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
@@ -303,12 +252,17 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
                     height={height}
                     rowHeight={60}
                     highlightedId={highlightedId}
+                    focusableIds={matchCount > 0 ? searchMatches : undefined}
                     sorting={sorting}
                     columnSizing={columnSizing}
                     columnOrder={columnOrder}
                     onSortingChange={handleSortingChange}
                     onColumnSizingChange={handleColumnSizingChange}
                     onColumnOrderChange={handleColumnOrderChange}
+                    onRowClick={handleRowClick}
+                    onHighlightChange={handleHighlightChange}
+                    onEscape={handleEscape}
+                    enableKeyboardNav={isActive}
                     context={{ searchQuery }}
                 />
             </div>
