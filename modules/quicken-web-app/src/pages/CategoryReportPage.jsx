@@ -9,7 +9,7 @@ import { FilterChipRow, TransactionSubTable } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 
-const pageContainerStyle = { padding: 'var(--space-4)', height: '100%' }
+const pageContainerStyle = { height: '100%' }
 
 const dimensionLayouts = {
     category: { title: 'Spending by Category', subtitle: 'View spending breakdown by category hierarchy' },
