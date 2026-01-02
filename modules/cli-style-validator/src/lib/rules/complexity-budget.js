@@ -154,7 +154,7 @@ const V = {
     // Validate React file budget (per-component or file-level)
     // @sig checkReactBudget :: (AST, String, Budget) -> [Violation]
     checkReactBudget: (ast, sourceCode, budget) => {
-        const components = A.findComponents(ast)
+        const components = AS.findComponents(ast)
         if (components.length === 0) {
             const totalLines = sourceCode.split('\n').length
             const result = V.checkMetric(sourceCode, 'lines', totalLines, budget.lines, 'react-component')
@@ -213,35 +213,6 @@ const A = {
             if (P.isStyleObject(n)) count++
         })
         return count
-    },
-
-    // Find all PascalCase component declarations at module level
-    // @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
-    findComponents: ast => {
-        const components = []
-        if (!ast?.body) return components
-
-        ast.body.forEach(node => {
-            if (node.type === 'VariableDeclaration') {
-                const decl = node.declarations[0]
-                if (decl?.id?.name && PS.isPascalCase(decl.id.name) && decl.init && PS.isFunctionNode(decl.init))
-                    components.push({
-                        name: decl.id.name,
-                        node: decl.init,
-                        startLine: node.loc?.start?.line || 1,
-                        endLine: node.loc?.end?.line || 1,
-                    })
-            }
-            if (node.type === 'FunctionDeclaration' && PS.isPascalCase(node.id?.name))
-                components.push({
-                    name: node.id.name,
-                    node,
-                    startLine: node.loc?.start?.line || 1,
-                    endLine: node.loc?.end?.line || 1,
-                })
-        })
-
-        return components
     },
 }
 

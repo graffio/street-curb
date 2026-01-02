@@ -1,6 +1,7 @@
 // ABOUTME: Shared AST traversal/aggregation utilities for style validator rules
 // ABOUTME: Provides traverseAST and child node utilities for rule implementations
-// COMPLEXITY: Shared module consolidating utilities from multiple rules
+// COMPLEXITY: lines — Shared module consolidating utilities from multiple rules
+// COMPLEXITY: functions — Shared module consolidating utilities from multiple rules
 
 import { PS } from './predicates.js'
 
@@ -117,6 +118,35 @@ const AS = {
         const tracker = { isCallback: false }
         AS.searchCallbackContext(rootNode, node, tracker)
         return tracker.isCallback
+    },
+
+    // Convert AST node to component info if it's a PascalCase component declaration
+    // @sig toComponent :: ASTNode -> { name: String, node: ASTNode, startLine: Number, endLine: Number } | null
+    toComponent: node => {
+        const { type, loc, declarations } = node
+        const startLine = loc?.start?.line || 1
+        const endLine = loc?.end?.line || 1
+
+        if (type === 'FunctionDeclaration') {
+            const name = node.id?.name
+            return PS.isPascalCase(name) ? { name, node, startLine, endLine } : null
+        }
+
+        if (type !== 'VariableDeclaration') return null
+
+        const decl = declarations?.[0]
+        const name = decl?.id?.name
+        const init = decl?.init
+        if (!name || !PS.isPascalCase(name) || !init || !PS.isFunctionNode(init)) return null
+
+        return { name, node: init, startLine, endLine }
+    },
+
+    // Find all PascalCase component declarations at module level
+    // @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
+    findComponents: ast => {
+        if (!ast?.body) return []
+        return ast.body.map(AS.toComponent).filter(Boolean)
     },
 }
 
