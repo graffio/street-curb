@@ -71,6 +71,15 @@ const F = {
     }),
 }
 
+const V = {
+    // Validate that code uses functional patterns instead of loops
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast) return []
+        return A.collectViolations(ast)
+    },
+}
+
 const A = {
     // Check node for loop violations and add to array
     // @sig checkNode :: (ASTNode, [Violation]) -> Void
@@ -88,14 +97,5 @@ const A = {
     },
 }
 
-const V = {
-    // Validate that code uses functional patterns instead of loops
-    // @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
-    checkFunctionalPatterns: (ast, sourceCode, filePath) => {
-        if (!ast) return []
-        return A.collectViolations(ast)
-    },
-}
-
-const checkFunctionalPatterns = FS.withExemptions('functional-patterns', V.checkFunctionalPatterns)
+const checkFunctionalPatterns = FS.withExemptions('functional-patterns', V.check)
 export { checkFunctionalPatterns }

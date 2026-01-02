@@ -1,6 +1,8 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
-// COMPLEXITY: sig-documentation — Multi-aspect validation (presence, ordering, description) requires many predicates
+// COMPLEXITY-TODO: lines — Comment block analysis requires many predicates (expires 2026-01-03)
+// COMPLEXITY-TODO: functions — Comment block analysis requires many predicates (expires 2026-01-03)
+// COMPLEXITY-TODO: cohesion-structure — Comment parsing requires many predicates (expires 2026-01-03)
 
 import { AS } from '../aggregators.js'
 import { FS } from '../factories.js'

@@ -70,6 +70,17 @@ const F = {
     }),
 }
 
+const V = {
+    // Validate that functions are declared before executable statements
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast) return []
+        const violations = []
+        AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
+        return violations
+    },
+}
+
 const A = {
     // Add violation for misplaced variable function declarator
     // @sig processDeclarator :: (ASTNode, [Violation]) -> Void
@@ -109,19 +120,5 @@ const A = {
     },
 }
 
-const V = {
-    // Validate that functions are declared before executable statements
-    // @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
-    checkFunctionDeclarationOrdering: (ast, sourceCode, filePath) => {
-        if (!ast) return []
-        const violations = []
-        AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
-        return violations
-    },
-}
-
-const checkFunctionDeclarationOrdering = FS.withExemptions(
-    'function-declaration-ordering',
-    V.checkFunctionDeclarationOrdering,
-)
+const checkFunctionDeclarationOrdering = FS.withExemptions('function-declaration-ordering', V.check)
 export { checkFunctionDeclarationOrdering }

@@ -60,6 +60,18 @@ const F = {
     }),
 }
 
+const V = {
+    // Validate React component cohesion patterns
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
+        if (!A.hasJSXContext(ast)) return []
+
+        const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
+        return [...renderViolations, ...A.collectCohesionViolations(ast)]
+    },
+}
+
 const A = {
     // Find cohesion groups inside a component function body
     // @sig findCohesionGroupsIn :: (ASTNode, String) -> [Violation]
@@ -93,17 +105,5 @@ const A = {
     hasJSXContext: ast => AS.collectNodes(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
 }
 
-const V = {
-    // Validate React component cohesion patterns
-    // @sig checkReactComponentCohesion :: (AST?, String, String) -> [Violation]
-    checkReactComponentCohesion: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
-        if (!A.hasJSXContext(ast)) return []
-
-        const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
-        return [...renderViolations, ...A.collectCohesionViolations(ast)]
-    },
-}
-
-const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.checkReactComponentCohesion)
+const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.check)
 export { checkReactComponentCohesion }

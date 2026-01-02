@@ -1,7 +1,10 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
-// COMPLEXITY-TODO: lines — extracting findComponents and refactoring in this task (expires 2026-02-01)
-// COMPLEXITY-TODO: functions — will be reduced after extracting findComponents (expires 2026-02-01)
+// COMPLEXITY-TODO: lines — Budget config and per-context validation (expires 2026-01-03)
+// COMPLEXITY-TODO: functions — Budget config and per-context validation (expires 2026-01-03)
+// COMPLEXITY-TODO: cohesion-structure — Budget checking requires many validators (expires 2026-01-03)
+// COMPLEXITY-TODO: chain-extraction — Component analysis accesses nested props (expires 2026-01-03)
+// COMPLEXITY-TODO: single-level-indentation — Style counting callback needs inline (expires 2026-01-03)
 
 import { AS } from '../aggregators.js'
 import { PS } from '../predicates.js'
@@ -87,8 +90,8 @@ const P = {
 
 const T = {
     // Determine file context based on path patterns
-    // @sig getContext :: String -> String
-    getContext: filePath => {
+    // @sig toContext :: String -> String
+    toContext: filePath => {
         if (filePath.includes('/cli-')) return 'cli'
         if (filePath.includes('/pages/') && filePath.endsWith('.jsx')) return 'react-page'
         if (filePath.includes('/components/') && filePath.endsWith('.jsx')) return 'react-component'
@@ -99,13 +102,13 @@ const T = {
         return 'utility'
     },
 
-    // Get budget for a component based on its name (Page suffix = page budget)
-    // @sig getComponentBudget :: String -> Budget
-    getComponentBudget: compName => (compName.endsWith('Page') ? BUDGETS['react-page'] : BUDGETS['react-component']),
+    // Transform component name to its budget (Page suffix = page budget)
+    // @sig toComponentBudget :: String -> Budget
+    toComponentBudget: compName => (compName.endsWith('Page') ? BUDGETS['react-page'] : BUDGETS['react-component']),
 
-    // Get context string for a component based on its name
-    // @sig getComponentContext :: String -> String
-    getComponentContext: compName => (compName.endsWith('Page') ? 'react-page' : 'react-component'),
+    // Transform component name to its context string
+    // @sig toComponentContext :: String -> String
+    toComponentContext: compName => (compName.endsWith('Page') ? 'react-page' : 'react-component'),
 }
 
 const CHECKPOINT_SUFFIX =
@@ -137,8 +140,8 @@ const V = {
     // Validate a single React component against its budget
     // @sig checkComponentBudget :: ({ name, node, startLine, endLine }, String) -> [Violation]
     checkComponentBudget: (comp, sourceCode) => {
-        const budget = T.getComponentBudget(comp.name)
-        const context = T.getComponentContext(comp.name)
+        const budget = T.toComponentBudget(comp.name)
+        const context = T.toComponentContext(comp.name)
         const compLines = comp.endLine - comp.startLine + 1
         const funcCount = AS.countFunctions(comp.node)
         const styleCount = A.countStyleObjects(comp.node)
@@ -192,11 +195,11 @@ const V = {
     },
 
     // Validate complexity budget for entire file
-    // @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
-    checkComplexityBudget: (ast, sourceCode, filePath) => {
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
 
-        const context = T.getContext(filePath)
+        const context = T.toContext(filePath)
         const budget = BUDGETS[context]
 
         if (P.isReactContext(context)) return V.checkReactBudget(ast, sourceCode, budget)
@@ -216,5 +219,5 @@ const A = {
     },
 }
 
-const checkComplexityBudget = V.checkComplexityBudget
+const checkComplexityBudget = V.check
 export { checkComplexityBudget }

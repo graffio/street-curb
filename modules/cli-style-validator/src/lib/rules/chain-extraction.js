@@ -1,5 +1,8 @@
 // ABOUTME: Rule to suggest extracting repeated property chains into variables
 // ABOUTME: Flags when base.* appears 3+ times and suggests const { props } = base
+// COMPLEXITY-TODO: lines — Chain tracking requires scope-aware traversal (expires 2026-01-03)
+// COMPLEXITY-TODO: functions — Chain tracking requires scope-aware traversal (expires 2026-01-03)
+// COMPLEXITY-TODO: cohesion-structure — Scope tracking requires many helpers (expires 2026-01-03)
 
 import { AS } from '../aggregators.js'
 import { FS } from '../factories.js'
@@ -34,43 +37,40 @@ const P = {
 }
 
 const T = {
-    // Recursively find the base identifier of a member expression
-    // @sig findBase :: ASTNode -> ASTNode?
-    findBase: node => {
-        if (!node) return null
-        if (node.type === 'Identifier') return node
-        if (node.type === 'MemberExpression') return T.findBase(node.object)
-        return null
-    },
-
     // Collect property names in a chain (a.b.c -> ['a', 'b', 'c'])
     // @sig collectChainParts :: (ASTNode, [String]) -> [String]
     collectChainParts: (node, parts) => {
-        if (node.type === 'Identifier') return [node.name, ...parts]
-        if (node.type !== 'MemberExpression' || node.computed) return parts
-        if (node.property?.type !== 'Identifier') return parts
-        return T.collectChainParts(node.object, [node.property.name, ...parts])
+        const { type, computed, object, property, name } = node
+        if (type === 'Identifier') return [name, ...parts]
+        if (type !== 'MemberExpression' || computed) return parts
+        if (property?.type !== 'Identifier') return parts
+        return T.collectChainParts(object, [property.name, ...parts])
     },
 
-    // Get base and property from nested chain
-    // @sig getNestedChain :: (ASTNode, String) -> { base: String, property: String }?
-    getNestedChain: (object, propertyName) => {
-        const baseNode = T.findBase(object)
+    // Convert nested chain to base and property
+    // @sig toNestedChain :: (ASTNode, String) -> { base: String, property: String }?
+    toNestedChain: (object, propertyName) => {
+        const baseNode = AS.findBase(object)
         if (!baseNode) return null
         const parts = T.collectChainParts(object, [])
         if (parts.length === 0) return null
         return { base: parts.join('.'), property: propertyName }
     },
 
-    // Extract base and property from a member expression
-    // @sig getBaseAndProperty :: ASTNode -> { base: String, property: String }?
-    getBaseAndProperty: node => {
-        if (!node || node.type !== 'MemberExpression' || node.computed) return null
-        if (!node.property || node.property.type !== 'Identifier') return null
+    // Convert member expression to base and property
+    // @sig toBaseAndProperty :: ASTNode -> { base: String, property: String }?
+    toBaseAndProperty: node => {
+        if (!node) return null
+        const { type, computed, object, property } = node
+        if (type !== 'MemberExpression' || computed) return null
+        const propType = property?.type
+        const propName = property?.name
+        if (propType !== 'Identifier') return null
 
-        const { object, property } = node
-        if (object.type === 'Identifier') return { base: object.name, property: property.name }
-        if (object.type === 'MemberExpression') return T.getNestedChain(object, property.name)
+        const objType = object?.type
+        const objName = object?.name
+        if (objType === 'Identifier') return { base: objName, property: propName }
+        if (objType === 'MemberExpression') return T.toNestedChain(object, propName)
         return null
     },
 }
@@ -93,21 +93,23 @@ const F = {
 
 const V = {
     // Validate repeated property chains that could be destructured
-    // @sig checkChainExtraction :: (AST?, String, String) -> [Violation]
-    checkChainExtraction: (ast, sourceCode, filePath) => {
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
         if (!ast) return []
 
         const namespaces = A.collectNamespaceImports(ast)
-        const allSuggestions = []
-        AS.traverseAST(ast, node => {
-            if (PS.isFunctionNode(node)) allSuggestions.push(...A.processFunctionNode(node, namespaces))
-        })
-
-        return allSuggestions
+        return A.collectFunctionSuggestions(ast, namespaces)
     },
 }
 
 const A = {
+    // Collect suggestions for all functions in AST
+    // @sig collectFunctionSuggestions :: (AST, Set<String>) -> [Violation]
+    collectFunctionSuggestions: (ast, namespaces) =>
+        AS.collectNodes(ast)
+            .filter(PS.isFunctionNode)
+            .flatMap(node => A.processFunctionNode(node, namespaces)),
+
     // Collect all namespace import identifiers (import * as X)
     // @sig collectNamespaceImports :: AST -> Set<String>
     collectNamespaceImports: ast => {
@@ -143,10 +145,20 @@ const A = {
         if (P.isAssignmentTarget(node, parent)) return
 
         const targetNode = P.isMethodCall(node, parent) ? node.object : node
-        const result = T.getBaseAndProperty(targetNode)
+        const result = T.toBaseAndProperty(targetNode)
         if (!result) return
 
         A.addToMap(bases, result.base, result.property, node.loc?.start?.line || 1)
+    },
+
+    // Process a single node in the function scope traversal
+    // @sig processNodeInScope :: (Map, Set, ASTNode, ASTNode, ASTNode?) -> Void
+    processNodeInScope: (bases, visited, funcNode, node, parent) => {
+        if (visited.has(node)) return
+        visited.add(node)
+        if (PS.isFunctionNode(node) && node !== funcNode) return
+        if (node.type === 'MemberExpression') A.processMemberExpression(bases, node, parent)
+        AS.getChildNodes(node).forEach(child => A.processNodeInScope(bases, visited, funcNode, child, node))
     },
 
     // Collect all base accesses within a function scope
@@ -154,16 +166,7 @@ const A = {
     collectBasesInFunction: funcNode => {
         const bases = new Map()
         const visited = new Set()
-
-        const processNode = (node, parent) => {
-            if (visited.has(node)) return
-            visited.add(node)
-            if (PS.isFunctionNode(node) && node !== funcNode) return
-            if (node.type === 'MemberExpression') A.processMemberExpression(bases, node, parent)
-            AS.getChildNodes(node).forEach(child => processNode(child, node))
-        }
-
-        if (funcNode.body) processNode(funcNode.body, funcNode)
+        if (funcNode.body) A.processNodeInScope(bases, visited, funcNode, funcNode.body, funcNode)
         return bases
     },
 
@@ -183,5 +186,5 @@ const A = {
     },
 }
 
-const checkChainExtraction = FS.withExemptions('chain-extraction', V.checkChainExtraction)
+const checkChainExtraction = FS.withExemptions('chain-extraction', V.check)
 export { checkChainExtraction }

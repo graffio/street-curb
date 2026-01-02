@@ -1,5 +1,6 @@
-// ABOUTME: Rule to detect import violations
-// ABOUTME: Enforces ES6 imports, no require(), and @graffio/design-system over @radix-ui/themes
+// ABOUTME: Rule to detect import violations (ES6 imports, design-system wrapping)
+// ABOUTME: Enforces standard import patterns across the codebase
+// COMPLEXITY-TODO: import-ordering — Rule contains patterns it checks for (expires 2026-01-03)
 
 import { FS } from '../factories.js'
 
@@ -29,6 +30,20 @@ const F = {
     }),
 }
 
+const V = {
+    // Validate import statements in source file
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        const violations = []
+        const lines = sourceCode.split('\n')
+        const skipRadixCheck = P.isDesignSystemFile(filePath)
+
+        lines.forEach((line, index) => A.collectLineViolations(line, index + 1, skipRadixCheck, violations))
+
+        return violations
+    },
+}
+
 const A = {
     // Check a single line for import violations and add to array
     // @sig collectLineViolations :: (String, Number, Boolean, [Violation]) -> Void
@@ -42,19 +57,5 @@ const A = {
     },
 }
 
-const V = {
-    // Validate import statements in source file
-    // @sig checkImportOrdering :: (AST?, String, String) -> [Violation]
-    checkImportOrdering: (ast, sourceCode, filePath) => {
-        const violations = []
-        const lines = sourceCode.split('\n')
-        const skipRadixCheck = P.isDesignSystemFile(filePath)
-
-        lines.forEach((line, index) => A.collectLineViolations(line, index + 1, skipRadixCheck, violations))
-
-        return violations
-    },
-}
-
-const checkImportOrdering = FS.withExemptions('import-ordering', V.checkImportOrdering)
+const checkImportOrdering = FS.withExemptions('import-ordering', V.check)
 export { checkImportOrdering }

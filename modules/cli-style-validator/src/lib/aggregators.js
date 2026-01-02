@@ -148,6 +148,42 @@ const AS = {
         if (!ast?.body) return []
         return ast.body.map(AS.toComponent).filter(Boolean)
     },
+
+    // Generate array of numbers from start to end inclusive
+    // @sig lineRange :: (Number, Number) -> [Number]
+    lineRange: (start, end) => Array.from({ length: end - start + 1 }, (_, i) => start + i),
+
+    // Transform AST node to array of line numbers it covers
+    // @sig toNodeLineNumbers :: ASTNode -> [Number]
+    toNodeLineNumbers: node => (node.loc ? AS.lineRange(node.loc.start.line, node.loc.end.line) : []),
+
+    // Recursively find the base identifier of a member expression
+    // @sig findBase :: ASTNode -> ASTNode?
+    findBase: node => {
+        if (!node) return null
+        const { type, object } = node
+        if (type === 'Identifier') return node
+        if (type === 'MemberExpression') return AS.findBase(object)
+        return null
+    },
+
+    // Transform AST to unique exported names
+    // @sig toExportedNames :: AST -> [String]
+    toExportedNames: ast => {
+        if (!ast || !ast.body) return []
+        const names = ast.body.flatMap(node => [...AS.toSpecifierNames(node), ...AS.toDefaultExportName(node)])
+        return [...new Set(names)]
+    },
+
+    // Extract exported names from named export specifiers
+    // @sig toSpecifierNames :: ASTNode -> [String]
+    toSpecifierNames: ({ type, specifiers }) =>
+        type === 'ExportNamedDeclaration' && specifiers ? specifiers.map(s => s.exported?.name).filter(Boolean) : [],
+
+    // Extract name from default export declaration
+    // @sig toDefaultExportName :: ASTNode -> [String]
+    toDefaultExportName: node =>
+        node.type === 'ExportDefaultDeclaration' && node.declaration?.name ? [node.declaration.name] : [],
 }
 
 export { AS }

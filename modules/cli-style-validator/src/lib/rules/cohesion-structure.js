@@ -1,5 +1,11 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
+// COMPLEXITY-TODO: lines — Rule implementation requires many checks (expires 2026-01-03)
+// COMPLEXITY-TODO: functions — Rule implementation requires many checks (expires 2026-01-03)
+// COMPLEXITY-TODO: cohesion-structure — Self-referential rule complexity (expires 2026-01-03)
+// COMPLEXITY-TODO: chain-extraction — AST traversal callbacks need inline access (expires 2026-01-03)
+// COMPLEXITY-TODO: single-level-indentation — AST traversal callbacks need inline access (expires 2026-01-03)
+// COMPLEXITY-TODO: sig-documentation — Inline callbacks in forEach need refactoring (expires 2026-01-03)
 
 import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
@@ -33,13 +39,9 @@ const P = {
     // @sig isCohesionGroup :: String -> Boolean
     isCohesionGroup: name => COHESION_ORDER.includes(name),
 
-    // Check if name is PascalCase (React component)
-    // @sig isPascalCase :: String -> Boolean
-    isPascalCase: name => /^[A-Z][a-zA-Z0-9]*$/.test(name),
-
     // Check if name is exempt from cohesion requirements
     // @sig isExemptName :: String -> Boolean
-    isExemptName: name => EXEMPT_NAMES.includes(name) || P.isPascalCase(name),
+    isExemptName: name => EXEMPT_NAMES.includes(name) || PS.isPascalCase(name),
 
     // Check if node is defined inside a cohesion group object
     // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
@@ -64,10 +66,8 @@ const P = {
 
     // Match function name to suggested cohesion group based on prefix
     // @sig matchesCohesionPattern :: String -> String?
-    matchesCohesionPattern: name => {
-        for (const [group, pattern] of Object.entries(COHESION_PATTERNS)) if (pattern.test(name)) return group
-        return null
-    },
+    matchesCohesionPattern: name =>
+        Object.entries(COHESION_PATTERNS).find(([, pattern]) => pattern.test(name))?.[0] || null,
 
     // Check if name has a vague prefix
     // @sig hasVaguePrefix :: String -> Boolean
@@ -307,8 +307,8 @@ const V = {
         ),
 
     // Validate cohesion structure for entire file
-    // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
-    checkCohesionStructure: (ast, sourceCode, filePath) => {
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
 
         const violations = []
@@ -387,5 +387,5 @@ const V = {
     },
 }
 
-const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.checkCohesionStructure)
+const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.check)
 export { checkCohesionStructure }

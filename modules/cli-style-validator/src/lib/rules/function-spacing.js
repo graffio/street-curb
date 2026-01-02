@@ -7,23 +7,10 @@ import { PS } from '../predicates.js'
 
 const PRIORITY = 5
 
-const P = {
-    // Check if node is a variable declaration containing a function
-    // @sig isFunctionVariableDeclaration :: ASTNode -> Boolean
-    isFunctionVariableDeclaration: node => {
-        if (node.type !== 'VariableDeclaration') return false
-        return node.declarations.some(d => d.init && PS.isFunctionNode(d.init))
-    },
-
-    // Check if node is any kind of function statement
-    // @sig isFunctionStatement :: ASTNode -> Boolean
-    isFunctionStatement: node => node.type === 'FunctionDeclaration' || P.isFunctionVariableDeclaration(node),
-}
-
 const T = {
-    // Get trimmed content of line before given line number
-    // @sig getPrevLineContent :: (Number, String) -> String
-    getPrevLineContent: (lineNum, sourceCode) => {
+    // Transform line number to trimmed content of preceding line
+    // @sig toPrevLineContent :: (Number, String) -> String
+    toPrevLineContent: (lineNum, sourceCode) => {
         if (lineNum <= 1) return ''
         const lines = sourceCode.split('\n')
         return lines[lineNum - 2]?.trim() || ''
@@ -50,7 +37,7 @@ const V = {
         if (!prevNode) return null
 
         const { line: startLine } = node.loc.start
-        const prevLineContent = T.getPrevLineContent(startLine, sourceCode)
+        const prevLineContent = T.toPrevLineContent(startLine, sourceCode)
 
         if (prevLineContent === '' || PS.isCommentLine(prevLineContent)) return null
 
@@ -63,18 +50,15 @@ const V = {
                 'Multiline function requires blank line above. FIX: Add a blank line before this function definition.',
             )
 
-        if (prevIsMultiline)
-            return F.createViolation(
-                startLine,
-                'Function after multiline function requires blank line above. FIX: Add a blank line before this function.',
-            )
+        const postMultilineMsg = 'Function after multiline needs blank line above. FIX: Add a blank line before it.'
+        if (prevIsMultiline) return F.createViolation(startLine, postMultilineMsg)
 
         return null
     },
 
     // Validate blank lines between function declarations
-    // @sig checkFunctionSpacing :: (AST?, String, String) -> [Violation]
-    checkFunctionSpacing: (ast, sourceCode, filePath) => {
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
 
         const topLevelViolations = A.checkBlockFunctions(A.findFunctionsInBlock(ast.body), sourceCode)
@@ -90,7 +74,7 @@ const A = {
     // @sig findFunctionsInBlock :: [ASTNode] -> [ASTNode]
     findFunctionsInBlock: statements => {
         if (!statements || !Array.isArray(statements)) return []
-        return statements.filter(P.isFunctionStatement)
+        return statements.filter(PS.isFunctionStatement)
     },
 
     // Check spacing between consecutive functions in a block
@@ -106,5 +90,5 @@ const A = {
     },
 }
 
-const checkFunctionSpacing = FS.withExemptions('function-spacing', V.checkFunctionSpacing)
+const checkFunctionSpacing = FS.withExemptions('function-spacing', V.check)
 export { checkFunctionSpacing }

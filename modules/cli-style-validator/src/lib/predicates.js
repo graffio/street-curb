@@ -65,6 +65,10 @@ const PS = {
     // @sig isPascalCase :: String -> Boolean
     isPascalCase: name => /^[A-Z][a-zA-Z0-9]*$/.test(name),
 
+    // Check if name is kebab-case (lowercase with hyphens)
+    // @sig isKebabCase :: String -> Boolean
+    isKebabCase: name => /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(name),
+
     // Check if a node spans multiple lines
     // @sig isMultilineNode :: ASTNode -> Boolean
     isMultilineNode: node => node.loc && node.loc.end.line > node.loc.start.line,
