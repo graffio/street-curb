@@ -3,7 +3,7 @@
 
 import { PS } from './predicates.js'
 
-const F = {
+const FS = {
     // Create a violation factory for a specific rule
     // Usage: const violation = FS.createViolation('aboutme-comment', 0)
     // @sig createViolation :: (String, Number) -> (Number, String) -> Violation
@@ -31,16 +31,14 @@ const F = {
         const { exempt, deferred, expired, reason, daysRemaining } = PS.getExemptionStatus(sourceCode, ruleName)
 
         if (exempt) return []
-        if (deferred) return [F.createDeferralWarning(ruleName, reason, daysRemaining)]
+        if (deferred) return [FS.createDeferralWarning(ruleName, reason, daysRemaining)]
 
         const violations = checkFn(ast, sourceCode, filePath)
 
-        if (expired) return violations.map(F.toExpiredViolation)
+        if (expired) return violations.map(FS.toExpiredViolation)
 
         return violations
     },
 }
-
-const FS = { createViolation: F.createViolation, withExemptions: F.withExemptions }
 
 export { FS }
