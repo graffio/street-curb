@@ -1,6 +1,11 @@
 // ABOUTME: Shared predicate functions for style validator rules
 // ABOUTME: Unified file/AST predicates to avoid duplication across rules
-// COMPLEXITY: Shared module pattern - functions defined individually then exported via PS namespace
+// COMPLEXITY-TODO: lines — will refactor to inline-in-namespace style (expires 2026-02-01)
+// COMPLEXITY-TODO: functions — will refactor to inline-in-namespace style (expires 2026-02-01)
+// COMPLEXITY-TODO: cohesion-structure — shared module uses module-level functions exported via PS namespace (expires 2026-02-01)
+// COMPLEXITY-TODO: chain-extraction — will fix during inline-in-namespace refactor (expires 2026-02-01)
+// COMPLEXITY-TODO: single-level-indentation — parseSingleComplexityComment requires conditionals (expires 2026-02-01)
+// COMPLEXITY-TODO: line-length — will fix during refactor (expires 2026-02-01)
 
 // Check if file is a test file that should skip validation
 // Unified version: includes .tap.js, .test.js, .integration-test.js, and /test/ directory
@@ -83,10 +88,6 @@ const isJSXFunction = node => {
     if (node.body.type === 'BlockStatement') return node.body.body.some(hasJSXReturnStatement)
     return false
 }
-
-// Check if source code has a COMPLEXITY comment justifying its structure
-// @sig hasComplexityComment :: String -> Boolean
-const hasComplexityComment = sourceCode => /\/\/\s*COMPLEXITY:/.test(sourceCode)
 
 // Check if function is the inner part of a curried function (body of another arrow)
 // @sig isInnerCurriedFunction :: (ASTNode, ASTNode?) -> Boolean
@@ -214,7 +215,6 @@ const getExemptionStatus = (sourceCode, ruleName) => {
 
 const PS = {
     getExemptionStatus,
-    hasComplexityComment,
     hasJSXReturnStatement,
     isBlockStatement,
     isCommentLine,

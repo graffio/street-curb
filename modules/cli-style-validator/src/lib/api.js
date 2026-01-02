@@ -62,7 +62,9 @@ const checkFile = async filePath => {
 
     const violations = allViolations.sort((a, b) => a.priority - b.priority || a.line - b.line)
 
-    return { filePath, violations, isCompliant: violations.length === 0 }
+    // Warnings (deferred via COMPLEXITY-TODO) don't block compliance
+    const errors = violations.filter(v => !v.type.endsWith('-warning'))
+    return { filePath, violations, isCompliant: errors.length === 0 }
 }
 
 export { checkFile }
