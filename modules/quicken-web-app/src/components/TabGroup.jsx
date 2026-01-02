@@ -66,7 +66,6 @@ const T = {
 
     // @sig toTabProps :: (View, String, String, Boolean) -> Object
     toTabProps: (view, groupId, activeViewId, isActiveGroup) => ({
-        key: view.id,
         view,
         groupId,
         isActive: view.id === activeViewId,
@@ -175,7 +174,7 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
     return (
         <Flex align="end" style={style} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
             {group.views.map(v => (
-                <Tab {...T.toTabProps(v, group.id, group.activeViewId, isActiveGroup)} />
+                <Tab key={v.id} {...T.toTabProps(v, group.id, group.activeViewId, isActiveGroup)} />
             ))}
             <SplitButton groupCount={groupCount} />
         </Flex>

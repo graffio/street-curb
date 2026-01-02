@@ -1,7 +1,14 @@
 // ABOUTME: Barrel export for transaction selectors
 // ABOUTME: Re-exports transaction filtering and selector functions
+// COMPLEXITY: Barrel file for transaction selectors. Exports are re-exports from submodules.
 
-export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches } from './selectors.js'
+export {
+    defaultStartDate,
+    defaultEndDate,
+    enrichedTransactions,
+    filteredTransactions,
+    searchMatches,
+} from './selectors.js'
 export {
     categoryMatches,
     filterByCategories,

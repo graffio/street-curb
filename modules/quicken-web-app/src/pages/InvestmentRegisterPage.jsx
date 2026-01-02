@@ -37,6 +37,11 @@ const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBot
 
 const MAX_DETAIL_LINES = 3
 
+const P = {
+    // @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
+    shouldInitializeDateRange: (dateRangeKey, dateRange) => dateRangeKey === 'lastTwelveMonths' && !dateRange,
+}
+
 const T = {
     // @sig toTableLayoutId :: String -> String
     toTableLayoutId: id => `cols_investment_${id}`,
@@ -49,6 +54,18 @@ const T = {
         const shown = items.slice(0, MAX_DETAIL_LINES - 1)
         return [...shown, `+${length - shown.length} more`]
     },
+
+    // @sig toRowIndex :: ([Row], String) -> Number
+    toRowIndex: (data, id) => data.findIndex(r => r.transaction?.id === id),
+
+    // @sig toDefaultDateRange :: () -> DateRange
+    toDefaultDateRange: () => {
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+        const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+        return { start: twelveMonthsAgo, end: endOfToday }
+    },
 }
 
 const E = {
@@ -56,9 +73,15 @@ const E = {
     // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
     dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
         const inSearchMode = matchCount > 0
-        const idx = inSearchMode ? searchMatches.indexOf(newId) : data.findIndex(r => r.transaction?.id === newId)
+        const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
         if (idx < 0) return
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
+    },
+
+    // @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
+    initDateRangeIfNeeded: (dateRangeKey, dateRange, viewId) => {
+        if (P.shouldInitializeDateRange(dateRangeKey, dateRange))
+            post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
     },
 }
 
@@ -70,17 +93,6 @@ const E = {
  *         isActive?: Boolean }
  */
 const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%', isActive = false }) => {
-    // Initializes the date range to last 12 months when first loading
-    // @sig initializeDateRange :: () -> void
-    const initializeDateRange = () => {
-        if (dateRangeKey !== 'lastTwelveMonths' || dateRange) return
-        const now = new Date()
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-        const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-        post(Action.SetTransactionFilter(viewId, { dateRange: { start: twelveMonthsAgo, end: endOfToday } }))
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // Derived values (computed from props)
     // -----------------------------------------------------------------------------------------------------------------
@@ -214,7 +226,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
         [setLayout, accountName],
     )
 
-    useEffect(initializeDateRange, [dateRangeKey, dateRange, viewId])
+    useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
