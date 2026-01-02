@@ -1,6 +1,8 @@
 // ABOUTME: Rule to detect missing ABOUTME comments at file top
 // ABOUTME: Enforces two-line ABOUTME header in all source files
 
+import { FS } from '../factories.js'
+
 const P = {
     // Check if line starts with ABOUTME marker
     // @sig isAboutmeComment :: String -> Boolean
@@ -75,5 +77,5 @@ const A = {
     },
 }
 
-const checkAboutmeComment = V.checkAboutmeComment
+const checkAboutmeComment = FS.withExemptions('aboutme-comment', V.checkAboutmeComment)
 export { checkAboutmeComment }

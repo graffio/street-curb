@@ -2,6 +2,7 @@
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 2
@@ -119,11 +120,14 @@ const A = {
     },
 }
 
-// Validate single-level indentation throughout the file
-// @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
-const checkSingleLevelIndentation = (ast, sourceCode, filePath) => {
-    if (!ast || PS.isTestFile(filePath) || PS.hasComplexityComment(sourceCode)) return []
-    return A.collectViolations(ast, [], new Set())
+const VV = {
+    // Validate single-level indentation throughout the file
+    // @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
+    checkSingleLevelIndentation: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath)) return []
+        return A.collectViolations(ast, [], new Set())
+    },
 }
 
+const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', VV.checkSingleLevelIndentation)
 export { checkSingleLevelIndentation }

@@ -1,8 +1,9 @@
 // ABOUTME: Rule to enforce React component cohesion patterns
 // ABOUTME: Detects render* functions and cohesion groups defined inside components
 
-import { PS } from '../predicates.js'
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
+import { PS } from '../predicates.js'
 
 const PRIORITY = 2
 const COHESION_GROUPS = ['P', 'T', 'F', 'V', 'A', 'E']
@@ -59,12 +60,6 @@ const F = {
     }),
 }
 
-const V = {
-    // Check if AST contains any JSX (file context check)
-    // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AS.collectNodes(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
-}
-
 const A = {
     // Find cohesion groups inside a component function body
     // @sig findCohesionGroupsIn :: (ASTNode, String) -> [Violation]
@@ -92,16 +87,23 @@ const A = {
 
         return violations
     },
+
+    // Check if AST contains any JSX (file context check)
+    // @sig hasJSXContext :: AST -> Boolean
+    hasJSXContext: ast => AS.collectNodes(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
 }
 
-// Validate React component cohesion patterns
-// @sig checkReactComponentCohesion :: (AST?, String, String) -> [Violation]
-const checkReactComponentCohesion = (ast, sourceCode, filePath) => {
-    if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
-    if (!V.hasJSXContext(ast)) return []
+const V = {
+    // Validate React component cohesion patterns
+    // @sig checkReactComponentCohesion :: (AST?, String, String) -> [Violation]
+    checkReactComponentCohesion: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
+        if (!A.hasJSXContext(ast)) return []
 
-    const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
-    return [...renderViolations, ...A.collectCohesionViolations(ast)]
+        const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
+        return [...renderViolations, ...A.collectCohesionViolations(ast)]
+    },
 }
 
+const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.checkReactComponentCohesion)
 export { checkReactComponentCohesion }

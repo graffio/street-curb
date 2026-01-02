@@ -2,6 +2,7 @@
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 3
@@ -91,5 +92,5 @@ const A = {
     },
 }
 
-const checkLineLength = V.checkLineLength
+const checkLineLength = FS.withExemptions('line-length', V.checkLineLength)
 export { checkLineLength }

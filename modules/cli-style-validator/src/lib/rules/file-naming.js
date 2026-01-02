@@ -3,6 +3,7 @@
 
 import { basename } from 'path'
 
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 7
@@ -146,5 +147,5 @@ const V = {
     },
 }
 
-const checkFileNaming = V.checkFileNaming
+const checkFileNaming = FS.withExemptions('file-naming', V.checkFileNaming)
 export { checkFileNaming }

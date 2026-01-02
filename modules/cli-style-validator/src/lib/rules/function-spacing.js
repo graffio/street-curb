@@ -2,6 +2,7 @@
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 5
@@ -105,5 +106,5 @@ const A = {
     },
 }
 
-const checkFunctionSpacing = V.checkFunctionSpacing
+const checkFunctionSpacing = FS.withExemptions('function-spacing', V.checkFunctionSpacing)
 export { checkFunctionSpacing }

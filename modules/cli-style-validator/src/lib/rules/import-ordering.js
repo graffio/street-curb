@@ -1,6 +1,8 @@
 // ABOUTME: Rule to detect import violations
 // ABOUTME: Enforces ES6 imports, no require(), and @graffio/design-system over @radix-ui/themes
 
+import { FS } from '../factories.js'
+
 const P = {
     // Check if line uses CommonJS require()
     // @sig hasRequire :: String -> Boolean
@@ -54,5 +56,5 @@ const V = {
     },
 }
 
-const checkImportOrdering = V.checkImportOrdering
+const checkImportOrdering = FS.withExemptions('import-ordering', V.checkImportOrdering)
 export { checkImportOrdering }

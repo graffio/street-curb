@@ -2,6 +2,7 @@
 // ABOUTME: Flags when base.* appears 3+ times and suggests const { props } = base
 
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const THRESHOLD = 3
@@ -95,7 +96,6 @@ const V = {
     // @sig checkChainExtraction :: (AST?, String, String) -> [Violation]
     checkChainExtraction: (ast, sourceCode, filePath) => {
         if (!ast) return []
-        if (PS.hasComplexityComment(sourceCode)) return []
 
         const namespaces = A.collectNamespaceImports(ast)
         const allSuggestions = []
@@ -183,5 +183,5 @@ const A = {
     },
 }
 
-const checkChainExtraction = V.checkChainExtraction
+const checkChainExtraction = FS.withExemptions('chain-extraction', V.checkChainExtraction)
 export { checkChainExtraction }

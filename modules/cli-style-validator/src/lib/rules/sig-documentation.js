@@ -1,8 +1,9 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
-// COMPLEXITY: Multi-aspect validation (presence, ordering, description) requires many predicates
+// COMPLEXITY: sig-documentation — Multi-aspect validation (presence, ordering, description) requires many predicates
 
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 6
@@ -167,17 +168,21 @@ const A = {
     },
 }
 
-// Validate @sig documentation in source file
-// @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
-const checkSigDocumentation = (ast, sourceCode, filePath) => {
-    if (!ast || PS.isTestFile(filePath)) return []
-    if (PS.hasComplexityComment(sourceCode)) return []
+const VV = {
+    // Validate @sig documentation in source file
+    // @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
+    checkSigDocumentation: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath)) return []
 
-    const result = []
-    const processedNodes = new Set()
-    AS.traverseAST(ast, (node, parent) => V.checkFunctionForSig(node, parent, ast, sourceCode, processedNodes, result))
+        const result = []
+        const processedNodes = new Set()
+        AS.traverseAST(ast, (node, parent) =>
+            V.checkFunctionForSig(node, parent, ast, sourceCode, processedNodes, result),
+        )
 
-    return result
+        return result
+    },
 }
 
+const checkSigDocumentation = FS.withExemptions('sig-documentation', VV.checkSigDocumentation)
 export { checkSigDocumentation }

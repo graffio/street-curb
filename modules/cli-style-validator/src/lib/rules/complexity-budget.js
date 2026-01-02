@@ -1,5 +1,7 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
+// COMPLEXITY-TODO: lines — extracting findComponents and refactoring in this task (expires 2026-02-01)
+// COMPLEXITY-TODO: functions — will be reduced after extracting findComponents (expires 2026-02-01)
 
 import { AS } from '../aggregators.js'
 import { PS } from '../predicates.js'
@@ -106,60 +108,47 @@ const T = {
     getComponentContext: compName => (compName.endsWith('Page') ? 'react-page' : 'react-component'),
 }
 
+const CHECKPOINT_SUFFIX =
+    'CHECKPOINT: Run complexity review before proceeding. This may require revising your approach.'
+
 const F = {
     // Create a complexity-budget violation with metric details
-    // @sig createViolation :: (Number, String, String, Number, Number) -> Violation
-    createViolation: (line, metric, context, actual, budget) => ({
-        type: 'complexity-budget',
+    // @sig createViolation :: (Number, String, String, Number, Number, Boolean?) -> Violation
+    createViolation: (line, metric, context, actual, budget, expired = false) => {
+        const base = `${metric} (${actual}) exceeds ${context} budget (${budget}).`
+        const message = expired ? `${base} COMPLEXITY-TODO expired.` : `${base} ${CHECKPOINT_SUFFIX}`
+        return { type: 'complexity-budget', line, column: 1, priority: PRIORITY, message, rule: 'complexity-budget' }
+    },
+
+    // Create a warning for deferred complexity metric
+    // @sig createWarning :: (Number, String, String, Number) -> Warning
+    createWarning: (line, rule, reason, daysRemaining) => ({
+        type: 'complexity-budget-warning',
         line,
         column: 1,
         priority: PRIORITY,
-        message:
-            `${metric} (${actual}) exceeds ${context} budget (${budget}). ` +
-            `CHECKPOINT: Run complexity review before proceeding. This may require revising your implementation approach.`,
+        message: `COMPLEXITY-TODO deferred: ${rule} — "${reason}" (${daysRemaining} days remaining)`,
         rule: 'complexity-budget',
+        daysRemaining,
     }),
 }
 
 const V = {
     // Validate a single React component against its budget
-    // @sig checkComponentBudget :: ({ name, node, startLine, endLine }) -> [Violation]
-    checkComponentBudget: comp => {
-        const violations = []
+    // @sig checkComponentBudget :: ({ name, node, startLine, endLine }, String) -> [Violation]
+    checkComponentBudget: (comp, sourceCode) => {
         const budget = T.getComponentBudget(comp.name)
         const context = T.getComponentContext(comp.name)
         const compLines = comp.endLine - comp.startLine + 1
-
-        if (compLines > budget.lines)
-            violations.push(
-                F.createViolation(comp.startLine, `Component "${comp.name}" lines`, context, compLines, budget.lines),
-            )
-
         const funcCount = AS.countFunctions(comp.node)
-        if (funcCount > budget.functions)
-            violations.push(
-                F.createViolation(
-                    comp.startLine,
-                    `Component "${comp.name}" functions`,
-                    context,
-                    funcCount,
-                    budget.functions,
-                ),
-            )
-
         const styleCount = A.countStyleObjects(comp.node)
-        if (styleCount > budget.styleObjects)
-            violations.push(
-                F.createViolation(
-                    comp.startLine,
-                    `Component "${comp.name}" style objects`,
-                    context,
-                    styleCount,
-                    budget.styleObjects,
-                ),
-            )
+        const line = comp.startLine
 
-        return violations
+        return [
+            V.checkMetric(sourceCode, 'lines', compLines, budget.lines, context, line),
+            V.checkMetric(sourceCode, 'functions', funcCount, budget.functions, context, line),
+            V.checkMetric(sourceCode, 'style-objects', styleCount, budget.styleObjects, context, line),
+        ].filter(Boolean)
     },
 
     // Validate React file budget (per-component or file-level)
@@ -168,37 +157,44 @@ const V = {
         const components = A.findComponents(ast)
         if (components.length === 0) {
             const totalLines = sourceCode.split('\n').length
-            if (totalLines > budget.lines)
-                return [F.createViolation(1, 'Lines', 'react-component', totalLines, budget.lines)]
-            return []
+            const result = V.checkMetric(sourceCode, 'lines', totalLines, budget.lines, 'react-component')
+            return result ? [result] : []
         }
-        return components.flatMap(V.checkComponentBudget)
+        return components.flatMap(comp => V.checkComponentBudget(comp, sourceCode))
+    },
+
+    // Check a single metric against budget with exemption support
+    // @sig checkMetric :: (String, String, Number, Number, String, Number?) -> Violation | Warning | null
+    checkMetric: (sourceCode, metricName, actual, budgetValue, context, line = 1) => {
+        if (actual <= budgetValue) return null
+
+        const status = PS.getExemptionStatus(sourceCode, metricName)
+        if (status.exempt) return null
+        if (status.deferred) return F.createWarning(line, metricName, status.reason, status.daysRemaining)
+
+        const metricLabel =
+            metricName === 'style-objects' ? 'Style objects' : metricName.charAt(0).toUpperCase() + metricName.slice(1)
+        return F.createViolation(line, metricLabel, context, actual, budgetValue, status.expired)
     },
 
     // Validate non-React file budget (utility, selector, cli)
     // @sig checkNonReactBudget :: (AST, String, String, Budget) -> [Violation]
     checkNonReactBudget: (ast, sourceCode, context, budget) => {
-        const violations = []
         const totalLines = sourceCode.split('\n').length
-
-        if (totalLines > budget.lines) violations.push(F.createViolation(1, 'Lines', context, totalLines, budget.lines))
-
         const styleCount = A.countStyleObjects(ast)
-        if (styleCount > budget.styleObjects)
-            violations.push(F.createViolation(1, 'Style objects', context, styleCount, budget.styleObjects))
-
         const totalFunctions = AS.countFunctions(ast)
-        if (totalFunctions > budget.functions)
-            violations.push(F.createViolation(1, 'Functions', context, totalFunctions, budget.functions))
 
-        return violations
+        return [
+            V.checkMetric(sourceCode, 'lines', totalLines, budget.lines, context),
+            V.checkMetric(sourceCode, 'style-objects', styleCount, budget.styleObjects, context),
+            V.checkMetric(sourceCode, 'functions', totalFunctions, budget.functions, context),
+        ].filter(Boolean)
     },
 
     // Validate complexity budget for entire file
     // @sig checkComplexityBudget :: (AST?, String, String) -> [Violation]
     checkComplexityBudget: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
-        if (PS.hasComplexityComment(sourceCode)) return []
 
         const context = T.getContext(filePath)
         const budget = BUDGETS[context]

@@ -2,6 +2,7 @@
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
 import { AS } from '../aggregators.js'
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 4
@@ -108,13 +109,19 @@ const A = {
     },
 }
 
-// Validate that functions are declared before executable statements
-// @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
-const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) => {
-    if (!ast || PS.hasComplexityComment(sourceCode)) return []
-    const violations = []
-    AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
-    return violations
+const V = {
+    // Validate that functions are declared before executable statements
+    // @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
+    checkFunctionDeclarationOrdering: (ast, sourceCode, filePath) => {
+        if (!ast) return []
+        const violations = []
+        AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
+        return violations
+    },
 }
 
+const checkFunctionDeclarationOrdering = FS.withExemptions(
+    'function-declaration-ordering',
+    V.checkFunctionDeclarationOrdering,
+)
 export { checkFunctionDeclarationOrdering }

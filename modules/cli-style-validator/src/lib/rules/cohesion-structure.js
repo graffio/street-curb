@@ -1,6 +1,7 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
 
+import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 
 const PRIORITY = 0 // High priority - structural issue
@@ -309,7 +310,6 @@ const V = {
     // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
     checkCohesionStructure: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
-        if (PS.hasComplexityComment(sourceCode)) return []
 
         const violations = []
         const complexityComments = A.findComplexityComments(sourceCode)
@@ -387,5 +387,5 @@ const V = {
     },
 }
 
-const checkCohesionStructure = V.checkCohesionStructure
+const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.checkCohesionStructure)
 export { checkCohesionStructure }
