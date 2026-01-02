@@ -22,7 +22,8 @@ Brevity > thoroughness. When in doubt, match existing code.
 - One indentation level per function (extract helpers)
 - `const` preferred, `let` if needed, never `var`
 - Define functions at the TOP of their containing block, before usage
-- This is safe: functions can reference variables declared later because the variables are initialized before the function is *called*, not when it's defined
+- This is safe: functions can reference variables declared later because the variables are initialized before the
+  function is *called*, not when it's defined
 - Indentation resets to 0 inside ANY function body, including nested/inline functions
 - "Nested indentation" means control flow nesting (`if` inside `if`), not function-inside-function
 
@@ -52,16 +53,17 @@ const HelperRow = ({ item }) => <tr>{T.toLabel(item)}</tr>
 const MyComponent = ({ prop }) => {
     const [open, setOpen] = useState(false)
     const data = useSelector(S.getData)
-
+    
     const handleClick = useCallback(() => setOpen(!open), [open])
-
-    return <div onClick={handleClick}>{P.canExpand(data) && <HelperRow item={data} />}</div>
+    
+    return <div onClick={handleClick}>{P.canExpand(data) && <HelperRow item={data}/>}</div>
 }
 
 export { MyComponent }
 ```
 
 **Rules:**
+
 - P/T/F/V/A/E cohesion groups at module level (not inside components)
 - Exported component(s) at bottom of file
 - `render*` functions → extract to actual `<Component />`
@@ -78,16 +80,17 @@ export { MyComponent }
 
 Organize functions into single-letter namespace objects by cohesion type:
 
-| Letter | Type | Naming Patterns |
-|--------|------|-----------------|
-| P | Predicates | `is*`, `has*`, `should*`, `can*`, `exports*` |
-| T | Transformers | `to*`, `get*`, `extract*`, `parse*`, `format*` |
-| F | Factories | `create*`, `make*`, `build*` |
-| V | Validators | `check*`, `validate*` (return violations/errors) |
-| A | Aggregators | `collect*`, `count*`, `gather*`, `find*` |
-| E | Effects | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*` |
+| Letter | Type         | Naming Patterns                                      |
+|--------|--------------|------------------------------------------------------|
+| P      | Predicates   | `is*`, `has*`, `should*`, `can*`, `exports*`         |
+| T      | Transformers | `to*`, `get*`, `extract*`, `parse*`, `format*`       |
+| F      | Factories    | `create*`, `make*`, `build*`                         |
+| V      | Validators   | `check*`, `validate*` (return violations/errors)     |
+| A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`             |
+| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*` |
 
 **Rules:**
+
 - Every function goes in a cohesion group, even if it's the only one of its type
 - Single letters (P, T, F, V, A, E) for brevity: `P.isPascalCase` not `predicates.isPascalCase`
 - Same letters across all files for consistency
@@ -97,6 +100,7 @@ Organize functions into single-letter namespace objects by cohesion type:
 **Ordering:** Configuration → P → T → F → V → A → E → Exports
 
 **Example:**
+
 ```javascript
 // ABOUTME: Rule to check file naming conventions
 // ABOUTME: Enforces PascalCase for components, kebab-case for utilities
@@ -122,7 +126,8 @@ const checkFileNaming = V.checkNaming
 export { checkFileNaming }
 ```
 
-**Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and decide: rename it to match a cohesion type, or justify the exception with a `// COMPLEXITY:` comment. This requires judgment, so it's a checkpoint.
+**Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and decide: rename it to match a
+cohesion type, or justify the exception with a `// COMPLEXITY:` comment. This requires judgment, so it's a checkpoint.
 
 **E Group (Handlers) Rules:**
 
@@ -162,16 +167,19 @@ const handleDragStart = useCallback(
 ## Shared Modules (cli-style-validator)
 
 Utilities used across multiple rules go in shared modules with namespace prefixes:
+
 - `PS` (predicates.js) - Boolean checks on AST nodes, strings, file paths
 - `AS` (aggregators.js) - AST traversal, collection, counting utilities
 - `FS` (factories.js) - Violation/object creation helpers
 
 **When to extract immediately:**
+
 - Function is **general-purpose** - operates on AST/strings/arrays without rule-specific logic
 - Function is **named generically** - name makes sense outside the rule context
 - Test: "Would another rule plausibly need this exact function?"
 
 **When NOT to extract:**
+
 - Rule-specific factories with hardcoded rule name/priority
 - Domain predicates tied to one rule's purpose (e.g., `isStyleObject`, `isCohesionGroup`)
 
@@ -181,13 +189,14 @@ Utilities used across multiple rules go in shared modules with namespace prefixe
 
 Different file types have different responsibilities:
 
-| Layer | Should contain | Should NOT contain |
-|-------|---------------|-------------------|
-| React components | Local state, `post(Action.X)`, presentation, JSX | Business logic, complex derivations |
-| Selectors | Redux mechanics, simple derived state | Business logic (delegate to modules) |
-| Business modules | Pure domain logic, computations | Redux awareness, UI concerns |
+| Layer            | Should contain                                   | Should NOT contain                   |
+|------------------|--------------------------------------------------|--------------------------------------|
+| React components | Local state, `post(Action.X)`, presentation, JSX | Business logic, complex derivations  |
+| Selectors        | Redux mechanics, simple derived state            | Business logic (delegate to modules) |
+| Business modules | Pure domain logic, computations                  | Redux awareness, UI concerns         |
 
-When a file contains logic belonging to a different layer, that's a signal to move it—not to split the file arbitrarily, but to place logic in its proper architectural home (decided together).
+When a file contains logic belonging to a different layer, that's a signal to move it—not to split the file arbitrarily,
+but to place logic in its proper architectural home (decided together).
 
 **Selectors with Parameters:**
 
