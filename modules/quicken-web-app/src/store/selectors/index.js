@@ -1,5 +1,7 @@
 // ABOUTME: Redux selectors for accessing application state
 // ABOUTME: Re-exports from submodules plus base state accessors
+// COMPLEXITY: This is a barrel file re-exporting selectors from submodules. High export count is expected for
+// centralized selector access. Functions are simple state accessors, not complex logic.
 
 // @sig initialized :: State -> Boolean
 const initialized = state => state.initialized
@@ -72,7 +74,13 @@ export {
     transactionFilter,
 } from './ui.js'
 
-export { defaultStartDate, defaultEndDate, filteredTransactions, searchMatches } from './transactions/index.js'
+export {
+    defaultStartDate,
+    defaultEndDate,
+    enrichedTransactions,
+    filteredTransactions,
+    searchMatches,
+} from './transactions/index.js'
 export { allCategoryNames } from './categories/index.js'
 export { enrichedHoldingsAsOf } from './holdings-selectors.js'
 export {

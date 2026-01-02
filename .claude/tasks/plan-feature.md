@@ -32,6 +32,7 @@ Use after brainstorming to create a task spec.
 - **Inline template steps** - don't reference templates, copy their steps into the plan
 - Steps must be specific enough to follow without reading anything else
 - **Complexity review first** - if modifying an existing file > 100 lines, run complexity review before planning changes. This reveals budget headroom and simplification opportunities.
+- **Validator after each step** - after each implementation step that modifies JS/JSX files, add a step: "Run style validator on changed files, fix violations before proceeding". This keeps violations fresh in context.
 - **Intermediate commits** - include `git add` + commit steps after each logical chunk (e.g., after creating types, after adding reducer logic). This triggers the style validator hook.
 - Always include final commit step (from `commit-changes.md`) at the end
 - If no template exists for a step, note it—we'll create one

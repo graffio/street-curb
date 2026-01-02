@@ -4,6 +4,17 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [quicken-web-app] Page Convention Violations Fix (2026-01-02)
+**Purpose:** Refactor register pages to follow handler/selector/layer conventions
+
+- Moved P/T/E cohesion groups to module level in InvestmentRegisterPage and TransactionRegisterPage
+- Extracted `P.shouldInitializeDateRange` predicate and `T.toDefaultDateRange` transform
+- Created `E.initDateRangeIfNeeded` effect composing predicate + transform + post
+- Extracted `T.toRowIndex` from `dispatchHighlightChange` handlers
+- Added `enrichedTransactions` selector for CategoryReportPage (transactions with category/account names)
+- Added COMPLEXITY comments to selector barrel files (justified high export counts)
+- Fixed React key warning in TabGroup (key passed directly, not via spread)
+
 ## [quicken-web-app] FilterBar Consolidation with Inline Chip Popovers (2025-12-22)
 **Purpose:** Replace sidebar filters with top-aligned chip row where each chip opens its own dropdown
 

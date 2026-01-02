@@ -1,5 +1,7 @@
 // ABOUTME: Memoized derived selectors for transaction data
 // ABOUTME: Combines UI state with transaction filtering
+// COMPLEXITY: compute* functions are internal implementations for memoized selectors—cohesion groups don't apply.
+// enrichTransaction is a private helper. Exports are the memoized selectors themselves.
 
 import memoizeReduxState, { memoizeReduxStatePerKey } from '@graffio/functional/src/ramda-like/memoize-redux-state.js'
 import { dateRange, filterQuery, searchQuery, selectedAccounts, selectedCategories } from '../ui.js'
@@ -80,4 +82,32 @@ const searchMatches = memoizeReduxStatePerKey(
     computeSearchMatches,
 )
 
-export { defaultEndDate, defaultStartDate, filteredTransactions, searchMatches }
+// Enrich transaction with category and account names from lookups
+// @sig enrichTransaction :: (Transaction, LookupTable<Category>, LookupTable<Account>) -> EnrichedTransaction
+const enrichTransaction = (txn, categories, accounts) => ({
+    ...txn,
+    categoryName: categories?.get(txn.categoryId)?.name || 'Uncategorized',
+    accountName: accounts?.get(txn.accountId)?.name || '',
+})
+
+// Compute enriched transactions with category and account names for a specific view
+// @sig computeEnrichedTransactions :: (ReduxState, String) -> [EnrichedTransaction]
+const computeEnrichedTransactions = (state, viewId) => {
+    const { accounts, categories } = state
+    const txns = filteredTransactions(state, viewId)
+    if (!txns || !categories || !accounts) return []
+    return txns.map(txn => enrichTransaction(txn, categories, accounts))
+}
+
+/*
+ * Transactions enriched with category and account names for a specific view
+ *
+ * @sig enrichedTransactions :: (ReduxState, String) -> [EnrichedTransaction]
+ */
+const enrichedTransactions = memoizeReduxStatePerKey(
+    ['transactions', 'categories', 'accounts'],
+    'transactionFilters',
+    computeEnrichedTransactions,
+)
+
+export { defaultEndDate, defaultStartDate, enrichedTransactions, filteredTransactions, searchMatches }
