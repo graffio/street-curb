@@ -117,11 +117,108 @@ const isNonCommentLine = line => {
     return trimmed && !isCommentLine(trimmed)
 }
 
+// Regex patterns for COMPLEXITY comments
+// COMPLEXITY: rule — reason
+// COMPLEXITY-TODO: rule — reason (expires YYYY-MM-DD)
+const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/
+const COMPLEXITY_TODO_BASE = /^\/\/\s*COMPLEXITY-TODO:\s*(\S+)/
+const EXPIRES_PATTERN = /\(expires\s+(\S+)\)\s*$/
+
+// Parse a single COMPLEXITY comment line
+// @sig parseSingleComplexityComment :: String -> { rule, reason?, expires?, error? } | null
+const parseSingleComplexityComment = line => {
+    const trimmed = line.trim()
+
+    const todoBaseMatch = trimmed.match(COMPLEXITY_TODO_BASE)
+    if (todoBaseMatch) {
+        const rule = todoBaseMatch[1]
+        const afterRule = trimmed.slice(todoBaseMatch[0].length).trim()
+
+        if (!afterRule.startsWith('—')) return { rule, error: 'COMPLEXITY-TODO requires a reason after —' }
+
+        const expiresMatch = afterRule.match(EXPIRES_PATTERN)
+        if (!expiresMatch) {
+            const reason = afterRule.slice(1).trim()
+            return {
+                rule,
+                reason: reason || undefined,
+                error: 'COMPLEXITY-TODO requires expiration date (expires YYYY-MM-DD)',
+            }
+        }
+
+        const expires = expiresMatch[1]
+        const reason = afterRule.slice(1, afterRule.indexOf('(expires')).trim()
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(expires)) return { rule, reason, error: `Invalid date format: ${expires}` }
+
+        const date = new Date(expires)
+        if (isNaN(date.getTime())) return { rule, reason, error: `Invalid date: ${expires}` }
+
+        return { rule, reason, expires }
+    }
+
+    const permanentMatch = trimmed.match(COMPLEXITY_PATTERN)
+    if (permanentMatch) {
+        const [, rule, reason] = permanentMatch
+        if (!reason) return { rule, error: 'COMPLEXITY requires a reason after —' }
+        return { rule, reason }
+    }
+
+    return null
+}
+
+// Parse all COMPLEXITY comments from source code
+// @sig parseComplexityComments :: String -> [{ rule, reason?, expires?, error? }]
+const parseComplexityComments = sourceCode => {
+    const lines = sourceCode.split('\n')
+    return lines.map(parseSingleComplexityComment).filter(Boolean)
+}
+
+// Check if a rule has a permanent exemption (not TODO)
+// @sig isExempt :: (String, String) -> Boolean
+const isExempt = (sourceCode, ruleName) => {
+    const comments = parseComplexityComments(sourceCode)
+    return comments.some(c => c.rule === ruleName && !c.expires && !c.error)
+}
+
+// Get full exemption status for a rule
+// @sig getExemptionStatus :: (String, String) -> ExemptionStatus
+const getExemptionStatus = (sourceCode, ruleName) => {
+    const comments = parseComplexityComments(sourceCode)
+    const comment = comments.find(c => c.rule === ruleName)
+
+    if (!comment) return { exempt: false, deferred: false, expired: false }
+
+    if (comment.error) return { exempt: false, deferred: false, expired: false, error: comment.error }
+
+    if (!comment.expires) return { exempt: true, deferred: false, reason: comment.reason }
+
+    const expiresDate = new Date(comment.expires)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    expiresDate.setHours(0, 0, 0, 0)
+
+    const daysRemaining = Math.ceil((expiresDate - today) / (1000 * 60 * 60 * 24))
+
+    if (daysRemaining < 0) return { exempt: false, deferred: false, expired: true, reason: comment.reason }
+
+    return {
+        exempt: false,
+        deferred: true,
+        expired: false,
+        daysRemaining,
+        reason: comment.reason,
+        warning: `COMPLEXITY-TODO deferred: ${ruleName} — "${comment.reason}" (${daysRemaining} days remaining)`,
+    }
+}
+
 const PS = {
+    getExemptionStatus,
     hasComplexityComment,
     hasJSXReturnStatement,
     isBlockStatement,
     isCommentLine,
+    isExempt,
     isNonCommentLine,
     isComplexFunction,
     isDirectiveComment,
@@ -137,6 +234,7 @@ const PS = {
     isPascalCase,
     isTestFile,
     isValidNode,
+    parseComplexityComments,
     toCommentContent,
 }
 
