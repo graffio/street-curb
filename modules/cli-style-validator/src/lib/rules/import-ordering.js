@@ -2,7 +2,7 @@
 // ABOUTME: Enforces standard import patterns across the codebase
 // COMPLEXITY-TODO: import-ordering — Rule contains patterns it checks for (expires 2026-01-03)
 
-import { FS } from '../factories.js'
+import { FS } from '../shared/factories.js'
 
 const P = {
     // Check if line uses CommonJS require()

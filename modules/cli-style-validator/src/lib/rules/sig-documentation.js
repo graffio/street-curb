@@ -1,10 +1,10 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
-import { AST } from '../ast.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
-import { Source } from '../source.js'
+import { AST } from '../dsl/ast.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
+import { Source } from '../dsl/source.js'
 
 const PRIORITY = 6
 

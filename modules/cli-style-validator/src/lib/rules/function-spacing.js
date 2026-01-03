@@ -1,9 +1,9 @@
 // ABOUTME: Rule to enforce blank lines before multiline function declarations
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
-import { AS } from '../aggregators.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 5
 

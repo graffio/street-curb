@@ -4,10 +4,10 @@
 // COMPLEXITY-TODO: cohesion-structure — Budget checking requires many validators (expires 2026-01-03)
 // COMPLEXITY-TODO: chain-extraction — Component analysis accesses nested props (expires 2026-01-03)
 
-import { AS } from '../aggregators.js'
-import { AST } from '../ast.js'
-import { PS } from '../predicates.js'
-import { Source } from '../source.js'
+import { AS } from '../shared/aggregators.js'
+import { AST } from '../dsl/ast.js'
+import { PS } from '../shared/predicates.js'
+import { Source } from '../dsl/source.js'
 
 const PRIORITY = 0
 
@@ -22,55 +22,14 @@ const BUDGETS = {
     utility: { lines: 150, styleObjects: 0, functions: 10 },
 }
 
+// prettier-ignore
 const STYLE_PROPERTIES = new Set([
-    'padding',
-    'margin',
-    'width',
-    'height',
-    'display',
-    'flex',
-    'color',
-    'backgroundColor',
-    'background',
-    'border',
-    'borderRadius',
-    'fontSize',
-    'fontWeight',
-    'textAlign',
-    'position',
-    'top',
-    'left',
-    'right',
-    'bottom',
-    'overflow',
-    'overflowX',
-    'overflowY',
-    'maxHeight',
-    'maxWidth',
-    'minHeight',
-    'minWidth',
-    'gap',
-    'gridTemplateColumns',
-    'gridTemplateRows',
-    'justifyContent',
-    'alignItems',
-    'flexDirection',
-    'flexWrap',
-    'zIndex',
-    'opacity',
-    'transform',
-    'transition',
-    'cursor',
-    'boxShadow',
-    'outline',
-    'fontStyle',
-    'textDecoration',
-    'lineHeight',
-    'letterSpacing',
-    'whiteSpace',
-    'wordBreak',
-    'tableLayout',
-    'borderCollapse',
+    'alignItems', 'background', 'backgroundColor', 'border', 'borderCollapse', 'borderRadius', 'bottom', 'boxShadow',
+    'color', 'cursor', 'display', 'flex', 'flexDirection', 'flexWrap', 'fontSize', 'fontStyle', 'fontWeight', 'gap',
+    'gridTemplateColumns', 'gridTemplateRows', 'height', 'justifyContent', 'left', 'letterSpacing', 'lineHeight',
+    'margin', 'maxHeight', 'maxWidth', 'minHeight', 'minWidth', 'opacity', 'outline', 'overflow', 'overflowX',
+    'overflowY', 'padding', 'position', 'right', 'tableLayout', 'textAlign', 'textDecoration', 'top', 'transform',
+    'transition', 'whiteSpace', 'width', 'wordBreak', 'zIndex',
 ])
 
 const P = {

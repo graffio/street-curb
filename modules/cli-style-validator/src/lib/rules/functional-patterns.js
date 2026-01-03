@@ -1,8 +1,8 @@
 // ABOUTME: Rule to detect imperative loop patterns
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
-import { AS } from '../aggregators.js'
-import { FS } from '../factories.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
 
 const LOOP_TYPES = ['ForStatement', 'WhileStatement', 'DoWhileStatement', 'ForInStatement', 'ForOfStatement']
 

@@ -4,9 +4,9 @@
 // COMPLEXITY-TODO: functions — Chain tracking requires scope-aware traversal (expires 2026-01-03)
 // COMPLEXITY-TODO: cohesion-structure — Scope tracking requires many helpers (expires 2026-01-03)
 
-import { AS } from '../aggregators.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const THRESHOLD = 3
 const PRIORITY = 1

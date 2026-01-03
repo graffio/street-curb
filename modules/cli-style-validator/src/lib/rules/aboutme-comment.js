@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect missing ABOUTME comments at file top
 // ABOUTME: Enforces two-line ABOUTME header in all source files
 
-import { FS } from '../factories.js'
+import { FS } from '../shared/factories.js'
 
 const P = {
     // Check if line starts with ABOUTME marker

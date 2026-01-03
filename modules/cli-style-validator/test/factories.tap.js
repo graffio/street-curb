@@ -2,7 +2,7 @@
 // ABOUTME: Covers withExemptions wrapper for rule exemption handling
 
 import t from 'tap'
-import { FS } from '../src/lib/factories.js'
+import { FS } from '../src/lib/shared/factories.js'
 
 t.test('Given withExemptions wrapper', t => {
     const mockViolation = { type: 'test-rule', line: 1, message: 'Test violation' }

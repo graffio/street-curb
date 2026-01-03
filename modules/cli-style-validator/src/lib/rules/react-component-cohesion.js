@@ -1,9 +1,9 @@
 // ABOUTME: Rule to enforce React component cohesion patterns
 // ABOUTME: Detects render* functions and cohesion groups defined inside components
 
-import { AS } from '../aggregators.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
 const COHESION_GROUPS = ['P', 'T', 'F', 'V', 'A', 'E']

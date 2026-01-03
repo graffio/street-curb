@@ -2,7 +2,7 @@
 // ABOUTME: Covers permanent exemptions, TODO deferrals, and malformed comments
 
 import t from 'tap'
-import { PS } from '../src/lib/predicates.js'
+import { PS } from '../src/lib/shared/predicates.js'
 
 t.test('Given parseComplexityComments', t => {
     t.test('When the source has a permanent COMPLEXITY comment', t => {

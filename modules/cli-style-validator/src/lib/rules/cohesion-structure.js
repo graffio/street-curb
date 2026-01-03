@@ -7,10 +7,10 @@
 // COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-01-03)
 // COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-01-03)
 
-import { AST } from '../ast.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
-import { Source } from '../source.js'
+import { AST } from '../dsl/ast.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
+import { Source } from '../dsl/source.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -51,11 +51,11 @@ const P = {
         AST.topLevel(ast)
             .ofType('VariableDeclaration')
             .someNode(stmt => {
-                const name = AST.firstDeclName(stmt)
+                const name = AST.variableName(stmt)
                 if (!name || !P.isCohesionGroup(name)) return false
-                const init = AST.firstDeclInit(stmt)
-                if (!AST.isObjectExpr(init)) return false
-                return AST.properties(init).some(prop => AST.value(prop) === node)
+                const value = AST.variableValue(stmt)
+                if (!AST.isObjectExpr(value)) return false
+                return AST.properties(value).some(prop => AST.value(prop) === node)
             }),
 
     // Check if node is a function definition
@@ -82,13 +82,13 @@ const T = {
     toFunctionDeclaration: stmt =>
         AST.isNamedFunctionDecl(stmt) ? [F.createFunctionInfo(AST.idName(stmt), stmt, stmt)] : [],
 
-    // Transform statement to function infos if it's a variable with function init
+    // Transform statement to function infos if it's a variable with function value
     // @sig toFunctionVariables :: Statement -> [{ name, line, node }]
     toFunctionVariables: stmt =>
         AST.isVarDecl(stmt)
             ? AST.declarations(stmt)
-                  .filter(decl => AST.init(decl) && PS.isFunctionNode(AST.init(decl)) && AST.idName(decl))
-                  .map(decl => F.createFunctionInfo(AST.idName(decl), stmt, AST.init(decl)))
+                  .filter(decl => AST.rhs(decl) && PS.isFunctionNode(AST.rhs(decl)) && AST.idName(decl))
+                  .map(decl => F.createFunctionInfo(AST.idName(decl), stmt, AST.rhs(decl)))
             : [],
 
     // Transform statement to module-level function info (declaration or variable)
@@ -96,14 +96,14 @@ const T = {
     toModuleLevelFunction: stmt => [...T.toFunctionDeclaration(stmt), ...T.toFunctionVariables(stmt)],
 
     // Transform statement to cohesion group declaration if it is one
-    // @sig toCohesionDecl :: Statement -> { name, line, init }?
+    // @sig toCohesionDecl :: Statement -> { name, line, value }?
     toCohesionDecl: stmt => {
         if (!AST.isVarDecl(stmt)) return null
-        const name = AST.firstDeclName(stmt)
+        const name = AST.variableName(stmt)
         if (!name || !P.isCohesionGroup(name)) return null
-        const init = AST.firstDeclInit(stmt)
-        if (!AST.isObjectExpr(init)) return null
-        return { name, line: AST.line(stmt), init }
+        const value = AST.variableValue(stmt)
+        if (!AST.isObjectExpr(value)) return null
+        return { name, line: AST.line(stmt), value }
     },
 
     // Transform object property to function member info
@@ -125,7 +125,7 @@ const T = {
 
 const A = {
     // Collect all cohesion group declarations from AST
-    // @sig collectCohesionDecls :: AST -> [{ name, line, init }]
+    // @sig collectCohesionDecls :: AST -> [{ name, line, value }]
     collectCohesionDecls: ast => AST.topLevel(ast).mapNode(T.toCohesionDecl).filter(Boolean),
 
     // Collect all function declarations at module level (outside cohesion groups)
@@ -136,8 +136,8 @@ const A = {
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
     collectCohesionGroups: ast => {
         const empty = { P: [], T: [], F: [], V: [], A: [], E: [] }
-        return A.collectCohesionDecls(ast).reduce((groups, { name, init }) => {
-            groups[name] = AST.properties(init).map(T.toFunctionMember).filter(Boolean)
+        return A.collectCohesionDecls(ast).reduce((groups, { name, value }) => {
+            groups[name] = AST.properties(value).map(T.toFunctionMember).filter(Boolean)
             return groups
         }, empty)
     },
@@ -149,8 +149,8 @@ const A = {
     // Find properties that reference external functions instead of defining inline
     // @sig collectExternalReferences :: AST -> [{ group: String, propName: String, refName: String, line: Number }]
     collectExternalReferences: ast =>
-        A.collectCohesionDecls(ast).flatMap(({ name, init }) =>
-            AST.properties(init)
+        A.collectCohesionDecls(ast).flatMap(({ name, value }) =>
+            AST.properties(value)
                 .map(prop => T.toExternalRef(name, prop))
                 .filter(Boolean),
         ),

@@ -1,9 +1,9 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { AS } from '../aggregators.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
 

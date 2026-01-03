@@ -1,9 +1,9 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { AS } from '../aggregators.js'
-import { FS } from '../factories.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 4
 
