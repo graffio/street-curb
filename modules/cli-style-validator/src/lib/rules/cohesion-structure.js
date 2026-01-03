@@ -1,14 +1,15 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
 // COMPLEXITY-TODO: lines — Rule implementation requires many checks (expires 2026-01-03)
-// COMPLEXITY-TODO: functions — Rule implementation requires many checks (expires 2026-01-03)
+// COMPLEXITY-TODO: functions — Rule implementation requires many validators (expires 2026-01-03)
 // COMPLEXITY-TODO: cohesion-structure — Self-referential rule complexity (expires 2026-01-03)
-// COMPLEXITY-TODO: chain-extraction — AST traversal callbacks need inline access (expires 2026-01-03)
-// COMPLEXITY-TODO: single-level-indentation — AST traversal callbacks need inline access (expires 2026-01-03)
-// COMPLEXITY-TODO: sig-documentation — Inline callbacks in forEach need refactoring (expires 2026-01-03)
+// COMPLEXITY-TODO: chain-extraction — Transform functions access nested AST props (expires 2026-01-03)
+// COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-01-03)
+// COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-01-03)
 
 import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
+import { Source } from '../source.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -74,122 +75,106 @@ const P = {
     hasVaguePrefix: name => VAGUE_PREFIXES.test(name),
 }
 
+const T = {
+    // Transform statement to function info if it's a function declaration
+    // @sig toFunctionDeclaration :: Statement -> [{ name, line, node }]
+    toFunctionDeclaration: stmt =>
+        stmt.type === 'FunctionDeclaration' && stmt.id
+            ? [{ name: stmt.id.name, line: stmt.loc?.start?.line || 1, node: stmt }]
+            : [],
+
+    // Transform statement to function infos if it's a variable with function init
+    // @sig toFunctionVariables :: Statement -> [{ name, line, node }]
+    toFunctionVariables: stmt =>
+        stmt.type === 'VariableDeclaration'
+            ? stmt.declarations
+                  .filter(decl => decl.init && PS.isFunctionNode(decl.init) && decl.id?.name)
+                  .map(decl => ({ name: decl.id.name, line: stmt.loc?.start?.line || 1, node: decl.init }))
+            : [],
+
+    // Transform statement to module-level function info (declaration or variable)
+    // @sig toModuleLevelFunction :: Statement -> [{ name, line, node }]
+    toModuleLevelFunction: stmt => [...T.toFunctionDeclaration(stmt), ...T.toFunctionVariables(stmt)],
+
+    // Transform statement to cohesion group declaration if it is one
+    // @sig toCohesionDecl :: Statement -> { name, line, init }?
+    toCohesionDecl: stmt => {
+        if (stmt.type !== 'VariableDeclaration') return null
+        const decl = stmt.declarations[0]
+        if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return null
+        if (decl.init?.type !== 'ObjectExpression') return null
+        return { name: decl.id.name, line: stmt.loc?.start?.line || 1, init: decl.init }
+    },
+
+    // Transform object property to function member info
+    // @sig toFunctionMember :: Property -> { name, line }?
+    toFunctionMember: prop =>
+        prop.key?.name && prop.value && PS.isFunctionNode(prop.value)
+            ? { name: prop.key.name, line: prop.loc?.start?.line || 1 }
+            : null,
+
+    // Transform object property to external reference info
+    // @sig toExternalRef :: (String, Property) -> { group, propName, refName, line }?
+    toExternalRef: (groupName, prop) =>
+        prop.key?.name && prop.value && P.isIdentifierReference(prop.value) && !P.isFunctionDefinition(prop.value)
+            ? { group: groupName, propName: prop.key.name, refName: prop.value.name, line: prop.loc?.start?.line || 1 }
+            : null,
+}
+
 const A = {
+    // Collect all cohesion group declarations from AST
+    // @sig collectCohesionDecls :: AST -> [{ name, line, init }]
+    collectCohesionDecls: ast => (ast?.body ? ast.body.map(T.toCohesionDecl).filter(Boolean) : []),
+
     // Collect all function declarations at module level (outside cohesion groups)
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
-    collectModuleLevelFunctions: ast => {
-        const functions = []
-        if (!ast?.body) return functions
-
-        ast.body.forEach(stmt => {
-            if (stmt.type === 'FunctionDeclaration' && stmt.id)
-                functions.push({ name: stmt.id.name, line: stmt.loc?.start?.line || 1, node: stmt })
-
-            if (stmt.type === 'VariableDeclaration')
-                stmt.declarations.forEach(decl => {
-                    if (decl.init && PS.isFunctionNode(decl.init) && decl.id?.name)
-                        functions.push({ name: decl.id.name, line: stmt.loc?.start?.line || 1, node: decl.init })
-                })
-        })
-
-        return functions
-    },
+    collectModuleLevelFunctions: ast => (ast?.body ? ast.body.flatMap(T.toModuleLevelFunction) : []),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
     collectCohesionGroups: ast => {
-        const groups = { P: [], T: [], F: [], V: [], A: [], E: [] }
-        if (!ast?.body) return groups
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
-            if (decl.init?.type !== 'ObjectExpression') return
-
-            const groupName = decl.id.name
-            decl.init.properties.forEach(prop => {
-                if (prop.key?.name && prop.value && PS.isFunctionNode(prop.value))
-                    groups[groupName].push({ name: prop.key.name, line: prop.loc?.start?.line || 1 })
-            })
-        })
-
-        return groups
+        const empty = { P: [], T: [], F: [], V: [], A: [], E: [] }
+        return A.collectCohesionDecls(ast).reduce((groups, { name, init }) => {
+            groups[name] = init.properties.map(T.toFunctionMember).filter(Boolean)
+            return groups
+        }, empty)
     },
 
     // Collect the order in which cohesion groups are declared
     // @sig collectCohesionDeclarationOrder :: AST -> [{ name: String, line: Number }]
-    collectCohesionDeclarationOrder: ast => {
-        const declarations = []
-        if (!ast?.body) return declarations
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
-            if (decl.init?.type !== 'ObjectExpression') return
-            declarations.push({ name: decl.id.name, line: stmt.loc?.start?.line || 1 })
-        })
-
-        return declarations
-    },
+    collectCohesionDeclarationOrder: ast => A.collectCohesionDecls(ast).map(({ name, line }) => ({ name, line })),
 
     // Find properties that reference external functions instead of defining inline
     // @sig collectExternalReferences :: AST -> [{ group: String, propName: String, refName: String, line: Number }]
-    collectExternalReferences: ast => {
-        const references = []
-        if (!ast?.body) return references
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
-            if (decl.init?.type !== 'ObjectExpression') return
-
-            const groupName = decl.id.name
-            decl.init.properties.forEach(prop => {
-                if (!prop.key?.name || !prop.value) return
-                if (P.isIdentifierReference(prop.value) && !P.isFunctionDefinition(prop.value))
-                    references.push({
-                        group: groupName,
-                        propName: prop.key.name,
-                        refName: prop.value.name,
-                        line: prop.loc?.start?.line || 1,
-                    })
-            })
-        })
-
-        return references
-    },
+    collectExternalReferences: ast =>
+        A.collectCohesionDecls(ast).flatMap(({ name, init }) =>
+            init.properties.map(prop => T.toExternalRef(name, prop)).filter(Boolean),
+        ),
 
     // Find COMPLEXITY: comments that justify structural decisions
     // @sig findComplexityComments :: String -> [{ line: Number, reason: String }]
-    findComplexityComments: sourceCode => {
-        const comments = []
-        const lines = sourceCode.split('\n')
-        lines.forEach((line, index) => {
-            const match = line.match(/\/\/\s*COMPLEXITY:\s*(.+)/)
-            if (match) comments.push({ line: index + 1, reason: match[1].trim() })
-        })
-        return comments
-    },
+    findComplexityComments: sourceCode =>
+        Source.from(sourceCode)
+            .all()
+            .toArray()
+            .map((line, index) => {
+                const match = line.match(/\/\/\s*COMPLEXITY:\s*(.+)/)
+                return match ? { line: index + 1, reason: match[1].trim() } : null
+            })
+            .filter(Boolean),
 
     // Collect exported names from export statements
     // @sig collectExports :: AST -> [{ name: String, line: Number }]
-    collectExports: ast => {
-        const exports = []
-        if (!ast?.body) return exports
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'ExportNamedDeclaration') return
-            if (!stmt.specifiers) return
-            stmt.specifiers.forEach(spec => {
-                if (spec.exported?.name) exports.push({ name: spec.exported.name, line: stmt.loc?.start?.line || 1 })
-            })
-        })
-
-        return exports
-    },
+    collectExports: ast =>
+        ast?.body
+            ? ast.body
+                  .filter(stmt => stmt.type === 'ExportNamedDeclaration' && stmt.specifiers)
+                  .flatMap(stmt =>
+                      stmt.specifiers
+                          .filter(spec => spec.exported?.name)
+                          .map(spec => ({ name: spec.exported.name, line: stmt.loc?.start?.line || 1 })),
+                  )
+            : [],
 }
 
 const F = {
