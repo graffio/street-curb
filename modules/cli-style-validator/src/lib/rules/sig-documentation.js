@@ -4,7 +4,7 @@
 import { AST } from '../dsl/ast.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
-import { Source } from '../dsl/source.js'
+import { Lines } from '../dsl/source.js'
 
 const PRIORITY = 6
 
@@ -74,7 +74,7 @@ const F = {
 
 const A = {
     // Find @sig line in comment block above function, returns { found, lineIndex }
-    // @sig findSigInCommentBlock :: (SourceQuery, ASTNode, ASTNode?) -> { found: Boolean, lineIndex: Number? }
+    // @sig findSigInCommentBlock :: (Lines, ASTNode, ASTNode?) -> { found: Boolean, lineIndex: Number? }
     findSigInCommentBlock: (src, node, parent) => {
         const commentLines = src.beforeNode(node, parent).takeUntil(PS.isNonCommentLine)
         const sigIndex = commentLines.findIndex(P.hasSig)
@@ -87,19 +87,19 @@ const A = {
     },
 
     // Check if there are substantive non-continuation comments between @sig and function
-    // @sig hasCommentsBetweenSigAndFunction :: (SourceQuery, Number, Number) -> Boolean
+    // @sig hasCommentsBetweenSigAndFunction :: (Lines, Number, Number) -> Boolean
     hasCommentsBetweenSigAndFunction: (src, sigLineNum, functionLineNum) =>
         src.between(sigLineNum + 1, functionLineNum).some(P.isNonContinuationComment),
 
     // Check if there's a description comment above @sig line
-    // @sig hasDescriptionAboveSig :: (SourceQuery, Number) -> Boolean
+    // @sig hasDescriptionAboveSig :: (Lines, Number) -> Boolean
     hasDescriptionAboveSig: (src, sigLineNum) =>
         src.before(sigLineNum).takeUntil(PS.isNonCommentLine).some(P.isDescription),
 }
 
 const V = {
     // Validate a single function for @sig documentation
-    // @sig validateFunction :: ({ node, parent }, AST, SourceQuery) -> [Violation]
+    // @sig validateFunction :: ({ node, parent }, AST, Lines) -> [Violation]
     validateFunction: (pair, ast, src) => {
         const { node, parent } = pair
         const { found: hasSig, lineIndex: sigLineIndex } = A.findSigInCommentBlock(src, node, parent)
@@ -130,7 +130,7 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
 
-        const src = Source.from(sourceCode)
+        const src = Lines.from(sourceCode)
 
         return AST.from(ast)
             .find(({ node }) => PS.isFunctionNode(node))

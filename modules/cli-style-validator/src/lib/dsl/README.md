@@ -9,7 +9,7 @@ Two complementary query systems:
 | Module | Purpose | Entry Point | Returns |
 |--------|---------|-------------|---------|
 | `ast.js` | Query parsed AST nodes | `AST.from(ast)` | `Nodes` (collection of `{ node, parent }` pairs) |
-| `source.js` | Query source lines by position | `Source.from(code)` | `SourceView` with position-based access |
+| `source.js` | Query source lines by position | `Lines.from(code)` | `Lines` (collection with position and filter methods) |
 
 Both produce chainable collection wrappers with filter/map/find operations.
 
@@ -46,15 +46,24 @@ Source Code
     │
     ▼
 ┌──────────────┐
-│ Source.from()│────▶ SourceView (position-based line access)
+│ Lines.from() │────▶ Lines (position + collection methods)
 └──────────────┘
         │
-        ▼
-┌──────────────┐
-│ .before(n)   │
-│ .all()       │────▶ Lines (query over line strings)
-│ .after(n)    │
-└──────────────┘
+        ├──────────────────┐
+        ▼                  ▼
+┌──────────────┐    ┌──────────────┐
+│ .before(n)   │    │ .filter()    │
+│ .after(n)    │    │ .takeUntil() │────▶ Filtered Lines
+│ .beforeNode()│    │ .takeWhile() │
+└──────────────┘    └──────────────┘
+        │                  │
+        └───────┬──────────┘
+                ▼
+         ┌─────────────┐
+         │ .find()     │
+         │ .some()     │────▶ Results
+         │ .toArray()  │
+         └─────────────┘
 ```
 
 ## AST Module
@@ -152,15 +161,17 @@ AST.from(ast)
     .toArray()
 ```
 
-## Source Module
+## Lines Module
 
 ### Entry Point
 
 ```javascript
-Source.from(sourceCode)  // Create query interface over source lines (1-indexed)
+Lines.from(sourceCode)  // Create Lines from source code (1-indexed lines)
 ```
 
-### SourceView Methods
+### Position Methods
+
+Navigate to specific line ranges:
 
 ```javascript
 .at(lineNum)              // Get single line by number (1-indexed)
@@ -168,11 +179,13 @@ Source.from(sourceCode)  // Create query interface over source lines (1-indexed)
 .after(lineNum)           // Lines after position
 .between(start, end)      // Lines between two positions (exclusive)
 .beforeNode(node, parent) // Lines before an AST node
-.all()                    // All lines as a Lines collection
+.all()                    // All lines (returns self, for chaining)
 .lineCount()              // Total number of lines
 ```
 
-### Lines Methods (chainable)
+### Collection Methods (chainable)
+
+Filter or limit the line collection:
 
 ```javascript
 .filter(predicate)        // Keep lines matching predicate
@@ -180,7 +193,9 @@ Source.from(sourceCode)  // Create query interface over source lines (1-indexed)
 .takeWhile(predicate)     // Take lines while predicate matches
 ```
 
-### Lines Methods (terminal)
+### Collection Methods (terminal)
+
+Extract results from the collection:
 
 ```javascript
 .find(predicate)          // First line matching predicate, or undefined
@@ -193,23 +208,23 @@ Source.from(sourceCode)  // Create query interface over source lines (1-indexed)
 .toArray()                // Get lines as array
 ```
 
-### Source Examples
+### Lines Examples
 
 ```javascript
 // Find @sig comment above a function
-Source.from(sourceCode)
+Lines.from(sourceCode)
     .beforeNode(functionNode, parentNode)
     .takeUntil(PS.isNonCommentLine)
     .find(line => line.includes('@sig'))
 
 // Check if there's a description comment above @sig
-Source.from(sourceCode)
+Lines.from(sourceCode)
     .before(sigLineNum)
     .takeUntil(PS.isNonCommentLine)
     .some(isDescriptionLine)
 
 // Count non-comment lines in file
-Source.from(sourceCode)
+Lines.from(sourceCode)
     .all()
     .count(PS.isNonCommentLine)
 ```

@@ -10,7 +10,7 @@
 import { AST } from '../dsl/ast.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
-import { Source } from '../dsl/source.js'
+import { Lines } from '../dsl/source.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -158,7 +158,7 @@ const A = {
     // Find COMPLEXITY: comments that justify structural decisions
     // @sig findComplexityComments :: String -> [{ line: Number, reason: String }]
     findComplexityComments: sourceCode =>
-        Source.from(sourceCode)
+        Lines.from(sourceCode)
             .all()
             .toArray()
             .map((line, index) => {

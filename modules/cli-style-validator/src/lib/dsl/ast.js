@@ -2,28 +2,28 @@
 // ABOUTME: Enables declarative node finding, filtering, and transformation
 // API documentation: see README.md in this directory
 
-// Query builder over array of { node, parent } pairs
-// @sig Query :: [{ node: ASTNode, parent: ASTNode? }] -> QueryObject
-const Query = pairs => ({
+// Collection of { node, parent } pairs with chainable query methods
+// @sig Nodes :: [{ node: ASTNode, parent: ASTNode? }] -> Nodes
+const Nodes = pairs => ({
     // Filter to nodes matching predicate
-    // @sig find :: ({ node, parent } -> Boolean) -> Query
-    find: predicate => Query(pairs.filter(predicate)),
+    // @sig find :: ({ node, parent } -> Boolean) -> Nodes
+    find: predicate => Nodes(pairs.filter(predicate)),
 
     // Alias for find (reads better after initial find)
-    // @sig where :: ({ node, parent } -> Boolean) -> Query
-    where: predicate => Query(pairs.filter(predicate)),
+    // @sig where :: ({ node, parent } -> Boolean) -> Nodes
+    where: predicate => Nodes(pairs.filter(predicate)),
 
     // Filter out nodes matching predicate
-    // @sig reject :: ({ node, parent } -> Boolean) -> Query
-    reject: predicate => Query(pairs.filter(p => !predicate(p))),
+    // @sig reject :: ({ node, parent } -> Boolean) -> Nodes
+    reject: predicate => Nodes(pairs.filter(p => !predicate(p))),
 
     // Filter by node type
-    // @sig ofType :: String -> Query
-    ofType: type => Query(pairs.filter(({ node }) => node.type === type)),
+    // @sig ofType :: String -> Nodes
+    ofType: type => Nodes(pairs.filter(({ node }) => node.type === type)),
 
     // Filter by parent type
-    // @sig ofParentType :: String -> Query
-    ofParentType: type => Query(pairs.filter(({ parent }) => parent?.type === type)),
+    // @sig ofParentType :: String -> Nodes
+    ofParentType: type => Nodes(pairs.filter(({ parent }) => parent?.type === type)),
 
     // Transform each pair
     // @sig map :: ({ node, parent } -> T) -> [T]
@@ -102,17 +102,17 @@ const A = {
 const AST = {
     // === Entry Points ===
 
-    // Create a query from an AST root, collecting all nodes with parent context
-    // @sig from :: AST -> Query
+    // Create Nodes from an AST root, collecting all nodes with parent context
+    // @sig from :: AST -> Nodes
     from: ast => {
         const pairs = []
         AST.walk(ast, (node, parent) => pairs.push({ node, parent }))
-        return Query(pairs)
+        return Nodes(pairs)
     },
 
-    // Create a query over just top-level statements (ast.body)
-    // @sig topLevel :: AST -> Query
-    topLevel: ast => Query((ast?.body || []).map(node => ({ node, parent: ast }))),
+    // Create Nodes over just top-level statements (ast.body)
+    // @sig topLevel :: AST -> Nodes
+    topLevel: ast => Nodes((ast?.body || []).map(node => ({ node, parent: ast }))),
 
     // === Type Predicates ===
 
