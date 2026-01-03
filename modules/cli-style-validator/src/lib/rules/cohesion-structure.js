@@ -11,7 +11,7 @@ import { AST } from '../dsl/ast.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 import { Lines } from '../dsl/source.js'
-import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
+import { ASTNode, FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -64,8 +64,9 @@ const P = {
     isFunctionDefinition: node => PS.isFunctionNode(node),
 
     // Check if node is an identifier reference (not function definition)
+    // Uses ASTNode.Identifier.is() for type-safe variant checking
     // @sig isIdentifierReference :: ASTNode -> Boolean
-    isIdentifierReference: node => node?.type === 'Identifier',
+    isIdentifierReference: node => ASTNode.Identifier.is(node),
 
     // Match function name to suggested cohesion group based on prefix
     // @sig matchesCohesionPattern :: String -> String?
