@@ -252,6 +252,10 @@ const AST = {
     // @sig keyName :: Property -> String?
     keyName: prop => prop?.key?.name || prop?.key?.value,
 
+    // Get key name and value node from property
+    // @sig keyValue :: Property -> { key: String?, value: ASTNode? }
+    keyValue: prop => ({ key: prop?.key?.name || prop?.key?.value, value: prop?.value }),
+
     // Get exported name from specifier
     // @sig exportedName :: Specifier -> String?
     exportedName: spec => spec?.exported?.name,
@@ -280,6 +284,10 @@ const AST = {
     // Get start line of a node
     // @sig startLine :: ASTNode -> Number
     startLine: node => node.loc?.start?.line ?? 0,
+
+    // Get start line with fallback to 1 (for info objects)
+    // @sig line :: ASTNode -> Number
+    line: node => node?.loc?.start?.line || 1,
 
     // Get end line of a node
     // @sig endLine :: ASTNode -> Number
