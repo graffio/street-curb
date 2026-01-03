@@ -1,10 +1,14 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
+// Get raw ESTree node from either wrapped ASTNode or raw node
+// @sig raw :: (ASTNode | ESTreeNode) -> ESTreeNode
 import { AST } from '../dsl/ast.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 import { Lines } from '../dsl/source.js'
+
+const raw = node => node?.raw ?? node
 
 const PRIORITY = 6
 
@@ -62,14 +66,17 @@ const T = {
 const F = {
     // Create a violation object from an AST node
     // @sig createViolation :: (ASTNode, String) -> Violation
-    createViolation: (node, message) => ({
-        type: 'sig-documentation',
-        line: node.loc.start.line,
-        column: node.loc.start.column + 1,
-        priority: PRIORITY,
-        message,
-        rule: 'sig-documentation',
-    }),
+    createViolation: (node, message) => {
+        const r = raw(node)
+        return {
+            type: 'sig-documentation',
+            line: r.loc.start.line,
+            column: r.loc.start.column + 1,
+            priority: PRIORITY,
+            message,
+            rule: 'sig-documentation',
+        }
+    },
 }
 
 const A = {

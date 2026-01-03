@@ -3,6 +3,10 @@
 // COMPLEXITY: lines — Shared module consolidating predicates from multiple rules
 // COMPLEXITY: functions — Shared module consolidating predicates from multiple rules
 
+// Get raw ESTree node from either wrapped ASTNode or raw node
+// @sig raw :: (ASTNode | ESTreeNode) -> ESTreeNode
+const raw = node => node?.raw ?? node
+
 // Regex patterns for COMPLEXITY comments
 const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/
 const COMPLEXITY_TODO_BASE = /^\/\/\s*COMPLEXITY-TODO:\s*(\S+)/
@@ -29,18 +33,20 @@ const PS = {
     // Check if a node represents a function (declaration, expression, or arrow)
     // @sig isFunctionNode :: ASTNode -> Boolean
     isFunctionNode: node => {
-        const { type } = node
+        const type = raw(node)?.type
         return type === 'FunctionDeclaration' || type === 'FunctionExpression' || type === 'ArrowFunctionExpression'
     },
 
     // Check if a node is a function declaration statement
     // @sig isFunctionDeclaration :: ASTNode -> Boolean
-    isFunctionDeclaration: node => node.type === 'FunctionDeclaration',
+    isFunctionDeclaration: node => raw(node)?.type === 'FunctionDeclaration',
 
     // Check if a node is a variable declaration with a function expression
     // @sig isFunctionVariableDeclaration :: ASTNode -> Boolean
-    isFunctionVariableDeclaration: node =>
-        node.type === 'VariableDeclaration' && node.declarations.some(d => d.init && PS.isFunctionNode(d.init)),
+    isFunctionVariableDeclaration: node => {
+        const r = raw(node)
+        return r?.type === 'VariableDeclaration' && r.declarations.some(d => d.init && PS.isFunctionNode(d.init))
+    },
 
     // Check if a node is a function statement (declaration or variable with function)
     // @sig isFunctionStatement :: ASTNode -> Boolean
@@ -55,11 +61,11 @@ const PS = {
 
     // Check if node is valid for traversal (has type property)
     // @sig isValidNode :: Any -> Boolean
-    isValidNode: node => node && typeof node === 'object' && node.type,
+    isValidNode: node => node && typeof node === 'object' && raw(node)?.type,
 
     // Check if node is a block statement
     // @sig isBlockStatement :: ASTNode -> Boolean
-    isBlockStatement: node => node.type === 'BlockStatement',
+    isBlockStatement: node => raw(node)?.type === 'BlockStatement',
 
     // Check if a name is PascalCase (starts with uppercase, alphanumeric)
     // @sig isPascalCase :: String -> Boolean
@@ -71,7 +77,10 @@ const PS = {
 
     // Check if a node spans multiple lines
     // @sig isMultilineNode :: ASTNode -> Boolean
-    isMultilineNode: node => node.loc && node.loc.end.line > node.loc.start.line,
+    isMultilineNode: node => {
+        const r = raw(node)
+        return r?.loc && r.loc.end.line > r.loc.start.line
+    },
 
     // Check if function counts toward complexity
     // @sig isComplexFunction :: ASTNode -> Boolean
@@ -79,21 +88,24 @@ const PS = {
 
     // Check if node is a function with a block body (not expression)
     // @sig isFunctionWithBlockBody :: ASTNode -> Boolean
-    isFunctionWithBlockBody: node => PS.isFunctionNode(node) && node.body?.type === 'BlockStatement',
+    isFunctionWithBlockBody: node => PS.isFunctionNode(node) && raw(node)?.body?.type === 'BlockStatement',
 
     // Check if statement returns JSX element or fragment
     // @sig hasJSXReturnStatement :: Statement -> Boolean
     hasJSXReturnStatement: stmt => {
-        if (stmt.type !== 'ReturnStatement' || !stmt.argument) return false
-        return stmt.argument.type === 'JSXElement' || stmt.argument.type === 'JSXFragment'
+        const r = raw(stmt)
+        if (r?.type !== 'ReturnStatement' || !r.argument) return false
+        return r.argument.type === 'JSXElement' || r.argument.type === 'JSXFragment'
     },
 
     // Check if function returns JSX (arrow expression or block return)
     // @sig isJSXFunction :: ASTNode -> Boolean
     isJSXFunction: node => {
-        const { body, expression } = node
+        const r = raw(node)
+        const body = r?.body
+        const expression = r?.expression
         if (!body) return false
-        const { type } = body
+        const type = body.type
         if (expression && (type === 'JSXElement' || type === 'JSXFragment')) return true
         if (type === 'BlockStatement') return body.body.some(PS.hasJSXReturnStatement)
         return false
@@ -101,8 +113,10 @@ const PS = {
 
     // Check if function is the inner part of a curried function (body of another arrow)
     // @sig isInnerCurriedFunction :: (ASTNode, ASTNode?) -> Boolean
-    isInnerCurriedFunction: (node, parent) =>
-        parent?.type === 'ArrowFunctionExpression' && parent.body === node && PS.isFunctionNode(node),
+    isInnerCurriedFunction: (node, parent) => {
+        const rp = raw(parent)
+        return rp?.type === 'ArrowFunctionExpression' && rp.body === raw(node) && PS.isFunctionNode(node)
+    },
 
     // Strip comment markers (//, /*, *, */) from a line to get content
     // @sig toCommentContent :: String -> String

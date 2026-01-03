@@ -32,12 +32,17 @@ const STYLE_PROPERTIES = new Set([
     'transition', 'whiteSpace', 'width', 'wordBreak', 'zIndex',
 ])
 
+// Get raw ESTree node from either wrapped ASTNode or raw node
+// @sig raw :: (ASTNode | ESTreeNode) -> ESTreeNode
+const raw = node => node?.raw ?? node
+
 const P = {
     // Check if object expression appears to be a style object (>50% CSS properties)
     // @sig isStyleObject :: ASTNode -> Boolean
     isStyleObject: node => {
-        if (node.type !== 'ObjectExpression' || node.properties.length === 0) return false
-        const names = node.properties.filter(p => p.key?.name || p.key?.value).map(p => p.key.name || p.key.value)
+        const r = raw(node)
+        if (r?.type !== 'ObjectExpression' || r.properties.length === 0) return false
+        const names = r.properties.filter(p => p.key?.name || p.key?.value).map(p => p.key.name || p.key.value)
         const cssCount = names.filter(name => STYLE_PROPERTIES.has(name)).length
         return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
     },

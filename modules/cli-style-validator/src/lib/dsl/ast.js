@@ -1,6 +1,9 @@
 // ABOUTME: Fluent query DSL for read-only AST traversal
 // ABOUTME: Enables declarative node finding, filtering, and transformation
+// COMPLEXITY-TODO: functions — ASTNode wrapping adds accessor functions (expires 2026-02-01)
 // API documentation: see README.md in this directory
+
+import { ASTNode } from '../../types/index.js'
 
 // Collection of { node, parent } pairs with chainable query methods
 // @sig Nodes :: [{ node: ASTNode, parent: ASTNode? }] -> Nodes
@@ -17,13 +20,13 @@ const Nodes = pairs => ({
     // @sig reject :: ({ node, parent } -> Boolean) -> Nodes
     reject: predicate => Nodes(pairs.filter(p => !predicate(p))),
 
-    // Filter by node type
+    // Filter by node type (works with both wrapped ASTNode and raw ESTree nodes)
     // @sig ofType :: String -> Nodes
-    ofType: type => Nodes(pairs.filter(({ node }) => node.type === type)),
+    ofType: type => Nodes(pairs.filter(({ node }) => (node.raw?.type ?? node.type) === type)),
 
-    // Filter by parent type
+    // Filter by parent type (works with both wrapped ASTNode and raw ESTree nodes)
     // @sig ofParentType :: String -> Nodes
-    ofParentType: type => Nodes(pairs.filter(({ parent }) => parent?.type === type)),
+    ofParentType: type => Nodes(pairs.filter(({ parent }) => (parent?.raw?.type ?? parent?.type) === type)),
 
     // Transform each pair
     // @sig map :: ({ node, parent } -> T) -> [T]
@@ -66,10 +69,15 @@ const Nodes = pairs => ({
     every: predicate => pairs.every(predicate),
 })
 
+// COMPLEXITY: "raw" — Module-level helper for ASTNode wrapper interop, used throughout AST module
+// Get raw ESTree node from either wrapped ASTNode or raw node
+// @sig raw :: (ASTNode | ESTreeNode) -> ESTreeNode
+const raw = node => node?.raw ?? node
+
 const P = {
-    // Check if value is an AST node
+    // Check if value is an AST node (handles both wrapped and raw)
     // @sig isNode :: Any -> Boolean
-    isNode: child => child && typeof child === 'object' && child.type,
+    isNode: child => child && typeof child === 'object' && (raw(child).type || child.type),
 
     // Keys to skip during traversal
     // @sig isMetaKey :: String -> Boolean
@@ -103,92 +111,97 @@ const AST = {
     // === Entry Points ===
 
     // Create Nodes from an AST root, collecting all nodes with parent context
+    // Nodes are wrapped in ASTNode TaggedSum for type-safe pattern matching
     // @sig from :: AST -> Nodes
     from: ast => {
         const pairs = []
-        AST.walk(ast, (node, parent) => pairs.push({ node, parent }))
+        AST.walk(ast, (node, parent) =>
+            pairs.push({ node: ASTNode.wrap(node), parent: parent ? ASTNode.wrap(parent) : null }),
+        )
         return Nodes(pairs)
     },
 
     // Create Nodes over just top-level statements (ast.body)
+    // Nodes are wrapped in ASTNode TaggedSum for type-safe pattern matching
     // @sig topLevel :: AST -> Nodes
-    topLevel: ast => Nodes((ast?.body || []).map(node => ({ node, parent: ast }))),
+    topLevel: ast =>
+        Nodes((ast?.body || []).map(node => ({ node: ASTNode.wrap(node), parent: ast ? ASTNode.wrap(ast) : null }))),
 
-    // === Type Predicates ===
+    // === Type Predicates (handle both wrapped ASTNode and raw ESTree) ===
 
     // Create a type predicate function
     // @sig isType :: String -> (ASTNode -> Boolean)
-    isType: type => node => node?.type === type,
+    isType: type => node => raw(node)?.type === type,
 
     // Direct type check
     // @sig hasType :: (ASTNode, String) -> Boolean
-    hasType: (node, type) => node?.type === type,
+    hasType: (node, type) => raw(node)?.type === type,
 
     // Check if node is a VariableDeclaration
     // @sig isVarDecl :: ASTNode -> Boolean
-    isVarDecl: node => node?.type === 'VariableDeclaration',
+    isVarDecl: node => raw(node)?.type === 'VariableDeclaration',
 
     // Check if node is a FunctionDeclaration
     // @sig isFunctionDecl :: ASTNode -> Boolean
-    isFunctionDecl: node => node?.type === 'FunctionDeclaration',
+    isFunctionDecl: node => raw(node)?.type === 'FunctionDeclaration',
 
     // Check if node is an ObjectExpression
     // @sig isObjectExpr :: ASTNode -> Boolean
-    isObjectExpr: node => node?.type === 'ObjectExpression',
+    isObjectExpr: node => raw(node)?.type === 'ObjectExpression',
 
     // Check if node is a FunctionDeclaration with a name
     // @sig isNamedFunctionDecl :: ASTNode -> Boolean
-    isNamedFunctionDecl: node => node?.type === 'FunctionDeclaration' && node.id?.name,
+    isNamedFunctionDecl: node => raw(node)?.type === 'FunctionDeclaration' && raw(node).id?.name,
 
-    // === Property Accessors (safe) ===
+    // === Property Accessors (handle both wrapped ASTNode and raw ESTree) ===
 
     // Get body array or empty
     // @sig body :: AST -> [Statement]
-    body: ast => ast?.body || [],
+    body: ast => raw(ast)?.body || [],
 
     // Get declarations array or empty
     // @sig declarations :: ASTNode -> [VariableDeclarator]
-    declarations: node => node?.declarations || [],
+    declarations: node => raw(node)?.declarations || [],
 
     // Get the name of the first declared variable
     // @sig variableName :: VariableDeclaration -> String?
-    variableName: node => node?.declarations?.[0]?.id?.name,
+    variableName: node => raw(node)?.declarations?.[0]?.id?.name,
 
     // Get the value (right-hand side) of the first declared variable
     // @sig variableValue :: VariableDeclaration -> ASTNode?
-    variableValue: node => node?.declarations?.[0]?.init,
+    variableValue: node => raw(node)?.declarations?.[0]?.init,
 
     // Get properties array or empty
     // @sig properties :: ASTNode -> [Property]
-    properties: node => node?.properties || [],
+    properties: node => raw(node)?.properties || [],
 
     // Get specifiers array or empty
     // @sig specifiers :: ASTNode -> [Specifier]
-    specifiers: node => node?.specifiers || [],
+    specifiers: node => raw(node)?.specifiers || [],
 
     // Get right-hand side of assignment (the value being assigned)
     // @sig rhs :: VariableDeclarator -> ASTNode?
-    rhs: node => node?.init,
+    rhs: node => raw(node)?.init,
 
     // Get id.name or undefined
     // @sig idName :: ASTNode -> String?
-    idName: node => node?.id?.name,
+    idName: node => raw(node)?.id?.name,
 
     // Get key name (handles both identifier and literal keys)
     // @sig keyName :: Property -> String?
-    keyName: prop => prop?.key?.name || prop?.key?.value,
+    keyName: prop => raw(prop)?.key?.name || raw(prop)?.key?.value,
 
     // Get key name and value node from property
     // @sig keyValue :: Property -> { key: String?, value: ASTNode? }
-    keyValue: prop => ({ key: prop?.key?.name || prop?.key?.value, value: prop?.value }),
+    keyValue: prop => ({ key: raw(prop)?.key?.name || raw(prop)?.key?.value, value: raw(prop)?.value }),
 
     // Get exported name from specifier
     // @sig exportedName :: Specifier -> String?
-    exportedName: spec => spec?.exported?.name,
+    exportedName: spec => raw(spec)?.exported?.name,
 
     // Get value node from property
     // @sig value :: Property -> ASTNode?
-    value: prop => prop?.value,
+    value: prop => raw(prop)?.value,
 
     // === Node Helpers ===
 
@@ -200,36 +213,39 @@ const AST = {
         A.toChildren(node).forEach(child => AST.walk(child, visitor, node))
     },
 
-    // Count lines spanned by a node
+    // Count lines spanned by a node (handles both wrapped and raw)
     // @sig lineCount :: ASTNode -> Number
     lineCount: node => {
-        if (!node.loc) return 0
-        return node.loc.end.line - node.loc.start.line + 1
+        const r = raw(node)
+        if (!r.loc) return 0
+        return r.loc.end.line - r.loc.start.line + 1
     },
 
-    // Get start line of a node
+    // Get start line of a node (handles both wrapped and raw)
     // @sig startLine :: ASTNode -> Number
-    startLine: node => node.loc?.start?.line ?? 0,
+    startLine: node => raw(node)?.loc?.start?.line ?? 0,
 
     // Get start line with fallback to 1 (for info objects)
     // @sig line :: ASTNode -> Number
-    line: node => node?.loc?.start?.line || 1,
+    line: node => raw(node)?.loc?.start?.line || 1,
 
-    // Get end line of a node
+    // Get end line of a node (handles both wrapped and raw)
     // @sig endLine :: ASTNode -> Number
-    endLine: node => node.loc?.end?.line ?? 0,
+    endLine: node => raw(node)?.loc?.end?.line ?? 0,
 
     // Check if a function node is at module top level
     // @sig isTopLevel :: (ASTNode, AST) -> Boolean
     isTopLevel: (node, ast) => {
-        if (!ast?.body) return false
-        return ast.body.some(statement => P.isTopLevelDeclarationOf(node, statement))
+        const r = raw(ast)
+        if (!r?.body) return false
+        return r.body.some(statement => P.isTopLevelDeclarationOf(raw(node), statement))
     },
 
     // Get the effective line for comment searching (uses parent for properties/variables)
     // @sig effectiveLine :: (ASTNode, ASTNode?) -> Number
     effectiveLine: (node, parent) => {
-        if (parent?.type === 'Property' || parent?.type === 'VariableDeclarator') return AST.startLine(parent)
+        const rp = raw(parent)
+        if (rp?.type === 'Property' || rp?.type === 'VariableDeclarator') return AST.startLine(parent)
         return AST.startLine(node)
     },
 }
