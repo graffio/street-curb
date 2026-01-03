@@ -1,7 +1,17 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
+// COMPLEXITY-TODO: lines — Rule implementation requires many checks (expires 2026-02-01)
+// COMPLEXITY-TODO: functions — Rule implementation requires many validators (expires 2026-02-01)
+// COMPLEXITY-TODO: cohesion-structure — Self-referential rule complexity (expires 2026-02-01)
+// COMPLEXITY-TODO: chain-extraction — Transform functions access nested AST props (expires 2026-02-01)
+// COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-02-01)
+// COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-02-01)
 
-import { PS } from '../predicates.js'
+import { AST } from '../dsl/ast.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
+import { Lines } from '../dsl/source.js'
+import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -32,26 +42,22 @@ const P = {
     // @sig isCohesionGroup :: String -> Boolean
     isCohesionGroup: name => COHESION_ORDER.includes(name),
 
-    // Check if name is PascalCase (React component)
-    // @sig isPascalCase :: String -> Boolean
-    isPascalCase: name => /^[A-Z][a-zA-Z0-9]*$/.test(name),
-
     // Check if name is exempt from cohesion requirements
     // @sig isExemptName :: String -> Boolean
-    isExemptName: name => EXEMPT_NAMES.includes(name) || P.isPascalCase(name),
+    isExemptName: name => EXEMPT_NAMES.includes(name) || PS.isPascalCase(name),
 
     // Check if node is defined inside a cohesion group object
     // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
-    isInCohesionGroup: (node, ast) => {
-        if (!ast?.body) return false
-        return ast.body.some(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return false
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return false
-            if (decl.init?.type !== 'ObjectExpression') return false
-            return decl.init.properties.some(prop => prop.value === node)
-        })
-    },
+    isInCohesionGroup: (node, ast) =>
+        AST.topLevel(ast)
+            .ofType('VariableDeclaration')
+            .someNode(stmt => {
+                const name = AST.variableName(stmt)
+                if (!name || !P.isCohesionGroup(name)) return false
+                const value = AST.variableValue(stmt)
+                if (!AST.isObjectExpr(value)) return false
+                return AST.properties(value).some(prop => AST.value(prop) === node)
+            }),
 
     // Check if node is a function definition
     // @sig isFunctionDefinition :: ASTNode -> Boolean
@@ -63,145 +69,130 @@ const P = {
 
     // Match function name to suggested cohesion group based on prefix
     // @sig matchesCohesionPattern :: String -> String?
-    matchesCohesionPattern: name => {
-        for (const [group, pattern] of Object.entries(COHESION_PATTERNS)) if (pattern.test(name)) return group
-        return null
-    },
+    matchesCohesionPattern: name =>
+        Object.entries(COHESION_PATTERNS).find(([, pattern]) => pattern.test(name))?.[0] || null,
 
     // Check if name has a vague prefix
     // @sig hasVaguePrefix :: String -> Boolean
     hasVaguePrefix: name => VAGUE_PREFIXES.test(name),
 }
 
+const T = {
+    // Transform statement to function info if it's a function declaration
+    // @sig toFunctionDeclaration :: Statement -> [{ name, line, node }]
+    toFunctionDeclaration: stmt =>
+        AST.isNamedFunctionDecl(stmt) ? [F.createFunctionInfo(AST.idName(stmt), stmt, stmt)] : [],
+
+    // Transform statement to function infos if it's a variable with function value
+    // @sig toFunctionVariables :: Statement -> [{ name, line, node }]
+    toFunctionVariables: stmt =>
+        AST.isVarDecl(stmt)
+            ? AST.declarations(stmt)
+                  .filter(decl => AST.rhs(decl) && PS.isFunctionNode(AST.rhs(decl)) && AST.idName(decl))
+                  .map(decl => F.createFunctionInfo(AST.idName(decl), stmt, AST.rhs(decl)))
+            : [],
+
+    // Transform statement to module-level function info (declaration or variable)
+    // @sig toModuleLevelFunction :: Statement -> [{ name, line, node }]
+    toModuleLevelFunction: stmt => [...T.toFunctionDeclaration(stmt), ...T.toFunctionVariables(stmt)],
+
+    // Transform statement to cohesion group declaration if it is one
+    // @sig toCohesionDecl :: Statement -> { name, line, value }?
+    toCohesionDecl: stmt => {
+        if (!AST.isVarDecl(stmt)) return null
+        const name = AST.variableName(stmt)
+        if (!name || !P.isCohesionGroup(name)) return null
+        const value = AST.variableValue(stmt)
+        if (!AST.isObjectExpr(value)) return null
+        return { name, line: AST.line(stmt), value }
+    },
+
+    // Transform object property to function member info
+    // @sig toFunctionMember :: Property -> { name, line }?
+    toFunctionMember: prop => {
+        const { key, value } = AST.keyValue(prop)
+        return key && value && PS.isFunctionNode(value) ? F.createNameInfo(key, prop) : null
+    },
+
+    // Transform object property to external reference info
+    // @sig toExternalRef :: (String, Property) -> { group, propName, refName, line }?
+    toExternalRef: (groupName, prop) => {
+        const { key, value } = AST.keyValue(prop)
+        if (!key || !value) return null
+        if (!P.isIdentifierReference(value) || P.isFunctionDefinition(value)) return null
+        return { group: groupName, propName: key, refName: value.name, line: AST.line(prop) }
+    },
+}
+
 const A = {
+    // Collect all cohesion group declarations from AST
+    // @sig collectCohesionDecls :: AST -> [{ name, line, value }]
+    collectCohesionDecls: ast => AST.topLevel(ast).mapNode(T.toCohesionDecl).filter(Boolean),
+
     // Collect all function declarations at module level (outside cohesion groups)
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
-    collectModuleLevelFunctions: ast => {
-        const functions = []
-        if (!ast?.body) return functions
-
-        ast.body.forEach(stmt => {
-            if (stmt.type === 'FunctionDeclaration' && stmt.id)
-                functions.push({ name: stmt.id.name, line: stmt.loc?.start?.line || 1, node: stmt })
-
-            if (stmt.type === 'VariableDeclaration')
-                stmt.declarations.forEach(decl => {
-                    if (decl.init && PS.isFunctionNode(decl.init) && decl.id?.name)
-                        functions.push({ name: decl.id.name, line: stmt.loc?.start?.line || 1, node: decl.init })
-                })
-        })
-
-        return functions
-    },
+    collectModuleLevelFunctions: ast => AST.topLevel(ast).flatMapNode(T.toModuleLevelFunction),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
     collectCohesionGroups: ast => {
-        const groups = { P: [], T: [], F: [], V: [], A: [], E: [] }
-        if (!ast?.body) return groups
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
-            if (decl.init?.type !== 'ObjectExpression') return
-
-            const groupName = decl.id.name
-            decl.init.properties.forEach(prop => {
-                if (prop.key?.name && prop.value && PS.isFunctionNode(prop.value))
-                    groups[groupName].push({ name: prop.key.name, line: prop.loc?.start?.line || 1 })
-            })
-        })
-
-        return groups
+        const empty = { P: [], T: [], F: [], V: [], A: [], E: [] }
+        return A.collectCohesionDecls(ast).reduce((groups, { name, value }) => {
+            groups[name] = AST.properties(value).map(T.toFunctionMember).filter(Boolean)
+            return groups
+        }, empty)
     },
 
     // Collect the order in which cohesion groups are declared
     // @sig collectCohesionDeclarationOrder :: AST -> [{ name: String, line: Number }]
-    collectCohesionDeclarationOrder: ast => {
-        const declarations = []
-        if (!ast?.body) return declarations
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
-            if (decl.init?.type !== 'ObjectExpression') return
-            declarations.push({ name: decl.id.name, line: stmt.loc?.start?.line || 1 })
-        })
-
-        return declarations
-    },
+    collectCohesionDeclarationOrder: ast => A.collectCohesionDecls(ast).map(({ name, line }) => ({ name, line })),
 
     // Find properties that reference external functions instead of defining inline
     // @sig collectExternalReferences :: AST -> [{ group: String, propName: String, refName: String, line: Number }]
-    collectExternalReferences: ast => {
-        const references = []
-        if (!ast?.body) return references
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return
-            if (decl.init?.type !== 'ObjectExpression') return
-
-            const groupName = decl.id.name
-            decl.init.properties.forEach(prop => {
-                if (!prop.key?.name || !prop.value) return
-                if (P.isIdentifierReference(prop.value) && !P.isFunctionDefinition(prop.value))
-                    references.push({
-                        group: groupName,
-                        propName: prop.key.name,
-                        refName: prop.value.name,
-                        line: prop.loc?.start?.line || 1,
-                    })
-            })
-        })
-
-        return references
-    },
+    collectExternalReferences: ast =>
+        A.collectCohesionDecls(ast).flatMap(({ name, value }) =>
+            AST.properties(value)
+                .map(prop => T.toExternalRef(name, prop))
+                .filter(Boolean),
+        ),
 
     // Find COMPLEXITY: comments that justify structural decisions
     // @sig findComplexityComments :: String -> [{ line: Number, reason: String }]
-    findComplexityComments: sourceCode => {
-        const comments = []
-        const lines = sourceCode.split('\n')
-        lines.forEach((line, index) => {
-            const match = line.match(/\/\/\s*COMPLEXITY:\s*(.+)/)
-            if (match) comments.push({ line: index + 1, reason: match[1].trim() })
-        })
-        return comments
-    },
+    findComplexityComments: sourceCode =>
+        Lines.from(sourceCode)
+            .all()
+            .toArray()
+            .map((line, index) => {
+                const match = line.match(/\/\/\s*COMPLEXITY:\s*(.+)/)
+                return match ? { line: index + 1, reason: match[1].trim() } : null
+            })
+            .filter(Boolean),
 
     // Collect exported names from export statements
     // @sig collectExports :: AST -> [{ name: String, line: Number }]
-    collectExports: ast => {
-        const exports = []
-        if (!ast?.body) return exports
-
-        ast.body.forEach(stmt => {
-            if (stmt.type !== 'ExportNamedDeclaration') return
-            if (!stmt.specifiers) return
-            stmt.specifiers.forEach(spec => {
-                if (spec.exported?.name) exports.push({ name: spec.exported.name, line: stmt.loc?.start?.line || 1 })
-            })
-        })
-
-        return exports
-    },
+    collectExports: ast =>
+        AST.topLevel(ast)
+            .ofType('ExportNamedDeclaration')
+            .flatMap(({ node }) =>
+                AST.specifiers(node)
+                    .filter(spec => AST.exportedName(spec))
+                    .map(spec => F.createNameInfo(AST.exportedName(spec), node)),
+            ),
 }
 
 const F = {
+    // Create a named info object with line from a node
+    // @sig createNameInfo :: (String, ASTNode) -> NamedLocation
+    createNameInfo: (name, node) => NamedLocation(name, AST.line(node)),
+
+    // Create a function info object with name, line, and node reference
+    // @sig createFunctionInfo :: (String, ASTNode, ASTNode) -> FunctionInfo
+    createFunctionInfo: (name, lineNode, node) => FunctionInfo(name, AST.line(lineNode), node),
+
     // Create a cohesion-structure violation at given line
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) => ({
-        type: 'cohesion-structure',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message,
-        rule: 'cohesion-structure',
-    }),
+    createViolation: (line, message) =>
+        Violation('cohesion-structure', line, 1, PRIORITY, message, 'cohesion-structure'),
 
     // Create violation for function not in any cohesion group
     // @sig createUncategorizedViolation :: (Number, String, String?) -> Violation
@@ -306,10 +297,9 @@ const V = {
         ),
 
     // Validate cohesion structure for entire file
-    // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
-    checkCohesionStructure: (ast, sourceCode, filePath) => {
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
-        if (PS.hasComplexityComment(sourceCode)) return []
 
         const violations = []
         const complexityComments = A.findComplexityComments(sourceCode)
@@ -387,5 +377,5 @@ const V = {
     },
 }
 
-const checkCohesionStructure = V.checkCohesionStructure
+const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.check)
 export { checkCohesionStructure }

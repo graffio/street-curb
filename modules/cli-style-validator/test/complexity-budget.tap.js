@@ -74,7 +74,7 @@ t.test('Given a React component file', t => {
         const violations = checkComplexityBudget(ast, code, '/src/components/MyComponent.jsx')
 
         t.equal(violations.length, 1, 'Then one violation should be detected')
-        t.match(violations[0].message, /Component.*MyComponent.*lines/, 'Then the message identifies the component')
+        t.match(violations[0].message, /Lines.*exceeds.*react-component/, 'Then the message describes the violation')
         t.end()
     })
 
@@ -89,7 +89,7 @@ t.test('Given a React component file', t => {
         const violations = checkComplexityBudget(ast, code, '/src/pages/FooPage.jsx')
 
         t.equal(violations.length, 1, 'Then one violation should be detected')
-        t.match(violations[0].message, /Component.*FooPage.*lines.*react-page/, 'Then the message uses page budget')
+        t.match(violations[0].message, /Lines.*exceeds.*react-page/, 'Then the message uses page budget')
         t.end()
     })
 
@@ -107,7 +107,7 @@ t.test('Given a React component file', t => {
         t.equal(violations.length, 1, 'Then one violation should be detected')
         t.match(
             violations[0].message,
-            /style objects.*4.*exceeds.*3/,
+            /Style objects.*4.*exceeds.*react-component.*3/,
             'Then the message describes style object violation',
         )
         t.end()
@@ -124,7 +124,7 @@ t.test('Given a React component file', t => {
         const violations = checkComplexityBudget(ast, code, '/src/components/Complex.jsx')
 
         t.equal(violations.length, 1, 'Then one violation should be detected')
-        t.match(violations[0].message, /functions.*6.*exceeds.*5/, 'Then the message describes function violation')
+        t.match(violations[0].message, /Functions.*6.*exceeds.*5/, 'Then the message describes function violation')
         t.end()
     })
 
@@ -234,6 +234,70 @@ t.test('Given an empty AST', t => {
         const violations = checkComplexityBudget(null, '', 'test.js')
 
         t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given COMPLEXITY exemptions', t => {
+    t.test('When a file has a permanent COMPLEXITY exemption for lines', t => {
+        const code = '// COMPLEXITY: lines — this is a barrel file\n' + manyLines(160)
+        const ast = parseCode(code)
+        const violations = checkComplexityBudget(ast, code, '/cli-foo/src/index.js')
+
+        t.equal(violations.length, 0, 'Then no lines violation should be detected')
+        t.end()
+    })
+
+    t.test('When a file has a non-expired COMPLEXITY-TODO for functions', t => {
+        const futureDate = new Date()
+        futureDate.setDate(futureDate.getDate() + 30)
+        const dateStr = futureDate.toISOString().split('T')[0]
+        const funcs = Array(12)
+            .fill(0)
+            .map((_, i) => `const fn${i} = () => ${i}`)
+            .join('\n')
+        const code = `// COMPLEXITY-TODO: functions — refactoring pending (expires ${dateStr})\n${funcs}`
+        const ast = parseCode(code)
+        const result = checkComplexityBudget(ast, code, '/cli-bar/src/tool.js')
+
+        const violations = result.filter(r => r.type === 'complexity-budget')
+        const warnings = result.filter(r => r.type === 'complexity-budget-warning')
+
+        t.equal(violations.length, 0, 'Then no function violation should be detected')
+        t.equal(warnings.length, 1, 'Then one warning should be emitted')
+        t.match(warnings[0].message, /deferred.*functions/, 'Then the warning mentions the deferred rule')
+        t.ok(warnings[0].daysRemaining >= 29, 'Then daysRemaining should be approximately 30')
+        t.end()
+    })
+
+    t.test('When a file has an expired COMPLEXITY-TODO for style-objects', t => {
+        const code = `// COMPLEXITY-TODO: style-objects — moving to CSS (expires 2020-01-01)
+const style = { padding: '8px', margin: '4px', display: 'flex' }`
+        const ast = parseCode(code)
+        const violations = checkComplexityBudget(ast, code, '/cli-baz/src/main.js')
+
+        t.equal(violations.length, 1, 'Then a style-objects violation should be detected')
+        t.match(violations[0].message, /expired/i, 'Then the message mentions expiration')
+        t.end()
+    })
+
+    t.test('When a file has multiple exemptions for different metrics', t => {
+        const code =
+            `// COMPLEXITY: lines — barrel file
+// COMPLEXITY: functions — many small helpers
+` +
+            manyLines(160) +
+            '\n' +
+            Array(12)
+                .fill(0)
+                .map((_, i) => `const fn${i} = () => ${i}`)
+                .join('\n')
+        const ast = parseCode(code)
+        const violations = checkComplexityBudget(ast, code, '/cli-foo/src/index.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for exempted metrics')
         t.end()
     })
 

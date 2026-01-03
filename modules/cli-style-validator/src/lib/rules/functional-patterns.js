@@ -1,8 +1,8 @@
 // ABOUTME: Rule to detect imperative loop patterns
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
-import { AS } from '../aggregators.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
 
 const LOOP_TYPES = ['ForStatement', 'WhileStatement', 'DoWhileStatement', 'ForInStatement', 'ForOfStatement']
 
@@ -72,29 +72,30 @@ const F = {
 }
 
 const V = {
+    // Validate that code uses functional patterns instead of loops
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast) return []
+        return A.collectViolations(ast)
+    },
+}
+
+const A = {
     // Check node for loop violations and add to array
     // @sig checkNode :: (ASTNode, [Violation]) -> Void
     checkNode: (node, violations) => {
         if (!P.isImperativeLoop(node)) return
         violations.push(F.createViolation(node, T.toLoopSuggestion(node.type)))
     },
-}
 
-const A = {
     // Collect all loop violations from AST
     // @sig collectViolations :: AST -> [Violation]
     collectViolations: ast => {
         const violations = []
-        AS.traverseAST(ast, node => V.checkNode(node, violations))
+        AS.traverseAST(ast, node => A.checkNode(node, violations))
         return violations
     },
 }
 
-// Validate that code uses functional patterns instead of loops
-// @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
-const checkFunctionalPatterns = (ast, sourceCode, filePath) => {
-    if (!ast || PS.hasComplexityComment(sourceCode)) return []
-    return A.collectViolations(ast)
-}
-
+const checkFunctionalPatterns = FS.withExemptions('functional-patterns', V.check)
 export { checkFunctionalPatterns }

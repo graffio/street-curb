@@ -1,8 +1,9 @@
 // ABOUTME: Rule to enforce React component cohesion patterns
 // ABOUTME: Detects render* functions and cohesion groups defined inside components
 
-import { PS } from '../predicates.js'
-import { AS } from '../aggregators.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
 const COHESION_GROUPS = ['P', 'T', 'F', 'V', 'A', 'E']
@@ -60,9 +61,15 @@ const F = {
 }
 
 const V = {
-    // Check if AST contains any JSX (file context check)
-    // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AS.collectNodes(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
+    // Validate React component cohesion patterns
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
+        if (!A.hasJSXContext(ast)) return []
+
+        const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
+        return [...renderViolations, ...A.collectCohesionViolations(ast)]
+    },
 }
 
 const A = {
@@ -92,16 +99,11 @@ const A = {
 
         return violations
     },
+
+    // Check if AST contains any JSX (file context check)
+    // @sig hasJSXContext :: AST -> Boolean
+    hasJSXContext: ast => AS.collectNodes(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
 }
 
-// Validate React component cohesion patterns
-// @sig checkReactComponentCohesion :: (AST?, String, String) -> [Violation]
-const checkReactComponentCohesion = (ast, sourceCode, filePath) => {
-    if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
-    if (!V.hasJSXContext(ast)) return []
-
-    const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
-    return [...renderViolations, ...A.collectCohesionViolations(ast)]
-}
-
+const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.check)
 export { checkReactComponentCohesion }

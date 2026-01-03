@@ -1,8 +1,9 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { AS } from '../aggregators.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 4
 
@@ -69,6 +70,17 @@ const F = {
     }),
 }
 
+const V = {
+    // Validate that functions are declared before executable statements
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast) return []
+        const violations = []
+        AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
+        return violations
+    },
+}
+
 const A = {
     // Add violation for misplaced variable function declarator
     // @sig processDeclarator :: (ASTNode, [Violation]) -> Void
@@ -108,13 +120,5 @@ const A = {
     },
 }
 
-// Validate that functions are declared before executable statements
-// @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
-const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) => {
-    if (!ast || PS.hasComplexityComment(sourceCode)) return []
-    const violations = []
-    AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
-    return violations
-}
-
+const checkFunctionDeclarationOrdering = FS.withExemptions('function-declaration-ordering', V.check)
 export { checkFunctionDeclarationOrdering }

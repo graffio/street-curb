@@ -1,8 +1,9 @@
 // ABOUTME: Rule to detect lines exceeding 120 characters
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
-import { AS } from '../aggregators.js'
-import { PS } from '../predicates.js'
+import { AS } from '../shared/aggregators.js'
+import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 3
 
@@ -19,23 +20,13 @@ const P = {
     // @sig nodeHasPrettierIgnore :: (ASTNode, [String]) -> Boolean
     nodeHasPrettierIgnore: (node, lines) => {
         if (!node.loc) return false
-        const precedingLines = A.getPrecedingCommentLines(lines, node.loc.start.line - 1)
+        const precedingLines = A.toPrecedingCommentLines(lines, node.loc.start.line - 1)
         return precedingLines.some(P.hasPrettierIgnore)
     },
 
     // Check if line exceeds limit and isn't ignored
     // @sig shouldReportLine :: (String, Number, Set<Number>) -> Boolean
     shouldReportLine: (line, lineNumber, ignoredLines) => line.length > 120 && !ignoredLines.has(lineNumber),
-}
-
-const T = {
-    // Generate array of numbers from start to end inclusive
-    // @sig lineRange :: (Number, Number) -> [Number]
-    lineRange: (start, end) => Array.from({ length: end - start + 1 }, (_, i) => start + i),
-
-    // Get all line numbers covered by an AST node
-    // @sig getNodeLineNumbers :: ASTNode -> [Number]
-    getNodeLineNumbers: node => (node.loc ? T.lineRange(node.loc.start.line, node.loc.end.line) : []),
 }
 
 const F = {
@@ -55,8 +46,8 @@ const F = {
 
 const V = {
     // Validate that no lines exceed 120 characters
-    // @sig checkLineLength :: (AST?, String, String) -> [Violation]
-    checkLineLength: (ast, sourceCode, filePath) => {
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
         const lines = sourceCode.split('\n')
         const ignoredLines = A.buildIgnoredLinesSet(ast, lines)
 
@@ -68,9 +59,9 @@ const V = {
 }
 
 const A = {
-    // Get consecutive comment lines before a given index
-    // @sig getPrecedingCommentLines :: ([String], Number) -> [String]
-    getPrecedingCommentLines: (lines, startIndex) => {
+    // Transform line array to preceding comment lines before index
+    // @sig toPrecedingCommentLines :: ([String], Number) -> [String]
+    toPrecedingCommentLines: (lines, startIndex) => {
         const preceding = lines.slice(0, startIndex).reverse()
         const boundaryIndex = preceding.findIndex(P.isBoundaryLine)
         return boundaryIndex === -1 ? preceding : preceding.slice(0, boundaryIndex)
@@ -78,7 +69,7 @@ const A = {
 
     // Get line numbers to ignore if node has prettier-ignore
     // @sig collectIgnoredLines :: ([String], ASTNode) -> [Number]
-    collectIgnoredLines: (lines, node) => (P.nodeHasPrettierIgnore(node, lines) ? T.getNodeLineNumbers(node) : []),
+    collectIgnoredLines: (lines, node) => (P.nodeHasPrettierIgnore(node, lines) ? AS.toNodeLineNumbers(node) : []),
 
     // Build set of all line numbers that should be ignored
     // @sig buildIgnoredLinesSet :: (AST, [String]) -> Set<Number>
@@ -91,5 +82,5 @@ const A = {
     },
 }
 
-const checkLineLength = V.checkLineLength
+const checkLineLength = FS.withExemptions('line-length', V.check)
 export { checkLineLength }
