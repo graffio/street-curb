@@ -7,6 +7,7 @@
 // COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-01-03)
 // COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-01-03)
 
+import { AST } from '../ast.js'
 import { FS } from '../factories.js'
 import { PS } from '../predicates.js'
 import { Source } from '../source.js'
@@ -46,16 +47,16 @@ const P = {
 
     // Check if node is defined inside a cohesion group object
     // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
-    isInCohesionGroup: (node, ast) => {
-        if (!ast?.body) return false
-        return ast.body.some(stmt => {
-            if (stmt.type !== 'VariableDeclaration') return false
-            const decl = stmt.declarations[0]
-            if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return false
-            if (decl.init?.type !== 'ObjectExpression') return false
-            return decl.init.properties.some(prop => prop.value === node)
-        })
-    },
+    isInCohesionGroup: (node, ast) =>
+        AST.topLevel(ast)
+            .ofType('VariableDeclaration')
+            .some(({ node: stmt }) => {
+                const decl = AST.firstDecl(stmt)
+                const name = AST.idName(decl)
+                if (!name || !P.isCohesionGroup(name)) return false
+                if (!AST.hasType(AST.init(decl), 'ObjectExpression')) return false
+                return AST.properties(AST.init(decl)).some(prop => AST.value(prop) === node)
+            }),
 
     // Check if node is a function definition
     // @sig isFunctionDefinition :: ASTNode -> Boolean
@@ -79,17 +80,17 @@ const T = {
     // Transform statement to function info if it's a function declaration
     // @sig toFunctionDeclaration :: Statement -> [{ name, line, node }]
     toFunctionDeclaration: stmt =>
-        stmt.type === 'FunctionDeclaration' && stmt.id
-            ? [{ name: stmt.id.name, line: stmt.loc?.start?.line || 1, node: stmt }]
+        AST.hasType(stmt, 'FunctionDeclaration') && AST.idName(stmt)
+            ? [{ name: AST.idName(stmt), line: AST.startLine(stmt) || 1, node: stmt }]
             : [],
 
     // Transform statement to function infos if it's a variable with function init
     // @sig toFunctionVariables :: Statement -> [{ name, line, node }]
     toFunctionVariables: stmt =>
-        stmt.type === 'VariableDeclaration'
-            ? stmt.declarations
-                  .filter(decl => decl.init && PS.isFunctionNode(decl.init) && decl.id?.name)
-                  .map(decl => ({ name: decl.id.name, line: stmt.loc?.start?.line || 1, node: decl.init }))
+        AST.hasType(stmt, 'VariableDeclaration')
+            ? AST.declarations(stmt)
+                  .filter(decl => AST.init(decl) && PS.isFunctionNode(AST.init(decl)) && AST.idName(decl))
+                  .map(decl => ({ name: AST.idName(decl), line: AST.startLine(stmt) || 1, node: AST.init(decl) }))
             : [],
 
     // Transform statement to module-level function info (declaration or variable)
@@ -99,43 +100,52 @@ const T = {
     // Transform statement to cohesion group declaration if it is one
     // @sig toCohesionDecl :: Statement -> { name, line, init }?
     toCohesionDecl: stmt => {
-        if (stmt.type !== 'VariableDeclaration') return null
-        const decl = stmt.declarations[0]
-        if (!decl?.id?.name || !P.isCohesionGroup(decl.id.name)) return null
-        if (decl.init?.type !== 'ObjectExpression') return null
-        return { name: decl.id.name, line: stmt.loc?.start?.line || 1, init: decl.init }
+        if (!AST.hasType(stmt, 'VariableDeclaration')) return null
+        const decl = AST.firstDecl(stmt)
+        const name = AST.idName(decl)
+        if (!name || !P.isCohesionGroup(name)) return null
+        const init = AST.init(decl)
+        if (!AST.hasType(init, 'ObjectExpression')) return null
+        return { name, line: AST.startLine(stmt) || 1, init }
     },
 
     // Transform object property to function member info
     // @sig toFunctionMember :: Property -> { name, line }?
-    toFunctionMember: prop =>
-        prop.key?.name && prop.value && PS.isFunctionNode(prop.value)
-            ? { name: prop.key.name, line: prop.loc?.start?.line || 1 }
-            : null,
+    toFunctionMember: prop => {
+        const name = AST.keyName(prop)
+        const value = AST.value(prop)
+        return name && value && PS.isFunctionNode(value) ? { name, line: AST.startLine(prop) || 1 } : null
+    },
 
     // Transform object property to external reference info
     // @sig toExternalRef :: (String, Property) -> { group, propName, refName, line }?
-    toExternalRef: (groupName, prop) =>
-        prop.key?.name && prop.value && P.isIdentifierReference(prop.value) && !P.isFunctionDefinition(prop.value)
-            ? { group: groupName, propName: prop.key.name, refName: prop.value.name, line: prop.loc?.start?.line || 1 }
-            : null,
+    toExternalRef: (groupName, prop) => {
+        const propName = AST.keyName(prop)
+        const value = AST.value(prop)
+        if (!propName || !value) return null
+        if (!P.isIdentifierReference(value) || P.isFunctionDefinition(value)) return null
+        return { group: groupName, propName, refName: value.name, line: AST.startLine(prop) || 1 }
+    },
 }
 
 const A = {
     // Collect all cohesion group declarations from AST
     // @sig collectCohesionDecls :: AST -> [{ name, line, init }]
-    collectCohesionDecls: ast => (ast?.body ? ast.body.map(T.toCohesionDecl).filter(Boolean) : []),
+    collectCohesionDecls: ast =>
+        AST.topLevel(ast)
+            .map(({ node }) => T.toCohesionDecl(node))
+            .filter(Boolean),
 
     // Collect all function declarations at module level (outside cohesion groups)
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
-    collectModuleLevelFunctions: ast => (ast?.body ? ast.body.flatMap(T.toModuleLevelFunction) : []),
+    collectModuleLevelFunctions: ast => AST.topLevel(ast).flatMap(({ node }) => T.toModuleLevelFunction(node)),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
     collectCohesionGroups: ast => {
         const empty = { P: [], T: [], F: [], V: [], A: [], E: [] }
         return A.collectCohesionDecls(ast).reduce((groups, { name, init }) => {
-            groups[name] = init.properties.map(T.toFunctionMember).filter(Boolean)
+            groups[name] = AST.properties(init).map(T.toFunctionMember).filter(Boolean)
             return groups
         }, empty)
     },
@@ -148,7 +158,9 @@ const A = {
     // @sig collectExternalReferences :: AST -> [{ group: String, propName: String, refName: String, line: Number }]
     collectExternalReferences: ast =>
         A.collectCohesionDecls(ast).flatMap(({ name, init }) =>
-            init.properties.map(prop => T.toExternalRef(name, prop)).filter(Boolean),
+            AST.properties(init)
+                .map(prop => T.toExternalRef(name, prop))
+                .filter(Boolean),
         ),
 
     // Find COMPLEXITY: comments that justify structural decisions
@@ -166,15 +178,13 @@ const A = {
     // Collect exported names from export statements
     // @sig collectExports :: AST -> [{ name: String, line: Number }]
     collectExports: ast =>
-        ast?.body
-            ? ast.body
-                  .filter(stmt => stmt.type === 'ExportNamedDeclaration' && stmt.specifiers)
-                  .flatMap(stmt =>
-                      stmt.specifiers
-                          .filter(spec => spec.exported?.name)
-                          .map(spec => ({ name: spec.exported.name, line: stmt.loc?.start?.line || 1 })),
-                  )
-            : [],
+        AST.topLevel(ast)
+            .ofType('ExportNamedDeclaration')
+            .flatMap(({ node }) =>
+                AST.specifiers(node)
+                    .filter(spec => AST.exportedName(spec))
+                    .map(spec => ({ name: AST.exportedName(spec), line: AST.startLine(node) || 1 })),
+            ),
 }
 
 const F = {
