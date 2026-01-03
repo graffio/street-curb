@@ -50,12 +50,12 @@ const P = {
     isInCohesionGroup: (node, ast) =>
         AST.topLevel(ast)
             .ofType('VariableDeclaration')
-            .some(({ node: stmt }) => {
-                const decl = AST.firstDecl(stmt)
-                const name = AST.idName(decl)
+            .someNode(stmt => {
+                const name = AST.firstDeclName(stmt)
                 if (!name || !P.isCohesionGroup(name)) return false
-                if (!AST.hasType(AST.init(decl), 'ObjectExpression')) return false
-                return AST.properties(AST.init(decl)).some(prop => AST.value(prop) === node)
+                const init = AST.firstDeclInit(stmt)
+                if (!AST.isObjectExpr(init)) return false
+                return AST.properties(init).some(prop => AST.value(prop) === node)
             }),
 
     // Check if node is a function definition
@@ -80,14 +80,12 @@ const T = {
     // Transform statement to function info if it's a function declaration
     // @sig toFunctionDeclaration :: Statement -> [{ name, line, node }]
     toFunctionDeclaration: stmt =>
-        AST.hasType(stmt, 'FunctionDeclaration') && AST.idName(stmt)
-            ? [{ name: AST.idName(stmt), line: AST.startLine(stmt) || 1, node: stmt }]
-            : [],
+        AST.isNamedFunctionDecl(stmt) ? [{ name: AST.idName(stmt), line: AST.startLine(stmt) || 1, node: stmt }] : [],
 
     // Transform statement to function infos if it's a variable with function init
     // @sig toFunctionVariables :: Statement -> [{ name, line, node }]
     toFunctionVariables: stmt =>
-        AST.hasType(stmt, 'VariableDeclaration')
+        AST.isVarDecl(stmt)
             ? AST.declarations(stmt)
                   .filter(decl => AST.init(decl) && PS.isFunctionNode(AST.init(decl)) && AST.idName(decl))
                   .map(decl => ({ name: AST.idName(decl), line: AST.startLine(stmt) || 1, node: AST.init(decl) }))
@@ -100,12 +98,11 @@ const T = {
     // Transform statement to cohesion group declaration if it is one
     // @sig toCohesionDecl :: Statement -> { name, line, init }?
     toCohesionDecl: stmt => {
-        if (!AST.hasType(stmt, 'VariableDeclaration')) return null
-        const decl = AST.firstDecl(stmt)
-        const name = AST.idName(decl)
+        if (!AST.isVarDecl(stmt)) return null
+        const name = AST.firstDeclName(stmt)
         if (!name || !P.isCohesionGroup(name)) return null
-        const init = AST.init(decl)
-        if (!AST.hasType(init, 'ObjectExpression')) return null
+        const init = AST.firstDeclInit(stmt)
+        if (!AST.isObjectExpr(init)) return null
         return { name, line: AST.startLine(stmt) || 1, init }
     },
 
@@ -131,14 +128,11 @@ const T = {
 const A = {
     // Collect all cohesion group declarations from AST
     // @sig collectCohesionDecls :: AST -> [{ name, line, init }]
-    collectCohesionDecls: ast =>
-        AST.topLevel(ast)
-            .map(({ node }) => T.toCohesionDecl(node))
-            .filter(Boolean),
+    collectCohesionDecls: ast => AST.topLevel(ast).mapNode(T.toCohesionDecl).filter(Boolean),
 
     // Collect all function declarations at module level (outside cohesion groups)
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
-    collectModuleLevelFunctions: ast => AST.topLevel(ast).flatMap(({ node }) => T.toModuleLevelFunction(node)),
+    collectModuleLevelFunctions: ast => AST.topLevel(ast).flatMapNode(T.toModuleLevelFunction),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }

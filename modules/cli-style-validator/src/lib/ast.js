@@ -18,20 +18,29 @@
 // Query Methods (terminal):
 //   .map(fn)            - Transform each pair, returns array
 //   .flatMap(fn)        - Transform and flatten, returns array
+//   .mapNode(fn)        - Transform just node: .map(({ node }) => fn(node))
+//   .flatMapNode(fn)    - Transform just node: .flatMap(({ node }) => fn(node))
 //   .toArray()          - Get all pairs as array
 //   .first()            - Get first pair or null
 //   .count()            - Count matching nodes
 //   .some(predicate)    - Check if any match
+//   .someNode(pred)     - Check if any node matches: .some(({ node }) => pred(node))
 //   .every(predicate)   - Check if all match
 //
 // Type Predicates:
 //   AST.isType(type)        - Returns predicate: node => node.type === type
 //   AST.hasType(node, type) - Direct check: node.type === type
+//   AST.isVarDecl(node)     - node.type === 'VariableDeclaration'
+//   AST.isFunctionDecl(node)- node.type === 'FunctionDeclaration'
+//   AST.isObjectExpr(node)  - node.type === 'ObjectExpression'
+//   AST.isNamedFunctionDecl(node) - FunctionDeclaration with id.name
 //
 // Property Accessors (safe, return undefined/[] on missing):
 //   AST.body(ast)           - ast.body or []
 //   AST.declarations(node)  - node.declarations or []
 //   AST.firstDecl(node)     - node.declarations?.[0]
+//   AST.firstDeclName(node) - node.declarations?.[0]?.id?.name
+//   AST.firstDeclInit(node) - node.declarations?.[0]?.init
 //   AST.properties(node)    - node.properties or []
 //   AST.specifiers(node)    - node.specifiers or []
 //   AST.init(node)          - node.init
@@ -100,6 +109,14 @@ const Query = pairs => ({
     // @sig flatMap :: ({ node, parent } -> [T]) -> [T]
     flatMap: fn => pairs.flatMap(fn),
 
+    // Transform just the node (ignores parent)
+    // @sig mapNode :: (ASTNode -> T) -> [T]
+    mapNode: fn => pairs.map(({ node }) => fn(node)),
+
+    // Transform just the node and flatten
+    // @sig flatMapNode :: (ASTNode -> [T]) -> [T]
+    flatMapNode: fn => pairs.flatMap(({ node }) => fn(node)),
+
     // Get results as array
     // @sig toArray :: () -> [{ node, parent }]
     toArray: () => pairs,
@@ -115,6 +132,10 @@ const Query = pairs => ({
     // Check if any match predicate
     // @sig some :: ({ node, parent } -> Boolean) -> Boolean
     some: predicate => pairs.some(predicate),
+
+    // Check if any node matches predicate (ignores parent)
+    // @sig someNode :: (ASTNode -> Boolean) -> Boolean
+    someNode: predicate => pairs.some(({ node }) => predicate(node)),
 
     // Check if all match predicate
     // @sig every :: ({ node, parent } -> Boolean) -> Boolean
@@ -173,6 +194,22 @@ const AST = {
     // @sig hasType :: (ASTNode, String) -> Boolean
     hasType: (node, type) => node?.type === type,
 
+    // Check if node is a VariableDeclaration
+    // @sig isVarDecl :: ASTNode -> Boolean
+    isVarDecl: node => node?.type === 'VariableDeclaration',
+
+    // Check if node is a FunctionDeclaration
+    // @sig isFunctionDecl :: ASTNode -> Boolean
+    isFunctionDecl: node => node?.type === 'FunctionDeclaration',
+
+    // Check if node is an ObjectExpression
+    // @sig isObjectExpr :: ASTNode -> Boolean
+    isObjectExpr: node => node?.type === 'ObjectExpression',
+
+    // Check if node is a FunctionDeclaration with a name
+    // @sig isNamedFunctionDecl :: ASTNode -> Boolean
+    isNamedFunctionDecl: node => node?.type === 'FunctionDeclaration' && node.id?.name,
+
     // === Property Accessors (safe) ===
 
     // Get body array or empty
@@ -186,6 +223,14 @@ const AST = {
     // Get first declarator or undefined
     // @sig firstDecl :: ASTNode -> VariableDeclarator?
     firstDecl: node => node?.declarations?.[0],
+
+    // Get first declarator's id.name
+    // @sig firstDeclName :: ASTNode -> String?
+    firstDeclName: node => node?.declarations?.[0]?.id?.name,
+
+    // Get first declarator's init
+    // @sig firstDeclInit :: ASTNode -> ASTNode?
+    firstDeclInit: node => node?.declarations?.[0]?.init,
 
     // Get properties array or empty
     // @sig properties :: ASTNode -> [Property]
