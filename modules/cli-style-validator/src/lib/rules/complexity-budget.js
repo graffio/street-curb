@@ -1,13 +1,13 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
-// COMPLEXITY-TODO: lines — Budget config and per-context validation (expires 2026-01-03)
-// COMPLEXITY-TODO: functions — Budget config and per-context validation (expires 2026-01-03)
+// COMPLEXITY-TODO: lines — STYLE_PROPERTIES config takes 50 lines (expires 2026-01-03)
 // COMPLEXITY-TODO: cohesion-structure — Budget checking requires many validators (expires 2026-01-03)
 // COMPLEXITY-TODO: chain-extraction — Component analysis accesses nested props (expires 2026-01-03)
-// COMPLEXITY-TODO: single-level-indentation — Style counting callback needs inline (expires 2026-01-03)
 
 import { AS } from '../aggregators.js'
+import { AST } from '../ast.js'
 import { PS } from '../predicates.js'
+import { Source } from '../source.js'
 
 const PRIORITY = 0
 
@@ -159,8 +159,8 @@ const V = {
     checkReactBudget: (ast, sourceCode, budget) => {
         const components = AS.findComponents(ast)
         if (components.length === 0) {
-            const totalLines = sourceCode.split('\n').length
-            const result = V.checkMetric(sourceCode, 'lines', totalLines, budget.lines, 'react-component')
+            const codeLines = Source.from(sourceCode).all().count(PS.isNonCommentLine)
+            const result = V.checkMetric(sourceCode, 'lines', codeLines, budget.lines, 'react-component')
             return result ? [result] : []
         }
         return components.flatMap(comp => V.checkComponentBudget(comp, sourceCode))
@@ -183,12 +183,12 @@ const V = {
     // Validate non-React file budget (utility, selector, cli)
     // @sig checkNonReactBudget :: (AST, String, String, Budget) -> [Violation]
     checkNonReactBudget: (ast, sourceCode, context, budget) => {
-        const totalLines = sourceCode.split('\n').length
+        const codeLines = Source.from(sourceCode).all().count(PS.isNonCommentLine)
         const styleCount = A.countStyleObjects(ast)
         const totalFunctions = AS.countFunctions(ast)
 
         return [
-            V.checkMetric(sourceCode, 'lines', totalLines, budget.lines, context),
+            V.checkMetric(sourceCode, 'lines', codeLines, budget.lines, context),
             V.checkMetric(sourceCode, 'style-objects', styleCount, budget.styleObjects, context),
             V.checkMetric(sourceCode, 'functions', totalFunctions, budget.functions, context),
         ].filter(Boolean)
@@ -210,13 +210,10 @@ const V = {
 const A = {
     // Count style objects in an AST subtree
     // @sig countStyleObjects :: ASTNode -> Number
-    countStyleObjects: node => {
-        let count = 0
-        AS.traverseAST(node, n => {
-            if (P.isStyleObject(n)) count++
-        })
-        return count
-    },
+    countStyleObjects: node =>
+        AST.from(node)
+            .find(({ node: n }) => P.isStyleObject(n))
+            .count(),
 }
 
 const checkComplexityBudget = V.check

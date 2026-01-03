@@ -1,6 +1,5 @@
 // ABOUTME: Query interface for source code as lines
 // ABOUTME: Enables searching for comments and patterns relative to AST positions
-// COMPLEXITY-TODO: lines — API documentation adds necessary lines (expires 2026-01-03)
 //
 // API OVERVIEW
 // =============================================================================

@@ -1,6 +1,5 @@
 // ABOUTME: Fluent query DSL for read-only AST traversal
 // ABOUTME: Enables declarative node finding, filtering, and transformation
-// COMPLEXITY-TODO: lines — API documentation adds necessary lines (expires 2026-01-03)
 //
 // API OVERVIEW
 // =============================================================================
