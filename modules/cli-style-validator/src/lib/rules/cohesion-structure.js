@@ -1,16 +1,17 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
-// COMPLEXITY-TODO: lines — Rule implementation requires many checks (expires 2026-01-03)
-// COMPLEXITY-TODO: functions — Rule implementation requires many validators (expires 2026-01-03)
-// COMPLEXITY-TODO: cohesion-structure — Self-referential rule complexity (expires 2026-01-03)
-// COMPLEXITY-TODO: chain-extraction — Transform functions access nested AST props (expires 2026-01-03)
-// COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-01-03)
-// COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-01-03)
+// COMPLEXITY-TODO: lines — Rule implementation requires many checks (expires 2026-02-01)
+// COMPLEXITY-TODO: functions — Rule implementation requires many validators (expires 2026-02-01)
+// COMPLEXITY-TODO: cohesion-structure — Self-referential rule complexity (expires 2026-02-01)
+// COMPLEXITY-TODO: chain-extraction — Transform functions access nested AST props (expires 2026-02-01)
+// COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-02-01)
+// COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-02-01)
 
 import { AST } from '../dsl/ast.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 import { Lines } from '../dsl/source.js'
+import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -181,23 +182,17 @@ const A = {
 
 const F = {
     // Create a named info object with line from a node
-    // @sig createNameInfo :: (String, ASTNode) -> { name, line }
-    createNameInfo: (name, node) => ({ name, line: AST.line(node) }),
+    // @sig createNameInfo :: (String, ASTNode) -> NamedLocation
+    createNameInfo: (name, node) => NamedLocation(name, AST.line(node)),
 
     // Create a function info object with name, line, and node reference
-    // @sig createFunctionInfo :: (String, ASTNode, ASTNode) -> { name, line, node }
-    createFunctionInfo: (name, lineNode, node) => ({ name, line: AST.line(lineNode), node }),
+    // @sig createFunctionInfo :: (String, ASTNode, ASTNode) -> FunctionInfo
+    createFunctionInfo: (name, lineNode, node) => FunctionInfo(name, AST.line(lineNode), node),
 
     // Create a cohesion-structure violation at given line
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) => ({
-        type: 'cohesion-structure',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message,
-        rule: 'cohesion-structure',
-    }),
+    createViolation: (line, message) =>
+        Violation('cohesion-structure', line, 1, PRIORITY, message, 'cohesion-structure'),
 
     // Create violation for function not in any cohesion group
     // @sig createUncategorizedViolation :: (Number, String, String?) -> Violation

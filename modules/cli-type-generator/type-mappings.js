@@ -11,6 +11,7 @@ const REPO_ROOT = resolve(__dirname, '../..')
 
 // prettier-ignore
 const sources = {
+    cliStyleValidator    : `${REPO_ROOT}/modules/cli-style-validator/type-definitions`,
     curbMap              : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     designSystem         : `${REPO_ROOT}/modules/design-system/type-definitions`,
@@ -22,6 +23,7 @@ const sources = {
 
 // prettier-ignore
 const targets = {
+    cliStyleValidator    : `${REPO_ROOT}/modules/cli-style-validator/src/types`,
     curbMap              : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
     designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
@@ -33,6 +35,11 @@ const targets = {
 
 // prettier-ignore
 export const typeMappings = {
+    // cli-style-validator
+    [`${sources.cliStyleValidator}/named-location.type.js`]   : [targets.cliStyleValidator],
+    [`${sources.cliStyleValidator}/function-info.type.js`]    : [targets.cliStyleValidator],
+    [`${sources.cliStyleValidator}/violation.type.js`]        : [targets.cliStyleValidator],
+
     // curb-map infrastructure
     [`${sources.curbMap}/action.type.js`]                 : [targets.curbMap],
     [`${sources.curbMap}/action-request.type.js`]         : [targets.curbMap],
