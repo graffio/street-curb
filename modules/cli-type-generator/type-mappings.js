@@ -36,6 +36,7 @@ const targets = {
 // prettier-ignore
 export const typeMappings = {
     // cli-style-validator
+    [`${sources.cliStyleValidator}/ast-node.type.js`]         : [targets.cliStyleValidator],
     [`${sources.cliStyleValidator}/named-location.type.js`]   : [targets.cliStyleValidator],
     [`${sources.cliStyleValidator}/function-info.type.js`]    : [targets.cliStyleValidator],
     [`${sources.cliStyleValidator}/violation.type.js`]        : [targets.cliStyleValidator],

@@ -299,7 +299,7 @@ const V = {
     // Validate cohesion structure for entire file
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath)) return []
+        if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
 
         const violations = []
         const complexityComments = A.findComplexityComments(sourceCode)
