@@ -231,6 +231,12 @@ Only wrap selectors that actually need curried usage (YAGNI). Simple state-only 
 - Bad: `AbstractToolInterface`, `ToolRegistryManager`, `executeWithValidation()`
 - Boolean properties use `is` prefix (e.g., `isImportPlaceholder`), never `__` prefix
 - `@@` is reserved for hidden type metadata (`@@typeName`, `@@tagName`); `__` has no legitimate use
+- **No abbreviations** — use full words in names:
+  - `declaration` not `decl`
+  - `reference` not `ref`
+  - `specification` not `spec`
+  - `expression` not `expr`
+  - Exception: single-letter variables (`i`, `n`, `x`) in short anonymous callbacks
 
 ## Comments
 
