@@ -538,6 +538,17 @@ This document summarizes the specifications that were previously archived in `sp
 - Refactored InvestmentReportPage.jsx: moved P/T to module level, extracted HoldingRow/HoldingsSubTable as sibling components
 - Added commit-msg hook (bash/commit-msg-validate.sh) to enforce Problem/Solution/Impact message format
 
+## [infrastructure] AST/DSL Reorganization Phases 1-4 (2026-01-03)
+**Purpose:** Reorganize cli-style-validator DSL code for clarity, add Tagged types for type safety
+
+- **Phase 1:** Reorganized into `src/lib/dsl/` (ast.js, source.js) and `src/lib/shared/` (predicates.js, aggregators.js, factories.js)
+- **Phase 2:** Added no-abbreviations naming convention (declaration not decl, reference not ref)
+- **Phase 3:** Renamed wrapper types - Query→Nodes, merged Source/SourceQuery/LineQuery→Lines
+- **Phase 4:** Added Tagged types (NamedLocation, FunctionInfo, Violation) via cli-type-generator
+- Created README.md documenting DSL API with examples and data flow diagrams
+- Specification at `specifications/F-ast-dsl-reorganization/plan.md`
+- **Deferred:** Phase 5 (ASTNode TaggedSum with .match() pattern matching)
+
 ## [infrastructure] createSelector + Style Validator Curried Function Support (2026-01-01)
 **Purpose:** Auto-currying createSelector for Redux and fix style validator false positives on curried functions
 
