@@ -46,9 +46,9 @@ test('Given ASTNode.wrap with different ESTree types', async t => {
     })
 })
 
-test('Given AST.topLevel with a Program AST', async t => {
+test('Given AST.topLevelStatements with a Program AST', async t => {
     t.test('When getting top-level statements', async t => {
-        const topLevel = AST.topLevel(minimalAST)
+        const topLevel = AST.topLevelStatements(minimalAST)
 
         t.equal(topLevel.length, 2, 'Then it should return all top-level statements')
         t.ok(ASTNode.VariableDeclaration.is(topLevel[0]), 'Then first should be VariableDeclaration')
@@ -56,7 +56,7 @@ test('Given AST.topLevel with a Program AST', async t => {
     })
 
     t.test('When checking parent references', async t => {
-        const topLevel = AST.topLevel(minimalAST)
+        const topLevel = AST.topLevelStatements(minimalAST)
         const firstNode = topLevel[0]
 
         t.ok(firstNode.parent, 'Then wrapped nodes should have parent')
@@ -64,21 +64,73 @@ test('Given AST.topLevel with a Program AST', async t => {
     })
 })
 
-test('Given AST accessors with wrapped nodes', async t => {
-    t.test('When using location accessors', async t => {
-        const topLevel = AST.topLevel(minimalAST)
+test('Given AST helper functions', async t => {
+    t.test('When using effectiveLine', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
         const varDecl = topLevel[0]
 
-        t.equal(AST.line(varDecl), 1, 'Then line() returns correct line')
-        t.equal(AST.startLine(varDecl), 1, 'Then startLine() returns correct line')
+        t.equal(AST.associatedCommentLine(varDecl), 1, 'Then associatedCommentLine returns start line for top-level')
     })
 
-    t.test('When using property accessors', async t => {
-        const topLevel = AST.topLevel(minimalAST)
+    t.test('When using children', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
         const varDecl = topLevel[0]
 
-        const declarations = AST.declarations(varDecl)
-        t.equal(declarations.length, 1, 'Then declarations() returns array')
-        t.equal(AST.variableName(varDecl), 'x', 'Then variableName() extracts name')
+        const children = AST.children(varDecl)
+        t.ok(Array.isArray(children), 'Then children returns array')
+        t.ok(children.length > 0, 'Then VariableDeclaration has children')
+        t.ok(ASTNode.VariableDeclarator.is(children[0]), 'Then first child is VariableDeclarator')
+    })
+})
+
+test('Given ASTNode instance properties', async t => {
+    t.test('When using shared location properties', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
+        const varDecl = topLevel[0]
+        const funcDecl = topLevel[1]
+
+        t.equal(varDecl.line, 1, 'Then line returns start line')
+        t.equal(varDecl.startLine, 1, 'Then startLine returns start line')
+        t.equal(varDecl.endLine, 1, 'Then endLine returns end line')
+        t.equal(varDecl.column, 1, 'Then column returns 1-based column')
+        t.equal(varDecl.lineCount, 1, 'Then lineCount returns lines spanned')
+        t.ok(varDecl.isSameAs(varDecl), 'Then isSameAs() returns true for same node')
+        t.notOk(varDecl.isSameAs(funcDecl), 'Then isSameAs() returns false for different nodes')
+    })
+
+    t.test('When using VariableDeclaration properties', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
+        const varDecl = topLevel[0]
+
+        t.equal(varDecl.declarations.length, 1, 'Then declarations returns array of wrapped nodes')
+        t.ok(ASTNode.VariableDeclarator.is(varDecl.declarations[0]), 'Then declarator is VariableDeclarator')
+        t.equal(varDecl.firstName, 'x', 'Then firstName returns first declarator name')
+    })
+
+    t.test('When using VariableDeclarator properties', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
+        const varDecl = topLevel[0]
+        const declarator = varDecl.declarations[0]
+
+        t.equal(declarator.name, 'x', 'Then name returns identifier name')
+        t.equal(declarator.value, null, 'Then value returns null when no init')
+    })
+
+    t.test('When using FunctionDeclaration properties', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
+        const funcDecl = topLevel[1]
+
+        t.equal(funcDecl.name, 'foo', 'Then name returns function name')
+        t.ok(funcDecl.body, 'Then body returns wrapped node')
+        t.ok(ASTNode.BlockStatement.is(funcDecl.body), 'Then body is BlockStatement')
+    })
+
+    t.test('When using BlockStatement properties', async t => {
+        const topLevel = AST.topLevelStatements(minimalAST)
+        const funcDecl = topLevel[1]
+        const block = funcDecl.body
+
+        t.ok(Array.isArray(block.body), 'Then body returns array')
+        t.equal(block.body.length, 0, 'Then empty block has no statements')
     })
 })

@@ -22,16 +22,16 @@ const AS = {
     // Count lines in a function's body (for length checks)
     // @sig countFunctionLines :: ASTNode -> Number
     countFunctionLines: node => {
-        const body = AST.functionBody(node)
+        const body = node.body
         if (!body) return 0
-        return AST.lineCount(body)
+        return body.lineCount
     },
 
     // Get the name of a function from its AST node
     // @sig getFunctionName :: ASTNode -> String
     getFunctionName: node => {
-        if (AST.hasType(node, 'FunctionDeclaration')) return AST.idName(node) || '<anonymous>'
-        if (AST.hasType(node, 'VariableDeclarator')) return AST.idName(node) || '<anonymous>'
+        if (ASTNode.FunctionDeclaration.is(node)) return node.name || '<anonymous>'
+        if (ASTNode.VariableDeclarator.is(node)) return node.name || '<anonymous>'
         return '<anonymous>'
     },
 
@@ -40,29 +40,31 @@ const AS = {
     // @sig isCountableFunction :: ASTNode -> Boolean
     isCountableFunction: node => {
         if (!PS.isFunctionNode(node)) return false
-        if (AST.idName(node)) return true
+        if (node.name) return true
         const parent = node.parent
-        if (parent && AST.hasType(parent, 'VariableDeclarator') && AST.isSameNode(AST.variableInit(parent), node))
-            return true
+        if (parent && ASTNode.VariableDeclarator.is(parent) && parent.value?.isSameAs(node)) return true
         return PS.isMultilineNode(node)
     },
 
     // Count complex functions in an AST subtree (excludes single-line anonymous callbacks)
-    // @sig countFunctions :: ESTreeAST -> Number
-    countFunctions: ast => AST.from(ast).filter(AS.isCountableFunction).length,
+    // @sig countFunctions :: (ESTreeAST | ASTNode) -> Number
+    countFunctions: node => {
+        const nodes = ASTNode.isASTNode(node) ? AST.descendants(node) : AST.from(node)
+        return nodes.filter(AS.isCountableFunction).length
+    },
 
     // Find whether a function is used as a callback (passed as argument or in non-declarator position)
     // @sig isCallbackFunction :: ASTNode -> Boolean
     isCallbackFunction: node => {
-        if (AST.hasType(node, 'FunctionDeclaration')) return false
+        if (ASTNode.FunctionDeclaration.is(node)) return false
         const parent = node.parent
         if (!parent) return false
 
         // If parent is CallExpression and node is not the callee, it's an argument (callback)
-        if (AST.hasType(parent, 'CallExpression') && !AST.isSameNode(AST.callee(parent), node)) return true
+        if (ASTNode.CallExpression.is(parent) && !parent.target?.isSameAs(node)) return true
 
         // If parent is ArrayExpression, the function is in an array (likely passed to something)
-        if (AST.hasType(parent, 'ArrayExpression')) return true
+        if (ASTNode.ArrayExpression.is(parent)) return true
 
         return false
     },
@@ -70,20 +72,20 @@ const AS = {
     // Convert AST statement to component info if it's a PascalCase component declaration
     // @sig toComponent :: ASTNode -> { name: String, node: ASTNode, startLine: Number, endLine: Number } | null
     toComponent: node => {
-        const startLine = AST.line(node)
-        const endLine = AST.endLine(node)
+        const startLine = node.line
+        const endLine = node.endLine
 
         if (ASTNode.FunctionDeclaration.is(node)) {
-            const name = AST.idName(node)
+            const name = node.name
             return PS.isPascalCase(name) ? { name, node, startLine, endLine } : null
         }
 
         if (!ASTNode.VariableDeclaration.is(node)) return null
 
-        const decl = AST.declarations(node)[0]
+        const decl = node.declarations[0]
         if (!decl) return null
-        const name = AST.idName(decl)
-        const init = AST.rhs(decl)
+        const name = decl.name
+        const init = decl.value
         if (!name || !PS.isPascalCase(name) || !init) return null
 
         if (!PS.isFunctionNode(init)) return null
@@ -93,7 +95,7 @@ const AS = {
 
     // Find all PascalCase component declarations at module level
     // @sig findComponents :: ESTreeAST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
-    findComponents: ast => AST.topLevel(ast).map(AS.toComponent).filter(Boolean),
+    findComponents: ast => AST.topLevelStatements(ast).map(AS.toComponent).filter(Boolean),
 
     // Generate array of numbers from start to end inclusive
     // @sig lineRange :: (Number, Number) -> [Number]
@@ -101,15 +103,15 @@ const AS = {
 
     // Transform AST node to array of line numbers it covers
     // @sig toNodeLineNumbers :: ASTNode -> [Number]
-    toNodeLineNumbers: node => AS.lineRange(AST.startLine(node), AST.endLine(node)),
+    toNodeLineNumbers: node => AS.lineRange(node.startLine, node.endLine),
 
     // Recursively find the base identifier of a member expression
     // @sig findBase :: ASTNode -> ASTNode?
     findBase: node => {
         if (!node) return null
-        if (AST.hasType(node, 'Identifier')) return node
-        if (AST.hasType(node, 'MemberExpression')) {
-            const obj = AST.memberObject(node)
+        if (ASTNode.Identifier.is(node)) return node
+        if (ASTNode.MemberExpression.is(node)) {
+            const obj = node.base
             return obj ? AS.findBase(obj) : null
         }
         return null
@@ -118,23 +120,20 @@ const AS = {
     // Transform AST to unique exported names
     // @sig toExportedNames :: ESTreeAST -> [String]
     toExportedNames: ast =>
-        AST.topLevel(ast)
+        AST.topLevelStatements(ast)
             .flatMap(node => [...AS.toSpecifierNames(node), ...AS.toDefaultExportName(node)])
             .filter((name, i, arr) => arr.indexOf(name) === i),
 
     // Extract exported names from named export specifiers
     // @sig toSpecifierNames :: ASTNode -> [String]
     toSpecifierNames: node =>
-        AST.hasType(node, 'ExportNamedDeclaration')
-            ? AST.specifiers(node)
-                  .map(s => AST.exportedName(s))
-                  .filter(Boolean)
-            : [],
+        ASTNode.ExportNamedDeclaration.is(node) ? node.specifiers.map(s => s.exportedName).filter(Boolean) : [],
 
     // Extract name from default export declaration
     // @sig toDefaultExportName :: ASTNode -> [String]
     toDefaultExportName: node => {
-        const name = AST.defaultExportName(node)
+        if (!ASTNode.ExportDefaultDeclaration.is(node)) return []
+        const name = node.declarationName
         return name ? [name] : []
     },
 }

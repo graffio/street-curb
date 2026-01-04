@@ -42,8 +42,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'functional-patterns',
-        line: AST.line(node),
-        column: AST.column(node),
+        line: node.line,
+        column: node.column,
         message,
         rule: 'functional-patterns',
     }),

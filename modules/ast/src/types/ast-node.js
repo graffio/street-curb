@@ -21,6 +21,9 @@
  *  ObjectExpression
  *      esTree: "Object",
  *      parent: "ASTNode?"
+ *  ArrayExpression
+ *      esTree: "Object",
+ *      parent: "ASTNode?"
  *  MemberExpression
  *      esTree: "Object",
  *      parent: "ASTNode?"
@@ -40,6 +43,9 @@
  *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ExportDefaultDeclaration
+ *      esTree: "Object",
+ *      parent: "ASTNode?"
+ *  ExportSpecifier
  *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ImportDeclaration
@@ -117,6 +123,7 @@ Object.defineProperty(ASTNode, '@@tagNames', {
         'VariableDeclaration',
         'VariableDeclarator',
         'ObjectExpression',
+        'ArrayExpression',
         'MemberExpression',
         'CallExpression',
         'AssignmentExpression',
@@ -124,6 +131,7 @@ Object.defineProperty(ASTNode, '@@tagNames', {
         'Property',
         'ExportNamedDeclaration',
         'ExportDefaultDeclaration',
+        'ExportSpecifier',
         'ImportDeclaration',
         'ImportNamespaceSpecifier',
         'BlockStatement',
@@ -175,6 +183,7 @@ const toString = {
     variableDeclaration     : function () { return `ASTNode.VariableDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     variableDeclarator      : function () { return `ASTNode.VariableDeclarator(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     objectExpression        : function () { return `ASTNode.ObjectExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    arrayExpression         : function () { return `ASTNode.ArrayExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     memberExpression        : function () { return `ASTNode.MemberExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     callExpression          : function () { return `ASTNode.CallExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     assignmentExpression    : function () { return `ASTNode.AssignmentExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
@@ -182,6 +191,7 @@ const toString = {
     property                : function () { return `ASTNode.Property(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     exportNamedDeclaration  : function () { return `ASTNode.ExportNamedDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     exportDefaultDeclaration: function () { return `ASTNode.ExportDefaultDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    exportSpecifier         : function () { return `ASTNode.ExportSpecifier(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     importDeclaration       : function () { return `ASTNode.ImportDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     importNamespaceSpecifier: function () { return `ASTNode.ImportNamespaceSpecifier(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     blockStatement          : function () { return `ASTNode.BlockStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
@@ -214,6 +224,7 @@ const toJSON = {
     variableDeclaration     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     variableDeclarator      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     objectExpression        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    arrayExpression         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     memberExpression        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     callExpression          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     assignmentExpression    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -221,6 +232,7 @@ const toJSON = {
     property                : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     exportNamedDeclaration  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     exportDefaultDeclaration: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    exportSpecifier         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     importDeclaration       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     importNamespaceSpecifier: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     blockStatement          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -355,6 +367,24 @@ const ObjectExpressionConstructor = function ObjectExpression(esTree, parent) {
 ASTNode.ObjectExpression = ObjectExpressionConstructor
 
 /*
+ * Construct a ASTNode.ArrayExpression instance
+ * @sig ArrayExpression :: (Object, ASTNode?) -> ASTNode.ArrayExpression
+ */
+const ArrayExpressionConstructor = function ArrayExpression(esTree, parent) {
+    const constructorName = 'ASTNode.ArrayExpression(esTree, parent)'
+
+    R.validateObject(constructorName, 'esTree', false, esTree)
+    R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
+
+    const result = Object.create(ArrayExpressionPrototype)
+    result.esTree = esTree
+    if (parent != null) result.parent = parent
+    return result
+}
+
+ASTNode.ArrayExpression = ArrayExpressionConstructor
+
+/*
  * Construct a ASTNode.MemberExpression instance
  * @sig MemberExpression :: (Object, ASTNode?) -> ASTNode.MemberExpression
  */
@@ -479,6 +509,24 @@ const ExportDefaultDeclarationConstructor = function ExportDefaultDeclaration(es
 }
 
 ASTNode.ExportDefaultDeclaration = ExportDefaultDeclarationConstructor
+
+/*
+ * Construct a ASTNode.ExportSpecifier instance
+ * @sig ExportSpecifier :: (Object, ASTNode?) -> ASTNode.ExportSpecifier
+ */
+const ExportSpecifierConstructor = function ExportSpecifier(esTree, parent) {
+    const constructorName = 'ASTNode.ExportSpecifier(esTree, parent)'
+
+    R.validateObject(constructorName, 'esTree', false, esTree)
+    R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
+
+    const result = Object.create(ExportSpecifierPrototype)
+    result.esTree = esTree
+    if (parent != null) result.parent = parent
+    return result
+}
+
+ASTNode.ExportSpecifier = ExportSpecifierConstructor
 
 /*
  * Construct a ASTNode.ImportDeclaration instance
@@ -839,6 +887,14 @@ const ObjectExpressionPrototype = Object.create(ASTNodePrototype, {
     constructor: { value: ObjectExpressionConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const ArrayExpressionPrototype = Object.create(ASTNodePrototype, {
+    '@@tagName': { value: 'ArrayExpression', enumerable: false },
+    '@@typeName': { value: 'ASTNode', enumerable: false },
+    toString: { value: toString.arrayExpression, enumerable: false },
+    toJSON: { value: toJSON.arrayExpression, enumerable: false },
+    constructor: { value: ArrayExpressionConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const MemberExpressionPrototype = Object.create(ASTNodePrototype, {
     '@@tagName': { value: 'MemberExpression', enumerable: false },
     '@@typeName': { value: 'ASTNode', enumerable: false },
@@ -893,6 +949,14 @@ const ExportDefaultDeclarationPrototype = Object.create(ASTNodePrototype, {
     toString: { value: toString.exportDefaultDeclaration, enumerable: false },
     toJSON: { value: toJSON.exportDefaultDeclaration, enumerable: false },
     constructor: { value: ExportDefaultDeclarationConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const ExportSpecifierPrototype = Object.create(ASTNodePrototype, {
+    '@@tagName': { value: 'ExportSpecifier', enumerable: false },
+    '@@typeName': { value: 'ASTNode', enumerable: false },
+    toString: { value: toString.exportSpecifier, enumerable: false },
+    toJSON: { value: toJSON.exportSpecifier, enumerable: false },
+    constructor: { value: ExportSpecifierConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ImportDeclarationPrototype = Object.create(ASTNodePrototype, {
@@ -1040,6 +1104,7 @@ FunctionExpressionConstructor.prototype = FunctionExpressionPrototype
 VariableDeclarationConstructor.prototype = VariableDeclarationPrototype
 VariableDeclaratorConstructor.prototype = VariableDeclaratorPrototype
 ObjectExpressionConstructor.prototype = ObjectExpressionPrototype
+ArrayExpressionConstructor.prototype = ArrayExpressionPrototype
 MemberExpressionConstructor.prototype = MemberExpressionPrototype
 CallExpressionConstructor.prototype = CallExpressionPrototype
 AssignmentExpressionConstructor.prototype = AssignmentExpressionPrototype
@@ -1047,6 +1112,7 @@ IdentifierConstructor.prototype = IdentifierPrototype
 PropertyConstructor.prototype = PropertyPrototype
 ExportNamedDeclarationConstructor.prototype = ExportNamedDeclarationPrototype
 ExportDefaultDeclarationConstructor.prototype = ExportDefaultDeclarationPrototype
+ExportSpecifierConstructor.prototype = ExportSpecifierPrototype
 ImportDeclarationConstructor.prototype = ImportDeclarationPrototype
 ImportNamespaceSpecifierConstructor.prototype = ImportNamespaceSpecifierPrototype
 BlockStatementConstructor.prototype = BlockStatementPrototype
@@ -1073,6 +1139,7 @@ FunctionExpressionConstructor.is = val => val && val.constructor === FunctionExp
 VariableDeclarationConstructor.is = val => val && val.constructor === VariableDeclarationConstructor
 VariableDeclaratorConstructor.is = val => val && val.constructor === VariableDeclaratorConstructor
 ObjectExpressionConstructor.is = val => val && val.constructor === ObjectExpressionConstructor
+ArrayExpressionConstructor.is = val => val && val.constructor === ArrayExpressionConstructor
 MemberExpressionConstructor.is = val => val && val.constructor === MemberExpressionConstructor
 CallExpressionConstructor.is = val => val && val.constructor === CallExpressionConstructor
 AssignmentExpressionConstructor.is = val => val && val.constructor === AssignmentExpressionConstructor
@@ -1080,6 +1147,7 @@ IdentifierConstructor.is = val => val && val.constructor === IdentifierConstruct
 PropertyConstructor.is = val => val && val.constructor === PropertyConstructor
 ExportNamedDeclarationConstructor.is = val => val && val.constructor === ExportNamedDeclarationConstructor
 ExportDefaultDeclarationConstructor.is = val => val && val.constructor === ExportDefaultDeclarationConstructor
+ExportSpecifierConstructor.is = val => val && val.constructor === ExportSpecifierConstructor
 ImportDeclarationConstructor.is = val => val && val.constructor === ImportDeclarationConstructor
 ImportNamespaceSpecifierConstructor.is = val => val && val.constructor === ImportNamespaceSpecifierConstructor
 BlockStatementConstructor.is = val => val && val.constructor === BlockStatementConstructor
@@ -1106,6 +1174,7 @@ FunctionExpressionConstructor.toString = () => 'ASTNode.FunctionExpression'
 VariableDeclarationConstructor.toString = () => 'ASTNode.VariableDeclaration'
 VariableDeclaratorConstructor.toString = () => 'ASTNode.VariableDeclarator'
 ObjectExpressionConstructor.toString = () => 'ASTNode.ObjectExpression'
+ArrayExpressionConstructor.toString = () => 'ASTNode.ArrayExpression'
 MemberExpressionConstructor.toString = () => 'ASTNode.MemberExpression'
 CallExpressionConstructor.toString = () => 'ASTNode.CallExpression'
 AssignmentExpressionConstructor.toString = () => 'ASTNode.AssignmentExpression'
@@ -1113,6 +1182,7 @@ IdentifierConstructor.toString = () => 'ASTNode.Identifier'
 PropertyConstructor.toString = () => 'ASTNode.Property'
 ExportNamedDeclarationConstructor.toString = () => 'ASTNode.ExportNamedDeclaration'
 ExportDefaultDeclarationConstructor.toString = () => 'ASTNode.ExportDefaultDeclaration'
+ExportSpecifierConstructor.toString = () => 'ASTNode.ExportSpecifier'
 ImportDeclarationConstructor.toString = () => 'ASTNode.ImportDeclaration'
 ImportNamespaceSpecifierConstructor.toString = () => 'ASTNode.ImportNamespaceSpecifier'
 BlockStatementConstructor.toString = () => 'ASTNode.BlockStatement'
@@ -1139,6 +1209,7 @@ FunctionExpressionConstructor._from = _input => ASTNode.FunctionExpression(_inpu
 VariableDeclarationConstructor._from = _input => ASTNode.VariableDeclaration(_input.esTree, _input.parent)
 VariableDeclaratorConstructor._from = _input => ASTNode.VariableDeclarator(_input.esTree, _input.parent)
 ObjectExpressionConstructor._from = _input => ASTNode.ObjectExpression(_input.esTree, _input.parent)
+ArrayExpressionConstructor._from = _input => ASTNode.ArrayExpression(_input.esTree, _input.parent)
 MemberExpressionConstructor._from = _input => ASTNode.MemberExpression(_input.esTree, _input.parent)
 CallExpressionConstructor._from = _input => ASTNode.CallExpression(_input.esTree, _input.parent)
 AssignmentExpressionConstructor._from = _input => ASTNode.AssignmentExpression(_input.esTree, _input.parent)
@@ -1146,6 +1217,7 @@ IdentifierConstructor._from = _input => ASTNode.Identifier(_input.esTree, _input
 PropertyConstructor._from = _input => ASTNode.Property(_input.esTree, _input.parent)
 ExportNamedDeclarationConstructor._from = _input => ASTNode.ExportNamedDeclaration(_input.esTree, _input.parent)
 ExportDefaultDeclarationConstructor._from = _input => ASTNode.ExportDefaultDeclaration(_input.esTree, _input.parent)
+ExportSpecifierConstructor._from = _input => ASTNode.ExportSpecifier(_input.esTree, _input.parent)
 ImportDeclarationConstructor._from = _input => ASTNode.ImportDeclaration(_input.esTree, _input.parent)
 ImportNamespaceSpecifierConstructor._from = _input => ASTNode.ImportNamespaceSpecifier(_input.esTree, _input.parent)
 BlockStatementConstructor._from = _input => ASTNode.BlockStatement(_input.esTree, _input.parent)
@@ -1172,6 +1244,7 @@ FunctionExpressionConstructor.from = FunctionExpressionConstructor._from
 VariableDeclarationConstructor.from = VariableDeclarationConstructor._from
 VariableDeclaratorConstructor.from = VariableDeclaratorConstructor._from
 ObjectExpressionConstructor.from = ObjectExpressionConstructor._from
+ArrayExpressionConstructor.from = ArrayExpressionConstructor._from
 MemberExpressionConstructor.from = MemberExpressionConstructor._from
 CallExpressionConstructor.from = CallExpressionConstructor._from
 AssignmentExpressionConstructor.from = AssignmentExpressionConstructor._from
@@ -1179,6 +1252,7 @@ IdentifierConstructor.from = IdentifierConstructor._from
 PropertyConstructor.from = PropertyConstructor._from
 ExportNamedDeclarationConstructor.from = ExportNamedDeclarationConstructor._from
 ExportDefaultDeclarationConstructor.from = ExportDefaultDeclarationConstructor._from
+ExportSpecifierConstructor.from = ExportSpecifierConstructor._from
 ImportDeclarationConstructor.from = ImportDeclarationConstructor._from
 ImportNamespaceSpecifierConstructor.from = ImportNamespaceSpecifierConstructor._from
 BlockStatementConstructor.from = BlockStatementConstructor._from
@@ -1370,6 +1444,34 @@ ObjectExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
 // Public aliases (can be overridden)
 ObjectExpressionConstructor.toFirestore = ObjectExpressionConstructor._toFirestore
 ObjectExpressionConstructor.fromFirestore = ObjectExpressionConstructor._fromFirestore
+
+/**
+ * Serialize to Firestore format
+ * @sig _toFirestore :: (ArrayExpression, Function) -> Object
+ */
+ArrayExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { esTree, parent } = o
+    return {
+        esTree: esTree,
+        parent: ASTNode.toFirestore(parent, encodeTimestamps),
+    }
+}
+
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> ArrayExpression
+ */
+ArrayExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { esTree, parent } = doc
+    return ArrayExpressionConstructor._from({
+        esTree: esTree,
+        parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
+    })
+}
+
+// Public aliases (can be overridden)
+ArrayExpressionConstructor.toFirestore = ArrayExpressionConstructor._toFirestore
+ArrayExpressionConstructor.fromFirestore = ArrayExpressionConstructor._fromFirestore
 
 /**
  * Serialize to Firestore format
@@ -1566,6 +1668,34 @@ ExportDefaultDeclarationConstructor._fromFirestore = (doc, decodeTimestamps) => 
 // Public aliases (can be overridden)
 ExportDefaultDeclarationConstructor.toFirestore = ExportDefaultDeclarationConstructor._toFirestore
 ExportDefaultDeclarationConstructor.fromFirestore = ExportDefaultDeclarationConstructor._fromFirestore
+
+/**
+ * Serialize to Firestore format
+ * @sig _toFirestore :: (ExportSpecifier, Function) -> Object
+ */
+ExportSpecifierConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { esTree, parent } = o
+    return {
+        esTree: esTree,
+        parent: ASTNode.toFirestore(parent, encodeTimestamps),
+    }
+}
+
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> ExportSpecifier
+ */
+ExportSpecifierConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { esTree, parent } = doc
+    return ExportSpecifierConstructor._from({
+        esTree: esTree,
+        parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
+    })
+}
+
+// Public aliases (can be overridden)
+ExportSpecifierConstructor.toFirestore = ExportSpecifierConstructor._toFirestore
+ExportSpecifierConstructor.fromFirestore = ExportSpecifierConstructor._fromFirestore
 
 /**
  * Serialize to Firestore format
@@ -2057,6 +2187,7 @@ ASTNode.is = v => {
         VariableDeclaration,
         VariableDeclarator,
         ObjectExpression,
+        ArrayExpression,
         MemberExpression,
         CallExpression,
         AssignmentExpression,
@@ -2064,6 +2195,7 @@ ASTNode.is = v => {
         Property,
         ExportNamedDeclaration,
         ExportDefaultDeclaration,
+        ExportSpecifier,
         ImportDeclaration,
         ImportNamespaceSpecifier,
         BlockStatement,
@@ -2091,6 +2223,7 @@ ASTNode.is = v => {
         constructor === VariableDeclaration ||
         constructor === VariableDeclarator ||
         constructor === ObjectExpression ||
+        constructor === ArrayExpression ||
         constructor === MemberExpression ||
         constructor === CallExpression ||
         constructor === AssignmentExpression ||
@@ -2098,6 +2231,7 @@ ASTNode.is = v => {
         constructor === Property ||
         constructor === ExportNamedDeclaration ||
         constructor === ExportDefaultDeclaration ||
+        constructor === ExportSpecifier ||
         constructor === ImportDeclaration ||
         constructor === ImportNamespaceSpecifier ||
         constructor === BlockStatement ||
@@ -2140,6 +2274,7 @@ ASTNode._fromFirestore = (doc, decodeTimestamps) => {
         VariableDeclaration,
         VariableDeclarator,
         ObjectExpression,
+        ArrayExpression,
         MemberExpression,
         CallExpression,
         AssignmentExpression,
@@ -2147,6 +2282,7 @@ ASTNode._fromFirestore = (doc, decodeTimestamps) => {
         Property,
         ExportNamedDeclaration,
         ExportDefaultDeclaration,
+        ExportSpecifier,
         ImportDeclaration,
         ImportNamespaceSpecifier,
         BlockStatement,
@@ -2172,6 +2308,7 @@ ASTNode._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'VariableDeclaration') return VariableDeclaration.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'VariableDeclarator') return VariableDeclarator.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ObjectExpression') return ObjectExpression.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ArrayExpression') return ArrayExpression.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'MemberExpression') return MemberExpression.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'CallExpression') return CallExpression.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AssignmentExpression') return AssignmentExpression.fromFirestore(doc, decodeTimestamps)
@@ -2179,6 +2316,7 @@ ASTNode._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'Property') return Property.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ExportNamedDeclaration') return ExportNamedDeclaration.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ExportDefaultDeclaration') return ExportDefaultDeclaration.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ExportSpecifier') return ExportSpecifier.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ImportDeclaration') return ImportDeclaration.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ImportNamespaceSpecifier') return ImportNamespaceSpecifier.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockStatement') return BlockStatement.fromFirestore(doc, decodeTimestamps)

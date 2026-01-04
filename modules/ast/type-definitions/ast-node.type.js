@@ -74,6 +74,7 @@ export const ASTNode = {
 
         // Expressions
         ObjectExpression    : { esTree: 'Object', parent: 'ASTNode?' },
+        ArrayExpression     : { esTree: 'Object', parent: 'ASTNode?' },
         MemberExpression    : { esTree: 'Object', parent: 'ASTNode?' },
         CallExpression      : { esTree: 'Object', parent: 'ASTNode?' },
         AssignmentExpression: { esTree: 'Object', parent: 'ASTNode?' },
@@ -85,6 +86,7 @@ export const ASTNode = {
         // Exports/Imports
         ExportNamedDeclaration   : { esTree: 'Object', parent: 'ASTNode?' },
         ExportDefaultDeclaration : { esTree: 'Object', parent: 'ASTNode?' },
+        ExportSpecifier          : { esTree: 'Object', parent: 'ASTNode?' },
         ImportDeclaration        : { esTree: 'Object', parent: 'ASTNode?' },
         ImportNamespaceSpecifier : { esTree: 'Object', parent: 'ASTNode?' },
 
@@ -127,3 +129,6 @@ ASTNode.wrap = (esTreeNode, parent = null) => {
 // Check if a value is an ASTNode instance
 // @sig isASTNode :: Any -> Boolean
 ASTNode.isASTNode = value => value && value['@@typeName'] === 'ASTNode'
+
+// NOTE: Instance methods (line(), name(), body(), etc.) are defined in
+// src/ast-node-methods.js which extends the generated type at runtime.

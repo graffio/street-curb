@@ -3,7 +3,8 @@
 // COMPLEXITY: exports — Barrel file for module public API (ASTNode, AST, Lines, patterns)
 
 // Re-export public API
-export { ASTNode } from './src/types/ast-node.js'
+// ASTNode is re-exported from ast-node-methods.js which extends the generated type with instance methods
+export { ASTNode } from './src/ast-node-methods.js'
 export { AST } from './src/ast.js'
 export { Lines } from './src/lines.js'
 export { isStyleObject, countStyleObjects, STYLE_PROPERTIES } from './src/patterns.js'

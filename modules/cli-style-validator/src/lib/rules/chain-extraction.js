@@ -15,15 +15,15 @@ const P = {
     // Check if node is the outermost in a chain (not nested)
     // @sig isOutermostMemberExpression :: (ASTNode, ASTNode?) -> Boolean
     isOutermostMemberExpression: (node, parent) => {
-        if (!parent || !AST.hasType(parent, 'MemberExpression')) return true
-        return !AST.isSameNode(AST.memberObject(parent), node)
+        if (!parent || !ASTNode.MemberExpression.is(parent)) return true
+        return !parent.base?.isSameAs(node)
     },
 
     // Check if node is on left side of assignment
     // @sig isAssignmentTarget :: (ASTNode, ASTNode?) -> Boolean
     isAssignmentTarget: (node, parent) => {
-        if (!parent || !AST.hasType(parent, 'AssignmentExpression')) return false
-        return AST.isSameNode(AST.assignmentLeft(parent), node)
+        if (!parent || !ASTNode.AssignmentExpression.is(parent)) return false
+        return parent.target?.isSameAs(node)
     },
 
     // Check if base is a namespace import (PS, AS, etc.)
@@ -33,8 +33,8 @@ const P = {
     // Check if node is being called as a method
     // @sig isMethodCall :: (ASTNode, ASTNode?) -> Boolean
     isMethodCall: (node, parent) => {
-        if (!parent || !AST.hasType(parent, 'CallExpression')) return false
-        return AST.isSameNode(AST.callee(parent), node)
+        if (!parent || !ASTNode.CallExpression.is(parent)) return false
+        return parent.target?.isSameAs(node)
     },
 }
 
@@ -43,11 +43,11 @@ const T = {
     // @sig collectChainParts :: (ASTNode, [String]) -> [String]
     collectChainParts: (node, parts) => {
         if (!node) return parts
-        if (AST.hasType(node, 'Identifier')) return [AST.identifierName(node), ...parts]
-        if (!AST.hasType(node, 'MemberExpression') || AST.isComputed(node)) return parts
-        const prop = AST.memberProperty(node)
-        if (!prop || !AST.hasType(prop, 'Identifier')) return parts
-        return T.collectChainParts(AST.memberObject(node), [AST.identifierName(prop), ...parts])
+        if (ASTNode.Identifier.is(node)) return [node.name, ...parts]
+        if (!ASTNode.MemberExpression.is(node) || node.isComputed) return parts
+        const prop = node.member
+        if (!prop || !ASTNode.Identifier.is(prop)) return parts
+        return T.collectChainParts(node.base, [prop.name, ...parts])
     },
 
     // Convert nested chain to base and property
@@ -61,15 +61,15 @@ const T = {
     // Convert member expression to base and property
     // @sig toBaseAndProperty :: ASTNode -> { base: String, property: String }?
     toBaseAndProperty: node => {
-        if (!node || !AST.hasType(node, 'MemberExpression') || AST.isComputed(node)) return null
-        const prop = AST.memberProperty(node)
-        if (!prop || !AST.hasType(prop, 'Identifier')) return null
-        const propName = AST.identifierName(prop)
+        if (!node || !ASTNode.MemberExpression.is(node) || node.isComputed) return null
+        const prop = node.member
+        if (!prop || !ASTNode.Identifier.is(prop)) return null
+        const propName = prop.name
 
-        const obj = AST.memberObject(node)
+        const obj = node.base
         if (!obj) return null
-        if (AST.hasType(obj, 'Identifier')) return { base: AST.identifierName(obj), property: propName }
-        if (AST.hasType(obj, 'MemberExpression')) return T.toNestedChain(obj, propName)
+        if (ASTNode.Identifier.is(obj)) return { base: obj.name, property: propName }
+        if (ASTNode.MemberExpression.is(obj)) return T.toNestedChain(obj, propName)
         return null
     },
 }
@@ -94,7 +94,7 @@ const V = {
     // Validate repeated property chains that could be destructured
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
-        if (!ast) return []
+        if (!ast || PS.isTestFile(filePath)) return []
 
         const namespaces = A.collectNamespaceImports(ast)
         return A.collectFunctionSuggestions(ast, namespaces)
@@ -143,28 +143,26 @@ const A = {
         if (!P.isOutermostMemberExpression(node, parent)) return
         if (P.isAssignmentTarget(node, parent)) return
 
-        const target = P.isMethodCall(node, parent) ? AST.memberObject(node) : node
+        const target = P.isMethodCall(node, parent) ? node.base : node
         const result = T.toBaseAndProperty(target)
         if (!result) return
 
-        A.addToMap(bases, result.base, result.property, AST.line(node))
+        A.addToMap(bases, result.base, result.property, node.line)
     },
 
     // Process a single node in the function scope traversal
     // @sig processNodeInScope :: (Map, Set, ASTNode, ASTNode) -> Void
     processNodeInScope: (bases, visited, funcNode, node) => {
         // Use line+column+type as identity (nested nodes at same position have different types)
-        const nodeId = `${AST.startLine(node)}:${AST.column(node)}:${AST.nodeType(node)}`
+        const nodeId = `${node.startLine}:${node.column}:${node.esTree.type}`
         if (visited.has(nodeId)) return
         visited.add(nodeId)
 
-        if (PS.isFunctionNode(node) && !AST.isSameNode(node, funcNode)) return
-        if (AST.hasType(node, 'MemberExpression')) A.processMemberExpression(bases, node, node.parent)
+        if (PS.isFunctionNode(node) && !node.isSameAs(funcNode)) return
+        if (ASTNode.MemberExpression.is(node)) A.processMemberExpression(bases, node, node.parent)
 
         // Use direct children (not all descendants) to respect function boundaries
-        AST.children(node).forEach(rawChild =>
-            A.processNodeInScope(bases, visited, funcNode, ASTNode.wrap(rawChild, node)),
-        )
+        AST.children(node).forEach(child => A.processNodeInScope(bases, visited, funcNode, child))
     },
 
     // Collect all base accesses within a function scope
@@ -172,8 +170,8 @@ const A = {
     collectBasesInFunction: funcNode => {
         const bases = new Map()
         const visited = new Set()
-        const body = AST.functionBody(funcNode)
-        if (body) A.processNodeInScope(bases, visited, funcNode, ASTNode.wrap(body, funcNode))
+        const body = funcNode.body
+        if (body) A.processNodeInScope(bases, visited, funcNode, body)
         return bases
     },
 

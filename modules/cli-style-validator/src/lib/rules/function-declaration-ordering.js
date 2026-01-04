@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { AST } from '@graffio/ast'
+import { ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -28,22 +28,20 @@ const P = {
     // Check if node is a variable declarator with function value (works on wrapped nodes)
     // @sig isVariableWithFunctionExpression :: ASTNode -> Boolean
     isVariableWithFunctionExpression: node => {
-        if (!AST.hasType(node, 'VariableDeclarator')) return false
-        const init = AST.rhs(node)
+        if (!ASTNode.VariableDeclarator.is(node)) return false
+        const init = node.value
         if (!init) return false
-        const initType = AST.nodeType(init)
-        return initType === 'ArrowFunctionExpression' || initType === 'FunctionExpression'
+        return ASTNode.ArrowFunctionExpression.is(init) || ASTNode.FunctionExpression.is(init)
     },
 
     // Check if statement declares a function (multiline only for this rule)
     // @sig isFunctionStatement :: ASTNode -> Boolean
     isFunctionStatement: node => {
         if (PS.isFunctionDeclaration(node)) return true
-        if (AST.hasType(node, 'VariableDeclaration')) {
-            const init = AST.variableValue(node)
+        if (ASTNode.VariableDeclaration.is(node)) {
+            const init = node.firstValue
             if (!init) return false
-            const initType = AST.nodeType(init)
-            return initType === 'ArrowFunctionExpression' || initType === 'FunctionExpression'
+            return ASTNode.ArrowFunctionExpression.is(init) || ASTNode.FunctionExpression.is(init)
         }
         return false
     },
@@ -52,7 +50,7 @@ const P = {
     // @sig isNonFunctionStatement :: ASTNode -> Boolean
     isNonFunctionStatement: node => {
         if (!node || P.isFunctionStatement(node)) return false
-        return NON_FUNCTION_STATEMENT_TYPES.has(AST.nodeType(node))
+        return NON_FUNCTION_STATEMENT_TYPES.has(node.esTree?.type)
     },
 }
 
@@ -71,8 +69,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'function-declaration-ordering',
-        line: AST.line(node),
-        column: AST.column(node),
+        line: node.line,
+        column: node.column,
         priority: PRIORITY,
         message,
         rule: 'function-declaration-ordering',
@@ -96,20 +94,20 @@ const A = {
     processDeclarator: (declarator, violations) => {
         if (!P.isVariableWithFunctionExpression(declarator)) return
         const funcName = AS.getFunctionName(declarator)
-        const init = AST.rhs(declarator)
-        const funcType = AST.nodeType(init) === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
+        const init = declarator.value
+        const funcType = ASTNode.ArrowFunctionExpression.is(init) ? 'Arrow function' : 'Function'
         violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
     },
 
     // Route misplaced function to appropriate processor
     // @sig processMisplacedFunctionStatement :: (ASTNode, [Violation]) -> Void
     processMisplacedFunctionStatement: (statement, violations) => {
-        if (AST.hasType(statement, 'FunctionDeclaration')) {
+        if (ASTNode.FunctionDeclaration.is(statement)) {
             const funcName = AS.getFunctionName(statement)
             return violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
         }
-        if (AST.hasType(statement, 'VariableDeclaration')) {
-            const decls = AST.declarations(statement)
+        if (ASTNode.VariableDeclaration.is(statement)) {
+            const decls = statement.declarations
             decls.forEach(d => A.processDeclarator(d, violations))
         }
     },
@@ -120,7 +118,7 @@ const A = {
         if (P.isNonFunctionStatement(statement)) return true
         if (P.isFunctionStatement(statement) && foundNonFunction)
             A.processMisplacedFunctionStatement(statement, violations)
-        if (AST.hasType(statement, 'VariableDeclaration') && !P.isFunctionStatement(statement)) return true
+        if (ASTNode.VariableDeclaration.is(statement) && !P.isFunctionStatement(statement)) return true
         return foundNonFunction
     },
 
@@ -128,7 +126,7 @@ const A = {
     // @sig processBlockForViolations :: (ASTNode, [Violation]) -> Void
     processBlockForViolations: (block, violations) => {
         if (!PS.isBlockStatement(block)) return
-        const body = AST.blockStatements(block)
+        const body = block.body
         body.reduce((found, stmt) => A.processStatementReducer(violations, stmt, found), false)
     },
 }

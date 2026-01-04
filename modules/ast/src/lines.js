@@ -48,7 +48,7 @@ LinesPrototype.between = function (startLine, endLine) {
 // Lines before an AST node (uses effective line for parent context)
 // @sig beforeNode :: (ASTNode, ASTNode?) -> Lines
 LinesPrototype.beforeNode = function (node, parent) {
-    const line = AST.effectiveLine(node, parent)
+    const line = AST.associatedCommentLine(node, parent)
     return Lines(this.slice(0, line - 1).reverse())
 }
 

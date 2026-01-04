@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { AST, ASTNode } from '@graffio/ast'
+import { ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -62,8 +62,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'single-level-indentation',
-        line: AST.line(node),
-        column: AST.column(node),
+        line: node.line,
+        column: node.column,
         priority: PRIORITY,
         message,
         rule: 'single-level-indentation',
@@ -82,8 +82,8 @@ const V = {
     // @sig checkFunctionNode :: (ASTNode, Set, [Violation]) -> Void
     checkFunctionNode: (node, processedNodes, violations) => {
         if (!PS.isFunctionWithBlockBody(node)) return
-        const body = AST.functionBody(node)
-        A.findNestedViolations(body, 0, processedNodes, violations)
+        const body = node.body
+        A.findNestedViolations(body?.esTree, 0, processedNodes, violations)
     },
 }
 

@@ -47,7 +47,7 @@ const P = {
     // @sig requiresSig :: (ASTNode, AST) -> Boolean
     requiresSig: (node, ast) => {
         if (PS.isInnerCurriedFunction(node, node.parent)) return false
-        return AST.isTopLevel(node, ast) || AST.lineCount(node) > 5
+        return AST.isTopLevel(node, ast) || node.lineCount > 5
     },
 }
 
@@ -63,8 +63,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'sig-documentation',
-        line: AST.line(node),
-        column: AST.column(node),
+        line: node.line,
+        column: node.column,
         priority: PRIORITY,
         message,
         rule: 'sig-documentation',
@@ -80,7 +80,7 @@ const A = {
         if (sigIndex === -1) return { found: false, lineIndex: null }
 
         // Convert relative index back to absolute line number
-        const effectiveLine = AST.effectiveLine(node)
+        const effectiveLine = AST.associatedCommentLine(node)
         const absoluteIndex = effectiveLine - 2 - sigIndex
         return { found: true, lineIndex: absoluteIndex }
     },
@@ -101,7 +101,7 @@ const V = {
     // @sig validateFunction :: (ASTNode, AST, Lines) -> [Violation]
     validateFunction: (node, ast, src) => {
         const { found: hasSig, lineIndex: sigLineIndex } = A.findSigInCommentBlock(src, node)
-        const effectiveLine = AST.effectiveLine(node)
+        const effectiveLine = AST.associatedCommentLine(node)
 
         // Has @sig but it's not last in comment block
         if (hasSig && A.hasCommentsBetweenSigAndFunction(src, sigLineIndex, effectiveLine)) {
