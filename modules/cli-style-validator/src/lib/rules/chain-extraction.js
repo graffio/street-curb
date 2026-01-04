@@ -130,11 +130,11 @@ const A = {
     // @sig collectNamespaceImports :: AST -> Set<String>
     collectNamespaceImports: ast =>
         new Set(
-            (ast?.body ?? [])
-                .filter(node => node.type === 'ImportDeclaration')
-                .flatMap(node => node.specifiers || [])
-                .filter(spec => spec.type === 'ImportNamespaceSpecifier')
-                .map(spec => spec.local.name),
+            AST.topLevelStatements(ast)
+                .filter(ASTNode.ImportDeclaration.is)
+                .flatMap(node => (node.esTree.specifiers || []).map(s => ASTNode.wrap(s, node)))
+                .filter(ASTNode.ImportNamespaceSpecifier.is)
+                .map(spec => spec.esTree.local.name),
         ),
 
     // Collect all property accesses within a function's scope (excluding nested functions)
