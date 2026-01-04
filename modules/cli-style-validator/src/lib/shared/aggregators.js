@@ -3,8 +3,7 @@
 // COMPLEXITY: lines — Shared module consolidating utilities from multiple rules
 // COMPLEXITY: functions — Shared module consolidating utilities from multiple rules
 
-import { AST } from '../dsl/ast.js'
-import { ASTNode } from '../../types/index.js'
+import { AST, ASTNode } from '@graffio/ast'
 import { PS } from './predicates.js'
 
 const AS = {

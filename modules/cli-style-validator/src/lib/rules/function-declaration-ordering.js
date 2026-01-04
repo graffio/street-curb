@@ -1,8 +1,7 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { AST } from '../dsl/ast.js'
-import { ASTNode } from '../../types/index.js'
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'

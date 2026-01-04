@@ -1,8 +1,7 @@
 // ABOUTME: Rule to detect imperative loop patterns
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
-import { ASTNode } from '../../types/index.js'
-import { AST } from '../dsl/ast.js'
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 

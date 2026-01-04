@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { AST } from '../dsl/ast.js'
+import { AST } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'

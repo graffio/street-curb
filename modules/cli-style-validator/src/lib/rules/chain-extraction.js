@@ -4,8 +4,7 @@
 // COMPLEXITY-TODO: functions — Chain tracking requires scope-aware traversal (expires 2026-01-03)
 // COMPLEXITY-TODO: cohesion-structure — Scope tracking requires many helpers (expires 2026-01-03)
 
-import { AST } from '../dsl/ast.js'
-import { ASTNode } from '../../types/index.js'
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'

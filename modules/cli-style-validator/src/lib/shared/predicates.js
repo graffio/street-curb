@@ -3,7 +3,7 @@
 // COMPLEXITY: lines — Shared module consolidating predicates from multiple rules
 // COMPLEXITY: functions — Shared module consolidating predicates from multiple rules
 
-import { AST } from '../dsl/ast.js'
+import { AST } from '@graffio/ast'
 
 // Regex patterns for COMPLEXITY comments
 const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/

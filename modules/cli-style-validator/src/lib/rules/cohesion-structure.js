@@ -7,11 +7,10 @@
 // COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-02-01)
 // COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-02-01)
 
-import { AST } from '../dsl/ast.js'
+import { AST, ASTNode, Lines } from '@graffio/ast'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
-import { Lines } from '../dsl/source.js'
-import { ASTNode, FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
+import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
