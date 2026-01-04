@@ -91,13 +91,16 @@ export const ASTNode = {
         ImportNamespaceSpecifier : { esTree: 'Object', parent: 'ASTNode?' },
 
         // Statements
-        BlockStatement   : { esTree: 'Object', parent: 'ASTNode?' },
-        ReturnStatement  : { esTree: 'Object', parent: 'ASTNode?' },
-        IfStatement      : { esTree: 'Object', parent: 'ASTNode?' },
-        TryStatement     : { esTree: 'Object', parent: 'ASTNode?' },
-        ThrowStatement   : { esTree: 'Object', parent: 'ASTNode?' },
-        BreakStatement   : { esTree: 'Object', parent: 'ASTNode?' },
-        ContinueStatement: { esTree: 'Object', parent: 'ASTNode?' },
+        BlockStatement      : { esTree: 'Object', parent: 'ASTNode?' },
+        ExpressionStatement : { esTree: 'Object', parent: 'ASTNode?' },
+        ReturnStatement     : { esTree: 'Object', parent: 'ASTNode?' },
+        IfStatement         : { esTree: 'Object', parent: 'ASTNode?' },
+        SwitchStatement     : { esTree: 'Object', parent: 'ASTNode?' },
+        TryStatement        : { esTree: 'Object', parent: 'ASTNode?' },
+        CatchClause         : { esTree: 'Object', parent: 'ASTNode?' },
+        ThrowStatement      : { esTree: 'Object', parent: 'ASTNode?' },
+        BreakStatement      : { esTree: 'Object', parent: 'ASTNode?' },
+        ContinueStatement   : { esTree: 'Object', parent: 'ASTNode?' },
 
         // Loops
         ForStatement     : { esTree: 'Object', parent: 'ASTNode?' },

@@ -60,9 +60,9 @@ const PS = {
         return markers.some(marker => sourceCode.includes(marker))
     },
 
-    // Check if node is valid for traversal (is an ASTNode with type)
+    // Check if node is valid for traversal
     // @sig isValidNode :: Any -> Boolean
-    isValidNode: node => ASTNode.isASTNode(node) && node.esTree?.type,
+    isValidNode: node => ASTNode.isASTNode(node),
 
     // Check if node is a block statement
     // @sig isBlockStatement :: ASTNode -> Boolean

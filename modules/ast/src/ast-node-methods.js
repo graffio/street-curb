@@ -42,6 +42,14 @@ Object.defineProperties(ASTNode.prototype, {
         },
         enumerable: false,
     },
+
+    // Stable identity for Set/Map keys (wrapped nodes are different instances)
+    identity: {
+        get() {
+            return this.esTree
+        },
+        enumerable: false,
+    },
 })
 
 // Identity comparison as method (takes parameter)

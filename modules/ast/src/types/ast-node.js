@@ -57,13 +57,22 @@
  *  BlockStatement
  *      esTree: "Object",
  *      parent: "ASTNode?"
+ *  ExpressionStatement
+ *      esTree: "Object",
+ *      parent: "ASTNode?"
  *  ReturnStatement
  *      esTree: "Object",
  *      parent: "ASTNode?"
  *  IfStatement
  *      esTree: "Object",
  *      parent: "ASTNode?"
+ *  SwitchStatement
+ *      esTree: "Object",
+ *      parent: "ASTNode?"
  *  TryStatement
+ *      esTree: "Object",
+ *      parent: "ASTNode?"
+ *  CatchClause
  *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ThrowStatement
@@ -135,9 +144,12 @@ Object.defineProperty(ASTNode, '@@tagNames', {
         'ImportDeclaration',
         'ImportNamespaceSpecifier',
         'BlockStatement',
+        'ExpressionStatement',
         'ReturnStatement',
         'IfStatement',
+        'SwitchStatement',
         'TryStatement',
+        'CatchClause',
         'ThrowStatement',
         'BreakStatement',
         'ContinueStatement',
@@ -195,9 +207,12 @@ const toString = {
     importDeclaration       : function () { return `ASTNode.ImportDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     importNamespaceSpecifier: function () { return `ASTNode.ImportNamespaceSpecifier(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     blockStatement          : function () { return `ASTNode.BlockStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    expressionStatement     : function () { return `ASTNode.ExpressionStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     returnStatement         : function () { return `ASTNode.ReturnStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     ifStatement             : function () { return `ASTNode.IfStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    switchStatement         : function () { return `ASTNode.SwitchStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     tryStatement            : function () { return `ASTNode.TryStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    catchClause             : function () { return `ASTNode.CatchClause(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     throwStatement          : function () { return `ASTNode.ThrowStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     breakStatement          : function () { return `ASTNode.BreakStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
     continueStatement       : function () { return `ASTNode.ContinueStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
@@ -236,9 +251,12 @@ const toJSON = {
     importDeclaration       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     importNamespaceSpecifier: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     blockStatement          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    expressionStatement     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     returnStatement         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     ifStatement             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    switchStatement         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     tryStatement            : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    catchClause             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     throwStatement          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     breakStatement          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     continueStatement       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -583,6 +601,24 @@ const BlockStatementConstructor = function BlockStatement(esTree, parent) {
 ASTNode.BlockStatement = BlockStatementConstructor
 
 /*
+ * Construct a ASTNode.ExpressionStatement instance
+ * @sig ExpressionStatement :: (Object, ASTNode?) -> ASTNode.ExpressionStatement
+ */
+const ExpressionStatementConstructor = function ExpressionStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ExpressionStatement(esTree, parent)'
+
+    R.validateObject(constructorName, 'esTree', false, esTree)
+    R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
+
+    const result = Object.create(ExpressionStatementPrototype)
+    result.esTree = esTree
+    if (parent != null) result.parent = parent
+    return result
+}
+
+ASTNode.ExpressionStatement = ExpressionStatementConstructor
+
+/*
  * Construct a ASTNode.ReturnStatement instance
  * @sig ReturnStatement :: (Object, ASTNode?) -> ASTNode.ReturnStatement
  */
@@ -619,6 +655,24 @@ const IfStatementConstructor = function IfStatement(esTree, parent) {
 ASTNode.IfStatement = IfStatementConstructor
 
 /*
+ * Construct a ASTNode.SwitchStatement instance
+ * @sig SwitchStatement :: (Object, ASTNode?) -> ASTNode.SwitchStatement
+ */
+const SwitchStatementConstructor = function SwitchStatement(esTree, parent) {
+    const constructorName = 'ASTNode.SwitchStatement(esTree, parent)'
+
+    R.validateObject(constructorName, 'esTree', false, esTree)
+    R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
+
+    const result = Object.create(SwitchStatementPrototype)
+    result.esTree = esTree
+    if (parent != null) result.parent = parent
+    return result
+}
+
+ASTNode.SwitchStatement = SwitchStatementConstructor
+
+/*
  * Construct a ASTNode.TryStatement instance
  * @sig TryStatement :: (Object, ASTNode?) -> ASTNode.TryStatement
  */
@@ -635,6 +689,24 @@ const TryStatementConstructor = function TryStatement(esTree, parent) {
 }
 
 ASTNode.TryStatement = TryStatementConstructor
+
+/*
+ * Construct a ASTNode.CatchClause instance
+ * @sig CatchClause :: (Object, ASTNode?) -> ASTNode.CatchClause
+ */
+const CatchClauseConstructor = function CatchClause(esTree, parent) {
+    const constructorName = 'ASTNode.CatchClause(esTree, parent)'
+
+    R.validateObject(constructorName, 'esTree', false, esTree)
+    R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
+
+    const result = Object.create(CatchClausePrototype)
+    result.esTree = esTree
+    if (parent != null) result.parent = parent
+    return result
+}
+
+ASTNode.CatchClause = CatchClauseConstructor
 
 /*
  * Construct a ASTNode.ThrowStatement instance
@@ -983,6 +1055,14 @@ const BlockStatementPrototype = Object.create(ASTNodePrototype, {
     constructor: { value: BlockStatementConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const ExpressionStatementPrototype = Object.create(ASTNodePrototype, {
+    '@@tagName': { value: 'ExpressionStatement', enumerable: false },
+    '@@typeName': { value: 'ASTNode', enumerable: false },
+    toString: { value: toString.expressionStatement, enumerable: false },
+    toJSON: { value: toJSON.expressionStatement, enumerable: false },
+    constructor: { value: ExpressionStatementConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const ReturnStatementPrototype = Object.create(ASTNodePrototype, {
     '@@tagName': { value: 'ReturnStatement', enumerable: false },
     '@@typeName': { value: 'ASTNode', enumerable: false },
@@ -999,12 +1079,28 @@ const IfStatementPrototype = Object.create(ASTNodePrototype, {
     constructor: { value: IfStatementConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SwitchStatementPrototype = Object.create(ASTNodePrototype, {
+    '@@tagName': { value: 'SwitchStatement', enumerable: false },
+    '@@typeName': { value: 'ASTNode', enumerable: false },
+    toString: { value: toString.switchStatement, enumerable: false },
+    toJSON: { value: toJSON.switchStatement, enumerable: false },
+    constructor: { value: SwitchStatementConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const TryStatementPrototype = Object.create(ASTNodePrototype, {
     '@@tagName': { value: 'TryStatement', enumerable: false },
     '@@typeName': { value: 'ASTNode', enumerable: false },
     toString: { value: toString.tryStatement, enumerable: false },
     toJSON: { value: toJSON.tryStatement, enumerable: false },
     constructor: { value: TryStatementConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const CatchClausePrototype = Object.create(ASTNodePrototype, {
+    '@@tagName': { value: 'CatchClause', enumerable: false },
+    '@@typeName': { value: 'ASTNode', enumerable: false },
+    toString: { value: toString.catchClause, enumerable: false },
+    toJSON: { value: toJSON.catchClause, enumerable: false },
+    constructor: { value: CatchClauseConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const ThrowStatementPrototype = Object.create(ASTNodePrototype, {
@@ -1116,9 +1212,12 @@ ExportSpecifierConstructor.prototype = ExportSpecifierPrototype
 ImportDeclarationConstructor.prototype = ImportDeclarationPrototype
 ImportNamespaceSpecifierConstructor.prototype = ImportNamespaceSpecifierPrototype
 BlockStatementConstructor.prototype = BlockStatementPrototype
+ExpressionStatementConstructor.prototype = ExpressionStatementPrototype
 ReturnStatementConstructor.prototype = ReturnStatementPrototype
 IfStatementConstructor.prototype = IfStatementPrototype
+SwitchStatementConstructor.prototype = SwitchStatementPrototype
 TryStatementConstructor.prototype = TryStatementPrototype
+CatchClauseConstructor.prototype = CatchClausePrototype
 ThrowStatementConstructor.prototype = ThrowStatementPrototype
 BreakStatementConstructor.prototype = BreakStatementPrototype
 ContinueStatementConstructor.prototype = ContinueStatementPrototype
@@ -1151,9 +1250,12 @@ ExportSpecifierConstructor.is = val => val && val.constructor === ExportSpecifie
 ImportDeclarationConstructor.is = val => val && val.constructor === ImportDeclarationConstructor
 ImportNamespaceSpecifierConstructor.is = val => val && val.constructor === ImportNamespaceSpecifierConstructor
 BlockStatementConstructor.is = val => val && val.constructor === BlockStatementConstructor
+ExpressionStatementConstructor.is = val => val && val.constructor === ExpressionStatementConstructor
 ReturnStatementConstructor.is = val => val && val.constructor === ReturnStatementConstructor
 IfStatementConstructor.is = val => val && val.constructor === IfStatementConstructor
+SwitchStatementConstructor.is = val => val && val.constructor === SwitchStatementConstructor
 TryStatementConstructor.is = val => val && val.constructor === TryStatementConstructor
+CatchClauseConstructor.is = val => val && val.constructor === CatchClauseConstructor
 ThrowStatementConstructor.is = val => val && val.constructor === ThrowStatementConstructor
 BreakStatementConstructor.is = val => val && val.constructor === BreakStatementConstructor
 ContinueStatementConstructor.is = val => val && val.constructor === ContinueStatementConstructor
@@ -1186,9 +1288,12 @@ ExportSpecifierConstructor.toString = () => 'ASTNode.ExportSpecifier'
 ImportDeclarationConstructor.toString = () => 'ASTNode.ImportDeclaration'
 ImportNamespaceSpecifierConstructor.toString = () => 'ASTNode.ImportNamespaceSpecifier'
 BlockStatementConstructor.toString = () => 'ASTNode.BlockStatement'
+ExpressionStatementConstructor.toString = () => 'ASTNode.ExpressionStatement'
 ReturnStatementConstructor.toString = () => 'ASTNode.ReturnStatement'
 IfStatementConstructor.toString = () => 'ASTNode.IfStatement'
+SwitchStatementConstructor.toString = () => 'ASTNode.SwitchStatement'
 TryStatementConstructor.toString = () => 'ASTNode.TryStatement'
+CatchClauseConstructor.toString = () => 'ASTNode.CatchClause'
 ThrowStatementConstructor.toString = () => 'ASTNode.ThrowStatement'
 BreakStatementConstructor.toString = () => 'ASTNode.BreakStatement'
 ContinueStatementConstructor.toString = () => 'ASTNode.ContinueStatement'
@@ -1221,9 +1326,12 @@ ExportSpecifierConstructor._from = _input => ASTNode.ExportSpecifier(_input.esTr
 ImportDeclarationConstructor._from = _input => ASTNode.ImportDeclaration(_input.esTree, _input.parent)
 ImportNamespaceSpecifierConstructor._from = _input => ASTNode.ImportNamespaceSpecifier(_input.esTree, _input.parent)
 BlockStatementConstructor._from = _input => ASTNode.BlockStatement(_input.esTree, _input.parent)
+ExpressionStatementConstructor._from = _input => ASTNode.ExpressionStatement(_input.esTree, _input.parent)
 ReturnStatementConstructor._from = _input => ASTNode.ReturnStatement(_input.esTree, _input.parent)
 IfStatementConstructor._from = _input => ASTNode.IfStatement(_input.esTree, _input.parent)
+SwitchStatementConstructor._from = _input => ASTNode.SwitchStatement(_input.esTree, _input.parent)
 TryStatementConstructor._from = _input => ASTNode.TryStatement(_input.esTree, _input.parent)
+CatchClauseConstructor._from = _input => ASTNode.CatchClause(_input.esTree, _input.parent)
 ThrowStatementConstructor._from = _input => ASTNode.ThrowStatement(_input.esTree, _input.parent)
 BreakStatementConstructor._from = _input => ASTNode.BreakStatement(_input.esTree, _input.parent)
 ContinueStatementConstructor._from = _input => ASTNode.ContinueStatement(_input.esTree, _input.parent)
@@ -1256,9 +1364,12 @@ ExportSpecifierConstructor.from = ExportSpecifierConstructor._from
 ImportDeclarationConstructor.from = ImportDeclarationConstructor._from
 ImportNamespaceSpecifierConstructor.from = ImportNamespaceSpecifierConstructor._from
 BlockStatementConstructor.from = BlockStatementConstructor._from
+ExpressionStatementConstructor.from = ExpressionStatementConstructor._from
 ReturnStatementConstructor.from = ReturnStatementConstructor._from
 IfStatementConstructor.from = IfStatementConstructor._from
+SwitchStatementConstructor.from = SwitchStatementConstructor._from
 TryStatementConstructor.from = TryStatementConstructor._from
+CatchClauseConstructor.from = CatchClauseConstructor._from
 ThrowStatementConstructor.from = ThrowStatementConstructor._from
 BreakStatementConstructor.from = BreakStatementConstructor._from
 ContinueStatementConstructor.from = ContinueStatementConstructor._from
@@ -1783,6 +1894,34 @@ BlockStatementConstructor.fromFirestore = BlockStatementConstructor._fromFiresto
 
 /**
  * Serialize to Firestore format
+ * @sig _toFirestore :: (ExpressionStatement, Function) -> Object
+ */
+ExpressionStatementConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { esTree, parent } = o
+    return {
+        esTree: esTree,
+        parent: ASTNode.toFirestore(parent, encodeTimestamps),
+    }
+}
+
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> ExpressionStatement
+ */
+ExpressionStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { esTree, parent } = doc
+    return ExpressionStatementConstructor._from({
+        esTree: esTree,
+        parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
+    })
+}
+
+// Public aliases (can be overridden)
+ExpressionStatementConstructor.toFirestore = ExpressionStatementConstructor._toFirestore
+ExpressionStatementConstructor.fromFirestore = ExpressionStatementConstructor._fromFirestore
+
+/**
+ * Serialize to Firestore format
  * @sig _toFirestore :: (ReturnStatement, Function) -> Object
  */
 ReturnStatementConstructor._toFirestore = (o, encodeTimestamps) => {
@@ -1839,6 +1978,34 @@ IfStatementConstructor.fromFirestore = IfStatementConstructor._fromFirestore
 
 /**
  * Serialize to Firestore format
+ * @sig _toFirestore :: (SwitchStatement, Function) -> Object
+ */
+SwitchStatementConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { esTree, parent } = o
+    return {
+        esTree: esTree,
+        parent: ASTNode.toFirestore(parent, encodeTimestamps),
+    }
+}
+
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> SwitchStatement
+ */
+SwitchStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { esTree, parent } = doc
+    return SwitchStatementConstructor._from({
+        esTree: esTree,
+        parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
+    })
+}
+
+// Public aliases (can be overridden)
+SwitchStatementConstructor.toFirestore = SwitchStatementConstructor._toFirestore
+SwitchStatementConstructor.fromFirestore = SwitchStatementConstructor._fromFirestore
+
+/**
+ * Serialize to Firestore format
  * @sig _toFirestore :: (TryStatement, Function) -> Object
  */
 TryStatementConstructor._toFirestore = (o, encodeTimestamps) => {
@@ -1864,6 +2031,34 @@ TryStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
 // Public aliases (can be overridden)
 TryStatementConstructor.toFirestore = TryStatementConstructor._toFirestore
 TryStatementConstructor.fromFirestore = TryStatementConstructor._fromFirestore
+
+/**
+ * Serialize to Firestore format
+ * @sig _toFirestore :: (CatchClause, Function) -> Object
+ */
+CatchClauseConstructor._toFirestore = (o, encodeTimestamps) => {
+    const { esTree, parent } = o
+    return {
+        esTree: esTree,
+        parent: ASTNode.toFirestore(parent, encodeTimestamps),
+    }
+}
+
+/**
+ * Deserialize from Firestore format
+ * @sig _fromFirestore :: (Object, Function) -> CatchClause
+ */
+CatchClauseConstructor._fromFirestore = (doc, decodeTimestamps) => {
+    const { esTree, parent } = doc
+    return CatchClauseConstructor._from({
+        esTree: esTree,
+        parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
+    })
+}
+
+// Public aliases (can be overridden)
+CatchClauseConstructor.toFirestore = CatchClauseConstructor._toFirestore
+CatchClauseConstructor.fromFirestore = CatchClauseConstructor._fromFirestore
 
 /**
  * Serialize to Firestore format
@@ -2199,9 +2394,12 @@ ASTNode.is = v => {
         ImportDeclaration,
         ImportNamespaceSpecifier,
         BlockStatement,
+        ExpressionStatement,
         ReturnStatement,
         IfStatement,
+        SwitchStatement,
         TryStatement,
+        CatchClause,
         ThrowStatement,
         BreakStatement,
         ContinueStatement,
@@ -2235,9 +2433,12 @@ ASTNode.is = v => {
         constructor === ImportDeclaration ||
         constructor === ImportNamespaceSpecifier ||
         constructor === BlockStatement ||
+        constructor === ExpressionStatement ||
         constructor === ReturnStatement ||
         constructor === IfStatement ||
+        constructor === SwitchStatement ||
         constructor === TryStatement ||
+        constructor === CatchClause ||
         constructor === ThrowStatement ||
         constructor === BreakStatement ||
         constructor === ContinueStatement ||
@@ -2286,9 +2487,12 @@ ASTNode._fromFirestore = (doc, decodeTimestamps) => {
         ImportDeclaration,
         ImportNamespaceSpecifier,
         BlockStatement,
+        ExpressionStatement,
         ReturnStatement,
         IfStatement,
+        SwitchStatement,
         TryStatement,
+        CatchClause,
         ThrowStatement,
         BreakStatement,
         ContinueStatement,
@@ -2320,9 +2524,12 @@ ASTNode._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'ImportDeclaration') return ImportDeclaration.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ImportNamespaceSpecifier') return ImportNamespaceSpecifier.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BlockStatement') return BlockStatement.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ExpressionStatement') return ExpressionStatement.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ReturnStatement') return ReturnStatement.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'IfStatement') return IfStatement.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SwitchStatement') return SwitchStatement.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'TryStatement') return TryStatement.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'CatchClause') return CatchClause.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ThrowStatement') return ThrowStatement.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BreakStatement') return BreakStatement.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ContinueStatement') return ContinueStatement.fromFirestore(doc, decodeTimestamps)

@@ -153,10 +153,8 @@ const A = {
     // Process a single node in the function scope traversal
     // @sig processNodeInScope :: (Map, Set, ASTNode, ASTNode) -> Void
     processNodeInScope: (bases, visited, funcNode, node) => {
-        // Use line+column+type as identity (nested nodes at same position have different types)
-        const nodeId = `${node.startLine}:${node.column}:${node.esTree.type}`
-        if (visited.has(nodeId)) return
-        visited.add(nodeId)
+        if (visited.has(node.identity)) return
+        visited.add(node.identity)
 
         if (PS.isFunctionNode(node) && !node.isSameAs(funcNode)) return
         if (ASTNode.MemberExpression.is(node)) A.processMemberExpression(bases, node, node.parent)

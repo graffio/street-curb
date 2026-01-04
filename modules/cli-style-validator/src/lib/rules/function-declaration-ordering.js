@@ -8,22 +8,6 @@ import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 4
 
-const NON_FUNCTION_STATEMENT_TYPES = new Set([
-    'VariableDeclaration',
-    'ExpressionStatement',
-    'ReturnStatement',
-    'IfStatement',
-    'ForStatement',
-    'WhileStatement',
-    'DoWhileStatement',
-    'ForInStatement',
-    'ForOfStatement',
-    'TryStatement',
-    'ThrowStatement',
-    'BreakStatement',
-    'ContinueStatement',
-])
-
 const P = {
     // Check if node is a variable declarator with function value (works on wrapped nodes)
     // @sig isVariableWithFunctionExpression :: ASTNode -> Boolean
@@ -46,11 +30,28 @@ const P = {
         return false
     },
 
+    // Check if node is a non-function statement type
+    // @sig isNonFunctionStatementType :: ASTNode -> Boolean
+    isNonFunctionStatementType: node =>
+        ASTNode.VariableDeclaration.is(node) ||
+        ASTNode.ExpressionStatement.is(node) ||
+        ASTNode.ReturnStatement.is(node) ||
+        ASTNode.IfStatement.is(node) ||
+        ASTNode.ForStatement.is(node) ||
+        ASTNode.WhileStatement.is(node) ||
+        ASTNode.DoWhileStatement.is(node) ||
+        ASTNode.ForInStatement.is(node) ||
+        ASTNode.ForOfStatement.is(node) ||
+        ASTNode.TryStatement.is(node) ||
+        ASTNode.ThrowStatement.is(node) ||
+        ASTNode.BreakStatement.is(node) ||
+        ASTNode.ContinueStatement.is(node),
+
     // Check if statement is executable (not a function)
     // @sig isNonFunctionStatement :: ASTNode -> Boolean
     isNonFunctionStatement: node => {
         if (!node || P.isFunctionStatement(node)) return false
-        return NON_FUNCTION_STATEMENT_TYPES.has(node.esTree?.type)
+        return P.isNonFunctionStatementType(node)
     },
 }
 

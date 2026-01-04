@@ -1,30 +1,12 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { ASTNode } from '@graffio/ast'
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
-
-const INDENTATION_STATEMENT_TYPES = new Set([
-    'IfStatement',
-    'ForStatement',
-    'WhileStatement',
-    'ForInStatement',
-    'ForOfStatement',
-    'SwitchStatement',
-])
-
-const ALLOWED_NESTING_TYPES = new Set([
-    'TryStatement',
-    'CatchClause',
-    'ObjectExpression',
-    'ArrayExpression',
-    'JSXElement',
-    'JSXFragment',
-])
 
 const CALLBACK_EXTRACTION_MESSAGE =
     'Extract multi-line unnamed function to a named function. ' +
@@ -38,21 +20,33 @@ const NESTED_INDENTATION_MESSAGE =
     '(P/T/F/V/A), or use early returns to flatten the logic.'
 
 const P = {
-    // Check if node is a control flow statement that increases indentation (works on raw nodes)
-    // @sig isIndentationStatement :: ESTreeNode -> Boolean
-    isIndentationStatement: rawNode => INDENTATION_STATEMENT_TYPES.has(rawNode.type),
+    // Check if node is a control flow statement that increases indentation
+    // @sig isIndentationStatement :: ASTNode -> Boolean
+    isIndentationStatement: node =>
+        ASTNode.IfStatement.is(node) ||
+        ASTNode.ForStatement.is(node) ||
+        ASTNode.WhileStatement.is(node) ||
+        ASTNode.ForInStatement.is(node) ||
+        ASTNode.ForOfStatement.is(node) ||
+        ASTNode.SwitchStatement.is(node),
 
-    // Check if node type is allowed to nest without counting as indentation (works on raw nodes)
-    // @sig isAllowedNesting :: ESTreeNode -> Boolean
-    isAllowedNesting: rawNode => ALLOWED_NESTING_TYPES.has(rawNode.type),
+    // Check if node type is allowed to nest without counting as indentation
+    // @sig isAllowedNesting :: ASTNode -> Boolean
+    isAllowedNesting: node =>
+        ASTNode.TryStatement.is(node) ||
+        ASTNode.CatchClause.is(node) ||
+        ASTNode.ObjectExpression.is(node) ||
+        ASTNode.ArrayExpression.is(node) ||
+        ASTNode.JSXElement.is(node) ||
+        ASTNode.JSXFragment.is(node),
 }
 
 const T = {
-    // Calculate next depth based on node type (works on raw nodes)
-    // @sig toNextDepth :: (ESTreeNode, Number) -> Number
-    toNextDepth: (rawNode, depth) => {
-        if (P.isAllowedNesting(rawNode)) return depth
-        if (P.isIndentationStatement(rawNode)) return depth + 1
+    // Calculate next depth based on node type
+    // @sig toNextDepth :: (ASTNode, Number) -> Number
+    toNextDepth: (node, depth) => {
+        if (P.isAllowedNesting(node)) return depth
+        if (P.isIndentationStatement(node)) return depth + 1
         return depth
     },
 }
@@ -83,53 +77,33 @@ const V = {
     checkFunctionNode: (node, processedNodes, violations) => {
         if (!PS.isFunctionWithBlockBody(node)) return
         const body = node.body
-        A.findNestedViolations(body?.esTree, 0, processedNodes, violations)
+        if (body) A.findNestedViolations(body, 0, processedNodes, violations)
     },
 }
 
 const A = {
-    // Flatten raw node properties into array of child values
-    // @sig collectChildValues :: ESTreeNode -> [Any]
-    collectChildValues: rawNode =>
-        Object.keys(rawNode).flatMap(key => (Array.isArray(rawNode[key]) ? rawNode[key] : [rawNode[key]])),
-
-    // Check if value is a valid raw AST node
-    // @sig isValidRawNode :: Any -> Boolean
-    isValidRawNode: node => node && typeof node === 'object' && node.type,
-
-    // Process a child raw node for violations, resetting depth at function boundaries
-    // @sig processChildForViolations :: (ESTreeNode, Number, Set, [Violation]) -> Void
-    processChildForViolations: (rawNode, nextDepth, processedNodes, violations) => {
-        if (!A.isValidRawNode(rawNode)) return
-        const isFunctionWithBlock = A.isRawFunctionWithBlock(rawNode)
-        if (isFunctionWithBlock) return A.findNestedViolations(rawNode.body, 0, processedNodes, violations)
-        if (!A.isRawFunctionNode(rawNode)) A.findNestedViolations(rawNode, nextDepth, processedNodes, violations)
+    // Process a child node for violations, resetting depth at function boundaries
+    // @sig processChildForViolations :: (ASTNode, Number, Set, [Violation]) -> Void
+    processChildForViolations: (node, nextDepth, processedNodes, violations) => {
+        if (PS.isFunctionWithBlockBody(node)) {
+            const body = node.body
+            if (body) return A.findNestedViolations(body, 0, processedNodes, violations)
+            return
+        }
+        if (!PS.isFunctionNode(node)) A.findNestedViolations(node, nextDepth, processedNodes, violations)
     },
 
-    // Check if raw node is a function (for internal traversal)
-    // @sig isRawFunctionNode :: ESTreeNode -> Boolean
-    isRawFunctionNode: rawNode => {
-        const type = rawNode.type
-        return type === 'FunctionDeclaration' || type === 'FunctionExpression' || type === 'ArrowFunctionExpression'
-    },
+    // Recursively find nested indentation violations in a node subtree
+    // @sig findNestedViolations :: (ASTNode, Number, Set, [Violation]) -> Void
+    findNestedViolations: (node, depth, processedNodes, violations) => {
+        if (!node || processedNodes.has(node.identity)) return
+        processedNodes.add(node.identity)
 
-    // Check if raw node is a function with block body
-    // @sig isRawFunctionWithBlock :: ESTreeNode -> Boolean
-    isRawFunctionWithBlock: rawNode => A.isRawFunctionNode(rawNode) && rawNode.body?.type === 'BlockStatement',
+        if (depth > 0 && P.isIndentationStatement(node))
+            violations.push(F.createViolation(node, NESTED_INDENTATION_MESSAGE))
 
-    // Recursively find nested indentation violations in a raw node subtree
-    // @sig findNestedViolations :: (ESTreeNode, Number, Set, [Violation]) -> Void
-    findNestedViolations: (rawNode, depth, processedNodes, violations) => {
-        if (!rawNode || typeof rawNode !== 'object' || processedNodes.has(rawNode)) return
-        processedNodes.add(rawNode)
-
-        if (depth > 0 && P.isIndentationStatement(rawNode))
-            violations.push(F.createViolation(ASTNode.wrap(rawNode), NESTED_INDENTATION_MESSAGE))
-
-        const nextDepth = T.toNextDepth(rawNode, depth)
-        A.collectChildValues(rawNode).forEach(c =>
-            A.processChildForViolations(c, nextDepth, processedNodes, violations),
-        )
+        const nextDepth = T.toNextDepth(node, depth)
+        AST.children(node).forEach(child => A.processChildForViolations(child, nextDepth, processedNodes, violations))
     },
 
     // Collect all violations from the AST
