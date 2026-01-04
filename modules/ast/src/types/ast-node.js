@@ -2211,12 +2211,9 @@ ASTNode.fromFirestore = ASTNode._fromFirestore
 
 ASTNode.wrap = (esTreeNode, parent = null) => {
     const type = esTreeNode?.type
-    let node
-    if (!type) node = ASTNode.Other(esTreeNode || {}, parent)
-    else if (ASTNode['@@tagNames'].includes(type)) node = ASTNode[type](esTreeNode, parent)
-    else node = ASTNode.Other(esTreeNode, parent)
-    node.raw = node.esTree
-    return node
+    if (!type) return ASTNode.Other(esTreeNode || {}, parent)
+    if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](esTreeNode, parent)
+    return ASTNode.Other(esTreeNode, parent)
 }
 
 ASTNode.isASTNode = value => value && value['@@typeName'] === 'ASTNode'

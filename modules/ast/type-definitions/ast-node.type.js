@@ -116,18 +116,12 @@ export const ASTNode = {
 
 // Wrap a raw ESTree node in the appropriate ASTNode variant
 // Uses ASTNode['@@tagNames'] to check if type has a dedicated variant
-// Sets both esTree and raw for backwards compatibility during migration
 // @sig wrap :: (Object, ASTNode?) -> ASTNode
 ASTNode.wrap = (esTreeNode, parent = null) => {
     const type = esTreeNode?.type
-    let node
-    if (!type) node = ASTNode.Other(esTreeNode || {}, parent)
-    else if (ASTNode['@@tagNames'].includes(type)) node = ASTNode[type](esTreeNode, parent)
-    else node = ASTNode.Other(esTreeNode, parent)
-
-    // Backwards compatibility: alias raw → esTree until all .raw usages are migrated
-    node.raw = node.esTree
-    return node
+    if (!type) return ASTNode.Other(esTreeNode || {}, parent)
+    if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](esTreeNode, parent)
+    return ASTNode.Other(esTreeNode, parent)
 }
 
 // Check if a value is an ASTNode instance
