@@ -34,6 +34,14 @@ Brevity > thoroughness. When in doubt, match existing code.
 - Avoid: `items.forEach(item => { results.push(...) })`
 - When iteration callbacks are unavoidable, keep them as single-line delegation calls
 
+## Conditionals
+
+- Prefer ternary for simple if/else returns or assignments
+- Good: `return s ? 4 : 5`
+- Good: `const x = s ? 4 : 5`
+- Never nest ternaries: `s ? t ? 3 : 4 : 5` is unreadable
+- Guard clauses stay as-is: `if (!x) return null`
+
 ## React Component Files
 
 React component files follow the same structure as other modules:
