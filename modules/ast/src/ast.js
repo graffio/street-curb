@@ -52,9 +52,10 @@ const P = {
 
 const T = {
     // Internal helper to get esTree node from wrapped ASTNode or pass through raw ESTree
+    // Supports both .esTree (new) and .raw (legacy) fields for backwards compatibility
     // IMPORTANT: This is internal to @graffio/ast - never exported publicly
     // @sig toESTree :: (ASTNode | ESTreeNode) -> ESTreeNode
-    toESTree: node => node?.esTree ?? node,
+    toESTree: node => node?.esTree ?? node?.raw ?? node,
 }
 
 const A = {
