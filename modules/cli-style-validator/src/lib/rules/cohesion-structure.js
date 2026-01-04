@@ -160,8 +160,6 @@ const A = {
     // @sig findComplexityComments :: String -> [{ line: Number, reason: String }]
     findComplexityComments: sourceCode =>
         Lines.from(sourceCode)
-            .all()
-            .toArray()
             .map((line, index) => {
                 const match = line.match(/\/\/\s*COMPLEXITY:\s*(.+)/)
                 return match ? { line: index + 1, reason: match[1].trim() } : null

@@ -1,100 +1,81 @@
-// ABOUTME: Query interface for source code as lines
+// ABOUTME: Query interface for source code as lines - extends Array with position methods
 // ABOUTME: Enables searching for comments and patterns relative to AST positions
-// COMPLEXITY: functions — Lines DSL with chainable collection methods (expires 2026-02-01)
 
 import { AST } from './ast.js'
 
-// Collection of source lines with position and query methods
-// @sig Lines :: ([String], Boolean?) -> Lines
-const Lines = (lines, hasPositions = false) => ({
-    // === Position Methods (available when created from source) ===
-
-    // Get single line by number (1-indexed to match AST loc)
-    // @sig at :: Number -> String
-    at: lineNumber => lines[lineNumber - 1] ?? '',
-
-    // Get lines before a position, in reverse order (nearest first)
-    // @sig before :: Number -> Lines
-    before: lineNumber => Lines(lines.slice(0, lineNumber - 1).reverse()),
-
-    // Get lines after a position
-    // @sig after :: Number -> Lines
-    after: lineNumber => Lines(lines.slice(lineNumber)),
-
-    // Get lines between two positions (exclusive of both)
-    // @sig between :: (Number, Number) -> Lines
-    between: (startLine, endLine) => Lines(lines.slice(startLine, endLine - 1)),
-
-    // Lines before an AST node (uses effective line for parent context)
-    // @sig beforeNode :: (ASTNode, ASTNode?) -> Lines
-    beforeNode: (node, parent) => {
-        const line = AST.effectiveLine(node, parent)
-        return Lines(lines.slice(0, line - 1).reverse())
-    },
-
-    // Get all lines (returns self, useful for chaining from entry point)
-    // @sig all :: () -> Lines
-    all: () => Lines(lines),
-
-    // Total line count
-    // @sig lineCount :: () -> Number
-    lineCount: () => lines.length,
-
-    // === Collection Methods (always available) ===
-
-    // Find first line matching predicate
-    // @sig find :: (String -> Boolean) -> String?
-    find: predicate => lines.find(predicate),
-
-    // Find index of first matching line
-    // @sig findIndex :: (String -> Boolean) -> Number
-    findIndex: predicate => lines.findIndex(predicate),
-
-    // Check if any line matches
-    // @sig some :: (String -> Boolean) -> Boolean
-    some: predicate => lines.some(predicate),
-
-    // Check if all lines match
-    // @sig every :: (String -> Boolean) -> Boolean
-    every: predicate => lines.every(predicate),
-
-    // Filter lines
-    // @sig filter :: (String -> Boolean) -> Lines
-    filter: predicate => Lines(lines.filter(predicate)),
-
-    // Take lines until predicate matches (exclusive)
-    // @sig takeUntil :: (String -> Boolean) -> Lines
-    takeUntil: predicate => {
-        const index = lines.findIndex(predicate)
-        return Lines(index === -1 ? lines : lines.slice(0, index))
-    },
-
-    // Take lines while predicate matches
-    // @sig takeWhile :: (String -> Boolean) -> Lines
-    takeWhile: predicate => {
-        const index = lines.findIndex(line => !predicate(line))
-        return Lines(index === -1 ? lines : lines.slice(0, index))
-    },
-
-    // Get underlying array
-    // @sig toArray :: () -> [String]
-    toArray: () => lines,
-
-    // Count lines, optionally filtered
-    // @sig count :: (String -> Boolean)? -> Number
-    count: predicate => (predicate ? lines.filter(predicate).length : lines.length),
-
-    // Get first line or null
-    // @sig first :: () -> String?
-    first: () => lines[0] ?? null,
-
-    // Map over lines
-    // @sig map :: (String -> T) -> [T]
-    map: fn => lines.map(fn),
-})
+// Create a Lines array from string items with position and query methods
+// @sig Lines :: [String] -> Lines
+const Lines = items => {
+    const array = Array.from(items)
+    Object.setPrototypeOf(array, LinesPrototype)
+    return array
+}
 
 // Entry point: create Lines from source code string
-// @sig from :: String -> Lines
-Lines.from = sourceCode => Lines(sourceCode.split('\n'), true)
+// @sig Lines.from :: String -> Lines
+Lines.from = sourceCode => Lines(sourceCode.split('\n'))
+
+// Check if value is a Lines array
+// @sig Lines.is :: Any -> Boolean
+Lines.is = o => Object.getPrototypeOf(o) === LinesPrototype
+
+const LinesPrototype = Object.create(Array.prototype)
+
+// Get single line by number (1-indexed to match AST loc)
+// @sig at :: Number -> String
+LinesPrototype.at = function (lineNumber) {
+    return this[lineNumber - 1] ?? ''
+}
+
+// Get lines before a position, in reverse order (nearest first)
+// @sig before :: Number -> Lines
+LinesPrototype.before = function (lineNumber) {
+    return Lines(this.slice(0, lineNumber - 1).reverse())
+}
+
+// Get lines after a position
+// @sig after :: Number -> Lines
+LinesPrototype.after = function (lineNumber) {
+    return Lines(this.slice(lineNumber))
+}
+
+// Get lines between two positions (exclusive of both)
+// @sig between :: (Number, Number) -> Lines
+LinesPrototype.between = function (startLine, endLine) {
+    return Lines(this.slice(startLine, endLine - 1))
+}
+
+// Lines before an AST node (uses effective line for parent context)
+// @sig beforeNode :: (ASTNode, ASTNode?) -> Lines
+LinesPrototype.beforeNode = function (node, parent) {
+    const line = AST.effectiveLine(node, parent)
+    return Lines(this.slice(0, line - 1).reverse())
+}
+
+// Filter lines (override to return Lines instead of Array)
+// @sig filter :: (String -> Boolean) -> Lines
+LinesPrototype.filter = function (predicate) {
+    return Lines(Array.prototype.filter.call(this, predicate))
+}
+
+// Take lines until predicate matches (exclusive)
+// @sig takeUntil :: (String -> Boolean) -> Lines
+LinesPrototype.takeUntil = function (predicate) {
+    const index = this.findIndex(predicate)
+    return Lines(index === -1 ? this : this.slice(0, index))
+}
+
+// Take lines while predicate matches
+// @sig takeWhile :: (String -> Boolean) -> Lines
+LinesPrototype.takeWhile = function (predicate) {
+    const index = this.findIndex(line => !predicate(line))
+    return Lines(index === -1 ? this : this.slice(0, index))
+}
+
+// Get first line or null
+// @sig first :: () -> String?
+LinesPrototype.first = function () {
+    return this[0] ?? null
+}
 
 export { Lines }

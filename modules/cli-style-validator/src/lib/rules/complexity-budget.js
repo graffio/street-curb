@@ -97,7 +97,7 @@ const V = {
     checkReactBudget: (ast, sourceCode, budget) => {
         const components = AS.findComponents(ast)
         if (components.length === 0) {
-            const codeLines = Lines.from(sourceCode).all().count(PS.isNonCommentLine)
+            const codeLines = Lines.from(sourceCode).filter(PS.isNonCommentLine).length
             const result = V.checkMetric(sourceCode, 'lines', codeLines, budget.lines, 'react-component')
             return result ? [result] : []
         }
@@ -121,7 +121,7 @@ const V = {
     // Validate non-React file budget (utility, selector, cli)
     // @sig checkNonReactBudget :: (AST, String, String, Budget) -> [Violation]
     checkNonReactBudget: (ast, sourceCode, context, budget) => {
-        const codeLines = Lines.from(sourceCode).all().count(PS.isNonCommentLine)
+        const codeLines = Lines.from(sourceCode).filter(PS.isNonCommentLine).length
         const styleCount = countStyleObjects(ast)
         const totalFunctions = AS.countFunctions(ast)
 
