@@ -51,12 +51,6 @@ const P = {
     },
 }
 
-const T = {
-    // Extract raw ESTree from wrapped ASTNode
-    // @sig toESTree :: ASTNode -> ESTreeNode
-    toESTree: node => node.esTree,
-}
-
 const A = {
     // Collect child nodes from a value (handles arrays and single nodes)
     // @sig collectChildren :: Any -> [ESTreeNode]
@@ -89,7 +83,7 @@ const AST = {
 
     // Collect all nodes from an AST (raw) or ASTNode (wrapped) as wrapped ASTNodes
     // @sig from :: (ESTreeAST | ASTNode) -> [ASTNode]
-    from: ast => (ASTNode.isASTNode(ast) ? A.collectAll(T.toESTree(ast), ast.parent, []) : A.collectAll(ast, null, [])),
+    from: ast => (ASTNode.isASTNode(ast) ? A.collectAll(ast.esTree, ast.parent, []) : A.collectAll(ast, null, [])),
 
     // Get just top-level statements as wrapped ASTNodes
     // @sig topLevel :: ESTreeAST -> [ASTNode]
@@ -101,212 +95,210 @@ const AST = {
 
     // Get all descendant nodes of an ASTNode (including the node itself)
     // @sig descendants :: ASTNode -> [ASTNode]
-    descendants: node => A.collectAll(T.toESTree(node), node.parent, []),
+    descendants: node => A.collectAll(node.esTree, node.parent, []),
 
     // === Type Predicates ===
 
     // Direct type check (for checking ESTree types by string)
     // @sig hasType :: (ASTNode, String) -> Boolean
-    hasType: (node, type) => T.toESTree(node).type === type,
+    hasType: (node, type) => node.esTree.type === type,
 
     // Check if node is a function declaration with a name
     // @sig isNamedFunctionDecl :: ASTNode -> Boolean
-    isNamedFunctionDecl: node => T.toESTree(node).type === 'FunctionDeclaration' && T.toESTree(node).id?.name,
+    isNamedFunctionDecl: node => node.esTree.type === 'FunctionDeclaration' && node.esTree.id?.name,
 
     // Check if node is an object expression
     // @sig isObjectExpr :: ASTNode -> Boolean
-    isObjectExpr: node => T.toESTree(node).type === 'ObjectExpression',
+    isObjectExpr: node => node.esTree.type === 'ObjectExpression',
 
     // Check if node is a variable declaration
     // @sig isVarDecl :: ASTNode -> Boolean
-    isVarDecl: node => T.toESTree(node).type === 'VariableDeclaration',
+    isVarDecl: node => node.esTree.type === 'VariableDeclaration',
 
     // Get node type string
     // @sig nodeType :: ASTNode -> String
-    nodeType: node => T.toESTree(node).type,
+    nodeType: node => node.esTree.type,
 
     // === Property Accessors ===
 
     // Get body array or empty
     // @sig body :: ASTNode -> [ESTreeNode]
-    body: node => T.toESTree(node).body || [],
+    body: node => node.esTree.body || [],
 
     // Get declarations array or empty
     // @sig declarations :: ASTNode -> [ASTNode]
-    declarations: node => (T.toESTree(node).declarations || []).map(d => ASTNode.wrap(d, node)),
+    declarations: node => (node.esTree.declarations || []).map(d => ASTNode.wrap(d, node)),
 
     // Get the name of the first declared variable
     // @sig variableName :: ASTNode -> String?
-    variableName: node => T.toESTree(node).declarations?.[0]?.id?.name,
+    variableName: node => node.esTree.declarations?.[0]?.id?.name,
 
     // Get the value (right-hand side) of the first declared variable
     // @sig variableValue :: ASTNode -> ASTNode?
     variableValue: node => {
-        const init = T.toESTree(node).declarations?.[0]?.init
+        const init = node.esTree.declarations?.[0]?.init
         return init ? ASTNode.wrap(init, node) : null
     },
 
     // Get the init of a VariableDeclarator as wrapped ASTNode
     // @sig variableInit :: ASTNode -> ASTNode?
     variableInit: node => {
-        const init = T.toESTree(node).init
+        const init = node.esTree.init
         return init ? ASTNode.wrap(init, node) : null
     },
 
     // Get properties array or empty
     // @sig properties :: ASTNode -> [ASTNode]
-    properties: node => (T.toESTree(node).properties || []).map(p => ASTNode.wrap(p, node)),
+    properties: node => (node.esTree.properties || []).map(p => ASTNode.wrap(p, node)),
 
     // Count properties in an object expression
     // @sig propertyCount :: ASTNode -> Number
-    propertyCount: node => (T.toESTree(node).properties || []).length,
+    propertyCount: node => (node.esTree.properties || []).length,
 
     // Get property key names from object expression
     // @sig propertyNames :: ASTNode -> [String]
     propertyNames: node =>
-        (T.toESTree(node).properties || [])
-            .filter(p => p.key?.name || p.key?.value)
-            .map(p => p.key.name || p.key.value),
+        (node.esTree.properties || []).filter(p => p.key?.name || p.key?.value).map(p => p.key.name || p.key.value),
 
     // Get specifiers array or empty
     // @sig specifiers :: ASTNode -> [ASTNode]
-    specifiers: node => (T.toESTree(node).specifiers || []).map(s => ASTNode.wrap(s, node)),
+    specifiers: node => (node.esTree.specifiers || []).map(s => ASTNode.wrap(s, node)),
 
     // Get right-hand side of assignment (the value being assigned)
     // @sig rhs :: ASTNode -> ASTNode?
     rhs: node => {
-        const init = T.toESTree(node).init
+        const init = node.esTree.init
         return init ? ASTNode.wrap(init, node) : null
     },
 
     // Get id.name or undefined
     // @sig idName :: ASTNode -> String?
-    idName: node => T.toESTree(node).id?.name,
+    idName: node => node.esTree.id?.name,
 
     // Get key name (handles both identifier and literal keys)
     // @sig keyName :: ASTNode -> String?
-    keyName: prop => T.toESTree(prop).key?.name || T.toESTree(prop).key?.value,
+    keyName: prop => prop.esTree.key?.name || prop.esTree.key?.value,
 
     // Get key name and value node from property
     // @sig keyValue :: ASTNode -> { key: String?, value: ASTNode? }
     keyValue: prop => {
-        const raw = T.toESTree(prop)
+        const raw = prop.esTree
         const value = raw.value ? ASTNode.wrap(raw.value, prop) : null
         return { key: raw.key?.name || raw.key?.value, value }
     },
 
     // Get exported name from specifier
     // @sig exportedName :: ASTNode -> String?
-    exportedName: spec => T.toESTree(spec).exported?.name,
+    exportedName: spec => spec.esTree.exported?.name,
 
     // Get value node from property
     // @sig value :: ASTNode -> ESTreeNode?
-    value: prop => T.toESTree(prop).value,
+    value: prop => prop.esTree.value,
 
     // Get function body (block or expression)
     // @sig functionBody :: ASTNode -> ASTNode?
     functionBody: node => {
-        const body = T.toESTree(node).body
+        const body = node.esTree.body
         return body ? ASTNode.wrap(body, node) : null
     },
 
     // Check if arrow function has expression body (not block)
     // @sig isExpressionArrow :: ASTNode -> Boolean
-    isExpressionArrow: node => T.toESTree(node).expression === true,
+    isExpressionArrow: node => node.esTree.expression === true,
 
     // Get statements from a block body
     // @sig blockStatements :: ASTNode -> [ASTNode]
-    blockStatements: node => (T.toESTree(node).body || []).map(stmt => ASTNode.wrap(stmt, node)),
+    blockStatements: node => (node.esTree.body || []).map(stmt => ASTNode.wrap(stmt, node)),
 
     // Get return statement argument
     // @sig returnArgument :: ASTNode -> ASTNode?
     returnArgument: node => {
-        const arg = T.toESTree(node).argument
+        const arg = node.esTree.argument
         return arg ? ASTNode.wrap(arg, node) : null
     },
 
     // Get MemberExpression object (the part before the dot)
     // @sig memberObject :: ASTNode -> ASTNode?
     memberObject: node => {
-        const obj = T.toESTree(node).object
+        const obj = node.esTree.object
         return obj ? ASTNode.wrap(obj, node) : null
     },
 
     // Get MemberExpression property (the part after the dot)
     // @sig memberProperty :: ASTNode -> ASTNode?
     memberProperty: node => {
-        const prop = T.toESTree(node).property
+        const prop = node.esTree.property
         return prop ? ASTNode.wrap(prop, node) : null
     },
 
     // Check if MemberExpression uses computed access (a[b] vs a.b)
     // @sig isComputed :: ASTNode -> Boolean
-    isComputed: node => T.toESTree(node).computed === true,
+    isComputed: node => node.esTree.computed === true,
 
     // Get name from Identifier node
     // @sig identifierName :: ASTNode -> String?
-    identifierName: node => T.toESTree(node).name,
+    identifierName: node => node.esTree.name,
 
     // Get CallExpression callee (the function being called)
     // @sig callee :: ASTNode -> ASTNode?
     callee: node => {
-        const callee = T.toESTree(node).callee
+        const callee = node.esTree.callee
         return callee ? ASTNode.wrap(callee, node) : null
     },
 
     // Get AssignmentExpression left side (the target of assignment)
     // @sig assignmentLeft :: ASTNode -> ASTNode?
     assignmentLeft: node => {
-        const left = T.toESTree(node).left
+        const left = node.esTree.left
         return left ? ASTNode.wrap(left, node) : null
     },
 
     // Get ExportDefaultDeclaration declaration name
     // @sig defaultExportName :: ASTNode -> String?
-    defaultExportName: node => T.toESTree(node).declaration?.name,
+    defaultExportName: node => node.esTree.declaration?.name,
 
     // Check if two nodes refer to the same ESTree node (identity comparison)
     // @sig isSameNode :: (ASTNode, ASTNode) -> Boolean
-    isSameNode: (a, b) => T.toESTree(a) === T.toESTree(b),
+    isSameNode: (a, b) => a.esTree === b.esTree,
 
     // === Location Helpers ===
 
     // Count lines spanned by a node
     // @sig lineCount :: ASTNode -> Number
     lineCount: node => {
-        const loc = T.toESTree(node).loc
+        const loc = node.esTree.loc
         if (!loc) return 0
         return loc.end.line - loc.start.line + 1
     },
 
     // Get start line of a node
     // @sig startLine :: ASTNode -> Number
-    startLine: node => T.toESTree(node).loc?.start?.line ?? 0,
+    startLine: node => node.esTree.loc?.start?.line ?? 0,
 
     // Get start line with fallback to 1 (for info objects)
     // @sig line :: ASTNode -> Number
-    line: node => T.toESTree(node).loc?.start?.line || 1,
+    line: node => node.esTree.loc?.start?.line || 1,
 
     // Get end line of a node
     // @sig endLine :: ASTNode -> Number
-    endLine: node => T.toESTree(node).loc?.end?.line ?? 0,
+    endLine: node => node.esTree.loc?.end?.line ?? 0,
 
     // Get start column of a node (1-based for display)
     // @sig column :: ASTNode -> Number
-    column: node => (T.toESTree(node).loc?.start?.column ?? 0) + 1,
+    column: node => (node.esTree.loc?.start?.column ?? 0) + 1,
 
     // === Node Helpers ===
 
     // Check if node's body contains an await expression
     // @sig bodyContainsAwait :: ASTNode -> Boolean
-    bodyContainsAwait: node => P.containsAwait(T.toESTree(node).body),
+    bodyContainsAwait: node => P.containsAwait(node.esTree.body),
 
     // Check if a function node is at module top level (ast is raw ESTree Program)
     // @sig isTopLevel :: (ASTNode, ESTreeAST) -> Boolean
     isTopLevel: (node, ast) => {
         const body = ast?.body
         if (!body) return false
-        return body.some(statement => P.isTopLevelDeclarationOf(T.toESTree(node), statement))
+        return body.some(statement => P.isTopLevelDeclarationOf(node.esTree, statement))
     },
 
     // Get the effective line for comment searching (uses parent for properties/variables)
@@ -314,14 +306,14 @@ const AST = {
     effectiveLine: node => {
         const parent = node.parent
         if (!parent) return AST.startLine(node)
-        const parentType = T.toESTree(parent).type
+        const parentType = parent.esTree.type
         if (parentType === 'Property' || parentType === 'VariableDeclarator') return AST.startLine(parent)
         return AST.startLine(node)
     },
 
     // Get all direct child nodes of a node (as raw ESTree nodes)
     // @sig children :: ASTNode -> [ESTreeNode]
-    children: node => A.toChildren(T.toESTree(node)),
+    children: node => A.toChildren(node.esTree),
 }
 
 export { AST }
