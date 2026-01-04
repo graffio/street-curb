@@ -23,19 +23,10 @@ const P = {
     // @sig containsAwait :: ESTreeNode -> Boolean
     containsAwait: rawNode => {
         if (!rawNode) return false
-        const {
-            type,
-            body,
-            expression,
-            declarations,
-            right,
-            callee,
-            arguments: args,
-            object,
-            test,
-            consequent,
-            alternate,
-        } = rawNode
+
+        const { type, body, expression, declarations, right, callee } = rawNode
+        const { arguments: args, object, test, consequent, alternate } = rawNode
+
         if (type === 'AwaitExpression') return true
         if (type === 'BlockStatement') return body.some(P.containsAwait)
         if (type === 'ExpressionStatement') return P.containsAwait(expression)

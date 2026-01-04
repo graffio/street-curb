@@ -8,9 +8,9 @@
 // COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-02-01)
 
 import { AST, ASTNode, Lines } from '@graffio/ast'
+import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
-import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -57,15 +57,6 @@ const P = {
                 if (!ASTNode.ObjectExpression.is(value)) return false
                 return value.properties.some(prop => prop.value?.isSameAs(node))
             }),
-
-    // Check if node is a function definition
-    // @sig isFunctionDefinition :: ASTNode -> Boolean
-    isFunctionDefinition: node => PS.isFunctionNode(node),
-
-    // Check if node is an identifier reference (not function definition)
-    // Uses ASTNode.Identifier.is() for type-safe variant checking
-    // @sig isIdentifierReference :: ASTNode -> Boolean
-    isIdentifierReference: node => ASTNode.Identifier.is(node),
 
     // Match function name to suggested cohesion group based on prefix
     // @sig matchesCohesionPattern :: String -> String?
@@ -121,7 +112,7 @@ const T = {
         const key = prop.name
         const value = prop.value
         if (!key || !value) return null
-        if (!P.isIdentifierReference(value) || P.isFunctionDefinition(value)) return null
+        if (!ASTNode.Identifier.is(value) || PS.isFunctionNode(value)) return null
         return { group: groupName, propName: key, refName: value.name, line: prop.line }
     },
 }
