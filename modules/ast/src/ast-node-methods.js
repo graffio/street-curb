@@ -1,7 +1,7 @@
 // ABOUTME: Adds instance methods to ASTNode variants
 // ABOUTME: Extends generated TaggedSum with semantic accessors that hide ESTree structure
-// COMPLEXITY-TODO: lines — Defines getters for all ESTree node types (expires 2026-04-01)
-// COMPLEXITY-TODO: functions — Each getter counts as a function (expires 2026-04-01)
+// COMPLEXITY: lines — Semantic accessors for all ESTree node types
+// COMPLEXITY: functions — Each node type requires multiple property getters
 
 import { ASTNode } from './types/ast-node.js'
 

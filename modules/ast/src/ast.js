@@ -1,5 +1,6 @@
 // ABOUTME: AST entry points and traversal helpers
 // ABOUTME: Wraps raw ESTree from parsers into ASTNode instances
+// COMPLEXITY: functions — AST module provides multiple entry points for different traversal needs
 
 import { ASTNode } from './types/ast-node.js'
 

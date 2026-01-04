@@ -72,10 +72,4 @@ LinesPrototype.takeWhile = function (predicate) {
     return Lines(index === -1 ? this : this.slice(0, index))
 }
 
-// Get first line or null
-// @sig first :: () -> String?
-LinesPrototype.first = function () {
-    return this[0] ?? null
-}
-
 export { Lines }
