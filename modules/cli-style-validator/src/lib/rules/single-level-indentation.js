@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
-import { AST } from '@graffio/ast'
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -124,7 +124,7 @@ const A = {
         processedNodes.add(rawNode)
 
         if (depth > 0 && P.isIndentationStatement(rawNode))
-            violations.push(F.createViolation(rawNode, NESTED_INDENTATION_MESSAGE))
+            violations.push(F.createViolation(ASTNode.wrap(rawNode), NESTED_INDENTATION_MESSAGE))
 
         const nextDepth = T.toNextDepth(rawNode, depth)
         A.collectChildValues(rawNode).forEach(c =>

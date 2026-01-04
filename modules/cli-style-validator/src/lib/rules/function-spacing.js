@@ -1,6 +1,7 @@
 // ABOUTME: Rule to enforce blank lines before multiline function declarations
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
+import { AST } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -36,7 +37,7 @@ const V = {
     checkFunction: (node, prevNode, sourceCode) => {
         if (!prevNode) return null
 
-        const { line: startLine } = node.loc.start
+        const startLine = AST.startLine(node)
         const prevLineContent = T.toPrevLineContent(startLine, sourceCode)
 
         if (prevLineContent === '' || PS.isCommentLine(prevLineContent)) return null
@@ -61,7 +62,7 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
 
-        const topLevelViolations = A.checkBlockFunctions(A.findFunctionsInBlock(ast.body), sourceCode)
+        const topLevelViolations = A.checkBlockFunctions(A.findFunctionsInBlock(AST.topLevel(ast)), sourceCode)
         const nestedViolations = []
         AS.traverseAST(ast, node => nestedViolations.push(...A.checkInnerFunctions(node, sourceCode)))
 
@@ -85,8 +86,10 @@ const A = {
     // Check spacing for functions inside a function body
     // @sig checkInnerFunctions :: (ASTNode, String) -> [Violation]
     checkInnerFunctions: (node, sourceCode) => {
-        if (!PS.isFunctionNode(node) || !node.body || node.body.type !== 'BlockStatement') return []
-        return A.checkBlockFunctions(A.findFunctionsInBlock(node.body.body), sourceCode)
+        if (!PS.isFunctionNode(node)) return []
+        const body = AST.functionBody(node)
+        if (!body || !AST.hasType(body, 'BlockStatement')) return []
+        return A.checkBlockFunctions(A.findFunctionsInBlock(AST.blockStatements(body)), sourceCode)
     },
 }
 

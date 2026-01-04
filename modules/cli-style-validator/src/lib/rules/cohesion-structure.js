@@ -120,7 +120,7 @@ const T = {
         const { key, value } = AST.keyValue(prop)
         if (!key || !value) return null
         if (!P.isIdentifierReference(value) || P.isFunctionDefinition(value)) return null
-        return { group: groupName, propName: key, refName: value.name, line: AST.line(prop) }
+        return { group: groupName, propName: key, refName: AST.identifierName(value), line: AST.line(prop) }
     },
 }
 

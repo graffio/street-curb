@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { AST, ASTNode } from '@graffio/ast'
+import { AST } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -31,7 +31,8 @@ const P = {
         if (!AST.hasType(node, 'VariableDeclarator')) return false
         const init = AST.rhs(node)
         if (!init) return false
-        return init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression'
+        const initType = AST.nodeType(init)
+        return initType === 'ArrowFunctionExpression' || initType === 'FunctionExpression'
     },
 
     // Check if statement declares a function (multiline only for this rule)
@@ -39,11 +40,10 @@ const P = {
     isFunctionStatement: node => {
         if (PS.isFunctionDeclaration(node)) return true
         if (AST.hasType(node, 'VariableDeclaration')) {
-            const decls = AST.declarations(node)
-            return decls.some(d => {
-                const init = d.init
-                return init && (init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression')
-            })
+            const init = AST.variableValue(node)
+            if (!init) return false
+            const initType = AST.nodeType(init)
+            return initType === 'ArrowFunctionExpression' || initType === 'FunctionExpression'
         }
         return false
     },
@@ -97,7 +97,7 @@ const A = {
         if (!P.isVariableWithFunctionExpression(declarator)) return
         const funcName = AS.getFunctionName(declarator)
         const init = AST.rhs(declarator)
-        const funcType = init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
+        const funcType = AST.nodeType(init) === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
         violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
     },
 
@@ -110,26 +110,8 @@ const A = {
         }
         if (AST.hasType(statement, 'VariableDeclaration')) {
             const decls = AST.declarations(statement)
-            decls.forEach(d => A.processDeclaratorRaw(d, violations))
+            decls.forEach(d => A.processDeclarator(d, violations))
         }
-    },
-
-    // Process raw declarator for function expressions
-    // @sig processDeclaratorRaw :: (ESTreeDeclarator, [Violation]) -> Void
-    processDeclaratorRaw: (rawDecl, violations) => {
-        const init = rawDecl.init
-        if (!init) return
-        if (init.type !== 'ArrowFunctionExpression' && init.type !== 'FunctionExpression') return
-        const funcName = rawDecl.id?.name || '<anonymous>'
-        const funcType = init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
-        violations.push({
-            type: 'function-declaration-ordering',
-            line: rawDecl.loc?.start?.line || 1,
-            column: (rawDecl.loc?.start?.column || 0) + 1,
-            priority: PRIORITY,
-            message: T.buildFunctionOrderingMessage(funcType, funcName),
-            rule: 'function-declaration-ordering',
-        })
     },
 
     // Reducer to track non-function statements and flag misplaced functions
@@ -147,10 +129,7 @@ const A = {
     processBlockForViolations: (block, violations) => {
         if (!PS.isBlockStatement(block)) return
         const body = AST.blockStatements(block)
-        body.reduce((found, rawStmt) => {
-            const stmt = ASTNode.wrap(rawStmt)
-            return A.processStatementReducer(violations, stmt, found)
-        }, false)
+        body.reduce((found, stmt) => A.processStatementReducer(violations, stmt, found), false)
     },
 }
 

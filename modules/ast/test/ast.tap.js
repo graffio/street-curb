@@ -82,12 +82,3 @@ test('Given AST accessors with wrapped nodes', async t => {
         t.equal(AST.variableName(varDecl), 'x', 'Then variableName() extracts name')
     })
 })
-
-test('Given raw ESTree nodes passed directly', async t =>
-    t.test('When accessors receive raw ESTree instead of wrapped', async t => {
-        // Raw ESTree node (not wrapped)
-        const rawNode = { type: 'VariableDeclaration', declarations: [], loc: { start: { line: 5 } } }
-
-        t.equal(AST.line(rawNode), 5, 'Then accessors should work with raw ESTree')
-        t.ok(AST.isVarDecl(rawNode), 'Then type checks should work with raw ESTree')
-    }))

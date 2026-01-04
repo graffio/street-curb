@@ -41,9 +41,13 @@ const PS = {
 
     // Check if a node is a variable declaration with a function expression
     // @sig isFunctionVariableDeclaration :: ASTNode -> Boolean
-    isFunctionVariableDeclaration: node =>
-        AST.hasType(node, 'VariableDeclaration') &&
-        AST.declarations(node).some(declaration => declaration.init && PS.isFunctionNode(declaration.init)),
+    isFunctionVariableDeclaration: node => {
+        if (!AST.hasType(node, 'VariableDeclaration')) return false
+        return AST.declarations(node).some(declaration => {
+            const init = AST.rhs(declaration)
+            return init && PS.isFunctionNode(init)
+        })
+    },
 
     // Check if a node is a function statement (declaration or variable with function)
     // @sig isFunctionStatement :: ASTNode -> Boolean
@@ -85,16 +89,17 @@ const PS = {
     isFunctionWithBlockBody: node => {
         if (!PS.isFunctionNode(node)) return false
         const body = AST.functionBody(node)
-        return body && body.type === 'BlockStatement'
+        return body && AST.hasType(body, 'BlockStatement')
     },
 
     // Check if statement returns JSX element or fragment
-    // @sig hasJSXReturnStatement :: Statement -> Boolean
+    // @sig hasJSXReturnStatement :: ASTNode -> Boolean
     hasJSXReturnStatement: statement => {
         if (!AST.hasType(statement, 'ReturnStatement')) return false
         const argument = AST.returnArgument(statement)
         if (!argument) return false
-        return argument.type === 'JSXElement' || argument.type === 'JSXFragment'
+        const argType = AST.nodeType(argument)
+        return argType === 'JSXElement' || argType === 'JSXFragment'
     },
 
     // Check if function returns JSX (arrow expression or block return)
@@ -102,7 +107,7 @@ const PS = {
     isJSXFunction: node => {
         const body = AST.functionBody(node)
         if (!body) return false
-        const bodyType = body.type
+        const bodyType = AST.nodeType(body)
         if (AST.isExpressionArrow(node) && (bodyType === 'JSXElement' || bodyType === 'JSXFragment')) return true
         if (bodyType === 'BlockStatement') return AST.blockStatements(body).some(PS.hasJSXReturnStatement)
         return false
@@ -114,7 +119,7 @@ const PS = {
         if (!parent) return false
         if (!AST.hasType(parent, 'ArrowFunctionExpression')) return false
         const body = AST.functionBody(parent)
-        return body && AST.isSameNode(ASTNode.wrap(body, parent), node) && PS.isFunctionNode(node)
+        return body && AST.isSameNode(body, node) && PS.isFunctionNode(node)
     },
 
     // Strip comment markers (//, /*, *, */) from a line to get content

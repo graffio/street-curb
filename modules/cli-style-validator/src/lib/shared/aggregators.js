@@ -82,15 +82,13 @@ const AS = {
 
         const decl = AST.declarations(node)[0]
         if (!decl) return null
-        const name = decl.id?.name
-        const init = decl.init
+        const name = AST.idName(decl)
+        const init = AST.rhs(decl)
         if (!name || !PS.isPascalCase(name) || !init) return null
 
-        // Wrap the init node to check if it's a function
-        const wrappedInit = ASTNode.wrap(init)
-        if (!PS.isFunctionNode(wrappedInit)) return null
+        if (!PS.isFunctionNode(init)) return null
 
-        return { name, node: wrappedInit, startLine, endLine }
+        return { name, node: init, startLine, endLine }
     },
 
     // Find all PascalCase component declarations at module level
@@ -129,7 +127,7 @@ const AS = {
     toSpecifierNames: node =>
         AST.hasType(node, 'ExportNamedDeclaration')
             ? AST.specifiers(node)
-                  .map(s => s.exported?.name)
+                  .map(s => AST.exportedName(s))
                   .filter(Boolean)
             : [],
 

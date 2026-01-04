@@ -1,6 +1,7 @@
 // ABOUTME: Main AST abstraction - provides accessors that hide ESTree structure
 // ABOUTME: All accessors return wrapped ASTNodes, not raw ESTree nodes
 // COMPLEXITY-TODO: functions — AST accessors grouped by purpose, not decomposable (expires 2026-02-01)
+// COMPLEXITY-TODO: lines — Accessors expanded to wrap all returned nodes (expires 2026-02-01)
 
 import { ASTNode } from './types/ast-node.js'
 
@@ -51,10 +52,9 @@ const P = {
 }
 
 const T = {
-    // Extract raw ESTree from wrapped ASTNode, or pass through if already raw
-    // IMPORTANT: Internal to @graffio/ast - never exported publicly
-    // @sig toESTree :: (ASTNode | ESTreeNode) -> ESTreeNode
-    toESTree: node => node?.esTree ?? node,
+    // Extract raw ESTree from wrapped ASTNode
+    // @sig toESTree :: ASTNode -> ESTreeNode
+    toESTree: node => node.esTree,
 }
 
 const A = {
@@ -132,16 +132,19 @@ const AST = {
     body: node => T.toESTree(node).body || [],
 
     // Get declarations array or empty
-    // @sig declarations :: ASTNode -> [ESTreeNode]
-    declarations: node => T.toESTree(node).declarations || [],
+    // @sig declarations :: ASTNode -> [ASTNode]
+    declarations: node => (T.toESTree(node).declarations || []).map(d => ASTNode.wrap(d, node)),
 
     // Get the name of the first declared variable
     // @sig variableName :: ASTNode -> String?
     variableName: node => T.toESTree(node).declarations?.[0]?.id?.name,
 
-    // Get the value (right-hand side) of the first declared variable (raw ESTree)
-    // @sig variableValue :: ASTNode -> ESTreeNode?
-    variableValue: node => T.toESTree(node).declarations?.[0]?.init,
+    // Get the value (right-hand side) of the first declared variable
+    // @sig variableValue :: ASTNode -> ASTNode?
+    variableValue: node => {
+        const init = T.toESTree(node).declarations?.[0]?.init
+        return init ? ASTNode.wrap(init, node) : null
+    },
 
     // Get the init of a VariableDeclarator as wrapped ASTNode
     // @sig variableInit :: ASTNode -> ASTNode?
@@ -151,8 +154,8 @@ const AST = {
     },
 
     // Get properties array or empty
-    // @sig properties :: ASTNode -> [ESTreeNode]
-    properties: node => T.toESTree(node).properties || [],
+    // @sig properties :: ASTNode -> [ASTNode]
+    properties: node => (T.toESTree(node).properties || []).map(p => ASTNode.wrap(p, node)),
 
     // Count properties in an object expression
     // @sig propertyCount :: ASTNode -> Number
@@ -166,12 +169,15 @@ const AST = {
             .map(p => p.key.name || p.key.value),
 
     // Get specifiers array or empty
-    // @sig specifiers :: ASTNode -> [ESTreeNode]
-    specifiers: node => T.toESTree(node).specifiers || [],
+    // @sig specifiers :: ASTNode -> [ASTNode]
+    specifiers: node => (T.toESTree(node).specifiers || []).map(s => ASTNode.wrap(s, node)),
 
     // Get right-hand side of assignment (the value being assigned)
-    // @sig rhs :: ASTNode -> ESTreeNode?
-    rhs: node => T.toESTree(node).init,
+    // @sig rhs :: ASTNode -> ASTNode?
+    rhs: node => {
+        const init = T.toESTree(node).init
+        return init ? ASTNode.wrap(init, node) : null
+    },
 
     // Get id.name or undefined
     // @sig idName :: ASTNode -> String?
@@ -182,11 +188,12 @@ const AST = {
     keyName: prop => T.toESTree(prop).key?.name || T.toESTree(prop).key?.value,
 
     // Get key name and value node from property
-    // @sig keyValue :: ASTNode -> { key: String?, value: ESTreeNode? }
-    keyValue: prop => ({
-        key: T.toESTree(prop).key?.name || T.toESTree(prop).key?.value,
-        value: T.toESTree(prop).value,
-    }),
+    // @sig keyValue :: ASTNode -> { key: String?, value: ASTNode? }
+    keyValue: prop => {
+        const raw = T.toESTree(prop)
+        const value = raw.value ? ASTNode.wrap(raw.value, prop) : null
+        return { key: raw.key?.name || raw.key?.value, value }
+    },
 
     // Get exported name from specifier
     // @sig exportedName :: ASTNode -> String?
@@ -197,20 +204,26 @@ const AST = {
     value: prop => T.toESTree(prop).value,
 
     // Get function body (block or expression)
-    // @sig functionBody :: ASTNode -> ESTreeNode?
-    functionBody: node => T.toESTree(node).body,
+    // @sig functionBody :: ASTNode -> ASTNode?
+    functionBody: node => {
+        const body = T.toESTree(node).body
+        return body ? ASTNode.wrap(body, node) : null
+    },
 
     // Check if arrow function has expression body (not block)
     // @sig isExpressionArrow :: ASTNode -> Boolean
     isExpressionArrow: node => T.toESTree(node).expression === true,
 
     // Get statements from a block body
-    // @sig blockStatements :: ASTNode -> [ESTreeNode]
-    blockStatements: node => T.toESTree(node).body || [],
+    // @sig blockStatements :: ASTNode -> [ASTNode]
+    blockStatements: node => (T.toESTree(node).body || []).map(stmt => ASTNode.wrap(stmt, node)),
 
     // Get return statement argument
-    // @sig returnArgument :: ASTNode -> ESTreeNode?
-    returnArgument: node => T.toESTree(node).argument,
+    // @sig returnArgument :: ASTNode -> ASTNode?
+    returnArgument: node => {
+        const arg = T.toESTree(node).argument
+        return arg ? ASTNode.wrap(arg, node) : null
+    },
 
     // Get MemberExpression object (the part before the dot)
     // @sig memberObject :: ASTNode -> ASTNode?
@@ -288,10 +301,10 @@ const AST = {
     // @sig bodyContainsAwait :: ASTNode -> Boolean
     bodyContainsAwait: node => P.containsAwait(T.toESTree(node).body),
 
-    // Check if a function node is at module top level
-    // @sig isTopLevel :: (ASTNode, ASTNode) -> Boolean
+    // Check if a function node is at module top level (ast is raw ESTree Program)
+    // @sig isTopLevel :: (ASTNode, ESTreeAST) -> Boolean
     isTopLevel: (node, ast) => {
-        const body = T.toESTree(ast).body
+        const body = ast?.body
         if (!body) return false
         return body.some(statement => P.isTopLevelDeclarationOf(T.toESTree(node), statement))
     },
