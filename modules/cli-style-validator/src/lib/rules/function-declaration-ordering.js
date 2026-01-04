@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
-import { ASTNode } from '@graffio/ast'
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -84,7 +84,7 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast) return []
         const violations = []
-        AS.traverseAST(ast, node => A.processBlockForViolations(node, violations))
+        AST.from(ast).forEach(node => A.processBlockForViolations(node, violations))
         return violations
     },
 }

@@ -4,6 +4,7 @@
 import { AST, Lines } from '@graffio/ast'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
+import { TS } from '../shared/transformers.js'
 
 const PRIORITY = 6
 
@@ -20,14 +21,14 @@ const P = {
     isSubstantiveComment: line => {
         if (!PS.isCommentLine(line.trim())) return false
         if (PS.isDirectiveComment(line)) return false
-        return PS.toCommentContent(line).trim().length > 0
+        return TS.toCommentContent(line).trim().length > 0
     },
 
     // Check if line is an indented continuation of @sig (4+ spaces after comment marker)
     // @sig isSigContinuation :: String -> Boolean
     isSigContinuation: line => {
         if (!PS.isCommentLine(line.trim())) return false
-        const content = PS.toCommentContent(line)
+        const content = TS.toCommentContent(line)
         return content.length > 0 && /^\s{4,}/.test(content)
     },
 

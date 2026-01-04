@@ -79,6 +79,13 @@ const V = {
         const body = node.body
         if (body) A.findNestedViolations(body, 0, processedNodes, violations)
     },
+
+    // Validate single-level indentation throughout the file
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath)) return []
+        return A.collectViolations(ast, [], new Set())
+    },
 }
 
 const A = {
@@ -109,20 +116,11 @@ const A = {
     // Collect all violations from the AST
     // @sig collectViolations :: (AST, [Violation]) -> [Violation]
     collectViolations: (ast, violations, processedNodes) => {
-        AS.traverseAST(ast, node => V.checkCallbackFunction(node, ast, violations))
-        AS.traverseAST(ast, node => V.checkFunctionNode(node, processedNodes, violations))
+        AST.from(ast).forEach(node => V.checkCallbackFunction(node, ast, violations))
+        AST.from(ast).forEach(node => V.checkFunctionNode(node, processedNodes, violations))
         return violations
     },
 }
 
-const VV = {
-    // Validate single-level indentation throughout the file
-    // @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
-    checkSingleLevelIndentation: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath)) return []
-        return A.collectViolations(ast, [], new Set())
-    },
-}
-
-const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', VV.checkSingleLevelIndentation)
+const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', V.check)
 export { checkSingleLevelIndentation }

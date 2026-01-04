@@ -1,3 +1,6 @@
+// ABOUTME: JavaScript/JSX parser wrapper using acorn
+// ABOUTME: Provides consistent AST parsing configuration for style validation
+
 import { Parser } from 'acorn'
 import jsx from 'acorn-jsx'
 

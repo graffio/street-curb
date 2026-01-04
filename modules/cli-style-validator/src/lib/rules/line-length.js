@@ -1,6 +1,7 @@
 // ABOUTME: Rule to detect lines exceeding 120 characters
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
+import { AST } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -77,7 +78,7 @@ const A = {
         if (!ast) return new Set()
 
         const allIgnored = []
-        AS.traverseAST(ast, node => allIgnored.push(...A.collectIgnoredLines(lines, node)))
+        AST.from(ast).forEach(node => allIgnored.push(...A.collectIgnoredLines(lines, node)))
         return new Set(allIgnored)
     },
 }

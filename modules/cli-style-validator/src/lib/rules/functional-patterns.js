@@ -2,7 +2,6 @@
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
 import { AST, ASTNode } from '@graffio/ast'
-import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 
 const P = {
@@ -70,7 +69,7 @@ const A = {
     // @sig collectViolations :: AST -> [Violation]
     collectViolations: ast => {
         const violations = []
-        AS.traverseAST(ast, node => A.checkNode(node, violations))
+        AST.from(ast).forEach(node => A.checkNode(node, violations))
         return violations
     },
 }

@@ -7,4 +7,4 @@
 export { ASTNode } from './src/ast-node-methods.js'
 export { AST } from './src/ast.js'
 export { Lines } from './src/lines.js'
-export { isStyleObject, countStyleObjects, STYLE_PROPERTIES } from './src/patterns.js'
+export { countStyleObjects } from './src/patterns.js'

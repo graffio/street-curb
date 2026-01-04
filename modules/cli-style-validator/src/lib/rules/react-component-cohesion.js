@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce React component cohesion patterns
 // ABOUTME: Detects render* functions and cohesion groups defined inside components
 
-import { AS } from '../shared/aggregators.js'
+import { AST } from '@graffio/ast'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
@@ -67,7 +67,7 @@ const V = {
         if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
         if (!A.hasJSXContext(ast)) return []
 
-        const renderViolations = AS.collectNodes(ast).filter(P.isRenderNode).map(F.createRenderViolation)
+        const renderViolations = AST.from(ast).filter(P.isRenderNode).map(F.createRenderViolation)
         return [...renderViolations, ...A.collectCohesionViolations(ast)]
     },
 }
@@ -102,7 +102,7 @@ const A = {
 
     // Check if AST contains any JSX (file context check)
     // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AS.collectNodes(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
+    hasJSXContext: ast => AST.from(ast).some(n => n.type === 'JSXElement' || n.type === 'JSXFragment'),
 }
 
 const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.check)

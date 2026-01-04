@@ -7,18 +7,6 @@ import { AST, ASTNode } from '@graffio/ast'
 import { PS } from './predicates.js'
 
 const AS = {
-    // Collect all wrapped nodes in an AST into a flat array (enables filter/map chains)
-    // @sig collectNodes :: ESTreeAST -> [ASTNode]
-    collectNodes: ast => AST.from(ast),
-
-    // Recursively visit all wrapped nodes in an AST with parent context via node.parent
-    // @sig traverseAST :: (ESTreeAST, (ASTNode) -> Void) -> Void
-    traverseAST: (ast, visitor) => AST.from(ast).forEach(visitor),
-
-    // Get all direct child nodes (for custom traversal patterns that need scope awareness)
-    // @sig getChildNodes :: (ASTNode | ESTreeNode) -> [ESTreeNode]
-    getChildNodes: node => (ASTNode.isASTNode(node) ? AST.children(node) : AST.children(ASTNode.wrap(node))),
-
     // Count lines in a function's body (for length checks)
     // @sig countFunctionLines :: ASTNode -> Number
     countFunctionLines: node => {
@@ -104,18 +92,6 @@ const AS = {
     // Transform AST node to array of line numbers it covers
     // @sig toNodeLineNumbers :: ASTNode -> [Number]
     toNodeLineNumbers: node => AS.lineRange(node.startLine, node.endLine),
-
-    // Recursively find the base identifier of a member expression
-    // @sig findBase :: ASTNode -> ASTNode?
-    findBase: node => {
-        if (!node) return null
-        if (ASTNode.Identifier.is(node)) return node
-        if (ASTNode.MemberExpression.is(node)) {
-            const obj = node.base
-            return obj ? AS.findBase(obj) : null
-        }
-        return null
-    },
 
     // Transform AST to unique exported names
     // @sig toExportedNames :: ESTreeAST -> [String]

@@ -2,7 +2,6 @@
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
 import { AST, ASTNode } from '@graffio/ast'
-import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
@@ -67,7 +66,7 @@ const V = {
             sourceCode,
         )
         const nestedViolations = []
-        AS.traverseAST(ast, node => nestedViolations.push(...A.checkInnerFunctions(node, sourceCode)))
+        AST.from(ast).forEach(node => nestedViolations.push(...A.checkInnerFunctions(node, sourceCode)))
 
         return [...topLevelViolations, ...nestedViolations]
     },

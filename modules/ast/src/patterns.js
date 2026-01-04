@@ -1,6 +1,6 @@
 // ABOUTME: Pattern recognition for JavaScript AST nodes
 // ABOUTME: Detects common patterns like style objects, cohesion groups
-// COMPLEXITY: exports — Style object detection exports belong together (predicate + aggregator + config)
+// COMPLEXITY: cohesion-structure — Private helper isStyleObject only used by countStyleObjects
 
 import { ASTNode } from './ast-node-methods.js'
 import { AST } from './ast.js'
@@ -33,4 +33,4 @@ const countStyleObjects = node => {
     return nodes.filter(isStyleObject).length
 }
 
-export { isStyleObject, countStyleObjects, STYLE_PROPERTIES }
+export { countStyleObjects }

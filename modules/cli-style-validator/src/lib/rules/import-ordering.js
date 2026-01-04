@@ -1,6 +1,5 @@
 // ABOUTME: Rule to detect import violations (ES6 imports, design-system wrapping)
 // ABOUTME: Enforces standard import patterns across the codebase
-// COMPLEXITY-TODO: import-ordering — Rule contains patterns it checks for (expires 2026-01-03)
 
 import { FS } from '../shared/factories.js'
 

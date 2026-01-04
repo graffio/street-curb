@@ -1,11 +1,11 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
-// COMPLEXITY-TODO: cohesion-structure — Budget checking requires many validators (expires 2026-01-03)
-// COMPLEXITY-TODO: chain-extraction — Component analysis accesses nested props (expires 2026-01-03)
+// COMPLEXITY: functions — Budget checking inherently validates multiple metrics across contexts
 
-import { Lines, countStyleObjects } from '@graffio/ast'
+import { countStyleObjects, Lines } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { PS } from '../shared/predicates.js'
+import { TS } from '../shared/transformers.js'
 
 const PRIORITY = 0
 
@@ -109,7 +109,7 @@ const V = {
     checkMetric: (sourceCode, metricName, actual, budgetValue, context, line = 1) => {
         if (actual <= budgetValue) return null
 
-        const status = PS.getExemptionStatus(sourceCode, metricName)
+        const status = TS.getExemptionStatus(sourceCode, metricName)
         if (status.exempt) return null
         if (status.deferred) return F.createWarning(line, metricName, status.reason, status.daysRemaining)
 
