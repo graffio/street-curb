@@ -586,3 +586,10 @@ This document summarizes the specifications that were previously archived in `sp
 - Migrated cli-style-validator: all 11 rule files use new ASTNode property API
 - All 247 tests pass (31 ast module + 216 cli-style-validator)
 - Deferred: ASTNode.match() pattern matching for exhaustive type handling
+
+**Cleanup (2026-01-04):**
+- Created `transformers.js` for COMPLEXITY comment parsing (extracted from predicates.js)
+- Removed unused shared functions: collectNodes, traverseAST, getChildNodes, findBase, isValidNode
+- Deleted redundant function-nesting rule (covered by single-level-indentation)
+- Refactored chain-extraction.js to functional style using AST.descendants() + filter chains
+- Fixed patterns.js to use P cohesion group for isStyleObject helper
