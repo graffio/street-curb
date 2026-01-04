@@ -106,23 +106,23 @@ const AST = {
     // === Type Predicates ===
 
     // Direct type check (for checking ESTree types by string)
-    // @sig hasType :: (ASTNode | ESTreeNode, String) -> Boolean
+    // @sig hasType :: (ASTNode, String) -> Boolean
     hasType: (node, type) => T.toESTree(node).type === type,
 
     // Check if node is a function declaration with a name
-    // @sig isNamedFunctionDecl :: (ASTNode | ESTreeNode) -> Boolean
+    // @sig isNamedFunctionDecl :: ASTNode -> Boolean
     isNamedFunctionDecl: node => T.toESTree(node).type === 'FunctionDeclaration' && T.toESTree(node).id?.name,
 
     // Check if node is an object expression
-    // @sig isObjectExpr :: (ASTNode | ESTreeNode) -> Boolean
+    // @sig isObjectExpr :: ASTNode -> Boolean
     isObjectExpr: node => T.toESTree(node).type === 'ObjectExpression',
 
     // Check if node is a variable declaration
-    // @sig isVarDecl :: (ASTNode | ESTreeNode) -> Boolean
+    // @sig isVarDecl :: ASTNode -> Boolean
     isVarDecl: node => T.toESTree(node).type === 'VariableDeclaration',
 
     // Get node type string
-    // @sig nodeType :: (ASTNode | ESTreeNode) -> String
+    // @sig nodeType :: ASTNode -> String
     nodeType: node => T.toESTree(node).type,
 
     // === Property Accessors ===
