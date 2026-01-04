@@ -43,6 +43,11 @@ When the style validator reports a complexity-budget violation ("exceeds budget"
 
 Complexity-budget failures often signal architectural issues that require rethinking, not just refactoring.
 
+**Claude must NEVER add `// COMPLEXITY:` comments unilaterally.** When a complexity exemption might be needed (budget violation, uncategorized function, etc.), stop and ask Jeff. Options:
+- Restructure to eliminate the need
+- Add `// COMPLEXITY-TODO: <date>` (expiring — preferred)
+- Add `// COMPLEXITY:` (permanent — rare)
+
 ## Phases
 
 ### 1. Brainstorm
