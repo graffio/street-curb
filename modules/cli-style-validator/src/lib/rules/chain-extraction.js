@@ -5,7 +5,6 @@
 // COMPLEXITY-TODO: cohesion-structure — Scope tracking requires many helpers (expires 2026-01-03)
 
 import { AST, ASTNode } from '@graffio/ast'
-import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
@@ -16,16 +15,15 @@ const P = {
     // Check if node is the outermost in a chain (not nested)
     // @sig isOutermostMemberExpression :: (ASTNode, ASTNode?) -> Boolean
     isOutermostMemberExpression: (node, parent) => {
-        if (parent && AST.hasType(parent, 'MemberExpression') && parent.raw.object === node.raw) return false
-        return true
+        if (!parent || !AST.hasType(parent, 'MemberExpression')) return true
+        return !AST.isSameNode(AST.memberObject(parent), node)
     },
 
     // Check if node is on left side of assignment
     // @sig isAssignmentTarget :: (ASTNode, ASTNode?) -> Boolean
     isAssignmentTarget: (node, parent) => {
-        if (!parent) return false
-        if (AST.hasType(parent, 'AssignmentExpression') && parent.raw.left === node.raw) return true
-        return false
+        if (!parent || !AST.hasType(parent, 'AssignmentExpression')) return false
+        return AST.isSameNode(AST.assignmentLeft(parent), node)
     },
 
     // Check if base is a namespace import (PS, AS, etc.)
@@ -34,42 +32,44 @@ const P = {
 
     // Check if node is being called as a method
     // @sig isMethodCall :: (ASTNode, ASTNode?) -> Boolean
-    isMethodCall: (node, parent) => parent && AST.hasType(parent, 'CallExpression') && parent.raw.callee === node.raw,
+    isMethodCall: (node, parent) => {
+        if (!parent || !AST.hasType(parent, 'CallExpression')) return false
+        return AST.isSameNode(AST.callee(parent), node)
+    },
 }
 
 const T = {
-    // Collect property names in a chain (a.b.c -> ['a', 'b', 'c']) - works on raw nodes
-    // @sig collectChainParts :: (ESTreeNode, [String]) -> [String]
-    collectChainParts: (rawNode, parts) => {
-        const { type, computed, object, property, name } = rawNode
-        if (type === 'Identifier') return [name, ...parts]
-        if (type !== 'MemberExpression' || computed) return parts
-        if (property?.type !== 'Identifier') return parts
-        return T.collectChainParts(object, [property.name, ...parts])
+    // Collect property names in a chain (a.b.c -> ['a', 'b', 'c'])
+    // @sig collectChainParts :: (ASTNode, [String]) -> [String]
+    collectChainParts: (node, parts) => {
+        if (!node) return parts
+        if (AST.hasType(node, 'Identifier')) return [AST.identifierName(node), ...parts]
+        if (!AST.hasType(node, 'MemberExpression') || AST.isComputed(node)) return parts
+        const prop = AST.memberProperty(node)
+        if (!prop || !AST.hasType(prop, 'Identifier')) return parts
+        return T.collectChainParts(AST.memberObject(node), [AST.identifierName(prop), ...parts])
     },
 
-    // Convert nested chain to base and property - works on raw nodes
-    // @sig toNestedChain :: (ESTreeNode, String) -> { base: String, property: String }?
-    toNestedChain: (rawObject, propertyName) => {
-        const parts = T.collectChainParts(rawObject, [])
+    // Convert nested chain to base and property
+    // @sig toNestedChain :: (ASTNode, String) -> { base: String, property: String }?
+    toNestedChain: (objNode, propertyName) => {
+        const parts = T.collectChainParts(objNode, [])
         if (parts.length === 0) return null
         return { base: parts.join('.'), property: propertyName }
     },
 
-    // Convert member expression to base and property - works on raw nodes
-    // @sig toBaseAndProperty :: ESTreeNode -> { base: String, property: String }?
-    toBaseAndProperty: rawNode => {
-        if (!rawNode) return null
-        const { type, computed, object, property } = rawNode
-        if (type !== 'MemberExpression' || computed) return null
-        const propType = property?.type
-        const propName = property?.name
-        if (propType !== 'Identifier') return null
+    // Convert member expression to base and property
+    // @sig toBaseAndProperty :: ASTNode -> { base: String, property: String }?
+    toBaseAndProperty: node => {
+        if (!node || !AST.hasType(node, 'MemberExpression') || AST.isComputed(node)) return null
+        const prop = AST.memberProperty(node)
+        if (!prop || !AST.hasType(prop, 'Identifier')) return null
+        const propName = AST.identifierName(prop)
 
-        const objType = object?.type
-        const objName = object?.name
-        if (objType === 'Identifier') return { base: objName, property: propName }
-        if (objType === 'MemberExpression') return T.toNestedChain(object, propName)
+        const obj = AST.memberObject(node)
+        if (!obj) return null
+        if (AST.hasType(obj, 'Identifier')) return { base: AST.identifierName(obj), property: propName }
+        if (AST.hasType(obj, 'MemberExpression')) return T.toNestedChain(obj, propName)
         return null
     },
 }
@@ -137,31 +137,34 @@ const A = {
         }
     },
 
-    // Process a member expression and track its base - works on wrapped nodes
+    // Process a member expression and track its base
     // @sig processMemberExpression :: (Map, ASTNode, ASTNode?) -> Void
     processMemberExpression: (bases, node, parent) => {
         if (!P.isOutermostMemberExpression(node, parent)) return
         if (P.isAssignmentTarget(node, parent)) return
 
-        const rawTarget = P.isMethodCall(node, parent) ? node.raw.object : node.raw
-        const result = T.toBaseAndProperty(rawTarget)
+        const target = P.isMethodCall(node, parent) ? AST.memberObject(node) : node
+        const result = T.toBaseAndProperty(target)
         if (!result) return
 
         A.addToMap(bases, result.base, result.property, AST.line(node))
     },
 
-    // Process a single raw node in the function scope traversal
-    // @sig processNodeInScope :: (Map, Set, ESTreeNode, ESTreeNode, ESTreeNode?) -> Void
-    processNodeInScope: (bases, visited, funcRaw, rawNode, rawParent) => {
-        if (visited.has(rawNode)) return
-        visited.add(rawNode)
+    // Process a single node in the function scope traversal
+    // @sig processNodeInScope :: (Map, Set, ASTNode, ASTNode) -> Void
+    processNodeInScope: (bases, visited, funcNode, node) => {
+        // Use line+column+type as identity (nested nodes at same position have different types)
+        const nodeId = `${AST.startLine(node)}:${AST.column(node)}:${AST.nodeType(node)}`
+        if (visited.has(nodeId)) return
+        visited.add(nodeId)
 
-        const wrapped = ASTNode.wrap(rawNode)
-        const wrappedParent = rawParent ? ASTNode.wrap(rawParent) : null
+        if (PS.isFunctionNode(node) && !AST.isSameNode(node, funcNode)) return
+        if (AST.hasType(node, 'MemberExpression')) A.processMemberExpression(bases, node, node.parent)
 
-        if (PS.isFunctionNode(wrapped) && rawNode !== funcRaw) return
-        if (rawNode.type === 'MemberExpression') A.processMemberExpression(bases, wrapped, wrappedParent)
-        AS.getChildNodes(rawNode).forEach(child => A.processNodeInScope(bases, visited, funcRaw, child, rawNode))
+        // Use direct children (not all descendants) to respect function boundaries
+        AST.children(node).forEach(rawChild =>
+            A.processNodeInScope(bases, visited, funcNode, ASTNode.wrap(rawChild, node)),
+        )
     },
 
     // Collect all base accesses within a function scope
@@ -170,7 +173,7 @@ const A = {
         const bases = new Map()
         const visited = new Set()
         const body = AST.functionBody(funcNode)
-        if (body) A.processNodeInScope(bases, visited, funcNode.raw, body, funcNode.raw)
+        if (body) A.processNodeInScope(bases, visited, funcNode, ASTNode.wrap(body, funcNode))
         return bases
     },
 

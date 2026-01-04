@@ -74,7 +74,7 @@ const V = {
     // Validate callback functions should be extracted if multiline
     // @sig checkCallbackFunction :: (ASTNode, ASTNode, [Violation]) -> Void
     checkCallbackFunction: (node, ast, violations) => {
-        if (!PS.isFunctionNode(node) || !AS.isCallbackFunction(node, ast) || PS.isJSXFunction(node)) return
+        if (!PS.isFunctionNode(node) || !AS.isCallbackFunction(node) || PS.isJSXFunction(node)) return
         if (AS.countFunctionLines(node) > 1) violations.push(F.createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
     },
 

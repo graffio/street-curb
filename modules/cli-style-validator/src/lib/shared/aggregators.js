@@ -17,7 +17,7 @@ const AS = {
 
     // Get all direct child nodes (for custom traversal patterns that need scope awareness)
     // @sig getChildNodes :: (ASTNode | ESTreeNode) -> [ESTreeNode]
-    getChildNodes: node => (node.raw ? AST.children(node) : AST.children(ASTNode.wrap(node))),
+    getChildNodes: node => (ASTNode.isASTNode(node) ? AST.children(node) : AST.children(ASTNode.wrap(node))),
 
     // Count lines in a function's body (for length checks)
     // @sig countFunctionLines :: ASTNode -> Number
@@ -42,7 +42,8 @@ const AS = {
         if (!PS.isFunctionNode(node)) return false
         if (AST.idName(node)) return true
         const parent = node.parent
-        if (parent && AST.hasType(parent, 'VariableDeclarator') && AST.rhs(parent) === node.raw) return true
+        if (parent && AST.hasType(parent, 'VariableDeclarator') && AST.isSameNode(AST.variableInit(parent), node))
+            return true
         return PS.isMultilineNode(node)
     },
 
@@ -50,44 +51,20 @@ const AS = {
     // @sig countFunctions :: ESTreeAST -> Number
     countFunctions: ast => AST.from(ast).filter(AS.isCountableFunction).length,
 
-    // Check if node is in an arguments array context (uses raw nodes for identity comparison)
-    // @sig isArgumentsContext :: (String, [Any], ESTreeNode) -> Boolean
-    isArgumentsContext: (key, child, rawNode) => key === 'arguments' && child.includes(rawNode),
-
-    // Check if node is in a callback context (callee or non-declarator init)
-    // @sig isCallbackContext :: (String, ESTreeNode) -> Boolean
-    isCallbackContext: (key, searchNode) => {
-        if (key !== 'callee' && key !== 'init') return false
-        if (key === 'init' && searchNode.type === 'VariableDeclarator') return false
-        return true
-    },
-
-    // Check a single [key, child] pair for callback context (operates on raw ESTree nodes)
-    // @sig checkEntryForCallback :: (ESTreeNode, ESTreeNode, { isCallback: Boolean }) -> ([String, Any]) -> Boolean
-    checkEntryForCallback:
-        (searchNode, rawNode, tracker) =>
-        ([key, child]) => {
-            if (Array.isArray(child) && AS.isArgumentsContext(key, child, rawNode)) return (tracker.isCallback = true)
-            if (Array.isArray(child)) return (child.forEach(i => AS.searchCallbackContext(i, rawNode, tracker)), false)
-            if (child === rawNode && AS.isCallbackContext(key, searchNode)) tracker.isCallback = true
-            if (child && typeof child === 'object') AS.searchCallbackContext(child, rawNode, tracker)
-            return false
-        },
-
-    // Recursively search AST to find if node is in callback context (operates on raw ESTree)
-    // @sig searchCallbackContext :: (ESTreeNode, ESTreeNode, { isCallback: Boolean }) -> Void
-    searchCallbackContext: (searchNode, rawNode, tracker) => {
-        if (!searchNode || typeof searchNode !== 'object') return
-        Object.entries(searchNode).some(AS.checkEntryForCallback(searchNode, rawNode, tracker))
-    },
-
-    // Find whether a function is used as a callback in the AST
-    // @sig isCallbackFunction :: (ASTNode, AST) -> Boolean
-    isCallbackFunction: (node, ast) => {
+    // Find whether a function is used as a callback (passed as argument or in non-declarator position)
+    // @sig isCallbackFunction :: ASTNode -> Boolean
+    isCallbackFunction: node => {
         if (AST.hasType(node, 'FunctionDeclaration')) return false
-        const tracker = { isCallback: false }
-        AS.searchCallbackContext(ast, node.raw, tracker)
-        return tracker.isCallback
+        const parent = node.parent
+        if (!parent) return false
+
+        // If parent is CallExpression and node is not the callee, it's an argument (callback)
+        if (AST.hasType(parent, 'CallExpression') && !AST.isSameNode(AST.callee(parent), node)) return true
+
+        // If parent is ArrayExpression, the function is in an array (likely passed to something)
+        if (AST.hasType(parent, 'ArrayExpression')) return true
+
+        return false
     },
 
     // Convert AST statement to component info if it's a PascalCase component declaration
@@ -134,9 +111,8 @@ const AS = {
         if (!node) return null
         if (AST.hasType(node, 'Identifier')) return node
         if (AST.hasType(node, 'MemberExpression')) {
-            const obj = node.raw.object
-            if (!obj) return null
-            return AS.findBase(ASTNode.wrap(obj))
+            const obj = AST.memberObject(node)
+            return obj ? AS.findBase(obj) : null
         }
         return null
     },
@@ -152,13 +128,17 @@ const AS = {
     // @sig toSpecifierNames :: ASTNode -> [String]
     toSpecifierNames: node =>
         AST.hasType(node, 'ExportNamedDeclaration')
-            ? node.raw.specifiers.map(s => s.exported?.name).filter(Boolean)
+            ? AST.specifiers(node)
+                  .map(s => s.exported?.name)
+                  .filter(Boolean)
             : [],
 
     // Extract name from default export declaration
     // @sig toDefaultExportName :: ASTNode -> [String]
-    toDefaultExportName: node =>
-        AST.hasType(node, 'ExportDefaultDeclaration') && node.raw.declaration?.name ? [node.raw.declaration.name] : [],
+    toDefaultExportName: node => {
+        const name = AST.defaultExportName(node)
+        return name ? [name] : []
+    },
 }
 
 export { AS }

@@ -3,7 +3,7 @@
 // COMPLEXITY: lines — Shared module consolidating predicates from multiple rules
 // COMPLEXITY: functions — Shared module consolidating predicates from multiple rules
 
-import { AST } from '@graffio/ast'
+import { AST, ASTNode } from '@graffio/ast'
 
 // Regex patterns for COMPLEXITY comments
 const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/
@@ -56,9 +56,9 @@ const PS = {
         return markers.some(marker => sourceCode.includes(marker))
     },
 
-    // Check if node is valid for traversal (has type property)
+    // Check if node is valid for traversal (is an ASTNode with type)
     // @sig isValidNode :: Any -> Boolean
-    isValidNode: node => node && typeof node === 'object' && node.raw?.type,
+    isValidNode: node => ASTNode.isASTNode(node) && AST.nodeType(node),
 
     // Check if node is a block statement
     // @sig isBlockStatement :: ASTNode -> Boolean
@@ -113,7 +113,8 @@ const PS = {
     isInnerCurriedFunction: (node, parent) => {
         if (!parent) return false
         if (!AST.hasType(parent, 'ArrowFunctionExpression')) return false
-        return AST.functionBody(parent) === node.raw && PS.isFunctionNode(node)
+        const body = AST.functionBody(parent)
+        return body && AST.isSameNode(ASTNode.wrap(body, parent), node) && PS.isFunctionNode(node)
     },
 
     // Strip comment markers (//, /*, *, */) from a line to get content

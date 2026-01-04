@@ -140,9 +140,16 @@ const AST = {
     // @sig variableName :: ASTNode -> String?
     variableName: node => T.toESTree(node).declarations?.[0]?.id?.name,
 
-    // Get the value (right-hand side) of the first declared variable
+    // Get the value (right-hand side) of the first declared variable (raw ESTree)
     // @sig variableValue :: ASTNode -> ESTreeNode?
     variableValue: node => T.toESTree(node).declarations?.[0]?.init,
+
+    // Get the init of a VariableDeclarator as wrapped ASTNode
+    // @sig variableInit :: ASTNode -> ASTNode?
+    variableInit: node => {
+        const init = T.toESTree(node).init
+        return init ? ASTNode.wrap(init, node) : null
+    },
 
     // Get properties array or empty
     // @sig properties :: ASTNode -> [ESTreeNode]
@@ -205,6 +212,50 @@ const AST = {
     // Get return statement argument
     // @sig returnArgument :: ASTNode -> ESTreeNode?
     returnArgument: node => T.toESTree(node).argument,
+
+    // Get MemberExpression object (the part before the dot)
+    // @sig memberObject :: ASTNode -> ASTNode?
+    memberObject: node => {
+        const obj = T.toESTree(node).object
+        return obj ? ASTNode.wrap(obj, node) : null
+    },
+
+    // Get MemberExpression property (the part after the dot)
+    // @sig memberProperty :: ASTNode -> ASTNode?
+    memberProperty: node => {
+        const prop = T.toESTree(node).property
+        return prop ? ASTNode.wrap(prop, node) : null
+    },
+
+    // Check if MemberExpression uses computed access (a[b] vs a.b)
+    // @sig isComputed :: ASTNode -> Boolean
+    isComputed: node => T.toESTree(node).computed === true,
+
+    // Get name from Identifier node
+    // @sig identifierName :: ASTNode -> String?
+    identifierName: node => T.toESTree(node).name,
+
+    // Get CallExpression callee (the function being called)
+    // @sig callee :: ASTNode -> ASTNode?
+    callee: node => {
+        const callee = T.toESTree(node).callee
+        return callee ? ASTNode.wrap(callee, node) : null
+    },
+
+    // Get AssignmentExpression left side (the target of assignment)
+    // @sig assignmentLeft :: ASTNode -> ASTNode?
+    assignmentLeft: node => {
+        const left = T.toESTree(node).left
+        return left ? ASTNode.wrap(left, node) : null
+    },
+
+    // Get ExportDefaultDeclaration declaration name
+    // @sig defaultExportName :: ASTNode -> String?
+    defaultExportName: node => T.toESTree(node).declaration?.name,
+
+    // Check if two nodes refer to the same ESTree node (identity comparison)
+    // @sig isSameNode :: (ASTNode, ASTNode) -> Boolean
+    isSameNode: (a, b) => T.toESTree(a) === T.toESTree(b),
 
     // === Location Helpers ===
 
