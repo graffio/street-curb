@@ -34,6 +34,14 @@ Brevity > thoroughness. When in doubt, match existing code.
 - Avoid: `items.forEach(item => { results.push(...) })`
 - When iteration callbacks are unavoidable, keep them as single-line delegation calls
 
+## Conditionals
+
+- Prefer ternary for simple if/else returns or assignments
+- Good: `return s ? 4 : 5`
+- Good: `const x = s ? 4 : 5`
+- Never nest ternaries: `s ? t ? 3 : 4 : 5` is unreadable
+- Guard clauses stay as-is: `if (!x) return null`
+
 ## React Component Files
 
 React component files follow the same structure as other modules:
@@ -126,8 +134,7 @@ const checkFileNaming = V.checkNaming
 export { checkFileNaming }
 ```
 
-**Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and decide: rename it to match a
-cohesion type, or justify the exception with a `// COMPLEXITY:` comment. This requires judgment, so it's a checkpoint.
+**Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and ask Jeff. See workflow.md "Complexity-Budget Failures" for the rule on complexity comments.
 
 **E Group (Handlers) Rules:**
 
@@ -232,11 +239,11 @@ Only wrap selectors that actually need curried usage (YAGNI). Simple state-only 
 - Boolean properties use `is` prefix (e.g., `isImportPlaceholder`), never `__` prefix
 - `@@` is reserved for hidden type metadata (`@@typeName`, `@@tagName`); `__` has no legitimate use
 - **No abbreviations** — use full words in names:
-  - `declaration` not `decl`
-  - `reference` not `ref`
-  - `specification` not `spec`
-  - `expression` not `expr`
-  - Exception: single-letter variables (`i`, `n`, `x`) in short anonymous callbacks
+    - `declaration` not `decl`
+    - `reference` not `ref`
+    - `specification` not `spec`
+    - `expression` not `expr`
+    - Exception: single-letter variables (`i`, `n`, `x`) in short anonymous callbacks
 
 ## Comments
 

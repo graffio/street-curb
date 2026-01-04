@@ -572,3 +572,24 @@ This document summarizes the specifications that were previously archived in `sp
 **User cleanup (post-session):**
 - Simplified traverseAST signature (removed parent parameter)
 - Removed COMPLEXITY comments from aggregators.js and sig-documentation.js after simplification
+
+## [infrastructure] @graffio/ast Module Extraction (2026-01-04)
+**Purpose:** Create reusable AST module that completely hides ESTree structure from consumers
+
+- Created `modules/ast/` with TaggedSum ASTNode type (30+ variants for ESTree node types)
+- Added prototype getters via `ast-node-methods.js` for natural property access (`node.line` not `AST.line(node)`)
+- API hides ESTree: consumers use semantic names (`node.base` not `node.esTree.object`)
+- Entry points: `AST.from()`, `AST.topLevelStatements()`, `AST.descendants()`, `AST.children()`
+- Helpers: `AST.isTopLevel()`, `AST.associatedCommentLine()`, `AST.bodyContainsAwait()`
+- Lines DSL for source code queries: `Lines.from(code).before(line).takeUntil(predicate)`
+- Pattern detection: `isStyleObject()`, `countStyleObjects()`, `STYLE_PROPERTIES`
+- Migrated cli-style-validator: all 11 rule files use new ASTNode property API
+- All 247 tests pass (31 ast module + 216 cli-style-validator)
+- Deferred: ASTNode.match() pattern matching for exhaustive type handling
+
+**Cleanup (2026-01-04):**
+- Created `transformers.js` for COMPLEXITY comment parsing (extracted from predicates.js)
+- Removed unused shared functions: collectNodes, traverseAST, getChildNodes, findBase, isValidNode
+- Deleted redundant function-nesting rule (covered by single-level-indentation)
+- Refactored chain-extraction.js to functional style using AST.descendants() + filter chains
+- Fixed patterns.js to use P cohesion group for isStyleObject helper

@@ -1,29 +1,12 @@
 // ABOUTME: Rule to detect nested indentation (>1 level deep)
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
+import { AST, ASTNode } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
-
-const INDENTATION_STATEMENT_TYPES = new Set([
-    'IfStatement',
-    'ForStatement',
-    'WhileStatement',
-    'ForInStatement',
-    'ForOfStatement',
-    'SwitchStatement',
-])
-
-const ALLOWED_NESTING_TYPES = new Set([
-    'TryStatement',
-    'CatchClause',
-    'ObjectExpression',
-    'ArrayExpression',
-    'JSXElement',
-    'JSXFragment',
-])
 
 const CALLBACK_EXTRACTION_MESSAGE =
     'Extract multi-line unnamed function to a named function. ' +
@@ -39,11 +22,23 @@ const NESTED_INDENTATION_MESSAGE =
 const P = {
     // Check if node is a control flow statement that increases indentation
     // @sig isIndentationStatement :: ASTNode -> Boolean
-    isIndentationStatement: node => INDENTATION_STATEMENT_TYPES.has(node.type),
+    isIndentationStatement: node =>
+        ASTNode.IfStatement.is(node) ||
+        ASTNode.ForStatement.is(node) ||
+        ASTNode.WhileStatement.is(node) ||
+        ASTNode.ForInStatement.is(node) ||
+        ASTNode.ForOfStatement.is(node) ||
+        ASTNode.SwitchStatement.is(node),
 
     // Check if node type is allowed to nest without counting as indentation
     // @sig isAllowedNesting :: ASTNode -> Boolean
-    isAllowedNesting: node => ALLOWED_NESTING_TYPES.has(node.type),
+    isAllowedNesting: node =>
+        ASTNode.TryStatement.is(node) ||
+        ASTNode.CatchClause.is(node) ||
+        ASTNode.ObjectExpression.is(node) ||
+        ASTNode.ArrayExpression.is(node) ||
+        ASTNode.JSXElement.is(node) ||
+        ASTNode.JSXFragment.is(node),
 }
 
 const T = {
@@ -61,8 +56,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'single-level-indentation',
-        line: node.loc.start.line,
-        column: node.loc.start.column + 1,
+        line: node.line,
+        column: node.column,
         priority: PRIORITY,
         message,
         rule: 'single-level-indentation',
@@ -73,7 +68,7 @@ const V = {
     // Validate callback functions should be extracted if multiline
     // @sig checkCallbackFunction :: (ASTNode, ASTNode, [Violation]) -> Void
     checkCallbackFunction: (node, ast, violations) => {
-        if (!PS.isFunctionNode(node) || !AS.isCallbackFunction(node, ast) || PS.isJSXFunction(node)) return
+        if (!PS.isFunctionNode(node) || !AS.isCallbackFunction(node) || PS.isJSXFunction(node)) return
         if (AS.countFunctionLines(node) > 1) violations.push(F.createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
     },
 
@@ -81,53 +76,51 @@ const V = {
     // @sig checkFunctionNode :: (ASTNode, Set, [Violation]) -> Void
     checkFunctionNode: (node, processedNodes, violations) => {
         if (!PS.isFunctionWithBlockBody(node)) return
-        A.findNestedViolations(node.body, 0, processedNodes, violations)
+        const body = node.body
+        if (body) A.findNestedViolations(body, 0, processedNodes, violations)
+    },
+
+    // Validate single-level indentation throughout the file
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath)) return []
+        return A.collectViolations(ast, [], new Set())
     },
 }
 
 const A = {
-    // Flatten node properties into array of child values
-    // @sig collectChildValues :: ASTNode -> [Any]
-    collectChildValues: node => Object.keys(node).flatMap(key => (Array.isArray(node[key]) ? node[key] : [node[key]])),
-
     // Process a child node for violations, resetting depth at function boundaries
     // @sig processChildForViolations :: (ASTNode, Number, Set, [Violation]) -> Void
     processChildForViolations: (node, nextDepth, processedNodes, violations) => {
-        if (!PS.isValidNode(node)) return
-        if (PS.isFunctionWithBlockBody(node)) return A.findNestedViolations(node.body, 0, processedNodes, violations)
+        if (PS.isFunctionWithBlockBody(node)) {
+            const body = node.body
+            if (body) return A.findNestedViolations(body, 0, processedNodes, violations)
+            return
+        }
         if (!PS.isFunctionNode(node)) A.findNestedViolations(node, nextDepth, processedNodes, violations)
     },
 
     // Recursively find nested indentation violations in a node subtree
     // @sig findNestedViolations :: (ASTNode, Number, Set, [Violation]) -> Void
     findNestedViolations: (node, depth, processedNodes, violations) => {
-        if (!node || typeof node !== 'object' || processedNodes.has(node)) return
-        processedNodes.add(node)
+        if (!node || processedNodes.has(node.identity)) return
+        processedNodes.add(node.identity)
 
         if (depth > 0 && P.isIndentationStatement(node))
             violations.push(F.createViolation(node, NESTED_INDENTATION_MESSAGE))
 
         const nextDepth = T.toNextDepth(node, depth)
-        A.collectChildValues(node).forEach(c => A.processChildForViolations(c, nextDepth, processedNodes, violations))
+        AST.children(node).forEach(child => A.processChildForViolations(child, nextDepth, processedNodes, violations))
     },
 
     // Collect all violations from the AST
     // @sig collectViolations :: (AST, [Violation]) -> [Violation]
     collectViolations: (ast, violations, processedNodes) => {
-        AS.traverseAST(ast, node => V.checkCallbackFunction(node, ast, violations))
-        AS.traverseAST(ast, node => V.checkFunctionNode(node, processedNodes, violations))
+        AST.from(ast).forEach(node => V.checkCallbackFunction(node, ast, violations))
+        AST.from(ast).forEach(node => V.checkFunctionNode(node, processedNodes, violations))
         return violations
     },
 }
 
-const VV = {
-    // Validate single-level indentation throughout the file
-    // @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
-    checkSingleLevelIndentation: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath)) return []
-        return A.collectViolations(ast, [], new Set())
-    },
-}
-
-const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', VV.checkSingleLevelIndentation)
+const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', V.check)
 export { checkSingleLevelIndentation }

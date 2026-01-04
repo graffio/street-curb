@@ -36,6 +36,15 @@ const F = {
     }),
 }
 
+const A = {
+    // Find index of first non-comment line in file
+    // @sig findFirstCodeLine :: [String] -> Number
+    findFirstCodeLine: lines => {
+        const index = lines.findIndex(P.isCodeLine)
+        return index === -1 ? lines.length : index
+    },
+}
+
 const V = {
     // Validate ABOUTME comments at file top
     // @sig check :: (AST?, String, String) -> [Violation]
@@ -65,15 +74,6 @@ const V = {
             return [F.createViolation(2, 'Second ABOUTME comment must immediately follow the first.')]
 
         return []
-    },
-}
-
-const A = {
-    // Find index of first non-comment line in file
-    // @sig findFirstCodeLine :: [String] -> Number
-    findFirstCodeLine: lines => {
-        const index = lines.findIndex(P.isCodeLine)
-        return index === -1 ? lines.length : index
     },
 }
 

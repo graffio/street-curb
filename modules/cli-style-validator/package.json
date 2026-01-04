@@ -13,6 +13,7 @@
         "tap-mocha-reporter": "^5.0.4"
     },
     "dependencies": {
+        "@graffio/ast": "^0.1.0",
         "yargs": "^18.0.0"
     }
 }

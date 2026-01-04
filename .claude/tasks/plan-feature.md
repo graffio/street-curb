@@ -18,7 +18,11 @@ Use after brainstorming to create a task spec.
   "templates_used": ["add-redux-action.md", "commit-changes.md"],
   "steps": [
     { "step": 1, "action": "[CHECKPOINT] Specific action needing approval", "done": false },
-    { "step": 2, "action": "Specific action from template or brainstorm", "done": false }
+    { "step": 2, "action": "Implement first change (JS/JSX files)", "done": false },
+    { "step": 3, "action": "Run style validator on changed files, fix violations", "done": false },
+    { "step": 4, "action": "Implement second change", "done": false },
+    { "step": 5, "action": "Run style validator on changed files, fix violations", "done": false },
+    { "step": 6, "action": "git add and commit changes", "done": false }
   ],
   "verification": [
     "Tests pass",

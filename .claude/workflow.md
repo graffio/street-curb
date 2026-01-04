@@ -12,18 +12,20 @@
 ## Commands
 
 ### review \<file\>
-Run both checks on a file:
+Run all checks on a file:
 1. Style validator (mechanical: @sig, line length, file naming, complexity budgets)
 2. Complexity review (structural: cohesion grouping, patterns, simplification opportunities)
+3. Simplicity review (API design: does each abstraction earn its existence?)
 
 Report all findings together.
 
 ### review staged
-Run both checks on all staged files together:
+Run all checks on staged files together:
 1. Style validator on each file
 2. Complexity review across all staged files (can detect cross-file patterns)
+3. Simplicity review on files with new/changed exports
 
-Use before commit to catch issues across related changes. More context than single-file review, but focused on files you're actually changing.
+Use before commit to catch issues across related changes.
 
 ## Complexity-Budget Failures
 
@@ -40,6 +42,11 @@ When the style validator reports a complexity-budget violation ("exceeds budget"
 4. **Get approval** — if the plan changes significantly, confirm with user
 
 Complexity-budget failures often signal architectural issues that require rethinking, not just refactoring.
+
+**Claude must NEVER add `// COMPLEXITY:` comments unilaterally.** When a complexity exemption might be needed (budget violation, uncategorized function, etc.), stop and ask Jeff. Options:
+- Restructure to eliminate the need
+- Add `// COMPLEXITY-TODO: <date>` (expiring — preferred)
+- Add `// COMPLEXITY:` (permanent — rare)
 
 ## Phases
 
@@ -70,6 +77,7 @@ Discuss freely. No templates.
 3. At `[CHECKPOINT]` steps: stop, present options, wait for approval
 4. Before each `git commit`:
    - **Run style validator** on changed files while developing (catch issues early, before pre-commit rejects)
+   - **Run simplicity review** on files with new/changed exports (catch overengineering early)
    - **Spawn code-reviewer subagent** on staged changes — address blocking issues
    - Then commit (pre-commit hook runs style validator as safety net)
 
@@ -135,3 +143,25 @@ Discuss freely. No templates.
 - Patterns to Investigate (from catalog, flagged for human review)
 
 **Key principle:** Surface concerns and questions rather than prescribe automatic fixes. The human has global context Claude doesn't.
+
+### simplicity-reviewer
+**Reads:** Target file(s), `.claude/tasks/review-simplicity.md`
+
+**When to spawn:**
+- Before commit for files with new/changed exports
+- User requests simplicity assessment
+- When a file feels "overengineered"
+
+**Checks:**
+- Pointless indirection: wrappers that add nothing, single-use helpers
+- API confusion: mixed input types, misleading names (singular/plural mismatch)
+- Unnecessary complexity: accumulator params, manual destructuring, explicit null filtering
+- Litmus test: does each abstraction earn its existence?
+
+**Output format:**
+- Exports list (the API surface)
+- Findings by category (pointless/confusing/unnecessary)
+- Questions for Developer (patterns that might be intentional)
+- Summary (X abstractions reviewed, Y findings)
+
+**Key principle:** An abstraction earns existence when removing it would make code worse, not just different.

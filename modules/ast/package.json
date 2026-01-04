@@ -1,0 +1,16 @@
+{
+    "name": "@graffio/ast",
+    "version": "0.1.0",
+    "main": "index.js",
+    "module": "index.js",
+    "type": "module",
+    "sideEffects": false,
+    "scripts": {
+        "tap": "TAP_DISABLE_COVERAGE=1 tap **/*.tap.js tap **/**/*.tap.js -R tap | tap-mocha-reporter spec",
+        "tap:file": "../../bash/run-tap.sh"
+    },
+    "private": true,
+    "devDependencies": {
+        "tap": "^21.1.0"
+    }
+}

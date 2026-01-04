@@ -1,6 +1,6 @@
 // ABOUTME: Rule to detect file naming convention violations
 // ABOUTME: Enforces PascalCase.jsx for component files, kebab-case for config/utility files
-// COMPLEXITY-TODO: functions — Export analysis requires several helpers (expires 2026-01-03)
+// COMPLEXITY: functions — Export-based naming rules require multiple export predicates
 
 import { basename } from 'path'
 

@@ -3,6 +3,7 @@
 
 import { readFile } from 'fs/promises'
 import { parseCode } from './parser.js'
+import { PS } from './shared/predicates.js'
 import { checkAboutmeComment } from './rules/aboutme-comment.js'
 import { checkChainExtraction } from './rules/chain-extraction.js'
 import { checkComplexityBudget } from './rules/complexity-budget.js'
@@ -36,6 +37,9 @@ import { checkReactComponentCohesion } from './rules/react-component-cohesion.js
  */
 const checkFile = async filePath => {
     const sourceCode = await readFile(filePath, 'utf8')
+
+    // Skip generated files entirely - they're auto-created and shouldn't be validated
+    if (PS.isGeneratedFile(sourceCode)) return { filePath, violations: [], isCompliant: true }
 
     let ast = null
     try {

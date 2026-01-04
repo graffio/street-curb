@@ -3,11 +3,12 @@
 
 import t from 'tap'
 import { PS } from '../src/lib/shared/predicates.js'
+import { TS } from '../src/lib/shared/transformers.js'
 
 t.test('Given parseComplexityComments', t => {
     t.test('When the source has a permanent COMPLEXITY comment', t => {
         const code = '// COMPLEXITY: lines — this is a barrel file\nconst x = 1'
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 1, 'Then one comment should be parsed')
         t.equal(comments[0].rule, 'lines', 'Then the rule should be extracted')
@@ -19,7 +20,7 @@ t.test('Given parseComplexityComments', t => {
 
     t.test('When the source has a COMPLEXITY-TODO comment with expiration', t => {
         const code = '// COMPLEXITY-TODO: functions — refactoring in #123 (expires 2025-06-15)\nconst x = 1'
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 1, 'Then one comment should be parsed')
         t.equal(comments[0].rule, 'functions', 'Then the rule should be extracted')
@@ -33,7 +34,7 @@ t.test('Given parseComplexityComments', t => {
         const code = `// COMPLEXITY: lines — barrel file
 // COMPLEXITY-TODO: functions — cleanup in #456 (expires 2025-03-01)
 const x = 1`
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 2, 'Then two comments should be parsed')
         t.equal(comments[0].rule, 'lines', 'Then the first rule should be lines')
@@ -43,7 +44,7 @@ const x = 1`
 
     t.test('When a COMPLEXITY comment is missing a reason', t => {
         const code = '// COMPLEXITY: lines\nconst x = 1'
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 1, 'Then one comment should be parsed')
         t.equal(comments[0].rule, 'lines', 'Then the rule should be extracted')
@@ -53,7 +54,7 @@ const x = 1`
 
     t.test('When a COMPLEXITY-TODO comment is missing expiration date', t => {
         const code = '// COMPLEXITY-TODO: lines — some reason\nconst x = 1'
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 1, 'Then one comment should be parsed')
         t.equal(comments[0].rule, 'lines', 'Then the rule should be extracted')
@@ -63,7 +64,7 @@ const x = 1`
 
     t.test('When a COMPLEXITY-TODO comment has an invalid date format', t => {
         const code = '// COMPLEXITY-TODO: lines — some reason (expires 15-06-2025)\nconst x = 1'
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 1, 'Then one comment should be parsed')
         t.match(comments[0].error, /date/i, 'Then there should be an error about invalid date')
@@ -72,7 +73,7 @@ const x = 1`
 
     t.test('When the source has no COMPLEXITY comments', t => {
         const code = '// Regular comment\nconst x = 1'
-        const comments = PS.parseComplexityComments(code)
+        const comments = TS.parseComplexityComments(code)
 
         t.equal(comments.length, 0, 'Then no comments should be parsed')
         t.end()
@@ -112,7 +113,7 @@ t.test('Given isExempt', t => {
 t.test('Given getExemptionStatus', t => {
     t.test('When the source has a permanent COMPLEXITY comment', t => {
         const code = '// COMPLEXITY: lines — barrel file\nconst x = 1'
-        const status = PS.getExemptionStatus(code, 'lines')
+        const status = TS.getExemptionStatus(code, 'lines')
 
         t.equal(status.exempt, true, 'Then exempt should be true')
         t.equal(status.deferred, false, 'Then deferred should be false')
@@ -125,7 +126,7 @@ t.test('Given getExemptionStatus', t => {
         futureDate.setDate(futureDate.getDate() + 30)
         const dateStr = futureDate.toISOString().split('T')[0]
         const code = `// COMPLEXITY-TODO: functions — cleanup pending (expires ${dateStr})\nconst x = 1`
-        const status = PS.getExemptionStatus(code, 'functions')
+        const status = TS.getExemptionStatus(code, 'functions')
 
         t.equal(status.exempt, false, 'Then exempt should be false')
         t.equal(status.deferred, true, 'Then deferred should be true')
@@ -138,7 +139,7 @@ t.test('Given getExemptionStatus', t => {
 
     t.test('When the source has an expired COMPLEXITY-TODO', t => {
         const code = '// COMPLEXITY-TODO: style-objects — moving to CSS (expires 2020-01-01)\nconst x = 1'
-        const status = PS.getExemptionStatus(code, 'style-objects')
+        const status = TS.getExemptionStatus(code, 'style-objects')
 
         t.equal(status.exempt, false, 'Then exempt should be false')
         t.equal(status.deferred, false, 'Then deferred should be false (expired)')
@@ -148,7 +149,7 @@ t.test('Given getExemptionStatus', t => {
 
     t.test('When the source has no COMPLEXITY comment for the rule', t => {
         const code = 'const x = 1'
-        const status = PS.getExemptionStatus(code, 'lines')
+        const status = TS.getExemptionStatus(code, 'lines')
 
         t.equal(status.exempt, false, 'Then exempt should be false')
         t.equal(status.deferred, false, 'Then deferred should be false')
@@ -158,7 +159,7 @@ t.test('Given getExemptionStatus', t => {
 
     t.test('When the COMPLEXITY comment has a parse error', t => {
         const code = '// COMPLEXITY: lines\nconst x = 1'
-        const status = PS.getExemptionStatus(code, 'lines')
+        const status = TS.getExemptionStatus(code, 'lines')
 
         t.equal(status.exempt, false, 'Then exempt should be false')
         t.ok(status.error, 'Then error should be present')

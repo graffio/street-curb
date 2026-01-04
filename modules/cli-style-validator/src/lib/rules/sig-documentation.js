@@ -1,10 +1,10 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
-import { AST } from '../dsl/ast.js'
+import { AST, Lines } from '@graffio/ast'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
-import { Lines } from '../dsl/source.js'
+import { TS } from '../shared/transformers.js'
 
 const PRIORITY = 6
 
@@ -21,14 +21,14 @@ const P = {
     isSubstantiveComment: line => {
         if (!PS.isCommentLine(line.trim())) return false
         if (PS.isDirectiveComment(line)) return false
-        return PS.toCommentContent(line).trim().length > 0
+        return TS.toCommentContent(line).trim().length > 0
     },
 
     // Check if line is an indented continuation of @sig (4+ spaces after comment marker)
     // @sig isSigContinuation :: String -> Boolean
     isSigContinuation: line => {
         if (!PS.isCommentLine(line.trim())) return false
-        const content = PS.toCommentContent(line)
+        const content = TS.toCommentContent(line)
         return content.length > 0 && /^\s{4,}/.test(content)
     },
 
@@ -45,17 +45,17 @@ const P = {
     isNonContinuationComment: line => P.isSubstantiveComment(line) && !P.isSigContinuation(line),
 
     // Check if function requires @sig documentation
-    // @sig requiresSig :: ({ node, parent }, AST) -> Boolean
-    requiresSig: ({ node, parent }, ast) => {
-        if (PS.isInnerCurriedFunction(node, parent)) return false
-        return AST.isTopLevel(node, ast) || AST.lineCount(node) > 5
+    // @sig requiresSig :: (ASTNode, AST) -> Boolean
+    requiresSig: (node, ast) => {
+        if (PS.isInnerCurriedFunction(node, node.parent)) return false
+        return AST.isTopLevel(node, ast) || node.lineCount > 5
     },
 }
 
 const T = {
     // Get reason string for why function requires @sig
-    // @sig toRequirementReason :: ({ node, parent }, AST) -> String
-    toRequirementReason: ({ node }, ast) =>
+    // @sig toRequirementReason :: (ASTNode, AST) -> String
+    toRequirementReason: (node, ast) =>
         AST.isTopLevel(node, ast) ? 'top-level function' : 'function longer than 5 lines',
 }
 
@@ -64,8 +64,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'sig-documentation',
-        line: node.loc.start.line,
-        column: node.loc.start.column + 1,
+        line: node.line,
+        column: node.column,
         priority: PRIORITY,
         message,
         rule: 'sig-documentation',
@@ -74,14 +74,14 @@ const F = {
 
 const A = {
     // Find @sig line in comment block above function, returns { found, lineIndex }
-    // @sig findSigInCommentBlock :: (Lines, ASTNode, ASTNode?) -> { found: Boolean, lineIndex: Number? }
-    findSigInCommentBlock: (src, node, parent) => {
-        const commentLines = src.beforeNode(node, parent).takeUntil(PS.isNonCommentLine)
+    // @sig findSigInCommentBlock :: (Lines, ASTNode) -> { found: Boolean, lineIndex: Number? }
+    findSigInCommentBlock: (src, node) => {
+        const commentLines = src.beforeNode(node, node.parent).takeUntil(PS.isNonCommentLine)
         const sigIndex = commentLines.findIndex(P.hasSig)
         if (sigIndex === -1) return { found: false, lineIndex: null }
 
         // Convert relative index back to absolute line number
-        const effectiveLine = AST.effectiveLine(node, parent)
+        const effectiveLine = AST.associatedCommentLine(node)
         const absoluteIndex = effectiveLine - 2 - sigIndex
         return { found: true, lineIndex: absoluteIndex }
     },
@@ -99,11 +99,10 @@ const A = {
 
 const V = {
     // Validate a single function for @sig documentation
-    // @sig validateFunction :: ({ node, parent }, AST, Lines) -> [Violation]
-    validateFunction: (pair, ast, src) => {
-        const { node, parent } = pair
-        const { found: hasSig, lineIndex: sigLineIndex } = A.findSigInCommentBlock(src, node, parent)
-        const effectiveLine = AST.effectiveLine(node, parent)
+    // @sig validateFunction :: (ASTNode, AST, Lines) -> [Violation]
+    validateFunction: (node, ast, src) => {
+        const { found: hasSig, lineIndex: sigLineIndex } = A.findSigInCommentBlock(src, node)
+        const effectiveLine = AST.associatedCommentLine(node)
 
         // Has @sig but it's not last in comment block
         if (hasSig && A.hasCommentsBetweenSigAndFunction(src, sigLineIndex, effectiveLine)) {
@@ -117,8 +116,8 @@ const V = {
             return [F.createViolation(node, SIG_REQUIRES_DESCRIPTION_MESSAGE)]
 
         // Requires @sig but doesn't have it
-        if (P.requiresSig(pair, ast) && !hasSig) {
-            const reason = T.toRequirementReason(pair, ast)
+        if (P.requiresSig(node, ast) && !hasSig) {
+            const reason = T.toRequirementReason(node, ast)
             return [F.createViolation(node, `Missing @sig documentation for ${reason}. ${MISSING_SIG_FIX}`)]
         }
 
@@ -133,8 +132,8 @@ const V = {
         const src = Lines.from(sourceCode)
 
         return AST.from(ast)
-            .find(({ node }) => PS.isFunctionNode(node))
-            .flatMap(pair => V.validateFunction(pair, ast, src))
+            .filter(node => PS.isFunctionNode(node))
+            .flatMap(node => V.validateFunction(node, ast, src))
     },
 }
 

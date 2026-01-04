@@ -1,13 +1,11 @@
 // ABOUTME: Rule to enforce complexity budgets (lines, style objects, functions)
 // ABOUTME: Budgets vary by context (cli, react-page, react-component, selector, utility)
-// COMPLEXITY-TODO: lines — STYLE_PROPERTIES config takes 50 lines (expires 2026-01-03)
-// COMPLEXITY-TODO: cohesion-structure — Budget checking requires many validators (expires 2026-01-03)
-// COMPLEXITY-TODO: chain-extraction — Component analysis accesses nested props (expires 2026-01-03)
+// COMPLEXITY: functions — Budget checking inherently validates multiple metrics across contexts
 
+import { countStyleObjects, Lines } from '@graffio/ast'
 import { AS } from '../shared/aggregators.js'
-import { AST } from '../dsl/ast.js'
 import { PS } from '../shared/predicates.js'
-import { Lines } from '../dsl/source.js'
+import { TS } from '../shared/transformers.js'
 
 const PRIORITY = 0
 
@@ -22,26 +20,7 @@ const BUDGETS = {
     utility: { lines: 150, styleObjects: 0, functions: 10 },
 }
 
-// prettier-ignore
-const STYLE_PROPERTIES = new Set([
-    'alignItems', 'background', 'backgroundColor', 'border', 'borderCollapse', 'borderRadius', 'bottom', 'boxShadow',
-    'color', 'cursor', 'display', 'flex', 'flexDirection', 'flexWrap', 'fontSize', 'fontStyle', 'fontWeight', 'gap',
-    'gridTemplateColumns', 'gridTemplateRows', 'height', 'justifyContent', 'left', 'letterSpacing', 'lineHeight',
-    'margin', 'maxHeight', 'maxWidth', 'minHeight', 'minWidth', 'opacity', 'outline', 'overflow', 'overflowX',
-    'overflowY', 'padding', 'position', 'right', 'tableLayout', 'textAlign', 'textDecoration', 'top', 'transform',
-    'transition', 'whiteSpace', 'width', 'wordBreak', 'zIndex',
-])
-
 const P = {
-    // Check if object expression appears to be a style object (>50% CSS properties)
-    // @sig isStyleObject :: ASTNode -> Boolean
-    isStyleObject: node => {
-        if (node.type !== 'ObjectExpression' || node.properties.length === 0) return false
-        const names = node.properties.filter(p => p.key?.name || p.key?.value).map(p => p.key.name || p.key.value)
-        const cssCount = names.filter(name => STYLE_PROPERTIES.has(name)).length
-        return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
-    },
-
     // Check if context is a React file type (page or component)
     // @sig isReactContext :: String -> Boolean
     isReactContext: context => context === 'react-page' || context === 'react-component',
@@ -103,7 +82,7 @@ const V = {
         const context = T.toComponentContext(comp.name)
         const compLines = comp.endLine - comp.startLine + 1
         const funcCount = AS.countFunctions(comp.node)
-        const styleCount = A.countStyleObjects(comp.node)
+        const styleCount = countStyleObjects(comp.node)
         const line = comp.startLine
 
         return [
@@ -118,7 +97,7 @@ const V = {
     checkReactBudget: (ast, sourceCode, budget) => {
         const components = AS.findComponents(ast)
         if (components.length === 0) {
-            const codeLines = Lines.from(sourceCode).all().count(PS.isNonCommentLine)
+            const codeLines = Lines.from(sourceCode).filter(PS.isNonCommentLine).length
             const result = V.checkMetric(sourceCode, 'lines', codeLines, budget.lines, 'react-component')
             return result ? [result] : []
         }
@@ -130,7 +109,7 @@ const V = {
     checkMetric: (sourceCode, metricName, actual, budgetValue, context, line = 1) => {
         if (actual <= budgetValue) return null
 
-        const status = PS.getExemptionStatus(sourceCode, metricName)
+        const status = TS.getExemptionStatus(sourceCode, metricName)
         if (status.exempt) return null
         if (status.deferred) return F.createWarning(line, metricName, status.reason, status.daysRemaining)
 
@@ -142,8 +121,8 @@ const V = {
     // Validate non-React file budget (utility, selector, cli)
     // @sig checkNonReactBudget :: (AST, String, String, Budget) -> [Violation]
     checkNonReactBudget: (ast, sourceCode, context, budget) => {
-        const codeLines = Lines.from(sourceCode).all().count(PS.isNonCommentLine)
-        const styleCount = A.countStyleObjects(ast)
+        const codeLines = Lines.from(sourceCode).filter(PS.isNonCommentLine).length
+        const styleCount = countStyleObjects(ast)
         const totalFunctions = AS.countFunctions(ast)
 
         return [
@@ -164,15 +143,6 @@ const V = {
         if (P.isReactContext(context)) return V.checkReactBudget(ast, sourceCode, budget)
         return V.checkNonReactBudget(ast, sourceCode, context, budget)
     },
-}
-
-const A = {
-    // Count style objects in an AST subtree
-    // @sig countStyleObjects :: ASTNode -> Number
-    countStyleObjects: node =>
-        AST.from(node)
-            .find(({ node: n }) => P.isStyleObject(n))
-            .count(),
 }
 
 const checkComplexityBudget = V.check

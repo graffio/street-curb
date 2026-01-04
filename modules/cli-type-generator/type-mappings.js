@@ -11,6 +11,7 @@ const REPO_ROOT = resolve(__dirname, '../..')
 
 // prettier-ignore
 const sources = {
+    ast                  : `${REPO_ROOT}/modules/ast/type-definitions`,
     cliStyleValidator    : `${REPO_ROOT}/modules/cli-style-validator/type-definitions`,
     curbMap              : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
@@ -23,6 +24,7 @@ const sources = {
 
 // prettier-ignore
 const targets = {
+    ast                  : `${REPO_ROOT}/modules/ast/src/types`,
     cliStyleValidator    : `${REPO_ROOT}/modules/cli-style-validator/src/types`,
     curbMap              : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
@@ -33,8 +35,16 @@ const targets = {
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
 
+// Shorthand aliases for common multi-target combinations
+const t = targets
+const qifAndWeb = [t.cliQifToSqlite, t.quickenWebApp]
+const qifWebFinance = [t.cliQifToSqlite, t.quickenWebApp, t.financialComputations]
+
 // prettier-ignore
 export const typeMappings = {
+    // ast
+    [`${sources.ast}/ast-node.type.js`]                       : [targets.ast],
+
     // cli-style-validator
     [`${sources.cliStyleValidator}/named-location.type.js`]   : [targets.cliStyleValidator],
     [`${sources.cliStyleValidator}/function-info.type.js`]    : [targets.cliStyleValidator],
@@ -72,16 +82,16 @@ export const typeMappings = {
     [`${sources.cliQifToSqlite}/category.type.js`]        : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/daily-portfolio.type.js`] : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/entry.type.js`]           : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/holding.type.js`]         : [targets.cliQifToSqlite, targets.quickenWebApp],
-    [`${sources.cliQifToSqlite}/lot.type.js`]             : [targets.cliQifToSqlite, targets.financialComputations, targets.quickenWebApp],
-    [`${sources.cliQifToSqlite}/lot-allocation.type.js`] : [targets.cliQifToSqlite, targets.quickenWebApp],
-    [`${sources.cliQifToSqlite}/price.type.js`]           : [targets.cliQifToSqlite, targets.quickenWebApp],
+    [`${sources.cliQifToSqlite}/holding.type.js`]         : qifAndWeb,
+    [`${sources.cliQifToSqlite}/lot.type.js`]             : qifWebFinance,
+    [`${sources.cliQifToSqlite}/lot-allocation.type.js`] : qifAndWeb,
+    [`${sources.cliQifToSqlite}/price.type.js`]           : qifAndWeb,
     [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
     
     // multiple targets
-    [`${sources.cliQifToSqlite}/transaction.type.js`]     : [targets.cliQifToSqlite, targets.quickenWebApp, targets.financialComputations],
+    [`${sources.cliQifToSqlite}/transaction.type.js`]     : qifWebFinance,
 
     // quicken-web-app (types must come before Action since Action references them)
     [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
