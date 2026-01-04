@@ -4,6 +4,7 @@
 // COMPLEXITY-TODO: cohesion-structure — Budget checking requires many validators (expires 2026-01-03)
 // COMPLEXITY-TODO: chain-extraction — Component analysis accesses nested props (expires 2026-01-03)
 
+import { ASTNode } from '../../types/index.js'
 import { AS } from '../shared/aggregators.js'
 import { AST } from '../dsl/ast.js'
 import { PS } from '../shared/predicates.js'
@@ -32,17 +33,12 @@ const STYLE_PROPERTIES = new Set([
     'transition', 'whiteSpace', 'width', 'wordBreak', 'zIndex',
 ])
 
-// Get raw ESTree node from either wrapped ASTNode or raw node
-// @sig raw :: (ASTNode | ESTreeNode) -> ESTreeNode
-const raw = node => node?.raw ?? node
-
 const P = {
     // Check if object expression appears to be a style object (>50% CSS properties)
     // @sig isStyleObject :: ASTNode -> Boolean
     isStyleObject: node => {
-        const r = raw(node)
-        if (r?.type !== 'ObjectExpression' || r.properties.length === 0) return false
-        const names = r.properties.filter(p => p.key?.name || p.key?.value).map(p => p.key.name || p.key.value)
+        if (!ASTNode.ObjectExpression.is(node) || AST.propertyCount(node) === 0) return false
+        const names = AST.propertyNames(node)
         const cssCount = names.filter(name => STYLE_PROPERTIES.has(name)).length
         return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
     },
@@ -173,11 +169,8 @@ const V = {
 
 const A = {
     // Count style objects in an AST subtree
-    // @sig countStyleObjects :: ASTNode -> Number
-    countStyleObjects: node =>
-        AST.from(node)
-            .find(({ node: n }) => P.isStyleObject(n))
-            .count(),
+    // @sig countStyleObjects :: (ESTreeAST | ASTNode) -> Number
+    countStyleObjects: node => AST.from(node).filter(P.isStyleObject).length,
 }
 
 const checkComplexityBudget = V.check

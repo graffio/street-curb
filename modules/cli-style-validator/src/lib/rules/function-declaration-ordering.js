@@ -1,6 +1,8 @@
 // ABOUTME: Rule to detect functions defined after non-function statements
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
+import { AST } from '../dsl/ast.js'
+import { ASTNode } from '../../types/index.js'
 import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
@@ -24,18 +26,26 @@ const NON_FUNCTION_STATEMENT_TYPES = new Set([
 ])
 
 const P = {
-    // Check if node is a variable declarator with function value
+    // Check if node is a variable declarator with function value (works on wrapped nodes)
     // @sig isVariableWithFunctionExpression :: ASTNode -> Boolean
-    isVariableWithFunctionExpression: node =>
-        node.type === 'VariableDeclarator' &&
-        node.init &&
-        (node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression'),
+    isVariableWithFunctionExpression: node => {
+        if (!AST.hasType(node, 'VariableDeclarator')) return false
+        const init = AST.rhs(node)
+        if (!init) return false
+        return init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression'
+    },
 
     // Check if statement declares a function (multiline only for this rule)
     // @sig isFunctionStatement :: ASTNode -> Boolean
     isFunctionStatement: node => {
         if (PS.isFunctionDeclaration(node)) return true
-        if (node.type === 'VariableDeclaration') return node.declarations.some(P.isVariableWithFunctionExpression)
+        if (AST.hasType(node, 'VariableDeclaration')) {
+            const decls = AST.declarations(node)
+            return decls.some(d => {
+                const init = d.init
+                return init && (init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression')
+            })
+        }
         return false
     },
 
@@ -43,7 +53,7 @@ const P = {
     // @sig isNonFunctionStatement :: ASTNode -> Boolean
     isNonFunctionStatement: node => {
         if (!node || P.isFunctionStatement(node)) return false
-        return NON_FUNCTION_STATEMENT_TYPES.has(node.type)
+        return NON_FUNCTION_STATEMENT_TYPES.has(AST.nodeType(node))
     },
 }
 
@@ -62,8 +72,8 @@ const F = {
     // @sig createViolation :: (ASTNode, String) -> Violation
     createViolation: (node, message) => ({
         type: 'function-declaration-ordering',
-        line: node.loc.start.line,
-        column: node.loc.start.column + 1,
+        line: AST.line(node),
+        column: AST.column(node),
         priority: PRIORITY,
         message,
         rule: 'function-declaration-ordering',
@@ -87,19 +97,40 @@ const A = {
     processDeclarator: (declarator, violations) => {
         if (!P.isVariableWithFunctionExpression(declarator)) return
         const funcName = AS.getFunctionName(declarator)
-        const funcType = declarator.init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
+        const init = AST.rhs(declarator)
+        const funcType = init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
         violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
     },
 
     // Route misplaced function to appropriate processor
     // @sig processMisplacedFunctionStatement :: (ASTNode, [Violation]) -> Void
     processMisplacedFunctionStatement: (statement, violations) => {
-        const { type, declarations } = statement
-        if (type === 'FunctionDeclaration') {
+        if (AST.hasType(statement, 'FunctionDeclaration')) {
             const funcName = AS.getFunctionName(statement)
             return violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
         }
-        if (type === 'VariableDeclaration') declarations.forEach(d => A.processDeclarator(d, violations))
+        if (AST.hasType(statement, 'VariableDeclaration')) {
+            const decls = AST.declarations(statement)
+            decls.forEach(d => A.processDeclaratorRaw(d, violations))
+        }
+    },
+
+    // Process raw declarator for function expressions
+    // @sig processDeclaratorRaw :: (ESTreeDeclarator, [Violation]) -> Void
+    processDeclaratorRaw: (rawDecl, violations) => {
+        const init = rawDecl.init
+        if (!init) return
+        if (init.type !== 'ArrowFunctionExpression' && init.type !== 'FunctionExpression') return
+        const funcName = rawDecl.id?.name || '<anonymous>'
+        const funcType = init.type === 'ArrowFunctionExpression' ? 'Arrow function' : 'Function'
+        violations.push({
+            type: 'function-declaration-ordering',
+            line: rawDecl.loc?.start?.line || 1,
+            column: (rawDecl.loc?.start?.column || 0) + 1,
+            priority: PRIORITY,
+            message: T.buildFunctionOrderingMessage(funcType, funcName),
+            rule: 'function-declaration-ordering',
+        })
     },
 
     // Reducer to track non-function statements and flag misplaced functions
@@ -108,15 +139,19 @@ const A = {
         if (P.isNonFunctionStatement(statement)) return true
         if (P.isFunctionStatement(statement) && foundNonFunction)
             A.processMisplacedFunctionStatement(statement, violations)
-        if (statement.type === 'VariableDeclaration' && !P.isFunctionStatement(statement)) return true
+        if (AST.hasType(statement, 'VariableDeclaration') && !P.isFunctionStatement(statement)) return true
         return foundNonFunction
     },
 
     // Check all statements in a block for ordering violations
     // @sig processBlockForViolations :: (ASTNode, [Violation]) -> Void
     processBlockForViolations: (block, violations) => {
-        if (!PS.isBlockStatement(block) || !block.body) return
-        block.body.reduce((found, stmt) => A.processStatementReducer(violations, stmt, found), false)
+        if (!PS.isBlockStatement(block)) return
+        const body = AST.blockStatements(block)
+        body.reduce((found, rawStmt) => {
+            const stmt = ASTNode.wrap(rawStmt)
+            return A.processStatementReducer(violations, stmt, found)
+        }, false)
     },
 }
 

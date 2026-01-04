@@ -32,14 +32,13 @@ Source Code
                 ┌─────────────┐
                 │ .find()     │
                 │ .ofType()   │────▶ Filtered Nodes
-                │ .where()    │
                 └─────────────┘
                        │
                        ▼
                 ┌─────────────┐
-                │ .map()      │
+                │ .mapNode()  │
                 │ .toArray()  │────▶ Results
-                │ .first()    │
+                │ .count()    │
                 └─────────────┘
 
 Source Code
@@ -75,30 +74,24 @@ AST.from(ast)      // Query over ALL nodes in tree (depth-first traversal)
 AST.topLevel(ast)  // Query over just top-level statements (ast.body)
 ```
 
-### Nodes Methods (chainable)
+### Nodes Methods
+
+Nodes extends Array, so all array methods work. Custom methods:
 
 ```javascript
-.find(predicate)      // Filter by predicate on { node, parent }
-.where(predicate)     // Alias for find
-.reject(predicate)    // Exclude nodes matching predicate
-.ofType(type)         // Filter by node.type === type
-.ofParentType(type)   // Filter by parent.type === type
-```
+// Filtering (chainable, return Nodes)
+.find(predicate)      // Filter by predicate on { node, parent } - NOTE: returns Nodes, not single element
+.ofType(type)         // Filter by node.raw.type === type
 
-### Nodes Methods (terminal)
-
-```javascript
-.map(fn)              // Transform each pair, returns array
-.flatMap(fn)          // Transform and flatten, returns array
+// Transformation (terminal, return plain arrays/values)
 .mapNode(fn)          // Transform just node: .map(({ node }) => fn(node))
-.flatMapNode(fn)      // Transform just node: .flatMap(({ node }) => fn(node))
-.toArray()            // Get all pairs as array
-.first()              // Get first pair or null
-.count()              // Count matching nodes
-.some(predicate)      // Check if any match
+.flatMapNode(fn)      // Transform and flatten: .flatMap(({ node }) => fn(node))
+.toArray()            // Get all pairs as plain array
+.count()              // Count matching nodes (alias for .length)
 .someNode(predicate)  // Check if any node matches (ignores parent)
-.every(predicate)     // Check if all match
 ```
+
+Standard array methods like `.map()`, `.filter()`, `.some()`, `.every()` also work.
 
 ### Type Predicates
 
@@ -157,7 +150,7 @@ AST.topLevel(ast)
 // Find all functions longer than 5 lines
 AST.from(ast)
     .find(({ node }) => PS.isFunctionNode(node))
-    .where(({ node }) => AST.lineCount(node) > 5)
+    .find(({ node }) => AST.lineCount(node) > 5)
     .toArray()
 ```
 
@@ -231,37 +224,20 @@ Lines.from(sourceCode)
 
 **Note:** `.before()` and `.beforeNode()` return lines in REVERSE order (nearest to position first) for convenient upward searching.
 
-## Future Plans
+## Design Notes
 
-### Phase 4: Tagged Types for Data Shapes
+### ASTNode Wrapping
 
-Internal data structures will become proper Tagged types:
+All nodes returned from `AST.from()` and `AST.topLevel()` are wrapped in `ASTNode` TaggedSum. The wrapper provides:
 
-```javascript
-NamedLocation({ name, line })
-FunctionInfo({ name, line, node })
-CohesionDeclaration({ name, line, value })
-Violation({ type, line, column, priority, message, rule })
-```
+- `.raw` - Access to the underlying ESTree node
+- Type-safe wrapping without modifying ESTree structure
 
-### Phase 5: ASTNode TaggedSum
+The `AST` module's helpers (like `AST.line()`, `AST.nodeType()`) accept both wrapped ASTNodes and raw ESTree nodes, so you can use them anywhere.
 
-Wrap ESTree nodes in our own TaggedSum for type-safe matching:
+### ESTree Isolation
 
-```javascript
-const ASTNode = TaggedSum('ASTNode', {
-    VariableDeclaration: ['variableName', 'variableValue', 'declarations'],
-    FunctionDeclaration: ['name', 'parameters', 'body'],
-    // ... other types we care about
-    Other: ['type', 'raw']  // catch-all
-})
-
-// Usage with .match()
-node.match({
-    VariableDeclaration: ({ variableName }) => ...,
-    FunctionDeclaration: ({ name }) => ...,
-    Other: () => null
-})
-```
-
-See `specifications/F-ast-dsl-reorganization/plan.md` for full roadmap.
+Only `ast.js` knows about ESTree structure. Rules and shared modules use AST helpers:
+- `AST.nodeType(node)` instead of `node.type`
+- `AST.line(node)` instead of `node.loc.start.line`
+- `AST.hasType(node, 'X')` instead of `node.type === 'X'`

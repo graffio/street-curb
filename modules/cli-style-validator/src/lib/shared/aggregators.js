@@ -1,153 +1,125 @@
 // ABOUTME: Shared AST traversal/aggregation utilities for style validator rules
-// ABOUTME: Provides traverseAST and child node utilities for rule implementations
+// ABOUTME: Provides higher-level aggregation over AST module primitives
 // COMPLEXITY: lines — Shared module consolidating utilities from multiple rules
 // COMPLEXITY: functions — Shared module consolidating utilities from multiple rules
 
+import { AST } from '../dsl/ast.js'
+import { ASTNode } from '../../types/index.js'
 import { PS } from './predicates.js'
 
 const AS = {
-    // Check if value is an AST node (has type property)
-    // @sig isASTNode :: Any -> Boolean
-    isASTNode: child => child && typeof child === 'object' && child.type,
+    // Collect all wrapped nodes in an AST into a flat array (enables filter/map chains)
+    // @sig collectNodes :: ESTreeAST -> [ASTNode]
+    collectNodes: ast => AST.from(ast),
+
+    // Recursively visit all wrapped nodes in an AST with parent context via node.parent
+    // @sig traverseAST :: (ESTreeAST, (ASTNode) -> Void) -> Void
+    traverseAST: (ast, visitor) => AST.from(ast).forEach(visitor),
+
+    // Get all direct child nodes (for custom traversal patterns that need scope awareness)
+    // @sig getChildNodes :: (ASTNode | ESTreeNode) -> [ESTreeNode]
+    getChildNodes: node => (node.raw ? AST.children(node) : AST.children(ASTNode.wrap(node))),
 
     // Count lines in a function's body (for length checks)
     // @sig countFunctionLines :: ASTNode -> Number
     countFunctionLines: node => {
-        if (!node.body?.loc) return 0
-        return node.body.loc.end.line - node.body.loc.start.line + 1
-    },
-
-    // Extract AST nodes from a value (handles arrays and single nodes)
-    // @sig extractChildNodes :: Any -> [ASTNode]
-    extractChildNodes: value => {
-        if (Array.isArray(value)) return value.filter(AS.isASTNode)
-        if (AS.isASTNode(value)) return [value]
-        return []
-    },
-
-    // Get all child AST nodes from a parent node
-    // @sig getChildNodes :: ASTNode -> [ASTNode]
-    getChildNodes: node => {
-        const skip = new Set(['type', 'loc', 'range', 'start', 'end'])
-        return Object.entries(node)
-            .filter(([key]) => !skip.has(key))
-            .flatMap(([, value]) => AS.extractChildNodes(value))
-    },
-
-    // Recursively visit all nodes in an AST with optional parent context
-    // @sig traverseAST :: (ASTNode, (ASTNode, ASTNode?) -> Void, ASTNode?) -> Void
-    traverseAST: (node, visitor, parent = null) => {
-        if (!node || typeof node !== 'object') return
-        visitor(node, parent)
-        AS.getChildNodes(node).forEach(child => AS.traverseAST(child, visitor, node))
+        const body = AST.functionBody(node)
+        if (!body) return 0
+        return AST.lineCount(body)
     },
 
     // Get the name of a function from its AST node
     // @sig getFunctionName :: ASTNode -> String
     getFunctionName: node => {
-        if (node.type === 'FunctionDeclaration') return node.id?.name || '<anonymous>'
-        if (node.type === 'VariableDeclarator') return node.id?.name || '<anonymous>'
+        if (AST.hasType(node, 'FunctionDeclaration')) return AST.idName(node) || '<anonymous>'
+        if (AST.hasType(node, 'VariableDeclarator')) return AST.idName(node) || '<anonymous>'
         return '<anonymous>'
-    },
-
-    // Collect all nodes in an AST into a flat array (enables filter/map chains)
-    // @sig collectNodes :: ASTNode -> [ASTNode]
-    collectNodes: node => {
-        const nodes = []
-        AS.traverseAST(node, n => nodes.push(n))
-        return nodes
-    },
-
-    // Collect all nodes with their parent context
-    // @sig collectNodesWithParent :: ASTNode -> [{node: ASTNode, parent: ASTNode?}]
-    collectNodesWithParent: node => {
-        const pairs = []
-        AS.traverseAST(node, (n, parent) => pairs.push({ node: n, parent }))
-        return pairs
     },
 
     // Check if a function node should count toward complexity
     // Named functions, variable-assigned functions, and multiline anonymous functions count
-    // @sig isCountableFunction :: {node: ASTNode, parent: ASTNode?} -> Boolean
-    isCountableFunction: ({ node: n, parent }) => {
-        if (!PS.isFunctionNode(n)) return false
-        if (n.id?.name) return true
-        if (parent?.type === 'VariableDeclarator' && parent.init === n) return true
-        return PS.isMultilineNode(n)
+    // @sig isCountableFunction :: ASTNode -> Boolean
+    isCountableFunction: node => {
+        if (!PS.isFunctionNode(node)) return false
+        if (AST.idName(node)) return true
+        const parent = node.parent
+        if (parent && AST.hasType(parent, 'VariableDeclarator') && AST.rhs(parent) === node.raw) return true
+        return PS.isMultilineNode(node)
     },
 
     // Count complex functions in an AST subtree (excludes single-line anonymous callbacks)
-    // @sig countFunctions :: ASTNode -> Number
-    countFunctions: node => AS.collectNodesWithParent(node).filter(AS.isCountableFunction).length,
+    // @sig countFunctions :: ESTreeAST -> Number
+    countFunctions: ast => AST.from(ast).filter(AS.isCountableFunction).length,
 
-    // Check if node is in an arguments array context
-    // @sig isArgumentsContext :: (String, [Any], ASTNode) -> Boolean
-    isArgumentsContext: (key, child, node) => key === 'arguments' && child.includes(node),
+    // Check if node is in an arguments array context (uses raw nodes for identity comparison)
+    // @sig isArgumentsContext :: (String, [Any], ESTreeNode) -> Boolean
+    isArgumentsContext: (key, child, rawNode) => key === 'arguments' && child.includes(rawNode),
 
     // Check if node is in a callback context (callee or non-declarator init)
-    // @sig isCallbackContext :: (String, ASTNode) -> Boolean
+    // @sig isCallbackContext :: (String, ESTreeNode) -> Boolean
     isCallbackContext: (key, searchNode) => {
         if (key !== 'callee' && key !== 'init') return false
         if (key === 'init' && searchNode.type === 'VariableDeclarator') return false
         return true
     },
 
-    // Check a single [key, child] pair for callback context
-    // @sig checkEntryForCallback :: (ASTNode, ASTNode, { isCallback: Boolean }) -> ([String, Any]) -> Boolean
+    // Check a single [key, child] pair for callback context (operates on raw ESTree nodes)
+    // @sig checkEntryForCallback :: (ESTreeNode, ESTreeNode, { isCallback: Boolean }) -> ([String, Any]) -> Boolean
     checkEntryForCallback:
-        (searchNode, node, tracker) =>
+        (searchNode, rawNode, tracker) =>
         ([key, child]) => {
-            if (Array.isArray(child) && AS.isArgumentsContext(key, child, node)) return (tracker.isCallback = true)
-            if (Array.isArray(child)) return (child.forEach(i => AS.searchCallbackContext(i, node, tracker)), false)
-            if (child === node && AS.isCallbackContext(key, searchNode)) tracker.isCallback = true
-            if (child && typeof child === 'object') AS.searchCallbackContext(child, node, tracker)
+            if (Array.isArray(child) && AS.isArgumentsContext(key, child, rawNode)) return (tracker.isCallback = true)
+            if (Array.isArray(child)) return (child.forEach(i => AS.searchCallbackContext(i, rawNode, tracker)), false)
+            if (child === rawNode && AS.isCallbackContext(key, searchNode)) tracker.isCallback = true
+            if (child && typeof child === 'object') AS.searchCallbackContext(child, rawNode, tracker)
             return false
         },
 
-    // Recursively search AST to find if node is in callback context
-    // @sig searchCallbackContext :: (ASTNode, ASTNode, { isCallback: Boolean }) -> Void
-    searchCallbackContext: (searchNode, node, tracker) => {
+    // Recursively search AST to find if node is in callback context (operates on raw ESTree)
+    // @sig searchCallbackContext :: (ESTreeNode, ESTreeNode, { isCallback: Boolean }) -> Void
+    searchCallbackContext: (searchNode, rawNode, tracker) => {
         if (!searchNode || typeof searchNode !== 'object') return
-        Object.entries(searchNode).some(AS.checkEntryForCallback(searchNode, node, tracker))
+        Object.entries(searchNode).some(AS.checkEntryForCallback(searchNode, rawNode, tracker))
     },
 
     // Find whether a function is used as a callback in the AST
-    // @sig isCallbackFunction :: (ASTNode, ASTNode) -> Boolean
-    isCallbackFunction: (node, rootNode) => {
-        if (node.type === 'FunctionDeclaration') return false
+    // @sig isCallbackFunction :: (ASTNode, AST) -> Boolean
+    isCallbackFunction: (node, ast) => {
+        if (AST.hasType(node, 'FunctionDeclaration')) return false
         const tracker = { isCallback: false }
-        AS.searchCallbackContext(rootNode, node, tracker)
+        AS.searchCallbackContext(ast, node.raw, tracker)
         return tracker.isCallback
     },
 
-    // Convert AST node to component info if it's a PascalCase component declaration
+    // Convert AST statement to component info if it's a PascalCase component declaration
     // @sig toComponent :: ASTNode -> { name: String, node: ASTNode, startLine: Number, endLine: Number } | null
     toComponent: node => {
-        const { type, loc, declarations } = node
-        const startLine = loc?.start?.line || 1
-        const endLine = loc?.end?.line || 1
+        const startLine = AST.line(node)
+        const endLine = AST.endLine(node)
 
-        if (type === 'FunctionDeclaration') {
-            const name = node.id?.name
+        if (ASTNode.FunctionDeclaration.is(node)) {
+            const name = AST.idName(node)
             return PS.isPascalCase(name) ? { name, node, startLine, endLine } : null
         }
 
-        if (type !== 'VariableDeclaration') return null
+        if (!ASTNode.VariableDeclaration.is(node)) return null
 
-        const decl = declarations?.[0]
-        const name = decl?.id?.name
-        const init = decl?.init
-        if (!name || !PS.isPascalCase(name) || !init || !PS.isFunctionNode(init)) return null
+        const decl = AST.declarations(node)[0]
+        if (!decl) return null
+        const name = decl.id?.name
+        const init = decl.init
+        if (!name || !PS.isPascalCase(name) || !init) return null
 
-        return { name, node: init, startLine, endLine }
+        // Wrap the init node to check if it's a function
+        const wrappedInit = ASTNode.wrap(init)
+        if (!PS.isFunctionNode(wrappedInit)) return null
+
+        return { name, node: wrappedInit, startLine, endLine }
     },
 
     // Find all PascalCase component declarations at module level
-    // @sig findComponents :: AST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
-    findComponents: ast => {
-        if (!ast?.body) return []
-        return ast.body.map(AS.toComponent).filter(Boolean)
-    },
+    // @sig findComponents :: ESTreeAST -> [{ name: String, node: ASTNode, startLine: Number, endLine: Number }]
+    findComponents: ast => AST.topLevel(ast).map(AS.toComponent).filter(Boolean),
 
     // Generate array of numbers from start to end inclusive
     // @sig lineRange :: (Number, Number) -> [Number]
@@ -155,35 +127,39 @@ const AS = {
 
     // Transform AST node to array of line numbers it covers
     // @sig toNodeLineNumbers :: ASTNode -> [Number]
-    toNodeLineNumbers: node => (node.loc ? AS.lineRange(node.loc.start.line, node.loc.end.line) : []),
+    toNodeLineNumbers: node => AS.lineRange(AST.startLine(node), AST.endLine(node)),
 
     // Recursively find the base identifier of a member expression
     // @sig findBase :: ASTNode -> ASTNode?
     findBase: node => {
         if (!node) return null
-        const { type, object } = node
-        if (type === 'Identifier') return node
-        if (type === 'MemberExpression') return AS.findBase(object)
+        if (AST.hasType(node, 'Identifier')) return node
+        if (AST.hasType(node, 'MemberExpression')) {
+            const obj = node.raw.object
+            if (!obj) return null
+            return AS.findBase(ASTNode.wrap(obj))
+        }
         return null
     },
 
     // Transform AST to unique exported names
-    // @sig toExportedNames :: AST -> [String]
-    toExportedNames: ast => {
-        if (!ast || !ast.body) return []
-        const names = ast.body.flatMap(node => [...AS.toSpecifierNames(node), ...AS.toDefaultExportName(node)])
-        return [...new Set(names)]
-    },
+    // @sig toExportedNames :: ESTreeAST -> [String]
+    toExportedNames: ast =>
+        AST.topLevel(ast)
+            .flatMap(node => [...AS.toSpecifierNames(node), ...AS.toDefaultExportName(node)])
+            .filter((name, i, arr) => arr.indexOf(name) === i),
 
     // Extract exported names from named export specifiers
     // @sig toSpecifierNames :: ASTNode -> [String]
-    toSpecifierNames: ({ type, specifiers }) =>
-        type === 'ExportNamedDeclaration' && specifiers ? specifiers.map(s => s.exported?.name).filter(Boolean) : [],
+    toSpecifierNames: node =>
+        AST.hasType(node, 'ExportNamedDeclaration')
+            ? node.raw.specifiers.map(s => s.exported?.name).filter(Boolean)
+            : [],
 
     // Extract name from default export declaration
     // @sig toDefaultExportName :: ASTNode -> [String]
     toDefaultExportName: node =>
-        node.type === 'ExportDefaultDeclaration' && node.declaration?.name ? [node.declaration.name] : [],
+        AST.hasType(node, 'ExportDefaultDeclaration') && node.raw.declaration?.name ? [node.raw.declaration.name] : [],
 }
 
 export { AS }

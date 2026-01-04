@@ -32,15 +32,29 @@
  *      ExportNamedDeclaration
  *      ExportDefaultDeclaration
  *      ImportDeclaration
+ *      ImportNamespaceSpecifier
  *
  *      // Statements
  *      BlockStatement
+ *      ReturnStatement
+ *      IfStatement
+ *      TryStatement
+ *      ThrowStatement
+ *      BreakStatement
+ *      ContinueStatement
+ *
+ *      // Loops
+ *      ForStatement
+ *      WhileStatement
+ *      DoWhileStatement
+ *      ForInStatement
+ *      ForOfStatement
  *
  *      // JSX
  *      JSXElement
  *      JSXFragment
  *
- *      // Catch-all
+ *      // Catch-all (opaque - add variants for types you need to check)
  *      Other
  */
 
@@ -50,70 +64,64 @@ export const ASTNode = {
     kind: 'taggedSum',
     variants: {
         // Functions
-        FunctionDeclaration    : { raw: 'Object' },
-        ArrowFunctionExpression: { raw: 'Object' },
-        FunctionExpression     : { raw: 'Object' },
+        FunctionDeclaration    : { raw: 'Object', parent: 'ASTNode?' },
+        ArrowFunctionExpression: { raw: 'Object', parent: 'ASTNode?' },
+        FunctionExpression     : { raw: 'Object', parent: 'ASTNode?' },
 
         // Declarations
-        VariableDeclaration : { raw: 'Object' },
-        VariableDeclarator  : { raw: 'Object' },
+        VariableDeclaration : { raw: 'Object', parent: 'ASTNode?' },
+        VariableDeclarator  : { raw: 'Object', parent: 'ASTNode?' },
 
         // Expressions
-        ObjectExpression    : { raw: 'Object' },
-        MemberExpression    : { raw: 'Object' },
-        CallExpression      : { raw: 'Object' },
-        AssignmentExpression: { raw: 'Object' },
-        Identifier          : { raw: 'Object' },
+        ObjectExpression    : { raw: 'Object', parent: 'ASTNode?' },
+        MemberExpression    : { raw: 'Object', parent: 'ASTNode?' },
+        CallExpression      : { raw: 'Object', parent: 'ASTNode?' },
+        AssignmentExpression: { raw: 'Object', parent: 'ASTNode?' },
+        Identifier          : { raw: 'Object', parent: 'ASTNode?' },
 
         // Properties
-        Property: { raw: 'Object' },
+        Property: { raw: 'Object', parent: 'ASTNode?' },
 
         // Exports/Imports
-        ExportNamedDeclaration  : { raw: 'Object' },
-        ExportDefaultDeclaration: { raw: 'Object' },
-        ImportDeclaration       : { raw: 'Object' },
+        ExportNamedDeclaration   : { raw: 'Object', parent: 'ASTNode?' },
+        ExportDefaultDeclaration : { raw: 'Object', parent: 'ASTNode?' },
+        ImportDeclaration        : { raw: 'Object', parent: 'ASTNode?' },
+        ImportNamespaceSpecifier : { raw: 'Object', parent: 'ASTNode?' },
 
         // Statements
-        BlockStatement: { raw: 'Object' },
+        BlockStatement   : { raw: 'Object', parent: 'ASTNode?' },
+        ReturnStatement  : { raw: 'Object', parent: 'ASTNode?' },
+        IfStatement      : { raw: 'Object', parent: 'ASTNode?' },
+        TryStatement     : { raw: 'Object', parent: 'ASTNode?' },
+        ThrowStatement   : { raw: 'Object', parent: 'ASTNode?' },
+        BreakStatement   : { raw: 'Object', parent: 'ASTNode?' },
+        ContinueStatement: { raw: 'Object', parent: 'ASTNode?' },
+
+        // Loops
+        ForStatement     : { raw: 'Object', parent: 'ASTNode?' },
+        WhileStatement   : { raw: 'Object', parent: 'ASTNode?' },
+        DoWhileStatement : { raw: 'Object', parent: 'ASTNode?' },
+        ForInStatement   : { raw: 'Object', parent: 'ASTNode?' },
+        ForOfStatement   : { raw: 'Object', parent: 'ASTNode?' },
 
         // JSX
-        JSXElement : { raw: 'Object' },
-        JSXFragment: { raw: 'Object' },
+        JSXElement : { raw: 'Object', parent: 'ASTNode?' },
+        JSXFragment: { raw: 'Object', parent: 'ASTNode?' },
 
-        // Catch-all for unhandled node types
-        Other: { nodeType: 'String', raw: 'Object' },
+        // Catch-all (opaque - add variants for types you need to check)
+        // Keeps raw/parent for traversal but type checks should use specific variants
+        Other: { raw: 'Object', parent: 'ASTNode?' },
     },
 }
 
-// Map ESTree type strings to variant constructors
-const VARIANT_MAP = {
-    FunctionDeclaration: 'FunctionDeclaration',
-    ArrowFunctionExpression: 'ArrowFunctionExpression',
-    FunctionExpression: 'FunctionExpression',
-    VariableDeclaration: 'VariableDeclaration',
-    VariableDeclarator: 'VariableDeclarator',
-    ObjectExpression: 'ObjectExpression',
-    MemberExpression: 'MemberExpression',
-    CallExpression: 'CallExpression',
-    AssignmentExpression: 'AssignmentExpression',
-    Identifier: 'Identifier',
-    Property: 'Property',
-    ExportNamedDeclaration: 'ExportNamedDeclaration',
-    ExportDefaultDeclaration: 'ExportDefaultDeclaration',
-    ImportDeclaration: 'ImportDeclaration',
-    BlockStatement: 'BlockStatement',
-    JSXElement: 'JSXElement',
-    JSXFragment: 'JSXFragment',
-}
-
 // Wrap a raw ESTree node in the appropriate ASTNode variant
-// @sig wrap :: Object -> ASTNode
-ASTNode.wrap = rawNode => {
+// Uses ASTNode['@@tagNames'] to check if type has a dedicated variant
+// @sig wrap :: (Object, ASTNode?) -> ASTNode
+ASTNode.wrap = (rawNode, parent = null) => {
     const type = rawNode?.type
-    if (!type) return ASTNode.Other('unknown', rawNode || {})
-    const variantName = VARIANT_MAP[type]
-    if (variantName) return ASTNode[variantName](rawNode)
-    return ASTNode.Other(type, rawNode)
+    if (!type) return ASTNode.Other(rawNode || {}, parent)
+    if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](rawNode, parent)
+    return ASTNode.Other(rawNode, parent)
 }
 
 // Check if a value is an ASTNode instance

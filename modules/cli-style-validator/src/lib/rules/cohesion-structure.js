@@ -50,8 +50,8 @@ const P = {
     // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
     isInCohesionGroup: (node, ast) =>
         AST.topLevel(ast)
-            .ofType('VariableDeclaration')
-            .someNode(stmt => {
+            .filter(stmt => ASTNode.VariableDeclaration.is(stmt))
+            .some(stmt => {
                 const name = AST.variableName(stmt)
                 if (!name || !P.isCohesionGroup(name)) return false
                 const value = AST.variableValue(stmt)
@@ -128,11 +128,11 @@ const T = {
 const A = {
     // Collect all cohesion group declarations from AST
     // @sig collectCohesionDecls :: AST -> [{ name, line, value }]
-    collectCohesionDecls: ast => AST.topLevel(ast).mapNode(T.toCohesionDecl).filter(Boolean),
+    collectCohesionDecls: ast => AST.topLevel(ast).map(T.toCohesionDecl).filter(Boolean),
 
     // Collect all function declarations at module level (outside cohesion groups)
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
-    collectModuleLevelFunctions: ast => AST.topLevel(ast).flatMapNode(T.toModuleLevelFunction),
+    collectModuleLevelFunctions: ast => AST.topLevel(ast).flatMap(T.toModuleLevelFunction),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
@@ -173,8 +173,8 @@ const A = {
     // @sig collectExports :: AST -> [{ name: String, line: Number }]
     collectExports: ast =>
         AST.topLevel(ast)
-            .ofType('ExportNamedDeclaration')
-            .flatMap(({ node }) =>
+            .filter(node => ASTNode.ExportNamedDeclaration.is(node))
+            .flatMap(node =>
                 AST.specifiers(node)
                     .filter(spec => AST.exportedName(spec))
                     .map(spec => F.createNameInfo(AST.exportedName(spec), node)),

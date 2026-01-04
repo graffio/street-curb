@@ -1,97 +1,97 @@
 // ABOUTME: Generated type definition for ASTNode
-// ABOUTME: Auto-generated from modules/cli-style-validator/type-definitions/ast-node.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/ast/type-definitions/ast-node.type.js - do not edit manually
 
-/*  ASTNode generated from: modules/cli-style-validator/type-definitions/ast-node.type.js
+/*  ASTNode generated from: modules/ast/type-definitions/ast-node.type.js
  *
  *  FunctionDeclaration
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ArrowFunctionExpression
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  FunctionExpression
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  VariableDeclaration
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  VariableDeclarator
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ObjectExpression
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  MemberExpression
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  CallExpression
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  AssignmentExpression
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  Identifier
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  Property
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ExportNamedDeclaration
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ExportDefaultDeclaration
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ImportDeclaration
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ImportNamespaceSpecifier
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  BlockStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ReturnStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  IfStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  TryStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ThrowStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  BreakStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ContinueStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ForStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  WhileStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  DoWhileStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ForInStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  ForOfStatement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  JSXElement
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  JSXFragment
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *  Other
- *      raw   : "Object",
+ *      esTree: "Object",
  *      parent: "ASTNode?"
  *
  */
@@ -169,36 +169,36 @@ ASTNode.prototype = ASTNodePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    functionDeclaration     : function () { return `ASTNode.FunctionDeclaration(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    arrowFunctionExpression : function () { return `ASTNode.ArrowFunctionExpression(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    functionExpression      : function () { return `ASTNode.FunctionExpression(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    variableDeclaration     : function () { return `ASTNode.VariableDeclaration(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    variableDeclarator      : function () { return `ASTNode.VariableDeclarator(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    objectExpression        : function () { return `ASTNode.ObjectExpression(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    memberExpression        : function () { return `ASTNode.MemberExpression(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    callExpression          : function () { return `ASTNode.CallExpression(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    assignmentExpression    : function () { return `ASTNode.AssignmentExpression(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    identifier              : function () { return `ASTNode.Identifier(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    property                : function () { return `ASTNode.Property(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    exportNamedDeclaration  : function () { return `ASTNode.ExportNamedDeclaration(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    exportDefaultDeclaration: function () { return `ASTNode.ExportDefaultDeclaration(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    importDeclaration       : function () { return `ASTNode.ImportDeclaration(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    importNamespaceSpecifier: function () { return `ASTNode.ImportNamespaceSpecifier(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    blockStatement          : function () { return `ASTNode.BlockStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    returnStatement         : function () { return `ASTNode.ReturnStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    ifStatement             : function () { return `ASTNode.IfStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    tryStatement            : function () { return `ASTNode.TryStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    throwStatement          : function () { return `ASTNode.ThrowStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    breakStatement          : function () { return `ASTNode.BreakStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    continueStatement       : function () { return `ASTNode.ContinueStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    forStatement            : function () { return `ASTNode.ForStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    whileStatement          : function () { return `ASTNode.WhileStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    doWhileStatement        : function () { return `ASTNode.DoWhileStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    forInStatement          : function () { return `ASTNode.ForInStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    forOfStatement          : function () { return `ASTNode.ForOfStatement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    jSXElement              : function () { return `ASTNode.JSXElement(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    jSXFragment             : function () { return `ASTNode.JSXFragment(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
-    other                   : function () { return `ASTNode.Other(${R._toString(this.raw)}, ${R._toString(this.parent)})` },
+    functionDeclaration     : function () { return `ASTNode.FunctionDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    arrowFunctionExpression : function () { return `ASTNode.ArrowFunctionExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    functionExpression      : function () { return `ASTNode.FunctionExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    variableDeclaration     : function () { return `ASTNode.VariableDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    variableDeclarator      : function () { return `ASTNode.VariableDeclarator(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    objectExpression        : function () { return `ASTNode.ObjectExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    memberExpression        : function () { return `ASTNode.MemberExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    callExpression          : function () { return `ASTNode.CallExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    assignmentExpression    : function () { return `ASTNode.AssignmentExpression(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    identifier              : function () { return `ASTNode.Identifier(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    property                : function () { return `ASTNode.Property(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    exportNamedDeclaration  : function () { return `ASTNode.ExportNamedDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    exportDefaultDeclaration: function () { return `ASTNode.ExportDefaultDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    importDeclaration       : function () { return `ASTNode.ImportDeclaration(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    importNamespaceSpecifier: function () { return `ASTNode.ImportNamespaceSpecifier(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    blockStatement          : function () { return `ASTNode.BlockStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    returnStatement         : function () { return `ASTNode.ReturnStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    ifStatement             : function () { return `ASTNode.IfStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    tryStatement            : function () { return `ASTNode.TryStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    throwStatement          : function () { return `ASTNode.ThrowStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    breakStatement          : function () { return `ASTNode.BreakStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    continueStatement       : function () { return `ASTNode.ContinueStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    forStatement            : function () { return `ASTNode.ForStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    whileStatement          : function () { return `ASTNode.WhileStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    doWhileStatement        : function () { return `ASTNode.DoWhileStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    forInStatement          : function () { return `ASTNode.ForInStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    forOfStatement          : function () { return `ASTNode.ForOfStatement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    jSXElement              : function () { return `ASTNode.JSXElement(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    jSXFragment             : function () { return `ASTNode.JSXFragment(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
+    other                   : function () { return `ASTNode.Other(${R._toString(this.esTree)}, ${R._toString(this.parent)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -250,14 +250,14 @@ const toJSON = {
  * Construct a ASTNode.FunctionDeclaration instance
  * @sig FunctionDeclaration :: (Object, ASTNode?) -> ASTNode.FunctionDeclaration
  */
-const FunctionDeclarationConstructor = function FunctionDeclaration(raw, parent) {
-    const constructorName = 'ASTNode.FunctionDeclaration(raw, parent)'
+const FunctionDeclarationConstructor = function FunctionDeclaration(esTree, parent) {
+    const constructorName = 'ASTNode.FunctionDeclaration(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(FunctionDeclarationPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -268,14 +268,14 @@ ASTNode.FunctionDeclaration = FunctionDeclarationConstructor
  * Construct a ASTNode.ArrowFunctionExpression instance
  * @sig ArrowFunctionExpression :: (Object, ASTNode?) -> ASTNode.ArrowFunctionExpression
  */
-const ArrowFunctionExpressionConstructor = function ArrowFunctionExpression(raw, parent) {
-    const constructorName = 'ASTNode.ArrowFunctionExpression(raw, parent)'
+const ArrowFunctionExpressionConstructor = function ArrowFunctionExpression(esTree, parent) {
+    const constructorName = 'ASTNode.ArrowFunctionExpression(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ArrowFunctionExpressionPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -286,14 +286,14 @@ ASTNode.ArrowFunctionExpression = ArrowFunctionExpressionConstructor
  * Construct a ASTNode.FunctionExpression instance
  * @sig FunctionExpression :: (Object, ASTNode?) -> ASTNode.FunctionExpression
  */
-const FunctionExpressionConstructor = function FunctionExpression(raw, parent) {
-    const constructorName = 'ASTNode.FunctionExpression(raw, parent)'
+const FunctionExpressionConstructor = function FunctionExpression(esTree, parent) {
+    const constructorName = 'ASTNode.FunctionExpression(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(FunctionExpressionPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -304,14 +304,14 @@ ASTNode.FunctionExpression = FunctionExpressionConstructor
  * Construct a ASTNode.VariableDeclaration instance
  * @sig VariableDeclaration :: (Object, ASTNode?) -> ASTNode.VariableDeclaration
  */
-const VariableDeclarationConstructor = function VariableDeclaration(raw, parent) {
-    const constructorName = 'ASTNode.VariableDeclaration(raw, parent)'
+const VariableDeclarationConstructor = function VariableDeclaration(esTree, parent) {
+    const constructorName = 'ASTNode.VariableDeclaration(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(VariableDeclarationPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -322,14 +322,14 @@ ASTNode.VariableDeclaration = VariableDeclarationConstructor
  * Construct a ASTNode.VariableDeclarator instance
  * @sig VariableDeclarator :: (Object, ASTNode?) -> ASTNode.VariableDeclarator
  */
-const VariableDeclaratorConstructor = function VariableDeclarator(raw, parent) {
-    const constructorName = 'ASTNode.VariableDeclarator(raw, parent)'
+const VariableDeclaratorConstructor = function VariableDeclarator(esTree, parent) {
+    const constructorName = 'ASTNode.VariableDeclarator(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(VariableDeclaratorPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -340,14 +340,14 @@ ASTNode.VariableDeclarator = VariableDeclaratorConstructor
  * Construct a ASTNode.ObjectExpression instance
  * @sig ObjectExpression :: (Object, ASTNode?) -> ASTNode.ObjectExpression
  */
-const ObjectExpressionConstructor = function ObjectExpression(raw, parent) {
-    const constructorName = 'ASTNode.ObjectExpression(raw, parent)'
+const ObjectExpressionConstructor = function ObjectExpression(esTree, parent) {
+    const constructorName = 'ASTNode.ObjectExpression(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ObjectExpressionPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -358,14 +358,14 @@ ASTNode.ObjectExpression = ObjectExpressionConstructor
  * Construct a ASTNode.MemberExpression instance
  * @sig MemberExpression :: (Object, ASTNode?) -> ASTNode.MemberExpression
  */
-const MemberExpressionConstructor = function MemberExpression(raw, parent) {
-    const constructorName = 'ASTNode.MemberExpression(raw, parent)'
+const MemberExpressionConstructor = function MemberExpression(esTree, parent) {
+    const constructorName = 'ASTNode.MemberExpression(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(MemberExpressionPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -376,14 +376,14 @@ ASTNode.MemberExpression = MemberExpressionConstructor
  * Construct a ASTNode.CallExpression instance
  * @sig CallExpression :: (Object, ASTNode?) -> ASTNode.CallExpression
  */
-const CallExpressionConstructor = function CallExpression(raw, parent) {
-    const constructorName = 'ASTNode.CallExpression(raw, parent)'
+const CallExpressionConstructor = function CallExpression(esTree, parent) {
+    const constructorName = 'ASTNode.CallExpression(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(CallExpressionPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -394,14 +394,14 @@ ASTNode.CallExpression = CallExpressionConstructor
  * Construct a ASTNode.AssignmentExpression instance
  * @sig AssignmentExpression :: (Object, ASTNode?) -> ASTNode.AssignmentExpression
  */
-const AssignmentExpressionConstructor = function AssignmentExpression(raw, parent) {
-    const constructorName = 'ASTNode.AssignmentExpression(raw, parent)'
+const AssignmentExpressionConstructor = function AssignmentExpression(esTree, parent) {
+    const constructorName = 'ASTNode.AssignmentExpression(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(AssignmentExpressionPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -412,14 +412,14 @@ ASTNode.AssignmentExpression = AssignmentExpressionConstructor
  * Construct a ASTNode.Identifier instance
  * @sig Identifier :: (Object, ASTNode?) -> ASTNode.Identifier
  */
-const IdentifierConstructor = function Identifier(raw, parent) {
-    const constructorName = 'ASTNode.Identifier(raw, parent)'
+const IdentifierConstructor = function Identifier(esTree, parent) {
+    const constructorName = 'ASTNode.Identifier(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(IdentifierPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -430,14 +430,14 @@ ASTNode.Identifier = IdentifierConstructor
  * Construct a ASTNode.Property instance
  * @sig Property :: (Object, ASTNode?) -> ASTNode.Property
  */
-const PropertyConstructor = function Property(raw, parent) {
-    const constructorName = 'ASTNode.Property(raw, parent)'
+const PropertyConstructor = function Property(esTree, parent) {
+    const constructorName = 'ASTNode.Property(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(PropertyPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -448,14 +448,14 @@ ASTNode.Property = PropertyConstructor
  * Construct a ASTNode.ExportNamedDeclaration instance
  * @sig ExportNamedDeclaration :: (Object, ASTNode?) -> ASTNode.ExportNamedDeclaration
  */
-const ExportNamedDeclarationConstructor = function ExportNamedDeclaration(raw, parent) {
-    const constructorName = 'ASTNode.ExportNamedDeclaration(raw, parent)'
+const ExportNamedDeclarationConstructor = function ExportNamedDeclaration(esTree, parent) {
+    const constructorName = 'ASTNode.ExportNamedDeclaration(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ExportNamedDeclarationPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -466,14 +466,14 @@ ASTNode.ExportNamedDeclaration = ExportNamedDeclarationConstructor
  * Construct a ASTNode.ExportDefaultDeclaration instance
  * @sig ExportDefaultDeclaration :: (Object, ASTNode?) -> ASTNode.ExportDefaultDeclaration
  */
-const ExportDefaultDeclarationConstructor = function ExportDefaultDeclaration(raw, parent) {
-    const constructorName = 'ASTNode.ExportDefaultDeclaration(raw, parent)'
+const ExportDefaultDeclarationConstructor = function ExportDefaultDeclaration(esTree, parent) {
+    const constructorName = 'ASTNode.ExportDefaultDeclaration(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ExportDefaultDeclarationPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -484,14 +484,14 @@ ASTNode.ExportDefaultDeclaration = ExportDefaultDeclarationConstructor
  * Construct a ASTNode.ImportDeclaration instance
  * @sig ImportDeclaration :: (Object, ASTNode?) -> ASTNode.ImportDeclaration
  */
-const ImportDeclarationConstructor = function ImportDeclaration(raw, parent) {
-    const constructorName = 'ASTNode.ImportDeclaration(raw, parent)'
+const ImportDeclarationConstructor = function ImportDeclaration(esTree, parent) {
+    const constructorName = 'ASTNode.ImportDeclaration(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ImportDeclarationPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -502,14 +502,14 @@ ASTNode.ImportDeclaration = ImportDeclarationConstructor
  * Construct a ASTNode.ImportNamespaceSpecifier instance
  * @sig ImportNamespaceSpecifier :: (Object, ASTNode?) -> ASTNode.ImportNamespaceSpecifier
  */
-const ImportNamespaceSpecifierConstructor = function ImportNamespaceSpecifier(raw, parent) {
-    const constructorName = 'ASTNode.ImportNamespaceSpecifier(raw, parent)'
+const ImportNamespaceSpecifierConstructor = function ImportNamespaceSpecifier(esTree, parent) {
+    const constructorName = 'ASTNode.ImportNamespaceSpecifier(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ImportNamespaceSpecifierPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -520,14 +520,14 @@ ASTNode.ImportNamespaceSpecifier = ImportNamespaceSpecifierConstructor
  * Construct a ASTNode.BlockStatement instance
  * @sig BlockStatement :: (Object, ASTNode?) -> ASTNode.BlockStatement
  */
-const BlockStatementConstructor = function BlockStatement(raw, parent) {
-    const constructorName = 'ASTNode.BlockStatement(raw, parent)'
+const BlockStatementConstructor = function BlockStatement(esTree, parent) {
+    const constructorName = 'ASTNode.BlockStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(BlockStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -538,14 +538,14 @@ ASTNode.BlockStatement = BlockStatementConstructor
  * Construct a ASTNode.ReturnStatement instance
  * @sig ReturnStatement :: (Object, ASTNode?) -> ASTNode.ReturnStatement
  */
-const ReturnStatementConstructor = function ReturnStatement(raw, parent) {
-    const constructorName = 'ASTNode.ReturnStatement(raw, parent)'
+const ReturnStatementConstructor = function ReturnStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ReturnStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ReturnStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -556,14 +556,14 @@ ASTNode.ReturnStatement = ReturnStatementConstructor
  * Construct a ASTNode.IfStatement instance
  * @sig IfStatement :: (Object, ASTNode?) -> ASTNode.IfStatement
  */
-const IfStatementConstructor = function IfStatement(raw, parent) {
-    const constructorName = 'ASTNode.IfStatement(raw, parent)'
+const IfStatementConstructor = function IfStatement(esTree, parent) {
+    const constructorName = 'ASTNode.IfStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(IfStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -574,14 +574,14 @@ ASTNode.IfStatement = IfStatementConstructor
  * Construct a ASTNode.TryStatement instance
  * @sig TryStatement :: (Object, ASTNode?) -> ASTNode.TryStatement
  */
-const TryStatementConstructor = function TryStatement(raw, parent) {
-    const constructorName = 'ASTNode.TryStatement(raw, parent)'
+const TryStatementConstructor = function TryStatement(esTree, parent) {
+    const constructorName = 'ASTNode.TryStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(TryStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -592,14 +592,14 @@ ASTNode.TryStatement = TryStatementConstructor
  * Construct a ASTNode.ThrowStatement instance
  * @sig ThrowStatement :: (Object, ASTNode?) -> ASTNode.ThrowStatement
  */
-const ThrowStatementConstructor = function ThrowStatement(raw, parent) {
-    const constructorName = 'ASTNode.ThrowStatement(raw, parent)'
+const ThrowStatementConstructor = function ThrowStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ThrowStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ThrowStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -610,14 +610,14 @@ ASTNode.ThrowStatement = ThrowStatementConstructor
  * Construct a ASTNode.BreakStatement instance
  * @sig BreakStatement :: (Object, ASTNode?) -> ASTNode.BreakStatement
  */
-const BreakStatementConstructor = function BreakStatement(raw, parent) {
-    const constructorName = 'ASTNode.BreakStatement(raw, parent)'
+const BreakStatementConstructor = function BreakStatement(esTree, parent) {
+    const constructorName = 'ASTNode.BreakStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(BreakStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -628,14 +628,14 @@ ASTNode.BreakStatement = BreakStatementConstructor
  * Construct a ASTNode.ContinueStatement instance
  * @sig ContinueStatement :: (Object, ASTNode?) -> ASTNode.ContinueStatement
  */
-const ContinueStatementConstructor = function ContinueStatement(raw, parent) {
-    const constructorName = 'ASTNode.ContinueStatement(raw, parent)'
+const ContinueStatementConstructor = function ContinueStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ContinueStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ContinueStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -646,14 +646,14 @@ ASTNode.ContinueStatement = ContinueStatementConstructor
  * Construct a ASTNode.ForStatement instance
  * @sig ForStatement :: (Object, ASTNode?) -> ASTNode.ForStatement
  */
-const ForStatementConstructor = function ForStatement(raw, parent) {
-    const constructorName = 'ASTNode.ForStatement(raw, parent)'
+const ForStatementConstructor = function ForStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ForStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ForStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -664,14 +664,14 @@ ASTNode.ForStatement = ForStatementConstructor
  * Construct a ASTNode.WhileStatement instance
  * @sig WhileStatement :: (Object, ASTNode?) -> ASTNode.WhileStatement
  */
-const WhileStatementConstructor = function WhileStatement(raw, parent) {
-    const constructorName = 'ASTNode.WhileStatement(raw, parent)'
+const WhileStatementConstructor = function WhileStatement(esTree, parent) {
+    const constructorName = 'ASTNode.WhileStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(WhileStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -682,14 +682,14 @@ ASTNode.WhileStatement = WhileStatementConstructor
  * Construct a ASTNode.DoWhileStatement instance
  * @sig DoWhileStatement :: (Object, ASTNode?) -> ASTNode.DoWhileStatement
  */
-const DoWhileStatementConstructor = function DoWhileStatement(raw, parent) {
-    const constructorName = 'ASTNode.DoWhileStatement(raw, parent)'
+const DoWhileStatementConstructor = function DoWhileStatement(esTree, parent) {
+    const constructorName = 'ASTNode.DoWhileStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(DoWhileStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -700,14 +700,14 @@ ASTNode.DoWhileStatement = DoWhileStatementConstructor
  * Construct a ASTNode.ForInStatement instance
  * @sig ForInStatement :: (Object, ASTNode?) -> ASTNode.ForInStatement
  */
-const ForInStatementConstructor = function ForInStatement(raw, parent) {
-    const constructorName = 'ASTNode.ForInStatement(raw, parent)'
+const ForInStatementConstructor = function ForInStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ForInStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ForInStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -718,14 +718,14 @@ ASTNode.ForInStatement = ForInStatementConstructor
  * Construct a ASTNode.ForOfStatement instance
  * @sig ForOfStatement :: (Object, ASTNode?) -> ASTNode.ForOfStatement
  */
-const ForOfStatementConstructor = function ForOfStatement(raw, parent) {
-    const constructorName = 'ASTNode.ForOfStatement(raw, parent)'
+const ForOfStatementConstructor = function ForOfStatement(esTree, parent) {
+    const constructorName = 'ASTNode.ForOfStatement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(ForOfStatementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -736,14 +736,14 @@ ASTNode.ForOfStatement = ForOfStatementConstructor
  * Construct a ASTNode.JSXElement instance
  * @sig JSXElement :: (Object, ASTNode?) -> ASTNode.JSXElement
  */
-const JSXElementConstructor = function JSXElement(raw, parent) {
-    const constructorName = 'ASTNode.JSXElement(raw, parent)'
+const JSXElementConstructor = function JSXElement(esTree, parent) {
+    const constructorName = 'ASTNode.JSXElement(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(JSXElementPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -754,14 +754,14 @@ ASTNode.JSXElement = JSXElementConstructor
  * Construct a ASTNode.JSXFragment instance
  * @sig JSXFragment :: (Object, ASTNode?) -> ASTNode.JSXFragment
  */
-const JSXFragmentConstructor = function JSXFragment(raw, parent) {
-    const constructorName = 'ASTNode.JSXFragment(raw, parent)'
+const JSXFragmentConstructor = function JSXFragment(esTree, parent) {
+    const constructorName = 'ASTNode.JSXFragment(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(JSXFragmentPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -772,14 +772,14 @@ ASTNode.JSXFragment = JSXFragmentConstructor
  * Construct a ASTNode.Other instance
  * @sig Other :: (Object, ASTNode?) -> ASTNode.Other
  */
-const OtherConstructor = function Other(raw, parent) {
-    const constructorName = 'ASTNode.Other(raw, parent)'
+const OtherConstructor = function Other(esTree, parent) {
+    const constructorName = 'ASTNode.Other(esTree, parent)'
 
-    R.validateObject(constructorName, 'raw', false, raw)
+    R.validateObject(constructorName, 'esTree', false, esTree)
     R.validateTag(constructorName, 'ASTNode', 'parent', true, parent)
 
     const result = Object.create(OtherPrototype)
-    result.raw = raw
+    result.esTree = esTree
     if (parent != null) result.parent = parent
     return result
 }
@@ -1133,36 +1133,36 @@ OtherConstructor.toString = () => 'ASTNode.Other'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-FunctionDeclarationConstructor._from = _input => ASTNode.FunctionDeclaration(_input.raw, _input.parent)
-ArrowFunctionExpressionConstructor._from = _input => ASTNode.ArrowFunctionExpression(_input.raw, _input.parent)
-FunctionExpressionConstructor._from = _input => ASTNode.FunctionExpression(_input.raw, _input.parent)
-VariableDeclarationConstructor._from = _input => ASTNode.VariableDeclaration(_input.raw, _input.parent)
-VariableDeclaratorConstructor._from = _input => ASTNode.VariableDeclarator(_input.raw, _input.parent)
-ObjectExpressionConstructor._from = _input => ASTNode.ObjectExpression(_input.raw, _input.parent)
-MemberExpressionConstructor._from = _input => ASTNode.MemberExpression(_input.raw, _input.parent)
-CallExpressionConstructor._from = _input => ASTNode.CallExpression(_input.raw, _input.parent)
-AssignmentExpressionConstructor._from = _input => ASTNode.AssignmentExpression(_input.raw, _input.parent)
-IdentifierConstructor._from = _input => ASTNode.Identifier(_input.raw, _input.parent)
-PropertyConstructor._from = _input => ASTNode.Property(_input.raw, _input.parent)
-ExportNamedDeclarationConstructor._from = _input => ASTNode.ExportNamedDeclaration(_input.raw, _input.parent)
-ExportDefaultDeclarationConstructor._from = _input => ASTNode.ExportDefaultDeclaration(_input.raw, _input.parent)
-ImportDeclarationConstructor._from = _input => ASTNode.ImportDeclaration(_input.raw, _input.parent)
-ImportNamespaceSpecifierConstructor._from = _input => ASTNode.ImportNamespaceSpecifier(_input.raw, _input.parent)
-BlockStatementConstructor._from = _input => ASTNode.BlockStatement(_input.raw, _input.parent)
-ReturnStatementConstructor._from = _input => ASTNode.ReturnStatement(_input.raw, _input.parent)
-IfStatementConstructor._from = _input => ASTNode.IfStatement(_input.raw, _input.parent)
-TryStatementConstructor._from = _input => ASTNode.TryStatement(_input.raw, _input.parent)
-ThrowStatementConstructor._from = _input => ASTNode.ThrowStatement(_input.raw, _input.parent)
-BreakStatementConstructor._from = _input => ASTNode.BreakStatement(_input.raw, _input.parent)
-ContinueStatementConstructor._from = _input => ASTNode.ContinueStatement(_input.raw, _input.parent)
-ForStatementConstructor._from = _input => ASTNode.ForStatement(_input.raw, _input.parent)
-WhileStatementConstructor._from = _input => ASTNode.WhileStatement(_input.raw, _input.parent)
-DoWhileStatementConstructor._from = _input => ASTNode.DoWhileStatement(_input.raw, _input.parent)
-ForInStatementConstructor._from = _input => ASTNode.ForInStatement(_input.raw, _input.parent)
-ForOfStatementConstructor._from = _input => ASTNode.ForOfStatement(_input.raw, _input.parent)
-JSXElementConstructor._from = _input => ASTNode.JSXElement(_input.raw, _input.parent)
-JSXFragmentConstructor._from = _input => ASTNode.JSXFragment(_input.raw, _input.parent)
-OtherConstructor._from = _input => ASTNode.Other(_input.raw, _input.parent)
+FunctionDeclarationConstructor._from = _input => ASTNode.FunctionDeclaration(_input.esTree, _input.parent)
+ArrowFunctionExpressionConstructor._from = _input => ASTNode.ArrowFunctionExpression(_input.esTree, _input.parent)
+FunctionExpressionConstructor._from = _input => ASTNode.FunctionExpression(_input.esTree, _input.parent)
+VariableDeclarationConstructor._from = _input => ASTNode.VariableDeclaration(_input.esTree, _input.parent)
+VariableDeclaratorConstructor._from = _input => ASTNode.VariableDeclarator(_input.esTree, _input.parent)
+ObjectExpressionConstructor._from = _input => ASTNode.ObjectExpression(_input.esTree, _input.parent)
+MemberExpressionConstructor._from = _input => ASTNode.MemberExpression(_input.esTree, _input.parent)
+CallExpressionConstructor._from = _input => ASTNode.CallExpression(_input.esTree, _input.parent)
+AssignmentExpressionConstructor._from = _input => ASTNode.AssignmentExpression(_input.esTree, _input.parent)
+IdentifierConstructor._from = _input => ASTNode.Identifier(_input.esTree, _input.parent)
+PropertyConstructor._from = _input => ASTNode.Property(_input.esTree, _input.parent)
+ExportNamedDeclarationConstructor._from = _input => ASTNode.ExportNamedDeclaration(_input.esTree, _input.parent)
+ExportDefaultDeclarationConstructor._from = _input => ASTNode.ExportDefaultDeclaration(_input.esTree, _input.parent)
+ImportDeclarationConstructor._from = _input => ASTNode.ImportDeclaration(_input.esTree, _input.parent)
+ImportNamespaceSpecifierConstructor._from = _input => ASTNode.ImportNamespaceSpecifier(_input.esTree, _input.parent)
+BlockStatementConstructor._from = _input => ASTNode.BlockStatement(_input.esTree, _input.parent)
+ReturnStatementConstructor._from = _input => ASTNode.ReturnStatement(_input.esTree, _input.parent)
+IfStatementConstructor._from = _input => ASTNode.IfStatement(_input.esTree, _input.parent)
+TryStatementConstructor._from = _input => ASTNode.TryStatement(_input.esTree, _input.parent)
+ThrowStatementConstructor._from = _input => ASTNode.ThrowStatement(_input.esTree, _input.parent)
+BreakStatementConstructor._from = _input => ASTNode.BreakStatement(_input.esTree, _input.parent)
+ContinueStatementConstructor._from = _input => ASTNode.ContinueStatement(_input.esTree, _input.parent)
+ForStatementConstructor._from = _input => ASTNode.ForStatement(_input.esTree, _input.parent)
+WhileStatementConstructor._from = _input => ASTNode.WhileStatement(_input.esTree, _input.parent)
+DoWhileStatementConstructor._from = _input => ASTNode.DoWhileStatement(_input.esTree, _input.parent)
+ForInStatementConstructor._from = _input => ASTNode.ForInStatement(_input.esTree, _input.parent)
+ForOfStatementConstructor._from = _input => ASTNode.ForOfStatement(_input.esTree, _input.parent)
+JSXElementConstructor._from = _input => ASTNode.JSXElement(_input.esTree, _input.parent)
+JSXFragmentConstructor._from = _input => ASTNode.JSXFragment(_input.esTree, _input.parent)
+OtherConstructor._from = _input => ASTNode.Other(_input.esTree, _input.parent)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -1208,9 +1208,9 @@ OtherConstructor.from = OtherConstructor._from
  * @sig _toFirestore :: (FunctionDeclaration, Function) -> Object
  */
 FunctionDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1220,9 +1220,9 @@ FunctionDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> FunctionDeclaration
  */
 FunctionDeclarationConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return FunctionDeclarationConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1236,9 +1236,9 @@ FunctionDeclarationConstructor.fromFirestore = FunctionDeclarationConstructor._f
  * @sig _toFirestore :: (ArrowFunctionExpression, Function) -> Object
  */
 ArrowFunctionExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1248,9 +1248,9 @@ ArrowFunctionExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ArrowFunctionExpression
  */
 ArrowFunctionExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ArrowFunctionExpressionConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1264,9 +1264,9 @@ ArrowFunctionExpressionConstructor.fromFirestore = ArrowFunctionExpressionConstr
  * @sig _toFirestore :: (FunctionExpression, Function) -> Object
  */
 FunctionExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1276,9 +1276,9 @@ FunctionExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> FunctionExpression
  */
 FunctionExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return FunctionExpressionConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1292,9 +1292,9 @@ FunctionExpressionConstructor.fromFirestore = FunctionExpressionConstructor._fro
  * @sig _toFirestore :: (VariableDeclaration, Function) -> Object
  */
 VariableDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1304,9 +1304,9 @@ VariableDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> VariableDeclaration
  */
 VariableDeclarationConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return VariableDeclarationConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1320,9 +1320,9 @@ VariableDeclarationConstructor.fromFirestore = VariableDeclarationConstructor._f
  * @sig _toFirestore :: (VariableDeclarator, Function) -> Object
  */
 VariableDeclaratorConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1332,9 +1332,9 @@ VariableDeclaratorConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> VariableDeclarator
  */
 VariableDeclaratorConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return VariableDeclaratorConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1348,9 +1348,9 @@ VariableDeclaratorConstructor.fromFirestore = VariableDeclaratorConstructor._fro
  * @sig _toFirestore :: (ObjectExpression, Function) -> Object
  */
 ObjectExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1360,9 +1360,9 @@ ObjectExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ObjectExpression
  */
 ObjectExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ObjectExpressionConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1376,9 +1376,9 @@ ObjectExpressionConstructor.fromFirestore = ObjectExpressionConstructor._fromFir
  * @sig _toFirestore :: (MemberExpression, Function) -> Object
  */
 MemberExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1388,9 +1388,9 @@ MemberExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> MemberExpression
  */
 MemberExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return MemberExpressionConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1404,9 +1404,9 @@ MemberExpressionConstructor.fromFirestore = MemberExpressionConstructor._fromFir
  * @sig _toFirestore :: (CallExpression, Function) -> Object
  */
 CallExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1416,9 +1416,9 @@ CallExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> CallExpression
  */
 CallExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return CallExpressionConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1432,9 +1432,9 @@ CallExpressionConstructor.fromFirestore = CallExpressionConstructor._fromFiresto
  * @sig _toFirestore :: (AssignmentExpression, Function) -> Object
  */
 AssignmentExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1444,9 +1444,9 @@ AssignmentExpressionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> AssignmentExpression
  */
 AssignmentExpressionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return AssignmentExpressionConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1460,9 +1460,9 @@ AssignmentExpressionConstructor.fromFirestore = AssignmentExpressionConstructor.
  * @sig _toFirestore :: (Identifier, Function) -> Object
  */
 IdentifierConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1472,9 +1472,9 @@ IdentifierConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Identifier
  */
 IdentifierConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return IdentifierConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1488,9 +1488,9 @@ IdentifierConstructor.fromFirestore = IdentifierConstructor._fromFirestore
  * @sig _toFirestore :: (Property, Function) -> Object
  */
 PropertyConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1500,9 +1500,9 @@ PropertyConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Property
  */
 PropertyConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return PropertyConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1516,9 +1516,9 @@ PropertyConstructor.fromFirestore = PropertyConstructor._fromFirestore
  * @sig _toFirestore :: (ExportNamedDeclaration, Function) -> Object
  */
 ExportNamedDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1528,9 +1528,9 @@ ExportNamedDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ExportNamedDeclaration
  */
 ExportNamedDeclarationConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ExportNamedDeclarationConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1544,9 +1544,9 @@ ExportNamedDeclarationConstructor.fromFirestore = ExportNamedDeclarationConstruc
  * @sig _toFirestore :: (ExportDefaultDeclaration, Function) -> Object
  */
 ExportDefaultDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1556,9 +1556,9 @@ ExportDefaultDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ExportDefaultDeclaration
  */
 ExportDefaultDeclarationConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ExportDefaultDeclarationConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1572,9 +1572,9 @@ ExportDefaultDeclarationConstructor.fromFirestore = ExportDefaultDeclarationCons
  * @sig _toFirestore :: (ImportDeclaration, Function) -> Object
  */
 ImportDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1584,9 +1584,9 @@ ImportDeclarationConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ImportDeclaration
  */
 ImportDeclarationConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ImportDeclarationConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1600,9 +1600,9 @@ ImportDeclarationConstructor.fromFirestore = ImportDeclarationConstructor._fromF
  * @sig _toFirestore :: (ImportNamespaceSpecifier, Function) -> Object
  */
 ImportNamespaceSpecifierConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1612,9 +1612,9 @@ ImportNamespaceSpecifierConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ImportNamespaceSpecifier
  */
 ImportNamespaceSpecifierConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ImportNamespaceSpecifierConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1628,9 +1628,9 @@ ImportNamespaceSpecifierConstructor.fromFirestore = ImportNamespaceSpecifierCons
  * @sig _toFirestore :: (BlockStatement, Function) -> Object
  */
 BlockStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1640,9 +1640,9 @@ BlockStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> BlockStatement
  */
 BlockStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return BlockStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1656,9 +1656,9 @@ BlockStatementConstructor.fromFirestore = BlockStatementConstructor._fromFiresto
  * @sig _toFirestore :: (ReturnStatement, Function) -> Object
  */
 ReturnStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1668,9 +1668,9 @@ ReturnStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ReturnStatement
  */
 ReturnStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ReturnStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1684,9 +1684,9 @@ ReturnStatementConstructor.fromFirestore = ReturnStatementConstructor._fromFires
  * @sig _toFirestore :: (IfStatement, Function) -> Object
  */
 IfStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1696,9 +1696,9 @@ IfStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> IfStatement
  */
 IfStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return IfStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1712,9 +1712,9 @@ IfStatementConstructor.fromFirestore = IfStatementConstructor._fromFirestore
  * @sig _toFirestore :: (TryStatement, Function) -> Object
  */
 TryStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1724,9 +1724,9 @@ TryStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> TryStatement
  */
 TryStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return TryStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1740,9 +1740,9 @@ TryStatementConstructor.fromFirestore = TryStatementConstructor._fromFirestore
  * @sig _toFirestore :: (ThrowStatement, Function) -> Object
  */
 ThrowStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1752,9 +1752,9 @@ ThrowStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ThrowStatement
  */
 ThrowStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ThrowStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1768,9 +1768,9 @@ ThrowStatementConstructor.fromFirestore = ThrowStatementConstructor._fromFiresto
  * @sig _toFirestore :: (BreakStatement, Function) -> Object
  */
 BreakStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1780,9 +1780,9 @@ BreakStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> BreakStatement
  */
 BreakStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return BreakStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1796,9 +1796,9 @@ BreakStatementConstructor.fromFirestore = BreakStatementConstructor._fromFiresto
  * @sig _toFirestore :: (ContinueStatement, Function) -> Object
  */
 ContinueStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1808,9 +1808,9 @@ ContinueStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ContinueStatement
  */
 ContinueStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ContinueStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1824,9 +1824,9 @@ ContinueStatementConstructor.fromFirestore = ContinueStatementConstructor._fromF
  * @sig _toFirestore :: (ForStatement, Function) -> Object
  */
 ForStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1836,9 +1836,9 @@ ForStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ForStatement
  */
 ForStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ForStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1852,9 +1852,9 @@ ForStatementConstructor.fromFirestore = ForStatementConstructor._fromFirestore
  * @sig _toFirestore :: (WhileStatement, Function) -> Object
  */
 WhileStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1864,9 +1864,9 @@ WhileStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> WhileStatement
  */
 WhileStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return WhileStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1880,9 +1880,9 @@ WhileStatementConstructor.fromFirestore = WhileStatementConstructor._fromFiresto
  * @sig _toFirestore :: (DoWhileStatement, Function) -> Object
  */
 DoWhileStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1892,9 +1892,9 @@ DoWhileStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> DoWhileStatement
  */
 DoWhileStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return DoWhileStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1908,9 +1908,9 @@ DoWhileStatementConstructor.fromFirestore = DoWhileStatementConstructor._fromFir
  * @sig _toFirestore :: (ForInStatement, Function) -> Object
  */
 ForInStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1920,9 +1920,9 @@ ForInStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ForInStatement
  */
 ForInStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ForInStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1936,9 +1936,9 @@ ForInStatementConstructor.fromFirestore = ForInStatementConstructor._fromFiresto
  * @sig _toFirestore :: (ForOfStatement, Function) -> Object
  */
 ForOfStatementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1948,9 +1948,9 @@ ForOfStatementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> ForOfStatement
  */
 ForOfStatementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return ForOfStatementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1964,9 +1964,9 @@ ForOfStatementConstructor.fromFirestore = ForOfStatementConstructor._fromFiresto
  * @sig _toFirestore :: (JSXElement, Function) -> Object
  */
 JSXElementConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -1976,9 +1976,9 @@ JSXElementConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> JSXElement
  */
 JSXElementConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return JSXElementConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -1992,9 +1992,9 @@ JSXElementConstructor.fromFirestore = JSXElementConstructor._fromFirestore
  * @sig _toFirestore :: (JSXFragment, Function) -> Object
  */
 JSXFragmentConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -2004,9 +2004,9 @@ JSXFragmentConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> JSXFragment
  */
 JSXFragmentConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return JSXFragmentConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -2020,9 +2020,9 @@ JSXFragmentConstructor.fromFirestore = JSXFragmentConstructor._fromFirestore
  * @sig _toFirestore :: (Other, Function) -> Object
  */
 OtherConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { raw, parent } = o
+    const { esTree, parent } = o
     return {
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.toFirestore(parent, encodeTimestamps),
     }
 }
@@ -2032,9 +2032,9 @@ OtherConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Other
  */
 OtherConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { raw, parent } = doc
+    const { esTree, parent } = doc
     return OtherConstructor._from({
-        raw: raw,
+        esTree: esTree,
         parent: ASTNode.fromFirestore ? ASTNode.fromFirestore(parent, decodeTimestamps) : ASTNode.from(parent),
     })
 }
@@ -2209,11 +2209,11 @@ ASTNode.fromFirestore = ASTNode._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-ASTNode.wrap = (rawNode, parent = null) => {
-    const type = rawNode?.type
-    if (!type) return ASTNode.Other(rawNode || {}, parent)
-    if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](rawNode, parent)
-    return ASTNode.Other(rawNode, parent)
+ASTNode.wrap = (esTreeNode, parent = null) => {
+    const type = esTreeNode?.type
+    if (!type) return ASTNode.Other(esTreeNode || {}, parent)
+    if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](esTreeNode, parent)
+    return ASTNode.Other(esTreeNode, parent)
 }
 
 ASTNode.isASTNode = value => value && value['@@typeName'] === 'ASTNode'
