@@ -21,7 +21,7 @@ const defaults = {
 
 // Get the TransactionFilter for a viewId, or undefined if none exists
 // @sig transactionFilter :: (ReduxState, String) -> TransactionFilter?
-const transactionFilter = (state, viewId) => state.transactionFilters.get(viewId)
+const transactionFilter = (state, viewId) => state.transactionFilters?.get(viewId)
 
 // @sig dateRange :: (ReduxState, String) -> { start: Date, end: Date }?
 const dateRange = (state, viewId) => transactionFilter(state, viewId)?.dateRange ?? defaults.dateRange

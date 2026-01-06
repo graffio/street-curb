@@ -42,7 +42,7 @@ const Sidebar = ({ children }) => (
  */
 const MainLayout = ({ children }) => {
     const mainLayoutGridProperties = {
-        columns: '240px 1fr',
+        columns: '320px 1fr',
         rows: '60px 1fr',
         areas: `
             "topbar topbar"

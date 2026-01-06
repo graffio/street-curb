@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { investmentReportColumns } from '../columns/index.js'
 import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
-import { enrichedHoldingsAsOf } from '../store/selectors/index.js'
 import * as S from '../store/selectors/index.js'
+import { enrichedHoldingsAsOf } from '../store/selectors/index.js'
 import { buildHoldingsTree } from '../utils/holdings-tree.js'
 
 const pageContainerStyle = { height: '100%' }
@@ -91,8 +91,8 @@ const HoldingRow = ({ holding }) => {
     return (
         <tr>
             <td style={{ ...CELL_STYLE, width: security }}>
-                <div style={{ fontWeight: 500 }}>{securitySymbol || '—'}</div>
-                <div style={{ fontSize: 'var(--font-size-1)', color: 'var(--gray-11)' }}>{securityName || ''}</div>
+                <div style={{ fontWeight: 500 }}>{securityName || '—'}</div>
+                <div style={{ fontSize: 'var(--font-size-1)', color: 'var(--gray-11)' }}>{securitySymbol || ''}</div>
             </td>
             <td style={{ ...CELL_STYLE, width: account }}>{accountName}</td>
             <td style={{ ...RIGHT_CELL, width: shares }}>{quantity.toFixed(3)}</td>
