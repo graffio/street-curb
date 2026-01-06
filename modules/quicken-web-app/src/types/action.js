@@ -42,6 +42,10 @@
  *  SetTabGroupWidth
  *      groupId: "String",
  *      width  : "Number"
+ *  SetAccountListSortMode
+ *      sortMode: "SortMode"
+ *  ToggleSectionCollapsed
+ *      sectionId: "String"
  *
  */
 
@@ -57,6 +61,7 @@ import { LotAllocation } from './lot-allocation.js'
 import { Price } from './price.js'
 import { TableLayout } from './table-layout.js'
 import { View } from './view.js'
+import { SortMode } from './sort-mode.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -83,6 +88,8 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetActiveView',
         'SetActiveTabGroup',
         'SetTabGroupWidth',
+        'SetAccountListSortMode',
+        'ToggleSectionCollapsed',
     ],
     enumerable: false,
 })
@@ -123,6 +130,8 @@ const toString = {
     setActiveView          : function () { return `Action.SetActiveView(${R._toString(this.groupId)}, ${R._toString(this.viewId)})` },
     setActiveTabGroup      : function () { return `Action.SetActiveTabGroup(${R._toString(this.groupId)})` },
     setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
+    setAccountListSortMode : function () { return `Action.SetAccountListSortMode(${R._toString(this.sortMode)})` },
+    toggleSectionCollapsed : function () { return `Action.ToggleSectionCollapsed(${R._toString(this.sectionId)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -144,6 +153,8 @@ const toJSON = {
     setActiveView          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setActiveTabGroup      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTabGroupWidth       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setAccountListSortMode : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    toggleSectionCollapsed : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -386,6 +397,38 @@ const SetTabGroupWidthConstructor = function SetTabGroupWidth(groupId, width) {
 
 Action.SetTabGroupWidth = SetTabGroupWidthConstructor
 
+/*
+ * Construct a Action.SetAccountListSortMode instance
+ * @sig SetAccountListSortMode :: (SortMode) -> Action.SetAccountListSortMode
+ */
+const SetAccountListSortModeConstructor = function SetAccountListSortMode(sortMode) {
+    const constructorName = 'Action.SetAccountListSortMode(sortMode)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateTag(constructorName, 'SortMode', 'sortMode', false, sortMode)
+
+    const result = Object.create(SetAccountListSortModePrototype)
+    result.sortMode = sortMode
+    return result
+}
+
+Action.SetAccountListSortMode = SetAccountListSortModeConstructor
+
+/*
+ * Construct a Action.ToggleSectionCollapsed instance
+ * @sig ToggleSectionCollapsed :: (String) -> Action.ToggleSectionCollapsed
+ */
+const ToggleSectionCollapsedConstructor = function ToggleSectionCollapsed(sectionId) {
+    const constructorName = 'Action.ToggleSectionCollapsed(sectionId)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'sectionId', false, sectionId)
+
+    const result = Object.create(ToggleSectionCollapsedPrototype)
+    result.sectionId = sectionId
+    return result
+}
+
+Action.ToggleSectionCollapsed = ToggleSectionCollapsedConstructor
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
@@ -487,6 +530,22 @@ const SetTabGroupWidthPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetTabGroupWidthConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetAccountListSortModePrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetAccountListSortMode', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setAccountListSortMode, enumerable: false },
+    toJSON: { value: toJSON.setAccountListSortMode, enumerable: false },
+    constructor: { value: SetAccountListSortModeConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const ToggleSectionCollapsedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ToggleSectionCollapsed', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.toggleSectionCollapsed, enumerable: false },
+    toJSON: { value: toJSON.toggleSectionCollapsed, enumerable: false },
+    constructor: { value: ToggleSectionCollapsedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
@@ -502,6 +561,8 @@ CloseTabGroupConstructor.prototype = CloseTabGroupPrototype
 SetActiveViewConstructor.prototype = SetActiveViewPrototype
 SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
 SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
+SetAccountListSortModeConstructor.prototype = SetAccountListSortModePrototype
+ToggleSectionCollapsedConstructor.prototype = ToggleSectionCollapsedPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
@@ -517,6 +578,8 @@ CloseTabGroupConstructor.is = val => val && val.constructor === CloseTabGroupCon
 SetActiveViewConstructor.is = val => val && val.constructor === SetActiveViewConstructor
 SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTabGroupConstructor
 SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
+SetAccountListSortModeConstructor.is = val => val && val.constructor === SetAccountListSortModeConstructor
+ToggleSectionCollapsedConstructor.is = val => val && val.constructor === ToggleSectionCollapsedConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
@@ -532,6 +595,8 @@ CloseTabGroupConstructor.toString = () => 'Action.CloseTabGroup'
 SetActiveViewConstructor.toString = () => 'Action.SetActiveView'
 SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
 SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
+SetAccountListSortModeConstructor.toString = () => 'Action.SetAccountListSortMode'
+ToggleSectionCollapsedConstructor.toString = () => 'Action.ToggleSectionCollapsed'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -553,6 +618,8 @@ CloseTabGroupConstructor._from = _input => Action.CloseTabGroup(_input.groupId)
 SetActiveViewConstructor._from = _input => Action.SetActiveView(_input.groupId, _input.viewId)
 SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.groupId)
 SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
+SetAccountListSortModeConstructor._from = _input => Action.SetAccountListSortMode(_input.sortMode)
+ToggleSectionCollapsedConstructor._from = _input => Action.ToggleSectionCollapsed(_input.sectionId)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -568,6 +635,8 @@ CloseTabGroupConstructor.from = CloseTabGroupConstructor._from
 SetActiveViewConstructor.from = SetActiveViewConstructor._from
 SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
 SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
+SetAccountListSortModeConstructor.from = SetAccountListSortModeConstructor._from
+ToggleSectionCollapsedConstructor.from = ToggleSectionCollapsedConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -687,6 +756,24 @@ SetActiveTabGroupConstructor.fromFirestore = SetActiveTabGroupConstructor._from
 SetTabGroupWidthConstructor.toFirestore = o => ({ ...o })
 SetTabGroupWidthConstructor.fromFirestore = SetTabGroupWidthConstructor._from
 
+SetAccountListSortModeConstructor._toFirestore = (o, encodeTimestamps) => ({
+    sortMode: SortMode.toFirestore(o.sortMode, encodeTimestamps),
+})
+
+SetAccountListSortModeConstructor._fromFirestore = (doc, decodeTimestamps) =>
+    SetAccountListSortModeConstructor._from({
+        sortMode: SortMode.fromFirestore
+            ? SortMode.fromFirestore(doc.sortMode, decodeTimestamps)
+            : SortMode.from(doc.sortMode),
+    })
+
+// Public aliases (can be overridden)
+SetAccountListSortModeConstructor.toFirestore = SetAccountListSortModeConstructor._toFirestore
+SetAccountListSortModeConstructor.fromFirestore = SetAccountListSortModeConstructor._fromFirestore
+
+ToggleSectionCollapsedConstructor.toFirestore = o => ({ ...o })
+ToggleSectionCollapsedConstructor.fromFirestore = ToggleSectionCollapsedConstructor._from
+
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -707,6 +794,8 @@ Action.is = v => {
         SetActiveView,
         SetActiveTabGroup,
         SetTabGroupWidth,
+        SetAccountListSortMode,
+        ToggleSectionCollapsed,
     } = Action
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
@@ -722,7 +811,9 @@ Action.is = v => {
         constructor === CloseTabGroup ||
         constructor === SetActiveView ||
         constructor === SetActiveTabGroup ||
-        constructor === SetTabGroupWidth
+        constructor === SetTabGroupWidth ||
+        constructor === SetAccountListSortMode ||
+        constructor === ToggleSectionCollapsed
     )
 }
 
@@ -754,6 +845,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetActiveView,
         SetActiveTabGroup,
         SetTabGroupWidth,
+        SetAccountListSortMode,
+        ToggleSectionCollapsed,
     } = Action
     const tagName = doc['@@tagName']
     if (tagName === 'LoadFile') return LoadFile.fromFirestore(doc, decodeTimestamps)
@@ -768,6 +861,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetActiveView') return SetActiveView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetActiveTabGroup') return SetActiveTabGroup.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTabGroupWidth') return SetTabGroupWidth.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetAccountListSortMode') return SetAccountListSortMode.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ToggleSectionCollapsed') return ToggleSectionCollapsed.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 

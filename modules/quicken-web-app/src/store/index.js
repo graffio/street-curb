@@ -3,7 +3,7 @@
 // COMPLEXITY: Exports both store access and initialization - both needed by app and commands
 
 import { createStore } from 'redux'
-import { hydrateTabLayout, hydrateTableLayouts } from './hydration.js'
+import { hydrateAccountListPrefs, hydrateTabLayout, hydrateTableLayouts } from './hydration.js'
 import { createEmptyState, rootReducer } from './reducer.js'
 
 let store = null
@@ -11,9 +11,20 @@ let store = null
 // Hydrates state from IndexedDB and creates the Redux store
 // @sig initializeStore :: () -> Promise<Store>
 const initializeStore = async () => {
-    const [tableLayouts, tabLayout] = await Promise.all([hydrateTableLayouts(), hydrateTabLayout()])
+    const [tableLayouts, tabLayout, accountListPrefs] = await Promise.all([
+        hydrateTableLayouts(),
+        hydrateTabLayout(),
+        hydrateAccountListPrefs(),
+    ])
 
-    const preloadedState = { ...createEmptyState(), initialized: true, tableLayouts, tabLayout }
+    const preloadedState = {
+        ...createEmptyState(),
+        initialized: true,
+        tableLayouts,
+        tabLayout,
+        accountListSortMode: accountListPrefs.sortMode,
+        collapsedSections: accountListPrefs.collapsedSections,
+    }
 
     store = createStore(
         rootReducer,

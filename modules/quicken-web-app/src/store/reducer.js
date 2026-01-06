@@ -10,6 +10,7 @@ import {
     LotAllocation,
     Price,
     Security,
+    SortMode,
     Split,
     TableLayout,
     Tag,
@@ -30,6 +31,16 @@ import { resetTransactionFilters, setTransactionFilter } from './reducers/transa
 
 // COMPLEXITY: Exporting both reducer and state factory is standard Redux pattern
 
+// Toggles a section's collapsed state (add if not present, remove if present)
+// @sig toggleSectionCollapsed :: (State, Action.ToggleSectionCollapsed) -> State
+const toggleSectionCollapsed = (state, action) => {
+    const { sectionId } = action
+    const next = new Set(state.collapsedSections)
+    if (next.has(sectionId)) next.delete(sectionId)
+    else next.add(sectionId)
+    return { ...state, collapsedSections: next }
+}
+
 // Creates empty initial state (hydration happens async before store creation)
 // @sig createEmptyState :: () -> State
 const createEmptyState = () => ({
@@ -46,6 +57,8 @@ const createEmptyState = () => ({
     transactions: LookupTable([], Transaction, 'id'),
     tabLayout: null,
     transactionFilters: LookupTable([], TransactionFilter, 'id'),
+    accountListSortMode: SortMode.ByType(),
+    collapsedSections: new Set(),
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -79,6 +92,10 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         SetActiveView     : () => setActiveView(state, action),
         SetActiveTabGroup : () => setActiveTabGroup(state, action),
         SetTabGroupWidth  : () => setTabGroupWidth(state, action),
+
+        // Account list actions
+        SetAccountListSortMode : () => ({ ...state, accountListSortMode: action.sortMode }),
+        ToggleSectionCollapsed : () => toggleSectionCollapsed(state, action),
     })
 }
 

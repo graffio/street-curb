@@ -9,6 +9,7 @@ import { Action } from '../types/action.js'
 
 const TABLE_LAYOUTS_KEY = 'tableLayouts'
 const TAB_LAYOUT_KEY = 'tabLayout'
+const ACCOUNT_LIST_PREFS_KEY = 'accountListPrefs'
 const TABLE_LAYOUT_PERSIST_DELAY_MS = 500
 
 // COMPLEXITY: Side-effect functions (persist*, handle*) don't fit P/T/F/V/A cohesion patterns
@@ -21,8 +22,10 @@ const persistTableLayouts = () => set(TABLE_LAYOUTS_KEY, S.tableLayouts(currentS
 // @sig debouncedPersistTableLayouts :: () -> ()
 const debouncedPersistTableLayouts = debounce(TABLE_LAYOUT_PERSIST_DELAY_MS, persistTableLayouts)
 
+// Dispatches an Action to Redux and handles persistence side effects
 // @sig post :: Action -> void
 const post = action => {
+    // Sends action to Redux store with type string for devtools
     // @sig dispatch :: Action -> ()
     const dispatch = a => currentStore().dispatch({ type: a.constructor.toString(), action: a })
 
@@ -47,6 +50,22 @@ const post = action => {
         persistTabLayout()
     }
 
+    // Writes account list preferences to IndexedDB (fire-and-forget)
+    // @sig persistAccountListPrefs :: () -> ()
+    const persistAccountListPrefs = () => {
+        const state = currentStore().getState()
+        const sortMode = S.accountListSortMode(state)['@@tagName']
+        const collapsedSections = [...S.collapsedSections(state)]
+        set(ACCOUNT_LIST_PREFS_KEY, { sortMode, collapsedSections })
+    }
+
+    // Dispatches and persists account list preferences (immediate)
+    // @sig handleAccountListAction :: () -> ()
+    const handleAccountListAction = () => {
+        dispatch(action)
+        persistAccountListPrefs()
+    }
+
     if (!Action.is(action)) throw new Error('post requires an Action; found: ' + action)
 
     // prettier-ignore
@@ -65,6 +84,10 @@ const post = action => {
         SetActiveView     : handleTabLayoutAction,
         SetActiveTabGroup : handleTabLayoutAction,
         SetTabGroupWidth  : handleTabLayoutAction,
+
+        // Account list actions (all persist to IndexedDB)
+        SetAccountListSortMode : handleAccountListAction,
+        ToggleSectionCollapsed : handleAccountListAction,
     })
 }
 
