@@ -593,3 +593,17 @@ This document summarizes the specifications that were previously archived in `sp
 - Deleted redundant function-nesting rule (covered by single-level-indentation)
 - Refactored chain-extraction.js to functional style using AST.descendants() + filter chains
 - Fixed patterns.js to use P cohesion group for isStyleObject helper
+
+## [quicken-web-app] Account List Redesign (2026-01-06)
+**Purpose:** Scrollable sidebar account list with sort modes, collapsible sections, and investment balances
+
+- Added SortMode, EnrichedAccount, AccountSection tagged types for type-safe organization
+- Created account-organization.js business module for section-building logic
+- Implemented accounts.js selector using enrichedHoldingsAsOf for investment balances
+- Added Redux state for sortMode and collapsedSections with IndexedDB persistence
+- AccountList component: ScrollArea wrapper, sort dropdown, collapsible section headers
+- Always segregate $0 accounts into separate section (nested by type in ByType mode)
+- Removed Default sort mode; ByType is now default (Cash, Credit, Investments, Other Assets, Other Liabilities)
+- Investment accounts show market value (shares × price) and day change
+- Memoized collectOrganized selector to prevent unnecessary rerenders
+- Fixed multiple crash bugs: null guards for lots, prices, transactionFilters during initial load
