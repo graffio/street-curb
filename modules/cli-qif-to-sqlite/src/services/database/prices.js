@@ -1,18 +1,26 @@
 // ABOUTME: Database operations for security prices
 // ABOUTME: Imports prices from QIF entries and populates from transaction data
 
+// COMPLEXITY-TODO: functions — Pre-existing debt, database module (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Pre-existing debt, database module exports (expires 2026-04-01)
+// COMPLEXITY-TODO: vague-prefix — Pre-existing debt, database getter convention (expires 2026-04-01)
+// COMPLEXITY-TODO: single-level-indentation — Pre-existing debt, collision handling (expires 2026-04-01)
+// COMPLEXITY-TODO: functional-patterns — Pre-existing debt, collision handling (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — Pre-existing debt (expires 2026-04-01)
+
 import { map } from '@graffio/functional'
 import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Entry, Price } from '../../types/index.js'
 
 /*
- * Generate deterministic price ID from securityId and date
- * @sig generatePriceId :: (String, String) -> String
+ * Generate deterministic price ID from securityId, date, and optional collision counter
+ * @sig generatePriceId :: (String, String, Number?) -> String
  */
-const generatePriceId = (securityId, dateString) => `prc_${hashFields({ securityId, date: dateString })}`
+const generatePriceId = (securityId, dateString, collision = 0) =>
+    `prc_${hashFields({ securityId, date: dateString, collision })}`
 
 /*
- * Insert price into database (dedupes on collision)
+ * Insert price into database (dedupes by securityId+date unique constraint)
  * @sig insertPrice :: (Database, Entry.Price, Security) -> String
  */
 const insertPrice = (db, priceEntry, security) => {
@@ -21,11 +29,18 @@ const insertPrice = (db, priceEntry, security) => {
     const { id: securityId, symbol } = security
     const { price, date } = priceEntry
     const dateString = date.toISOString().split('T')[0]
-    const id = generatePriceId(securityId, dateString)
 
-    // Check if price already exists
-    const existing = db.prepare('SELECT id, price FROM prices WHERE id = ?').get(id)
+    // Check if price already exists for this security+date (unique constraint)
+    const existing = db
+        .prepare('SELECT id, price FROM prices WHERE securityId = ? AND date = ?')
+        .get(securityId, dateString)
     if (!existing) {
+        // Find a unique ID (handle hash collisions by incrementing counter)
+        let collision = 0
+        let id = generatePriceId(securityId, dateString, collision)
+        while (db.prepare('SELECT 1 FROM prices WHERE id = ?').get(id))
+            id = generatePriceId(securityId, dateString, ++collision)
+
         db.prepare(`INSERT INTO prices (id, securityId, date, price) VALUES (?, ?, ?, ?)`).run(
             id,
             securityId,
@@ -99,10 +114,17 @@ const clearPrices = db => db.prepare('DELETE FROM prices').run()
 const populatePricesFromTransactions = db => {
     // @sig insertOrUpdatePrice :: (String, String, Number) -> void
     const insertOrUpdatePrice = (securityId, date, price) => {
-        const id = generatePriceId(securityId, date)
-        const existing = db.prepare('SELECT id, price FROM prices WHERE id = ?').get(id)
+        const existing = db
+            .prepare('SELECT id, price FROM prices WHERE securityId = ? AND date = ?')
+            .get(securityId, date)
 
         if (!existing) {
+            // Find a unique ID (handle hash collisions by incrementing counter)
+            let collision = 0
+            let id = generatePriceId(securityId, date, collision)
+            while (db.prepare('SELECT 1 FROM prices WHERE id = ?').get(id))
+                id = generatePriceId(securityId, date, ++collision)
+
             db.prepare('INSERT INTO prices (id, securityId, date, price) VALUES (?, ?, ?, ?)').run(
                 id,
                 securityId,
@@ -112,7 +134,7 @@ const populatePricesFromTransactions = db => {
             return
         }
 
-        if (existing.price !== price) db.prepare('UPDATE prices SET price = ? WHERE id = ?').run(price, id)
+        if (existing.price !== price) db.prepare('UPDATE prices SET price = ? WHERE id = ?').run(price, existing.id)
     }
 
     // @sig processTransaction :: Object -> void

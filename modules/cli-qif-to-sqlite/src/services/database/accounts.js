@@ -1,6 +1,11 @@
 // ABOUTME: Account database operations for QIF import
 // ABOUTME: Handles account CRUD, balance calculations, and register queries
 
+// COMPLEXITY-TODO: lines — Pre-existing debt, database module (expires 2026-04-01)
+// COMPLEXITY-TODO: vague-prefix — Pre-existing debt, database getter convention (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Pre-existing debt, database module exports (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — Pre-existing debt (expires 2026-04-01)
+
 import { map } from '@graffio/functional'
 import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Account, Entry } from '../../types/index.js'
@@ -106,16 +111,16 @@ const getAccountsWithBalances = db => {
                 SELECT accountId, SUM(
                     CASE
                         WHEN transactionType = 'bank' THEN amount
+                        -- Investment actions where amount is already signed for cash impact
                         WHEN investmentAction IN (
-                            'Cash', 'CGLong', 'CGShort', 'ContribX', 'Div', 'DivX',
-                            'IntInc', 'MiscInc', 'MiscIncX', 'Sell', 'ShtSell', 'XIn'
+                            'Buy', 'Cash', 'CGLong', 'CGShort', 'ContribX', 'CvrShrt',
+                            'Div', 'DivX', 'IntInc', 'MargInt', 'MiscExp', 'MiscInc',
+                            'MiscIncX', 'Sell', 'ShtSell', 'WithdrwX', 'XIn', 'XOut'
                         ) THEN amount
-                        WHEN investmentAction IN (
-                            'Buy', 'CvrShrt', 'MargInt', 'MiscExp', 'XOut', 'WithdrwX'
-                        ) THEN -amount
+                        -- Actions with no cash impact (reinvestments, share transfers, splits)
                         WHEN investmentAction IN (
                             'BuyX', 'ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvMd', 'ReinvSh',
-                            'SellX', 'ShrsIn', 'ShrsOut', 'StkSplit', 'RtrnCapX'
+                            'RtrnCapX', 'SellX', 'ShrsIn', 'ShrsOut', 'StkSplit'
                         ) THEN 0
                         ELSE 0
                     END
@@ -175,26 +180,24 @@ const getAccountRegister = (db, accountName) => {
                     WHEN t.transactionType = 'bank' THEN t.amount
                     WHEN t.transactionType = 'investment' THEN
                         CASE t.investmentAction
-                            -- Cash inflows
+                            -- Actions where amount is already signed for cash impact
+                            WHEN 'Buy' THEN t.amount
                             WHEN 'Cash' THEN COALESCE(t.amount, 0)
-                            WHEN 'ContribX' THEN t.amount
-                            WHEN 'Div' THEN t.amount
-                            WHEN 'IntInc' THEN t.amount
                             WHEN 'CGLong' THEN t.amount
                             WHEN 'CGShort' THEN t.amount
+                            WHEN 'ContribX' THEN t.amount
+                            WHEN 'CvrShrt' THEN t.amount
+                            WHEN 'Div' THEN t.amount
+                            WHEN 'IntInc' THEN t.amount
+                            WHEN 'MargInt' THEN t.amount
+                            WHEN 'MiscExp' THEN t.amount
                             WHEN 'MiscInc' THEN t.amount
                             WHEN 'Sell' THEN t.amount
                             WHEN 'ShtSell' THEN t.amount
+                            WHEN 'WithdrwX' THEN t.amount
                             WHEN 'XIn' THEN t.amount
-                            -- Cash outflows
-                            WHEN 'Buy' THEN -t.amount
-                            WHEN 'CvrShrt' THEN -t.amount
-                            WHEN 'MargInt' THEN -t.amount
-                            WHEN 'MiscExp' THEN -t.amount
-                            WHEN 'XOut' THEN -t.amount
-                            -- Subtract commission from cash outflows
-                            WHEN 'BuyX' THEN -(t.amount + COALESCE(t.commission, 0))
-                            WHEN 'SellX' THEN t.amount - COALESCE(t.commission, 0)
+                            WHEN 'XOut' THEN t.amount
+                            -- No cash impact (reinvestments, share transfers)
                             ELSE 0
                         END
                     ELSE 0

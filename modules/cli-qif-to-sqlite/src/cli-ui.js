@@ -1,8 +1,20 @@
+// ABOUTME: CLI display functions for QIF import results
+// ABOUTME: Shows import statistics, account balances, holdings, and schema info
+
+// COMPLEXITY-TODO: lines — Pre-existing debt, needs cohesion group refactoring (expires 2026-04-01)
+// COMPLEXITY-TODO: functions — Pre-existing debt, needs cohesion group refactoring (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Pre-existing debt, 5 display exports (expires 2026-04-01)
+// COMPLEXITY-TODO: chain-extraction — Pre-existing debt (expires 2026-04-01)
+// COMPLEXITY-TODO: single-level-indentation — Pre-existing debt (expires 2026-04-01)
+// COMPLEXITY-TODO: function-declaration-ordering — Pre-existing debt (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — Pre-existing debt (expires 2026-04-01)
+
+import { filter, map } from '@graffio/functional'
+
 /*
  * Display import results
  * @sig displayImportResults :: QifData -> void
  */
-import { filter, map } from '@graffio/functional'
 
 const displayImportResults = qifData => {
     console.log('\nImport Statistics:')
@@ -145,7 +157,7 @@ const displayAccountsWithNonZeroBalances = (accountsWithBalances, allHoldings, a
 
     const getLatestPrice = securityId => {
         const row = db
-            .prepare('SELECT price FROM prices WHERE security_id = ? ORDER BY date DESC LIMIT 1')
+            .prepare('SELECT price FROM prices WHERE securityId = ? ORDER BY date DESC LIMIT 1')
             .get(securityId)
         return row && row.price ? row.price : 0
     }
