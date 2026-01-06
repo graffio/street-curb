@@ -1,3 +1,7 @@
+// ABOUTME: Core date manipulation utilities - parsing, formatting, period calculations
+// ABOUTME: Pure functions with no UI or business logic dependencies
+// COMPLEXITY-TODO: functions — Utility module with many date helpers (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Utility exports differ from cohesion groups (expires 2026-04-01)
 /*
  * date-utils.js - Core date manipulation utilities
  *
@@ -142,12 +146,12 @@ const parseSlashDateFormat = dateString => {
 
 /*
  * Format date parts to MM/DD/YYYY string
- * @sig formatDateString :: DateParts -> String
+ * @sig formatDateString :: (DateParts, Boolean?) -> String
  *     DateParts = { month: Number, day: Number, year: Number }
  */
-const formatDateString = ({ month, day, year }) => {
-    const monthStr = String(month).padStart(2, '0')
-    const dayStr = String(day).padStart(2, '0')
+const formatDateString = ({ month, day, year }, padDayAndMonth = true) => {
+    const monthStr = padDayAndMonth ? String(month).padStart(2, '0') : String(month)
+    const dayStr = padDayAndMonth ? String(day).padStart(2, '0') : String(day)
     return `${monthStr}/${dayStr}/${year}`
 }
 

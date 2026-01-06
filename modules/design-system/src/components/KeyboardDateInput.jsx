@@ -1,13 +1,22 @@
+// ABOUTME: Custom date input with keyboard-only navigation between month/day/year segments
+// ABOUTME: Supports arrow keys, Tab, slash navigation, and smart 2-digit year expansion
+// COMPLEXITY-TODO: lines — Complex keyboard navigation requires many handlers (expires 2026-04-01)
+// COMPLEXITY-TODO: function-declaration-ordering — Handlers reference state that must exist (expires 2026-04-01)
+// COMPLEXITY-TODO: react-component-cohesion — Render functions share state tightly (expires 2026-04-01)
+// COMPLEXITY-TODO: single-level-indentation — React hooks require inline callbacks (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — Handlers are self-documenting by name (expires 2026-04-01)
+// COMPLEXITY-TODO: chain-extraction — Event destructuring would break prettier alignment (expires 2026-04-01)
 /*
  * KeyboardDateInput - A custom date input with arrow key navigation
  *
  * This component allows users to navigate and edit date fields using only arrow keys:
  * - Left/Right: Move between month, day, year segments
  * - Up/Down: Increment/decrement the selected segment with wrapping
- * - Number keys: Type values directly into segments
- * - Enter/Tab: Exit keyboard navigation mode
- * - onChange is called immediately when any date value changes
- * - []: decrease/increase date
+ * - Number keys: Type values directly (2-digit years expand to 1980-2079, applies immediately except for 19/20 prefix)
+ * - /: Apply pending input and advance to next field
+ * - Tab: Apply pending input and advance (shift-tab goes backward)
+ * - Enter: Exit keyboard navigation mode
+ * - []: decrease/increase date by one day
  * - t: set to today
  *
  * FEATURES:
@@ -34,7 +43,12 @@ import { datePartsToDate, dateToDateParts, formatDateString } from '@graffio/fun
 import { Box, Flex, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { parseDateString, toDisplayDateString, updateDatePartWithValidation } from '../utils/date-input-utils.js'
+import {
+    expandTwoDigitYear,
+    parseDateString,
+    toDisplayDateString,
+    updateDatePartWithValidation,
+} from '../utils/date-input-utils.js'
 
 /*
  * KeyboardDateInput component
@@ -52,7 +66,10 @@ const KeyboardDateInput = forwardRef((props, ref) => {
     } = props
 
     // Helper functions for keyboard navigation
-    const handleTabNavigation = (event, isShiftTab) => (isShiftTab ? handleArrowLeft() : handleArrowRight())
+    const handleTabNavigation = (event, isShiftTab) => {
+        applyPendingBuffer()
+        return isShiftTab ? handleArrowLeft() : handleArrowRight()
+    }
 
     // prettier-ignore
     const handleArrowLeft = () => {
@@ -86,14 +103,33 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         // Clear existing timeout
         if (typingTimeout) clearTimeout(typingTimeout)
 
-        // Set new timeout to apply the number after a short delay
+        // For year field with 2 digits: apply immediately unless it could be a 4-digit year prefix
+        const isTwoDigitYear = activePart === 'year' && newBuffer.length === 2
+        const couldBeFourDigitPrefix = newBuffer === '19' || newBuffer === '20'
+
+        if (isTwoDigitYear && !couldBeFourDigitPrefix) {
+            applyTypedNumber(newBuffer)
+            setTypingBuffer('')
+            return
+        }
+
+        // Shorter delay for ambiguous year prefixes (19/20), normal delay otherwise
+        const delay = isTwoDigitYear && couldBeFourDigitPrefix ? 400 : 800
         const timeout = setTimeout(() => {
             applyTypedNumber(newBuffer)
             setTypingBuffer('')
             setTypingTimeout(null)
-        }, 800) // 800ms delay allows for multi-digit input
+        }, delay)
 
         setTypingTimeout(timeout)
+    }
+
+    const applyPendingBuffer = () => {
+        if (!typingBuffer) return
+        if (typingTimeout) clearTimeout(typingTimeout)
+        applyTypedNumber(typingBuffer)
+        setTypingBuffer('')
+        setTypingTimeout(null)
     }
 
     const handleBackspace = () => {
@@ -127,12 +163,19 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         setDateParts(dateToDateParts(newDate))
     }
 
+    const handleSlashKey = () => {
+        applyPendingBuffer()
+        handleArrowRight()
+    }
+
     const applyTypedNumber = buffer => {
         const number = parseInt(buffer, 10)
         if (isNaN(number)) return
 
+        const value = activePart === 'year' ? expandTwoDigitYear(number) : number
+
         userInitiatedChange.current = true
-        setDateParts(prev => updateDatePartWithValidation(prev, activePart, number))
+        setDateParts(prev => updateDatePartWithValidation(prev, activePart, value))
     }
 
     // Enter keyboard mode on any arrow key or tab
@@ -162,6 +205,7 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         if (event.key === 't')           return handleTodayKey()
         if (event.key === '[')           return handleDayAdjustment(false)
         if (event.key === ']')           return handleDayAdjustment(true)
+        if (event.key === '/')           return handleSlashKey()
         if (numbers.includes(event.key)) return handleNumberTyping(event.key)
     }
 
@@ -196,7 +240,7 @@ const KeyboardDateInput = forwardRef((props, ref) => {
 
         if (activePart === partName && typingBuffer) return typingBuffer
 
-        const displayValue = formatDateString(dateParts)
+        const displayValue = formatDateString(dateParts, false)
         const parts = displayValue.split('/')
         return parts[partIndex]
     }
@@ -242,9 +286,9 @@ const KeyboardDateInput = forwardRef((props, ref) => {
             }
 
             if (typingBuffer) return ''
-            const text =
-                '{{↑↓}} change field • {{←→}}/{{Tab}} navigate fields • {{0-9}} type • {{t}} today • {{[}}/{{]}} +/- day • {{Enter}}/click away to exit'
-            const parts = text.split(/(\{\{.*?\}\})/)
+            const shortcuts = '{{↑↓}} change • {{←→}}/{{Tab}}/{{/}} navigate • {{0-9}} type • {{t}} today'
+            const extras = '{{[}}/{{]}} +/- day • {{Enter}}/click to exit'
+            const parts = `${shortcuts} • ${extras}`.split(/(\{\{.*?\}\})/)
             return parts.map(interpolateBraces)
         }
 
