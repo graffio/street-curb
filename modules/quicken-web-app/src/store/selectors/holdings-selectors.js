@@ -159,6 +159,9 @@ const _enrichedHoldingsAsOf = (state, viewId) => {
     const filterQuery = filterQuerySelector(state, viewId)
     const { lotAllocations, lots } = state
 
+    // Return empty if no lots loaded yet
+    if (!lots || lots.length === 0) return []
+
     // Filter lots by selected accounts if any are selected
     const filteredLots = selectedAccounts.length > 0 ? lots.filter(l => selectedAccounts.includes(l.accountId)) : lots
 

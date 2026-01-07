@@ -1,6 +1,9 @@
 // ABOUTME: Converts QIF line groups into typed Entry objects
 // ABOUTME: Handles parsing and normalization of accounts, transactions, securities, etc.
 
+// COMPLEXITY-TODO: lines — Pre-existing debt, QIF parsing inherently complex (expires 2026-04-01)
+// COMPLEXITY-TODO: functions — Pre-existing debt, QIF parsing inherently complex (expires 2026-04-01)
+
 import { append, assoc, update } from '@graffio/functional'
 import { Entry, Split } from './types/index.js'
 
@@ -223,12 +226,13 @@ const lineGroupToEntry = (currentContext, currentAccount, lineGroup) => {
             const { amount, transactionType } = d
             if (amount == null) return null
 
-            const outflowActions = ['Buy', 'BuyX', 'MiscExp', 'MargInt']
+            const outflowActions = ['Buy', 'BuyX', 'CvrShrt', 'MargInt', 'MiscExp', 'WithdrwX', 'XOut']
             const zeroCashActions = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'StkSplit', 'ShrsIn', 'ShrsOut']
 
             if (zeroCashActions.includes(transactionType)) return null
-            const absAmount = Math.abs(amount)
-            return outflowActions.includes(transactionType) ? -absAmount : absAmount
+
+            // Outflows: force negative; others: preserve original sign from QIF
+            return outflowActions.includes(transactionType) ? -Math.abs(amount) : amount
         }
 
         const account = currentAccount?.name

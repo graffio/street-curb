@@ -38,5 +38,9 @@ export const Action = {
         SetActiveView     : { groupId: 'String', viewId: 'String' },
         SetActiveTabGroup : { groupId: 'String' },
         SetTabGroupWidth  : { groupId: 'String', width: 'Number' },
+
+        // Account list actions
+        SetAccountListSortMode : { sortMode: 'SortMode' },
+        ToggleSectionCollapsed : { sectionId: 'String' },
     }
 }

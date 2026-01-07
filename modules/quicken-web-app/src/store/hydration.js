@@ -4,14 +4,16 @@
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { get } from '../services/storage.js'
-import { ColumnDescriptor, SortOrder, TabGroup, TabLayout, TableLayout, View } from '../types/index.js'
+import { ColumnDescriptor, SortMode, SortOrder, TabGroup, TabLayout, TableLayout, View } from '../types/index.js'
 
 const TABLE_LAYOUTS_KEY = 'tableLayouts'
 const TAB_LAYOUT_KEY = 'tabLayout'
+const ACCOUNT_LIST_PREFS_KEY = 'accountListPrefs'
 
 // COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
 // @sig hydrateTableLayouts :: () -> Promise<LookupTable<TableLayout>>
 const hydrateTableLayouts = async () => {
+    // Reconstructs a TableLayout from stored JSON object
     // @sig hydrateTableLayout :: Object -> TableLayout
     const hydrateTableLayout = obj => {
         // Converts old sortOrder format (array of column IDs) to new LookupTable<SortOrder>
@@ -58,14 +60,17 @@ const hydrateTableLayouts = async () => {
 // COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
 // @sig hydrateTabLayout :: () -> Promise<TabLayout>
 const hydrateTabLayout = async () => {
+    // Creates default tab layout with one empty tab group
     // @sig createDefaultTabLayout :: () -> TabLayout
     const createDefaultTabLayout = () => {
         const emptyGroup = TabGroup('tg_1', LookupTable([], View, 'id'), null, 100)
         return TabLayout('tl_main', LookupTable([emptyGroup], TabGroup, 'id'), 'tg_1', 2)
     }
 
+    // Reconstructs a TabGroup from stored JSON object
     // @sig hydrateTabGroup :: Object -> TabGroup
     const hydrateTabGroup = obj => {
+        // Reconstructs a View variant from stored JSON object
         // @sig hydrateView :: Object -> View
         const hydrateView = viewObj => {
             const { '@@tagName': tagName, accountId, id, reportType, title } = viewObj
@@ -93,4 +98,21 @@ const hydrateTabLayout = async () => {
     }
 }
 
-export { hydrateTabLayout, hydrateTableLayouts }
+// COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
+// @sig hydrateAccountListPrefs :: () -> Promise<{ sortMode: SortMode, collapsedSections: Set }>
+const hydrateAccountListPrefs = async () => {
+    const defaults = { sortMode: SortMode.ByType(), collapsedSections: new Set() }
+    try {
+        const stored = await get(ACCOUNT_LIST_PREFS_KEY)
+        if (!stored) return defaults
+
+        const sortMode = SortMode[stored.sortMode]?.() || SortMode.ByType()
+        const collapsedSections = new Set(stored.collapsedSections || [])
+        return { sortMode, collapsedSections }
+    } catch (e) {
+        console.warn('Failed to read accountListPrefs from IndexedDB', e)
+        return defaults
+    }
+}
+
+export { hydrateAccountListPrefs, hydrateTabLayout, hydrateTableLayouts }

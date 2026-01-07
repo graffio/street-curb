@@ -1,16 +1,19 @@
 // Auto-generated module index
 // This file exports all generated types for this module
 
+export { AccountSection } from './account-section.js'
 export { Account } from './account.js'
 export { Action } from './action.js'
 export { Category } from './category.js'
 export { ColumnDescriptor } from './column-descriptor.js'
+export { EnrichedAccount } from './enriched-account.js'
 export { FieldTypes } from './field-types.js'
 export { Holding } from './holding.js'
 export { LotAllocation } from './lot-allocation.js'
 export { Lot } from './lot.js'
 export { Price } from './price.js'
 export { Security } from './security.js'
+export { SortMode } from './sort-mode.js'
 export { SortOrder } from './sort-order.js'
 export { Split } from './split.js'
 export { TabGroup } from './tab-group.js'

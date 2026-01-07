@@ -1,3 +1,10 @@
+// ABOUTME: Date input validation and formatting utilities for UI components
+// ABOUTME: Handles constraints, defaults, parsing for date picker inputs
+// COMPLEXITY-TODO: functions — Date input validation requires many helpers (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Utility exports differ from cohesion groups (expires 2026-04-01)
+// COMPLEXITY-TODO: chain-extraction — newParts accessed for validation checks (expires 2026-04-01)
+// COMPLEXITY-TODO: single-level-indentation — Validation requires nested checks (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — Internal validation helpers (expires 2026-04-01)
 /*
  * date-input-utils.js - Date input validation and formatting utilities
  *
@@ -53,6 +60,15 @@ const constrainDatePart = (part, value, month, year) => {
     if (part === 'day') return constrainDay()
     if (part === 'year') return constrainYear()
     return value
+}
+
+/*
+ * Expand 2-digit year to 4-digit using 1980-2079 window
+ * @sig expandTwoDigitYear :: Number -> Number
+ */
+const expandTwoDigitYear = year => {
+    if (year >= 100) return year
+    return year >= 80 ? 1900 + year : 2000 + year
 }
 
 /*
@@ -170,6 +186,7 @@ export {
     // Validation and constraints
     createDefaultParts,
     constrainDatePart,
+    expandTwoDigitYear,
     updateDatePartWithValidation,
 
     // Parsing and formatting for inputs

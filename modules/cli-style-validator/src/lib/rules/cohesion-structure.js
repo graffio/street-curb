@@ -238,7 +238,7 @@ const F = {
         F.createViolation(
             line,
             `CHECKPOINT: File has ${count} exports. Multiple exports may indicate the file should be split. ` +
-                `If justified, add a COMPLEXITY comment explaining why these belong together.`,
+                `If justified, ask Jeff if you should add a COMPLEXITY comment explaining why these belong together.`,
         ),
 
     // Create violation for export defined inside cohesion group

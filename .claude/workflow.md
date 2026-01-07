@@ -45,8 +45,10 @@ Complexity-budget failures often signal architectural issues that require rethin
 
 **Claude must NEVER add `// COMPLEXITY:` comments unilaterally.** When a complexity exemption might be needed (budget violation, uncategorized function, etc.), stop and ask Jeff. Options:
 - Restructure to eliminate the need
-- Add `// COMPLEXITY-TODO: <date>` (expiring — preferred)
-- Add `// COMPLEXITY:` (permanent — rare)
+- Add `// COMPLEXITY-TODO: <rule> — <reason> (expires YYYY-MM-DD)` (expiring — preferred)
+- Add `// COMPLEXITY: <rule> — <reason>` (permanent — rare)
+
+Example: `// COMPLEXITY-TODO: lines — Complex keyboard navigation requires many handlers (expires 2026-04-01)`
 
 ## Phases
 

@@ -222,10 +222,10 @@ const SecurityCell = ({ getValue, table }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
             <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
-                <HighlightedText text={symbol || ''} searchQuery={searchQuery} />
+                <HighlightedText text={name || ''} searchQuery={searchQuery} />
             </div>
             <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>
-                <HighlightedText text={name || ''} searchQuery={searchQuery} />
+                <HighlightedText text={symbol || ''} searchQuery={searchQuery} />
             </div>
         </div>
     )

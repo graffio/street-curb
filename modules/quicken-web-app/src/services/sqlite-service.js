@@ -1,14 +1,19 @@
 // ABOUTME: Service for loading SQLite databases in the browser
 // ABOUTME: Uses sql.js (WebAssembly SQLite) to read .sqlite files and extract all entities
 
+// COMPLEXITY-TODO: lines — Pre-existing debt, needs splitting (expires 2026-04-01)
+// COMPLEXITY-TODO: functions — Pre-existing debt, needs splitting (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Pre-existing debt (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — Pre-existing debt (expires 2026-04-01)
+
 /* global FileReader */
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import initSqlJs from 'sql.js'
 import { Account } from '../types/account.js'
 import { Category } from '../types/category.js'
-import { Lot } from '../types/lot.js'
 import { LotAllocation } from '../types/lot-allocation.js'
+import { Lot } from '../types/lot.js'
 import { Price } from '../types/price.js'
 import { Security } from '../types/security.js'
 import { Split } from '../types/split.js'
@@ -95,14 +100,14 @@ const loadEntitiesFromFile = async file => {
 
     // @sig querySecurities :: Database -> LookupTable<Security>
     const querySecurities = db => {
-        // Note: DB schema has name/symbol swapped - name contains ticker, symbol contains full name
+        // DB schema has name/symbol swapped - compensate when reading
         // @sig mapRow :: Object -> Security
         const mapRow = row => {
-            const { goal, id, name: ticker, symbol: fullName, type } = row
+            const { goal, id, name, symbol, type } = row
             return Security.from({
                 id,
-                name: fullName || null,
-                symbol: ticker || null,
+                name: name || symbol || null, // default to symbol if there's no name
+                symbol: symbol || name || null, // default to the name if there's no symbol
                 type: type || null,
                 goal: goal || null,
             })
