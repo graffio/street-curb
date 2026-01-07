@@ -11,4 +11,6 @@ export const Intent = {
     },
 }
 
+// Checks if an intent is triggered by the given key
+// @sig Intent.hasKey :: (Intent, String) -> Boolean
 Intent.hasKey = (intent, key) => intent.keys.includes(key)

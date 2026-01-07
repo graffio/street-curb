@@ -12,6 +12,7 @@
  *
  */
 
+import { uniqBy } from '@graffio/functional'
 import { Intent } from './intent.js'
 
 import * as R from '@graffio/cli-type-generator'
@@ -144,42 +145,24 @@ Keymap.resolveKey = (keymap, key, activeViewId) => {
             description: intent.description,
             action: intent.action,
         }
-    if (keymap.blocking) return { blocked: true }
-    return null
-}
-
-Keymap.collectIntents = (keymap, activeViewId, seen) => {
-    if (!Keymap.isActive(keymap, activeViewId)) return []
-    return keymap.intents
-        .filter(intent => !seen.has(intent.description))
-        .map(intent => {
-            seen.add(intent.description)
-            return {
-                description: intent.description,
-                keys: intent.keys,
-                from: keymap.id,
-            }
-        })
+    return keymap.blocking ? { blocked: true } : null
 }
 
 Keymap.resolve = (key, keymaps, activeId) =>
     keymaps.reduce((found, keymap) => found ?? Keymap.resolveKey(keymap, key, activeId), null)
 
 Keymap.collectAvailable = (keymaps, activeId) => {
-    const seen = new Set()
-    const accumulate = (acc, keymap) => {
-        if (acc.blocked) return acc
-        const collected = Keymap.collectIntents(keymap, activeId, seen)
-        const isBlocking = keymap.blocking && Keymap.isActive(keymap, activeId)
-        return {
-            result: acc.result.concat(collected),
-            blocked: isBlocking,
-        }
-    }
-    return keymaps.reduce(accumulate, {
-        result: [],
-        blocked: false,
-    }).result
+    const activeKeymaps = keymaps.filter(km => Keymap.isActive(km, activeId))
+    const blockingIndex = activeKeymaps.findIndex(km => km.blocking)
+    const relevantKeymaps = blockingIndex === -1 ? activeKeymaps : activeKeymaps.slice(0, blockingIndex + 1)
+    const allIntents = relevantKeymaps.flatMap(keymap =>
+        keymap.intents.map(intent => ({
+            description: intent.description,
+            keys: intent.keys,
+            from: keymap.id,
+        })),
+    )
+    return uniqBy(intent => intent.description)(allIntents)
 }
 
 export { Keymap }
