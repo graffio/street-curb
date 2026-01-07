@@ -49,7 +49,7 @@
  *  RegisterKeymap
  *      keymap: "Any"
  *  UnregisterKeymap
- *      keymapId: FieldTypes.viewId
+ *      keymapId: FieldTypes.keymapId
  *
  */
 
@@ -463,7 +463,7 @@ Action.RegisterKeymap = RegisterKeymapConstructor
 const UnregisterKeymapConstructor = function UnregisterKeymap(keymapId) {
     const constructorName = 'Action.UnregisterKeymap(keymapId)'
     R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateRegex(constructorName, FieldTypes.viewId, 'keymapId', false, keymapId)
+    R.validateRegex(constructorName, FieldTypes.keymapId, 'keymapId', false, keymapId)
 
     const result = Object.create(UnregisterKeymapPrototype)
     result.keymapId = keymapId

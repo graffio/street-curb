@@ -47,6 +47,6 @@ export const Action = {
 
         // Keymap actions
         RegisterKeymap   : { keymap: 'Any' },
-        UnregisterKeymap : { keymapId: FieldTypes.viewId },
+        UnregisterKeymap : { keymapId: FieldTypes.keymapId },
     }
 }
