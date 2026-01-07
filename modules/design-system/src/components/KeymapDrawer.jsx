@@ -2,7 +2,6 @@
 // ABOUTME: Groups keybindings by source context with formatted key symbols
 
 import { Box, Button, Flex, Heading, ScrollArea, Text } from '@radix-ui/themes'
-import { Cross2Icon } from '@radix-ui/react-icons'
 import { KeymapModule } from '@graffio/keymap'
 
 const { formatKeys } = KeymapModule
@@ -65,7 +64,7 @@ const KeymapDrawer = ({ open, onOpenChange, intents, height = 140 }) => {
                     Keyboard Shortcuts
                 </Text>
                 <Button variant="ghost" size="1" onClick={() => onOpenChange(false)}>
-                    <Cross2Icon />
+                    ✕
                 </Button>
             </Flex>
             <ScrollArea style={{ height: `${height - 40}px` }}>
