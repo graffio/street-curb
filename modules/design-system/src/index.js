@@ -1,5 +1,6 @@
 // ABOUTME: Design system facade re-exporting Radix Themes components
 // ABOUTME: Import from this package instead of @radix-ui/themes directly
+// COMPLEXITY: exports — barrel file re-exporting Radix + our components as unified API
 
 // Import Radix Themes CSS
 import '@radix-ui/themes/styles.css'
@@ -38,6 +39,7 @@ import { DataTable } from './components/DataTable.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { FilePickerButton } from './components/FilePickerButton.jsx'
 import { KeyboardDateInput } from './components/KeyboardDateInput.jsx'
+import { KeymapDrawer } from './components/KeymapDrawer.jsx'
 import { LoadingSpinner } from './components/LoadingSpinner.jsx'
 import { MainLayout } from './components/MainLayout.jsx'
 import { Table } from './components/Table.jsx'
@@ -78,9 +80,10 @@ export {
     CategorySelector,
     DataTable,
     DateRangePicker,
-    FilePickerButton,
     Dialog,
+    FilePickerButton,
     KeyboardDateInput,
+    KeymapDrawer,
     LoadingSpinner,
     MainLayout,
     TitleAndSubtitle,
