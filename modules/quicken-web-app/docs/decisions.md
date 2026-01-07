@@ -18,3 +18,8 @@ Quick decisions that don't warrant full architecture docs. For patterns, see `do
 **Context:** Investment Holdings report needs "as of date" filtering with instant response.
 **Decision:** Load all lots into Redux state; compute holdings in JS via selector filtering.
 **Why:** Avoids database round-trip on each date change; selector memoization gives instant updates.
+
+### 2026-01-07: Keymap integration via Redux state
+**Context:** Need keyboard shortcuts (j/k) for navigation without coupling to specific components.
+**Decision:** Keymaps stored in Redux; components register/unregister on mount; global listener resolves keys.
+**Why:** Components own their keymaps; priority-based resolution; translations forward to existing handlers.

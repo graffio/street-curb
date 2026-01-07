@@ -607,3 +607,16 @@ This document summarizes the specifications that were previously archived in `sp
 - Investment accounts show market value (shares × price) and day change
 - Memoized collectOrganized selector to prevent unnecessary rerenders
 - Fixed multiple crash bugs: null guards for lots, prices, transactionFilters during initial load
+
+## [quicken-web-app] Keymap Module Integration (2026-01-07)
+**Purpose:** Keyboard shortcuts (j/k navigation) via priority-based keymap resolution
+
+- Created @graffio/keymap module: Intent/Keymap tagged types, normalizeKey, Keymap.resolve()
+- Added Redux state for keymaps with RegisterKeymap/UnregisterKeymap actions
+- Created keymap-routing.js service for global keyboard handling
+- Created file-handling.js service (extracted from router.jsx)
+- Extracted RootLayout.jsx, MainSidebar.jsx, FileOpenDialog.jsx from router.jsx
+- Router.jsx simplified to route configuration only (~30 lines)
+- TransactionRegisterPage registers j/k keymap on mount, unregisters on unmount
+- Key translations forward to existing DataTable handlers (no component changes needed)
+- Fixed COMPLEXITY comment syntax: separate `// COMPLEXITY: rule — reason` per rule with em-dash
