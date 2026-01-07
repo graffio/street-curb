@@ -1,0 +1,19 @@
+{
+    "name": "@graffio/keymap",
+    "version": "0.1.0",
+    "main": "src/index.js",
+    "module": "src/index.js",
+    "type": "module",
+    "sideEffects": false,
+    "scripts": {
+        "tap": "TAP_DISABLE_COVERAGE=1 tap test/**/*.tap.js -R tap | tap-mocha-reporter spec",
+        "tap:file": "../../bash/run-tap.sh"
+    },
+    "private": true,
+    "dependencies": {
+        "@graffio/functional": "*"
+    },
+    "devDependencies": {
+        "tap": "^21.1.0"
+    }
+}

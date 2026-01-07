@@ -18,6 +18,7 @@ const sources = {
     designSystem         : `${REPO_ROOT}/modules/design-system/type-definitions`,
     financialComputations: `${REPO_ROOT}/modules/financial-computations/type-definitions`,
     functional           : `${REPO_ROOT}/modules/functional/type-definitions`,
+    keymap               : `${REPO_ROOT}/modules/keymap/type-definitions`,
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
@@ -31,6 +32,7 @@ const targets = {
     designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
     financialComputations: `${REPO_ROOT}/modules/financial-computations/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
+    keymap               : `${REPO_ROOT}/modules/keymap/src/types`,
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
@@ -71,6 +73,11 @@ export const typeMappings = {
 
     // design-system
     [`${sources.designSystem}/column-definition.type.js`] : [targets.designSystem],
+
+
+    // keymap
+    [`${sources.keymap}/intent.type.js`]                  : [targets.keymap],
+    [`${sources.keymap}/keymap.type.js`]                  : [targets.keymap],
 
 
     // functional
