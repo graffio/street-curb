@@ -59,6 +59,7 @@ const createEmptyState = () => ({
     transactionFilters: LookupTable([], TransactionFilter, 'id'),
     accountListSortMode: SortMode.ByType(),
     collapsedSections: new Set(),
+    keymaps: [],
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -96,6 +97,10 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         // Account list actions
         SetAccountListSortMode : () => ({ ...state, accountListSortMode: action.sortMode }),
         ToggleSectionCollapsed : () => toggleSectionCollapsed(state, action),
+
+        // Keymap actions
+        RegisterKeymap   : () => ({ ...state, keymaps: [...state.keymaps, action.keymap] }),
+        UnregisterKeymap : () => ({ ...state, keymaps: state.keymaps.filter(km => km.id !== action.keymapId) }),
     })
 }
 

@@ -4,6 +4,8 @@
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
 import { calculateRunningBalances } from '@graffio/financial-computations/banking'
 import { applySort } from '@graffio/financial-computations/query'
+import { LookupTable } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { bankTransactionColumns } from '../columns/index.js'
@@ -20,21 +22,27 @@ import {
     toDataTableProps,
 } from '../utils/table-layout.js'
 
+const { Intent, Keymap } = KeymapModule
+
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 
 const P = {
+    // Checks if we need to initialize the date range on first render
     // @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
     shouldInitializeDateRange: (dateRangeKey, dateRange) => dateRangeKey === 'lastTwelveMonths' && !dateRange,
 }
 
 const T = {
+    // Generates a unique table layout ID for an account
     // @sig toTableLayoutId :: String -> String
     toTableLayoutId: id => `cols_account_${id}`,
 
+    // Finds the index of a transaction by ID in the data array
     // @sig toRowIndex :: ([Row], String) -> Number
     toRowIndex: (data, id) => data.findIndex(r => r.transaction?.id === id),
 
+    // Creates a date range spanning the last 12 months
     // @sig toDefaultDateRange :: () -> DateRange
     toDefaultDateRange: () => {
         const now = new Date()
@@ -42,6 +50,19 @@ const T = {
         const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
         const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
         return { start: twelveMonthsAgo, end: endOfToday }
+    },
+}
+
+const F = {
+    // Creates a keymap for the transaction register with j/k navigation
+    // @sig createRegisterKeymap :: String -> Keymap
+    createRegisterKeymap: viewId => {
+        const intents = LookupTable(
+            [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
+            Intent,
+            'description',
+        )
+        return Keymap(viewId, 10, false, activeId => activeId === viewId, intents)
     },
 }
 
@@ -55,10 +76,18 @@ const E = {
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
 
+    // Initializes the date range to last 12 months if not already set
     // @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
     initDateRangeIfNeeded: (dateRangeKey, dateRange, viewId) => {
         if (P.shouldInitializeDateRange(dateRangeKey, dateRange))
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
+    },
+
+    // Registers keymap on mount and unregisters on unmount
+    // @sig keymapEffect :: (Keymap, String) -> () -> void
+    keymapEffect: (keymap, viewId) => () => {
+        post(Action.RegisterKeymap(keymap))
+        return () => post(Action.UnregisterKeymap(viewId))
     },
 }
 
@@ -78,8 +107,12 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     const tableLayoutId = T.toTableLayoutId(accountId)
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Hooks (selectors)
+    // Hooks (selectors and keymap registration)
     // -----------------------------------------------------------------------------------------------------------------
+    const registerKeymap = useMemo(() => F.createRegisterKeymap(viewId), [viewId])
+
+    useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
+
     const [, setLayout] = useChannel(layoutChannel)
     const dateRange = useSelector(state => S.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))

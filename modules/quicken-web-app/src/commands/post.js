@@ -88,6 +88,10 @@ const post = action => {
         // Account list actions (all persist to IndexedDB)
         SetAccountListSortMode : handleAccountListAction,
         ToggleSectionCollapsed : handleAccountListAction,
+
+        // Keymap actions (no persistence needed)
+        RegisterKeymap   : () => dispatch(action),
+        UnregisterKeymap : () => dispatch(action),
     })
 }
 

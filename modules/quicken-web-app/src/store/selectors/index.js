@@ -1,7 +1,7 @@
 // ABOUTME: Redux selectors for accessing application state
 // ABOUTME: Re-exports from submodules plus base state accessors
-// COMPLEXITY: complexity-budget, cohesion-structure - barrel file re-exporting selectors from submodules.
-// High export count is expected for centralized selector access. Functions are simple state accessors.
+// COMPLEXITY: functions — barrel file re-exporting selectors; functions are simple state accessors
+// COMPLEXITY: cohesion-structure — barrel file for centralized selector access
 
 // Returns initialization status
 // @sig initialized :: State -> Boolean
@@ -30,6 +30,10 @@ const tabLayout = state => state.tabLayout
 // Returns all tags
 // @sig tags :: State -> LookupTable<Tag>
 const tags = state => state.tags
+
+// Returns all registered keymaps
+// @sig keymaps :: State -> [Keymap]
+const keymaps = state => state.keymaps
 
 // Returns all splits
 // @sig splits :: State -> LookupTable<Split>
@@ -105,6 +109,7 @@ export {
     accounts,
     categories,
     initialized,
+    keymaps,
     lots,
     prices,
     securities,

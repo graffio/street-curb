@@ -1,5 +1,7 @@
 /** @module Action */
 
+import { FieldTypes } from './field-types.js'
+
 /**
  * Action represents Redux actions for the quicken-web-app
  * @sig Action ::
@@ -42,5 +44,9 @@ export const Action = {
         // Account list actions
         SetAccountListSortMode : { sortMode: 'SortMode' },
         ToggleSectionCollapsed : { sectionId: 'String' },
+
+        // Keymap actions
+        RegisterKeymap   : { keymap: 'Any' },
+        UnregisterKeymap : { keymapId: FieldTypes.viewId },
     }
 }
