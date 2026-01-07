@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "@graffio/design-system": "0.1.0",
-        "@graffio/keymap": "*",
+        "@graffio/keymap": "0.1.0",
         "@radix-ui/themes": "^3.0.0",
         "sql.js": "^1.11.0",
         "@reduxjs/toolkit": "^2.8.2",
