@@ -21,6 +21,7 @@ const handleStyle = {
 }
 
 const T = {
+    // Clamps widths to ensure neither group falls below minimum
     // @sig toClampedWidths :: (Number, Number, Number, Number) -> { left: Number, right: Number }
     toClampedWidths: (leftWidth, rightWidth, totalWidth, minWidth) => {
         if (leftWidth < minWidth) return { left: minWidth, right: totalWidth - minWidth }
@@ -30,6 +31,7 @@ const T = {
 }
 
 const E = {
+    // Calculates and persists new widths based on drag delta
     // @sig persistGroupWidths :: (Object, Number) -> void
     persistGroupWidths: (drag, clientX) => {
         const { startX, containerWidth, startLeftWidth, startRightWidth, totalWidth, leftGroupId, rightGroupId } = drag
@@ -45,6 +47,7 @@ const E = {
         post(Action.SetTabGroupWidth(rightGroupId, right))
     },
 
+    // Resets drag state and removes mouse event listeners
     // @sig handleDragCleanup :: (Object, Function, Function) -> void
     handleDragCleanup: (drag, onMove, onUp) => {
         drag.active = false
@@ -53,6 +56,7 @@ const E = {
         document.removeEventListener('mouseup', onUp)
     },
 
+    // Initializes drag state and attaches mouse event listeners
     // @sig handleDragInit :: (MouseEvent, Ref, Ref, TabGroup, TabGroup, Ref) -> void
     handleDragInit: (e, containerRef, dragStateRef, leftGroup, rightGroup, handleRef) => {
         const onMove = moveEvent =>
@@ -83,10 +87,12 @@ const E = {
         document.addEventListener('mouseup', onUp)
     },
 
+    // Updates handle background color for hover/drag feedback
     // @sig persistHandleColor :: (Ref, String) -> void
     persistHandleColor: (handleRef, color) => handleRef.current && (handleRef.current.style.backgroundColor = color),
 }
 
+// Draggable divider between adjacent tab groups
 // @sig ResizeHandle :: { leftGroup: TabGroup, rightGroup: TabGroup, containerRef: Ref } -> ReactElement
 const ResizeHandle = ({ leftGroup, rightGroup, containerRef }) => {
     const handleRef = useRef(null)
@@ -105,6 +111,7 @@ const ResizeHandle = ({ leftGroup, rightGroup, containerRef }) => {
     )
 }
 
+// Renders a tab group with optional resize handle to next group
 // @sig GroupWithHandle :: { group: TabGroup, nextGroup: TabGroup|null, containerRef: Ref } -> ReactElement
 const GroupWithHandle = ({ group, nextGroup, containerRef }) => (
     <>
@@ -120,6 +127,7 @@ const GroupWithHandle = ({ group, nextGroup, containerRef }) => (
     </>
 )
 
+// Horizontal flex container for tab groups with resize handles
 // @sig TabGroupContainer :: () -> ReactElement
 const TabGroupContainer = () => {
     const tabLayout = useSelector(S.tabLayout)
@@ -127,7 +135,7 @@ const TabGroupContainer = () => {
     const { tabGroups } = tabLayout
 
     return (
-        <Flex ref={containerRef} style={{ height: '100%', width: '100%' }}>
+        <Flex ref={containerRef} style={{ flex: 1, minHeight: 0, width: '100%' }}>
             {tabGroups.map((g, i) => (
                 <GroupWithHandle key={g.id} group={g} nextGroup={tabGroups[i + 1]} containerRef={containerRef} />
             ))}
