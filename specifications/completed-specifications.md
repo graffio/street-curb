@@ -634,3 +634,15 @@ This document summarizes the specifications that were previously archived in `sp
 - Fixed duplicate keymap IDs causing j/k to overwrite DataTable shortcuts
 - Fixed CSS height chain (MainLayout Box→Flex, TabGroupContainer height→flex) for virtualizer
 - Added keymap integration to InvestmentRegisterPage (matched TransactionRegisterPage)
+
+## [infrastructure] Precompute Running Cash Balances (2026-01-08)
+**Purpose:** Store running cash balance per transaction in SQLite at import time
+
+- Added `runningBalance` column to transactions table schema
+- Created `updateRunningBalances()` using SQL window function with `ORDER BY date, rowid`
+- Removed amount-sign preprocessing that was incorrectly reordering transactions
+- Investment transactions use cash impact logic (Buy/Sell/Div affect cash; ReinvDiv/ShrsIn/StkSplit don't)
+- Web app reads stored balance directly instead of computing client-side
+- Refactored cli.js and database-service.js with proper P/T/F/A/E cohesion groups
+- Added COMPLEXITY-TODO for pre-existing style debt in transactions.js, index.js, cli.js
+- Deferred: Splitting transactions.js into smaller modules (288 lines, 24 functions)

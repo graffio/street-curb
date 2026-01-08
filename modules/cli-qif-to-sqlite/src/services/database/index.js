@@ -1,3 +1,8 @@
+// ABOUTME: Barrel file re-exporting all database module functions
+// ABOUTME: Provides unified import point for database operations
+
+// COMPLEXITY-TODO: cohesion-structure — Barrel file re-exports all modules (expires 2026-04-01)
+
 import {
     clearAccounts,
     findAccountByName,
@@ -60,6 +65,7 @@ import {
     importInvestmentTransactions,
     insertBankTransaction,
     insertInvestmentTransaction,
+    updateRunningBalances,
 } from './transactions.js'
 
 export {
@@ -82,6 +88,7 @@ export {
     importPrices,
     importSecurities,
     importTags,
+    updateRunningBalances,
 
     // clear
     clearAccounts,

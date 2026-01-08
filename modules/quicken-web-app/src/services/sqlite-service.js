@@ -141,12 +141,14 @@ const loadEntitiesFromFile = async file => {
     const queryTransactions = db => {
         // @sig mapBankRow :: Object -> Transaction.Bank
         const mapBankRow = row => {
-            const { accountId, address, amount, categoryId, cleared, date, id, memo, number, payee } = row
+            const { accountId, address, amount, categoryId, cleared, date, id, memo, number, payee, runningBalance } =
+                row
             return Transaction.Bank.from({
                 id,
                 accountId,
                 date,
                 amount,
+                runningBalance,
                 transactionType: 'bank',
                 address: address || null,
                 categoryId: categoryId || null,
@@ -159,12 +161,13 @@ const loadEntitiesFromFile = async file => {
 
         // @sig mapInvestmentRow :: Object -> Transaction.Investment
         const mapInvestmentRow = row => {
-            const { accountId, address, amount, categoryId, cleared, commission, date, id } = row
+            const { accountId, address, amount, categoryId, cleared, commission, date, id, runningBalance } = row
             const { investmentAction, memo, payee, price, quantity, securityId } = row
             return Transaction.Investment.from({
                 id,
                 accountId,
                 date,
+                runningBalance,
                 transactionType: 'investment',
                 address: address || null,
                 amount: amount || null,
@@ -182,9 +185,9 @@ const loadEntitiesFromFile = async file => {
 
         const sql = `
             SELECT id, accountId, date, amount, transactionType, payee, memo, number, cleared,
-                   categoryId, securityId, quantity, price, commission, investmentAction, address
+                   categoryId, securityId, quantity, price, commission, investmentAction, address, runningBalance
             FROM transactions
-            ORDER BY date DESC, id DESC
+            ORDER BY date, rowid
         `
         const results = db.exec(sql)
         const rows = rowsToObjects(results)

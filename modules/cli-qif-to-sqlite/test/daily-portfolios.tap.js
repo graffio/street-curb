@@ -1,6 +1,9 @@
+// ABOUTME: Tests for daily portfolio functionality
+// ABOUTME: Verifies portfolio snapshots for bank and investment accounts
+
 import Database from 'better-sqlite3'
 import { test } from 'tap'
-import { initializeSchema } from '../src/services/database-service.js'
+import { DatabaseService } from '../src/services/database-service.js'
 import { findAccountByName, insertAccount } from '../src/services/database/accounts.js'
 
 import {
@@ -18,6 +21,8 @@ import {
 } from '../src/services/database/index.js'
 
 import { Entry } from '../src/types/index.js'
+
+const { initializeSchema } = DatabaseService
 
 test('Daily Portfolios', t => {
     t.test('Given a fresh database', t => {

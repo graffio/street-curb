@@ -2,7 +2,6 @@
 // ABOUTME: Displays investment account transactions with running cash balance
 
 import { DataTable, Flex, layoutChannel, Text, useChannel } from '@graffio/design-system'
-import { calculateRunningCashBalances } from '@graffio/financial-computations/investments'
 import { applySort } from '@graffio/financial-computations/query'
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
@@ -91,8 +90,9 @@ const F = {
 }
 
 const E = {
-    // Dispatches highlight change, resolving ID to index based on search mode
-    // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+    /* Dispatch highlight change, resolving ID to index based on search mode
+     * @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+     */
     dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
         const inSearchMode = matchCount > 0
         const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
@@ -177,16 +177,10 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
 
     const { sorting, columnSizing, columnOrder } = useMemo(() => toDataTableProps(tableLayout), [tableLayout])
 
-    // Always sort by date ascending for correct running balance calculation
-    const chronological = useMemo(
-        () => [...actionFiltered].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)),
-        [actionFiltered],
-    )
-
-    // Calculate running balance in chronological order (wraps in RegisterRow)
+    // Wrap transactions with stored running balance, then apply user's display sort
     const withBalances = useMemo(
-        () => calculateRunningCashBalances(chronological, startingBalance),
-        [chronological, startingBalance],
+        () => actionFiltered.map(txn => ({ transaction: txn, runningBalance: txn.runningBalance })),
+        [actionFiltered],
     )
 
     // Apply user's display sort to RegisterRows

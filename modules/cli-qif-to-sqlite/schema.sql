@@ -60,6 +60,9 @@ CREATE TABLE transactions (
     categoryId TEXT REFERENCES categories(id),
     address TEXT,
 
+    -- Computed balance
+    runningBalance DECIMAL(15,2),
+
     -- Investment-specific fields
     securityId TEXT REFERENCES securities(id),
     quantity DECIMAL(15,6),
