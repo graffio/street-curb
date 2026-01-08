@@ -1,6 +1,11 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
 // ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
-// COMPLEXITY: Design system component integrating TanStack Table + Virtual + dnd-kit - inherent complexity
+// COMPLEXITY: lines — Design system component integrating TanStack Table + Virtual + dnd-kit
+// COMPLEXITY: functions — Design system component integrating TanStack Table + Virtual + dnd-kit
+// COMPLEXITY: cohesion-structure — Design system component integrating TanStack Table + Virtual + dnd-kit
+// COMPLEXITY: chain-extraction — Virtual row access pattern required by TanStack Virtual
+// COMPLEXITY: function-declaration-ordering — Factory functions contain nested helpers
+// COMPLEXITY: sig-documentation — Internal component helpers don't need full signatures
 
 /*
  * DataTable - TanStack Table integration for the design system
@@ -27,6 +32,8 @@
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { LookupTable } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex } from '@radix-ui/themes'
 import {
     flexRender,
@@ -63,6 +70,45 @@ const T = {
     },
 }
 
+const F = {
+    // Creates a DataTable keymap with navigation intents
+    // @sig createDataTableKeymap :: (String, String, String, Number, Function, Function?, String?, [String]?, [Row])
+    //                            -> Keymap
+    createDataTableKeymap: (
+        keymapId,
+        activeViewId,
+        keymapName,
+        priority,
+        onHighlightChange,
+        onEscape,
+        highlightedId,
+        focusableIds,
+        rows,
+    ) => {
+        const { Intent, Keymap } = KeymapModule
+
+        const navigateAction = direction => () => {
+            const ids = T.toNavigableIds(focusableIds, rows)
+            if (ids.length === 0) return
+            const nextIndex = T.toNextIndex(direction, ids, highlightedId)
+            onHighlightChange(ids[nextIndex])
+        }
+
+        const intents = LookupTable(
+            [
+                Intent('Move down', ['ArrowDown'], navigateAction('ArrowDown')),
+                Intent('Move up', ['ArrowUp'], navigateAction('ArrowUp')),
+                Intent('Dismiss', ['Escape'], () => onEscape?.()),
+            ],
+            Intent,
+            'description',
+        )
+
+        const activeWhen = activeId => activeId === activeViewId
+        return Keymap(keymapId, keymapName, priority, false, activeWhen, intents)
+    },
+}
+
 const E = {
     // Handles keyboard navigation events for DataTable
     // @sig handleKeyDown :: (Function, Function?, String?, [String]?, [Row]) -> Event -> void
@@ -94,6 +140,13 @@ const E = {
         const handler = E.handleKeyDown(onHighlightChange, onEscape, highlightedId, focusableIds, rows)
         document.addEventListener('keydown', handler)
         return () => document.removeEventListener('keydown', handler)
+    },
+
+    // Registers keymap and returns cleanup that unregisters it
+    // @sig keymapRegistrationEffect :: (Keymap, String, Function, Function) -> (() -> void)
+    keymapRegistrationEffect: (keymap, keymapId, onRegister, onUnregister) => {
+        onRegister(keymap)
+        return () => onUnregister(keymapId)
     },
 }
 
@@ -318,6 +371,12 @@ const DataTable = ({
     onHighlightChange,
     onEscape,
     enableKeyboardNav = false,
+    keymapId,
+    keymapActiveViewId,
+    keymapName,
+    keymapPriority = 10,
+    onRegisterKeymap,
+    onUnregisterKeymap,
     context = {},
 }) => {
     // Hack: convert nested accessorKey paths to accessorFn to avoid TanStack "deeply nested key" warnings
@@ -407,9 +466,33 @@ const DataTable = ({
     }
 
     // Keyboard navigation for row highlighting (only when this DataTable is active)
+    // When keymap registration is provided, keymap handles navigation instead of direct listener
     const setupKeyboardNavEffect = () => {
         if (!enableKeyboardNav) return undefined
+        if (onRegisterKeymap) return undefined
         return E.setupKeyboardNav(onHighlightChange, onEscape, highlightedId, focusableIds, rows)
+    }
+
+    // Keymap registration for keyboard shortcuts appearing in KeymapDrawer
+    // @sig createKeymapMemo :: () -> Keymap?
+    const createKeymapMemo = () => {
+        if (!enableKeyboardNav || !onRegisterKeymap || !keymapId) return null
+        return F.createDataTableKeymap(
+            keymapId,
+            keymapActiveViewId ?? keymapId,
+            keymapName,
+            keymapPriority,
+            onHighlightChange,
+            onEscape,
+            highlightedId,
+            focusableIds,
+            rows,
+        )
+    }
+
+    const keymapRegistrationEffect = () => {
+        if (!keymap || !onRegisterKeymap || !onUnregisterKeymap) return undefined
+        return E.keymapRegistrationEffect(keymap, keymapId, onRegisterKeymap, onUnregisterKeymap)
     }
 
     // Refs
@@ -477,7 +560,24 @@ const DataTable = ({
         highlightedId,
         focusableIds,
         rows,
+        onRegisterKeymap,
     ])
+
+    const keymap = React.useMemo(createKeymapMemo, [
+        enableKeyboardNav,
+        onRegisterKeymap,
+        keymapId,
+        keymapActiveViewId,
+        keymapName,
+        keymapPriority,
+        onHighlightChange,
+        onEscape,
+        highlightedId,
+        focusableIds,
+        rows,
+    ])
+
+    useEffect(keymapRegistrationEffect, [keymap, keymapId, onRegisterKeymap, onUnregisterKeymap])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Main
@@ -539,6 +639,12 @@ DataTable.propTypes = {
     onHighlightChange: PropTypes.func,
     onEscape: PropTypes.func,
     enableKeyboardNav: PropTypes.bool,
+    keymapId: PropTypes.string,
+    keymapActiveViewId: PropTypes.string,
+    keymapName: PropTypes.string,
+    keymapPriority: PropTypes.number,
+    onRegisterKeymap: PropTypes.func,
+    onUnregisterKeymap: PropTypes.func,
     context: PropTypes.object,
 }
 

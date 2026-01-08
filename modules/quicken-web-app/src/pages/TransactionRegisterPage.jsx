@@ -55,14 +55,14 @@ const T = {
 
 const F = {
     // Creates a keymap for the transaction register with j/k navigation
-    // @sig createRegisterKeymap :: String -> Keymap
-    createRegisterKeymap: viewId => {
+    // @sig createRegisterKeymap :: (String, String) -> Keymap
+    createRegisterKeymap: (viewId, name) => {
         const intents = LookupTable(
             [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
             Intent,
             'description',
         )
-        return Keymap(viewId, 10, false, activeId => activeId === viewId, intents)
+        return Keymap(viewId, name, 10, false, activeId => activeId === viewId, intents)
     },
 }
 
@@ -109,7 +109,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     // -----------------------------------------------------------------------------------------------------------------
     // Hooks (selectors and keymap registration)
     // -----------------------------------------------------------------------------------------------------------------
-    const registerKeymap = useMemo(() => F.createRegisterKeymap(viewId), [viewId])
+    const accountName = useSelector(state => S.accountName(state, accountId))
+    const registerKeymap = useMemo(() => F.createRegisterKeymap(viewId, accountName), [viewId, accountName])
 
     useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
 
@@ -189,6 +190,9 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
 
+    const handleRegisterKeymap = useCallback(keymap => post(Action.RegisterKeymap(keymap)), [])
+    const handleUnregisterKeymap = useCallback(id => post(Action.UnregisterKeymap(id)), [])
+
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
@@ -220,6 +224,11 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
                     onHighlightChange={handleHighlightChange}
                     onEscape={handleEscape}
                     enableKeyboardNav={isActive}
+                    keymapId={`${viewId}_table`}
+                    keymapActiveViewId={viewId}
+                    keymapName={accountName}
+                    onRegisterKeymap={handleRegisterKeymap}
+                    onUnregisterKeymap={handleUnregisterKeymap}
                     context={{ searchQuery }}
                 />
             </div>

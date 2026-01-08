@@ -20,6 +20,7 @@
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
         "@graffio/functional": "0.1.0",
+        "@graffio/keymap": "0.1.0",
         "@radix-ui/react-dialog": "^1.1.14",
         "@radix-ui/react-slot": "^1.0.2",
         "@radix-ui/themes": "^3.0.0",

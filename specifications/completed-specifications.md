@@ -620,3 +620,17 @@ This document summarizes the specifications that were previously archived in `sp
 - TransactionRegisterPage registers j/k keymap on mount, unregisters on unmount
 - Key translations forward to existing DataTable handlers (no component changes needed)
 - Fixed COMPLEXITY comment syntax: separate `// COMPLEXITY: rule — reason` per rule with em-dash
+
+## [quicken-web-app] DataTable Keymap & KeymapDrawer (2026-01-08)
+**Purpose:** DataTable registers keyboard shortcuts visible in KeymapDrawer
+
+- DataTable accepts `keymapId`, `keymapName`, `onRegisterKeymap`, `onUnregisterKeymap` props
+- DataTable creates its own keymap with ArrowUp/Down/Escape intents
+- Register pages keep j/k keymap (dispatches synthetic ArrowDown/ArrowUp events)
+- Added `name` field to Keymap type for display in KeymapDrawer
+- Created KeymapDrawer component (bottom drawer showing shortcuts grouped by source)
+- Added `Keymap.collectAvailable()` to aggregate intents from active keymaps
+- Fixed `normalizeKey` to not add shift for symbol keys (? vs Shift+/)
+- Fixed duplicate keymap IDs causing j/k to overwrite DataTable shortcuts
+- Fixed CSS height chain (MainLayout Box→Flex, TabGroupContainer height→flex) for virtualizer
+- Added keymap integration to InvestmentRegisterPage (matched TransactionRegisterPage)

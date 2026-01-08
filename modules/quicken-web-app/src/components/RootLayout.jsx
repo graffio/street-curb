@@ -35,7 +35,7 @@ const F = {
     // @sig createGlobalKeymap :: Function -> Keymap
     createGlobalKeymap: toggleDrawer => {
         const intents = LookupTable([Intent('Toggle shortcuts', ['?'], toggleDrawer)], Intent, 'description')
-        return Keymap(GLOBAL_KEYMAP_ID, 0, false, null, intents)
+        return Keymap(GLOBAL_KEYMAP_ID, 'Global', 0, false, null, intents)
     },
 }
 

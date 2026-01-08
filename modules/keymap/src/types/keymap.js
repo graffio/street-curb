@@ -5,6 +5,7 @@
 /*  Keymap generated from: modules/keymap/type-definitions/keymap.type.js
  *
  *  id        : "String",
+ *  name      : "String",
  *  priority  : "Number",
  *  blocking  : "Boolean?",
  *  activeWhen: "Any?",
@@ -12,7 +13,6 @@
  *
  */
 
-import { uniqBy } from '@graffio/functional'
 import { Intent } from './intent.js'
 
 import * as R from '@graffio/cli-type-generator'
@@ -26,12 +26,13 @@ import { LookupTable } from '@graffio/functional'
 
 /*
  * Construct a Keymap instance
- * @sig Keymap :: (String, Number, Boolean?, Any?, {Intent}) -> Keymap
+ * @sig Keymap :: (String, String, Number, Boolean?, Any?, {Intent}) -> Keymap
  */
-const Keymap = function Keymap(id, priority, blocking, activeWhen, intents) {
-    const constructorName = 'Keymap(id, priority, blocking, activeWhen, intents)'
+const Keymap = function Keymap(id, name, priority, blocking, activeWhen, intents) {
+    const constructorName = 'Keymap(id, name, priority, blocking, activeWhen, intents)'
 
     R.validateString(constructorName, 'id', false, id)
+    R.validateString(constructorName, 'name', false, name)
     R.validateNumber(constructorName, 'priority', false, priority)
     R.validateBoolean(constructorName, 'blocking', true, blocking)
 
@@ -39,6 +40,7 @@ const Keymap = function Keymap(id, priority, blocking, activeWhen, intents) {
 
     const result = Object.create(prototype)
     result.id = id
+    result.name = name
     result.priority = priority
     if (blocking != null) result.blocking = blocking
     if (activeWhen != null) result.activeWhen = activeWhen
@@ -58,6 +60,7 @@ const Keymap = function Keymap(id, priority, blocking, activeWhen, intents) {
  */
 const keymapToString = function () {
     return `Keymap(${R._toString(this.id)},
+        ${R._toString(this.name)},
         ${R._toString(this.priority)},
         ${R._toString(this.blocking)},
         ${R._toString(this.activeWhen)},
@@ -95,14 +98,15 @@ Keymap.toString = () => 'Keymap'
 Keymap.is = v => v && v['@@typeName'] === 'Keymap'
 
 Keymap._from = _input => {
-    const { id, priority, blocking, activeWhen, intents } = _input
-    return Keymap(id, priority, blocking, activeWhen, intents)
+    const { id, name, priority, blocking, activeWhen, intents } = _input
+    return Keymap(id, name, priority, blocking, activeWhen, intents)
 }
 Keymap.from = Keymap._from
 
 Keymap._toFirestore = (o, encodeTimestamps) => {
     const result = {
         id: o.id,
+        name: o.name,
         priority: o.priority,
         intents: R.lookupTableToFirestore(Intent, 'description', encodeTimestamps, o.intents),
     }
@@ -117,6 +121,7 @@ Keymap._toFirestore = (o, encodeTimestamps) => {
 Keymap._fromFirestore = (doc, decodeTimestamps) =>
     Keymap._from({
         id: doc.id,
+        name: doc.name,
         priority: doc.priority,
         blocking: doc.blocking,
         activeWhen: doc.activeWhen,
@@ -159,10 +164,15 @@ Keymap.collectAvailable = (keymaps, activeId) => {
         keymap.intents.map(intent => ({
             description: intent.description,
             keys: intent.keys,
-            from: keymap.id,
+            from: keymap.name,
         })),
     )
-    return uniqBy(intent => intent.description)(allIntents)
+    return allIntents.reduce((acc, intent) => {
+        const existing = acc.find(i => i.description === intent.description)
+        if (existing) existing.keys = [...existing.keys, ...intent.keys]
+        else acc.push({ ...intent })
+        return acc
+    }, [])
 }
 
 export { Keymap }
