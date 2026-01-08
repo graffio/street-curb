@@ -8,7 +8,8 @@ export const Keymap = {
     name: 'Keymap',
     kind: 'tagged',
     fields: {
-        id: 'String', // Unique identifier (e.g., 'register-123')
+        id: 'String', // Unique identifier for unregistration (e.g., 'reg_acc_123')
+        name: 'String', // Display name for UI (e.g., 'Register', 'Global')
         priority: 'Number', // Higher = checked first (100=modal, 50=panel, 10=view, 0=global)
         blocking: 'Boolean?', // If true, unhandled keys are swallowed
         activeWhen: 'Any?', // Optional predicate: (activeViewId) => boolean
@@ -37,6 +38,7 @@ Keymap.resolveKey = (keymap, key, activeViewId) => {
     return keymap.blocking ? { blocked: true } : null
 }
 
+// Resolves a key press across all keymaps, returning the first match or block
 // @sig Keymap.resolve :: (String, [Keymap], String?) -> { description, action } | { blocked: true } | null
 Keymap.resolve = (key, keymaps, activeId) =>
     keymaps.reduce((found, keymap) => found ?? Keymap.resolveKey(keymap, key, activeId), null)
@@ -50,7 +52,7 @@ Keymap.collectAvailable = (keymaps, activeId) => {
     const relevantKeymaps = blockingIndex === -1 ? activeKeymaps : activeKeymaps.slice(0, blockingIndex + 1)
 
     const allIntents = relevantKeymaps.flatMap(keymap =>
-        keymap.intents.map(intent => ({ description: intent.description, keys: intent.keys, from: keymap.id })),
+        keymap.intents.map(intent => ({ description: intent.description, keys: intent.keys, from: keymap.name })),
     )
 
     return uniqBy(intent => intent.description)(allIntents)
