@@ -1,6 +1,6 @@
 # Keymap System
 
-Keyboard-driven interaction with user-configurable keybindings.
+Keyboard-driven interaction with discoverable keybindings.
 
 ## The Problem
 
@@ -8,7 +8,7 @@ Users want to:
 
 - Navigate and act without touching the mouse
 - Use vim-style keys (j/k) or their own bindings
-- See what keys are available
+- See what keys are available (press `?` to show shortcuts)
 
 The UI has overlapping areas (sidebar, register, modals) where the same key means different things. Multiple DataTables may be visible simultaneously - only one should respond.
 
@@ -17,9 +17,9 @@ The UI has overlapping areas (sidebar, register, modals) where the same key mean
 ```
 @graffio/functional     - pure FP utilities (Tagged, LookupTable)
         ↑
-@graffio/keymap         - pure types + functions (Intent, Keymap, resolution)
+@graffio/keymap         - pure types + functions (Intent, Keymap, resolution, formatKey)
         ↑
-@graffio/design-system  - UI components (KeymapPanel, DataTable)
+@graffio/design-system  - UI components (KeymapDrawer, DataTable with keymap support)
         ↑
 quicken-web-app         - wires everything together, manages "active" state
 ```
@@ -28,16 +28,18 @@ quicken-web-app         - wires everything together, manages "active" state
 - No DOM, no React, no browser APIs
 - Tagged types with methods
 - Pure resolution functions
+- Key formatting for display (ArrowDown → ↓, cmd+k → ⌘K)
 - Trivially testable with Node TAP
 
 **@graffio/design-system** provides:
-- KeymapPanel component for displaying available keybindings
-- DataTable accepts keymap configuration (replaces baked-in keyboard handling)
+- KeymapDrawer component for displaying available keybindings (bottom drawer, grouped by source)
+- DataTable accepts keymap callbacks for registration (shortcuts appear in drawer)
 
 **App** is responsible for:
 - Tracking which component is "active"
-- Attaching global keydown listener
+- Attaching global keydown listener (KeymapRouting service)
 - Wiring resolution results to actions
+- Registering global keymap (`?` to toggle drawer)
 
 ## Core Concepts
 
@@ -50,9 +52,10 @@ Intent.from({ description: 'Delete item', keys: ['Delete'], action: deleteFn })
 **Keymap** — A component's keybinding registration with priority:
 ```javascript
 Keymap.from({
-    id: 'register-123',
+    id: 'reg_acc_123',           // For unregistration
+    name: 'Chase Checking',       // Display name in drawer
     priority: 10,
-    activeWhen: activeId => activeId === 'register-123',
+    activeWhen: activeId => activeId === 'reg_acc_123',
     blocking: false,
     intents: LookupTable([...intents], Intent, 'description'),
 })
@@ -83,10 +86,11 @@ const Keymap = {
     name: 'Keymap',
     kind: 'tagged',
     fields: {
-        id: 'String',
+        id: 'String',           // For unregistration
+        name: 'String',         // Display name in drawer
         priority: 'Number',
         blocking: 'Boolean?',
-        activeWhen: 'Any?',  // Optional predicate: (activeId) => boolean
+        activeWhen: 'Any?',     // Optional predicate: (activeId) => boolean
         intents: '{Intent:description}',
     },
 }
@@ -106,7 +110,7 @@ Keymap.collectIntents = (keymap, activeId, seen) => {
         .filter(intent => !seen.has(intent.description))
         .map(intent => {
             seen.add(intent.description)
-            return { description: intent.description, keys: intent.keys, from: keymap.id }
+            return { description: intent.description, keys: intent.keys, from: keymap.name }
         })
 }
 ```
@@ -224,32 +228,53 @@ useEffect(() => {
 }, [keymaps, activeId])
 ```
 
-## Multiple DataTables Example
+## DataTable Keymap Integration
+
+DataTable registers its own keymap for ArrowUp/Down/Escape. Consumer provides registration callbacks:
 
 ```javascript
-// InvestmentReport with expandable account holdings
-const [activeTableId, setActiveTableId] = useState(null)
+// TransactionRegisterPage
+const handleRegisterKeymap = keymap => post(Action.RegisterKeymap(keymap))
+const handleUnregisterKeymap = id => post(Action.UnregisterKeymap(id))
 
-// Each DataTable registers its keymap and tracks activation
 <DataTable
-    id="root"
-    onFocus={() => setActiveTableId('root')}
-    keymapPriority={10}
-    keymapActiveWhen={id => id === 'root'}
+    keymapId={viewId}                          // e.g., 'reg_acc_123'
+    keymapName={accountName}                   // e.g., 'Chase Checking'
+    onRegisterKeymap={handleRegisterKeymap}
+    onUnregisterKeymap={handleUnregisterKeymap}
+    enableKeyboardNav={isActive}
+    onHighlightChange={handleHighlightChange}
+    onEscape={handleEscape}
+    ...
 />
-
-{expandedAccounts.map(account => (
-    <DataTable
-        key={account.id}
-        id={account.id}
-        onFocus={() => setActiveTableId(account.id)}
-        keymapPriority={10}
-        keymapActiveWhen={id => id === account.id}
-    />
-))}
 ```
 
-User clicks Account C's holdings table → `activeTableId = 'account-c'` → only that table's keymap responds to `j`.
+DataTable internally creates a keymap with:
+- ArrowDown → calls onHighlightChange (next row)
+- ArrowUp → calls onHighlightChange (previous row)
+- Escape → calls onEscape
+
+These shortcuts appear in KeymapDrawer under the account name.
+
+**Vim-style synonyms** stay in the consumer's keymap:
+```javascript
+// TransactionRegisterPage's keymap (separate from DataTable's)
+const intents = LookupTable([
+    Intent('Move down', ['j'], 'ArrowDown'),  // Dispatches synthetic ArrowDown
+    Intent('Move up', ['k'], 'ArrowUp'),      // DataTable's keymap handles it
+], Intent, 'description')
+```
+
+## Multiple DataTables Example
+
+When multiple DataTables are visible, `activeWhen` ensures only one responds:
+
+```javascript
+// Each DataTable's keymap uses activeWhen to check if it's the active view
+activeWhen: activeId => activeId === viewId
+```
+
+User clicks Account C's table → `activeViewId = 'reg_acc_c'` → only that table's keymap responds.
 
 ## Sequence Diagrams
 
@@ -290,29 +315,30 @@ resolveKey('Delete', keymaps, activeId)
 blocked → preventDefault, done (key swallowed)
 ```
 
+## KeymapDrawer (Implemented)
+
+Bottom drawer showing available shortcuts, toggled with `?`:
+
+```javascript
+// RootLayout registers global keymap
+const globalKeymap = Keymap(GLOBAL_KEYMAP_ID, 'Global', 0, false, null, intents)
+// Intent: Toggle shortcuts, keys: ['?'], action: toggleDrawer
+
+// Drawer displays grouped shortcuts
+<KeymapDrawer
+    open={showDrawer}
+    onOpenChange={setShowDrawer}
+    intents={Keymap.collectAvailable(keymaps, activeViewId)}
+/>
+```
+
+Drawer shows shortcuts grouped by source (keymap.name):
+- **Global**: ? Toggle shortcuts
+- **Chase Checking**: ↓ Move down, ↑ Move up, Esc Dismiss, J Move down, K Move up
+
 ## Future: Personalization
 
 User-configurable keybindings (deferred):
 - Store user overrides in IndexedDB
 - Merge with defaults at resolution time
 - UI for rebinding keys (in design-system)
-
-## Future: KeymapPanel
-
-Display component (lives in design-system):
-```javascript
-// Uses collectAvailableKeybindings from @graffio/keymap
-const KeymapPanel = ({ keymaps, activeId }) => {
-    const bindings = collectAvailableKeybindings(keymaps, activeId)
-    return (
-        <Panel>
-            {bindings.map(b => (
-                <Row key={b.description}>
-                    <span>{b.description}</span>
-                    <kbd>{b.keys.join(', ')}</kbd>
-                </Row>
-            ))}
-        </Panel>
-    )
-}
-```
