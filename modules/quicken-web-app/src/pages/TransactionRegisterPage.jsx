@@ -224,7 +224,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
                     onHighlightChange={handleHighlightChange}
                     onEscape={handleEscape}
                     enableKeyboardNav={isActive}
-                    keymapId={viewId}
+                    keymapId={`${viewId}_table`}
+                    keymapActiveViewId={viewId}
                     keymapName={accountName}
                     onRegisterKeymap={handleRegisterKeymap}
                     onUnregisterKeymap={handleUnregisterKeymap}

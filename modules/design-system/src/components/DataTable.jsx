@@ -72,9 +72,11 @@ const T = {
 
 const F = {
     // Creates a DataTable keymap with navigation intents
-    // @sig createDataTableKeymap :: (String, String, Number, Function, Function?, String?, [String]?, [Row]) -> Keymap
+    // @sig createDataTableKeymap :: (String, String, String, Number, Function, Function?, String?, [String]?, [Row])
+    //                            -> Keymap
     createDataTableKeymap: (
         keymapId,
+        activeViewId,
         keymapName,
         priority,
         onHighlightChange,
@@ -102,7 +104,7 @@ const F = {
             'description',
         )
 
-        const activeWhen = activeId => activeId === keymapId
+        const activeWhen = activeId => activeId === activeViewId
         return Keymap(keymapId, keymapName, priority, false, activeWhen, intents)
     },
 }
@@ -370,6 +372,7 @@ const DataTable = ({
     onEscape,
     enableKeyboardNav = false,
     keymapId,
+    keymapActiveViewId,
     keymapName,
     keymapPriority = 10,
     onRegisterKeymap,
@@ -476,6 +479,7 @@ const DataTable = ({
         if (!enableKeyboardNav || !onRegisterKeymap || !keymapId) return null
         return F.createDataTableKeymap(
             keymapId,
+            keymapActiveViewId ?? keymapId,
             keymapName,
             keymapPriority,
             onHighlightChange,
@@ -563,6 +567,7 @@ const DataTable = ({
         enableKeyboardNav,
         onRegisterKeymap,
         keymapId,
+        keymapActiveViewId,
         keymapName,
         keymapPriority,
         onHighlightChange,
@@ -635,6 +640,7 @@ DataTable.propTypes = {
     onEscape: PropTypes.func,
     enableKeyboardNav: PropTypes.bool,
     keymapId: PropTypes.string,
+    keymapActiveViewId: PropTypes.string,
     keymapName: PropTypes.string,
     keymapPriority: PropTypes.number,
     onRegisterKeymap: PropTypes.func,
