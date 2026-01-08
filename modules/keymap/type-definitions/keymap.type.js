@@ -1,7 +1,6 @@
 // ABOUTME: Keymap - a component's keyboard binding registration
 // ABOUTME: Priority-based resolution; higher priority keymaps are checked first
 
-import { uniqBy } from '@graffio/functional'
 import { Intent } from './intent.js'
 
 export const Keymap = {
@@ -44,7 +43,7 @@ Keymap.resolve = (key, keymaps, activeId) =>
     keymaps.reduce((found, keymap) => found ?? Keymap.resolveKey(keymap, key, activeId), null)
 
 // Gathers all active keybindings across keymaps, stopping at a blocking keymap
-// Assumes keymaps are sorted by priority (highest first); first occurrence of each description wins
+// Assumes keymaps are sorted by priority (highest first); merges keys for intents with same description
 // @sig Keymap.collectAvailable :: ([Keymap], String?) -> [{ description, keys, from }]
 Keymap.collectAvailable = (keymaps, activeId) => {
     const activeKeymaps = keymaps.filter(km => Keymap.isActive(km, activeId))
@@ -55,5 +54,11 @@ Keymap.collectAvailable = (keymaps, activeId) => {
         keymap.intents.map(intent => ({ description: intent.description, keys: intent.keys, from: keymap.name })),
     )
 
-    return uniqBy(intent => intent.description)(allIntents)
+    // Merge intents with same description, combining their keys
+    return allIntents.reduce((acc, intent) => {
+        const existing = acc.find(i => i.description === intent.description)
+        if (existing) existing.keys = [...existing.keys, ...intent.keys]
+        else acc.push({ ...intent })
+        return acc
+    }, [])
 }

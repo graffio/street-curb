@@ -13,7 +13,6 @@
  *
  */
 
-import { uniqBy } from '@graffio/functional'
 import { Intent } from './intent.js'
 
 import * as R from '@graffio/cli-type-generator'
@@ -168,7 +167,12 @@ Keymap.collectAvailable = (keymaps, activeId) => {
             from: keymap.name,
         })),
     )
-    return uniqBy(intent => intent.description)(allIntents)
+    return allIntents.reduce((acc, intent) => {
+        const existing = acc.find(i => i.description === intent.description)
+        if (existing) existing.keys = [...existing.keys, ...intent.keys]
+        else acc.push({ ...intent })
+        return acc
+    }, [])
 }
 
 export { Keymap }
