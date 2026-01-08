@@ -17,6 +17,7 @@ export const Transaction = {
             memo: 'String?',
             number: 'String?',
             payee: 'String?',
+            runningBalance: 'Number',
         },
         Investment: {
             // Required fields (alphabetical)
@@ -37,6 +38,7 @@ export const Transaction = {
             payee: 'String?',
             price: 'Number?',
             quantity: 'Number?',
+            runningBalance: 'Number',
             securityId: 'String?', // sec_<hash> or null
         },
     },

@@ -2,7 +2,6 @@
 // ABOUTME: Displays account transactions with sorting, column reordering, and running balances
 
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
-import { calculateRunningBalances } from '@graffio/financial-computations/banking'
 import { applySort } from '@graffio/financial-computations/query'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
@@ -24,18 +23,26 @@ const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 
 const P = {
-    // @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
+    /* Check if date range should be initialized with default last 12 months
+     * @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
+     */
     shouldInitializeDateRange: (dateRangeKey, dateRange) => dateRangeKey === 'lastTwelveMonths' && !dateRange,
 }
 
 const T = {
-    // @sig toTableLayoutId :: String -> String
+    /* Generate table layout storage ID for account register
+     * @sig toTableLayoutId :: String -> String
+     */
     toTableLayoutId: id => `cols_account_${id}`,
 
-    // @sig toRowIndex :: ([Row], String) -> Number
+    /* Find row index by transaction ID in data array
+     * @sig toRowIndex :: ([Row], String) -> Number
+     */
     toRowIndex: (data, id) => data.findIndex(r => r.transaction?.id === id),
 
-    // @sig toDefaultDateRange :: () -> DateRange
+    /* Create default date range for last 12 months
+     * @sig toDefaultDateRange :: () -> DateRange
+     */
     toDefaultDateRange: () => {
         const now = new Date()
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -46,8 +53,9 @@ const T = {
 }
 
 const E = {
-    // Dispatches highlight change, resolving ID to index based on search mode
-    // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+    /* Dispatch highlight change, resolving ID to index based on search mode
+     * @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+     */
     dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
         const inSearchMode = matchCount > 0
         const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
@@ -55,7 +63,9 @@ const E = {
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
 
-    // @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
+    /* Initialize date range filter if using default and not yet set
+     * @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
+     */
     initDateRangeIfNeeded: (dateRangeKey, dateRange, viewId) => {
         if (P.shouldInitializeDateRange(dateRangeKey, dateRange))
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
@@ -105,15 +115,15 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     const { sorting, columnSizing, columnOrder } = useMemo(() => toDataTableProps(tableLayout), [tableLayout])
 
-    // Sort transactions, then calculate running balances
+    // Sort transactions for display, wrap with stored running balance
     const sortedTransactions = useMemo(
         () => applySort(sorting, accountTransactions, bankTransactionColumns),
         [accountTransactions, sorting],
     )
 
     const data = useMemo(
-        () => calculateRunningBalances(sortedTransactions, startingBalance),
-        [sortedTransactions, startingBalance],
+        () => sortedTransactions.map(txn => ({ transaction: txn, runningBalance: txn.runningBalance })),
+        [sortedTransactions],
     )
 
     // With manual sorting, search matches are already in display order (indices into sortedTransactions)

@@ -157,7 +157,7 @@ const getAccountsWithBalances = db => {
 /*
  * Get account register with running cash balances
  * RegisterEntry = {date: String, transactionType: String, investmentAction: String?,
- *   amount: Number, payee: String?, memo: String?, cashImpact: Number, runningBalance: Number}
+ *   amount: Number, payee: String?, memo: String?, runningBalance: Number}
  * @sig getAccountRegister :: (Database, String) -> [RegisterEntry]
  */
 const getAccountRegister = (db, accountName) => {
@@ -165,47 +165,6 @@ const getAccountRegister = (db, accountName) => {
     if (!account) throw new Error(`Account not found: ${accountName}`)
 
     const statement = `
-        WITH account_transactions AS (
-            SELECT
-                t.id,
-                t.date,
-                t.transactionType,
-                t.investmentAction,
-                t.amount,
-                t.payee,
-                t.memo,
-                t.commission,
-                -- Calculate cash impact based on transaction type
-                CASE
-                    WHEN t.transactionType = 'bank' THEN t.amount
-                    WHEN t.transactionType = 'investment' THEN
-                        CASE t.investmentAction
-                            -- Actions where amount is already signed for cash impact
-                            WHEN 'Buy' THEN t.amount
-                            WHEN 'Cash' THEN COALESCE(t.amount, 0)
-                            WHEN 'CGLong' THEN t.amount
-                            WHEN 'CGShort' THEN t.amount
-                            WHEN 'ContribX' THEN t.amount
-                            WHEN 'CvrShrt' THEN t.amount
-                            WHEN 'Div' THEN t.amount
-                            WHEN 'IntInc' THEN t.amount
-                            WHEN 'MargInt' THEN t.amount
-                            WHEN 'MiscExp' THEN t.amount
-                            WHEN 'MiscInc' THEN t.amount
-                            WHEN 'Sell' THEN t.amount
-                            WHEN 'ShtSell' THEN t.amount
-                            WHEN 'WithdrwX' THEN t.amount
-                            WHEN 'XIn' THEN t.amount
-                            WHEN 'XOut' THEN t.amount
-                            -- No cash impact (reinvestments, share transfers)
-                            ELSE 0
-                        END
-                    ELSE 0
-                END as cashImpact
-            FROM transactions t
-            WHERE t.accountId = ?
-            ORDER BY t.date, t.id
-        )
         SELECT
             date,
             transactionType,
@@ -213,9 +172,9 @@ const getAccountRegister = (db, accountName) => {
             amount,
             payee,
             memo,
-            cashImpact,
-            SUM(cashImpact) OVER (ORDER BY date, id) as runningBalance
-        FROM account_transactions
+            runningBalance
+        FROM transactions
+        WHERE accountId = ?
         ORDER BY date, id
     `
 

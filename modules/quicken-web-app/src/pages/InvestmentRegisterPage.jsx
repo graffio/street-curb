@@ -2,7 +2,6 @@
 // ABOUTME: Displays investment account transactions with running cash balance
 
 import { DataTable, Flex, layoutChannel, Text, useChannel } from '@graffio/design-system'
-import { calculateRunningCashBalances } from '@graffio/financial-computations/investments'
 import { applySort } from '@graffio/financial-computations/query'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
@@ -38,15 +37,21 @@ const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBot
 const MAX_DETAIL_LINES = 3
 
 const P = {
-    // @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
+    /* Check if date range should be initialized with default last 12 months
+     * @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
+     */
     shouldInitializeDateRange: (dateRangeKey, dateRange) => dateRangeKey === 'lastTwelveMonths' && !dateRange,
 }
 
 const T = {
-    // @sig toTableLayoutId :: String -> String
+    /* Generate table layout storage ID for investment register
+     * @sig toTableLayoutId :: String -> String
+     */
     toTableLayoutId: id => `cols_investment_${id}`,
 
-    // @sig toDetailLines :: [String] -> [String]
+    /* Truncate item list with "+N more" suffix if exceeds max lines
+     * @sig toDetailLines :: [String] -> [String]
+     */
     toDetailLines: items => {
         const { length } = items
         if (length === 0) return []
@@ -55,10 +60,14 @@ const T = {
         return [...shown, `+${length - shown.length} more`]
     },
 
-    // @sig toRowIndex :: ([Row], String) -> Number
+    /* Find row index by transaction ID in data array
+     * @sig toRowIndex :: ([Row], String) -> Number
+     */
     toRowIndex: (data, id) => data.findIndex(r => r.transaction?.id === id),
 
-    // @sig toDefaultDateRange :: () -> DateRange
+    /* Create default date range for last 12 months
+     * @sig toDefaultDateRange :: () -> DateRange
+     */
     toDefaultDateRange: () => {
         const now = new Date()
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -69,8 +78,9 @@ const T = {
 }
 
 const E = {
-    // Dispatches highlight change, resolving ID to index based on search mode
-    // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+    /* Dispatch highlight change, resolving ID to index based on search mode
+     * @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+     */
     dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
         const inSearchMode = matchCount > 0
         const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
@@ -78,7 +88,9 @@ const E = {
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
 
-    // @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
+    /* Initialize date range filter if using default and not yet set
+     * @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
+     */
     initDateRangeIfNeeded: (dateRangeKey, dateRange, viewId) => {
         if (P.shouldInitializeDateRange(dateRangeKey, dateRange))
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
@@ -143,16 +155,10 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
 
     const { sorting, columnSizing, columnOrder } = useMemo(() => toDataTableProps(tableLayout), [tableLayout])
 
-    // Always sort by date ascending for correct running balance calculation
-    const chronological = useMemo(
-        () => [...actionFiltered].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)),
-        [actionFiltered],
-    )
-
-    // Calculate running balance in chronological order (wraps in RegisterRow)
+    // Wrap transactions with stored running balance, then apply user's display sort
     const withBalances = useMemo(
-        () => calculateRunningCashBalances(chronological, startingBalance),
-        [chronological, startingBalance],
+        () => actionFiltered.map(txn => ({ transaction: txn, runningBalance: txn.runningBalance })),
+        [actionFiltered],
     )
 
     // Apply user's display sort to RegisterRows
