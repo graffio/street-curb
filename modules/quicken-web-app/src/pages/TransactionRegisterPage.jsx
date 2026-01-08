@@ -190,6 +190,9 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
 
+    const handleRegisterKeymap = useCallback(keymap => post(Action.RegisterKeymap(keymap)), [])
+    const handleUnregisterKeymap = useCallback(id => post(Action.UnregisterKeymap(id)), [])
+
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
@@ -221,6 +224,10 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
                     onHighlightChange={handleHighlightChange}
                     onEscape={handleEscape}
                     enableKeyboardNav={isActive}
+                    keymapId={viewId}
+                    keymapName={accountName}
+                    onRegisterKeymap={handleRegisterKeymap}
+                    onUnregisterKeymap={handleUnregisterKeymap}
                     context={{ searchQuery }}
                 />
             </div>
