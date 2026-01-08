@@ -4,6 +4,8 @@
 import { DataTable, Flex, layoutChannel, Text, useChannel } from '@graffio/design-system'
 import { calculateRunningCashBalances } from '@graffio/financial-computations/investments'
 import { applySort } from '@graffio/financial-computations/query'
+import { LookupTable } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { ACTION_LABELS, investmentTransactionColumns } from '../columns/index.js'
@@ -31,6 +33,8 @@ import {
     toDataTableProps,
 } from '../utils/table-layout.js'
 
+const { Intent, Keymap } = KeymapModule
+
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
@@ -38,14 +42,17 @@ const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBot
 const MAX_DETAIL_LINES = 3
 
 const P = {
+    // Checks if we need to initialize the date range on first render
     // @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
     shouldInitializeDateRange: (dateRangeKey, dateRange) => dateRangeKey === 'lastTwelveMonths' && !dateRange,
 }
 
 const T = {
+    // Generates a unique table layout ID for an investment account
     // @sig toTableLayoutId :: String -> String
     toTableLayoutId: id => `cols_investment_${id}`,
 
+    // Truncates detail lines with "+N more" if exceeding maximum
     // @sig toDetailLines :: [String] -> [String]
     toDetailLines: items => {
         const { length } = items
@@ -55,9 +62,11 @@ const T = {
         return [...shown, `+${length - shown.length} more`]
     },
 
+    // Finds the index of a transaction by ID in the data array
     // @sig toRowIndex :: ([Row], String) -> Number
     toRowIndex: (data, id) => data.findIndex(r => r.transaction?.id === id),
 
+    // Creates a date range spanning the last 12 months
     // @sig toDefaultDateRange :: () -> DateRange
     toDefaultDateRange: () => {
         const now = new Date()
@@ -65,6 +74,19 @@ const T = {
         const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
         const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
         return { start: twelveMonthsAgo, end: endOfToday }
+    },
+}
+
+const F = {
+    // Creates a keymap for the investment register with j/k navigation
+    // @sig createRegisterKeymap :: (String, String) -> Keymap
+    createRegisterKeymap: (viewId, name) => {
+        const intents = LookupTable(
+            [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
+            Intent,
+            'description',
+        )
+        return Keymap(viewId, name, 10, false, activeId => activeId === viewId, intents)
     },
 }
 
@@ -78,10 +100,18 @@ const E = {
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
 
+    // Initializes the date range to last 12 months if not already set
     // @sig initDateRangeIfNeeded :: (String, DateRange | null, String) -> void
     initDateRangeIfNeeded: (dateRangeKey, dateRange, viewId) => {
         if (P.shouldInitializeDateRange(dateRangeKey, dateRange))
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
+    },
+
+    // Registers keymap on mount and unregisters on unmount
+    // @sig keymapEffect :: (Keymap, String) -> () -> void
+    keymapEffect: (keymap, viewId) => () => {
+        post(Action.RegisterKeymap(keymap))
+        return () => post(Action.UnregisterKeymap(viewId))
     },
 }
 
@@ -96,8 +126,8 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     // -----------------------------------------------------------------------------------------------------------------
     // Derived values (computed from props)
     // -----------------------------------------------------------------------------------------------------------------
-    // Use inv_ prefix to distinguish from bank registers
-    const viewId = `inv_${accountId}`
+    // Use reg_ prefix to match View.Register's id pattern (FieldTypes.viewId)
+    const viewId = `reg_${accountId}`
     const tableLayoutId = T.toTableLayoutId(accountId)
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -116,6 +146,10 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const selectedInvestmentActions = useSelector(state => S.selectedInvestmentActions(state, viewId))
     const filterQuery = useSelector(state => S.filterQuery(state, viewId))
     const securities = useSelector(S.securities)
+    const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
+    const registerKeymap = useMemo(() => F.createRegisterKeymap(viewId, accountName), [viewId, accountName])
+
+    useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Memos (data transformations)
@@ -157,9 +191,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
 
     // Apply user's display sort to RegisterRows
     const data = useMemo(() => applySort(sorting, withBalances, investmentTransactionColumns), [withBalances, sorting])
-
-    // Get account name for header
-    const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
     // With manual sorting, search matches are already in display order
     const matchCount = searchMatches.length
@@ -218,6 +249,9 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
 
+    const handleRegisterKeymap = useCallback(keymap => post(Action.RegisterKeymap(keymap)), [])
+    const handleUnregisterKeymap = useCallback(id => post(Action.UnregisterKeymap(id)), [])
+
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
@@ -275,6 +309,11 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
                     onHighlightChange={handleHighlightChange}
                     onEscape={handleEscape}
                     enableKeyboardNav={isActive}
+                    keymapId={`${viewId}_table`}
+                    keymapActiveViewId={viewId}
+                    keymapName={accountName}
+                    onRegisterKeymap={handleRegisterKeymap}
+                    onUnregisterKeymap={handleUnregisterKeymap}
                     context={{ searchQuery }}
                 />
             </div>
