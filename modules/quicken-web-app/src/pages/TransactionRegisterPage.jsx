@@ -2,7 +2,6 @@
 // ABOUTME: Displays account transactions with sorting, column reordering, and running balances
 
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
-import { calculateRunningBalances } from '@graffio/financial-computations/banking'
 import { applySort } from '@graffio/financial-computations/query'
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
@@ -67,8 +66,9 @@ const F = {
 }
 
 const E = {
-    // Dispatches highlight change, resolving ID to index based on search mode
-    // @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+    /* Dispatch highlight change, resolving ID to index based on search mode
+     * @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+     */
     dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
         const inSearchMode = matchCount > 0
         const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
@@ -139,15 +139,15 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     const { sorting, columnSizing, columnOrder } = useMemo(() => toDataTableProps(tableLayout), [tableLayout])
 
-    // Sort transactions, then calculate running balances
+    // Sort transactions for display, wrap with stored running balance
     const sortedTransactions = useMemo(
         () => applySort(sorting, accountTransactions, bankTransactionColumns),
         [accountTransactions, sorting],
     )
 
     const data = useMemo(
-        () => calculateRunningBalances(sortedTransactions, startingBalance),
-        [sortedTransactions, startingBalance],
+        () => sortedTransactions.map(txn => ({ transaction: txn, runningBalance: txn.runningBalance })),
+        [sortedTransactions],
     )
 
     // With manual sorting, search matches are already in display order (indices into sortedTransactions)

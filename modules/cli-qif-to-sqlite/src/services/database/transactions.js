@@ -1,6 +1,11 @@
 // ABOUTME: Transaction database operations for QIF import
 // ABOUTME: Handles bank and investment transaction CRUD with split support
 
+// COMPLEXITY-TODO: lines — Transaction module is large, split deferred (expires 2026-04-01)
+// COMPLEXITY-TODO: functions — Many transaction helpers needed (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — Pre-existing debt, needs cohesion groups (expires 2026-04-01)
+// COMPLEXITY-TODO: exports — Module exports many transaction functions (expires 2026-04-01)
+
 import { map } from '@graffio/functional'
 import { hashFields } from '@graffio/functional/src/generate-entity-id.js'
 import { Entry, Transaction } from '../../types/index.js'
@@ -66,8 +71,9 @@ const getAllTransactions = db => {
      * @sig mapBankTransactionToRecord :: Object -> Transaction.Bank
      */
     const mapBankTransactionToRecord = record => {
-        const { id, accountId, date, address, amount, categoryId, cleared, memo, number, payee } = record
-        const baseFields = { id, accountId, date, transactionType: 'bank', address }
+        const { id, accountId, date, address, amount, categoryId, cleared, memo, number, payee, runningBalance } =
+            record
+        const baseFields = { id, accountId, date, transactionType: 'bank', address, runningBalance }
         return Transaction.Bank.from({ ...baseFields, amount, categoryId, cleared, memo, number, payee })
     }
 
@@ -90,9 +96,10 @@ const getAllTransactions = db => {
             payee,
             price,
             quantity,
+            runningBalance,
             securityId,
         } = record
-        const baseFields = { id, accountId, date, transactionType: 'investment', address }
+        const baseFields = { id, accountId, date, transactionType: 'investment', address, runningBalance }
         return Transaction.Investment.from({
             ...baseFields,
             amount,
@@ -119,7 +126,7 @@ const getAllTransactions = db => {
 
     const statement = `
         SELECT id, accountId, date, amount, transactionType, payee, memo, number, cleared,
-               categoryId, securityId, quantity, price, commission, investmentAction, address
+               categoryId, securityId, quantity, price, commission, investmentAction, address, runningBalance
         FROM transactions
         ORDER BY date DESC, id DESC
     `
@@ -368,11 +375,69 @@ const clearTransactions = db => {
     db.prepare('DELETE FROM transactions').run()
 }
 
+// Investment actions that affect cash balance (amount is already signed correctly)
+const CASH_IMPACT_ACTIONS = new Set([
+    'Buy',
+    'Cash',
+    'CGLong',
+    'CGShort',
+    'ContribX',
+    'CvrShrt',
+    'Div',
+    'IntInc',
+    'MargInt',
+    'MiscExp',
+    'MiscInc',
+    'Sell',
+    'ShtSell',
+    'WithdrwX',
+    'XIn',
+    'XOut',
+])
+
+/*
+ * Update running balances for all transactions using SQL window function
+ * Must be called after all transactions are imported
+ * Order: date then rowid (preserves QIF import order within each day)
+ * @sig updateRunningBalances :: Database -> void
+ */
+const updateRunningBalances = db => {
+    const cashImpactActions = Array.from(CASH_IMPACT_ACTIONS)
+        .map(a => `'${a}'`)
+        .join(', ')
+
+    const statement = `
+        WITH balances AS (
+            SELECT
+                id,
+                SUM(
+                    CASE
+                        WHEN transactionType = 'bank' THEN amount
+                        WHEN transactionType = 'investment' AND investmentAction IN (${cashImpactActions})
+                            THEN COALESCE(amount, 0)
+                        ELSE 0
+                    END
+                ) OVER (
+                    PARTITION BY accountId
+                    ORDER BY date, rowid
+                ) as runningBalance
+            FROM transactions
+        )
+        UPDATE transactions
+        SET runningBalance = balances.runningBalance
+        FROM balances
+        WHERE transactions.id = balances.id
+    `
+
+    db.prepare(statement).run()
+}
+
 export {
     insertBankTransaction,
     insertInvestmentTransaction,
     importBankTransactions,
     importInvestmentTransactions,
+    updateRunningBalances,
     getAllTransactions,
     getTransactionCount,
     clearTransactions,

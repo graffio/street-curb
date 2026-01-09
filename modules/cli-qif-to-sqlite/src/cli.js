@@ -1,6 +1,8 @@
-/*
- * CLI command implementations - thin wrappers that call services and handle presentation
- */
+// ABOUTME: CLI command implementations for QIF database operations
+// ABOUTME: Thin wrappers that call services and handle presentation
+
+// COMPLEXITY-TODO: functions — CLI has 12 handlers/helpers, split deferred (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — E group size 9, split deferred (expires 2026-04-01)
 
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
@@ -10,201 +12,202 @@ import {
     displayImportResults,
     displaySchemaInfo,
 } from './cli-ui.js'
-import {
-    getAllCurrentHoldings,
-    getAllSecurities,
-    getDatabase,
-    getDatabaseStats,
-    getSchemaInfo,
-    importQifData,
-} from './services/database-service.js'
+import { DatabaseService } from './services/database-service.js'
 import { getAccountRegister, getAccountsWithBalances } from './services/database/accounts.js'
 import parseQifFile from './services/qif-parsing-service.js'
 
-/*
- * Display QIF parse results
- * @sig displayParseResults :: (QifData, Boolean) -> void
- */
-const displayParseResults = qifData => {
-    const { accounts, categories, securities, bankTransactions, investmentTransactions, prices, tags, others } = qifData
+const { collectDatabaseStats, createDatabase, getAllCurrentHoldings, getAllSecurities, importQifData, toSchemaInfo } =
+    DatabaseService
 
-    console.log('\nParsed QIF data:')
-    console.log(`Accounts: ${accounts.length}`)
-    console.log(`Categories: ${categories.length}`)
-    console.log(`Securities: ${securities.length}`)
-    console.log(`Bank Transactions: ${bankTransactions.length}`)
-    console.log(`Investment Transactions: ${investmentTransactions.length}`)
-    console.log(`Prices: ${prices.length}`)
-    console.log(`Tags: ${tags.length}`)
-    console.log(`Other Entries: ${others.length}`)
-}
+const E = {
+    /* Output parsed QIF data summary to console
+     * @sig emitParseResults :: QifData -> void
+     */
+    emitParseResults: qifData => {
+        const { accounts, bankTransactions, categories, investmentTransactions, others, prices, securities, tags } =
+            qifData
 
-const displayAccountsAndHoldings = argv => {
-    // Get database connection for reporting
-    const db = getDatabase(argv.database)
+        console.log('\nParsed QIF data:')
+        console.log(`Accounts: ${accounts.length}`)
+        console.log(`Categories: ${categories.length}`)
+        console.log(`Securities: ${securities.length}`)
+        console.log(`Bank Transactions: ${bankTransactions.length}`)
+        console.log(`Investment Transactions: ${investmentTransactions.length}`)
+        console.log(`Prices: ${prices.length}`)
+        console.log(`Tags: ${tags.length}`)
+        console.log(`Other Entries: ${others.length}`)
+    },
 
-    try {
-        const accountsWithBalances = getAccountsWithBalances(db)
-        const allHoldings = getAllCurrentHoldings(db)
-        const allSecurities = getAllSecurities(db)
-        displayAccountsWithNonZeroBalances(accountsWithBalances, allHoldings, allSecurities, db)
-    } catch (error) {
-        console.log(`\n⚠️  Error during post-import analysis: ${error.message}`)
-    }
-}
-/*
- * Handle import command - parse QIF file and import into database
- * @sig handleImport :: (Argv) -> void
- */
-const handleImport = argv => {
-    const filename = argv.file || argv._[1]
-    if (!filename) throw new Error('Import command requires a file path')
+    /* Output accounts and holdings summary to console
+     * @sig emitAccountsAndHoldings :: String -> void
+     */
+    emitAccountsAndHoldings: database => {
+        const db = createDatabase(database)
 
-    console.log(`Parsing QIF file: ${filename}`)
-    const qifData = parseQifFile(filename)
-    displayParseResults(qifData)
+        try {
+            const accountsWithBalances = getAccountsWithBalances(db)
+            const allHoldings = getAllCurrentHoldings(db)
+            const allSecurities = getAllSecurities(db)
+            displayAccountsWithNonZeroBalances(accountsWithBalances, allHoldings, allSecurities, db)
+        } catch (error) {
+            console.log(`\n⚠️  Error during post-import analysis: ${error.message}`)
+        }
+    },
 
-    console.log('\nImporting data into database...')
-    importQifData(argv.database, qifData)
-    displayImportResults(qifData)
+    /* Handle import command - parse QIF file and import into database
+     * @sig handleImport :: Argv -> void
+     */
+    handleImport: argv => {
+        const { _, database, file } = argv
+        const filename = file || _[1]
+        if (!filename) throw new Error('Import command requires a file path')
 
-    console.log(`\nDatabase: ${argv.database}`)
-    console.log('Import completed successfully!')
+        console.log(`Parsing QIF file: ${filename}`)
+        const qifData = parseQifFile(filename)
+        E.emitParseResults(qifData)
 
-    // Add reporting functionality
-    console.log('\n' + '='.repeat(60))
-    console.log('📋 POST-IMPORT ANALYSIS')
-    console.log('='.repeat(60))
+        console.log('\nImporting data into database...')
+        importQifData(database, qifData)
+        displayImportResults(qifData)
 
-    displayAccountsAndHoldings(argv)
-}
+        console.log(`\nDatabase: ${database}`)
+        console.log('Import completed successfully!')
 
-/*
- * Handle schema command - display database schema information
- * @sig handleSchema :: (Argv) -> void
- */
-const handleSchema = argv => {
-    try {
-        const schemaInfo = getSchemaInfo(argv.database)
-        displaySchemaInfo(schemaInfo)
-        console.log(`\nDatabase: ${argv.database}`)
-    } catch (error) {
-        console.log(`Database: ${argv.database}`)
-        console.log(`Error: ${error.message}`)
-    }
-}
+        console.log('\n' + '='.repeat(60))
+        console.log('📋 POST-IMPORT ANALYSIS')
+        console.log('='.repeat(60))
 
-/*
- * Display database statistics
- * @sig displayStats :: (DatabaseStats) -> void
- */
-const displayStats = stats => {
-    console.log('\n=== Database Statistics ===')
-    console.log(`Accounts: ${stats.accounts}`)
-    console.log(`Securities: ${stats.securities}`)
-    console.log(`Categories: ${stats.categories}`)
-    console.log(`Tags: ${stats.tags}`)
-    console.log(`Transactions: ${stats.transactions}`)
-    console.log(`Prices: ${stats.prices}`)
-    console.log(`Lots: ${stats.lots}`)
-    console.log(`Holdings: ${stats.holdings}`)
-    console.log(`Daily Portfolios: ${stats.dailyPortfolios}`)
-}
+        E.emitAccountsAndHoldings(database)
+    },
 
-/*
- * Handle info command - display database statistics
- * @sig handleInfo :: (Argv) -> void
- */
-const handleInfo = argv => {
-    try {
-        const stats = getDatabaseStats(argv.database)
-        displayStats(stats)
-        console.log(`\nDatabase: ${argv.database}`)
-    } catch (error) {
-        console.log(`Database: ${argv.database}`)
-        console.log(`Error: ${error.message}`)
-    }
-}
+    /* Handle schema command - display database schema information
+     * @sig handleSchema :: Argv -> void
+     */
+    handleSchema: argv => {
+        const { database } = argv
+        try {
+            const schemaInfo = toSchemaInfo(database)
+            displaySchemaInfo(schemaInfo)
+            console.log(`\nDatabase: ${database}`)
+        } catch (error) {
+            console.log(`Database: ${database}`)
+            console.log(`Error: ${error.message}`)
+        }
+    },
 
-/*
- * Handle register command - display account register
- * @sig handleRegister :: (Argv) -> void
- */
-const handleRegister = argv => {
-    const accountName = argv.account
-    if (!accountName) throw new Error('Register command requires an account name')
+    /* Output database statistics to console
+     * @sig emitStats :: DatabaseStats -> void
+     */
+    emitStats: stats => {
+        const { accounts, categories, dailyPortfolios, holdings, lots, prices, securities, tags, transactions } = stats
+        console.log('\n=== Database Statistics ===')
+        console.log(`Accounts: ${accounts}`)
+        console.log(`Securities: ${securities}`)
+        console.log(`Categories: ${categories}`)
+        console.log(`Tags: ${tags}`)
+        console.log(`Transactions: ${transactions}`)
+        console.log(`Prices: ${prices}`)
+        console.log(`Lots: ${lots}`)
+        console.log(`Holdings: ${holdings}`)
+        console.log(`Daily Portfolios: ${dailyPortfolios}`)
+    },
 
-    const db = getDatabase(argv.database)
-    const registerEntries = getAccountRegister(db, accountName)
-    displayAccountRegister(accountName, registerEntries)
-    console.log(`\nDatabase: ${argv.database}`)
-    db.close()
-}
+    /* Handle info command - display database statistics
+     * @sig handleInfo :: Argv -> void
+     */
+    handleInfo: argv => {
+        const { database } = argv
+        try {
+            const stats = collectDatabaseStats(database)
+            E.emitStats(stats)
+            console.log(`\nDatabase: ${database}`)
+        } catch (error) {
+            console.log(`Database: ${database}`)
+            console.log(`Error: ${error.message}`)
+        }
+    },
 
-/*
- * Process command line arguments
- * @sig processArgs :: (Argv) -> void
- */
-const processArgs = argv => {
-    if (argv._.length === 0 && !argv.help && !argv.version) {
-        console.log('Error: No command specified')
-        console.log("Run 'qif-db --help' for usage information")
-        process.exit(1)
-    }
+    /* Handle register command - display account register
+     * @sig handleRegister :: Argv -> void
+     */
+    handleRegister: argv => {
+        const { account, database } = argv
+        if (!account) throw new Error('Register command requires an account name')
 
-    const [command] = argv._
+        const db = createDatabase(database)
+        const registerEntries = getAccountRegister(db, account)
+        displayAccountRegister(account, registerEntries)
+        console.log(`\nDatabase: ${database}`)
+        db.close()
+    },
 
-    if (command === 'import') return handleImport(argv)
-    if (command === 'schema') return handleSchema(argv)
-    if (command === 'info') return handleInfo(argv)
-    if (command === 'register') return handleRegister(argv)
+    /* Dispatch command to appropriate handler
+     * @sig dispatchCommand :: Argv -> void
+     */
+    dispatchCommand: argv => {
+        const { _, help, version } = argv
+        if (_.length === 0 && !help && !version) {
+            console.log('Error: No command specified')
+            console.log("Run 'qif-db --help' for usage information")
+            process.exit(1)
+        }
 
-    throw new Error(`Unknown command: ${command}`)
-}
+        const [command] = _
 
-/*
- * Main CLI entry point
- * @sig main :: () -> void
- */
-const main = () => {
-    try {
+        if (command === 'import') return E.handleImport(argv)
+        if (command === 'schema') return E.handleSchema(argv)
+        if (command === 'info') return E.handleInfo(argv)
+        if (command === 'register') return E.handleRegister(argv)
+
+        throw new Error(`Unknown command: ${command}`)
+    },
+
+    /* Main CLI entry point
+     * @sig main :: () -> void
+     */
+    main: () => {
+        /* Check that required arguments are present
+         * @sig checkArgs :: Argv -> Boolean
+         */
         const checkArgs = argv => {
-            // Only require database for actual commands
-            const command = argv._[0]
+            const { _, database } = argv
+            const command = _[0]
             const requiresDatabaseCommands = ['import', 'schema', 'info', 'register']
-            if (command && requiresDatabaseCommands.includes(command) && !argv.database)
+            if (command && requiresDatabaseCommands.includes(command) && !database)
                 throw new Error('Database path is required for this command')
 
             return true
         }
 
-        const argv = yargs(hideBin(process.argv))
-            .usage('Usage: qif-db <command> [options]')
-            .command('import <file>', 'Import QIF file into database')
-            .command('schema', 'Show database schema information')
-            .command('info', 'Show database statistics')
-            .command('register', 'Show account register with running cash balances')
-            .option('database', { alias: 'd', type: 'string', description: 'Database file path' })
-            .option('account', { alias: 'a', type: 'string', description: 'Account name (for register command)' })
-            .help()
-            .alias('help', 'h')
-            .version()
-            .alias('version', 'v')
-            .check(checkArgs)
-            .parse()
+        const emitHelpMessage = () => console.error("Run 'qif-db --help' for usage information")
+        const emitUsageMessage = () => console.error('Usage: qif-db import <file>')
 
-        processArgs(argv)
-    } catch (error) {
-        console.error(error)
+        try {
+            const argv = yargs(hideBin(process.argv))
+                .usage('Usage: qif-db <command> [options]')
+                .command('import <file>', 'Import QIF file into database')
+                .command('schema', 'Show database schema information')
+                .command('info', 'Show database statistics')
+                .command('register', 'Show account register with running cash balances')
+                .option('database', { alias: 'd', type: 'string', description: 'Database file path' })
+                .option('account', { alias: 'a', type: 'string', description: 'Account name (for register command)' })
+                .help()
+                .alias('help', 'h')
+                .version()
+                .alias('version', 'v')
+                .check(checkArgs)
+                .parse()
 
-        const showHelpMessage = () => console.error("Run 'qif-db --help' for usage information")
-        const showUsageMessage = () => console.error('Usage: qif-db import <file>')
+            E.dispatchCommand(argv)
+        } catch (error) {
+            console.error(error)
 
-        if (error.message.includes('Unknown command')) showHelpMessage()
-        if (error.message.includes('requires a file path')) showUsageMessage()
-        process.exit(1)
-    }
+            if (error.message.includes('Unknown command')) emitHelpMessage()
+            if (error.message.includes('requires a file path')) emitUsageMessage()
+            process.exit(1)
+        }
+    },
 }
 
 // Run if called directly - check if this module is the main module
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1].endsWith('cli.js')) main()
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1].endsWith('cli.js')) E.main()
