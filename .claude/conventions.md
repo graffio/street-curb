@@ -15,6 +15,23 @@ Brevity > thoroughness. When in doubt, match existing code.
 - Max 120 chars per line
 - Trailing commas in multiline structures
 - Remove unnecessary braces: `if (x) doThing()` not `if (x) { doThing() }`
+- Destructuring: fit as many bindings per line as possible under 120 chars
+
+```javascript
+// BAD - one binding per line when they could fit together
+const {
+    a,
+    b,
+    c,
+} = x
+
+// GOOD - compact when it fits
+const { a, b, c } = x
+
+// GOOD - split across minimum required lines when too long
+const { veryLongNameOne, veryLongNameTwo } = x
+const { veryLongNameThree, veryLongNameFour } = x
+```
 
 ## Functions
 

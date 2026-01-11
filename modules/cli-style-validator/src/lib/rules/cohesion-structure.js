@@ -1,11 +1,5 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
-// COMPLEXITY-TODO: lines — Rule implementation requires many checks (expires 2026-02-01)
-// COMPLEXITY-TODO: functions — Rule implementation requires many validators (expires 2026-02-01)
-// COMPLEXITY-TODO: cohesion-structure — Self-referential rule complexity (expires 2026-02-01)
-// COMPLEXITY-TODO: chain-extraction — Transform functions access nested AST props (expires 2026-02-01)
-// COMPLEXITY-TODO: single-level-indentation — V.check requires inline validation logic (expires 2026-02-01)
-// COMPLEXITY-TODO: sig-documentation — Inline validation callbacks need extraction (expires 2026-02-01)
 
 import { AST, ASTNode, Lines } from '@graffio/ast'
 import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
@@ -29,9 +23,6 @@ const VAGUE_PREFIXES = /^(get|extract|derive|select|fetch)[A-Z]/
 
 // Required declaration order
 const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A', 'E']
-
-// Thresholds for triggering CHECKPOINTs
-const THRESHOLDS = { totalFunctions: 12, perGroup: 5 }
 
 // Names that are exempt from cohesion group requirements
 const EXEMPT_NAMES = ['rootReducer']
@@ -196,24 +187,6 @@ const F = {
         )
     },
 
-    // Create violation for exceeding function count threshold
-    // @sig createHighCountViolation :: (Number, Number, Number, String) -> Violation
-    createHighCountViolation: (line, count, threshold, context) =>
-        F.createViolation(
-            line,
-            `CHECKPOINT: ${context} (${count}) exceeds threshold (${threshold}). ` +
-                `This may indicate a design issue. Consider whether the mental model is right.`,
-        ),
-
-    // Create violation for cohesion group with too many functions
-    // @sig createLargeGroupViolation :: (Number, String, Number) -> Violation
-    createLargeGroupViolation: (line, groupName, count) =>
-        F.createViolation(
-            line,
-            `CHECKPOINT: ${groupName} group has ${count} functions (threshold: ${THRESHOLDS.perGroup}). ` +
-                `Consider whether these share a pattern that could be unified.`,
-        ),
-
     // Create violation for cohesion groups declared out of order
     // @sig createOrderingViolation :: (Number, String, String) -> Violation
     createOrderingViolation: (line, actual, expected) =>
@@ -324,22 +297,6 @@ const V = {
             if (!P.hasVaguePrefix(name)) return
             const hasJustification = complexityComments.some(c => c.reason.includes(`"${name}"`))
             if (!hasJustification) violations.push(F.createVaguePrefixViolation(line, name))
-        })
-
-        // Count total functions in cohesion groups
-        const totalInGroups = Object.values(cohesionGroups).reduce((sum, g) => sum + g.length, 0)
-        const totalFunctions = moduleFunctions.length + totalInGroups
-
-        // Check total function count
-        if (totalFunctions > THRESHOLDS.totalFunctions)
-            violations.push(F.createHighCountViolation(1, totalFunctions, THRESHOLDS.totalFunctions, 'Total functions'))
-
-        // Check per-group counts
-        Object.entries(cohesionGroups).forEach(([groupName, members]) => {
-            if (members.length > THRESHOLDS.perGroup) {
-                const firstLine = members[0]?.line || 1
-                violations.push(F.createLargeGroupViolation(firstLine, groupName, members.length))
-            }
         })
 
         // Check for multiple exports (CHECKPOINT)

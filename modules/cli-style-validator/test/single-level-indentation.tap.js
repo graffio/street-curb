@@ -203,63 +203,62 @@ t.test('Given a function with allowed nesting patterns', t => {
     t.end()
 })
 
-t.test('Given functions with multi-line unnamed function violations', t => {
-    t.test('When an arrow function callback is longer than 1 line', t => {
+t.test('Given functions with complex callback violations', t => {
+    t.test('When an arrow function callback has 3+ lines', t => {
         const code = `const processData = (items) => {
             return items.map(item => {
                 const processed = item.value * 2
-                return processed + 1
+                const adjusted = processed + 1
+                return adjusted
             })
         }`
         const ast = parseCode(code)
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
-        t.equal(violations.length, 1, 'Then one violation should be detected for the multi-line arrow function')
-        t.match(
-            violations[0].message,
-            /multi-line unnamed function/,
-            'Then the message should mention multi-line unnamed function',
-        )
+        t.equal(violations.length, 1, 'Then one violation should be detected for long callback')
+        t.match(violations[0].message, /exceeds 2 lines/, 'Then the message should mention exceeds 2 lines')
         t.end()
     })
 
-    t.test('When a function expression callback is longer than 1 line', t => {
+    t.test('When a callback contains control flow even if short', t => {
         const code = `const processItems = (data) => {
-            return data.filter(function(item) {
-                const isValid = item.active
-                return isValid && item.value > 0
+            return data.filter(item => {
+                if (item.active) return true
             })
         }`
         const ast = parseCode(code)
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
-        t.equal(violations.length, 1, 'Then one violation should be detected for the multi-line function expression')
+        t.equal(violations.length, 1, 'Then one violation should be detected for control flow in callback')
+        t.match(violations[0].message, /control flow/, 'Then the message should mention control flow')
         t.end()
     })
 
-    t.test('When there are multiple multi-line unnamed functions', t => {
+    t.test('When there are multiple complex callbacks', t => {
         const code = `const processAll = (data) => {
             const filtered = data.filter(item => {
                 const valid = item.active
-                return valid
+                const checked = valid && item.value > 0
+                return checked
             })
             const mapped = filtered.map(item => {
                 const doubled = item.value * 2
-                return doubled
+                const tripled = doubled * 1.5
+                return tripled
             })
             return mapped
         }`
         const ast = parseCode(code)
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
-        t.equal(violations.length, 2, 'Then two violations should be detected for both multi-line unnamed functions')
+        t.equal(violations.length, 2, 'Then two violations should be detected for both complex callbacks')
         t.end()
     })
 
     t.end()
 })
 
-t.test('Given functions with proper single-line unnamed functions', t => {
+t.test('Given functions with simple callbacks', t => {
     t.test('When arrow function callbacks are single-line', t => {
         const code = `const processData = (items) => {
             return items
@@ -270,6 +269,20 @@ t.test('Given functions with proper single-line unnamed functions', t => {
         const violations = checkSingleLevelIndentation(ast, code, 'test.js')
 
         t.equal(violations.length, 0, 'Then no violations should be detected for single-line arrow functions')
+        t.end()
+    })
+
+    t.test('When arrow function callbacks are 2 lines without control flow', t => {
+        const code = `const processData = (items) => {
+            return items.map(item => {
+                const doubled = item.value * 2
+                return doubled
+            })
+        }`
+        const ast = parseCode(code)
+        const violations = checkSingleLevelIndentation(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for simple 2-line callbacks')
         t.end()
     })
 
@@ -291,7 +304,7 @@ t.test('Given a function with nested callback functions', t => {
     t.test('When the callback function contains nested indentation violations', t => {
         const code = `const outerFunction = (data) => {
             if (data) return data.map(item => item.value)
-            
+
             return data.reduce((acc, item) => {
                 if (item.valid) {
                     if (item.processed) {
@@ -306,9 +319,9 @@ t.test('Given a function with nested callback functions', t => {
 
         t.equal(violations.length, 2, 'Then two violations should be detected')
         const nestedViolation = violations.find(v => v.message.toLowerCase().includes('nested indentation'))
-        const unnamedViolation = violations.find(v => v.message.includes('multi-line unnamed function'))
+        const longCallbackViolation = violations.find(v => v.message.includes('exceeds 2 lines'))
         t.ok(nestedViolation, 'Then one violation should be for nested indentation')
-        t.ok(unnamedViolation, 'Then one violation should be for multi-line unnamed function')
+        t.ok(longCallbackViolation, 'Then one violation should be for callback exceeding 2 lines')
         t.end()
     })
 

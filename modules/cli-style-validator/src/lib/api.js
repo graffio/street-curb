@@ -6,7 +6,6 @@ import { parseCode } from './parser.js'
 import { PS } from './shared/predicates.js'
 import { checkAboutmeComment } from './rules/aboutme-comment.js'
 import { checkChainExtraction } from './rules/chain-extraction.js'
-import { checkComplexityBudget } from './rules/complexity-budget.js'
 import { checkFileNaming } from './rules/file-naming.js'
 import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
 import { checkCohesionStructure } from './rules/cohesion-structure.js'
@@ -14,6 +13,7 @@ import { checkFunctionSpacing } from './rules/function-spacing.js'
 import { checkFunctionalPatterns } from './rules/functional-patterns.js'
 import { checkImportOrdering } from './rules/import-ordering.js'
 import { checkLineLength } from './rules/line-length.js'
+import { checkMultilineDestructuring } from './rules/multiline-destructuring.js'
 import { checkSigDocumentation } from './rules/sig-documentation.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { checkReactComponentCohesion } from './rules/react-component-cohesion.js'
@@ -24,7 +24,7 @@ import { checkReactComponentCohesion } from './rules/react-component-cohesion.js
  * Violation = { type: String, line: Number, column: Number, message: String, rule: String, priority: Number }
  *
  * Priority determines fix order (lower = fix first):
- *   0 = complexity-budget (structural issues - address first)
+ *   0 = cohesion-structure (structural issues - address first)
  *   1 = chain-extraction (shortens lines, may fix line-length)
  *   2 = single-level-indentation (extracts functions, may fix line-length and sig-documentation)
  *   3 = line-length (fix remaining after 1 and 2)
@@ -51,7 +51,6 @@ const checkFile = async filePath => {
     const allViolations = [
         ...checkAboutmeComment(ast, sourceCode, filePath),
         ...checkChainExtraction(ast, sourceCode, filePath),
-        ...checkComplexityBudget(ast, sourceCode, filePath),
         ...checkFileNaming(ast, sourceCode, filePath),
         ...checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
         ...checkFunctionalPatterns(ast, sourceCode, filePath),
@@ -59,6 +58,7 @@ const checkFile = async filePath => {
         ...checkFunctionSpacing(ast, sourceCode, filePath),
         ...checkImportOrdering(ast, sourceCode, filePath),
         ...checkLineLength(ast, sourceCode, filePath),
+        ...checkMultilineDestructuring(ast, sourceCode, filePath),
         ...checkSigDocumentation(ast, sourceCode, filePath),
         ...checkSingleLevelIndentation(ast, sourceCode, filePath),
         ...checkReactComponentCohesion(ast, sourceCode, filePath),

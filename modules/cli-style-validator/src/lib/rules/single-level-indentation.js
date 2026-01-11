@@ -8,11 +8,13 @@ import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
 
-const CALLBACK_EXTRACTION_MESSAGE =
-    'Extract multi-line unnamed function to a named function. ' +
-    'FIX: Move the callback body to a named function in the appropriate module-level cohesion group (P/T/F/V/A). ' +
-    'For Promise executors: extract to a function that receives resolve/reject as parameters. ' +
-    "For .map() callbacks: if it doesn't fit on one line with .map(), extract it."
+const CALLBACK_TOO_LONG_MESSAGE =
+    'Callback exceeds 2 lines — extract to a named function. ' +
+    'FIX: Move the callback body to a named function in the appropriate module-level cohesion group (P/T/F/V/A).'
+
+const CALLBACK_CONTROL_FLOW_MESSAGE =
+    'Callback contains control flow — simplify or extract. ' +
+    'FIX: Use a ternary expression, or extract to a named function in the appropriate cohesion group (P/T/F/V/A).'
 
 const NESTED_INDENTATION_MESSAGE =
     'Nested indentation detected. ' +
@@ -39,6 +41,10 @@ const P = {
         ASTNode.ArrayExpression.is(node) ||
         ASTNode.JSXElement.is(node) ||
         ASTNode.JSXFragment.is(node),
+
+    // Check if function body contains any control flow statements
+    // @sig hasControlFlow :: ASTNode -> Boolean
+    hasControlFlow: node => AST.descendants(node).some(P.isIndentationStatement),
 }
 
 const T = {
@@ -65,11 +71,16 @@ const F = {
 }
 
 const V = {
-    // Validate callback functions should be extracted if multiline
+    // Validate callback functions: flag if too long (>2 lines) or has control flow
+    // A 2-statement body spans 4 lines (open brace, 2 statements, close brace), so flag at 5+ lines
+    // Line count has precedence over control flow check
     // @sig checkCallbackFunction :: (ASTNode, ASTNode, [Violation]) -> Void
     checkCallbackFunction: (node, ast, violations) => {
         if (!PS.isFunctionNode(node) || !AS.isCallbackFunction(node) || PS.isJSXFunction(node)) return
-        if (AS.countFunctionLines(node) > 1) violations.push(F.createViolation(node, CALLBACK_EXTRACTION_MESSAGE))
+
+        if (AS.countFunctionLines(node) > 4) return violations.push(F.createViolation(node, CALLBACK_TOO_LONG_MESSAGE))
+
+        if (P.hasControlFlow(node)) return violations.push(F.createViolation(node, CALLBACK_CONTROL_FLOW_MESSAGE))
     },
 
     // Validate a function node for nested indentation violations
