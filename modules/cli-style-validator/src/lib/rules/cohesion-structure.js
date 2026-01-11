@@ -218,6 +218,7 @@ const V = {
         const externalRefs = A.collectExternalReferences(ast)
         const exports = A.collectExports(ast)
         const exportedNames = new Set(exports.map(e => e.name))
+        A.collectExportedFunctionRefs(ast, exportedNames).forEach(name => exportedNames.add(name))
 
         V.checkOrdering(declarations, violations)
         V.checkExternalReferences(externalRefs, violations)
@@ -285,6 +286,17 @@ const A = {
                     .filter(spec => spec.exportedName)
                     .map(spec => F.createNameInfo(spec.exportedName, node)),
             ),
+
+    // Collect function names referenced in exported objects (e.g., `const Api = { checkFile }`)
+    // @sig collectExportedFunctionRefs :: (AST, Set<String>) -> [String]
+    collectExportedFunctionRefs: (ast, exportedNames) =>
+        AST.topLevelStatements(ast)
+            .filter(stmt => ASTNode.VariableDeclaration.is(stmt))
+            .filter(stmt => exportedNames.has(stmt.firstName))
+            .filter(stmt => ASTNode.ObjectExpression.is(stmt.firstValue))
+            .flatMap(stmt => stmt.firstValue.properties)
+            .filter(prop => prop.value && ASTNode.Identifier.is(prop.value))
+            .map(prop => prop.value.name),
 }
 
 const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.check)

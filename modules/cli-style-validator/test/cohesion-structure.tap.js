@@ -82,6 +82,18 @@ export { myFunction }`
         t.end()
     })
 
+    t.test('When a function is referenced in an exported object it should be exempt', t => {
+        const code = `const checkFile = async () => {}
+const Api = { checkFile }
+export { Api }`
+        const ast = parseCode(code)
+        const violations = checkCohesionStructure(ast, code, 'test.js')
+
+        const uncatViolation = violations.find(v => v.message.includes('checkFile'))
+        t.notOk(uncatViolation, 'Then no violation for function referenced in exported object')
+        t.end()
+    })
+
     t.test('When a PascalCase function exists it should be exempt', t => {
         const code = `const MyComponent = () => <div />
 const P = { isValid: x => x > 0 }`

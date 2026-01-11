@@ -19,7 +19,6 @@ import { checkSigDocumentation } from './rules/sig-documentation.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { checkReactComponentCohesion } from './rules/react-component-cohesion.js'
 
-// COMPLEXITY: cohesion-structure — API entry point doesn't fit cohesion model
 /**
  * Check single file for coding standards violations
  * CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
