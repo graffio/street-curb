@@ -9,7 +9,7 @@ import { checkChainExtraction } from './rules/chain-extraction.js'
 import { ExportStructure } from './rules/export-structure.js'
 import { checkFileNaming } from './rules/file-naming.js'
 import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
-import { checkCohesionStructure } from './rules/cohesion-structure.js'
+import { CohesionStructure } from './rules/cohesion-structure.js'
 import { checkFunctionSpacing } from './rules/function-spacing.js'
 import { checkFunctionalPatterns } from './rules/functional-patterns.js'
 import { checkImportOrdering } from './rules/import-ordering.js'
@@ -19,6 +19,7 @@ import { checkSigDocumentation } from './rules/sig-documentation.js'
 import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 import { checkReactComponentCohesion } from './rules/react-component-cohesion.js'
 
+// COMPLEXITY: cohesion-structure — API entry point doesn't fit cohesion model
 /**
  * Check single file for coding standards violations
  * CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
@@ -55,7 +56,7 @@ const checkFile = async filePath => {
         ...checkFileNaming(ast, sourceCode, filePath),
         ...checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
         ...checkFunctionalPatterns(ast, sourceCode, filePath),
-        ...checkCohesionStructure(ast, sourceCode, filePath),
+        ...CohesionStructure.checkCohesionStructure(ast, sourceCode, filePath),
         ...ExportStructure.checkExportStructure(ast, sourceCode, filePath),
         ...checkFunctionSpacing(ast, sourceCode, filePath),
         ...checkImportOrdering(ast, sourceCode, filePath),

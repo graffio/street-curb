@@ -1,6 +1,8 @@
 import t from 'tap'
-import { checkCohesionStructure } from '../src/lib/rules/cohesion-structure.js'
+import { CohesionStructure } from '../src/lib/rules/cohesion-structure.js'
 import { parseCode } from '../src/lib/parser.js'
+
+const { checkCohesionStructure } = CohesionStructure
 
 t.test('Given cohesion groups in correct order', t => {
     t.test('When P comes before T comes before F', t => {
