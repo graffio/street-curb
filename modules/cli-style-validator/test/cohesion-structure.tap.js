@@ -156,52 +156,6 @@ const T = { toNumber: x => parseInt(x) }`
     t.end()
 })
 
-t.test('Given multiple exports', t => {
-    t.test('When a file has more than one export', t => {
-        const code = `const fn1 = () => {}
-const fn2 = () => {}
-export { fn1, fn2 }`
-        const ast = parseCode(code)
-        const violations = checkCohesionStructure(ast, code, 'test.js')
-
-        const multiExportViolation = violations.find(v => v.message.includes('exports'))
-        t.ok(multiExportViolation, 'Then a multiple exports violation should be detected')
-        t.match(multiExportViolation.message, /2 exports/, 'Then the message should mention the count')
-        t.end()
-    })
-
-    t.test('When a file has exactly one export', t => {
-        const code = `const fn1 = () => {}
-export { fn1 }`
-        const ast = parseCode(code)
-        const violations = checkCohesionStructure(ast, code, 'test.js')
-
-        const multiExportViolation = violations.find(v => v.message.includes('exports'))
-        t.notOk(multiExportViolation, 'Then no multiple exports violation should be detected')
-        t.end()
-    })
-
-    t.end()
-})
-
-t.test('Given an exported function defined inside a cohesion group', t => {
-    t.test('When an export references a function inside P group', t => {
-        const code = `const P = { isValid: x => x > 0 }
-export { isValid } from './other.js'`
-
-        // Note: This test may not trigger the violation since the function
-        // isn't actually defined inside the group, just has the same name
-        const ast = parseCode(code)
-        const violations = checkCohesionStructure(ast, code, 'test.js')
-
-        // This is testing the mechanism runs without error
-        t.ok(Array.isArray(violations), 'Then violations array should be returned')
-        t.end()
-    })
-
-    t.end()
-})
-
 t.test('Given COMPLEXITY comments for justification', t => {
     t.test('When a COMPLEXITY comment exists near an uncategorized function', t => {
         const code = `// COMPLEXITY: Special case for legacy support

@@ -205,25 +205,6 @@ const F = {
                 `FIX: Define the function inside the ${group} object, not outside with a later reference.`,
         ),
 
-    // Create violation for multiple exports
-    // @sig createMultipleExportsViolation :: (Number, Number) -> Violation
-    createMultipleExportsViolation: (line, count) =>
-        F.createViolation(
-            line,
-            `CHECKPOINT: File has ${count} exports. Multiple exports may indicate the file should be split. ` +
-                `If justified, ask Jeff if you should add a COMPLEXITY comment explaining why these belong together.`,
-        ),
-
-    // Create violation for export defined inside cohesion group
-    // @sig createExportInsideCohesionViolation :: (Number, String, String) -> Violation
-    createExportInsideCohesionViolation: (line, name, group) =>
-        F.createViolation(
-            line,
-            `Exported function "${name}" is defined inside ${group} group. ` +
-                `FIX: Define exported functions at module level (outside cohesion groups). ` +
-                `Cohesion groups are for internal helpers.`,
-        ),
-
     // Create violation for vague function prefix
     // @sig createVaguePrefixViolation :: (Number, String) -> Violation
     createVaguePrefixViolation: (line, name) =>
@@ -298,20 +279,6 @@ const V = {
             const hasJustification = complexityComments.some(c => c.reason.includes(`"${name}"`))
             if (!hasJustification) violations.push(F.createVaguePrefixViolation(line, name))
         })
-
-        // Check for multiple exports (CHECKPOINT)
-        if (exports.length > 1) {
-            const hasJustification = complexityComments.some(c => c.reason.toLowerCase().includes('export'))
-            if (!hasJustification) violations.push(F.createMultipleExportsViolation(exports[0].line, exports.length))
-        }
-
-        // Check that exported functions are defined outside cohesion groups
-        exports.forEach(({ name, line }) =>
-            Object.entries(cohesionGroups).forEach(([groupName, members]) => {
-                const inGroup = members.find(m => m.name === name)
-                if (inGroup) violations.push(F.createExportInsideCohesionViolation(inGroup.line, name, groupName))
-            }),
-        )
 
         // Add reminder about existing COMPLEXITY comments
         if (complexityComments.length > 0 && violations.length > 0) {

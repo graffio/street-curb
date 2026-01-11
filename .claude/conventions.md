@@ -122,7 +122,33 @@ Organize functions into single-letter namespace objects by cohesion type:
 - Exported function(s) at bottom, outside namespace objects
 - Configuration constants at top, before cohesion groups
 
-**Ordering:** Configuration → P → T → F → V → A → E → Exports
+**Ordering:** Configuration → P → T → F → V → A → E → Exported Functions → Export Object → Export Statement
+
+**Export Structure:**
+
+Every file exports exactly one named object (not default) matching the file name:
+
+```javascript
+// cohesion-structure.js
+const P = { ... }  // internal helpers in cohesion groups
+const T = { ... }
+const V = { check: (ast, code, path) => { ... } }
+
+// Exported functions at module level (NOT inside cohesion groups)
+const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.check)
+
+// Single export object matching file name (kebab-case → PascalCase)
+const CohesionStructure = { checkCohesionStructure }
+export { CohesionStructure }
+```
+
+**Rules:**
+
+- Exactly one named export per file (no `export default`, no multiple exports)
+- Export name matches file name: `cohesion-structure.js` → `CohesionStructure`
+- Functions in the export object must be defined at module level, NOT inside P/T/F/V/A/E
+- Cohesion groups are for internal helpers; exported API is separate
+- Test files and index files are exempt
 
 **Example:**
 
@@ -138,17 +164,18 @@ const P = {
 }
 
 const T = {
-    getBaseName: filePath => filePath.split('/').pop(),
+    toBaseName: filePath => filePath.split('/').pop(),
 }
 
 const V = {
-    checkNaming: (ast, sourceCode, filePath) => {
+    check: (ast, sourceCode, filePath) => {
         // ... returns violations
     },
 }
 
-const checkFileNaming = V.checkNaming
-export { checkFileNaming }
+const checkFileNaming = V.check
+const FileNaming = { checkFileNaming }
+export { FileNaming }
 ```
 
 **Uncategorized functions = CHECKPOINT:** If a function doesn't match any pattern, stop and ask Jeff. See workflow.md "Complexity-Budget Failures" for the rule on complexity comments.

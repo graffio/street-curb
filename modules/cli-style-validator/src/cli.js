@@ -3,8 +3,9 @@
 
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import { checkFile } from './lib/api.js'
+import { Api } from './lib/api.js'
 
+// COMPLEXITY: cohesion-structure — CLI entry point functions don't fit cohesion model
 /**
  * Main CLI function
  * @sig main :: () -> Promise<Void>
@@ -18,7 +19,7 @@ const main = async () => {
         .help().argv
 
     try {
-        const result = await checkFile(argv.file)
+        const result = await Api.checkFile(argv.file)
 
         // Output JSON result for LLM consumption
         console.log(JSON.stringify(result, null, 2))
@@ -31,7 +32,7 @@ const main = async () => {
     }
 }
 
-// handle reject
+// COMPLEXITY: cohesion-structure — CLI error handler doesn't fit cohesion model
 // @sig onrejected :: Error -> ()
 const onrejected = error => {
     console.error('CLI error:', error.message)

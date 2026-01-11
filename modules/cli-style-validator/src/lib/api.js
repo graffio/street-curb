@@ -6,6 +6,7 @@ import { parseCode } from './parser.js'
 import { PS } from './shared/predicates.js'
 import { checkAboutmeComment } from './rules/aboutme-comment.js'
 import { checkChainExtraction } from './rules/chain-extraction.js'
+import { ExportStructure } from './rules/export-structure.js'
 import { checkFileNaming } from './rules/file-naming.js'
 import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
 import { checkCohesionStructure } from './rules/cohesion-structure.js'
@@ -55,6 +56,7 @@ const checkFile = async filePath => {
         ...checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
         ...checkFunctionalPatterns(ast, sourceCode, filePath),
         ...checkCohesionStructure(ast, sourceCode, filePath),
+        ...ExportStructure.checkExportStructure(ast, sourceCode, filePath),
         ...checkFunctionSpacing(ast, sourceCode, filePath),
         ...checkImportOrdering(ast, sourceCode, filePath),
         ...checkLineLength(ast, sourceCode, filePath),
@@ -71,4 +73,5 @@ const checkFile = async filePath => {
     return { filePath, violations, isCompliant: errors.length === 0 }
 }
 
-export { checkFile }
+const Api = { checkFile }
+export { Api }
