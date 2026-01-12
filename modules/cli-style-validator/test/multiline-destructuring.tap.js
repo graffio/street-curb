@@ -1,6 +1,9 @@
 import t from 'tap'
-import { checkMultilineDestructuring } from '../src/lib/rules/multiline-destructuring.js'
-import { parseCode } from '../src/lib/parser.js'
+import { MultilineDestructuring } from '../src/lib/rules/multiline-destructuring.js'
+import { Parser } from '../src/lib/parser.js'
+
+const { checkMultilineDestructuring } = MultilineDestructuring
+const { parseCode } = Parser
 
 t.test('Given destructuring that could fit on one line', t => {
     t.test('When object destructuring spans multiple lines unnecessarily', t => {

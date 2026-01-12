@@ -1,6 +1,8 @@
 import t from 'tap'
 import { ExportStructure } from '../src/lib/rules/export-structure.js'
-import { parseCode } from '../src/lib/parser.js'
+import { Parser } from '../src/lib/parser.js'
+
+const { parseCode } = Parser
 
 const { checkExportStructure } = ExportStructure
 

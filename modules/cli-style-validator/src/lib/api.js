@@ -2,22 +2,22 @@
 // ABOUTME: Orchestrates running all style rules on source files
 
 import { readFile } from 'fs/promises'
-import { parseCode } from './parser.js'
+import { Parser } from './parser.js'
 import { PS } from './shared/predicates.js'
-import { checkAboutmeComment } from './rules/aboutme-comment.js'
-import { checkChainExtraction } from './rules/chain-extraction.js'
-import { ExportStructure } from './rules/export-structure.js'
-import { checkFileNaming } from './rules/file-naming.js'
-import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
+import { AboutmeComment } from './rules/aboutme-comment.js'
+import { ChainExtraction } from './rules/chain-extraction.js'
 import { CohesionStructure } from './rules/cohesion-structure.js'
-import { checkFunctionSpacing } from './rules/function-spacing.js'
-import { checkFunctionalPatterns } from './rules/functional-patterns.js'
-import { checkImportOrdering } from './rules/import-ordering.js'
-import { checkLineLength } from './rules/line-length.js'
-import { checkMultilineDestructuring } from './rules/multiline-destructuring.js'
-import { checkSigDocumentation } from './rules/sig-documentation.js'
-import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
-import { checkReactComponentCohesion } from './rules/react-component-cohesion.js'
+import { ExportStructure } from './rules/export-structure.js'
+import { FileNaming } from './rules/file-naming.js'
+import { FunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
+import { FunctionSpacing } from './rules/function-spacing.js'
+import { FunctionalPatterns } from './rules/functional-patterns.js'
+import { ImportOrdering } from './rules/import-ordering.js'
+import { LineLength } from './rules/line-length.js'
+import { MultilineDestructuring } from './rules/multiline-destructuring.js'
+import { ReactComponentCohesion } from './rules/react-component-cohesion.js'
+import { SigDocumentation } from './rules/sig-documentation.js'
+import { SingleLevelIndentation } from './rules/single-level-indentation.js'
 
 /**
  * Check single file for coding standards violations
@@ -44,26 +44,26 @@ const checkFile = async filePath => {
 
     let ast = null
     try {
-        ast = parseCode(sourceCode)
+        ast = Parser.parseCode(sourceCode)
     } catch (parseError) {
         console.warn(`AST parsing failed for ${filePath}: ${parseError.message}`)
     }
 
     const allViolations = [
-        ...checkAboutmeComment(ast, sourceCode, filePath),
-        ...checkChainExtraction(ast, sourceCode, filePath),
-        ...checkFileNaming(ast, sourceCode, filePath),
-        ...checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
-        ...checkFunctionalPatterns(ast, sourceCode, filePath),
+        ...AboutmeComment.checkAboutmeComment(ast, sourceCode, filePath),
+        ...ChainExtraction.checkChainExtraction(ast, sourceCode, filePath),
         ...CohesionStructure.checkCohesionStructure(ast, sourceCode, filePath),
         ...ExportStructure.checkExportStructure(ast, sourceCode, filePath),
-        ...checkFunctionSpacing(ast, sourceCode, filePath),
-        ...checkImportOrdering(ast, sourceCode, filePath),
-        ...checkLineLength(ast, sourceCode, filePath),
-        ...checkMultilineDestructuring(ast, sourceCode, filePath),
-        ...checkSigDocumentation(ast, sourceCode, filePath),
-        ...checkSingleLevelIndentation(ast, sourceCode, filePath),
-        ...checkReactComponentCohesion(ast, sourceCode, filePath),
+        ...FileNaming.checkFileNaming(ast, sourceCode, filePath),
+        ...FunctionDeclarationOrdering.checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
+        ...FunctionSpacing.checkFunctionSpacing(ast, sourceCode, filePath),
+        ...FunctionalPatterns.checkFunctionalPatterns(ast, sourceCode, filePath),
+        ...ImportOrdering.checkImportOrdering(ast, sourceCode, filePath),
+        ...LineLength.checkLineLength(ast, sourceCode, filePath),
+        ...MultilineDestructuring.checkMultilineDestructuring(ast, sourceCode, filePath),
+        ...ReactComponentCohesion.checkReactComponentCohesion(ast, sourceCode, filePath),
+        ...SigDocumentation.checkSigDocumentation(ast, sourceCode, filePath),
+        ...SingleLevelIndentation.checkSingleLevelIndentation(ast, sourceCode, filePath),
     ]
 
     const violations = allViolations.sort((a, b) => a.priority - b.priority || a.line - b.line)

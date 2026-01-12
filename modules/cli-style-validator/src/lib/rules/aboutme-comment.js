@@ -2,6 +2,7 @@
 // ABOUTME: Enforces two-line ABOUTME header in all source files
 
 import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const P = {
     // Check if line starts with ABOUTME marker
@@ -49,6 +50,7 @@ const V = {
     // Validate ABOUTME comments at file top
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
+        if (PS.isTestFile(filePath)) return []
         const lines = sourceCode.split('\n')
         const firstCodeLine = A.findFirstCodeLine(lines)
         const headerLines = lines.slice(0, firstCodeLine)
@@ -78,4 +80,5 @@ const V = {
 }
 
 const checkAboutmeComment = FS.withExemptions('aboutme-comment', V.check)
-export { checkAboutmeComment }
+const AboutmeComment = { checkAboutmeComment }
+export { AboutmeComment }

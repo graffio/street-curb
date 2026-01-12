@@ -6,26 +6,31 @@ import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
+const { ArrowFunctionExpression, BreakStatement, ContinueStatement, DoWhileStatement } = ASTNode
+const { ExpressionStatement, ForInStatement, ForOfStatement, ForStatement, FunctionDeclaration } = ASTNode
+const { FunctionExpression, IfStatement, ReturnStatement, ThrowStatement, TryStatement } = ASTNode
+const { VariableDeclaration, VariableDeclarator, WhileStatement } = ASTNode
+
 const PRIORITY = 4
 
 const P = {
     // Check if node is a variable declarator with function value (works on wrapped nodes)
     // @sig isVariableWithFunctionExpression :: ASTNode -> Boolean
     isVariableWithFunctionExpression: node => {
-        if (!ASTNode.VariableDeclarator.is(node)) return false
+        if (!VariableDeclarator.is(node)) return false
         const init = node.value
         if (!init) return false
-        return ASTNode.ArrowFunctionExpression.is(init) || ASTNode.FunctionExpression.is(init)
+        return ArrowFunctionExpression.is(init) || FunctionExpression.is(init)
     },
 
     // Check if statement declares a function (multiline only for this rule)
     // @sig isFunctionStatement :: ASTNode -> Boolean
     isFunctionStatement: node => {
         if (PS.isFunctionDeclaration(node)) return true
-        if (ASTNode.VariableDeclaration.is(node)) {
+        if (VariableDeclaration.is(node)) {
             const init = node.firstValue
             if (!init) return false
-            return ASTNode.ArrowFunctionExpression.is(init) || ASTNode.FunctionExpression.is(init)
+            return ArrowFunctionExpression.is(init) || FunctionExpression.is(init)
         }
         return false
     },
@@ -33,19 +38,19 @@ const P = {
     // Check if node is a non-function statement type
     // @sig isNonFunctionStatementType :: ASTNode -> Boolean
     isNonFunctionStatementType: node =>
-        ASTNode.VariableDeclaration.is(node) ||
-        ASTNode.ExpressionStatement.is(node) ||
-        ASTNode.ReturnStatement.is(node) ||
-        ASTNode.IfStatement.is(node) ||
-        ASTNode.ForStatement.is(node) ||
-        ASTNode.WhileStatement.is(node) ||
-        ASTNode.DoWhileStatement.is(node) ||
-        ASTNode.ForInStatement.is(node) ||
-        ASTNode.ForOfStatement.is(node) ||
-        ASTNode.TryStatement.is(node) ||
-        ASTNode.ThrowStatement.is(node) ||
-        ASTNode.BreakStatement.is(node) ||
-        ASTNode.ContinueStatement.is(node),
+        VariableDeclaration.is(node) ||
+        ExpressionStatement.is(node) ||
+        ReturnStatement.is(node) ||
+        IfStatement.is(node) ||
+        ForStatement.is(node) ||
+        WhileStatement.is(node) ||
+        DoWhileStatement.is(node) ||
+        ForInStatement.is(node) ||
+        ForOfStatement.is(node) ||
+        TryStatement.is(node) ||
+        ThrowStatement.is(node) ||
+        BreakStatement.is(node) ||
+        ContinueStatement.is(node),
 
     // Check if statement is executable (not a function)
     // @sig isNonFunctionStatement :: ASTNode -> Boolean
@@ -82,7 +87,7 @@ const V = {
     // Validate that functions are declared before executable statements
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
-        if (!ast) return []
+        if (!ast || PS.isTestFile(filePath)) return []
         const violations = []
         AST.from(ast).forEach(node => A.processBlockForViolations(node, violations))
         return violations
@@ -96,18 +101,18 @@ const A = {
         if (!P.isVariableWithFunctionExpression(declarator)) return
         const funcName = AS.getFunctionName(declarator)
         const init = declarator.value
-        const funcType = ASTNode.ArrowFunctionExpression.is(init) ? 'Arrow function' : 'Function'
+        const funcType = ArrowFunctionExpression.is(init) ? 'Arrow function' : 'Function'
         violations.push(F.createViolation(declarator, T.buildFunctionOrderingMessage(funcType, funcName)))
     },
 
     // Route misplaced function to appropriate processor
     // @sig processMisplacedFunctionStatement :: (ASTNode, [Violation]) -> Void
     processMisplacedFunctionStatement: (statement, violations) => {
-        if (ASTNode.FunctionDeclaration.is(statement)) {
+        if (FunctionDeclaration.is(statement)) {
             const funcName = AS.getFunctionName(statement)
             return violations.push(F.createViolation(statement, T.buildFunctionOrderingMessage('Function', funcName)))
         }
-        if (ASTNode.VariableDeclaration.is(statement)) {
+        if (VariableDeclaration.is(statement)) {
             const decls = statement.declarations
             decls.forEach(d => A.processDeclarator(d, violations))
         }
@@ -119,7 +124,7 @@ const A = {
         if (P.isNonFunctionStatement(statement)) return true
         if (P.isFunctionStatement(statement) && foundNonFunction)
             A.processMisplacedFunctionStatement(statement, violations)
-        if (ASTNode.VariableDeclaration.is(statement) && !P.isFunctionStatement(statement)) return true
+        if (VariableDeclaration.is(statement) && !P.isFunctionStatement(statement)) return true
         return foundNonFunction
     },
 
@@ -133,4 +138,5 @@ const A = {
 }
 
 const checkFunctionDeclarationOrdering = FS.withExemptions('function-declaration-ordering', V.check)
-export { checkFunctionDeclarationOrdering }
+const FunctionDeclarationOrdering = { checkFunctionDeclarationOrdering }
+export { FunctionDeclarationOrdering }

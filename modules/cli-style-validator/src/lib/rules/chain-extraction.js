@@ -173,4 +173,5 @@ const A = {
 }
 
 const checkChainExtraction = FS.withExemptions('chain-extraction', V.check)
-export { checkChainExtraction }
+const ChainExtraction = { checkChainExtraction }
+export { ChainExtraction }

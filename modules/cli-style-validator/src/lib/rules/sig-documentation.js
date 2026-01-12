@@ -138,4 +138,5 @@ const V = {
 }
 
 const checkSigDocumentation = FS.withExemptions('sig-documentation', V.check)
-export { checkSigDocumentation }
+const SigDocumentation = { checkSigDocumentation }
+export { SigDocumentation }

@@ -49,6 +49,7 @@ const V = {
     // Validate that no lines exceed 120 characters
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
+        if (PS.isTestFile(filePath)) return []
         const lines = sourceCode.split('\n')
         const ignoredLines = A.buildIgnoredLinesSet(ast, lines)
 
@@ -84,4 +85,5 @@ const A = {
 }
 
 const checkLineLength = FS.withExemptions('line-length', V.check)
-export { checkLineLength }
+const LineLength = { checkLineLength }
+export { LineLength }

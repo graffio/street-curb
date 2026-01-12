@@ -177,4 +177,5 @@ const V = {
 }
 
 const checkMultilineDestructuring = FS.withExemptions('multiline-destructuring', V.check)
-export { checkMultilineDestructuring }
+const MultilineDestructuring = { checkMultilineDestructuring }
+export { MultilineDestructuring }

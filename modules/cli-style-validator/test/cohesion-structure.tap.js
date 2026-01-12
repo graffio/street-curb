@@ -1,6 +1,8 @@
 import t from 'tap'
 import { CohesionStructure } from '../src/lib/rules/cohesion-structure.js'
-import { parseCode } from '../src/lib/parser.js'
+import { Parser } from '../src/lib/parser.js'
+
+const { parseCode } = Parser
 
 const { checkCohesionStructure } = CohesionStructure
 

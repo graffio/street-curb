@@ -96,4 +96,5 @@ const A = {
 }
 
 const checkFunctionSpacing = FS.withExemptions('function-spacing', V.check)
-export { checkFunctionSpacing }
+const FunctionSpacing = { checkFunctionSpacing }
+export { FunctionSpacing }

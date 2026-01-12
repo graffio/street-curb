@@ -1,5 +1,6 @@
 // ABOUTME: Shared factory functions for style validator rules
 // ABOUTME: Standardized violation creation to ensure consistent structure
+// COMPLEXITY: export-structure — Abbreviated export name FS per conventions.md
 
 import { TS } from './transformers.js'
 

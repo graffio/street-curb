@@ -2,9 +2,13 @@
 // ABOUTME: Provides higher-level aggregation over AST module primitives
 // COMPLEXITY: lines — Shared module consolidating utilities from multiple rules
 // COMPLEXITY: functions — Shared module consolidating utilities from multiple rules
+// COMPLEXITY: export-structure — Abbreviated export name AS per conventions.md
 
 import { AST, ASTNode } from '@graffio/ast'
 import { PS } from './predicates.js'
+
+const { ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportNamedDeclaration } = ASTNode
+const { FunctionDeclaration, VariableDeclaration, VariableDeclarator } = ASTNode
 
 const AS = {
     // Count lines in a function's body (for length checks)
@@ -18,8 +22,8 @@ const AS = {
     // Get the name of a function from its AST node
     // @sig getFunctionName :: ASTNode -> String
     getFunctionName: node => {
-        if (ASTNode.FunctionDeclaration.is(node)) return node.name || '<anonymous>'
-        if (ASTNode.VariableDeclarator.is(node)) return node.name || '<anonymous>'
+        if (FunctionDeclaration.is(node)) return node.name || '<anonymous>'
+        if (VariableDeclarator.is(node)) return node.name || '<anonymous>'
         return '<anonymous>'
     },
 
@@ -30,7 +34,7 @@ const AS = {
         if (!PS.isFunctionNode(node)) return false
         if (node.name) return true
         const parent = node.parent
-        if (parent && ASTNode.VariableDeclarator.is(parent) && parent.value?.isSameAs(node)) return true
+        if (parent && VariableDeclarator.is(parent) && parent.value?.isSameAs(node)) return true
         return PS.isMultilineNode(node)
     },
 
@@ -44,15 +48,15 @@ const AS = {
     // Find whether a function is used as a callback (passed as argument or in non-declarator position)
     // @sig isCallbackFunction :: ASTNode -> Boolean
     isCallbackFunction: node => {
-        if (ASTNode.FunctionDeclaration.is(node)) return false
+        if (FunctionDeclaration.is(node)) return false
         const parent = node.parent
         if (!parent) return false
 
         // If parent is CallExpression and node is not the callee, it's an argument (callback)
-        if (ASTNode.CallExpression.is(parent) && !parent.target?.isSameAs(node)) return true
+        if (CallExpression.is(parent) && !parent.target?.isSameAs(node)) return true
 
         // If parent is ArrayExpression, the function is in an array (likely passed to something)
-        if (ASTNode.ArrayExpression.is(parent)) return true
+        if (ArrayExpression.is(parent)) return true
 
         return false
     },
@@ -63,12 +67,12 @@ const AS = {
         const startLine = node.line
         const endLine = node.endLine
 
-        if (ASTNode.FunctionDeclaration.is(node)) {
+        if (FunctionDeclaration.is(node)) {
             const name = node.name
             return PS.isPascalCase(name) ? { name, node, startLine, endLine } : null
         }
 
-        if (!ASTNode.VariableDeclaration.is(node)) return null
+        if (!VariableDeclaration.is(node)) return null
 
         const decl = node.declarations[0]
         if (!decl) return null
@@ -103,12 +107,12 @@ const AS = {
     // Extract exported names from named export specifiers
     // @sig toSpecifierNames :: ASTNode -> [String]
     toSpecifierNames: node =>
-        ASTNode.ExportNamedDeclaration.is(node) ? node.specifiers.map(s => s.exportedName).filter(Boolean) : [],
+        ExportNamedDeclaration.is(node) ? node.specifiers.map(s => s.exportedName).filter(Boolean) : [],
 
     // Extract name from default export declaration
     // @sig toDefaultExportName :: ASTNode -> [String]
     toDefaultExportName: node => {
-        if (!ASTNode.ExportDefaultDeclaration.is(node)) return []
+        if (!ExportDefaultDeclaration.is(node)) return []
         const name = node.declarationName
         return name ? [name] : []
     },

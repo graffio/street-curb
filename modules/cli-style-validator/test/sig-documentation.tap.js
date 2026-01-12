@@ -2,8 +2,11 @@
 // ABOUTME: Covers missing @sig, proper @sig placement, and exemptions
 
 import t from 'tap'
-import { parseCode } from '../src/lib/parser.js'
-import { checkSigDocumentation } from '../src/lib/rules/sig-documentation.js'
+import { Parser } from '../src/lib/parser.js'
+import { SigDocumentation } from '../src/lib/rules/sig-documentation.js'
+
+const { parseCode } = Parser
+const { checkSigDocumentation } = SigDocumentation
 
 t.test('Given functions that require @sig documentation', t => {
     t.test('When a top-level function has no @sig comment', t => {

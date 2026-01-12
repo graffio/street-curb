@@ -2,6 +2,7 @@
 // ABOUTME: Enforces standard import patterns across the codebase
 
 import { FS } from '../shared/factories.js'
+import { PS } from '../shared/predicates.js'
 
 const P = {
     // Check if line uses CommonJS require()
@@ -33,6 +34,7 @@ const V = {
     // Validate import statements in source file
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
+        if (PS.isTestFile(filePath)) return []
         const violations = []
         const lines = sourceCode.split('\n')
         const skipRadixCheck = P.isDesignSystemFile(filePath)
@@ -57,4 +59,5 @@ const A = {
 }
 
 const checkImportOrdering = FS.withExemptions('import-ordering', V.check)
-export { checkImportOrdering }
+const ImportOrdering = { checkImportOrdering }
+export { ImportOrdering }

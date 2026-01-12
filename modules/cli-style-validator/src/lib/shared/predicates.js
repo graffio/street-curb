@@ -2,9 +2,13 @@
 // ABOUTME: Unified file/AST predicates to avoid duplication across rules
 // COMPLEXITY: lines — Shared module consolidating predicates from multiple rules
 // COMPLEXITY: functions — Shared module consolidating predicates from multiple rules
+// COMPLEXITY: export-structure — Abbreviated export name PS per conventions.md
 
 import { ASTNode } from '@graffio/ast'
 import { TS } from './transformers.js'
+
+const { ArrowFunctionExpression, BlockStatement, FunctionDeclaration, FunctionExpression } = ASTNode
+const { JSXElement, JSXFragment, ReturnStatement, VariableDeclaration } = ASTNode
 
 const PS = {
     // Check if file is a test file that should skip validation
@@ -27,18 +31,16 @@ const PS = {
     // Check if a node represents a function (declaration, expression, or arrow)
     // @sig isFunctionNode :: ASTNode -> Boolean
     isFunctionNode: node =>
-        ASTNode.FunctionDeclaration.is(node) ||
-        ASTNode.FunctionExpression.is(node) ||
-        ASTNode.ArrowFunctionExpression.is(node),
+        FunctionDeclaration.is(node) || FunctionExpression.is(node) || ArrowFunctionExpression.is(node),
 
     // Check if a node is a function declaration statement
     // @sig isFunctionDeclaration :: ASTNode -> Boolean
-    isFunctionDeclaration: node => ASTNode.FunctionDeclaration.is(node),
+    isFunctionDeclaration: node => FunctionDeclaration.is(node),
 
     // Check if a node is a variable declaration with a function expression
     // @sig isFunctionVariableDeclaration :: ASTNode -> Boolean
     isFunctionVariableDeclaration: node => {
-        if (!ASTNode.VariableDeclaration.is(node)) return false
+        if (!VariableDeclaration.is(node)) return false
         return node.declarations.some(declaration => {
             const init = declaration.value
             return init && PS.isFunctionNode(init)
@@ -58,7 +60,7 @@ const PS = {
 
     // Check if node is a block statement
     // @sig isBlockStatement :: ASTNode -> Boolean
-    isBlockStatement: node => ASTNode.BlockStatement.is(node),
+    isBlockStatement: node => BlockStatement.is(node),
 
     // Check if a name is PascalCase (starts with uppercase, alphanumeric)
     // @sig isPascalCase :: String -> Boolean
@@ -77,16 +79,16 @@ const PS = {
     isFunctionWithBlockBody: node => {
         if (!PS.isFunctionNode(node)) return false
         const body = node.body
-        return body && ASTNode.BlockStatement.is(body)
+        return body && BlockStatement.is(body)
     },
 
     // Check if statement returns JSX element or fragment
     // @sig hasJSXReturnStatement :: ASTNode -> Boolean
     hasJSXReturnStatement: statement => {
-        if (!ASTNode.ReturnStatement.is(statement)) return false
+        if (!ReturnStatement.is(statement)) return false
         const argument = statement.value
         if (!argument) return false
-        return ASTNode.JSXElement.is(argument) || ASTNode.JSXFragment.is(argument)
+        return JSXElement.is(argument) || JSXFragment.is(argument)
     },
 
     // Check if function returns JSX (arrow expression or block return)
@@ -94,10 +96,9 @@ const PS = {
     isJSXFunction: node => {
         const body = node.body
         if (!body) return false
-        if (ASTNode.ArrowFunctionExpression.is(node) && node.isExpression)
-            return ASTNode.JSXElement.is(body) || ASTNode.JSXFragment.is(body)
+        if (ArrowFunctionExpression.is(node) && node.isExpression) return JSXElement.is(body) || JSXFragment.is(body)
 
-        if (ASTNode.BlockStatement.is(body)) return body.body.some(PS.hasJSXReturnStatement)
+        if (BlockStatement.is(body)) return body.body.some(PS.hasJSXReturnStatement)
         return false
     },
 
@@ -105,7 +106,7 @@ const PS = {
     // @sig isInnerCurriedFunction :: (ASTNode, ASTNode?) -> Boolean
     isInnerCurriedFunction: (node, parent) => {
         if (!parent) return false
-        if (!ASTNode.ArrowFunctionExpression.is(parent)) return false
+        if (!ArrowFunctionExpression.is(parent)) return false
         const body = parent.body
         return body && body.isSameAs(node) && PS.isFunctionNode(node)
     },

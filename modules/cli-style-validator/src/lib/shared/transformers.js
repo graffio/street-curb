@@ -1,5 +1,6 @@
 // ABOUTME: Shared transformer functions for style validator rules
 // ABOUTME: Parsing and transformation utilities for COMPLEXITY comments
+// COMPLEXITY: export-structure — Abbreviated export name TS per conventions.md
 
 // Regex patterns for COMPLEXITY comments
 const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/

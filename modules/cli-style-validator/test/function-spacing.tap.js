@@ -2,8 +2,11 @@
 // ABOUTME: Covers blank line requirements for multiline vs single-line functions
 
 import t from 'tap'
-import { checkFunctionSpacing } from '../src/lib/rules/function-spacing.js'
-import { parseCode } from '../src/lib/parser.js'
+import { FunctionSpacing } from '../src/lib/rules/function-spacing.js'
+import { Parser } from '../src/lib/parser.js'
+
+const { checkFunctionSpacing } = FunctionSpacing
+const { parseCode } = Parser
 
 t.test('Given multiline function declarations', t => {
     t.test('When a multiline function has no blank line above', t => {

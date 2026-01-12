@@ -6,6 +6,10 @@ import { AS } from '../shared/aggregators.js'
 import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
+const { ArrayExpression, CatchClause, ForInStatement, ForOfStatement, ForStatement } = ASTNode
+const { IfStatement, JSXElement, JSXFragment, ObjectExpression, SwitchStatement } = ASTNode
+const { TryStatement, WhileStatement } = ASTNode
+
 const PRIORITY = 2
 
 const CALLBACK_TOO_LONG_MESSAGE =
@@ -25,22 +29,22 @@ const P = {
     // Check if node is a control flow statement that increases indentation
     // @sig isIndentationStatement :: ASTNode -> Boolean
     isIndentationStatement: node =>
-        ASTNode.IfStatement.is(node) ||
-        ASTNode.ForStatement.is(node) ||
-        ASTNode.WhileStatement.is(node) ||
-        ASTNode.ForInStatement.is(node) ||
-        ASTNode.ForOfStatement.is(node) ||
-        ASTNode.SwitchStatement.is(node),
+        IfStatement.is(node) ||
+        ForStatement.is(node) ||
+        WhileStatement.is(node) ||
+        ForInStatement.is(node) ||
+        ForOfStatement.is(node) ||
+        SwitchStatement.is(node),
 
     // Check if node type is allowed to nest without counting as indentation
     // @sig isAllowedNesting :: ASTNode -> Boolean
     isAllowedNesting: node =>
-        ASTNode.TryStatement.is(node) ||
-        ASTNode.CatchClause.is(node) ||
-        ASTNode.ObjectExpression.is(node) ||
-        ASTNode.ArrayExpression.is(node) ||
-        ASTNode.JSXElement.is(node) ||
-        ASTNode.JSXFragment.is(node),
+        TryStatement.is(node) ||
+        CatchClause.is(node) ||
+        ObjectExpression.is(node) ||
+        ArrayExpression.is(node) ||
+        JSXElement.is(node) ||
+        JSXFragment.is(node),
 
     // Check if function body contains any control flow statements
     // @sig hasControlFlow :: ASTNode -> Boolean
@@ -134,4 +138,5 @@ const A = {
 }
 
 const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', V.check)
-export { checkSingleLevelIndentation }
+const SingleLevelIndentation = { checkSingleLevelIndentation }
+export { SingleLevelIndentation }
