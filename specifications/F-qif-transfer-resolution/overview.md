@@ -71,6 +71,30 @@ SELECT * FROM transactions WHERE gainMarkerType IS NOT NULL;
 SELECT * FROM transactionSplits WHERE transferAccountId IS NOT NULL;
 ```
 
+### Entity Change Tracking
+17. Wire up entity-level change tracking in import.js:
+    - Track which entities are added (new stableId created)
+    - Track which entities are modified (content changed)
+    - Track which entities are orphaned (removed from QIF)
+18. Pass changes array to ImportHistory.finalizeImportHistory
+19. Add tests for entity change tracking
+20. Commit: "Wire up entity-level change tracking"
+
+### CLI Display Migration
+21. Refactor cli-ui.js from cli-qif-to-sqlite-with-overwrite:
+    - Remove 7 COMPLEXITY-TODO comments by restructuring
+    - Use cohesion groups (P/T/E)
+    - Adapt imports for new module
+22. Copy to cli-qif-to-sqlite/src/cli-ui.js
+23. Integrate with cli.js for richer output display
+24. Commit: "Add CLI display functions"
+
+### Old Module Cleanup
+25. Remove cli-qif-to-sqlite-with-overwrite from workspaces
+26. Delete modules/cli-qif-to-sqlite-with-overwrite/
+27. Verify no broken imports
+28. Commit: "Remove old QIF module"
+
 ## Dependencies
 - F-stable-qif-import must be complete (it is)
 - Real QIF file with transfer transactions for testing
