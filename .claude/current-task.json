@@ -1,0 +1,53 @@
+{
+    "feature": "Complete F-stable-qif-import",
+    "goal": "Finalize stable-identity QIF importer: architecture review, performance, preserve code, documentation, commit cleanup",
+    "templates_used": ["review-complexity.md", "commit-changes.md", "reorganize-commits.md", "record-completion.md"],
+    "steps": [
+        { "step": 1, "action": "Run complexity review on import.js, import-lots.js, cli.js", "done": true },
+        { "step": 2, "action": "Run simplicity review on same files", "done": false },
+        { "step": 3, "action": "Verify no COMPLEXITY comments in committed code", "done": false },
+        { "step": 4, "action": "Document any architecture issues found", "done": false },
+
+        { "step": 5, "action": "Add timing instrumentation to processImport", "done": false },
+        { "step": 6, "action": "Profile a large QIF import, identify top bottleneck", "done": false },
+        { "step": 7, "action": "Implement optimization if clear win found", "done": false },
+        { "step": 8, "action": "Run style validator, fix violations", "done": false },
+        { "step": 9, "action": "git add and commit: Performance improvements", "done": false },
+
+        { "step": 10, "action": "Copy cli-ui.js to cli-qif-to-sqlite/src/", "done": false },
+        { "step": 11, "action": "Adapt cli-ui.js imports for new module structure", "done": false },
+        { "step": 12, "action": "Copy historical query functions (getHoldingsAsOf, getLotsAsOf, getAccurateHoldingsAsOf)", "done": false },
+        { "step": 13, "action": "Adapt historical queries for new module structure", "done": false },
+        { "step": 14, "action": "Run style validator, fix violations", "done": false },
+        { "step": 15, "action": "git add and commit: Preserve display and query functions from old module", "done": false },
+
+        { "step": 16, "action": "Update ABOUTME comments in import.js explaining the flow", "done": false },
+        { "step": 17, "action": "Add README.md to modules/cli-qif-to-sqlite/ (what it does, CLI usage, architecture)", "done": false },
+        { "step": 18, "action": "git add and commit: Add documentation", "done": false },
+
+        { "step": 19, "action": "Verify yarn types:generate produces src/types/ from type-definitions/", "done": false },
+        { "step": 20, "action": "Ensure consistency between source and generated types", "done": false },
+        { "step": 21, "action": "git add and commit if changes needed", "done": false },
+
+        { "step": 22, "action": "Read commit messages since 87012b14", "done": false },
+        { "step": 23, "action": "Assess quality (Problem/Solution/Impact format?)", "done": false },
+        { "step": 24, "action": "[CHECKPOINT] Propose commit regrouping for approval", "done": false },
+        { "step": 25, "action": "Execute reorganization per reorganize-commits.md", "done": false },
+
+        { "step": 26, "action": "Remove cli-qif-to-sqlite-with-overwrite from workspaces", "done": false },
+        { "step": 27, "action": "Delete modules/cli-qif-to-sqlite-with-overwrite/", "done": false },
+        { "step": 28, "action": "Update any remaining cross-module imports", "done": false },
+        { "step": 29, "action": "Verify tests pass", "done": false },
+        { "step": 30, "action": "git add and commit: Remove old module", "done": false },
+
+        { "step": 31, "action": "Update specifications/F-stable-qif-import/retrospective.md with final state", "done": false },
+        { "step": 32, "action": "Append outcome to specifications/completed-specifications.md", "done": false }
+    ],
+    "verification": [
+        "yarn tap modules/cli-qif-to-sqlite/test/ - all tests pass",
+        "node modules/cli-qif-to-sqlite/src/cli.js import -d test.db real.qif - works",
+        "No COMPLEXITY comments in committed code",
+        "Performance: import time documented/improved",
+        "Old module deleted, no broken imports"
+    ]
+}

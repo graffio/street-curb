@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Lot
-// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/lot.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-type-definitions/lot.type.js - do not edit manually
 
 /** {@link module:Lot} */
-/*  Lot generated from: modules/cli-qif-to-sqlite/type-definitions/lot.type.js
+/*  Lot generated from: modules/quicken-type-definitions/lot.type.js
  *
  *  accountId             : /^acc_[a-f0-9]{12}$/,
  *  costBasis             : "Number",

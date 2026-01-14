@@ -1,15 +1,19 @@
 {
-    "name": "qif-database",
+    "name": "cli-qif-to-sqlite",
     "version": "0.1.0",
-    "description": "QIF Database Migration Tool",
+    "description": "QIF Database Migration Tool with Stable Identity Tracking",
     "type": "module",
-    "main": "src/cli.js",
+    "main": "src/index.js",
+    "bin": {
+        "qif-db": "src/cli.js"
+    },
     "scripts": {
         "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
         "tap:file": "../../bash/run-tap.sh"
     },
     "dependencies": {
         "better-sqlite3": "^8.7.0",
+        "yargs": "^17.7.2",
         "@graffio/functional": "^0.1.0",
         "@graffio/cli-type-generator": "^0.1.0"
     },

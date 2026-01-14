@@ -1,7 +1,7 @@
 // ABOUTME: Generates realistic mock financial data for testing and demos
 // ABOUTME: Creates accounts, transactions, securities, prices with optional QIF serialization
 
-import { Entry } from './types/index.js'
+import { QifEntry } from './types/index.js'
 
 // -----------------------------------------------------------------------------------------------------------------
 // Sample data definitions
@@ -50,12 +50,24 @@ const EXPENSE_PAYEES = [
 
 const BASE_PRICES = { AAPL: 175, MSFT: 380, VTI: 230, SPY: 450, BND: 75, VFIAX: 420, JNJ: 160, PG: 155 }
 
+// -----------------------------------------------------------------------------------------------------------------
+// T group: Transformers for price duplication
+// -----------------------------------------------------------------------------------------------------------------
+
+const T = {
+    // Create duplicate price with slight variation (simulates real QIF exports)
+    // @sig toDuplicatePrice :: QifEntry.Price -> QifEntry.Price
+    toDuplicatePrice: ({ symbol, price, date }) =>
+        QifEntry.Price.from({ symbol, price: price * 1.001, date: new Date(date) }),
+}
+
 /*
  * Generate complete mock data set
  * @sig generateMockData :: (Number?) -> MockData
  *     MockData = { accounts, categories, securities, bankTransactions, investmentTransactions, prices }
  */
 const generateMockData = (seed = 12345) => {
+    // Add days to a date
     // @sig addDays :: (Date, Number) -> Date
     const addDays = (date, days) => {
         const result = new Date(date)
@@ -63,12 +75,14 @@ const generateMockData = (seed = 12345) => {
         return result
     }
 
+    // Generate array of dates between start and end
     // @sig generateDateRange :: (Date, Date) -> [Date]
     const generateDateRange = (start, end) => {
         const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
         return Array.from({ length: days }, (_, i) => addDays(start, i))
     }
 
+    // Create seeded random number generator
     // @sig createRng :: Number -> (() -> Number)
     const createRng = s => {
         let state = s
@@ -78,42 +92,50 @@ const generateMockData = (seed = 12345) => {
         }
     }
 
-    // @sig generateAccounts :: () -> [Entry.Account]
-    const generateAccounts = () => [...BANK_ACCOUNTS, ...INVESTMENT_ACCOUNTS].map(a => Entry.Account.from(a))
+    // Generate account list with duplicates (simulates real QIF exports)
+    // @sig generateAccounts :: () -> [QifEntry.Account]
+    const generateAccounts = () => {
+        const accounts = [...BANK_ACCOUNTS, ...INVESTMENT_ACCOUNTS].map(a => QifEntry.Account.from(a))
+        return [...accounts, ...accounts.slice(0, 3)]
+    }
 
-    // @sig generateCategories :: () -> [Entry.Category]
-    const generateCategories = () => CATEGORIES.map(c => Entry.Category.from(c))
+    // Generate category list from sample data
+    // @sig generateCategories :: () -> [QifEntry.Category]
+    const generateCategories = () => CATEGORIES.map(c => QifEntry.Category.from(c))
 
-    // @sig generateSecurities :: () -> [Entry.Security]
-    const generateSecurities = () => SECURITIES.map(s => Entry.Security.from(s))
+    // Generate security list from sample data
+    // @sig generateSecurities :: () -> [QifEntry.Security]
+    const generateSecurities = () => SECURITIES.map(s => QifEntry.Security.from(s))
 
     /*
-     * Generate price history for all securities
-     * @sig generatePrices :: () -> [Entry.Price]
+     * Generate price history for all securities with duplicates (simulates real QIF exports)
+     * @sig generatePrices :: () -> [QifEntry.Price]
      */
     const generatePrices = () => {
-        // @sig createPriceForDay :: (Security, Date) -> Entry.Price
+        // Create price record for a security on a given day
+        // @sig createPriceForDay :: (Security, Date) -> QifEntry.Price
         const createPriceForDay = (sec, day) => {
             const { symbol } = sec
             const drift = 1 + (random() - 0.48) * 0.02
             currentPrices[symbol] = Math.round(currentPrices[symbol] * drift * 100) / 100
-            return Entry.Price.from({ symbol, price: currentPrices[symbol], date: new Date(day) })
+            return QifEntry.Price.from({ symbol, price: currentPrices[symbol], date: new Date(day) })
         }
 
         const currentPrices = { ...BASE_PRICES }
         const tradingDays = generateDateRange(startDate, endDate).filter(d => d.getDay() !== 0 && d.getDay() !== 6)
-
-        return SECURITIES.flatMap(sec => tradingDays.map(day => createPriceForDay(sec, day)))
+        const prices = SECURITIES.flatMap(sec => tradingDays.map(day => createPriceForDay(sec, day)))
+        return [...prices, ...prices.slice(0, 50).map(T.toDuplicatePrice)]
     }
 
     /*
-     * Generate bank transactions
-     * @sig generateBankTransactions :: () -> [Entry.TransactionBank]
+     * Generate bank transactions including paychecks and expenses
+     * @sig generateBankTransactions :: () -> [QifEntry.TransactionBank]
      */
     const generateBankTransactions = () => {
-        // @sig createPaycheck :: Date -> Entry.TransactionBank
+        // Create paycheck transaction for a date
+        // @sig createPaycheck :: Date -> QifEntry.TransactionBank
         const createPaycheck = date =>
-            Entry.TransactionBank.from({
+            QifEntry.TransactionBank.from({
                 account: checking,
                 amount: 4500,
                 date,
@@ -124,19 +146,21 @@ const generateMockData = (seed = 12345) => {
                 cleared: 'R',
             })
 
-        // @sig generatePaychecks :: () -> [Entry.TransactionBank]
+        // Generate bi-weekly paychecks
+        // @sig generatePaychecks :: () -> [QifEntry.TransactionBank]
         const generatePaychecks = () => {
             const paydays = generateDateRange(startDate, endDate).filter((_, i) => i % 14 === 0)
             return paydays.map(createPaycheck)
         }
 
-        // @sig generateExpenseForDay :: (Date, Payee) -> Entry.TransactionBank?
+        // Maybe generate expense transaction for a day and payee
+        // @sig generateExpenseForDay :: (Date, Payee) -> QifEntry.TransactionBank?
         const generateExpenseForDay = (date, payee) => {
             if (random() >= 0.15) return null
             const { name, category, min, max } = payee
             const amount = -(min + random() * (max - min))
             const useCard = random() > 0.3
-            return Entry.TransactionBank.from({
+            return QifEntry.TransactionBank.from({
                 account: useCard ? creditCard : checking,
                 amount: Math.round(amount * 100) / 100,
                 date: new Date(date),
@@ -147,7 +171,8 @@ const generateMockData = (seed = 12345) => {
             })
         }
 
-        // @sig generateDailyExpenses :: () -> [Entry.TransactionBank]
+        // Generate daily expense transactions
+        // @sig generateDailyExpenses :: () -> [QifEntry.TransactionBank]
         const generateDailyExpenses = () => {
             const days = generateDateRange(startDate, endDate)
             return days.flatMap(d => EXPENSE_PAYEES.map(p => generateExpenseForDay(d, p)).filter(Boolean))
@@ -161,25 +186,29 @@ const generateMockData = (seed = 12345) => {
 
     /*
      * Generate investment transactions with correct amount signs
-     * @sig generateInvestmentTransactions :: () -> [Entry.TransactionInvestment]
+     * @sig generateInvestmentTransactions :: () -> [QifEntry.TransactionInvestment]
      */
     const generateInvestmentTransactions = () => {
+        // Round to 2 decimal places
         // @sig round2 :: Number -> Number
         const round2 = n => Math.round(n * 100) / 100
 
+        // Round to 4 decimal places
         // @sig round4 :: Number -> Number
         const round4 = n => Math.round(n * 10000) / 10000
 
-        // Mutual funds use 4 decimal NAV, stocks/ETFs use 2
+        // Round price based on security type (mutual funds use 4 decimals)
         // @sig roundPrice :: (String, Number) -> Number
         const roundPrice = (symbol, price) => {
             const security = SECURITIES.find(s => s.symbol === symbol)
             return security?.type === 'Mutual Fund' ? round4(price) : round2(price)
         }
 
+        // Maybe generate commission (10% chance)
         // @sig maybeCommission :: () -> Number?
         const maybeCommission = () => (random() < 0.1 ? round2(4.95 + random() * 10) : undefined)
 
+        // Maybe generate buy transaction for a date
         // @sig maybeGenerateBuy :: Date -> void
         const maybeGenerateBuy = date => {
             if (random() >= 0.3) return
@@ -189,10 +218,9 @@ const generateMockData = (seed = 12345) => {
             const commission = maybeCommission()
             const amount = round2(-(quantity * price) - (commission ?? 0))
 
-            // Track position for sell validation
             positions.set(symbol, (positions.get(symbol) ?? 0) + quantity)
             transactions.push(
-                Entry.TransactionInvestment.from({
+                QifEntry.TransactionInvestment.from({
                     account: brokerage,
                     date: new Date(date),
                     transactionType: 'Buy',
@@ -206,23 +234,22 @@ const generateMockData = (seed = 12345) => {
             )
         }
 
+        // Maybe generate sell transaction for a date
         // @sig maybeGenerateSell :: Date -> void
         const maybeGenerateSell = date => {
             if (random() >= 0.1) return
 
-            // Only sell securities we actually own
             const ownedSymbols = [...positions.entries()].filter(([, qty]) => qty > 0)
             if (ownedSymbols.length === 0) return
             const [symbol, ownedQty] = ownedSymbols[Math.floor(random() * ownedSymbols.length)]
             const price = roundPrice(symbol, BASE_PRICES[symbol] * (0.9 + random() * 0.2))
 
-            // Sell up to what we own
             const quantity = Math.min(Math.ceil(random() * 10), ownedQty)
             const commission = maybeCommission()
             const amount = round2(quantity * price - (commission ?? 0))
             positions.set(symbol, ownedQty - quantity)
             transactions.push(
-                Entry.TransactionInvestment.from({
+                QifEntry.TransactionInvestment.from({
                     account: brokerage,
                     date: new Date(date),
                     transactionType: 'Sell',
@@ -236,6 +263,7 @@ const generateMockData = (seed = 12345) => {
             )
         }
 
+        // Maybe generate short sale for a date
         // @sig maybeGenerateShortSale :: Date -> void
         const maybeGenerateShortSale = date => {
             if (random() >= 0.05) return
@@ -246,7 +274,7 @@ const generateMockData = (seed = 12345) => {
             const amount = round2(quantity * price - (commission ?? 0))
             openShorts.set(symbol, (openShorts.get(symbol) ?? 0) + quantity)
             transactions.push(
-                Entry.TransactionInvestment.from({
+                QifEntry.TransactionInvestment.from({
                     account: brokerage,
                     date: new Date(date),
                     transactionType: 'ShtSell',
@@ -261,6 +289,7 @@ const generateMockData = (seed = 12345) => {
             )
         }
 
+        // Maybe cover short position for a date
         // @sig maybeGenerateCoverShort :: Date -> void
         const maybeGenerateCoverShort = date => {
             if (openShorts.size === 0 || random() >= 0.3) return
@@ -274,7 +303,7 @@ const generateMockData = (seed = 12345) => {
             if (quantity >= shortQty) openShorts.delete(symbol)
             else openShorts.set(symbol, shortQty - quantity)
             transactions.push(
-                Entry.TransactionInvestment.from({
+                QifEntry.TransactionInvestment.from({
                     account: brokerage,
                     date: new Date(date),
                     transactionType: 'CvrShrt',
@@ -289,12 +318,13 @@ const generateMockData = (seed = 12345) => {
             )
         }
 
+        // Maybe generate dividend for a date and symbol
         // @sig maybeGenerateDividend :: (Date, String) -> void
         const maybeGenerateDividend = (date, symbol) => {
             const divAmount = 20 + random() * 60
             if (random() < 0.5) {
                 transactions.push(
-                    Entry.TransactionInvestment.from({
+                    QifEntry.TransactionInvestment.from({
                         account: brokerage,
                         date: new Date(date),
                         transactionType: 'Div',
@@ -306,7 +336,7 @@ const generateMockData = (seed = 12345) => {
             } else {
                 const price = roundPrice(symbol, BASE_PRICES[symbol] * (0.9 + random() * 0.2))
                 transactions.push(
-                    Entry.TransactionInvestment.from({
+                    QifEntry.TransactionInvestment.from({
                         account: brokerage,
                         date: new Date(date),
                         transactionType: 'ReinvDiv',
@@ -320,6 +350,7 @@ const generateMockData = (seed = 12345) => {
             }
         }
 
+        // Maybe generate 401k contribution for a date
         // @sig maybeGenerate401k :: Date -> void
         const maybeGenerate401k = date => {
             if (date.getDay() !== 5 || random() >= 0.5) return
@@ -327,35 +358,34 @@ const generateMockData = (seed = 12345) => {
             const contribution = 750
             const quantity = Math.round((contribution / price) * 1000) / 1000
 
-            // Use BuyX (buy with transfer) - ContribX is cash-only per QIF spec
             transactions.push(
-                Entry.TransactionInvestment.from({
+                QifEntry.TransactionInvestment.from({
                     account: k401,
                     date: new Date(date),
                     transactionType: 'BuyX',
                     security: 'VFIAX',
                     price,
                     quantity,
-                    amount: -(quantity * price), // Negative for buy
+                    amount: -(quantity * price),
                     memo: '401k contribution',
                     category: '[Primary Checking]',
                 }),
             )
         }
 
+        // Update running cash balance
         // @sig updateCashBalance :: Number -> void
         const updateCashBalance = amount => {
             if (amount != null) cashBalance += amount
         }
 
+        // Maybe add deposit when cash is low
         // @sig maybeAddDeposit :: Date -> void
         const maybeAddDeposit = date => {
-            // Add deposit when cash gets low to cover upcoming buys
-            // Threshold is higher to ensure we always have buying power
             if (cashBalance >= 25000) return
             const depositAmount = 50000
             transactions.push(
-                Entry.TransactionInvestment.from({
+                QifEntry.TransactionInvestment.from({
                     account: brokerage,
                     date: new Date(date),
                     transactionType: 'XIn',
@@ -364,8 +394,6 @@ const generateMockData = (seed = 12345) => {
                     category: '[Primary Checking]',
                 }),
             )
-
-            // Don't update cashBalance here - it's updated in processTradingDay's final loop
         }
 
         /*
@@ -390,13 +418,12 @@ const generateMockData = (seed = 12345) => {
         const brokerage = 'Fidelity Brokerage'
         const k401 = '401k Retirement'
         const transactions = []
-        const positions = new Map() // Track long positions for sell validation
+        const positions = new Map()
         const openShorts = new Map()
         let cashBalance = 50000
 
-        // Initial deposit
         transactions.push(
-            Entry.TransactionInvestment.from({
+            QifEntry.TransactionInvestment.from({
                 account: brokerage,
                 date: startDate,
                 transactionType: 'XIn',
@@ -433,6 +460,7 @@ const generateMockData = (seed = 12345) => {
  * @sig serializeToQif :: MockData -> String
  */
 const serializeToQif = data => {
+    // Format date as QIF date string (MM/DD/YYYY)
     // @sig formatQifDate :: Date -> String
     const formatQifDate = date => {
         const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -445,7 +473,8 @@ const serializeToQif = data => {
      * @sig serializeAccounts :: () -> String
      */
     const serializeAccounts = () => {
-        // @sig accountToQif :: Entry.Account -> String
+        // Convert account to QIF string
+        // @sig accountToQif :: QifEntry.Account -> String
         const accountToQif = a => {
             const { name, type, description } = a
             const lines = ['!Account', `N${name}`, `T${typeMap[type] || type}`]
@@ -462,7 +491,8 @@ const serializeToQif = data => {
      * @sig serializeCategories :: () -> String
      */
     const serializeCategories = () => {
-        // @sig categoryToLines :: Entry.Category -> [String]
+        // Convert category to QIF lines
+        // @sig categoryToLines :: QifEntry.Category -> [String]
         const categoryToLines = c => {
             const { name, description, isIncomeCategory, budgetAmount } = c
             const lines = [`N${name}`]
@@ -481,7 +511,8 @@ const serializeToQif = data => {
      * @sig serializeSecurities :: () -> String
      */
     const serializeSecurities = () => {
-        // @sig securityToQif :: Entry.Security -> String
+        // Convert security to QIF string
+        // @sig securityToQif :: QifEntry.Security -> String
         const securityToQif = s => {
             const { name, symbol, type } = s
             return `!Type:Security\nN${name}\nS${symbol}\nT${type}\n^\n`
@@ -495,6 +526,7 @@ const serializeToQif = data => {
      * @sig serializeBankTransactions :: () -> String
      */
     const serializeBankTransactions = () => {
+        // Add transaction to account group
         // @sig addTxToGroup :: (Object, Transaction) -> Object
         const addTxToGroup = (acc, t) => {
             const { account } = t
@@ -503,10 +535,12 @@ const serializeToQif = data => {
             return acc
         }
 
+        // Group transactions by account
         // @sig groupByAccount :: [Transaction] -> Object
         const groupByAccount = txs => txs.reduce(addTxToGroup, {})
 
-        // @sig txToQif :: Entry.TransactionBank -> String
+        // Convert transaction to QIF string
+        // @sig txToQif :: QifEntry.TransactionBank -> String
         const txToQif = t => {
             const { date, amount, payee, category, memo, cleared, number } = t
             const lines = [`D${formatQifDate(date)}`, `T${amount.toFixed(2)}`]
@@ -541,6 +575,7 @@ const serializeToQif = data => {
      * @sig serializeInvestmentTransactions :: () -> String
      */
     const serializeInvestmentTransactions = () => {
+        // Add transaction to account group
         // @sig addTxToGroup :: (Object, Transaction) -> Object
         const addTxToGroup = (acc, t) => {
             const { account } = t
@@ -549,10 +584,12 @@ const serializeToQif = data => {
             return acc
         }
 
+        // Group transactions by account
         // @sig groupByAccount :: [Transaction] -> Object
         const groupByAccount = txs => txs.reduce(addTxToGroup, {})
 
-        // @sig txToQif :: Entry.TransactionInvestment -> String
+        // Convert transaction to QIF string
+        // @sig txToQif :: QifEntry.TransactionInvestment -> String
         const txToQif = t => {
             const { date, transactionType, security, price, quantity, amount, commission, memo, category, cleared } = t
             const lines = [`D${formatQifDate(date)}`, `N${transactionType}`]
@@ -587,7 +624,8 @@ const serializeToQif = data => {
      * @sig serializePrices :: () -> String
      */
     const serializePrices = () => {
-        // @sig priceToQif :: Entry.Price -> String
+        // Convert price to QIF string
+        // @sig priceToQif :: QifEntry.Price -> String
         const priceToQif = p => {
             const { symbol, price, date } = p
             return `"${symbol}",${price.toFixed(2)},"${formatQifDate(date)}"`
@@ -609,4 +647,5 @@ const serializeToQif = data => {
     ].join('')
 }
 
-export { generateMockData, serializeToQif }
+const MockDataGenerator = { generateMockData, serializeToQif }
+export { MockDataGenerator }

@@ -10,6 +10,63 @@
 --
 
 -- =====================================================
+-- STABLE IDENTITY TRACKING
+-- =====================================================
+-- Maps signatures to stable IDs for reimport matching.
+-- The stable ID is used directly in base tables (no separate entityId layer).
+-- Enables editing QIF files without losing entity identity.
+
+CREATE TABLE stableIdentities (
+    id TEXT PRIMARY KEY,                 -- e.g., 'txn_000000000001'
+    entityType TEXT NOT NULL,
+    signature TEXT NOT NULL,
+    orphanedAt TEXT,
+    acknowledgedAt TEXT,
+    createdAt TEXT DEFAULT (datetime('now')),
+    lastModifiedAt TEXT
+);
+
+CREATE INDEX idx_stableIdentities_entityType_signature ON stableIdentities(entityType, signature);
+
+-- Stable ID generation counters (D23)
+-- 12-digit zero-padded IDs like txn_000000000001 (matches web app regex patterns)
+CREATE TABLE stableIdCounters (
+    entityType TEXT PRIMARY KEY,
+    nextId INTEGER DEFAULT 1
+);
+
+-- Import history tracking (D18) — last 20 imports retained
+CREATE TABLE importHistory (
+    importId TEXT PRIMARY KEY,
+    importedAt TEXT DEFAULT (datetime('now')),
+    qifFileHash TEXT,
+    summary TEXT  -- JSON: {created, modified, orphaned, restored}
+);
+
+-- Entity changes per import (pruned with importHistory)
+CREATE TABLE entityChanges (
+    stableId TEXT,
+    importId TEXT,
+    changeType TEXT CHECK (changeType IN ('created', 'modified', 'orphaned', 'restored')),
+    entityType TEXT,
+    PRIMARY KEY (stableId, importId)
+);
+
+-- User-specified lot assignments (D19) — overrides default FIFO/LIFO
+CREATE TABLE lotAssignmentOverrides (
+    sellTransactionStableId TEXT,
+    openTransactionStableId TEXT,
+    quantity REAL,
+    PRIMARY KEY (sellTransactionStableId, openTransactionStableId)
+);
+
+-- User preferences (default lot strategy, etc.)
+CREATE TABLE userPreferences (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
+
+-- =====================================================
 -- BASE TABLES (Raw QIF Data)
 -- =====================================================
 

@@ -11,24 +11,27 @@ const REPO_ROOT = resolve(__dirname, '../..')
 
 // prettier-ignore
 const sources = {
-    ast                  : `${REPO_ROOT}/modules/ast/type-definitions`,
-    cliStyleValidator    : `${REPO_ROOT}/modules/cli-style-validator/type-definitions`,
-    curbMap              : `${REPO_ROOT}/modules/curb-map/type-definitions`,
-    cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
-    designSystem         : `${REPO_ROOT}/modules/design-system/type-definitions`,
-    financialComputations: `${REPO_ROOT}/modules/financial-computations/type-definitions`,
-    functional           : `${REPO_ROOT}/modules/functional/type-definitions`,
-    keymap               : `${REPO_ROOT}/modules/keymap/type-definitions`,
-    quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
-    typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
+    ast                     : `${REPO_ROOT}/modules/ast/type-definitions`,
+    cliStyleValidator       : `${REPO_ROOT}/modules/cli-style-validator/type-definitions`,
+    curbMap                 : `${REPO_ROOT}/modules/curb-map/type-definitions`,
+    cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
+    cliQifToSqliteOverwrite : `${REPO_ROOT}/modules/cli-qif-to-sqlite-with-overwrite/type-definitions`,
+    designSystem            : `${REPO_ROOT}/modules/design-system/type-definitions`,
+    financialComputations   : `${REPO_ROOT}/modules/financial-computations/type-definitions`,
+    functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
+    keymap                  : `${REPO_ROOT}/modules/keymap/type-definitions`,
+    quickenTypes            : `${REPO_ROOT}/modules/quicken-type-definitions`,
+    quickenWebApp           : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
+    typesGeneration         : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
 
 // prettier-ignore
 const targets = {
-    ast                  : `${REPO_ROOT}/modules/ast/src/types`,
-    cliStyleValidator    : `${REPO_ROOT}/modules/cli-style-validator/src/types`,
-    curbMap              : `${REPO_ROOT}/modules/curb-map/src/types`,
-    cliQifToSqlite       : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
+    ast                     : `${REPO_ROOT}/modules/ast/src/types`,
+    cliStyleValidator       : `${REPO_ROOT}/modules/cli-style-validator/src/types`,
+    curbMap                 : `${REPO_ROOT}/modules/curb-map/src/types`,
+    cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
+    cliQifToSqliteOverwrite : `${REPO_ROOT}/modules/cli-qif-to-sqlite-with-overwrite/src/types`,
     designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
     financialComputations: `${REPO_ROOT}/modules/financial-computations/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
@@ -39,8 +42,8 @@ const targets = {
 
 // Shorthand aliases for common multi-target combinations
 const t = targets
-const qifAndWeb = [t.cliQifToSqlite, t.quickenWebApp]
-const qifWebFinance = [t.cliQifToSqlite, t.quickenWebApp, t.financialComputations]
+const qifAndWeb = [t.cliQifToSqliteOverwrite, t.quickenWebApp]
+const qifWebFinance = [t.cliQifToSqliteOverwrite, t.quickenWebApp, t.financialComputations]
 
 // prettier-ignore
 export const typeMappings = {
@@ -84,29 +87,29 @@ export const typeMappings = {
     [`${sources.functional}/filter-spec.type.js`]         : [targets.functional],
 
 
-    // quicken-tools domain
-    [`${sources.cliQifToSqlite}/account.type.js`]         : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/category.type.js`]        : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/daily-portfolio.type.js`] : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/entry.type.js`]           : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/holding.type.js`]         : qifAndWeb,
-    [`${sources.cliQifToSqlite}/lot.type.js`]             : qifWebFinance,
-    [`${sources.cliQifToSqlite}/lot-allocation.type.js`] : qifAndWeb,
-    [`${sources.cliQifToSqlite}/price.type.js`]           : qifAndWeb,
-    [`${sources.cliQifToSqlite}/security.type.js`]        : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/split.type.js`]           : [targets.cliQifToSqlite],
-    [`${sources.cliQifToSqlite}/tag.type.js`]             : [targets.cliQifToSqlite],
-    
-    // multiple targets
-    [`${sources.cliQifToSqlite}/transaction.type.js`]     : qifWebFinance,
+    // quicken shared domain types (from quicken-type-definitions)
+    [`${sources.quickenTypes}/account.type.js`]           : qifAndWeb,
+    [`${sources.quickenTypes}/category.type.js`]          : qifAndWeb,
+    [`${sources.quickenTypes}/holding.type.js`]           : qifAndWeb,
+    [`${sources.quickenTypes}/lot.type.js`]               : qifWebFinance,
+    [`${sources.quickenTypes}/lot-allocation.type.js`]    : qifAndWeb,
+    [`${sources.quickenTypes}/price.type.js`]             : qifAndWeb,
+    [`${sources.quickenTypes}/security.type.js`]          : qifAndWeb,
+    [`${sources.quickenTypes}/split.type.js`]             : qifAndWeb,
+    [`${sources.quickenTypes}/tag.type.js`]               : qifAndWeb,
+    [`${sources.quickenTypes}/transaction.type.js`]       : qifWebFinance,
+
+    // cli-qif-to-sqlite (new module with stable identities)
+    [`${sources.cliQifToSqlite}/qif-entry.type.js`]       : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/qif-split.type.js`]       : [targets.cliQifToSqlite],
+
+    // cli-qif-to-sqlite-with-overwrite only (QIF-specific types)
+    [`${sources.cliQifToSqliteOverwrite}/daily-portfolio.type.js`] : [targets.cliQifToSqliteOverwrite],
+    [`${sources.cliQifToSqliteOverwrite}/qif-entry.type.js`]       : [targets.cliQifToSqliteOverwrite],
+    [`${sources.cliQifToSqliteOverwrite}/qif-split.type.js`]       : [targets.cliQifToSqliteOverwrite],
 
     // quicken-web-app (types must come before Action since Action references them)
     [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/account.type.js`]         : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/category.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/security.type.js`]        : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/tag.type.js`]             : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/split.type.js`]           : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/sort-order.type.js`]      : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/table-layout.type.js`]    : [targets.quickenWebApp],
