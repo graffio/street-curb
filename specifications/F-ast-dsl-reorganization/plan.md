@@ -48,15 +48,16 @@ src/lib/
 
 Update all imports in rule files to reference new paths.
 
-### Phase 2: Naming Convention Rule (documentation)
+### Phase 2: Naming Convention Rule (documentation) ✅ COMPLETE
 
-Add to `.claude/conventions.md` under Naming:
+Added to `.claude/conventions.md` under Naming:
 ```
-- NEVER abbreviate names in code
-  - Use `declaration` not `decl`
-  - Use `reference` not `ref`
-  - Use `specification` not `spec`
-- Exception: Single-letter variables (`i`, `n`, `x`) in short anonymous callbacks
+- **No abbreviations** — use full words in names:
+    - `declaration` not `decl`
+    - `reference` not `ref`
+    - `specification` not `spec`
+    - `expression` not `expr`
+    - Exception: single-letter variables (`i`, `n`, `x`) in short anonymous callbacks
 ```
 
 ### Phase 3: Rename Wrapper Types (API change)
@@ -124,9 +125,11 @@ If other tools need AST processing, extract to a shared module:
 
 ## Tasks
 
-- **Phases 1-3** (current-task.json): Folder reorganization, naming rule, wrapper rename
-- **Phase 4**: Tagged types for data shapes (separate task)
-- **Phase 5**: ASTNode TaggedSum (separate task, after Phase 4)
+- **Phase 1**: Folder reorganization (not started)
+- **Phase 2**: Naming convention rule ✅ COMPLETE
+- **Phase 3**: Rename wrapper types (not started)
+- **Phase 4**: Tagged types for data shapes (future, separate task)
+- **Phase 5**: ASTNode TaggedSum (future, after Phase 4)
 
 ## Dependencies
 
