@@ -18,11 +18,55 @@ node src/cli.js schema -d database.db
 node src/cli.js tables -d database.db
 ```
 
+## Schema
+
+See [schema.puml](schema.puml) for ER diagram. Generate with `plantuml schema.puml`.
+
+### Stable Identity Tracking
+
+| Table                    | Purpose                                                  |
+|--------------------------|----------------------------------------------------------|
+| `stableIdentities`       | Maps signatures to stable IDs (e.g., `txn_000000000001`) |
+| `stableIdCounters`       | Next ID counter per entity type                          |
+| `importHistory`          | Last 20 imports with file hash and summary               |
+| `entityChanges`          | Per-entity changes per import (stubbed)                  |
+| `userPreferences`        | Key-value settings                                       |
+| `lotAssignmentOverrides` | User overrides for FIFO lot allocation                   |
+
+### Base Tables (Raw QIF Data)
+
+| Table               | Key Columns                       | Foreign Keys                                                           |
+|---------------------|-----------------------------------|------------------------------------------------------------------------|
+| `accounts`          | id, name, type                    | -                                                                      |
+| `categories`        | id, name, isIncomeCategory        | -                                                                      |
+| `tags`              | id, name, color                   | -                                                                      |
+| `securities`        | id, name, symbol, type            | -                                                                      |
+| `transactions`      | id, date, amount, transactionType | accountId → accounts, categoryId → categories, securityId → securities |
+| `transactionSplits` | id, amount, memo                  | transactionId → transactions, categoryId → categories                  |
+| `prices`            | id, date, price                   | securityId → securities                                                |
+
+### Derived Tables (Computed)
+
+| Table            | Purpose                        | Foreign Keys                                                                         |
+|------------------|--------------------------------|--------------------------------------------------------------------------------------|
+| `lots`           | FIFO cost basis tracking       | accountId → accounts, securityId → securities, createdByTransactionId → transactions |
+| `lotAllocations` | Records shares taken from lots | lotId → lots, transactionId → transactions                                           |
+
+### Views
+
+| View                        | Purpose                                           |
+|-----------------------------|---------------------------------------------------|
+| `currentHoldings`           | Open lot positions per account/security           |
+| `currentHoldingsWithPrices` | Holdings with latest prices and market values     |
+| `transactionDetails`        | Transactions with account/security/category names |
+| `dailyPortfolios`           | Historical portfolio values by date               |
+
 ## Architecture
 
 ### Stable IDs
 
 Every entity gets a stable ID that persists across reimports:
+
 - `acc_000000000001` - Accounts
 - `cat_000000000001` - Categories
 - `tag_000000000001` - Tags
@@ -48,14 +92,17 @@ Every entity gets a stable ID that persists across reimports:
 ### Import History
 
 The last 20 imports are retained in `importHistory` with:
+
 - QIF file hash (for duplicate detection)
 - Summary counts (accounts, transactions, etc.)
 
-Note: Entity-level change tracking (added/modified/orphaned per entity) is stubbed but not yet wired up. See F-qif-transfer-resolution for planned work.
+Note: Entity-level change tracking (added/modified/orphaned per entity) is stubbed but not yet wired up. See
+F-qif-transfer-resolution for planned work.
 
 ### Orphan Management
 
 When entities disappear from the QIF file on reimport:
+
 - `stableIdentities.orphanedAt` is set (soft delete)
 - Entity can be restored if it reappears in a future import
 - Orphaned transactions cascade to orphan their splits
