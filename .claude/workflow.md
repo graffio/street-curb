@@ -8,6 +8,7 @@
 - Read `conventions.md` and `preferences.md` when writing code
 - Address blocking issues from subagent reviewers before proceeding
 - Always spawn reviewers as specified — don't skip them
+- For autonomous (unsupervised) implementation, follow `.claude/tasks/autonomous-implementation.md`
 
 ## Commands
 

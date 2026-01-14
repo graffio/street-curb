@@ -1,0 +1,165 @@
+@startuml schema
+' ABOUTME: PlantUML entity-relationship diagram for QIF database schema
+' ABOUTME: Generate with: plantuml schema.puml
+
+skinparam linetype ortho
+skinparam ranksep 40
+skinparam nodesep 30
+
+title QIF Database Schema
+
+package "Stable Identity Tracking" {
+    entity stableIdentities {
+        * id : TEXT <<PK>>
+        --
+        entityType : TEXT
+        signature : TEXT
+        orphanedAt : TEXT
+        createdAt : TEXT
+        lastModifiedAt : TEXT
+    }
+
+    entity stableIdCounters {
+        * entityType : TEXT <<PK>>
+        --
+        nextId : INTEGER
+    }
+
+    entity importHistory {
+        * importId : TEXT <<PK>>
+        --
+        importedAt : TEXT
+        qifFileHash : TEXT
+        summary : TEXT (JSON)
+    }
+
+    entity entityChanges {
+        * stableId : TEXT <<PK>>
+        * importId : TEXT <<PK>>
+        --
+        changeType : TEXT
+        entityType : TEXT
+    }
+
+    entity lotAssignmentOverrides {
+        * sellTransactionStableId : TEXT <<PK>>
+        * openTransactionStableId : TEXT <<PK>>
+        --
+        quantity : REAL
+    }
+}
+
+package "Base Tables (Raw QIF)" {
+    entity accounts {
+        * id : TEXT <<PK>>
+        --
+        name : TEXT
+        type : TEXT
+        description : TEXT
+        creditLimit : DECIMAL
+    }
+
+    entity categories {
+        * id : TEXT <<PK>>
+        --
+        name : TEXT
+        description : TEXT
+        budgetAmount : DECIMAL
+        isIncomeCategory : BOOLEAN
+        isTaxRelated : BOOLEAN
+        taxSchedule : TEXT
+    }
+
+    entity tags {
+        * id : TEXT <<PK>>
+        --
+        name : TEXT
+        color : TEXT
+        description : TEXT
+    }
+
+    entity securities {
+        * id : TEXT <<PK>>
+        --
+        name : TEXT
+        symbol : TEXT
+        type : TEXT
+        goal : TEXT
+    }
+
+    entity transactions {
+        * id : TEXT <<PK>>
+        --
+        accountId : TEXT <<FK>>
+        categoryId : TEXT <<FK>>
+        securityId : TEXT <<FK>>
+        date : DATE
+        amount : DECIMAL
+        transactionType : TEXT
+        payee : TEXT
+        memo : TEXT
+        quantity : DECIMAL
+        price : DECIMAL
+        investmentAction : TEXT
+        runningBalance : DECIMAL
+    }
+
+    entity transactionSplits {
+        * id : TEXT <<PK>>
+        --
+        transactionId : TEXT <<FK>>
+        categoryId : TEXT <<FK>>
+        amount : DECIMAL
+        memo : TEXT
+    }
+
+    entity prices {
+        * id : TEXT <<PK>>
+        --
+        securityId : TEXT <<FK>>
+        date : DATE
+        price : DECIMAL
+    }
+}
+
+package "Derived Tables (Computed)" {
+    entity lots {
+        * id : TEXT <<PK>>
+        --
+        accountId : TEXT <<FK>>
+        securityId : TEXT <<FK>>
+        createdByTransactionId : TEXT <<FK>>
+        purchaseDate : DATE
+        quantity : DECIMAL
+        costBasis : DECIMAL
+        remainingQuantity : DECIMAL
+        closedDate : DATE
+    }
+
+    entity lotAllocations {
+        * id : TEXT <<PK>>
+        --
+        lotId : TEXT <<FK>>
+        transactionId : TEXT <<FK>>
+        sharesAllocated : DECIMAL
+        costBasisAllocated : DECIMAL
+        date : DATE
+    }
+}
+
+' Base table relationships
+transactions }o--|| accounts : accountId
+transactions }o--o| categories : categoryId
+transactions }o--o| securities : securityId
+transactionSplits }o--|| transactions : transactionId
+transactionSplits }o--o| categories : categoryId
+prices }o--|| securities : securityId
+
+' Derived table relationships
+lots }o--|| accounts : accountId
+lots }o--|| securities : securityId
+lots }o--|| transactions : createdByTransactionId
+lotAllocations }o--|| lots : lotId
+lotAllocations }o--|| transactions : transactionId
+
+@enduml

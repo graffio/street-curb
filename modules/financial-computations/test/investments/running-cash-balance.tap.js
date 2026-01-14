@@ -7,7 +7,7 @@ import { RegisterRow, Transaction } from '../../src/types/index.js'
 
 // Helper to create minimal investment transactions for testing
 // Transaction.Investment(accountId, date, id, transactionType, address, amount, categoryId, cleared, commission,
-//                        investmentAction, memo, payee, price, quantity, securityId)
+//                        investmentAction, memo, payee, price, quantity, runningBalance, securityId)
 const createTransaction = (id, amount, action = 'Buy') =>
     Transaction.Investment(
         'acc_000000000001',
@@ -20,6 +20,7 @@ const createTransaction = (id, amount, action = 'Buy') =>
         null,
         null,
         action,
+        null,
         null,
         null,
         null,
@@ -103,6 +104,7 @@ t.test('Given transaction with null amount', t => {
         null,
         100,
         10,
+        null,
         'sec_000000000001',
     )
 

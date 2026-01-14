@@ -646,3 +646,14 @@ This document summarizes the specifications that were previously archived in `sp
 - Refactored cli.js and database-service.js with proper P/T/F/A/E cohesion groups
 - Added COMPLEXITY-TODO for pre-existing style debt in transactions.js, index.js, cli.js
 - Deferred: Splitting transactions.js into smaller modules (288 lines, 24 functions)
+
+## [infrastructure] F-stable-qif-import Phase 1.5: Style Compliance (2026-01-10)
+**Purpose:** Make cli-qif-to-sqlite QIF parsing files style-compliant by extracting nested functions and eliminating module-level mutable state
+
+- Extracted all nested functions in `line-group-to-entry.js` to module-level cohesion groups (T, F, V)
+- `lineGroupToEntry` reduced from ~250-line function with nested definitions to ~20-line dispatch
+- Extracted all nested functions in `parse-qif-data.js` to T and V cohesion groups
+- Eliminated module-level mutable state (`currentContext`, `currentAccount`, `options`) with explicit state passing via reduce
+- State transformers use destructuring to avoid `state.xxx` pattern (ESLint rule)
+- Added COMPLEXITY-TODO (expires 2026-01-13) for count-based violations pending rule revision
+- All 17 tests pass

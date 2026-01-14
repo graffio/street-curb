@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for Transaction
-// ABOUTME: Auto-generated from modules/cli-qif-to-sqlite/type-definitions/transaction.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-type-definitions/transaction.type.js - do not edit manually
 
-/*  Transaction generated from: modules/cli-qif-to-sqlite/type-definitions/transaction.type.js
+/*  Transaction generated from: modules/quicken-type-definitions/transaction.type.js
  *
  *  Bank
  *      accountId      : /^acc_[a-f0-9]{12}$/,
@@ -15,7 +15,7 @@
  *      memo           : "String?",
  *      number         : "String?",
  *      payee          : "String?",
- *      runningBalance : "Number"
+ *      runningBalance : "Number?"
  *  Investment
  *      accountId       : /^acc_[a-f0-9]{12}$/,
  *      date            : "String",
@@ -31,7 +31,7 @@
  *      payee           : "String?",
  *      price           : "Number?",
  *      quantity        : "Number?",
- *      runningBalance  : "Number",
+ *      runningBalance  : "Number?",
  *      securityId      : "String?"
  *
  */
@@ -98,7 +98,7 @@ const toJSON = {
 
 /*
  * Construct a Transaction.Bank instance
- * @sig Bank :: (AccountId, Number, String, Id, TransactionType, String?, String?, String?, String?, String?, String?, Number) -> Transaction.Bank
+ * @sig Bank :: (AccountId, Number, String, Id, TransactionType, String?, String?, String?, String?, String?, String?, Number?) -> Transaction.Bank
  *     AccountId = /^acc_[a-f0-9]{12}$/
  *     Id = /^txn_[a-f0-9]{12}(-\d+)?$/
  *     TransactionType = /^bank$/
@@ -131,7 +131,7 @@ const BankConstructor = function Bank(
     R.validateString(constructorName, 'memo', true, memo)
     R.validateString(constructorName, 'number', true, number)
     R.validateString(constructorName, 'payee', true, payee)
-    R.validateNumber(constructorName, 'runningBalance', false, runningBalance)
+    R.validateNumber(constructorName, 'runningBalance', true, runningBalance)
 
     const result = Object.create(BankPrototype)
     result.accountId = accountId
@@ -145,7 +145,7 @@ const BankConstructor = function Bank(
     if (memo != null) result.memo = memo
     if (number != null) result.number = number
     if (payee != null) result.payee = payee
-    result.runningBalance = runningBalance
+    if (runningBalance != null) result.runningBalance = runningBalance
     return result
 }
 
@@ -153,7 +153,7 @@ Transaction.Bank = BankConstructor
 
 /*
  * Construct a Transaction.Investment instance
- * @sig Investment :: (AccountId, String, Id, TransactionType, String?, Number?, String?, String?, Number?, InvestmentAction, String?, String?, Number?, Number?, Number, String?) -> Transaction.Investment
+ * @sig Investment :: (AccountId, String, Id, TransactionType, String?, Number?, String?, String?, Number?, InvestmentAction, String?, String?, Number?, Number?, Number?, String?) -> Transaction.Investment
  *     AccountId = /^acc_[a-f0-9]{12}$/
  *     Id = /^txn_[a-f0-9]{12}(-\d+)?$/
  *     TransactionType = /^investment$/
@@ -200,7 +200,7 @@ const InvestmentConstructor = function Investment(
     R.validateString(constructorName, 'payee', true, payee)
     R.validateNumber(constructorName, 'price', true, price)
     R.validateNumber(constructorName, 'quantity', true, quantity)
-    R.validateNumber(constructorName, 'runningBalance', false, runningBalance)
+    R.validateNumber(constructorName, 'runningBalance', true, runningBalance)
     R.validateString(constructorName, 'securityId', true, securityId)
 
     const result = Object.create(InvestmentPrototype)
@@ -218,7 +218,7 @@ const InvestmentConstructor = function Investment(
     if (payee != null) result.payee = payee
     if (price != null) result.price = price
     if (quantity != null) result.quantity = quantity
-    result.runningBalance = runningBalance
+    if (runningBalance != null) result.runningBalance = runningBalance
     if (securityId != null) result.securityId = securityId
     return result
 }
