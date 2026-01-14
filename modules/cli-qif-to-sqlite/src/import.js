@@ -30,9 +30,9 @@ const P = {
 }
 
 const T = {
-    // Convert boolean to integer for SQLite (which can't bind booleans)
-    // @sig toBoolInt :: Boolean|null -> Number|null
-    toBoolInt: val => (val === true ? 1 : val === false ? 0 : null),
+    // Convert boolean or number to integer for SQLite (which can't bind booleans)
+    // @sig toBoolInt :: Boolean|Number|null -> Number|null
+    toBoolInt: val => (val == null ? null : val ? 1 : 0),
 
     // Convert address array to newline-separated string for SQLite storage
     // @sig toAddressString :: [String]|String|null -> String|null

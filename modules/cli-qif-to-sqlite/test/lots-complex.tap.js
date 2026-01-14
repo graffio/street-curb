@@ -24,7 +24,7 @@ const createTransaction = (accountName, date, action, quantity, price, amount = 
     accountName,
     date,
     amount: amount ?? -(quantity * price),
-    transactionType: 'investment',
+    transactionType: action,
     payee: null,
     memo: null,
     number: null,
@@ -36,7 +36,6 @@ const createTransaction = (accountName, date, action, quantity, price, amount = 
     quantity,
     price,
     commission: 0,
-    investmentAction: action,
     splits: [],
 })
 
