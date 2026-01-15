@@ -5,49 +5,6 @@ These exemptions expire on 2026-04-01 and should be addressed before then.
 
 ## Folders Requiring Refactoring
 
-### modules/cli-qif-to-sqlite/src/
-
-**Files:**
-- `cli-ui.js` - CLI display functions
-- `line-group-to-entry.js` - QIF line group parsing
-
-**Violations:**
-- lines: Files exceed line budget
-- functions: Too many functions per file
-- cohesion-structure: Functions not organized into P/T/F/V/A/E cohesion groups
-- chain-extraction: Long method chains should be extracted
-- single-level-indentation: Functions have more than one level of indentation
-- function-declaration-ordering: Functions not defined before usage
-- sig-documentation: Missing @sig documentation
-
-**Refactoring Strategy:**
-- Extract display functions into separate cohesion-grouped modules
-- Split QIF parsing into smaller, focused modules by context type
-
----
-
-### modules/cli-qif-to-sqlite/src/services/database/
-
-**Files:**
-- `accounts.js` - Account CRUD and balance queries
-- `prices.js` - Price import and transaction-derived prices
-
-**Violations:**
-- lines: Files exceed line budget
-- functions: Too many functions per file
-- vague-prefix: Getter functions use unclear naming (e.g., `get*` instead of more specific patterns)
-- cohesion-structure: Database module exports pattern doesn't match cohesion groups
-- single-level-indentation: Collision handling has nested control flow
-- functional-patterns: Collision handling uses while loops
-- sig-documentation: Missing @sig documentation
-
-**Refactoring Strategy:**
-- Split database operations by entity type into smaller modules
-- Extract complex SQL queries into documented query builders
-- Move collision handling into shared utility
-
----
-
 ### modules/quicken-web-app/src/services/
 
 **Files:**

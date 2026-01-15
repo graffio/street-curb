@@ -1,6 +1,0 @@
-- Outline TAP test matrix: schema failures, profile-required fields, cross-field rules.
-- Decide fixture-to-test mapping and naming conventions.
-- Plan CLI integration tests (exit codes, stdout structure) vs unit tests for rules.
-- Note how to seed tests with real sample data when available.
-- Identify tooling commands (yarn tap, yarn tap:file) to run in CI.
-- Add regression tests proving the CLI stays offline (e.g., schema cache injected, no network fetch) and only checks intra-payload consistency.

@@ -1,9 +1,0 @@
-- Define CLI interface: cds-validate <file> --api curbs|events|metrics --profile <name> [--spec-version].
-- Decide outputs: JSON report vs human summary; exit codes for CI.
-- Plan for streaming/NDJSON handling or single-file only (initial scope?).
-- Map validation pipeline (schema -> profile rules -> custom keywords) boundaries.
-- Confirm CLI operates offline (no network calls); validation uses cached schemas and user-supplied payloads only.
-- Note dependencies (ajv, ajv-formats) and expected Node version.
-- CLI tests: required flags, help/usage, exit codes for valid/invalid, stderr on parse errors, JSON output shape.
-- Library API candidates: loadSchemas, validateJson, validateFile, listProfiles, getSpecVersions.
-- Library tests: rejects invalid JSON, applies profile rules, returns normalized error objects, supports spec-version selection.
