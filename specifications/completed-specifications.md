@@ -647,6 +647,20 @@ This document summarizes the specifications that were previously archived in `sp
 - Added COMPLEXITY-TODO for pre-existing style debt in transactions.js, index.js, cli.js
 - Deferred: Splitting transactions.js into smaller modules (288 lines, 24 functions)
 
+## [infrastructure] F-stable-qif-import: QIF Import with Stable Identities (2026-01-15)
+**Purpose:** Import QIF files while preserving entity IDs across reimports via signature-based matching
+
+- Created cli-qif-to-sqlite module with stable identity system
+- Signature-based matching for all entity types (accounts, securities, transactions, lots, etc.)
+- 12-digit zero-padded IDs (`txn_000000000001`) compatible with existing web app patterns
+- FIFO lot tracking computed from investment transactions
+- Orphan tracking: entities removed from QIF marked orphaned (not deleted)
+- Rollback protection via copy-then-replace strategy
+- Performance: ~0.3s for 1145 transactions, 4176 prices
+- CLI commands: import, info, schema, register, history
+- Lessons learned: test data must match production types, INSERT OR IGNORE hides problems
+- Deferred to F-qif-transfer-resolution: transfer resolution, gain markers, entity change tracking, old module cleanup
+
 ## [infrastructure] F-stable-qif-import Phase 1.5: Style Compliance (2026-01-10)
 **Purpose:** Make cli-qif-to-sqlite QIF parsing files style-compliant by extracting nested functions and eliminating module-level mutable state
 
@@ -657,3 +671,27 @@ This document summarizes the specifications that were previously archived in `sp
 - State transformers use destructuring to avoid `state.xxx` pattern (ESLint rule)
 - Added COMPLEXITY-TODO (expires 2026-01-13) for count-based violations pending rule revision
 - All 17 tests pass
+
+## [infrastructure] F-qif-transfer-resolution: Transfer Resolution & Entity Change Tracking (2026-01-15)
+**Purpose:** Resolve transfer accounts, track gain markers, implement entity-level change tracking, incremental import, and clean up old module
+
+- Created `category-resolver.js` with P.isTransfer, P.isGainMarker, T.toTransferAccountName, F.resolveCategory
+- Added `transferAccountId` and `gainMarkerType` columns to transactions table
+- Integrated CategoryResolver into import.js: transfers resolve to linked account IDs, gain markers stored as CGLong/CGShort/CGMid
+- Added `F.createChangeTracker` factory returning `{ record, getCounts, getChanges }` for entity-level tracking
+- All `importSingle*` functions track created/modified/orphaned/restored states
+- CLI displays import summary: Created/Modified/Orphaned/Restored counts after each import
+- Reimport of identical data shows "Created: 0" confirming stable identity matching works
+- Deleted `cli-qif-to-sqlite-with-overwrite` module (22,665 lines removed)
+- Updated `type-mappings.js` to remove references to deleted module
+- Switched to incremental import with soft delete (orphanedAt column):
+  - Added orphanedAt column to all base tables (accounts, categories, tags, securities, transactions, transactionSplits, prices)
+  - Changed DELETE ALL + INSERT to INSERT OR REPLACE for incremental updates
+  - Orphaned entities marked in both stableIdentities AND data tables
+  - Running balances and lots computed from only active entities (WHERE orphanedAt IS NULL)
+  - Updated quicken-web-app sqlite-service.js to filter orphaned entities
+  - Orphaned entity details now queryable directly (no signature parsing fallback needed)
+- Manual test verified: 90 transfers resolved, 47 gain markers tracked, reimport stable
+- Performance optimized: INSERT for new entities, UPDATE for existing (vs INSERT OR REPLACE)
+- Prices UPDATE only touches price/orphanedAt to avoid UNIQUE constraint rechecks
+- All 350 tests pass
