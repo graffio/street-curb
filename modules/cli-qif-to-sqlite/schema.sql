@@ -75,7 +75,8 @@ CREATE TABLE accounts (
     name TEXT NOT NULL UNIQUE,
     type TEXT NOT NULL CHECK (type IN ('Bank', 'Cash', 'Credit Card', 'Investment', 'Other Asset', 'Other Liability', '401(k)/403(b)')),
     description TEXT,
-    creditLimit DECIMAL(15,2)
+    creditLimit DECIMAL(15,2),
+    orphanedAt TEXT
 );
 
 CREATE TABLE securities (
@@ -84,6 +85,7 @@ CREATE TABLE securities (
     symbol TEXT,
     type TEXT,
     goal TEXT,
+    orphanedAt TEXT,
     UNIQUE(name, symbol)
 );
 
@@ -94,14 +96,16 @@ CREATE TABLE categories (
     budgetAmount DECIMAL(15,2),
     isIncomeCategory BOOLEAN,
     isTaxRelated BOOLEAN,
-    taxSchedule TEXT
+    taxSchedule TEXT,
+    orphanedAt TEXT
 );
 
 CREATE TABLE tags (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     color TEXT,
-    description TEXT
+    description TEXT,
+    orphanedAt TEXT
 );
 
 CREATE TABLE transactions (
@@ -117,6 +121,10 @@ CREATE TABLE transactions (
     categoryId TEXT REFERENCES categories(id),
     address TEXT,
 
+    -- Transfer and gain marker resolution
+    transferAccountId TEXT REFERENCES accounts(id),
+    gainMarkerType TEXT CHECK (gainMarkerType IN ('CGLong', 'CGShort', 'CGMid')),
+
     -- Computed balance
     runningBalance DECIMAL(15,2),
 
@@ -130,15 +138,18 @@ CREATE TABLE transactions (
         'IntInc', 'MargInt', 'MiscExp', 'MiscInc', 'MiscIncX', 'ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvMd', 'ReinvSh',
         'Reminder', 'RtrnCapX', 'Sell', 'SellX', 'ShrsIn', 'ShrsOut', 'ShtSell', 'StkSplit', 'Vest', 'WithdrwX',
         'XIn', 'XOut'
-    ))
+    )),
+    orphanedAt TEXT
 );
 
 CREATE TABLE transactionSplits (
     id TEXT PRIMARY KEY,
     transactionId TEXT REFERENCES transactions(id),
     categoryId TEXT REFERENCES categories(id),
+    transferAccountId TEXT REFERENCES accounts(id),
     amount DECIMAL(15,2),
-    memo TEXT
+    memo TEXT,
+    orphanedAt TEXT
 );
 
 CREATE TABLE prices (
@@ -146,6 +157,7 @@ CREATE TABLE prices (
     securityId TEXT REFERENCES securities(id),
     date DATE NOT NULL,
     price DECIMAL(15,2) NOT NULL,
+    orphanedAt TEXT,
     UNIQUE(securityId, date)
 );
 
@@ -190,6 +202,15 @@ CREATE INDEX idx_transactions_date ON transactions(date);
 CREATE INDEX idx_transactions_accountId_date ON transactions(accountId, date);
 CREATE INDEX idx_transactions_securityId_date ON transactions(securityId, date);
 CREATE INDEX idx_transactionSplits_transactionId ON transactionSplits(transactionId);
+
+-- Indices for filtering active (non-orphaned) entities
+CREATE INDEX idx_accounts_active ON accounts(orphanedAt) WHERE orphanedAt IS NULL;
+CREATE INDEX idx_securities_active ON securities(orphanedAt) WHERE orphanedAt IS NULL;
+CREATE INDEX idx_categories_active ON categories(orphanedAt) WHERE orphanedAt IS NULL;
+CREATE INDEX idx_tags_active ON tags(orphanedAt) WHERE orphanedAt IS NULL;
+CREATE INDEX idx_transactions_active ON transactions(orphanedAt) WHERE orphanedAt IS NULL;
+CREATE INDEX idx_transactionSplits_active ON transactionSplits(orphanedAt) WHERE orphanedAt IS NULL;
+CREATE INDEX idx_prices_active ON prices(orphanedAt) WHERE orphanedAt IS NULL;
 
 -- Critical indexes for prices table (hundreds of thousands of rows)
 CREATE INDEX idx_prices_securityId_date ON prices(securityId, date);

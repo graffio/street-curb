@@ -10,12 +10,13 @@ const P = {
 }
 
 const T = {
-    // Add a security identity to the appropriate lookup map
+    // Add a security identity to the appropriate lookup map (appends to array for duplicates)
     // @sig addToSecurityLookup :: ({bySymbol, byName}, {id, signature, orphanedAt}) -> {bySymbol, byName}
     addToSecurityLookup: ({ bySymbol, byName }, { id, signature, orphanedAt }) => {
         const entry = { id, orphanedAt }
-        if (P.isSymbolSignature(signature)) bySymbol.set(signature, entry)
-        else byName.set(signature, entry)
+        const map = P.isSymbolSignature(signature) ? bySymbol : byName
+        const existing = map.get(signature) || []
+        map.set(signature, [...existing, entry])
         return { bySymbol, byName }
     },
 
@@ -40,12 +41,14 @@ const buildSecurityLookup = db => {
     return rows.reduce(T.addToSecurityLookup, { bySymbol: new Map(), byName: new Map() })
 }
 
-// Find matching entry for a security (symbol first, then name)
+// Find matching entry for a security (symbol first, then name, shifts from array)
 // Returns {id, orphanedAt} or null
 // @sig findSecurityMatch :: ({bySymbol, byName}, Security) -> {id, orphanedAt} | null
 const findSecurityMatch = ({ bySymbol, byName }, security) => {
     const sig = SigT.securitySignature(security)
-    return bySymbol.get(sig) || byName.get(sig) || null
+    const entries = bySymbol.get(sig) || byName.get(sig)
+    if (!entries || entries.length === 0) return null
+    return entries.shift()
 }
 
 // Build lookup map for transaction matching (signature -> [{id, orphanedAt}] for duplicates)
@@ -120,7 +123,7 @@ const createSeenTracker = lookup => {
 // @sig buildSecurityLookupWithTracker :: Database -> {lookup, tracker}
 const buildSecurityLookupWithTracker = db => {
     const lookup = buildSecurityLookup(db)
-    const allEntries = [...lookup.bySymbol.values(), ...lookup.byName.values()]
+    const allEntries = [...lookup.bySymbol.values(), ...lookup.byName.values()].flat()
     const tracker = createSeenTracker(new Map(allEntries.map(e => [e.id, e])))
     return { lookup, tracker }
 }

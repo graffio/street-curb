@@ -106,16 +106,19 @@
 
 ---
 
-## D8: Import is Always Full Replace (for QIF data)
+## D8: Incremental Import with Soft Delete
 
-**Decision:** Each import still wipes QIF-derived tables and reimports everything.
+**Decision:** Import uses INSERT for new entities, UPDATE for existing. Orphaned entities are soft-deleted (`orphanedAt` timestamp), not removed.
 
 **Rationale:**
-- Quicken only exports complete files
-- Trying to merge/diff is complex and error-prone
-- Stable identity layer handles "what changed" separately
+- Orphaned entities remain queryable for change reporting
+- Running balances and lots exclude orphaned transactions (`WHERE orphanedAt IS NULL`)
+- No signature parsing needed to display orphan details
+- Data tables mirror stableIdentities state
 
-**What persists:** `stableIdentities` table survives across imports.
+**What's recomputed:** Lots and lot allocations are fully recomputed each import (derived from transactions).
+
+**Previous design (replaced):** Full table wipe + reimport. This prevented querying orphaned entity details.
 
 ---
 

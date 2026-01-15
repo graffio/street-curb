@@ -15,7 +15,6 @@ const sources = {
     cliStyleValidator       : `${REPO_ROOT}/modules/cli-style-validator/type-definitions`,
     curbMap                 : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
-    cliQifToSqliteOverwrite : `${REPO_ROOT}/modules/cli-qif-to-sqlite-with-overwrite/type-definitions`,
     designSystem            : `${REPO_ROOT}/modules/design-system/type-definitions`,
     financialComputations   : `${REPO_ROOT}/modules/financial-computations/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
@@ -31,7 +30,6 @@ const targets = {
     cliStyleValidator       : `${REPO_ROOT}/modules/cli-style-validator/src/types`,
     curbMap                 : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
-    cliQifToSqliteOverwrite : `${REPO_ROOT}/modules/cli-qif-to-sqlite-with-overwrite/src/types`,
     designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
     financialComputations: `${REPO_ROOT}/modules/financial-computations/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
@@ -42,8 +40,8 @@ const targets = {
 
 // Shorthand aliases for common multi-target combinations
 const t = targets
-const qifAndWeb = [t.cliQifToSqliteOverwrite, t.quickenWebApp]
-const qifWebFinance = [t.cliQifToSqliteOverwrite, t.quickenWebApp, t.financialComputations]
+const qifAndWeb = [t.quickenWebApp]
+const qifWebFinance = [t.quickenWebApp, t.financialComputations]
 
 // prettier-ignore
 export const typeMappings = {
@@ -99,14 +97,9 @@ export const typeMappings = {
     [`${sources.quickenTypes}/tag.type.js`]               : qifAndWeb,
     [`${sources.quickenTypes}/transaction.type.js`]       : qifWebFinance,
 
-    // cli-qif-to-sqlite (new module with stable identities)
+    // cli-qif-to-sqlite
     [`${sources.cliQifToSqlite}/qif-entry.type.js`]       : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/qif-split.type.js`]       : [targets.cliQifToSqlite],
-
-    // cli-qif-to-sqlite-with-overwrite only (QIF-specific types)
-    [`${sources.cliQifToSqliteOverwrite}/daily-portfolio.type.js`] : [targets.cliQifToSqliteOverwrite],
-    [`${sources.cliQifToSqliteOverwrite}/qif-entry.type.js`]       : [targets.cliQifToSqliteOverwrite],
-    [`${sources.cliQifToSqliteOverwrite}/qif-split.type.js`]       : [targets.cliQifToSqliteOverwrite],
 
     // quicken-web-app (types must come before Action since Action references them)
     [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],

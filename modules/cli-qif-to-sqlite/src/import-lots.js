@@ -398,10 +398,10 @@ const importLots = (db, context) => {
     const toEnrichedLot = dbLot => {
         const { id, purchaseDate, accountId, securityId } = dbLot
 
-        // Verify account and security exist in lookups (values are {id, orphanedAt} objects)
+        // Verify account and security exist in lookups (values are arrays of {id, orphanedAt})
         const hasAccount = [...accountLookup.values()].some(e => e.id === accountId)
-        const hasSecurityBySymbol = [...securityLookup.bySymbol.values()].some(e => e.id === securityId)
-        const hasSecurityByName = [...securityLookup.byName.values()].some(e => e.id === securityId)
+        const hasSecurityBySymbol = [...securityLookup.bySymbol.values()].flat().some(e => e.id === securityId)
+        const hasSecurityByName = [...securityLookup.byName.values()].flat().some(e => e.id === securityId)
         if (!hasAccount || (!hasSecurityBySymbol && !hasSecurityByName)) return null
 
         return { ...dbLot, id, openDate: purchaseDate }
@@ -484,8 +484,8 @@ const importLots = (db, context) => {
         // Lot-creating actions require a security
         if (!securityId) return
 
-        const hasSecurityBySymbol = [...securityLookup.bySymbol.values()].some(e => e.id === securityId)
-        const hasSecurityByName = [...securityLookup.byName.values()].some(e => e.id === securityId)
+        const hasSecurityBySymbol = [...securityLookup.bySymbol.values()].flat().some(e => e.id === securityId)
+        const hasSecurityByName = [...securityLookup.byName.values()].flat().some(e => e.id === securityId)
         if (!hasSecurityBySymbol && !hasSecurityByName) return
 
         // Transaction id IS the stable ID now
@@ -511,9 +511,11 @@ const importLots = (db, context) => {
     const allocationLookup = context.allocationLookup || new Map()
     const warnings = []
 
-    // Get investment transactions sorted by date
+    // Get active (non-orphaned) investment transactions sorted by date
     const transactions = db
-        .prepare(`SELECT * FROM transactions WHERE investmentAction IS NOT NULL ORDER BY date, id`)
+        .prepare(
+            `SELECT * FROM transactions WHERE investmentAction IS NOT NULL AND orphanedAt IS NULL ORDER BY date, id`,
+        )
         .all()
 
     // In-memory lots map: "accountId|securityId" -> [Lot]

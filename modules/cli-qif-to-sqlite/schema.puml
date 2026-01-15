@@ -57,6 +57,7 @@ package "Base Tables (Raw QIF)" {
         type : TEXT
         description : TEXT
         creditLimit : DECIMAL
+        orphanedAt : TEXT
     }
 
     entity categories {
@@ -68,6 +69,7 @@ package "Base Tables (Raw QIF)" {
         isIncomeCategory : BOOLEAN
         isTaxRelated : BOOLEAN
         taxSchedule : TEXT
+        orphanedAt : TEXT
     }
 
     entity tags {
@@ -76,6 +78,7 @@ package "Base Tables (Raw QIF)" {
         name : TEXT
         color : TEXT
         description : TEXT
+        orphanedAt : TEXT
     }
 
     entity securities {
@@ -85,6 +88,7 @@ package "Base Tables (Raw QIF)" {
         symbol : TEXT
         type : TEXT
         goal : TEXT
+        orphanedAt : TEXT
     }
 
     entity transactions {
@@ -92,6 +96,7 @@ package "Base Tables (Raw QIF)" {
         --
         accountId : TEXT <<FK>>
         categoryId : TEXT <<FK>>
+        transferAccountId : TEXT <<FK>>
         securityId : TEXT <<FK>>
         date : DATE
         amount : DECIMAL
@@ -101,7 +106,9 @@ package "Base Tables (Raw QIF)" {
         quantity : DECIMAL
         price : DECIMAL
         investmentAction : TEXT
+        gainMarkerType : TEXT
         runningBalance : DECIMAL
+        orphanedAt : TEXT
     }
 
     entity transactionSplits {
@@ -109,8 +116,10 @@ package "Base Tables (Raw QIF)" {
         --
         transactionId : TEXT <<FK>>
         categoryId : TEXT <<FK>>
+        transferAccountId : TEXT <<FK>>
         amount : DECIMAL
         memo : TEXT
+        orphanedAt : TEXT
     }
 
     entity prices {
@@ -119,6 +128,7 @@ package "Base Tables (Raw QIF)" {
         securityId : TEXT <<FK>>
         date : DATE
         price : DECIMAL
+        orphanedAt : TEXT
     }
 }
 
@@ -150,9 +160,11 @@ package "Derived Tables (Computed)" {
 ' Base table relationships
 transactions }o--|| accounts : accountId
 transactions }o--o| categories : categoryId
+transactions }o--o| accounts : transferAccountId
 transactions }o--o| securities : securityId
 transactionSplits }o--|| transactions : transactionId
 transactionSplits }o--o| categories : categoryId
+transactionSplits }o--o| accounts : transferAccountId
 prices }o--|| securities : securityId
 
 ' Derived table relationships

@@ -159,19 +159,65 @@ const T = {
         if (!existsSync(path) || tableCount === 0) db.exec(readFileSync(schemaPath, 'utf-8'))
         return db
     },
+
+    // Look up transaction details (works for both active and orphaned transactions)
+    // @sig toTransactionDetails :: (Database, String) -> Object|null
+    toTransactionDetails: (db, entityId) =>
+        db
+            .prepare(
+                `SELECT t.date, t.payee, t.amount, t.memo, a.name as accountName
+                 FROM transactions t JOIN accounts a ON t.accountId = a.id
+                 WHERE t.id = ?`,
+            )
+            .get(entityId),
+
+    // Look up entity details from database for change reporting
+    // @sig toEntityDetails :: (Database, String, String) -> Object|null
+    toEntityDetails: (db, entityType, entityId) => {
+        if (entityType === 'Transaction') return T.toTransactionDetails(db, entityId)
+        if (entityType === 'Account') return db.prepare('SELECT name FROM accounts WHERE id = ?').get(entityId)
+        if (entityType === 'Security')
+            return db.prepare('SELECT name, symbol FROM securities WHERE id = ?').get(entityId)
+        if (entityType === 'Category') return db.prepare('SELECT name FROM categories WHERE id = ?').get(entityId)
+        if (entityType === 'Price')
+            return db
+                .prepare(
+                    `SELECT p.date, p.price, s.symbol FROM prices p
+                     JOIN securities s ON p.securityId = s.id WHERE p.id = ?`,
+                )
+                .get(entityId)
+
+        return null
+    },
+
+    // Format entity details as a readable string
+    // @sig toEntityDescription :: (String, Object|null) -> String
+    toEntityDescription: (entityType, details) => {
+        if (!details) return '(details unavailable)'
+        const { accountName, amount, date, memo, name, payee, price, symbol } = details
+        if (entityType === 'Transaction') {
+            const desc = payee || memo || '(no description)'
+            return `${date} ${accountName}: ${desc} $${(amount || 0).toFixed(2)}`
+        }
+        if (entityType === 'Account') return name
+        if (entityType === 'Security') return `${symbol} (${name})`
+        if (entityType === 'Category') return name
+        if (entityType === 'Price') return `${symbol} ${date} $${price}`
+        return JSON.stringify(details)
+    },
 }
 
 const F = {
     // Create import function that captures parsed data and records history
+    // Uses real change tracking from Import.processImport
     // @sig createImportFn :: (Object, String) -> (Database, Object) -> Object
     createImportFn: (data, qifContent) => (db, progress) => {
         progress.stage = 'importing'
         const txnCount = (data.bankTransactions?.length || 0) + (data.investmentTransactions?.length || 0)
         progress.total = txnCount
-        Import.processImport(db, data, msg => console.log(`  ${msg}`))
-        const changeCounts = { created: txnCount + data.accounts.length + data.categories.length }
-        ImportHistory.finalizeImportHistory(db, qifContent, changeCounts, [])
-        return { success: true }
+        const { changeCounts, changes } = Import.processImport(db, data, msg => console.log(`  ${msg}`))
+        ImportHistory.finalizeImportHistory(db, qifContent, changeCounts, changes)
+        return { success: true, changeCounts, changes }
     },
 }
 
@@ -231,6 +277,41 @@ const E = {
         history.forEach(E.emitHistoryEntry)
     },
 
+    // Output a single change detail line
+    // @sig emitChangeDetail :: (Database, Object) -> void
+    emitChangeDetail: (db, change) => {
+        const { changeType, entityId, entityType } = change
+        const details = T.toEntityDetails(db, entityType, entityId)
+        const description = T.toEntityDescription(entityType, details)
+        console.log(`  ${changeType.toUpperCase()}: ${entityType} - ${description}`)
+    },
+
+    // Output change summary to console after import
+    // Shows details for all changes, but limits created to 100 items
+    // @sig emitChangeSummary :: (Object, [Object], Database) -> void
+    emitChangeSummary: (changeCounts, changes, db) => {
+        const { created, modified, orphaned, restored } = changeCounts
+        const CREATED_DETAIL_LIMIT = 100
+
+        console.log('\n=== Import Summary ===')
+        if (created > CREATED_DETAIL_LIMIT) console.log(`Created:  ${created} (many new entities - details omitted)`)
+        else console.log(`Created:  ${created}`)
+
+        if (modified > 0) console.log(`Modified: ${modified}`)
+        if (orphaned > 0) console.log(`Orphaned: ${orphaned}`)
+        if (restored > 0) console.log(`Restored: ${restored}`)
+
+        const createdChanges = changes.filter(c => c.changeType === 'created')
+        const otherChanges = changes.filter(c => c.changeType !== 'created')
+        const showCreatedDetails = createdChanges.length > 0 && createdChanges.length <= CREATED_DETAIL_LIMIT
+        const hasDetails = showCreatedDetails || otherChanges.length > 0
+
+        if (!hasDetails) return
+        console.log('\n=== Change Details ===')
+        if (showCreatedDetails) createdChanges.forEach(c => E.emitChangeDetail(db, c))
+        otherChanges.forEach(c => E.emitChangeDetail(db, c))
+    },
+
     // Output import error to console with full context
     // @sig emitImportError :: Object -> void
     emitImportError: error => {
@@ -262,13 +343,17 @@ const E = {
         console.log(`\nParsed: ${data.accounts.length} accounts, ${data.transactions.length} transactions`)
         console.log(`        ${data.securities.length} securities, ${data.prices.length} prices`)
 
-        const result = Rollback.withRollback(database, T.toOpenDatabase, F.createImportFn(data, qifContent))
+        const importFn = F.createImportFn(data, qifContent)
+        const { success, result, error } = Rollback.withRollback(database, T.toOpenDatabase, importFn)
 
-        if (result.success) {
+        if (success) {
+            const db = new Database(database)
+            E.emitChangeSummary(result.changeCounts, result.changes, db)
+            db.close()
             console.log('\nImport completed successfully!')
             console.log(`Database: ${database}`)
         } else {
-            E.emitImportError(result.error)
+            E.emitImportError(error)
             process.exit(1)
         }
     },

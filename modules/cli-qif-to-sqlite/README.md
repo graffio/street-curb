@@ -35,15 +35,15 @@ See [schema.puml](schema.puml) for ER diagram. Generate with `plantuml schema.pu
 
 ### Base Tables (Raw QIF Data)
 
-| Table               | Key Columns                       | Foreign Keys                                                           |
-|---------------------|-----------------------------------|------------------------------------------------------------------------|
-| `accounts`          | id, name, type                    | -                                                                      |
-| `categories`        | id, name, isIncomeCategory        | -                                                                      |
-| `tags`              | id, name, color                   | -                                                                      |
-| `securities`        | id, name, symbol, type            | -                                                                      |
-| `transactions`      | id, date, amount, transactionType | accountId → accounts, categoryId → categories, securityId → securities |
-| `transactionSplits` | id, amount, memo                  | transactionId → transactions, categoryId → categories                  |
-| `prices`            | id, date, price                   | securityId → securities                                                |
+| Table               | Key Columns                            | Foreign Keys                                                                       |
+|---------------------|----------------------------------------|------------------------------------------------------------------------------------|
+| `accounts`          | id, name, type, orphanedAt             | -                                                                                  |
+| `categories`        | id, name, isIncomeCategory, orphanedAt | -                                                                                  |
+| `tags`              | id, name, color, orphanedAt            | -                                                                                  |
+| `securities`        | id, name, symbol, type, orphanedAt     | -                                                                                  |
+| `transactions`      | id, date, amount, gainMarkerType       | accountId, transferAccountId → accounts, categoryId → categories, securityId      |
+| `transactionSplits` | id, amount, memo, orphanedAt           | transactionId → transactions, categoryId → categories, transferAccountId          |
+| `prices`            | id, date, price, orphanedAt            | securityId → securities                                                            |
 
 ### Derived Tables (Computed)
 
@@ -80,13 +80,13 @@ Every entity gets a stable ID that persists across reimports:
 
 1. Parse QIF file into data structures
 2. Build lookup maps from existing stable identities
-3. Clear base tables (entities are recreated each import)
-4. Import accounts, categories, tags, securities
-5. Import transactions with splits
+3. Clear derived tables (lots are recomputed each import)
+4. Import accounts, categories, tags, securities (INSERT or UPDATE)
+5. Import transactions with splits, resolving transfers and gain markers
 6. Import prices
-7. Compute running balances (SQL window function)
-8. Process lot tracking (FIFO for buys/sells)
-9. Mark orphaned entities (deleted from source)
+7. Compute running balances (SQL window function, excludes orphaned)
+8. Process lot tracking (FIFO for buys/sells, excludes orphaned)
+9. Mark orphaned entities (deleted from source) in both stableIdentities and data tables
 10. Record import in history (retains last 20 imports)
 
 ### Import History
@@ -96,26 +96,33 @@ The last 20 imports are retained in `importHistory` with:
 - QIF file hash (for duplicate detection)
 - Summary counts (accounts, transactions, etc.)
 
-Note: Entity-level change tracking (added/modified/orphaned per entity) is stubbed but not yet wired up. See
-F-qif-transfer-resolution for planned work.
+Entity-level change tracking reports created/modified/orphaned/restored counts after each import.
+
+### Transfer Resolution
+
+Transfers between accounts (e.g., `[Checking]` in category field) are resolved:
+
+- `transferAccountId` links to the destination account
+- Works for both transactions and splits
+- `gainMarkerType` captures CGLong/CGShort/CGMid for capital gains
 
 ### Orphan Management
 
 When entities disappear from the QIF file on reimport:
 
-- `stableIdentities.orphanedAt` is set (soft delete)
+- `orphanedAt` is set in both `stableIdentities` AND the data table (soft delete)
+- Running balances and lots exclude orphaned transactions
 - Entity can be restored if it reappears in a future import
 - Orphaned transactions cascade to orphan their splits
 
 ### Key Files
 
-- `cli.js` - CLI entry point
-- `import.js` - Import orchestration
+- `cli.js` - CLI entry point with change reporting
+- `import.js` - Import orchestration with change tracking
 - `import-lots.js` - Investment lot tracking (FIFO)
 - `import-history.js` - Import history tracking (last 20)
 - `stable-identity.js` - Stable ID generation and management
 - `signatures.js` - Entity signature computation for matching
 - `Matching.js` - Entity matching during reimport
-- `orphan-management.js` - Orphan detection and restoration
+- `category-resolver.js` - Transfer and gain marker resolution
 - `holdings.js` - Historical holdings queries
-- `rollback.js` - Rollback support (restore from orphaned state)
