@@ -1,6 +1,7 @@
 // ABOUTME: Import orchestration for QIF data with stable identity matching
 // ABOUTME: Coordinates account/security/transaction import and orphan detection
 
+import { CategoryResolver } from './category-resolver.js'
 import { ImportLots } from './import-lots.js'
 import { Matching } from './Matching.js'
 import { Signatures as SigT } from './signatures.js'
@@ -16,13 +17,14 @@ const CASH_IMPACT_ACTIONS = new Set([
 ])
 
 const P = {
-    // Check if category string is a transfer marker like [Checking]
-    // @sig isTransfer :: String|null -> Boolean
-    isTransfer: cat => cat?.startsWith('[') && cat?.endsWith(']'),
-
-    // Check if category string is a special marker (_RlzdGain, _UnrlzdGain, --Split--)
+    // Check if category string is a special marker that should not resolve to categoryId
+    // Includes _RlzdGain, _UnrlzdGain (Quicken internal markers), --Split--, and CGLong/CGShort/CGMid
     // @sig isSpecialMarker :: String|null -> Boolean
-    isSpecialMarker: cat => cat?.startsWith('_RlzdGain') || cat?.startsWith('_UnrlzdGain') || cat === '--Split--',
+    isSpecialMarker: cat =>
+        cat?.startsWith('_RlzdGain') ||
+        cat?.startsWith('_UnrlzdGain') ||
+        CategoryResolver.P.isSplitMarker(cat) ||
+        CategoryResolver.P.isGainMarker(cat),
 
     // Check if QIF transaction type is a bank type (vs investment)
     // @sig isBankTransactionType :: String -> Boolean
@@ -30,6 +32,16 @@ const P = {
 }
 
 const T = {
+    // Time and report an import step, returning the result
+    // @sig toTimedResult :: (Function, String, () -> a) -> a
+    toTimedResult: (report, label, fn) => {
+        const start = performance.now()
+        const result = fn()
+        const elapsed = (performance.now() - start).toFixed(0)
+        report(`${label} (${elapsed}ms)`)
+        return result
+    },
+
     // Convert boolean or number to integer for SQLite (which can't bind booleans)
     // @sig toBoolInt :: Boolean|Number|null -> Number|null
     toBoolInt: val => (val == null ? null : val ? 1 : 0),
@@ -43,9 +55,10 @@ const T = {
     toDateString: date => (date instanceof Date ? date.toISOString().slice(0, 10) : date),
 
     // Extract base category name from raw category string (strips class suffix, handles markers)
+    // Uses CategoryResolver for transfer detection, filters special markers
     // @sig toBaseCategoryName :: String|null -> String|null
     toBaseCategoryName: cat => {
-        if (!cat || P.isTransfer(cat) || P.isSpecialMarker(cat)) return null
+        if (!cat || CategoryResolver.P.isTransfer(cat) || P.isSpecialMarker(cat)) return null
         return cat.split('/')[0]
     },
 
@@ -70,6 +83,34 @@ const T = {
         lotLookup: Matching.buildLotLookup(db),
         allocationLookup: Matching.buildLotAllocationLookup(db),
     }),
+
+    // Resolve category string to categoryId, transferAccountId, and gainMarkerType
+    // @sig resolveCategoryFields :: (String|null, Map, Map) -> {categoryId, transferAccountId, gainMarkerType}
+    resolveCategoryFields: (category, categoryMap, accountMap) => {
+        const { transferAccountName, gainMarkerType } = CategoryResolver.F.resolveCategory(category)
+        const baseCategoryName = T.toBaseCategoryName(category)
+        const categoryId = baseCategoryName ? (categoryMap.get(baseCategoryName) ?? null) : null
+        const transferAccountId = transferAccountName ? (accountMap.get(transferAccountName) ?? null) : null
+        return { categoryId, transferAccountId, gainMarkerType }
+    },
+}
+
+const F = {
+    // Create a change tracker to aggregate import statistics
+    // Tracks counts by entity type (Account, Category, Transaction, etc.)
+    // @sig createChangeTracker :: () -> {record, getCounts, getChanges}
+    createChangeTracker: () => {
+        const counts = { created: 0, modified: 0, orphaned: 0, restored: 0 }
+        const changes = []
+        return {
+            record: (entityType, entityId, changeType) => {
+                counts[changeType]++
+                changes.push({ entityType, entityId, changeType })
+            },
+            getCounts: () => counts,
+            getChanges: () => changes,
+        }
+    },
 }
 
 const A = {
@@ -87,10 +128,49 @@ const A = {
 }
 
 const E = {
+    // Restore an orphaned entity and record the change
+    // @sig restoreOrphanedEntity :: (Database, String, String, ChangeTracker, Boolean|String) -> void
+    restoreOrphanedEntity: (db, entityType, id, changeTracker, orphanedAt) => {
+        if (!orphanedAt) return
+        StableIdentity.restoreEntity(db, id)
+        changeTracker.record(entityType, id, 'restored')
+    },
+
+    // Delegate transaction import to importFns with context object
+    // @sig doImportTransactions :: (Object, ImportFns) -> void
+    doImportTransactions: (ctx, fns) => {
+        const { db, txnLookup, accountMap, securityMap, splitLookup, categoryMap, transactions, changeTracker } = ctx
+        fns.transactions(db, txnLookup, accountMap, securityMap, splitLookup, categoryMap, transactions, changeTracker)
+    },
+
+    // Record orphan change and mark entity as orphaned in both stableIdentities and data table
+    // @sig recordAndMarkOrphaned :: (Database, ChangeTracker, String, String) -> void
+    recordAndMarkOrphaned: (db, changeTracker, entityType, id) => {
+        changeTracker.record(entityType, id, 'orphaned')
+        StableIdentity.markOrphaned(db, id)
+        E.markOrphanedInTable(db, entityType, id)
+    },
+
+    // Set orphanedAt in the data table for an entity
+    // @sig markOrphanedInTable :: (Database, String, String) -> void
+    markOrphanedInTable: (db, entityType, id) => {
+        const tableMap = {
+            Account: 'accounts',
+            Category: 'categories',
+            Tag: 'tags',
+            Security: 'securities',
+            Transaction: 'transactions',
+            Split: 'transactionSplits',
+            Price: 'prices',
+        }
+        const table = tableMap[entityType]
+        if (table) db.prepare(`UPDATE ${table} SET orphanedAt = datetime('now') WHERE id = ?`).run(id)
+    },
+
     // Execute the import work within a transaction
     // Handles both combined (transactions) and separate (bankTransactions/investmentTransactions) formats
-    // @sig executeImportWork :: (Database, Object, Object, Object, Object, Function?) -> void
-    executeImportWork: (db, data, lookups, importFns, markOrphanFn, onProgress) => {
+    // @sig executeImportWork :: (Database, Object, Object, Object, Object, ChangeTracker, Function?) -> void
+    executeImportWork: (db, data, lookups, importFns, markOrphanFn, changeTracker, onProgress) => {
         const { accounts, categories, tags, securities, prices, bankTransactions, investmentTransactions } = data
         const report = onProgress || (() => {})
 
@@ -99,56 +179,56 @@ const E = {
         const { accounts: accLookup, categories: catLookup, tags: tagLookup } = lookups
         const { securities: secLookup, transactions: txnLookup, splits: splitLookup, prices: priceLookup } = lookups
 
-        report('Clearing tables...')
-        E.clearBaseTables(db)
+        T.toTimedResult(report, 'Clearing derived tables', () => E.clearDerivedTables(db))
 
-        report(`Importing ${accounts?.length || 0} accounts...`)
-        const accountMap = importFns.accounts(db, accLookup, accounts)
+        const accountMap = T.toTimedResult(report, `Importing ${accounts?.length || 0} accounts`, () =>
+            importFns.accounts(db, accLookup, accounts, changeTracker),
+        )
 
-        report(`Importing ${categories?.length || 0} categories...`)
-        const categoryMap = importFns.categories(db, catLookup, categories)
+        const categoryMap = T.toTimedResult(report, `Importing ${categories?.length || 0} categories`, () =>
+            importFns.categories(db, catLookup, categories, changeTracker),
+        )
 
-        report(`Importing ${tags?.length || 0} tags...`)
-        importFns.tags(db, tagLookup, tags)
+        T.toTimedResult(report, `Importing ${tags?.length || 0} tags`, () =>
+            importFns.tags(db, tagLookup, tags, changeTracker),
+        )
 
-        report(`Importing ${securities?.length || 0} securities...`)
-        const securityMap = importFns.securities(db, secLookup, securities)
+        const securityMap = T.toTimedResult(report, `Importing ${securities?.length || 0} securities`, () =>
+            importFns.securities(db, secLookup, securities, changeTracker),
+        )
 
-        report(`Importing ${transactions.length} transactions...`)
-        importFns.transactions(db, txnLookup, accountMap, securityMap, splitLookup, categoryMap, transactions)
+        const txnCtx = { db, txnLookup, accountMap, securityMap, splitLookup, categoryMap, transactions, changeTracker }
+        T.toTimedResult(report, `Importing ${transactions.length} transactions`, () =>
+            E.doImportTransactions(txnCtx, importFns),
+        )
 
-        report(`Importing ${prices?.length || 0} prices...`)
-        importFns.prices(db, priceLookup, securityMap, prices)
+        T.toTimedResult(report, `Importing ${prices?.length || 0} prices`, () =>
+            importFns.prices(db, priceLookup, securityMap, prices, changeTracker),
+        )
 
-        report('Computing running balances...')
-        E.updateRunningBalances(db)
+        T.toTimedResult(report, 'Computing running balances', () => E.updateRunningBalances(db))
 
-        report('Computing lots...')
-        ImportLots.importLots(db, T.toLotContext(db))
+        T.toTimedResult(report, 'Computing lots', () => ImportLots.importLots(db, T.toLotContext(db)))
 
-        report('Marking orphans...')
-        markOrphanFn(db, {
-            accounts: accLookup,
-            categories: catLookup,
-            tags: tagLookup,
-            securities: secLookup,
-            transactions: txnLookup,
-            prices: priceLookup,
-        })
+        const orphanLookups = { accounts: accLookup, categories: catLookup, tags: tagLookup }
+        const moreOrphanLookups = { securities: secLookup, transactions: txnLookup, prices: priceLookup }
+        T.toTimedResult(report, 'Marking orphans', () =>
+            markOrphanFn(db, { ...orphanLookups, ...moreOrphanLookups }, changeTracker),
+        )
         report('Done!')
     },
 
     // Import or match a single account, updating accountMap with id
-    // Handles restore of previously orphaned accounts
-    // @sig importSingleAccount :: (Database, Statement, {lookup, tracker}, Map, Account) -> void
-    importSingleAccount: (db, insertStatement, { lookup, tracker }, accountMap, account) => {
+    // Handles restore of previously orphaned accounts, records changes to tracker
+    // @sig importSingleAccount :: (Database, Statement, {lookup, tracker}, Map, Account, ChangeTracker) -> void
+    importSingleAccount: (db, insertStatement, { lookup, tracker }, accountMap, account, changeTracker) => {
         const { name, type, description, creditLimit } = account
         const existing = lookup.get(name)
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
             insertStatement.run(id, name, type, description, creditLimit)
-            orphanedAt && StableIdentity.restoreEntity(db, id)
+            E.restoreOrphanedEntity(db, 'Account', id, changeTracker, orphanedAt)
             accountMap.set(name, id)
             return
         }
@@ -157,12 +237,13 @@ const E = {
         insertStatement.run(id, name, type, description, creditLimit)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Account', signature: name })
         accountMap.set(name, id)
+        changeTracker.record('Account', id, 'created')
     },
 
     // Import or match a single category, updating categoryMap with id
-    // Handles restore of previously orphaned categories
-    // @sig importSingleCategory :: (Database, Statement, {lookup, tracker}, Map, Category) -> void
-    importSingleCategory: (db, insertStatement, { lookup, tracker }, categoryMap, category) => {
+    // Handles restore of previously orphaned categories, records changes to tracker
+    // @sig importSingleCategory :: (Database, Statement, {lookup, tracker}, Map, Category, ChangeTracker) -> void
+    importSingleCategory: (db, insertStatement, { lookup, tracker }, categoryMap, category, changeTracker) => {
         const { name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule } = category
         const isIncome = T.toBoolInt(isIncomeCategory)
         const isTax = T.toBoolInt(isTaxRelated)
@@ -171,7 +252,7 @@ const E = {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
             insertStatement.run(id, name, description, budgetAmount, isIncome, isTax, taxSchedule)
-            orphanedAt && StableIdentity.restoreEntity(db, id)
+            E.restoreOrphanedEntity(db, 'Category', id, changeTracker, orphanedAt)
             categoryMap.set(name, id)
             return
         }
@@ -180,19 +261,20 @@ const E = {
         insertStatement.run(id, name, description, budgetAmount, isIncome, isTax, taxSchedule)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Category', signature: name })
         categoryMap.set(name, id)
+        changeTracker.record('Category', id, 'created')
     },
 
     // Import or match a single tag, updating tagMap with id
-    // Handles restore of previously orphaned tags
-    // @sig importSingleTag :: (Database, Statement, {lookup, tracker}, Map, Tag) -> void
-    importSingleTag: (db, insertStatement, { lookup, tracker }, tagMap, tag) => {
+    // Handles restore of previously orphaned tags, records changes to tracker
+    // @sig importSingleTag :: (Database, Statement, {lookup, tracker}, Map, Tag, ChangeTracker) -> void
+    importSingleTag: (db, insertStatement, { lookup, tracker }, tagMap, tag, changeTracker) => {
         const { name, color, description } = tag
         const existing = lookup.get(name)
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
             insertStatement.run(id, name, color, description)
-            orphanedAt && StableIdentity.restoreEntity(db, id)
+            E.restoreOrphanedEntity(db, 'Tag', id, changeTracker, orphanedAt)
             tagMap.set(name, id)
             return
         }
@@ -201,6 +283,7 @@ const E = {
         insertStatement.run(id, name, color, description)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Tag', signature: name })
         tagMap.set(name, id)
+        changeTracker.record('Tag', id, 'created')
     },
 
     // Store security in map by both name and symbol for lookup by either
@@ -212,9 +295,9 @@ const E = {
 
     // Import or match a single security, updating securityMap with id
     // Stores by BOTH name and symbol so transaction lookup by either works
-    // Handles restore of previously orphaned securities
-    // @sig importSingleSecurity :: (Database, Statement, {lookup, tracker}, Map, Security) -> void
-    importSingleSecurity: (db, insertStatement, { lookup, tracker }, securityMap, security) => {
+    // Handles restore of previously orphaned securities, records changes to tracker
+    // @sig importSingleSecurity :: (Database, Statement, {lookup, tracker}, Map, Security, ChangeTracker) -> void
+    importSingleSecurity: (db, insertStatement, { lookup, tracker }, securityMap, security, changeTracker) => {
         const { name, symbol, type, goal } = security
         const signature = SigT.securitySignature(security)
         const existing = Matching.findSecurityMatch(lookup, security)
@@ -222,7 +305,7 @@ const E = {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
             insertStatement.run(id, name, symbol, type, goal)
-            orphanedAt && StableIdentity.restoreEntity(db, id)
+            E.restoreOrphanedEntity(db, 'Security', id, changeTracker, orphanedAt)
             E.storeSecurityInMap(securityMap, name, symbol, id)
             return
         }
@@ -231,37 +314,42 @@ const E = {
         insertStatement.run(id, name, symbol, type, goal)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Security', signature })
         E.storeSecurityInMap(securityMap, name, symbol, id)
+        changeTracker.record('Security', id, 'created')
     },
 
-    // Import or match a single split, returning id
-    // @sig importSingleSplit :: (Database, Statement, Map, String, Map, Split) -> {id, isNew}
-    importSingleSplit: (db, insertStatement, splitLookup, transactionId, categoryMap, split) => {
+    // Import or match a single split, returning id, records changes to tracker
+    // Handles transfers in splits (e.g., "[Checking]" in category)
+    // @sig importSingleSplit :: (Database, Statement, Map, String, Map, Map, Split, ChangeTracker) -> {id, isNew}
+    importSingleSplit: (db, stmt, splitLookup, transactionId, categoryMap, accountMap, split, changeTracker) => {
         const { categoryName, amount, memo } = split
-        const baseCategoryName = T.toBaseCategoryName(categoryName)
-        const categoryId = baseCategoryName ? (categoryMap.get(baseCategoryName) ?? null) : null
+        const resolved = T.resolveCategoryFields(categoryName, categoryMap, accountMap)
+        const { categoryId, transferAccountId } = resolved
 
         const signature = SigT.splitSignature(split, transactionId, categoryId)
         const existing = Matching.findTransactionMatch(splitLookup, signature)
         if (existing) {
             const { id, orphanedAt } = existing
-            insertStatement.run(id, transactionId, categoryId, amount, memo)
-            orphanedAt && StableIdentity.restoreEntity(db, id)
+            stmt.run(id, transactionId, categoryId, transferAccountId, amount, memo)
+            E.restoreOrphanedEntity(db, 'Split', id, changeTracker, orphanedAt)
             return { id, isNew: false }
         }
 
         const id = StableIdentity.createStableId(db, 'Split')
-        insertStatement.run(id, transactionId, categoryId, amount, memo)
+        stmt.run(id, transactionId, categoryId, transferAccountId, amount, memo)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Split', signature })
+        changeTracker.record('Split', id, 'created')
         return { id, isNew: true }
     },
 
     // Import or match a single transaction, returning id for split processing
     // Handles both parser format (account, security, transactionType) and legacy format (accountName, etc.)
-    // @sig importSingleTransaction :: (Database, Statement, Map, Map, Map, Transaction) -> {id, isNew}
-    importSingleTransaction: (db, insertStatement, txnLookup, accountMap, securityMap, txn) => {
+    // Resolves category string to categoryId, transferAccountId, and gainMarkerType
+    // @sig importSingleTransaction :: (Db, {insert, update}, Map, Map, Map, Map, Txn, ChangeTracker) -> {id, isNew}
+    importSingleTransaction: (db, statements, txnLookup, accountMap, securityMap, categoryMap, txn, changeTracker) => {
         // prettier-ignore
         const { account, accountName: legacyAccountName, security, securitySignature, date, amount, transactionType,
-            payee, memo, number, cleared, categoryId, address, runningBalance, quantity, price, commission } = txn
+            payee, memo, number, cleared, category, categoryId: preResolvedCategoryId, address, runningBalance,
+            quantity, price, commission } = txn
 
         // Support both canonical (parser) and legacy (cli.js alias) field names
         const accountName = account || legacyAccountName
@@ -278,39 +366,16 @@ const E = {
         const addressString = T.toAddressString(address)
         const schemaTransactionType = isBankType ? 'bank' : 'investment'
 
+        // Resolve category: use pre-resolved categoryId if available, otherwise resolve from category string
+        const resolved = T.resolveCategoryFields(category, categoryMap, accountMap)
+        const categoryId = preResolvedCategoryId ?? resolved.categoryId
+        const { transferAccountId, gainMarkerType } = resolved
+
         // Bank transactions require amount; default to 0 for opening balance entries missing T/U line
         const normalizedAmount = isBankType && amount == null ? 0 : amount
 
-        const signature = T.computeTransactionSignature(txn, accountId, securityId)
-        const existing = Matching.findTransactionMatch(txnLookup, signature)
-        if (existing) {
-            const { id, orphanedAt } = existing
-            insertStatement.run(
-                id,
-                accountId,
-                dateString,
-                normalizedAmount,
-                schemaTransactionType,
-                payee,
-                memo,
-                number,
-                cleared,
-                categoryId,
-                addressString,
-                runningBalance,
-                securityId,
-                quantity,
-                price,
-                commission,
-                investmentAction,
-            )
-            orphanedAt && StableIdentity.restoreEntity(db, id)
-            return { id, isNew: false }
-        }
-
-        const id = StableIdentity.createStableId(db, 'Transaction')
-        insertStatement.run(
-            id,
+        // Common values for both INSERT and UPDATE (field order matches statement definitions)
+        const values = [
             accountId,
             dateString,
             normalizedAmount,
@@ -320,6 +385,8 @@ const E = {
             number,
             cleared,
             categoryId,
+            transferAccountId,
+            gainMarkerType,
             addressString,
             runningBalance,
             securityId,
@@ -327,22 +394,45 @@ const E = {
             price,
             commission,
             investmentAction,
-        )
+        ]
+
+        const signature = T.computeTransactionSignature(txn, accountId, securityId)
+        const existing = Matching.findTransactionMatch(txnLookup, signature)
+        if (existing) {
+            const { id, orphanedAt } = existing
+            statements.update.run(...values, id) // UPDATE: id at end (WHERE id = ?)
+            E.restoreOrphanedEntity(db, 'Transaction', id, changeTracker, orphanedAt)
+            return { id, isNew: false }
+        }
+
+        const id = StableIdentity.createStableId(db, 'Transaction')
+        statements.insert.run(id, ...values) // INSERT: id at start
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Transaction', signature })
+        changeTracker.record('Transaction', id, 'created')
         return { id, isNew: true }
     },
 
     // Import a transaction with its splits using context object
     // @sig importTransactionWithSplitsCtx :: (TransactionContext, Transaction) -> void
     importTransactionWithSplitsCtx: (ctx, txn) => {
-        const { db, insertStatement, txnLookup, accountMap, securityMap, splitLookup, categoryMap } = ctx
-        const result = E.importSingleTransaction(db, insertStatement, txnLookup, accountMap, securityMap, txn)
-        if (txn.splits?.length > 0) importSplits(db, splitLookup, result.id, categoryMap, txn.splits)
+        const { db, statements, txnLookup, accountMap, securityMap, splitLookup, categoryMap, changeTracker } = ctx
+        const result = E.importSingleTransaction(
+            db,
+            statements,
+            txnLookup,
+            accountMap,
+            securityMap,
+            categoryMap,
+            txn,
+            changeTracker,
+        )
+        if (txn.splits?.length > 0)
+            importSplits(db, splitLookup, result.id, categoryMap, accountMap, txn.splits, changeTracker)
     },
 
-    // Import or match a single price
-    // @sig importSinglePrice :: (Database, Statement, Map, Map, Price) -> {id, isNew}
-    importSinglePrice: (db, insertStatement, priceLookup, securityMap, price) => {
+    // Import or match a single price, records changes to tracker
+    // @sig importSinglePrice :: (Database, {insert, update}, Map, Map, Price, ChangeTracker) -> {id, isNew}
+    importSinglePrice: (db, statements, priceLookup, securityMap, price, changeTracker) => {
         const { date, price: priceValue } = price
         const securityKey = SigT.securitySignature(price)
         const securityId = securityMap.get(securityKey)
@@ -353,34 +443,28 @@ const E = {
         const existing = Matching.findTransactionMatch(priceLookup, signature)
         if (existing) {
             const { id, orphanedAt } = existing
-            insertStatement.run(id, securityId, dateString, priceValue)
-            orphanedAt && StableIdentity.restoreEntity(db, id)
+            statements.update.run(priceValue, id)
+            E.restoreOrphanedEntity(db, 'Price', id, changeTracker, orphanedAt)
             return { id, isNew: false }
         }
 
         const id = StableIdentity.createStableId(db, 'Price')
-        insertStatement.run(id, securityId, dateString, priceValue)
+        statements.insert.run(id, securityId, dateString, priceValue)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Price', signature })
+        changeTracker.record('Price', id, 'created')
         return { id, isNew: true }
     },
 
-    // Clear base tables before reimport (D8: import is always full replace)
-    // stableIdentities is preserved across imports
-    // @sig clearBaseTables :: Database -> void
-    clearBaseTables: db =>
+    // Clear derived tables before reimport (lots are fully recomputed from transactions)
+    // Base tables use INSERT OR REPLACE for incremental updates
+    // @sig clearDerivedTables :: Database -> void
+    clearDerivedTables: db =>
         db.exec(`
             DELETE FROM lotAllocations;
             DELETE FROM lots;
-            DELETE FROM transactionSplits;
-            DELETE FROM transactions;
-            DELETE FROM prices;
-            DELETE FROM securities;
-            DELETE FROM categories;
-            DELETE FROM tags;
-            DELETE FROM accounts;
         `),
 
-    // Update running balances for all transactions using SQL window function
+    // Update running balances for all active (non-orphaned) transactions using SQL window function
     // Must be called after all transactions are imported
     // @sig updateRunningBalances :: Database -> void
     updateRunningBalances: db => {
@@ -405,6 +489,7 @@ const E = {
                         ORDER BY date, rowid
                     ) as runningBalance
                 FROM transactions
+                WHERE orphanedAt IS NULL
             )
             UPDATE transactions
             SET runningBalance = balances.runningBalance
@@ -435,124 +520,145 @@ const buildLookupMaps = db => {
 
 // Import accounts with stable identity matching (exact name match)
 // Returns map of accountName → id for downstream use
-// @sig importAccounts :: (Database, {lookup, tracker}, [Account]) -> Map<String, String>
-const importAccounts = (db, accountLookup, accounts) => {
+// @sig importAccounts :: (Database, {lookup, tracker}, [Account], ChangeTracker) -> Map<String, String>
+const importAccounts = (db, accountLookup, accounts, changeTracker) => {
     const accountMap = new Map()
     const insertAccount = db.prepare(`
-        INSERT INTO accounts (id, name, type, description, creditLimit)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO accounts (id, name, type, description, creditLimit, orphanedAt)
+        VALUES (?, ?, ?, ?, ?, NULL)
     `)
-    accounts.forEach(account => E.importSingleAccount(db, insertAccount, accountLookup, accountMap, account))
+    accounts.forEach(account =>
+        E.importSingleAccount(db, insertAccount, accountLookup, accountMap, account, changeTracker),
+    )
     return accountMap
 }
 
 // Import categories with stable identity matching (exact name match)
 // Returns map of categoryName → id for downstream use
-// @sig importCategories :: (Database, {lookup, tracker}, [Category]) -> Map<String, String>
-const importCategories = (db, categoryLookup, categories) => {
+// @sig importCategories :: (Database, {lookup, tracker}, [Category], ChangeTracker) -> Map<String, String>
+const importCategories = (db, categoryLookup, categories, changeTracker) => {
     const categoryMap = new Map()
     const insertCategory = db.prepare(`
-        INSERT INTO categories
-            (id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO categories
+            (id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule, orphanedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
     `)
-    categories.forEach(cat => E.importSingleCategory(db, insertCategory, categoryLookup, categoryMap, cat))
+    categories.forEach(cat =>
+        E.importSingleCategory(db, insertCategory, categoryLookup, categoryMap, cat, changeTracker),
+    )
     return categoryMap
 }
 
 // Import tags with stable identity matching (exact name match)
 // Returns map of tagName → id for downstream use
-// @sig importTags :: (Database, {lookup, tracker}, [Tag]) -> Map<String, String>
-const importTags = (db, tagLookup, tags) => {
+// @sig importTags :: (Database, {lookup, tracker}, [Tag], ChangeTracker) -> Map<String, String>
+const importTags = (db, tagLookup, tags, changeTracker) => {
     const tagMap = new Map()
     const insertTag = db.prepare(`
-        INSERT INTO tags (id, name, color, description)
-        VALUES (?, ?, ?, ?)
+        INSERT OR REPLACE INTO tags (id, name, color, description, orphanedAt)
+        VALUES (?, ?, ?, ?, NULL)
     `)
-    tags.forEach(tag => E.importSingleTag(db, insertTag, tagLookup, tagMap, tag))
+    tags.forEach(tag => E.importSingleTag(db, insertTag, tagLookup, tagMap, tag, changeTracker))
     return tagMap
 }
 
 // Import securities with stable identity matching (symbol first, then name)
 // Returns map of securitySignature → id for downstream use
-// @sig importSecurities :: (Database, {lookup, tracker}, [Security]) -> Map<String, String>
-const importSecurities = (db, secLookup, securities) => {
+// @sig importSecurities :: (Database, {lookup, tracker}, [Security], ChangeTracker) -> Map<String, String>
+const importSecurities = (db, secLookup, securities, changeTracker) => {
     const securityMap = new Map()
     const insertSecurity = db.prepare(`
-        INSERT INTO securities (id, name, symbol, type, goal)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO securities (id, name, symbol, type, goal, orphanedAt)
+        VALUES (?, ?, ?, ?, ?, NULL)
     `)
-    securities.forEach(sec => E.importSingleSecurity(db, insertSecurity, secLookup, securityMap, sec))
+    securities.forEach(sec => E.importSingleSecurity(db, insertSecurity, secLookup, securityMap, sec, changeTracker))
     return securityMap
 }
 
 // Import transactions with stable identity matching (count-based pairing for duplicates)
 // Also imports splits for each transaction that has them
-// @sig importTransactions :: (Database, Map, Map, Map, Map, Map, [Transaction]) -> void
-const importTransactions = (db, txnLookup, accountMap, securityMap, splitLookup, categoryMap, transactions) => {
-    const insertTransaction = db.prepare(`
-        INSERT INTO transactions (
-            id, accountId, date, amount, transactionType, payee, memo, number, cleared,
-            categoryId, address, runningBalance, securityId, quantity, price, commission, investmentAction
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-    const ctx = { db, insertStatement: insertTransaction, txnLookup, accountMap, securityMap, splitLookup, categoryMap }
-    transactions.forEach(txn => E.importTransactionWithSplitsCtx(ctx, txn))
+// @sig importTransactions :: (Database, Map, Map, Map, Map, Map, [Transaction], ChangeTracker) -> void
+const importTransactions = (db, txnLookup, accountMap, securityMap, splitLookup, categoryMap, transactions, ct) => {
+    const cols = `id, accountId, date, amount, transactionType, payee, memo, number, cleared, categoryId,
+        transferAccountId, gainMarkerType, address, runningBalance, securityId, quantity, price, commission,
+        investmentAction, orphanedAt`
+    const setCols = `accountId=?, date=?, amount=?, transactionType=?, payee=?, memo=?, number=?, cleared=?,
+        categoryId=?, transferAccountId=?, gainMarkerType=?, address=?, runningBalance=?, securityId=?, quantity=?,
+        price=?, commission=?, investmentAction=?, orphanedAt=NULL`
+    const statements = {
+        insert: db.prepare(`INSERT INTO transactions (${cols}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)`),
+        update: db.prepare(`UPDATE transactions SET ${setCols} WHERE id=?`),
+    }
+    const ctx = { db, statements, txnLookup, accountMap, securityMap, splitLookup, categoryMap }
+    const ctxWithTracker = { ...ctx, changeTracker: ct }
+    transactions.forEach(txn => E.importTransactionWithSplitsCtx(ctxWithTracker, txn))
 }
 
 // Import splits for a single transaction with stable identity matching
 // Duplicate splits are paired arbitrarily per D4 (fungible pairing)
-// @sig importSplits :: (Database, Map, String, Map, [Split]) -> void
-const importSplits = (db, splitLookup, transactionId, categoryMap, splits) => {
+// @sig importSplits :: (Database, Map, String, Map, Map, [Split], ChangeTracker) -> void
+const importSplits = (db, splitLookup, transactionId, categoryMap, accountMap, splits, changeTracker) => {
+    const splitCols = 'id, transactionId, categoryId, transferAccountId, amount, memo, orphanedAt'
     const insertSplit = db.prepare(`
-        INSERT INTO transactionSplits (id, transactionId, categoryId, amount, memo)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO transactionSplits (${splitCols}) VALUES (?, ?, ?, ?, ?, ?, NULL)
     `)
-    splits.forEach(split => E.importSingleSplit(db, insertSplit, splitLookup, transactionId, categoryMap, split))
+    splits.forEach(split =>
+        E.importSingleSplit(db, insertSplit, splitLookup, transactionId, categoryMap, accountMap, split, changeTracker),
+    )
 }
 
 // Import prices with stable identity matching (per D14: securityStableId|date)
 // Duplicate prices are paired arbitrarily per D4 (fungible pairing)
-// @sig importPrices :: (Database, Map, Map, [Price]) -> void
-const importPrices = (db, priceLookup, securityMap, prices) => {
+// @sig importPrices :: (Database, Map, Map, [Price], ChangeTracker) -> void
+const importPrices = (db, priceLookup, securityMap, prices, changeTracker) => {
     if (!prices || prices.length === 0) return
-    const insertPrice = db.prepare(`
-        INSERT INTO prices (id, securityId, date, price)
-        VALUES (?, ?, ?, ?)
-    `)
-    prices.forEach(price => E.importSinglePrice(db, insertPrice, priceLookup, securityMap, price))
+
+    // UPDATE only touches price and orphanedAt - securityId/date can't change (they're in the signature)
+    // This avoids UNIQUE constraint rechecks on (securityId, date)
+    const statements = {
+        insert: db.prepare('INSERT INTO prices (id, securityId, date, price, orphanedAt) VALUES (?, ?, ?, ?, NULL)'),
+        update: db.prepare('UPDATE prices SET price = ?, orphanedAt = NULL WHERE id = ?'),
+    }
+    prices.forEach(price => E.importSinglePrice(db, statements, priceLookup, securityMap, price, changeTracker))
 }
 
 // Mark unmatched entities as orphaned (those not seen during reimport)
 // Per D13: when a transaction is orphaned, its splits are also orphaned
-// @sig markOrphanedEntities :: (Database, {accounts, categories, tags, securities, transactions, prices}) -> void
-const markOrphanedEntities = (db, lookups) => {
+// Records each orphan to changeTracker for reporting
+// @sig markOrphanedEntities :: (Database, Object, ChangeTracker) -> void
+const markOrphanedEntities = (db, lookups, changeTracker) => {
     const { accounts, categories, tags, securities, transactions, prices } = lookups
+
+    accounts.tracker.getUnseen().forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Account', id))
+    categories.tracker.getUnseen().forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Category', id))
+    tags.tracker.getUnseen().forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Tag', id))
+    securities.tracker.getUnseen().forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Security', id))
+
     const transactionOrphans = Matching.collectUnmatchedIds(transactions)
+    transactionOrphans.forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Transaction', id))
+
     const splitOrphans = transactionOrphans.flatMap(txnId => A.findSplitsByTransaction(db, txnId))
-    const orphanIds = [
-        ...accounts.tracker.getUnseen(),
-        ...categories.tracker.getUnseen(),
-        ...tags.tracker.getUnseen(),
-        ...securities.tracker.getUnseen(),
-        ...transactionOrphans,
-        ...splitOrphans,
-        ...Matching.collectUnmatchedIds(prices),
-    ]
-    orphanIds.forEach(stableId => StableIdentity.markOrphaned(db, stableId))
+    splitOrphans.forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Split', id))
+
+    Matching.collectUnmatchedIds(prices).forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Price', id))
 }
 
 // Orchestrate full import with stable matching
 // Order: clear → build maps → accounts → categories → tags → securities → transactions+splits → prices → mark orphans
-// @sig processImport :: (Database, {accounts, categories, tags, securities, transactions, prices}, Function?) -> void
+// Returns { changeCounts, changes } for reporting to caller
+// @sig processImport :: (Database, Object, Function?) -> {changeCounts, changes}
 const processImport = (db, data, onProgress) => {
     db.pragma('synchronous = OFF')
     db.pragma('journal_mode = WAL')
     const lookups = buildLookupMaps(db)
+    const changeTracker = F.createChangeTracker()
     const importFns = { accounts: importAccounts, categories: importCategories, tags: importTags }
     const moreFns = { securities: importSecurities, transactions: importTransactions, prices: importPrices }
     const allFns = { ...importFns, ...moreFns }
-    db.transaction(() => E.executeImportWork(db, data, lookups, allFns, markOrphanedEntities, onProgress))()
+    db.transaction(() =>
+        E.executeImportWork(db, data, lookups, allFns, markOrphanedEntities, changeTracker, onProgress),
+    )()
+    return { changeCounts: changeTracker.getCounts(), changes: changeTracker.getChanges() }
 }
 
 const Import = {

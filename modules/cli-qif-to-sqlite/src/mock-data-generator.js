@@ -178,10 +178,33 @@ const generateMockData = (seed = 12345) => {
             return days.flatMap(d => EXPENSE_PAYEES.map(p => generateExpenseForDay(d, p)).filter(Boolean))
         }
 
+        // Generate transfer from checking to savings for a date
+        // @sig createTransferToSavings :: Date -> QifEntry.TransactionBank
+        const createTransferToSavings = date =>
+            QifEntry.TransactionBank.from({
+                account: checking,
+                amount: -500,
+                date,
+                transactionType: 'Bank',
+                payee: 'Transfer to Savings',
+                category: '[Emergency Savings]',
+                memo: 'Monthly savings transfer',
+                cleared: 'R',
+            })
+
+        // Generate monthly transfers to savings
+        // @sig generateSavingsTransfers :: () -> [QifEntry.TransactionBank]
+        const generateSavingsTransfers = () => {
+            const monthlyDates = generateDateRange(startDate, endDate).filter(d => d.getDate() === 1)
+            return monthlyDates.map(createTransferToSavings)
+        }
+
         const checking = 'Primary Checking'
         const creditCard = 'Chase Sapphire'
 
-        return [...generatePaychecks(), ...generateDailyExpenses()].sort((a, b) => a.date - b.date)
+        return [...generatePaychecks(), ...generateDailyExpenses(), ...generateSavingsTransfers()].sort(
+            (a, b) => a.date - b.date,
+        )
     }
 
     /*
@@ -234,6 +257,16 @@ const generateMockData = (seed = 12345) => {
             )
         }
 
+        // Pick a random gain marker type for sell transactions
+        // @sig randomGainMarker :: () -> String|null
+        const randomGainMarker = () => {
+            const r = random()
+            if (r < 0.3) return 'CGLong'
+            if (r < 0.5) return 'CGShort'
+            if (r < 0.6) return 'CGMid'
+            return null
+        }
+
         // Maybe generate sell transaction for a date
         // @sig maybeGenerateSell :: Date -> void
         const maybeGenerateSell = date => {
@@ -247,6 +280,7 @@ const generateMockData = (seed = 12345) => {
             const quantity = Math.min(Math.ceil(random() * 10), ownedQty)
             const commission = maybeCommission()
             const amount = round2(quantity * price - (commission ?? 0))
+            const gainMarker = randomGainMarker()
             positions.set(symbol, ownedQty - quantity)
             transactions.push(
                 QifEntry.TransactionInvestment.from({
@@ -259,6 +293,7 @@ const generateMockData = (seed = 12345) => {
                     amount,
                     commission,
                     cleared: 'R',
+                    category: gainMarker,
                 }),
             )
         }

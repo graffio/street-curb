@@ -2,9 +2,10 @@
 // ABOUTME: Manages file picker, IndexedDB persistence, and entity loading
 
 import { post } from '../commands/post.js'
-import { loadEntitiesFromFile } from './sqlite-service.js'
+import { SqliteService } from './sqlite-service.js'
 import { getRaw, setRaw } from './storage.js'
 import { Action } from '../types/action.js'
+const { loadEntitiesFromFile } = SqliteService
 
 const FILE_HANDLE_KEY = 'fileHandle'
 

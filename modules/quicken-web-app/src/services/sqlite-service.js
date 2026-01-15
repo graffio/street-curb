@@ -71,7 +71,9 @@ const loadEntitiesFromFile = async file => {
     const queryAccounts = db => {
         const mapRow = row =>
             Account.from({ ...row, description: row.description || null, creditLimit: row.creditLimit || null })
-        const results = db.exec('SELECT id, name, type, description, creditLimit FROM accounts')
+        const results = db.exec(
+            'SELECT id, name, type, description, creditLimit FROM accounts WHERE orphanedAt IS NULL',
+        )
         return LookupTable(rowsToObjects(results).map(mapRow), Account, 'id')
     }
 
@@ -94,7 +96,7 @@ const loadEntitiesFromFile = async file => {
         }
 
         const categoryCols = 'id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule'
-        const results = db.exec(`SELECT ${categoryCols} FROM categories`)
+        const results = db.exec(`SELECT ${categoryCols} FROM categories WHERE orphanedAt IS NULL`)
         return LookupTable(rowsToObjects(results).map(mapRow), Category, 'id')
     }
 
@@ -113,7 +115,7 @@ const loadEntitiesFromFile = async file => {
             })
         }
 
-        const results = db.exec('SELECT id, name, symbol, type, goal FROM securities')
+        const results = db.exec('SELECT id, name, symbol, type, goal FROM securities WHERE orphanedAt IS NULL')
         return LookupTable(rowsToObjects(results).map(mapRow), Security, 'id')
     }
 
@@ -123,7 +125,7 @@ const loadEntitiesFromFile = async file => {
             const { color, description, id, name } = row
             return Tag.from({ id, name, color: color || null, description: description || null })
         }
-        const results = db.exec('SELECT id, name, color, description FROM tags')
+        const results = db.exec('SELECT id, name, color, description FROM tags WHERE orphanedAt IS NULL')
         return LookupTable(rowsToObjects(results).map(mapRow), Tag, 'id')
     }
 
@@ -133,7 +135,9 @@ const loadEntitiesFromFile = async file => {
             const { amount, categoryId, id, memo, transactionId } = row
             return Split.from({ id, transactionId, categoryId: categoryId || null, amount, memo: memo || null })
         }
-        const results = db.exec('SELECT id, transactionId, categoryId, amount, memo FROM transactionSplits')
+        const results = db.exec(
+            'SELECT id, transactionId, categoryId, amount, memo FROM transactionSplits WHERE orphanedAt IS NULL',
+        )
         return LookupTable(rowsToObjects(results).map(mapRow), Split, 'id')
     }
 
@@ -141,8 +145,8 @@ const loadEntitiesFromFile = async file => {
     const queryTransactions = db => {
         // @sig mapBankRow :: Object -> Transaction.Bank
         const mapBankRow = row => {
-            const { accountId, address, amount, categoryId, cleared, date, id, memo, number, payee, runningBalance } =
-                row
+            const { accountId, address, amount, categoryId, cleared, date } = row
+            const { id, memo, number, payee, runningBalance } = row
             return Transaction.Bank.from({
                 id,
                 accountId,
@@ -187,6 +191,7 @@ const loadEntitiesFromFile = async file => {
             SELECT id, accountId, date, amount, transactionType, payee, memo, number, cleared,
                    categoryId, securityId, quantity, price, commission, investmentAction, address, runningBalance
             FROM transactions
+            WHERE orphanedAt IS NULL
             ORDER BY date, rowid
         `
         const results = db.exec(sql)
@@ -197,7 +202,9 @@ const loadEntitiesFromFile = async file => {
 
     // @sig queryPrices :: Database -> LookupTable<Price>
     const queryPrices = db => {
-        const results = db.exec('SELECT id, securityId, date, price FROM prices ORDER BY securityId, date DESC')
+        const results = db.exec(
+            'SELECT id, securityId, date, price FROM prices WHERE orphanedAt IS NULL ORDER BY securityId, date DESC',
+        )
         return LookupTable(rowsToObjects(results).map(Price.from), Price, 'id')
     }
 
@@ -246,4 +253,5 @@ const loadEntitiesFromFile = async file => {
     }
 }
 
-export { loadEntitiesFromFile, isSqliteFile }
+const SqliteService = { loadEntitiesFromFile, isSqliteFile }
+export { SqliteService }
