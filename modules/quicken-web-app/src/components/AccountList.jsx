@@ -6,7 +6,7 @@ import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
-import { accountSelectors } from '../store/selectors/accounts.js'
+import { Accounts } from '../store/selectors/accounts.js'
 import { Action } from '../types/action.js'
 import { SortMode } from '../types/sort-mode.js'
 import { View } from '../types/view.js'
@@ -94,7 +94,7 @@ const AccountRow = ({ enriched }) => {
 }
 
 // Displays a collapsible section header with balance subtotal
-// @sig SectionHeader :: { section: AccountSection, isCollapsed: Boolean, onToggle: Function, indent: Number } -> ReactElement
+// @sig SectionHeader :: { section: AccountSection, isCollapsed: Boolean, onToggle: Function } -> ReactElement
 const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
     const { accounts, children, id, isCollapsible, label } = section
 
@@ -139,31 +139,28 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
 // Displays a section with header and accounts (supports nested children)
 // @sig AccountSectionView :: { section: AccountSection, collapsedSections: Set, indent: Number } -> ReactElement
 const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
-    const isCollapsed = collapsedSections.has(section.id)
-    const onToggle = useCallback(id => E.handleSectionToggle(id), [])
-    const hasChildren = section.children.length > 0
+    const { accounts, children, id } = section
+    const isCollapsed = collapsedSections.has(id)
+    const onToggle = useCallback(sectionId => E.handleSectionToggle(sectionId), [])
+    const hasChildren = children.length > 0
+    const paddingLeft = `${8 + indent * 12}px`
+    const nextIndent = indent + 1
+    const childProps = { collapsedSections, indent: nextIndent }
 
     return (
         <Box>
             <SectionHeader section={section} isCollapsed={isCollapsed} onToggle={onToggle} indent={indent} />
             {!isCollapsed && (
                 <>
-                    {section.accounts.length > 0 && (
-                        <Flex direction="column" gap="0" px="2" style={{ paddingLeft: `${8 + indent * 12}px` }}>
-                            {section.accounts.map(enriched => (
+                    {accounts.length > 0 && (
+                        <Flex direction="column" gap="0" px="2" style={{ paddingLeft }}>
+                            {accounts.map(enriched => (
                                 <AccountRow key={enriched.id} enriched={enriched} />
                             ))}
                         </Flex>
                     )}
                     {hasChildren &&
-                        section.children.map(child => (
-                            <AccountSectionView
-                                key={child.id}
-                                section={child}
-                                collapsedSections={collapsedSections}
-                                indent={indent + 1}
-                            />
-                        ))}
+                        children.map(child => <AccountSectionView key={child.id} section={child} {...childProps} />)}
                 </>
             )}
         </Box>
@@ -191,7 +188,7 @@ const AccountList = () => {
     const accounts = useSelector(S.accounts)
     const sortMode = useSelector(S.accountListSortMode)
     const collapsedSections = useSelector(S.collapsedSections)
-    const organizedSections = useSelector(accountSelectors.A.collectOrganized)
+    const organizedSections = useSelector(Accounts.A.collectOrganized)
 
     if (!accounts || accounts.length === 0)
         return (
