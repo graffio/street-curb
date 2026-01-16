@@ -22,10 +22,12 @@ const T = {
 
 const E = {
     // Loads entities from a file handle into Redux store
-    // @sig loadFromHandle :: FileSystemFileHandle -> Promise<void>
-    loadFromHandle: async handle => {
+    // @sig loadFromHandle :: (FileSystemFileHandle, Function?) -> Promise<void>
+    loadFromHandle: async (handle, onProgress) => {
+        if (onProgress) onProgress('Reading file...')
         const file = await handle.getFile()
-        const entities = await loadEntitiesFromFile(file)
+        const entities = await loadEntitiesFromFile(file, onProgress)
+        if (onProgress) onProgress('Initializing...')
         const { accounts, categories, lotAllocations, lots, prices, securities, splits, tags, transactions } = entities
         post(
             Action.LoadFile(accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices),
@@ -33,27 +35,27 @@ const E = {
     },
 
     // Opens file picker and loads selected file
-    // @sig openFile :: Function -> Promise<void>
-    openFile: async setStoredHandle => {
+    // @sig openFile :: (Function, Function?) -> Promise<void>
+    openFile: async (setStoredHandle, onProgress) => {
         try {
             const [handle] = await window.showOpenFilePicker({
                 types: [{ description: 'Financial files', accept: { 'application/*': ['.sqlite', '.qif'] } }],
             })
             setRaw(FILE_HANDLE_KEY, handle)
             setStoredHandle(handle)
-            await E.loadFromHandle(handle)
+            await E.loadFromHandle(handle, onProgress)
         } catch (error) {
             if (error.name !== 'AbortError') console.error('Failed to open file:', error.message)
         }
     },
 
     // Requests permission and reopens previously stored file
-    // @sig reopenFile :: (FileSystemFileHandle, Function) -> Promise<void>
-    reopenFile: async (storedHandle, setShowBanner) => {
+    // @sig reopenFile :: (FileSystemFileHandle, Function, Function?) -> Promise<void>
+    reopenFile: async (storedHandle, setShowBanner, onProgress) => {
         try {
             const permission = await storedHandle.requestPermission({ mode: 'read' })
             if (permission === 'granted') {
-                await E.loadFromHandle(storedHandle)
+                await E.loadFromHandle(storedHandle, onProgress)
                 setShowBanner(false)
             }
         } catch (error) {
@@ -70,10 +72,10 @@ const E = {
     },
 
     // Dismisses banner and opens file picker for new file
-    // @sig openNewFile :: (Function, Function) -> Promise<void>
-    openNewFile: async (setStoredHandle, setShowBanner) => {
+    // @sig openNewFile :: (Function, Function, Function?) -> Promise<void>
+    openNewFile: async (setStoredHandle, setShowBanner, onProgress) => {
         setShowBanner(false)
-        await E.openFile(setStoredHandle)
+        await E.openFile(setStoredHandle, onProgress)
     },
 }
 

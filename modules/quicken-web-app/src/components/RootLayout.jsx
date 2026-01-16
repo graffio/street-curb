@@ -1,7 +1,7 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
 
-import { Box, Button, Flex, KeymapDrawer, LoadingSpinner, MainLayout, Separator, Text } from '@graffio/design-system'
+import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -47,38 +47,35 @@ const E = {
         return () => post(Action.UnregisterKeymap(GLOBAL_KEYMAP_ID))
     },
 
-    // Opens file with loading state
+    // Opens file with loading status
     // @sig handleOpenFile :: (Function, Function) -> Promise<void>
-    handleOpenFile: async (setStoredHandle, setIsLoading) => {
-        setIsLoading(true)
+    handleOpenFile: async (setStoredHandle, setLoadingStatus) => {
         try {
-            await FileHandling.openFile(setStoredHandle)
+            await FileHandling.openFile(setStoredHandle, setLoadingStatus)
         } finally {
-            setIsLoading(false)
+            setLoadingStatus(null)
         }
     },
 
-    // Reopens stored file with loading state (closes dialog first)
+    // Reopens stored file with loading status (closes dialog first)
     // @sig handleReopen :: (FileHandle, Function, Function) -> Promise<void>
-    handleReopen: async (storedHandle, setShowReopenBanner, setIsLoading) => {
+    handleReopen: async (storedHandle, setShowReopenBanner, setLoadingStatus) => {
         setShowReopenBanner(false)
-        setIsLoading(true)
         try {
-            await FileHandling.reopenFile(storedHandle, setShowReopenBanner)
+            await FileHandling.reopenFile(storedHandle, setShowReopenBanner, setLoadingStatus)
         } finally {
-            setIsLoading(false)
+            setLoadingStatus(null)
         }
     },
 
-    // Opens new file with loading state (closes dialog first)
+    // Opens new file with loading status (closes dialog first)
     // @sig handleOpenNew :: (Function, Function, Function) -> Promise<void>
-    handleOpenNew: async (setStoredHandle, setShowReopenBanner, setIsLoading) => {
+    handleOpenNew: async (setStoredHandle, setShowReopenBanner, setLoadingStatus) => {
         setShowReopenBanner(false)
-        setIsLoading(true)
         try {
-            await FileHandling.openNewFile(setStoredHandle, setShowReopenBanner)
+            await FileHandling.openNewFile(setStoredHandle, setShowReopenBanner, setLoadingStatus)
         } finally {
-            setIsLoading(false)
+            setLoadingStatus(null)
         }
     },
 }
@@ -95,12 +92,12 @@ const LOADING_OVERLAY_STYLE = {
 }
 
 // Loading overlay shown while file is being loaded
-// @sig LoadingOverlay :: () -> ReactElement
-const LoadingOverlay = () => (
+// @sig LoadingOverlay :: { status: String } -> ReactElement
+const LoadingOverlay = ({ status }) => (
     <Flex style={LOADING_OVERLAY_STYLE} direction="column" align="center" justify="center" gap="3">
-        <LoadingSpinner />
+        <Spinner size="3" />
         <Text size="3" color="gray">
-            Loading file...
+            {status}
         </Text>
     </Flex>
 )
@@ -111,7 +108,7 @@ const RootLayout = () => {
     const [storedHandle, setStoredHandle] = useState(null)
     const [showReopenBanner, setShowReopenBanner] = useState(false)
     const [showDrawer, setShowDrawer] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
+    const [loadingStatus, setLoadingStatus] = useState(null)
     const keymaps = useSelector(S.keymaps)
     const tabLayout = useSelector(S.tabLayout)
 
@@ -120,12 +117,12 @@ const RootLayout = () => {
     const activeViewId = useMemo(() => T.toActiveViewId(tabLayout), [tabLayout])
     const availableIntents = useMemo(() => Keymap.collectAvailable(keymaps, activeViewId), [keymaps, activeViewId])
 
-    const handleOpenFile = useCallback(() => E.handleOpenFile(setStoredHandle, setIsLoading), [])
+    const handleOpenFile = useCallback(() => E.handleOpenFile(setStoredHandle, setLoadingStatus), [])
     const handleReopen = useCallback(
-        () => E.handleReopen(storedHandle, setShowReopenBanner, setIsLoading),
+        () => E.handleReopen(storedHandle, setShowReopenBanner, setLoadingStatus),
         [storedHandle],
     )
-    const handleOpenNew = useCallback(() => E.handleOpenNew(setStoredHandle, setShowReopenBanner, setIsLoading), [])
+    const handleOpenNew = useCallback(() => E.handleOpenNew(setStoredHandle, setShowReopenBanner, setLoadingStatus), [])
     const handleKeyDown = useCallback(KeymapRouting.handleKeydown(keymaps, tabLayout), [keymaps, tabLayout])
 
     useEffect(() => FileHandling.loadStoredHandle(setStoredHandle, setShowReopenBanner), [])
@@ -157,7 +154,7 @@ const RootLayout = () => {
                 <TabGroupContainer />
                 <KeymapDrawer open={showDrawer} onOpenChange={setShowDrawer} intents={availableIntents} />
             </Flex>
-            {isLoading && <LoadingOverlay />}
+            {loadingStatus && <LoadingOverlay status={loadingStatus} />}
         </MainLayout>
     )
 }

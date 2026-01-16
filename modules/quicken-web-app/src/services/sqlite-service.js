@@ -44,10 +44,10 @@ const isSqliteFile = buffer => {
 
 /*
  * Load a SQLite file and extract all entities
- * @sig loadEntitiesFromFile :: File -> Promise<Entities>
+ * @sig loadEntitiesFromFile :: (File, Function?) -> Promise<Entities>
  *     Entities = { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
  */
-const loadEntitiesFromFile = async file => {
+const loadEntitiesFromFile = async (file, onProgress) => {
     // @sig rowsToObjects :: { columns: [String], values: [[Any]] } -> [Object]
     const rowsToObjects = result => {
         const rowToObject = (columns, row) => Object.fromEntries(columns.map((col, i) => [col, row[i]]))
@@ -242,20 +242,30 @@ const loadEntitiesFromFile = async file => {
 
     const buffer = await readFileAsArrayBuffer(file)
     if (!isSqliteFile(buffer)) throw new Error(`Not a valid SQLite file: ${file.name}`)
+    if (onProgress) onProgress('Opening database...')
     const db = await loadDatabase(buffer)
 
     try {
-        return {
-            accounts: queryAccounts(db),
-            categories: queryCategories(db),
-            securities: querySecurities(db),
-            tags: queryTags(db),
-            splits: querySplits(db),
-            transactions: queryTransactions(db),
-            lots: queryLots(db),
-            lotAllocations: queryLotAllocations(db),
-            prices: queryPrices(db),
-        }
+        if (onProgress) onProgress('Loading accounts...')
+        const accounts = queryAccounts(db)
+        if (onProgress) onProgress('Loading categories...')
+        const categories = queryCategories(db)
+        if (onProgress) onProgress('Loading securities...')
+        const securities = querySecurities(db)
+        if (onProgress) onProgress('Loading tags...')
+        const tags = queryTags(db)
+        if (onProgress) onProgress('Loading splits...')
+        const splits = querySplits(db)
+        if (onProgress) onProgress('Loading transactions...')
+        const transactions = queryTransactions(db)
+        if (onProgress) onProgress('Loading lots...')
+        const lots = queryLots(db)
+        if (onProgress) onProgress('Loading lot allocations...')
+        const lotAllocations = queryLotAllocations(db)
+        if (onProgress) onProgress('Loading prices...')
+        const prices = queryPrices(db)
+
+        return { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
     } finally {
         db.close()
     }
