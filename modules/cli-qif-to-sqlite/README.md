@@ -8,14 +8,17 @@ Import QIF financial data to SQLite with stable identity matching.
 # Import QIF file
 node src/cli.js import -d database.db file.qif
 
-# Show import history (last 10 imports with summary counts)
+# Show database statistics (entity counts)
+node src/cli.js info -d database.db
+
+# Show account register with running balances
+node src/cli.js register -d database.db -a "Checking"
+
+# Show recent import history
 node src/cli.js history -d database.db
 
 # Show database schema
 node src/cli.js schema -d database.db
-
-# Show table row counts
-node src/cli.js tables -d database.db
 ```
 
 ## Schema
@@ -29,21 +32,21 @@ See [schema.puml](schema.puml) for ER diagram. Generate with `plantuml schema.pu
 | `stableIdentities`       | Maps signatures to stable IDs (e.g., `txn_000000000001`) |
 | `stableIdCounters`       | Next ID counter per entity type                          |
 | `importHistory`          | Last 20 imports with file hash and summary               |
-| `entityChanges`          | Per-entity changes per import (stubbed)                  |
+| `entityChanges`          | Per-entity changes per import                            |
 | `userPreferences`        | Key-value settings                                       |
 | `lotAssignmentOverrides` | User overrides for FIFO lot allocation                   |
 
 ### Base Tables (Raw QIF Data)
 
-| Table               | Key Columns                            | Foreign Keys                                                                       |
-|---------------------|----------------------------------------|------------------------------------------------------------------------------------|
-| `accounts`          | id, name, type, orphanedAt             | -                                                                                  |
-| `categories`        | id, name, isIncomeCategory, orphanedAt | -                                                                                  |
-| `tags`              | id, name, color, orphanedAt            | -                                                                                  |
-| `securities`        | id, name, symbol, type, orphanedAt     | -                                                                                  |
-| `transactions`      | id, date, amount, gainMarkerType       | accountId, transferAccountId → accounts, categoryId → categories, securityId      |
-| `transactionSplits` | id, amount, memo, orphanedAt           | transactionId → transactions, categoryId → categories, transferAccountId          |
-| `prices`            | id, date, price, orphanedAt            | securityId → securities                                                            |
+| Table               | Key Columns                            | Foreign Keys                                                                 |
+|---------------------|----------------------------------------|------------------------------------------------------------------------------|
+| `accounts`          | id, name, type, orphanedAt             | -                                                                            |
+| `categories`        | id, name, isIncomeCategory, orphanedAt | -                                                                            |
+| `tags`              | id, name, color, orphanedAt            | -                                                                            |
+| `securities`        | id, name, symbol, type, orphanedAt     | -                                                                            |
+| `transactions`      | id, date, amount, gainMarkerType       | accountId, transferAccountId → accounts, categoryId → categories, securityId |
+| `transactionSplits` | id, amount, memo, orphanedAt           | transactionId → transactions, categoryId → categories, transferAccountId     |
+| `prices`            | id, date, price, orphanedAt            | securityId → securities                                                      |
 
 ### Derived Tables (Computed)
 
@@ -89,14 +92,21 @@ Every entity gets a stable ID that persists across reimports:
 9. Mark orphaned entities (deleted from source) in both stableIdentities and data tables
 10. Record import in history (retains last 20 imports)
 
-### Import History
+### Import Output
 
-The last 20 imports are retained in `importHistory` with:
+After each import, the CLI displays:
 
-- QIF file hash (for duplicate detection)
-- Summary counts (accounts, transactions, etc.)
+```
+=== Import Summary ===
+Created:  15
+Modified: 3
+Orphaned: 2
+Restored: 1
 
-Entity-level change tracking reports created/modified/orphaned/restored counts after each import.
+=== Change Details ===
+[MODIFIED] Transaction txn_000000000042: 2024-01-15 Checking $100.00
+[ORPHANED] Transaction txn_000000000099: 2024-02-20 Savings $50.00
+```
 
 ### Transfer Resolution
 
@@ -117,12 +127,16 @@ When entities disappear from the QIF file on reimport:
 
 ### Key Files
 
-- `cli.js` - CLI entry point with change reporting
-- `import.js` - Import orchestration with change tracking
-- `import-lots.js` - Investment lot tracking (FIFO)
-- `import-history.js` - Import history tracking (last 20)
-- `stable-identity.js` - Stable ID generation and management
-- `signatures.js` - Entity signature computation for matching
-- `Matching.js` - Entity matching during reimport
-- `category-resolver.js` - Transfer and gain marker resolution
-- `holdings.js` - Historical holdings queries
+| File                   | Purpose                                   |
+|------------------------|-------------------------------------------|
+| `cli.js`               | CLI entry point with change reporting     |
+| `import.js`            | Import orchestration with change tracking |
+| `import-lots.js`       | Investment lot tracking (FIFO)            |
+| `import-history.js`    | Import history tracking (last 20)         |
+| `stable-identity.js`   | Stable ID generation and management       |
+| `signatures.js`        | Entity signature computation for matching |
+| `matching.js`          | Entity matching during reimport           |
+| `category-resolver.js` | Transfer and gain marker resolution       |
+| `orphan-management.js` | Orphan detection and restoration          |
+| `holdings.js`          | Historical holdings queries               |
+| `rollback.js`          | Copy-then-replace error handling          |

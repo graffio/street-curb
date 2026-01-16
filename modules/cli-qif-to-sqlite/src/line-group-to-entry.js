@@ -263,31 +263,26 @@ const V = {
  * LineGroup = [String]
  * @sig lineGroupToEntry :: (Context, Entry.Account, LineGroup) -> Entry
  */
+// prettier-ignore
 const lineGroupToEntry = (currentContext, currentAccount, lineGroup) => {
-    const { Account, Category, Class, Payee, Security, Tag, TransactionBank, TransactionInvestment } = QifEntry
+    const bankTx = type => QifEntry.TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, type))
+    const { Account, Category, Class, Payee, Security, Tag, TransactionInvestment: TxI } = QifEntry
 
-    if (currentContext === 'Account') return Account.from(F.createAccount(lineGroup))
-    if (currentContext === 'Bank')
-        return TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, 'Bank'))
-    if (currentContext === 'Cash')
-        return TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, 'Cash'))
-    if (currentContext === 'Category') return Category.from(F.createCategory(lineGroup))
-    if (currentContext === 'Class') return Class.from(F.createClass(lineGroup))
-    if (currentContext === 'Credit Card')
-        return TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, 'Credit Card'))
-    if (currentContext === 'Investment')
-        return TransactionInvestment.from(F.createTransactionInvestment(lineGroup, currentAccount))
-    if (currentContext === 'Invoice')
-        return TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, 'Invoice'))
-    if (currentContext === 'Memorized') return
-    if (currentContext === 'Other Asset')
-        return TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, 'Other Asset'))
-    if (currentContext === 'Other Liability')
-        return TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, 'Other Liability'))
-    if (currentContext === 'Payees') return Payee.from(F.createPayee(lineGroup))
-    if (currentContext === 'Prices') return F.createPrices(lineGroup)
-    if (currentContext === 'Security') return Security.from(F.createSecurity(lineGroup))
-    if (currentContext === 'Tag') return Tag.from(F.createTag(lineGroup))
+    if (currentContext === 'Account')         return Account.from(F.createAccount(lineGroup))
+    if (currentContext === 'Bank')            return bankTx('Bank')
+    if (currentContext === 'Cash')            return bankTx('Cash')
+    if (currentContext === 'Category')        return Category.from(F.createCategory(lineGroup))
+    if (currentContext === 'Class')           return Class.from(F.createClass(lineGroup))
+    if (currentContext === 'Credit Card')     return bankTx('Credit Card')
+    if (currentContext === 'Investment')      return TxI.from(F.createTransactionInvestment(lineGroup, currentAccount))
+    if (currentContext === 'Invoice')         return bankTx('Invoice')
+    if (currentContext === 'Memorized')       return
+    if (currentContext === 'Other Asset')     return bankTx('Other Asset')
+    if (currentContext === 'Other Liability') return bankTx('Other Liability')
+    if (currentContext === 'Payees')          return Payee.from(F.createPayee(lineGroup))
+    if (currentContext === 'Prices')          return F.createPrices(lineGroup)
+    if (currentContext === 'Security')        return Security.from(F.createSecurity(lineGroup))
+    if (currentContext === 'Tag')             return Tag.from(F.createTag(lineGroup))
 }
 
 const LineGroupToEntry = { lineGroupToEntry }

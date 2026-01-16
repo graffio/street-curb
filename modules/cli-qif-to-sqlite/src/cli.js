@@ -9,7 +9,7 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { ImportHistory } from './import-history.js'
 import { Import } from './import.js'
-import { ParseQifData } from './qif/parse-qif-data.js'
+import { ParseQifData } from './parse-qif-data.js'
 import { Rollback } from './rollback.js'
 import { QifEntry } from './types/index.js'
 

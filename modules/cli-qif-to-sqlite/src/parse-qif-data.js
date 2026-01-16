@@ -20,8 +20,8 @@
  */
 
 import { groupBy } from '@graffio/functional'
-import { LineGroupToEntry } from '../line-group-to-entry.js'
-import { QifEntry } from '../types/index.js'
+import { LineGroupToEntry } from './line-group-to-entry.js'
+import { QifEntry } from './types/index.js'
 
 const { lineGroupToEntry } = LineGroupToEntry
 

@@ -3,7 +3,7 @@
 
 import { test } from 'tap'
 import { MockDataGenerator } from '../src/mock-data-generator.js'
-import { ParseQifData } from '../src/qif/parse-qif-data.js'
+import { ParseQifData } from '../src/parse-qif-data.js'
 import { QifEntry } from '../src/types/index.js'
 
 const { generateMockData, serializeToQif } = MockDataGenerator
