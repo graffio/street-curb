@@ -40,27 +40,15 @@ const T = {
         return currentBalance(accountTransactions)
     },
 
-    // Gets cash balance for an account from the most recent transaction's runningBalance
-    // @sig toCashBalance :: (State, String) -> Number
-    toCashBalance: (state, accountId) => {
-        const { transactions } = state
-        if (!transactions || transactions.length === 0) return 0
-        const accountTransactions = transactions.filter(t => t.accountId === accountId)
-        if (accountTransactions.length === 0) return 0
-        const lastTransaction = accountTransactions[accountTransactions.length - 1]
-        return lastTransaction.runningBalance ?? 0
-    },
-
-    // Computes balance for investment accounts from holdings market value plus cash
+    // Computes balance for investment accounts from holdings market value (includes cash)
     // @sig toHoldingsBalance :: (State, String) -> { balance: Number, dayChange: Number }
     toHoldingsBalance: (state, accountId) => {
         const holdings = enrichedHoldingsAsOf(state, 'account-list') || []
         const accountHoldings = holdings.filter(h => h.accountId === accountId)
-        const cashBalance = T.toCashBalance(state, accountId)
 
-        const holdingsValue = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
+        const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
         const dayChange = accountHoldings.reduce((sum, h) => sum + h.dayGainLoss, 0)
-        return { balance: holdingsValue + cashBalance, dayChange }
+        return { balance, dayChange }
     },
 
     // Enriches a single account with balance and day change
