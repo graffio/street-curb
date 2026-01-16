@@ -240,29 +240,42 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(LotAllocation.from), LotAllocation, 'id')
     }
 
+    // Yields to event loop so browser can repaint progress updates
+    // @sig yieldToUI :: () -> Promise<void>
+    const yieldToUI = () => new Promise(resolve => setTimeout(resolve, 0))
+
+    // Reports progress and yields to allow UI repaint
+    // @sig reportProgress :: String -> Promise<void>
+    const reportProgress = async message => {
+        if (onProgress) {
+            onProgress(message)
+            await yieldToUI()
+        }
+    }
+
     const buffer = await readFileAsArrayBuffer(file)
     if (!isSqliteFile(buffer)) throw new Error(`Not a valid SQLite file: ${file.name}`)
-    if (onProgress) onProgress('Opening database...')
+    await reportProgress('Opening database...')
     const db = await loadDatabase(buffer)
 
     try {
-        if (onProgress) onProgress('Loading accounts...')
+        await reportProgress('Loading accounts...')
         const accounts = queryAccounts(db)
-        if (onProgress) onProgress('Loading categories...')
+        await reportProgress('Loading categories...')
         const categories = queryCategories(db)
-        if (onProgress) onProgress('Loading securities...')
+        await reportProgress('Loading securities...')
         const securities = querySecurities(db)
-        if (onProgress) onProgress('Loading tags...')
+        await reportProgress('Loading tags...')
         const tags = queryTags(db)
-        if (onProgress) onProgress('Loading splits...')
+        await reportProgress('Loading splits...')
         const splits = querySplits(db)
-        if (onProgress) onProgress('Loading transactions...')
+        await reportProgress('Loading transactions...')
         const transactions = queryTransactions(db)
-        if (onProgress) onProgress('Loading lots...')
+        await reportProgress('Loading lots...')
         const lots = queryLots(db)
-        if (onProgress) onProgress('Loading lot allocations...')
+        await reportProgress('Loading lot allocations...')
         const lotAllocations = queryLotAllocations(db)
-        if (onProgress) onProgress('Loading prices...')
+        await reportProgress('Loading prices...')
         const prices = queryPrices(db)
 
         return { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
