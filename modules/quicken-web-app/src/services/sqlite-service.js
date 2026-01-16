@@ -10,6 +10,7 @@
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import initSqlJs from 'sql.js'
+
 import { Account } from '../types/account.js'
 import { Category } from '../types/category.js'
 import { LotAllocation } from '../types/lot-allocation.js'
@@ -19,6 +20,13 @@ import { Security } from '../types/security.js'
 import { Split } from '../types/split.js'
 import { Tag } from '../types/tag.js'
 import { Transaction } from '../types/transaction.js'
+
+// Cache sql.js WASM module - initialized once on first use
+let sqlModulePromise = null
+const getSqlModule = () => {
+    if (!sqlModulePromise) sqlModulePromise = initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
+    return sqlModulePromise
+}
 
 // SQLite file magic bytes: "SQLite format 3\0"
 const SQLITE_MAGIC = new Uint8Array([
@@ -63,7 +71,7 @@ const loadEntitiesFromFile = async file => {
 
     // @sig loadDatabase :: ArrayBuffer -> Promise<Database>
     const loadDatabase = async buffer => {
-        const SQL = await initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
+        const SQL = await getSqlModule()
         return new SQL.Database(new Uint8Array(buffer))
     }
 
