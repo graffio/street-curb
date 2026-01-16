@@ -58,9 +58,10 @@ const E = {
         }
     },
 
-    // Reopens stored file with loading state
+    // Reopens stored file with loading state (closes dialog first)
     // @sig handleReopen :: (FileHandle, Function, Function) -> Promise<void>
     handleReopen: async (storedHandle, setShowReopenBanner, setIsLoading) => {
+        setShowReopenBanner(false)
         setIsLoading(true)
         try {
             await FileHandling.reopenFile(storedHandle, setShowReopenBanner)
@@ -69,9 +70,10 @@ const E = {
         }
     },
 
-    // Opens new file with loading state
+    // Opens new file with loading state (closes dialog first)
     // @sig handleOpenNew :: (Function, Function, Function) -> Promise<void>
     handleOpenNew: async (setStoredHandle, setShowReopenBanner, setIsLoading) => {
+        setShowReopenBanner(false)
         setIsLoading(true)
         try {
             await FileHandling.openNewFile(setStoredHandle, setShowReopenBanner)
