@@ -36,7 +36,12 @@ const TopBar = () => {
 // Sidebar slot component - renders children in sidebar area
 // @sig Sidebar :: { children: ReactNode } -> ReactElement
 const Sidebar = ({ children }) => (
-    <Flex direction="column" gap="1" height="100%" style={{ backgroundColor: 'var(--gray-1)' }}>
+    <Flex
+        direction="column"
+        gap="1"
+        height="100%"
+        style={{ backgroundColor: 'var(--gray-1)', minHeight: 0, overflow: 'hidden' }}
+    >
         {children}
     </Flex>
 )
@@ -61,7 +66,9 @@ const MainLayout = ({ children }) => {
     return (
         <Grid {...mainLayoutGridProperties} style={{ height: '100vh', width: '100vw' }}>
             <Box gridArea="topbar">{topbar}</Box>
-            <Box gridArea="sidebar">{sidebar}</Box>
+            <Box gridArea="sidebar" style={{ overflow: 'hidden' }}>
+                {sidebar}
+            </Box>
             <Flex direction="column" style={{ gridArea: 'main', minHeight: 0 }}>
                 {main}
             </Flex>

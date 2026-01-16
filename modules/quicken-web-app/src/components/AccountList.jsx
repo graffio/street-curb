@@ -5,8 +5,8 @@ import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@graffio/d
 import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors/index.js'
 import { Accounts } from '../store/selectors/accounts.js'
+import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 import { SortMode } from '../types/sort-mode.js'
 import { View } from '../types/view.js'
@@ -93,6 +93,9 @@ const AccountRow = ({ enriched }) => {
     )
 }
 
+const SECTION_HEADER_STYLE = { backgroundColor: 'var(--gray-4)', borderRadius: 'var(--radius-2)' }
+const SECTION_CHEVRON_STYLE = { width: '20px', textAlign: 'center', fontSize: '12px', lineHeight: 1 }
+
 // Displays a collapsible section header with balance subtotal
 // @sig SectionHeader :: { section: AccountSection, isCollapsed: Boolean, onToggle: Function } -> ReactElement
 const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
@@ -107,25 +110,28 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
     const childSubtotal = children.reduce((sum, child) => sum + child.accounts.reduce((s, e) => s + e.balance, 0), 0)
     const subtotal = directSubtotal + childSubtotal
 
+    const style = {
+        ...SECTION_HEADER_STYLE,
+        backgroundColor: indent > 0 ? 'var(--gray-3)' : 'var(--gray-4)',
+        cursor: isCollapsible ? 'pointer' : 'default',
+        paddingLeft: `${8 + indent * 12}px`,
+    }
+
     return (
         <Flex
             justify="between"
             align="center"
             py="2"
             px="2"
-            style={{ cursor: isCollapsible ? 'pointer' : 'default', paddingLeft: `${8 + indent * 12}px` }}
+            style={style}
             onClick={() => isCollapsible && onToggle(id)}
         >
-            <Flex align="center" gap="1">
-                {isCollapsible && (
-                    <Text size="1" color="gray">
-                        {isCollapsed ? '▸' : '▾'}
-                    </Text>
-                )}
-                <Text size="2" weight="medium">
+            <Flex align="center" gap="2">
+                {isCollapsible && <Text style={SECTION_CHEVRON_STYLE}>{isCollapsed ? '▶' : '▼'}</Text>}
+                <Text size="2" weight="bold">
                     {label}
                 </Text>
-                <Text size="1" color="gray">
+                <Text size="2" color="gray">
                     ({totalCount})
                 </Text>
             </Flex>
@@ -159,8 +165,13 @@ const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
                             ))}
                         </Flex>
                     )}
-                    {hasChildren &&
-                        children.map(child => <AccountSectionView key={child.id} section={child} {...childProps} />)}
+                    {hasChildren && (
+                        <Flex direction="column" gap="2" mt="2">
+                            {children.map(child => (
+                                <AccountSectionView key={child.id} section={child} {...childProps} />
+                            ))}
+                        </Flex>
+                    )}
                 </>
             )}
         </Box>
