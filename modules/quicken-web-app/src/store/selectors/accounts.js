@@ -38,16 +38,27 @@ const T = {
         return currentBalance(accountTransactions)
     },
 
-    // Computes balance for investment accounts from holdings market value
+    // Gets cash balance for an account from the most recent transaction's runningBalance
+    // @sig toCashBalance :: (State, String) -> Number
+    toCashBalance: (state, accountId) => {
+        const { transactions } = state
+        if (!transactions || transactions.length === 0) return 0
+        const accountTransactions = transactions.filter(t => t.accountId === accountId)
+        if (accountTransactions.length === 0) return 0
+        const lastTransaction = accountTransactions[accountTransactions.length - 1]
+        return lastTransaction.runningBalance ?? 0
+    },
+
+    // Computes balance for investment accounts from holdings market value plus cash
     // @sig toHoldingsBalance :: (State, String) -> { balance: Number, dayChange: Number }
     toHoldingsBalance: (state, accountId) => {
         const holdings = enrichedHoldingsAsOf(state, 'account-list') || []
         const accountHoldings = holdings.filter(h => h.accountId === accountId)
-        if (accountHoldings.length === 0) return { balance: 0, dayChange: 0 }
+        const cashBalance = T.toCashBalance(state, accountId)
 
-        const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
+        const holdingsValue = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
         const dayChange = accountHoldings.reduce((sum, h) => sum + h.dayGainLoss, 0)
-        return { balance, dayChange }
+        return { balance: holdingsValue + cashBalance, dayChange }
     },
 
     // Enriches a single account with balance and day change
@@ -65,27 +76,22 @@ const T = {
     },
 }
 
-// Enriches all accounts with computed balance and day change values (unmemoized)
-// @sig _collectEnriched :: State -> LookupTable<EnrichedAccount>
-const _collectEnriched = state => {
-    const { accounts } = state
-    const enriched = accounts.map(account => T.toEnriched(state, account))
-    return LookupTable(enriched, EnrichedAccount, 'id')
-}
-
-// Organizes accounts into sections based on sort mode (unmemoized)
-// @sig _collectOrganized :: State -> LookupTable<AccountSection>
-const _collectOrganized = state => {
-    const { accountListSortMode } = state
-    const enriched = _collectEnriched(state)
-    return accountOrganization.A.collectSections(enriched, accountListSortMode)
-}
-
 const A = {
-    collectEnriched: _collectEnriched,
-    collectOrganized: memoizeReduxState(ORGANIZATION_STATE_KEYS, _collectOrganized),
+    // Enriches all accounts with computed balance and day change values
+    // @sig collectEnriched :: State -> LookupTable<EnrichedAccount>
+    collectEnriched: state => {
+        const { accounts } = state
+        const enriched = accounts.map(account => T.toEnriched(state, account))
+        return LookupTable(enriched, EnrichedAccount, 'id')
+    },
+
+    // Organizes accounts into sections based on sort mode (memoized)
+    // @sig collectOrganized :: State -> LookupTable<AccountSection>
+    collectOrganized: memoizeReduxState(ORGANIZATION_STATE_KEYS, state =>
+        accountOrganization.A.collectSections(A.collectEnriched(state), state.accountListSortMode),
+    ),
 }
 
-const accountSelectors = { T, A }
+const Accounts = { T, A }
 
-export { accountSelectors }
+export { Accounts }

@@ -5,13 +5,13 @@ import t from 'tap'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Account } from '../../src/types/account.js'
 import { Transaction } from '../../src/types/transaction.js'
-import { accountSelectors } from '../../src/store/selectors/accounts.js'
+import { Accounts } from '../../src/store/selectors/accounts.js'
 import { AccountSection } from '../../src/types/account-section.js'
 import { EnrichedAccount } from '../../src/types/enriched-account.js'
 import { SortMode } from '../../src/types/sort-mode.js'
 
-const { T, A } = accountSelectors
-const accountBalance = T.toBalance
+const { T, A } = Accounts
+const accountBalance = T.toBankBalance
 const enrichedAccounts = A.collectEnriched
 const organizedAccounts = A.collectOrganized
 
