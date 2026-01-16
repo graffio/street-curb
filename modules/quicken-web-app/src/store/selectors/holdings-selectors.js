@@ -1,7 +1,8 @@
 // ABOUTME: Holdings selectors with price enrichment
 // ABOUTME: Computes market values, gains/losses, and staleness indicators
 
-import { filter, groupBy, memoizeReduxStatePerKey } from '@graffio/functional'
+import { groupBy, LookupTable, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
+import { Price } from '../../types/price.js'
 import {
     asOfDate as asOfDateSelector,
     filterQuery as filterQuerySelector,
@@ -102,15 +103,15 @@ const T = {
     },
 
     // Enriches a holding with market value and gain/loss calculations
-    // @sig toEnrichedHolding :: (Holding, State, String) -> EnrichedHolding
-    toEnrichedHolding: (holding, state, date) => {
+    // @sig toEnrichedHolding :: (Holding, State, Map, String) -> EnrichedHolding
+    toEnrichedHolding: (holding, state, priceIndex, date) => {
         const { accountId, avgCostPerShare, costBasis, quantity, securityId } = holding
-        const { accounts, prices, securities } = state
+        const { accounts, securities } = state
 
         const security = securities.get(securityId)
         const account = accounts.get(accountId)
-        const priceOnDate = A.findPriceAsOf(prices, securityId, date)
-        const previousDayPrice = A.findPriceAsOf(prices, securityId, T.toPreviousDay(date))
+        const priceOnDate = A.findPriceAsOf(priceIndex, securityId, date)
+        const previousDayPrice = A.findPriceAsOf(priceIndex, securityId, T.toPreviousDay(date))
 
         const { goal, name, symbol, type } = security ?? {}
 
@@ -172,10 +173,28 @@ const F = {
 }
 
 const A = {
-    // Finds the most recent price for a security as of a date
-    // @sig findPriceAsOf :: (LookupTable<Price>, String, String) -> Price?
-    findPriceAsOf: (prices, securityId, date) => {
-        const secPrices = filter(p => p.securityId === securityId, prices)
+    // Builds a Map of securityId -> LookupTable<Price, 'date'> for O(1) lookups
+    // @sig buildPriceIndex :: LookupTable<Price> -> Map<String, LookupTable<Price, 'date'>>
+    buildPriceIndex: prices => {
+        // Group prices by securityId (prices are already sorted by securityId, date DESC from SQL)
+        const grouped = groupBy(p => p.securityId, prices)
+
+        // Convert to Map with LookupTables keyed by date for O(1) exact-date lookups
+        const entries = Object.entries(grouped).map(([secId, arr]) => [secId, LookupTable(arr, Price, 'date')])
+        return new Map(entries)
+    },
+
+    // Finds the most recent price for a security as of a date using the indexed structure
+    // @sig findPriceAsOf :: (Map<String, LookupTable<Price>>, String, String) -> Price?
+    findPriceAsOf: (priceIndex, securityId, date) => {
+        const secPrices = priceIndex.get(securityId)
+        if (!secPrices) return null
+
+        // Try exact date match first (O(1))
+        const exact = secPrices.get(date)
+        if (exact) return exact
+
+        // Otherwise find most recent before date (prices sorted DESC, so first match wins)
         return secPrices.find(p => p.date <= date) ?? null
     },
 
@@ -194,8 +213,8 @@ const A = {
     },
 
     // Collects enriched holdings as of a specific date (unmemoized, for memoization wrapper)
-    // @sig collectEnrichedHoldingsAsOfCore :: (State, String) -> [EnrichedHolding]
-    collectEnrichedHoldingsAsOfCore: (state, viewId) => {
+    // @sig collectEnrichedHoldingsAsOfCore :: (State, String, Map) -> [EnrichedHolding]
+    collectEnrichedHoldingsAsOfCore: (state, viewId, priceIndex) => {
         const asOfDate = asOfDateSelector(state, viewId)
         const selectedAccounts = selectedAccountsSelector(state, viewId)
         const filterQuery = filterQuerySelector(state, viewId)
@@ -209,7 +228,7 @@ const A = {
             selectedAccounts.length > 0 ? lots.filter(l => selectedAccounts.includes(l.accountId)) : lots
 
         const holdings = A.collectHoldingsFromLots(filteredLots, lotAllocations, asOfDate)
-        const enriched = holdings.map(h => T.toEnrichedHolding(h, state, asOfDate))
+        const enriched = holdings.map(h => T.toEnrichedHolding(h, state, priceIndex, asOfDate))
 
         // Get cash balances for investment accounts with holdings
         const accountIdsWithHoldings = [...new Set(enriched.map(h => h.accountId))]
@@ -227,12 +246,16 @@ const A = {
     },
 }
 
+// Builds price index (memoized - only rebuilds when prices change, which is never after load)
+// @sig priceIndex :: State -> Map<String, LookupTable<Price, 'date'>>
+const priceIndex = memoizeReduxState(['prices'], state => A.buildPriceIndex(state.prices))
+
 // Collects enriched holdings as of a specific date (memoized per viewId)
 // @sig collectEnrichedHoldingsAsOf :: (State, String) -> [EnrichedHolding]
 const collectEnrichedHoldingsAsOf = memoizeReduxStatePerKey(
     ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
     'transactionFilters',
-    A.collectEnrichedHoldingsAsOfCore,
+    (state, viewId) => A.collectEnrichedHoldingsAsOfCore(state, viewId, priceIndex(state)),
 )
 
 const HoldingsSelectors = { collectEnrichedHoldingsAsOf }
