@@ -10,6 +10,7 @@
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import initSqlJs from 'sql.js'
+
 import { Account } from '../types/account.js'
 import { Category } from '../types/category.js'
 import { LotAllocation } from '../types/lot-allocation.js'
@@ -19,6 +20,13 @@ import { Security } from '../types/security.js'
 import { Split } from '../types/split.js'
 import { Tag } from '../types/tag.js'
 import { Transaction } from '../types/transaction.js'
+
+// Cache sql.js WASM module - initialized once on first use
+let sqlModulePromise = null
+const getSqlModule = () => {
+    if (!sqlModulePromise) sqlModulePromise = initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
+    return sqlModulePromise
+}
 
 // SQLite file magic bytes: "SQLite format 3\0"
 const SQLITE_MAGIC = new Uint8Array([
@@ -36,10 +44,10 @@ const isSqliteFile = buffer => {
 
 /*
  * Load a SQLite file and extract all entities
- * @sig loadEntitiesFromFile :: File -> Promise<Entities>
+ * @sig loadEntitiesFromFile :: (File, Function?) -> Promise<Entities>
  *     Entities = { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
  */
-const loadEntitiesFromFile = async file => {
+const loadEntitiesFromFile = async (file, onProgress) => {
     // @sig rowsToObjects :: { columns: [String], values: [[Any]] } -> [Object]
     const rowsToObjects = result => {
         const rowToObject = (columns, row) => Object.fromEntries(columns.map((col, i) => [col, row[i]]))
@@ -63,7 +71,7 @@ const loadEntitiesFromFile = async file => {
 
     // @sig loadDatabase :: ArrayBuffer -> Promise<Database>
     const loadDatabase = async buffer => {
-        const SQL = await initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
+        const SQL = await getSqlModule()
         return new SQL.Database(new Uint8Array(buffer))
     }
 
@@ -232,22 +240,45 @@ const loadEntitiesFromFile = async file => {
         return LookupTable(rowsToObjects(results).map(LotAllocation.from), LotAllocation, 'id')
     }
 
+    // Yields to event loop so browser can repaint progress updates
+    // @sig yieldToUI :: () -> Promise<void>
+    const yieldToUI = () => new Promise(resolve => setTimeout(resolve, 0))
+
+    // Reports progress and yields to allow UI repaint
+    // @sig reportProgress :: String -> Promise<void>
+    const reportProgress = async message => {
+        if (onProgress) {
+            onProgress(message)
+            await yieldToUI()
+        }
+    }
+
     const buffer = await readFileAsArrayBuffer(file)
     if (!isSqliteFile(buffer)) throw new Error(`Not a valid SQLite file: ${file.name}`)
+    await reportProgress('Opening database...')
     const db = await loadDatabase(buffer)
 
     try {
-        return {
-            accounts: queryAccounts(db),
-            categories: queryCategories(db),
-            securities: querySecurities(db),
-            tags: queryTags(db),
-            splits: querySplits(db),
-            transactions: queryTransactions(db),
-            lots: queryLots(db),
-            lotAllocations: queryLotAllocations(db),
-            prices: queryPrices(db),
-        }
+        await reportProgress('Loading accounts...')
+        const accounts = queryAccounts(db)
+        await reportProgress('Loading categories...')
+        const categories = queryCategories(db)
+        await reportProgress('Loading securities...')
+        const securities = querySecurities(db)
+        await reportProgress('Loading tags...')
+        const tags = queryTags(db)
+        await reportProgress('Loading splits...')
+        const splits = querySplits(db)
+        await reportProgress('Loading transactions...')
+        const transactions = queryTransactions(db)
+        await reportProgress('Loading lots...')
+        const lots = queryLots(db)
+        await reportProgress('Loading lot allocations...')
+        const lotAllocations = queryLotAllocations(db)
+        await reportProgress('Loading prices...')
+        const prices = queryPrices(db)
+
+        return { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
     } finally {
         db.close()
     }

@@ -102,7 +102,7 @@ export {
     searchMatches,
 } from './transactions/index.js'
 export { allCategoryNames } from './categories/index.js'
-export { enrichedHoldingsAsOf } from './holdings-selectors.js'
+export { HoldingsSelectors } from './holdings-selectors.js'
 export { accountListSortMode, collapsedSections } from './account-list-prefs.js'
 export {
     // Base state

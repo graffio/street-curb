@@ -695,3 +695,20 @@ This document summarizes the specifications that were previously archived in `sp
 - Performance optimized: INSERT for new entities, UPDATE for existing (vs INSERT OR REPLACE)
 - Prices UPDATE only touches price/orphanedAt to avoid UNIQUE constraint rechecks
 - All 350 tests pass
+
+
+## [quicken-web-app] Investment Report Performance & Loading UX (2026-01-16)
+**Purpose:** Fix 1s+ date-change lag and 3-5s startup time in investment holdings report
+
+- Added indexed lookups for O(1) price/allocation/transaction access:
+  - `priceIndex`: Map<securityId, LookupTable<Price, 'date'>>
+  - `allocationIndex`: Map<lotId, [LotAllocation]>
+  - `transactionIndex`: Map<accountId, [Transaction]>
+- Refactored holdings-selectors.js into P/T/F/A cohesion groups
+- Added cash balance as pseudo-holding in holdings computation
+- Fixed duplicate cash balance bug in account selectors
+- Cached sql.js WASM module at module level (avoids re-download on reopen)
+- Added loading overlay with step-by-step progress (accounts, transactions, etc.)
+- Used setTimeout(0) yield pattern for UI repaints between sync queries
+- Performance: date changes ~200ms (down from 1s+), startup unchanged but visible progress
+- Deferred: Query combining, web workers (complexity not justified for current gains)

@@ -23,3 +23,8 @@ Quick decisions that don't warrant full architecture docs. For patterns, see `do
 **Context:** Need keyboard shortcuts (j/k) for navigation without coupling to specific components.
 **Decision:** Keymaps stored in Redux; components register/unregister on mount; global listener resolves keys.
 **Why:** Components own their keymaps; priority-based resolution; translations forward to existing handlers.
+
+### 2026-01-16: Pre-built indices for O(1) lookups in selectors
+**Context:** Holdings computation did O(n) scans of prices/allocations/transactions for each holding/date.
+**Decision:** Build Map<key, Array|LookupTable> indices via `memoizeReduxState`; consume in dependent selectors.
+**Why:** Indices rebuild only when source data changes; lookups become O(1); keeps indices as implementation details.

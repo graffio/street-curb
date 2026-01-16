@@ -7,8 +7,9 @@ import { useSelector } from 'react-redux'
 import { investmentReportColumns } from '../columns/index.js'
 import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
-import { enrichedHoldingsAsOf } from '../store/selectors/index.js'
 import { buildHoldingsTree } from '../utils/holdings-tree.js'
+
+const { collectEnrichedHoldingsAsOf } = S.HoldingsSelectors
 
 const pageContainerStyle = { height: '100%' }
 
@@ -73,17 +74,8 @@ const T = {
  * @sig HoldingRow :: ({ holding: EnrichedHolding }) -> ReactElement
  */
 const HoldingRow = ({ holding }) => {
-    const {
-        accountName,
-        avgCostPerShare,
-        isStale,
-        marketValue,
-        quantity,
-        quotePrice,
-        securityName,
-        securitySymbol,
-        unrealizedGainLoss,
-    } = holding
+    const { accountName, avgCostPerShare, isStale, marketValue, quantity } = holding
+    const { quotePrice, securityName, securitySymbol, unrealizedGainLoss } = holding
     const { account, cost, gain, price, security, shares, value } = COL_WIDTHS
     const staleCell = isStale ? STALE_STYLE : {}
     const gainColor = unrealizedGainLoss >= 0 ? 'var(--green-11)' : 'var(--red-11)'
@@ -154,7 +146,7 @@ const HoldingsSubTable = ({ holdings }) => {
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
-    const holdings = useSelector(state => enrichedHoldingsAsOf(state, viewId))
+    const holdings = useSelector(state => collectEnrichedHoldingsAsOf(state, viewId))
     const groupBy = useSelector(state => S.groupBy(state, viewId))
     const [expanded, setExpanded] = useState({})
 
@@ -191,5 +183,4 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     )
 }
 
-export default InvestmentReportPage
 export { InvestmentReportPage }

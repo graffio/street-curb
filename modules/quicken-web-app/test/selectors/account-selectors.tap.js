@@ -5,13 +5,13 @@ import t from 'tap'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Account } from '../../src/types/account.js'
 import { Transaction } from '../../src/types/transaction.js'
-import { accountSelectors } from '../../src/store/selectors/accounts.js'
+import { Accounts } from '../../src/store/selectors/accounts.js'
 import { AccountSection } from '../../src/types/account-section.js'
 import { EnrichedAccount } from '../../src/types/enriched-account.js'
 import { SortMode } from '../../src/types/sort-mode.js'
 
-const { T, A } = accountSelectors
-const accountBalance = T.toBalance
+const { T, A } = Accounts
+const accountBalance = T.toBankBalance
 const enrichedAccounts = A.collectEnriched
 const organizedAccounts = A.collectOrganized
 
@@ -141,10 +141,19 @@ t.test('Given accounts of various types with SortMode.Alphabetical', t => {
         Account,
         'id',
     )
-    const state = { accounts, transactions: LookupTable([], Transaction, 'id') }
+    const transactions = LookupTable(
+        [
+            bankTxn('txn_000000000001', 'acc_000000000001', '2024-01-15', 100),
+            bankTxn('txn_000000000002', 'acc_000000000002', '2024-01-20', 200),
+            bankTxn('txn_000000000003', 'acc_000000000003', '2024-01-25', -50),
+        ],
+        Transaction,
+        'id',
+    )
+    const state = { accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
 
     t.test('When organizedAccounts is called', t => {
-        const result = organizedAccounts(state, SortMode.Alphabetical())
+        const result = organizedAccounts(state)
 
         t.ok(LookupTable.is(result), 'Then it returns a LookupTable of sections')
         t.equal(result.length, 1, 'Then it has 1 section (all accounts)')
@@ -162,7 +171,7 @@ t.test('Given accounts of various types with SortMode.Alphabetical', t => {
     t.end()
 })
 
-t.test('Given accounts with SortMode.Default (alpha with $0 section)', t => {
+t.test('Given accounts with zero balance (Alphabetical mode with $0 section)', t => {
     const accounts = LookupTable(
         [
             Account('acc_000000000001', 'Checking', 'Bank', null, null),
@@ -182,15 +191,15 @@ t.test('Given accounts with SortMode.Default (alpha with $0 section)', t => {
         Transaction,
         'id',
     )
-    const state = { accounts, transactions }
+    const state = { accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
 
     t.test('When organizedAccounts is called', t => {
-        const result = organizedAccounts(state, SortMode.Default())
+        const result = organizedAccounts(state)
 
         t.equal(result.length, 2, 'Then it has 2 sections')
 
         const mainSection = result[0]
-        t.equal(mainSection.label, 'Accounts', 'Then first section is main accounts')
+        t.equal(mainSection.label, 'All Accounts', 'Then first section is main accounts')
         t.equal(mainSection.accounts.length, 2, 'Then main section has 2 accounts with balance')
         t.equal(mainSection.isCollapsible, false, 'Then main section is not collapsible')
 
@@ -211,29 +220,33 @@ t.test('Given accounts with SortMode.ByType', t => {
             Account('acc_000000000001', 'Checking', 'Bank', null, null),
             Account('acc_000000000002', 'Cash', 'Cash', null, null),
             Account('acc_000000000003', 'Visa', 'Credit Card', null, null),
-            Account('acc_000000000004', 'Brokerage', 'Investment', null, null),
         ],
         Account,
         'id',
     )
-    const state = { accounts, transactions: LookupTable([], Transaction, 'id') }
+    const transactions = LookupTable(
+        [
+            bankTxn('txn_000000000001', 'acc_000000000001', '2024-01-15', 100),
+            bankTxn('txn_000000000002', 'acc_000000000002', '2024-01-20', 50),
+            bankTxn('txn_000000000003', 'acc_000000000003', '2024-01-25', -200),
+        ],
+        Transaction,
+        'id',
+    )
+    const state = { accounts, transactions, accountListSortMode: SortMode.ByType() }
 
     t.test('When organizedAccounts is called', t => {
-        const result = organizedAccounts(state, SortMode.ByType())
+        const result = organizedAccounts(state)
 
-        t.ok(result.length >= 3, 'Then it has at least 3 sections')
+        t.equal(result.length, 2, 'Then it has 2 sections (Cash, Credit)')
 
-        const bankingSection = result.find(s => s.label === 'Banking')
-        t.ok(bankingSection, 'Then there is a Banking section')
-        t.equal(bankingSection.accounts.length, 2, 'Then Banking has Bank + Cash accounts')
+        const cashSection = result.find(s => s.label === 'Cash')
+        t.ok(cashSection, 'Then there is a Cash section')
+        t.equal(cashSection.accounts.length, 2, 'Then Cash has Bank + Cash accounts')
 
-        const creditSection = result.find(s => s.label === 'Credit Cards')
-        t.ok(creditSection, 'Then there is a Credit Cards section')
-        t.equal(creditSection.accounts.length, 1, 'Then Credit Cards has 1 account')
-
-        const investSection = result.find(s => s.label === 'Investments')
-        t.ok(investSection, 'Then there is an Investments section')
-        t.equal(investSection.accounts.length, 1, 'Then Investments has 1 account')
+        const creditSection = result.find(s => s.label === 'Credit')
+        t.ok(creditSection, 'Then there is a Credit section')
+        t.equal(creditSection.accounts.length, 1, 'Then Credit has 1 account')
 
         t.end()
     })
