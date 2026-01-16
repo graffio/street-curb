@@ -54,19 +54,24 @@ const T = {
         return d.toISOString().slice(0, 10)
     },
 
+    // Gets allocations for a lot up to a date from the index
+    // @sig toAllocationsAsOf :: (Map, String, String) -> [LotAllocation]
+    toAllocationsAsOf: (allocationIndex, lotId, date) => {
+        const lotAllocs = allocationIndex.get(lotId) ?? []
+        return lotAllocs.filter(a => a.date <= date)
+    },
+
     // Computes remaining quantity for a lot after allocations up to date
-    // @sig toRemainingQuantity :: (Lot, [LotAllocation], String) -> Number
-    toRemainingQuantity: (lot, allocations, date) => {
-        const lotAllocs = allocations.filter(a => a.lotId === lot.id && a.date <= date)
-        const totalAllocated = lotAllocs.reduce((sum, a) => sum + a.sharesAllocated, 0)
+    // @sig toRemainingQuantity :: (Lot, [LotAllocation]) -> Number
+    toRemainingQuantity: (lot, allocsAsOf) => {
+        const totalAllocated = allocsAsOf.reduce((sum, a) => sum + a.sharesAllocated, 0)
         return lot.quantity - totalAllocated
     },
 
     // Computes remaining cost basis for a lot after allocations up to date
-    // @sig toRemainingCostBasis :: (Lot, [LotAllocation], String) -> Number
-    toRemainingCostBasis: (lot, allocations, date) => {
-        const lotAllocs = allocations.filter(a => a.lotId === lot.id && a.date <= date)
-        const totalAllocatedCost = lotAllocs.reduce((sum, a) => sum + a.costBasisAllocated, 0)
+    // @sig toRemainingCostBasis :: (Lot, [LotAllocation]) -> Number
+    toRemainingCostBasis: (lot, allocsAsOf) => {
+        const totalAllocatedCost = allocsAsOf.reduce((sum, a) => sum + a.costBasisAllocated, 0)
         return lot.costBasis - totalAllocatedCost
     },
 
@@ -74,29 +79,41 @@ const T = {
     // @sig toLotKey :: Lot -> String
     toLotKey: lot => `${lot.accountId}|${lot.securityId}`,
 
-    // Aggregates a group of lots into a single holding
-    // @sig toAggregatedHolding :: ([Lot], [LotAllocation], String) -> Holding
-    toAggregatedHolding: (groupLots, allocations, date) => {
+    // Computes remaining qty and cost for a lot, returning accumulated totals
+    // @sig toLotTotals :: ({qty, cost}, Lot, Map, String) -> {qty, cost}
+    toLotTotals: (acc, lot, allocationIndex, date) => {
+        const allocsAsOf = T.toAllocationsAsOf(allocationIndex, lot.id, date)
+        return {
+            qty: acc.qty + T.toRemainingQuantity(lot, allocsAsOf),
+            cost: acc.cost + T.toRemainingCostBasis(lot, allocsAsOf),
+        }
+    },
+
+    // Aggregates a group of lots into a single holding using allocation index
+    // @sig toAggregatedHolding :: ([Lot], Map, String) -> Holding
+    toAggregatedHolding: (groupLots, allocationIndex, date) => {
         const { accountId, securityId } = groupLots[0]
-        const qty = groupLots.reduce((sum, lot) => sum + T.toRemainingQuantity(lot, allocations, date), 0)
-        const cost = groupLots.reduce((sum, lot) => sum + T.toRemainingCostBasis(lot, allocations, date), 0)
+        const init = { qty: 0, cost: 0 }
+        const { qty, cost } = groupLots.reduce((acc, lot) => T.toLotTotals(acc, lot, allocationIndex, date), init)
         const avg = qty !== 0 ? cost / qty : 0
         return { accountId, securityId, quantity: qty, costBasis: cost, avgCostPerShare: avg }
     },
 
-    // Gets cash balance from transactions as of a specific date
-    // @sig toCashBalanceAsOf :: ([Transaction], String, String) -> Number
-    toCashBalanceAsOf: (transactions, accountId, date) => {
-        const accountTx = transactions.filter(t => t.accountId === accountId && t.date <= date)
-        if (accountTx.length === 0) return 0
-        const lastTx = accountTx[accountTx.length - 1]
-        return lastTx.runningBalance ?? 0
+    // Gets cash balance from transactions as of a specific date using transaction index
+    // @sig toCashBalanceAsOf :: (Map, String, String) -> Number
+    toCashBalanceAsOf: (transactionIndex, accountId, date) => {
+        const accountTx = transactionIndex.get(accountId) ?? []
+
+        // Transactions are sorted by date from SQL, find last one <= date
+        const asOf = accountTx.filter(t => t.date <= date)
+        if (asOf.length === 0) return 0
+        return asOf[asOf.length - 1].runningBalance ?? 0
     },
 
     // Creates cash holding for account if balance is non-zero, else null
-    // @sig toCashHoldingOrNull :: ([Transaction], LookupTable<Account>, String, String) -> EnrichedHolding?
-    toCashHoldingOrNull: (transactions, accounts, accountId, date) => {
-        const cashBalance = T.toCashBalanceAsOf(transactions, accountId, date)
+    // @sig toCashHoldingOrNull :: (Map, LookupTable<Account>, String, String) -> EnrichedHolding?
+    toCashHoldingOrNull: (transactionIndex, accounts, accountId, date) => {
+        const cashBalance = T.toCashBalanceAsOf(transactionIndex, accountId, date)
         return cashBalance !== 0
             ? F.createCashHolding(accountId, accounts.get(accountId)?.name ?? '', cashBalance)
             : null
@@ -184,6 +201,20 @@ const A = {
         return new Map(entries)
     },
 
+    // Builds a Map of lotId -> LotAllocation[] for O(1) lookups (sorted by date from SQL)
+    // @sig buildAllocationIndex :: LookupTable<LotAllocation> -> Map<String, [LotAllocation]>
+    buildAllocationIndex: allocations => {
+        const grouped = groupBy(a => a.lotId, allocations)
+        return new Map(Object.entries(grouped))
+    },
+
+    // Builds a Map of accountId -> Transaction[] for O(1) lookups (sorted by date from SQL)
+    // @sig buildTransactionIndex :: LookupTable<Transaction> -> Map<String, [Transaction]>
+    buildTransactionIndex: transactions => {
+        const grouped = groupBy(t => t.accountId, transactions)
+        return new Map(Object.entries(grouped))
+    },
+
     // Finds the most recent price for a security as of a date using the indexed structure
     // @sig findPriceAsOf :: (Map<String, LookupTable<Price>>, String, String) -> Price?
     findPriceAsOf: (priceIndex, securityId, date) => {
@@ -202,23 +233,24 @@ const A = {
     // @sig filterLotsAsOf :: ([Lot], String) -> [Lot]
     filterLotsAsOf: (allLots, date) => allLots.filter(lot => P.isLotOpenOnDate(lot, date)),
 
-    // Computes holdings from lots and allocations as of a specific date
-    // @sig collectHoldingsFromLots :: ([Lot], [LotAllocation], String) -> [Holding]
-    collectHoldingsFromLots: (allLots, allocations, date) => {
+    // Computes holdings from lots using allocation index
+    // @sig collectHoldingsFromLots :: ([Lot], Map, String) -> [Holding]
+    collectHoldingsFromLots: (allLots, allocationIndex, date) => {
         const openLots = A.filterLotsAsOf(allLots, date)
         const grouped = groupBy(T.toLotKey, openLots)
         return Object.values(grouped)
-            .map(groupLots => T.toAggregatedHolding(groupLots, allocations, date))
+            .map(groupLots => T.toAggregatedHolding(groupLots, allocationIndex, date))
             .filter(h => h.quantity > 0)
     },
 
     // Collects enriched holdings as of a specific date (unmemoized, for memoization wrapper)
-    // @sig collectEnrichedHoldingsAsOfCore :: (State, String, Map) -> [EnrichedHolding]
-    collectEnrichedHoldingsAsOfCore: (state, viewId, priceIndex) => {
+    // @sig collectEnrichedHoldingsAsOfCore :: (State, String, [Index]) -> [EnrichedHolding]
+    collectEnrichedHoldingsAsOfCore: (state, viewId, indices) => {
+        const [allocationIndex, priceIndex, transactionIndex] = indices
         const asOfDate = asOfDateSelector(state, viewId)
         const selectedAccounts = selectedAccountsSelector(state, viewId)
         const filterQuery = filterQuerySelector(state, viewId)
-        const { accounts, lotAllocations, lots, transactions } = state
+        const { accounts, lots } = state
 
         // Return empty if no lots loaded yet
         if (!lots || lots.length === 0) return []
@@ -227,13 +259,13 @@ const A = {
         const filteredLots =
             selectedAccounts.length > 0 ? lots.filter(l => selectedAccounts.includes(l.accountId)) : lots
 
-        const holdings = A.collectHoldingsFromLots(filteredLots, lotAllocations, asOfDate)
+        const holdings = A.collectHoldingsFromLots(filteredLots, allocationIndex, asOfDate)
         const enriched = holdings.map(h => T.toEnrichedHolding(h, state, priceIndex, asOfDate))
 
         // Get cash balances for investment accounts with holdings
         const accountIdsWithHoldings = [...new Set(enriched.map(h => h.accountId))]
         const cashHoldings = accountIdsWithHoldings
-            .map(accId => T.toCashHoldingOrNull(transactions, accounts, accId, asOfDate))
+            .map(accId => T.toCashHoldingOrNull(transactionIndex, accounts, accId, asOfDate))
             .filter(h => h !== null)
 
         const allHoldings = [...enriched, ...cashHoldings]
@@ -250,12 +282,24 @@ const A = {
 // @sig priceIndex :: State -> Map<String, LookupTable<Price, 'date'>>
 const priceIndex = memoizeReduxState(['prices'], state => A.buildPriceIndex(state.prices))
 
+// Builds allocation index (memoized - only rebuilds when lotAllocations change)
+// @sig allocationIndex :: State -> Map<String, [LotAllocation]>
+const allocationIndex = memoizeReduxState(['lotAllocations'], state => A.buildAllocationIndex(state.lotAllocations))
+
+// Builds transaction index (memoized - only rebuilds when transactions change)
+// @sig transactionIndex :: State -> Map<String, [Transaction]>
+const transactionIndex = memoizeReduxState(['transactions'], state => A.buildTransactionIndex(state.transactions))
+
 // Collects enriched holdings as of a specific date (memoized per viewId)
 // @sig collectEnrichedHoldingsAsOf :: (State, String) -> [EnrichedHolding]
+// prettier-ignore
 const collectEnrichedHoldingsAsOf = memoizeReduxStatePerKey(
     ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
     'transactionFilters',
-    (state, viewId) => A.collectEnrichedHoldingsAsOfCore(state, viewId, priceIndex(state)),
+    (state, viewId) => {
+        const idx = [allocationIndex(state), priceIndex(state), transactionIndex(state)]
+        return A.collectEnrichedHoldingsAsOfCore(state, viewId, idx)
+    },
 )
 
 const HoldingsSelectors = { collectEnrichedHoldingsAsOf }
