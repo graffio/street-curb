@@ -3,8 +3,10 @@
 
 import { Box, Flex, Text } from '@graffio/design-system'
 import React from 'react'
-import { ACTION_LABELS } from '../columns/cell-renderers.jsx'
+import { CellRenderers } from '../columns/CellRenderers.jsx'
 import { formatCurrency, formatDate } from '../utils/formatters.js'
+
+const { ACTION_LABELS } = CellRenderers
 
 // Render a single transaction row, hiding column for groupBy dimension
 // @sig TransactionRow :: { transaction: Transaction, groupBy: String? } -> ReactElement

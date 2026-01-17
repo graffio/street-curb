@@ -7,7 +7,7 @@ import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { bankTransactionColumns } from '../columns/index.js'
+import { TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
@@ -20,6 +20,8 @@ import {
     initializeTableLayout,
     toDataTableProps,
 } from '../utils/table-layout.js'
+
+const { bankColumns } = TransactionColumns
 
 const { Intent, Keymap } = KeymapModule
 
@@ -133,7 +135,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     )
 
     const tableLayout = useMemo(
-        () => allTableLayouts?.[tableLayoutId] || initializeTableLayout(tableLayoutId, bankTransactionColumns),
+        () => allTableLayouts?.[tableLayoutId] || initializeTableLayout(tableLayoutId, bankColumns),
         [allTableLayouts, tableLayoutId],
     )
 
@@ -141,7 +143,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     // Sort transactions for display, wrap with stored running balance
     const sortedTransactions = useMemo(
-        () => applySort(sorting, accountTransactions, bankTransactionColumns),
+        () => applySort(sorting, accountTransactions, bankColumns),
         [accountTransactions, sorting],
     )
 
@@ -208,7 +210,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
             <FilterChipRow viewId={viewId} accountId={accountId} />
             <div style={mainContentStyle}>
                 <DataTable
-                    columns={bankTransactionColumns}
+                    columns={bankColumns}
                     data={data}
                     height={height}
                     rowHeight={60}
@@ -236,5 +238,4 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     )
 }
 
-export default TransactionRegisterPage // fixme: TanStack Router depends on a default export!
 export { TransactionRegisterPage }

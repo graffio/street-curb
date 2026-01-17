@@ -1,7 +1,7 @@
 // ABOUTME: Individual tab group with tab bar and content area
 // ABOUTME: Uses View.match() for exhaustive content rendering
 
-import { Box, Button, Flex, Text } from '@graffio/design-system'
+import { Box, Button, Flex, Text, Tooltip } from '@graffio/design-system'
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
@@ -13,6 +13,7 @@ import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
 const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
+const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
 const VIEW_COLORS = {
     Register: { focused: 'var(--blue-6)', active: 'var(--blue-4)', inactive: 'var(--blue-2)' },
     Report: { focused: 'var(--purple-6)', active: 'var(--purple-4)', inactive: 'var(--purple-3)' },
@@ -20,11 +21,13 @@ const VIEW_COLORS = {
 }
 
 const P = {
+    // Checks if account type requires investment register
     // @sig isInvestmentAccount :: Account -> Boolean
     isInvestmentAccount: account => account?.type === 'Investment' || account?.type === '401(k)/403(b)',
 }
 
 const T = {
+    // Gets the accent color for a view based on type and active state
     // @sig toViewColor :: (View, Boolean) -> String
     toViewColor: (view, isActiveGroup) => {
         if (!view) return 'var(--accent-8)'
@@ -33,6 +36,7 @@ const T = {
         return isActiveGroup ? colors.focused : colors.active
     },
 
+    // Parses drag data JSON, returns null on failure
     // @sig toDragData :: String -> { viewId: String, groupId: String } | null
     toDragData: data => {
         try {
@@ -42,6 +46,7 @@ const T = {
         }
     },
 
+    // Computes tab styling based on view type and state
     // @sig toTabStyle :: (String, Boolean, Boolean, Boolean) -> Object
     toTabStyle: (tagName, active, isDragging, activeGroup) => {
         const { focused, active: activeColor, inactive } = VIEW_COLORS[tagName] || VIEW_COLORS.Register
@@ -58,12 +63,15 @@ const T = {
             borderRadius: 'var(--radius-3) var(--radius-3) 0 0',
             border: '1px solid var(--gray-5)',
             borderBottom: 'none',
+            width: '160px',
         }
     },
 
+    // Serializes view and group IDs for drag transfer
     // @sig toSerializedDragData :: (String, String) -> String
     toSerializedDragData: (viewId, groupId) => JSON.stringify({ viewId, groupId }),
 
+    // Builds props for Tab component from view and group state
     // @sig toTabProps :: (View, String, String, Boolean) -> Object
     toTabProps: (view, groupId, activeViewId, isActiveGroup) => ({
         view,
@@ -73,7 +81,8 @@ const T = {
     }),
 }
 
-// @sig Tab ::  { view: View, groupId: String, isActive: Boolean, isActiveGroup: Boolean } -> ReactElement
+// Draggable tab with icon, title, and close button
+// @sig Tab :: { view: View, groupId: String, isActive: Boolean, isActiveGroup: Boolean } -> ReactElement
 const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
     const handleClick = () => post(Action.SetActiveView(groupId, view.id))
 
@@ -96,28 +105,31 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
     const icon = VIEW_ICONS[tagName] || '○'
 
     return (
-        <Flex
-            draggable
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            style={T.toTabStyle(tagName, isActive, isDragging, isActiveGroup)}
-            onClick={handleClick}
-        >
-            <Text size="2" color="gray">
-                {icon}
-            </Text>
-            <Text size="2" weight={isActive ? 'medium' : 'regular'}>
-                {title}
-            </Text>
-            <Button size="1" variant="ghost" onClick={handleClose} style={{ padding: '0 4px' }}>
-                ×
-            </Button>
-        </Flex>
+        <Tooltip content={title} delayDuration={200}>
+            <Flex
+                draggable
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                style={T.toTabStyle(tagName, isActive, isDragging, isActiveGroup)}
+                onClick={handleClick}
+            >
+                <Text size="2" color="gray">
+                    {icon}
+                </Text>
+                <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
+                    {title}
+                </Text>
+                <Button size="1" variant="ghost" onClick={handleClose} style={{ padding: '0 4px', flexShrink: 0 }}>
+                    ×
+                </Button>
+            </Flex>
+        </Tooltip>
     )
 }
 
 const MAX_GROUPS = 4
 
+// Button to create new tab group, hidden at max group count
 // @sig SplitButton :: { groupCount: Number } -> ReactElement|null
 const SplitButton = ({ groupCount }) => {
     if (groupCount >= MAX_GROUPS) return null
@@ -181,6 +193,7 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
     )
 }
 
+// Placeholder shown when no tabs are open in a group
 // @sig EmptyState :: () -> ReactElement
 const EmptyState = () => (
     <Flex align="center" justify="center" style={{ height: '100%' }}>
@@ -190,6 +203,7 @@ const EmptyState = () => (
     </Flex>
 )
 
+// Renders the appropriate page component for the active view
 // @sig ViewContent :: { group: TabGroup, isActive: Boolean } -> ReactElement
 const ViewContent = ({ group, isActive }) => {
     const accounts = useSelector(S.accounts)
@@ -218,6 +232,7 @@ const ViewContent = ({ group, isActive }) => {
     })
 }
 
+// Container with tab bar and content area for a group of views
 // @sig TabGroup :: { group: TabGroup } -> ReactElement
 const TabGroup = ({ group }) => {
     const { activeViewId, id, views, width } = group

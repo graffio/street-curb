@@ -4,7 +4,7 @@
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { categoryReportColumns } from '../columns/index.js'
+import { CategoryReportColumns } from '../columns/index.js'
 import { FilterChipRow, TransactionSubTable } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
@@ -65,7 +65,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         <Flex direction="column" style={pageContainerStyle}>
             <FilterChipRow viewId={viewId} showGroupBy />
             <DataTable
-                columns={categoryReportColumns}
+                columns={CategoryReportColumns.columns}
                 data={transactionTree}
                 height={height}
                 rowHeight={40}
@@ -79,5 +79,4 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     )
 }
 
-export default CategoryReportPage
 export { CategoryReportPage }

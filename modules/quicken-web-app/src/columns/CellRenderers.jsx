@@ -43,6 +43,7 @@ const HighlightedText = ({ text, searchQuery }) => {
 }
 
 const ellipsisStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+const chevronStyle = { cursor: 'pointer', userSelect: 'none', width: 20, display: 'inline-block', fontSize: 12 }
 
 // Cell renderer for date column with relative time below
 // @sig DateCell :: { getValue: Function, table: Table } -> ReactElement
@@ -197,8 +198,6 @@ const ExpandableCategoryCell = ({ row, getValue }) => {
     // Show last segment of path for display (e.g., "Food:Groceries" -> "Groceries")
     const displayName = value?.includes(':') ? value.split(':').pop() : value
 
-    const chevronStyle = { cursor: 'pointer', userSelect: 'none', width: 16, display: 'inline-block' }
-
     const indentStyle = { paddingLeft: depth * 16 }
 
     return (
@@ -261,7 +260,7 @@ const PriceCell = ({ getValue }) => {
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatPrice(value)}</span>
 }
 
-export {
+const CellRenderers = {
     AccountCell,
     ACTION_LABELS,
     ActionCell,
@@ -275,3 +274,5 @@ export {
     QuantityCell,
     SecurityCell,
 }
+
+export { CellRenderers }

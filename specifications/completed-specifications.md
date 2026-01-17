@@ -65,7 +65,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Validated and fixed 17 files in `modules/quicken-web-app/src/`
 - Added ABOUTME comments to all files
 - Extracted memoizeReduxState callbacks to named functions with @sig
-- Replaced while loop with recursive `findMatches` in cell-renderers.jsx
+- Replaced while loop with recursive `findMatches` in CellRenderers.jsx
 - Used destructuring aliases for snake_case DB fields (`account_id: accountId`)
 - Added Theme to design-system Radix re-exports (was missing)
 - Exempted design-system from radix import rule (it IS the facade)

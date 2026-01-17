@@ -4,7 +4,7 @@
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { investmentReportColumns } from '../columns/index.js'
+import { InvestmentReportColumns } from '../columns/index.js'
 import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { buildHoldingsTree } from '../utils/holdings-tree.js'
@@ -169,7 +169,7 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 groupByOptions={investmentGroupByOptions}
             />
             <DataTable
-                columns={investmentReportColumns}
+                columns={InvestmentReportColumns.columns}
                 data={holdingsTree}
                 height={height}
                 rowHeight={40}
