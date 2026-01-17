@@ -1,7 +1,9 @@
 import t from 'tap'
 import { LineLength } from '../src/lib/rules/line-length.js'
+import { Parser } from '../src/lib/parser.js'
 
 const { checkLineLength } = LineLength
+const { parseCode } = Parser
 
 t.test('Given a file with line length violations', t => {
     t.test('When a line exceeds 120 characters', t => {
@@ -49,6 +51,44 @@ t.test('Given a file with proper line lengths', t => {
         const violations = checkLineLength(null, code, 'test.js')
 
         t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a file with prettier-ignore directive', t => {
+    t.test('When a long line follows prettier-ignore', t => {
+        const code = `// prettier-ignore
+const x = "this is a very long line that definitely exceeds 120 characters and should be ignored because of prettier-ignore"`
+        const ast = parseCode(code)
+        const violations = checkLineLength(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.test('When a multiline statement follows prettier-ignore', t => {
+        const code = `// prettier-ignore
+const columns = LookupTable([
+    ColumnDefinition.from({ id: 'date', accessorKey: 'transaction.date', header: 'Date', size: 100, minSize: 100, cell: DateCell }),
+    ColumnDefinition.from({ id: 'payee', accessorKey: 'transaction.payee', header: 'Payee', size: 300, minSize: 120, cell: PayeeCell }),
+])`
+        const ast = parseCode(code)
+        const violations = checkLineLength(ast, code, 'test.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for multiline statements')
+        t.end()
+    })
+
+    t.test('When long lines exist without prettier-ignore', t => {
+        const code = `const short = "ok"
+const veryLongVariableName = "this is an extremely long string that definitely exceeds the 120 character limit for sure and goes on"`
+        const ast = parseCode(code)
+        const violations = checkLineLength(ast, code, 'test.js')
+
+        t.equal(violations.length, 1, 'Then one violation should be detected')
+        t.equal(violations[0].line, 2, 'Then the violation should be on line 2')
         t.end()
     })
 
