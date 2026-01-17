@@ -65,7 +65,7 @@ This document summarizes the specifications that were previously archived in `sp
 - Validated and fixed 17 files in `modules/quicken-web-app/src/`
 - Added ABOUTME comments to all files
 - Extracted memoizeReduxState callbacks to named functions with @sig
-- Replaced while loop with recursive `findMatches` in cell-renderers.jsx
+- Replaced while loop with recursive `findMatches` in CellRenderers.jsx
 - Used destructuring aliases for snake_case DB fields (`account_id: accountId`)
 - Added Theme to design-system Radix re-exports (was missing)
 - Exempted design-system from radix import rule (it IS the facade)
@@ -712,3 +712,24 @@ This document summarizes the specifications that were previously archived in `sp
 - Used setTimeout(0) yield pattern for UI repaints between sync queries
 - Performance: date changes ~200ms (down from 1s+), startup unchanged but visible progress
 - Deferred: Query combining, web workers (complexity not justified for current gains)
+
+## [quicken-web-app] UI Refinements: Tabs, Sidebar, Section Headers (2026-01-16)
+**Purpose:** Visual polish for tab groups, sidebar scroll, and section header styling
+
+- TabGroup: Fixed 160px tab width with ellipsis overflow and Tooltip on hover (200ms delay)
+- MainLayout/AccountList: Sidebar scroll containment with minHeight:0 and overflow:hidden
+- AccountList section headers: background color (gray-4), larger solid triangle chevrons (▶/▼)
+- Column files: Renamed to PascalCase (CellRenderers.jsx, CategoryReportColumns.jsx, etc.)
+- Column files: Consolidated 12 cell renderer exports into single CellRenderers object
+- Column definitions: Extracted accessorKey and meta+resize constants to shorten lines under 120 chars
+- Register pages: Removed default exports (kept named exports only)
+- TabGroup: Added @sig descriptions to all 11 functions
+
+## [quicken-web-app] FilterChipRow Count Fix (2026-01-16)
+**Purpose:** Fix incorrect transaction counts and support non-transaction data types
+
+- Fixed count mismatch: FilterChipRow compared filteredTransactions (all accounts) to baseTransactions (single account)
+- Now applies accountId filter consistently to both filtered and base transaction counts
+- Added optional props: filteredCount, totalCount, itemLabel for pages with non-transaction data
+- InvestmentReportPage now passes holdings count with "holdings" label instead of showing irrelevant transaction stats
+- Fixed isFiltering logic to exclude date filter when showAsOfDate is true (investment report)

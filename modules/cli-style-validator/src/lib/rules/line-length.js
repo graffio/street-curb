@@ -20,8 +20,8 @@ const P = {
     // Check if node has prettier-ignore in preceding comments
     // @sig nodeHasPrettierIgnore :: (ASTNode, [String]) -> Boolean
     nodeHasPrettierIgnore: (node, lines) => {
-        if (!node.loc) return false
-        const precedingLines = A.toPrecedingCommentLines(lines, node.loc.start.line - 1)
+        if (!node.startLine) return false
+        const precedingLines = A.toPrecedingCommentLines(lines, node.startLine - 1)
         return precedingLines.some(P.hasPrettierIgnore)
     },
 

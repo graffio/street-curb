@@ -6,6 +6,8 @@ import { LookupTable } from '@graffio/functional'
 import React from 'react'
 import { formatCurrency, formatPercentage, formatPrice, formatQuantity } from '../utils/formatters.js'
 
+const NUMERIC = { enableResizing: false, textAlign: 'right' }
+
 // Cell renderer for expandable tree row with holding/group name
 // @sig ExpandableNameCell :: { row: Row, getValue: Function } -> ReactElement
 const ExpandableNameCell = ({ row, getValue }) => {
@@ -14,7 +16,7 @@ const ExpandableNameCell = ({ row, getValue }) => {
     const depth = row.depth
     const value = getValue()
 
-    const chevronStyle = { cursor: 'pointer', userSelect: 'none', width: 16, display: 'inline-block' }
+    const chevronStyle = { cursor: 'pointer', userSelect: 'none', width: 20, display: 'inline-block', fontSize: 12 }
     const indentStyle = { paddingLeft: depth * 16 }
 
     return (
@@ -117,17 +119,19 @@ const MarketValuePctCell = ({ row }) => {
  * Row structure for leaves: EnrichedHolding
  */
 // prettier-ignore
-const investmentReportColumns = LookupTable([
-    ColumnDefinition.from({ id: 'name',          accessorKey: 'key',                          header: 'Name',            size: 200, minSize: 150, cell: ExpandableNameCell,   enableResizing: true }),
-    ColumnDefinition.from({ id: 'symbol',        accessorKey: 'securitySymbol',               header: 'Symbol',          size: 80,  minSize: 60,  cell: SymbolCell,           enableResizing: true }),
-    ColumnDefinition.from({ id: 'dayGainLossPct',accessorKey: 'aggregate.dayGainLossPct',     header: 'Day %',           size: 80,  minSize: 60,  cell: StalePercentageCell,  enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'dayGainLoss',   accessorKey: 'aggregate.dayGainLoss',        header: 'Day Gain',        size: 100, minSize: 80,  cell: StaleCurrencyCell,    enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'quotePrice',    accessorKey: 'aggregate.quotePrice',         header: 'Price',           size: 90,  minSize: 70,  cell: StalePriceCell,       enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'avgCost',       accessorKey: 'aggregate.avgCostPerShare',    header: 'Avg Cost',        size: 90,  minSize: 70,  cell: StalePriceCell,       enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'costBasis',     accessorKey: 'aggregate.costBasis',          header: 'Cost Basis',      size: 110, minSize: 80,  cell: StaleCurrencyCell,    enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'shares',        accessorKey: 'aggregate.shares',             header: 'Shares',          size: 90,  minSize: 70,  cell: AggregateQuantityCell,enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'marketValue',   accessorKey: 'aggregate.marketValue',        header: 'Mkt Value',       size: 110, minSize: 80,  cell: StaleCurrencyCell,    enableResizing: false, textAlign: 'right' }),
-    ColumnDefinition.from({ id: 'marketValuePct',accessorKey: 'aggregate.marketValuePct',     header: 'Mkt %',           size: 70,  minSize: 50,  cell: MarketValuePctCell,   enableResizing: false, textAlign: 'right' }),
+const columns = LookupTable([
+    ColumnDefinition.from({ id: 'name',      accessorKey: 'key',                      header: 'Name',      size: 200, minSize: 150, cell: ExpandableNameCell,    enableResizing: true }),
+    ColumnDefinition.from({ id: 'symbol',    accessorKey: 'securitySymbol',           header: 'Symbol',    size: 80,  minSize: 60,  cell: SymbolCell,            enableResizing: true }),
+    ColumnDefinition.from({ id: 'dayPct',    accessorKey: 'aggregate.dayGainLossPct', header: 'Day %',     size: 80,  minSize: 60,  cell: StalePercentageCell,   ...NUMERIC }),
+    ColumnDefinition.from({ id: 'dayGain',   accessorKey: 'aggregate.dayGainLoss',    header: 'Day Gain',  size: 100, minSize: 80,  cell: StaleCurrencyCell,     ...NUMERIC }),
+    ColumnDefinition.from({ id: 'price',     accessorKey: 'aggregate.quotePrice',     header: 'Price',     size: 90,  minSize: 70,  cell: StalePriceCell,        ...NUMERIC }),
+    ColumnDefinition.from({ id: 'avgCost',   accessorKey: 'aggregate.avgCostPerShare',header: 'Avg Cost',  size: 90,  minSize: 70,  cell: StalePriceCell,        ...NUMERIC }),
+    ColumnDefinition.from({ id: 'costBasis', accessorKey: 'aggregate.costBasis',      header: 'Cost Basis',size: 110, minSize: 80,  cell: StaleCurrencyCell,     ...NUMERIC }),
+    ColumnDefinition.from({ id: 'shares',    accessorKey: 'aggregate.shares',         header: 'Shares',    size: 90,  minSize: 70,  cell: AggregateQuantityCell, ...NUMERIC }),
+    ColumnDefinition.from({ id: 'mktValue',  accessorKey: 'aggregate.marketValue',    header: 'Mkt Value', size: 110, minSize: 80,  cell: StaleCurrencyCell,     ...NUMERIC }),
+    ColumnDefinition.from({ id: 'mktPct',    accessorKey: 'aggregate.marketValuePct', header: 'Mkt %',     size: 70,  minSize: 50,  cell: MarketValuePctCell,    ...NUMERIC }),
 ], ColumnDefinition, 'id')
 
-export { investmentReportColumns }
+const InvestmentReportColumns = { columns }
+
+export { InvestmentReportColumns }

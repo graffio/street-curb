@@ -24,7 +24,8 @@ const MAX_DETAIL_LINES = 3
  * Row of filter chips organized in columns with details below each chip
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
- *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, accountId?, groupByOptions? }
+ *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, accountId?, groupByOptions?,
+ *         filteredCount?, totalCount?, itemLabel? }
  */
 const FilterChipRow = props => {
     // Build detail lines for categories (up to MAX_DETAIL_LINES, then +N more)
@@ -52,9 +53,14 @@ const FilterChipRow = props => {
 
     const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
     const { accountId = null, groupByOptions = null } = props
+    const { filteredCount: filteredCountProp, totalCount: totalCountProp, itemLabel = 'transactions' } = props
 
-    const allTransactions = useSelector(S.transactions)
-    const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
+    // Only fetch transaction data if counts not provided via props
+    const needsTransactionData = filteredCountProp === undefined
+    const allTransactions = useSelector(state => (needsTransactionData ? S.transactions(state) : null))
+    const filteredTransactions = useSelector(state =>
+        needsTransactionData ? S.filteredTransactions(state, viewId) : [],
+    )
     const dateRange = useSelector(state => S.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
     const filterQuery = useSelector(state => S.filterQuery(state, viewId))
@@ -73,13 +79,16 @@ const FilterChipRow = props => {
     const isTextActive = filterQuery?.length > 0
 
     // Determine if any filtering is happening
-    // For registers, compare to account transactions; for reports, compare to all
+    // Use props if provided, otherwise compute from transaction selectors
+    const accountFilteredTxns = accountId
+        ? filteredTransactions.filter(t => t.accountId === accountId)
+        : filteredTransactions
     const baseTransactions = accountId
         ? (allTransactions?.filter(t => t.accountId === accountId) ?? [])
         : (allTransactions ?? [])
-    const filteredCount = filteredTransactions.length
-    const totalCount = baseTransactions.length
-    const isFiltering = filteredCount < totalCount || isDateActive || isTextActive
+    const filteredCount = filteredCountProp ?? accountFilteredTxns.length
+    const totalCount = totalCountProp ?? baseTransactions.length
+    const isFiltering = filteredCount < totalCount || (!showAsOfDate && isDateActive) || isTextActive
 
     const containerStyle = { ...baseContainerStyle, backgroundColor: isFiltering ? 'var(--ruby-3)' : 'var(--gray-2)' }
 
@@ -87,7 +96,7 @@ const FilterChipRow = props => {
         <Flex direction="column" gap="2" style={containerStyle}>
             <Flex align="center" gap="2" style={{ paddingLeft: 'var(--space-2)' }}>
                 <Text size="1" color="gray">
-                    {filteredCount} transactions
+                    {filteredCount} {itemLabel}
                 </Text>
                 {isFiltering && (
                     <Text size="1" color="ruby" weight="medium">

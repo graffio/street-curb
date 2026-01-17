@@ -7,7 +7,7 @@ import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { ACTION_LABELS, investmentTransactionColumns } from '../columns/index.js'
+import { CellRenderers, TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import {
     ActionFilterChip,
@@ -31,6 +31,9 @@ import {
     initializeTableLayout,
     toDataTableProps,
 } from '../utils/table-layout.js'
+
+const { ACTION_LABELS } = CellRenderers
+const { investmentColumns } = TransactionColumns
 
 const { Intent, Keymap } = KeymapModule
 
@@ -171,7 +174,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
 
     const tableLayout = useMemo(
-        () => allTableLayouts?.[tableLayoutId] || initializeTableLayout(tableLayoutId, investmentTransactionColumns),
+        () => allTableLayouts?.[tableLayoutId] || initializeTableLayout(tableLayoutId, investmentColumns),
         [allTableLayouts, tableLayoutId],
     )
 
@@ -184,7 +187,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
 
     // Apply user's display sort to RegisterRows
-    const data = useMemo(() => applySort(sorting, withBalances, investmentTransactionColumns), [withBalances, sorting])
+    const data = useMemo(() => applySort(sorting, withBalances, investmentColumns), [withBalances, sorting])
 
     // With manual sorting, search matches are already in display order
     const matchCount = searchMatches.length
@@ -287,7 +290,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
             </Flex>
             <div style={mainContentStyle}>
                 <DataTable
-                    columns={investmentTransactionColumns}
+                    columns={investmentColumns}
                     data={data}
                     height={height}
                     rowHeight={60}
@@ -315,5 +318,4 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
 }
 
-export default InvestmentRegisterPage // fixme: TanStack Router depends on a default export!
 export { InvestmentRegisterPage }
