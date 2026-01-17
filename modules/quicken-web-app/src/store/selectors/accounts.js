@@ -8,7 +8,7 @@ import { EnrichedAccount } from '../../types/enriched-account.js'
 import { accountOrganization } from '../../services/account-organization.js'
 import { HoldingsSelectors } from './holdings-selectors.js'
 
-const enrichedHoldingsAsOf = HoldingsSelectors.collectEnrichedHoldingsAsOf
+const holdingsAsOf = HoldingsSelectors.collectHoldingsAsOf
 
 // State keys that affect account organization
 const ORGANIZATION_STATE_KEYS = [
@@ -43,7 +43,7 @@ const T = {
     // Computes balance for investment accounts from holdings market value (includes cash)
     // @sig toHoldingsBalance :: (State, String) -> { balance: Number, dayChange: Number }
     toHoldingsBalance: (state, accountId) => {
-        const holdings = enrichedHoldingsAsOf(state, 'account-list') || []
+        const holdings = holdingsAsOf(state, 'account-list') || []
         const accountHoldings = holdings.filter(h => h.accountId === accountId)
 
         const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)

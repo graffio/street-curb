@@ -27,6 +27,7 @@ export const ColumnDefinition = {
     fields: {
         id            : 'String',    // Column identifier (TanStack: id)
         accessorKey   : 'String?',   // Field name in row data (defaults to id)
+        accessorFn    : 'Any?',      // Function to extract value from row data (TanStack: accessorFn)
         header        : 'String',    // Header display text (TanStack: header as string)
         size          : 'Number?',   // Column width in pixels (TanStack: size)
         minSize       : 'Number?',   // Minimum width (TanStack: minSize)

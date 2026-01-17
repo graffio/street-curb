@@ -231,8 +231,14 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
             </Flex>
             {canResize && (
                 <Box
-                    onMouseDown={header.getResizeHandler()}
-                    onTouchStart={header.getResizeHandler()}
+                    onMouseDown={e => {
+                        e.stopPropagation()
+                        header.getResizeHandler()(e)
+                    }}
+                    onTouchStart={e => {
+                        e.stopPropagation()
+                        header.getResizeHandler()(e)
+                    }}
                     onClick={e => e.stopPropagation()}
                     onMouseEnter={e => (e.target.style.opacity = 0.9)}
                     onMouseLeave={e => (e.target.style.opacity = 0.4)}
@@ -286,6 +292,7 @@ const TableCell = ({ cell }) => {
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
         color: 'var(--gray-11)',
+        textAlign: column.columnDef.textAlign || 'left',
     }
 
     return (

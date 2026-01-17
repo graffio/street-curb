@@ -6,6 +6,7 @@
  *
  *  id            : "String",
  *  accessorKey   : "String?",
+ *  accessorFn    : "Any?",
  *  header        : "String",
  *  size          : "Number?",
  *  minSize       : "Number?",
@@ -28,11 +29,12 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a ColumnDefinition instance
- * @sig ColumnDefinition :: (String, String?, String, Number?, Number?, Number?, String?, Boolean?, Boolean?, Object?, Any) -> ColumnDefinition
+ * @sig ColumnDefinition :: (String, String?, Any?, String, Number?, Number?, Number?, String?, Boolean?, Boolean?, Object?, Any) -> ColumnDefinition
  */
 const ColumnDefinition = function ColumnDefinition(
     id,
     accessorKey,
+    accessorFn,
     header,
     size,
     minSize,
@@ -44,10 +46,11 @@ const ColumnDefinition = function ColumnDefinition(
     cell,
 ) {
     const constructorName =
-        'ColumnDefinition(id, accessorKey, header, size, minSize, maxSize, textAlign, enableSorting, enableResizing, meta, cell)'
+        'ColumnDefinition(id, accessorKey, accessorFn, header, size, minSize, maxSize, textAlign, enableSorting, enableResizing, meta, cell)'
 
     R.validateString(constructorName, 'id', false, id)
     R.validateString(constructorName, 'accessorKey', true, accessorKey)
+
     R.validateString(constructorName, 'header', false, header)
     R.validateNumber(constructorName, 'size', true, size)
     R.validateNumber(constructorName, 'minSize', true, minSize)
@@ -60,6 +63,7 @@ const ColumnDefinition = function ColumnDefinition(
     const result = Object.create(prototype)
     result.id = id
     if (accessorKey != null) result.accessorKey = accessorKey
+    if (accessorFn != null) result.accessorFn = accessorFn
     result.header = header
     if (size != null) result.size = size
     if (minSize != null) result.minSize = minSize
@@ -85,6 +89,7 @@ const ColumnDefinition = function ColumnDefinition(
 const columndefinitionToString = function () {
     return `ColumnDefinition(${R._toString(this.id)},
         ${R._toString(this.accessorKey)},
+        ${R._toString(this.accessorFn)},
         ${R._toString(this.header)},
         ${R._toString(this.size)},
         ${R._toString(this.minSize)},
@@ -127,11 +132,24 @@ ColumnDefinition.toString = () => 'ColumnDefinition'
 ColumnDefinition.is = v => v && v['@@typeName'] === 'ColumnDefinition'
 
 ColumnDefinition._from = _input => {
-    const { id, accessorKey, header, size, minSize, maxSize, textAlign, enableSorting, enableResizing, meta, cell } =
-        _input
+    const {
+        id,
+        accessorKey,
+        accessorFn,
+        header,
+        size,
+        minSize,
+        maxSize,
+        textAlign,
+        enableSorting,
+        enableResizing,
+        meta,
+        cell,
+    } = _input
     return ColumnDefinition(
         id,
         accessorKey,
+        accessorFn,
         header,
         size,
         minSize,

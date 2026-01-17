@@ -5,6 +5,8 @@ const viewIdRegex = /^(reg|rpt|rec|inv)_[a-z0-9_]+$/
 
 // prettier-ignore
 const FieldTypes = {
+    accountId          : /^acc_[a-f0-9]{12}$/,           // stable account id: acc_000000000001
+    securityId         : /^sec_[a-f0-9]{12}$/,           // stable security id: sec_000000000001
     direction          : /^(asc|desc|none)$/,
     columnDescriptorId : /^[a-zA-Z][a-zA-Z0-9_]*$/,      // matches TanStack column id directly (date, payee, amount)
     tableLayoutId      : /^cols_[a-z0-9_]+$/,            // allows semantic IDs like cols_bank_default

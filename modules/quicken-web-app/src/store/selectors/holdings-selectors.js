@@ -2,6 +2,7 @@
 // ABOUTME: Computes market values, gains/losses, and staleness indicators
 
 import { groupBy, LookupTable, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
+import { Holding } from '../../types/holding.js'
 import { Price } from '../../types/price.js'
 import {
     asOfDate as asOfDateSelector,
@@ -11,6 +12,9 @@ import {
 
 // Number of days before a price is considered stale
 const STALE_DAYS = 1
+
+// Reserved securityId for cash positions in investment accounts
+const CASH_SECURITY_ID = 'sec_000000000000'
 
 const P = {
     // Checks if a price is stale relative to target date
@@ -89,14 +93,14 @@ const T = {
         }
     },
 
-    // Aggregates a group of lots into a single holding using allocation index
-    // @sig toAggregatedHolding :: ([Lot], Map, String) -> Holding
-    toAggregatedHolding: (groupLots, allocationIndex, date) => {
+    // Aggregates a group of lots into partial holding data (before enrichment)
+    // @sig toAggregatedLots :: ([Lot], Map, String) -> LotAggregate
+    toAggregatedLots: (groupLots, allocationIndex, date) => {
         const { accountId, securityId } = groupLots[0]
         const init = { qty: 0, cost: 0 }
         const { qty, cost } = groupLots.reduce((acc, lot) => T.toLotTotals(acc, lot, allocationIndex, date), init)
-        const avg = qty !== 0 ? cost / qty : 0
-        return { accountId, securityId, quantity: qty, costBasis: cost, avgCostPerShare: avg }
+        const averageCostPerShare = qty !== 0 ? cost / qty : 0
+        return { accountId, securityId, quantity: qty, costBasis: cost, averageCostPerShare }
     },
 
     // Gets cash balance from transactions as of a specific date using transaction index
@@ -119,10 +123,10 @@ const T = {
             : null
     },
 
-    // Enriches a holding with market value and gain/loss calculations
-    // @sig toEnrichedHolding :: (Holding, State, Map, String) -> EnrichedHolding
-    toEnrichedHolding: (holding, state, priceIndex, date) => {
-        const { accountId, avgCostPerShare, costBasis, quantity, securityId } = holding
+    // Enriches aggregated lot data into a Holding instance with market values and gain/loss calculations
+    // @sig toHolding :: (LotAggregate, State, Map, String) -> Holding
+    toHolding: (lotData, state, priceIndex, date) => {
+        const { accountId, averageCostPerShare, costBasis, quantity, securityId } = lotData
         const { accounts, securities } = state
 
         const security = securities.get(securityId)
@@ -138,55 +142,57 @@ const T = {
 
         const marketValue = quantity * quotePrice
         const unrealizedGainLoss = marketValue - costBasis
-        const unrealizedGainLossPct = costBasis !== 0 ? unrealizedGainLoss / costBasis : 0
+        const unrealizedGainLossPercent = costBasis !== 0 ? unrealizedGainLoss / costBasis : 0
 
         const previousQuotePrice = previousDayPrice?.price ?? quotePrice
         const dayGainLoss = quantity * (quotePrice - previousQuotePrice)
-        const dayGainLossPct = previousQuotePrice !== 0 ? (quotePrice - previousQuotePrice) / previousQuotePrice : 0
+        const dayGainLossPercent = previousQuotePrice !== 0 ? (quotePrice - previousQuotePrice) / previousQuotePrice : 0
 
-        return {
-            ...holding,
-            avgCostPerShare,
-            securityName: name ?? '',
-            securitySymbol: symbol ?? '',
-            securityType: type ?? null,
-            securityGoal: goal ?? null,
-            accountName: account?.name ?? '',
+        return Holding(
+            accountId,
+            account?.name ?? '',
+            securityId,
+            name ?? '',
+            symbol ?? '',
+            type ?? '',
+            goal ?? null,
+            quantity,
+            costBasis,
+            averageCostPerShare,
             quotePrice,
-            priceDate: priceDt,
-            isStale,
             marketValue,
             unrealizedGainLoss,
-            unrealizedGainLossPct,
+            unrealizedGainLossPercent,
             dayGainLoss,
-            dayGainLossPct,
-        }
+            dayGainLossPercent,
+            isStale,
+        )
     },
 }
 
 const F = {
     // Creates a cash pseudo-holding for an investment account
-    // @sig createCashHolding :: (String, String, Number) -> EnrichedHolding
-    createCashHolding: (accountId, accountName, cashBalance) => ({
-        accountId,
-        securityId: null,
-        quantity: cashBalance,
-        costBasis: cashBalance,
-        avgCostPerShare: 1,
-        securityName: 'Cash',
-        securitySymbol: 'CASH',
-        securityType: 'Cash',
-        securityGoal: null,
-        accountName,
-        quotePrice: 1,
-        priceDate: null,
-        isStale: false,
-        marketValue: cashBalance,
-        unrealizedGainLoss: 0,
-        unrealizedGainLossPct: 0,
-        dayGainLoss: 0,
-        dayGainLossPct: 0,
-    }),
+    // @sig createCashHolding :: (String, String, Number) -> Holding
+    createCashHolding: (accountId, accountName, cashBalance) =>
+        Holding(
+            accountId,
+            accountName,
+            CASH_SECURITY_ID,
+            'Cash',
+            'CASH',
+            'Cash',
+            null,
+            cashBalance,
+            cashBalance,
+            1,
+            1,
+            cashBalance,
+            0,
+            0,
+            0,
+            0,
+            false,
+        ),
 }
 
 const A = {
@@ -233,19 +239,19 @@ const A = {
     // @sig filterLotsAsOf :: ([Lot], String) -> [Lot]
     filterLotsAsOf: (allLots, date) => allLots.filter(lot => P.isLotOpenOnDate(lot, date)),
 
-    // Computes holdings from lots using allocation index
-    // @sig collectHoldingsFromLots :: ([Lot], Map, String) -> [Holding]
-    collectHoldingsFromLots: (allLots, allocationIndex, date) => {
+    // Computes aggregated lot data from lots using allocation index
+    // @sig collectAggregatedLots :: ([Lot], Map, String) -> [LotAggregate]
+    collectAggregatedLots: (allLots, allocationIndex, date) => {
         const openLots = A.filterLotsAsOf(allLots, date)
         const grouped = groupBy(T.toLotKey, openLots)
         return Object.values(grouped)
-            .map(groupLots => T.toAggregatedHolding(groupLots, allocationIndex, date))
+            .map(groupLots => T.toAggregatedLots(groupLots, allocationIndex, date))
             .filter(h => h.quantity > 0)
     },
 
-    // Collects enriched holdings as of a specific date (unmemoized, for memoization wrapper)
-    // @sig collectEnrichedHoldingsAsOfCore :: (State, String, [Index]) -> [EnrichedHolding]
-    collectEnrichedHoldingsAsOfCore: (state, viewId, indices) => {
+    // Collects holdings as of a specific date (unmemoized, for memoization wrapper)
+    // @sig collectHoldingsAsOfCore :: (State, String, [Index]) -> [Holding]
+    collectHoldingsAsOfCore: (state, viewId, indices) => {
         const [allocationIndex, priceIndex, transactionIndex] = indices
         const asOfDate = asOfDateSelector(state, viewId)
         const selectedAccounts = selectedAccountsSelector(state, viewId)
@@ -259,22 +265,19 @@ const A = {
         const filteredLots =
             selectedAccounts.length > 0 ? lots.filter(l => selectedAccounts.includes(l.accountId)) : lots
 
-        const holdings = A.collectHoldingsFromLots(filteredLots, allocationIndex, asOfDate)
-        const enriched = holdings.map(h => T.toEnrichedHolding(h, state, priceIndex, asOfDate))
+        const aggregatedLots = A.collectAggregatedLots(filteredLots, allocationIndex, asOfDate)
+        const holdings = aggregatedLots.map(lotData => T.toHolding(lotData, state, priceIndex, asOfDate))
 
         // Get cash balances for investment accounts with holdings
-        const accountIdsWithHoldings = [...new Set(enriched.map(h => h.accountId))]
+        const accountIdsWithHoldings = [...new Set(holdings.map(h => h.accountId))]
         const cashHoldings = accountIdsWithHoldings
             .map(accId => T.toCashHoldingOrNull(transactionIndex, accounts, accId, asOfDate))
             .filter(h => h !== null)
 
-        const allHoldings = [...enriched, ...cashHoldings]
+        const allHoldings = [...holdings, ...cashHoldings]
 
         // Filter by search query
-        const searched = filterQuery ? allHoldings.filter(h => P.matchesSearch(h, filterQuery)) : allHoldings
-
-        const total = searched.reduce((sum, h) => sum + h.marketValue, 0)
-        return searched.map(h => ({ ...h, marketValuePct: total !== 0 ? h.marketValue / total : 0 }))
+        return filterQuery ? allHoldings.filter(h => P.matchesSearch(h, filterQuery)) : allHoldings
     },
 }
 
@@ -290,18 +293,18 @@ const allocationIndex = memoizeReduxState(['lotAllocations'], state => A.buildAl
 // @sig transactionIndex :: State -> Map<String, [Transaction]>
 const transactionIndex = memoizeReduxState(['transactions'], state => A.buildTransactionIndex(state.transactions))
 
-// Collects enriched holdings as of a specific date (memoized per viewId)
-// @sig collectEnrichedHoldingsAsOf :: (State, String) -> [EnrichedHolding]
+// Collects holdings as of a specific date (memoized per viewId)
+// @sig collectHoldingsAsOf :: (State, String) -> [Holding]
 // prettier-ignore
-const collectEnrichedHoldingsAsOf = memoizeReduxStatePerKey(
+const collectHoldingsAsOf = memoizeReduxStatePerKey(
     ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
     'transactionFilters',
     (state, viewId) => {
         const idx = [allocationIndex(state), priceIndex(state), transactionIndex(state)]
-        return A.collectEnrichedHoldingsAsOfCore(state, viewId, idx)
+        return A.collectHoldingsAsOfCore(state, viewId, idx)
     },
 )
 
-const HoldingsSelectors = { collectEnrichedHoldingsAsOf }
+const HoldingsSelectors = { collectHoldingsAsOf, CASH_SECURITY_ID }
 
 export { HoldingsSelectors }

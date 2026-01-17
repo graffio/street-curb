@@ -113,6 +113,8 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/sort-mode.type.js`]       : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/enriched-account.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/account-section.type.js`] : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/holdings-aggregate.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/holdings-tree-node.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 

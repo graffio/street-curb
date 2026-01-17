@@ -4,12 +4,23 @@
 /** {@link module:Holding} */
 /*  Holding generated from: modules/quicken-type-definitions/holding.type.js
  *
- *  accountId      : /^acc_[a-f0-9]{12}$/,
- *  avgCostPerShare: "Number",
- *  costBasis      : "Number",
- *  lastUpdated    : "String",
- *  quantity       : "Number",
- *  securityId     : /^sec_[a-f0-9]{12}$/
+ *  accountId                : /^acc_[a-f0-9]{12}$/,
+ *  accountName              : "String",
+ *  securityId               : /^sec_[a-f0-9]{12}$/,
+ *  securityName             : "String",
+ *  securitySymbol           : "String",
+ *  securityType             : "String",
+ *  securityGoal             : "String?",
+ *  quantity                 : "Number",
+ *  costBasis                : "Number",
+ *  averageCostPerShare      : "Number",
+ *  quotePrice               : "Number",
+ *  marketValue              : "Number",
+ *  unrealizedGainLoss       : "Number",
+ *  unrealizedGainLossPercent: "Number",
+ *  dayGainLoss              : "Number",
+ *  dayGainLossPercent       : "Number",
+ *  isStale                  : "Boolean"
  *
  */
 
@@ -23,27 +34,68 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Holding instance
- * @sig Holding :: (AccountId, Number, Number, String, Number, SecurityId) -> Holding
+ * @sig Holding :: (AccountId, String, SecurityId, String, String, String, String?, Number, Number, Number, Number, Number, Number, Number, Number, Number, Boolean) -> Holding
  *     AccountId = /^acc_[a-f0-9]{12}$/
  *     SecurityId = /^sec_[a-f0-9]{12}$/
  */
-const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId) {
-    const constructorName = 'Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)'
-    R.validateArgumentLength(constructorName, 6, arguments)
+const Holding = function Holding(
+    accountId,
+    accountName,
+    securityId,
+    securityName,
+    securitySymbol,
+    securityType,
+    securityGoal,
+    quantity,
+    costBasis,
+    averageCostPerShare,
+    quotePrice,
+    marketValue,
+    unrealizedGainLoss,
+    unrealizedGainLossPercent,
+    dayGainLoss,
+    dayGainLossPercent,
+    isStale,
+) {
+    const constructorName =
+        'Holding(accountId, accountName, securityId, securityName, securitySymbol, securityType, securityGoal, quantity, costBasis, averageCostPerShare, quotePrice, marketValue, unrealizedGainLoss, unrealizedGainLossPercent, dayGainLoss, dayGainLossPercent, isStale)'
+
     R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
-    R.validateNumber(constructorName, 'avgCostPerShare', false, avgCostPerShare)
-    R.validateNumber(constructorName, 'costBasis', false, costBasis)
-    R.validateString(constructorName, 'lastUpdated', false, lastUpdated)
-    R.validateNumber(constructorName, 'quantity', false, quantity)
+    R.validateString(constructorName, 'accountName', false, accountName)
     R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
+    R.validateString(constructorName, 'securityName', false, securityName)
+    R.validateString(constructorName, 'securitySymbol', false, securitySymbol)
+    R.validateString(constructorName, 'securityType', false, securityType)
+    R.validateString(constructorName, 'securityGoal', true, securityGoal)
+    R.validateNumber(constructorName, 'quantity', false, quantity)
+    R.validateNumber(constructorName, 'costBasis', false, costBasis)
+    R.validateNumber(constructorName, 'averageCostPerShare', false, averageCostPerShare)
+    R.validateNumber(constructorName, 'quotePrice', false, quotePrice)
+    R.validateNumber(constructorName, 'marketValue', false, marketValue)
+    R.validateNumber(constructorName, 'unrealizedGainLoss', false, unrealizedGainLoss)
+    R.validateNumber(constructorName, 'unrealizedGainLossPercent', false, unrealizedGainLossPercent)
+    R.validateNumber(constructorName, 'dayGainLoss', false, dayGainLoss)
+    R.validateNumber(constructorName, 'dayGainLossPercent', false, dayGainLossPercent)
+    R.validateBoolean(constructorName, 'isStale', false, isStale)
 
     const result = Object.create(prototype)
     result.accountId = accountId
-    result.avgCostPerShare = avgCostPerShare
-    result.costBasis = costBasis
-    result.lastUpdated = lastUpdated
-    result.quantity = quantity
+    result.accountName = accountName
     result.securityId = securityId
+    result.securityName = securityName
+    result.securitySymbol = securitySymbol
+    result.securityType = securityType
+    if (securityGoal != null) result.securityGoal = securityGoal
+    result.quantity = quantity
+    result.costBasis = costBasis
+    result.averageCostPerShare = averageCostPerShare
+    result.quotePrice = quotePrice
+    result.marketValue = marketValue
+    result.unrealizedGainLoss = unrealizedGainLoss
+    result.unrealizedGainLossPercent = unrealizedGainLossPercent
+    result.dayGainLoss = dayGainLoss
+    result.dayGainLossPercent = dayGainLossPercent
+    result.isStale = isStale
     return result
 }
 
@@ -59,11 +111,22 @@ const Holding = function Holding(accountId, avgCostPerShare, costBasis, lastUpda
  */
 const holdingToString = function () {
     return `Holding(${R._toString(this.accountId)},
-        ${R._toString(this.avgCostPerShare)},
-        ${R._toString(this.costBasis)},
-        ${R._toString(this.lastUpdated)},
+        ${R._toString(this.accountName)},
+        ${R._toString(this.securityId)},
+        ${R._toString(this.securityName)},
+        ${R._toString(this.securitySymbol)},
+        ${R._toString(this.securityType)},
+        ${R._toString(this.securityGoal)},
         ${R._toString(this.quantity)},
-        ${R._toString(this.securityId)})`
+        ${R._toString(this.costBasis)},
+        ${R._toString(this.averageCostPerShare)},
+        ${R._toString(this.quotePrice)},
+        ${R._toString(this.marketValue)},
+        ${R._toString(this.unrealizedGainLoss)},
+        ${R._toString(this.unrealizedGainLossPercent)},
+        ${R._toString(this.dayGainLoss)},
+        ${R._toString(this.dayGainLossPercent)},
+        ${R._toString(this.isStale)})`
 }
 
 /*
@@ -97,8 +160,44 @@ Holding.toString = () => 'Holding'
 Holding.is = v => v && v['@@typeName'] === 'Holding'
 
 Holding._from = _input => {
-    const { accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId } = _input
-    return Holding(accountId, avgCostPerShare, costBasis, lastUpdated, quantity, securityId)
+    const {
+        accountId,
+        accountName,
+        securityId,
+        securityName,
+        securitySymbol,
+        securityType,
+        securityGoal,
+        quantity,
+        costBasis,
+        averageCostPerShare,
+        quotePrice,
+        marketValue,
+        unrealizedGainLoss,
+        unrealizedGainLossPercent,
+        dayGainLoss,
+        dayGainLossPercent,
+        isStale,
+    } = _input
+    return Holding(
+        accountId,
+        accountName,
+        securityId,
+        securityName,
+        securitySymbol,
+        securityType,
+        securityGoal,
+        quantity,
+        costBasis,
+        averageCostPerShare,
+        quotePrice,
+        marketValue,
+        unrealizedGainLoss,
+        unrealizedGainLossPercent,
+        dayGainLoss,
+        dayGainLossPercent,
+        isStale,
+    )
 }
 Holding.from = Holding._from
 

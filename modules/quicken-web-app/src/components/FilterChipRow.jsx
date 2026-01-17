@@ -19,6 +19,7 @@ import {
 const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
 const MAX_DETAIL_LINES = 3
+const EMPTY_ARRAY = []
 
 /*
  * Row of filter chips organized in columns with details below each chip
@@ -59,7 +60,7 @@ const FilterChipRow = props => {
     const needsTransactionData = filteredCountProp === undefined
     const allTransactions = useSelector(state => (needsTransactionData ? S.transactions(state) : null))
     const filteredTransactions = useSelector(state =>
-        needsTransactionData ? S.filteredTransactions(state, viewId) : [],
+        needsTransactionData ? S.filteredTransactions(state, viewId) : EMPTY_ARRAY,
     )
     const dateRange = useSelector(state => S.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))

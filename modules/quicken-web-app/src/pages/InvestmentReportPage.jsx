@@ -7,9 +7,10 @@ import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
-import { buildHoldingsTree } from '../utils/holdings-tree.js'
+import { HoldingsTree } from '../utils/holdings-tree.js'
 
-const { collectEnrichedHoldingsAsOf } = S.HoldingsSelectors
+const { collectHoldingsAsOf } = S.HoldingsSelectors
+const { buildHoldingsTree } = HoldingsTree
 
 const pageContainerStyle = { height: '100%' }
 
@@ -20,123 +21,16 @@ const dimensionLayouts = {
     goal: { title: 'Holdings by Goal', subtitle: 'View portfolio positions by investment goal' },
 }
 
-// Shared column widths for holdings sub-table
-const COL_WIDTHS = { security: 220, account: 120, shares: 80, cost: 80, price: 80, value: 100, gain: 100 }
-
-// Shared styles for holdings sub-table
-const CELL_STYLE = { padding: 'var(--space-1) var(--space-2)', borderBottom: '1px solid var(--gray-4)' }
-const RIGHT_CELL = { ...CELL_STYLE, textAlign: 'right' }
-const STALE_STYLE = { fontStyle: 'italic' }
-const CONTAINER_STYLE = {
-    backgroundColor: 'var(--gray-2)',
-    borderRadius: 'var(--radius-2)',
-    margin: '0 var(--space-4)',
-    padding: 'var(--space-2)',
-    maxHeight: '200px',
-    overflowY: 'auto',
-}
-const TABLE_STYLE = { width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-size-1)', tableLayout: 'fixed' }
-const HEADER_STYLE = {
-    textAlign: 'left',
-    padding: 'var(--space-1) var(--space-2)',
-    borderBottom: '1px solid var(--gray-6)',
-    color: 'var(--gray-11)',
-    fontWeight: 500,
-}
-const RIGHT_HEADER_STYLE = { ...HEADER_STYLE, textAlign: 'right' }
-
 const P = {
-    // Rows can expand if they have children (tree) or are leaves with holdings (sub-component)
+    // Tree rows can expand if they have children
     // @sig canExpand :: Row -> Boolean
-    canExpand: row => {
-        const { children, value } = row.original
-        return (children && children.length > 0) || (value && value.length > 0)
-    },
+    canExpand: row => row.original.children && row.original.children.length > 0,
 }
 
 const T = {
-    // Get children from a tree node for DataTable getChildRows prop
-    // @sig toChildRows :: TreeNode -> [TreeNode]
+    // Get children from a HoldingsTreeNode for DataTable getChildRows prop
+    // @sig toChildRows :: HoldingsTreeNode -> [HoldingsTreeNode]
     toChildRows: row => row.children,
-
-    // Generate header style with width
-    // @sig toHeaderStyle :: Number -> Style
-    toHeaderStyle: width => ({ ...HEADER_STYLE, width }),
-
-    // Generate right-aligned header style with width
-    // @sig toRightHeaderStyle :: Number -> Style
-    toRightHeaderStyle: width => ({ ...RIGHT_HEADER_STYLE, width }),
-}
-
-/*
- * Single holding row in the sub-table
- *
- * @sig HoldingRow :: ({ holding: EnrichedHolding }) -> ReactElement
- */
-const HoldingRow = ({ holding }) => {
-    const { accountName, avgCostPerShare, isStale, marketValue, quantity } = holding
-    const { quotePrice, securityName, securitySymbol, unrealizedGainLoss } = holding
-    const { account, cost, gain, price, security, shares, value } = COL_WIDTHS
-    const staleCell = isStale ? STALE_STYLE : {}
-    const gainColor = unrealizedGainLoss >= 0 ? 'var(--green-11)' : 'var(--red-11)'
-
-    return (
-        <tr>
-            <td style={{ ...CELL_STYLE, width: security }}>
-                <div style={{ fontWeight: 500 }}>{securityName || '—'}</div>
-                <div style={{ fontSize: 'var(--font-size-1)', color: 'var(--gray-11)' }}>{securitySymbol || ''}</div>
-            </td>
-            <td style={{ ...CELL_STYLE, width: account }}>{accountName}</td>
-            <td style={{ ...RIGHT_CELL, width: shares }}>{quantity.toFixed(3)}</td>
-            <td style={{ ...RIGHT_CELL, ...staleCell, width: cost }}>${avgCostPerShare.toFixed(2)}</td>
-            <td style={{ ...RIGHT_CELL, ...staleCell, width: price }}>
-                ${quotePrice.toFixed(2)}
-                {isStale ? '*' : ''}
-            </td>
-            <td style={{ ...RIGHT_CELL, ...staleCell, width: value }}>
-                ${marketValue.toFixed(2)}
-                {isStale ? '*' : ''}
-            </td>
-            <td style={{ ...RIGHT_CELL, color: gainColor, ...staleCell, width: gain }}>
-                ${unrealizedGainLoss.toFixed(2)}
-                {isStale ? '*' : ''}
-            </td>
-        </tr>
-    )
-}
-
-/*
- * Sub-table showing individual holdings when a tree row is expanded
- *
- * @sig HoldingsSubTable :: ({ holdings: [EnrichedHolding] }) -> ReactElement
- */
-const HoldingsSubTable = ({ holdings }) => {
-    const { account, cost, gain, price, security, shares, value } = COL_WIDTHS
-
-    if (!holdings || holdings.length === 0) return <div style={CONTAINER_STYLE}>No holdings</div>
-
-    return (
-        <div style={CONTAINER_STYLE}>
-            <table style={TABLE_STYLE}>
-                <thead>
-                    <tr>
-                        <th style={T.toHeaderStyle(security)}>Security</th>
-                        <th style={T.toHeaderStyle(account)}>Account</th>
-                        <th style={T.toRightHeaderStyle(shares)}>Shares</th>
-                        <th style={T.toRightHeaderStyle(cost)}>Avg Cost</th>
-                        <th style={T.toRightHeaderStyle(price)}>Price</th>
-                        <th style={T.toRightHeaderStyle(value)}>Mkt Value</th>
-                        <th style={T.toRightHeaderStyle(gain)}>Gain/Loss</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {holdings.map((holding, i) => (
-                        <HoldingRow key={i} holding={holding} />
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    )
 }
 
 /*
@@ -146,16 +40,25 @@ const HoldingsSubTable = ({ holdings }) => {
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
-    const holdings = useSelector(state => collectEnrichedHoldingsAsOf(state, viewId))
+    const holdings = useSelector(state => collectHoldingsAsOf(state, viewId))
     const groupBy = useSelector(state => S.groupBy(state, viewId))
     const [expanded, setExpanded] = useState({})
+    const [columnSizing, setColumnSizing] = useState({})
+    const [columnOrder, setColumnOrder] = useState([])
 
     const holdingsTree = useMemo(() => buildHoldingsTree(groupBy || 'account', holdings), [groupBy, holdings])
-    const renderSubComponent = useCallback(({ row }) => <HoldingsSubTable holdings={row.original.value} />, [])
     const handleExpandedChange = useCallback(
         updater => setExpanded(prev => (typeof updater === 'function' ? updater(prev) : updater)),
         [],
     )
+    const handleColumnSizingChange = useCallback(
+        updater => setColumnSizing(prev => (typeof updater === 'function' ? updater(prev) : updater)),
+        [],
+    )
+    const handleColumnOrderChange = useCallback(setColumnOrder, [])
+
+    // Compute total holdings count for filter display
+    const totalHoldingsCount = useMemo(() => holdings?.length ?? 0, [holdings])
 
     useEffect(() => setLayout(dimensionLayouts[groupBy] || dimensionLayouts.account), [setLayout, groupBy])
 
@@ -167,8 +70,8 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 showAsOfDate
                 showCategories={false}
                 groupByOptions={investmentGroupByOptions}
-                filteredCount={holdings.length}
-                totalCount={holdings.length}
+                filteredCount={totalHoldingsCount}
+                totalCount={totalHoldingsCount}
                 itemLabel="holdings"
             />
             <DataTable
@@ -178,9 +81,13 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 rowHeight={40}
                 getChildRows={T.toChildRows}
                 getRowCanExpand={P.canExpand}
-                renderSubComponent={renderSubComponent}
                 expanded={expanded}
                 onExpandedChange={handleExpandedChange}
+                columnSizing={columnSizing}
+                onColumnSizingChange={handleColumnSizingChange}
+                columnOrder={columnOrder}
+                onColumnOrderChange={handleColumnOrderChange}
+                context={{ groupBy }}
             />
         </Flex>
     )
