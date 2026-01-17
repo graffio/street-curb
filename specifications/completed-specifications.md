@@ -724,3 +724,12 @@ This document summarizes the specifications that were previously archived in `sp
 - Column definitions: Extracted accessorKey and meta+resize constants to shorten lines under 120 chars
 - Register pages: Removed default exports (kept named exports only)
 - TabGroup: Added @sig descriptions to all 11 functions
+
+## [quicken-web-app] FilterChipRow Count Fix (2026-01-16)
+**Purpose:** Fix incorrect transaction counts and support non-transaction data types
+
+- Fixed count mismatch: FilterChipRow compared filteredTransactions (all accounts) to baseTransactions (single account)
+- Now applies accountId filter consistently to both filtered and base transaction counts
+- Added optional props: filteredCount, totalCount, itemLabel for pages with non-transaction data
+- InvestmentReportPage now passes holdings count with "holdings" label instead of showing irrelevant transaction stats
+- Fixed isFiltering logic to exclude date filter when showAsOfDate is true (investment report)

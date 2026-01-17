@@ -167,6 +167,9 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 showAsOfDate
                 showCategories={false}
                 groupByOptions={investmentGroupByOptions}
+                filteredCount={holdings.length}
+                totalCount={holdings.length}
+                itemLabel="holdings"
             />
             <DataTable
                 columns={InvestmentReportColumns.columns}
