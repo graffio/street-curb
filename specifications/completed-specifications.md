@@ -733,3 +733,18 @@ This document summarizes the specifications that were previously archived in `sp
 - Added optional props: filteredCount, totalCount, itemLabel for pages with non-transaction data
 - InvestmentReportPage now passes holdings count with "holdings" label instead of showing irrelevant transaction stats
 - Fixed isFiltering logic to exclude date filter when showAsOfDate is true (investment report)
+
+## [quicken-web-app] Investment Report DataTable Integration (2026-01-17)
+**Purpose:** Replace bespoke HoldingsSubTable with unified DataTable using Tagged types
+
+- Added HoldingsTreeNode TaggedSum (Group/Holding variants) for type-safe tree structure
+- Added HoldingsAggregate type for group-level totals
+- Expanded Holding type with 17 fields (account, security, quantities, values, gains)
+- Added accessorFn field to ColumnDefinition type for custom data extraction
+- Updated holdings-selectors to return typed Holding instances
+- Updated holdings-tree.js to build HoldingsTreeNode instances
+- Created InvestmentReportColumns with context-aware cell renderers
+- Simplified InvestmentReportPage from 190 to 85 lines
+- Fixed DataTable column resize (stopPropagation for dnd-kit compatibility)
+- Fixed FilterChipRow selector memoization warning (constant EMPTY_ARRAY)
+- Smart aggregate display: shares/avgCost/symbol/price shown only when groupBy='security'
