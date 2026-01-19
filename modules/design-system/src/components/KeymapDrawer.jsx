@@ -19,6 +19,10 @@ const T = {
     // Groups intents by their source keymap
     // @sig groupBySource :: [Intent] -> { [source]: [Intent] }
     groupBySource: intents => intents.reduce(T.accumulateBySource, {}),
+
+    // Sorts group entries alphabetically by name
+    // @sig toSortedEntries :: { [String]: [Intent] } -> [[String, [Intent]]]
+    toSortedEntries: groups => Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)),
 }
 
 // Renders a single keybinding row
@@ -58,7 +62,14 @@ const KeymapDrawer = ({ open, onOpenChange, intents, height = 290 }) => {
     const groups = T.groupBySource(intents)
 
     return (
-        <Box style={{ height: `${height}px`, borderTop: '1px solid var(--gray-6)', backgroundColor: 'var(--gray-2)' }}>
+        <Box
+            style={{
+                height: `${height}px`,
+                flexShrink: 0,
+                borderTop: '1px solid var(--gray-6)',
+                backgroundColor: 'var(--gray-2)',
+            }}
+        >
             <Flex justify="between" align="center" px="3" py="2" style={{ borderBottom: '1px solid var(--gray-4)' }}>
                 <Text size="2" weight="medium">
                     Keyboard Shortcuts
@@ -69,7 +80,7 @@ const KeymapDrawer = ({ open, onOpenChange, intents, height = 290 }) => {
             </Flex>
             <ScrollArea style={{ height: `${height - 40}px` }}>
                 <Flex gap="5" p="3" wrap="wrap">
-                    {Object.entries(groups).map(([name, groupIntents]) => (
+                    {T.toSortedEntries(groups).map(([name, groupIntents]) => (
                         <KeybindingGroup key={name} name={name} intents={groupIntents} />
                     ))}
                 </Flex>

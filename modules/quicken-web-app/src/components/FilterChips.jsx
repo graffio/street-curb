@@ -23,21 +23,37 @@ import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Shared styles
+// Cohesion groups
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Generate trigger style with specified width
-// @sig makeChipTriggerStyle :: Number -> Style
-const makeChipTriggerStyle = width => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 'var(--space-1)',
-    padding: 'var(--space-1) var(--space-2)',
-    borderRadius: 'var(--radius-4)',
-    cursor: 'pointer',
-    userSelect: 'none',
-    width,
-})
+const F = {
+    // Creates chip trigger style with specified width
+    // @sig makeChipTriggerStyle :: Number -> Style
+    makeChipTriggerStyle: width => ({
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 'var(--space-1)',
+        padding: 'var(--space-1) var(--space-2)',
+        borderRadius: 'var(--radius-4)',
+        cursor: 'pointer',
+        userSelect: 'none',
+        width,
+    }),
+}
+
+const E = {
+    // Dispatches keymap registration action
+    // @sig handleRegisterKeymap :: Keymap -> void
+    handleRegisterKeymap: keymap => post(Action.RegisterKeymap(keymap)),
+
+    // Dispatches keymap unregistration action
+    // @sig handleUnregisterKeymap :: String -> void
+    handleUnregisterKeymap: id => post(Action.UnregisterKeymap(id)),
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Shared styles
+// ---------------------------------------------------------------------------------------------------------------------
 
 const clearButtonStyle = {
     display: 'inline-flex',
@@ -63,22 +79,6 @@ const detailTextStyle = {
     lineHeight: 1.3,
     paddingLeft: 'var(--space-2)',
 }
-
-/*
- * A filter column with chip and detail lines below
- *
- * @sig FilterColumn :: { chip: ReactElement, details: [String] } -> ReactElement
- */
-const FilterColumn = ({ chip, details }) => (
-    <div style={columnStyle}>
-        {chip}
-        {details.map((line, i) => (
-            <span key={i} style={detailTextStyle}>
-                {line}
-            </span>
-        ))}
-    </div>
-)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constants
@@ -124,14 +124,87 @@ const investmentGroupByOptions = [
 const dateRangeOptions = Object.entries(DATE_RANGES).map(([key, label]) => ({ key, label }))
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Shared helper components
+// ---------------------------------------------------------------------------------------------------------------------
+
+// A filter column with chip and detail lines below
+// @sig FilterColumn :: { chip: ReactElement, details: [String] } -> ReactElement
+const FilterColumn = ({ chip, details }) => (
+    <div style={columnStyle}>
+        {chip}
+        {details.map((line, i) => (
+            <span key={i} style={detailTextStyle}>
+                {line}
+            </span>
+        ))}
+    </div>
+)
+
+// Removable badge for selected items
+// @sig SelectedBadge :: { id: String, label: String, onRemove: Function } -> ReactElement
+const SelectedBadge = ({ id, label, onRemove }) => (
+    <Badge key={id} variant="soft" style={{ cursor: 'pointer' }} onClick={() => onRemove(id)}>
+        {label} ×
+    </Badge>
+)
+
+// Row with checkbox for multi-select lists
+// @sig CheckboxRow :: { id: String, label: String, isSelected: Boolean, onToggle: Function } -> ReactElement
+const CheckboxRow = ({ id, label, isSelected, onToggle }) => (
+    <Flex key={id} align="center" gap="2" style={itemRowStyle} onClick={() => onToggle(id)}>
+        <Checkbox checked={isSelected} />
+        <Text size="2">{label}</Text>
+    </Flex>
+)
+
+// Separator line for option lists
+// @sig OptionSeparator :: { id: String } -> ReactElement
+const OptionSeparator = ({ id }) => (
+    <Box key={id} style={separatorStyle}>
+        <Text size="1" color="gray">
+            ───────────────
+        </Text>
+    </Box>
+)
+
+// Selectable option row for dropdown menus
+// @sig SelectableOption :: { id, label, isSelected, onSelect, closeOnSelect? } -> ReactElement
+const SelectableOption = ({ id, label, isSelected, onSelect, closeOnSelect = true }) => {
+    const style = { ...optionStyle, backgroundColor: isSelected ? 'var(--accent-3)' : 'transparent' }
+    const content = (
+        <Box key={id} style={style} onClick={() => onSelect(id)}>
+            <Text size="2" weight={isSelected ? 'medium' : 'regular'}>
+                {label}
+            </Text>
+        </Box>
+    )
+    return closeOnSelect ? <Popover.Close key={id}>{content}</Popover.Close> : content
+}
+
+// Date range option that handles both separators and selectable options
+// @sig DateRangeOption :: { option: { key, label }, selectedKey: String, onSelect: Function } -> ReactElement
+const DateRangeOption = ({ option, selectedKey, onSelect }) => {
+    const { key, label } = option
+    if (key.startsWith('separator')) return <OptionSeparator key={key} id={key} />
+    const closeOnSelect = key !== 'customDates'
+    return (
+        <SelectableOption
+            key={key}
+            id={key}
+            label={label}
+            isSelected={key === selectedKey}
+            onSelect={onSelect}
+            closeOnSelect={closeOnSelect}
+        />
+    )
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // AccountFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Account filter chip with inline account multi-select popover
- *
- * @sig AccountFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
- */
+// Account filter chip with inline account multi-select popover
+// @sig AccountFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleAccount = accountId => {
         const isSelected = selectedAccounts.includes(accountId)
@@ -144,35 +217,11 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
     }
 
-    // Render a selected account badge
-    // @sig renderSelectedBadge :: String -> ReactElement
-    const renderSelectedBadge = id => {
-        const account = accounts.get(id)
-        return (
-            <Badge key={id} variant="soft" style={{ cursor: 'pointer' }} onClick={() => handleToggleAccount(id)}>
-                {account?.name || id} ×
-            </Badge>
-        )
-    }
-
-    // Render an account row with checkbox
-    // @sig renderAccountRow :: { id: String, name: String } -> ReactElement
-    const renderAccountRow = ({ id, name }) => (
-        <Flex key={id} align="center" gap="2" style={itemRowStyle} onClick={() => handleToggleAccount(id)}>
-            <Checkbox checked={selectedAccounts.includes(id)} />
-            <Text size="2">{name}</Text>
-        </Flex>
-    )
-
     const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
     const accounts = useSelector(S.accounts)
-
-    const baseTriggerStyle = makeChipTriggerStyle(175)
+    const baseTriggerStyle = F.makeChipTriggerStyle(175)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
-
-    // Convert LookupTable to array of {id, name}
     const accountList = accounts ? Array.from(accounts).map(a => ({ id: a.id, name: a.name })) : []
-
     const { length: count } = selectedAccounts
     const label = count > 0 ? `${count} selected` : 'All'
 
@@ -193,11 +242,28 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
             <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 250 }}>
                 {count > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
-                        {selectedAccounts.map(renderSelectedBadge)}
+                        {/* prettier-ignore */}
+                        {selectedAccounts.map(id => (
+                            <SelectedBadge
+                                key={id}
+                                id={id}
+                                label={accounts.get(id)?.name || id}
+                                onRemove={handleToggleAccount}
+                            />
+                        ))}
                     </Flex>
                 )}
                 <ScrollArea style={{ maxHeight: 200 }}>
-                    {accountList.map(renderAccountRow)}
+                    {/* prettier-ignore */}
+                    {accountList.map(({ id, name }) => (
+                        <CheckboxRow
+                            key={id}
+                            id={id}
+                            label={name}
+                            isSelected={selectedAccounts.includes(id)}
+                            onToggle={handleToggleAccount}
+                        />
+                    ))}
                     {accountList.length === 0 && (
                         <Text size="2" color="gray">
                             No accounts available
@@ -213,11 +279,8 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
 // ActionFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Investment action filter chip with inline multi-select popover
- *
- * @sig ActionFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
- */
+// Investment action filter chip with inline multi-select popover
+// @sig ActionFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const ActionFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleAction = actionId => {
         const isSelected = selectedActions.includes(actionId)
@@ -230,39 +293,18 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
     }
 
-    // Render a selected action badge
-    // @sig renderSelectedBadge :: String -> ReactElement
-    const renderSelectedBadge = id => {
-        const action = INVESTMENT_ACTIONS.find(a => a.id === id)
-        return (
-            <Badge key={id} variant="soft" style={{ cursor: 'pointer' }} onClick={() => handleToggleAction(id)}>
-                {action?.label || id} ×
-            </Badge>
-        )
-    }
-
-    // Render an action row with checkbox
-    // @sig renderActionRow :: { id: String, label: String } -> ReactElement
-    const renderActionRow = ({ id, label }) => (
-        <Flex key={id} align="center" gap="2" style={itemRowStyle} onClick={() => handleToggleAction(id)}>
-            <Checkbox checked={selectedActions.includes(id)} />
-            <Text size="2">{label}</Text>
-        </Flex>
-    )
-
     const selectedActions = useSelector(state => S.selectedInvestmentActions(state, viewId))
-    const baseTriggerStyle = makeChipTriggerStyle(150)
+    const baseTriggerStyle = F.makeChipTriggerStyle(150)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
-
     const { length: count } = selectedActions
-    const label = count > 0 ? `${count} selected` : 'All'
+    const chipLabel = count > 0 ? `${count} selected` : 'All'
 
     return (
         <Popover.Root>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
-                        Actions: {label}
+                        Actions: {chipLabel}
                     </Text>
                     {count > 0 && (
                         <Box style={clearButtonStyle} onClick={handleClear}>
@@ -274,10 +316,25 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
             <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 200 }}>
                 {count > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
-                        {selectedActions.map(renderSelectedBadge)}
+                        {selectedActions.map(id => (
+                            <SelectedBadge
+                                key={id}
+                                id={id}
+                                label={INVESTMENT_ACTIONS.find(a => a.id === id)?.label || id}
+                                onRemove={handleToggleAction}
+                            />
+                        ))}
                     </Flex>
                 )}
-                {INVESTMENT_ACTIONS.map(renderActionRow)}
+                {INVESTMENT_ACTIONS.map(({ id, label }) => (
+                    <CheckboxRow
+                        key={id}
+                        id={id}
+                        label={label}
+                        isSelected={selectedActions.includes(id)}
+                        onToggle={handleToggleAction}
+                    />
+                ))}
             </Popover.Content>
         </Popover.Root>
     )
@@ -287,11 +344,8 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
 // CategoryFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Category filter chip with inline category selector popover
- *
- * @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
- */
+// Category filter chip with inline category selector popover
+// @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const handleCategoryAdd = category =>
         post(Action.SetTransactionFilter(viewId, { selectedCategories: [...selectedCategories, category] }))
@@ -308,8 +362,7 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 
     const selectedCategories = useSelector(state => S.selectedCategories(state, viewId))
     const allCategories = useSelector(S.allCategoryNames)
-
-    const baseTriggerStyle = makeChipTriggerStyle(185)
+    const baseTriggerStyle = F.makeChipTriggerStyle(185)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
     const { length: count } = selectedCategories
     const label = count > 0 ? `${count} selected` : 'All'
@@ -344,16 +397,13 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 // AsOfDateChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * As-of date filter chip with single date picker for holdings view
- *
- * @sig AsOfDateChip :: { viewId: String } -> ReactElement
- */
+// As-of date filter chip with single date picker for holdings view
+// @sig AsOfDateChip :: { viewId: String } -> ReactElement
 const AsOfDateChip = ({ viewId }) => {
+    // Converts Date to YYYY-MM-DD string and dispatches filter update
     // @sig handleDateChange :: Date? -> void
     const handleDateChange = date => {
         if (date) {
-            // Format as local YYYY-MM-DD (not UTC) to avoid timezone shift
             const year = date.getFullYear()
             const month = String(date.getMonth() + 1).padStart(2, '0')
             const day = String(date.getDate()).padStart(2, '0')
@@ -364,11 +414,8 @@ const AsOfDateChip = ({ viewId }) => {
     const asOfDate = useSelector(state => S.asOfDate(state, viewId))
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
     const dateInputRef = useRef(null)
-
-    const baseTriggerStyle = makeChipTriggerStyle(180)
+    const baseTriggerStyle = F.makeChipTriggerStyle(180)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: 'var(--accent-3)' }
-
-    // Format date for display
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
     return (
@@ -385,7 +432,15 @@ const AsOfDateChip = ({ viewId }) => {
                     <Text size="1" color="gray" weight="medium">
                         Show holdings as of date
                     </Text>
-                    <KeyboardDateInput ref={dateInputRef} value={dateValue} onChange={handleDateChange} />
+                    <KeyboardDateInput
+                        ref={dateInputRef}
+                        value={dateValue}
+                        onChange={handleDateChange}
+                        keymapId={`${viewId}_date_asof`}
+                        keymapName="Date Input"
+                        onRegisterKeymap={E.handleRegisterKeymap}
+                        onUnregisterKeymap={E.handleUnregisterKeymap}
+                    />
                 </Flex>
             </Popover.Content>
         </Popover.Root>
@@ -396,11 +451,8 @@ const AsOfDateChip = ({ viewId }) => {
 // DateFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Date filter chip with inline date range options popover
- *
- * @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
- */
+// Date filter chip with inline date range options popover
+// @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const DateFilterChip = ({ viewId, isActive = false }) => {
     const handleSelect = key => {
         const dateRange = calculateDateRange(key)
@@ -424,48 +476,14 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
-    // Render a separator row
-    // @sig renderSeparator :: String -> ReactElement
-    const renderSeparator = key => (
-        <Box key={key} style={separatorStyle}>
-            <Text size="1" color="gray">
-                ───────────────
-            </Text>
-        </Box>
-    )
-
-    // Render a selectable option row
-    // @sig renderSelectableOption :: (String, String, Boolean) -> ReactElement
-    const renderSelectableOption = (key, label, isSelected) => {
-        const style = { ...optionStyle, backgroundColor: isSelected ? 'var(--accent-3)' : 'transparent' }
-        const content = (
-            <Box key={key} style={style} onClick={() => handleSelect(key)}>
-                <Text size="2" weight={isSelected ? 'medium' : 'regular'}>
-                    {label}
-                </Text>
-            </Box>
-        )
-
-        // Don't close popover for customDates so user can enter dates
-        return key === 'customDates' ? content : <Popover.Close key={key}>{content}</Popover.Close>
-    }
-
-    // Render a date range option row
-    // @sig renderOption :: { key: String, label: String } -> ReactElement
-    const renderOption = ({ key, label }) => {
-        if (key.startsWith('separator')) return renderSeparator(key)
-        return renderSelectableOption(key, label, key === dateRangeKey)
-    }
-
+    const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const startDateRef = useRef(null)
     const endDateRef = useRef(null)
-
     const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.customEndDate(state, viewId))
-    const baseTriggerStyle = makeChipTriggerStyle(180)
+    const baseTriggerStyle = F.makeChipTriggerStyle(180)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
-
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
 
     return (
@@ -483,7 +501,16 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                 </Box>
             </Popover.Trigger>
             <Popover.Content style={{ padding: 'var(--space-1)', width: 220 }}>
-                <Flex direction="column">{dateRangeOptions.map(renderOption)}</Flex>
+                <Flex direction="column">
+                    {dateRangeOptions.map(opt => (
+                        <DateRangeOption
+                            key={opt.key}
+                            option={opt}
+                            selectedKey={dateRangeKey}
+                            onSelect={handleSelect}
+                        />
+                    ))}
+                </Flex>
                 {dateRangeKey === 'customDates' && (
                     <Flex direction="column" gap="2" mt="2" p="2" style={{ borderTop: '1px solid var(--gray-5)' }}>
                         <Flex direction="column" gap="1">
@@ -496,6 +523,10 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 onChange={handleCustomStartChange}
                                 placeholder="MM/DD/YYYY"
                                 onTabOut={() => endDateRef?.current?.focus('month')}
+                                keymapId={`${viewId}_date_start`}
+                                keymapName="Date Input"
+                                onRegisterKeymap={handleRegisterKeymap}
+                                onUnregisterKeymap={handleUnregisterKeymap}
                             />
                         </Flex>
                         <Flex direction="column" gap="1">
@@ -508,6 +539,10 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 onChange={handleCustomEndChange}
                                 placeholder="MM/DD/YYYY"
                                 onTabOut={() => startDateRef?.current?.focus('month')}
+                                keymapId={`${viewId}_date_end`}
+                                keymapName="Date Input"
+                                onRegisterKeymap={handleRegisterKeymap}
+                                onUnregisterKeymap={handleUnregisterKeymap}
                             />
                         </Flex>
                     </Flex>
@@ -521,36 +556,17 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 // GroupByFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Group by filter chip with inline dimension selector popover
- *
- * @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
- */
+// Group by filter chip with inline dimension selector popover
+// @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
 const GroupByFilterChip = ({ viewId, options }) => {
     const handleSelect = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
 
-    // Render a group by option row
-    // @sig renderOption :: { value: String, label: String } -> ReactElement
-    const renderOption = ({ value, label }) => {
-        const isSelected = value === (groupBy || resolvedOptions[0]?.value)
-        const style = { ...optionStyle, backgroundColor: isSelected ? 'var(--accent-3)' : 'transparent' }
-        return (
-            <Popover.Close key={value}>
-                <Box style={style} onClick={() => handleSelect(value)}>
-                    <Text size="2" weight={isSelected ? 'medium' : 'regular'}>
-                        {label}
-                    </Text>
-                </Box>
-            </Popover.Close>
-        )
-    }
-
     const resolvedOptions = options ?? defaultGroupByOptions
     const groupBy = useSelector(state => S.groupBy(state, viewId))
-
-    const baseTriggerStyle = makeChipTriggerStyle(155)
+    const baseTriggerStyle = F.makeChipTriggerStyle(155)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: 'var(--accent-3)' }
     const currentOption = resolvedOptions.find(o => o.value === groupBy) || resolvedOptions[0]
+    const defaultValue = resolvedOptions[0]?.value
 
     return (
         <Popover.Root>
@@ -562,7 +578,17 @@ const GroupByFilterChip = ({ viewId, options }) => {
                 </Box>
             </Popover.Trigger>
             <Popover.Content style={{ padding: 'var(--space-1)' }}>
-                <Flex direction="column">{resolvedOptions.map(renderOption)}</Flex>
+                <Flex direction="column">
+                    {resolvedOptions.map(({ value, label }) => (
+                        <SelectableOption
+                            key={value}
+                            id={value}
+                            label={label}
+                            isSelected={value === (groupBy || defaultValue)}
+                            onSelect={handleSelect}
+                        />
+                    ))}
+                </Flex>
             </Popover.Content>
         </Popover.Root>
     )
@@ -572,11 +598,8 @@ const GroupByFilterChip = ({ viewId, options }) => {
 // SearchFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Search filter chip with inline text input popover
- *
- * @sig SearchFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
- */
+// Search filter chip with inline text input popover
+// @sig SearchFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SearchFilterChip = ({ viewId, isActive = false }) => {
     const handleChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
 
@@ -591,9 +614,8 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
 
     const inputRef = useRef(null)
     const filterQuery = useSelector(state => S.filterQuery(state, viewId))
-    const baseTriggerStyle = makeChipTriggerStyle(120)
+    const baseTriggerStyle = F.makeChipTriggerStyle(120)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
-
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
 
@@ -633,16 +655,9 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
 // SecurityFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Security filter chip with inline security multi-select popover
- *
- * @sig SecurityFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
- */
+// Security filter chip with inline security multi-select popover
+// @sig SecurityFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SecurityFilterChip = ({ viewId, isActive = false }) => {
-    /*
-     * Toggle security selection in filter
-     * @sig handleToggleSecurity :: String -> void
-     */
     const handleToggleSecurity = securityId => {
         const isSelected = selectedSecurities.includes(securityId)
         const updated = isSelected
@@ -656,46 +671,20 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
     }
 
-    // Render a selected security badge
-    // @sig renderSelectedBadge :: String -> ReactElement
-    const renderSelectedBadge = id => {
-        const security = securities.get(id)
-        return (
-            <Badge key={id} variant="soft" style={{ cursor: 'pointer' }} onClick={() => handleToggleSecurity(id)}>
-                {security?.symbol || id} ×
-            </Badge>
-        )
-    }
-
-    // Render a security row with checkbox
-    // @sig renderSecurityRow :: { id: String, symbol: String, name: String } -> ReactElement
-    const renderSecurityRow = ({ id, symbol, name }) => (
-        <Flex key={id} align="center" gap="2" style={itemRowStyle} onClick={() => handleToggleSecurity(id)}>
-            <Checkbox checked={selectedSecurities.includes(id)} />
-            <Text size="2">
-                {symbol} - {name}
-            </Text>
-        </Flex>
-    )
-
-    // @sig toSecurityItem :: Security -> { id: String, symbol: String, name: String }
-    const toSecurityItem = ({ id, symbol, name }) => ({ id, symbol, name })
-
     const selectedSecurities = useSelector(state => S.selectedSecurities(state, viewId))
     const securities = useSelector(S.securities)
-    const securityList = securities ? Array.from(securities).map(toSecurityItem) : []
-    const baseTriggerStyle = makeChipTriggerStyle(175)
+    const securityList = securities ? Array.from(securities).map(({ id, symbol, name }) => ({ id, symbol, name })) : []
+    const baseTriggerStyle = F.makeChipTriggerStyle(175)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
-
     const { length: count } = selectedSecurities
-    const label = count > 0 ? `${count} selected` : 'All'
+    const chipLabel = count > 0 ? `${count} selected` : 'All'
 
     return (
         <Popover.Root>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
-                        Securities: {label}
+                        Securities: {chipLabel}
                     </Text>
                     {count > 0 && (
                         <Box style={clearButtonStyle} onClick={handleClear}>
@@ -707,11 +696,26 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
             <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 300 }}>
                 {count > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
-                        {selectedSecurities.map(renderSelectedBadge)}
+                        {selectedSecurities.map(id => (
+                            <SelectedBadge
+                                key={id}
+                                id={id}
+                                label={securities.get(id)?.symbol || id}
+                                onRemove={handleToggleSecurity}
+                            />
+                        ))}
                     </Flex>
                 )}
                 <ScrollArea style={{ maxHeight: 350 }}>
-                    {securityList.map(renderSecurityRow)}
+                    {securityList.map(({ id, symbol, name }) => (
+                        <CheckboxRow
+                            key={id}
+                            id={id}
+                            label={`${symbol} - ${name}`}
+                            isSelected={selectedSecurities.includes(id)}
+                            onToggle={handleToggleSecurity}
+                        />
+                    ))}
                     {securityList.length === 0 && (
                         <Text size="2" color="gray">
                             No securities available
@@ -723,7 +727,11 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
     )
 }
 
-export {
+// ---------------------------------------------------------------------------------------------------------------------
+// Export
+// ---------------------------------------------------------------------------------------------------------------------
+
+const FilterChips = {
     AccountFilterChip,
     ActionFilterChip,
     AsOfDateChip,
@@ -735,3 +743,5 @@ export {
     SearchFilterChip,
     SecurityFilterChip,
 }
+
+export { FilterChips }

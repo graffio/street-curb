@@ -6,15 +6,10 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors/index.js'
 import { formatDateRange } from '../utils/formatters.js'
-import {
-    AccountFilterChip,
-    AsOfDateChip,
-    CategoryFilterChip,
-    DateFilterChip,
-    FilterColumn,
-    GroupByFilterChip,
-    SearchFilterChip,
-} from './filter-chips.jsx'
+import { FilterChips } from './FilterChips.jsx'
+
+const { AccountFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
+const { FilterColumn, GroupByFilterChip, SearchFilterChip } = FilterChips
 
 const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 
