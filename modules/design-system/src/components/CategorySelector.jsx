@@ -78,9 +78,14 @@ const SelectedCategories = ({ selectedCategories, onCategoryRemoved }) => {
 const scrollAreaStyle = { border: '1px solid var(--gray-6)', zIndex: 1000, height: '200px' }
 
 // Dropdown list item for a single category with highlight and selected state
-// @sig CategoryItem :: { category, isHighlighted, isSelected, isLast, onClick, onMouseEnter } -> ReactElement
-const CategoryItem = ({ category, isHighlighted, isSelected, isLast, onClick, onMouseEnter }) => (
-    <Box style={T.toDropdownItemStyle(isHighlighted, isSelected, isLast)} onClick={onClick} onMouseEnter={onMouseEnter}>
+// @sig CategoryItem :: { category, isHighlighted, isSelected, isLast, onClick, onMouseEnter, itemRef? } -> ReactElement
+const CategoryItem = ({ category, isHighlighted, isSelected, isLast, onClick, onMouseEnter, itemRef }) => (
+    <Box
+        ref={itemRef}
+        style={T.toDropdownItemStyle(isHighlighted, isSelected, isLast)}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+    >
         <Flex justify="between" align="center">
             <Text size="2">{category}</Text>
             {isSelected && <Text size="2">✓</Text>}
@@ -225,6 +230,7 @@ const CategoryDropdown = ({
             isLast={i === filteredCount - 1}
             onClick={() => handleCategoryClick(cat)}
             onMouseEnter={() => setHighlightedIndex(i)}
+            itemRef={i === highlightedIndex ? highlightedRef : null}
         />
     )
 
@@ -233,6 +239,7 @@ const CategoryDropdown = ({
     const [isOpen, setIsOpen] = useState(false)
     const [highlightedIndex, setHighlightedIndex] = useState(0)
     const textFieldRef = useRef(null)
+    const highlightedRef = useRef(null)
 
     // Derived state
     const filteredCategories = filterCategories(categories, searchText)
@@ -240,6 +247,7 @@ const CategoryDropdown = ({
 
     // Effects
     useEffect(() => setHighlightedIndex(0), [filteredCount])
+    useEffect(() => highlightedRef.current?.scrollIntoView({ block: 'nearest' }), [highlightedIndex])
 
     const keymap = useMemo(createKeymapMemo, [
         isOpen,
