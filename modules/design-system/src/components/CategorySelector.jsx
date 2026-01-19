@@ -1,50 +1,147 @@
 // ABOUTME: Hierarchical category filtering component with search
 // ABOUTME: Allows users to select categories with incremental search and keyboard navigation
 
-import { containsIgnoreCase } from '@graffio/functional'
+import { containsIgnoreCase, LookupTable } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import { Badge, Box, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+
+const T = {
+    // Converts highlight state and position to dropdown item style object
+    // @sig toDropdownItemStyle :: (Boolean, Boolean) -> Object
+    toDropdownItemStyle: (isHighlighted, isLast) => ({
+        padding: 'var(--space-2)',
+        cursor: 'pointer',
+        borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
+        backgroundColor: isHighlighted ? 'var(--gray-3)' : 'transparent',
+    }),
+}
+
+const F = {
+    // Creates keymap with navigation intents for category selector dropdown
+    // @sig createCategorySelectorKeymap :: (String, String, Object) -> Keymap
+    createCategorySelectorKeymap: (keymapId, keymapName, handlers) => {
+        const { Intent, Keymap } = KeymapModule
+        const { onDown, onUp, onEnter, onEscape } = handlers
+
+        const intents = LookupTable(
+            [
+                Intent('Move down', ['ArrowDown'], onDown),
+                Intent('Move up', ['ArrowUp'], onUp),
+                Intent('Select', ['Enter'], onEnter),
+                Intent('Dismiss', ['Escape'], onEscape),
+            ],
+            Intent,
+            'description',
+        )
+
+        return Keymap(keymapId, keymapName, 10, false, null, intents)
+    },
+}
+
+const E = {
+    // Registers keymap and returns cleanup function that unregisters it
+    // @sig keymapRegistrationEffect :: (Keymap, String, Function, Function) -> (() -> void)
+    keymapRegistrationEffect: (keymap, keymapId, onRegister, onUnregister) => {
+        onRegister(keymap)
+        return () => onUnregister(keymapId)
+    },
+}
+
+const badgeStyle = { cursor: 'pointer' }
+
+// Removable badge displaying a single category
+// @sig CategoryBadge :: { category: String, onRemove: () -> void } -> ReactElement
+const CategoryBadge = ({ category, onRemove }) => (
+    <Badge variant="soft" style={badgeStyle} onClick={onRemove}>
+        {category} ×
+    </Badge>
+)
 
 /**
  * Displays selected categories as removable badges
  * @sig SelectedCategories :: ({ selectedCategories: [String], onCategoryRemoved: String -> () }) -> ReactElement
  */
 const SelectedCategories = ({ selectedCategories, onCategoryRemoved }) => {
-    const handleBadgeClick = category => () => onCategoryRemoved(category)
-
-    const renderCategoryBadge = category => (
-        <Badge key={category} variant="soft" style={{ cursor: 'pointer' }} onClick={handleBadgeClick(category)}>
-            {category} ×
-        </Badge>
-    )
-
     if (selectedCategories.length === 0) return null
 
     return (
         <Flex wrap="wrap" gap="1">
-            {selectedCategories.map(renderCategoryBadge)}
+            {selectedCategories.map(category => (
+                <CategoryBadge key={category} category={category} onRemove={() => onCategoryRemoved(category)} />
+            ))}
         </Flex>
     )
 }
 
 const scrollAreaStyle = { border: '1px solid var(--gray-6)', zIndex: 1000, height: '200px' }
 
+// Dropdown list item for a single category with highlight state
+// @sig CategoryItem :: { category, isHighlighted, isLast, onClick, onMouseEnter } -> ReactElement
+const CategoryItem = ({ category, isHighlighted, isLast, onClick, onMouseEnter }) => (
+    <Box style={T.toDropdownItemStyle(isHighlighted, isLast)} onClick={onClick} onMouseEnter={onMouseEnter}>
+        <Text size="2">{category}</Text>
+    </Box>
+)
+
 /**
  * Category dropdown with search and keyboard navigation
  * @sig CategoryDropdown :: CategoryDropdownProps -> ReactElement
  *     CategoryDropdownProps = { categories: [String], selectedCategories: [String], onCategoryAdded: String -> () }
  */
-const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) => {
-    // @sig filterCategories :: ([String], String) -> [String]
-    const filterCategories = (cats, searchText) => {
-        if (!searchText.trim()) return cats
-        return cats.filter(containsIgnoreCase(searchText))
+const CategoryDropdown = ({
+    categories,
+    selectedCategories,
+    onCategoryAdded,
+    keymapId,
+    keymapName = 'Category Selector',
+    onRegisterKeymap,
+    onUnregisterKeymap,
+}) => {
+    // Functions defined before hooks (closures capture bindings, not values)
+    const filterCategories = (cats, text) => {
+        if (!text.trim()) return cats
+        return cats.filter(containsIgnoreCase(text))
     }
 
-    const resetHighlightedIndex = () => setHighlightedIndex(0)
-    const handleInputBlur = () => setTimeout(() => setIsOpen(false), 150)
+    const moveDown = () => setHighlightedIndex(prev => (prev < availableCount - 1 ? prev + 1 : 0))
+    const moveUp = () => setHighlightedIndex(prev => (prev > 0 ? prev - 1 : availableCount - 1))
 
+    // Adds highlighted category and resets dropdown state
+    // @sig selectCategory :: () -> void
+    const selectCategory = () => {
+        if (availableCount === 0) return
+        onCategoryAdded(availableCategories[highlightedIndex])
+        setSearchText('')
+        setIsOpen(false)
+        setHighlightedIndex(0)
+    }
+
+    const dismiss = () => {
+        setSearchText('')
+        setIsOpen(false)
+        setHighlightedIndex(0)
+    }
+
+    // Creates keymap when dropdown is open and keymap props provided
+    // @sig createKeymapMemo :: () -> Keymap?
+    const createKeymapMemo = () => {
+        if (!isOpen || !onRegisterKeymap || !keymapId) return null
+        return F.createCategorySelectorKeymap(keymapId, keymapName, {
+            onDown: moveDown,
+            onUp: moveUp,
+            onEnter: selectCategory,
+            onEscape: dismiss,
+        })
+    }
+
+    const keymapRegistrationEffect = () => {
+        if (!keymap || !onRegisterKeymap || !onUnregisterKeymap) return undefined
+        return E.keymapRegistrationEffect(keymap, keymapId, onRegisterKeymap, onUnregisterKeymap)
+    }
+
+    // Selects category by click and refocuses input
     // @sig handleCategoryClick :: String -> void
     const handleCategoryClick = category => {
         onCategoryAdded(category)
@@ -54,20 +151,15 @@ const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) =
         textFieldRef.current?.focus()
     }
 
-    const handleCategoryMouseEnter = index => setHighlightedIndex(index)
-
-    // @sig handleEscapeKey :: Event -> void
     const handleEscapeKey = event => {
         event.preventDefault()
-        setSearchText('')
-        setIsOpen(false)
-        setHighlightedIndex(0)
+        dismiss()
     }
 
+    // Opens dropdown on ArrowDown or Enter when categories available
     // @sig handleOpenDropdown :: Event -> void
     const handleOpenDropdown = event => {
-        const { length } = availableCategories
-        if ((event.key === 'ArrowDown' || event.key === 'Enter') && length > 0) {
+        if ((event.key === 'ArrowDown' || event.key === 'Enter') && availableCount > 0) {
             setIsOpen(true)
             event.preventDefault()
         }
@@ -75,26 +167,20 @@ const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) =
 
     const handleArrowDown = event => {
         event.preventDefault()
-        setHighlightedIndex(prev => (prev < availableCategories.length - 1 ? prev + 1 : 0))
+        moveDown()
     }
 
     const handleArrowUp = event => {
         event.preventDefault()
-        setHighlightedIndex(prev => (prev > 0 ? prev - 1 : availableCategories.length - 1))
+        moveUp()
     }
 
-    // @sig handleEnterKey :: Event -> void
     const handleEnterKey = event => {
         event.preventDefault()
-        if (availableCategories.length === 0) return
-
-        const selectedCategory = availableCategories[highlightedIndex]
-        onCategoryAdded(selectedCategory)
-        setSearchText('')
-        setIsOpen(false)
-        setHighlightedIndex(0)
+        selectCategory()
     }
 
+    // Routes keyboard events to appropriate handlers
     // @sig handleKeyDown :: Event -> void
     const handleKeyDown = event => {
         const { key } = event
@@ -105,59 +191,59 @@ const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) =
         if (key === 'Escape') return handleEscapeKey(event)
     }
 
+    // Updates search text and opens dropdown if matches found
     // @sig handleInputChange :: Event -> void
     const handleInputChange = event => {
         const value = event.target.value
         setSearchText(value)
-
-        // Check availability with the NEW search value, not the stale state
         const newFiltered = filterCategories(categories, value)
         const newAvailable = newFiltered.filter(cat => !selectedCategories.includes(cat))
         setIsOpen(newAvailable.length > 0)
     }
 
     const handleInputFocus = () => {
-        const { length } = availableCategories
-        if (length > 0) setIsOpen(true)
+        if (availableCount > 0) setIsOpen(true)
     }
 
-    // @sig getDropdownItemStyle :: (Boolean, Boolean) -> Object
-    const getDropdownItemStyle = (isHighlighted, isLast) => ({
-        padding: 'var(--space-2)',
-        cursor: 'pointer',
-        borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
-        backgroundColor: isHighlighted ? 'var(--gray-3)' : 'transparent',
-    })
+    const handleInputBlur = () => setTimeout(() => setIsOpen(false), 150)
 
-    // @sig renderCategoryItem :: (String, Number) -> ReactElement
-    const renderCategoryItem = (category, index) => {
-        const isLast = index === availableCategories.length - 1
-        return (
-            <Box
-                key={category}
-                style={getDropdownItemStyle(index === highlightedIndex, isLast)}
-                onClick={() => handleCategoryClick(category)}
-                onMouseEnter={() => handleCategoryMouseEnter(index)}
-            >
-                <Text size="2">{category}</Text>
-            </Box>
-        )
-    }
+    // Maps category and index to CategoryItem element
+    // @sig toCategoryItem :: (String, Number) -> ReactElement
+    const toCategoryItem = (cat, i) => (
+        <CategoryItem
+            key={cat}
+            category={cat}
+            isHighlighted={i === highlightedIndex}
+            isLast={i === availableCount - 1}
+            onClick={() => handleCategoryClick(cat)}
+            onMouseEnter={() => setHighlightedIndex(i)}
+        />
+    )
 
+    // Hooks
     const [searchText, setSearchText] = useState('')
     const [isOpen, setIsOpen] = useState(false)
     const [highlightedIndex, setHighlightedIndex] = useState(0)
     const textFieldRef = useRef(null)
 
-    // Filter categories based on search text
+    // Derived state
     const filteredCategories = filterCategories(categories, searchText)
-
-    // Show available categories (exclude already selected ones)
     const availableCategories = filteredCategories.filter(cat => !selectedCategories.includes(cat))
     const { length: availableCount } = availableCategories
 
-    // Reset highlighted index when available categories change
-    useEffect(resetHighlightedIndex, [availableCount])
+    // Effects
+    useEffect(() => setHighlightedIndex(0), [availableCount])
+
+    const keymap = useMemo(createKeymapMemo, [
+        isOpen,
+        onRegisterKeymap,
+        keymapId,
+        keymapName,
+        highlightedIndex,
+        availableCount,
+    ])
+
+    useEffect(keymapRegistrationEffect, [keymap, keymapId, onRegisterKeymap, onUnregisterKeymap])
 
     const showNoMatches = searchText && availableCount === 0
     const showAllSelected = !searchText && availableCount === 0 && selectedCategories.length > 0
@@ -175,8 +261,8 @@ const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) =
                     onBlur={handleInputBlur}
                 />
 
-                {isOpen && availableCategories.length > 0 && (
-                    <ScrollArea style={scrollAreaStyle}>{availableCategories.map(renderCategoryItem)}</ScrollArea>
+                {isOpen && availableCount > 0 && (
+                    <ScrollArea style={scrollAreaStyle}>{availableCategories.map(toCategoryItem)}</ScrollArea>
                 )}
             </Box>
 
@@ -200,19 +286,30 @@ const CategoryDropdown = ({ categories, selectedCategories, onCategoryAdded }) =
  * @sig CategorySelector :: CategorySelectorProps -> ReactElement
  *     CategorySelectorProps = { categories, selectedCategories, onCategoryAdded, onCategoryRemoved }
  */
-const CategorySelector = props => {
-    const { categories, selectedCategories, onCategoryAdded, onCategoryRemoved, style = {} } = props
-    return (
-        <Flex direction="column" gap="2" style={{ ...style }}>
-            <SelectedCategories selectedCategories={selectedCategories} onCategoryRemoved={onCategoryRemoved} />
-            <CategoryDropdown
-                categories={categories}
-                selectedCategories={selectedCategories}
-                onCategoryAdded={onCategoryAdded}
-            />
-        </Flex>
-    )
-}
+const CategorySelector = ({
+    categories,
+    selectedCategories,
+    onCategoryAdded,
+    onCategoryRemoved,
+    style = {},
+    keymapId,
+    keymapName,
+    onRegisterKeymap,
+    onUnregisterKeymap,
+}) => (
+    <Flex direction="column" gap="2" style={{ ...style }}>
+        <SelectedCategories selectedCategories={selectedCategories} onCategoryRemoved={onCategoryRemoved} />
+        <CategoryDropdown
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onCategoryAdded={onCategoryAdded}
+            keymapId={keymapId}
+            keymapName={keymapName}
+            onRegisterKeymap={onRegisterKeymap}
+            onUnregisterKeymap={onUnregisterKeymap}
+        />
+    </Flex>
+)
 
 CategorySelector.propTypes = {
     categories: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -220,6 +317,10 @@ CategorySelector.propTypes = {
     onCategoryAdded: PropTypes.func.isRequired,
     onCategoryRemoved: PropTypes.func.isRequired,
     style: PropTypes.object,
+    keymapId: PropTypes.string,
+    keymapName: PropTypes.string,
+    onRegisterKeymap: PropTypes.func,
+    onUnregisterKeymap: PropTypes.func,
 }
 
 export { CategorySelector }
