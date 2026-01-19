@@ -4,6 +4,16 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [design-system] [quicken-web-app] CategorySelector Keymap Support (2026-01-19)
+**Purpose:** Add keymap registration to CategorySelector so keyboard shortcuts appear in KeymapDrawer
+
+- Added F.createCategorySelectorKeymap factory and E.keymapRegistrationEffect helper
+- Four intents: Move down (↓), Move up (↑), Select (Enter), Dismiss (Escape)
+- Keymap active only when dropdown is open (guards: isOpen && onRegisterKeymap && keymapId)
+- Backward compatible: works without keymap props
+- Wired keymap props to CategorySelector in FilterChips.jsx CategoryFilterChip
+- Fixed pre-existing style violations: extracted render functions to components, map callbacks to named functions
+
 ## [quicken-web-app] Page Convention Violations Fix (2026-01-02)
 **Purpose:** Refactor register pages to follow handler/selector/layer conventions
 
@@ -748,3 +758,15 @@ This document summarizes the specifications that were previously archived in `sp
 - Fixed DataTable column resize (stopPropagation for dnd-kit compatibility)
 - Fixed FilterChipRow selector memoization warning (constant EMPTY_ARRAY)
 - Smart aggregate display: shares/avgCost/symbol/price shown only when groupBy='security'
+
+## [infrastructure] KeymapDrawer Fixes (2026-01-19)
+**Purpose:** Fix three KeymapDrawer issues: visibility, ordering, and date input integration
+
+- Added flexShrink: 0 to KeymapDrawer container to prevent flex collapse from TabGroupContainer
+- Added T.toSortedEntries transformer to sort keymap groups alphabetically before rendering
+- Added keymap registration props to KeyboardDateInput: keymapId, keymapName, onRegisterKeymap, onUnregisterKeymap
+- Created F.createDateInputKeymap factory for date input keyboard shortcuts
+- Wired up keymap registration in FilterChips date input components (AsOfDateChip, DateFilterChip)
+- Refactored FilterChips.jsx: renamed from filter-chips.jsx, moved to single FilterChips export object
+- Extracted helper components: SelectedBadge, CheckboxRow, OptionSeparator, SelectableOption, DateRangeOption
+- Fixed function declaration ordering: handlers before hooks (per style validator)
