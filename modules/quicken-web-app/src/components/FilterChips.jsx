@@ -395,7 +395,7 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
                     selectedCategories={selectedCategories}
                     onCategoryAdded={handleCategoryAdd}
                     onCategoryRemoved={handleCategoryRemove}
-                    keymapId={`category-filter-${viewId}`}
+                    keymapId={`${viewId}_category`}
                     keymapName="Category Filter"
                     onRegisterKeymap={E.handleRegisterKeymap}
                     onUnregisterKeymap={E.handleUnregisterKeymap}
