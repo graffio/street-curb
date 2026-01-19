@@ -8,13 +8,13 @@ import PropTypes from 'prop-types'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 const T = {
-    // Converts highlight state and position to dropdown item style object
-    // @sig toDropdownItemStyle :: (Boolean, Boolean) -> Object
-    toDropdownItemStyle: (isHighlighted, isLast) => ({
+    // Converts highlight/selected state and position to dropdown item style object
+    // @sig toDropdownItemStyle :: (Boolean, Boolean, Boolean) -> Object
+    toDropdownItemStyle: (isHighlighted, isSelected, isLast) => ({
         padding: 'var(--space-2)',
         cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
-        backgroundColor: isHighlighted ? 'var(--gray-3)' : 'transparent',
+        backgroundColor: isHighlighted ? 'var(--accent-4)' : isSelected ? 'var(--accent-3)' : 'transparent',
     }),
 }
 
@@ -29,7 +29,7 @@ const F = {
             [
                 Intent('Move down', ['ArrowDown'], onDown),
                 Intent('Move up', ['ArrowUp'], onUp),
-                Intent('Select', ['Enter'], onEnter),
+                Intent('Toggle', ['Enter'], onEnter),
                 Intent('Dismiss', ['Escape'], onEscape),
             ],
             Intent,
@@ -77,23 +77,27 @@ const SelectedCategories = ({ selectedCategories, onCategoryRemoved }) => {
 
 const scrollAreaStyle = { border: '1px solid var(--gray-6)', zIndex: 1000, height: '200px' }
 
-// Dropdown list item for a single category with highlight state
-// @sig CategoryItem :: { category, isHighlighted, isLast, onClick, onMouseEnter } -> ReactElement
-const CategoryItem = ({ category, isHighlighted, isLast, onClick, onMouseEnter }) => (
-    <Box style={T.toDropdownItemStyle(isHighlighted, isLast)} onClick={onClick} onMouseEnter={onMouseEnter}>
-        <Text size="2">{category}</Text>
+// Dropdown list item for a single category with highlight and selected state
+// @sig CategoryItem :: { category, isHighlighted, isSelected, isLast, onClick, onMouseEnter } -> ReactElement
+const CategoryItem = ({ category, isHighlighted, isSelected, isLast, onClick, onMouseEnter }) => (
+    <Box style={T.toDropdownItemStyle(isHighlighted, isSelected, isLast)} onClick={onClick} onMouseEnter={onMouseEnter}>
+        <Flex justify="between" align="center">
+            <Text size="2">{category}</Text>
+            {isSelected && <Text size="2">✓</Text>}
+        </Flex>
     </Box>
 )
 
 /**
  * Category dropdown with search and keyboard navigation
  * @sig CategoryDropdown :: CategoryDropdownProps -> ReactElement
- *     CategoryDropdownProps = { categories: [String], selectedCategories: [String], onCategoryAdded: String -> () }
+ *     CategoryDropdownProps = { categories, selectedCategories, onCategoryAdded, onCategoryRemoved }
  */
 const CategoryDropdown = ({
     categories,
     selectedCategories,
     onCategoryAdded,
+    onCategoryRemoved,
     keymapId,
     keymapName = 'Category Selector',
     onRegisterKeymap,
@@ -105,14 +109,17 @@ const CategoryDropdown = ({
         return cats.filter(containsIgnoreCase(text))
     }
 
-    const moveDown = () => setHighlightedIndex(prev => (prev < availableCount - 1 ? prev + 1 : 0))
-    const moveUp = () => setHighlightedIndex(prev => (prev > 0 ? prev - 1 : availableCount - 1))
+    const moveDown = () => setHighlightedIndex(prev => (prev < filteredCount - 1 ? prev + 1 : 0))
+    const moveUp = () => setHighlightedIndex(prev => (prev > 0 ? prev - 1 : filteredCount - 1))
 
-    // Adds highlighted category and resets search text (keeps dropdown open for more selections)
-    // @sig selectCategory :: () -> void
-    const selectCategory = () => {
-        if (availableCount === 0) return
-        onCategoryAdded(availableCategories[highlightedIndex])
+    // Toggles highlighted category selection and resets search text
+    // @sig toggleCategory :: () -> void
+    const toggleCategory = () => {
+        if (filteredCount === 0) return
+        const category = filteredCategories[highlightedIndex]
+        const isSelected = selectedCategories.includes(category)
+        if (isSelected) onCategoryRemoved(category)
+        else onCategoryAdded(category)
         setSearchText('')
         setHighlightedIndex(0)
     }
@@ -130,7 +137,7 @@ const CategoryDropdown = ({
         return F.createCategorySelectorKeymap(keymapId, keymapName, {
             onDown: moveDown,
             onUp: moveUp,
-            onEnter: selectCategory,
+            onEnter: toggleCategory,
             onEscape: dismiss,
         })
     }
@@ -140,10 +147,12 @@ const CategoryDropdown = ({
         return E.keymapRegistrationEffect(keymap, keymapId, onRegisterKeymap, onUnregisterKeymap)
     }
 
-    // Selects category by click and refocuses input
+    // Toggles category selection by click and refocuses input
     // @sig handleCategoryClick :: String -> void
     const handleCategoryClick = category => {
-        onCategoryAdded(category)
+        const isSelected = selectedCategories.includes(category)
+        if (isSelected) onCategoryRemoved(category)
+        else onCategoryAdded(category)
         setSearchText('')
         setIsOpen(false)
         setHighlightedIndex(0)
@@ -158,7 +167,7 @@ const CategoryDropdown = ({
     // Opens dropdown on ArrowDown or Enter when categories available
     // @sig handleOpenDropdown :: Event -> void
     const handleOpenDropdown = event => {
-        if ((event.key === 'ArrowDown' || event.key === 'Enter') && availableCount > 0) {
+        if ((event.key === 'ArrowDown' || event.key === 'Enter') && filteredCount > 0) {
             setIsOpen(true)
             event.preventDefault()
         }
@@ -176,7 +185,7 @@ const CategoryDropdown = ({
 
     const handleEnterKey = event => {
         event.preventDefault()
-        selectCategory()
+        toggleCategory()
     }
 
     // Routes keyboard events to appropriate handlers
@@ -196,12 +205,11 @@ const CategoryDropdown = ({
         const value = event.target.value
         setSearchText(value)
         const newFiltered = filterCategories(categories, value)
-        const newAvailable = newFiltered.filter(cat => !selectedCategories.includes(cat))
-        setIsOpen(newAvailable.length > 0)
+        setIsOpen(newFiltered.length > 0)
     }
 
     const handleInputFocus = () => {
-        if (availableCount > 0) setIsOpen(true)
+        if (filteredCount > 0) setIsOpen(true)
     }
 
     const handleInputBlur = () => setTimeout(() => setIsOpen(false), 150)
@@ -213,7 +221,8 @@ const CategoryDropdown = ({
             key={cat}
             category={cat}
             isHighlighted={i === highlightedIndex}
-            isLast={i === availableCount - 1}
+            isSelected={selectedCategories.includes(cat)}
+            isLast={i === filteredCount - 1}
             onClick={() => handleCategoryClick(cat)}
             onMouseEnter={() => setHighlightedIndex(i)}
         />
@@ -227,11 +236,10 @@ const CategoryDropdown = ({
 
     // Derived state
     const filteredCategories = filterCategories(categories, searchText)
-    const availableCategories = filteredCategories.filter(cat => !selectedCategories.includes(cat))
-    const { length: availableCount } = availableCategories
+    const { length: filteredCount } = filteredCategories
 
     // Effects
-    useEffect(() => setHighlightedIndex(0), [availableCount])
+    useEffect(() => setHighlightedIndex(0), [filteredCount])
 
     const keymap = useMemo(createKeymapMemo, [
         isOpen,
@@ -239,13 +247,12 @@ const CategoryDropdown = ({
         keymapId,
         keymapName,
         highlightedIndex,
-        availableCount,
+        filteredCount,
     ])
 
     useEffect(keymapRegistrationEffect, [keymap, keymapId, onRegisterKeymap, onUnregisterKeymap])
 
-    const showNoMatches = searchText && availableCount === 0
-    const showAllSelected = !searchText && availableCount === 0 && selectedCategories.length > 0
+    const showNoMatches = searchText && filteredCount === 0
 
     return (
         <>
@@ -260,20 +267,14 @@ const CategoryDropdown = ({
                     onBlur={handleInputBlur}
                 />
 
-                {isOpen && availableCount > 0 && (
-                    <ScrollArea style={scrollAreaStyle}>{availableCategories.map(toCategoryItem)}</ScrollArea>
+                {isOpen && filteredCount > 0 && (
+                    <ScrollArea style={scrollAreaStyle}>{filteredCategories.map(toCategoryItem)}</ScrollArea>
                 )}
             </Box>
 
             {showNoMatches && (
                 <Text size="1" color="gray">
-                    No available categories match "{searchText}"
-                </Text>
-            )}
-
-            {showAllSelected && (
-                <Text size="1" color="gray">
-                    All categories selected
+                    No categories match "{searchText}"
                 </Text>
             )}
         </>
@@ -302,6 +303,7 @@ const CategorySelector = ({
             categories={categories}
             selectedCategories={selectedCategories}
             onCategoryAdded={onCategoryAdded}
+            onCategoryRemoved={onCategoryRemoved}
             keymapId={keymapId}
             keymapName={keymapName}
             onRegisterKeymap={onRegisterKeymap}
