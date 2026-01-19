@@ -217,10 +217,27 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
     }
 
-    const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
-    const accounts = useSelector(S.accounts)
+    const toSelectedBadge = id => (
+        <SelectedBadge key={id} id={id} label={accounts.get(id)?.name || id} onRemove={handleToggleAccount} />
+    )
+
+    // Maps account to checkbox row element
+    // @sig toCheckboxRow :: { id: String, name: String } -> ReactElement
+    const toCheckboxRow = ({ id, name }) => (
+        <CheckboxRow
+            key={id}
+            id={id}
+            label={name}
+            isSelected={selectedAccounts.includes(id)}
+            onToggle={handleToggleAccount}
+        />
+    )
+
     const baseTriggerStyle = F.makeChipTriggerStyle(175)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
+
+    const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
+    const accounts = useSelector(S.accounts)
     const accountList = accounts ? Array.from(accounts).map(a => ({ id: a.id, name: a.name })) : []
     const { length: count } = selectedAccounts
     const label = count > 0 ? `${count} selected` : 'All'
@@ -242,28 +259,11 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
             <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 250 }}>
                 {count > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
-                        {/* prettier-ignore */}
-                        {selectedAccounts.map(id => (
-                            <SelectedBadge
-                                key={id}
-                                id={id}
-                                label={accounts.get(id)?.name || id}
-                                onRemove={handleToggleAccount}
-                            />
-                        ))}
+                        {selectedAccounts.map(toSelectedBadge)}
                     </Flex>
                 )}
                 <ScrollArea style={{ maxHeight: 200 }}>
-                    {/* prettier-ignore */}
-                    {accountList.map(({ id, name }) => (
-                        <CheckboxRow
-                            key={id}
-                            id={id}
-                            label={name}
-                            isSelected={selectedAccounts.includes(id)}
-                            onToggle={handleToggleAccount}
-                        />
-                    ))}
+                    {accountList.map(toCheckboxRow)}
                     {accountList.length === 0 && (
                         <Text size="2" color="gray">
                             No accounts available
@@ -293,6 +293,29 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
     }
 
+    // Maps action id to removable badge element
+    // @sig toSelectedBadge :: String -> ReactElement
+    const toSelectedBadge = id => (
+        <SelectedBadge
+            key={id}
+            id={id}
+            label={INVESTMENT_ACTIONS.find(a => a.id === id)?.label || id}
+            onRemove={handleToggleAction}
+        />
+    )
+
+    // Maps action to checkbox row element
+    // @sig toCheckboxRow :: { id: String, label: String } -> ReactElement
+    const toCheckboxRow = ({ id, label }) => (
+        <CheckboxRow
+            key={id}
+            id={id}
+            label={label}
+            isSelected={selectedActions.includes(id)}
+            onToggle={handleToggleAction}
+        />
+    )
+
     const selectedActions = useSelector(state => S.selectedInvestmentActions(state, viewId))
     const baseTriggerStyle = F.makeChipTriggerStyle(150)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
@@ -316,25 +339,10 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
             <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 200 }}>
                 {count > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
-                        {selectedActions.map(id => (
-                            <SelectedBadge
-                                key={id}
-                                id={id}
-                                label={INVESTMENT_ACTIONS.find(a => a.id === id)?.label || id}
-                                onRemove={handleToggleAction}
-                            />
-                        ))}
+                        {selectedActions.map(toSelectedBadge)}
                     </Flex>
                 )}
-                {INVESTMENT_ACTIONS.map(({ id, label }) => (
-                    <CheckboxRow
-                        key={id}
-                        id={id}
-                        label={label}
-                        isSelected={selectedActions.includes(id)}
-                        onToggle={handleToggleAction}
-                    />
-                ))}
+                {INVESTMENT_ACTIONS.map(toCheckboxRow)}
             </Popover.Content>
         </Popover.Root>
     )
@@ -387,6 +395,10 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
                     selectedCategories={selectedCategories}
                     onCategoryAdded={handleCategoryAdd}
                     onCategoryRemoved={handleCategoryRemove}
+                    keymapId={`category-filter-${viewId}`}
+                    keymapName="Category Filter"
+                    onRegisterKeymap={E.handleRegisterKeymap}
+                    onUnregisterKeymap={E.handleUnregisterKeymap}
                 />
             </Popover.Content>
         </Popover.Root>
@@ -476,6 +488,10 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
+    const toDateRangeOption = opt => (
+        <DateRangeOption key={opt.key} option={opt} selectedKey={dateRangeKey} onSelect={handleSelect} />
+    )
+
     const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const startDateRef = useRef(null)
     const endDateRef = useRef(null)
@@ -501,16 +517,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                 </Box>
             </Popover.Trigger>
             <Popover.Content style={{ padding: 'var(--space-1)', width: 220 }}>
-                <Flex direction="column">
-                    {dateRangeOptions.map(opt => (
-                        <DateRangeOption
-                            key={opt.key}
-                            option={opt}
-                            selectedKey={dateRangeKey}
-                            onSelect={handleSelect}
-                        />
-                    ))}
-                </Flex>
+                <Flex direction="column">{dateRangeOptions.map(toDateRangeOption)}</Flex>
                 {dateRangeKey === 'customDates' && (
                     <Flex direction="column" gap="2" mt="2" p="2" style={{ borderTop: '1px solid var(--gray-5)' }}>
                         <Flex direction="column" gap="1">
@@ -561,6 +568,18 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 const GroupByFilterChip = ({ viewId, options }) => {
     const handleSelect = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
 
+    // Maps group option to selectable option element
+    // @sig toOption :: { value: String, label: String } -> ReactElement
+    const toOption = ({ value, label }) => (
+        <SelectableOption
+            key={value}
+            id={value}
+            label={label}
+            isSelected={value === (groupBy || defaultValue)}
+            onSelect={handleSelect}
+        />
+    )
+
     const resolvedOptions = options ?? defaultGroupByOptions
     const groupBy = useSelector(state => S.groupBy(state, viewId))
     const baseTriggerStyle = F.makeChipTriggerStyle(155)
@@ -578,17 +597,7 @@ const GroupByFilterChip = ({ viewId, options }) => {
                 </Box>
             </Popover.Trigger>
             <Popover.Content style={{ padding: 'var(--space-1)' }}>
-                <Flex direction="column">
-                    {resolvedOptions.map(({ value, label }) => (
-                        <SelectableOption
-                            key={value}
-                            id={value}
-                            label={label}
-                            isSelected={value === (groupBy || defaultValue)}
-                            onSelect={handleSelect}
-                        />
-                    ))}
-                </Flex>
+                <Flex direction="column">{resolvedOptions.map(toOption)}</Flex>
             </Popover.Content>
         </Popover.Root>
     )
@@ -658,6 +667,8 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
 // Security filter chip with inline security multi-select popover
 // @sig SecurityFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SecurityFilterChip = ({ viewId, isActive = false }) => {
+    // Toggles security selection and updates filter
+    // @sig handleToggleSecurity :: String -> void
     const handleToggleSecurity = securityId => {
         const isSelected = selectedSecurities.includes(securityId)
         const updated = isSelected
@@ -670,6 +681,22 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
         e.stopPropagation()
         post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
     }
+
+    const toSelectedBadge = id => (
+        <SelectedBadge key={id} id={id} label={securities.get(id)?.symbol || id} onRemove={handleToggleSecurity} />
+    )
+
+    // Maps security to checkbox row element
+    // @sig toCheckboxRow :: { id: String, symbol: String, name: String } -> ReactElement
+    const toCheckboxRow = ({ id, symbol, name }) => (
+        <CheckboxRow
+            key={id}
+            id={id}
+            label={`${symbol} - ${name}`}
+            isSelected={selectedSecurities.includes(id)}
+            onToggle={handleToggleSecurity}
+        />
+    )
 
     const selectedSecurities = useSelector(state => S.selectedSecurities(state, viewId))
     const securities = useSelector(S.securities)
@@ -696,26 +723,11 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
             <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 300 }}>
                 {count > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
-                        {selectedSecurities.map(id => (
-                            <SelectedBadge
-                                key={id}
-                                id={id}
-                                label={securities.get(id)?.symbol || id}
-                                onRemove={handleToggleSecurity}
-                            />
-                        ))}
+                        {selectedSecurities.map(toSelectedBadge)}
                     </Flex>
                 )}
                 <ScrollArea style={{ maxHeight: 350 }}>
-                    {securityList.map(({ id, symbol, name }) => (
-                        <CheckboxRow
-                            key={id}
-                            id={id}
-                            label={`${symbol} - ${name}`}
-                            isSelected={selectedSecurities.includes(id)}
-                            onToggle={handleToggleSecurity}
-                        />
-                    ))}
+                    {securityList.map(toCheckboxRow)}
                     {securityList.length === 0 && (
                         <Text size="2" color="gray">
                             No securities available
