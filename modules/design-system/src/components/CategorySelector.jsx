@@ -108,13 +108,12 @@ const CategoryDropdown = ({
     const moveDown = () => setHighlightedIndex(prev => (prev < availableCount - 1 ? prev + 1 : 0))
     const moveUp = () => setHighlightedIndex(prev => (prev > 0 ? prev - 1 : availableCount - 1))
 
-    // Adds highlighted category and resets dropdown state
+    // Adds highlighted category and resets search text (keeps dropdown open for more selections)
     // @sig selectCategory :: () -> void
     const selectCategory = () => {
         if (availableCount === 0) return
         onCategoryAdded(availableCategories[highlightedIndex])
         setSearchText('')
-        setIsOpen(false)
         setHighlightedIndex(0)
     }
 
