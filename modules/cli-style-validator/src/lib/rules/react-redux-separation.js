@@ -93,9 +93,9 @@ const P = {
         )
     },
 
-    // Check if function name suggests it's a selector (starts with select)
-    // @sig isSelectorName :: String -> Boolean
-    isSelectorName: name => name && name.startsWith('select'),
+    // Check if name is a cohesion group identifier (P, T, F, V, A, E)
+    // @sig isCohesionGroupName :: String -> Boolean
+    isCohesionGroupName: name => ['P', 'T', 'F', 'V', 'A', 'E'].includes(name),
 
     // Check if node is an if statement
     // @sig isIfStatement :: ASTNode -> Boolean
@@ -228,14 +228,17 @@ const F = {
 
     // Create violation for selector too long
     // @sig createSelectorTooLongViolation :: (String, Number, Number) -> Violation
-    createSelectorTooLongViolation: (name, line, lineCount) => ({
-        type: 'react-redux-separation',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message: `Selector "${name}" is ${lineCount} lines. FIX: Delegate logic to a business module.`,
-        rule: 'react-redux-separation',
-    }),
+    createSelectorTooLongViolation: (name, line, lineCount) => {
+        const fix = 'FIX: Move logic to Type.from{InputType}() or business module.'
+        return {
+            type: 'react-redux-separation',
+            line,
+            column: 1,
+            priority: PRIORITY,
+            message: `Selector "${name}" is ${lineCount} lines. ${fix}`,
+            rule: 'react-redux-separation',
+        }
+    },
 
     // Create violation for nested if in selector
     // @sig createSelectorNestedIfViolation :: (String, Number) -> Violation
@@ -244,7 +247,7 @@ const F = {
         line,
         column: 1,
         priority: PRIORITY,
-        message: `Selector "${name}" has nested conditionals. FIX: Delegate branching logic to a business module.`,
+        message: `Selector "${name}" has nested conditionals. FIX: Move to Type.from{InputType}() or business module.`,
         rule: 'react-redux-separation',
     }),
 
@@ -255,20 +258,37 @@ const F = {
         line,
         column: 1,
         priority: PRIORITY,
-        message: `Selector "${name}" has nested ternary. FIX: Delegate to a business module or use if/else.`,
+        message: `Selector "${name}" has nested ternary. FIX: Move to Type.from{InputType}() or use if/else.`,
         rule: 'react-redux-separation',
     }),
 
     // Create violation for too many collection methods in selector
     // @sig createSelectorTooManyCollectionsViolation :: (String, Number, Number) -> Violation
-    createSelectorTooManyCollectionsViolation: (name, line, count) => ({
-        type: 'react-redux-separation',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message: `Selector "${name}" chains ${count} collection methods. FIX: Delegate to a business module.`,
-        rule: 'react-redux-separation',
-    }),
+    createSelectorTooManyCollectionsViolation: (name, line, count) => {
+        const fix = 'FIX: Move to Type.from{InputType}() or business module.'
+        return {
+            type: 'react-redux-separation',
+            line,
+            column: 1,
+            priority: PRIORITY,
+            message: `Selector "${name}" chains ${count} collection methods. ${fix}`,
+            rule: 'react-redux-separation',
+        }
+    },
+
+    // Create violation for export referencing cohesion group function
+    // @sig createExportFromCohesionViolation :: (String, String, Number) -> Violation
+    createExportFromCohesionViolation: (exportName, groupRef, line) => {
+        const fix = 'FIX: Define exported functions at module level, not in cohesion groups.'
+        return {
+            type: 'react-redux-separation',
+            line,
+            column: 1,
+            priority: PRIORITY,
+            message: `Export "${exportName}" references ${groupRef}. ${fix}`,
+            rule: 'react-redux-separation',
+        }
+    },
 }
 
 const V = {
@@ -309,8 +329,11 @@ const V = {
 
     // Validate selector complexity (selector files)
     // @sig checkSelectors :: (AST, String, String) -> [Violation]
-    checkSelectors: (ast, sourceCode, filePath) =>
-        A.collectSelectorFunctions(ast).flatMap(sel => A.collectSelectorViolations(ast, sel)),
+    checkSelectors: (ast, sourceCode, filePath) => {
+        const functionViolations = A.collectSelectorFunctions(ast).flatMap(sel => A.collectSelectorViolations(ast, sel))
+        const exportViolations = A.collectCohesionExportViolations(ast)
+        return [...functionViolations, ...exportViolations]
+    },
 
     // Main entry point - dispatches to component or selector checks
     // @sig check :: (AST?, String, String) -> [Violation]
@@ -371,36 +394,91 @@ const A = {
     collectUseChannelViolations: ast =>
         AST.topLevelStatements(ast).filter(P.isUseChannelImport).map(F.createUseChannelViolation),
 
-    // Convert function declaration to selector info if it's a selector
-    // @sig toSelectorFromFuncDecl :: ASTNode -> {name, line, node}?
-    toSelectorFromFuncDecl: s => {
+    // Convert function declaration to function info
+    // @sig toFunctionInfo :: ASTNode -> {name, line, node}?
+    toFunctionInfo: s => {
         const { name, line } = s
-        return P.isSelectorName(name) ? { name, line, node: s } : null
+        return name ? { name, line, node: s } : null
     },
 
-    // Convert variable declaration to selector info if it's a selector
-    // @sig toSelectorFromVarDecl :: Object -> {name, line, node}?
-    toSelectorFromVarDecl: d => {
+    // Convert variable declaration to function info if it's a function
+    // @sig toVarFunctionInfo :: Object -> {name, line, node}?
+    toVarFunctionInfo: d => {
         const { name, line, value } = d
-        if (!P.isSelectorName(name) || !value || !PS.isFunctionNode(value)) return null
+        if (!value || !PS.isFunctionNode(value)) return null
         return { name, line, node: value }
     },
 
-    // Collect selector functions (select* named functions at module level)
+    // Convert property to function info for cohesion group
+    // @sig toPropFunctionInfo :: (String, ASTNode) -> {name, line, node}
+    toPropFunctionInfo: (groupName, prop) => {
+        const { name, line, value } = prop
+        return { name: `${groupName}.${name || 'unknown'}`, line: line || value.line, node: value }
+    },
+
+    // Extract functions from cohesion group object (P, T, F, V, A, E)
+    // @sig toCohesionGroupFunctions :: Object -> [{name, line, node}]
+    toCohesionGroupFunctions: d => {
+        const { name, value } = d
+        if (!P.isCohesionGroupName(name) || !value || !ASTNode.ObjectExpression.is(value)) return []
+        const funcProps = value.properties.filter(prop => prop.value && PS.isFunctionNode(prop.value))
+        return funcProps.map(prop => A.toPropFunctionInfo(name, prop))
+    },
+
+    // Collect all functions in selector files (top-level + cohesion groups)
     // @sig collectSelectorFunctions :: AST -> [{name: String, line: Number, node: ASTNode}]
     collectSelectorFunctions: ast => {
+        const { toFunctionInfo, toVarFunctionInfo, toCohesionGroupFunctions } = A
         const statements = AST.topLevelStatements(ast)
         const { FunctionDeclaration, VariableDeclaration } = ASTNode
+        const funcDecls = statements.filter(FunctionDeclaration.is).map(toFunctionInfo).filter(Boolean)
+        const varDeclarations = statements.filter(VariableDeclaration.is).flatMap(decl => decl.declarations)
+        const varFunctions = varDeclarations.map(toVarFunctionInfo).filter(Boolean)
+        const cohesionFunctions = varDeclarations.flatMap(toCohesionGroupFunctions)
+        return [...funcDecls, ...varFunctions, ...cohesionFunctions]
+    },
 
-        const funcSelectors = statements.filter(FunctionDeclaration.is).map(A.toSelectorFromFuncDecl).filter(Boolean)
+    // Check if a property value references a cohesion group (e.g., T.foo, A.bar)
+    // @sig toCohesionRef :: ASTNode -> String?
+    toCohesionRef: prop => {
+        const { value } = prop
+        const { MemberExpression, Identifier } = ASTNode
+        if (!value || !MemberExpression.is(value)) return null
+        const { base, member } = value
+        if (!Identifier.is(base) || !P.isCohesionGroupName(base.name)) return null
+        const memberName = member && Identifier.is(member) ? member.name : 'unknown'
+        return `${base.name}.${memberName}`
+    },
 
-        const varSelectors = statements
+    // Convert property to export violation if it references a cohesion group
+    // @sig toExportViolation :: (Number, ASTNode) -> Violation?
+    toExportViolation: (declLine, prop) => {
+        const ref = A.toCohesionRef(prop)
+        if (!ref) return null
+        const exportName = prop.name || 'unknown'
+        return F.createExportFromCohesionViolation(exportName, ref, prop.line || declLine)
+    },
+
+    // Check if declaration is an export object (PascalCase name with ObjectExpression value)
+    // @sig isExportObject :: Object -> Boolean
+    isExportObject: d => {
+        const { name, value } = d
+        return value && ASTNode.ObjectExpression.is(value) && PS.isPascalCase(name)
+    },
+
+    // Collect violations for exports referencing cohesion group functions
+    // @sig collectCohesionExportViolations :: AST -> [Violation]
+    collectCohesionExportViolations: ast => {
+        const statements = AST.topLevelStatements(ast)
+        const { VariableDeclaration } = ASTNode
+        const exportObjects = statements
             .filter(VariableDeclaration.is)
             .flatMap(decl => decl.declarations)
-            .map(A.toSelectorFromVarDecl)
-            .filter(Boolean)
+            .filter(A.isExportObject)
 
-        return [...funcSelectors, ...varSelectors]
+        return exportObjects.flatMap(decl =>
+            decl.value.properties.map(prop => A.toExportViolation(decl.line, prop)).filter(Boolean),
+        )
     },
 
     // Collect violations for a single selector
