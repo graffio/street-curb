@@ -1,5 +1,5 @@
 // ABOUTME: Rule to enforce strict React/Redux separation patterns
-// ABOUTME: Flags useState, useMemo, useChannel, collection methods, and spreading in component bodies
+// ABOUTME: Flags forbidden patterns in components and complex selectors
 
 import { AST, ASTNode } from '@graffio/ast'
 import { FS } from '../shared/factories.js'
@@ -8,6 +8,8 @@ import { PS } from '../shared/predicates.js'
 const PRIORITY = 8
 const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
 const EXEMPT_PATTERNS = ['hover', 'focus', 'drag']
+const SELECTOR_MAX_LINES = 6
+const SELECTOR_MAX_COLLECTION_CHAIN = 2
 
 const P = {
     // Check if node is a hook call with given name
@@ -81,6 +83,27 @@ const P = {
         const args = node.esTree.arguments || []
         return P.hasMultipleStatements(args[0])
     },
+
+    // Check if file path indicates a selector file
+    // @sig isSelectorFile :: String -> Boolean
+    isSelectorFile: filePath => {
+        if (!filePath.endsWith('.js')) return false
+        return (
+            filePath.includes('/selectors/') || filePath.includes('-selectors.js') || filePath.endsWith('/selectors.js')
+        )
+    },
+
+    // Check if function name suggests it's a selector (starts with select)
+    // @sig isSelectorName :: String -> Boolean
+    isSelectorName: name => name && name.startsWith('select'),
+
+    // Check if node is an if statement
+    // @sig isIfStatement :: ASTNode -> Boolean
+    isIfStatement: node => ASTNode.IfStatement.is(node),
+
+    // Check if esTree node is a conditional expression (ternary)
+    // @sig isConditionalExpr :: Object -> Boolean
+    isConditionalExpr: esNode => esNode?.type === 'ConditionalExpression',
 }
 
 const T = {
@@ -91,6 +114,48 @@ const T = {
         if (!target || !ASTNode.MemberExpression.is(target)) return ''
         const member = target.member
         return member && ASTNode.Identifier.is(member) ? member.name : ''
+    },
+
+    // Count lines in a function body
+    // @sig toLineCount :: ASTNode -> Number
+    toLineCount: funcNode => {
+        const { esTree } = funcNode
+        if (!esTree) return 0
+        const { start, end } = esTree.loc || {}
+        return start && end ? end.line - start.line + 1 : 0
+    },
+
+    // Count collection method calls in function body
+    // @sig toCollectionMethodCount :: (AST, ASTNode) -> Number
+    toCollectionMethodCount: (ast, bodyNode) => {
+        if (!bodyNode?.esTree) return 0
+        return AST.from(bodyNode.esTree).filter(P.isCollectionMethodCall).length
+    },
+
+    // Check for nested if statements in function body
+    // @sig toHasNestedIf :: (AST, ASTNode) -> Boolean
+    toHasNestedIf: (ast, bodyNode) => {
+        if (!bodyNode?.esTree) return false
+        const ifStatements = AST.from(bodyNode.esTree).filter(P.isIfStatement)
+        return ifStatements.some(ifNode => AST.from(ifNode.esTree).filter(P.isIfStatement).length > 1)
+    },
+
+    // Check if a single node is a nested ternary
+    // @sig toIsNestedTernaryNode :: Object -> Boolean
+    toIsNestedTernaryNode: node => {
+        if (!node || typeof node !== 'object') return false
+        if (!P.isConditionalExpr(node)) return false
+        const { consequent, alternate } = node
+        return P.isConditionalExpr(consequent) || P.isConditionalExpr(alternate)
+    },
+
+    // Recursively check esTree for nested ternary
+    // @sig toHasNestedTernary :: Object -> Boolean
+    toHasNestedTernary: esTree => {
+        if (!esTree) return false
+        if (T.toIsNestedTernaryNode(esTree)) return true
+        const values = Object.values(esTree).filter(v => v && typeof v === 'object')
+        return values.some(v => (Array.isArray(v) ? v.some(T.toHasNestedTernary) : T.toHasNestedTernary(v)))
     },
 }
 
@@ -160,13 +225,56 @@ const F = {
         message: 'Spread in component body. FIX: Pre-compute in selector or use separate style constants.',
         rule: 'react-redux-separation',
     }),
+
+    // Create violation for selector too long
+    // @sig createSelectorTooLongViolation :: (String, Number, Number) -> Violation
+    createSelectorTooLongViolation: (name, line, lineCount) => ({
+        type: 'react-redux-separation',
+        line,
+        column: 1,
+        priority: PRIORITY,
+        message: `Selector "${name}" is ${lineCount} lines. FIX: Delegate logic to a business module.`,
+        rule: 'react-redux-separation',
+    }),
+
+    // Create violation for nested if in selector
+    // @sig createSelectorNestedIfViolation :: (String, Number) -> Violation
+    createSelectorNestedIfViolation: (name, line) => ({
+        type: 'react-redux-separation',
+        line,
+        column: 1,
+        priority: PRIORITY,
+        message: `Selector "${name}" has nested conditionals. FIX: Delegate branching logic to a business module.`,
+        rule: 'react-redux-separation',
+    }),
+
+    // Create violation for nested ternary in selector
+    // @sig createSelectorNestedTernaryViolation :: (String, Number) -> Violation
+    createSelectorNestedTernaryViolation: (name, line) => ({
+        type: 'react-redux-separation',
+        line,
+        column: 1,
+        priority: PRIORITY,
+        message: `Selector "${name}" has nested ternary. FIX: Delegate to a business module or use if/else.`,
+        rule: 'react-redux-separation',
+    }),
+
+    // Create violation for too many collection methods in selector
+    // @sig createSelectorTooManyCollectionsViolation :: (String, Number, Number) -> Violation
+    createSelectorTooManyCollectionsViolation: (name, line, count) => ({
+        type: 'react-redux-separation',
+        line,
+        column: 1,
+        priority: PRIORITY,
+        message: `Selector "${name}" chains ${count} collection methods. FIX: Delegate to a business module.`,
+        rule: 'react-redux-separation',
+    }),
 }
 
 const V = {
-    // Validate React/Redux separation patterns
-    // @sig check :: (AST?, String, String) -> [Violation]
-    check: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
+    // Validate React component patterns (JSX files)
+    // @sig checkComponents :: (AST, String, String) -> [Violation]
+    checkComponents: (ast, sourceCode, filePath) => {
         if (!A.hasJSXContext(ast)) return []
 
         const { isUseStateCall, hasUseStateExemption, isUseMemoCall, isComplexUseCallback } = P
@@ -197,6 +305,22 @@ const V = {
             ...collectionViolations,
             ...spreadViolations,
         ]
+    },
+
+    // Validate selector complexity (selector files)
+    // @sig checkSelectors :: (AST, String, String) -> [Violation]
+    checkSelectors: (ast, sourceCode, filePath) =>
+        A.collectSelectorFunctions(ast).flatMap(sel => A.collectSelectorViolations(ast, sel)),
+
+    // Main entry point - dispatches to component or selector checks
+    // @sig check :: (AST?, String, String) -> [Violation]
+    check: (ast, sourceCode, filePath) => {
+        if (!ast || PS.isTestFile(filePath)) return []
+
+        if (filePath.endsWith('.jsx')) return V.checkComponents(ast, sourceCode, filePath)
+        if (P.isSelectorFile(filePath)) return V.checkSelectors(ast, sourceCode, filePath)
+
+        return []
     },
 }
 
@@ -246,6 +370,60 @@ const A = {
     // @sig collectUseChannelViolations :: AST -> [Violation]
     collectUseChannelViolations: ast =>
         AST.topLevelStatements(ast).filter(P.isUseChannelImport).map(F.createUseChannelViolation),
+
+    // Convert function declaration to selector info if it's a selector
+    // @sig toSelectorFromFuncDecl :: ASTNode -> {name, line, node}?
+    toSelectorFromFuncDecl: s => {
+        const { name, line } = s
+        return P.isSelectorName(name) ? { name, line, node: s } : null
+    },
+
+    // Convert variable declaration to selector info if it's a selector
+    // @sig toSelectorFromVarDecl :: Object -> {name, line, node}?
+    toSelectorFromVarDecl: d => {
+        const { name, line, value } = d
+        if (!P.isSelectorName(name) || !value || !PS.isFunctionNode(value)) return null
+        return { name, line, node: value }
+    },
+
+    // Collect selector functions (select* named functions at module level)
+    // @sig collectSelectorFunctions :: AST -> [{name: String, line: Number, node: ASTNode}]
+    collectSelectorFunctions: ast => {
+        const statements = AST.topLevelStatements(ast)
+        const { FunctionDeclaration, VariableDeclaration } = ASTNode
+
+        const funcSelectors = statements.filter(FunctionDeclaration.is).map(A.toSelectorFromFuncDecl).filter(Boolean)
+
+        const varSelectors = statements
+            .filter(VariableDeclaration.is)
+            .flatMap(decl => decl.declarations)
+            .map(A.toSelectorFromVarDecl)
+            .filter(Boolean)
+
+        return [...funcSelectors, ...varSelectors]
+    },
+
+    // Collect violations for a single selector
+    // @sig collectSelectorViolations :: (AST, {name, line, node}) -> [Violation]
+    collectSelectorViolations: (ast, selector) => {
+        const { name, line, node } = selector
+        const { body, esTree } = node
+        const bodyOrNode = body || node
+        const violations = []
+
+        const lineCount = T.toLineCount(node)
+        if (lineCount > SELECTOR_MAX_LINES) violations.push(F.createSelectorTooLongViolation(name, line, lineCount))
+
+        if (T.toHasNestedIf(ast, bodyOrNode)) violations.push(F.createSelectorNestedIfViolation(name, line))
+
+        if (T.toHasNestedTernary(esTree)) violations.push(F.createSelectorNestedTernaryViolation(name, line))
+
+        const collectionCount = T.toCollectionMethodCount(ast, bodyOrNode)
+        if (collectionCount > SELECTOR_MAX_COLLECTION_CHAIN)
+            violations.push(F.createSelectorTooManyCollectionsViolation(name, line, collectionCount))
+
+        return violations
+    },
 }
 
 const checkReactReduxSeparation = FS.withExemptions('react-redux-separation', V.check)

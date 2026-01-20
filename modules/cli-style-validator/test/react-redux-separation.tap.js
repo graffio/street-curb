@@ -199,3 +199,123 @@ t.test('Given a useCallback with complex body', t => {
 
     t.end()
 })
+
+t.test('Given a selector file with a long selector', t => {
+    t.test('When selector exceeds 6 lines', t => {
+        const code = `const selectItems = state => {
+    const items = state.items
+    const filtered = items.filter(i => i.active)
+    const sorted = filtered.sort((a, b) => a.name.localeCompare(b.name))
+    const mapped = sorted.map(i => i.name)
+    const result = mapped.join(', ')
+    return result
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/items.js')
+
+        const longViolation = violations.find(v => v.message.includes('lines'))
+        t.ok(longViolation, 'Then a too-long violation should be detected')
+        t.match(longViolation.message, /selectItems/, 'Then the message should include selector name')
+        t.end()
+    })
+
+    t.test('When selector is 6 lines or fewer', t => {
+        const code = `const selectItems = state => {
+    const items = state.items
+    return items.filter(i => i.active)
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/items.js')
+
+        const longViolation = violations.find(v => v.message.includes('lines'))
+        t.notOk(longViolation, 'Then no too-long violation should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a selector file with nested conditionals', t => {
+    t.test('When selector has nested if statements', t => {
+        const code = `const selectLabel = state => {
+    if (state.type === 'a') {
+        if (state.subtype === 'x') return 'AX'
+        return 'A'
+    }
+    return 'B'
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/labels.js')
+
+        const nestedViolation = violations.find(v => v.message.includes('nested conditionals'))
+        t.ok(nestedViolation, 'Then a nested conditional violation should be detected')
+        t.end()
+    })
+
+    t.test('When selector has nested ternary', t => {
+        const code = `const selectLabel = state => state.a ? state.b ? 'AB' : 'A' : 'none'`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/labels.js')
+
+        const nestedViolation = violations.find(v => v.message.includes('nested ternary'))
+        t.ok(nestedViolation, 'Then a nested ternary violation should be detected')
+        t.end()
+    })
+
+    t.test('When selector has single-level ternary', t => {
+        const code = `const selectLabel = state => state.active ? 'Yes' : 'No'`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/labels.js')
+
+        const nestedViolation = violations.find(v => v.message.includes('nested'))
+        t.notOk(nestedViolation, 'Then no nested violation should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a selector file with chained collection methods', t => {
+    t.test('When selector chains more than 2 collection methods', t => {
+        const code = `const selectNames = state => state.items.filter(i => i.active).map(i => i.name).slice(0, 10)`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/names.js')
+
+        const chainViolation = violations.find(v => v.message.includes('collection methods'))
+        t.ok(chainViolation, 'Then a collection chain violation should be detected')
+        t.match(chainViolation.message, /3/, 'Then the message should mention count')
+        t.end()
+    })
+
+    t.test('When selector chains 2 or fewer collection methods', t => {
+        const code = `const selectNames = state => state.items.filter(i => i.active).map(i => i.name)`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'store/selectors/names.js')
+
+        const chainViolation = violations.find(v => v.message.includes('collection methods'))
+        t.notOk(chainViolation, 'Then no collection chain violation should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a non-selector file', t => {
+    t.test('When file is not in selectors path', t => {
+        const code = `const selectItems = state => {
+    const a = 1
+    const b = 2
+    const c = 3
+    const d = 4
+    const e = 5
+    return state.items
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'utils/helpers.js')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected')
+        t.end()
+    })
+
+    t.end()
+})
