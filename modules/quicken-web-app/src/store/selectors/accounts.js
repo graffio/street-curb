@@ -6,9 +6,9 @@ import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { memoizeReduxState } from '@graffio/functional'
 import { EnrichedAccount } from '../../types/enriched-account.js'
 import { accountOrganization } from '../../services/account-organization.js'
-import { HoldingsSelectors } from './holdings-selectors.js'
+import { Holdings } from './holdings.js'
 
-const holdingsAsOf = HoldingsSelectors.collectHoldingsAsOf
+const holdingsAsOf = Holdings.collectAsOf
 
 // State keys that affect account organization
 const ORGANIZATION_STATE_KEYS = [
@@ -82,6 +82,8 @@ const A = {
     ),
 }
 
-const Accounts = { T, A }
+const organized = A.collectOrganized
+
+const Accounts = { organized }
 
 export { Accounts }

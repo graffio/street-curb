@@ -4,11 +4,11 @@
 import { groupBy, LookupTable, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
 import { Holding } from '../../types/holding.js'
 import { Price } from '../../types/price.js'
-import {
-    asOfDate as asOfDateSelector,
-    filterQuery as filterQuerySelector,
-    selectedAccounts as selectedAccountsSelector,
-} from './ui.js'
+import { UI } from './ui.js'
+
+const asOfDateSelector = UI.asOfDate
+const filterQuerySelector = UI.filterQuery
+const selectedAccountsSelector = UI.selectedAccounts
 
 // Number of days before a price is considered stale
 const STALE_DAYS = 1
@@ -305,6 +305,8 @@ const collectHoldingsAsOf = memoizeReduxStatePerKey(
     },
 )
 
-const HoldingsSelectors = { collectHoldingsAsOf, CASH_SECURITY_ID }
+const collectAsOf = collectHoldingsAsOf
 
-export { HoldingsSelectors }
+const Holdings = { collectAsOf }
+
+export { Holdings }

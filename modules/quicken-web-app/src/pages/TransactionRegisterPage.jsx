@@ -117,14 +117,14 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
 
     const [, setLayout] = useChannel(layoutChannel)
-    const dateRange = useSelector(state => S.dateRange(state, viewId))
-    const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
-    const searchQuery = useSelector(state => S.searchQuery(state, viewId))
-    const currentSearchIndex = useSelector(state => S.currentSearchIndex(state, viewId))
-    const currentRowIndex = useSelector(state => S.currentRowIndex(state, viewId))
+    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
+    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
+    const currentSearchIndex = useSelector(state => S.UI.currentSearchIndex(state, viewId))
+    const currentRowIndex = useSelector(state => S.UI.currentRowIndex(state, viewId))
     const allTableLayouts = useSelector(S.tableLayouts)
-    const filteredTransactions = useSelector(state => S.filteredTransactions(state, viewId))
-    const searchMatches = useSelector(state => S.searchMatches(state, viewId))
+    const filteredTransactions = useSelector(state => S.Transactions.filtered(state, viewId))
+    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId))
 
     // -----------------------------------------------------------------------------------------------------------------
     // Memos (data transformations)

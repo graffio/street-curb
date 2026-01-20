@@ -40,8 +40,8 @@ const T = {
  */
 const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
-    const enrichedTransactions = useSelector(state => S.enrichedTransactions(state, viewId))
-    const groupBy = useSelector(state => S.groupBy(state, viewId))
+    const enrichedTransactions = useSelector(state => S.Transactions.enriched(state, viewId))
+    const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const [expanded, setExpanded] = useState({})
 
     const transactionTree = useMemo(

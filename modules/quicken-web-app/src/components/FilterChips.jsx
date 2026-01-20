@@ -236,7 +236,7 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const baseTriggerStyle = F.makeChipTriggerStyle(175)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
 
-    const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
+    const selectedAccounts = useSelector(state => S.UI.selectedAccounts(state, viewId))
     const accounts = useSelector(S.accounts)
     const accountList = accounts ? Array.from(accounts).map(a => ({ id: a.id, name: a.name })) : []
     const { length: count } = selectedAccounts
@@ -316,7 +316,7 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
         />
     )
 
-    const selectedActions = useSelector(state => S.selectedInvestmentActions(state, viewId))
+    const selectedActions = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
     const baseTriggerStyle = F.makeChipTriggerStyle(150)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
     const { length: count } = selectedActions
@@ -368,8 +368,8 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
     }
 
-    const selectedCategories = useSelector(state => S.selectedCategories(state, viewId))
-    const allCategories = useSelector(S.allCategoryNames)
+    const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
+    const allCategories = useSelector(S.Categories.allNames)
     const baseTriggerStyle = F.makeChipTriggerStyle(185)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
     const { length: count } = selectedCategories
@@ -423,7 +423,7 @@ const AsOfDateChip = ({ viewId }) => {
         }
     }
 
-    const asOfDate = useSelector(state => S.asOfDate(state, viewId))
+    const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
     const dateInputRef = useRef(null)
     const baseTriggerStyle = F.makeChipTriggerStyle(180)
@@ -495,9 +495,9 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const startDateRef = useRef(null)
     const endDateRef = useRef(null)
-    const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
-    const customStartDate = useSelector(state => S.customStartDate(state, viewId))
-    const customEndDate = useSelector(state => S.customEndDate(state, viewId))
+    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
+    const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
     const baseTriggerStyle = F.makeChipTriggerStyle(180)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
@@ -581,7 +581,7 @@ const GroupByFilterChip = ({ viewId, options }) => {
     )
 
     const resolvedOptions = options ?? defaultGroupByOptions
-    const groupBy = useSelector(state => S.groupBy(state, viewId))
+    const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const baseTriggerStyle = F.makeChipTriggerStyle(155)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: 'var(--accent-3)' }
     const currentOption = resolvedOptions.find(o => o.value === groupBy) || resolvedOptions[0]
@@ -622,7 +622,7 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
     }
 
     const inputRef = useRef(null)
-    const filterQuery = useSelector(state => S.filterQuery(state, viewId))
+    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const baseTriggerStyle = F.makeChipTriggerStyle(120)
     const triggerStyle = { ...baseTriggerStyle, backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)' }
     const hasQuery = filterQuery && filterQuery.length > 0
@@ -698,7 +698,7 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
         />
     )
 
-    const selectedSecurities = useSelector(state => S.selectedSecurities(state, viewId))
+    const selectedSecurities = useSelector(state => S.UI.selectedSecurities(state, viewId))
     const securities = useSelector(S.securities)
     const securityList = securities ? Array.from(securities).map(({ id, symbol, name }) => ({ id, symbol, name })) : []
     const baseTriggerStyle = F.makeChipTriggerStyle(175)

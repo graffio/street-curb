@@ -9,7 +9,7 @@ import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 
-const { collectHoldingsAsOf } = S.HoldingsSelectors
+const { collectAsOf: collectHoldingsAsOf } = S.Holdings
 const { buildHoldingsTree } = HoldingsTree
 
 const pageContainerStyle = { height: '100%' }
@@ -41,7 +41,7 @@ const T = {
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
     const holdings = useSelector(state => collectHoldingsAsOf(state, viewId))
-    const groupBy = useSelector(state => S.groupBy(state, viewId))
+    const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const [expanded, setExpanded] = useState({})
     const [columnSizing, setColumnSizing] = useState({})
     const [columnOrder, setColumnOrder] = useState([])

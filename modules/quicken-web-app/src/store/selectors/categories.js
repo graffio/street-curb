@@ -3,16 +3,23 @@
 
 import memoizeReduxState from '@graffio/functional/src/ramda-like/memoize-redux-state.js'
 import pluck from '@graffio/functional/src/ramda-like/pluck.js'
-import { generateParentCategories } from './hierarchy.js'
+
+// Generate all parent categories for a hierarchical category
+// e.g., "food:restaurant:lunch" -> ["food", "food:restaurant", "food:restaurant:lunch"]
+// @sig generateParentCategories :: String -> [String]
+const generateParentCategories = category => {
+    const parts = category.split(':')
+    return parts.map((_, i) => parts.slice(0, i + 1).join(':'))
+}
 
 // Base accessor (defined here to avoid circular deps)
-// @sig categories :: ReduxState -> LookupTable<Category>
-const categories = state => state.categories
+// @sig categoriesAccessor :: ReduxState -> LookupTable<Category>
+const categoriesAccessor = state => state.categories
 
 // Computes all category names including generated parent categories
 // @sig computeAllCategoryNames :: ReduxState -> [String]
 const computeAllCategoryNames = state => {
-    const cats = categories(state)
+    const cats = categoriesAccessor(state)
     if (!cats || cats.length === 0) return []
 
     const names = pluck('name', cats)
@@ -21,7 +28,9 @@ const computeAllCategoryNames = state => {
 }
 
 // All category names including generated parent categories
-// @sig allCategoryNames :: ReduxState -> [String]
-const allCategoryNames = memoizeReduxState(['categories'], computeAllCategoryNames)
+// @sig allNames :: ReduxState -> [String]
+const allNames = memoizeReduxState(['categories'], computeAllCategoryNames)
 
-export { allCategoryNames }
+const Categories = { allNames }
+
+export { Categories }

@@ -27,17 +27,9 @@ const tableLayouts = state => state.tableLayouts
 // @sig tabLayout :: State -> TabLayout
 const tabLayout = state => state.tabLayout
 
-// Returns all tags
-// @sig tags :: State -> LookupTable<Tag>
-const tags = state => state.tags
-
 // Returns all registered keymaps
 // @sig keymaps :: State -> [Keymap]
 const keymaps = state => state.keymaps
-
-// Returns all splits
-// @sig splits :: State -> LookupTable<Split>
-const splits = state => state.splits
 
 // Returns all transactions
 // @sig transactions :: State -> LookupTable<Transaction>
@@ -75,35 +67,14 @@ const securityName = (state, id) => securities(state)?.get(id)?.name ?? id
 // @sig categoryName :: (State, String) -> String
 const categoryName = (state, id) => categories(state)?.get(id)?.name ?? 'Uncategorized'
 
-// UI state (all selectors now take viewId as second parameter)
-export {
-    asOfDate,
-    currentRowIndex,
-    currentSearchIndex,
-    customEndDate,
-    customStartDate,
-    dateRange,
-    dateRangeKey,
-    filterQuery,
-    groupBy,
-    searchQuery,
-    selectedAccounts,
-    selectedCategories,
-    selectedInvestmentActions,
-    selectedSecurities,
-    transactionFilter,
-} from './ui.js'
+// Namespace exports
+export { Accounts } from './accounts.js'
+export { UI } from './ui.js'
 
-export {
-    defaultStartDate,
-    defaultEndDate,
-    enrichedTransactions,
-    filteredTransactions,
-    searchMatches,
-} from './transactions/index.js'
-export { allCategoryNames } from './categories/index.js'
-export { HoldingsSelectors } from './holdings-selectors.js'
-export { accountListSortMode, collapsedSections } from './account-list-prefs.js'
+export { Transactions } from './transactions.js'
+export { Categories } from './categories.js'
+export { Holdings } from './holdings.js'
+export { Prefs } from './prefs.js'
 export {
     // Base state
     accounts,
@@ -113,10 +84,8 @@ export {
     lots,
     prices,
     securities,
-    splits,
     tabLayout,
     tableLayouts,
-    tags,
     transactions,
 
     // Entity lookups

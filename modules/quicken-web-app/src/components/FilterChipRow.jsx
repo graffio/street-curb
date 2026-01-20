@@ -55,13 +55,13 @@ const FilterChipRow = props => {
     const needsTransactionData = filteredCountProp === undefined
     const allTransactions = useSelector(state => (needsTransactionData ? S.transactions(state) : null))
     const filteredTransactions = useSelector(state =>
-        needsTransactionData ? S.filteredTransactions(state, viewId) : EMPTY_ARRAY,
+        needsTransactionData ? S.Transactions.filtered(state, viewId) : EMPTY_ARRAY,
     )
-    const dateRange = useSelector(state => S.dateRange(state, viewId))
-    const dateRangeKey = useSelector(state => S.dateRangeKey(state, viewId))
-    const filterQuery = useSelector(state => S.filterQuery(state, viewId))
-    const selectedCategories = useSelector(state => S.selectedCategories(state, viewId))
-    const selectedAccounts = useSelector(state => S.selectedAccounts(state, viewId))
+    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
+    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
+    const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
+    const selectedAccounts = useSelector(state => S.UI.selectedAccounts(state, viewId))
     const accounts = useSelector(S.accounts)
 
     const dateDetails = dateRange ? [formatDateRange(dateRange.start, dateRange.end)].filter(Boolean) : []

@@ -1,6 +1,7 @@
 // ABOUTME: Command execution layer for domain Actions
 // ABOUTME: Dispatches Tagged actions to Redux as plain objects
 // ABOUTME: Handles IndexedDB persistence for table layouts (debounced) and tab layout
+// COMPLEXITY: export-structure — post is a function, not a namespace; lowercase matches usage pattern
 
 import { debounce } from '@graffio/functional'
 import { set } from '../services/storage.js'
@@ -54,8 +55,8 @@ const post = action => {
     // @sig persistAccountListPrefs :: () -> ()
     const persistAccountListPrefs = () => {
         const state = currentStore().getState()
-        const sortMode = S.accountListSortMode(state)['@@tagName']
-        const collapsedSections = [...S.collapsedSections(state)]
+        const sortMode = S.Prefs.sortMode(state)['@@tagName']
+        const collapsedSections = [...S.Prefs.collapsedSections(state)]
         set(ACCOUNT_LIST_PREFS_KEY, { sortMode, collapsedSections })
     }
 

@@ -5,7 +5,6 @@ import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@graffio/d
 import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import { Accounts } from '../store/selectors/accounts.js'
 import * as S from '../store/selectors/index.js'
 import { Action } from '../types/action.js'
 import { SortMode } from '../types/sort-mode.js'
@@ -197,9 +196,9 @@ const SortModeDropdown = ({ value, onChange }) => (
 // @sig AccountList :: () -> ReactElement
 const AccountList = () => {
     const accounts = useSelector(S.accounts)
-    const sortMode = useSelector(S.accountListSortMode)
-    const collapsedSections = useSelector(S.collapsedSections)
-    const organizedSections = useSelector(Accounts.A.collectOrganized)
+    const sortMode = useSelector(S.Prefs.sortMode)
+    const collapsedSections = useSelector(S.Prefs.collapsedSections)
+    const organizedSections = useSelector(S.Accounts.organized)
 
     if (!accounts || accounts.length === 0)
         return (

@@ -1,5 +1,7 @@
 // ABOUTME: UI state selectors for ephemeral display state
 // ABOUTME: Not persisted - resets on refresh
+// COMPLEXITY: export-structure — UI is the standard acronym for "user interface"
+// COMPLEXITY: signature-with-description — trivial accessors; names are self-documenting
 
 // Default values for filter fields when no filter exists for a viewId
 const defaults = {
@@ -19,76 +21,54 @@ const defaults = {
     customEndDate: null,
 }
 
-// Get the TransactionFilter for a viewId, or undefined if none exists
-// @sig transactionFilter :: (ReduxState, String) -> TransactionFilter?
-const transactionFilter = (state, viewId) => state.transactionFilters?.get(viewId)
+const T = {
+    toFilter: (state, viewId) => state.transactionFilters?.get(viewId),
+    toDateRange: (state, viewId) => T.toFilter(state, viewId)?.dateRange ?? defaults.dateRange,
+    toDateRangeKey: (state, viewId) => T.toFilter(state, viewId)?.dateRangeKey ?? defaults.dateRangeKey,
+    toFilterQuery: (state, viewId) => T.toFilter(state, viewId)?.filterQuery ?? defaults.filterQuery,
+    toSearchQuery: (state, viewId) => T.toFilter(state, viewId)?.searchQuery ?? defaults.searchQuery,
+    toGroupBy: (state, viewId) => T.toFilter(state, viewId)?.groupBy ?? defaults.groupBy,
 
-// @sig dateRange :: (ReduxState, String) -> { start: Date, end: Date }?
-const dateRange = (state, viewId) => transactionFilter(state, viewId)?.dateRange ?? defaults.dateRange
+    toCurrentSearchIndex: (state, viewId) =>
+        T.toFilter(state, viewId)?.currentSearchIndex ?? defaults.currentSearchIndex,
 
-// @sig dateRangeKey :: (ReduxState, String) -> String
-const dateRangeKey = (state, viewId) => transactionFilter(state, viewId)?.dateRangeKey ?? defaults.dateRangeKey
+    toCurrentRowIndex: (state, viewId) => T.toFilter(state, viewId)?.currentRowIndex ?? defaults.currentRowIndex,
+    toCustomStartDate: (state, viewId) => T.toFilter(state, viewId)?.customStartDate ?? defaults.customStartDate,
+    toCustomEndDate: (state, viewId) => T.toFilter(state, viewId)?.customEndDate ?? defaults.customEndDate,
 
-// @sig filterQuery :: (ReduxState, String) -> String
-const filterQuery = (state, viewId) => transactionFilter(state, viewId)?.filterQuery ?? defaults.filterQuery
+    toSelectedCategories: (state, viewId) =>
+        T.toFilter(state, viewId)?.selectedCategories ?? defaults.selectedCategories,
 
-// @sig searchQuery :: (ReduxState, String) -> String
-const searchQuery = (state, viewId) => transactionFilter(state, viewId)?.searchQuery ?? defaults.searchQuery
+    toSelectedAccounts: (state, viewId) => T.toFilter(state, viewId)?.selectedAccounts ?? defaults.selectedAccounts,
 
-// @sig selectedCategories :: (ReduxState, String) -> [String]
-const selectedCategories = (state, viewId) =>
-    transactionFilter(state, viewId)?.selectedCategories ?? defaults.selectedCategories
+    toSelectedSecurities: (state, viewId) =>
+        T.toFilter(state, viewId)?.selectedSecurities ?? defaults.selectedSecurities,
 
-// @sig selectedAccounts :: (ReduxState, String) -> [String]
-const selectedAccounts = (state, viewId) =>
-    transactionFilter(state, viewId)?.selectedAccounts ?? defaults.selectedAccounts
+    toSelectedInvestmentActions: (state, viewId) =>
+        T.toFilter(state, viewId)?.selectedInvestmentActions ?? defaults.selectedInvestmentActions,
 
-// @sig selectedSecurities :: (ReduxState, String) -> [String]
-const selectedSecurities = (state, viewId) =>
-    transactionFilter(state, viewId)?.selectedSecurities ?? defaults.selectedSecurities
-
-// @sig selectedInvestmentActions :: (ReduxState, String) -> [String]
-const selectedInvestmentActions = (state, viewId) =>
-    transactionFilter(state, viewId)?.selectedInvestmentActions ?? defaults.selectedInvestmentActions
-
-// @sig groupBy :: (ReduxState, String) -> String?
-const groupBy = (state, viewId) => transactionFilter(state, viewId)?.groupBy ?? defaults.groupBy
-
-// @sig asOfDate :: (ReduxState, String) -> String
-const asOfDate = (state, viewId) => {
-    // @sig todayIso :: () -> String
-    const todayIso = () => new Date().toISOString().slice(0, 10)
-
-    return transactionFilter(state, viewId)?.asOfDate ?? todayIso()
+    toAsOfDate: (state, viewId) => {
+        const todayIso = () => new Date().toISOString().slice(0, 10)
+        return T.toFilter(state, viewId)?.asOfDate ?? todayIso()
+    },
 }
 
-// @sig currentSearchIndex :: (ReduxState, String) -> Number
-const currentSearchIndex = (state, viewId) =>
-    transactionFilter(state, viewId)?.currentSearchIndex ?? defaults.currentSearchIndex
-
-// @sig currentRowIndex :: (ReduxState, String) -> Number
-const currentRowIndex = (state, viewId) => transactionFilter(state, viewId)?.currentRowIndex ?? defaults.currentRowIndex
-
-// @sig customStartDate :: (ReduxState, String) -> Date?
-const customStartDate = (state, viewId) => transactionFilter(state, viewId)?.customStartDate ?? defaults.customStartDate
-
-// @sig customEndDate :: (ReduxState, String) -> Date?
-const customEndDate = (state, viewId) => transactionFilter(state, viewId)?.customEndDate ?? defaults.customEndDate
-
-export {
-    asOfDate,
-    currentRowIndex,
-    currentSearchIndex,
-    customEndDate,
-    customStartDate,
-    dateRange,
-    dateRangeKey,
-    filterQuery,
-    groupBy,
-    searchQuery,
-    selectedAccounts,
-    selectedCategories,
-    selectedInvestmentActions,
-    selectedSecurities,
-    transactionFilter,
+const UI = {
+    asOfDate: T.toAsOfDate,
+    currentRowIndex: T.toCurrentRowIndex,
+    currentSearchIndex: T.toCurrentSearchIndex,
+    customEndDate: T.toCustomEndDate,
+    customStartDate: T.toCustomStartDate,
+    dateRange: T.toDateRange,
+    dateRangeKey: T.toDateRangeKey,
+    filterQuery: T.toFilterQuery,
+    groupBy: T.toGroupBy,
+    searchQuery: T.toSearchQuery,
+    selectedAccounts: T.toSelectedAccounts,
+    selectedCategories: T.toSelectedCategories,
+    selectedInvestmentActions: T.toSelectedInvestmentActions,
+    selectedSecurities: T.toSelectedSecurities,
+    transactionFilter: T.toFilter,
 }
+
+export { UI }

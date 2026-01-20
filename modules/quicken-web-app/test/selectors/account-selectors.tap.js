@@ -1,5 +1,5 @@
 // ABOUTME: Tests for account-related selectors
-// ABOUTME: Verifies balance computation and account enrichment
+// ABOUTME: Verifies account organization by sort mode
 
 import t from 'tap'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
@@ -7,13 +7,9 @@ import { Account } from '../../src/types/account.js'
 import { Transaction } from '../../src/types/transaction.js'
 import { Accounts } from '../../src/store/selectors/accounts.js'
 import { AccountSection } from '../../src/types/account-section.js'
-import { EnrichedAccount } from '../../src/types/enriched-account.js'
 import { SortMode } from '../../src/types/sort-mode.js'
 
-const { T, A } = Accounts
-const accountBalance = T.toBankBalance
-const enrichedAccounts = A.collectEnriched
-const organizedAccounts = A.collectOrganized
+const organizedAccounts = Accounts.organized
 
 // -----------------------------------------------------------------------------
 // Test helpers
@@ -21,111 +17,6 @@ const organizedAccounts = A.collectOrganized
 
 const bankTxn = (id, accountId, date, amount) =>
     Transaction.Bank.from({ id, accountId, date, amount, transactionType: 'bank' })
-
-// -----------------------------------------------------------------------------
-// accountBalance
-// -----------------------------------------------------------------------------
-
-t.test('Given a state with transactions for a bank account', t => {
-    const account = Account('acc_000000000001', 'Checking', 'Bank', null, null)
-    const transactions = LookupTable(
-        [
-            bankTxn('txn_000000000001', 'acc_000000000001', '2024-01-15', 100),
-            bankTxn('txn_000000000002', 'acc_000000000001', '2024-01-20', -50),
-            bankTxn('txn_000000000003', 'acc_000000000001', '2024-01-25', 200),
-        ],
-        Transaction,
-        'id',
-    )
-    const state = { accounts: LookupTable([account], Account, 'id'), transactions }
-
-    t.test('When accountBalance is called', t => {
-        const result = accountBalance(state, 'acc_000000000001')
-        t.equal(result, 250, 'Then it returns the sum of transaction amounts')
-        t.end()
-    })
-    t.end()
-})
-
-t.test('Given a state with transactions for multiple accounts', t => {
-    const account1 = Account('acc_000000000001', 'Checking', 'Bank', null, null)
-    const account2 = Account('acc_000000000002', 'Savings', 'Bank', null, null)
-    const transactions = LookupTable(
-        [
-            bankTxn('txn_000000000001', 'acc_000000000001', '2024-01-15', 100),
-            bankTxn('txn_000000000002', 'acc_000000000002', '2024-01-20', 500),
-            bankTxn('txn_000000000003', 'acc_000000000001', '2024-01-25', 200),
-        ],
-        Transaction,
-        'id',
-    )
-    const state = { accounts: LookupTable([account1, account2], Account, 'id'), transactions }
-
-    t.test('When accountBalance is called for account1', t => {
-        const result = accountBalance(state, 'acc_000000000001')
-        t.equal(result, 300, 'Then it only sums transactions for that account')
-        t.end()
-    })
-
-    t.test('When accountBalance is called for account2', t => {
-        const result = accountBalance(state, 'acc_000000000002')
-        t.equal(result, 500, 'Then it only sums transactions for that account')
-        t.end()
-    })
-    t.end()
-})
-
-t.test('Given a state with no transactions for an account', t => {
-    const account = Account('acc_000000000001', 'Empty', 'Bank', null, null)
-    const state = { accounts: LookupTable([account], Account, 'id'), transactions: LookupTable([], Transaction, 'id') }
-
-    t.test('When accountBalance is called', t => {
-        const result = accountBalance(state, 'acc_000000000001')
-        t.equal(result, 0, 'Then it returns 0')
-        t.end()
-    })
-    t.end()
-})
-
-// -----------------------------------------------------------------------------
-// enrichedAccounts
-// -----------------------------------------------------------------------------
-
-t.test('Given a state with bank accounts and transactions', t => {
-    const account1 = Account('acc_000000000001', 'Checking', 'Bank', null, null)
-    const account2 = Account('acc_000000000002', 'Savings', 'Bank', null, null)
-    const transactions = LookupTable(
-        [
-            bankTxn('txn_000000000001', 'acc_000000000001', '2024-01-15', 100),
-            bankTxn('txn_000000000002', 'acc_000000000002', '2024-01-20', 500),
-            bankTxn('txn_000000000003', 'acc_000000000001', '2024-01-25', 200),
-        ],
-        Transaction,
-        'id',
-    )
-    const state = { accounts: LookupTable([account1, account2], Account, 'id'), transactions }
-
-    t.test('When enrichedAccounts is called', t => {
-        const result = enrichedAccounts(state)
-
-        t.ok(LookupTable.is(result), 'Then it returns a LookupTable')
-        t.equal(result.length, 2, 'Then it has 2 enriched accounts')
-
-        const enriched1 = result.get('acc_000000000001')
-        t.ok(EnrichedAccount.is(enriched1), 'Then each item is an EnrichedAccount')
-        t.equal(enriched1.id, 'acc_000000000001', 'Then id matches account id')
-        t.equal(enriched1.account.name, 'Checking', 'Then account is embedded')
-        t.equal(enriched1.balance, 300, 'Then balance is computed from transactions')
-        t.equal(enriched1.dayChange, 0, 'Then dayChange is 0 for bank accounts')
-        t.equal(enriched1.dayChangePct, undefined, 'Then dayChangePct is undefined for bank accounts')
-
-        const enriched2 = result.get('acc_000000000002')
-        t.equal(enriched2.balance, 500, 'Then second account has correct balance')
-
-        t.end()
-    })
-    t.end()
-})
 
 // -----------------------------------------------------------------------------
 // organizedAccounts
