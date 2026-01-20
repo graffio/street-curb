@@ -770,3 +770,18 @@ This document summarizes the specifications that were previously archived in `sp
 - Refactored FilterChips.jsx: renamed from filter-chips.jsx, moved to single FilterChips export object
 - Extracted helper components: SelectedBadge, CheckboxRow, OptionSeparator, SelectableOption, DateRangeOption
 - Fixed function declaration ordering: handlers before hooks (per style validator)
+
+## [quicken-web-app] Selectors Reorganization + --strict-react Compliance (2026-01-20)
+**Purpose:** Consistent export structure, business logic extraction, and --strict-react compliance
+
+- All selector files export single namespace object (Accounts, Categories, Holdings, Transactions, UI, Prefs)
+- Moved holdings computation to @graffio/financial-computations (HoldingsAsOf.computeHoldingsAsOf)
+- Added factory methods to type definitions:
+  - EnrichedAccount.fromAccount, sumHoldingsForAccount, sumBankBalance
+  - Category.toParentCategories, collectAllNames
+  - Holding.matchesSearch
+  - Price.isStale
+- Consolidated filters.js to single Filters export object
+- Renamed functions: getCategoryName → toCategoryName, getEarliestTransactionDate → findEarliestTransactionDate
+- Selectors are now thin Redux wiring that delegates to types and business modules
+- All selectors pass --strict-react validation (max 5 lines, no collection chains)

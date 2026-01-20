@@ -88,10 +88,10 @@ export const typeMappings = {
     // quicken shared domain types (from quicken-type-definitions)
     [`${sources.quickenTypes}/account.type.js`]           : qifAndWeb,
     [`${sources.quickenTypes}/category.type.js`]          : qifAndWeb,
-    [`${sources.quickenTypes}/holding.type.js`]           : qifAndWeb,
+    [`${sources.quickenTypes}/holding.type.js`]           : qifWebFinance,
     [`${sources.quickenTypes}/lot.type.js`]               : qifWebFinance,
-    [`${sources.quickenTypes}/lot-allocation.type.js`]    : qifAndWeb,
-    [`${sources.quickenTypes}/price.type.js`]             : qifAndWeb,
+    [`${sources.quickenTypes}/lot-allocation.type.js`]    : qifWebFinance,
+    [`${sources.quickenTypes}/price.type.js`]             : qifWebFinance,
     [`${sources.quickenTypes}/security.type.js`]          : qifAndWeb,
     [`${sources.quickenTypes}/split.type.js`]             : qifAndWeb,
     [`${sources.quickenTypes}/tag.type.js`]               : qifAndWeb,

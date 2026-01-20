@@ -11,7 +11,7 @@ import { TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
-import { filterByAccount } from '../store/selectors/transactions/filters.js'
+import { Filters } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
 import {
     applyOrderChange,
@@ -130,7 +130,7 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     // Memos (data transformations)
     // -----------------------------------------------------------------------------------------------------------------
     const accountTransactions = useMemo(
-        () => filterByAccount(filteredTransactions, accountId),
+        () => Filters.filterByAccount(filteredTransactions, accountId),
         [filteredTransactions, accountId],
     )
 

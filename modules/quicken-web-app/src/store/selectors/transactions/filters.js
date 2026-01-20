@@ -5,9 +5,9 @@ import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
 
 /*
  * Resolve a transaction's categoryId to category name
- * @sig getCategoryName :: (Transaction, LookupTable<Category>) -> String?
+ * @sig toCategoryName :: (Transaction, LookupTable<Category>) -> String?
  */
-const getCategoryName = (transaction, categories) => {
+const toCategoryName = (transaction, categories) => {
     if (!transaction.categoryId || !categories) return null
     const cat = categories.get(transaction.categoryId)
     return cat ? cat.name : null
@@ -26,7 +26,7 @@ const transactionMatchesSearch = (transaction, searchQuery, categories) => {
 
     if (matchesFields(transaction)) return true
     if (matchesText(String(transaction.amount))) return true
-    if (matchesText(getCategoryName(transaction, categories))) return true
+    if (matchesText(toCategoryName(transaction, categories))) return true
     return false
 }
 
@@ -37,18 +37,20 @@ const transactionMatchesSearch = (transaction, searchQuery, categories) => {
  * @sig filterByText :: ([Transaction], String, LookupTable<Category>?, LookupTable<Security>?) -> [Transaction]
  */
 const filterByText = (transactions, query, categories, securities) => {
-    // @sig getSecurityName :: (Transaction, LookupTable<Security>) -> String?
-    const getSecurityName = (transaction, secs) => {
+    // Resolves security symbol or name from a transaction
+    // @sig toSecurityName :: (Transaction, LookupTable<Security>) -> String?
+    const toSecurityName = (transaction, secs) => {
         if (!transaction.securityId || !secs) return null
         const security = secs.get(transaction.securityId)
         return security ? security.symbol || security.name : null
     }
 
-    // @sig matchesTextQuery :: Transaction -> Boolean
-    const matchesTextQuery = transaction => {
+    // Checks if transaction matches the text query
+    // @sig hasMatchingText :: Transaction -> Boolean
+    const hasMatchingText = transaction => {
         if (matchesFields(transaction)) return true
-        if (matchesText(getCategoryName(transaction, categories))) return true
-        if (matchesText(getSecurityName(transaction, securities))) return true
+        if (matchesText(toCategoryName(transaction, categories))) return true
+        if (matchesText(toSecurityName(transaction, securities))) return true
         return false
     }
 
@@ -57,7 +59,7 @@ const filterByText = (transactions, query, categories, securities) => {
     const matchesFields = anyFieldContains(['description', 'memo', 'payee', 'investmentAction'])(query)
     const matchesText = containsIgnoreCase(query)
 
-    return transactions.filter(matchesTextQuery)
+    return transactions.filter(hasMatchingText)
 }
 
 /*
@@ -68,8 +70,9 @@ const filterByText = (transactions, query, categories, securities) => {
  *     DateRange = { start: Date?, end: Date? }
  */
 const filterByDateRange = (transactions, dateRange) => {
-    // @sig isInDateRange :: Transaction -> Boolean
-    const isInDateRange = transaction => {
+    // Checks if transaction falls within the date bounds
+    // @sig isWithinRange :: Transaction -> Boolean
+    const isWithinRange = transaction => {
         const dateStr = transaction.date // Already ISO string like "2024-06-15"
         if (startStr && dateStr < startStr) return false
         if (endStr && dateStr > endStr) return false
@@ -83,7 +86,7 @@ const filterByDateRange = (transactions, dateRange) => {
     const startStr = start?.toISOString().slice(0, 10)
     const endStr = end?.toISOString().slice(0, 10)
 
-    return transactions.filter(isInDateRange)
+    return transactions.filter(isWithinRange)
 }
 
 /*
@@ -94,7 +97,7 @@ const filterByDateRange = (transactions, dateRange) => {
 const categoryMatches = (transaction, selectedCategories, categories) => {
     if (!selectedCategories.length) return true
 
-    const categoryName = getCategoryName(transaction, categories)
+    const categoryName = toCategoryName(transaction, categories)
     if (!categoryName) return false
 
     // Check if category name matches or starts with any selected category (for hierarchy)
@@ -113,20 +116,20 @@ const filterByCategories = (transactions, selectedCategories, categories) => {
 }
 
 /*
- * Get the earliest transaction date for default start date
+ * Find the earliest transaction date for default start date
  *
- * @sig getEarliestTransactionDate :: [Transaction] -> Date?
+ * @sig findEarliestTransactionDate :: [Transaction] -> Date?
  */
-const getEarliestTransactionDate = transactions => {
+const findEarliestTransactionDate = transactions => {
     // Compare two dates and return the earlier one
-    // @sig findEarlier :: (Date, Transaction) -> Date
-    const findEarlier = (earliest, transaction) => {
+    // @sig toEarlierDate :: (Date, Transaction) -> Date
+    const toEarlierDate = (earliest, transaction) => {
         const transactionDate = new Date(transaction.date)
         return transactionDate < earliest ? transactionDate : earliest
     }
 
     if (!transactions || transactions.length === 0) return null
-    return transactions.reduce(findEarlier, new Date(transactions[0].date))
+    return transactions.reduce(toEarlierDate, new Date(transactions[0].date))
 }
 
 /*
@@ -169,8 +172,31 @@ const filterByInvestmentActions = (transactions, actions) => {
     return transactions.filter(t => actions.includes(t.investmentAction))
 }
 
-export {
+/*
+ * Apply all standard filters in sequence: text -> date -> category -> account
+ *
+ * @sig applyFilters :: Config -> [Transaction]
+ *     Config = { transactions, query, dateRange, categoryIds, accountIds, categories, securities }
+ */
+const applyFilters = (transactions, query, dateRange, categoryIds, accountIds, categories, securities) => {
+    const textFiltered = filterByText(transactions, query, categories, securities)
+    const dateFiltered = filterByDateRange(textFiltered, dateRange || {})
+    const categoryFiltered = filterByCategories(dateFiltered, categoryIds, categories)
+    return filterByAccounts(categoryFiltered, accountIds)
+}
+
+/*
+ * Collect IDs of transactions matching a search query
+ *
+ * @sig collectSearchMatchIds :: ([Transaction], String, LookupTable<Category>) -> [TransactionId]
+ */
+const collectSearchMatchIds = (transactions, query, categories) =>
+    transactions.filter(txn => transactionMatchesSearch(txn, query, categories)).map(txn => txn.id)
+
+const Filters = {
+    applyFilters,
     categoryMatches,
+    collectSearchMatchIds,
     filterByAccount,
     filterByAccounts,
     filterByCategories,
@@ -178,7 +204,9 @@ export {
     filterByInvestmentActions,
     filterBySecurities,
     filterByText,
-    getCategoryName,
-    getEarliestTransactionDate,
+    findEarliestTransactionDate,
+    toCategoryName,
     transactionMatchesSearch,
 }
+
+export { Filters }

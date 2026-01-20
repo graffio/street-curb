@@ -12,6 +12,8 @@
  *
  */
 
+import { currentBalance } from '@graffio/financial-computations/banking'
+
 import * as R from '@graffio/cli-type-generator'
 
 import { Account } from './account.js'
@@ -131,5 +133,34 @@ EnrichedAccount.fromFirestore = EnrichedAccount._fromFirestore
 // Additional functions copied from type definition file
 //
 // -------------------------------------------------------------------------------------------------------------
+
+EnrichedAccount.HOLDINGS_BALANCE_TYPES = ['Investment', '401(k)/403(b)']
+
+EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
+    const accountHoldings = holdings.filter(h => h.accountId === accountId)
+    const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
+    const dayChange = accountHoldings.reduce((sum, h) => sum + h.dayGainLoss, 0)
+    const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : null
+    return {
+        balance,
+        dayChange,
+        dayChangePct,
+    }
+}
+
+EnrichedAccount.sumBankBalance = (transactions, accountId) => {
+    if (!transactions || transactions.length === 0) return 0
+    const accountTransactions = transactions.filter(t => t.accountId === accountId && t.amount != null)
+    return currentBalance(accountTransactions)
+}
+
+EnrichedAccount.fromAccount = (account, holdings, transactions) => {
+    const { id } = account
+    if (EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)) {
+        const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
+        return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
+    }
+    return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
+}
 
 export { EnrichedAccount }

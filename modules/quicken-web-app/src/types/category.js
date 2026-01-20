@@ -119,4 +119,16 @@ Category.fromFirestore = Category._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
+Category.toParentCategories = name => {
+    const parts = name.split(':')
+    return parts.map((_, i) => parts.slice(0, i + 1).join(':'))
+}
+
+Category.collectAllNames = categories => {
+    if (!categories || categories.length === 0) return []
+    const names = categories.map(c => c.name)
+    const withParents = names.flatMap(Category.toParentCategories)
+    return Array.from(new Set(withParents)).sort()
+}
+
 export { Category }

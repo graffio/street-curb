@@ -17,11 +17,7 @@ import {
     SecurityFilterChip,
 } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
-import {
-    filterByAccount,
-    filterByInvestmentActions,
-    filterBySecurities,
-} from '../store/selectors/transactions/filters.js'
+import { Filters } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
 import { formatDateRange } from '../utils/formatters.js'
 import {
@@ -159,17 +155,17 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     // -----------------------------------------------------------------------------------------------------------------
     // Apply investment-specific filter chain: account -> securities -> actions
     const accountTransactions = useMemo(
-        () => filterByAccount(filteredTransactions, accountId),
+        () => Filters.filterByAccount(filteredTransactions, accountId),
         [filteredTransactions, accountId],
     )
 
     const securityFiltered = useMemo(
-        () => filterBySecurities(accountTransactions, selectedSecurities),
+        () => Filters.filterBySecurities(accountTransactions, selectedSecurities),
         [accountTransactions, selectedSecurities],
     )
 
     const actionFiltered = useMemo(
-        () => filterByInvestmentActions(securityFiltered, selectedInvestmentActions),
+        () => Filters.filterByInvestmentActions(securityFiltered, selectedInvestmentActions),
         [securityFiltered, selectedInvestmentActions],
     )
 

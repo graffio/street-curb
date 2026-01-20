@@ -24,3 +24,14 @@ export const Holding = {
         isStale: 'Boolean',
     },
 }
+
+// Checks if holding matches search query (case-insensitive)
+// @sig matchesSearch :: (Holding, String) -> Boolean
+// prettier-ignore
+Holding.matchesSearch = (holding, query) => {
+    if (!query) return true
+    const q = query.toLowerCase()
+    const { accountName, securityName, securitySymbol } = holding
+    return securityName.toLowerCase().includes(q) || securitySymbol.toLowerCase().includes(q) ||
+        accountName.toLowerCase().includes(q)
+}

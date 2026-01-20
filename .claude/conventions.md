@@ -309,3 +309,32 @@ Only wrap selectors that actually need curried usage (YAGNI). Simple state-only 
 - Prefer LookupTable over plain array when contained type is Tagged or TaggedSum
 - Syntax: `'{Type:idField}'` for LookupTable, `'[Type]'` for plain array
 - ID patterns go in `field-types.js`, not inline in type definitions
+
+**Type-attached factory methods:**
+
+When transforming from one type to another, attach a `from{InputType}` method to the target type:
+
+```javascript
+// In enriched-account.type.js
+const EnrichedAccount = {
+    name: 'EnrichedAccount',
+    kind: 'tagged',
+    fields: { ... },
+    methods: {
+        // Cross-type transformation: Account → EnrichedAccount
+        fromAccount: (account, holdings) => EnrichedAccount.from({
+            id: account.id,
+            account,
+            balance: T.toBalance(account, holdings),
+            dayChange: T.toDayChange(holdings),
+            dayChangePct: T.toDayChangePct(holdings),
+        }),
+    },
+}
+```
+
+**Naming rules:**
+
+- `from` (generated) — same-shape deserialization (field-by-field copy)
+- `from{InputType}` — cross-type transformation with logic (e.g., `fromAccount`, `fromTransaction`)
+- Multiple `from*` methods are fine when a type can be constructed from different sources

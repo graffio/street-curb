@@ -2,14 +2,8 @@
 // ABOUTME: Combines UI state with transaction filtering
 
 import { memoizeReduxStatePerKey } from '@graffio/functional'
+import { Filters } from './transactions/filters.js'
 import { UI } from './ui.js'
-import {
-    filterByAccounts,
-    filterByCategories,
-    filterByDateRange,
-    filterByText,
-    transactionMatchesSearch,
-} from './transactions/filters.js'
 
 const { dateRange, filterQuery, searchQuery, selectedAccounts, selectedCategories } = UI
 
@@ -26,23 +20,17 @@ const T = {
 const A = {
     // Applies all transaction filters in sequence: text -> date -> category -> account
     // @sig collectFiltered :: (ReduxState, String) -> [Transaction]
+    // prettier-ignore
     collectFiltered: (state, viewId) => {
         const { categories, securities, transactions } = state
-        const textFiltered = filterByText(transactions, filterQuery(state, viewId), categories, securities)
-        const dateFiltered = filterByDateRange(textFiltered, dateRange(state, viewId) || {})
-        const categoryFiltered = filterByCategories(dateFiltered, selectedCategories(state, viewId), categories)
-        return filterByAccounts(categoryFiltered, selectedAccounts(state, viewId))
+        return Filters.applyFilters(transactions, filterQuery(state, viewId), dateRange(state, viewId),
+            selectedCategories(state, viewId), selectedAccounts(state, viewId), categories, securities)
     },
 
     // Computes IDs of transactions matching the current search query for a specific view
     // @sig collectSearchMatches :: (ReduxState, String) -> [TransactionId]
-    collectSearchMatches: (state, viewId) => {
-        const { categories } = state
-        const query = searchQuery(state, viewId)
-        return filtered(state, viewId)
-            .filter(txn => transactionMatchesSearch(txn, query, categories))
-            .map(txn => txn.id)
-    },
+    collectSearchMatches: (state, viewId) =>
+        Filters.collectSearchMatchIds(filtered(state, viewId), searchQuery(state, viewId), state.categories),
 
     // Computes enriched transactions with category and account names for a specific view
     // @sig collectEnriched: (ReduxState, String) -> [EnrichedTransaction]
