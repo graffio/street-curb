@@ -92,6 +92,7 @@ test('normalizeKey', t => {
 test('Keymap.resolve', t => {
     const registerKeymap = Keymap.from({
         id: 'register',
+        name: 'Register',
         priority: 10,
         intents: intents(
             Intent.from({ description: 'Move down', keys: ['j', 'ArrowDown'], action: 'ArrowDown' }),
@@ -101,6 +102,7 @@ test('Keymap.resolve', t => {
 
     const globalKeymap = Keymap.from({
         id: 'global',
+        name: 'Global',
         priority: 0,
         intents: intents(Intent.from({ description: 'Save', keys: ['cmd+s'], action: () => {} })),
     })
@@ -125,6 +127,7 @@ test('Keymap.resolve', t => {
     t.test('Given a keymap with activeWhen', t => {
         const conditionalKeymap = Keymap.from({
             id: 'register-123',
+            name: 'Register 123',
             priority: 10,
             activeWhen: activeId => activeId === 'register-123',
             intents: intents(Intent.from({ description: 'Delete item', keys: ['Delete'], action: () => {} })),
@@ -148,6 +151,7 @@ test('Keymap.resolve', t => {
     t.test('Given a blocking keymap', t => {
         const modalKeymap = Keymap.from({
             id: 'modal',
+            name: 'Modal',
             priority: 100,
             blocking: true,
             intents: intents(Intent.from({ description: 'Confirm', keys: ['Enter'], action: () => {} })),
@@ -173,6 +177,7 @@ test('Keymap.resolve', t => {
 test('Keymap.collectAvailable', t => {
     const registerKeymap = Keymap.from({
         id: 'register',
+        name: 'Register',
         priority: 10,
         intents: intents(
             Intent.from({ description: 'Move down', keys: ['j'], action: 'ArrowDown' }),
@@ -182,6 +187,7 @@ test('Keymap.collectAvailable', t => {
 
     const globalKeymap = Keymap.from({
         id: 'global',
+        name: 'Global',
         priority: 0,
         intents: intents(
             Intent.from({ description: 'Save', keys: ['cmd+s'], action: () => {} }),
@@ -198,9 +204,13 @@ test('Keymap.collectAvailable', t => {
             const result = Keymap.collectAvailable(keymaps, null)
 
             t.equal(result.length, 3, 'Then it returns unique descriptions')
-            t.same(result[0], { description: 'Move down', keys: ['j'], from: 'register' }, 'Then higher priority wins')
-            t.same(result[1], { description: 'Move up', keys: ['k'], from: 'register' })
-            t.same(result[2], { description: 'Save', keys: ['cmd+s'], from: 'global' })
+            t.same(
+                result[0],
+                { description: 'Move down', keys: ['j', 'ArrowDown'], from: 'Register' },
+                'Then keys are merged',
+            )
+            t.same(result[1], { description: 'Move up', keys: ['k'], from: 'Register' })
+            t.same(result[2], { description: 'Save', keys: ['cmd+s'], from: 'Global' })
             t.end()
         })
         t.end()
@@ -209,6 +219,7 @@ test('Keymap.collectAvailable', t => {
     t.test('Given a blocking keymap', t => {
         const modalKeymap = Keymap.from({
             id: 'modal',
+            name: 'Modal',
             priority: 100,
             blocking: true,
             intents: intents(Intent.from({ description: 'Confirm', keys: ['Enter'], action: () => {} })),
@@ -228,6 +239,7 @@ test('Keymap.collectAvailable', t => {
     t.test('Given a keymap with activeWhen that is false', t => {
         const conditionalKeymap = Keymap.from({
             id: 'conditional',
+            name: 'Conditional',
             priority: 50,
             activeWhen: () => false,
             intents: intents(Intent.from({ description: 'Hidden', keys: ['h'], action: () => {} })),
