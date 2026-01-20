@@ -16,6 +16,7 @@ import { ImportOrdering } from './rules/import-ordering.js'
 import { LineLength } from './rules/line-length.js'
 import { MultilineDestructuring } from './rules/multiline-destructuring.js'
 import { ReactComponentCohesion } from './rules/react-component-cohesion.js'
+import { ReactReduxSeparation } from './rules/react-redux-separation.js'
 import { SigDocumentation } from './rules/sig-documentation.js'
 import { SingleLevelIndentation } from './rules/single-level-indentation.js'
 
@@ -23,6 +24,7 @@ import { SingleLevelIndentation } from './rules/single-level-indentation.js'
  * Check single file for coding standards violations
  * CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
  * Violation = { type: String, line: Number, column: Number, message: String, rule: String, priority: Number }
+ * Options = { strictReact?: Boolean }
  *
  * Priority determines fix order (lower = fix first):
  *   0 = cohesion-structure (structural issues - address first)
@@ -33,10 +35,11 @@ import { SingleLevelIndentation } from './rules/single-level-indentation.js'
  *   5 = function-spacing (just blank lines)
  *   6 = sig-documentation (depends on extraction being done first)
  *   7 = file-naming (last - changes file paths)
+ *   8 = react-redux-separation (experimental, only with --strict-react)
  *
- * @sig checkFile :: String -> Promise<CheckResult>
+ * @sig checkFile :: (String, Options?) -> Promise<CheckResult>
  */
-const checkFile = async filePath => {
+const checkFile = async (filePath, options = {}) => {
     const sourceCode = await readFile(filePath, 'utf8')
 
     // Skip generated files entirely - they're auto-created and shouldn't be validated
@@ -48,6 +51,10 @@ const checkFile = async filePath => {
     } catch (parseError) {
         console.warn(`AST parsing failed for ${filePath}: ${parseError.message}`)
     }
+
+    const strictReactViolations = options.strictReact
+        ? ReactReduxSeparation.checkReactReduxSeparation(ast, sourceCode, filePath)
+        : []
 
     const allViolations = [
         ...AboutmeComment.checkAboutmeComment(ast, sourceCode, filePath),
@@ -64,6 +71,7 @@ const checkFile = async filePath => {
         ...ReactComponentCohesion.checkReactComponentCohesion(ast, sourceCode, filePath),
         ...SigDocumentation.checkSigDocumentation(ast, sourceCode, filePath),
         ...SingleLevelIndentation.checkSingleLevelIndentation(ast, sourceCode, filePath),
+        ...strictReactViolations,
     ]
 
     const violations = allViolations.sort((a, b) => a.priority - b.priority || a.line - b.line)
