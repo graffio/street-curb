@@ -69,6 +69,9 @@
  *      viewId: "String?"
  *  SetDropTarget
  *      groupId: "String?"
+ *  SetPageTitle
+ *      title   : "String",
+ *      subtitle: "String?"
  *
  */
 
@@ -125,6 +128,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetLoadingStatus',
         'SetDraggingView',
         'SetDropTarget',
+        'SetPageTitle',
     ],
     enumerable: false,
 })
@@ -177,6 +181,7 @@ const toString = {
     setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
+    setPageTitle           : function () { return `Action.SetPageTitle(${R._toString(this.title)}, ${R._toString(this.subtitle)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -210,6 +215,7 @@ const toJSON = {
     setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setPageTitle           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -649,6 +655,24 @@ const SetDropTargetConstructor = function SetDropTarget(groupId) {
 
 Action.SetDropTarget = SetDropTargetConstructor
 
+/*
+ * Construct a Action.SetPageTitle instance
+ * @sig SetPageTitle :: (String, String?) -> Action.SetPageTitle
+ */
+const SetPageTitleConstructor = function SetPageTitle(title, subtitle) {
+    const constructorName = 'Action.SetPageTitle(title, subtitle)'
+
+    R.validateString(constructorName, 'title', false, title)
+    R.validateString(constructorName, 'subtitle', true, subtitle)
+
+    const result = Object.create(SetPageTitlePrototype)
+    result.title = title
+    if (subtitle != null) result.subtitle = subtitle
+    return result
+}
+
+Action.SetPageTitle = SetPageTitleConstructor
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
@@ -846,6 +870,14 @@ const SetDropTargetPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetDropTargetConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetPageTitlePrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetPageTitle', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setPageTitle, enumerable: false },
+    toJSON: { value: toJSON.setPageTitle, enumerable: false },
+    constructor: { value: SetPageTitleConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
@@ -873,6 +905,7 @@ SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
 SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
+SetPageTitleConstructor.prototype = SetPageTitlePrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
@@ -900,6 +933,7 @@ SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerCon
 SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
+SetPageTitleConstructor.is = val => val && val.constructor === SetPageTitleConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
@@ -927,6 +961,7 @@ SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
 SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
+SetPageTitleConstructor.toString = () => 'Action.SetPageTitle'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -960,6 +995,7 @@ SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
 SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
+SetPageTitleConstructor._from = _input => Action.SetPageTitle(_input.title, _input.subtitle)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -987,6 +1023,7 @@ SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
 SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
+SetPageTitleConstructor.from = SetPageTitleConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -1154,6 +1191,9 @@ SetDraggingViewConstructor.fromFirestore = SetDraggingViewConstructor._from
 SetDropTargetConstructor.toFirestore = o => ({ ...o })
 SetDropTargetConstructor.fromFirestore = SetDropTargetConstructor._from
 
+SetPageTitleConstructor.toFirestore = o => ({ ...o })
+SetPageTitleConstructor.fromFirestore = SetPageTitleConstructor._from
+
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -1186,6 +1226,7 @@ Action.is = v => {
         SetLoadingStatus,
         SetDraggingView,
         SetDropTarget,
+        SetPageTitle,
     } = Action
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
@@ -1213,7 +1254,8 @@ Action.is = v => {
         constructor === SetShowDrawer ||
         constructor === SetLoadingStatus ||
         constructor === SetDraggingView ||
-        constructor === SetDropTarget
+        constructor === SetDropTarget ||
+        constructor === SetPageTitle
     )
 }
 
@@ -1257,6 +1299,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetLoadingStatus,
         SetDraggingView,
         SetDropTarget,
+        SetPageTitle,
     } = Action
     const tagName = doc['@@tagName']
     if (tagName === 'LoadFile') return LoadFile.fromFirestore(doc, decodeTimestamps)
@@ -1283,6 +1326,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetPageTitle') return SetPageTitle.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 
