@@ -105,6 +105,9 @@ const post = action => {
         // Drag state actions (no persistence needed)
         SetDraggingView : () => dispatch(action),
         SetDropTarget   : () => dispatch(action),
+
+        // Page title actions (no persistence needed)
+        SetPageTitle : () => dispatch(action),
     })
 }
 
