@@ -187,10 +187,12 @@ const KeyboardDateInput = forwardRef((props, ref) => {
 
     const handleDayAdjustment = (increment = true) => {
         userInitiatedChange.current = true
-        const currentDate = datePartsToDate(dateParts)
-        const newDate = new Date(currentDate)
-        newDate.setDate(currentDate.getDate() + (increment ? 1 : -1))
-        setDateParts(dateToDateParts(newDate))
+        setDateParts(prev => {
+            const currentDate = datePartsToDate(prev)
+            const newDate = new Date(currentDate)
+            newDate.setDate(currentDate.getDate() + (increment ? 1 : -1))
+            return dateToDateParts(newDate)
+        })
     }
 
     const handleSlashKey = () => {
@@ -437,7 +439,10 @@ const KeyboardDateInput = forwardRef((props, ref) => {
             onSlash: handleSlashKey,
         }
         return F.createDateInputKeymap(keymapId, keymapName, handlers)
-    }, [isKeyboardMode, onRegisterKeymap, keymapId, keymapName, activePart, dateParts, typingBuffer])
+
+    // Note: Keymap is only for displaying shortcuts in KeymapDrawer; local handleKeyDown processes actual keys.
+    // No need to recreate keymap on state changes since global keymap routing skips input elements.
+    }, [isKeyboardMode, onRegisterKeymap, keymapId, keymapName])
 
     // Register/unregister keymap when entering/exiting keyboard mode
     useEffect(() => {
