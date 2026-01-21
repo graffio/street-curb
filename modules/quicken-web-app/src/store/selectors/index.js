@@ -31,6 +31,34 @@ const tabLayout = state => state.tabLayout
 // @sig keymaps :: State -> [Keymap]
 const keymaps = state => state.keymaps
 
+// Returns whether the reopen banner is shown
+// @sig showReopenBanner :: State -> Boolean
+const showReopenBanner = state => state.showReopenBanner
+
+// Returns whether the keymap drawer is shown
+// @sig showDrawer :: State -> Boolean
+const showDrawer = state => state.showDrawer
+
+// Returns the current loading status message
+// @sig loadingStatus :: State -> String?
+const loadingStatus = state => state.loadingStatus
+
+// Returns the ID of the view currently being dragged
+// @sig draggingViewId :: State -> String?
+const draggingViewId = state => state.draggingViewId
+
+// Returns the ID of the group that is a drop target
+// @sig dropTargetGroupId :: State -> String?
+const dropTargetGroupId = state => state.dropTargetGroupId
+
+// Returns the active view ID from the tab layout
+// @sig activeViewId :: State -> String | null
+const activeViewId = state => {
+    const layout = state.tabLayout
+    const activeGroup = layout?.tabGroups?.find(g => g.id === layout.activeTabGroupId)
+    return activeGroup?.activeViewId ?? null
+}
+
 // Returns all transactions
 // @sig transactions :: State -> LookupTable<Transaction>
 const transactions = state => state.transactions
@@ -69,21 +97,27 @@ const categoryName = (state, id) => categories(state)?.get(id)?.name ?? 'Uncateg
 
 // Namespace exports
 export { Accounts } from './accounts.js'
-export { UI } from './ui.js'
-
-export { Transactions } from './transactions.js'
 export { Categories } from './categories.js'
 export { Holdings } from './holdings.js'
+export { Keymaps } from './keymaps.js'
 export { Prefs } from './prefs.js'
+export { Transactions } from './transactions.js'
+export { UI } from './ui.js'
 export {
     // Base state
     accounts,
+    activeViewId,
     categories,
+    draggingViewId,
+    dropTargetGroupId,
     initialized,
     keymaps,
+    loadingStatus,
     lots,
     prices,
     securities,
+    showDrawer,
+    showReopenBanner,
     tabLayout,
     tableLayouts,
     transactions,

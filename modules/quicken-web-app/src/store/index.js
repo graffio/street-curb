@@ -4,18 +4,16 @@
 
 import { createStore } from 'redux'
 import { hydrateAccountListPrefs, hydrateTabLayout, hydrateTableLayouts } from './hydration.js'
-import { createEmptyState, rootReducer } from './reducer.js'
+import { Reducer } from './reducer.js'
+const { createEmptyState, rootReducer } = Reducer
 
 let store = null
 
 // Hydrates state from IndexedDB and creates the Redux store
 // @sig initializeStore :: () -> Promise<Store>
 const initializeStore = async () => {
-    const [tableLayouts, tabLayout, accountListPrefs] = await Promise.all([
-        hydrateTableLayouts(),
-        hydrateTabLayout(),
-        hydrateAccountListPrefs(),
-    ])
+    const promises = [hydrateTableLayouts(), hydrateTabLayout(), hydrateAccountListPrefs()]
+    const [tableLayouts, tabLayout, accountListPrefs] = await Promise.all(promises)
 
     const preloadedState = {
         ...createEmptyState(),
