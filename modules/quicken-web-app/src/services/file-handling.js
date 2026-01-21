@@ -24,15 +24,29 @@ const E = {
     // Loads entities from a file handle into Redux store
     // @sig loadFromHandle :: FileSystemFileHandle -> Promise<void>
     loadFromHandle: async handle => {
-        post(Action.SetLoadingStatus('Reading file...'))
-        const file = await handle.getFile()
-        const entities = await loadEntitiesFromFile(file, status => post(Action.SetLoadingStatus(status)))
-        post(Action.SetLoadingStatus('Initializing...'))
-        const { accounts, categories, lotAllocations, lots, prices, securities, splits, tags, transactions } = entities
-        post(
-            Action.LoadFile(accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices),
-        )
-        post(Action.SetLoadingStatus(null))
+        try {
+            post(Action.SetLoadingStatus('Reading file...'))
+            const file = await handle.getFile()
+            const entities = await loadEntitiesFromFile(file, status => post(Action.SetLoadingStatus(status)))
+            post(Action.SetLoadingStatus('Initializing...'))
+            const { accounts, categories, lotAllocations, lots, prices, securities, splits, tags, transactions } =
+                entities
+            post(
+                Action.LoadFile(
+                    accounts,
+                    categories,
+                    securities,
+                    tags,
+                    splits,
+                    transactions,
+                    lots,
+                    lotAllocations,
+                    prices,
+                ),
+            )
+        } finally {
+            post(Action.SetLoadingStatus(null))
+        }
     },
 
     // Opens file picker and loads selected file
@@ -56,8 +70,8 @@ const E = {
         try {
             const permission = await storedHandle.requestPermission({ mode: 'read' })
             if (permission === 'granted') {
-                await E.loadFromHandle(storedHandle)
                 post(Action.SetShowReopenBanner(false))
+                await E.loadFromHandle(storedHandle)
             }
         } catch (error) {
             console.error('Failed to reopen file:', error.message)
