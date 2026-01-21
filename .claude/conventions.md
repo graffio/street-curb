@@ -95,6 +95,57 @@ export { MyComponent }
 - Event handlers: use `useCallback` directly for simple `set()`/`post()` calls
 - E group at module level: pass setters as parameters for testable effect functions
 
+## React/Redux Separation
+
+Components should be pure wiring between selectors (reads) and actions (writes).
+
+**Allowed in Components:**
+
+- `useSelector` — all state reads
+- `post(Action.X)` — all state writes
+- `useEffect` — only for wiring (e.g., layout effects, subscriptions)
+- `useRef` — only for DOM refs
+- `useCallback` — only for simple `() => post(Action.X)` bodies
+- P/T cohesion groups at module level for trivial UI adapters
+
+**Restricted in Components:**
+
+- `useState` — requires `// EXEMPT: reason` comment
+  - Valid exemptions: `drag`, `hover`, `focus`, `file-handling`, `drawer`, `loading`
+  - Exempted state should be truly ephemeral (no persistence, no sharing)
+- `useMemo` — derived state belongs in selectors
+- `useChannel` — use Redux instead when practical
+
+**Handler Pattern with Updater Functions:**
+
+When a library (e.g., TanStack Table) passes updater functions to callbacks:
+
+```javascript
+// State comes from Redux
+const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
+
+// Handler resolves updater and dispatches
+const handleExpandedChange = useCallback(
+    updater => {
+        const next = typeof updater === 'function' ? updater(expanded) : updater
+        post(Action.SetTreeExpanded(viewId, next))
+    },
+    [viewId, expanded],  // expanded is a dependency - this is correct
+)
+```
+
+**Derived State → Selectors:**
+
+Move `useMemo` computations to memoized selectors:
+
+```javascript
+// BAD - derived state in component
+const holdingsTree = useMemo(() => buildTree(groupBy, holdings), [groupBy, holdings])
+
+// GOOD - selector handles derivation with memoization
+const holdingsTree = useSelector(state => S.Holdings.collectTree(state, viewId))
+```
+
 ## Files
 
 - Components: `PascalCase.jsx`
