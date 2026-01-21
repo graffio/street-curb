@@ -1,20 +1,14 @@
-import { createChannel } from '@graffio/design-system'
+// ABOUTME: Drag state channel for SegmentedCurbEditor components
+// ABOUTME: Coordinates drag/edit UI state between sibling components
 
-/**
- * Channel for coordinating UI state within SegmentedCurbEditor components
- * Domain-specific channel for editor interactions (drag, label editing, etc.)
- */
-const initialDragState = {
-    isDragging: false,
-    draggedIndex: null,
-    dragType: null, // 'divider', 'segment', etc.
-    editingIndex: null, // Index of label currently being edited (dropdown open)
-}
+import { Channel } from './channel.js'
 
-/**
- * Editor-specific drag state channel instance
- * @sig dragStateChannel :: Channel
- */
+const { createChannel } = Channel
+
+const initialDragState = { isDragging: false, draggedIndex: null, dragType: null, editingIndex: null }
+
+// @sig dragStateChannel :: Channel
 const dragStateChannel = createChannel(initialDragState)
 
-export { dragStateChannel }
+const DragStateChannel = { dragStateChannel }
+export { DragStateChannel }

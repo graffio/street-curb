@@ -1,9 +1,30 @@
 // ABOUTME: TanStack Router configuration
 // ABOUTME: Defines routes with lazy loading and MainLayout shell
+// COMPLEXITY-TODO: chain-extraction — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: export-structure — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: function-spacing — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: react-component-cohesion — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: react-redux-separation — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — File predates style rules (expires 2026-04-01)
 
 import { Box, Button, Flex, Heading, LoadingSpinner, MainLayout } from '@graffio/design-system'
-import { createRootRoute, createRoute, createRouter, Link, Outlet, redirect } from '@tanstack/react-router'
+import {
+    createRootRoute,
+    createRoute,
+    createRouter,
+    Link,
+    Outlet,
+    redirect,
+    useRouterState,
+} from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Route titles
+// ---------------------------------------------------------------------------------------------------------------------
+
+const ROUTE_TITLES = { '/map': 'Curb Map', '/admin/users': 'User Management' }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Sidebar rendering
@@ -36,6 +57,24 @@ const sidebarSections = [
 ]
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Layout component
+// ---------------------------------------------------------------------------------------------------------------------
+
+const RootLayout = () => {
+    const pathname = useRouterState({ select: s => s.location.pathname })
+    const title = ROUTE_TITLES[pathname] || ''
+
+    return (
+        <MainLayout title={title}>
+            <MainLayout.Sidebar>{sidebarSections.map(renderSidebarSection)}</MainLayout.Sidebar>
+            <Suspense fallback={<LoadingSpinner />}>
+                <Outlet />
+            </Suspense>
+        </MainLayout>
+    )
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Lazy / suspense
 // ---------------------------------------------------------------------------------------------------------------------
 const MapPage = lazy(() => import('./pages/MapPage.jsx'))
@@ -50,16 +89,7 @@ const redirectToDefaultRoute = () => {
     throw redirect({ to: '/map' })
 }
 
-const rootRoute = createRootRoute({
-    component: () => (
-        <MainLayout>
-            <MainLayout.Sidebar>{sidebarSections.map(renderSidebarSection)}</MainLayout.Sidebar>
-            <Suspense fallback={<LoadingSpinner />}>
-                <Outlet />
-            </Suspense>
-        </MainLayout>
-    ),
-})
+const rootRoute = createRootRoute({ component: RootLayout })
 
 // prettier-ignore
 const routeTree = rootRoute.addChildren([

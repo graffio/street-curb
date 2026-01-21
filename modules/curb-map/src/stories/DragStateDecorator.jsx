@@ -1,6 +1,14 @@
+// ABOUTME: Storybook decorator for drag state channel
+// ABOUTME: Syncs Storybook controls with dragStateChannel for testing
+// COMPLEXITY-TODO: cohesion-structure — File predates style rules (expires 2026-04-01)
+
 import React from 'react'
-import { useChannel } from '@graffio/design-system'
-import { dragStateChannel } from '../channels/drag-state-channel.js'
+import { Channel } from '../channels/channel.js'
+import { DragStateChannel } from '../channels/drag-state-channel.js'
+
+const { dragStateChannel } = DragStateChannel
+
+const { useChannel } = Channel
 
 /**
  * Updates drag state channel when Storybook controls change
