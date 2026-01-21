@@ -70,6 +70,8 @@ const RootLayout = () => {
     const showReopenBanner = useSelector(S.showReopenBanner)
     const showDrawer = useSelector(S.showDrawer)
     const loadingStatus = useSelector(S.loadingStatus)
+    const pageTitle = useSelector(S.UI.pageTitle)
+    const pageSubtitle = useSelector(S.UI.pageSubtitle)
     const registeredKeymaps = useSelector(S.keymaps)
     const tabLayout = useSelector(S.tabLayout)
     const availableIntents = useSelector(S.Keymaps.availableIntents)
@@ -90,7 +92,7 @@ const RootLayout = () => {
     useEffect(E.globalKeymapEffect(globalKeymap), [globalKeymap])
 
     return (
-        <MainLayout>
+        <MainLayout title={pageTitle} subtitle={pageSubtitle}>
             <MainLayout.Sidebar>
                 <SidebarNav />
                 <Separator size="4" my="3" />

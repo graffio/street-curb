@@ -1,8 +1,9 @@
 // ABOUTME: Admin users page
 // ABOUTME: Connects UserManagementPage to Redux state
+// COMPLEXITY-TODO: export-structure — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: function-declaration-ordering — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — File predates style rules (expires 2026-04-01)
 
-import { layoutChannel } from '@graffio/design-system'
-import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/index.js'
 import { AdminUsersTabbedPanel } from '../components/AdminUsersTabbedPanel.jsx'
@@ -15,10 +16,6 @@ const AdminUsersPage = () => {
     const isAdmin = Organization.isAdmin(currentOrganization, currentUserId)
 
     const onRoleChange = (userId, role) => post(Action.RoleChanged(userId, role))
-
-    useEffect(() => {
-        layoutChannel.setState({ title: 'User Management' })
-    }, [])
 
     return (
         <AdminUsersTabbedPanel

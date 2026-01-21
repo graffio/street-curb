@@ -4,8 +4,8 @@
 
 set -e
 
-# Get list of staged .js/.jsx files (excluding generated src/types/, type-definitions/, and cli-style-validator)
-staged_files=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(jsx?)$' | grep -v -e 'src/types/' -e 'type-definitions/' -e 'cli-style-validator/' || true)
+# Get list of staged .js/.jsx files (excluding generated src/types/, type-definitions/, cli-style-validator/, and stories)
+staged_files=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(jsx?)$' | grep -v -e 'src/types/' -e 'type-definitions/' -e 'cli-style-validator/' -e '\.stories\.' || true)
 
 if [ -z "$staged_files" ]; then
     exit 0

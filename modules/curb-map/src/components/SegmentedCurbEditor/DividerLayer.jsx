@@ -1,10 +1,21 @@
-import { useChannel } from '@graffio/design-system'
+// ABOUTME: Divider drag handles for SegmentedCurbEditor
+// ABOUTME: Renders draggable dividers between curb segments
+// COMPLEXITY-TODO: chain-extraction — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: import-ordering — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: react-redux-separation — File predates style rules (expires 2026-04-01)
+
 import { Box } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { dragStateChannel } from '../../channels/drag-state-channel.js'
+import { Channel } from '../../channels/channel.js'
+import { DragStateChannel } from '../../channels/drag-state-channel.js'
 import * as S from '../../store/selectors.js'
 import { Blockface } from '../../types/index.js'
+
+const { dragStateChannel } = DragStateChannel
+
+const { useChannel } = Channel
 
 /**
  * Gets visual state for divider thumb based on interaction state

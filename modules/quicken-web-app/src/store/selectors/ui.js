@@ -34,6 +34,8 @@ const transactionFilter = (state, viewId) => state.transactionFilters?.get(viewI
 // prettier-ignore
 const UI = {
     asOfDate,
+    pageTitle                : state => state.pageTitle,
+    pageSubtitle             : state => state.pageSubtitle,
     currentRowIndex          : (state, viewId) => state.transactionFilters?.get(viewId)?.currentRowIndex           ?? defaults.currentRowIndex,
     currentSearchIndex       : (state, viewId) => state.transactionFilters?.get(viewId)?.currentSearchIndex        ?? defaults.currentSearchIndex,
     customEndDate            : (state, viewId) => state.transactionFilters?.get(viewId)?.customEndDate             ?? defaults.customEndDate,

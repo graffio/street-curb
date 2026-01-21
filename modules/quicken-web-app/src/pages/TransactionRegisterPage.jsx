@@ -1,7 +1,7 @@
 // ABOUTME: Transaction register page with filtering, search, and table layout persistence
 // ABOUTME: Displays account transactions with sorting, column reordering, and running balances
 
-import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
+import { DataTable, Flex } from '@graffio/design-system'
 import { applySort } from '@graffio/financial-computations/query'
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
@@ -116,7 +116,6 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
 
     useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
 
-    const [, setLayout] = useChannel(layoutChannel)
     const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
@@ -199,8 +198,8 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
     useEffect(
-        () => setLayout({ title: 'Checking Account', subtitle: 'View and filter your checking account transactions' }),
-        [setLayout],
+        () => post(Action.SetPageTitle('Checking Account', 'View and filter your checking account transactions')),
+        [],
     )
 
     useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])

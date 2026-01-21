@@ -4,6 +4,15 @@ This document summarizes the specifications that were previously archived in `sp
 
 **Project tags:** `[curb-map]`, `[quicken-web-app]`, `[infrastructure]` (shared tooling)
 
+## [infrastructure] Channel Elimination (2026-01-21)
+**Purpose:** Remove custom pub/sub channel system from design-system in favor of standard patterns
+
+- Removed `createChannel`, `useChannel`, `layoutChannel` exports from @graffio/design-system
+- MainLayout now accepts `title`/`subtitle`/`actions` props directly (no channel dependency)
+- quicken-web-app: Added `SetPageTitle` action, pages dispatch on mount, RootLayout reads from Redux
+- curb-map: Moved channel infrastructure locally for dragStateChannel, uses route-based titles via `ROUTE_TITLES` lookup
+- Added COMPLEXITY-TODO exemptions to pre-existing curb-map files (expires 2026-04-01)
+
 ## [design-system] [quicken-web-app] CategorySelector Keymap Support (2026-01-19)
 **Purpose:** Add keymap registration to CategorySelector so keyboard shortcuts appear in KeymapDrawer
 
@@ -785,3 +794,16 @@ This document summarizes the specifications that were previously archived in `sp
 - Renamed functions: getCategoryName → toCategoryName, getEarliestTransactionDate → findEarliestTransactionDate
 - Selectors are now thin Redux wiring that delegates to types and business modules
 - All selectors pass --strict-react validation (max 5 lines, no collection chains)
+
+## [quicken-web-app] React/Redux Separation (2026-01-21)
+**Purpose:** Make React components pure wiring between selectors (reads) and actions (writes)
+
+- Moved useState to Redux: tree expansion, column sizing/order, showReopenBanner, showDrawer, loadingStatus, drag state
+- Moved useMemo derivations to selectors: activeViewId, availableIntents
+- Transformed InvestmentReportPage, CategoryReportPage, RootLayout, TabGroup
+- Added conventions.md "React/Redux Separation" section documenting the pattern
+- Added 5 validator rules: no-component-usestate, no-component-usememo, no-complex-usecallback, no-usechannel, actions-data-only
+- Fixed holdings selector performance regression with memoized index builders
+- Fixed loading overlay visibility (dismiss dialog before load, try/finally for status clear)
+- Exemptions documented: storedHandle (not serializable), useMemo for tree building (perf)
+- Deferred: Channel elimination (layoutChannel → props to MainLayout)

@@ -1,75 +1,36 @@
-/*
- * MainLayout2.stories.jsx - Storybook stories for MainLayout component
- *
- * Demonstrates the application shell layout with sidebar, topbar, and main content area.
- * Layout uses layoutChannel for coordinating state between TopBar and Sidebar components.
- */
+// ABOUTME: Storybook stories for MainLayout component
+// ABOUTME: Demonstrates the application shell layout with sidebar, topbar, and main content area
 
 import { Card, Flex, Text } from '@radix-ui/themes'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import { layoutChannel } from '../src/channels/index.js'
 import { MainLayout } from '../src/components/MainLayout.jsx'
 
-export default {
-    title: 'MainLayout',
-    component: MainLayout,
-    decorators: [
-        Story => (
-            <BrowserRouter>
-                <Story />
-            </BrowserRouter>
-        ),
-    ],
-    parameters: {
-        docs: {
-            description: {
-                component:
-                    'Full-screen application shell with topbar, sidebar, and main content area. Uses CSS Grid with design tokens (240px sidebar, 60px topbar) and layoutChannel for coordination.',
-            },
-        },
-        layout: 'fullscreen',
-    },
-}
+export default { title: 'MainLayout', component: MainLayout, parameters: { layout: 'fullscreen' } }
 
-export const Default = () => {
-    useEffect(() => {
-        layoutChannel.setState({ title: 'Application Title', subtitle: 'Subtitle text' })
-    }, [])
-
-    return (
-        <MainLayout>
+const DefaultStory = () => (
+    <BrowserRouter>
+        <MainLayout title="Application Title" subtitle="Subtitle text">
             <Card m="4">
                 <Text>Main content area</Text>
             </Card>
         </MainLayout>
-    )
-}
+    </BrowserRouter>
+)
 
-export const WithCustomNavigation = () => {
-    useEffect(() => {
-        layoutChannel.setState({
-            title: 'Custom Navigation',
-            subtitle: 'Via layoutChannel',
-            topBarActions: [{ label: 'Alpha' }, { label: 'Beta' }, { label: 'Gamma' }],
-            sidebarItems: [
-                { title: 'Section 1', items: [{ href: '/page1', label: 'Page 1', active: true }] },
-                {
-                    title: 'Section 2',
-                    items: [
-                        { href: '/page2', label: 'Page 2', active: false },
-                        { href: '/page3', label: 'Page 3', active: false },
-                    ],
-                },
-            ],
-        })
-    }, [])
-
-    return (
-        <MainLayout>
+const WithActionsStory = () => (
+    <BrowserRouter>
+        <MainLayout
+            title="Custom Navigation"
+            subtitle="With action buttons"
+            actions={[{ label: 'Alpha' }, { label: 'Beta' }, { label: 'Gamma' }]}
+        >
             <Flex direction="column" gap="2" p="4">
-                <Text>Custom sidebar navigation and topbar action configured via layoutChannel</Text>
+                <Text>TopBar with action buttons configured via props</Text>
             </Flex>
         </MainLayout>
-    )
-}
+    </BrowserRouter>
+)
+
+export const Default = () => <DefaultStory />
+export const WithActions = () => <WithActionsStory />

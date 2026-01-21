@@ -1,13 +1,15 @@
 // ABOUTME: Dashboard overview page
-// ABOUTME: Sets layout title via layoutChannel
+// ABOUTME: Sets page title via Redux
 
-import { Box, Flex, layoutChannel, Text } from '@graffio/design-system'
+import { Box, Flex, Text } from '@graffio/design-system'
 import { useEffect } from 'react'
+import { post } from '../commands/post.js'
+import { Action } from '../types/action.js'
 
 // Top-level dashboard
 // @sig DashboardPage :: () -> ReactElement
 const DashboardPage = () => {
-    useEffect(() => layoutChannel.setState({ title: 'Dashboard' }), [])
+    useEffect(() => post(Action.SetPageTitle('Dashboard')), [])
 
     return (
         <Box p="4">
@@ -23,4 +25,4 @@ const DashboardPage = () => {
     )
 }
 
-export default DashboardPage
+export { DashboardPage }

@@ -60,5 +60,8 @@ export const Action = {
         // Drag state actions
         SetDraggingView  : { viewId: 'String?' },
         SetDropTarget    : { groupId: 'String?' },
+
+        // Page title actions
+        SetPageTitle     : { title: 'String', subtitle: 'String?' },
     }
 }

@@ -1,16 +1,10 @@
 // ABOUTME: Map route page
-// ABOUTME: Sets layout metadata and renders MapComponent
+// ABOUTME: Renders the curb map editor panel
+// COMPLEXITY-TODO: export-structure — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — File predates style rules (expires 2026-04-01)
 
-import { layoutChannel } from '@graffio/design-system'
-import { useEffect } from 'react'
 import { CurbMapEditorPanel } from '../components/CurbMapEditorPanel.jsx'
 
-const MapPage = () => {
-    useEffect(() => {
-        layoutChannel.setState({ title: 'Curb Map' })
-    }, [])
-
-    return <CurbMapEditorPanel />
-}
+const MapPage = () => <CurbMapEditorPanel />
 
 export default MapPage

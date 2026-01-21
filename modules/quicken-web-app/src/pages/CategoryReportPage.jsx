@@ -1,7 +1,7 @@
 // ABOUTME: Category spending report page with hierarchical tree display
 // ABOUTME: Aggregates transactions by category with expand/collapse and totals
 
-import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
+import { DataTable, Flex } from '@graffio/design-system'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
@@ -41,7 +41,6 @@ const T = {
  * @sig CategoryReportPage :: ({ viewId: String, height?: String }) -> ReactElement
  */
 const CategoryReportPage = ({ viewId, height = '100%' }) => {
-    const [, setLayout] = useChannel(layoutChannel)
     const enrichedTransactions = useSelector(state => S.Transactions.enriched(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
@@ -65,7 +64,8 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         [groupBy],
     )
 
-    useEffect(() => setLayout(dimensionLayouts[groupBy] || dimensionLayouts.category), [setLayout, groupBy])
+    const layout = dimensionLayouts[groupBy] || dimensionLayouts.category
+    useEffect(() => post(Action.SetPageTitle(layout.title, layout.subtitle)), [layout])
 
     return (
         <Flex direction="column" style={pageContainerStyle}>

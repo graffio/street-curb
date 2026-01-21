@@ -65,6 +65,8 @@ const createEmptyState = () => ({
     loadingStatus: null,
     draggingViewId: null,
     dropTargetGroupId: null,
+    pageTitle: '',
+    pageSubtitle: '',
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -118,6 +120,9 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         // Drag state actions
         SetDraggingView : () => ({ ...state, draggingViewId: action.viewId }),
         SetDropTarget   : () => ({ ...state, dropTargetGroupId: action.groupId }),
+
+        // Page title actions
+        SetPageTitle    : () => ({ ...state, pageTitle: action.title, pageSubtitle: action.subtitle ?? '' }),
     })
 }
 

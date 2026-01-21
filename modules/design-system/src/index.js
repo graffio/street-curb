@@ -33,8 +33,6 @@ import {
     Tooltip,
 } from '@radix-ui/themes'
 
-// Channel system
-import { createChannel, layoutChannel, useChannel } from './channels/index.js'
 import { CategorySelector } from './components/CategorySelector.jsx'
 import { DataTable } from './components/DataTable.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
@@ -89,11 +87,6 @@ export {
     LoadingSpinner,
     MainLayout,
     TitleAndSubtitle,
-
-    // channel
-    createChannel,
-    useChannel,
-    layoutChannel,
 
     // PropTypes
     lookupTablePropType,

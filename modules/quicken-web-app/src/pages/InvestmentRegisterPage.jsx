@@ -1,7 +1,7 @@
 // ABOUTME: Investment transaction register page with security/action filtering
 // ABOUTME: Displays investment account transactions with running cash balance
 
-import { DataTable, Flex, layoutChannel, Text, useChannel } from '@graffio/design-system'
+import { DataTable, Flex, Text } from '@graffio/design-system'
 import { applySort } from '@graffio/financial-computations/query'
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
@@ -132,7 +132,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     // -----------------------------------------------------------------------------------------------------------------
     // Hooks (selectors)
     // -----------------------------------------------------------------------------------------------------------------
-    const [, setLayout] = useChannel(layoutChannel)
     const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
@@ -249,8 +248,8 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
     useEffect(
-        () => setLayout({ title: accountName, subtitle: 'Investment transactions with running cash balance' }),
-        [setLayout, accountName],
+        () => post(Action.SetPageTitle(accountName, 'Investment transactions with running cash balance')),
+        [accountName],
     )
 
     useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])

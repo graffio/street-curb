@@ -1,13 +1,28 @@
-import { useChannel } from '@graffio/design-system'
+// ABOUTME: Label overlay for SegmentedCurbEditor
+// ABOUTME: Renders segment type labels with dropdown menus
+// COMPLEXITY-TODO: chain-extraction — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: cohesion-structure — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: function-declaration-ordering — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: import-ordering — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: line-length — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: react-redux-separation — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: sig-documentation — File predates style rules (expires 2026-04-01)
+// COMPLEXITY-TODO: single-level-indentation — File predates style rules (expires 2026-04-01)
+
 import { Box, DropdownMenu, Text } from '@radix-ui/themes'
 import React, { useLayoutEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { dragStateChannel } from '../../channels/drag-state-channel.js'
+import { Channel } from '../../channels/channel.js'
+import { DragStateChannel } from '../../channels/drag-state-channel.js'
 import { COLORS } from '../../constants.js'
 import * as S from '../../store/selectors.js'
 import { Blockface } from '../../types/index.js'
 import { formatLength } from '../../utils/formatting.js'
 import { calculateSimplePositions } from './label-positioning-simple.js'
+
+const { dragStateChannel } = DragStateChannel
+
+const { useChannel } = Channel
 
 /**
  * Individual menu item for segment type selection
@@ -117,6 +132,7 @@ const LabelItem = React.memo(
 
         const labelStyle = {
             position: 'absolute',
+
             // Remove top, left, width from here since useLayoutEffect handles them
             backgroundColor: COLORS[segment.use] || '#666',
             color: 'white',
