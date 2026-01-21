@@ -18,7 +18,10 @@
  *  currentSearchIndex       : "Number",
  *  currentRowIndex          : "Number",
  *  customStartDate          : "Object?",
- *  customEndDate            : "Object?"
+ *  customEndDate            : "Object?",
+ *  treeExpansion            : "Object?",
+ *  columnSizing             : "Object?",
+ *  columnOrder              : "[String]?"
  *
  */
 
@@ -34,7 +37,7 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a TransactionFilter instance
- * @sig TransactionFilter :: (String, String?, Object?, String, String, String, [String], [String], [String], [String], String?, Number, Number, Object?, Object?) -> TransactionFilter
+ * @sig TransactionFilter :: (String, String?, Object?, String, String, String, [String], [String], [String], [String], String?, Number, Number, Object?, Object?, Object?, Object?, [String]?) -> TransactionFilter
  */
 const TransactionFilter = function TransactionFilter(
     id,
@@ -52,9 +55,12 @@ const TransactionFilter = function TransactionFilter(
     currentRowIndex,
     customStartDate,
     customEndDate,
+    treeExpansion,
+    columnSizing,
+    columnOrder,
 ) {
     const constructorName =
-        'TransactionFilter(id, asOfDate, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate)'
+        'TransactionFilter(id, asOfDate, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate, treeExpansion, columnSizing, columnOrder)'
 
     R.validateRegex(constructorName, FieldTypes.viewId, 'id', false, id)
     R.validateString(constructorName, 'asOfDate', true, asOfDate)
@@ -79,6 +85,9 @@ const TransactionFilter = function TransactionFilter(
     R.validateNumber(constructorName, 'currentRowIndex', false, currentRowIndex)
     R.validateObject(constructorName, 'customStartDate', true, customStartDate)
     R.validateObject(constructorName, 'customEndDate', true, customEndDate)
+    R.validateObject(constructorName, 'treeExpansion', true, treeExpansion)
+    R.validateObject(constructorName, 'columnSizing', true, columnSizing)
+    R.validateArray(constructorName, 1, 'String', undefined, 'columnOrder', true, columnOrder)
 
     const result = Object.create(prototype)
     result.id = id
@@ -96,6 +105,9 @@ const TransactionFilter = function TransactionFilter(
     result.currentRowIndex = currentRowIndex
     if (customStartDate != null) result.customStartDate = customStartDate
     if (customEndDate != null) result.customEndDate = customEndDate
+    if (treeExpansion != null) result.treeExpansion = treeExpansion
+    if (columnSizing != null) result.columnSizing = columnSizing
+    if (columnOrder != null) result.columnOrder = columnOrder
     return result
 }
 
@@ -124,7 +136,10 @@ const transactionfilterToString = function () {
         ${R._toString(this.currentSearchIndex)},
         ${R._toString(this.currentRowIndex)},
         ${R._toString(this.customStartDate)},
-        ${R._toString(this.customEndDate)})`
+        ${R._toString(this.customEndDate)},
+        ${R._toString(this.treeExpansion)},
+        ${R._toString(this.columnSizing)},
+        ${R._toString(this.columnOrder)})`
 }
 
 /*
@@ -174,6 +189,9 @@ TransactionFilter._from = _input => {
         currentRowIndex,
         customStartDate,
         customEndDate,
+        treeExpansion,
+        columnSizing,
+        columnOrder,
     } = _input
     return TransactionFilter(
         id,
@@ -191,6 +209,9 @@ TransactionFilter._from = _input => {
         currentRowIndex,
         customStartDate,
         customEndDate,
+        treeExpansion,
+        columnSizing,
+        columnOrder,
     )
 }
 TransactionFilter.from = TransactionFilter._from

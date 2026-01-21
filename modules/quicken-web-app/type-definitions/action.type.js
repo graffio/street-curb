@@ -27,6 +27,9 @@ export const Action = {
         },
         SetTransactionFilter   : { viewId: 'String', changes: 'Object' },
         ResetTransactionFilters: { viewId: 'String' },
+        SetTreeExpanded        : { viewId: 'String', expanded: 'Object' },
+        SetColumnSizing        : { viewId: 'String', sizing: 'Object' },
+        SetColumnOrder         : { viewId: 'String', order: '[String]' },
 
         // Table layout actions
         SetTableLayout         : { tableLayout: 'TableLayout' },
@@ -48,5 +51,14 @@ export const Action = {
         // Keymap actions
         RegisterKeymap   : { keymap: 'Any' },
         UnregisterKeymap : { keymapId: FieldTypes.keymapId },
+
+        // Global UI actions
+        SetShowReopenBanner : { show: 'Boolean' },
+        SetShowDrawer       : { show: 'Boolean' },
+        SetLoadingStatus    : { status: 'String?' },
+
+        // Drag state actions
+        SetDraggingView  : { viewId: 'String?' },
+        SetDropTarget    : { groupId: 'String?' },
     }
 }

@@ -19,6 +19,9 @@ const defaults = {
     currentRowIndex: 0,
     customStartDate: null,
     customEndDate: null,
+    treeExpansion: {},
+    columnSizing: {},
+    columnOrder: [],
 }
 
 const asOfDate = (state, viewId) => {
@@ -44,6 +47,9 @@ const UI = {
     selectedCategories       : (state, viewId) => state.transactionFilters?.get(viewId)?.selectedCategories        ?? defaults.selectedCategories,
     selectedInvestmentActions: (state, viewId) => state.transactionFilters?.get(viewId)?.selectedInvestmentActions ?? defaults.selectedInvestmentActions,
     selectedSecurities       : (state, viewId) => state.transactionFilters?.get(viewId)?.selectedSecurities        ?? defaults.selectedSecurities,
+    treeExpansion            : (state, viewId) => state.transactionFilters?.get(viewId)?.treeExpansion             ?? defaults.treeExpansion,
+    columnSizing             : (state, viewId) => state.transactionFilters?.get(viewId)?.columnSizing              ?? defaults.columnSizing,
+    columnOrder              : (state, viewId) => state.transactionFilters?.get(viewId)?.columnOrder               ?? defaults.columnOrder,
     transactionFilter,
 }
 

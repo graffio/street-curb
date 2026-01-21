@@ -74,6 +74,9 @@ const post = action => {
         LoadFile               : () => dispatch(action),
         SetTransactionFilter   : () => dispatch(action),
         ResetTransactionFilters: () => dispatch(action),
+        SetTreeExpanded        : () => dispatch(action),
+        SetColumnSizing        : () => dispatch(action),
+        SetColumnOrder         : () => dispatch(action),
         SetTableLayout         : handleSetTableLayout,
 
         // Tab layout actions (all persist to IndexedDB)
@@ -93,6 +96,15 @@ const post = action => {
         // Keymap actions (no persistence needed)
         RegisterKeymap   : () => dispatch(action),
         UnregisterKeymap : () => dispatch(action),
+
+        // Global UI actions (no persistence needed)
+        SetShowReopenBanner : () => dispatch(action),
+        SetShowDrawer       : () => dispatch(action),
+        SetLoadingStatus    : () => dispatch(action),
+
+        // Drag state actions (no persistence needed)
+        SetDraggingView : () => dispatch(action),
+        SetDropTarget   : () => dispatch(action),
     })
 }
 

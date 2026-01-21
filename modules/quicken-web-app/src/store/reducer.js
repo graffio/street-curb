@@ -27,7 +27,7 @@ import {
     setActiveView,
     setTabGroupWidth,
 } from './reducers/tab-layout.js'
-import { resetTransactionFilters, setTransactionFilter } from './reducers/transaction-filters.js'
+import { TransactionFilters } from './reducers/transaction-filters.js'
 
 // COMPLEXITY: Exporting both reducer and state factory is standard Redux pattern
 
@@ -60,6 +60,11 @@ const createEmptyState = () => ({
     accountListSortMode: SortMode.ByType(),
     collapsedSections: new Set(),
     keymaps: [],
+    showReopenBanner: false,
+    showDrawer: false,
+    loadingStatus: null,
+    draggingViewId: null,
+    dropTargetGroupId: null,
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -80,9 +85,12 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
     // prettier-ignore
     return action.match({
         LoadFile               : () => loadFile(action),
-        ResetTransactionFilters: () => resetTransactionFilters(state, action),
+        ResetTransactionFilters: () => TransactionFilters.resetTransactionFilters(state, action),
         SetTableLayout         : () => setTableLayout(action),
-        SetTransactionFilter   : () => setTransactionFilter(state, action),
+        SetTransactionFilter   : () => TransactionFilters.setTransactionFilter(state, action),
+        SetTreeExpanded        : () => TransactionFilters.setTreeExpanded(state, action),
+        SetColumnSizing        : () => TransactionFilters.setColumnSizing(state, action),
+        SetColumnOrder         : () => TransactionFilters.setColumnOrder(state, action),
 
         // Tab layout actions
         OpenView          : () => openView(state, action),
@@ -101,7 +109,17 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         // Keymap actions
         RegisterKeymap   : () => ({ ...state, keymaps: [...state.keymaps, action.keymap] }),
         UnregisterKeymap : () => ({ ...state, keymaps: state.keymaps.filter(km => km.id !== action.keymapId) }),
+
+        // Global UI actions
+        SetShowReopenBanner : () => ({ ...state, showReopenBanner: action.show }),
+        SetShowDrawer       : () => ({ ...state, showDrawer: action.show }),
+        SetLoadingStatus    : () => ({ ...state, loadingStatus: action.status }),
+
+        // Drag state actions
+        SetDraggingView : () => ({ ...state, draggingViewId: action.viewId }),
+        SetDropTarget   : () => ({ ...state, dropTargetGroupId: action.groupId }),
     })
 }
 
-export { createEmptyState, rootReducer }
+const Reducer = { createEmptyState, rootReducer }
+export { Reducer }
