@@ -1,7 +1,7 @@
 // ABOUTME: Investment holdings report page with hierarchical tree display
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
 
-import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
+import { DataTable, Flex } from '@graffio/design-system'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
@@ -40,7 +40,6 @@ const T = {
  * @sig InvestmentReportPage :: ({ viewId: String, height?: String }) -> ReactElement
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
-    const [, setLayout] = useChannel(layoutChannel)
     const holdings = useSelector(state => S.Holdings.collectAsOf(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
@@ -68,7 +67,8 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
 
     const totalHoldingsCount = holdings?.length ?? 0
 
-    useEffect(() => setLayout(dimensionLayouts[groupBy] || dimensionLayouts.account), [setLayout, groupBy])
+    const layout = dimensionLayouts[groupBy] || dimensionLayouts.account
+    useEffect(() => post(Action.SetPageTitle(layout.title, layout.subtitle)), [layout])
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
