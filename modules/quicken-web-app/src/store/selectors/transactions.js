@@ -1,7 +1,8 @@
 // ABOUTME: Memoized derived selectors for transaction data
 // ABOUTME: Combines UI state with transaction filtering
 
-import { memoizeReduxStatePerKey } from '@graffio/functional'
+import { memoizeOnceWithIdenticalParams, memoizeReduxStatePerKey } from '@graffio/functional'
+import { buildTransactionTree } from '../../utils/category-tree.js'
 import { Filters } from './transactions/filters.js'
 import { UI } from './ui.js'
 
@@ -15,6 +16,12 @@ const T = {
         categoryName: categories?.get(txn.categoryId)?.name || 'Uncategorized',
         accountName: accounts?.get(txn.accountId)?.name || '',
     }),
+
+    // Build transaction tree from groupBy dimension and transactions array
+    // @sig toTransactionTree :: (String?, [EnrichedTransaction]) -> [TreeNode]
+    toTransactionTree: memoizeOnceWithIdenticalParams((groupBy, transactions) =>
+        buildTransactionTree(groupBy || 'category', transactions),
+    ),
 }
 
 const A = {
@@ -66,6 +73,14 @@ const enriched = memoizeReduxStatePerKey(
     A.collectEnriched,
 )
 
-const Transactions = { filtered, enriched, searchMatches }
+// Collects transaction tree for a view (memoized on groupBy + enriched transactions reference)
+// @sig collectTree :: (ReduxState, String) -> [TreeNode]
+const collectTree = (state, viewId) => {
+    const transactions = enriched(state, viewId)
+    const groupBy = UI.groupBy(state, viewId)
+    return T.toTransactionTree(groupBy, transactions)
+}
+
+const Transactions = { collectTree, enriched, filtered, searchMatches }
 
 export { Transactions }

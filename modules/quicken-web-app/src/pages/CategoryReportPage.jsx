@@ -2,11 +2,13 @@
 // ABOUTME: Aggregates transactions by category with expand/collapse and totals
 
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
 import { FilterChipRow, TransactionSubTable } from '../components/index.js'
+import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
+import { Action } from '../types/action.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 
 const pageContainerStyle = { height: '100%' }
@@ -42,16 +44,20 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
     const enrichedTransactions = useSelector(state => S.Transactions.enriched(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
-    const [expanded, setExpanded] = useState({})
+    const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
 
+    // EXEMPT: useMemo - tree building is expensive; keeping as useMemo for render optimization
     const transactionTree = useMemo(
-        () => buildTransactionTree(groupBy, enrichedTransactions),
+        () => buildTransactionTree(groupBy || 'category', enrichedTransactions),
         [groupBy, enrichedTransactions],
     )
 
     const handleExpandedChange = useCallback(
-        updater => setExpanded(prev => (typeof updater === 'function' ? updater(prev) : updater)),
-        [],
+        updater => {
+            const next = typeof updater === 'function' ? updater(expanded) : updater
+            post(Action.SetTreeExpanded(viewId, next))
+        },
+        [viewId, expanded],
     )
 
     const renderSubComponent = useCallback(
