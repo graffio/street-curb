@@ -2,7 +2,7 @@
 // ABOUTME: Uses View.match() for exhaustive content rendering
 
 import { Box, Button, Flex, Text, Tooltip } from '@graffio/design-system'
-import React, { useState } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
@@ -92,14 +92,14 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
     }
 
     const handleDragStart = e => {
-        setIsDragging(true)
+        post(Action.SetDraggingView(view.id))
         e.dataTransfer.setData('application/json', T.toSerializedDragData(view.id, groupId))
         e.dataTransfer.effectAllowed = 'move'
     }
 
-    const handleDragEnd = () => setIsDragging(false)
+    const handleDragEnd = () => post(Action.SetDraggingView(null))
 
-    const [isDragging, setIsDragging] = useState(false)
+    const isDragging = useSelector(S.draggingViewId) === view.id
     const { title } = view
     const tagName = view['@@tagName']
     const icon = VIEW_ICONS[tagName] || '○'
@@ -155,18 +155,18 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
     const handleDragOver = e => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'move'
-        setIsDropTarget(true)
+        post(Action.SetDropTarget(group.id))
     }
 
     const handleDragLeave = e => {
-        if (!e.currentTarget.contains(e.relatedTarget)) setIsDropTarget(false)
+        if (!e.currentTarget.contains(e.relatedTarget)) post(Action.SetDropTarget(null))
     }
 
     // Handle tab drop - move view from source group to this group
     // @sig handleDrop :: DragEvent -> void
     const handleDrop = e => {
         e.preventDefault()
-        setIsDropTarget(false)
+        post(Action.SetDropTarget(null))
         const dragData = T.toDragData(e.dataTransfer.getData('application/json'))
         if (!dragData) return
         const { viewId, groupId: sourceGroupId } = dragData
@@ -174,8 +174,7 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
         post(Action.MoveView(viewId, sourceGroupId, group.id, null))
     }
 
-    const [isDropTarget, setIsDropTarget] = useState(false)
-
+    const isDropTarget = useSelector(S.dropTargetGroupId) === group.id
     const style = {
         backgroundColor: isDropTarget ? 'var(--accent-3)' : 'var(--color-background)',
         minHeight: '40px',

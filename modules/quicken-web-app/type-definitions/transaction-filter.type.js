@@ -19,5 +19,8 @@ export const TransactionFilter = {
         currentRowIndex: 'Number',
         customStartDate: 'Object?',
         customEndDate: 'Object?',
+        treeExpansion: 'Object?',
+        columnSizing: 'Object?',
+        columnOrder: '[String]?',
     },
 }

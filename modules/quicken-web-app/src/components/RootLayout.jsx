@@ -4,7 +4,7 @@
 import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { FileHandling } from '../services/file-handling.js'
@@ -21,15 +21,6 @@ const { Intent, Keymap } = KeymapModule
 
 const GLOBAL_KEYMAP_ID = 'global'
 
-const T = {
-    // Gets the active view ID from the tab layout
-    // @sig toActiveViewId :: TabLayout -> String | null
-    toActiveViewId: tabLayout => {
-        const activeGroup = tabLayout?.tabGroups?.find(g => g.id === tabLayout.activeTabGroupId)
-        return activeGroup?.activeViewId ?? null
-    },
-}
-
 const F = {
     // Creates global keymap with shortcuts panel toggle
     // @sig createGlobalKeymap :: Function -> Keymap
@@ -45,38 +36,6 @@ const E = {
     globalKeymapEffect: keymap => () => {
         post(Action.RegisterKeymap(keymap))
         return () => post(Action.UnregisterKeymap(GLOBAL_KEYMAP_ID))
-    },
-
-    // Opens file with loading status
-    // @sig handleOpenFile :: (Function, Function) -> Promise<void>
-    handleOpenFile: async (setStoredHandle, setLoadingStatus) => {
-        try {
-            await FileHandling.openFile(setStoredHandle, setLoadingStatus)
-        } finally {
-            setLoadingStatus(null)
-        }
-    },
-
-    // Reopens stored file with loading status (closes dialog first)
-    // @sig handleReopen :: (FileHandle, Function, Function) -> Promise<void>
-    handleReopen: async (storedHandle, setShowReopenBanner, setLoadingStatus) => {
-        setShowReopenBanner(false)
-        try {
-            await FileHandling.reopenFile(storedHandle, setShowReopenBanner, setLoadingStatus)
-        } finally {
-            setLoadingStatus(null)
-        }
-    },
-
-    // Opens new file with loading status (closes dialog first)
-    // @sig handleOpenNew :: (Function, Function, Function) -> Promise<void>
-    handleOpenNew: async (setStoredHandle, setShowReopenBanner, setLoadingStatus) => {
-        setShowReopenBanner(false)
-        try {
-            await FileHandling.openNewFile(setStoredHandle, setShowReopenBanner, setLoadingStatus)
-        } finally {
-            setLoadingStatus(null)
-        }
     },
 }
 
@@ -105,27 +64,28 @@ const LoadingOverlay = ({ status }) => (
 // Main application layout with sidebar, file handling, and keyboard routing
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
+    // EXEMPT: file-handling - storedHandle is FileSystemFileHandle (not serializable)
     const [storedHandle, setStoredHandle] = useState(null)
-    const [showReopenBanner, setShowReopenBanner] = useState(false)
-    const [showDrawer, setShowDrawer] = useState(false)
-    const [loadingStatus, setLoadingStatus] = useState(null)
-    const keymaps = useSelector(S.keymaps)
+
+    const showReopenBanner = useSelector(S.showReopenBanner)
+    const showDrawer = useSelector(S.showDrawer)
+    const loadingStatus = useSelector(S.loadingStatus)
+    const registeredKeymaps = useSelector(S.keymaps)
     const tabLayout = useSelector(S.tabLayout)
+    const availableIntents = useSelector(S.Keymaps.availableIntents)
 
-    const toggleDrawer = useCallback(() => setShowDrawer(prev => !prev), [])
+    const toggleDrawer = useCallback(() => post(Action.SetShowDrawer(!showDrawer)), [showDrawer])
     const globalKeymap = useMemo(() => F.createGlobalKeymap(toggleDrawer), [toggleDrawer])
-    const activeViewId = useMemo(() => T.toActiveViewId(tabLayout), [tabLayout])
-    const availableIntents = useMemo(() => Keymap.collectAvailable(keymaps, activeViewId), [keymaps, activeViewId])
 
-    const handleOpenFile = useCallback(() => E.handleOpenFile(setStoredHandle, setLoadingStatus), [])
-    const handleReopen = useCallback(
-        () => E.handleReopen(storedHandle, setShowReopenBanner, setLoadingStatus),
-        [storedHandle],
-    )
-    const handleOpenNew = useCallback(() => E.handleOpenNew(setStoredHandle, setShowReopenBanner, setLoadingStatus), [])
-    const handleKeyDown = useCallback(KeymapRouting.handleKeydown(keymaps, tabLayout), [keymaps, tabLayout])
+    const handleOpenFile = useCallback(() => FileHandling.openFile(setStoredHandle), [])
+    const handleReopen = useCallback(() => FileHandling.reopenFile(storedHandle), [storedHandle])
+    const handleOpenNew = useCallback(() => FileHandling.openNewFile(setStoredHandle), [])
+    const handleKeyDown = useCallback(KeymapRouting.handleKeydown(registeredKeymaps, tabLayout), [
+        registeredKeymaps,
+        tabLayout,
+    ])
 
-    useEffect(() => FileHandling.loadStoredHandle(setStoredHandle, setShowReopenBanner), [])
+    useEffect(() => FileHandling.loadStoredHandle(setStoredHandle), [])
     useEffect(KeymapRouting.keydownEffect(handleKeyDown), [handleKeyDown])
     useEffect(E.globalKeymapEffect(globalKeymap), [globalKeymap])
 
@@ -146,13 +106,17 @@ const RootLayout = () => {
             </MainLayout.Sidebar>
             <FileOpenDialog
                 open={showReopenBanner}
-                onOpenChange={setShowReopenBanner}
+                onOpenChange={show => post(Action.SetShowReopenBanner(show))}
                 onReopen={handleReopen}
                 onOpenNew={handleOpenNew}
             />
             <Flex direction="column" style={{ flex: 1 }}>
                 <TabGroupContainer />
-                <KeymapDrawer open={showDrawer} onOpenChange={setShowDrawer} intents={availableIntents} />
+                <KeymapDrawer
+                    open={showDrawer}
+                    onOpenChange={show => post(Action.SetShowDrawer(show))}
+                    intents={availableIntents}
+                />
             </Flex>
             {loadingStatus && <LoadingOverlay status={loadingStatus} />}
         </MainLayout>

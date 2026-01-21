@@ -2,9 +2,10 @@
 // ABOUTME: Verifies SetAccountListSortMode and ToggleSectionCollapsed handling
 
 import t from 'tap'
-import { createEmptyState, rootReducer } from '../../src/store/reducer.js'
+import { Reducer } from '../../src/store/reducer.js'
 import { Action } from '../../src/types/action.js'
 import { SortMode } from '../../src/types/sort-mode.js'
+const { createEmptyState, rootReducer } = Reducer
 
 // -----------------------------------------------------------------------------
 // SetAccountListSortMode

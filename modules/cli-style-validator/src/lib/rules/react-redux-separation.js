@@ -104,6 +104,33 @@ const P = {
     // Check if esTree node is a conditional expression (ternary)
     // @sig isConditionalExpr :: Object -> Boolean
     isConditionalExpr: esNode => esNode?.type === 'ConditionalExpression',
+
+    // Check if node is an Action.X() call (e.g., Action.SetDraggingView(...))
+    // @sig isActionCall :: ASTNode -> Boolean
+    isActionCall: node => {
+        const { CallExpression, MemberExpression, Identifier } = ASTNode
+        if (!CallExpression.is(node)) return false
+        const { target } = node
+        if (!target || !MemberExpression.is(target)) return false
+        const { base } = target
+        return base && Identifier.is(base) && base.name === 'Action'
+    },
+
+    // Check if esTree node is a function expression
+    // @sig isFunctionExpr :: Object -> Boolean
+    isFunctionExpr: esNode => {
+        if (!esNode) return false
+        const { type } = esNode
+        return type === 'ArrowFunctionExpression' || type === 'FunctionExpression'
+    },
+
+    // Check if Action call has function arguments
+    // @sig hasActionFunctionArg :: ASTNode -> Boolean
+    hasActionFunctionArg: node => {
+        if (!P.isActionCall(node)) return false
+        const args = node.esTree?.arguments || []
+        return args.some(P.isFunctionExpr)
+    },
 }
 
 const T = {
@@ -226,6 +253,17 @@ const F = {
         rule: 'react-redux-separation',
     }),
 
+    // Create violation for Action call with function argument
+    // @sig createActionFunctionViolation :: ASTNode -> Violation
+    createActionFunctionViolation: node => ({
+        type: 'react-redux-separation',
+        line: node.line,
+        column: node.column || 1,
+        priority: PRIORITY,
+        message: 'Function passed to Action. FIX: Actions should only carry data, not functions.',
+        rule: 'react-redux-separation',
+    }),
+
     // Create violation for selector too long
     // @sig createSelectorTooLongViolation :: (String, Number, Number) -> Violation
     createSelectorTooLongViolation: (name, line, lineCount) => {
@@ -298,9 +336,9 @@ const V = {
         if (!A.hasJSXContext(ast)) return []
 
         const { isUseStateCall, hasUseStateExemption, isUseMemoCall, isComplexUseCallback } = P
-        const { isCollectionMethodCall, isSpreadElement } = P
+        const { isCollectionMethodCall, isSpreadElement, hasActionFunctionArg } = P
         const { createUseStateViolation, createUseMemoViolation, createUseCallbackViolation } = F
-        const { createCollectionMethodViolation, createSpreadViolation } = F
+        const { createCollectionMethodViolation, createSpreadViolation, createActionFunctionViolation } = F
         const { findInComponentBodies, collectUseChannelViolations } = A
 
         const useChannelViolations = collectUseChannelViolations(ast)
@@ -316,6 +354,9 @@ const V = {
             createCollectionMethodViolation,
         )
         const spreadViolations = findInComponentBodies(ast, isSpreadElement).map(createSpreadViolation)
+        const actionFunctionViolations = findInComponentBodies(ast, hasActionFunctionArg).map(
+            createActionFunctionViolation,
+        )
 
         return [
             ...useChannelViolations,
@@ -324,6 +365,7 @@ const V = {
             ...useCallbackViolations,
             ...collectionViolations,
             ...spreadViolations,
+            ...actionFunctionViolations,
         ]
     },
 

@@ -18,6 +18,15 @@
  *      changes: "Object"
  *  ResetTransactionFilters
  *      viewId: "String"
+ *  SetTreeExpanded
+ *      viewId  : "String",
+ *      expanded: "Object"
+ *  SetColumnSizing
+ *      viewId: "String",
+ *      sizing: "Object"
+ *  SetColumnOrder
+ *      viewId: "String",
+ *      order : "[String]"
  *  SetTableLayout
  *      tableLayout: "TableLayout"
  *  OpenView
@@ -50,6 +59,16 @@
  *      keymap: "Any"
  *  UnregisterKeymap
  *      keymapId: FieldTypes.keymapId
+ *  SetShowReopenBanner
+ *      show: "Boolean"
+ *  SetShowDrawer
+ *      show: "Boolean"
+ *  SetLoadingStatus
+ *      status: "String?"
+ *  SetDraggingView
+ *      viewId: "String?"
+ *  SetDropTarget
+ *      groupId: "String?"
  *
  */
 
@@ -85,6 +104,9 @@ Object.defineProperty(Action, '@@tagNames', {
         'LoadFile',
         'SetTransactionFilter',
         'ResetTransactionFilters',
+        'SetTreeExpanded',
+        'SetColumnSizing',
+        'SetColumnOrder',
         'SetTableLayout',
         'OpenView',
         'CloseView',
@@ -98,6 +120,11 @@ Object.defineProperty(Action, '@@tagNames', {
         'ToggleSectionCollapsed',
         'RegisterKeymap',
         'UnregisterKeymap',
+        'SetShowReopenBanner',
+        'SetShowDrawer',
+        'SetLoadingStatus',
+        'SetDraggingView',
+        'SetDropTarget',
     ],
     enumerable: false,
 })
@@ -129,6 +156,9 @@ const toString = {
     loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)}, ${R._toString(this.lots)}, ${R._toString(this.lotAllocations)}, ${R._toString(this.prices)})` },
     setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
     resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
+    setTreeExpanded        : function () { return `Action.SetTreeExpanded(${R._toString(this.viewId)}, ${R._toString(this.expanded)})` },
+    setColumnSizing        : function () { return `Action.SetColumnSizing(${R._toString(this.viewId)}, ${R._toString(this.sizing)})` },
+    setColumnOrder         : function () { return `Action.SetColumnOrder(${R._toString(this.viewId)}, ${R._toString(this.order)})` },
     setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
     openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
     closeView              : function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
@@ -142,6 +172,11 @@ const toString = {
     toggleSectionCollapsed : function () { return `Action.ToggleSectionCollapsed(${R._toString(this.sectionId)})` },
     registerKeymap         : function () { return `Action.RegisterKeymap(${R._toString(this.keymap)})` },
     unregisterKeymap       : function () { return `Action.UnregisterKeymap(${R._toString(this.keymapId)})` },
+    setShowReopenBanner    : function () { return `Action.SetShowReopenBanner(${R._toString(this.show)})` },
+    setShowDrawer          : function () { return `Action.SetShowDrawer(${R._toString(this.show)})` },
+    setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
+    setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
+    setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -154,6 +189,9 @@ const toJSON = {
     loadFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTransactionFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTreeExpanded        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setColumnSizing        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setColumnOrder         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     openView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     closeView              : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -167,6 +205,11 @@ const toJSON = {
     toggleSectionCollapsed : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     registerKeymap         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     unregisterKeymap       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setShowReopenBanner    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setShowDrawer          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -251,6 +294,60 @@ const ResetTransactionFiltersConstructor = function ResetTransactionFilters(view
 }
 
 Action.ResetTransactionFilters = ResetTransactionFiltersConstructor
+
+/*
+ * Construct a Action.SetTreeExpanded instance
+ * @sig SetTreeExpanded :: (String, Object) -> Action.SetTreeExpanded
+ */
+const SetTreeExpandedConstructor = function SetTreeExpanded(viewId, expanded) {
+    const constructorName = 'Action.SetTreeExpanded(viewId, expanded)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateObject(constructorName, 'expanded', false, expanded)
+
+    const result = Object.create(SetTreeExpandedPrototype)
+    result.viewId = viewId
+    result.expanded = expanded
+    return result
+}
+
+Action.SetTreeExpanded = SetTreeExpandedConstructor
+
+/*
+ * Construct a Action.SetColumnSizing instance
+ * @sig SetColumnSizing :: (String, Object) -> Action.SetColumnSizing
+ */
+const SetColumnSizingConstructor = function SetColumnSizing(viewId, sizing) {
+    const constructorName = 'Action.SetColumnSizing(viewId, sizing)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateObject(constructorName, 'sizing', false, sizing)
+
+    const result = Object.create(SetColumnSizingPrototype)
+    result.viewId = viewId
+    result.sizing = sizing
+    return result
+}
+
+Action.SetColumnSizing = SetColumnSizingConstructor
+
+/*
+ * Construct a Action.SetColumnOrder instance
+ * @sig SetColumnOrder :: (String, [String]) -> Action.SetColumnOrder
+ */
+const SetColumnOrderConstructor = function SetColumnOrder(viewId, order) {
+    const constructorName = 'Action.SetColumnOrder(viewId, order)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateArray(constructorName, 1, 'String', undefined, 'order', false, order)
+
+    const result = Object.create(SetColumnOrderPrototype)
+    result.viewId = viewId
+    result.order = order
+    return result
+}
+
+Action.SetColumnOrder = SetColumnOrderConstructor
 
 /*
  * Construct a Action.SetTableLayout instance
@@ -472,6 +569,86 @@ const UnregisterKeymapConstructor = function UnregisterKeymap(keymapId) {
 
 Action.UnregisterKeymap = UnregisterKeymapConstructor
 
+/*
+ * Construct a Action.SetShowReopenBanner instance
+ * @sig SetShowReopenBanner :: (Boolean) -> Action.SetShowReopenBanner
+ */
+const SetShowReopenBannerConstructor = function SetShowReopenBanner(show) {
+    const constructorName = 'Action.SetShowReopenBanner(show)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateBoolean(constructorName, 'show', false, show)
+
+    const result = Object.create(SetShowReopenBannerPrototype)
+    result.show = show
+    return result
+}
+
+Action.SetShowReopenBanner = SetShowReopenBannerConstructor
+
+/*
+ * Construct a Action.SetShowDrawer instance
+ * @sig SetShowDrawer :: (Boolean) -> Action.SetShowDrawer
+ */
+const SetShowDrawerConstructor = function SetShowDrawer(show) {
+    const constructorName = 'Action.SetShowDrawer(show)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateBoolean(constructorName, 'show', false, show)
+
+    const result = Object.create(SetShowDrawerPrototype)
+    result.show = show
+    return result
+}
+
+Action.SetShowDrawer = SetShowDrawerConstructor
+
+/*
+ * Construct a Action.SetLoadingStatus instance
+ * @sig SetLoadingStatus :: (String?) -> Action.SetLoadingStatus
+ */
+const SetLoadingStatusConstructor = function SetLoadingStatus(status) {
+    const constructorName = 'Action.SetLoadingStatus(status)'
+
+    R.validateString(constructorName, 'status', true, status)
+
+    const result = Object.create(SetLoadingStatusPrototype)
+    if (status != null) result.status = status
+    return result
+}
+
+Action.SetLoadingStatus = SetLoadingStatusConstructor
+
+/*
+ * Construct a Action.SetDraggingView instance
+ * @sig SetDraggingView :: (String?) -> Action.SetDraggingView
+ */
+const SetDraggingViewConstructor = function SetDraggingView(viewId) {
+    const constructorName = 'Action.SetDraggingView(viewId)'
+
+    R.validateString(constructorName, 'viewId', true, viewId)
+
+    const result = Object.create(SetDraggingViewPrototype)
+    if (viewId != null) result.viewId = viewId
+    return result
+}
+
+Action.SetDraggingView = SetDraggingViewConstructor
+
+/*
+ * Construct a Action.SetDropTarget instance
+ * @sig SetDropTarget :: (String?) -> Action.SetDropTarget
+ */
+const SetDropTargetConstructor = function SetDropTarget(groupId) {
+    const constructorName = 'Action.SetDropTarget(groupId)'
+
+    R.validateString(constructorName, 'groupId', true, groupId)
+
+    const result = Object.create(SetDropTargetPrototype)
+    if (groupId != null) result.groupId = groupId
+    return result
+}
+
+Action.SetDropTarget = SetDropTargetConstructor
+
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
@@ -499,6 +676,30 @@ const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
     toString: { value: toString.resetTransactionFilters, enumerable: false },
     toJSON: { value: toJSON.resetTransactionFilters, enumerable: false },
     constructor: { value: ResetTransactionFiltersConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetTreeExpandedPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTreeExpanded', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setTreeExpanded, enumerable: false },
+    toJSON: { value: toJSON.setTreeExpanded, enumerable: false },
+    constructor: { value: SetTreeExpandedConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetColumnSizingPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetColumnSizing', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setColumnSizing, enumerable: false },
+    toJSON: { value: toJSON.setColumnSizing, enumerable: false },
+    constructor: { value: SetColumnSizingConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetColumnOrderPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetColumnOrder', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setColumnOrder, enumerable: false },
+    toJSON: { value: toJSON.setColumnOrder, enumerable: false },
+    constructor: { value: SetColumnOrderConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetTableLayoutPrototype = Object.create(ActionPrototype, {
@@ -605,12 +806,55 @@ const UnregisterKeymapPrototype = Object.create(ActionPrototype, {
     constructor: { value: UnregisterKeymapConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetShowReopenBannerPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetShowReopenBanner', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setShowReopenBanner, enumerable: false },
+    toJSON: { value: toJSON.setShowReopenBanner, enumerable: false },
+    constructor: { value: SetShowReopenBannerConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetShowDrawerPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetShowDrawer', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setShowDrawer, enumerable: false },
+    toJSON: { value: toJSON.setShowDrawer, enumerable: false },
+    constructor: { value: SetShowDrawerConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetLoadingStatusPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetLoadingStatus', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setLoadingStatus, enumerable: false },
+    toJSON: { value: toJSON.setLoadingStatus, enumerable: false },
+    constructor: { value: SetLoadingStatusConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetDraggingViewPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetDraggingView', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setDraggingView, enumerable: false },
+    toJSON: { value: toJSON.setDraggingView, enumerable: false },
+    constructor: { value: SetDraggingViewConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetDropTargetPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetDropTarget', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setDropTarget, enumerable: false },
+    toJSON: { value: toJSON.setDropTarget, enumerable: false },
+    constructor: { value: SetDropTargetConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 // -------------------------------------------------------------------------------------------------------------
 // Variant static prototype
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.prototype = LoadFilePrototype
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
 ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
+SetTreeExpandedConstructor.prototype = SetTreeExpandedPrototype
+SetColumnSizingConstructor.prototype = SetColumnSizingPrototype
+SetColumnOrderConstructor.prototype = SetColumnOrderPrototype
 SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
 OpenViewConstructor.prototype = OpenViewPrototype
 CloseViewConstructor.prototype = CloseViewPrototype
@@ -624,12 +868,20 @@ SetAccountListSortModeConstructor.prototype = SetAccountListSortModePrototype
 ToggleSectionCollapsedConstructor.prototype = ToggleSectionCollapsedPrototype
 RegisterKeymapConstructor.prototype = RegisterKeymapPrototype
 UnregisterKeymapConstructor.prototype = UnregisterKeymapPrototype
+SetShowReopenBannerConstructor.prototype = SetShowReopenBannerPrototype
+SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
+SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
+SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
+SetDropTargetConstructor.prototype = SetDropTargetPrototype
 // -------------------------------------------------------------------------------------------------------------
 // Variant static is
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
 ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
+SetTreeExpandedConstructor.is = val => val && val.constructor === SetTreeExpandedConstructor
+SetColumnSizingConstructor.is = val => val && val.constructor === SetColumnSizingConstructor
+SetColumnOrderConstructor.is = val => val && val.constructor === SetColumnOrderConstructor
 SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
 OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
 CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
@@ -643,12 +895,20 @@ SetAccountListSortModeConstructor.is = val => val && val.constructor === SetAcco
 ToggleSectionCollapsedConstructor.is = val => val && val.constructor === ToggleSectionCollapsedConstructor
 RegisterKeymapConstructor.is = val => val && val.constructor === RegisterKeymapConstructor
 UnregisterKeymapConstructor.is = val => val && val.constructor === UnregisterKeymapConstructor
+SetShowReopenBannerConstructor.is = val => val && val.constructor === SetShowReopenBannerConstructor
+SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerConstructor
+SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
+SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
+SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.toString = () => 'Action.LoadFile'
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
 ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
+SetTreeExpandedConstructor.toString = () => 'Action.SetTreeExpanded'
+SetColumnSizingConstructor.toString = () => 'Action.SetColumnSizing'
+SetColumnOrderConstructor.toString = () => 'Action.SetColumnOrder'
 SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
 OpenViewConstructor.toString = () => 'Action.OpenView'
 CloseViewConstructor.toString = () => 'Action.CloseView'
@@ -662,6 +922,11 @@ SetAccountListSortModeConstructor.toString = () => 'Action.SetAccountListSortMod
 ToggleSectionCollapsedConstructor.toString = () => 'Action.ToggleSectionCollapsed'
 RegisterKeymapConstructor.toString = () => 'Action.RegisterKeymap'
 UnregisterKeymapConstructor.toString = () => 'Action.UnregisterKeymap'
+SetShowReopenBannerConstructor.toString = () => 'Action.SetShowReopenBanner'
+SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
+SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
+SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
+SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
@@ -671,6 +936,9 @@ LoadFileConstructor._from = _input => {
 }
 SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
 ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
+SetTreeExpandedConstructor._from = _input => Action.SetTreeExpanded(_input.viewId, _input.expanded)
+SetColumnSizingConstructor._from = _input => Action.SetColumnSizing(_input.viewId, _input.sizing)
+SetColumnOrderConstructor._from = _input => Action.SetColumnOrder(_input.viewId, _input.order)
 SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
 OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
 CloseViewConstructor._from = _input => Action.CloseView(_input.viewId, _input.groupId)
@@ -687,12 +955,20 @@ SetAccountListSortModeConstructor._from = _input => Action.SetAccountListSortMod
 ToggleSectionCollapsedConstructor._from = _input => Action.ToggleSectionCollapsed(_input.sectionId)
 RegisterKeymapConstructor._from = _input => Action.RegisterKeymap(_input.keymap)
 UnregisterKeymapConstructor._from = _input => Action.UnregisterKeymap(_input.keymapId)
+SetShowReopenBannerConstructor._from = _input => Action.SetShowReopenBanner(_input.show)
+SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
+SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
+SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
+SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.from = LoadFileConstructor._from
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
 ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
+SetTreeExpandedConstructor.from = SetTreeExpandedConstructor._from
+SetColumnSizingConstructor.from = SetColumnSizingConstructor._from
+SetColumnOrderConstructor.from = SetColumnOrderConstructor._from
 SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
 OpenViewConstructor.from = OpenViewConstructor._from
 CloseViewConstructor.from = CloseViewConstructor._from
@@ -706,6 +982,11 @@ SetAccountListSortModeConstructor.from = SetAccountListSortModeConstructor._from
 ToggleSectionCollapsedConstructor.from = ToggleSectionCollapsedConstructor._from
 RegisterKeymapConstructor.from = RegisterKeymapConstructor._from
 UnregisterKeymapConstructor.from = UnregisterKeymapConstructor._from
+SetShowReopenBannerConstructor.from = SetShowReopenBannerConstructor._from
+SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
+SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
+SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
+SetDropTargetConstructor.from = SetDropTargetConstructor._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -760,6 +1041,15 @@ SetTransactionFilterConstructor.fromFirestore = SetTransactionFilterConstructor.
 
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
 ResetTransactionFiltersConstructor.fromFirestore = ResetTransactionFiltersConstructor._from
+
+SetTreeExpandedConstructor.toFirestore = o => ({ ...o })
+SetTreeExpandedConstructor.fromFirestore = SetTreeExpandedConstructor._from
+
+SetColumnSizingConstructor.toFirestore = o => ({ ...o })
+SetColumnSizingConstructor.fromFirestore = SetColumnSizingConstructor._from
+
+SetColumnOrderConstructor.toFirestore = o => ({ ...o })
+SetColumnOrderConstructor.fromFirestore = SetColumnOrderConstructor._from
 
 SetTableLayoutConstructor._toFirestore = (o, encodeTimestamps) => ({
     tableLayout: TableLayout.toFirestore(o.tableLayout, encodeTimestamps),
@@ -849,6 +1139,21 @@ RegisterKeymapConstructor.fromFirestore = RegisterKeymapConstructor._from
 UnregisterKeymapConstructor.toFirestore = o => ({ ...o })
 UnregisterKeymapConstructor.fromFirestore = UnregisterKeymapConstructor._from
 
+SetShowReopenBannerConstructor.toFirestore = o => ({ ...o })
+SetShowReopenBannerConstructor.fromFirestore = SetShowReopenBannerConstructor._from
+
+SetShowDrawerConstructor.toFirestore = o => ({ ...o })
+SetShowDrawerConstructor.fromFirestore = SetShowDrawerConstructor._from
+
+SetLoadingStatusConstructor.toFirestore = o => ({ ...o })
+SetLoadingStatusConstructor.fromFirestore = SetLoadingStatusConstructor._from
+
+SetDraggingViewConstructor.toFirestore = o => ({ ...o })
+SetDraggingViewConstructor.fromFirestore = SetDraggingViewConstructor._from
+
+SetDropTargetConstructor.toFirestore = o => ({ ...o })
+SetDropTargetConstructor.fromFirestore = SetDropTargetConstructor._from
+
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -860,6 +1165,9 @@ Action.is = v => {
         LoadFile,
         SetTransactionFilter,
         ResetTransactionFilters,
+        SetTreeExpanded,
+        SetColumnSizing,
+        SetColumnOrder,
         SetTableLayout,
         OpenView,
         CloseView,
@@ -873,6 +1181,11 @@ Action.is = v => {
         ToggleSectionCollapsed,
         RegisterKeymap,
         UnregisterKeymap,
+        SetShowReopenBanner,
+        SetShowDrawer,
+        SetLoadingStatus,
+        SetDraggingView,
+        SetDropTarget,
     } = Action
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
@@ -880,6 +1193,9 @@ Action.is = v => {
         constructor === LoadFile ||
         constructor === SetTransactionFilter ||
         constructor === ResetTransactionFilters ||
+        constructor === SetTreeExpanded ||
+        constructor === SetColumnSizing ||
+        constructor === SetColumnOrder ||
         constructor === SetTableLayout ||
         constructor === OpenView ||
         constructor === CloseView ||
@@ -892,7 +1208,12 @@ Action.is = v => {
         constructor === SetAccountListSortMode ||
         constructor === ToggleSectionCollapsed ||
         constructor === RegisterKeymap ||
-        constructor === UnregisterKeymap
+        constructor === UnregisterKeymap ||
+        constructor === SetShowReopenBanner ||
+        constructor === SetShowDrawer ||
+        constructor === SetLoadingStatus ||
+        constructor === SetDraggingView ||
+        constructor === SetDropTarget
     )
 }
 
@@ -915,6 +1236,9 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         LoadFile,
         SetTransactionFilter,
         ResetTransactionFilters,
+        SetTreeExpanded,
+        SetColumnSizing,
+        SetColumnOrder,
         SetTableLayout,
         OpenView,
         CloseView,
@@ -928,11 +1252,19 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         ToggleSectionCollapsed,
         RegisterKeymap,
         UnregisterKeymap,
+        SetShowReopenBanner,
+        SetShowDrawer,
+        SetLoadingStatus,
+        SetDraggingView,
+        SetDropTarget,
     } = Action
     const tagName = doc['@@tagName']
     if (tagName === 'LoadFile') return LoadFile.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTransactionFilter') return SetTransactionFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ResetTransactionFilters') return ResetTransactionFilters.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetTreeExpanded') return SetTreeExpanded.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetColumnSizing') return SetColumnSizing.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetColumnOrder') return SetColumnOrder.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTableLayout') return SetTableLayout.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'OpenView') return OpenView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'CloseView') return CloseView.fromFirestore(doc, decodeTimestamps)
@@ -946,6 +1278,11 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'ToggleSectionCollapsed') return ToggleSectionCollapsed.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'RegisterKeymap') return RegisterKeymap.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'UnregisterKeymap') return UnregisterKeymap.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetShowReopenBanner') return SetShowReopenBanner.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetShowDrawer') return SetShowDrawer.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)
     throw new Error(`Unrecognized Action variant: ${tagName}`)
 }
 

@@ -2,14 +2,15 @@
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
 
 import { DataTable, Flex, layoutChannel, useChannel } from '@graffio/design-system'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
+import { post } from '../commands/post.js'
 import * as S from '../store/selectors/index.js'
+import { Action } from '../types/action.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 
-const { collectAsOf: collectHoldingsAsOf } = S.Holdings
 const { buildHoldingsTree } = HoldingsTree
 
 const pageContainerStyle = { height: '100%' }
@@ -40,25 +41,32 @@ const T = {
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const [, setLayout] = useChannel(layoutChannel)
-    const holdings = useSelector(state => collectHoldingsAsOf(state, viewId))
+    const holdings = useSelector(state => S.Holdings.collectAsOf(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
-    const [expanded, setExpanded] = useState({})
-    const [columnSizing, setColumnSizing] = useState({})
-    const [columnOrder, setColumnOrder] = useState([])
+    const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
+    const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
+    const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
 
+    // EXEMPT: useMemo - tree building is expensive; keeping as useMemo for render optimization
     const holdingsTree = useMemo(() => buildHoldingsTree(groupBy || 'account', holdings), [groupBy, holdings])
+
     const handleExpandedChange = useCallback(
-        updater => setExpanded(prev => (typeof updater === 'function' ? updater(prev) : updater)),
-        [],
+        updater => {
+            const next = typeof updater === 'function' ? updater(expanded) : updater
+            post(Action.SetTreeExpanded(viewId, next))
+        },
+        [viewId, expanded],
     )
     const handleColumnSizingChange = useCallback(
-        updater => setColumnSizing(prev => (typeof updater === 'function' ? updater(prev) : updater)),
-        [],
+        updater => {
+            const next = typeof updater === 'function' ? updater(columnSizing) : updater
+            post(Action.SetColumnSizing(viewId, next))
+        },
+        [viewId, columnSizing],
     )
-    const handleColumnOrderChange = useCallback(setColumnOrder, [])
+    const handleColumnOrderChange = useCallback(order => post(Action.SetColumnOrder(viewId, order)), [viewId])
 
-    // Compute total holdings count for filter display
-    const totalHoldingsCount = useMemo(() => holdings?.length ?? 0, [holdings])
+    const totalHoldingsCount = holdings?.length ?? 0
 
     useEffect(() => setLayout(dimensionLayouts[groupBy] || dimensionLayouts.account), [setLayout, groupBy])
 
