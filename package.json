@@ -39,7 +39,9 @@
     "lint-staged": {
         "**/*.{mjs,js,jsx}": [
             "eslint --fix",
-            "prettier --write --ignore-unknown",
+            "prettier --write --ignore-unknown"
+        ],
+        "**/!(*.stories).{mjs,js,jsx}": [
             "node modules/cli-style-validator/src/cli.js"
         ]
     },
