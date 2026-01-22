@@ -1,10 +1,11 @@
 // ABOUTME: Cell renderers for transaction register table columns
 // ABOUTME: TanStack Table components with search highlighting and formatting
+// COMPLEXITY-TODO: react-redux-separation — Presentational cell renderers (expires 2026-04-01)
 
 import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { formatCurrency, formatDate, formatPrice, formatQuantity } from '../utils/formatters.js'
 
 // ---------------------------------------------------------------------------------------------------------------------

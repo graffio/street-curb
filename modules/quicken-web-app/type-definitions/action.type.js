@@ -33,6 +33,7 @@ export const Action = {
 
         // Table layout actions
         SetTableLayout         : { tableLayout: 'TableLayout' },
+        EnsureTableLayout      : { tableLayoutId: 'String', columns: '[Object]' },
 
         // Tab layout actions
         OpenView       : { view: 'View', groupId: 'String?' },

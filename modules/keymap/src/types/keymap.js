@@ -4,12 +4,12 @@
 /** {@link module:Keymap} */
 /*  Keymap generated from: modules/keymap/type-definitions/keymap.type.js
  *
- *  id        : "String",
- *  name      : "String",
- *  priority  : "Number",
- *  blocking  : "Boolean?",
- *  activeWhen: "Any?",
- *  intents   : "{Intent:description}"
+ *  id             : "String",
+ *  name           : "String",
+ *  priority       : "Number",
+ *  blocking       : "Boolean?",
+ *  activeForViewId: "String?",
+ *  intents        : "{Intent:description}"
  *
  */
 
@@ -26,16 +26,16 @@ import { LookupTable } from '@graffio/functional'
 
 /*
  * Construct a Keymap instance
- * @sig Keymap :: (String, String, Number, Boolean?, Any?, {Intent}) -> Keymap
+ * @sig Keymap :: (String, String, Number, Boolean?, String?, {Intent}) -> Keymap
  */
-const Keymap = function Keymap(id, name, priority, blocking, activeWhen, intents) {
-    const constructorName = 'Keymap(id, name, priority, blocking, activeWhen, intents)'
+const Keymap = function Keymap(id, name, priority, blocking, activeForViewId, intents) {
+    const constructorName = 'Keymap(id, name, priority, blocking, activeForViewId, intents)'
 
     R.validateString(constructorName, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateNumber(constructorName, 'priority', false, priority)
     R.validateBoolean(constructorName, 'blocking', true, blocking)
-
+    R.validateString(constructorName, 'activeForViewId', true, activeForViewId)
     R.validateLookupTable(constructorName, 'Intent', 'intents', false, intents)
 
     const result = Object.create(prototype)
@@ -43,7 +43,7 @@ const Keymap = function Keymap(id, name, priority, blocking, activeWhen, intents
     result.name = name
     result.priority = priority
     if (blocking != null) result.blocking = blocking
-    if (activeWhen != null) result.activeWhen = activeWhen
+    if (activeForViewId != null) result.activeForViewId = activeForViewId
     result.intents = intents
     return result
 }
@@ -63,7 +63,7 @@ const keymapToString = function () {
         ${R._toString(this.name)},
         ${R._toString(this.priority)},
         ${R._toString(this.blocking)},
-        ${R._toString(this.activeWhen)},
+        ${R._toString(this.activeForViewId)},
         ${R._toString(this.intents)})`
 }
 
@@ -98,8 +98,8 @@ Keymap.toString = () => 'Keymap'
 Keymap.is = v => v && v['@@typeName'] === 'Keymap'
 
 Keymap._from = _input => {
-    const { id, name, priority, blocking, activeWhen, intents } = _input
-    return Keymap(id, name, priority, blocking, activeWhen, intents)
+    const { id, name, priority, blocking, activeForViewId, intents } = _input
+    return Keymap(id, name, priority, blocking, activeForViewId, intents)
 }
 Keymap.from = Keymap._from
 
@@ -113,7 +113,7 @@ Keymap._toFirestore = (o, encodeTimestamps) => {
 
     if (o.blocking != null) result.blocking = o.blocking
 
-    if (o.activeWhen != null) result.activeWhen = o.activeWhen
+    if (o.activeForViewId != null) result.activeForViewId = o.activeForViewId
 
     return result
 }
@@ -124,7 +124,7 @@ Keymap._fromFirestore = (doc, decodeTimestamps) =>
         name: doc.name,
         priority: doc.priority,
         blocking: doc.blocking,
-        activeWhen: doc.activeWhen,
+        activeForViewId: doc.activeForViewId,
         intents: R.lookupTableFromFirestore(Intent, 'description', decodeTimestamps, doc.intents),
     })
 
@@ -138,7 +138,7 @@ Keymap.fromFirestore = Keymap._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-Keymap.isActive = (keymap, activeViewId) => !keymap.activeWhen || keymap.activeWhen(activeViewId)
+Keymap.isActive = (keymap, activeViewId) => !keymap.activeForViewId || keymap.activeForViewId === activeViewId
 
 Keymap.findMatchingIntent = (keymap, key) => keymap.intents.find(intent => Intent.hasKey(intent, key))
 

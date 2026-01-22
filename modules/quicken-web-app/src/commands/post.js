@@ -78,6 +78,7 @@ const post = action => {
         SetColumnSizing        : () => dispatch(action),
         SetColumnOrder         : () => dispatch(action),
         SetTableLayout         : handleSetTableLayout,
+        EnsureTableLayout      : handleSetTableLayout,
 
         // Tab layout actions (all persist to IndexedDB)
         OpenView          : handleTabLayoutAction,

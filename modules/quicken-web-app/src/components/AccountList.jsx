@@ -5,7 +5,7 @@ import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@graffio/d
 import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { SortMode } from '../types/sort-mode.js'
 import { View } from '../types/view.js'

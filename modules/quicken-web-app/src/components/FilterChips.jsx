@@ -19,7 +19,7 @@ import { endOfDay } from '@graffio/functional'
 import React, { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
 // ---------------------------------------------------------------------------------------------------------------------

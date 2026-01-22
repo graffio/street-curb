@@ -118,4 +118,10 @@ TableLayout.fromFirestore = TableLayout._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
+TableLayout.toSorting = layout =>
+    layout?.sortOrder?.map(s => ({
+        id: s.id,
+        desc: s.isDescending,
+    })) ?? []
+
 export { TableLayout }

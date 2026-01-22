@@ -29,6 +29,9 @@
  *      order : "[String]"
  *  SetTableLayout
  *      tableLayout: "TableLayout"
+ *  EnsureTableLayout
+ *      tableLayoutId: "String",
+ *      columns      : "[Object]"
  *  OpenView
  *      view   : "View",
  *      groupId: "String?"
@@ -111,6 +114,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetColumnSizing',
         'SetColumnOrder',
         'SetTableLayout',
+        'EnsureTableLayout',
         'OpenView',
         'CloseView',
         'MoveView',
@@ -164,6 +168,7 @@ const toString = {
     setColumnSizing        : function () { return `Action.SetColumnSizing(${R._toString(this.viewId)}, ${R._toString(this.sizing)})` },
     setColumnOrder         : function () { return `Action.SetColumnOrder(${R._toString(this.viewId)}, ${R._toString(this.order)})` },
     setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
+    ensureTableLayout      : function () { return `Action.EnsureTableLayout(${R._toString(this.tableLayoutId)}, ${R._toString(this.columns)})` },
     openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
     closeView              : function () { return `Action.CloseView(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
     moveView               : function () { return `Action.MoveView(${R._toString(this.viewId)}, ${R._toString(this.fromGroupId)}, ${R._toString(this.toGroupId)}, ${R._toString(this.toIndex)})` },
@@ -198,6 +203,7 @@ const toJSON = {
     setColumnSizing        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setColumnOrder         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    ensureTableLayout      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     openView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     closeView              : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     moveView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -370,6 +376,24 @@ const SetTableLayoutConstructor = function SetTableLayout(tableLayout) {
 }
 
 Action.SetTableLayout = SetTableLayoutConstructor
+
+/*
+ * Construct a Action.EnsureTableLayout instance
+ * @sig EnsureTableLayout :: (String, [Object]) -> Action.EnsureTableLayout
+ */
+const EnsureTableLayoutConstructor = function EnsureTableLayout(tableLayoutId, columns) {
+    const constructorName = 'Action.EnsureTableLayout(tableLayoutId, columns)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'tableLayoutId', false, tableLayoutId)
+    R.validateArray(constructorName, 1, 'Object', undefined, 'columns', false, columns)
+
+    const result = Object.create(EnsureTableLayoutPrototype)
+    result.tableLayoutId = tableLayoutId
+    result.columns = columns
+    return result
+}
+
+Action.EnsureTableLayout = EnsureTableLayoutConstructor
 
 /*
  * Construct a Action.OpenView instance
@@ -734,6 +758,14 @@ const SetTableLayoutPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetTableLayoutConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const EnsureTableLayoutPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'EnsureTableLayout', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.ensureTableLayout, enumerable: false },
+    toJSON: { value: toJSON.ensureTableLayout, enumerable: false },
+    constructor: { value: EnsureTableLayoutConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const OpenViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'OpenView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -888,6 +920,7 @@ SetTreeExpandedConstructor.prototype = SetTreeExpandedPrototype
 SetColumnSizingConstructor.prototype = SetColumnSizingPrototype
 SetColumnOrderConstructor.prototype = SetColumnOrderPrototype
 SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
+EnsureTableLayoutConstructor.prototype = EnsureTableLayoutPrototype
 OpenViewConstructor.prototype = OpenViewPrototype
 CloseViewConstructor.prototype = CloseViewPrototype
 MoveViewConstructor.prototype = MoveViewPrototype
@@ -916,6 +949,7 @@ SetTreeExpandedConstructor.is = val => val && val.constructor === SetTreeExpande
 SetColumnSizingConstructor.is = val => val && val.constructor === SetColumnSizingConstructor
 SetColumnOrderConstructor.is = val => val && val.constructor === SetColumnOrderConstructor
 SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
+EnsureTableLayoutConstructor.is = val => val && val.constructor === EnsureTableLayoutConstructor
 OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
 CloseViewConstructor.is = val => val && val.constructor === CloseViewConstructor
 MoveViewConstructor.is = val => val && val.constructor === MoveViewConstructor
@@ -944,6 +978,7 @@ SetTreeExpandedConstructor.toString = () => 'Action.SetTreeExpanded'
 SetColumnSizingConstructor.toString = () => 'Action.SetColumnSizing'
 SetColumnOrderConstructor.toString = () => 'Action.SetColumnOrder'
 SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
+EnsureTableLayoutConstructor.toString = () => 'Action.EnsureTableLayout'
 OpenViewConstructor.toString = () => 'Action.OpenView'
 CloseViewConstructor.toString = () => 'Action.CloseView'
 MoveViewConstructor.toString = () => 'Action.MoveView'
@@ -975,6 +1010,7 @@ SetTreeExpandedConstructor._from = _input => Action.SetTreeExpanded(_input.viewI
 SetColumnSizingConstructor._from = _input => Action.SetColumnSizing(_input.viewId, _input.sizing)
 SetColumnOrderConstructor._from = _input => Action.SetColumnOrder(_input.viewId, _input.order)
 SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
+EnsureTableLayoutConstructor._from = _input => Action.EnsureTableLayout(_input.tableLayoutId, _input.columns)
 OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
 CloseViewConstructor._from = _input => Action.CloseView(_input.viewId, _input.groupId)
 MoveViewConstructor._from = _input => {
@@ -1006,6 +1042,7 @@ SetTreeExpandedConstructor.from = SetTreeExpandedConstructor._from
 SetColumnSizingConstructor.from = SetColumnSizingConstructor._from
 SetColumnOrderConstructor.from = SetColumnOrderConstructor._from
 SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
+EnsureTableLayoutConstructor.from = EnsureTableLayoutConstructor._from
 OpenViewConstructor.from = OpenViewConstructor._from
 CloseViewConstructor.from = CloseViewConstructor._from
 MoveViewConstructor.from = MoveViewConstructor._from
@@ -1102,6 +1139,9 @@ SetTableLayoutConstructor._fromFirestore = (doc, decodeTimestamps) =>
 // Public aliases (can be overridden)
 SetTableLayoutConstructor.toFirestore = SetTableLayoutConstructor._toFirestore
 SetTableLayoutConstructor.fromFirestore = SetTableLayoutConstructor._fromFirestore
+
+EnsureTableLayoutConstructor.toFirestore = o => ({ ...o })
+EnsureTableLayoutConstructor.fromFirestore = EnsureTableLayoutConstructor._from
 
 /**
  * Serialize to Firestore format
@@ -1209,6 +1249,7 @@ Action.is = v => {
         SetColumnSizing,
         SetColumnOrder,
         SetTableLayout,
+        EnsureTableLayout,
         OpenView,
         CloseView,
         MoveView,
@@ -1238,6 +1279,7 @@ Action.is = v => {
         constructor === SetColumnSizing ||
         constructor === SetColumnOrder ||
         constructor === SetTableLayout ||
+        constructor === EnsureTableLayout ||
         constructor === OpenView ||
         constructor === CloseView ||
         constructor === MoveView ||
@@ -1282,6 +1324,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetColumnSizing,
         SetColumnOrder,
         SetTableLayout,
+        EnsureTableLayout,
         OpenView,
         CloseView,
         MoveView,
@@ -1309,6 +1352,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetColumnSizing') return SetColumnSizing.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetColumnOrder') return SetColumnOrder.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTableLayout') return SetTableLayout.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'EnsureTableLayout') return EnsureTableLayout.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'OpenView') return OpenView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'CloseView') return CloseView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'MoveView') return MoveView.fromFirestore(doc, decodeTimestamps)

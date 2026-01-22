@@ -36,6 +36,8 @@
  *
  */
 
+import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+
 import * as R from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
@@ -392,5 +394,98 @@ Transaction.fromFirestore = Transaction._fromFirestore
 // Additional functions copied from type definition file
 //
 // -------------------------------------------------------------------------------------------------------------
+
+Transaction.toCategoryName = (txn, categories) => {
+    if (!txn.categoryId) return null
+    return categories.get(txn.categoryId).name
+}
+
+Transaction.toSecurityName = (txn, securities) => {
+    if (!txn.securityId) return null
+    const security = securities.get(txn.securityId)
+    return security.symbol || security.name
+}
+
+Transaction.toRegisterRow = txn => ({
+    transaction: txn,
+    runningBalance: txn.runningBalance,
+})
+
+Transaction.toEnriched = (txn, categories, accounts) => ({
+    ...txn,
+    categoryName: Transaction.toCategoryName(txn, categories) || 'Uncategorized',
+    accountName: accounts.get(txn.accountId).name,
+})
+
+Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
+    const matchesFields = anyFieldContains(fields)(query)
+    const matches = containsIgnoreCase(query)
+    if (matchesFields(txn)) return true
+    if (matches(Transaction.toCategoryName(txn, categories))) return true
+    if (securities && matches(Transaction.toSecurityName(txn, securities))) return true
+    return false
+}
+
+Transaction.matchesSearch = (query, categories) => txn => {
+    if (!query.trim()) return false
+    if (Transaction.matchesAnyText(query, ['payee', 'memo', 'address', 'number'], categories, null)(txn)) return true
+    return containsIgnoreCase(query)(String(txn.amount))
+}
+
+Transaction.matchesText = (query, categories, securities) => txn => {
+    if (!query.trim()) return true
+    return Transaction.matchesAnyText(query, ['memo', 'payee', 'investmentAction'], categories, securities)(txn)
+}
+
+Transaction.isInDateRange = dateRange => txn => {
+    const { start, end } = dateRange
+    if (!start && !end) return true
+    const startStr = start ? start.toISOString().slice(0, 10) : null
+    const endStr = end ? end.toISOString().slice(0, 10) : null
+    if (startStr && txn.date < startStr) return false
+    if (endStr && txn.date > endStr) return false
+    return true
+}
+
+Transaction.matchesCategories = (selected, categories) => txn => {
+    if (!selected.length) return true
+    const categoryName = Transaction.toCategoryName(txn, categories)
+    if (!categoryName) return false
+    return selected.some(s => categoryName === s || categoryName.startsWith(s + ':'))
+}
+
+Transaction.isInAccount = accountId => txn => txn.accountId === accountId
+
+Transaction.matchesSecurities = securityIds => txn => !securityIds.length || securityIds.includes(txn.securityId)
+
+Transaction.matchesInvestmentActions = actions => txn => !actions.length || actions.includes(txn.investmentAction)
+
+Transaction.applyFilters = ({ transactions, query, dateRange, categoryIds, accountIds, categories, securities }) =>
+    transactions
+        .filter(Transaction.matchesText(query, categories, securities))
+        .filter(Transaction.isInDateRange(dateRange))
+        .filter(Transaction.matchesCategories(categoryIds, categories))
+        .filter(t => !accountIds.length || accountIds.includes(t.accountId))
+
+Transaction.applyInvestmentFilters = (transactions, securityIds, actionIds) =>
+    transactions
+        .filter(Transaction.matchesSecurities(securityIds))
+        .filter(Transaction.matchesInvestmentActions(actionIds))
+
+Transaction.collectSearchMatchIds = (transactions, query, categories) =>
+    transactions.filter(Transaction.matchesSearch(query, categories)).map(t => t.id)
+
+Transaction.enrichAll = (transactions, categories, accounts) =>
+    transactions.map(txn => Transaction.toEnriched(txn, categories, accounts))
+
+Transaction.toRegisterRows = transactions => transactions.map(Transaction.toRegisterRow)
+
+Transaction.findEarliest = transactions => {
+    if (transactions.length === 0) return null
+    return transactions.reduce((earliest, txn) => {
+        const d = new Date(txn.date)
+        return d < earliest ? d : earliest
+    }, new Date(transactions[0].date))
+}
 
 export { Transaction }

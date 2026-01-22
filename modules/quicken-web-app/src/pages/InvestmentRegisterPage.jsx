@@ -2,10 +2,7 @@
 // ABOUTME: Displays investment account transactions with running cash balance
 
 import { DataTable, Flex, Text } from '@graffio/design-system'
-import { applySort } from '@graffio/financial-computations/query'
-import { LookupTable } from '@graffio/functional'
-import { KeymapModule } from '@graffio/keymap'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CellRenderers, TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
@@ -16,26 +13,19 @@ import {
     SearchFilterChip,
     SecurityFilterChip,
 } from '../components/index.js'
-import * as S from '../store/selectors/index.js'
-import { Filters } from '../store/selectors/transactions/filters.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { formatDateRange } from '../utils/formatters.js'
-import {
-    applyOrderChange,
-    applySizingChange,
-    applySortingChange,
-    initializeTableLayout,
-    toDataTableProps,
-} from '../utils/table-layout.js'
+import { applyOrderChange, applySizingChange, applySortingChange } from '../utils/table-layout.js'
 
 const { ACTION_LABELS } = CellRenderers
 const { investmentColumns } = TransactionColumns
 
-const { Intent, Keymap } = KeymapModule
-
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
+const filterRowActiveStyle = { ...filterRowBaseStyle, backgroundColor: 'var(--ruby-3)' }
+const filterRowInactiveStyle = { ...filterRowBaseStyle, backgroundColor: 'var(--gray-2)' }
 
 const MAX_DETAIL_LINES = 3
 
@@ -73,28 +63,24 @@ const T = {
         const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
         return { start: twelveMonthsAgo, end: endOfToday }
     },
-}
 
-const F = {
-    // Creates a keymap for the investment register with j/k navigation
-    // @sig createRegisterKeymap :: (String, String) -> Keymap
-    createRegisterKeymap: (viewId, name) => {
-        const intents = LookupTable(
-            [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
-            Intent,
-            'description',
-        )
-        return Keymap(viewId, name, 10, false, activeId => activeId === viewId, intents)
-    },
+    // Maps security IDs to display names
+    // @sig toSecurityNames :: ([String], LookupTable<Security>) -> [String]
+    toSecurityNames: (ids, securities) => ids.map(id => securities?.get(id)?.name || id),
+
+    // Maps action codes to display labels
+    // @sig toActionNames :: ([String], Object) -> [String]
+    toActionNames: (codes, labels) => codes.map(code => labels[code] || code),
 }
 
 const E = {
     /* Dispatch highlight change, resolving ID to index based on search mode
-     * @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+     * Uses getData() to fetch current data at call time (avoids stale closures)
+     * @sig dispatchHighlightChange :: (Number, [String], () -> [Row], String) -> String -> void
      */
-    dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
+    dispatchHighlightChange: (matchCount, searchMatches, getData, viewId) => newId => {
         const inSearchMode = matchCount > 0
-        const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
+        const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(getData(), newId)
         if (idx < 0) return
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
@@ -106,12 +92,9 @@ const E = {
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
     },
 
-    // Registers keymap on mount and unregisters on unmount
-    // @sig keymapEffect :: (Keymap, String) -> () -> void
-    keymapEffect: (keymap, viewId) => () => {
-        post(Action.RegisterKeymap(keymap))
-        return () => post(Action.UnregisterKeymap(viewId))
-    },
+    // Ensures table layout exists in Redux (idempotent, only creates if missing)
+    // @sig ensureTableLayoutEffect :: (String, [Column]) -> () -> void
+    ensureTableLayoutEffect: (tableLayoutId, columns) => () => post(Action.EnsureTableLayout(tableLayoutId, columns)),
 }
 
 /*
@@ -135,80 +118,54 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
-    const currentSearchIndex = useSelector(state => S.UI.currentSearchIndex(state, viewId))
-    const currentRowIndex = useSelector(state => S.UI.currentRowIndex(state, viewId))
     const allTableLayouts = useSelector(S.tableLayouts)
-    const filteredTransactions = useSelector(state => S.Transactions.filtered(state, viewId))
+    const accountTransactions = useSelector(state => S.Transactions.filteredForAccount(state, viewId, accountId))
+    const investmentFiltered = useSelector(state => S.Transactions.filteredForInvestment(state, viewId, accountId))
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId))
     const selectedSecurities = useSelector(state => S.UI.selectedSecurities(state, viewId))
     const selectedInvestmentActions = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const securities = useSelector(S.securities)
     const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
-    const registerKeymap = useMemo(() => F.createRegisterKeymap(viewId, accountName), [viewId, accountName])
 
-    useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
+    useEffect(E.ensureTableLayoutEffect(tableLayoutId, investmentColumns), [tableLayoutId])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Memos (data transformations)
     // -----------------------------------------------------------------------------------------------------------------
-    // Apply investment-specific filter chain: account -> securities -> actions
-    const accountTransactions = useMemo(
-        () => Filters.filterByAccount(filteredTransactions, accountId),
-        [filteredTransactions, accountId],
+    const tableLayout = allTableLayouts?.[tableLayoutId]
+    const { sorting, columnSizing, columnOrder } = useSelector(state => S.tableLayoutProps(state, tableLayoutId))
+
+    // Sorted register rows for display (wraps with balances, applies sort)
+    const data = useSelector(state =>
+        S.Transactions.sortedForDisplay(state, viewId, accountId, tableLayoutId, investmentColumns),
     )
 
-    const securityFiltered = useMemo(
-        () => Filters.filterBySecurities(accountTransactions, selectedSecurities),
-        [accountTransactions, selectedSecurities],
+    // Ref to access current data in callbacks without adding to deps (prevents keymap recreation)
+    const dataRef = useRef(data)
+    dataRef.current = data
+
+    // Highlighted transaction ID based on search mode or row index
+    const highlightedId = useSelector(state =>
+        S.Transactions.highlightedId(state, viewId, accountId, tableLayoutId, investmentColumns),
     )
-
-    const actionFiltered = useMemo(
-        () => Filters.filterByInvestmentActions(securityFiltered, selectedInvestmentActions),
-        [securityFiltered, selectedInvestmentActions],
-    )
-
-    const tableLayout = useMemo(
-        () => allTableLayouts?.[tableLayoutId] || initializeTableLayout(tableLayoutId, investmentColumns),
-        [allTableLayouts, tableLayoutId],
-    )
-
-    const { sorting, columnSizing, columnOrder } = useMemo(() => toDataTableProps(tableLayout), [tableLayout])
-
-    // Wrap transactions with stored running balance, then apply user's display sort
-    const withBalances = useMemo(
-        () => actionFiltered.map(txn => ({ transaction: txn, runningBalance: txn.runningBalance })),
-        [actionFiltered],
-    )
-
-    // Apply user's display sort to RegisterRows
-    const data = useMemo(() => applySort(sorting, withBalances, investmentColumns), [withBalances, sorting])
-
-    // With manual sorting, search matches are already in display order
     const matchCount = searchMatches.length
-
-    const highlightedId = useMemo(
-        () => (matchCount > 0 ? searchMatches[currentSearchIndex] : data[currentRowIndex]?.transaction?.id),
-        [matchCount, searchMatches, currentSearchIndex, data, currentRowIndex],
-    )
 
     // Filter chip active states - true when that filter is reducing results
     const isDateActive = dateRangeKey !== 'all'
     const isSecuritiesActive = selectedSecurities.length > 0
     const isActionsActive = selectedInvestmentActions.length > 0
     const isTextActive = filterQuery?.length > 0
-    const { length: filteredCount } = actionFiltered
+    const { length: filteredCount } = investmentFiltered
     const { length: totalCount } = accountTransactions
     const isFiltering = filteredCount < totalCount || isDateActive || isTextActive
 
     // Build detail lines for each filter chip
-    const dateDetails = dateRange ? [formatDateRange(dateRange.start, dateRange.end)].filter(Boolean) : []
-    const securityNames = selectedSecurities.map(id => securities?.get(id)?.name || id)
-    const securityDetails = T.toDetailLines(securityNames)
-    const actionNames = selectedInvestmentActions.map(code => ACTION_LABELS[code] || code)
-    const actionDetails = T.toDetailLines(actionNames)
+    const dateDetails = dateRange ? T.toDetailLines([formatDateRange(dateRange.start, dateRange.end)]) : []
+    const securityDetails = T.toDetailLines(T.toSecurityNames(selectedSecurities, securities))
+    const actionDetails = T.toDetailLines(T.toActionNames(selectedInvestmentActions, ACTION_LABELS))
 
-    const filterRowStyle = { ...filterRowBaseStyle, backgroundColor: isFiltering ? 'var(--ruby-3)' : 'var(--gray-2)' }
+    const filterRowStyle = isFiltering ? filterRowActiveStyle : filterRowInactiveStyle
 
     // -----------------------------------------------------------------------------------------------------------------
     // Callbacks
@@ -228,10 +185,12 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
         [tableLayout],
     )
 
-    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, data, viewId), [
+    // Uses getData() to access current data without adding to deps (prevents keymap registration loop)
+    const getData = useCallback(() => dataRef.current, [])
+    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, getData, viewId), [
         matchCount,
         searchMatches,
-        data,
+        getData,
         viewId,
     ])
 
@@ -253,6 +212,9 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     )
 
     useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])
+
+    // Wait for EnsureTableLayout to populate Redux on first render
+    if (!tableLayout) return null
 
     return (
         <Flex direction="column" style={pageContainerStyle}>

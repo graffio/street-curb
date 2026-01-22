@@ -2,6 +2,7 @@
 // ABOUTME: Manages all entities (LookupTables) and transaction filter state
 
 import { LookupTable } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import {
     Account,
     Action,
@@ -12,22 +13,24 @@ import {
     Security,
     SortMode,
     Split,
+    TabGroup,
+    TabLayout,
     TableLayout,
     Tag,
     Transaction,
     TransactionFilter,
+    View,
 } from '../types/index.js'
-import {
-    closeTabGroup,
-    closeView,
-    createTabGroup,
-    moveView,
-    openView,
-    setActiveTabGroup,
-    setActiveView,
-    setTabGroupWidth,
-} from './reducers/tab-layout.js'
+import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
+import { initializeTableLayout } from '../utils/table-layout.js'
+
+const { closeTabGroup, closeView, createTabGroup, moveView } = TabLayoutReducers
+const { openView, setActiveTabGroup, setActiveView, setTabGroupWidth } = TabLayoutReducers
+const { Keymap } = KeymapModule
+const { createDefaultFilter } = TransactionFilters
+
+const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
 // COMPLEXITY: Exporting both reducer and state factory is standard Redux pattern
 
@@ -55,11 +58,16 @@ const createEmptyState = () => ({
     tags: LookupTable([], Tag, 'id'),
     splits: LookupTable([], Split, 'id'),
     transactions: LookupTable([], Transaction, 'id'),
-    tabLayout: null,
-    transactionFilters: LookupTable([], TransactionFilter, 'id'),
+    tabLayout: TabLayout(
+        'tl_main',
+        LookupTable([TabGroup('tg_1', LookupTable([], View, 'id'), null, 100)], TabGroup, 'id'),
+        'tg_1',
+        2,
+    ),
+    transactionFilters: LookupTable([createDefaultFilter(ACCOUNT_LIST_VIEW_ID)], TransactionFilter, 'id'),
     accountListSortMode: SortMode.ByType(),
     collapsedSections: new Set(),
-    keymaps: [],
+    keymaps: LookupTable([], Keymap, 'id'),
     showReopenBanner: false,
     showDrawer: false,
     loadingStatus: null,
@@ -76,6 +84,17 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
     // @sig setTableLayout :: Action.SetTableLayout -> State
     const setTableLayout = action => ({ ...state, tableLayouts: state.tableLayouts.addItemWithId(action.tableLayout) })
 
+    // Creates table layout if it doesn't exist (idempotent initialization)
+    // @sig ensureTableLayout :: Action.EnsureTableLayout -> State
+    const ensureTableLayout = action => {
+        const { tableLayoutId, columns } = action
+        if (state.tableLayouts[tableLayoutId]) return state
+        return {
+            ...state,
+            tableLayouts: state.tableLayouts.addItemWithId(initializeTableLayout(tableLayoutId, columns)),
+        }
+    }
+
     // Replaces state with loaded file data (accounts, transactions, etc.)
     // @sig loadFile :: Action.LoadFile -> State
     const loadFile = action => ({ ...state, ...action })
@@ -89,6 +108,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         LoadFile               : () => loadFile(action),
         ResetTransactionFilters: () => TransactionFilters.resetTransactionFilters(state, action),
         SetTableLayout         : () => setTableLayout(action),
+        EnsureTableLayout      : () => ensureTableLayout(action),
         SetTransactionFilter   : () => TransactionFilters.setTransactionFilter(state, action),
         SetTreeExpanded        : () => TransactionFilters.setTreeExpanded(state, action),
         SetColumnSizing        : () => TransactionFilters.setColumnSizing(state, action),
@@ -109,8 +129,8 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ToggleSectionCollapsed : () => toggleSectionCollapsed(state, action),
 
         // Keymap actions
-        RegisterKeymap   : () => ({ ...state, keymaps: [...state.keymaps, action.keymap] }),
-        UnregisterKeymap : () => ({ ...state, keymaps: state.keymaps.filter(km => km.id !== action.keymapId) }),
+        RegisterKeymap   : () => ({ ...state, keymaps: state.keymaps.addItemWithId(action.keymap) }),
+        UnregisterKeymap : () => ({ ...state, keymaps: state.keymaps.removeItemWithId(action.keymapId) }),
 
         // Global UI actions
         SetShowReopenBanner : () => ({ ...state, showReopenBanner: action.show }),

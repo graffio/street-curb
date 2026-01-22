@@ -17,3 +17,7 @@ export const TableLayout = {
         sortOrder        : '{SortOrder:id}',
     },
 }
+
+// Extracts sorting spec for DataTable from sortOrder
+// @sig toSorting :: TableLayout? -> [{ id: String, desc: Boolean }]
+TableLayout.toSorting = layout => layout?.sortOrder?.map(s => ({ id: s.id, desc: s.isDescending })) ?? []
