@@ -41,7 +41,10 @@
             "eslint --fix",
             "prettier --write --ignore-unknown"
         ],
-        "**/!(*.stories).{mjs,js,jsx}": [
+        "modules/{quicken-web-app,curb-map}/**/!(*.stories).{mjs,js,jsx}": [
+            "node modules/cli-style-validator/src/cli.js --strict-react"
+        ],
+        "modules/!(quicken-web-app|curb-map)/**/!(*.stories).{mjs,js,jsx}": [
             "node modules/cli-style-validator/src/cli.js"
         ]
     },
