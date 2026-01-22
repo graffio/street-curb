@@ -807,3 +807,14 @@ This document summarizes the specifications that were previously archived in `sp
 - Fixed loading overlay visibility (dismiss dialog before load, try/finally for status clear)
 - Exemptions documented: storedHandle (not serializable), useMemo for tree building (perf)
 - Deferred: Channel elimination (layoutChannel → props to MainLayout)
+
+## [quicken-web-app] Null Object Pattern for State (2026-01-22)
+**Purpose:** Eliminate defensive `?.` and `??` patterns by ensuring state fields are always valid structures
+
+- Changed `createDefaultFilter` to set `asOfDate: T.toTodayIso()` instead of null
+- Removed `?? todayIso()` fallbacks from UI.asOfDate and collectHoldingsAsOf selectors
+- Added `defaultFilterCache` Map for reference stability when filter doesn't exist yet
+- Consolidated 8 selector files (~603 lines) into single `selectors.js`
+- Entity lookups (accountName, securityName) retain defensive patterns (async data loading)
+- Added COMPLEXITY-TODO exemptions (expires 2026-01-28) for cohesion/export/sig issues
+- Deferred: Filter logic consolidation to financial-computations/query module (steps 26-32)
