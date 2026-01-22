@@ -2,28 +2,16 @@
 // ABOUTME: Displays account transactions with sorting, column reordering, and running balances
 
 import { DataTable, Flex } from '@graffio/design-system'
-import { applySort } from '@graffio/financial-computations/query'
-import { LookupTable } from '@graffio/functional'
-import { KeymapModule } from '@graffio/keymap'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors/index.js'
-import { Filters } from '../store/selectors/transactions/filters.js'
 import { Action } from '../types/action.js'
-import {
-    applyOrderChange,
-    applySizingChange,
-    applySortingChange,
-    initializeTableLayout,
-    toDataTableProps,
-} from '../utils/table-layout.js'
+import { applyOrderChange, applySizingChange, applySortingChange } from '../utils/table-layout.js'
 
 const { bankColumns } = TransactionColumns
-
-const { Intent, Keymap } = KeymapModule
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
@@ -54,26 +42,14 @@ const T = {
     },
 }
 
-const F = {
-    // Creates a keymap for the transaction register with j/k navigation
-    // @sig createRegisterKeymap :: (String, String) -> Keymap
-    createRegisterKeymap: (viewId, name) => {
-        const intents = LookupTable(
-            [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
-            Intent,
-            'description',
-        )
-        return Keymap(viewId, name, 10, false, activeId => activeId === viewId, intents)
-    },
-}
-
 const E = {
     /* Dispatch highlight change, resolving ID to index based on search mode
-     * @sig dispatchHighlightChange :: (Number, [String], [Row], String) -> String -> void
+     * Uses getData() to fetch current data at call time (avoids stale closures)
+     * @sig dispatchHighlightChange :: (Number, [String], () -> [Row], String) -> String -> void
      */
-    dispatchHighlightChange: (matchCount, searchMatches, data, viewId) => newId => {
+    dispatchHighlightChange: (matchCount, searchMatches, getData, viewId) => newId => {
         const inSearchMode = matchCount > 0
-        const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(data, newId)
+        const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(getData(), newId)
         if (idx < 0) return
         post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
@@ -85,12 +61,9 @@ const E = {
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
     },
 
-    // Registers keymap on mount and unregisters on unmount
-    // @sig keymapEffect :: (Keymap, String) -> () -> void
-    keymapEffect: (keymap, viewId) => () => {
-        post(Action.RegisterKeymap(keymap))
-        return () => post(Action.UnregisterKeymap(viewId))
-    },
+    // Ensures table layout exists in Redux (idempotent, only creates if missing)
+    // @sig ensureTableLayoutEffect :: (String, [Column]) -> () -> void
+    ensureTableLayoutEffect: (tableLayoutId, columns) => () => post(Action.EnsureTableLayout(tableLayoutId, columns)),
 }
 
 /*
@@ -109,55 +82,35 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     const tableLayoutId = T.toTableLayoutId(accountId)
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Hooks (selectors and keymap registration)
+    // Hooks (selectors)
     // -----------------------------------------------------------------------------------------------------------------
     const accountName = useSelector(state => S.accountName(state, accountId))
-    const registerKeymap = useMemo(() => F.createRegisterKeymap(viewId, accountName), [viewId, accountName])
 
-    useEffect(E.keymapEffect(registerKeymap, viewId), [registerKeymap, viewId])
+    useEffect(E.ensureTableLayoutEffect(tableLayoutId, bankColumns), [tableLayoutId])
 
     const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
-    const currentSearchIndex = useSelector(state => S.UI.currentSearchIndex(state, viewId))
-    const currentRowIndex = useSelector(state => S.UI.currentRowIndex(state, viewId))
     const allTableLayouts = useSelector(S.tableLayouts)
-    const filteredTransactions = useSelector(state => S.Transactions.filtered(state, viewId))
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId))
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Memos (data transformations)
+    // Selectors (derived state)
     // -----------------------------------------------------------------------------------------------------------------
-    const accountTransactions = useMemo(
-        () => Filters.filterByAccount(filteredTransactions, accountId),
-        [filteredTransactions, accountId],
+    const tableLayout = allTableLayouts?.[tableLayoutId]
+    const { sorting, columnSizing, columnOrder } = useSelector(state => S.tableLayoutProps(state, tableLayoutId))
+    const data = useSelector(state =>
+        S.Transactions.sortedForBankDisplay(state, viewId, accountId, tableLayoutId, bankColumns),
     )
 
-    const tableLayout = useMemo(
-        () => allTableLayouts?.[tableLayoutId] || initializeTableLayout(tableLayoutId, bankColumns),
-        [allTableLayouts, tableLayoutId],
+    // Ref to access current data in callbacks without adding to deps (prevents keymap recreation)
+    const dataRef = useRef(data)
+    dataRef.current = data
+
+    const highlightedId = useSelector(state =>
+        S.Transactions.highlightedIdForBank(state, viewId, accountId, tableLayoutId, bankColumns),
     )
-
-    const { sorting, columnSizing, columnOrder } = useMemo(() => toDataTableProps(tableLayout), [tableLayout])
-
-    // Sort transactions for display, wrap with stored running balance
-    const sortedTransactions = useMemo(
-        () => applySort(sorting, accountTransactions, bankColumns),
-        [accountTransactions, sorting],
-    )
-
-    const data = useMemo(
-        () => sortedTransactions.map(txn => ({ transaction: txn, runningBalance: txn.runningBalance })),
-        [sortedTransactions],
-    )
-
-    // With manual sorting, search matches are already in display order (indices into sortedTransactions)
     const matchCount = searchMatches.length
-
-    const highlightedId = useMemo(
-        () => (matchCount > 0 ? searchMatches[currentSearchIndex] : sortedTransactions[currentRowIndex]?.id),
-        [matchCount, searchMatches, currentSearchIndex, sortedTransactions, currentRowIndex],
-    )
 
     // -----------------------------------------------------------------------------------------------------------------
     // Callbacks
@@ -177,10 +130,12 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
         [tableLayout],
     )
 
-    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, data, viewId), [
+    // Uses getData() to access current data without adding to deps (prevents keymap registration loop)
+    const getData = useCallback(() => dataRef.current, [])
+    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, getData, viewId), [
         matchCount,
         searchMatches,
-        data,
+        getData,
         viewId,
     ])
 
@@ -203,6 +158,9 @@ const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100
     )
 
     useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])
+
+    // Wait for EnsureTableLayout to populate Redux on first render
+    if (!tableLayout) return null
 
     return (
         <Flex direction="column" style={pageContainerStyle}>

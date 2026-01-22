@@ -104,8 +104,7 @@ const F = {
             'description',
         )
 
-        const activeWhen = activeId => activeId === activeViewId
-        return Keymap(keymapId, keymapName, priority, false, activeWhen, intents)
+        return Keymap(keymapId, keymapName, priority, false, activeViewId, intents)
     },
 }
 

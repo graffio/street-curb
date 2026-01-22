@@ -163,4 +163,7 @@ EnrichedAccount.fromAccount = (account, holdings, transactions) => {
     return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
 }
 
+EnrichedAccount.enrichAll = (accounts, holdings, transactions) =>
+    accounts.map(account => EnrichedAccount.fromAccount(account, holdings, transactions))
+
 export { EnrichedAccount }

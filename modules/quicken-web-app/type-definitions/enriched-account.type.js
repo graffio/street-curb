@@ -44,3 +44,8 @@ EnrichedAccount.fromAccount = (account, holdings, transactions) => {
     }
     return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
 }
+
+// Enriches all accounts with computed balances
+// @sig enrichAll :: (LookupTable<Account>, [Holding], [Transaction]) -> [EnrichedAccount]
+EnrichedAccount.enrichAll = (accounts, holdings, transactions) =>
+    accounts.map(account => EnrichedAccount.fromAccount(account, holdings, transactions))
