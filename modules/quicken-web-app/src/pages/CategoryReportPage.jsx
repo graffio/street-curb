@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
 import { FilterChipRow, TransactionSubTable } from '../components/index.js'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 

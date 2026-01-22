@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 

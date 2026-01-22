@@ -4,7 +4,7 @@
 import { Flex, Text } from '@graffio/design-system'
 import React from 'react'
 import { useSelector } from 'react-redux'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { formatDateRange } from '../utils/formatters.js'
 import { FilterChips } from './FilterChips.jsx'
 

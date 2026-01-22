@@ -15,7 +15,7 @@ const createDefaultFilter = viewId =>
     TransactionFilter(
         viewId,
         T.toTodayIso(), // asOfDate
-        null, // dateRange
+        { start: null, end: null }, // dateRange
         'lastTwelveMonths', // dateRangeKey
         '', // filterQuery
         '', // searchQuery

@@ -5,7 +5,7 @@ import { Box, Flex } from '@graffio/design-system'
 import React, { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { TabGroup } from './TabGroup.jsx'
 
@@ -37,12 +37,9 @@ const E = {
         const { startX, containerWidth, startLeftWidth, startRightWidth, totalWidth, leftGroupId, rightGroupId } = drag
         const deltaX = clientX - startX
         const deltaPercent = (deltaX / containerWidth) * 100
-        const { left, right } = T.toClampedWidths(
-            startLeftWidth + deltaPercent,
-            startRightWidth - deltaPercent,
-            totalWidth,
-            MIN_GROUP_WIDTH,
-        )
+        const newLeft = startLeftWidth + deltaPercent
+        const newRight = startRightWidth - deltaPercent
+        const { left, right } = T.toClampedWidths(newLeft, newRight, totalWidth, MIN_GROUP_WIDTH)
         post(Action.SetTabGroupWidth(leftGroupId, left))
         post(Action.SetTabGroupWidth(rightGroupId, right))
     },

@@ -35,7 +35,7 @@ const applyFilter = (filter, transactions, categories, securities) => {
         .filter(Transaction.matchesText(filterQuery, categories, securities))
         .filter(Transaction.isInDateRange(dateRange))
         .filter(Transaction.matchesCategories(selectedCategories, categories))
-        .filter(t => !selectedAccounts?.length || selectedAccounts.includes(t.accountId))
+        .filter(t => !selectedAccounts.length || selectedAccounts.includes(t.accountId))
 }
 
 // Applies investment-specific filters on top of base filtering, optionally scoped to one account

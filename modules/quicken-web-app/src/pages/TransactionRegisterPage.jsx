@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux'
 import { TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { applyOrderChange, applySizingChange, applySortingChange } from '../utils/table-layout.js'
 

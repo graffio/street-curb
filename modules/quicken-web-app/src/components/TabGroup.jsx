@@ -9,7 +9,7 @@ import { CategoryReportPage } from '../pages/CategoryReportPage.jsx'
 import { InvestmentRegisterPage } from '../pages/InvestmentRegisterPage.jsx'
 import { InvestmentReportPage } from '../pages/InvestmentReportPage.jsx'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
-import * as S from '../store/selectors/index.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
 const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
