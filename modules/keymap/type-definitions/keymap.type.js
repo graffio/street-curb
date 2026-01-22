@@ -11,15 +11,15 @@ export const Keymap = {
         name: 'String', // Display name for UI (e.g., 'Register', 'Global')
         priority: 'Number', // Higher = checked first (100=modal, 50=panel, 10=view, 0=global)
         blocking: 'Boolean?', // If true, unhandled keys are swallowed
-        activeWhen: 'Any?', // Optional predicate: (activeViewId) => boolean
+        activeForViewId: 'String?', // If set, keymap only active when this viewId is current
         intents: '{Intent:description}', // LookupTable of intents keyed by description
     },
 }
 
-// Checks if a keymap should respond based on its activeWhen predicate
-// Returns true if no predicate exists or if the predicate returns true for the given view
+// Checks if a keymap should respond based on activeForViewId
+// Returns true if no viewId restriction or if activeViewId matches
 // @sig Keymap.isActive :: (Keymap, String?) -> Boolean
-Keymap.isActive = (keymap, activeViewId) => !keymap.activeWhen || keymap.activeWhen(activeViewId)
+Keymap.isActive = (keymap, activeViewId) => !keymap.activeForViewId || keymap.activeForViewId === activeViewId
 
 // Searches the keymap's intents for one that matches the given key
 // @sig Keymap.findMatchingIntent :: (Keymap, String) -> Intent | undefined
