@@ -2,54 +2,94 @@
 // ABOUTME: Manages tab groups, views, and layout state
 
 import { LookupTable, updateLookupTablePath } from '@graffio/functional'
-import { TabGroup, TabLayout, View } from '../../types/index.js'
+import { KeymapModule } from '@graffio/keymap'
+import { TabGroup, TabLayout as TabLayoutType, View } from '../../types/index.js'
+import { TransactionFilters } from './transaction-filters.js'
 
-// Creates a copy of a tab group with a new width
-// @sig resizeGroupToWidth :: (TabGroup, Number) -> TabGroup
-const resizeGroupToWidth = (group, width) => {
-    const { activeViewId, id, views } = group
-    return TabGroup(id, views, activeViewId, width)
+const { Intent, Keymap } = KeymapModule
+
+const T = {
+    // Finds the next active view ID after removing a view
+    // @sig toNextActiveViewId :: (TabGroup, String, LookupTable<View>) -> String|null
+    toNextActiveViewId: (group, removedViewId, remainingViews) =>
+        group.activeViewId === removedViewId ? (remainingViews[0]?.id ?? null) : group.activeViewId,
+
+    // Removes a group and evenly resizes remaining groups
+    // @sig toLayoutWithoutGroup :: (TabLayout, String) -> TabLayout
+    toLayoutWithoutGroup: (tabLayout, groupIdToRemove) => {
+        const { id, tabGroups, activeTabGroupId, nextTabGroupId } = tabLayout
+        const remainingGroups = tabGroups.filter(g => g.id !== groupIdToRemove)
+        const evenWidth = 100 / remainingGroups.length
+        const resizedGroups = LookupTable(
+            remainingGroups.map(g => F.createResizedGroup(g, evenWidth)),
+            TabGroup,
+            'id',
+        )
+        const newActiveId = activeTabGroupId === groupIdToRemove ? resizedGroups[0].id : activeTabGroupId
+        return TabLayoutType(id, resizedGroups, newActiveId, nextTabGroupId)
+    },
 }
 
-// Removes the specified group and resizes remaining groups evenly
-// @sig removeGroupAndResize :: (TabLayout, String) -> TabLayout
-const removeGroupAndResize = (tabLayout, groupIdToRemove) => {
-    const { id, tabGroups, activeTabGroupId, nextTabGroupId } = tabLayout
-    const remainingGroups = tabGroups.filter(g => g.id !== groupIdToRemove)
-    const evenWidth = 100 / remainingGroups.length
-    const resizedGroups = LookupTable(
-        remainingGroups.map(g => resizeGroupToWidth(g, evenWidth)),
-        TabGroup,
-        'id',
-    )
-    const newActiveId = activeTabGroupId === groupIdToRemove ? resizedGroups[0].id : activeTabGroupId
-    return TabLayout(id, resizedGroups, newActiveId, nextTabGroupId)
-}
+const F = {
+    // Creates a copy of a tab group with a new width
+    // @sig createResizedGroup :: (TabGroup, Number) -> TabGroup
+    createResizedGroup: (group, width) => {
+        const { activeViewId, id, views } = group
+        return TabGroup(id, views, activeViewId, width)
+    },
 
-// Returns the next active view after removing a view; falls back to first remaining view
-// @sig nextActiveViewId :: (TabGroup, String, LookupTable<View>) -> String|null
-const nextActiveViewId = (group, removedViewId, remainingViews) =>
-    group.activeViewId === removedViewId ? (remainingViews[0]?.id ?? null) : group.activeViewId
+    // Creates a keymap for register views with j/k navigation
+    // @sig createRegisterKeymap :: (String, String) -> Keymap
+    createRegisterKeymap: (viewId, title) => {
+        const intents = LookupTable(
+            [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
+            Intent,
+            'description',
+        )
+        return Keymap(viewId, title, 10, false, viewId, intents)
+    },
+}
 
 const MAX_GROUPS = 4
 
 // Opens a view in a tab group; activates existing view if already open
 // @sig openView :: (State, Action.OpenView) -> State
 const openView = (state, action) => {
+    // Looks up which tab group contains a view by ID
     // @sig findGroupContainingView :: (TabLayout, String) -> TabGroup|undefined
     const findGroupContainingView = (layout, viewId) => layout.tabGroups.find(g => g.views[viewId])
 
+    // Updates layout to mark a view as active in its group
     // @sig activateView :: (TabLayout, String, String) -> TabLayout
     const activateView = (layout, groupId, viewId) => {
         const updated = updateLookupTablePath(layout, ['tabGroups', groupId, 'activeViewId'], viewId)
         return updateLookupTablePath(updated, ['activeTabGroupId'], groupId)
     }
 
+    // Registers a keymap for Register views if not already registered
+    // @sig maybeAddKeymap :: (State, View) -> State
+    const maybeAddKeymap = (newState, v) => {
+        const { tag, id, title } = v
+        // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+        if (tag !== 'Register' || state.keymaps.get(id)) return newState
+        return { ...newState, keymaps: newState.keymaps.addItemWithId(F.createRegisterKeymap(id, title)) }
+    }
+
+    // Creates a transaction filter for the view if not already present
+    // @sig maybeAddFilter :: (State, View) -> State
+    const maybeAddFilter = (newState, v) => {
+        // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+        if (state.transactionFilters.get(v.id)) return newState
+        const filter = TransactionFilters.createDefaultFilter(v.id)
+        return { ...newState, transactionFilters: newState.transactionFilters.addItemWithId(filter) }
+    }
+
     const activateExisting = group => ({ ...state, tabLayout: activateView(tabLayout, group.id, view.id) })
 
     const addToGroup = targetId => {
         const layout = updateLookupTablePath(tabLayout, ['tabGroups', targetId, 'views'], vs => vs.addItemWithId(view))
-        return { ...state, tabLayout: activateView(layout, targetId, view.id) }
+        const withLayout = { ...state, tabLayout: activateView(layout, targetId, view.id) }
+        return maybeAddFilter(maybeAddKeymap(withLayout, view), view)
     }
 
     const { tabLayout } = state
@@ -67,13 +107,13 @@ const closeView = (state, action) => {
     const remainingViews = group.views.removeItemWithId(viewId)
     const isEmptyAndRemovable = remainingViews.length === 0 && tabLayout.tabGroups.length > 1
 
-    if (isEmptyAndRemovable) return { ...state, tabLayout: removeGroupAndResize(tabLayout, groupId) }
+    if (isEmptyAndRemovable) return { ...state, tabLayout: T.toLayoutWithoutGroup(tabLayout, groupId) }
 
     let layout = updateLookupTablePath(tabLayout, ['tabGroups', groupId, 'views'], () => remainingViews)
     layout = updateLookupTablePath(
         layout,
         ['tabGroups', groupId, 'activeViewId'],
-        nextActiveViewId(group, viewId, remainingViews),
+        T.toNextActiveViewId(group, viewId, remainingViews),
     )
     return { ...state, tabLayout: layout }
 }
@@ -81,6 +121,7 @@ const closeView = (state, action) => {
 // Moves a view from one group to another; removes empty source group
 // @sig moveView :: (State, Action.MoveView) -> State
 const moveView = (state, action) => {
+    // Reorders views to place a view at a specific index
     // @sig moveViewToIndex :: (LookupTable<View>, String, Number) -> LookupTable<View>
     const moveViewToIndex = (viewList, targetViewId, targetIndex) => {
         const currentIndex = viewList.findIndex(v => v.id === targetViewId)
@@ -98,7 +139,7 @@ const moveView = (state, action) => {
     const view = fromViews[viewId]
 
     const remainingViews = fromViews.removeItemWithId(viewId)
-    const activeId = nextActiveViewId(fromGroup, viewId, remainingViews)
+    const activeId = T.toNextActiveViewId(fromGroup, viewId, remainingViews)
     const updatedFrom = TabGroup(fromId, remainingViews, activeId, fromWidth)
 
     let views = toViews.addItemWithId(view)
@@ -106,10 +147,10 @@ const moveView = (state, action) => {
     const updatedTo = TabGroup(toId, views, view.id, toWidth)
 
     const groups = tabGroups.addItemWithId(updatedFrom).addItemWithId(updatedTo)
-    let newLayout = TabLayout(id, groups, activeTabGroupId, nextTabGroupId)
+    let newLayout = TabLayoutType(id, groups, activeTabGroupId, nextTabGroupId)
 
     const sourceIsEmpty = updatedFrom.views.length === 0 && newLayout.tabGroups.length > 1
-    if (sourceIsEmpty) newLayout = removeGroupAndResize(newLayout, fromGroupId)
+    if (sourceIsEmpty) newLayout = T.toLayoutWithoutGroup(newLayout, fromGroupId)
 
     return { ...state, tabLayout: newLayout }
 }
@@ -123,10 +164,10 @@ const createTabGroup = state => {
 
     const newGroupId = `tg_${nextTabGroupId}`
     const evenWidth = 100 / (tabGroups.length + 1)
-    const resizedGroups = tabGroups.map(g => resizeGroupToWidth(g, evenWidth))
+    const resizedGroups = tabGroups.map(g => F.createResizedGroup(g, evenWidth))
     const newGroup = TabGroup(newGroupId, LookupTable([], View, 'id'), null, evenWidth)
     const updatedTabGroups = LookupTable([...resizedGroups, newGroup], TabGroup, 'id')
-    const updatedLayout = TabLayout(id, updatedTabGroups, newGroupId, nextTabGroupId + 1)
+    const updatedLayout = TabLayoutType(id, updatedTabGroups, newGroupId, nextTabGroupId + 1)
 
     return { ...state, tabLayout: updatedLayout }
 }
@@ -141,25 +182,21 @@ const closeTabGroup = (state, action) => {
     const { groupId } = action
     const closingGroup = tabGroups[groupId]
     const remainingGroups = tabGroups.filter(g => g.id !== groupId)
+    const targetGroup = remainingGroups[0]
 
-    // Transfer views from closing group to first remaining group
-    const {
-        id: targetId,
-        views: targetViews,
-        activeViewId: targetActiveViewId,
-        width: targetWidth,
-    } = remainingGroups[0]
+    // prettier-ignore
+    const { id: targetId, views: targetViews, activeViewId: targetActiveViewId, width: targetWidth } = targetGroup
     const mergedViews = closingGroup.views.reduce((vs, v) => vs.addItemWithId(v), targetViews)
     const mergedTarget = TabGroup(targetId, mergedViews, targetActiveViewId, targetWidth)
 
     const evenWidth = 100 / remainingGroups.length
     const resized = remainingGroups.map(g =>
-        g.id === mergedTarget.id ? resizeGroupToWidth(mergedTarget, evenWidth) : resizeGroupToWidth(g, evenWidth),
+        g.id === mergedTarget.id ? F.createResizedGroup(mergedTarget, evenWidth) : F.createResizedGroup(g, evenWidth),
     )
     const resizedGroups = LookupTable(resized, TabGroup, 'id')
 
     const newActiveId = activeTabGroupId === groupId ? resizedGroups[0].id : activeTabGroupId
-    return { ...state, tabLayout: TabLayout(id, resizedGroups, newActiveId, nextTabGroupId) }
+    return { ...state, tabLayout: TabLayoutType(id, resizedGroups, newActiveId, nextTabGroupId) }
 }
 
 // Sets the active view within a specific tab group
@@ -186,7 +223,7 @@ const setTabGroupWidth = (state, action) => ({
     tabLayout: updateLookupTablePath(state.tabLayout, ['tabGroups', action.groupId, 'width'], action.width),
 })
 
-export {
+const TabLayout = {
     closeTabGroup,
     closeView,
     createTabGroup,
@@ -196,3 +233,5 @@ export {
     setActiveView,
     setTabGroupWidth,
 }
+
+export { TabLayout }
