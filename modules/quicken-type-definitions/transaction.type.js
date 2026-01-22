@@ -1,3 +1,5 @@
+import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+
 export const Transaction = {
     name: 'Transaction',
     kind: 'taggedSum',
@@ -42,4 +44,149 @@ export const Transaction = {
             securityId: 'String?', // sec_<hash> or null
         },
     },
+}
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+
+// Resolves a transaction's categoryId to category name
+// @sig toCategoryName :: (Transaction, LookupTable<Category>) -> String?
+Transaction.toCategoryName = (txn, categories) => {
+    if (!txn.categoryId || !categories) return null
+    const cat = categories.get(txn.categoryId)
+    return cat ? cat.name : null
+}
+
+// Resolves a transaction's securityId to symbol or name
+// @sig toSecurityName :: (Transaction, LookupTable<Security>) -> String?
+Transaction.toSecurityName = (txn, securities) => {
+    if (!txn.securityId || !securities) return null
+    const security = securities.get(txn.securityId)
+    return security ? security.symbol || security.name : null
+}
+
+// Wraps transaction for DataTable row format (includes runningBalance)
+// @sig toRegisterRow :: Transaction -> { transaction: Transaction, runningBalance: Number? }
+Transaction.toRegisterRow = txn => ({ transaction: txn, runningBalance: txn.runningBalance })
+
+// Enriches transaction with resolved category and account names for display
+// @sig toEnriched :: (Transaction, LookupTable<Category>, LookupTable<Account>) -> EnrichedTransaction
+Transaction.toEnriched = (txn, categories, accounts) => ({
+    ...txn,
+    categoryName: categories?.get(txn.categoryId)?.name || 'Uncategorized',
+    accountName: accounts?.get(txn.accountId)?.name || '',
+})
+
+// -----------------------------------------------------------------------------
+// Predicates (curried for use with filter)
+// -----------------------------------------------------------------------------
+
+// Returns predicate for search highlighting (checks payee, memo, address, number, amount, category)
+// @sig matchesSearch :: (String, LookupTable<Category>?) -> Transaction -> Boolean
+Transaction.matchesSearch = (query, categories) => txn => {
+    if (!query.trim()) return false
+    const matchesFields = anyFieldContains(['payee', 'memo', 'address', 'number'])(query)
+    const matchesText = containsIgnoreCase(query)
+    if (matchesFields(txn)) return true
+    if (matchesText(String(txn.amount))) return true
+    if (matchesText(Transaction.toCategoryName(txn, categories))) return true
+    return false
+}
+
+// Returns predicate for text filtering (checks description, memo, payee, action, category, security)
+// @sig matchesText :: (String, LookupTable<Category>?, LookupTable<Security>?) -> Transaction -> Boolean
+Transaction.matchesText = (query, categories, securities) => txn => {
+    if (!query.trim()) return true
+    const matchesFields = anyFieldContains(['description', 'memo', 'payee', 'investmentAction'])(query)
+    const matchesText = containsIgnoreCase(query)
+    if (matchesFields(txn)) return true
+    if (matchesText(Transaction.toCategoryName(txn, categories))) return true
+    if (matchesText(Transaction.toSecurityName(txn, securities))) return true
+    return false
+}
+
+// Returns predicate for date range filtering (ISO string comparison)
+// @sig isInDateRange :: DateRange -> Transaction -> Boolean
+Transaction.isInDateRange = dateRange => txn => {
+    const { start, end } = dateRange || {}
+    if (!start && !end) return true
+    const startStr = start?.toISOString().slice(0, 10)
+    const endStr = end?.toISOString().slice(0, 10)
+    if (startStr && txn.date < startStr) return false
+    if (endStr && txn.date > endStr) return false
+    return true
+}
+
+// Returns predicate for category filtering (supports hierarchy with colon separator)
+// @sig matchesCategories :: ([String], LookupTable<Category>) -> Transaction -> Boolean
+Transaction.matchesCategories = (selected, categories) => txn => {
+    if (!selected.length) return true
+    const categoryName = Transaction.toCategoryName(txn, categories)
+    if (!categoryName) return false
+    return selected.some(s => categoryName === s || categoryName.startsWith(s + ':'))
+}
+
+// Returns predicate for single account filtering
+// @sig isInAccount :: String -> Transaction -> Boolean
+Transaction.isInAccount = accountId => txn => txn.accountId === accountId
+
+// Returns predicate for security filtering (investment transactions)
+// @sig matchesSecurities :: [String] -> Transaction -> Boolean
+Transaction.matchesSecurities = securityIds => txn => !securityIds?.length || securityIds.includes(txn.securityId)
+
+// Returns predicate for investment action filtering
+// @sig matchesInvestmentActions :: [String] -> Transaction -> Boolean
+Transaction.matchesInvestmentActions = actions => txn => !actions?.length || actions.includes(txn.investmentAction)
+
+// -----------------------------------------------------------------------------
+// Filter Composition
+// -----------------------------------------------------------------------------
+
+// Applies all standard filters: text -> date -> category -> account
+// @sig applyFilters :: (FilterConfig) -> [Transaction]
+Transaction.applyFilters = ({ transactions, query, dateRange, categoryIds, accountIds, categories, securities }) =>
+    transactions
+        .filter(Transaction.matchesText(query, categories, securities))
+        .filter(Transaction.isInDateRange(dateRange))
+        .filter(Transaction.matchesCategories(categoryIds, categories))
+        .filter(t => !accountIds?.length || accountIds.includes(t.accountId))
+
+// Applies investment-specific filters: securities and actions
+// @sig applyInvestmentFilters :: ([Transaction], [String], [String]) -> [Transaction]
+Transaction.applyInvestmentFilters = (transactions, securityIds, actionIds) =>
+    transactions
+        .filter(Transaction.matchesSecurities(securityIds))
+        .filter(Transaction.matchesInvestmentActions(actionIds))
+
+// -----------------------------------------------------------------------------
+// Batch Operations
+// -----------------------------------------------------------------------------
+
+// Collects IDs of transactions matching search query (for highlighting)
+// @sig collectSearchMatchIds :: ([Transaction], String, LookupTable<Category>) -> [String]
+Transaction.collectSearchMatchIds = (transactions, query, categories) =>
+    transactions.filter(Transaction.matchesSearch(query, categories)).map(t => t.id)
+
+// Enriches all transactions with category and account names
+// @sig enrichAll :: ([Transaction], LookupTable<Category>, LookupTable<Account>) -> [EnrichedTransaction]
+Transaction.enrichAll = (transactions, categories, accounts) =>
+    transactions.map(txn => Transaction.toEnriched(txn, categories, accounts))
+
+// Wraps all transactions for DataTable row format
+// @sig toRegisterRows :: [Transaction] -> [RegisterRow]
+Transaction.toRegisterRows = transactions => transactions.map(Transaction.toRegisterRow)
+
+// -----------------------------------------------------------------------------
+// Aggregations
+// -----------------------------------------------------------------------------
+
+// Finds the earliest transaction date
+// @sig findEarliest :: [Transaction] -> Date?
+Transaction.findEarliest = transactions => {
+    if (!transactions || transactions.length === 0) return null
+    return transactions.reduce((earliest, txn) => {
+        const d = new Date(txn.date)
+        return d < earliest ? d : earliest
+    }, new Date(transactions[0].date))
 }
