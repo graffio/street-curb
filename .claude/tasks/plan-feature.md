@@ -7,7 +7,7 @@ Use after brainstorming to create a task spec.
 1. Identify which task templates in `.claude/tasks/` apply
 2. **Read each template** and incorporate its steps into the plan
 3. Write `current-task.json` (schema below)
-4. Keep plan file (e.g., `~/.claude/plans/*.md`) for reference during implementation
+4. Keep plan file (e.g., `specifications/*.md`) for reference during implementation
 
 ## Output Schema
 

@@ -818,3 +818,19 @@ This document summarizes the specifications that were previously archived in `sp
 - Entity lookups (accountName, securityName) retain defensive patterns (async data loading)
 - Added COMPLEXITY-TODO exemptions (expires 2026-01-28) for cohesion/export/sig issues
 - Deferred: Filter logic consolidation to financial-computations/query module (steps 26-32)
+
+## [quicken-web-app] Selectors Simplification (2026-01-23)
+**Purpose:** Make selectors.js pure routing by moving logic to types and consolidating financial-computations
+
+- Moved filter logic to TransactionFilter type (`.apply()`, `.applyInvestment()` methods)
+- Deleted unused filter predicates (filter.js removed entirely)
+- Moved applySort to @graffio/functional
+- Consolidated financial-computations/ to single holdings.js
+- Removed defensive guards (fail-fast principle): TableLayout.toSorting, entity lookups throw on missing
+- Created placeholder-creator.js in cli-qif-to-sqlite for missing category/security references
+- Removed dead code: collectTree, toTransactionTree, Holdings.toHoldingsTree, accountType, Filters namespace
+- Consolidated Prefs namespace into UI (sortMode, collapsedSections)
+- Deleted unused UI.transactionFilter, Keymaps.forView
+- Renamed memoized helper pattern: `collectX` → `_x` (underscore indicates unmemoized implementation)
+- Line count: 348 → 288 lines (17% reduction)
+- Deferred: Splitting TransactionFilter into FilterCriteria + ViewUIState types
