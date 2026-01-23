@@ -116,6 +116,32 @@ t.test('Given a JSX file with collection methods', t => {
         t.end()
     })
 
+    t.test('When .map() returns JSX (expression body)', t => {
+        const code = `const MyComponent = ({ items }) => {
+    return <ul>{items.map(i => <li key={i.id}>{i.name}</li>)}</ul>
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
+
+        const mapViolation = violations.find(v => v.message.includes('.map()'))
+        t.notOk(mapViolation, 'Then no collection method violation should be detected for JSX render')
+        t.end()
+    })
+
+    t.test('When .map() returns JSX (block body)', t => {
+        const code = `const MyComponent = ({ items }) => {
+    return <ul>{items.map(i => {
+        return <li key={i.id}>{i.name}</li>
+    })}</ul>
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
+
+        const mapViolation = violations.find(v => v.message.includes('.map()'))
+        t.notOk(mapViolation, 'Then no collection method violation should be detected for JSX render')
+        t.end()
+    })
+
     t.end()
 })
 
