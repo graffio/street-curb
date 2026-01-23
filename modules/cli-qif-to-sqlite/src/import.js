@@ -4,6 +4,7 @@
 import { CategoryResolver } from './category-resolver.js'
 import { ImportLots } from './import-lots.js'
 import { Matching } from './Matching.js'
+import { PlaceholderCreator } from './placeholder-creator.js'
 import { Signatures as SigT } from './signatures.js'
 import { StableIdentity } from './stable-identity.js'
 
@@ -209,6 +210,10 @@ const E = {
         T.toTimedResult(report, 'Computing running balances', () => E.updateRunningBalances(db))
 
         T.toTimedResult(report, 'Computing lots', () => ImportLots.importLots(db, T.toLotContext(db)))
+
+        T.toTimedResult(report, 'Creating placeholders for missing references', () =>
+            PlaceholderCreator.createPlaceholders(db, changeTracker),
+        )
 
         const orphanLookups = { accounts: accLookup, categories: catLookup, tags: tagLookup }
         const moreOrphanLookups = { securities: secLookup, transactions: txnLookup, prices: priceLookup }

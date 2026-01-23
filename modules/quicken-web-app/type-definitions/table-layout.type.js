@@ -1,3 +1,5 @@
+// ABOUTME: Type definition for TableLayout - column and sort state for tables
+// ABOUTME: Defines structure for columnDescriptors and sortOrder
 /** @module TableLayout */
 
 import { FieldTypes } from './field-types.js'
@@ -19,5 +21,5 @@ export const TableLayout = {
 }
 
 // Extracts sorting spec for DataTable from sortOrder
-// @sig toSorting :: TableLayout? -> [{ id: String, desc: Boolean }]
-TableLayout.toSorting = layout => layout?.sortOrder?.map(s => ({ id: s.id, desc: s.isDescending })) ?? []
+// @sig toSorting :: TableLayout -> [{ id: String, desc: Boolean }]
+TableLayout.toSorting = layout => layout.sortOrder.map(s => ({ id: s.id, desc: s.isDescending }))
