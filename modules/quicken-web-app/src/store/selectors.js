@@ -1,51 +1,31 @@
 // ABOUTME: All Redux selectors in one place
 // ABOUTME: Thin state accessors and memoized derived selectors
-// COMPLEXITY-TODO: sig-documentation — Trivial accessors don't need @sig (expires 2026-01-28)
-// COMPLEXITY-TODO: cohesion-structure — Domain namespaces (UI, Transactions) vs P/T/F/V/A/E (expires 2026-01-28)
-// COMPLEXITY-TODO: export-structure — Multiple namespace exports vs single object (expires 2026-01-28)
-// COMPLEXITY-TODO: react-redux-separation — Filter logic moving to financial-computations (expires 2026-01-28)
+// COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
+// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
+// COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
+// COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
 /* eslint-disable no-restricted-syntax -- selectors must access state directly */
 
+import {
+    applySort,
+    memoizeOnceWithIdenticalParams,
+    memoizeReduxState,
+    memoizeReduxStatePerKey,
+} from '@graffio/functional'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { memoizeOnceWithIdenticalParams, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
-import { applySort } from '@graffio/financial-computations/query'
-import { HoldingsAsOf } from '@graffio/financial-computations/investments'
 import { KeymapModule } from '@graffio/keymap'
-import { Category } from '../types/category.js'
-import { EnrichedAccount } from '../types/enriched-account.js'
-import { TableLayout } from '../types/table-layout.js'
-import { Transaction } from '../types/transaction.js'
+import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
 import { accountOrganization } from '../services/account-organization.js'
-import { TransactionFilters } from './reducers/transaction-filters.js'
-import { buildTransactionTree } from '../utils/category-tree.js'
+import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 import { toDataTableProps } from '../utils/table-layout.js'
+import { TransactionFilters } from './reducers/transaction-filters.js'
 
-const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsAsOf
-const { buildHoldingsTree } = HoldingsTree
+const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsModule
 const { Keymap } = KeymapModule
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
-
-// Applies all filter criteria to a transaction list
-const applyFilter = (filter, transactions, categories, securities) => {
-    const { dateRange, filterQuery, selectedAccounts, selectedCategories } = filter
-    return transactions
-        .filter(Transaction.matchesText(filterQuery, categories, securities))
-        .filter(Transaction.isInDateRange(dateRange))
-        .filter(Transaction.matchesCategories(selectedCategories, categories))
-        .filter(t => !selectedAccounts.length || selectedAccounts.includes(t.accountId))
-}
-
-// Applies investment-specific filters on top of base filtering, optionally scoped to one account
-const applyInvestmentFilter = (filter, transactions, categories, securities, accountId) => {
-    const { selectedInvestmentActions, selectedSecurities } = filter
-    return applyFilter(filter, transactions, categories, securities)
-        .filter(t => !accountId || t.accountId === accountId)
-        .filter(Transaction.matchesSecurities(selectedSecurities))
-        .filter(Transaction.matchesInvestmentActions(selectedInvestmentActions))
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Pure state accessors
@@ -71,11 +51,10 @@ const dropTargetGroupId = state => state.dropTargetGroupId
 // Entity lookups (state, id) -> value
 // ---------------------------------------------------------------------------------------------------------------------
 
-const accountName = (state, id) => accounts(state).get(id)?.name ?? ''
-const accountType = (state, id) => accounts(state).get(id)?.type ?? ''
-const securitySymbol = (state, id) => securities(state).get(id)?.symbol ?? id
-const securityName = (state, id) => securities(state).get(id)?.name ?? id
-const categoryName = (state, id) => categories(state).get(id)?.name ?? 'Uncategorized'
+const accountName = (state, id) => accounts(state).get(id).name
+const securitySymbol = (state, id) => securities(state).get(id).symbol
+const securityName = (state, id) => securities(state).get(id).name
+const categoryName = (state, id) => (id ? categories(state).get(id).name : 'Uncategorized')
 
 // ---------------------------------------------------------------------------------------------------------------------
 // UI state accessors (per-view filter state)
@@ -108,17 +87,12 @@ const UI = {
     selectedCategories       : (state, viewId) => filter(state, viewId).selectedCategories,
     selectedInvestmentActions: (state, viewId) => filter(state, viewId).selectedInvestmentActions,
     selectedSecurities       : (state, viewId) => filter(state, viewId).selectedSecurities,
-    treeExpansion            : (state, viewId) => filter(state, viewId).treeExpansion             ?? {},
-    columnSizing             : (state, viewId) => filter(state, viewId).columnSizing              ?? {},
-    columnOrder              : (state, viewId) => filter(state, viewId).columnOrder               ?? [],
-    transactionFilter        : filter,
+    treeExpansion            : (state, viewId) => filter(state, viewId).treeExpansion,
+    collapsedSections        : state => state.collapsedSections,
+    columnSizing             : (state, viewId) => filter(state, viewId).columnSizing,
+    columnOrder              : (state, viewId) => filter(state, viewId).columnOrder,
+    sortMode                 : state => state.accountListSortMode,
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Preferences
-// ---------------------------------------------------------------------------------------------------------------------
-
-const Prefs = { sortMode: state => state.accountListSortMode, collapsedSections: state => state.collapsedSections }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tab layout derived
@@ -130,7 +104,7 @@ const activeViewId = state => {
     return activeGroup?.activeViewId ?? null
 }
 
-const tableLayoutProps = memoizeOnceWithIdenticalParams((state, tableLayoutId) => {
+const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', (state, tableLayoutId) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
     return tableLayout ? toDataTableProps(tableLayout) : defaultTableLayoutProps
 })
@@ -156,15 +130,15 @@ const ACCOUNT_STATE_KEYS = [
 ]
 
 // Computes organized account sections from state
-// @sig collectOrganizedAccounts :: State -> LookupTable<AccountSection>
-const collectOrganizedAccounts = state => {
+// @sig _organizedAccounts :: State -> LookupTable<AccountSection>
+const _organizedAccounts = state => {
     const { accounts, transactions, accountListSortMode } = state
-    const holdings = Holdings.collectAsOf(state, ACCOUNT_LIST_VIEW_ID)
+    const holdings = Holdings.asOf(state, ACCOUNT_LIST_VIEW_ID)
     const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, holdings, transactions), EnrichedAccount, 'id')
     return accountOrganization.A.collectSections(enriched, accountListSortMode)
 }
 
-const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, collectOrganizedAccounts) }
+const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Holdings
@@ -174,12 +148,10 @@ const priceIndex = memoizeReduxState(['prices'], state => buildPriceIndex(state.
 const allocationIndex = memoizeReduxState(['lotAllocations'], state => buildAllocationIndex(state.lotAllocations))
 const transactionIndex = memoizeReduxState(['transactions'], state => buildTransactionIndex(state.transactions))
 
-const toHoldingsTree = memoizeOnceWithIdenticalParams((groupBy, holdings) => buildHoldingsTree(groupBy, holdings))
-
-const collectHoldingsAsOf = (state, viewId) => {
+const _holdingsAsOf = (state, viewId) => {
     const { asOfDate, filterQuery, selectedAccounts } = filter(state, viewId)
     const { accounts, lotAllocations, lots, prices, securities, transactions } = state
-    return HoldingsAsOf.computeHoldingsAsOf({
+    return HoldingsModule.computeHoldingsAsOf({
         lots,
         lotAllocations,
         prices,
@@ -198,13 +170,21 @@ const collectHoldingsAsOf = (state, viewId) => {
 const holdingsAsOf = memoizeReduxStatePerKey(
     ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
     'transactionFilters',
-    collectHoldingsAsOf,
+    _holdingsAsOf,
 )
 
-const Holdings = {
-    collectAsOf: holdingsAsOf,
-    collectTree: (state, viewId) => toHoldingsTree(UI.groupBy(state, viewId), holdingsAsOf(state, viewId)),
+const _holdingsTree = (state, viewId) => {
+    const groupBy = filter(state, viewId).groupBy || 'account'
+    return HoldingsTree.buildHoldingsTree(groupBy, holdingsAsOf(state, viewId))
 }
+
+const holdingsTree = memoizeReduxStatePerKey(
+    ['lots', 'lotAllocations', 'prices', 'accounts', 'securities', 'transactions'],
+    'transactionFilters',
+    _holdingsTree,
+)
+
+const Holdings = { asOf: holdingsAsOf, tree: holdingsTree }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Keymaps
@@ -212,145 +192,73 @@ const Holdings = {
 
 const toAvailableIntents = memoizeOnceWithIdenticalParams((maps, viewId) => Keymap.collectAvailable(maps, viewId))
 
-const Keymaps = {
-    availableIntents: state => toAvailableIntents(keymaps(state), activeViewId(state)),
-    forView: (state, viewId) => keymaps(state).get(viewId) ?? null,
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Transactions - helpers
-// ---------------------------------------------------------------------------------------------------------------------
-
-const toTransactionTree = memoizeOnceWithIdenticalParams((groupBy, transactions) =>
-    buildTransactionTree(groupBy, transactions),
-)
+const Keymaps = { availableIntents: state => toAvailableIntents(keymaps(state), activeViewId(state)) }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Transactions - memoized selectors
 // ---------------------------------------------------------------------------------------------------------------------
 
-const collectFiltered = (state, viewId) => {
+const _filtered = (state, viewId) => {
     const { categories, securities, transactions } = state
-    return applyFilter(filter(state, viewId), transactions, categories, securities)
+    return TransactionFilter.apply(filter(state, viewId), transactions, categories, securities)
 }
 
-const filtered = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities'],
-    'transactionFilters',
-    collectFiltered,
-)
+const _searchMatches = (state, viewId) =>
+    Transaction.collectSearchMatchIds(T.filtered(state, viewId), filter(state, viewId).searchQuery, state.categories)
 
-const collectSearchMatches = (state, viewId) =>
-    Transaction.collectSearchMatchIds(filtered(state, viewId), filter(state, viewId).searchQuery, state.categories)
+const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, viewId), state.categories, state.accounts)
 
-const searchMatches = memoizeReduxStatePerKey(
-    ['transactions', 'categories'],
-    'transactionFilters',
-    collectSearchMatches,
-)
+const _filteredForAccount = (state, viewId, accountId) =>
+    T.filtered(state, viewId).filter(Transaction.isInAccount(accountId))
 
-const collectEnriched = (state, viewId) =>
-    Transaction.enrichAll(filtered(state, viewId), state.categories, state.accounts)
-
-const enriched = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'accounts'],
-    'transactionFilters',
-    collectEnriched,
-)
-
-const collectTree = (state, viewId) => toTransactionTree(UI.groupBy(state, viewId), enriched(state, viewId))
-
-const filteredForAccount = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities'],
-    'transactionFilters',
-    (state, viewId, accountId) => filtered(state, viewId).filter(Transaction.isInAccount(accountId)),
-)
-
-const collectFilteredForInvestment = (state, viewId, accountId) => {
+const _filteredForInvestment = (state, viewId, accountId) => {
     const { categories, securities, transactions } = state
-    return applyInvestmentFilter(filter(state, viewId), transactions, categories, securities, accountId)
+    return TransactionFilter.applyInvestment(filter(state, viewId), transactions, categories, securities, accountId)
 }
 
-const filteredForInvestment = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities'],
-    'transactionFilters',
-    collectFilteredForInvestment,
-)
-
-const collectSortedForDisplay = (state, viewId, accountId, tableLayoutId, columns) =>
+const _sortedForDisplay = (state, viewId, accountId, tableLayoutId, columns) =>
     applySort(
         TableLayout.toSorting(state.tableLayouts.get(tableLayoutId)),
-        Transaction.toRegisterRows(filteredForInvestment(state, viewId, accountId)),
+        Transaction.toRegisterRows(T.filteredForInvestment(state, viewId, accountId)),
         columns,
     )
 
-const sortedForDisplay = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities', 'tableLayouts'],
-    'transactionFilters',
-    collectSortedForDisplay,
-)
+const _highlightedId = (state, viewId, accountId, tableLayoutId, columns) => {
+    const matches = T.searchMatches(state, viewId)
+    if (matches.length > 0) return matches[UI.currentSearchIndex(state, viewId)]
 
-const collectHighlightedId = (state, viewId, accountId, tableLayoutId, columns) => {
-    const matches = searchMatches(state, viewId)
-    if (matches.length > 0) return matches[UI.currentSearchIndex(state, viewId)] ?? null
-    const data = sortedForDisplay(state, viewId, accountId, tableLayoutId, columns)
-    return data[UI.currentRowIndex(state, viewId)]?.transaction?.id ?? null
+    const data = T.sortedForDisplay(state, viewId, accountId, tableLayoutId, columns)
+    return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
 }
 
-const highlightedId = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities', 'tableLayouts'],
-    'transactionFilters',
-    collectHighlightedId,
-)
-
-const collectSortedForBankDisplay = (state, viewId, accountId, tableLayoutId, columns) =>
+const _sortedForBankDisplay = (state, viewId, accountId, tableLayoutId, columns) =>
     applySort(
         TableLayout.toSorting(state.tableLayouts.get(tableLayoutId)),
-        Transaction.toRegisterRows(filteredForAccount(state, viewId, accountId)),
+        Transaction.toRegisterRows(T.filteredForAccount(state, viewId, accountId)),
         columns,
     )
 
-const sortedForBankDisplay = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities', 'tableLayouts'],
-    'transactionFilters',
-    collectSortedForBankDisplay,
-)
-
-const collectHighlightedIdForBank = (state, viewId, accountId, tableLayoutId, columns) => {
-    const matches = searchMatches(state, viewId)
-    if (matches.length > 0) return matches[UI.currentSearchIndex(state, viewId)] ?? null
-    const data = sortedForBankDisplay(state, viewId, accountId, tableLayoutId, columns)
-    return data[UI.currentRowIndex(state, viewId)]?.transaction?.id ?? null
+const _highlightedIdForBank = (state, viewId, accountId, tableLayoutId, columns) => {
+    const matches = T.searchMatches(state, viewId)
+    if (matches.length > 0) return matches[UI.currentSearchIndex(state, viewId)]
+    const data = T.sortedForBankDisplay(state, viewId, accountId, tableLayoutId, columns)
+    return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
 }
 
-const highlightedIdForBank = memoizeReduxStatePerKey(
-    ['transactions', 'categories', 'securities', 'tableLayouts'],
-    'transactionFilters',
-    collectHighlightedIdForBank,
-)
-
-const Transactions = {
-    collectTree,
-    enriched,
-    filtered,
-    filteredForAccount,
-    filteredForInvestment,
-    highlightedId,
-    highlightedIdForBank,
-    searchMatches,
-    sortedForBankDisplay,
-    sortedForDisplay,
+// prettier-ignore
+const T= {
+    enriched             : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'                  ], 'transactionFilters', _enriched),
+    filtered             : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filtered),
+    filteredForAccount   : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForAccount,),
+    filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForInvestment,),
+    highlightedId        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _highlightedId,),
+    highlightedIdForBank : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _highlightedIdForBank,),
+    searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories'                              ], 'transactionFilters', _searchMatches),
+    sortedForBankDisplay : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForBankDisplay,),
+    sortedForDisplay     : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForDisplay,),
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Transaction filters (thin wrappers for pages)
-// ---------------------------------------------------------------------------------------------------------------------
-
-const Filters = {
-    filterByAccount: (txns, accountId) => (!accountId ? txns : txns.filter(Transaction.isInAccount(accountId))),
-    filterBySecurities: (txns, securityIds) => txns.filter(Transaction.matchesSecurities(securityIds)),
-    filterByInvestmentActions: (txns, actions) => txns.filter(Transaction.matchesInvestmentActions(actions)),
-}
+const Transactions = T
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Exports
@@ -360,10 +268,8 @@ export {
     // Namespaces
     Accounts,
     Categories,
-    Filters,
     Holdings,
     Keymaps,
-    Prefs,
     Transactions,
     UI,
 
@@ -388,7 +294,6 @@ export {
 
     // Entity lookups
     accountName,
-    accountType,
     categoryName,
     securityName,
     securitySymbol,

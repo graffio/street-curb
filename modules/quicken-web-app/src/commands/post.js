@@ -55,8 +55,8 @@ const post = action => {
     // @sig persistAccountListPrefs :: () -> ()
     const persistAccountListPrefs = () => {
         const state = currentStore().getState()
-        const sortMode = S.Prefs.sortMode(state)['@@tagName']
-        const collapsedSections = [...S.Prefs.collapsedSections(state)]
+        const sortMode = S.UI.sortMode(state)['@@tagName']
+        const collapsedSections = [...S.UI.collapsedSections(state)]
         set(ACCOUNT_LIST_PREFS_KEY, { sortMode, collapsedSections })
     }
 
