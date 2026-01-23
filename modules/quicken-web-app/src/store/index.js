@@ -5,6 +5,7 @@
 import { createStore } from 'redux'
 import { hydrateAccountListPrefs, hydrateTabLayout, hydrateTableLayouts } from './hydration.js'
 import { Reducer } from './reducer.js'
+
 const { createEmptyState, rootReducer } = Reducer
 
 let store = null
@@ -37,5 +38,5 @@ const initializeStore = async () => {
 // @sig currentStore :: () -> Store
 const currentStore = () => store
 
-export * as Selectors from './selectors'
+export * as Selectors from './selectors.js'
 export { currentStore, initializeStore }

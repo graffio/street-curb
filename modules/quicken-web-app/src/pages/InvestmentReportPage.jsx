@@ -2,16 +2,13 @@
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
 
 import { DataTable, Flex } from '@graffio/design-system'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
-import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import { post } from '../commands/post.js'
+import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
-import { HoldingsTree } from '../utils/holdings-tree.js'
-
-const { buildHoldingsTree } = HoldingsTree
 
 const pageContainerStyle = { height: '100%' }
 
@@ -22,16 +19,16 @@ const dimensionLayouts = {
     goal: { title: 'Holdings by Goal', subtitle: 'View portfolio positions by investment goal' },
 }
 
-const P = {
-    // Tree rows can expand if they have children
-    // @sig canExpand :: Row -> Boolean
-    canExpand: row => row.original.children && row.original.children.length > 0,
-}
+const E = {
+    // Resolves TanStack updater and dispatches tree expansion change
+    // @sig dispatchTreeExpanded :: (String, Object) -> (Function | Object) -> void
+    dispatchTreeExpanded: (viewId, current) => updater =>
+        post(Action.SetTreeExpanded(viewId, typeof updater === 'function' ? updater(current) : updater)),
 
-const T = {
-    // Get children from a HoldingsTreeNode for DataTable getChildRows prop
-    // @sig toChildRows :: HoldingsTreeNode -> [HoldingsTreeNode]
-    toChildRows: row => row.children,
+    // Resolves TanStack updater and dispatches column sizing change
+    // @sig dispatchColumnSizing :: (String, Object) -> (Function | Object) -> void
+    dispatchColumnSizing: (viewId, current) => updater =>
+        post(Action.SetColumnSizing(viewId, typeof updater === 'function' ? updater(current) : updater)),
 }
 
 /*
@@ -40,29 +37,15 @@ const T = {
  * @sig InvestmentReportPage :: ({ viewId: String, height?: String }) -> ReactElement
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
-    const holdings = useSelector(state => S.Holdings.collectAsOf(state, viewId))
+    const holdings = useSelector(state => S.Holdings.asOf(state, viewId))
+    const holdingsTree = useSelector(state => S.Holdings.tree(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
 
-    // EXEMPT: useMemo - tree building is expensive; keeping as useMemo for render optimization
-    const holdingsTree = useMemo(() => buildHoldingsTree(groupBy || 'account', holdings), [groupBy, holdings])
-
-    const handleExpandedChange = useCallback(
-        updater => {
-            const next = typeof updater === 'function' ? updater(expanded) : updater
-            post(Action.SetTreeExpanded(viewId, next))
-        },
-        [viewId, expanded],
-    )
-    const handleColumnSizingChange = useCallback(
-        updater => {
-            const next = typeof updater === 'function' ? updater(columnSizing) : updater
-            post(Action.SetColumnSizing(viewId, next))
-        },
-        [viewId, columnSizing],
-    )
+    const handleExpandedChange = useCallback(E.dispatchTreeExpanded(viewId, expanded), [viewId, expanded])
+    const handleColumnSizingChange = useCallback(E.dispatchColumnSizing(viewId, columnSizing), [viewId, columnSizing])
     const handleColumnOrderChange = useCallback(order => post(Action.SetColumnOrder(viewId, order)), [viewId])
 
     const totalHoldingsCount = holdings?.length ?? 0
@@ -87,8 +70,8 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 data={holdingsTree}
                 height={height}
                 rowHeight={40}
-                getChildRows={T.toChildRows}
-                getRowCanExpand={P.canExpand}
+                getChildRows={row => row.children}
+                getRowCanExpand={row => row.original.children && row.original.children.length > 0}
                 expanded={expanded}
                 onExpandedChange={handleExpandedChange}
                 columnSizing={columnSizing}
