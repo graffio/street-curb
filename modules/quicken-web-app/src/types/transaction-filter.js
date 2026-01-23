@@ -26,6 +26,7 @@
  */
 
 import { FieldTypes } from './field-types.js'
+import { Transaction } from './transaction.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -229,5 +230,22 @@ TransactionFilter.fromFirestore = TransactionFilter._fromFirestore
 // Additional functions copied from type definition file
 //
 // -------------------------------------------------------------------------------------------------------------
+
+TransactionFilter.apply = (filter, transactions, categories, securities) => {
+    const { dateRange, filterQuery, selectedAccounts, selectedCategories } = filter
+    return transactions
+        .filter(Transaction.matchesText(filterQuery, categories, securities))
+        .filter(Transaction.isInDateRange(dateRange))
+        .filter(Transaction.matchesCategories(selectedCategories, categories))
+        .filter(t => !selectedAccounts.length || selectedAccounts.includes(t.accountId))
+}
+
+TransactionFilter.applyInvestment = (filter, transactions, categories, securities, accountId) => {
+    const { selectedInvestmentActions, selectedSecurities } = filter
+    return TransactionFilter.apply(filter, transactions, categories, securities)
+        .filter(t => !accountId || t.accountId === accountId)
+        .filter(Transaction.matchesSecurities(selectedSecurities))
+        .filter(Transaction.matchesInvestmentActions(selectedInvestmentActions))
+}
 
 export { TransactionFilter }

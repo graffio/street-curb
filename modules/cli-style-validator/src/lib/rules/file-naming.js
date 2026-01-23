@@ -20,7 +20,11 @@ const P = {
 
     // Check if file should skip naming validation
     // @sig shouldSkip :: String -> Boolean
-    shouldSkip: fileName => fileName.includes('.tap.') || fileName.includes('.test.') || fileName.includes('.config.'),
+    shouldSkip: fileName =>
+        fileName.includes('.tap.') ||
+        fileName.includes('.test.') ||
+        fileName.includes('.config.') ||
+        fileName.includes('.type.'),
 
     // Check if file only exports PascalCase names (components)
     // @sig exportsComponentsOnly :: AST -> Boolean

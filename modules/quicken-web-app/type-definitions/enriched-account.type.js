@@ -1,4 +1,4 @@
-import { currentBalance } from '@graffio/financial-computations/banking'
+import { Transaction } from './transaction.js'
 
 // prettier-ignore
 export const EnrichedAccount = {
@@ -29,9 +29,9 @@ EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
 // Computes balance for bank/cash/credit accounts from transactions
 // @sig sumBankBalance :: ([Transaction], String) -> Number
 EnrichedAccount.sumBankBalance = (transactions, accountId) => {
-    if (!transactions || transactions.length === 0) return 0
+    if (transactions.length === 0) return 0
     const accountTransactions = transactions.filter(t => t.accountId === accountId && t.amount != null)
-    return currentBalance(accountTransactions)
+    return Transaction.currentBalance(accountTransactions)
 }
 
 // Creates EnrichedAccount from Account with computed balance

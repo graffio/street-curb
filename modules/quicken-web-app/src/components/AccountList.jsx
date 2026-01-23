@@ -196,8 +196,8 @@ const SortModeDropdown = ({ value, onChange }) => (
 // @sig AccountList :: () -> ReactElement
 const AccountList = () => {
     const accounts = useSelector(S.accounts)
-    const sortMode = useSelector(S.Prefs.sortMode)
-    const collapsedSections = useSelector(S.Prefs.collapsedSections)
+    const sortMode = useSelector(S.UI.sortMode)
+    const collapsedSections = useSelector(S.UI.collapsedSections)
     const organizedSections = useSelector(S.Accounts.organized)
 
     if (!accounts || accounts.length === 0)

@@ -1,3 +1,6 @@
+// ABOUTME: Transaction type definition for bank and investment transactions
+// ABOUTME: Includes filter predicates, enrichment helpers, and balance aggregations
+
 import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
 
 export const Transaction = {
@@ -34,8 +37,9 @@ export const Transaction = {
             categoryId: 'String?', // cat_<hash> or null
             cleared: 'String?',
             commission: 'Number?',
-            investmentAction:
-                /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/,
+
+            // prettier-ignore
+            investmentAction: /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/,
             memo: 'String?',
             payee: 'String?',
             price: 'Number?',
@@ -143,27 +147,6 @@ Transaction.matchesSecurities = securityIds => txn => !securityIds.length || sec
 Transaction.matchesInvestmentActions = actions => txn => !actions.length || actions.includes(txn.investmentAction)
 
 // -----------------------------------------------------------------------------
-// Filter Composition
-// -----------------------------------------------------------------------------
-
-// Applies all standard filters: text -> date -> category -> account
-// FilterConfig = { transactions, query, dateRange, categoryIds, accountIds, categories, securities }
-// @sig applyFilters :: FilterConfig -> [Transaction]
-Transaction.applyFilters = ({ transactions, query, dateRange, categoryIds, accountIds, categories, securities }) =>
-    transactions
-        .filter(Transaction.matchesText(query, categories, securities))
-        .filter(Transaction.isInDateRange(dateRange))
-        .filter(Transaction.matchesCategories(categoryIds, categories))
-        .filter(t => !accountIds.length || accountIds.includes(t.accountId))
-
-// Applies investment-specific filters: securities and actions
-// @sig applyInvestmentFilters :: ([Transaction], [String], [String]) -> [Transaction]
-Transaction.applyInvestmentFilters = (transactions, securityIds, actionIds) =>
-    transactions
-        .filter(Transaction.matchesSecurities(securityIds))
-        .filter(Transaction.matchesInvestmentActions(actionIds))
-
-// -----------------------------------------------------------------------------
 // Batch Operations
 // -----------------------------------------------------------------------------
 
@@ -193,4 +176,32 @@ Transaction.findEarliest = transactions => {
         const d = new Date(txn.date)
         return d < earliest ? d : earliest
     }, new Date(transactions[0].date))
+}
+
+// Sum of all transaction amounts
+// @sig currentBalance :: [Transaction] -> Number
+Transaction.currentBalance = transactions => transactions.reduce((sum, txn) => sum + txn.amount, 0)
+
+// Sum of transactions on or before date (inclusive)
+// Date comparison uses ISO string format (lexicographic = chronological)
+// @sig balanceAsOf :: (String, [Transaction]) -> Number
+Transaction.balanceAsOf = (isoDate, transactions) =>
+    transactions.filter(txn => txn.date <= isoDate).reduce((sum, txn) => sum + txn.amount, 0)
+
+// Breakdown by cleared status
+// @sig balanceBreakdown :: [Transaction] -> { cleared: Number, uncleared: Number, total: Number }
+Transaction.balanceBreakdown = transactions => {
+    const cleared = transactions
+        .filter(txn => txn.cleared === 'R' || txn.cleared === 'c')
+        .reduce((sum, txn) => sum + txn.amount, 0)
+    const total = transactions.reduce((sum, txn) => sum + txn.amount, 0)
+    return { cleared, uncleared: total - cleared, total }
+}
+
+// Difference between statement balance and cleared transactions
+// Positive = statement shows more than we have cleared
+// @sig reconciliationDifference :: (Number, [Transaction]) -> Number
+Transaction.reconciliationDifference = (statementBalance, transactions) => {
+    const { cleared } = Transaction.balanceBreakdown(transactions)
+    return statementBalance - cleared
 }

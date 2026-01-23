@@ -143,7 +143,7 @@ Move `useMemo` computations to memoized selectors:
 const holdingsTree = useMemo(() => buildTree(groupBy, holdings), [groupBy, holdings])
 
 // GOOD - selector handles derivation with memoization
-const holdingsTree = useSelector(state => S.Holdings.collectTree(state, viewId))
+const holdingsTree = useSelector(state => S.Holdings.toHoldingsTree(state, viewId))
 ```
 
 ## Files
@@ -361,35 +361,64 @@ Only wrap selectors that actually need curried usage (YAGNI). Simple state-only 
 - Syntax: `'{Type:idField}'` for LookupTable, `'[Type]'` for plain array
 - ID patterns go in `field-types.js`, not inline in type definitions
 
+## Fail-Fast vs. Defensive Coding
+
+**Principle:** Programming errors should throw. Only guard against genuinely uncertain external data.
+
+Defensive guards that silently return fallback values hide bugs. When internal data is missing or malformed, that's a
+programming error—let it throw so we find and fix it.
+
+**Guard only these (legitimate uncertainty):**
+
+- User input (form fields, URL params, search queries)
+- External API responses
+- File/network operations that can fail
+- Optional fields in domain types (marked with `?` in type definition)
+- Async data during initial load (before hydration completes)
+
+**Don't guard these (let them throw):**
+
+- LookupTable access for IDs that should exist
+- State fields after initialization
+- Function parameters from internal callers
+- Chained property access on typed objects
+
+**Forbidden patterns:**
+
+```javascript
+// BAD - hides bugs with silent fallbacks
+const name = accounts?.get(id)?.name ?? ''
+const items = data?.items || []
+if (!transaction) return null  // "impossible" early return
+
+// GOOD - throws if data missing (finds bugs)
+const name = accounts.get(id).name
+const items = data.items
+// No early return - let it throw if transaction is undefined
+```
+
+**When `?.` IS appropriate:**
+
+```javascript
+// Optional field in domain type (categoryId is nullable)
+const categoryName = transaction.categoryId ? categories.get(transaction.categoryId).name : null
+
+// Data that genuinely may not be loaded yet
+const filter = state.transactionFilters?.get(viewId)  // view may not have opened yet
+
+// User-provided search that may be empty
+if (!query?.trim()) return allResults
+```
+
 ## Null Object Pattern (State Initialization)
 
-**Principle:** If null means "behave as if empty/default", the value should BE empty/default, not null.
+**Corollary to fail-fast:** If null means "behave as if empty/default", initialize with the empty/default value instead.
 
 **Rules:**
 
 - Initialize state fields with valid empty structures, never null
 - Use empty LookupTables (`LookupTable([], Type, 'id')`) not null
 - Use `.get(id)` on LookupTables, never `.find()` or bracket access
-- Let missing entities throw rather than silently returning fallback values
-
-**Forbidden patterns:**
-
-```javascript
-// BAD - defensive code hides bugs
-const name = accounts?.get(id)?.name ?? ''
-const group = tabGroups.find(g => g.id === targetId)
-const layout = state.tableLayouts?.[id]
-
-// GOOD - direct access, missing data throws
-const name = accounts.get(id).name
-const group = tabGroups.get(targetId)
-const layout = state.tableLayouts.get(id)
-```
-
-**When `?.` IS appropriate:**
-
-- Field that genuinely may not exist yet (e.g., `transactionFilter` for a viewId before view opens)
-- Optional relationships in domain model (e.g., `transaction.parentId?.`)
 
 **Corollary:** If you need `?.` on a collection, that's a signal the collection should be initialized earlier.
 

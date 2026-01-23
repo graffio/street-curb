@@ -23,7 +23,7 @@ const VIEW_COLORS = {
 const P = {
     // Checks if account type requires investment register
     // @sig isInvestmentAccount :: Account -> Boolean
-    isInvestmentAccount: account => account?.type === 'Investment' || account?.type === '401(k)/403(b)',
+    isInvestmentAccount: account => account.type === 'Investment' || account.type === '401(k)/403(b)',
 }
 
 const T = {
@@ -79,6 +79,17 @@ const T = {
         isActive: view.id === activeViewId,
         isActiveGroup,
     }),
+}
+
+const F = {
+    // Returns the appropriate register page component for an account type
+    // @sig createRegisterPage :: (Account, String, Boolean) -> ReactElement
+    createRegisterPage: (account, accountId, isActive) =>
+        P.isInvestmentAccount(account) ? (
+            <InvestmentRegisterPage accountId={accountId} isActive={isActive} />
+        ) : (
+            <TransactionRegisterPage accountId={accountId} isActive={isActive} />
+        ),
 }
 
 // Draggable tab with icon, title, and close button
@@ -216,8 +227,8 @@ const ViewContent = ({ group, isActive }) => {
     return activeView.match({
         Register: () => {
             const account = accounts.get(accountId)
-            const Page = P.isInvestmentAccount(account) ? InvestmentRegisterPage : TransactionRegisterPage
-            return <Page accountId={accountId} isActive={isActive} />
+            if (!account) return <EmptyState /> // Account not loaded yet
+            return F.createRegisterPage(account, accountId, isActive)
         },
         Report: () => {
             if (reportType === 'holdings') return <InvestmentReportPage viewId={id} />

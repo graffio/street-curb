@@ -52,6 +52,29 @@ const P = {
         return member && Identifier.is(member) && COLLECTION_METHODS.includes(member.name)
     },
 
+    // Check if a .map() call returns JSX (standard React render pattern)
+    // @sig isJsxRenderMap :: ASTNode -> Boolean
+    isJsxRenderMap: node => {
+        const { CallExpression, MemberExpression, Identifier } = ASTNode
+        if (!CallExpression.is(node)) return false
+        const { target, esTree } = node
+        if (!target || !MemberExpression.is(target)) return false
+        const { member } = target
+        if (!member || !Identifier.is(member) || member.name !== 'map') return false
+        const callback = esTree?.arguments?.[0]
+        if (!callback) return false
+        const { body } = callback
+        if (!body) return false
+        const { type: bodyType, body: blockBody } = body
+        if (bodyType === 'JSXElement' || bodyType === 'JSXFragment') return true
+        if (bodyType === 'BlockStatement') {
+            const returnStmt = blockBody?.find(s => s.type === 'ReturnStatement')
+            const arg = returnStmt?.argument
+            return arg?.type === 'JSXElement' || arg?.type === 'JSXFragment'
+        }
+        return false
+    },
+
     // Check if node is a spread element {...obj} or [...arr]
     // @sig isSpreadElement :: ASTNode -> Boolean
     isSpreadElement: node => node.esTree?.type === 'SpreadElement',
@@ -350,9 +373,9 @@ const V = {
 
         const useMemoViolations = findInComponentBodies(ast, isUseMemoCall).map(createUseMemoViolation)
         const useCallbackViolations = findInComponentBodies(ast, isComplexUseCallback).map(createUseCallbackViolation)
-        const collectionViolations = findInComponentBodies(ast, isCollectionMethodCall).map(
-            createCollectionMethodViolation,
-        )
+        const collectionViolations = findInComponentBodies(ast, isCollectionMethodCall)
+            .filter(node => !P.isJsxRenderMap(node))
+            .map(createCollectionMethodViolation)
         const spreadViolations = findInComponentBodies(ast, isSpreadElement).map(createSpreadViolation)
         const actionFunctionViolations = findInComponentBodies(ast, hasActionFunctionArg).map(
             createActionFunctionViolation,

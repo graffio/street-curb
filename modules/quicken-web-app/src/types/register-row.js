@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for RegisterRow
-// ABOUTME: Auto-generated from modules/financial-computations/type-definitions/register-row.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/register-row.type.js - do not edit manually
 
 /** {@link module:RegisterRow} */
-/*  RegisterRow generated from: modules/financial-computations/type-definitions/register-row.type.js
+/*  RegisterRow generated from: modules/quicken-web-app/type-definitions/register-row.type.js
  *
  *  transaction   : "Transaction",
  *  runningBalance: "Number"
