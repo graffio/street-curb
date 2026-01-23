@@ -84,7 +84,7 @@ const T = {
         const priceOnDate = A.findPriceAsOf(priceIndex, securityId, date)
         const previousDayPrice = A.findPriceAsOf(priceIndex, securityId, T.toPreviousDay(date))
 
-        const { goal, name, symbol, type } = security ?? {}
+        const { goal, name, symbol, type } = security
         const quotePrice = priceOnDate?.price ?? 0
         const priceDt = priceOnDate?.date ?? null
         const isStale = priceDt ? Price.isStale(priceDt, date) : true
@@ -97,7 +97,7 @@ const T = {
         const dayGainLoss = quantity * (quotePrice - previousQuotePrice)
         const dayGainLossPercent = previousQuotePrice !== 0 ? (quotePrice - previousQuotePrice) / previousQuotePrice : 0
 
-        return Holding(accountId, account?.name ?? '', securityId, name ?? '', symbol ?? '', type ?? '', goal ?? null,
+        return Holding(accountId, account.name, securityId, name, symbol, type, goal,
             quantity, costBasis, averageCostPerShare, quotePrice, marketValue, unrealizedGainLoss,
             unrealizedGainLossPercent, dayGainLoss, dayGainLossPercent, isStale)
     },
@@ -155,14 +155,14 @@ const computeHoldingsAsOf = config => {
     const { lots, lotAllocations, prices, accounts, securities, transactions, asOfDate } = config
     const { selectedAccountIds, filterQuery } = config
     const { allocationIndex: prebuiltAlloc, priceIndex: prebuiltPrice, transactionIndex: prebuiltTx } = config
-    if (!lots || lots.length === 0) return []
+    if (lots.length === 0) return []
 
     // Use pre-built indexes if provided, otherwise build them
     const allocationIndex = prebuiltAlloc ?? A.buildAllocationIndex(lotAllocations)
     const priceIndex = prebuiltPrice ?? A.buildPriceIndex(prices)
     const transactionIndex = prebuiltTx ?? A.buildTransactionIndex(transactions)
 
-    const filteredLots = selectedAccountIds?.length > 0 ? lots.filter(l => selectedAccountIds.includes(l.accountId)) : lots
+    const filteredLots = selectedAccountIds.length > 0 ? lots.filter(l => selectedAccountIds.includes(l.accountId)) : lots
     const aggregatedLots = A.collectAggregatedLots(filteredLots, allocationIndex, asOfDate)
     const holdings = aggregatedLots.map(lotData => T.toHolding(lotData, accounts, securities, priceIndex, asOfDate))
 
@@ -170,7 +170,7 @@ const computeHoldingsAsOf = config => {
     const cashHoldings = accountIdsWithHoldings
         .map(accId => {
             const balance = T.toCashBalanceAsOf(transactionIndex, accId, asOfDate)
-            return balance !== 0 ? F.createCashHolding(accId, accounts.get(accId)?.name ?? '', balance) : null
+            return balance !== 0 ? F.createCashHolding(accId, accounts.get(accId).name, balance) : null
         })
         .filter(h => h !== null)
 
@@ -178,6 +178,6 @@ const computeHoldingsAsOf = config => {
     return filterQuery ? allHoldings.filter(h => Holding.matchesSearch(h, filterQuery)) : allHoldings
 }
 
-const HoldingsAsOf = { buildAllocationIndex, buildPriceIndex, buildTransactionIndex, computeHoldingsAsOf }
+const Holdings = { buildAllocationIndex, buildPriceIndex, buildTransactionIndex, computeHoldingsAsOf }
 
-export { HoldingsAsOf }
+export { Holdings }

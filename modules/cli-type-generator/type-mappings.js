@@ -16,7 +16,6 @@ const sources = {
     curbMap                 : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     designSystem            : `${REPO_ROOT}/modules/design-system/type-definitions`,
-    financialComputations   : `${REPO_ROOT}/modules/financial-computations/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
     keymap                  : `${REPO_ROOT}/modules/keymap/type-definitions`,
     quickenTypes            : `${REPO_ROOT}/modules/quicken-type-definitions`,
@@ -31,7 +30,6 @@ const targets = {
     curbMap                 : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
     designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
-    financialComputations: `${REPO_ROOT}/modules/financial-computations/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
     keymap               : `${REPO_ROOT}/modules/keymap/src/types`,
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
@@ -41,7 +39,6 @@ const targets = {
 // Shorthand aliases for common multi-target combinations
 const t = targets
 const qifAndWeb = [t.quickenWebApp]
-const qifWebFinance = [t.quickenWebApp, t.financialComputations]
 
 // prettier-ignore
 export const typeMappings = {
@@ -58,7 +55,7 @@ export const typeMappings = {
     [`${sources.curbMap}/action-request.type.js`]         : [targets.curbMap],
     [`${sources.curbMap}/audit-record.type.js`]           : [targets.curbMap],
     [`${sources.curbMap}/operation-details.type.js`]      : [targets.curbMap],
-    
+
     // curb-map domain
     [`${sources.curbMap}/blockface.type.js`]              : [targets.curbMap],
     [`${sources.curbMap}/member.type.js`]                 : [targets.curbMap],
@@ -67,7 +64,7 @@ export const typeMappings = {
     [`${sources.curbMap}/project.type.js`]                : [targets.curbMap],
     [`${sources.curbMap}/segment.type.js`]                : [targets.curbMap],
     [`${sources.curbMap}/user.type.js`]                   : [targets.curbMap],
-   
+
     // special case: source is just copied verbatim to target
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
 
@@ -88,14 +85,14 @@ export const typeMappings = {
     // quicken shared domain types (from quicken-type-definitions)
     [`${sources.quickenTypes}/account.type.js`]           : qifAndWeb,
     [`${sources.quickenTypes}/category.type.js`]          : qifAndWeb,
-    [`${sources.quickenTypes}/holding.type.js`]           : qifWebFinance,
-    [`${sources.quickenTypes}/lot.type.js`]               : qifWebFinance,
-    [`${sources.quickenTypes}/lot-allocation.type.js`]    : qifWebFinance,
-    [`${sources.quickenTypes}/price.type.js`]             : qifWebFinance,
+    [`${sources.quickenTypes}/holding.type.js`]           : qifAndWeb,
+    [`${sources.quickenTypes}/lot.type.js`]               : qifAndWeb,
+    [`${sources.quickenTypes}/lot-allocation.type.js`]    : qifAndWeb,
+    [`${sources.quickenTypes}/price.type.js`]             : qifAndWeb,
     [`${sources.quickenTypes}/security.type.js`]          : qifAndWeb,
     [`${sources.quickenTypes}/split.type.js`]             : qifAndWeb,
     [`${sources.quickenTypes}/tag.type.js`]               : qifAndWeb,
-    [`${sources.quickenTypes}/transaction.type.js`]       : qifWebFinance,
+    [`${sources.quickenTypes}/transaction.type.js`]       : qifAndWeb,
 
     // cli-qif-to-sqlite
     [`${sources.cliQifToSqlite}/qif-entry.type.js`]       : [targets.cliQifToSqlite],
@@ -115,11 +112,8 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/account-section.type.js`] : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/holdings-aggregate.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/holdings-tree-node.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/register-row.type.js`]    : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
-
-
-    // financial-computations
-    [`${sources.financialComputations}/register-row.type.js`]: [targets.financialComputations],
 
 
     // for the cli-type-generator itself (all internal types)
