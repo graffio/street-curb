@@ -460,18 +460,6 @@ Transaction.matchesSecurities = securityIds => txn => !securityIds.length || sec
 
 Transaction.matchesInvestmentActions = actions => txn => !actions.length || actions.includes(txn.investmentAction)
 
-Transaction.applyFilters = ({ transactions, query, dateRange, categoryIds, accountIds, categories, securities }) =>
-    transactions
-        .filter(Transaction.matchesText(query, categories, securities))
-        .filter(Transaction.isInDateRange(dateRange))
-        .filter(Transaction.matchesCategories(categoryIds, categories))
-        .filter(t => !accountIds.length || accountIds.includes(t.accountId))
-
-Transaction.applyInvestmentFilters = (transactions, securityIds, actionIds) =>
-    transactions
-        .filter(Transaction.matchesSecurities(securityIds))
-        .filter(Transaction.matchesInvestmentActions(actionIds))
-
 Transaction.collectSearchMatchIds = (transactions, query, categories) =>
     transactions.filter(Transaction.matchesSearch(query, categories)).map(t => t.id)
 
@@ -486,6 +474,28 @@ Transaction.findEarliest = transactions => {
         const d = new Date(txn.date)
         return d < earliest ? d : earliest
     }, new Date(transactions[0].date))
+}
+
+Transaction.currentBalance = transactions => transactions.reduce((sum, txn) => sum + txn.amount, 0)
+
+Transaction.balanceAsOf = (isoDate, transactions) =>
+    transactions.filter(txn => txn.date <= isoDate).reduce((sum, txn) => sum + txn.amount, 0)
+
+Transaction.balanceBreakdown = transactions => {
+    const cleared = transactions
+        .filter(txn => txn.cleared === 'R' || txn.cleared === 'c')
+        .reduce((sum, txn) => sum + txn.amount, 0)
+    const total = transactions.reduce((sum, txn) => sum + txn.amount, 0)
+    return {
+        cleared,
+        uncleared: total - cleared,
+        total,
+    }
+}
+
+Transaction.reconciliationDifference = (statementBalance, transactions) => {
+    const { cleared } = Transaction.balanceBreakdown(transactions)
+    return statementBalance - cleared
 }
 
 export { Transaction }

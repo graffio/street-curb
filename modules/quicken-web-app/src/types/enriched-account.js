@@ -12,7 +12,7 @@
  *
  */
 
-import { currentBalance } from '@graffio/financial-computations/banking'
+import { Transaction } from './transaction.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -149,9 +149,9 @@ EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
 }
 
 EnrichedAccount.sumBankBalance = (transactions, accountId) => {
-    if (!transactions || transactions.length === 0) return 0
+    if (transactions.length === 0) return 0
     const accountTransactions = transactions.filter(t => t.accountId === accountId && t.amount != null)
-    return currentBalance(accountTransactions)
+    return Transaction.currentBalance(accountTransactions)
 }
 
 EnrichedAccount.fromAccount = (account, holdings, transactions) => {
