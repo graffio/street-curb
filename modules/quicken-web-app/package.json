@@ -12,7 +12,9 @@
         "storybook": "storybook dev -p 6007",
         "build-storybook": "storybook build",
         "tap": "../../bash/run-tap.sh test/*.tap.js test/**/*.tap.js",
-        "tap:file": "../../bash/run-tap.sh"
+        "tap:file": "../../bash/run-tap.sh",
+        "test:smoke": "node test/ui-smoke.integration-test.js",
+        "test:smoke:headed": "HEADED=1 node test/ui-smoke.integration-test.js"
     },
     "dependencies": {
         "@graffio/design-system": "0.1.0",
