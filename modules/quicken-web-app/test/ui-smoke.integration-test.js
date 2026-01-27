@@ -2,7 +2,8 @@
 // ABOUTME: Run with: node --test test/ui-smoke.integration-test.js (HEADED=1 for visible browser)
 
 import { execFileSync } from 'child_process'
-import { readFileSync } from 'fs'
+import { readFileSync, rmSync } from 'fs'
+import { homedir } from 'os'
 import { dirname, resolve } from 'path'
 import { test } from 'tap'
 import { fileURLToPath } from 'url'
@@ -42,7 +43,13 @@ const parseSnapshot = output => {
 const loadExpected = () => JSON.parse(readFileSync(EXPECTED_PATH, 'utf-8'))
 
 test('setup: launch browser with test data', async t => {
+    // Remove stale session files from a previous run (e.g. HEADED mode leaves browser open)
+    const sessionDir = resolve(homedir(), '.agent-browser')
+    rmSync(resolve(sessionDir, `${SESSION}.pid`), { force: true })
+    rmSync(resolve(sessionDir, `${SESSION}.sock`), { force: true })
+
     const result = browser('open', [TEST_URL])
+    console.log(TEST_URL)
     t.ok(result.includes('Graffio Finance'), 'app loads with title')
 
     // Set viewport for consistent testing
@@ -224,10 +231,6 @@ test('clicking Spending by Category opens report with correct values', async t =
 })
 
 test('cleanup: close browser', async t => {
-    if (!HEADED) {
-        browser('close')
-        t.pass('browser closed')
-    } else {
-        t.pass('leaving browser open (HEADED mode)')
-    }
+    browser('close')
+    t.pass('browser closed')
 })

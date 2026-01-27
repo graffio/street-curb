@@ -16,7 +16,16 @@ Smoke tests using `agent-browser` to verify critical UI paths.
    node scripts/generate-fixtures.js
    ```
 
-3. Start the dev server:
+3. Make sure the app can get to the generated fixtures by linking to it in the app's public folder.
+
+   In modules/quicken-web-app:
+
+   ```bash
+   mkdir public
+   ln -s ../../cli-qif-to-sqlite/test/fixtures public/test-fixtures
+   ```
+
+4. Start the dev server:
    ```bash
    cd modules/quicken-web-app
    yarn dev
