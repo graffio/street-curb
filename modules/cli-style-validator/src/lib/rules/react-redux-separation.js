@@ -7,7 +7,7 @@ import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 8
 const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
-const EXEMPT_PATTERNS = ['hover', 'focus', 'drag']
+const EXEMPT_PATTERNS = ['hover', 'focus', 'drag', 'non-serializable']
 const SELECTOR_MAX_LINES = 6
 const SELECTOR_MAX_COLLECTION_CHAIN = 2
 

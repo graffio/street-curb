@@ -10,10 +10,31 @@ const { createEmptyState, rootReducer } = Reducer
 
 let store = null
 
+const P = {
+    // Check if running in test mode (skip IndexedDB hydration to start fresh)
+    // @sig isTestMode :: () -> Boolean
+    isTestMode: () => new URLSearchParams(window.location.search).has('testFile'),
+}
+
+const T = {
+    // Build promises that resolve to empty state values (for test mode, skipping IndexedDB)
+    // @sig toTestModePromises :: () -> [Promise]
+    toTestModePromises: () => {
+        const { accountListSortMode, collapsedSections, tabLayout, tableLayouts } = createEmptyState()
+        return [
+            Promise.resolve(tableLayouts),
+            Promise.resolve(tabLayout),
+            Promise.resolve({ sortMode: accountListSortMode, collapsedSections }),
+        ]
+    },
+}
+
 // Hydrates state from IndexedDB and creates the Redux store
 // @sig initializeStore :: () -> Promise<Store>
 const initializeStore = async () => {
-    const promises = [hydrateTableLayouts(), hydrateTabLayout(), hydrateAccountListPrefs()]
+    const promises = P.isTestMode()
+        ? T.toTestModePromises()
+        : [hydrateTableLayouts(), hydrateTabLayout(), hydrateAccountListPrefs()]
     const [tableLayouts, tabLayout, accountListPrefs] = await Promise.all(promises)
 
     const preloadedState = {

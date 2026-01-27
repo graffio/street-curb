@@ -5,7 +5,7 @@ import t from 'tap'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Account } from '../../src/types/account.js'
 import { Transaction } from '../../src/types/transaction.js'
-import { Accounts } from '../../src/store/selectors/accounts.js'
+import { Accounts } from '../../src/store/selectors.js'
 import { AccountSection } from '../../src/types/account-section.js'
 import { SortMode } from '../../src/types/sort-mode.js'
 

@@ -14,6 +14,7 @@ const parseCode = sourceCode =>
         sourceType: 'module',
         locations: true,
         preserveComments: true,
+        allowHashBang: true,
     })
 
 const Parser = { parseCode }

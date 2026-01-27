@@ -2,9 +2,9 @@
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
 
 import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
-import { LookupTable } from '@graffio/functional'
+import { LookupTable, memoizeOnceWithIdenticalParams } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { FileHandling } from '../services/file-handling.js'
@@ -22,12 +22,12 @@ const { Intent, Keymap } = KeymapModule
 const GLOBAL_KEYMAP_ID = 'global'
 
 const F = {
-    // Creates global keymap with shortcuts panel toggle
+    // Creates global keymap with shortcuts panel toggle (memoized by toggleDrawer identity)
     // @sig createGlobalKeymap :: Function -> Keymap
-    createGlobalKeymap: toggleDrawer => {
+    createGlobalKeymap: memoizeOnceWithIdenticalParams(toggleDrawer => {
         const intents = LookupTable([Intent('Toggle shortcuts', ['?'], toggleDrawer)], Intent, 'description')
         return Keymap(GLOBAL_KEYMAP_ID, 'Global', 0, false, null, intents)
-    },
+    }),
 }
 
 const E = {
@@ -64,7 +64,7 @@ const LoadingOverlay = ({ status }) => (
 // Main application layout with sidebar, file handling, and keyboard routing
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
-    // EXEMPT: file-handling - storedHandle is FileSystemFileHandle (not serializable)
+    // EXEMPT: non-serializable - FileSystemFileHandle can't be stored in Redux
     const [storedHandle, setStoredHandle] = useState(null)
 
     const showReopenBanner = useSelector(S.showReopenBanner)
@@ -77,7 +77,7 @@ const RootLayout = () => {
     const availableIntents = useSelector(S.Keymaps.availableIntents)
 
     const toggleDrawer = useCallback(() => post(Action.SetShowDrawer(!showDrawer)), [showDrawer])
-    const globalKeymap = useMemo(() => F.createGlobalKeymap(toggleDrawer), [toggleDrawer])
+    const globalKeymap = F.createGlobalKeymap(toggleDrawer)
 
     const handleOpenFile = useCallback(() => FileHandling.openFile(setStoredHandle), [])
     const handleReopen = useCallback(() => FileHandling.reopenFile(storedHandle), [storedHandle])
@@ -88,6 +88,7 @@ const RootLayout = () => {
     ])
 
     useEffect(() => FileHandling.loadStoredHandle(setStoredHandle), [])
+    useEffect(() => FileHandling.loadTestFileIfPresent(), [])
     useEffect(KeymapRouting.keydownEffect(handleKeyDown), [handleKeyDown])
     useEffect(E.globalKeymapEffect(globalKeymap), [globalKeymap])
 

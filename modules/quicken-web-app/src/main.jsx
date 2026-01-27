@@ -6,15 +6,16 @@ import { RouterProvider } from '@tanstack/react-router'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
-import { router } from './router.jsx'
+import { Router } from './router.js'
 import { initializeStore } from './store/index.js'
 
+// Root component wrapping providers and router
 // @sig App :: Store -> ReactElement
 const App = ({ store }) => (
     <React.StrictMode>
         <Provider store={store}>
             <Theme appearance="light" accentColor="blue" grayColor="slate" radius="medium" scaling="100%">
-                <RouterProvider router={router} />
+                <RouterProvider router={Router.router} />
             </Theme>
         </Provider>
     </React.StrictMode>

@@ -9,9 +9,9 @@ import { RootLayout } from './components/index.js'
 const root = () => rootRoute
 
 // COMPLEXITY: TanStack Router beforeLoad pattern - naming constrained by API
-// @sig redirectToDefaultRoute :: () -> never
-const redirectToDefaultRoute = () => {
-    throw redirect({ to: '/dashboard' })
+// @sig redirectToDefaultRoute :: Object -> never
+const redirectToDefaultRoute = ({ location }) => {
+    throw redirect({ to: '/dashboard', search: location.search })
 }
 
 const rootRoute = createRootRoute({ component: RootLayout })
@@ -24,4 +24,5 @@ const routeTree = rootRoute.addChildren([
 
 const router = createRouter({ routeTree })
 
-export { router }
+const Router = { router }
+export { Router }

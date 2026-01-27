@@ -9,11 +9,12 @@ const P = {
     // @sig isAboutmeComment :: String -> Boolean
     isAboutmeComment: line => line.trim().startsWith('// ABOUTME:'),
 
-    // Check if line contains actual code (not empty/comment)
+    // Check if line contains actual code (not empty/comment/shebang)
     // @sig isCodeLine :: String -> Boolean
     isCodeLine: line => {
         const trimmed = line.trim()
         if (trimmed === '') return false
+        if (trimmed.startsWith('#!')) return false
         if (trimmed.startsWith('//')) return false
         if (trimmed.startsWith('/*')) return false
         if (trimmed.startsWith('*')) return false
@@ -35,15 +36,6 @@ const F = {
         message,
         rule: 'aboutme-comment',
     }),
-}
-
-const A = {
-    // Find index of first non-comment line in file
-    // @sig findFirstCodeLine :: [String] -> Number
-    findFirstCodeLine: lines => {
-        const index = lines.findIndex(P.isCodeLine)
-        return index === -1 ? lines.length : index
-    },
 }
 
 const V = {
@@ -76,6 +68,15 @@ const V = {
             return [F.createViolation(2, 'Second ABOUTME comment must immediately follow the first.')]
 
         return []
+    },
+}
+
+const A = {
+    // Find index of first non-comment line in file
+    // @sig findFirstCodeLine :: [String] -> Number
+    findFirstCodeLine: lines => {
+        const index = lines.findIndex(P.isCodeLine)
+        return index === -1 ? lines.length : index
     },
 }
 
