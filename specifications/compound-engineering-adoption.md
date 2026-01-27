@@ -176,6 +176,63 @@ These are unaffected by compound engineering adoption:
 
 ---
 
+## The Integration Problem
+
+Jeff's existing `workflow.md` defines subagent-based review steps (plan-reviewer, code-reviewer, complexity-reviewer, simplicity-reviewer) as **instructions to Claude** — text that says "spawn this subagent." Compound engineering's `/workflows:*` commands achieve similar goals through **mechanical enforcement** — the skill infrastructure launches subagents directly.
+
+The conflict: when both systems are active, Claude sees two overlapping sets of instructions and optimizes for "just do the thing," skipping whichever steps feel redundant. This is a [known behavior pattern](https://github.com/anthropics/claude-code/issues/18454) — Claude prioritizes task completion over process compliance, especially when instructions are advisory rather than mechanical.
+
+### The core principle
+
+**If a step matters, it must be enforced mechanically (hooks, commands, required gates) — not as an instruction Claude interprets.**
+
+Jeff's `cli-style-validator` in pre-commit hooks works reliably because Claude can't skip it. Jeff's "spawn code-reviewer subagent" instruction in `workflow.md` gets skipped because Claude can rationalize not doing it.
+
+### Integration strategy
+
+**Keep Jeff's domain knowledge. Use compound engineering's enforcement.**
+
+| Jeff's System | Keep / Replace | Compound Engineering Equivalent |
+|---------------|----------------|--------------------------------|
+| `conventions.md` | **Keep** — domain-specific, no equivalent | Read by all agents automatically |
+| `preferences.md` | **Keep** — architectural taste, no equivalent | Read by all agents automatically |
+| `cli-style-validator` (pre-commit) | **Keep** — mechanical enforcement works | No conflict — additive |
+| `workflow.md` Phase 1 (Brainstorm) | **Keep** — lightweight, no overlap | N/A |
+| `workflow.md` Phase 2 (Plan) | **Replace with** `/workflows:plan` | Launches learnings-researcher + plan agents mechanically |
+| `workflow.md` Phase 3 (Implement) subagent steps | **Replace with** `/workflows:work` or `/workflows:review` | Launches reviewer agents mechanically instead of trusting Claude to "spawn" them |
+| `workflow.md` Phase 4 (Record) | **Replace with** `/workflows:compound` | Documents solutions with parallel subagents mechanically |
+| `current-task.json` format | **Keep** — proven format | `/workflows:plan` output can feed into it |
+| `[CHECKPOINT]` pattern | **Keep** — compound engineering doesn't have this | Add to plan output |
+| Custom subagent specs (plan-reviewer, etc.) | **Merge into compound engineering agents** | Jeff's review criteria become inputs to compound engineering's reviewer agents |
+
+### What to change in `workflow.md`
+
+The goal is to remove instruction-based subagent spawning and replace with command invocations:
+
+1. **Phase 2 (Plan):** Replace "Spawn plan-reviewer subagent" with "Run `/workflows:plan`" — this mechanically launches research and review agents
+2. **Phase 3 (Implement):** Replace "Spawn code-reviewer subagent on staged changes" with "Run `/workflows:review` before merge" — this mechanically launches 9 reviewer agents in parallel
+3. **Phase 4 (Record):** Replace with "Run `/workflows:compound`" — this mechanically launches documentation agents
+4. **Keep** the subagent specs section as documentation of *what* reviewers check — these become inputs to compound engineering agent configuration, not instructions Claude interprets
+
+### What NOT to change
+
+- `conventions.md` and `preferences.md` — these are domain knowledge, not process. All agents read them.
+- `cli-style-validator` — mechanical enforcement that works. Compound engineering adds to it, doesn't replace it.
+- `[CHECKPOINT]` pattern — compound engineering doesn't have an equivalent. Keep it.
+- `current-task.json` structure — proven format. `/workflows:plan` can generate it.
+- The brainstorm phase — freeform discussion has no process to enforce.
+
+### Migration order
+
+1. **Now:** Use `/workflows:compound` after fixes (Phase 1 — already started)
+2. **Next:** Replace `workflow.md` Phase 4 (Record) with `/workflows:compound` — lowest risk, already working
+3. **Then:** Replace `workflow.md` Phase 3 review steps with `/workflows:review` — removes the most-skipped instructions
+4. **Finally:** Replace `workflow.md` Phase 2 plan step with `/workflows:plan` — most disruptive, do last
+
+Each step: update `workflow.md` to reference the command instead of the instruction, test it on a real feature, then move to the next.
+
+---
+
 ## Notes
 
 - Skip phases if they don't fit — this is a guide, not a mandate
