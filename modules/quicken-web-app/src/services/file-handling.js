@@ -8,6 +8,13 @@ import { Action } from '../types/action.js'
 const { loadEntitiesFromFile } = SqliteService
 
 const FILE_HANDLE_KEY = 'fileHandle'
+const TEST_FILE_PARAM = 'testFile'
+
+const P = {
+    // Check if running in test mode via URL param
+    // @sig isTestMode :: () -> Boolean
+    isTestMode: () => new URLSearchParams(window.location.search).has(TEST_FILE_PARAM),
+}
 
 const T = {
     // Stores handle and shows reopen banner if handle exists
@@ -17,6 +24,13 @@ const T = {
             setStoredHandle(handle)
             post(Action.SetShowReopenBanner(true))
         }
+    },
+
+    // Build URL for test fixture file (served from public/test-fixtures symlink)
+    // @sig toTestFixtureUrl :: String -> String
+    toTestFixtureUrl: fileName => {
+        const name = fileName.endsWith('.sqlite') ? fileName : `${fileName}.sqlite`
+        return `/test-fixtures/${name}`
     },
 }
 
@@ -91,6 +105,49 @@ const E = {
     openNewFile: async setStoredHandle => {
         post(Action.SetShowReopenBanner(false))
         await E.openFile(setStoredHandle)
+    },
+
+    // Loads entities from a URL (for test mode)
+    // @sig loadFromUrl :: String -> Promise<void>
+    loadFromUrl: async url => {
+        try {
+            post(Action.SetLoadingStatus('Fetching test file...'))
+            const response = await fetch(url)
+            if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`)
+            const blob = await response.blob()
+            const file = new File([blob], url.split('/').pop(), { type: 'application/x-sqlite3' })
+            const entities = await loadEntitiesFromFile(file, status => post(Action.SetLoadingStatus(status)))
+            post(Action.SetLoadingStatus('Initializing...'))
+            const { accounts, categories, lotAllocations, lots, prices, securities, splits, tags, transactions } =
+                entities
+            post(
+                Action.LoadFile(
+                    accounts,
+                    categories,
+                    securities,
+                    tags,
+                    splits,
+                    transactions,
+                    lots,
+                    lotAllocations,
+                    prices,
+                ),
+            )
+        } finally {
+            post(Action.SetLoadingStatus(null))
+        }
+    },
+
+    // Loads test file from URL param if in test mode (fire-and-forget for useEffect)
+    // @sig loadTestFileIfPresent :: () -> undefined
+    loadTestFileIfPresent: () => {
+        if (!P.isTestMode()) return undefined
+        const fileName = new URLSearchParams(window.location.search).get(TEST_FILE_PARAM)
+        if (!fileName) return undefined
+        const url = T.toTestFixtureUrl(fileName)
+        console.log(`[Test Mode] Loading fixture: ${url}`)
+        E.loadFromUrl(url)
+        return undefined
     },
 }
 

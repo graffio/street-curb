@@ -52,8 +52,8 @@ const dropTargetGroupId = state => state.dropTargetGroupId
 // ---------------------------------------------------------------------------------------------------------------------
 
 const accountName = (state, id) => accounts(state).get(id).name
-const securitySymbol = (state, id) => securities(state).get(id).symbol
-const securityName = (state, id) => securities(state).get(id).name
+const securitySymbol = (state, id) => (id ? securities(state).get(id).symbol : null)
+const securityName = (state, id) => (id ? securities(state).get(id).name : null)
 const categoryName = (state, id) => (id ? categories(state).get(id).name : 'Uncategorized')
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -216,12 +216,11 @@ const _filteredForInvestment = (state, viewId, accountId) => {
     return TransactionFilter.applyInvestment(filter(state, viewId), transactions, categories, securities, accountId)
 }
 
-const _sortedForDisplay = (state, viewId, accountId, tableLayoutId, columns) =>
-    applySort(
-        TableLayout.toSorting(state.tableLayouts.get(tableLayoutId)),
-        Transaction.toRegisterRows(T.filteredForInvestment(state, viewId, accountId)),
-        columns,
-    )
+const _sortedForDisplay = (state, viewId, accountId, tableLayoutId, columns) => {
+    const tableLayout = state.tableLayouts.get(tableLayoutId)
+    const rows = Transaction.toRegisterRows(T.filteredForInvestment(state, viewId, accountId))
+    return tableLayout ? applySort(TableLayout.toSorting(tableLayout), rows, columns) : rows
+}
 
 const _highlightedId = (state, viewId, accountId, tableLayoutId, columns) => {
     const matches = T.searchMatches(state, viewId)
@@ -231,12 +230,11 @@ const _highlightedId = (state, viewId, accountId, tableLayoutId, columns) => {
     return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
 }
 
-const _sortedForBankDisplay = (state, viewId, accountId, tableLayoutId, columns) =>
-    applySort(
-        TableLayout.toSorting(state.tableLayouts.get(tableLayoutId)),
-        Transaction.toRegisterRows(T.filteredForAccount(state, viewId, accountId)),
-        columns,
-    )
+const _sortedForBankDisplay = (state, viewId, accountId, tableLayoutId, columns) => {
+    const tableLayout = state.tableLayouts.get(tableLayoutId)
+    const rows = Transaction.toRegisterRows(T.filteredForAccount(state, viewId, accountId))
+    return tableLayout ? applySort(TableLayout.toSorting(tableLayout), rows, columns) : rows
+}
 
 const _highlightedIdForBank = (state, viewId, accountId, tableLayoutId, columns) => {
     const matches = T.searchMatches(state, viewId)
