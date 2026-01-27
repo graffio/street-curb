@@ -23,6 +23,7 @@ const P = {
     shouldSkip: fileName =>
         fileName.includes('.tap.') ||
         fileName.includes('.test.') ||
+        fileName.includes('.integration-test.') ||
         fileName.includes('.config.') ||
         fileName.includes('.type.'),
 

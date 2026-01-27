@@ -39,3 +39,7 @@ modules/curb-map/functions/dist/
 !schema.sql
 *.sqlite
 *.sqlite3
+
+# Test fixtures (generated on demand)
+modules/cli-qif-to-sqlite/test/fixtures/
+modules/quicken-web-app/public/test-fixtures
