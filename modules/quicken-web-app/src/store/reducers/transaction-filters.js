@@ -16,7 +16,7 @@ const createDefaultFilter = viewId =>
         viewId,
         T.toTodayIso(), // asOfDate
         { start: null, end: null }, // dateRange
-        'lastTwelveMonths', // dateRangeKey
+        'all', // dateRangeKey
         '', // filterQuery
         '', // searchQuery
         [], // selectedCategories
