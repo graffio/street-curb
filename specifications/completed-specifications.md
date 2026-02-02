@@ -834,3 +834,16 @@ This document summarizes the specifications that were previously archived in `sp
 - Renamed memoized helper pattern: `collectX` → `_x` (underscore indicates unmemoized implementation)
 - Line count: 348 → 288 lines (17% reduction)
 - Deferred: Splitting TransactionFilter into FilterCriteria + ViewUIState types
+
+## [quicken-web-app] FilterChips strict-react Compliance (2026-02-02)
+**Purpose:** Move all computation out of FilterChips.jsx into selectors and reducer to fix 13 --strict-react violations
+
+- Added 5 Action variants: ToggleAccountFilter, ToggleSecurityFilter, ToggleActionFilter, AddCategoryFilter, RemoveCategoryFilter
+- Added 5 reducer handlers in transaction-filters.js with shared `T.toggleItem` helper
+- Added 3 memoized selectors: UI.accountFilterData, UI.securityFilterData, UI.actionFilterData (return `{rows, badges, count}`)
+- Moved INVESTMENT_ACTIONS constant from FilterChips.jsx to selectors.js
+- Refactored FilterChips.jsx: components use rich selectors, toggle handlers are one-line `post(Action.X)` calls
+- Inlined all `.map()` callbacks (used `{/* prettier-ignore */}` to stay under sig-documentation threshold)
+- Fixed post.js exhaustive match (5 missing variants caused runtime crash — see docs/solutions/runtime-errors/)
+- Added filter chip smoke tests for all 4 page types (date, category, search, security, action, group-by, account chips)
+- 0 strict-react violations, 79/79 smoke tests pass

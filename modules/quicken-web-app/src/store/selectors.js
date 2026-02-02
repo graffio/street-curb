@@ -27,6 +27,28 @@ const { Keymap } = KeymapModule
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
+// prettier-ignore
+const INVESTMENT_ACTIONS = [
+    { id: 'Buy',      label: 'Buy' },
+    { id: 'Sell',     label: 'Sell' },
+    { id: 'Div',      label: 'Dividend' },
+    { id: 'ReinvDiv', label: 'Reinvest Dividend' },
+    { id: 'XIn',      label: 'Transfer In' },
+    { id: 'XOut',     label: 'Transfer Out' },
+    { id: 'ContribX', label: 'Contribution' },
+    { id: 'WithdrwX', label: 'Withdrawal' },
+    { id: 'ShtSell',  label: 'Short Sell' },
+    { id: 'CvrShrt',  label: 'Cover Short' },
+    { id: 'CGLong',   label: 'Long-Term Gain' },
+    { id: 'CGShort',  label: 'Short-Term Gain' },
+    { id: 'MargInt',  label: 'Margin Interest' },
+    { id: 'ShrsIn',   label: 'Shares In' },
+    { id: 'ShrsOut',  label: 'Shares Out' },
+    { id: 'StkSplit', label: 'Stock Split' },
+    { id: 'Exercise', label: 'Exercise Option' },
+    { id: 'Expire',   label: 'Expire Option' },
+]
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Pure state accessors
 // ---------------------------------------------------------------------------------------------------------------------
@@ -93,6 +115,37 @@ const UI = {
     columnOrder              : (state, viewId) => filter(state, viewId).columnOrder,
     sortMode                 : state => state.accountListSortMode,
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// UI derived selectors (pre-joined filter data for FilterChips)
+// ---------------------------------------------------------------------------------------------------------------------
+
+const _accountFilterData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedAccounts
+    const rows = Array.from(accounts(state)).map(({ id, name }) => ({ id, name, isSelected: selected.includes(id) }))
+    const badges = selected.map(id => ({ id, label: accounts(state).get(id)?.name || id }))
+    return { rows, badges, count: selected.length }
+}
+
+const _securityFilterData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedSecurities
+
+    // prettier-ignore
+    const rows = Array.from(securities(state)).map(({ id, symbol, name }) => ({ id, symbol, name, isSelected: selected.includes(id) }))
+    const badges = selected.map(id => ({ id, label: securities(state).get(id)?.symbol || id }))
+    return { rows, badges, count: selected.length }
+}
+
+const _actionFilterData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedInvestmentActions
+    const rows = INVESTMENT_ACTIONS.map(({ id, label }) => ({ id, label, isSelected: selected.includes(id) }))
+    const badges = selected.map(id => ({ id, label: INVESTMENT_ACTIONS.find(a => a.id === id)?.label || id }))
+    return { rows, badges, count: selected.length }
+}
+
+UI.accountFilterData = memoizeReduxStatePerKey(['accounts'], 'transactionFilters', _accountFilterData)
+UI.securityFilterData = memoizeReduxStatePerKey(['securities'], 'transactionFilters', _securityFilterData)
+UI.actionFilterData = memoizeReduxStatePerKey([], 'transactionFilters', _actionFilterData)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tab layout derived
