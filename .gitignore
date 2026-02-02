@@ -43,3 +43,4 @@ modules/curb-map/functions/dist/
 # Test fixtures (generated on demand)
 modules/cli-qif-to-sqlite/test/fixtures/
 modules/quicken-web-app/public/test-fixtures
+.worktrees
