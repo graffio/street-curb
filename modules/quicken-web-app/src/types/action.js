@@ -18,6 +18,21 @@
  *      changes: "Object"
  *  ResetTransactionFilters
  *      viewId: "String"
+ *  ToggleAccountFilter
+ *      viewId   : "String",
+ *      accountId: FieldTypes.accountId
+ *  ToggleSecurityFilter
+ *      viewId    : "String",
+ *      securityId: FieldTypes.securityId
+ *  ToggleActionFilter
+ *      viewId  : "String",
+ *      actionId: "String"
+ *  AddCategoryFilter
+ *      viewId  : "String",
+ *      category: "String"
+ *  RemoveCategoryFilter
+ *      viewId  : "String",
+ *      category: "String"
  *  SetTreeExpanded
  *      viewId  : "String",
  *      expanded: "Object"
@@ -110,6 +125,11 @@ Object.defineProperty(Action, '@@tagNames', {
         'LoadFile',
         'SetTransactionFilter',
         'ResetTransactionFilters',
+        'ToggleAccountFilter',
+        'ToggleSecurityFilter',
+        'ToggleActionFilter',
+        'AddCategoryFilter',
+        'RemoveCategoryFilter',
         'SetTreeExpanded',
         'SetColumnSizing',
         'SetColumnOrder',
@@ -164,6 +184,11 @@ const toString = {
     loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)}, ${R._toString(this.lots)}, ${R._toString(this.lotAllocations)}, ${R._toString(this.prices)})` },
     setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
     resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
+    toggleAccountFilter    : function () { return `Action.ToggleAccountFilter(${R._toString(this.viewId)}, ${R._toString(this.accountId)})` },
+    toggleSecurityFilter   : function () { return `Action.ToggleSecurityFilter(${R._toString(this.viewId)}, ${R._toString(this.securityId)})` },
+    toggleActionFilter     : function () { return `Action.ToggleActionFilter(${R._toString(this.viewId)}, ${R._toString(this.actionId)})` },
+    addCategoryFilter      : function () { return `Action.AddCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
+    removeCategoryFilter   : function () { return `Action.RemoveCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
     setTreeExpanded        : function () { return `Action.SetTreeExpanded(${R._toString(this.viewId)}, ${R._toString(this.expanded)})` },
     setColumnSizing        : function () { return `Action.SetColumnSizing(${R._toString(this.viewId)}, ${R._toString(this.sizing)})` },
     setColumnOrder         : function () { return `Action.SetColumnOrder(${R._toString(this.viewId)}, ${R._toString(this.order)})` },
@@ -199,6 +224,11 @@ const toJSON = {
     loadFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTransactionFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    toggleAccountFilter    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    toggleSecurityFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    toggleActionFilter     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    addCategoryFilter      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    removeCategoryFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTreeExpanded        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setColumnSizing        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setColumnOrder         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -306,6 +336,96 @@ const ResetTransactionFiltersConstructor = function ResetTransactionFilters(view
 }
 
 Action.ResetTransactionFilters = ResetTransactionFiltersConstructor
+
+/*
+ * Construct a Action.ToggleAccountFilter instance
+ * @sig ToggleAccountFilter :: (String, String) -> Action.ToggleAccountFilter
+ */
+const ToggleAccountFilterConstructor = function ToggleAccountFilter(viewId, accountId) {
+    const constructorName = 'Action.ToggleAccountFilter(viewId, accountId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
+
+    const result = Object.create(ToggleAccountFilterPrototype)
+    result.viewId = viewId
+    result.accountId = accountId
+    return result
+}
+
+Action.ToggleAccountFilter = ToggleAccountFilterConstructor
+
+/*
+ * Construct a Action.ToggleSecurityFilter instance
+ * @sig ToggleSecurityFilter :: (String, String) -> Action.ToggleSecurityFilter
+ */
+const ToggleSecurityFilterConstructor = function ToggleSecurityFilter(viewId, securityId) {
+    const constructorName = 'Action.ToggleSecurityFilter(viewId, securityId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateRegex(constructorName, FieldTypes.securityId, 'securityId', false, securityId)
+
+    const result = Object.create(ToggleSecurityFilterPrototype)
+    result.viewId = viewId
+    result.securityId = securityId
+    return result
+}
+
+Action.ToggleSecurityFilter = ToggleSecurityFilterConstructor
+
+/*
+ * Construct a Action.ToggleActionFilter instance
+ * @sig ToggleActionFilter :: (String, String) -> Action.ToggleActionFilter
+ */
+const ToggleActionFilterConstructor = function ToggleActionFilter(viewId, actionId) {
+    const constructorName = 'Action.ToggleActionFilter(viewId, actionId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'actionId', false, actionId)
+
+    const result = Object.create(ToggleActionFilterPrototype)
+    result.viewId = viewId
+    result.actionId = actionId
+    return result
+}
+
+Action.ToggleActionFilter = ToggleActionFilterConstructor
+
+/*
+ * Construct a Action.AddCategoryFilter instance
+ * @sig AddCategoryFilter :: (String, String) -> Action.AddCategoryFilter
+ */
+const AddCategoryFilterConstructor = function AddCategoryFilter(viewId, category) {
+    const constructorName = 'Action.AddCategoryFilter(viewId, category)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'category', false, category)
+
+    const result = Object.create(AddCategoryFilterPrototype)
+    result.viewId = viewId
+    result.category = category
+    return result
+}
+
+Action.AddCategoryFilter = AddCategoryFilterConstructor
+
+/*
+ * Construct a Action.RemoveCategoryFilter instance
+ * @sig RemoveCategoryFilter :: (String, String) -> Action.RemoveCategoryFilter
+ */
+const RemoveCategoryFilterConstructor = function RemoveCategoryFilter(viewId, category) {
+    const constructorName = 'Action.RemoveCategoryFilter(viewId, category)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'category', false, category)
+
+    const result = Object.create(RemoveCategoryFilterPrototype)
+    result.viewId = viewId
+    result.category = category
+    return result
+}
+
+Action.RemoveCategoryFilter = RemoveCategoryFilterConstructor
 
 /*
  * Construct a Action.SetTreeExpanded instance
@@ -726,6 +846,46 @@ const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
     constructor: { value: ResetTransactionFiltersConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const ToggleAccountFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ToggleAccountFilter', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.toggleAccountFilter, enumerable: false },
+    toJSON: { value: toJSON.toggleAccountFilter, enumerable: false },
+    constructor: { value: ToggleAccountFilterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const ToggleSecurityFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ToggleSecurityFilter', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.toggleSecurityFilter, enumerable: false },
+    toJSON: { value: toJSON.toggleSecurityFilter, enumerable: false },
+    constructor: { value: ToggleSecurityFilterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const ToggleActionFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ToggleActionFilter', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.toggleActionFilter, enumerable: false },
+    toJSON: { value: toJSON.toggleActionFilter, enumerable: false },
+    constructor: { value: ToggleActionFilterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const AddCategoryFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'AddCategoryFilter', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.addCategoryFilter, enumerable: false },
+    toJSON: { value: toJSON.addCategoryFilter, enumerable: false },
+    constructor: { value: AddCategoryFilterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const RemoveCategoryFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'RemoveCategoryFilter', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.removeCategoryFilter, enumerable: false },
+    toJSON: { value: toJSON.removeCategoryFilter, enumerable: false },
+    constructor: { value: RemoveCategoryFilterConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SetTreeExpandedPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetTreeExpanded', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -916,6 +1076,11 @@ const SetPageTitlePrototype = Object.create(ActionPrototype, {
 LoadFileConstructor.prototype = LoadFilePrototype
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
 ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
+ToggleAccountFilterConstructor.prototype = ToggleAccountFilterPrototype
+ToggleSecurityFilterConstructor.prototype = ToggleSecurityFilterPrototype
+ToggleActionFilterConstructor.prototype = ToggleActionFilterPrototype
+AddCategoryFilterConstructor.prototype = AddCategoryFilterPrototype
+RemoveCategoryFilterConstructor.prototype = RemoveCategoryFilterPrototype
 SetTreeExpandedConstructor.prototype = SetTreeExpandedPrototype
 SetColumnSizingConstructor.prototype = SetColumnSizingPrototype
 SetColumnOrderConstructor.prototype = SetColumnOrderPrototype
@@ -945,6 +1110,11 @@ SetPageTitleConstructor.prototype = SetPageTitlePrototype
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
 ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
+ToggleAccountFilterConstructor.is = val => val && val.constructor === ToggleAccountFilterConstructor
+ToggleSecurityFilterConstructor.is = val => val && val.constructor === ToggleSecurityFilterConstructor
+ToggleActionFilterConstructor.is = val => val && val.constructor === ToggleActionFilterConstructor
+AddCategoryFilterConstructor.is = val => val && val.constructor === AddCategoryFilterConstructor
+RemoveCategoryFilterConstructor.is = val => val && val.constructor === RemoveCategoryFilterConstructor
 SetTreeExpandedConstructor.is = val => val && val.constructor === SetTreeExpandedConstructor
 SetColumnSizingConstructor.is = val => val && val.constructor === SetColumnSizingConstructor
 SetColumnOrderConstructor.is = val => val && val.constructor === SetColumnOrderConstructor
@@ -974,6 +1144,11 @@ SetPageTitleConstructor.is = val => val && val.constructor === SetPageTitleConst
 LoadFileConstructor.toString = () => 'Action.LoadFile'
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
 ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
+ToggleAccountFilterConstructor.toString = () => 'Action.ToggleAccountFilter'
+ToggleSecurityFilterConstructor.toString = () => 'Action.ToggleSecurityFilter'
+ToggleActionFilterConstructor.toString = () => 'Action.ToggleActionFilter'
+AddCategoryFilterConstructor.toString = () => 'Action.AddCategoryFilter'
+RemoveCategoryFilterConstructor.toString = () => 'Action.RemoveCategoryFilter'
 SetTreeExpandedConstructor.toString = () => 'Action.SetTreeExpanded'
 SetColumnSizingConstructor.toString = () => 'Action.SetColumnSizing'
 SetColumnOrderConstructor.toString = () => 'Action.SetColumnOrder'
@@ -1006,6 +1181,11 @@ LoadFileConstructor._from = _input => {
 }
 SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
 ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
+ToggleAccountFilterConstructor._from = _input => Action.ToggleAccountFilter(_input.viewId, _input.accountId)
+ToggleSecurityFilterConstructor._from = _input => Action.ToggleSecurityFilter(_input.viewId, _input.securityId)
+ToggleActionFilterConstructor._from = _input => Action.ToggleActionFilter(_input.viewId, _input.actionId)
+AddCategoryFilterConstructor._from = _input => Action.AddCategoryFilter(_input.viewId, _input.category)
+RemoveCategoryFilterConstructor._from = _input => Action.RemoveCategoryFilter(_input.viewId, _input.category)
 SetTreeExpandedConstructor._from = _input => Action.SetTreeExpanded(_input.viewId, _input.expanded)
 SetColumnSizingConstructor._from = _input => Action.SetColumnSizing(_input.viewId, _input.sizing)
 SetColumnOrderConstructor._from = _input => Action.SetColumnOrder(_input.viewId, _input.order)
@@ -1038,6 +1218,11 @@ SetPageTitleConstructor._from = _input => Action.SetPageTitle(_input.title, _inp
 LoadFileConstructor.from = LoadFileConstructor._from
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
 ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
+ToggleAccountFilterConstructor.from = ToggleAccountFilterConstructor._from
+ToggleSecurityFilterConstructor.from = ToggleSecurityFilterConstructor._from
+ToggleActionFilterConstructor.from = ToggleActionFilterConstructor._from
+AddCategoryFilterConstructor.from = AddCategoryFilterConstructor._from
+RemoveCategoryFilterConstructor.from = RemoveCategoryFilterConstructor._from
 SetTreeExpandedConstructor.from = SetTreeExpandedConstructor._from
 SetColumnSizingConstructor.from = SetColumnSizingConstructor._from
 SetColumnOrderConstructor.from = SetColumnOrderConstructor._from
@@ -1115,6 +1300,21 @@ SetTransactionFilterConstructor.fromFirestore = SetTransactionFilterConstructor.
 
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
 ResetTransactionFiltersConstructor.fromFirestore = ResetTransactionFiltersConstructor._from
+
+ToggleAccountFilterConstructor.toFirestore = o => ({ ...o })
+ToggleAccountFilterConstructor.fromFirestore = ToggleAccountFilterConstructor._from
+
+ToggleSecurityFilterConstructor.toFirestore = o => ({ ...o })
+ToggleSecurityFilterConstructor.fromFirestore = ToggleSecurityFilterConstructor._from
+
+ToggleActionFilterConstructor.toFirestore = o => ({ ...o })
+ToggleActionFilterConstructor.fromFirestore = ToggleActionFilterConstructor._from
+
+AddCategoryFilterConstructor.toFirestore = o => ({ ...o })
+AddCategoryFilterConstructor.fromFirestore = AddCategoryFilterConstructor._from
+
+RemoveCategoryFilterConstructor.toFirestore = o => ({ ...o })
+RemoveCategoryFilterConstructor.fromFirestore = RemoveCategoryFilterConstructor._from
 
 SetTreeExpandedConstructor.toFirestore = o => ({ ...o })
 SetTreeExpandedConstructor.fromFirestore = SetTreeExpandedConstructor._from
@@ -1245,6 +1445,11 @@ Action.is = v => {
         LoadFile,
         SetTransactionFilter,
         ResetTransactionFilters,
+        ToggleAccountFilter,
+        ToggleSecurityFilter,
+        ToggleActionFilter,
+        AddCategoryFilter,
+        RemoveCategoryFilter,
         SetTreeExpanded,
         SetColumnSizing,
         SetColumnOrder,
@@ -1275,6 +1480,11 @@ Action.is = v => {
         constructor === LoadFile ||
         constructor === SetTransactionFilter ||
         constructor === ResetTransactionFilters ||
+        constructor === ToggleAccountFilter ||
+        constructor === ToggleSecurityFilter ||
+        constructor === ToggleActionFilter ||
+        constructor === AddCategoryFilter ||
+        constructor === RemoveCategoryFilter ||
         constructor === SetTreeExpanded ||
         constructor === SetColumnSizing ||
         constructor === SetColumnOrder ||
@@ -1320,6 +1530,11 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         LoadFile,
         SetTransactionFilter,
         ResetTransactionFilters,
+        ToggleAccountFilter,
+        ToggleSecurityFilter,
+        ToggleActionFilter,
+        AddCategoryFilter,
+        RemoveCategoryFilter,
         SetTreeExpanded,
         SetColumnSizing,
         SetColumnOrder,
@@ -1348,6 +1563,11 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'LoadFile') return LoadFile.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTransactionFilter') return SetTransactionFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ResetTransactionFilters') return ResetTransactionFilters.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ToggleAccountFilter') return ToggleAccountFilter.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ToggleSecurityFilter') return ToggleSecurityFilter.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ToggleActionFilter') return ToggleActionFilter.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'AddCategoryFilter') return AddCategoryFilter.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'RemoveCategoryFilter') return RemoveCategoryFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTreeExpanded') return SetTreeExpanded.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetColumnSizing') return SetColumnSizing.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetColumnOrder') return SetColumnOrder.fromFirestore(doc, decodeTimestamps)
