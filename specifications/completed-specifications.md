@@ -835,6 +835,21 @@ This document summarizes the specifications that were previously archived in `sp
 - Line count: 348 → 288 lines (17% reduction)
 - Deferred: Splitting TransactionFilter into FilterCriteria + ViewUIState types
 
+## [quicken-web-app] [infrastructure] Transfer Display Correction (2026-02-03)
+**Purpose:** Display transfers correctly in both bank and investment registers using real QIF two-sided transfer behavior
+
+- Fixed mock data generator to emit both sides of every transfer (matching real QIF export behavior)
+- Added `transferAccountId` to Transaction.Bank, Transaction.Investment, and Split type definitions
+- sqlite-service.js includes transferAccountId in all entity queries
+- CategoryCell shows `[Account Name]` bracket notation for transfers (Quicken convention)
+- ActionCell shows transfer account as subtitle below investment action label
+- Created `field-types.js` in quicken-type-definitions centralizing 8 entity ID regex patterns
+- All type definitions reference FieldTypes instead of inline regex; `transferAccountId` uses `{ pattern: FieldTypes.accountId, optional: true }`
+- Added split transactions to mock data (mortgage payment with principal/interest/escrow)
+- Removed abandoned counterpart generation approach and obsolete specification
+- Fixed pre-existing account selector test crashes (missing state fields)
+- Reclassified DB-querying functions from A/T to E cohesion group; added `query*` prefix to E patterns
+
 ## [quicken-web-app] FilterChips strict-react Compliance (2026-02-02)
 **Purpose:** Move all computation out of FilterChips.jsx into selectors and reducer to fix 13 --strict-react violations
 
