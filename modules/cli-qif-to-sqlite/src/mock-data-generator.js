@@ -355,7 +355,7 @@ const generateMockData = (seed = 12345) => {
         // Maybe generate short sale for a date
         // @sig maybeGenerateShortSale :: Date -> void
         const maybeGenerateShortSale = date => {
-            if (random() >= 0.05) return
+            if (random() >= 0.01) return
             const { symbol } = SECURITIES[Math.floor(random() * 4)]
             const price = roundPrice(symbol, BASE_PRICES[symbol] * (0.9 + random() * 0.2))
             const quantity = Math.ceil(random() * 5) + 1
