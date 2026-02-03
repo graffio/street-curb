@@ -23,6 +23,7 @@ export const Transaction = {
             number: 'String?',
             payee: 'String?',
             runningBalance: 'Number?',
+            transferAccountId: 'String?', // acc_<hash> or null
         },
         Investment: {
             // Required fields (alphabetical)
@@ -46,6 +47,7 @@ export const Transaction = {
             quantity: 'Number?',
             runningBalance: 'Number?',
             securityId: 'String?', // sec_<hash> or null
+            transferAccountId: 'String?', // acc_<hash> or null
         },
     },
 }

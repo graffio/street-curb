@@ -4,11 +4,12 @@
 /** {@link module:Split} */
 /*  Split generated from: modules/quicken-type-definitions/split.type.js
  *
- *  id           : "String",
- *  transactionId: /^txn_[a-f0-9]{12}(-\d+)?$/,
- *  categoryId   : "String?",
- *  amount       : "Number",
- *  memo         : "String?"
+ *  id               : "String",
+ *  transactionId    : /^txn_[a-f0-9]{12}(-\d+)?$/,
+ *  categoryId       : "String?",
+ *  amount           : "Number",
+ *  memo             : "String?",
+ *  transferAccountId: "String?"
  *
  */
 
@@ -22,17 +23,18 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Split instance
- * @sig Split :: (String, TransactionId, String?, Number, String?) -> Split
+ * @sig Split :: (String, TransactionId, String?, Number, String?, String?) -> Split
  *     TransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
  */
-const Split = function Split(id, transactionId, categoryId, amount, memo) {
-    const constructorName = 'Split(id, transactionId, categoryId, amount, memo)'
+const Split = function Split(id, transactionId, categoryId, amount, memo, transferAccountId) {
+    const constructorName = 'Split(id, transactionId, categoryId, amount, memo, transferAccountId)'
 
     R.validateString(constructorName, 'id', false, id)
     R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'transactionId', false, transactionId)
     R.validateString(constructorName, 'categoryId', true, categoryId)
     R.validateNumber(constructorName, 'amount', false, amount)
     R.validateString(constructorName, 'memo', true, memo)
+    R.validateString(constructorName, 'transferAccountId', true, transferAccountId)
 
     const result = Object.create(prototype)
     result.id = id
@@ -40,6 +42,7 @@ const Split = function Split(id, transactionId, categoryId, amount, memo) {
     if (categoryId != null) result.categoryId = categoryId
     result.amount = amount
     if (memo != null) result.memo = memo
+    if (transferAccountId != null) result.transferAccountId = transferAccountId
     return result
 }
 
@@ -58,7 +61,8 @@ const splitToString = function () {
         ${R._toString(this.transactionId)},
         ${R._toString(this.categoryId)},
         ${R._toString(this.amount)},
-        ${R._toString(this.memo)})`
+        ${R._toString(this.memo)},
+        ${R._toString(this.transferAccountId)})`
 }
 
 /*
@@ -92,8 +96,8 @@ Split.toString = () => 'Split'
 Split.is = v => v && v['@@typeName'] === 'Split'
 
 Split._from = _input => {
-    const { id, transactionId, categoryId, amount, memo } = _input
-    return Split(id, transactionId, categoryId, amount, memo)
+    const { id, transactionId, categoryId, amount, memo, transferAccountId } = _input
+    return Split(id, transactionId, categoryId, amount, memo, transferAccountId)
 }
 Split.from = Split._from
 

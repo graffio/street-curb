@@ -1,3 +1,6 @@
+// ABOUTME: Split type definition for transaction sub-items
+// ABOUTME: Represents individual lines within a split transaction
+
 export const Split = {
     name: 'Split',
     kind: 'tagged',
@@ -7,5 +10,6 @@ export const Split = {
         categoryId: 'String?',
         amount: 'Number',
         memo: 'String?',
+        transferAccountId: 'String?', // acc_<hash> or null
     },
 }
