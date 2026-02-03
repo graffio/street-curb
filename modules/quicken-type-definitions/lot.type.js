@@ -1,16 +1,21 @@
+// ABOUTME: Lot type definition for tax lot tracking
+// ABOUTME: Tracks purchase date, cost basis, and remaining quantity per security position
+
+import { FieldTypes } from './field-types.js'
+
 export const Lot = {
     name: 'Lot',
     kind: 'tagged',
     fields: {
-        accountId: /^acc_[a-f0-9]{12}$/,
+        accountId: FieldTypes.accountId,
         costBasis: 'Number',
         createdAt: 'String',
-        id: /^lot_[a-f0-9]{12}$/,
+        id: FieldTypes.lotId,
         purchaseDate: 'String',
         quantity: 'Number',
         remainingQuantity: 'Number',
-        securityId: /^sec_[a-f0-9]{12}$/,
-        createdByTransactionId: /^txn_[a-f0-9]{12}(-\d+)?$/,
+        securityId: FieldTypes.securityId,
+        createdByTransactionId: FieldTypes.transactionId,
         closedDate: 'String?',
     },
 }

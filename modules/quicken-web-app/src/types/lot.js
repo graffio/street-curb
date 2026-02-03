@@ -4,18 +4,20 @@
 /** {@link module:Lot} */
 /*  Lot generated from: modules/quicken-type-definitions/lot.type.js
  *
- *  accountId             : /^acc_[a-f0-9]{12}$/,
+ *  accountId             : FieldTypes.accountId,
  *  costBasis             : "Number",
  *  createdAt             : "String",
- *  id                    : /^lot_[a-f0-9]{12}$/,
+ *  id                    : FieldTypes.lotId,
  *  purchaseDate          : "String",
  *  quantity              : "Number",
  *  remainingQuantity     : "Number",
- *  securityId            : /^sec_[a-f0-9]{12}$/,
- *  createdByTransactionId: /^txn_[a-f0-9]{12}(-\d+)?$/,
+ *  securityId            : FieldTypes.securityId,
+ *  createdByTransactionId: FieldTypes.transactionId,
  *  closedDate            : "String?"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -27,11 +29,7 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Lot instance
- * @sig Lot :: (AccountId, Number, String, Id, String, Number, Number, SecurityId, CreatedByTransactionId, String?) -> Lot
- *     AccountId = /^acc_[a-f0-9]{12}$/
- *     Id = /^lot_[a-f0-9]{12}$/
- *     SecurityId = /^sec_[a-f0-9]{12}$/
- *     CreatedByTransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
+ * @sig Lot :: (String, Number, String, String, String, Number, Number, String, String, String?) -> Lot
  */
 const Lot = function Lot(
     accountId,
@@ -48,21 +46,15 @@ const Lot = function Lot(
     const constructorName =
         'Lot(accountId, costBasis, createdAt, id, purchaseDate, quantity, remainingQuantity, securityId, createdByTransactionId, closedDate)'
 
-    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
     R.validateNumber(constructorName, 'costBasis', false, costBasis)
     R.validateString(constructorName, 'createdAt', false, createdAt)
-    R.validateRegex(constructorName, /^lot_[a-f0-9]{12}$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.lotId, 'id', false, id)
     R.validateString(constructorName, 'purchaseDate', false, purchaseDate)
     R.validateNumber(constructorName, 'quantity', false, quantity)
     R.validateNumber(constructorName, 'remainingQuantity', false, remainingQuantity)
-    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
-    R.validateRegex(
-        constructorName,
-        /^txn_[a-f0-9]{12}(-\d+)?$/,
-        'createdByTransactionId',
-        false,
-        createdByTransactionId,
-    )
+    R.validateRegex(constructorName, FieldTypes.securityId, 'securityId', false, securityId)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'createdByTransactionId', false, createdByTransactionId)
     R.validateString(constructorName, 'closedDate', true, closedDate)
 
     const result = Object.create(prototype)

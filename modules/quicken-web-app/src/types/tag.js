@@ -4,12 +4,14 @@
 /** {@link module:Tag} */
 /*  Tag generated from: modules/quicken-type-definitions/tag.type.js
  *
- *  id         : /^tag_[a-f0-9]{12}$/,
+ *  id         : FieldTypes.tagId,
  *  name       : "String",
  *  color      : "String?",
  *  description: "String?"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -21,13 +23,12 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Tag instance
- * @sig Tag :: (Id, String, String?, String?) -> Tag
- *     Id = /^tag_[a-f0-9]{12}$/
+ * @sig Tag :: (String, String, String?, String?) -> Tag
  */
 const Tag = function Tag(id, name, color, description) {
     const constructorName = 'Tag(id, name, color, description)'
 
-    R.validateRegex(constructorName, /^tag_[a-f0-9]{12}$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.tagId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'color', true, color)
     R.validateString(constructorName, 'description', true, description)

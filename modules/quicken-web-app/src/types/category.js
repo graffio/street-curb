@@ -4,7 +4,7 @@
 /** {@link module:Category} */
 /*  Category generated from: modules/quicken-type-definitions/category.type.js
  *
- *  id              : /^cat_[a-f0-9]{12}$/,
+ *  id              : FieldTypes.categoryId,
  *  name            : "String",
  *  description     : "String?",
  *  budgetAmount    : "Number?",
@@ -13,6 +13,8 @@
  *  taxSchedule     : "String?"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -24,13 +26,12 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Category instance
- * @sig Category :: (Id, String, String?, Number?, Boolean?, Boolean?, String?) -> Category
- *     Id = /^cat_[a-f0-9]{12}$/
+ * @sig Category :: (String, String, String?, Number?, Boolean?, Boolean?, String?) -> Category
  */
 const Category = function Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule) {
     const constructorName = 'Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)'
 
-    R.validateRegex(constructorName, /^cat_[a-f0-9]{12}$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.categoryId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
     R.validateNumber(constructorName, 'budgetAmount', true, budgetAmount)

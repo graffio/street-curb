@@ -5,13 +5,15 @@
 /*  Split generated from: modules/quicken-type-definitions/split.type.js
  *
  *  id               : "String",
- *  transactionId    : /^txn_[a-f0-9]{12}(-\d+)?$/,
+ *  transactionId    : FieldTypes.transactionId,
  *  categoryId       : "String?",
  *  amount           : "Number",
  *  memo             : "String?",
- *  transferAccountId: "String?"
+ *  transferAccountId: FieldTypes.accountId
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -23,18 +25,17 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Split instance
- * @sig Split :: (String, TransactionId, String?, Number, String?, String?) -> Split
- *     TransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
+ * @sig Split :: (String, String, String?, Number, String?, String?) -> Split
  */
 const Split = function Split(id, transactionId, categoryId, amount, memo, transferAccountId) {
     const constructorName = 'Split(id, transactionId, categoryId, amount, memo, transferAccountId)'
 
     R.validateString(constructorName, 'id', false, id)
-    R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'transactionId', false, transactionId)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'transactionId', false, transactionId)
     R.validateString(constructorName, 'categoryId', true, categoryId)
     R.validateNumber(constructorName, 'amount', false, amount)
     R.validateString(constructorName, 'memo', true, memo)
-    R.validateString(constructorName, 'transferAccountId', true, transferAccountId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'transferAccountId', true, transferAccountId)
 
     const result = Object.create(prototype)
     result.id = id

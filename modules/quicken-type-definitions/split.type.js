@@ -1,15 +1,17 @@
 // ABOUTME: Split type definition for transaction sub-items
 // ABOUTME: Represents individual lines within a split transaction
 
+import { FieldTypes } from './field-types.js'
+
 export const Split = {
     name: 'Split',
     kind: 'tagged',
     fields: {
         id: 'String',
-        transactionId: /^txn_[a-f0-9]{12}(-\d+)?$/,
+        transactionId: FieldTypes.transactionId,
         categoryId: 'String?',
         amount: 'Number',
         memo: 'String?',
-        transferAccountId: 'String?', // acc_<hash> or null
+        transferAccountId: { pattern: FieldTypes.accountId, optional: true },
     },
 }

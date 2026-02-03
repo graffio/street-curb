@@ -4,9 +4,9 @@
 /** {@link module:Holding} */
 /*  Holding generated from: modules/quicken-type-definitions/holding.type.js
  *
- *  accountId                : /^acc_[a-f0-9]{12}$/,
+ *  accountId                : FieldTypes.accountId,
  *  accountName              : "String",
- *  securityId               : /^sec_[a-f0-9]{12}$/,
+ *  securityId               : FieldTypes.securityId,
  *  securityName             : "String",
  *  securitySymbol           : "String",
  *  securityType             : "String",
@@ -24,6 +24,8 @@
  *
  */
 
+import { FieldTypes } from './field-types.js'
+
 import * as R from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
@@ -34,9 +36,7 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Holding instance
- * @sig Holding :: (AccountId, String, SecurityId, String, String, String, String?, Number, Number, Number, Number, Number, Number, Number, Number, Number, Boolean) -> Holding
- *     AccountId = /^acc_[a-f0-9]{12}$/
- *     SecurityId = /^sec_[a-f0-9]{12}$/
+ * @sig Holding :: (String, String, String, String, String, String, String?, Number, Number, Number, Number, Number, Number, Number, Number, Number, Boolean) -> Holding
  */
 const Holding = function Holding(
     accountId,
@@ -60,9 +60,9 @@ const Holding = function Holding(
     const constructorName =
         'Holding(accountId, accountName, securityId, securityName, securitySymbol, securityType, securityGoal, quantity, costBasis, averageCostPerShare, quotePrice, marketValue, unrealizedGainLoss, unrealizedGainLossPercent, dayGainLoss, dayGainLossPercent, isStale)'
 
-    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
     R.validateString(constructorName, 'accountName', false, accountName)
-    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
+    R.validateRegex(constructorName, FieldTypes.securityId, 'securityId', false, securityId)
     R.validateString(constructorName, 'securityName', false, securityName)
     R.validateString(constructorName, 'securitySymbol', false, securitySymbol)
     R.validateString(constructorName, 'securityType', false, securityType)

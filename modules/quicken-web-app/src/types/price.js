@@ -4,12 +4,14 @@
 /** {@link module:Price} */
 /*  Price generated from: modules/quicken-type-definitions/price.type.js
  *
- *  id        : /^prc_[a-f0-9]{12}$/,
- *  securityId: /^sec_[a-f0-9]{12}$/,
+ *  id        : FieldTypes.priceId,
+ *  securityId: FieldTypes.securityId,
  *  date      : "String",
  *  price     : "Number"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -21,15 +23,13 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Price instance
- * @sig Price :: (Id, SecurityId, String, Number) -> Price
- *     Id = /^prc_[a-f0-9]{12}$/
- *     SecurityId = /^sec_[a-f0-9]{12}$/
+ * @sig Price :: (String, String, String, Number) -> Price
  */
 const Price = function Price(id, securityId, date, price) {
     const constructorName = 'Price(id, securityId, date, price)'
     R.validateArgumentLength(constructorName, 4, arguments)
-    R.validateRegex(constructorName, /^prc_[a-f0-9]{12}$/, 'id', false, id)
-    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'securityId', false, securityId)
+    R.validateRegex(constructorName, FieldTypes.priceId, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.securityId, 'securityId', false, securityId)
     R.validateString(constructorName, 'date', false, date)
     R.validateNumber(constructorName, 'price', false, price)
 

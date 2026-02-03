@@ -1,10 +1,15 @@
+// ABOUTME: LotAllocation type definition for lot-to-transaction mappings
+// ABOUTME: Records shares and cost basis allocated from a lot to a sell transaction
+
+import { FieldTypes } from './field-types.js'
+
 export const LotAllocation = {
     name: 'LotAllocation',
     kind: 'tagged',
     fields: {
-        id: /^la_[a-f0-9]{12}$/,
-        lotId: /^lot_[a-f0-9]{12}$/,
-        transactionId: /^txn_[a-f0-9]{12}(-\d+)?$/,
+        id: FieldTypes.lotAllocationId,
+        lotId: FieldTypes.lotId,
+        transactionId: FieldTypes.transactionId,
         sharesAllocated: 'Number',
         costBasisAllocated: 'Number',
         date: 'String',

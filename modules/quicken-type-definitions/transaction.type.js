@@ -2,6 +2,7 @@
 // ABOUTME: Includes filter predicates, enrichment helpers, and balance aggregations
 
 import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+import { FieldTypes } from './field-types.js'
 
 export const Transaction = {
     name: 'Transaction',
@@ -9,33 +10,33 @@ export const Transaction = {
     variants: {
         Bank: {
             // Required fields (alphabetical)
-            accountId: /^acc_[a-f0-9]{12}$/,
+            accountId: FieldTypes.accountId,
             amount: 'Number',
             date: 'String',
-            id: /^txn_[a-f0-9]{12}(-\d+)?$/,
+            id: FieldTypes.transactionId,
             transactionType: /^bank$/,
 
             // Optional fields (alphabetical)
             address: 'String?',
-            categoryId: 'String?', // cat_<hash> or null
+            categoryId: 'String?',
             cleared: 'String?',
             memo: 'String?',
             number: 'String?',
             payee: 'String?',
             runningBalance: 'Number?',
-            transferAccountId: 'String?', // acc_<hash> or null
+            transferAccountId: { pattern: FieldTypes.accountId, optional: true },
         },
         Investment: {
             // Required fields (alphabetical)
-            accountId: /^acc_[a-f0-9]{12}$/,
+            accountId: FieldTypes.accountId,
             date: 'String',
-            id: /^txn_[a-f0-9]{12}(-\d+)?$/,
+            id: FieldTypes.transactionId,
             transactionType: /^investment$/,
 
             // Optional fields (alphabetical)
             address: 'String?',
             amount: 'Number?',
-            categoryId: 'String?', // cat_<hash> or null
+            categoryId: 'String?',
             cleared: 'String?',
             commission: 'Number?',
 
@@ -46,8 +47,8 @@ export const Transaction = {
             price: 'Number?',
             quantity: 'Number?',
             runningBalance: 'Number?',
-            securityId: 'String?', // sec_<hash> or null
-            transferAccountId: 'String?', // acc_<hash> or null
+            securityId: 'String?',
+            transferAccountId: { pattern: FieldTypes.accountId, optional: true },
         },
     },
 }
