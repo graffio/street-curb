@@ -20,10 +20,10 @@ const PREFIXES = {
     LotAllocation: 'la_',
 }
 
-const T = {
+const E = {
     // Get or create cached prepared statement for a database
-    // @sig toCachedStatement :: (Database, String, String) -> Statement
-    toCachedStatement: (db, key, sql) => {
+    // @sig persistCachedStatement :: (Database, String, String) -> Statement
+    persistCachedStatement: (db, key, sql) => {
         if (!stmtCache.has(db)) stmtCache.set(db, {})
         const cache = stmtCache.get(db)
         if (!cache[key]) cache[key] = db.prepare(sql)
@@ -31,34 +31,34 @@ const T = {
     },
 
     // Get or create ID pool for a database
-    // @sig toIdPool :: Database -> {entityType: {nextId, maxId}}
-    toIdPool: db => {
+    // @sig persistIdPool :: Database -> {entityType: {nextId, maxId}}
+    persistIdPool: db => {
         if (!idPoolCache.has(db)) idPoolCache.set(db, {})
         return idPoolCache.get(db)
     },
 
     // Reserve a batch of IDs from counter table, returns {startId, endId}
-    // @sig toReservedIdBatch :: (Database, String, Number) -> {startId, endId}
-    toReservedIdBatch: (db, entityType, count) => {
-        const insertStmt = T.toCachedStatement(
+    // @sig persistReservedIdBatch :: (Database, String, Number) -> {startId, endId}
+    persistReservedIdBatch: (db, entityType, count) => {
+        const insertStmt = E.persistCachedStatement(
             db,
             'counterInsert',
             'INSERT OR IGNORE INTO stableIdCounters (entityType) VALUES (?)',
         )
         const updateSql =
             'UPDATE stableIdCounters SET nextId = nextId + ? WHERE entityType = ? RETURNING nextId - ? as startId'
-        const updateStmt = T.toCachedStatement(db, 'counterBatchUpdate', updateSql)
+        const updateStmt = E.persistCachedStatement(db, 'counterBatchUpdate', updateSql)
         insertStmt.run(entityType)
         const row = updateStmt.get(count, entityType, count)
         return { startId: row.startId, endId: row.startId + count - 1 }
     },
 
     // Get next ID using batch allocation (refills pool when empty)
-    // @sig toNextId :: (Database, String) -> Integer
-    toNextId: (db, entityType) => {
-        const pool = T.toIdPool(db)
+    // @sig queryNextId :: (Database, String) -> Integer
+    queryNextId: (db, entityType) => {
+        const pool = E.persistIdPool(db)
         if (!pool[entityType] || pool[entityType].nextId > pool[entityType].maxId) {
-            const { startId, endId } = T.toReservedIdBatch(db, entityType, BATCH_SIZE)
+            const { startId, endId } = E.persistReservedIdBatch(db, entityType, BATCH_SIZE)
             pool[entityType] = { nextId: startId, maxId: endId }
         }
         return pool[entityType].nextId++
@@ -71,14 +71,14 @@ const T = {
 const createStableId = (db, entityType) => {
     const prefix = PREFIXES[entityType]
     if (!prefix) throw new Error(`Unknown entity type: ${entityType}`)
-    const id = T.toNextId(db, entityType)
+    const id = E.queryNextId(db, entityType)
     return prefix + String(id).padStart(12, '0')
 }
 
 // Insert a stable identity record into the database
 // @sig insertStableIdentity :: (Database, {id, entityType, signature}) -> void
 const insertStableIdentity = (db, { id, entityType, signature }) => {
-    const stmt = T.toCachedStatement(
+    const stmt = E.persistCachedStatement(
         db,
         'insertIdentity',
         'INSERT INTO stableIdentities (id, entityType, signature) VALUES (?, ?, ?)',
@@ -90,7 +90,7 @@ const insertStableIdentity = (db, { id, entityType, signature }) => {
 // Only returns non-orphaned entities (use findBySignatureIncludingOrphaned for restore logic)
 // @sig findBySignature :: (Database, String, String) -> String | null
 const findBySignature = (db, entityType, signature) => {
-    const stmt = T.toCachedStatement(
+    const stmt = E.persistCachedStatement(
         db,
         'findActive',
         'SELECT id FROM stableIdentities WHERE entityType = ? AND signature = ? AND orphanedAt IS NULL',
@@ -102,7 +102,7 @@ const findBySignature = (db, entityType, signature) => {
 // Lookup stable identity including orphaned ones, returns {id, orphanedAt} or null
 // @sig findBySignatureIncludingOrphaned :: (Database, String, String) -> {id, orphanedAt} | null
 const findBySignatureIncludingOrphaned = (db, entityType, signature) => {
-    const stmt = T.toCachedStatement(
+    const stmt = E.persistCachedStatement(
         db,
         'findAll',
         'SELECT id, orphanedAt FROM stableIdentities WHERE entityType = ? AND signature = ?',
@@ -114,7 +114,7 @@ const findBySignatureIncludingOrphaned = (db, entityType, signature) => {
 // Mark a stable identity as orphaned with current timestamp
 // @sig markOrphaned :: (Database, String) -> void
 const markOrphaned = (db, stableId) => {
-    const stmt = T.toCachedStatement(
+    const stmt = E.persistCachedStatement(
         db,
         'markOrphaned',
         "UPDATE stableIdentities SET orphanedAt = datetime('now') WHERE id = ?",
@@ -125,7 +125,7 @@ const markOrphaned = (db, stableId) => {
 // Restore an orphaned entity (clear orphanedAt, update lastModifiedAt)
 // @sig restoreEntity :: (Database, String) -> void
 const restoreEntity = (db, stableId) => {
-    const stmt = T.toCachedStatement(
+    const stmt = E.persistCachedStatement(
         db,
         'restore',
         "UPDATE stableIdentities SET orphanedAt = NULL, lastModifiedAt = datetime('now') WHERE id = ?",
@@ -136,7 +136,7 @@ const restoreEntity = (db, stableId) => {
 // Update lastModifiedAt when entity content changes
 // @sig touchEntity :: (Database, String) -> void
 const touchEntity = (db, stableId) => {
-    const stmt = T.toCachedStatement(
+    const stmt = E.persistCachedStatement(
         db,
         'touch',
         "UPDATE stableIdentities SET lastModifiedAt = datetime('now') WHERE id = ?",
@@ -149,7 +149,7 @@ const touchEntity = (db, stableId) => {
 const findOrphans = (db, entityType) => {
     const cols = 'id, entityType, signature, orphanedAt'
     const sql = `SELECT ${cols} FROM stableIdentities WHERE entityType = ? AND orphanedAt IS NOT NULL`
-    const stmt = T.toCachedStatement(db, 'findOrphans', sql)
+    const stmt = E.persistCachedStatement(db, 'findOrphans', sql)
     return stmt.all(entityType)
 }
 

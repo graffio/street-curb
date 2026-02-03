@@ -1,10 +1,10 @@
 // ABOUTME: Creates placeholder securities and categories for orphaned references
 // ABOUTME: Ensures all referenced IDs exist after import for referential integrity
 
-const A = {
+const E = {
     // Finds categoryIds referenced by transactions/splits that don't exist in categories table
-    // @sig collectMissingCategoryIds :: Database -> [String]
-    collectMissingCategoryIds: db => {
+    // @sig queryMissingCategoryIds :: Database -> [String]
+    queryMissingCategoryIds: db => {
         const sql = `
             SELECT DISTINCT categoryId FROM (
                 SELECT categoryId FROM transactions
@@ -22,8 +22,8 @@ const A = {
     },
 
     // Finds securityIds referenced by transactions/prices/lots that don't exist in securities table
-    // @sig collectMissingSecurityIds :: Database -> [String]
-    collectMissingSecurityIds: db => {
+    // @sig queryMissingSecurityIds :: Database -> [String]
+    queryMissingSecurityIds: db => {
         const sql = `
             SELECT DISTINCT securityId FROM (
                 SELECT securityId FROM transactions
@@ -42,9 +42,7 @@ const A = {
             .all()
             .map(row => row.securityId)
     },
-}
 
-const E = {
     // Creates a placeholder category with the given ID
     // @sig createPlaceholderCategory :: (Database, String, ChangeTracker?) -> void
     createPlaceholderCategory: (db, categoryId, changeTracker) => {
@@ -68,8 +66,8 @@ const E = {
 // Should be called after all data is imported but before orphan marking
 // @sig createPlaceholders :: (Database, ChangeTracker?) -> { categories: Number, securities: Number }
 const createPlaceholders = (db, changeTracker) => {
-    const missingCategoryIds = A.collectMissingCategoryIds(db)
-    const missingSecurityIds = A.collectMissingSecurityIds(db)
+    const missingCategoryIds = E.queryMissingCategoryIds(db)
+    const missingSecurityIds = E.queryMissingSecurityIds(db)
 
     missingCategoryIds.forEach(id => E.createPlaceholderCategory(db, id, changeTracker))
     missingSecurityIds.forEach(id => E.createPlaceholderSecurity(db, id, changeTracker))

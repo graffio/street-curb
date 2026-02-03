@@ -15,10 +15,10 @@ const T = {
     toSummary: counts => JSON.stringify(counts),
 }
 
-const A = {
+const E = {
     // Get import IDs to prune (older than retention count)
-    // @sig collectOldImportIds :: Database -> [String]
-    collectOldImportIds: db => {
+    // @sig queryOldImportIds :: Database -> [String]
+    queryOldImportIds: db => {
         const sql = `
             SELECT importId FROM importHistory
             ORDER BY importedAt DESC
@@ -29,9 +29,7 @@ const A = {
             .all(HISTORY_RETENTION_COUNT)
             .map(row => row.importId)
     },
-}
 
-const E = {
     // Record a new import in history
     // @sig recordImport :: (Database, String, Object) -> String
     recordImport: (db, qifContent, changeCounts) => {
@@ -73,7 +71,7 @@ const E = {
     // Remove old imports and their changes beyond retention count
     // @sig pruneOldHistory :: Database -> Number
     pruneOldHistory: db => {
-        const oldIds = A.collectOldImportIds(db)
+        const oldIds = E.queryOldImportIds(db)
         if (oldIds.length === 0) return 0
 
         const placeholders = oldIds.map(() => '?').join(', ')
@@ -100,6 +98,6 @@ const finalizeImportHistory = (db, qifContent, changeCounts, changes) => {
     return importId
 }
 
-const ImportHistory = { finalizeImportHistory, T, A, E, HISTORY_RETENTION_COUNT }
+const ImportHistory = { finalizeImportHistory, T, E, HISTORY_RETENTION_COUNT }
 
 export { ImportHistory }

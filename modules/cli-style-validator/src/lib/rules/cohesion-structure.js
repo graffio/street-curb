@@ -15,7 +15,7 @@ const COHESION_PATTERNS = {
     F: /^(create|make|build)[A-Z]/,
     V: /^(check|validate)[A-Z]/,
     A: /^(collect|count|gather|find|process)[A-Z]/,
-    E: /^(persist|handle|dispatch|emit|send)[A-Z]/,
+    E: /^(persist|handle|dispatch|emit|send|query)[A-Z]/,
 }
 
 // Vague prefixes that should be replaced with more specific names
