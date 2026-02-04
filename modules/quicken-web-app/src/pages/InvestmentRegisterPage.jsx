@@ -119,7 +119,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
     const allTableLayouts = useSelector(S.tableLayouts)
-    const accountTransactions = useSelector(state => S.Transactions.filteredForAccount(state, viewId, accountId))
+    const allAccountTransactions = useSelector(state => S.Transactions.forAccount(state, viewId, accountId))
     const investmentFiltered = useSelector(state => S.Transactions.filteredForInvestment(state, viewId, accountId))
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId))
     const selectedSecurities = useSelector(state => S.UI.selectedSecurities(state, viewId))
@@ -157,7 +157,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const isActionsActive = selectedInvestmentActions.length > 0
     const isTextActive = filterQuery?.length > 0
     const { length: filteredCount } = investmentFiltered
-    const { length: totalCount } = accountTransactions
+    const { length: totalCount } = allAccountTransactions
     const isFiltering = filteredCount < totalCount || isDateActive || isTextActive
 
     // Build detail lines for each filter chip

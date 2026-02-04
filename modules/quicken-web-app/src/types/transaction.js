@@ -38,7 +38,13 @@
  *
  */
 
-import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+import {
+    anyFieldContains,
+    containsIgnoreCase,
+    convertSlashToIso,
+    dateToDateParts,
+    formatDateString,
+} from '@graffio/functional'
 import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
@@ -447,10 +453,11 @@ Transaction.matchesText = (query, categories, securities) => txn => {
 }
 
 Transaction.isInDateRange = dateRange => txn => {
+    const toDateStr = d => convertSlashToIso(formatDateString(dateToDateParts(d)))
     const { start, end } = dateRange
     if (!start && !end) return true
-    const startStr = start ? start.toISOString().slice(0, 10) : null
-    const endStr = end ? end.toISOString().slice(0, 10) : null
+    const startStr = start ? toDateStr(start) : null
+    const endStr = end ? toDateStr(end) : null
     if (startStr && txn.date < startStr) return false
     if (endStr && txn.date > endStr) return false
     return true

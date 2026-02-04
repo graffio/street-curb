@@ -261,6 +261,8 @@ const _searchMatches = (state, viewId) =>
 
 const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, viewId), state.categories, state.accounts)
 
+const _forAccount = (state, _viewId, accountId) => state.transactions.filter(Transaction.isInAccount(accountId))
+
 const _filteredForAccount = (state, viewId, accountId) =>
     T.filtered(state, viewId).filter(Transaction.isInAccount(accountId))
 
@@ -300,6 +302,7 @@ const _highlightedIdForBank = (state, viewId, accountId, tableLayoutId, columns)
 const T= {
     enriched             : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'                  ], 'transactionFilters', _enriched),
     filtered             : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filtered),
+    forAccount           : memoizeReduxStatePerKey(['transactions'                                              ], 'transactionFilters', _forAccount),
     filteredForAccount   : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForAccount,),
     filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForInvestment,),
     highlightedId        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _highlightedId,),

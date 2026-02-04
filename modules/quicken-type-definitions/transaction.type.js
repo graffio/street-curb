@@ -1,7 +1,13 @@
 // ABOUTME: Transaction type definition for bank and investment transactions
 // ABOUTME: Includes filter predicates, enrichment helpers, and balance aggregations
 
-import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+import {
+    anyFieldContains,
+    containsIgnoreCase,
+    convertSlashToIso,
+    dateToDateParts,
+    formatDateString,
+} from '@graffio/functional'
 import { FieldTypes } from './field-types.js'
 
 export const Transaction = {
@@ -119,10 +125,11 @@ Transaction.matchesText = (query, categories, securities) => txn => {
 // DateRange = { start: Date?, end: Date? }
 // @sig isInDateRange :: DateRange -> Transaction -> Boolean
 Transaction.isInDateRange = dateRange => txn => {
+    const toDateStr = d => convertSlashToIso(formatDateString(dateToDateParts(d)))
     const { start, end } = dateRange
     if (!start && !end) return true
-    const startStr = start ? start.toISOString().slice(0, 10) : null
-    const endStr = end ? end.toISOString().slice(0, 10) : null
+    const startStr = start ? toDateStr(start) : null
+    const endStr = end ? toDateStr(end) : null
     if (startStr && txn.date < startStr) return false
     if (endStr && txn.date > endStr) return false
     return true
