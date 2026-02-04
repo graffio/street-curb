@@ -34,6 +34,7 @@ import {
 } from '@radix-ui/themes'
 
 import { CategorySelector } from './components/CategorySelector.jsx'
+import { FilterChipPopover } from './components/FilterChipPopover.jsx'
 import { DataTable } from './components/DataTable.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { FilePickerButton } from './components/FilePickerButton.jsx'
@@ -78,6 +79,7 @@ export {
 
     // ours
     CategorySelector,
+    FilterChipPopover,
     DataTable,
     DateRangePicker,
     Dialog,

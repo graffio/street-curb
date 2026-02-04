@@ -118,6 +118,8 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         SetTreeExpanded        : () => TransactionFilters.setTreeExpanded(state, action),
         SetColumnSizing        : () => TransactionFilters.setColumnSizing(state, action),
         SetColumnOrder         : () => TransactionFilters.setColumnOrder(state, action),
+        SetFilterPopoverOpen   : () => TransactionFilters.setFilterPopoverOpen(state, action),
+        SetFilterPopoverSearch : () => TransactionFilters.setFilterPopoverSearch(state, action),
 
         // Tab layout actions
         OpenView          : () => openView(state, action),

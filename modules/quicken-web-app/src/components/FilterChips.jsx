@@ -7,6 +7,7 @@ import {
     calculateDateRange,
     CategorySelector,
     Checkbox,
+    FilterChipPopover,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
@@ -16,7 +17,8 @@ import {
     TextField,
 } from '@graffio/design-system'
 import { endOfDay } from '@graffio/functional'
-import React, { useRef } from 'react'
+import { KeymapModule } from '@graffio/keymap'
+import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
@@ -196,54 +198,69 @@ const DateRangeOption = ({ option, selectedKey, onSelect }) => {
 // AccountFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Account filter chip with inline account multi-select popover
+// Account filter chip with keyboard-navigable popover and search — fully controlled via Redux
 // @sig AccountFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const AccountFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
     const handleToggle = accountId => post(Action.ToggleAccountFilter(viewId, accountId))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
+
+    // Creates and registers keymap when popover is open, unregisters on cleanup
+    // @sig keymapLifecycleEffect :: () -> (() -> void)?
+    const keymapLifecycleEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Account Filter', [
+            { description: 'Move down', keys: ['ArrowDown'], action: handleMoveDown },
+            { description: 'Move up', keys: ['ArrowUp'], action: handleMoveUp },
+            { description: 'Toggle', keys: ['Enter'], action: handleToggleHighlighted },
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
+        post(Action.RegisterKeymap(keymap))
+        return () => post(Action.UnregisterKeymap(KEYMAP_ID))
     }
 
-    const { rows, badges, count } = useSelector(state => S.UI.accountFilterData(state, viewId))
-    const triggerStyle = F.makeChipTriggerStyle(175, isActive)
-    const label = count > 0 ? `${count} selected` : 'All'
+    const KEYMAP_ID = `${viewId}_accounts`
+    const POPOVER_ID = 'accounts'
+    const { badges, selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
+
+    // prettier-ignore
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex,
+        highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
+
+    useEffect(keymapLifecycleEffect, [isOpen, KEYMAP_ID, nextHighlightIndex, prevHighlightIndex, highlightedItemId])
 
     return (
-        <Popover.Root>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Accounts: {label}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 250 }}>
-                {count > 0 && (
-                    <Flex wrap="wrap" gap="1" mb="2">
-                        {badges.map(({ id, label }) => (
-                            <SelectedBadge key={id} id={id} label={label} onRemove={handleToggle} />
-                        ))}
-                    </Flex>
-                )}
-                <ScrollArea style={{ maxHeight: 200 }}>
-                    {rows.map(({ id, name, isSelected }) => (
-                        <CheckboxRow key={id} id={id} label={name} isSelected={isSelected} onToggle={handleToggle} />
-                    ))}
-                    {rows.length === 0 && (
-                        <Text size="2" color="gray">
-                            No accounts available
-                        </Text>
-                    )}
-                </ScrollArea>
-            </Popover.Content>
-        </Popover.Root>
+        <FilterChipPopover
+            label="Accounts"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
+            width={175}
+            isActive={isActive}
+            onSearchChange={handleSearchChange}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 

@@ -1,7 +1,7 @@
 // ABOUTME: Hierarchical category filtering component with search
 // ABOUTME: Allows users to select categories with incremental search and keyboard navigation
 
-import { containsIgnoreCase, LookupTable } from '@graffio/functional'
+import { containsIgnoreCase } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { Badge, Box, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
@@ -16,28 +16,6 @@ const T = {
         borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
         backgroundColor: isHighlighted ? 'var(--accent-4)' : isSelected ? 'var(--accent-3)' : 'transparent',
     }),
-}
-
-const F = {
-    // Creates keymap with navigation intents for category selector dropdown
-    // @sig createCategorySelectorKeymap :: (String, String, Object) -> Keymap
-    createCategorySelectorKeymap: (keymapId, keymapName, handlers) => {
-        const { Intent, Keymap } = KeymapModule
-        const { onDown, onUp, onEnter, onEscape } = handlers
-
-        const intents = LookupTable(
-            [
-                Intent('Move down', ['ArrowDown'], onDown),
-                Intent('Move up', ['ArrowUp'], onUp),
-                Intent('Toggle', ['Enter'], onEnter),
-                Intent('Dismiss', ['Escape'], onEscape),
-            ],
-            Intent,
-            'description',
-        )
-
-        return Keymap(keymapId, keymapName, 10, false, null, intents)
-    },
 }
 
 const E = {
@@ -139,12 +117,12 @@ const CategoryDropdown = ({
     // @sig createKeymapMemo :: () -> Keymap?
     const createKeymapMemo = () => {
         if (!isOpen || !onRegisterKeymap || !keymapId) return null
-        return F.createCategorySelectorKeymap(keymapId, keymapName, {
-            onDown: moveDown,
-            onUp: moveUp,
-            onEnter: toggleCategory,
-            onEscape: dismiss,
-        })
+        return KeymapModule.fromBindings(keymapId, keymapName, [
+            { description: 'Move down', keys: ['ArrowDown'], action: moveDown },
+            { description: 'Move up', keys: ['ArrowUp'], action: moveUp },
+            { description: 'Toggle', keys: ['Enter'], action: toggleCategory },
+            { description: 'Dismiss', keys: ['Escape'], action: dismiss },
+        ])
     }
 
     const keymapRegistrationEffect = () => {

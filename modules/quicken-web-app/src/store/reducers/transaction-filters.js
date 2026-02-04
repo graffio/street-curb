@@ -35,6 +35,9 @@ const createDefaultFilter = viewId =>
         {}, // treeExpansion
         {}, // columnSizing
         [], // columnOrder
+        null, // filterPopoverId
+        '', // filterPopoverSearch
+        0, // filterPopoverHighlight
     )
 
 // Merges partial filter changes into transaction filter state for a specific view
@@ -155,6 +158,33 @@ const removeCategoryFilter = (state, action) => {
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
+// Opens/closes a filter popover, resetting search and highlight
+// @sig setFilterPopoverOpen :: (State, Action.SetFilterPopoverOpen) -> State
+const setFilterPopoverOpen = (state, action) => {
+    const { viewId, popoverId } = action
+    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
+    const updated = TransactionFilter.from({
+        ...existing,
+        filterPopoverId: popoverId,
+        filterPopoverSearch: '',
+        filterPopoverHighlight: 0,
+    })
+    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
+}
+
+// Updates filter popover search text, resetting highlight to first item
+// @sig setFilterPopoverSearch :: (State, Action.SetFilterPopoverSearch) -> State
+const setFilterPopoverSearch = (state, action) => {
+    const { viewId, searchText } = action
+    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
+    const updated = TransactionFilter.from({ ...existing, filterPopoverSearch: searchText, filterPopoverHighlight: 0 })
+    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
+}
+
 const TransactionFilters = {
     addCategoryFilter,
     createDefaultFilter,
@@ -162,6 +192,8 @@ const TransactionFilters = {
     resetTransactionFilters,
     setColumnOrder,
     setColumnSizing,
+    setFilterPopoverOpen,
+    setFilterPopoverSearch,
     setTransactionFilter,
     setTreeExpanded,
     toggleAccountFilter,

@@ -32,7 +32,6 @@
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex } from '@radix-ui/themes'
 import {
@@ -67,44 +66,6 @@ const T = {
             : currentIndex <= 0
               ? ids.length - 1
               : currentIndex - 1
-    },
-}
-
-const F = {
-    // Creates a DataTable keymap with navigation intents
-    // @sig createDataTableKeymap :: (String, String, String, Number, Function, Function?, String?, [String]?, [Row])
-    //                            -> Keymap
-    createDataTableKeymap: (
-        keymapId,
-        activeViewId,
-        keymapName,
-        priority,
-        onHighlightChange,
-        onEscape,
-        highlightedId,
-        focusableIds,
-        rows,
-    ) => {
-        const { Intent, Keymap } = KeymapModule
-
-        const navigateAction = direction => () => {
-            const ids = T.toNavigableIds(focusableIds, rows)
-            if (ids.length === 0) return
-            const nextIndex = T.toNextIndex(direction, ids, highlightedId)
-            onHighlightChange(ids[nextIndex])
-        }
-
-        const intents = LookupTable(
-            [
-                Intent('Move down', ['ArrowDown'], navigateAction('ArrowDown')),
-                Intent('Move up', ['ArrowUp'], navigateAction('ArrowUp')),
-                Intent('Dismiss', ['Escape'], () => onEscape?.()),
-            ],
-            Intent,
-            'description',
-        )
-
-        return Keymap(keymapId, keymapName, priority, false, activeViewId, intents)
     },
 }
 
@@ -482,17 +443,23 @@ const DataTable = ({
     // Keymap registration for keyboard shortcuts appearing in KeymapDrawer
     // @sig createKeymapMemo :: () -> Keymap?
     const createKeymapMemo = () => {
+        const navigateAction = direction => () => {
+            const ids = T.toNavigableIds(focusableIds, rows)
+            if (ids.length === 0) return
+            const nextIndex = T.toNextIndex(direction, ids, highlightedId)
+            onHighlightChange(ids[nextIndex])
+        }
+
         if (!enableKeyboardNav || !onRegisterKeymap || !keymapId) return null
-        return F.createDataTableKeymap(
+        return KeymapModule.fromBindings(
             keymapId,
-            keymapActiveViewId ?? keymapId,
             keymapName,
-            keymapPriority,
-            onHighlightChange,
-            onEscape,
-            highlightedId,
-            focusableIds,
-            rows,
+            [
+                { description: 'Move down', keys: ['ArrowDown'], action: navigateAction('ArrowDown') },
+                { description: 'Move up', keys: ['ArrowUp'], action: navigateAction('ArrowUp') },
+                { description: 'Dismiss', keys: ['Escape'], action: () => onEscape?.() },
+            ],
+            { priority: keymapPriority, activeForViewId: keymapActiveViewId ?? keymapId },
         )
     }
 

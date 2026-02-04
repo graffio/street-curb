@@ -1,0 +1,94 @@
+{
+    "feature": "FilterChipPopover + Account Search",
+    "goal": "Build a keyboard-navigable FilterChipPopover design system component (multi-select only) and migrate AccountFilterChip to use it with search, so users with many accounts can find them by name",
+    "templates_used": ["implement-feature.md", "commit-changes.md"],
+    "steps": [
+        {
+            "step": 1,
+            "action": "[CHECKPOINT] Review FilterChipPopover component API design. Key decisions: (a) Should the component own the Popover.Root/Trigger/Content or just the navigable content inside? (b) Should search filtering live inside the component or be passed as a prop? (c) How does the component know the popover is open for keymap lifecycle — controlled Popover.Root with explicit open/onOpenChange state? (d) Phase 1 is multi-select only (YAGNI — single-select added in Phase 3). Present options and get approval.",
+            "done": false
+        },
+        {
+            "step": 2,
+            "action": "Run complexity review on modules/quicken-web-app/src/components/FilterChips.jsx (760 lines). Determine: (a) budget headroom for modifications, (b) should shared helpers (CheckboxRow, SelectedBadge, SelectableOption) move into FilterChipPopover or stay in FilterChips.jsx, (c) simplification opportunities. Feed findings into step 5 scope.",
+            "done": false
+        },
+        {
+            "step": 3,
+            "action": "Write TAP tests for FilterChipPopover pure logic only (no React rendering). Test the extractable functions: (a) keymap factory — creates keymap with correct intents (ArrowDown, ArrowUp, Enter, Escape), (b) item filtering — given items and search text, returns matching items via case-insensitive containment, (c) index wrapping — arrow down from last item wraps to 0, arrow up from 0 wraps to last. Test file: modules/design-system/src/components/filter-chip-popover.tap.js",
+            "done": false
+        },
+        {
+            "step": 4,
+            "action": "Run test (yarn tap:file modules/design-system/src/components/filter-chip-popover.tap.js) to confirm it fails as expected.",
+            "done": false
+        },
+        {
+            "step": 5,
+            "action": "Implement FilterChipPopover component in modules/design-system/src/components/FilterChipPopover.jsx. Follow CategorySelector as reference pattern for keyboard navigation (highlighted index, keymap registration via useMemo+useEffect, scrollIntoView). Use controlled Popover.Root (open/onOpenChange) so the component knows when to register/unregister keymaps. Multi-select mode only for Phase 1. Extract pure logic (keymap factory, item filtering, index wrapping) into P/T/F cohesion groups so TAP tests can import them. Match conventions.md structure.",
+            "done": false
+        },
+        { "step": 6, "action": "Run TAP test to confirm pure logic tests pass.", "done": false },
+        {
+            "step": 7,
+            "action": "Run style validator on FilterChipPopover.jsx, fix violations before proceeding.",
+            "done": false
+        },
+        { "step": 8, "action": "Export FilterChipPopover from modules/design-system/src/index.js.", "done": false },
+        { "step": 9, "action": "Run style validator on index.js, fix violations before proceeding.", "done": false },
+        {
+            "step": 10,
+            "action": "git add FilterChipPopover.jsx, filter-chip-popover.tap.js, index.js and commit. Follow commit-changes.md format: problem/solution/impact.",
+            "done": false
+        },
+        {
+            "step": 11,
+            "action": "Migrate AccountFilterChip in FilterChips.jsx to use FilterChipPopover. Replace manual Popover.Root/Trigger/Content with FilterChipPopover, passing accounts as items ({ id, label: name }). This adds search input and keyboard navigation. Fix defensive coding violation: change accounts.get(id)?.name || id to accounts.get(id).name (fail-fast). If complexity review (step 2) indicated shared helpers should move, do so here.",
+            "done": false
+        },
+        {
+            "step": 12,
+            "action": "Run style validator on FilterChips.jsx, fix violations before proceeding.",
+            "done": false
+        },
+        {
+            "step": 13,
+            "action": "Run simplicity review on FilterChipPopover.jsx (new export) to verify the abstraction earns its existence.",
+            "done": false
+        },
+        {
+            "step": 14,
+            "action": "Spawn code-reviewer subagent on staged changes. Address any blocking issues.",
+            "done": false
+        },
+        { "step": 15, "action": "git add FilterChips.jsx and commit. Follow commit-changes.md format.", "done": false },
+        {
+            "step": 16,
+            "action": "Add agent-browser smoke test for AccountFilterChip keyboard interactions: open account chip popover, type search text to filter, use arrow keys to navigate, press Enter to toggle selection, press Escape to dismiss. Verify selection count updates. Test file: modules/quicken-web-app/test/smoke/keyboard-filter-chip.integration-test.js",
+            "done": false
+        },
+        {
+            "step": 17,
+            "action": "Run smoke test (yarn test:smoke:headed) to verify keyboard interactions work end-to-end.",
+            "done": false
+        },
+        {
+            "step": 18,
+            "action": "Run style validator on smoke test file, fix violations before proceeding.",
+            "done": false
+        },
+        { "step": 19, "action": "git add smoke test and commit. Follow commit-changes.md format.", "done": false }
+    ],
+    "verification": [
+        "FilterChipPopover pure logic TAP tests pass",
+        "AccountFilterChip renders with search input",
+        "Arrow keys navigate account list when popover open (verified by smoke test)",
+        "Enter toggles account selection (verified by smoke test)",
+        "Escape dismisses popover (verified by smoke test)",
+        "Search filters accounts by name (verified by smoke test)",
+        "Keyboard shortcuts appear in drawer when popover open",
+        "No style validator violations",
+        "Existing CategoryFilterChip still works unchanged",
+        "No defensive coding violations (accounts.get(id).name, not ?.)"
+    ]
+}
