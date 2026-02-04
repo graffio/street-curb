@@ -4,14 +4,16 @@
 /** {@link module:LotAllocation} */
 /*  LotAllocation generated from: modules/quicken-type-definitions/lot-allocation.type.js
  *
- *  id                : /^la_[a-f0-9]{12}$/,
- *  lotId             : /^lot_[a-f0-9]{12}$/,
- *  transactionId     : /^txn_[a-f0-9]{12}(-\d+)?$/,
+ *  id                : FieldTypes.lotAllocationId,
+ *  lotId             : FieldTypes.lotId,
+ *  transactionId     : FieldTypes.transactionId,
  *  sharesAllocated   : "Number",
  *  costBasisAllocated: "Number",
  *  date              : "String"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -23,17 +25,14 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a LotAllocation instance
- * @sig LotAllocation :: (Id, LotId, TransactionId, Number, Number, String) -> LotAllocation
- *     Id = /^la_[a-f0-9]{12}$/
- *     LotId = /^lot_[a-f0-9]{12}$/
- *     TransactionId = /^txn_[a-f0-9]{12}(-\d+)?$/
+ * @sig LotAllocation :: (String, String, String, Number, Number, String) -> LotAllocation
  */
 const LotAllocation = function LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date) {
     const constructorName = 'LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)'
     R.validateArgumentLength(constructorName, 6, arguments)
-    R.validateRegex(constructorName, /^la_[a-f0-9]{12}$/, 'id', false, id)
-    R.validateRegex(constructorName, /^lot_[a-f0-9]{12}$/, 'lotId', false, lotId)
-    R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'transactionId', false, transactionId)
+    R.validateRegex(constructorName, FieldTypes.lotAllocationId, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.lotId, 'lotId', false, lotId)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'transactionId', false, transactionId)
     R.validateNumber(constructorName, 'sharesAllocated', false, sharesAllocated)
     R.validateNumber(constructorName, 'costBasisAllocated', false, costBasisAllocated)
     R.validateString(constructorName, 'date', false, date)

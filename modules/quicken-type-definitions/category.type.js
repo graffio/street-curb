@@ -1,11 +1,13 @@
 // ABOUTME: Category type definition with hierarchical name support
 // ABOUTME: Includes static methods for parent category generation
 
+import { FieldTypes } from './field-types.js'
+
 export const Category = {
     name: 'Category',
     kind: 'tagged',
     fields: {
-        id: /^cat_[a-f0-9]{12}$/,
+        id: FieldTypes.categoryId,
         name: 'String',
         description: 'String?',
         budgetAmount: 'Number?',

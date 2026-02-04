@@ -4,39 +4,42 @@
 /*  Transaction generated from: modules/quicken-type-definitions/transaction.type.js
  *
  *  Bank
- *      accountId      : /^acc_[a-f0-9]{12}$/,
- *      amount         : "Number",
- *      date           : "String",
- *      id             : /^txn_[a-f0-9]{12}(-\d+)?$/,
- *      transactionType: /^bank$/,
- *      address        : "String?",
- *      categoryId     : "String?",
- *      cleared        : "String?",
- *      memo           : "String?",
- *      number         : "String?",
- *      payee          : "String?",
- *      runningBalance : "Number?"
+ *      accountId        : FieldTypes.accountId,
+ *      amount           : "Number",
+ *      date             : "String",
+ *      id               : FieldTypes.transactionId,
+ *      transactionType  : /^bank$/,
+ *      address          : "String?",
+ *      categoryId       : "String?",
+ *      cleared          : "String?",
+ *      memo             : "String?",
+ *      number           : "String?",
+ *      payee            : "String?",
+ *      runningBalance   : "Number?",
+ *      transferAccountId: FieldTypes.accountId
  *  Investment
- *      accountId       : /^acc_[a-f0-9]{12}$/,
- *      date            : "String",
- *      id              : /^txn_[a-f0-9]{12}(-\d+)?$/,
- *      transactionType : /^investment$/,
- *      address         : "String?",
- *      amount          : "Number?",
- *      categoryId      : "String?",
- *      cleared         : "String?",
- *      commission      : "Number?",
- *      investmentAction: /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/,
- *      memo            : "String?",
- *      payee           : "String?",
- *      price           : "Number?",
- *      quantity        : "Number?",
- *      runningBalance  : "Number?",
- *      securityId      : "String?"
+ *      accountId        : FieldTypes.accountId,
+ *      date             : "String",
+ *      id               : FieldTypes.transactionId,
+ *      transactionType  : /^investment$/,
+ *      address          : "String?",
+ *      amount           : "Number?",
+ *      categoryId       : "String?",
+ *      cleared          : "String?",
+ *      commission       : "Number?",
+ *      investmentAction : /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/,
+ *      memo             : "String?",
+ *      payee            : "String?",
+ *      price            : "Number?",
+ *      quantity         : "Number?",
+ *      runningBalance   : "Number?",
+ *      securityId       : "String?",
+ *      transferAccountId: FieldTypes.accountId
  *
  */
 
 import { anyFieldContains, containsIgnoreCase } from '@graffio/functional'
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -77,8 +80,8 @@ Transaction.prototype = TransactionPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    bank      : function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.runningBalance)})` },
-    investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.runningBalance)}, ${R._toString(this.securityId)})` },
+    bank      : function () { return `Transaction.Bank(${R._toString(this.accountId)}, ${R._toString(this.amount)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.memo)}, ${R._toString(this.number)}, ${R._toString(this.payee)}, ${R._toString(this.runningBalance)}, ${R._toString(this.transferAccountId)})` },
+    investment: function () { return `Transaction.Investment(${R._toString(this.accountId)}, ${R._toString(this.date)}, ${R._toString(this.id)}, ${R._toString(this.transactionType)}, ${R._toString(this.address)}, ${R._toString(this.amount)}, ${R._toString(this.categoryId)}, ${R._toString(this.cleared)}, ${R._toString(this.commission)}, ${R._toString(this.investmentAction)}, ${R._toString(this.memo)}, ${R._toString(this.payee)}, ${R._toString(this.price)}, ${R._toString(this.quantity)}, ${R._toString(this.runningBalance)}, ${R._toString(this.securityId)}, ${R._toString(this.transferAccountId)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -100,9 +103,7 @@ const toJSON = {
 
 /*
  * Construct a Transaction.Bank instance
- * @sig Bank :: (AccountId, Number, String, Id, TransactionType, String?, String?, String?, String?, String?, String?, Number?) -> Transaction.Bank
- *     AccountId = /^acc_[a-f0-9]{12}$/
- *     Id = /^txn_[a-f0-9]{12}(-\d+)?$/
+ * @sig Bank :: (String, Number, String, String, TransactionType, String?, String?, String?, String?, String?, String?, Number?, String?) -> Transaction.Bank
  *     TransactionType = /^bank$/
  */
 const BankConstructor = function Bank(
@@ -118,14 +119,15 @@ const BankConstructor = function Bank(
     number,
     payee,
     runningBalance,
+    transferAccountId,
 ) {
     const constructorName =
-        'Transaction.Bank(accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee, runningBalance)'
+        'Transaction.Bank(accountId, amount, date, id, transactionType, address, categoryId, cleared, memo, number, payee, runningBalance, transferAccountId)'
 
-    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
     R.validateNumber(constructorName, 'amount', false, amount)
     R.validateString(constructorName, 'date', false, date)
-    R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'id', false, id)
     R.validateRegex(constructorName, /^bank$/, 'transactionType', false, transactionType)
     R.validateString(constructorName, 'address', true, address)
     R.validateString(constructorName, 'categoryId', true, categoryId)
@@ -134,6 +136,7 @@ const BankConstructor = function Bank(
     R.validateString(constructorName, 'number', true, number)
     R.validateString(constructorName, 'payee', true, payee)
     R.validateNumber(constructorName, 'runningBalance', true, runningBalance)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'transferAccountId', true, transferAccountId)
 
     const result = Object.create(BankPrototype)
     result.accountId = accountId
@@ -148,6 +151,7 @@ const BankConstructor = function Bank(
     if (number != null) result.number = number
     if (payee != null) result.payee = payee
     if (runningBalance != null) result.runningBalance = runningBalance
+    if (transferAccountId != null) result.transferAccountId = transferAccountId
     return result
 }
 
@@ -155,9 +159,7 @@ Transaction.Bank = BankConstructor
 
 /*
  * Construct a Transaction.Investment instance
- * @sig Investment :: (AccountId, String, Id, TransactionType, String?, Number?, String?, String?, Number?, InvestmentAction, String?, String?, Number?, Number?, Number?, String?) -> Transaction.Investment
- *     AccountId = /^acc_[a-f0-9]{12}$/
- *     Id = /^txn_[a-f0-9]{12}(-\d+)?$/
+ * @sig Investment :: (String, String, String, TransactionType, String?, Number?, String?, String?, Number?, InvestmentAction, String?, String?, Number?, Number?, Number?, String?, String?) -> Transaction.Investment
  *     TransactionType = /^investment$/
  *     InvestmentAction = /^(Buy|BuyX|Cash|CGLong|CGShort|ContribX|CvrShrt|Div|DivX|Exercise|Expire|Grant|IntInc|MargInt|MiscExp|MiscInc|MiscIncX|ReinvDiv|ReinvInt|ReinvLg|ReinvMd|ReinvSh|Reminder|RtrnCapX|Sell|SellX|ShrsIn|ShrsOut|ShtSell|StkSplit|Vest|WithdrwX|XIn|XOut)$/
  */
@@ -178,13 +180,14 @@ const InvestmentConstructor = function Investment(
     quantity,
     runningBalance,
     securityId,
+    transferAccountId,
 ) {
     const constructorName =
-        'Transaction.Investment(accountId, date, id, transactionType, address, amount, categoryId, cleared, commission, investmentAction, memo, payee, price, quantity, runningBalance, securityId)'
+        'Transaction.Investment(accountId, date, id, transactionType, address, amount, categoryId, cleared, commission, investmentAction, memo, payee, price, quantity, runningBalance, securityId, transferAccountId)'
 
-    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'accountId', false, accountId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'accountId', false, accountId)
     R.validateString(constructorName, 'date', false, date)
-    R.validateRegex(constructorName, /^txn_[a-f0-9]{12}(-\d+)?$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.transactionId, 'id', false, id)
     R.validateRegex(constructorName, /^investment$/, 'transactionType', false, transactionType)
     R.validateString(constructorName, 'address', true, address)
     R.validateNumber(constructorName, 'amount', true, amount)
@@ -204,6 +207,7 @@ const InvestmentConstructor = function Investment(
     R.validateNumber(constructorName, 'quantity', true, quantity)
     R.validateNumber(constructorName, 'runningBalance', true, runningBalance)
     R.validateString(constructorName, 'securityId', true, securityId)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'transferAccountId', true, transferAccountId)
 
     const result = Object.create(InvestmentPrototype)
     result.accountId = accountId
@@ -222,6 +226,7 @@ const InvestmentConstructor = function Investment(
     if (quantity != null) result.quantity = quantity
     if (runningBalance != null) result.runningBalance = runningBalance
     if (securityId != null) result.securityId = securityId
+    if (transferAccountId != null) result.transferAccountId = transferAccountId
     return result
 }
 
@@ -280,6 +285,7 @@ BankConstructor._from = _input => {
         number,
         payee,
         runningBalance,
+        transferAccountId,
     } = _input
     return Transaction.Bank(
         accountId,
@@ -294,6 +300,7 @@ BankConstructor._from = _input => {
         number,
         payee,
         runningBalance,
+        transferAccountId,
     )
 }
 InvestmentConstructor._from = _input => {
@@ -314,6 +321,7 @@ InvestmentConstructor._from = _input => {
         quantity,
         runningBalance,
         securityId,
+        transferAccountId,
     } = _input
     return Transaction.Investment(
         accountId,
@@ -332,6 +340,7 @@ InvestmentConstructor._from = _input => {
         quantity,
         runningBalance,
         securityId,
+        transferAccountId,
     )
 }
 // -------------------------------------------------------------------------------------------------------------

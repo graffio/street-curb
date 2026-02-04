@@ -1,5 +1,10 @@
+// ABOUTME: Security type definition for stocks, bonds, and funds
+// ABOUTME: Identifies tradeable securities by symbol and name
+
+import { FieldTypes } from './field-types.js'
+
 export const Security = {
     name: 'Security',
     kind: 'tagged',
-    fields: { id: /^sec_[a-f0-9]{12}$/, name: 'String', symbol: 'String?', type: 'String?', goal: 'String?' },
+    fields: { id: FieldTypes.securityId, name: 'String', symbol: 'String?', type: 'String?', goal: 'String?' },
 }

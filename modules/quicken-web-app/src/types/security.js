@@ -4,13 +4,15 @@
 /** {@link module:Security} */
 /*  Security generated from: modules/quicken-type-definitions/security.type.js
  *
- *  id    : /^sec_[a-f0-9]{12}$/,
+ *  id    : FieldTypes.securityId,
  *  name  : "String",
  *  symbol: "String?",
  *  type  : "String?",
  *  goal  : "String?"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -22,13 +24,12 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Security instance
- * @sig Security :: (Id, String, String?, String?, String?) -> Security
- *     Id = /^sec_[a-f0-9]{12}$/
+ * @sig Security :: (String, String, String?, String?, String?) -> Security
  */
 const Security = function Security(id, name, symbol, type, goal) {
     const constructorName = 'Security(id, name, symbol, type, goal)'
 
-    R.validateRegex(constructorName, /^sec_[a-f0-9]{12}$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.securityId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'symbol', true, symbol)
     R.validateString(constructorName, 'type', true, type)

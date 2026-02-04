@@ -1,13 +1,15 @@
 // ABOUTME: Holding type definition for portfolio positions
 // ABOUTME: Represents a security position with market data and gain/loss calculations
 
+import { FieldTypes } from './field-types.js'
+
 export const Holding = {
     name: 'Holding',
     kind: 'tagged',
     fields: {
-        accountId: /^acc_[a-f0-9]{12}$/,
+        accountId: FieldTypes.accountId,
         accountName: 'String',
-        securityId: /^sec_[a-f0-9]{12}$/,
+        securityId: FieldTypes.securityId,
         securityName: 'String',
         securitySymbol: 'String',
         securityType: 'String',

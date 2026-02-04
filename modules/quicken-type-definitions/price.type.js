@@ -1,7 +1,12 @@
+// ABOUTME: Price type definition for security price history
+// ABOUTME: Daily price quotes with staleness detection
+
+import { FieldTypes } from './field-types.js'
+
 export const Price = {
     name: 'Price',
     kind: 'tagged',
-    fields: { id: /^prc_[a-f0-9]{12}$/, securityId: /^sec_[a-f0-9]{12}$/, date: 'String', price: 'Number' },
+    fields: { id: FieldTypes.priceId, securityId: FieldTypes.securityId, date: 'String', price: 'Number' },
 }
 
 // Checks if a price is stale relative to target date

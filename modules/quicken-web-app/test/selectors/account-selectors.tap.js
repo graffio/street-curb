@@ -4,16 +4,34 @@
 import t from 'tap'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Account } from '../../src/types/account.js'
+import { Lot } from '../../src/types/lot.js'
+import { LotAllocation } from '../../src/types/lot-allocation.js'
+import { Price } from '../../src/types/price.js'
+import { Security } from '../../src/types/security.js'
 import { Transaction } from '../../src/types/transaction.js'
+import { TransactionFilter } from '../../src/types/transaction-filter.js'
 import { Accounts } from '../../src/store/selectors.js'
 import { AccountSection } from '../../src/types/account-section.js'
 import { SortMode } from '../../src/types/sort-mode.js'
+import { TransactionFilters } from '../../src/store/reducers/transaction-filters.js'
 
 const organizedAccounts = Accounts.organized
 
 // -----------------------------------------------------------------------------
 // Test helpers
 // -----------------------------------------------------------------------------
+
+const emptyHoldingsState = {
+    lots: LookupTable([], Lot, 'id'),
+    lotAllocations: LookupTable([], LotAllocation, 'id'),
+    prices: LookupTable([], Price, 'id'),
+    securities: LookupTable([], Security, 'id'),
+    transactionFilters: LookupTable(
+        [TransactionFilters.createDefaultFilter('rpt_account_list')],
+        TransactionFilter,
+        'id',
+    ),
+}
 
 const bankTxn = (id, accountId, date, amount) =>
     Transaction.Bank.from({ id, accountId, date, amount, transactionType: 'bank' })
@@ -41,7 +59,7 @@ t.test('Given accounts of various types with SortMode.Alphabetical', t => {
         Transaction,
         'id',
     )
-    const state = { accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
+    const state = { ...emptyHoldingsState, accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
 
     t.test('When organizedAccounts is called', t => {
         const result = organizedAccounts(state)
@@ -82,7 +100,7 @@ t.test('Given accounts with zero balance (Alphabetical mode with $0 section)', t
         Transaction,
         'id',
     )
-    const state = { accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
+    const state = { ...emptyHoldingsState, accounts, transactions, accountListSortMode: SortMode.Alphabetical() }
 
     t.test('When organizedAccounts is called', t => {
         const result = organizedAccounts(state)
@@ -124,7 +142,7 @@ t.test('Given accounts with SortMode.ByType', t => {
         Transaction,
         'id',
     )
-    const state = { accounts, transactions, accountListSortMode: SortMode.ByType() }
+    const state = { ...emptyHoldingsState, accounts, transactions, accountListSortMode: SortMode.ByType() }
 
     t.test('When organizedAccounts is called', t => {
         const result = organizedAccounts(state)

@@ -1,7 +1,7 @@
 // ABOUTME: Generates realistic mock financial data for testing and demos
 // ABOUTME: Creates accounts, transactions, securities, prices with optional QIF serialization
 
-import { QifEntry } from './types/index.js'
+import { QifEntry, QifSplit } from './types/index.js'
 
 // -----------------------------------------------------------------------------------------------------------------
 // Sample data definitions
@@ -38,6 +38,8 @@ const CATEGORIES = [
     { name: 'Utilities:Electric', budgetAmount: 150, description: 'Electric bill' },
     { name: 'Housing:Rent', budgetAmount: 2000, description: 'Monthly rent' },
     { name: 'Transportation:Gas', budgetAmount: 200, description: 'Vehicle fuel' },
+    { name: 'Housing:Mortgage Interest', budgetAmount: 1200, description: 'Mortgage interest' },
+    { name: 'Housing:Escrow', budgetAmount: 500, description: 'Taxes & insurance escrow' },
 ]
 
 const EXPENSE_PAYEES = [
@@ -178,33 +180,84 @@ const generateMockData = (seed = 12345) => {
             return days.flatMap(d => EXPENSE_PAYEES.map(p => generateExpenseForDay(d, p)).filter(Boolean))
         }
 
-        // Generate transfer from checking to savings for a date
-        // @sig createTransferToSavings :: Date -> QifEntry.TransactionBank
-        const createTransferToSavings = date =>
+        // Create both sides of a checking-to-savings transfer for a date
+        // @sig createSavingsTransferPair :: Date -> [QifEntry.TransactionBank]
+        const createSavingsTransferPair = date => [
             QifEntry.TransactionBank.from({
                 account: checking,
                 amount: -500,
                 date,
                 transactionType: 'Bank',
                 payee: 'Transfer to Savings',
-                category: '[Emergency Savings]',
+                category: `[${savings}]`,
                 memo: 'Monthly savings transfer',
                 cleared: 'R',
-            })
+            }),
+            QifEntry.TransactionBank.from({
+                account: savings,
+                amount: 500,
+                date,
+                transactionType: 'Bank',
+                payee: 'Transfer to Savings',
+                category: `[${checking}]`,
+                memo: 'Monthly savings transfer',
+                cleared: 'R',
+            }),
+        ]
 
-        // Generate monthly transfers to savings
+        // Generate monthly transfers to savings (both sides)
         // @sig generateSavingsTransfers :: () -> [QifEntry.TransactionBank]
         const generateSavingsTransfers = () => {
             const monthlyDates = generateDateRange(startDate, endDate).filter(d => d.getDate() === 1)
-            return monthlyDates.map(createTransferToSavings)
+            return monthlyDates.flatMap(createSavingsTransferPair)
+        }
+
+        // Create mortgage payment with splits and receiving-side principal transfer
+        // @sig createMortgageTransactions :: Date -> [QifEntry.TransactionBank]
+        const createMortgageTransactions = date => [
+            QifEntry.TransactionBank.from({
+                account: checking,
+                amount: -2500,
+                date,
+                transactionType: 'Bank',
+                payee: 'Pacific National Mortgage',
+                memo: 'Monthly mortgage payment',
+                cleared: 'R',
+                splits: [
+                    QifSplit.from({ amount: -800, categoryName: `[${savings}]`, memo: 'Principal' }),
+                    QifSplit.from({ amount: -1200, categoryName: 'Housing:Mortgage Interest', memo: 'Interest' }),
+                    QifSplit.from({ amount: -500, categoryName: 'Housing:Escrow', memo: 'Taxes & Insurance' }),
+                ],
+            }),
+            QifEntry.TransactionBank.from({
+                account: savings,
+                amount: 800,
+                date,
+                transactionType: 'Bank',
+                payee: 'Pacific National Mortgage',
+                category: `[${checking}]`,
+                memo: 'Mortgage principal',
+                cleared: 'R',
+            }),
+        ]
+
+        // Generate monthly mortgage payments with splits (both sides of principal transfer)
+        // @sig generateMortgagePayments :: () -> [QifEntry.TransactionBank]
+        const generateMortgagePayments = () => {
+            const monthlyDates = generateDateRange(startDate, endDate).filter(d => d.getDate() === 15)
+            return monthlyDates.flatMap(createMortgageTransactions)
         }
 
         const checking = 'Primary Checking'
+        const savings = 'Emergency Savings'
         const creditCard = 'Chase Sapphire'
 
-        return [...generatePaychecks(), ...generateDailyExpenses(), ...generateSavingsTransfers()].sort(
-            (a, b) => a.date - b.date,
-        )
+        return [
+            ...generatePaychecks(),
+            ...generateDailyExpenses(),
+            ...generateSavingsTransfers(),
+            ...generateMortgagePayments(),
+        ].sort((a, b) => a.date - b.date)
     }
 
     /*
@@ -231,7 +284,7 @@ const generateMockData = (seed = 12345) => {
         // @sig maybeCommission :: () -> Number?
         const maybeCommission = () => (random() < 0.1 ? round2(4.95 + random() * 10) : undefined)
 
-        // Maybe generate buy transaction for a date
+        // Maybe generate buy transaction for a date (skips if insufficient cash)
         // @sig maybeGenerateBuy :: Date -> void
         const maybeGenerateBuy = date => {
             if (random() >= 0.3) return
@@ -240,6 +293,7 @@ const generateMockData = (seed = 12345) => {
             const quantity = Math.ceil(random() * 20)
             const commission = maybeCommission()
             const amount = round2(-(quantity * price) - (commission ?? 0))
+            if (cashBalance + amount < 0) return
 
             positions.set(symbol, (positions.get(symbol) ?? 0) + quantity)
             transactions.push(
@@ -301,7 +355,7 @@ const generateMockData = (seed = 12345) => {
         // Maybe generate short sale for a date
         // @sig maybeGenerateShortSale :: Date -> void
         const maybeGenerateShortSale = date => {
-            if (random() >= 0.05) return
+            if (random() >= 0.01) return
             const { symbol } = SECURITIES[Math.floor(random() * 4)]
             const price = roundPrice(symbol, BASE_PRICES[symbol] * (0.9 + random() * 0.2))
             const quantity = Math.ceil(random() * 5) + 1
@@ -335,6 +389,7 @@ const generateMockData = (seed = 12345) => {
             const price = roundPrice(symbol, BASE_PRICES[symbol] * (0.9 + random() * 0.2))
             const commission = maybeCommission()
             const amount = round2(-(quantity * price) - (commission ?? 0))
+            if (cashBalance + amount < 0) return
             if (quantity >= shortQty) openShorts.delete(symbol)
             else openShorts.set(symbol, shortQty - quantity)
             transactions.push(
@@ -385,13 +440,14 @@ const generateMockData = (seed = 12345) => {
             }
         }
 
-        // Maybe generate 401k contribution for a date
+        // Maybe generate 401k contribution for a date (both investment and bank sides)
         // @sig maybeGenerate401k :: Date -> void
         const maybeGenerate401k = date => {
             if (date.getDay() !== 5 || random() >= 0.5) return
             const price = roundPrice('VFIAX', BASE_PRICES.VFIAX * (0.95 + random() * 0.1))
             const contribution = 750
             const quantity = Math.round((contribution / price) * 1000) / 1000
+            const amount = round2(quantity * price)
 
             transactions.push(
                 QifEntry.TransactionInvestment.from({
@@ -401,9 +457,21 @@ const generateMockData = (seed = 12345) => {
                     security: 'VFIAX',
                     price,
                     quantity,
-                    amount: -(quantity * price),
+                    amount: -amount,
                     memo: '401k contribution',
-                    category: '[Primary Checking]',
+                    category: `[${checking}]`,
+                }),
+            )
+            bankTransfers.push(
+                QifEntry.TransactionBank.from({
+                    account: checking,
+                    amount: -amount,
+                    date: new Date(date),
+                    transactionType: 'Bank',
+                    payee: '401k Contribution',
+                    category: `[${k401}]`,
+                    memo: '401k contribution',
+                    cleared: 'R',
                 }),
             )
         }
@@ -414,11 +482,13 @@ const generateMockData = (seed = 12345) => {
             if (amount != null) cashBalance += amount
         }
 
-        // Maybe add deposit when cash is low
+        // Maybe add deposit when cash is low (both investment and bank sides)
+        // Caps total deposits to keep Primary Checking balance realistic
         // @sig maybeAddDeposit :: Date -> void
         const maybeAddDeposit = date => {
-            if (cashBalance >= 25000) return
-            const depositAmount = 50000
+            if (cashBalance >= 2500 || totalDeposited >= 50000) return
+            const depositAmount = 5000
+            totalDeposited += depositAmount
             transactions.push(
                 QifEntry.TransactionInvestment.from({
                     account: brokerage,
@@ -426,7 +496,19 @@ const generateMockData = (seed = 12345) => {
                     transactionType: 'XIn',
                     amount: depositAmount,
                     memo: 'Cash transfer in',
-                    category: '[Primary Checking]',
+                    category: `[${checking}]`,
+                }),
+            )
+            bankTransfers.push(
+                QifEntry.TransactionBank.from({
+                    account: checking,
+                    amount: -depositAmount,
+                    date: new Date(date),
+                    transactionType: 'Bank',
+                    payee: `Transfer to ${brokerage}`,
+                    category: `[${brokerage}]`,
+                    memo: `Transfer to ${brokerage}`,
+                    cleared: 'R',
                 }),
             )
         }
@@ -450,28 +532,46 @@ const generateMockData = (seed = 12345) => {
             transactions.slice(beforeCount).forEach(tx => updateCashBalance(tx.amount))
         }
 
+        const checking = 'Primary Checking'
         const brokerage = 'Fidelity Brokerage'
         const k401 = '401k Retirement'
         const transactions = []
+        const bankTransfers = []
         const positions = new Map()
         const openShorts = new Map()
-        let cashBalance = 50000
+        let cashBalance = 10000
+        let totalDeposited = 10000
 
         transactions.push(
             QifEntry.TransactionInvestment.from({
                 account: brokerage,
                 date: startDate,
                 transactionType: 'XIn',
-                amount: 50000,
+                amount: 10000,
                 memo: 'Initial deposit',
-                category: '[Primary Checking]',
+                category: `[${checking}]`,
+            }),
+        )
+        bankTransfers.push(
+            QifEntry.TransactionBank.from({
+                account: checking,
+                amount: -10000,
+                date: startDate,
+                transactionType: 'Bank',
+                payee: `Transfer to ${brokerage}`,
+                category: `[${brokerage}]`,
+                memo: `Transfer to ${brokerage}`,
+                cleared: 'R',
             }),
         )
 
         const tradingDays = generateDateRange(addDays(startDate, 7), endDate)
         tradingDays.forEach(processTradingDay)
 
-        return transactions.sort((a, b) => a.date - b.date)
+        return {
+            investments: transactions.sort((a, b) => a.date - b.date),
+            bankTransfers: bankTransfers.sort((a, b) => a.date - b.date),
+        }
     }
 
     const random = createRng(seed)
@@ -480,12 +580,15 @@ const generateMockData = (seed = 12345) => {
     const startDate = new Date(endDate)
     startDate.setFullYear(startDate.getFullYear() - 2)
 
+    const { investments, bankTransfers } = generateInvestmentTransactions()
+    const bankTransactions = [...generateBankTransactions(), ...bankTransfers].sort((a, b) => a.date - b.date)
+
     return {
         accounts: generateAccounts(),
         categories: generateCategories(),
         securities: generateSecurities(),
-        bankTransactions: generateBankTransactions(),
-        investmentTransactions: generateInvestmentTransactions(),
+        bankTransactions,
+        investmentTransactions: investments,
         prices: generatePrices(),
     }
 }
@@ -574,13 +677,23 @@ const serializeToQif = data => {
         // @sig groupByAccount :: [Transaction] -> Object
         const groupByAccount = txs => txs.reduce(addTxToGroup, {})
 
+        // Convert a split to QIF S/E/$ lines
+        // @sig splitToLines :: QifSplit -> [String]
+        const splitToLines = ({ categoryName, memo, amount }) => {
+            const lines = [`S${categoryName}`]
+            if (memo) lines.push(`E${memo}`)
+            lines.push(`$${amount.toFixed(2)}`)
+            return lines
+        }
+
         // Convert transaction to QIF string
         // @sig txToQif :: QifEntry.TransactionBank -> String
         const txToQif = t => {
-            const { date, amount, payee, category, memo, cleared, number } = t
+            const { date, amount, payee, category, memo, cleared, number, splits } = t
             const lines = [`D${formatQifDate(date)}`, `T${amount.toFixed(2)}`]
             if (payee) lines.push(`P${payee}`)
-            if (category) lines.push(`L${category}`)
+            if (splits) lines.push(...splits.flatMap(splitToLines))
+            if (!splits && category) lines.push(`L${category}`)
             if (memo) lines.push(`M${memo}`)
             if (cleared) lines.push(`C${cleared}`)
             if (number) lines.push(`N${number}`)

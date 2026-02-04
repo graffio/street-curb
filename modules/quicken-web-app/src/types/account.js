@@ -4,13 +4,15 @@
 /** {@link module:Account} */
 /*  Account generated from: modules/quicken-type-definitions/account.type.js
  *
- *  id         : /^acc_[a-f0-9]{12}$/,
+ *  id         : FieldTypes.accountId,
  *  name       : "String",
  *  type       : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
  *  description: "String?",
  *  creditLimit: "Number?"
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import * as R from '@graffio/cli-type-generator'
 
@@ -22,14 +24,13 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a Account instance
- * @sig Account :: (Id, String, Type, String?, Number?) -> Account
- *     Id = /^acc_[a-f0-9]{12}$/
+ * @sig Account :: (String, String, Type, String?, Number?) -> Account
  *     Type = /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/
  */
 const Account = function Account(id, name, type, description, creditLimit) {
     const constructorName = 'Account(id, name, type, description, creditLimit)'
 
-    R.validateRegex(constructorName, /^acc_[a-f0-9]{12}$/, 'id', false, id)
+    R.validateRegex(constructorName, FieldTypes.accountId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
     R.validateRegex(
         constructorName,

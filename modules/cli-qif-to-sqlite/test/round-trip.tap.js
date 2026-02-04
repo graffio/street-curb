@@ -209,6 +209,79 @@ test('transfers are resolved to transferAccountId', async t => {
     db.close()
 })
 
+test('Given a full import with transfers, both sides exist from QIF data', async t => {
+    const Database = (await import('better-sqlite3')).default
+    const { Import } = await import('../src/import.js')
+    const { readFileSync } = await import('fs')
+    const { resolve, dirname } = await import('path')
+    const { fileURLToPath } = await import('url')
+
+    const __dirname = dirname(fileURLToPath(import.meta.url))
+    const schemaPath = resolve(__dirname, '../schema.sql')
+
+    const original = generateMockData()
+    const qifString = serializeToQif(original)
+    const parsed = ParseQifData.parseQifData(qifString)
+
+    const db = new Database(':memory:')
+    db.exec(readFileSync(schemaPath, 'utf-8'))
+    Import.processImport(db, parsed)
+
+    const savingsId = db.prepare("SELECT id FROM accounts WHERE name = 'Emergency Savings'").get().id
+    const checkingId = db.prepare("SELECT id FROM accounts WHERE name = 'Primary Checking'").get().id
+
+    t.test('When checking Emergency Savings for transfer transactions', t => {
+        const savingsTransfers = db
+            .prepare(
+                'SELECT * FROM transactions WHERE accountId = ? AND transferAccountId IS NOT NULL AND orphanedAt IS NULL',
+            )
+            .all(savingsId)
+
+        t.ok(savingsTransfers.length > 0, `Then Emergency Savings has ${savingsTransfers.length} transfer transactions`)
+
+        const fromChecking = savingsTransfers.filter(tx => tx.transferAccountId === checkingId)
+        t.ok(fromChecking.length > 0, 'Then transfers reference Primary Checking as source')
+
+        const positiveAmounts = savingsTransfers.filter(tx => tx.amount > 0)
+        t.ok(positiveAmounts.length > 0, 'Then savings-side transfers have positive amounts')
+        t.end()
+    })
+
+    t.test('When checking transfer pairs have matching amounts', t => {
+        const checkingTransfers = db
+            .prepare(
+                `SELECT * FROM transactions
+                WHERE accountId = ? AND transferAccountId = ? AND orphanedAt IS NULL`,
+            )
+            .all(checkingId, savingsId)
+
+        const savingsTransfers = db
+            .prepare(
+                `SELECT * FROM transactions
+                WHERE accountId = ? AND transferAccountId = ? AND orphanedAt IS NULL`,
+            )
+            .all(savingsId, checkingId)
+
+        t.ok(checkingTransfers.length > 0, `Then Primary Checking has ${checkingTransfers.length} transfers to savings`)
+        t.ok(
+            savingsTransfers.length > 0,
+            `Then Emergency Savings has ${savingsTransfers.length} transfers from checking`,
+        )
+        t.end()
+    })
+
+    t.test('When checking that no counterpart signatures exist', t => {
+        const counterpartSigs = db
+            .prepare("SELECT COUNT(*) as c FROM stableIdentities WHERE signature LIKE '%:counterpart'")
+            .get().c
+
+        t.equal(counterpartSigs, 0, 'Then no stableIdentity signatures end in :counterpart')
+        t.end()
+    })
+
+    db.close()
+})
+
 test('gain markers are stored in gainMarkerType', async t => {
     const Database = (await import('better-sqlite3')).default
     const { Import } = await import('../src/import.js')

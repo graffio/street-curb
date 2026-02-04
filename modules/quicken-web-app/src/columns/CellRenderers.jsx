@@ -138,11 +138,14 @@ const DefaultCell = ({ getValue, column, table }) => {
     )
 }
 
-// Cell renderer for category column, looks up name from Redux store
-// @sig CategoryCell :: { getValue: Function, table: Table } -> ReactElement
-const CategoryCell = ({ getValue, table }) => {
+// Cell renderer for category column — shows [Account Name] for transfers, category name otherwise
+// @sig CategoryCell :: { getValue: Function, row: Row, table: Table } -> ReactElement
+const CategoryCell = ({ getValue, row, table }) => {
     const categoryId = getValue()
-    const name = useSelector(state => S.categoryName(state, categoryId))
+    const transferAccountId = row.original.transaction.transferAccountId
+    const categoryName = useSelector(state => S.categoryName(state, categoryId))
+    const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : null))
+    const name = transferName ? `[${transferName}]` : categoryName
     const searchQuery = table.options.meta?.searchQuery
 
     return (
@@ -174,17 +177,31 @@ const ACTION_LABELS = {
     Expire: 'Expire',
 }
 
-// Cell renderer for investment action column with human-readable labels
-// @sig ActionCell :: { getValue: Function, table: Table } -> ReactElement
-const ActionCell = ({ getValue, table }) => {
+// Cell renderer for investment action column — shows transfer account as subtitle when present
+// @sig ActionCell :: { getValue: Function, row: Row, table: Table } -> ReactElement
+const ActionCell = ({ getValue, row, table }) => {
     const code = getValue()
+    const transferAccountId = row.original.transaction.transferAccountId
+    const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : null))
     const searchQuery = table.options.meta?.searchQuery
     const label = ACTION_LABELS[code] || code || ''
 
+    if (!transferName)
+        return (
+            <span style={{ display: 'block' }}>
+                <HighlightedText text={label} searchQuery={searchQuery} />
+            </span>
+        )
+
     return (
-        <span style={{ display: 'block' }}>
-            <HighlightedText text={label} searchQuery={searchQuery} />
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
+                <HighlightedText text={label} searchQuery={searchQuery} />
+            </div>
+            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>
+                <HighlightedText text={transferName} searchQuery={searchQuery} />
+            </div>
+        </div>
     )
 }
 

@@ -163,7 +163,7 @@ Organize functions into single-letter namespace objects by cohesion type:
 | F      | Factories    | `create*`, `make*`, `build*`                         |
 | V      | Validators   | `check*`, `validate*` (return violations/errors)     |
 | A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`             |
-| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*` |
+| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*`, `query*` |
 
 **Rules:**
 

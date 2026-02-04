@@ -28,3 +28,13 @@ Quick decisions that don't warrant full architecture docs. For patterns, see `do
 **Context:** Holdings computation did O(n) scans of prices/allocations/transactions for each holding/date.
 **Decision:** Build Map<key, Array|LookupTable> indices via `memoizeReduxState`; consume in dependent selectors.
 **Why:** Indices rebuild only when source data changes; lookups become O(1); keeps indices as implementation details.
+
+### 2026-02-03: Don't generate transfer counterparts — QIF already has both sides
+**Context:** Transfers initially showed only one side. Tried generating mirror "counterpart" transactions during import.
+**Decision:** Removed counterpart generation. Real QIF files already export both sides of every transfer. Fixed mock data to match this reality.
+**Why:** Counterpart generation was solving a problem that doesn't exist with real data. The mock data was wrong, not the import logic.
+
+### 2026-02-03: Centralize entity ID patterns in FieldTypes module
+**Context:** Regex patterns like `/^acc_[a-f0-9]{12}$/` were duplicated across 10+ type definition files.
+**Decision:** Created `quicken-type-definitions/field-types.js` with all 8 ID patterns; type definitions reference `FieldTypes.accountId` etc.
+**Why:** Single source of truth. Also enables optional regex-validated fields: `{ pattern: FieldTypes.accountId, optional: true }`.

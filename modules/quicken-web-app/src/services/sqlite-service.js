@@ -140,11 +140,19 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     // @sig querySplits :: Database -> LookupTable<Split>
     const querySplits = db => {
         const mapRow = row => {
-            const { amount, categoryId, id, memo, transactionId } = row
-            return Split.from({ id, transactionId, categoryId: categoryId || null, amount, memo: memo || null })
+            const { amount, categoryId, id, memo, transactionId, transferAccountId } = row
+            return Split.from({
+                id,
+                transactionId,
+                categoryId: categoryId || null,
+                amount,
+                memo: memo || null,
+                transferAccountId: transferAccountId || null,
+            })
         }
         const results = db.exec(
-            'SELECT id, transactionId, categoryId, amount, memo FROM transactionSplits WHERE orphanedAt IS NULL',
+            `SELECT id, transactionId, categoryId, amount, memo, transferAccountId
+            FROM transactionSplits WHERE orphanedAt IS NULL`,
         )
         return LookupTable(rowsToObjects(results).map(mapRow), Split, 'id')
     }
@@ -154,7 +162,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         // @sig mapBankRow :: Object -> Transaction.Bank
         const mapBankRow = row => {
             const { accountId, address, amount, categoryId, cleared, date } = row
-            const { id, memo, number, payee, runningBalance } = row
+            const { id, memo, number, payee, runningBalance, transferAccountId } = row
             return Transaction.Bank.from({
                 id,
                 accountId,
@@ -168,13 +176,14 @@ const loadEntitiesFromFile = async (file, onProgress) => {
                 memo: memo || null,
                 number: number || null,
                 payee: payee || null,
+                transferAccountId: transferAccountId || null,
             })
         }
 
         // @sig mapInvestmentRow :: Object -> Transaction.Investment
         const mapInvestmentRow = row => {
             const { accountId, address, amount, categoryId, cleared, commission, date, id, runningBalance } = row
-            const { investmentAction, memo, payee, price, quantity, securityId } = row
+            const { investmentAction, memo, payee, price, quantity, securityId, transferAccountId } = row
             return Transaction.Investment.from({
                 id,
                 accountId,
@@ -192,12 +201,14 @@ const loadEntitiesFromFile = async (file, onProgress) => {
                 price: price || null,
                 quantity: quantity || null,
                 securityId: securityId || null,
+                transferAccountId: transferAccountId || null,
             })
         }
 
         const sql = `
-            SELECT id, accountId, date, amount, transactionType, payee, memo, number, cleared,
-                   categoryId, securityId, quantity, price, commission, investmentAction, address, runningBalance
+            SELECT id, accountId, date, amount, transactionType, transferAccountId, payee, memo, number,
+                   cleared, categoryId, securityId, quantity, price, commission, investmentAction, address,
+                   runningBalance
             FROM transactions
             WHERE orphanedAt IS NULL
             ORDER BY date, rowid
