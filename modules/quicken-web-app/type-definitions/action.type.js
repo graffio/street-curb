@@ -35,6 +35,8 @@ export const Action = {
         SetTreeExpanded        : { viewId: 'String', expanded: 'Object' },
         SetColumnSizing        : { viewId: 'String', sizing: 'Object' },
         SetColumnOrder         : { viewId: 'String', order: '[String]' },
+        SetFilterPopoverOpen   : { viewId: 'String', popoverId: 'String?' },
+        SetFilterPopoverSearch : { viewId: 'String', searchText: 'String' },
 
         // Table layout actions
         SetTableLayout         : { tableLayout: 'TableLayout' },

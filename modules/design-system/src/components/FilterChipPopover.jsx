@@ -1,10 +1,9 @@
-// ABOUTME: Keyboard-navigable filter chip popover for multi-select lists
-// ABOUTME: Owns Popover lifecycle, keymap registration, search filtering, and arrow-key navigation
+// ABOUTME: Fully controlled filter chip popover for multi-select lists
+// ABOUTME: Zero internal state — all state and navigation callbacks provided by consumer via props
 
 import { Badge, Box, Checkbox, Flex, Popover, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { FilterChipPopover as Logic } from './filter-chip-popover.js'
+import React, { useEffect, useRef } from 'react'
 
 const clearButtonStyle = {
     display: 'inline-flex',
@@ -47,15 +46,6 @@ const F = {
     }),
 }
 
-const E = {
-    // Registers keymap and returns cleanup function that unregisters it
-    // @sig keymapRegistrationEffect :: (Keymap, String, Function, Function) -> (() -> void)
-    keymapRegistrationEffect: (keymap, keymapId, onRegister, onUnregister) => {
-        onRegister(keymap)
-        return () => onUnregister(keymapId)
-    },
-}
-
 // Checkbox row for a single navigable item
 // @sig ItemRow :: { item, isSelected, isHighlighted, onToggle, itemRef? } -> ReactElement
 const ItemRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
@@ -80,72 +70,38 @@ const SelectedItemBadge = ({ item, onToggle }) => (
 )
 
 /**
- * Keyboard-navigable filter chip popover with multi-select, search, and keymap support
+ * Fully controlled filter chip popover — all state managed by consumer
  * @sig FilterChipPopover :: FilterChipPopoverProps -> ReactElement
  */
 const FilterChipPopover = ({
     label,
-    onClear,
+    open,
+    onOpenChange,
     items,
     selectedIds,
-    onToggle,
+    selectedItems,
+    highlightedIndex,
+    searchText,
     searchable = false,
     width = 175,
     isActive = false,
-    keymapId,
-    keymapName,
-    onRegisterKeymap,
-    onUnregisterKeymap,
+    onSearchChange,
+    onMoveDown,
+    onMoveUp,
+    onToggle,
+    onToggleHighlighted,
+    onDismiss,
+    onClear,
 }) => {
-    // Functions defined before hooks (closures capture bindings, not values)
-    const moveDown = () => setHighlightedIndex(prev => Logic.toNextIndex(prev, filteredCount))
-    const moveUp = () => setHighlightedIndex(prev => Logic.toPreviousIndex(prev, filteredCount))
-
-    const toggle = () => {
-        if (filteredCount === 0) return
-        onToggle(filteredItems[highlightedIndex].id)
-    }
-
-    const dismiss = () => {
-        setOpen(false)
-        setSearchText('')
-        setHighlightedIndex(0)
-    }
-
     // Dispatches navigation keys from search input (global keymap skips INPUT elements)
     // @sig handleSearchKeyDown :: KeyboardEvent -> void
     const handleSearchKeyDown = e => {
-        const handler = { ArrowDown: moveDown, ArrowUp: moveUp, Enter: toggle, Escape: dismiss }[e.key]
+        const handler = { ArrowDown: onMoveDown, ArrowUp: onMoveUp, Enter: onToggleHighlighted, Escape: onDismiss }[
+            e.key
+        ]
         if (!handler) return
         e.preventDefault()
         handler()
-    }
-
-    // Creates keymap when popover is open and keymap props provided
-    // @sig createKeymapMemo :: () -> Keymap?
-    const createKeymapMemo = () => {
-        if (!open || !onRegisterKeymap || !keymapId) return null
-        return Logic.createKeymap(keymapId, keymapName, {
-            onDown: moveDown,
-            onUp: moveUp,
-            onEnter: toggle,
-            onEscape: dismiss,
-        })
-    }
-
-    const keymapRegistrationEffect = () => {
-        if (!keymap || !onRegisterKeymap || !onUnregisterKeymap) return undefined
-        return E.keymapRegistrationEffect(keymap, keymapId, onRegisterKeymap, onUnregisterKeymap)
-    }
-
-    // Resets search and highlight when popover closes
-    // @sig handleOpenChange :: Boolean -> void
-    const handleOpenChange = nextOpen => {
-        setOpen(nextOpen)
-        if (!nextOpen) {
-            setSearchText('')
-            setHighlightedIndex(0)
-        }
     }
 
     const handleClear = e => {
@@ -172,41 +128,21 @@ const FilterChipPopover = ({
         />
     )
 
-    // Hooks
-    const [open, setOpen] = useState(false) // EXEMPT: drawer
-    const [searchText, setSearchText] = useState('') // EXEMPT: focus
-    const [highlightedIndex, setHighlightedIndex] = useState(0) // EXEMPT: focus
     const highlightedRef = useRef(null)
     const searchRef = useRef(null)
 
-    // Derived state
-    const filteredItems = searchable ? Logic.toFilteredItems(items, searchText) : items
-    const { length: filteredCount } = filteredItems
     const { length: selectedCount } = selectedIds
     const selectedSet = new Set(selectedIds)
-    const selectedItems = items.filter(item => selectedSet.has(item.id))
 
-    // Effects
-    useEffect(() => setHighlightedIndex(0), [filteredCount])
+    // DOM effects: scroll highlighted item into view, focus search input
     useEffect(() => highlightedRef.current?.scrollIntoView({ block: 'nearest' }), [highlightedIndex])
     useEffect(focusSearchEffect, [open, searchable])
-
-    const keymap = useMemo(createKeymapMemo, [
-        open,
-        onRegisterKeymap,
-        keymapId,
-        keymapName,
-        highlightedIndex,
-        filteredCount,
-    ])
-
-    useEffect(keymapRegistrationEffect, [keymap, keymapId, onRegisterKeymap, onUnregisterKeymap])
 
     const triggerStyle = F.makeTriggerStyle(width, isActive)
     const displayLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
 
     return (
-        <Popover.Root open={open} onOpenChange={handleOpenChange}>
+        <Popover.Root open={open} onOpenChange={onOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -232,14 +168,14 @@ const FilterChipPopover = ({
                         ref={searchRef}
                         placeholder="Search..."
                         value={searchText}
-                        onChange={e => setSearchText(e.target.value)}
+                        onChange={e => onSearchChange(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
                         style={{ marginBottom: 'var(--space-2)' }}
                     />
                 )}
                 <ScrollArea style={{ maxHeight: 200 }}>
-                    {filteredItems.map(toItemRow)}
-                    {filteredCount === 0 && (
+                    {items.map(toItemRow)}
+                    {items.length === 0 && (
                         <Text size="2" color="gray">
                             {searchText ? `No items match "${searchText}"` : 'No items available'}
                         </Text>
@@ -252,18 +188,26 @@ const FilterChipPopover = ({
 
 FilterChipPopover.propTypes = {
     label: PropTypes.string.isRequired,
-    onClear: PropTypes.func.isRequired,
+    open: PropTypes.bool.isRequired,
+    onOpenChange: PropTypes.func.isRequired,
     items: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.string.isRequired, label: PropTypes.string.isRequired }))
         .isRequired,
     selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
-    onToggle: PropTypes.func.isRequired,
+    selectedItems: PropTypes.arrayOf(
+        PropTypes.shape({ id: PropTypes.string.isRequired, label: PropTypes.string.isRequired }),
+    ).isRequired,
+    highlightedIndex: PropTypes.number.isRequired,
+    searchText: PropTypes.string,
     searchable: PropTypes.bool,
     width: PropTypes.number,
     isActive: PropTypes.bool,
-    keymapId: PropTypes.string,
-    keymapName: PropTypes.string,
-    onRegisterKeymap: PropTypes.func,
-    onUnregisterKeymap: PropTypes.func,
+    onSearchChange: PropTypes.func,
+    onMoveDown: PropTypes.func.isRequired,
+    onMoveUp: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+    onToggleHighlighted: PropTypes.func.isRequired,
+    onDismiss: PropTypes.func.isRequired,
+    onClear: PropTypes.func.isRequired,
 }
 
 export { FilterChipPopover }

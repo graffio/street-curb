@@ -27,6 +27,9 @@ export const TransactionFilter = {
         treeExpansion: 'Object?',
         columnSizing: 'Object?',
         columnOrder: '[String]?',
+        filterPopoverId: 'String?',
+        filterPopoverSearch: 'String',
+        filterPopoverHighlight: 'Number',
     },
 }
 

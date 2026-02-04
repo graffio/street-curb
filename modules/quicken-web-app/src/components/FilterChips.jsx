@@ -8,6 +8,7 @@ import {
     CategorySelector,
     Checkbox,
     FilterChipPopover,
+    FilterChipPopoverLogic,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
@@ -17,7 +18,7 @@ import {
     TextField,
 } from '@graffio/design-system'
 import { endOfDay } from '@graffio/functional'
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
@@ -31,14 +32,6 @@ const T = {
     // Finds current group-by option from options list
     // @sig toCurrentOption :: ([{ value, label }], String?) -> { value, label }
     toCurrentOption: (options, groupBy) => options.find(o => o.value === groupBy) || options[0],
-
-    // Maps account rows to FilterChipPopover item shape
-    // @sig toAccountItems :: ([{ id, name }]) -> [{ id, label }]
-    toAccountItems: rows => rows.map(({ id, name }) => ({ id, label: name })),
-
-    // Extracts IDs from a badge list
-    // @sig toSelectedIds :: ([{ id }]) -> [String]
-    toSelectedIds: badges => badges.map(({ id }) => id),
 }
 
 const F = {
@@ -205,30 +198,68 @@ const DateRangeOption = ({ option, selectedKey, onSelect }) => {
 // AccountFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Account filter chip with keyboard-navigable popover and search
+// Account filter chip with keyboard-navigable popover and search — fully controlled via Redux
 // @sig AccountFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const AccountFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
     const handleToggle = accountId => post(Action.ToggleAccountFilter(viewId, accountId))
     const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const { rows, badges } = useSelector(state => S.UI.accountFilterData(state, viewId))
-    const items = T.toAccountItems(rows)
-    const selectedIds = T.toSelectedIds(badges)
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
+
+    // Creates and registers keymap when popover is open, unregisters on cleanup
+    // @sig keymapLifecycleEffect :: () -> (() -> void)?
+    const keymapLifecycleEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = FilterChipPopoverLogic.createKeymap(KEYMAP_ID, 'Account Filter', {
+            onDown: handleMoveDown,
+            onUp: handleMoveUp,
+            onEnter: handleToggleHighlighted,
+            onEscape: handleDismiss,
+        })
+        post(Action.RegisterKeymap(keymap))
+        return () => post(Action.UnregisterKeymap(KEYMAP_ID))
+    }
+
+    const KEYMAP_ID = `${viewId}_accounts`
+    const POPOVER_ID = 'accounts'
+    const { badges, selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
+
+    // prettier-ignore
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex,
+        highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
+
+    useEffect(keymapLifecycleEffect, [isOpen, KEYMAP_ID, nextHighlightIndex, prevHighlightIndex, highlightedItemId])
 
     return (
         <FilterChipPopover
             label="Accounts"
-            onClear={handleClear}
-            items={items}
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
             selectedIds={selectedIds}
-            onToggle={handleToggle}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            searchText={searchText}
             searchable
             width={175}
             isActive={isActive}
-            keymapId={`${viewId}_accounts`}
-            keymapName="Account Filter"
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onSearchChange={handleSearchChange}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
         />
     )
 }

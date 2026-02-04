@@ -42,6 +42,12 @@
  *  SetColumnOrder
  *      viewId: "String",
  *      order : "[String]"
+ *  SetFilterPopoverOpen
+ *      viewId   : "String",
+ *      popoverId: "String?"
+ *  SetFilterPopoverSearch
+ *      viewId    : "String",
+ *      searchText: "String"
  *  SetTableLayout
  *      tableLayout: "TableLayout"
  *  EnsureTableLayout
@@ -133,6 +139,8 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetTreeExpanded',
         'SetColumnSizing',
         'SetColumnOrder',
+        'SetFilterPopoverOpen',
+        'SetFilterPopoverSearch',
         'SetTableLayout',
         'EnsureTableLayout',
         'OpenView',
@@ -192,6 +200,8 @@ const toString = {
     setTreeExpanded        : function () { return `Action.SetTreeExpanded(${R._toString(this.viewId)}, ${R._toString(this.expanded)})` },
     setColumnSizing        : function () { return `Action.SetColumnSizing(${R._toString(this.viewId)}, ${R._toString(this.sizing)})` },
     setColumnOrder         : function () { return `Action.SetColumnOrder(${R._toString(this.viewId)}, ${R._toString(this.order)})` },
+    setFilterPopoverOpen   : function () { return `Action.SetFilterPopoverOpen(${R._toString(this.viewId)}, ${R._toString(this.popoverId)})` },
+    setFilterPopoverSearch : function () { return `Action.SetFilterPopoverSearch(${R._toString(this.viewId)}, ${R._toString(this.searchText)})` },
     setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
     ensureTableLayout      : function () { return `Action.EnsureTableLayout(${R._toString(this.tableLayoutId)}, ${R._toString(this.columns)})` },
     openView               : function () { return `Action.OpenView(${R._toString(this.view)}, ${R._toString(this.groupId)})` },
@@ -232,6 +242,8 @@ const toJSON = {
     setTreeExpanded        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setColumnSizing        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setColumnOrder         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setFilterPopoverOpen   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setFilterPopoverSearch : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     ensureTableLayout      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     openView               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -480,6 +492,42 @@ const SetColumnOrderConstructor = function SetColumnOrder(viewId, order) {
 }
 
 Action.SetColumnOrder = SetColumnOrderConstructor
+
+/*
+ * Construct a Action.SetFilterPopoverOpen instance
+ * @sig SetFilterPopoverOpen :: (String, String?) -> Action.SetFilterPopoverOpen
+ */
+const SetFilterPopoverOpenConstructor = function SetFilterPopoverOpen(viewId, popoverId) {
+    const constructorName = 'Action.SetFilterPopoverOpen(viewId, popoverId)'
+
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'popoverId', true, popoverId)
+
+    const result = Object.create(SetFilterPopoverOpenPrototype)
+    result.viewId = viewId
+    if (popoverId != null) result.popoverId = popoverId
+    return result
+}
+
+Action.SetFilterPopoverOpen = SetFilterPopoverOpenConstructor
+
+/*
+ * Construct a Action.SetFilterPopoverSearch instance
+ * @sig SetFilterPopoverSearch :: (String, String) -> Action.SetFilterPopoverSearch
+ */
+const SetFilterPopoverSearchConstructor = function SetFilterPopoverSearch(viewId, searchText) {
+    const constructorName = 'Action.SetFilterPopoverSearch(viewId, searchText)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'searchText', false, searchText)
+
+    const result = Object.create(SetFilterPopoverSearchPrototype)
+    result.viewId = viewId
+    result.searchText = searchText
+    return result
+}
+
+Action.SetFilterPopoverSearch = SetFilterPopoverSearchConstructor
 
 /*
  * Construct a Action.SetTableLayout instance
@@ -910,6 +958,22 @@ const SetColumnOrderPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetColumnOrderConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetFilterPopoverOpenPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetFilterPopoverOpen', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setFilterPopoverOpen, enumerable: false },
+    toJSON: { value: toJSON.setFilterPopoverOpen, enumerable: false },
+    constructor: { value: SetFilterPopoverOpenConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetFilterPopoverSearchPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetFilterPopoverSearch', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setFilterPopoverSearch, enumerable: false },
+    toJSON: { value: toJSON.setFilterPopoverSearch, enumerable: false },
+    constructor: { value: SetFilterPopoverSearchConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SetTableLayoutPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetTableLayout', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1084,6 +1148,8 @@ RemoveCategoryFilterConstructor.prototype = RemoveCategoryFilterPrototype
 SetTreeExpandedConstructor.prototype = SetTreeExpandedPrototype
 SetColumnSizingConstructor.prototype = SetColumnSizingPrototype
 SetColumnOrderConstructor.prototype = SetColumnOrderPrototype
+SetFilterPopoverOpenConstructor.prototype = SetFilterPopoverOpenPrototype
+SetFilterPopoverSearchConstructor.prototype = SetFilterPopoverSearchPrototype
 SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
 EnsureTableLayoutConstructor.prototype = EnsureTableLayoutPrototype
 OpenViewConstructor.prototype = OpenViewPrototype
@@ -1118,6 +1184,8 @@ RemoveCategoryFilterConstructor.is = val => val && val.constructor === RemoveCat
 SetTreeExpandedConstructor.is = val => val && val.constructor === SetTreeExpandedConstructor
 SetColumnSizingConstructor.is = val => val && val.constructor === SetColumnSizingConstructor
 SetColumnOrderConstructor.is = val => val && val.constructor === SetColumnOrderConstructor
+SetFilterPopoverOpenConstructor.is = val => val && val.constructor === SetFilterPopoverOpenConstructor
+SetFilterPopoverSearchConstructor.is = val => val && val.constructor === SetFilterPopoverSearchConstructor
 SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
 EnsureTableLayoutConstructor.is = val => val && val.constructor === EnsureTableLayoutConstructor
 OpenViewConstructor.is = val => val && val.constructor === OpenViewConstructor
@@ -1152,6 +1220,8 @@ RemoveCategoryFilterConstructor.toString = () => 'Action.RemoveCategoryFilter'
 SetTreeExpandedConstructor.toString = () => 'Action.SetTreeExpanded'
 SetColumnSizingConstructor.toString = () => 'Action.SetColumnSizing'
 SetColumnOrderConstructor.toString = () => 'Action.SetColumnOrder'
+SetFilterPopoverOpenConstructor.toString = () => 'Action.SetFilterPopoverOpen'
+SetFilterPopoverSearchConstructor.toString = () => 'Action.SetFilterPopoverSearch'
 SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
 EnsureTableLayoutConstructor.toString = () => 'Action.EnsureTableLayout'
 OpenViewConstructor.toString = () => 'Action.OpenView'
@@ -1189,6 +1259,8 @@ RemoveCategoryFilterConstructor._from = _input => Action.RemoveCategoryFilter(_i
 SetTreeExpandedConstructor._from = _input => Action.SetTreeExpanded(_input.viewId, _input.expanded)
 SetColumnSizingConstructor._from = _input => Action.SetColumnSizing(_input.viewId, _input.sizing)
 SetColumnOrderConstructor._from = _input => Action.SetColumnOrder(_input.viewId, _input.order)
+SetFilterPopoverOpenConstructor._from = _input => Action.SetFilterPopoverOpen(_input.viewId, _input.popoverId)
+SetFilterPopoverSearchConstructor._from = _input => Action.SetFilterPopoverSearch(_input.viewId, _input.searchText)
 SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
 EnsureTableLayoutConstructor._from = _input => Action.EnsureTableLayout(_input.tableLayoutId, _input.columns)
 OpenViewConstructor._from = _input => Action.OpenView(_input.view, _input.groupId)
@@ -1226,6 +1298,8 @@ RemoveCategoryFilterConstructor.from = RemoveCategoryFilterConstructor._from
 SetTreeExpandedConstructor.from = SetTreeExpandedConstructor._from
 SetColumnSizingConstructor.from = SetColumnSizingConstructor._from
 SetColumnOrderConstructor.from = SetColumnOrderConstructor._from
+SetFilterPopoverOpenConstructor.from = SetFilterPopoverOpenConstructor._from
+SetFilterPopoverSearchConstructor.from = SetFilterPopoverSearchConstructor._from
 SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
 EnsureTableLayoutConstructor.from = EnsureTableLayoutConstructor._from
 OpenViewConstructor.from = OpenViewConstructor._from
@@ -1324,6 +1398,12 @@ SetColumnSizingConstructor.fromFirestore = SetColumnSizingConstructor._from
 
 SetColumnOrderConstructor.toFirestore = o => ({ ...o })
 SetColumnOrderConstructor.fromFirestore = SetColumnOrderConstructor._from
+
+SetFilterPopoverOpenConstructor.toFirestore = o => ({ ...o })
+SetFilterPopoverOpenConstructor.fromFirestore = SetFilterPopoverOpenConstructor._from
+
+SetFilterPopoverSearchConstructor.toFirestore = o => ({ ...o })
+SetFilterPopoverSearchConstructor.fromFirestore = SetFilterPopoverSearchConstructor._from
 
 SetTableLayoutConstructor._toFirestore = (o, encodeTimestamps) => ({
     tableLayout: TableLayout.toFirestore(o.tableLayout, encodeTimestamps),
@@ -1453,6 +1533,8 @@ Action.is = v => {
         SetTreeExpanded,
         SetColumnSizing,
         SetColumnOrder,
+        SetFilterPopoverOpen,
+        SetFilterPopoverSearch,
         SetTableLayout,
         EnsureTableLayout,
         OpenView,
@@ -1488,6 +1570,8 @@ Action.is = v => {
         constructor === SetTreeExpanded ||
         constructor === SetColumnSizing ||
         constructor === SetColumnOrder ||
+        constructor === SetFilterPopoverOpen ||
+        constructor === SetFilterPopoverSearch ||
         constructor === SetTableLayout ||
         constructor === EnsureTableLayout ||
         constructor === OpenView ||
@@ -1538,6 +1622,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetTreeExpanded,
         SetColumnSizing,
         SetColumnOrder,
+        SetFilterPopoverOpen,
+        SetFilterPopoverSearch,
         SetTableLayout,
         EnsureTableLayout,
         OpenView,
@@ -1571,6 +1657,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetTreeExpanded') return SetTreeExpanded.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetColumnSizing') return SetColumnSizing.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetColumnOrder') return SetColumnOrder.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetFilterPopoverOpen') return SetFilterPopoverOpen.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetFilterPopoverSearch') return SetFilterPopoverSearch.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTableLayout') return SetTableLayout.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'EnsureTableLayout') return EnsureTableLayout.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'OpenView') return OpenView.fromFirestore(doc, decodeTimestamps)

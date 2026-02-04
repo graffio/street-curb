@@ -8,6 +8,7 @@
 
 import {
     applySort,
+    containsIgnoreCase,
     memoizeOnceWithIdenticalParams,
     memoizeReduxState,
     memoizeReduxStatePerKey,
@@ -124,7 +125,7 @@ const _accountFilterData = (state, viewId) => {
     const selected = filter(state, viewId).selectedAccounts
     const rows = Array.from(accounts(state)).map(({ id, name }) => ({ id, name, isSelected: selected.includes(id) }))
     const badges = selected.map(id => ({ id, label: accounts(state).get(id)?.name || id }))
-    return { rows, badges, count: selected.length }
+    return { rows, badges, selectedIds: selected, count: selected.length }
 }
 
 const _securityFilterData = (state, viewId) => {
@@ -146,6 +147,52 @@ const _actionFilterData = (state, viewId) => {
 UI.accountFilterData = memoizeReduxStatePerKey(['accounts'], 'transactionFilters', _accountFilterData)
 UI.securityFilterData = memoizeReduxStatePerKey(['securities'], 'transactionFilters', _securityFilterData)
 UI.actionFilterData = memoizeReduxStatePerKey([], 'transactionFilters', _actionFilterData)
+
+const CLOSED_POPOVER = {
+    popoverId: null,
+    searchText: '',
+    highlightedIndex: 0,
+    nextHighlightIndex: 0,
+    prevHighlightIndex: 0,
+    highlightedItemId: null,
+    filteredItems: [],
+}
+
+const POPOVER_ITEM_SOURCES = {
+    accounts: state => Array.from(accounts(state)).map(({ id, name }) => ({ id, label: name })),
+}
+
+const _filterPopoverData = (state, viewId) => {
+    const f = filter(state, viewId)
+    const { filterPopoverId, filterPopoverSearch, filterPopoverHighlight } = f
+    if (!filterPopoverId) return CLOSED_POPOVER
+
+    const source = POPOVER_ITEM_SOURCES[filterPopoverId]
+    if (!source) return CLOSED_POPOVER
+
+    const allItems = source(state)
+    const searchText = filterPopoverSearch
+    const filteredItems = searchText.trim()
+        ? allItems.filter(item => containsIgnoreCase(searchText)(item.label))
+        : allItems
+    const count = filteredItems.length
+    const highlightedIndex = count === 0 ? 0 : Math.min(filterPopoverHighlight, count - 1)
+    const nextHighlightIndex = count === 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
+    const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
+    const highlightedItemId = count > 0 ? filteredItems[highlightedIndex].id : null
+
+    return {
+        popoverId: filterPopoverId,
+        searchText,
+        highlightedIndex,
+        nextHighlightIndex,
+        prevHighlightIndex,
+        highlightedItemId,
+        filteredItems,
+    }
+}
+
+UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'transactionFilters', _filterPopoverData)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tab layout derived

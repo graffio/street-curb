@@ -82,6 +82,8 @@ const post = action => {
         SetTreeExpanded        : () => dispatch(action),
         SetColumnSizing        : () => dispatch(action),
         SetColumnOrder         : () => dispatch(action),
+        SetFilterPopoverOpen   : () => dispatch(action),
+        SetFilterPopoverSearch : () => dispatch(action),
         SetTableLayout         : handleSetTableLayout,
         EnsureTableLayout      : handleSetTableLayout,
 
