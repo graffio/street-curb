@@ -7,6 +7,7 @@ import {
     calculateDateRange,
     CategorySelector,
     Checkbox,
+    FilterChipPopover,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
@@ -30,6 +31,14 @@ const T = {
     // Finds current group-by option from options list
     // @sig toCurrentOption :: ([{ value, label }], String?) -> { value, label }
     toCurrentOption: (options, groupBy) => options.find(o => o.value === groupBy) || options[0],
+
+    // Maps account rows to FilterChipPopover item shape
+    // @sig toAccountItems :: ([{ id, name }]) -> [{ id, label }]
+    toAccountItems: rows => rows.map(({ id, name }) => ({ id, label: name })),
+
+    // Extracts IDs from a badge list
+    // @sig toSelectedIds :: ([{ id }]) -> [String]
+    toSelectedIds: badges => badges.map(({ id }) => id),
 }
 
 const F = {
@@ -196,54 +205,31 @@ const DateRangeOption = ({ option, selectedKey, onSelect }) => {
 // AccountFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Account filter chip with inline account multi-select popover
+// Account filter chip with keyboard-navigable popover and search
 // @sig AccountFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleToggle = accountId => post(Action.ToggleAccountFilter(viewId, accountId))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
-    }
-
-    const { rows, badges, count } = useSelector(state => S.UI.accountFilterData(state, viewId))
-    const triggerStyle = F.makeChipTriggerStyle(175, isActive)
-    const label = count > 0 ? `${count} selected` : 'All'
+    const { rows, badges } = useSelector(state => S.UI.accountFilterData(state, viewId))
+    const items = T.toAccountItems(rows)
+    const selectedIds = T.toSelectedIds(badges)
 
     return (
-        <Popover.Root>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Accounts: {label}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 250 }}>
-                {count > 0 && (
-                    <Flex wrap="wrap" gap="1" mb="2">
-                        {badges.map(({ id, label }) => (
-                            <SelectedBadge key={id} id={id} label={label} onRemove={handleToggle} />
-                        ))}
-                    </Flex>
-                )}
-                <ScrollArea style={{ maxHeight: 200 }}>
-                    {rows.map(({ id, name, isSelected }) => (
-                        <CheckboxRow key={id} id={id} label={name} isSelected={isSelected} onToggle={handleToggle} />
-                    ))}
-                    {rows.length === 0 && (
-                        <Text size="2" color="gray">
-                            No accounts available
-                        </Text>
-                    )}
-                </ScrollArea>
-            </Popover.Content>
-        </Popover.Root>
+        <FilterChipPopover
+            label="Accounts"
+            onClear={handleClear}
+            items={items}
+            selectedIds={selectedIds}
+            onToggle={handleToggle}
+            searchable
+            width={175}
+            isActive={isActive}
+            keymapId={`${viewId}_accounts`}
+            keymapName="Account Filter"
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+        />
     )
 }
 
