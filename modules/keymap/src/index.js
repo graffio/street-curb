@@ -1,6 +1,7 @@
 // ABOUTME: Public API for @graffio/keymap
 // ABOUTME: Exports types (Intent, Keymap), normalizeKey, and formatKey utilities
 
+import { LookupTable } from '@graffio/functional'
 import { Intent } from './types/intent.js'
 import { Keymap } from './types/keymap.js'
 import { normalizeKey } from './keymap.js'
@@ -41,6 +42,21 @@ const T = {
     formatKeys: keys => keys.map(T.formatKey).join(', '),
 }
 
-const KeymapModule = { Intent, Keymap, normalizeKey, formatKey: T.formatKey, formatKeys: T.formatKeys }
+const F = {
+    // Creates a Keymap from a plain array of binding specs
+    // @sig fromBindings :: (String, String, [{ description, keys, action }], Options?) -> Keymap
+    fromBindings: (id, name, bindings, { priority = 10, blocking = false, activeForViewId = null } = {}) => {
+        const intents = LookupTable(
+            bindings.map(({ description, keys, action }) => Intent(description, keys, action)),
+            Intent,
+            'description',
+        )
+        return Keymap(id, name, priority, blocking, activeForViewId, intents)
+    },
+}
+
+const fromBindings = F.fromBindings
+
+const KeymapModule = { Intent, Keymap, normalizeKey, formatKey: T.formatKey, formatKeys: T.formatKeys, fromBindings }
 
 export { KeymapModule }

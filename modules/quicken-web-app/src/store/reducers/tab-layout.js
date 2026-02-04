@@ -6,8 +6,6 @@ import { KeymapModule } from '@graffio/keymap'
 import { TabGroup, TabLayout as TabLayoutType, View } from '../../types/index.js'
 import { TransactionFilters } from './transaction-filters.js'
 
-const { Intent, Keymap } = KeymapModule
-
 const T = {
     // Finds the next active view ID after removing a view
     // @sig toNextActiveViewId :: (TabGroup, String, LookupTable<View>) -> String|null
@@ -40,14 +38,16 @@ const F = {
 
     // Creates a keymap for register views with j/k navigation
     // @sig createRegisterKeymap :: (String, String) -> Keymap
-    createRegisterKeymap: (viewId, title) => {
-        const intents = LookupTable(
-            [Intent('Move down', ['j'], 'ArrowDown'), Intent('Move up', ['k'], 'ArrowUp')],
-            Intent,
-            'description',
-        )
-        return Keymap(viewId, title, 10, false, viewId, intents)
-    },
+    createRegisterKeymap: (viewId, title) =>
+        KeymapModule.fromBindings(
+            viewId,
+            title,
+            [
+                { description: 'Move down', keys: ['j'], action: 'ArrowDown' },
+                { description: 'Move up', keys: ['k'], action: 'ArrowUp' },
+            ],
+            { activeForViewId: viewId },
+        ),
 }
 
 const MAX_GROUPS = 4

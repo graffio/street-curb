@@ -39,7 +39,7 @@
  *     }
  */
 
-import { datePartsToDate, dateToDateParts, formatDateString, LookupTable } from '@graffio/functional'
+import { datePartsToDate, dateToDateParts, formatDateString } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
@@ -50,33 +50,6 @@ import {
     toDisplayDateString,
     updateDatePartWithValidation,
 } from '../utils/date-input-utils.js'
-
-const F = {
-    // Creates a date input keymap with navigation and editing intents
-    // @sig createDateInputKeymap :: (String, String, Object) -> Keymap
-    createDateInputKeymap: (keymapId, keymapName, handlers) => {
-        const { Intent, Keymap } = KeymapModule
-        const { onLeft, onRight, onUp, onDown, onEnter, onToday, onDayMinus, onDayPlus, onSlash } = handlers
-
-        const intents = LookupTable(
-            [
-                Intent('Decrement value', ['ArrowUp'], onUp),
-                Intent('Increment value', ['ArrowDown'], onDown),
-                Intent('Previous field', ['ArrowLeft'], onLeft),
-                Intent('Next field', ['ArrowRight', '/'], onRight),
-                Intent('Next field (apply)', ['Tab'], onSlash),
-                Intent('Set to today', ['t'], onToday),
-                Intent('Decrease by day', ['['], onDayMinus),
-                Intent('Increase by day', [']'], onDayPlus),
-                Intent('Exit', ['Enter'], onEnter),
-            ],
-            Intent,
-            'description',
-        )
-
-        return Keymap(keymapId, keymapName, 10, false, null, intents)
-    },
-}
 
 const E = {
     // Registers keymap and returns cleanup that unregisters it
@@ -427,18 +400,17 @@ const KeyboardDateInput = forwardRef((props, ref) => {
     // Create keymap with current handlers when in keyboard mode
     const keymap = useMemo(() => {
         if (!isKeyboardMode || !onRegisterKeymap || !keymapId) return null
-        const handlers = {
-            onLeft: handleArrowLeft,
-            onRight: handleArrowRight,
-            onUp: () => updateDatePart(false),
-            onDown: () => updateDatePart(true),
-            onEnter: handleEnterKey,
-            onToday: handleTodayKey,
-            onDayMinus: () => handleDayAdjustment(false),
-            onDayPlus: () => handleDayAdjustment(true),
-            onSlash: handleSlashKey,
-        }
-        return F.createDateInputKeymap(keymapId, keymapName, handlers)
+        return KeymapModule.fromBindings(keymapId, keymapName, [
+            { description: 'Decrement value', keys: ['ArrowUp'], action: () => updateDatePart(false) },
+            { description: 'Increment value', keys: ['ArrowDown'], action: () => updateDatePart(true) },
+            { description: 'Previous field', keys: ['ArrowLeft'], action: handleArrowLeft },
+            { description: 'Next field', keys: ['ArrowRight', '/'], action: handleArrowRight },
+            { description: 'Next field (apply)', keys: ['Tab'], action: handleSlashKey },
+            { description: 'Set to today', keys: ['t'], action: handleTodayKey },
+            { description: 'Decrease by day', keys: ['['], action: () => handleDayAdjustment(false) },
+            { description: 'Increase by day', keys: [']'], action: () => handleDayAdjustment(true) },
+            { description: 'Exit', keys: ['Enter'], action: handleEnterKey },
+        ])
 
     // Note: Keymap is only for displaying shortcuts in KeymapDrawer; local handleKeyDown processes actual keys.
     // No need to recreate keymap on state changes since global keymap routing skips input elements.

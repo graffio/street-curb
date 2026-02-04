@@ -2,7 +2,7 @@
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
 
 import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
-import { LookupTable, memoizeOnceWithIdenticalParams } from '@graffio/functional'
+import { memoizeOnceWithIdenticalParams } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { useCallback, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -17,17 +17,24 @@ import { SidebarNav } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
-const { Intent, Keymap } = KeymapModule
-
 const GLOBAL_KEYMAP_ID = 'global'
 
+const T = {
+    // Creates a global keymap from a toggle drawer handler
+    // @sig toGlobalKeymap :: Function -> Keymap
+    toGlobalKeymap: toggleDrawer =>
+        KeymapModule.fromBindings(
+            GLOBAL_KEYMAP_ID,
+            'Global',
+            [{ description: 'Toggle shortcuts', keys: ['?'], action: toggleDrawer }],
+            { priority: 0 },
+        ),
+}
+
 const F = {
-    // Creates global keymap with shortcuts panel toggle (memoized by toggleDrawer identity)
+    // Memoized global keymap factory (only recreates when toggleDrawer identity changes)
     // @sig createGlobalKeymap :: Function -> Keymap
-    createGlobalKeymap: memoizeOnceWithIdenticalParams(toggleDrawer => {
-        const intents = LookupTable([Intent('Toggle shortcuts', ['?'], toggleDrawer)], Intent, 'description')
-        return Keymap(GLOBAL_KEYMAP_ID, 'Global', 0, false, null, intents)
-    }),
+    createGlobalKeymap: memoizeOnceWithIdenticalParams(T.toGlobalKeymap),
 }
 
 const E = {

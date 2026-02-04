@@ -35,7 +35,6 @@ import {
 
 import { CategorySelector } from './components/CategorySelector.jsx'
 import { FilterChipPopover } from './components/FilterChipPopover.jsx'
-import { FilterChipPopover as FilterChipPopoverLogic } from './components/filter-chip-popover.js'
 import { DataTable } from './components/DataTable.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { FilePickerButton } from './components/FilePickerButton.jsx'
@@ -81,7 +80,6 @@ export {
     // ours
     CategorySelector,
     FilterChipPopover,
-    FilterChipPopoverLogic,
     DataTable,
     DateRangePicker,
     Dialog,

@@ -8,7 +8,6 @@ import {
     CategorySelector,
     Checkbox,
     FilterChipPopover,
-    FilterChipPopoverLogic,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
@@ -18,6 +17,7 @@ import {
     TextField,
 } from '@graffio/design-system'
 import { endOfDay } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
@@ -219,12 +219,12 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     // @sig keymapLifecycleEffect :: () -> (() -> void)?
     const keymapLifecycleEffect = () => {
         if (!isOpen) return undefined
-        const keymap = FilterChipPopoverLogic.createKeymap(KEYMAP_ID, 'Account Filter', {
-            onDown: handleMoveDown,
-            onUp: handleMoveUp,
-            onEnter: handleToggleHighlighted,
-            onEscape: handleDismiss,
-        })
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Account Filter', [
+            { description: 'Move down', keys: ['ArrowDown'], action: handleMoveDown },
+            { description: 'Move up', keys: ['ArrowUp'], action: handleMoveUp },
+            { description: 'Toggle', keys: ['Enter'], action: handleToggleHighlighted },
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
         post(Action.RegisterKeymap(keymap))
         return () => post(Action.UnregisterKeymap(KEYMAP_ID))
     }
