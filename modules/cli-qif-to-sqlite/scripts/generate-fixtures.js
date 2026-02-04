@@ -162,6 +162,53 @@ const T = {
             .map(T.toRoundedCategory)
     },
 
+    // Query per-account transaction counts for a date range
+    // @sig toDateFilteredAccountCounts :: (Database, String, String) -> [Object]
+    toDateFilteredAccountCounts: (db, startDate, endDate) =>
+        db
+            .prepare(
+                `SELECT a.name as account, COUNT(*) as count
+                 FROM transactions t JOIN accounts a ON t.accountId = a.id
+                 WHERE t.date BETWEEN ? AND ?
+                 GROUP BY a.name ORDER BY a.name`,
+            )
+            .all(startDate, endDate),
+
+    // Query category totals for a date range (rolled up to parent categories)
+    // @sig toDateFilteredCategoryTotals :: (Database, String, String) -> [Object]
+    toDateFilteredCategoryTotals: (db, startDate, endDate) => {
+        const parentCategory = `CASE WHEN c.name LIKE '%:%'
+            THEN SUBSTR(c.name, 1, INSTR(c.name, ':') - 1)
+            ELSE COALESCE(c.name, 'Uncategorized') END`
+        return db
+            .prepare(
+                `SELECT ${parentCategory} as category, SUM(t.amount) as total, COUNT(*) as count
+                 FROM transactions t
+                 LEFT JOIN categories c ON t.categoryId = c.id
+                 WHERE t.date BETWEEN ? AND ?
+                 GROUP BY category
+                 ORDER BY category`,
+            )
+            .all(startDate, endDate)
+            .map(T.toRoundedCategory)
+    },
+
+    // Query transaction count per security for an account
+    // @sig toPerSecurityCounts :: (Database, String) -> Object<Symbol, Number>
+    toPerSecurityCounts: (db, accountName) => {
+        const rows = db
+            .prepare(
+                `SELECT s.symbol, COUNT(*) as count
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 JOIN securities s ON t.securityId = s.id
+                 WHERE a.name = ?
+                 GROUP BY s.symbol ORDER BY s.symbol`,
+            )
+            .all(accountName)
+        return Object.fromEntries(rows.map(r => [r.symbol, r.count]))
+    },
+
     // Query holdings by account for InvestmentReportPage verification
     // @sig toHoldings :: Database -> [Object]
     toHoldings: db => {
@@ -182,6 +229,65 @@ const T = {
             )
             .all()
             .map(T.toRoundedHolding)
+    },
+
+    // Query cash balances at a historical date (last runningBalance per account on or before asOfDate)
+    // @sig toCashBalancesAsOf :: (Database, String) -> Object<AccountName, Number>
+    toCashBalancesAsOf: (db, asOfDate) => {
+        const rows = db
+            .prepare(
+                `SELECT a.name,
+                    (SELECT t.runningBalance FROM transactions t
+                     WHERE t.accountId = a.id AND t.date <= $asOfDate
+                     ORDER BY t.date DESC, t.id DESC LIMIT 1) as runningBalance
+                 FROM accounts a
+                 WHERE a.type IN ('Investment', '401(k)/403(b)')`,
+            )
+            .all({ asOfDate })
+        return Object.fromEntries(rows.filter(r => r.runningBalance != null).map(r => [r.name, r.runningBalance]))
+    },
+
+    // Query holdings by account and security at a historical date
+    // @sig toHoldingsAsOf :: (Database, String) -> [Object]
+    toHoldingsAsOf: (db, asOfDate) => {
+        const sumAllocated = `SELECT COALESCE(SUM(la.sharesAllocated), 0)
+            FROM lotAllocations la WHERE la.lotId = l.id AND la.date <= $asOfDate`
+        const priceAsOf = `SELECT p.price FROM prices p
+            WHERE p.securityId = l.securityId AND p.date <= $asOfDate ORDER BY p.date DESC LIMIT 1`
+        return db
+            .prepare(
+                `SELECT a.name as account, s.symbol, s.name as securityName,
+                    SUM(l.quantity - (${sumAllocated})) as shares,
+                    SUM((l.quantity - (${sumAllocated})) * (${priceAsOf})) as marketValue
+                 FROM lots l
+                 JOIN accounts a ON l.accountId = a.id
+                 JOIN securities s ON l.securityId = s.id
+                 WHERE l.purchaseDate <= $asOfDate
+                   AND (l.closedDate IS NULL OR l.closedDate > $asOfDate)
+                 GROUP BY a.id, s.id
+                 HAVING shares > 0.001
+                 ORDER BY a.name, s.symbol`,
+            )
+            .all({ asOfDate })
+            .map(T.toRoundedHolding)
+    },
+
+    // Query account totals at a historical date (holdings market value + cash)
+    // @sig toMarketValuesAsOf :: (Database, String) -> Object<AccountName, Number>
+    toMarketValuesAsOf: (db, asOfDate) => {
+        const holdings = T.toHoldingsAsOf(db, asOfDate)
+        const cashBalances = T.toCashBalancesAsOf(db, asOfDate)
+        const holdingsByAccount = holdings.reduce(
+            (acc, { account, marketValue }) => ({ ...acc, [account]: (acc[account] || 0) + marketValue }),
+            {},
+        )
+        const accounts = [...new Set([...Object.keys(holdingsByAccount), ...Object.keys(cashBalances)])].sort()
+        return Object.fromEntries(
+            accounts.map(name => {
+                const total = (holdingsByAccount[name] || 0) + (cashBalances[name] || 0)
+                return [name, Math.round(total * 100) / 100]
+            }),
+        )
     },
 }
 
@@ -225,7 +331,19 @@ const E = {
             accounts: T.toAccountStats(db),
             categoryTotals: T.toCategoryTotals(db),
             holdings: T.toHoldings(db),
+            holdingsAsOf: {
+                date: '2024-07-15',
+                holdings: T.toHoldingsAsOf(db, '2024-07-15'),
+                accountTotals: T.toMarketValuesAsOf(db, '2024-07-15'),
+            },
             spotChecks: T.toSpotChecks(db),
+            dateFiltered: {
+                startDate: '2024-02-01',
+                endDate: '2024-02-28',
+                accountCounts: T.toDateFilteredAccountCounts(db, '2024-02-01', '2024-02-28'),
+                categoryTotals: T.toDateFilteredCategoryTotals(db, '2024-02-01', '2024-02-28'),
+            },
+            perSecurityCounts: T.toPerSecurityCounts(db, 'Fidelity Brokerage'),
         }
         writeFileSync(expectedPath, JSON.stringify(expected, null, 2))
         console.log(`  Written: ${expectedPath}`)
