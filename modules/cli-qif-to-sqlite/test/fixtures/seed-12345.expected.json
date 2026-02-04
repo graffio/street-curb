@@ -1,0 +1,322 @@
+{
+  "seed": 12345,
+  "generatedAt": "2026-02-04T18:55:45.969Z",
+  "totals": {
+    "accounts": 6,
+    "transactions": 1054,
+    "securities": 8,
+    "prices": 4176,
+    "categories": 9
+  },
+  "accounts": [
+    {
+      "name": "401k Retirement",
+      "type": "Investment",
+      "transactionCount": 61,
+      "balance": -45749.28,
+      "marketValue": 55338.26
+    },
+    {
+      "name": "Chase Sapphire",
+      "type": "Credit Card",
+      "transactionCount": 405,
+      "balance": -32861.48,
+      "marketValue": null
+    },
+    {
+      "name": "Emergency Savings",
+      "type": "Bank",
+      "transactionCount": 48,
+      "balance": 31200,
+      "marketValue": null
+    },
+    {
+      "name": "Fidelity Brokerage",
+      "type": "Investment",
+      "transactionCount": 189,
+      "balance": 47030.28,
+      "marketValue": 51536.28
+    },
+    {
+      "name": "Primary Checking",
+      "type": "Bank",
+      "transactionCount": 351,
+      "balance": 55960.9,
+      "marketValue": null
+    },
+    {
+      "name": "Roth IRA",
+      "type": "Investment",
+      "transactionCount": 0,
+      "balance": 0,
+      "marketValue": null
+    }
+  ],
+  "categoryTotals": [
+    {
+      "category": "Food",
+      "total": -26042.86,
+      "count": 353
+    },
+    {
+      "category": "Income",
+      "total": 238500,
+      "count": 53
+    },
+    {
+      "category": "Transportation",
+      "total": -6514.51,
+      "count": 118
+    },
+    {
+      "category": "Uncategorized",
+      "total": -135268.28,
+      "count": 416
+    },
+    {
+      "category": "Utilities",
+      "total": -15093.93,
+      "count": 114
+    }
+  ],
+  "holdings": [
+    {
+      "account": "401k Retirement",
+      "symbol": "VFIAX",
+      "securityName": "Vanguard 500 Index Fund",
+      "shares": 108.91,
+      "marketValue": 55338.26
+    },
+    {
+      "account": "Fidelity Brokerage",
+      "symbol": "BND",
+      "securityName": "Vanguard Total Bond Market ETF",
+      "shares": 42,
+      "marketValue": 3983.7
+    },
+    {
+      "account": "Fidelity Brokerage",
+      "symbol": "JNJ",
+      "securityName": "Johnson & Johnson",
+      "shares": 1.173,
+      "marketValue": 257.57
+    },
+    {
+      "account": "Fidelity Brokerage",
+      "symbol": "PG",
+      "securityName": "Procter & Gamble",
+      "shares": 1.415,
+      "marketValue": 264.73
+    }
+  ],
+  "holdingsAsOf": {
+    "date": "2024-07-15",
+    "holdings": [
+      {
+        "account": "401k Retirement",
+        "symbol": "VFIAX",
+        "securityName": "Vanguard 500 Index Fund",
+        "shares": 21.404,
+        "marketValue": 8633.52
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "AAPL",
+        "securityName": "Apple Inc.",
+        "shares": 65,
+        "marketValue": 11971.7
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "BND",
+        "securityName": "Vanguard Total Bond Market ETF",
+        "shares": 37,
+        "marketValue": 2961.11
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "JNJ",
+        "securityName": "Johnson & Johnson",
+        "shares": 0.287,
+        "marketValue": 50.18
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "MSFT",
+        "securityName": "Microsoft Corp.",
+        "shares": 3,
+        "marketValue": 1132.89
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "PG",
+        "securityName": "Procter & Gamble",
+        "shares": 54,
+        "marketValue": 8283.6
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "VFIAX",
+        "securityName": "Vanguard 500 Index Fund",
+        "shares": 5,
+        "marketValue": 2016.8
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "symbol": "VTI",
+        "securityName": "Vanguard Total Stock Market ETF",
+        "shares": 58,
+        "marketValue": 13518.64
+      }
+    ],
+    "accountTotals": {
+      "401k Retirement": 8633.52,
+      "Fidelity Brokerage": 51000.1
+    }
+  },
+  "spotChecks": [
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-01",
+      "payee": "Acme Corp",
+      "amount": 4500,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-01",
+      "payee": "Transfer to Savings",
+      "amount": -500,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-01",
+      "payee": "Transfer to Fidelity Brokerage",
+      "amount": -10000,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Chase Sapphire",
+      "date": "2024-02-01",
+      "payee": "PG&E",
+      "amount": -108.88,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Emergency Savings",
+      "date": "2024-02-01",
+      "payee": "Transfer to Savings",
+      "amount": 500,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Fidelity Brokerage",
+      "date": "2024-02-01",
+      "payee": null,
+      "amount": 10000,
+      "investmentAction": "XIn",
+      "symbol": null
+    },
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-03",
+      "payee": "Whole Foods",
+      "amount": -74.57,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-03",
+      "payee": "PG&E",
+      "amount": -170.46,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Chase Sapphire",
+      "date": "2024-02-04",
+      "payee": "Whole Foods",
+      "amount": -105.17,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-05",
+      "payee": "Whole Foods",
+      "amount": -73.34,
+      "investmentAction": null,
+      "symbol": null
+    }
+  ],
+  "dateFiltered": {
+    "startDate": "2024-02-01",
+    "endDate": "2024-02-28",
+    "accountCounts": [
+      {
+        "account": "401k Retirement",
+        "count": 3
+      },
+      {
+        "account": "Chase Sapphire",
+        "count": 17
+      },
+      {
+        "account": "Emergency Savings",
+        "count": 2
+      },
+      {
+        "account": "Fidelity Brokerage",
+        "count": 5
+      },
+      {
+        "account": "Primary Checking",
+        "count": 18
+      }
+    ],
+    "categoryTotals": [
+      {
+        "category": "Food",
+        "total": -1773.83,
+        "count": 19
+      },
+      {
+        "category": "Income",
+        "total": 9000,
+        "count": 2
+      },
+      {
+        "category": "Transportation",
+        "total": -56.45,
+        "count": 1
+      },
+      {
+        "category": "Uncategorized",
+        "total": -8334.65,
+        "count": 16
+      },
+      {
+        "category": "Utilities",
+        "total": -911.62,
+        "count": 7
+      }
+    ]
+  },
+  "perSecurityCounts": {
+    "AAPL": 35,
+    "BND": 34,
+    "JNJ": 18,
+    "MSFT": 17,
+    "PG": 38,
+    "SPY": 9,
+    "VFIAX": 5,
+    "VTI": 24
+  }
+}
