@@ -14,7 +14,8 @@ tap.setTimeout(120_000)
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const FIXTURES_PATH = resolve(__dirname, '../../cli-qif-to-sqlite/test/fixtures')
 const EXPECTED_PATH = resolve(FIXTURES_PATH, 'seed-12345.expected.json')
-const TEST_URL = 'http://localhost:3000?testFile=seed-12345'
+const PORT = process.env.PORT || 3000
+const TEST_URL = `http://localhost:${PORT}?testFile=seed-12345`
 const HEADED = process.env.HEADED === '1'
 const SESSION = 'ui-smoke-test'
 
@@ -62,6 +63,18 @@ const clickPopoverItem = text => browser('click', [`[data-radix-popper-content-w
 // @sig clickClear :: () -> String
 const clickClear = () => browser('click', ['[style*="border-radius: 50%"]'])
 
+// Enters a date into KeyboardDateInput using keyboard-mode key presses
+// Click focuses the input → enters keyboard mode → hidden input captures keyDown events
+// Digits go through handleNumberTyping, '/' applies buffer and advances to next segment
+// After all digits, wait for the year buffer timeout (800ms) to auto-apply
+// @sig enterDate :: (String, String) -> Promise
+const enterDate = async (selector, dateString) => {
+    browser('click', [selector])
+    await wait(200)
+    dateString.split('').forEach(c => browser('press', [c]))
+    await wait(850)
+}
+
 test('setup: launch browser with test data', async t => {
     // Remove stale session files from a previous run (e.g. HEADED mode leaves browser open)
     const sessionDir = resolve(homedir(), '.agent-browser')
@@ -76,7 +89,7 @@ test('setup: launch browser with test data', async t => {
     browser('set', ['viewport', '1280', '1600'])
 
     // Wait for data to load
-    await wait(3000)
+    await wait(1500)
 })
 
 test('account list shows all accounts', async t => {
@@ -121,11 +134,18 @@ test('clicking bank account opens transaction register with correct data', async
 
     if (primaryChecking?.ref) {
         browser('click', [`@${primaryChecking.ref}`])
-        await wait(1000)
+        await wait(500)
 
         const afterClick = browser('snapshot')
 
         t.notOk(afterClick.includes('Something went wrong'), 'no crash after clicking account')
+
+        // Verify transaction count from expected.accounts
+        const primaryAccount = expected.accounts.find(a => a.name === 'Primary Checking')
+        t.ok(
+            afterClick.includes(`${primaryAccount.transactionCount} transactions`),
+            `shows ${primaryAccount.transactionCount} transactions`,
+        )
 
         // Verify transactions from spotChecks appear (filter to Primary Checking)
         const checkingTxns = expected.spotChecks.filter(s => s.account === 'Primary Checking')
@@ -143,9 +163,9 @@ test('transaction register: filter chip interactions', async t => {
 
     // --- DateFilterChip: select "This Year", then clear ---
     clickByText('Date:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('This Year')
-    await wait(500)
+    await wait(200)
 
     const afterDateFilter = browser('snapshot')
     t.notOk(afterDateFilter.includes('Something went wrong'), 'no crash after date filter')
@@ -154,18 +174,18 @@ test('transaction register: filter chip interactions', async t => {
 
     // Clear date filter via × button
     clickClear()
-    await wait(500)
+    await wait(200)
     const afterDateClear = browser('snapshot')
     t.notOk(afterDateClear.includes('Something went wrong'), 'no crash after clearing date filter')
     t.ok(afterDateClear.includes('Include all dates'), 'chip restored to "Include all dates"')
 
     // --- CategoryFilterChip: select a category, then clear ---
     clickByText('Categories:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Food')
-    await wait(300)
+    await wait(200)
     browser('press', ['Escape'])
-    await wait(500)
+    await wait(200)
 
     const afterCategoryFilter = browser('snapshot')
     t.notOk(afterCategoryFilter.includes('Something went wrong'), 'no crash after category filter')
@@ -173,23 +193,23 @@ test('transaction register: filter chip interactions', async t => {
 
     // Clear category filter via × button
     clickClear()
-    await wait(500)
+    await wait(200)
     const afterCategoryClear = browser('snapshot')
     t.notOk(afterCategoryClear.includes('Something went wrong'), 'no crash after clearing category filter')
 
     // --- SearchFilterChip: type search, then clear ---
     browser('click', ['text="Filter"'])
-    await wait(500)
+    await wait(200)
     browser('find', ['placeholder', 'Type to filter...', 'fill', 'Acme'])
-    await wait(500)
+    await wait(200)
 
     const afterSearch = browser('snapshot')
     t.notOk(afterSearch.includes('Something went wrong'), 'no crash after search filter')
     t.ok(afterSearch.includes('Acme'), 'search results contain "Acme"')
 
-    // Escape clears search (handleKeyDown) and closes popover
-    browser('press', ['Escape'])
-    await wait(500)
+    // handleClear stopPropagation blocks Escape from reaching Radix — use × button to clear search
+    clickClear()
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing search')
 })
 
@@ -199,7 +219,7 @@ test('clicking investment account opens register with correct transactions', asy
     const beforeElements = parseSnapshot(beforeSnapshot)
     const overview = beforeElements.find(e => e.text.includes('Overview'))
     if (overview?.ref) browser('click', [`@${overview.ref}`])
-    await wait(500)
+    await wait(200)
 
     const snapshot = browser('snapshot', ['-i'])
     const elements = parseSnapshot(snapshot)
@@ -210,11 +230,18 @@ test('clicking investment account opens register with correct transactions', asy
 
     if (fidelity?.ref) {
         browser('click', [`@${fidelity.ref}`])
-        await wait(1000)
+        await wait(500)
 
         const afterClick = browser('snapshot')
 
         t.notOk(afterClick.includes('Something went wrong'), 'no crash after clicking investment account')
+
+        // Verify transaction count from expected.accounts
+        const fidelityAccount = expected.accounts.find(a => a.name === 'Fidelity Brokerage')
+        t.ok(
+            afterClick.includes(`${fidelityAccount.transactionCount} transactions`),
+            `shows ${fidelityAccount.transactionCount} transactions`,
+        )
 
         // Verify investment transactions from spotChecks appear (filter to Fidelity with symbols)
         // Only check symbols and common actions (Buy/Sell) - specialized actions like ShtSell may display differently
@@ -233,29 +260,34 @@ test('investment register: filter chip interactions', async t => {
 
     // --- SecurityFilterChip: select "VTI", then clear ---
     clickByText('Securities:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('VTI')
-    await wait(300)
+    await wait(200)
     browser('press', ['Escape'])
-    await wait(500)
+    await wait(200)
 
     const afterSecurityFilter = browser('snapshot')
     t.notOk(afterSecurityFilter.includes('Something went wrong'), 'no crash after security filter')
     t.ok(afterSecurityFilter.includes('1 selected'), 'security chip shows "1 selected"')
     t.ok(afterSecurityFilter.includes('VTI'), 'VTI visible in filtered results')
 
+    // Verify VTI transaction count from expected.perSecurityCounts
+    const expected = loadExpected()
+    const vtiCount = expected.perSecurityCounts.VTI
+    t.ok(afterSecurityFilter.includes(`${vtiCount} transactions`), `shows ${vtiCount} VTI transactions`)
+
     // Clear security filter
     clickClear()
-    await wait(500)
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing security filter')
 
     // --- ActionFilterChip: select "Buy", then clear ---
     clickByText('Actions:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Buy')
-    await wait(300)
+    await wait(200)
     browser('press', ['Escape'])
-    await wait(500)
+    await wait(200)
 
     const afterActionFilter = browser('snapshot')
     t.notOk(afterActionFilter.includes('Something went wrong'), 'no crash after action filter')
@@ -263,23 +295,106 @@ test('investment register: filter chip interactions', async t => {
 
     // Clear action filter
     clickClear()
-    await wait(500)
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing action filter')
 
     // --- SearchFilterChip: type "AAPL" ---
     browser('click', ['text="Filter"'])
-    await wait(500)
+    await wait(200)
     browser('find', ['placeholder', 'Type to filter...', 'fill', 'AAPL'])
-    await wait(500)
+    await wait(200)
 
     const afterSearch = browser('snapshot')
     t.notOk(afterSearch.includes('Something went wrong'), 'no crash after search filter')
     t.ok(afterSearch.includes('AAPL'), 'search results contain "AAPL"')
 
-    // Escape clears search (handleKeyDown) and closes popover
-    browser('press', ['Escape'])
-    await wait(500)
+    // handleClear stopPropagation blocks Escape from closing Radix popover.
+    // Click × to clear search text, then click trigger again to toggle popover closed.
+    clickClear()
+    await wait(200)
+    browser('click', ['text="Filter"'])
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing search')
+})
+
+test('investment register: custom date filter shows correct values', async t => {
+    const expected = loadExpected()
+    const fidelityCount = expected.accounts.find(a => a.name === 'Fidelity Brokerage').transactionCount
+
+    // Open date filter and select "Custom dates..."
+    clickByText('Date:')
+    await wait(200)
+    clickPopoverItem('Custom dates')
+    await wait(200)
+
+    // Enter Feb 2024 date range
+    await enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
+    await enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+
+    browser('press', ['Escape'])
+    await wait(200)
+
+    const afterDateFilter = browser('snapshot')
+    const fidelityDateFiltered = expected.dateFiltered.accountCounts.find(a => a.account === 'Fidelity Brokerage').count
+    t.ok(
+        afterDateFilter.includes(`${fidelityDateFiltered} transactions`),
+        `shows ${fidelityDateFiltered} transactions for Feb 2024`,
+    )
+    t.ok(afterDateFilter.includes(`filtered from ${fidelityCount}`), `shows "filtered from ${fidelityCount}"`)
+
+    // Clear filter and verify original count returns
+    clickClear()
+    await wait(200)
+    const afterClear = browser('snapshot')
+    t.ok(afterClear.includes(`${fidelityCount} transactions`), `shows ${fidelityCount} transactions after clearing`)
+})
+
+test('bank register: custom date filter shows correct values', async t => {
+    // Navigate back to Overview, then click Primary Checking by ref (text matches sidebar + list)
+    const beforeSnap = browser('snapshot', ['-i'])
+    const beforeElements = parseSnapshot(beforeSnap)
+    const overview = beforeElements.find(e => e.text.includes('Overview'))
+    if (overview?.ref) browser('click', [`@${overview.ref}`])
+    await wait(200)
+
+    const overviewSnap = browser('snapshot', ['-i'])
+    const overviewElements = parseSnapshot(overviewSnap)
+    const primaryChecking = overviewElements.find(e => e.text.includes('Primary Checking'))
+    if (primaryChecking?.ref) browser('click', [`@${primaryChecking.ref}`])
+    await wait(500)
+
+    const expected = loadExpected()
+    const primaryCount = expected.accounts.find(a => a.name === 'Primary Checking').transactionCount
+
+    // Open date filter and select "Custom dates..."
+    clickByText('Date:')
+    await wait(200)
+    clickPopoverItem('Custom dates')
+    await wait(200)
+
+    // Enter dates via key presses (fill/type don't trigger KeyboardDateInput onChange)
+    await enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
+    await enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+
+    // Close popover (Escape bubbles from hidden input to popover)
+    browser('press', ['Escape'])
+    await wait(200)
+
+    const afterDateFilter = browser('snapshot')
+    const filteredCount = expected.dateFiltered.accountCounts.find(a => a.account === 'Primary Checking').count
+
+    // Assert filtered transaction count
+    t.ok(afterDateFilter.includes(`${filteredCount} transactions`), `shows ${filteredCount} transactions (filtered)`)
+    t.ok(afterDateFilter.includes(`filtered from ${primaryCount}`), `shows "filtered from ${primaryCount}"`)
+
+    // Clear date filter and verify original count returns
+    clickClear()
+    await wait(200)
+    const afterClear = browser('snapshot')
+    t.ok(
+        afterClear.includes(`${primaryCount} transactions`),
+        `shows ${primaryCount} transactions after clearing filter`,
+    )
 })
 
 test('clicking Investment Holdings opens holdings report with correct values', async t => {
@@ -288,7 +403,7 @@ test('clicking Investment Holdings opens holdings report with correct values', a
     const beforeElements = parseSnapshot(beforeSnapshot)
     const overview = beforeElements.find(e => e.text.includes('Overview'))
     if (overview?.ref) browser('click', [`@${overview.ref}`])
-    await wait(500)
+    await wait(200)
 
     // Click Investment Holdings in Reports section
     const snapshot = browser('snapshot', ['-i'])
@@ -300,7 +415,7 @@ test('clicking Investment Holdings opens holdings report with correct values', a
 
     if (holdingsReport?.ref) {
         browser('click', [`@${holdingsReport.ref}`])
-        await wait(1000)
+        await wait(500)
 
         const afterClick = browser('snapshot')
 
@@ -318,6 +433,36 @@ test('clicking Investment Holdings opens holdings report with correct values', a
             })
             t.ok(afterClick.includes(formattedValue), `${name} shows market value $${formattedValue}`)
         })
+
+        // Switch to "by Security" grouping to verify individual holdings without tree expansion
+        clickByText('Group by:')
+        await wait(200)
+        clickPopoverItem('Security')
+        await wait(200)
+
+        const securityView = browser('snapshot')
+
+        // Verify at least 3 individual securities: shares and market values
+        const spotCheckSecurities = expected.holdings.filter(h => h.account === 'Fidelity Brokerage').slice(0, 3)
+        spotCheckSecurities.forEach(({ marketValue, shares, symbol }) => {
+            t.ok(securityView.includes(symbol), `shows security: ${symbol}`)
+            const isWhole = Number.isInteger(shares)
+            const formattedShares = isWhole
+                ? shares.toLocaleString('en-US')
+                : shares.toLocaleString('en-US', { minimumFractionDigits: 3 })
+            const formattedValue = marketValue.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            })
+            t.ok(securityView.includes(formattedShares), `${symbol} shows ${formattedShares} shares`)
+            t.ok(securityView.includes(formattedValue), `${symbol} shows market value $${formattedValue}`)
+        })
+
+        // Switch back to Account grouping for subsequent tests
+        clickByText('Group by:')
+        await wait(200)
+        clickPopoverItem('Account')
+        await wait(200)
     } else {
         t.fail('Investment Holdings not clickable')
     }
@@ -329,9 +474,9 @@ test('investment holdings: filter chip interactions', async t => {
 
     // --- GroupByFilterChip: switch to "Security", then back to "Account" ---
     clickByText('Group by:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Security')
-    await wait(500)
+    await wait(200)
 
     const afterSecurityGroup = browser('snapshot')
     t.notOk(afterSecurityGroup.includes('Something went wrong'), 'no crash after group by Security')
@@ -340,18 +485,18 @@ test('investment holdings: filter chip interactions', async t => {
 
     // Switch back to Account
     clickByText('Group by:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Account')
-    await wait(500)
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after group by Account')
 
     // --- AccountFilterChip: select "Fidelity Brokerage" ---
     clickByText('Accounts:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Fidelity Brokerage')
-    await wait(300)
+    await wait(200)
     browser('press', ['Escape'])
-    await wait(500)
+    await wait(200)
 
     const afterAccountFilter = browser('snapshot')
     t.notOk(afterAccountFilter.includes('Something went wrong'), 'no crash after account filter')
@@ -360,8 +505,40 @@ test('investment holdings: filter chip interactions', async t => {
 
     // Clear account filter
     clickClear()
-    await wait(500)
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing account filter')
+})
+
+test('investment holdings: as-of date shows correct historical values', async t => {
+    // We're on Investment Holdings report from previous test
+    const expected = loadExpected()
+
+    // Click "As of:" chip to open date picker popover
+    clickByText('As of:')
+    await wait(200)
+
+    // AsOfDateChip auto-focuses month field on open — press keys directly (no click needed)
+    // Digits go through handleNumberTyping, '/' advances segment
+    '07/15/2024'.split('').forEach(c => browser('press', [c]))
+    await wait(850)
+
+    // Close popover
+    browser('press', ['Escape'])
+    await wait(500)
+
+    const afterAsOf = browser('snapshot')
+    t.notOk(afterAsOf.includes('Something went wrong'), 'no crash after as-of date change')
+
+    // Verify account totals from holdingsAsOf
+    const { accountTotals } = expected.holdingsAsOf
+    Object.entries(accountTotals).forEach(([name, total]) => {
+        const formatted = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        t.ok(afterAsOf.includes(formatted), `${name} shows historical total $${formatted}`)
+    })
+
+    // Verify historical totals differ from current (proves as-of date took effect)
+    const currentFidelity = expected.accounts.find(a => a.name === 'Fidelity Brokerage').marketValue
+    t.not(accountTotals['Fidelity Brokerage'], currentFidelity, 'historical total differs from current')
 })
 
 test('clicking Spending by Category opens report with correct values', async t => {
@@ -370,7 +547,7 @@ test('clicking Spending by Category opens report with correct values', async t =
     const beforeElements = parseSnapshot(beforeSnapshot)
     const overview = beforeElements.find(e => e.text.includes('Overview'))
     if (overview?.ref) browser('click', [`@${overview.ref}`])
-    await wait(500)
+    await wait(200)
 
     const snapshot = browser('snapshot', ['-i'])
     const elements = parseSnapshot(snapshot)
@@ -380,7 +557,7 @@ test('clicking Spending by Category opens report with correct values', async t =
 
     if (categoryReport?.ref) {
         browser('click', [`@${categoryReport.ref}`])
-        await wait(1000)
+        await wait(500)
 
         const afterClick = browser('snapshot')
         const expected = loadExpected()
@@ -407,9 +584,9 @@ test('category report: filter chip interactions', async t => {
 
     // --- GroupByFilterChip: switch to "Account" ---
     clickByText('Group by:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Account')
-    await wait(500)
+    await wait(200)
 
     const afterAccountGroup = browser('snapshot')
     t.notOk(afterAccountGroup.includes('Something went wrong'), 'no crash after group by Account')
@@ -417,18 +594,18 @@ test('category report: filter chip interactions', async t => {
 
     // Switch back to Category (default)
     clickByText('Group by:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Category')
-    await wait(500)
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after switching back to Category')
 
     // --- AccountFilterChip: select "Primary Checking", then clear ---
     clickByText('Accounts:')
-    await wait(500)
+    await wait(200)
     clickPopoverItem('Primary Checking')
-    await wait(300)
+    await wait(200)
     browser('press', ['Escape'])
-    await wait(500)
+    await wait(200)
 
     const afterAccountFilter = browser('snapshot')
     t.notOk(afterAccountFilter.includes('Something went wrong'), 'no crash after account filter')
@@ -436,8 +613,50 @@ test('category report: filter chip interactions', async t => {
 
     // Clear account filter
     clickClear()
-    await wait(500)
+    await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing account filter')
+})
+
+test('category report: custom date filter shows correct values', async t => {
+    // We're already on Spending by Category from previous test
+    const expected = loadExpected()
+    const originalFoodTotal = Math.abs(expected.categoryTotals.find(c => c.category === 'Food').total).toLocaleString(
+        'en-US',
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+    )
+
+    // Open date filter and select "Custom dates..."
+    clickByText('Date:')
+    await wait(200)
+    clickPopoverItem('Custom dates')
+    await wait(200)
+
+    // Enter dates via key presses (KeyboardDateInput requires keyboard-mode interaction)
+    await enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
+    await enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+
+    // Close popover
+    browser('press', ['Escape'])
+    await wait(200)
+
+    const afterDateFilter = browser('snapshot')
+
+    // Verify date-filtered category totals from expected.dateFiltered.categoryTotals
+    const filteredFood = Math.abs(
+        expected.dateFiltered.categoryTotals.find(c => c.category === 'Food').total,
+    ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const filteredIncome = expected.dateFiltered.categoryTotals
+        .find(c => c.category === 'Income')
+        .total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    t.ok(afterDateFilter.includes(filteredFood), `Food shows filtered total $${filteredFood}`)
+    t.ok(afterDateFilter.includes(filteredIncome), `Income shows filtered total $${filteredIncome}`)
+
+    // Clear date filter and verify original totals return
+    clickClear()
+    await wait(200)
+    const afterClear = browser('snapshot')
+    t.ok(afterClear.includes(originalFoodTotal), `Food shows original total $${originalFoodTotal} after clearing`)
 })
 
 test('cleanup: close browser', async t => {
