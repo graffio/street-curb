@@ -25,6 +25,10 @@ const F = {
     // Creates chip trigger style with specified width and active state
     // @sig makeTriggerStyle :: (Number, Boolean) -> Style
     makeTriggerStyle: (width, isActive) => ({
+        appearance: 'none',
+        border: 'none',
+        font: 'inherit',
+        color: 'inherit',
         display: 'inline-flex',
         alignItems: 'center',
         gap: 'var(--space-1)',
@@ -143,8 +147,8 @@ const FilterChipPopover = ({
 
     return (
         <Popover.Root open={open} onOpenChange={onOpenChange}>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
+            <Popover.Trigger asChild>
+                <button type="button" style={triggerStyle}>
                     <Text size="1" weight="medium">
                         {label}: {displayLabel}
                     </Text>
@@ -153,7 +157,7 @@ const FilterChipPopover = ({
                             ×
                         </Box>
                     )}
-                </Box>
+                </button>
             </Popover.Trigger>
             <Popover.Content style={popoverContentStyle}>
                 {selectedItems.length > 0 && (
