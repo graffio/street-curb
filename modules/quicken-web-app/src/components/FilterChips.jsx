@@ -271,6 +271,7 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
 // Investment action filter chip with inline multi-select popover
 // @sig ActionFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const ActionFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
     const handleToggle = actionId => post(Action.ToggleActionFilter(viewId, actionId))
 
     const handleClear = e => {
@@ -278,12 +279,15 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
     }
 
+    const POPOVER_ID = 'actions'
     const { rows, badges, count } = useSelector(state => S.UI.actionFilterData(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(150, isActive)
     const chipLabel = count > 0 ? `${count} selected` : 'All'
 
     return (
-        <Popover.Root>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -319,6 +323,7 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
 // Category filter chip with inline category selector popover
 // @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const CategoryFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
     const handleCategoryAdd = category => post(Action.AddCategoryFilter(viewId, category))
     const handleCategoryRemove = category => post(Action.RemoveCategoryFilter(viewId, category))
 
@@ -327,14 +332,17 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
     }
 
+    const POPOVER_ID = 'categories'
     const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
     const allCategories = useSelector(S.Categories.allNames)
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(185, isActive)
     const { length: count } = selectedCategories
     const label = count > 0 ? `${count} selected` : 'All'
 
     return (
-        <Popover.Root>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -370,6 +378,11 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 // As-of date filter chip with single date picker for holdings view
 // @sig AsOfDateChip :: { viewId: String } -> ReactElement
 const AsOfDateChip = ({ viewId }) => {
+    const handleOpenChange = open => {
+        post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+        if (open) setTimeout(() => dateInputRef.current?.focus('month'), 0)
+    }
+
     // Converts Date to YYYY-MM-DD string and dispatches filter update
     // @sig handleDateChange :: Date? -> void
     const handleDateChange = date => {
@@ -381,14 +394,17 @@ const AsOfDateChip = ({ viewId }) => {
         }
     }
 
+    const POPOVER_ID = 'asOfDate'
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
     const dateInputRef = useRef(null)
     const triggerStyle = F.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
     return (
-        <Popover.Root onOpenChange={open => open && setTimeout(() => dateInputRef.current?.focus('month'), 0)}>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -423,6 +439,8 @@ const AsOfDateChip = ({ viewId }) => {
 // Date filter chip with inline date range options popover
 // @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const DateFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+
     const handleSelect = key => {
         const dateRange = calculateDateRange(key) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
@@ -445,17 +463,20 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
+    const POPOVER_ID = 'date'
     const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const startDateRef = useRef(null)
     const endDateRef = useRef(null)
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
 
     return (
-        <Popover.Root>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -524,16 +545,20 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 // Group by filter chip with inline dimension selector popover
 // @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
 const GroupByFilterChip = ({ viewId, options }) => {
+    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
     const handleSelect = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
 
+    const POPOVER_ID = 'groupBy'
     const resolvedOptions = options ?? defaultGroupByOptions
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(155, false)
     const currentOption = T.toCurrentOption(resolvedOptions, groupBy)
     const defaultValue = resolvedOptions[0]?.value
 
     return (
-        <Popover.Root>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -561,6 +586,11 @@ const GroupByFilterChip = ({ viewId, options }) => {
 // Search filter chip with inline text input popover
 // @sig SearchFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SearchFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => {
+        post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+        if (open) setTimeout(() => inputRef.current?.focus(), 0)
+    }
+
     const handleChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
 
     const handleClear = e => {
@@ -572,14 +602,17 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
         if (e.key === 'Escape') handleClear(e)
     }
 
+    const POPOVER_ID = 'search'
     const inputRef = useRef(null)
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(120, isActive)
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
 
     return (
-        <Popover.Root onOpenChange={open => open && setTimeout(() => inputRef.current?.focus(), 0)}>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -617,6 +650,7 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
 // Security filter chip with inline security multi-select popover
 // @sig SecurityFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SecurityFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
     const handleToggle = securityId => post(Action.ToggleSecurityFilter(viewId, securityId))
 
     const handleClear = e => {
@@ -624,12 +658,15 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
     }
 
+    const POPOVER_ID = 'securities'
     const { rows, badges, count } = useSelector(state => S.UI.securityFilterData(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(175, isActive)
     const chipLabel = count > 0 ? `${count} selected` : 'All'
 
     return (
-        <Popover.Root>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
