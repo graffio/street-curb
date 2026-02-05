@@ -1,6 +1,7 @@
 // ABOUTME: Fully controlled filter chip popover for multi-select lists
 // ABOUTME: Zero internal state — all state and navigation callbacks provided by consumer via props
 
+import { KeymapModule } from '@graffio/keymap'
 import { Badge, Box, Checkbox, Flex, Popover, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef } from 'react'
@@ -89,6 +90,9 @@ const FilterChipPopover = ({
     searchable = false,
     width = 175,
     isActive = false,
+    keymapId,
+    onRegisterKeymap,
+    onUnregisterKeymap,
     onSearchChange,
     onMoveDown,
     onMoveUp,
@@ -119,6 +123,20 @@ const FilterChipPopover = ({
         if (open && searchable) searchRef.current?.focus()
     }
 
+    // Creates and registers navigation keymap when popover is open
+    // @sig keymapLifecycleEffect :: () -> (() -> void)?
+    const keymapLifecycleEffect = () => {
+        if (!keymapId || !onRegisterKeymap || !onUnregisterKeymap || !open) return undefined
+        const keymap = KeymapModule.fromBindings(keymapId, `${label} Filter`, [
+            { description: 'Move down', keys: ['ArrowDown'], action: () => handlersRef.current.onMoveDown() },
+            { description: 'Move up', keys: ['ArrowUp'], action: () => handlersRef.current.onMoveUp() },
+            { description: 'Toggle', keys: ['Enter'], action: () => handlersRef.current.onToggleHighlighted() },
+            { description: 'Dismiss', keys: ['Escape'], action: () => handlersRef.current.onDismiss() },
+        ])
+        onRegisterKeymap(keymap)
+        return () => onUnregisterKeymap(keymapId)
+    }
+
     // Maps an item and its position to an ItemRow element
     // @sig toItemRow :: ({ id, label }, Number) -> ReactElement
     const toItemRow = (item, i) => (
@@ -132,15 +150,19 @@ const FilterChipPopover = ({
         />
     )
 
+    // Refs to capture latest callbacks without triggering effect re-runs
+    const handlersRef = useRef({ onMoveDown, onMoveUp, onToggleHighlighted, onDismiss })
+    handlersRef.current = { onMoveDown, onMoveUp, onToggleHighlighted, onDismiss }
     const highlightedRef = useRef(null)
     const searchRef = useRef(null)
 
     const { length: selectedCount } = selectedIds
     const selectedSet = new Set(selectedIds)
 
-    // DOM effects: scroll highlighted item into view, focus search input
+    // DOM effects: scroll highlighted item into view, focus search input, manage keymap
     useEffect(() => highlightedRef.current?.scrollIntoView({ block: 'nearest' }), [highlightedIndex])
     useEffect(focusSearchEffect, [open, searchable])
+    useEffect(keymapLifecycleEffect, [open, keymapId, label, onRegisterKeymap, onUnregisterKeymap])
 
     const triggerStyle = F.makeTriggerStyle(width, isActive)
     const displayLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
@@ -205,6 +227,9 @@ FilterChipPopover.propTypes = {
     searchable: PropTypes.bool,
     width: PropTypes.number,
     isActive: PropTypes.bool,
+    keymapId: PropTypes.string,
+    onRegisterKeymap: PropTypes.func,
+    onUnregisterKeymap: PropTypes.func,
     onSearchChange: PropTypes.func,
     onMoveDown: PropTypes.func.isRequired,
     onMoveUp: PropTypes.func.isRequired,

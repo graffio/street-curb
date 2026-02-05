@@ -17,8 +17,7 @@ import {
     TextField,
 } from '@graffio/design-system'
 import { endOfDay } from '@graffio/functional'
-import { KeymapModule } from '@graffio/keymap'
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
@@ -215,20 +214,6 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
 
-    // Creates and registers keymap when popover is open, unregisters on cleanup
-    // @sig keymapLifecycleEffect :: () -> (() -> void)?
-    const keymapLifecycleEffect = () => {
-        if (!isOpen) return undefined
-        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Account Filter', [
-            { description: 'Move down', keys: ['ArrowDown'], action: handleMoveDown },
-            { description: 'Move up', keys: ['ArrowUp'], action: handleMoveUp },
-            { description: 'Toggle', keys: ['Enter'], action: handleToggleHighlighted },
-            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
-        ])
-        post(Action.RegisterKeymap(keymap))
-        return () => post(Action.UnregisterKeymap(KEYMAP_ID))
-    }
-
     const KEYMAP_ID = `${viewId}_accounts`
     const POPOVER_ID = 'accounts'
     const { badges, selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
@@ -237,8 +222,6 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex,
         highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId))
     const isOpen = popoverId === POPOVER_ID
-
-    useEffect(keymapLifecycleEffect, [isOpen, KEYMAP_ID, nextHighlightIndex, prevHighlightIndex, highlightedItemId])
 
     return (
         <FilterChipPopover
@@ -253,6 +236,9 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={175}
             isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
