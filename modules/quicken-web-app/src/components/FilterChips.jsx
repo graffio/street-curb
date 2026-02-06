@@ -2,17 +2,13 @@
 // ABOUTME: Consolidated chips with shared styles for accounts, actions, categories, dates, search, securities, groupBy
 
 import {
-    Badge,
     Box,
     calculateDateRange,
-    CategorySelector,
-    Checkbox,
-    FilterChipPopover,
+    SelectableListPopover,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
     Popover,
-    ScrollArea,
     Text,
     TextField,
 } from '@graffio/design-system'
@@ -32,6 +28,14 @@ const T = {
     // Finds current group-by option from options list
     // @sig toCurrentOption :: ([{ value, label }], String?) -> { value, label }
     toCurrentOption: (options, groupBy) => options.find(o => o.value === groupBy) || options[0],
+
+    // Converts options ({value, label}) to items ({id, label}) format for SelectableListPopover
+    // @sig toItems :: [{ value, label }] -> [{ id, label }]
+    toItems: options => options.map(({ value, label }) => ({ id: value, label })),
+
+    // Gets selected item from items array by ID
+    // @sig toSelectedItems :: ([{ id, label }], String?) -> [{ id, label }]
+    toSelectedItems: (items, selectedId) => items.filter(item => item.id === selectedId),
 }
 
 const F = {
@@ -65,6 +69,13 @@ const E = {
     // Dispatches keymap unregistration action
     // @sig handleUnregisterKeymap :: String -> void
     handleUnregisterKeymap: id => post(Action.UnregisterKeymap(id)),
+
+    // Toggles a category filter: adds if not selected, removes if selected
+    // @sig handleToggleCategory :: (String, String, [String]) -> void
+    handleToggleCategory: (viewId, categoryName, selectedIds) => {
+        if (selectedIds.includes(categoryName)) post(Action.RemoveCategoryFilter(viewId, categoryName))
+        else post(Action.AddCategoryFilter(viewId, categoryName))
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -84,7 +95,6 @@ const clearButtonStyle = {
     cursor: 'pointer',
 }
 
-const itemRowStyle = { padding: 'var(--space-2)', borderBottom: '1px solid var(--gray-3)', cursor: 'pointer' }
 const optionStyle = { padding: 'var(--space-2) var(--space-3)', cursor: 'pointer', borderRadius: 'var(--radius-1)' }
 const separatorStyle = { padding: 'var(--space-1) var(--space-3)', userSelect: 'none' }
 
@@ -133,23 +143,6 @@ const FilterColumn = ({ chip, details }) => (
             </span>
         ))}
     </div>
-)
-
-// Removable badge for selected items
-// @sig SelectedBadge :: { id: String, label: String, onRemove: Function } -> ReactElement
-const SelectedBadge = ({ id, label, onRemove }) => (
-    <Badge key={id} variant="soft" style={{ cursor: 'pointer' }} onClick={() => onRemove(id)}>
-        {label} ×
-    </Badge>
-)
-
-// Row with checkbox for multi-select lists
-// @sig CheckboxRow :: { id: String, label: String, isSelected: Boolean, onToggle: Function } -> ReactElement
-const CheckboxRow = ({ id, label, isSelected, onToggle }) => (
-    <Flex key={id} align="center" gap="2" style={itemRowStyle} onClick={() => onToggle(id)}>
-        <Checkbox checked={isSelected} />
-        <Text size="2">{label}</Text>
-    </Flex>
 )
 
 // Separator line for option lists
@@ -215,20 +208,6 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
 
-    // Creates and registers keymap when popover is open, unregisters on cleanup
-    // @sig keymapLifecycleEffect :: () -> (() -> void)?
-    const keymapLifecycleEffect = () => {
-        if (!isOpen) return undefined
-        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Account Filter', [
-            { description: 'Move down', keys: ['ArrowDown'], action: handleMoveDown },
-            { description: 'Move up', keys: ['ArrowUp'], action: handleMoveUp },
-            { description: 'Toggle', keys: ['Enter'], action: handleToggleHighlighted },
-            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
-        ])
-        post(Action.RegisterKeymap(keymap))
-        return () => post(Action.UnregisterKeymap(KEYMAP_ID))
-    }
-
     const KEYMAP_ID = `${viewId}_accounts`
     const POPOVER_ID = 'accounts'
     const { badges, selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
@@ -238,10 +217,8 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
         highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId))
     const isOpen = popoverId === POPOVER_ID
 
-    useEffect(keymapLifecycleEffect, [isOpen, KEYMAP_ID, nextHighlightIndex, prevHighlightIndex, highlightedItemId])
-
     return (
-        <FilterChipPopover
+        <SelectableListPopover
             label="Accounts"
             open={isOpen}
             onOpenChange={handleOpenChange}
@@ -253,6 +230,9 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={175}
             isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
@@ -268,47 +248,53 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
 // ActionFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Investment action filter chip with inline multi-select popover
+// Investment action filter chip with keyboard-navigable popover — fully controlled via Redux
 // @sig ActionFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const ActionFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
     const handleToggle = actionId => post(Action.ToggleActionFilter(viewId, actionId))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
-    }
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const { rows, badges, count } = useSelector(state => S.UI.actionFilterData(state, viewId))
-    const triggerStyle = F.makeChipTriggerStyle(150, isActive)
-    const chipLabel = count > 0 ? `${count} selected` : 'All'
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && post(Action.ToggleActionFilter(viewId, highlightedItemId))
+
+    const KEYMAP_ID = `${viewId}_actions`
+    const POPOVER_ID = 'actions'
+    const { badges } = useSelector(state => S.UI.actionFilterData(state, viewId))
+    const selectedIds = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
+
+    const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const { popoverId, highlightedIndex, nextHighlightIndex, prevHighlightIndex } = popoverData
+    const { highlightedItemId, filteredItems } = popoverData
+    const isOpen = popoverId === POPOVER_ID
 
     return (
-        <Popover.Root>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Actions: {chipLabel}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 200 }}>
-                {count > 0 && (
-                    <Flex wrap="wrap" gap="1" mb="2">
-                        {badges.map(({ id, label }) => (
-                            <SelectedBadge key={id} id={id} label={label} onRemove={handleToggle} />
-                        ))}
-                    </Flex>
-                )}
-                {rows.map(({ id, label, isSelected }) => (
-                    <CheckboxRow key={id} id={id} label={label} isSelected={isSelected} onToggle={handleToggle} />
-                ))}
-            </Popover.Content>
-        </Popover.Root>
+        <SelectableListPopover
+            label="Actions"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            width={150}
+            isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 
@@ -316,50 +302,57 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
 // CategoryFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Category filter chip with inline category selector popover
+// Category filter chip with keyboard-navigable searchable popover — fully controlled via Redux
 // @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const CategoryFilterChip = ({ viewId, isActive = false }) => {
-    const handleCategoryAdd = category => post(Action.AddCategoryFilter(viewId, category))
-    const handleCategoryRemove = category => post(Action.RemoveCategoryFilter(viewId, category))
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
-    }
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
-    const allCategories = useSelector(S.Categories.allNames)
-    const triggerStyle = F.makeChipTriggerStyle(185, isActive)
-    const { length: count } = selectedCategories
-    const label = count > 0 ? `${count} selected` : 'All'
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggle = categoryName => E.handleToggleCategory(viewId, categoryName, selectedIds)
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && E.handleToggleCategory(viewId, highlightedItemId, selectedIds)
+
+    const KEYMAP_ID = `${viewId}_categories`
+    const POPOVER_ID = 'categories'
+    const { badges, selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
+
+    const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex } = popoverData
+    const { highlightedItemId, filteredItems } = popoverData
+    const isOpen = popoverId === POPOVER_ID
 
     return (
-        <Popover.Root>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Categories: {label}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-3)', minWidth: 300 }}>
-                <CategorySelector
-                    categories={allCategories}
-                    selectedCategories={selectedCategories}
-                    onCategoryAdded={handleCategoryAdd}
-                    onCategoryRemoved={handleCategoryRemove}
-                    keymapId={`${viewId}_category`}
-                    keymapName="Category Filter"
-                    onRegisterKeymap={E.handleRegisterKeymap}
-                    onUnregisterKeymap={E.handleUnregisterKeymap}
-                />
-            </Popover.Content>
-        </Popover.Root>
+        <SelectableListPopover
+            label="Categories"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
+            width={185}
+            isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onSearchChange={handleSearchChange}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 
@@ -367,9 +360,16 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 // AsOfDateChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// As-of date filter chip with single date picker for holdings view
+// As-of date filter chip with single date picker for holdings view — Escape closes, KeyboardDateInput has own keymap
 // @sig AsOfDateChip :: { viewId: String } -> ReactElement
 const AsOfDateChip = ({ viewId }) => {
+    const handleOpenChange = open => {
+        post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+        if (open) setTimeout(() => dateInputRef.current?.focus('month'), 0)
+    }
+
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
+
     // Converts Date to YYYY-MM-DD string and dispatches filter update
     // @sig handleDateChange :: Date? -> void
     const handleDateChange = date => {
@@ -381,14 +381,31 @@ const AsOfDateChip = ({ viewId }) => {
         }
     }
 
+    // Escape keymap effect — closes popover when Escape pressed
+    // @sig escapeKeymapEffect :: () -> (() -> void)?
+    const escapeKeymapEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'As-of Date Dismiss', [
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
+        E.handleRegisterKeymap(keymap)
+        return () => E.handleUnregisterKeymap(KEYMAP_ID)
+    }
+
+    const KEYMAP_ID = `${viewId}_asof_dismiss`
+    const POPOVER_ID = 'asOfDate'
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
     const dateInputRef = useRef(null)
     const triggerStyle = F.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
+    useEffect(escapeKeymapEffect, [isOpen, viewId])
+
     return (
-        <Popover.Root onOpenChange={open => open && setTimeout(() => dateInputRef.current?.focus('month'), 0)}>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -420,9 +437,12 @@ const AsOfDateChip = ({ viewId }) => {
 // DateFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Date filter chip with inline date range options popover
+// Date filter chip with inline date range options popover — Escape closes, date inputs have own keymaps
 // @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const DateFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
+
     const handleSelect = key => {
         const dateRange = calculateDateRange(key) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
@@ -445,17 +465,34 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
+    // Escape keymap effect — closes popover when Escape pressed
+    // @sig escapeKeymapEffect :: () -> (() -> void)?
+    const escapeKeymapEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Date Filter', [
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
+        E.handleRegisterKeymap(keymap)
+        return () => E.handleUnregisterKeymap(KEYMAP_ID)
+    }
+
+    const KEYMAP_ID = `${viewId}_date`
+    const POPOVER_ID = 'date'
     const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const startDateRef = useRef(null)
     const endDateRef = useRef(null)
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
 
+    useEffect(escapeKeymapEffect, [isOpen, viewId])
+
     return (
-        <Popover.Root>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">
@@ -521,36 +558,61 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 // GroupByFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Group by filter chip with inline dimension selector popover
+// Group by filter chip with keyboard-navigable single-select popover
 // @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
 const GroupByFilterChip = ({ viewId, options }) => {
-    const handleSelect = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
+    const handleToggle = value => {
+        post(Action.SetTransactionFilter(viewId, { groupBy: value }))
+        handleDismiss()
+    }
+
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () => items[highlightedIndex] && handleToggle(items[highlightedIndex].id)
+
+    const KEYMAP_ID = `${viewId}_group_by`
+    const POPOVER_ID = 'groupBy'
     const resolvedOptions = options ?? defaultGroupByOptions
+    const items = T.toItems(resolvedOptions)
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
-    const triggerStyle = F.makeChipTriggerStyle(155, false)
-    const currentOption = T.toCurrentOption(resolvedOptions, groupBy)
-    const defaultValue = resolvedOptions[0]?.value
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const rawHighlight = useSelector(state => S.UI.filterPopoverHighlight(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
+    const selectedId = groupBy || items[0]?.id
+    const selectedIds = selectedId ? [selectedId] : []
+    const selectedItems = T.toSelectedItems(items, selectedId)
+    const count = items.length
+    const highlightedIndex = count === 0 ? 0 : Math.min(rawHighlight || 0, count - 1)
+    const nextHighlightIndex = count === 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
+    const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
 
     return (
-        <Popover.Root>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Group by: {currentOption.label}
-                    </Text>
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-1)' }}>
-                {/* prettier-ignore */}
-                <Flex direction="column">
-                    {resolvedOptions.map(({ value, label }) => (
-                        <SelectableOption key={value} id={value} label={label}
-                            isSelected={value === (groupBy || defaultValue)} onSelect={handleSelect} />
-                    ))}
-                </Flex>
-            </Popover.Content>
-        </Popover.Root>
+        <SelectableListPopover
+            label="Group by"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={items}
+            selectedIds={selectedIds}
+            selectedItems={selectedItems}
+            highlightedIndex={highlightedIndex}
+            singleSelect
+            width={155}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleDismiss}
+        />
     )
 }
 
@@ -561,6 +623,11 @@ const GroupByFilterChip = ({ viewId, options }) => {
 // Search filter chip with inline text input popover
 // @sig SearchFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SearchFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = open => {
+        post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+        if (open) setTimeout(() => inputRef.current?.focus(), 0)
+    }
+
     const handleChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
 
     const handleClear = e => {
@@ -568,18 +635,21 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { filterQuery: '' }))
     }
 
-    const handleKeyDown = e => {
-        if (e.key === 'Escape') handleClear(e)
-    }
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
+    const handleKeyDown = e => e.key === 'Escape' && (e.preventDefault(), handleDismiss())
+
+    const POPOVER_ID = 'search'
     const inputRef = useRef(null)
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
+    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(120, isActive)
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
 
     return (
-        <Popover.Root onOpenChange={open => open && setTimeout(() => inputRef.current?.focus(), 0)}>
+        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -614,56 +684,57 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
 // SecurityFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Security filter chip with inline security multi-select popover
+// Security filter chip with keyboard-navigable popover — fully controlled via Redux
 // @sig SecurityFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SecurityFilterChip = ({ viewId, isActive = false }) => {
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
     const handleToggle = securityId => post(Action.ToggleSecurityFilter(viewId, securityId))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
-    }
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const { rows, badges, count } = useSelector(state => S.UI.securityFilterData(state, viewId))
-    const triggerStyle = F.makeChipTriggerStyle(175, isActive)
-    const chipLabel = count > 0 ? `${count} selected` : 'All'
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && post(Action.ToggleSecurityFilter(viewId, highlightedItemId))
+
+    const KEYMAP_ID = `${viewId}_securities`
+    const POPOVER_ID = 'securities'
+    const { badges } = useSelector(state => S.UI.securityFilterData(state, viewId))
+    const selectedIds = useSelector(state => S.UI.selectedSecurities(state, viewId))
+
+    // prettier-ignore
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex,
+        highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const isOpen = popoverId === POPOVER_ID
 
     return (
-        <Popover.Root>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Securities: {chipLabel}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 300 }}>
-                {count > 0 && (
-                    <Flex wrap="wrap" gap="1" mb="2">
-                        {badges.map(({ id, label }) => (
-                            <SelectedBadge key={id} id={id} label={label} onRemove={handleToggle} />
-                        ))}
-                    </Flex>
-                )}
-                {/* prettier-ignore */}
-                <ScrollArea style={{ maxHeight: 350 }}>
-                    {rows.map(({ id, symbol, name, isSelected }) => (
-                        <CheckboxRow key={id} id={id} label={`${symbol} - ${name}`}
-                            isSelected={isSelected} onToggle={handleToggle} />
-                    ))}
-                    {rows.length === 0 && (
-                        <Text size="2" color="gray">
-                            No securities available
-                        </Text>
-                    )}
-                </ScrollArea>
-            </Popover.Content>
-        </Popover.Root>
+        <SelectableListPopover
+            label="Securities"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
+            width={175}
+            isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onSearchChange={handleSearchChange}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 

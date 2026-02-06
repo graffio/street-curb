@@ -1,33 +1,19 @@
 // ABOUTME: Investment transaction register page with security/action filtering
 // ABOUTME: Displays investment account transactions with running cash balance
 
-import { DataTable, Flex, Text } from '@graffio/design-system'
+import { DataTable, Flex } from '@graffio/design-system'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { CellRenderers, TransactionColumns } from '../columns/index.js'
+import { TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
-import {
-    ActionFilterChip,
-    DateFilterChip,
-    FilterColumn,
-    SearchFilterChip,
-    SecurityFilterChip,
-} from '../components/index.js'
+import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
-import { formatDateRange } from '../utils/formatters.js'
 import { applyOrderChange, applySizingChange, applySortingChange } from '../utils/table-layout.js'
-
-const { ACTION_LABELS } = CellRenderers
 const { investmentColumns } = TransactionColumns
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
-const filterRowBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
-const filterRowActiveStyle = { ...filterRowBaseStyle, backgroundColor: 'var(--ruby-3)' }
-const filterRowInactiveStyle = { ...filterRowBaseStyle, backgroundColor: 'var(--gray-2)' }
-
-const MAX_DETAIL_LINES = 3
 
 const P = {
     // Checks if we need to initialize the date range on first render
@@ -39,16 +25,6 @@ const T = {
     // Generates a unique table layout ID for an investment account
     // @sig toTableLayoutId :: String -> String
     toTableLayoutId: id => `cols_investment_${id}`,
-
-    // Truncates detail lines with "+N more" if exceeding maximum
-    // @sig toDetailLines :: [String] -> [String]
-    toDetailLines: items => {
-        const { length } = items
-        if (length === 0) return []
-        if (length <= MAX_DETAIL_LINES) return items
-        const shown = items.slice(0, MAX_DETAIL_LINES - 1)
-        return [...shown, `+${length - shown.length} more`]
-    },
 
     // Finds the index of a transaction by ID in the data array
     // @sig toRowIndex :: ([Row], String) -> Number
@@ -63,14 +39,6 @@ const T = {
         const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
         return { start: twelveMonthsAgo, end: endOfToday }
     },
-
-    // Maps security IDs to display names
-    // @sig toSecurityNames :: ([String], LookupTable<Security>) -> [String]
-    toSecurityNames: (ids, securities) => ids.map(id => securities?.get(id)?.name || id),
-
-    // Maps action codes to display labels
-    // @sig toActionNames :: ([String], Object) -> [String]
-    toActionNames: (codes, labels) => codes.map(code => labels[code] || code),
 }
 
 const E = {
@@ -122,10 +90,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const allAccountTransactions = useSelector(state => S.Transactions.forAccount(state, viewId, accountId))
     const investmentFiltered = useSelector(state => S.Transactions.filteredForInvestment(state, viewId, accountId))
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId))
-    const selectedSecurities = useSelector(state => S.UI.selectedSecurities(state, viewId))
-    const selectedInvestmentActions = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
-    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
-    const securities = useSelector(S.securities)
     const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
     useEffect(E.ensureTableLayoutEffect(tableLayoutId, investmentColumns), [tableLayoutId])
@@ -150,22 +114,8 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
         S.Transactions.highlightedId(state, viewId, accountId, tableLayoutId, investmentColumns),
     )
     const matchCount = searchMatches.length
-
-    // Filter chip active states - true when that filter is reducing results
-    const isDateActive = dateRangeKey !== 'all'
-    const isSecuritiesActive = selectedSecurities.length > 0
-    const isActionsActive = selectedInvestmentActions.length > 0
-    const isTextActive = filterQuery?.length > 0
     const { length: filteredCount } = investmentFiltered
     const { length: totalCount } = allAccountTransactions
-    const isFiltering = filteredCount < totalCount || isDateActive || isTextActive
-
-    // Build detail lines for each filter chip
-    const dateDetails = dateRange ? T.toDetailLines([formatDateRange(dateRange.start, dateRange.end)]) : []
-    const securityDetails = T.toDetailLines(T.toSecurityNames(selectedSecurities, securities))
-    const actionDetails = T.toDetailLines(T.toActionNames(selectedInvestmentActions, ACTION_LABELS))
-
-    const filterRowStyle = isFiltering ? filterRowActiveStyle : filterRowInactiveStyle
 
     // -----------------------------------------------------------------------------------------------------------------
     // Callbacks
@@ -218,33 +168,14 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
-            <Flex direction="column" gap="2" style={filterRowStyle}>
-                <Flex align="center" gap="2" style={{ paddingLeft: 'var(--space-2)' }}>
-                    <Text size="1" color="gray">
-                        {filteredCount} transactions
-                    </Text>
-                    {isFiltering && (
-                        <Text size="1" color="ruby" weight="medium">
-                            (filtered from {totalCount})
-                        </Text>
-                    )}
-                </Flex>
-                <Flex align="start" gap="3" wrap="wrap">
-                    <FilterColumn
-                        chip={<DateFilterChip viewId={viewId} isActive={isDateActive} />}
-                        details={dateDetails}
-                    />
-                    <FilterColumn
-                        chip={<SecurityFilterChip viewId={viewId} isActive={isSecuritiesActive} />}
-                        details={securityDetails}
-                    />
-                    <FilterColumn
-                        chip={<ActionFilterChip viewId={viewId} isActive={isActionsActive} />}
-                        details={actionDetails}
-                    />
-                    <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isTextActive} />} details={[]} />
-                </Flex>
-            </Flex>
+            <FilterChipRow
+                viewId={viewId}
+                showSecurities
+                showActions
+                showCategories={false}
+                filteredCount={filteredCount}
+                totalCount={totalCount}
+            />
             <div style={mainContentStyle}>
                 <DataTable
                     columns={investmentColumns}

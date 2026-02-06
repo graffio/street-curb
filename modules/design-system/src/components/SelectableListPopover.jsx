@@ -1,6 +1,7 @@
 // ABOUTME: Fully controlled filter chip popover for multi-select lists
 // ABOUTME: Zero internal state — all state and navigation callbacks provided by consumer via props
 
+import { KeymapModule } from '@graffio/keymap'
 import { Badge, Box, Checkbox, Flex, Popover, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef } from 'react'
@@ -46,11 +47,12 @@ const F = {
         padding: 'var(--space-2)',
         borderBottom: '1px solid var(--gray-3)',
         cursor: 'pointer',
+        outline: 'none',
         backgroundColor: isHighlighted ? 'var(--accent-4)' : 'transparent',
     }),
 }
 
-// Checkbox row for a single navigable item
+// Checkbox row for a single navigable item (multi-select mode)
 // @sig ItemRow :: { item, isSelected, isHighlighted, onToggle, itemRef? } -> ReactElement
 const ItemRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
     <Flex
@@ -60,8 +62,24 @@ const ItemRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
         style={F.makeItemRowStyle(isHighlighted)}
         onClick={() => onToggle(item.id)}
     >
-        <Checkbox checked={isSelected} />
+        <Checkbox checked={isSelected} tabIndex={-1} />
         <Text size="2">{item.label}</Text>
+    </Flex>
+)
+
+// Single-select row without checkbox
+// @sig SingleSelectRow :: { item, isSelected, isHighlighted, onToggle, itemRef? } -> ReactElement
+const SingleSelectRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
+    <Flex
+        ref={itemRef}
+        align="center"
+        gap="2"
+        style={F.makeItemRowStyle(isHighlighted)}
+        onClick={() => onToggle(item.id)}
+    >
+        <Text size="2" weight={isSelected ? 'medium' : 'regular'}>
+            {item.label}
+        </Text>
     </Flex>
 )
 
@@ -75,9 +93,9 @@ const SelectedItemBadge = ({ item, onToggle }) => (
 
 /**
  * Fully controlled filter chip popover — all state managed by consumer
- * @sig FilterChipPopover :: FilterChipPopoverProps -> ReactElement
+ * @sig SelectableListPopover :: SelectableListPopoverProps -> ReactElement
  */
-const FilterChipPopover = ({
+const SelectableListPopover = ({
     label,
     open,
     onOpenChange,
@@ -87,8 +105,13 @@ const FilterChipPopover = ({
     highlightedIndex,
     searchText,
     searchable = false,
+    singleSelect = false,
+    customContent,
     width = 175,
     isActive = false,
+    keymapId,
+    onRegisterKeymap,
+    onUnregisterKeymap,
     onSearchChange,
     onMoveDown,
     onMoveUp,
@@ -119,31 +142,55 @@ const FilterChipPopover = ({
         if (open && searchable) searchRef.current?.focus()
     }
 
-    // Maps an item and its position to an ItemRow element
-    // @sig toItemRow :: ({ id, label }, Number) -> ReactElement
-    const toItemRow = (item, i) => (
-        <ItemRow
-            key={item.id}
-            item={item}
-            isSelected={selectedSet.has(item.id)}
-            isHighlighted={i === highlightedIndex}
-            onToggle={onToggle}
-            itemRef={i === highlightedIndex ? highlightedRef : null}
-        />
-    )
+    // Creates and registers navigation keymap when popover is open
+    // @sig keymapLifecycleEffect :: () -> (() -> void)?
+    const keymapLifecycleEffect = () => {
+        if (!keymapId || !onRegisterKeymap || !onUnregisterKeymap || !open) return undefined
+        const keymap = KeymapModule.fromBindings(keymapId, `${label} Filter`, [
+            { description: 'Move down', keys: ['ArrowDown'], action: () => handlersRef.current.onMoveDown() },
+            { description: 'Move up', keys: ['ArrowUp'], action: () => handlersRef.current.onMoveUp() },
+            { description: 'Toggle', keys: ['Enter'], action: () => handlersRef.current.onToggleHighlighted() },
+            { description: 'Dismiss', keys: ['Escape'], action: () => handlersRef.current.onDismiss() },
+        ])
+        onRegisterKeymap(keymap)
+        return () => onUnregisterKeymap(keymapId)
+    }
 
+    // Maps an item and its position to an ItemRow or SingleSelectRow element
+    // @sig toItemRow :: ({ id, label }, Number) -> ReactElement
+    const toItemRow = (item, i) => {
+        const Row = singleSelect ? SingleSelectRow : ItemRow
+        return (
+            <Row
+                key={item.id}
+                item={item}
+                isSelected={selectedSet.has(item.id)}
+                isHighlighted={i === highlightedIndex}
+                onToggle={onToggle}
+                itemRef={i === highlightedIndex ? highlightedRef : null}
+            />
+        )
+    }
+
+    // Refs to capture latest callbacks without triggering effect re-runs
+    const handlersRef = useRef({ onMoveDown, onMoveUp, onToggleHighlighted, onDismiss })
+    handlersRef.current = { onMoveDown, onMoveUp, onToggleHighlighted, onDismiss }
     const highlightedRef = useRef(null)
     const searchRef = useRef(null)
 
     const { length: selectedCount } = selectedIds
     const selectedSet = new Set(selectedIds)
 
-    // DOM effects: scroll highlighted item into view, focus search input
+    // DOM effects: scroll highlighted item into view, focus search input, manage keymap
     useEffect(() => highlightedRef.current?.scrollIntoView({ block: 'nearest' }), [highlightedIndex])
     useEffect(focusSearchEffect, [open, searchable])
+    useEffect(keymapLifecycleEffect, [open, keymapId, label, onRegisterKeymap, onUnregisterKeymap])
 
     const triggerStyle = F.makeTriggerStyle(width, isActive)
-    const displayLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
+    const multiSelectLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
+    const singleSelectLabel = selectedItems.length > 0 ? selectedItems[0].label : 'All'
+    const displayLabel = singleSelect ? singleSelectLabel : multiSelectLabel
+    const showClearButton = !singleSelect && selectedCount > 0
 
     return (
         <Popover.Root open={open} onOpenChange={onOpenChange}>
@@ -152,15 +199,15 @@ const FilterChipPopover = ({
                     <Text size="1" weight="medium">
                         {label}: {displayLabel}
                     </Text>
-                    {selectedCount > 0 && (
+                    {showClearButton && (
                         <Box style={clearButtonStyle} onClick={handleClear}>
                             ×
                         </Box>
                     )}
                 </button>
             </Popover.Trigger>
-            <Popover.Content style={popoverContentStyle}>
-                {selectedItems.length > 0 && (
+            <Popover.Content style={popoverContentStyle} side="right" align="start" sideOffset={4}>
+                {!singleSelect && selectedItems.length > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
                         {selectedItems.map(item => (
                             <SelectedItemBadge key={item.id} item={item} onToggle={onToggle} />
@@ -185,12 +232,13 @@ const FilterChipPopover = ({
                         </Text>
                     )}
                 </ScrollArea>
+                {customContent}
             </Popover.Content>
         </Popover.Root>
     )
 }
 
-FilterChipPopover.propTypes = {
+SelectableListPopover.propTypes = {
     label: PropTypes.string.isRequired,
     open: PropTypes.bool.isRequired,
     onOpenChange: PropTypes.func.isRequired,
@@ -203,8 +251,13 @@ FilterChipPopover.propTypes = {
     highlightedIndex: PropTypes.number.isRequired,
     searchText: PropTypes.string,
     searchable: PropTypes.bool,
+    singleSelect: PropTypes.bool,
+    customContent: PropTypes.node,
     width: PropTypes.number,
     isActive: PropTypes.bool,
+    keymapId: PropTypes.string,
+    onRegisterKeymap: PropTypes.func,
+    onUnregisterKeymap: PropTypes.func,
     onSearchChange: PropTypes.func,
     onMoveDown: PropTypes.func.isRequired,
     onMoveUp: PropTypes.func.isRequired,
@@ -214,4 +267,4 @@ FilterChipPopover.propTypes = {
     onClear: PropTypes.func.isRequired,
 }
 
-export { FilterChipPopover }
+export { SelectableListPopover }

@@ -862,3 +862,18 @@ This document summarizes the specifications that were previously archived in `sp
 - Fixed post.js exhaustive match (5 missing variants caused runtime crash — see docs/solutions/runtime-errors/)
 - Added filter chip smoke tests for all 4 page types (date, category, search, security, action, group-by, account chips)
 - 0 strict-react violations, 79/79 smoke tests pass
+
+## [quicken-web-app] Filter Chip Polish and Keyboard Tests (2026-02-06)
+**Purpose:** UX improvements to filter popovers, consolidate components, add keyboard navigation tests
+
+- Removed focus ring from highlighted popover rows (highlight background only)
+- Changed popover positioning: side='right' align='start' for chip visibility
+- Migrated CategoryFilterChip to use SelectableListPopover with search
+- Renamed FilterChipPopover → SelectableListPopover (more general)
+- Deleted CategorySelector from design-system (replaced by SelectableListPopover)
+- Added keyboard navigation integration tests using agent-browser CLI
+  - Tests: d/c/x/h/slash shortcuts open popovers, arrow/enter/escape navigation
+- Extracted 7 per-chip selectors: dateChipData, categoryChipData, accountChipData, securityChipData, actionChipData, searchChipData, filterCounts
+- Each selector returns `{ isActive, details }` for consistent interface
+- Moved keymapEffect to module-level E group
+- All 74 unit tests pass, 103 smoke tests pass

@@ -2,91 +2,100 @@
 // ABOUTME: Each column shows chip + details below it (up to 3 lines)
 
 import { Flex, Text } from '@graffio/design-system'
-import React from 'react'
+import { KeymapModule } from '@graffio/keymap'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
-import { formatDateRange } from '../utils/formatters.js'
+import { Action } from '../types/action.js'
 import { FilterChips } from './FilterChips.jsx'
 
-const { AccountFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
-const { FilterColumn, GroupByFilterChip, SearchFilterChip } = FilterChips
+const { AccountFilterChip, ActionFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
+const { FilterColumn, GroupByFilterChip, SearchFilterChip, SecurityFilterChip } = FilterChips
 
-const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
+const containerBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
+const containerActiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--ruby-3)' }
+const containerInactiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--gray-2)' }
 
-const MAX_DETAIL_LINES = 3
-const EMPTY_ARRAY = []
+const F = {
+    // Creates keymap with bindings for visible filter chips
+    // @sig createFilterShortcutsKeymap :: (String, FilterConfig, Function) -> Keymap
+    //     FilterConfig = { accounts, categories, date, actions, securities, groupBy, search }
+    // prettier-ignore
+    createFilterShortcutsKeymap: (viewId, config, openPopover) => {
+        const { accounts, actions, asOfDate, categories, date, groupBy, search, securities } = config
+        const bindings = []
+        if (accounts)   bindings.push({ description: 'Accounts'  , keys: ['a']      , action : () => openPopover('accounts') })
+        if (categories) bindings.push({ description: 'Categories', keys: ['c']      , action : () => openPopover('categories') })
+        if (date)       bindings.push({ description: 'Date'      , keys: ['d']      , action : () => openPopover('date') })
+        if (asOfDate)   bindings.push({ description: 'As of date', keys: ['d']      , action : () => openPopover('asOfDate') })
+        if (actions)    bindings.push({ description: 'Actions'   , keys: ['x']      , action : () => openPopover('actions') })
+        if (securities) bindings.push({ description: 'Securities', keys: ['h']      , action : () => openPopover('securities') })
+        if (groupBy)    bindings.push({ description: 'Group by'  , keys: ['g']      , action : () => openPopover('groupBy') })
+        if (search)     bindings.push({ description: 'Search'    , keys: ['/' , 'f'], action : () => openPopover('search') })
+
+        return KeymapModule.fromBindings(`${viewId}_filters`, 'Filter shortcuts', bindings, { activeForViewId: viewId })
+    },
+}
+
+const E = {
+    // Registers keymap effect for filter shortcuts
+    // @sig keymapEffect :: (String, FilterConfig) -> (() -> void)
+    keymapEffect: (viewId, config) => {
+        const openPopover = popoverId => post(Action.SetFilterPopoverOpen(viewId, popoverId))
+        const keymap = F.createFilterShortcutsKeymap(viewId, config, openPopover)
+        post(Action.RegisterKeymap(keymap))
+        return () => post(Action.UnregisterKeymap(`${viewId}_filters`))
+    },
+}
 
 /*
  * Row of filter chips organized in columns with details below each chip
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
- *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, accountId?, groupByOptions?,
- *         filteredCount?, totalCount?, itemLabel? }
+ *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, showSecurities?, showActions?,
+ *         accountId?, groupByOptions?, filteredCount?, totalCount?, itemLabel? }
  */
 const FilterChipRow = props => {
-    // Build detail lines for categories (up to MAX_DETAIL_LINES, then +N more)
-    // @sig buildCategoryDetails :: [String] -> [String]
-    const buildCategoryDetails = categories => {
-        const { length } = categories
-        if (length === 0) return []
-        if (length <= MAX_DETAIL_LINES) return categories
-        const shown = categories.slice(0, MAX_DETAIL_LINES - 1)
-        const remaining = length - shown.length
-        return [...shown, `+${remaining} more`]
-    }
-
-    // Build detail lines for accounts (up to MAX_DETAIL_LINES, then +N more)
-    // @sig buildAccountDetails :: ([String], LookupTable) -> [String]
-    const buildAccountDetails = (accountIds, accountLookup) => {
-        const { length } = accountIds
-        if (length === 0 || !accountLookup) return []
-        const names = accountIds.map(id => accountLookup.get(id)?.name || id)
-        if (names.length <= MAX_DETAIL_LINES) return names
-        const shown = names.slice(0, MAX_DETAIL_LINES - 1)
-        const remaining = names.length - shown.length
-        return [...shown, `+${remaining} more`]
-    }
-
     const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
+    const { showSecurities = false, showActions = false } = props
     const { accountId = null, groupByOptions = null } = props
     const { filteredCount: filteredCountProp, totalCount: totalCountProp, itemLabel = 'transactions' } = props
 
-    // Only fetch transaction data if counts not provided via props
-    const needsTransactionData = filteredCountProp === undefined
-    const allTransactions = useSelector(state => (needsTransactionData ? S.transactions(state) : null))
-    const filteredTransactions = useSelector(state =>
-        needsTransactionData ? S.Transactions.filtered(state, viewId) : EMPTY_ARRAY,
+    // Per-chip data selectors
+    const { isActive: isDateActive, details: dateDetails } = useSelector(state => S.UI.dateChipData(state, viewId))
+    const category = useSelector(state => S.UI.categoryChipData(state, viewId))
+    const account = useSelector(state => S.UI.accountChipData(state, viewId))
+    const security = useSelector(state => S.UI.securityChipData(state, viewId))
+    const action = useSelector(state => S.UI.actionChipData(state, viewId))
+    const { isActive: isSearchActive } = useSelector(state => S.UI.searchChipData(state, viewId))
+    const counts = useSelector(state => S.UI.filterCounts(state, viewId, accountId))
+    const { filtered, total, isFiltering: countsIsFiltering } = counts
+
+    const keymapConfig = {
+        accounts: showGroupBy,
+        categories: showCategories,
+        date: !showAsOfDate,
+        asOfDate: showAsOfDate,
+        actions: showActions,
+        securities: showSecurities,
+        groupBy: showGroupBy,
+        search: true,
+    }
+    useEffect(
+        () => E.keymapEffect(viewId, keymapConfig),
+        [viewId, showGroupBy, showAsOfDate, showCategories, showSecurities, showActions],
     )
-    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
-    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
-    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
-    const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
-    const selectedAccounts = useSelector(state => S.UI.selectedAccounts(state, viewId))
-    const accounts = useSelector(S.accounts)
 
-    const dateDetails = dateRange ? [formatDateRange(dateRange.start, dateRange.end)].filter(Boolean) : []
-    const categoryDetails = buildCategoryDetails(selectedCategories)
-    const accountDetails = buildAccountDetails(selectedAccounts, accounts)
+    // Use props if provided, otherwise use selector data
+    const filteredCount = filteredCountProp ?? filtered
+    const totalCount = totalCountProp ?? total
+    const isFiltering =
+        filteredCountProp !== undefined
+            ? filteredCount < totalCount || isDateActive || isSearchActive
+            : countsIsFiltering
 
-    // Determine which filters are active
-    const isDateActive = dateRangeKey !== 'all'
-    const isCategoriesActive = selectedCategories.length > 0
-    const isAccountsActive = selectedAccounts.length > 0
-    const isTextActive = filterQuery?.length > 0
-
-    // Determine if any filtering is happening
-    // Use props if provided, otherwise compute from transaction selectors
-    const accountFilteredTxns = accountId
-        ? filteredTransactions.filter(t => t.accountId === accountId)
-        : filteredTransactions
-    const baseTransactions = accountId
-        ? (allTransactions?.filter(t => t.accountId === accountId) ?? [])
-        : (allTransactions ?? [])
-    const filteredCount = filteredCountProp ?? accountFilteredTxns.length
-    const totalCount = totalCountProp ?? baseTransactions.length
-    const isFiltering = filteredCount < totalCount || (!showAsOfDate && isDateActive) || isTextActive
-
-    const containerStyle = { ...baseContainerStyle, backgroundColor: isFiltering ? 'var(--ruby-3)' : 'var(--gray-2)' }
+    const containerStyle = isFiltering ? containerActiveStyle : containerInactiveStyle
 
     return (
         <Flex direction="column" gap="2" style={containerStyle}>
@@ -113,16 +122,16 @@ const FilterChipRow = props => {
 
                 {showCategories && (
                     <FilterColumn
-                        chip={<CategoryFilterChip viewId={viewId} isActive={isCategoriesActive} />}
-                        details={categoryDetails}
+                        chip={<CategoryFilterChip viewId={viewId} isActive={category.isActive} />}
+                        details={category.details}
                     />
                 )}
 
                 {showGroupBy && (
                     <>
                         <FilterColumn
-                            chip={<AccountFilterChip viewId={viewId} isActive={isAccountsActive} />}
-                            details={accountDetails}
+                            chip={<AccountFilterChip viewId={viewId} isActive={account.isActive} />}
+                            details={account.details}
                         />
                         <FilterColumn
                             chip={<GroupByFilterChip viewId={viewId} options={groupByOptions} />}
@@ -131,7 +140,21 @@ const FilterChipRow = props => {
                     </>
                 )}
 
-                <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isTextActive} />} details={[]} />
+                {showSecurities && (
+                    <FilterColumn
+                        chip={<SecurityFilterChip viewId={viewId} isActive={security.isActive} />}
+                        details={security.details}
+                    />
+                )}
+
+                {showActions && (
+                    <FilterColumn
+                        chip={<ActionFilterChip viewId={viewId} isActive={action.isActive} />}
+                        details={action.details}
+                    />
+                )}
+
+                <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isSearchActive} />} details={[]} />
             </Flex>
         </Flex>
     )
