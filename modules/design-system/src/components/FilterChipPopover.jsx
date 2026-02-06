@@ -47,6 +47,7 @@ const F = {
         padding: 'var(--space-2)',
         borderBottom: '1px solid var(--gray-3)',
         cursor: 'pointer',
+        outline: 'none',
         backgroundColor: isHighlighted ? 'var(--accent-4)' : 'transparent',
     }),
 }
@@ -61,7 +62,7 @@ const ItemRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
         style={F.makeItemRowStyle(isHighlighted)}
         onClick={() => onToggle(item.id)}
     >
-        <Checkbox checked={isSelected} />
+        <Checkbox checked={isSelected} tabIndex={-1} />
         <Text size="2">{item.label}</Text>
     </Flex>
 )
@@ -205,7 +206,7 @@ const FilterChipPopover = ({
                     )}
                 </button>
             </Popover.Trigger>
-            <Popover.Content style={popoverContentStyle}>
+            <Popover.Content style={popoverContentStyle} side="right" align="start" sideOffset={4}>
                 {!singleSelect && selectedItems.length > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
                         {selectedItems.map(item => (

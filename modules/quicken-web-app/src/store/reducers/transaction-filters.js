@@ -37,7 +37,7 @@ const createDefaultFilter = viewId =>
         [], // columnOrder
         null, // filterPopoverId
         '', // filterPopoverSearch
-        0, // filterPopoverHighlight
+        -1, // filterPopoverHighlight (no highlight until arrow key pressed)
     )
 
 // Merges partial filter changes into transaction filter state for a specific view
@@ -168,7 +168,7 @@ const setFilterPopoverOpen = (state, action) => {
         ...existing,
         filterPopoverId: popoverId,
         filterPopoverSearch: '',
-        filterPopoverHighlight: 0,
+        filterPopoverHighlight: -1,
     })
     // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }

@@ -4,7 +4,6 @@
 import {
     Box,
     calculateDateRange,
-    CategorySelector,
     FilterChipPopover,
     DATE_RANGES,
     Flex,
@@ -70,6 +69,13 @@ const E = {
     // Dispatches keymap unregistration action
     // @sig handleUnregisterKeymap :: String -> void
     handleUnregisterKeymap: id => post(Action.UnregisterKeymap(id)),
+
+    // Toggles a category filter: adds if not selected, removes if selected
+    // @sig handleToggleCategory :: (String, String, [String]) -> void
+    handleToggleCategory: (viewId, categoryName, selectedIds) => {
+        if (selectedIds.includes(categoryName)) post(Action.RemoveCategoryFilter(viewId, categoryName))
+        else post(Action.AddCategoryFilter(viewId, categoryName))
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -296,69 +302,57 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
 // CategoryFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Category filter chip with inline category selector popover — CategorySelector has own keymap, this adds Escape
+// Category filter chip with keyboard-navigable searchable popover — fully controlled via Redux
 // @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const CategoryFilterChip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
     const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-    const handleCategoryAdd = category => post(Action.AddCategoryFilter(viewId, category))
-    const handleCategoryRemove = category => post(Action.RemoveCategoryFilter(viewId, category))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
-    }
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    // Escape keymap effect — closes popover when Escape pressed (CategorySelector handles its own Escape internally)
-    // @sig escapeKeymapEffect :: () -> (() -> void)?
-    const escapeKeymapEffect = () => {
-        if (!isOpen) return undefined
-        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Category Filter Dismiss', [
-            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
-        ])
-        E.handleRegisterKeymap(keymap)
-        return () => E.handleUnregisterKeymap(KEYMAP_ID)
-    }
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
-    const KEYMAP_ID = `${viewId}_categories_dismiss`
+    const handleToggle = categoryName => E.handleToggleCategory(viewId, categoryName, selectedIds)
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && E.handleToggleCategory(viewId, highlightedItemId, selectedIds)
+
+    const KEYMAP_ID = `${viewId}_categories`
     const POPOVER_ID = 'categories'
-    const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
-    const allCategories = useSelector(S.Categories.allNames)
-    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
-    const isOpen = popoverId === POPOVER_ID
-    const triggerStyle = F.makeChipTriggerStyle(185, isActive)
-    const { length: count } = selectedCategories
-    const label = count > 0 ? `${count} selected` : 'All'
+    const { badges, selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
 
-    useEffect(escapeKeymapEffect, [isOpen, viewId])
+    const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex } = popoverData
+    const { highlightedItemId, filteredItems } = popoverData
+    const isOpen = popoverId === POPOVER_ID
 
     return (
-        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Categories: {label}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-3)', minWidth: 300 }}>
-                <CategorySelector
-                    categories={allCategories}
-                    selectedCategories={selectedCategories}
-                    onCategoryAdded={handleCategoryAdd}
-                    onCategoryRemoved={handleCategoryRemove}
-                    keymapId={`${viewId}_category`}
-                    keymapName="Category Filter"
-                    onRegisterKeymap={E.handleRegisterKeymap}
-                    onUnregisterKeymap={E.handleUnregisterKeymap}
-                />
-            </Popover.Content>
-        </Popover.Root>
+        <FilterChipPopover
+            label="Categories"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
+            width={185}
+            isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onSearchChange={handleSearchChange}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 

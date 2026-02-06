@@ -146,9 +146,16 @@ const _actionFilterData = (state, viewId) => {
     return { rows, badges, count: selected.length }
 }
 
+const _categoryFilterData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedCategories
+    const badges = selected.map(name => ({ id: name, label: name }))
+    return { badges, selectedIds: selected, count: selected.length }
+}
+
 UI.accountFilterData = memoizeReduxStatePerKey(['accounts'], 'transactionFilters', _accountFilterData)
 UI.securityFilterData = memoizeReduxStatePerKey(['securities'], 'transactionFilters', _securityFilterData)
 UI.actionFilterData = memoizeReduxStatePerKey([], 'transactionFilters', _actionFilterData)
+UI.categoryFilterData = memoizeReduxStatePerKey(['categories'], 'transactionFilters', _categoryFilterData)
 
 const CLOSED_POPOVER = {
     popoverId: null,
@@ -163,6 +170,7 @@ const CLOSED_POPOVER = {
 const POPOVER_ITEM_SOURCES = {
     accounts: state => Array.from(accounts(state)).map(({ id, name }) => ({ id, label: name })),
     actions: () => INVESTMENT_ACTIONS.map(({ id, label }) => ({ id, label })),
+    categories: state => Category.collectAllNames(categories(state)).map(name => ({ id: name, label: name })),
     securities: state => Array.from(securities(state)).map(({ id, symbol }) => ({ id, label: symbol })),
 }
 
@@ -180,10 +188,18 @@ const _filterPopoverData = (state, viewId) => {
         ? allItems.filter(item => containsIgnoreCase(searchText)(item.label))
         : allItems
     const count = filteredItems.length
-    const highlightedIndex = count === 0 ? 0 : Math.min(filterPopoverHighlight, count - 1)
-    const nextHighlightIndex = count === 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
-    const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
-    const highlightedItemId = count > 0 ? filteredItems[highlightedIndex].id : null
+
+    // -1 means no highlight (initial state), otherwise clamp to valid range
+    const highlightedIndex = count === 0 ? -1 : Math.max(-1, Math.min(filterPopoverHighlight, count - 1))
+
+    // Arrow down from -1 goes to 0, otherwise wrap around
+    const nextHighlightIndex =
+        count === 0 ? -1 : highlightedIndex < 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
+
+    // Arrow up from -1 goes to last item, otherwise wrap around
+    const prevHighlightIndex =
+        count === 0 ? -1 : highlightedIndex < 0 ? count - 1 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
+    const highlightedItemId = highlightedIndex >= 0 && count > 0 ? filteredItems[highlightedIndex].id : null
 
     return {
         popoverId: filterPopoverId,
