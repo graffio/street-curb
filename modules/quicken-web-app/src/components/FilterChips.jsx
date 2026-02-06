@@ -296,10 +296,11 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
 // CategoryFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Category filter chip with inline category selector popover
+// Category filter chip with inline category selector popover — CategorySelector has own keymap, this adds Escape
 // @sig CategoryFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
     const handleCategoryAdd = category => post(Action.AddCategoryFilter(viewId, category))
     const handleCategoryRemove = category => post(Action.RemoveCategoryFilter(viewId, category))
 
@@ -308,6 +309,18 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
     }
 
+    // Escape keymap effect — closes popover when Escape pressed (CategorySelector handles its own Escape internally)
+    // @sig escapeKeymapEffect :: () -> (() -> void)?
+    const escapeKeymapEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Category Filter Dismiss', [
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
+        E.handleRegisterKeymap(keymap)
+        return () => E.handleUnregisterKeymap(KEYMAP_ID)
+    }
+
+    const KEYMAP_ID = `${viewId}_categories_dismiss`
     const POPOVER_ID = 'categories'
     const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
     const allCategories = useSelector(S.Categories.allNames)
@@ -316,6 +329,8 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const triggerStyle = F.makeChipTriggerStyle(185, isActive)
     const { length: count } = selectedCategories
     const label = count > 0 ? `${count} selected` : 'All'
+
+    useEffect(escapeKeymapEffect, [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -351,13 +366,15 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 // AsOfDateChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// As-of date filter chip with single date picker for holdings view
+// As-of date filter chip with single date picker for holdings view — Escape closes, KeyboardDateInput has own keymap
 // @sig AsOfDateChip :: { viewId: String } -> ReactElement
 const AsOfDateChip = ({ viewId }) => {
     const handleOpenChange = open => {
         post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
         if (open) setTimeout(() => dateInputRef.current?.focus('month'), 0)
     }
+
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
     // Converts Date to YYYY-MM-DD string and dispatches filter update
     // @sig handleDateChange :: Date? -> void
@@ -370,6 +387,18 @@ const AsOfDateChip = ({ viewId }) => {
         }
     }
 
+    // Escape keymap effect — closes popover when Escape pressed
+    // @sig escapeKeymapEffect :: () -> (() -> void)?
+    const escapeKeymapEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'As-of Date Dismiss', [
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
+        E.handleRegisterKeymap(keymap)
+        return () => E.handleUnregisterKeymap(KEYMAP_ID)
+    }
+
+    const KEYMAP_ID = `${viewId}_asof_dismiss`
     const POPOVER_ID = 'asOfDate'
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
@@ -378,6 +407,8 @@ const AsOfDateChip = ({ viewId }) => {
     const dateInputRef = useRef(null)
     const triggerStyle = F.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+    useEffect(escapeKeymapEffect, [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -610,9 +641,9 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
         post(Action.SetTransactionFilter(viewId, { filterQuery: '' }))
     }
 
-    const handleKeyDown = e => {
-        if (e.key === 'Escape') handleClear(e)
-    }
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
+
+    const handleKeyDown = e => e.key === 'Escape' && (e.preventDefault(), handleDismiss())
 
     const POPOVER_ID = 'search'
     const inputRef = useRef(null)
