@@ -4,50 +4,73 @@
 import { Flex, Text } from '@graffio/design-system'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { CellRenderers } from '../columns/CellRenderers.jsx'
 import * as S from '../store/selectors.js'
 import { formatDateRange } from '../utils/formatters.js'
 import { FilterChips } from './FilterChips.jsx'
 
-const { AccountFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
-const { FilterColumn, GroupByFilterChip, SearchFilterChip } = FilterChips
-
-const baseContainerStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
+const { ACTION_LABELS } = CellRenderers
+const { AccountFilterChip, ActionFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
+const { FilterColumn, GroupByFilterChip, SearchFilterChip, SecurityFilterChip } = FilterChips
 
 const MAX_DETAIL_LINES = 3
 const EMPTY_ARRAY = []
+
+const containerBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
+const containerActiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--ruby-3)' }
+const containerInactiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--gray-2)' }
+
+const T = {
+    // Truncates a list of strings to MAX_DETAIL_LINES with "+N more" suffix
+    // @sig toTruncatedDetails :: [String] -> [String]
+    toTruncatedDetails: items => {
+        const { length } = items
+        if (length === 0) return []
+        if (length <= MAX_DETAIL_LINES) return items
+        const shown = items.slice(0, MAX_DETAIL_LINES - 1)
+        return [...shown, `+${length - shown.length} more`]
+    },
+
+    // Maps account IDs to names, then truncates
+    // @sig toAccountDetails :: ([String], LookupTable) -> [String]
+    toAccountDetails: (accountIds, accountLookup) => {
+        if (accountIds.length === 0 || !accountLookup) return []
+        const names = accountIds.map(id => accountLookup.get(id)?.name || id)
+        return T.toTruncatedDetails(names)
+    },
+
+    // Maps security IDs to symbols, then truncates
+    // @sig toSecurityDetails :: ([String], LookupTable) -> [String]
+    toSecurityDetails: (securityIds, securityLookup) => {
+        if (securityIds.length === 0 || !securityLookup) return []
+        const symbols = securityIds.map(id => securityLookup.get(id)?.symbol || id)
+        return T.toTruncatedDetails(symbols)
+    },
+
+    // Maps action codes to labels, then truncates
+    // @sig toActionDetails :: [String] -> [String]
+    toActionDetails: actionCodes => {
+        if (actionCodes.length === 0) return []
+        const labels = actionCodes.map(code => ACTION_LABELS[code] || code)
+        return T.toTruncatedDetails(labels)
+    },
+
+    // Filters transactions by accountId (or returns all if no accountId)
+    // @sig toAccountFiltered :: ([Transaction], String?) -> [Transaction]
+    toAccountFiltered: (transactions, accountId) =>
+        accountId ? transactions.filter(t => t.accountId === accountId) : transactions,
+}
 
 /*
  * Row of filter chips organized in columns with details below each chip
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
- *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, accountId?, groupByOptions?,
- *         filteredCount?, totalCount?, itemLabel? }
+ *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, showSecurities?, showActions?,
+ *         accountId?, groupByOptions?, filteredCount?, totalCount?, itemLabel? }
  */
 const FilterChipRow = props => {
-    // Build detail lines for categories (up to MAX_DETAIL_LINES, then +N more)
-    // @sig buildCategoryDetails :: [String] -> [String]
-    const buildCategoryDetails = categories => {
-        const { length } = categories
-        if (length === 0) return []
-        if (length <= MAX_DETAIL_LINES) return categories
-        const shown = categories.slice(0, MAX_DETAIL_LINES - 1)
-        const remaining = length - shown.length
-        return [...shown, `+${remaining} more`]
-    }
-
-    // Build detail lines for accounts (up to MAX_DETAIL_LINES, then +N more)
-    // @sig buildAccountDetails :: ([String], LookupTable) -> [String]
-    const buildAccountDetails = (accountIds, accountLookup) => {
-        const { length } = accountIds
-        if (length === 0 || !accountLookup) return []
-        const names = accountIds.map(id => accountLookup.get(id)?.name || id)
-        if (names.length <= MAX_DETAIL_LINES) return names
-        const shown = names.slice(0, MAX_DETAIL_LINES - 1)
-        const remaining = names.length - shown.length
-        return [...shown, `+${remaining} more`]
-    }
-
     const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
+    const { showSecurities = false, showActions = false } = props
     const { accountId = null, groupByOptions = null } = props
     const { filteredCount: filteredCountProp, totalCount: totalCountProp, itemLabel = 'transactions' } = props
 
@@ -62,31 +85,35 @@ const FilterChipRow = props => {
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
     const selectedAccounts = useSelector(state => S.UI.selectedAccounts(state, viewId))
+    const selectedSecurities = useSelector(state => (showSecurities ? S.UI.selectedSecurities(state, viewId) : []))
+    const selectedActions = useSelector(state => (showActions ? S.UI.selectedInvestmentActions(state, viewId) : []))
     const accounts = useSelector(S.accounts)
+    const securitiesLookup = useSelector(state => (showSecurities ? S.securities(state) : null))
 
-    const dateDetails = dateRange ? [formatDateRange(dateRange.start, dateRange.end)].filter(Boolean) : []
-    const categoryDetails = buildCategoryDetails(selectedCategories)
-    const accountDetails = buildAccountDetails(selectedAccounts, accounts)
+    const dateLabel = dateRange ? formatDateRange(dateRange.start, dateRange.end) : null
+    const dateDetails = dateLabel ? [dateLabel] : []
+    const categoryDetails = T.toTruncatedDetails(selectedCategories)
+    const accountDetails = T.toAccountDetails(selectedAccounts, accounts)
+    const securityDetails = T.toSecurityDetails(selectedSecurities, securitiesLookup)
+    const actionDetails = T.toActionDetails(selectedActions)
 
     // Determine which filters are active
     const isDateActive = dateRangeKey !== 'all'
     const isCategoriesActive = selectedCategories.length > 0
     const isAccountsActive = selectedAccounts.length > 0
+    const isSecuritiesActive = selectedSecurities.length > 0
+    const isActionsActive = selectedActions.length > 0
     const isTextActive = filterQuery?.length > 0
 
     // Determine if any filtering is happening
     // Use props if provided, otherwise compute from transaction selectors
-    const accountFilteredTxns = accountId
-        ? filteredTransactions.filter(t => t.accountId === accountId)
-        : filteredTransactions
-    const baseTransactions = accountId
-        ? (allTransactions?.filter(t => t.accountId === accountId) ?? [])
-        : (allTransactions ?? [])
+    const accountFilteredTxns = T.toAccountFiltered(filteredTransactions, accountId)
+    const baseTransactions = T.toAccountFiltered(allTransactions ?? [], accountId)
     const filteredCount = filteredCountProp ?? accountFilteredTxns.length
     const totalCount = totalCountProp ?? baseTransactions.length
     const isFiltering = filteredCount < totalCount || (!showAsOfDate && isDateActive) || isTextActive
 
-    const containerStyle = { ...baseContainerStyle, backgroundColor: isFiltering ? 'var(--ruby-3)' : 'var(--gray-2)' }
+    const containerStyle = isFiltering ? containerActiveStyle : containerInactiveStyle
 
     return (
         <Flex direction="column" gap="2" style={containerStyle}>
@@ -129,6 +156,20 @@ const FilterChipRow = props => {
                             details={[]}
                         />
                     </>
+                )}
+
+                {showSecurities && (
+                    <FilterColumn
+                        chip={<SecurityFilterChip viewId={viewId} isActive={isSecuritiesActive} />}
+                        details={securityDetails}
+                    />
+                )}
+
+                {showActions && (
+                    <FilterColumn
+                        chip={<ActionFilterChip viewId={viewId} isActive={isActionsActive} />}
+                        details={actionDetails}
+                    />
                 )}
 
                 <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isTextActive} />} details={[]} />
