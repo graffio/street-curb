@@ -161,6 +161,8 @@ const CLOSED_POPOVER = {
 
 const POPOVER_ITEM_SOURCES = {
     accounts: state => Array.from(accounts(state)).map(({ id, name }) => ({ id, label: name })),
+    actions: () => INVESTMENT_ACTIONS.map(({ id, label }) => ({ id, label })),
+    securities: state => Array.from(securities(state)).map(({ id, symbol }) => ({ id, label: symbol })),
 }
 
 const _filterPopoverData = (state, viewId) => {

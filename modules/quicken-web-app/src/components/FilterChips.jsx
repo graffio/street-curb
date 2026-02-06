@@ -2,17 +2,14 @@
 // ABOUTME: Consolidated chips with shared styles for accounts, actions, categories, dates, search, securities, groupBy
 
 import {
-    Badge,
     Box,
     calculateDateRange,
     CategorySelector,
-    Checkbox,
     FilterChipPopover,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
     Popover,
-    ScrollArea,
     Text,
     TextField,
 } from '@graffio/design-system'
@@ -83,7 +80,6 @@ const clearButtonStyle = {
     cursor: 'pointer',
 }
 
-const itemRowStyle = { padding: 'var(--space-2)', borderBottom: '1px solid var(--gray-3)', cursor: 'pointer' }
 const optionStyle = { padding: 'var(--space-2) var(--space-3)', cursor: 'pointer', borderRadius: 'var(--radius-1)' }
 const separatorStyle = { padding: 'var(--space-1) var(--space-3)', userSelect: 'none' }
 
@@ -132,23 +128,6 @@ const FilterColumn = ({ chip, details }) => (
             </span>
         ))}
     </div>
-)
-
-// Removable badge for selected items
-// @sig SelectedBadge :: { id: String, label: String, onRemove: Function } -> ReactElement
-const SelectedBadge = ({ id, label, onRemove }) => (
-    <Badge key={id} variant="soft" style={{ cursor: 'pointer' }} onClick={() => onRemove(id)}>
-        {label} ×
-    </Badge>
-)
-
-// Row with checkbox for multi-select lists
-// @sig CheckboxRow :: { id: String, label: String, isSelected: Boolean, onToggle: Function } -> ReactElement
-const CheckboxRow = ({ id, label, isSelected, onToggle }) => (
-    <Flex key={id} align="center" gap="2" style={itemRowStyle} onClick={() => onToggle(id)}>
-        <Checkbox checked={isSelected} />
-        <Text size="2">{label}</Text>
-    </Flex>
 )
 
 // Separator line for option lists
@@ -254,51 +233,53 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
 // ActionFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Investment action filter chip with inline multi-select popover
+// Investment action filter chip with keyboard-navigable popover — fully controlled via Redux
 // @sig ActionFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const ActionFilterChip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
     const handleToggle = actionId => post(Action.ToggleActionFilter(viewId, actionId))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
-    }
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && post(Action.ToggleActionFilter(viewId, highlightedItemId))
+
+    const KEYMAP_ID = `${viewId}_actions`
     const POPOVER_ID = 'actions'
-    const { rows, badges, count } = useSelector(state => S.UI.actionFilterData(state, viewId))
-    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const { badges } = useSelector(state => S.UI.actionFilterData(state, viewId))
+    const selectedIds = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
+
+    const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const { popoverId, highlightedIndex, nextHighlightIndex, prevHighlightIndex } = popoverData
+    const { highlightedItemId, filteredItems } = popoverData
     const isOpen = popoverId === POPOVER_ID
-    const triggerStyle = F.makeChipTriggerStyle(150, isActive)
-    const chipLabel = count > 0 ? `${count} selected` : 'All'
 
     return (
-        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Actions: {chipLabel}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 200 }}>
-                {count > 0 && (
-                    <Flex wrap="wrap" gap="1" mb="2">
-                        {badges.map(({ id, label }) => (
-                            <SelectedBadge key={id} id={id} label={label} onRemove={handleToggle} />
-                        ))}
-                    </Flex>
-                )}
-                {rows.map(({ id, label, isSelected }) => (
-                    <CheckboxRow key={id} id={id} label={label} isSelected={isSelected} onToggle={handleToggle} />
-                ))}
-            </Popover.Content>
-        </Popover.Root>
+        <FilterChipPopover
+            label="Actions"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            width={150}
+            isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 
@@ -633,60 +614,57 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
 // SecurityFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Security filter chip with inline security multi-select popover
+// Security filter chip with keyboard-navigable popover — fully controlled via Redux
 // @sig SecurityFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const SecurityFilterChip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
     const handleToggle = securityId => post(Action.ToggleSecurityFilter(viewId, securityId))
+    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
-    }
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () =>
+        highlightedItemId && post(Action.ToggleSecurityFilter(viewId, highlightedItemId))
+
+    const KEYMAP_ID = `${viewId}_securities`
     const POPOVER_ID = 'securities'
-    const { rows, badges, count } = useSelector(state => S.UI.securityFilterData(state, viewId))
-    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const { badges } = useSelector(state => S.UI.securityFilterData(state, viewId))
+    const selectedIds = useSelector(state => S.UI.selectedSecurities(state, viewId))
+
+    // prettier-ignore
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex,
+        highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId))
     const isOpen = popoverId === POPOVER_ID
-    const triggerStyle = F.makeChipTriggerStyle(175, isActive)
-    const chipLabel = count > 0 ? `${count} selected` : 'All'
 
     return (
-        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Securities: {chipLabel}
-                    </Text>
-                    {count > 0 && (
-                        <Box style={clearButtonStyle} onClick={handleClear}>
-                            ×
-                        </Box>
-                    )}
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', minWidth: 300 }}>
-                {count > 0 && (
-                    <Flex wrap="wrap" gap="1" mb="2">
-                        {badges.map(({ id, label }) => (
-                            <SelectedBadge key={id} id={id} label={label} onRemove={handleToggle} />
-                        ))}
-                    </Flex>
-                )}
-                {/* prettier-ignore */}
-                <ScrollArea style={{ maxHeight: 350 }}>
-                    {rows.map(({ id, symbol, name, isSelected }) => (
-                        <CheckboxRow key={id} id={id} label={`${symbol} - ${name}`}
-                            isSelected={isSelected} onToggle={handleToggle} />
-                    ))}
-                    {rows.length === 0 && (
-                        <Text size="2" color="gray">
-                            No securities available
-                        </Text>
-                    )}
-                </ScrollArea>
-            </Popover.Content>
-        </Popover.Root>
+        <FilterChipPopover
+            label="Securities"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={filteredItems}
+            selectedIds={selectedIds}
+            selectedItems={badges}
+            highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
+            width={175}
+            isActive={isActive}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onSearchChange={handleSearchChange}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleClear}
+        />
     )
 }
 
