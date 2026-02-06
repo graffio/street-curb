@@ -133,8 +133,12 @@ const FilterChipRow = props => {
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const selectedCategories = useSelector(state => S.UI.selectedCategories(state, viewId))
     const selectedAccounts = useSelector(state => S.UI.selectedAccounts(state, viewId))
-    const selectedSecurities = useSelector(state => (showSecurities ? S.UI.selectedSecurities(state, viewId) : []))
-    const selectedActions = useSelector(state => (showActions ? S.UI.selectedInvestmentActions(state, viewId) : []))
+    const selectedSecurities = useSelector(state =>
+        showSecurities ? S.UI.selectedSecurities(state, viewId) : EMPTY_ARRAY,
+    )
+    const selectedActions = useSelector(state =>
+        showActions ? S.UI.selectedInvestmentActions(state, viewId) : EMPTY_ARRAY,
+    )
     const accounts = useSelector(S.accounts)
     const securitiesLookup = useSelector(state => (showSecurities ? S.securities(state) : null))
 
