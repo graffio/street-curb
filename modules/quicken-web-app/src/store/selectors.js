@@ -13,6 +13,7 @@ import {
     memoizeReduxState,
     memoizeReduxStatePerKey,
 } from '@graffio/functional'
+import { formatDateRange } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { KeymapModule } from '@graffio/keymap'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
@@ -213,6 +214,81 @@ const _filterPopoverData = (state, viewId) => {
 }
 
 UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'transactionFilters', _filterPopoverData)
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Per-chip selectors (each returns { isActive, details } for FilterChipRow)
+// ---------------------------------------------------------------------------------------------------------------------
+
+const MAX_DETAIL_LINES = 3
+const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label }) => [id, label]))
+
+// Truncates a list of strings to MAX_DETAIL_LINES with "+N more" suffix
+// @sig toTruncatedDetails :: [String] -> [String]
+const toTruncatedDetails = items => {
+    const { length } = items
+    if (length === 0) return []
+    if (length <= MAX_DETAIL_LINES) return items
+    const shown = items.slice(0, MAX_DETAIL_LINES - 1)
+    return [...shown, `+${length - shown.length} more`]
+}
+
+const _dateChipData = (state, viewId) => {
+    const { dateRange, dateRangeKey } = filter(state, viewId)
+    const label = dateRange ? formatDateRange(dateRange.start, dateRange.end) : null
+    return { isActive: dateRangeKey !== 'all', details: label ? [label] : [] }
+}
+
+const _categoryChipData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedCategories
+    return { isActive: selected.length > 0, details: toTruncatedDetails(selected) }
+}
+
+const _accountChipData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedAccounts
+    const names = selected.map(id => accounts(state).get(id)?.name || id)
+    return { isActive: selected.length > 0, details: toTruncatedDetails(names) }
+}
+
+const _securityChipData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedSecurities
+    const symbols = selected.map(id => securities(state).get(id)?.symbol || id)
+    return { isActive: selected.length > 0, details: toTruncatedDetails(symbols) }
+}
+
+const _actionChipData = (state, viewId) => {
+    const selected = filter(state, viewId).selectedInvestmentActions
+    const labels = selected.map(code => ACTION_LABELS_MAP[code] || code)
+    return { isActive: selected.length > 0, details: toTruncatedDetails(labels) }
+}
+
+const _searchChipData = (state, viewId) => {
+    const query = filter(state, viewId).filterQuery
+    return { isActive: query?.length > 0 }
+}
+
+const _filterCounts = (state, viewId, accountId = null) => {
+    const { categories, securities, transactions } = state
+    const f = filter(state, viewId)
+    const filteredTxns = TransactionFilter.apply(f, transactions, categories, securities)
+    const baseTxns = accountId ? transactions.filter(t => t.accountId === accountId) : Array.from(transactions)
+    const accountFilteredTxns = accountId ? filteredTxns.filter(t => t.accountId === accountId) : filteredTxns
+    const total = baseTxns.length
+    const filtered = accountFilteredTxns.length
+    const isFiltering = filtered < total || f.dateRangeKey !== 'all' || f.filterQuery?.length > 0
+    return { filtered, total, isFiltering }
+}
+
+UI.dateChipData = memoizeReduxStatePerKey([], 'transactionFilters', _dateChipData)
+UI.categoryChipData = memoizeReduxStatePerKey([], 'transactionFilters', _categoryChipData)
+UI.accountChipData = memoizeReduxStatePerKey(['accounts'], 'transactionFilters', _accountChipData)
+UI.securityChipData = memoizeReduxStatePerKey(['securities'], 'transactionFilters', _securityChipData)
+UI.actionChipData = memoizeReduxStatePerKey([], 'transactionFilters', _actionChipData)
+UI.searchChipData = memoizeReduxStatePerKey([], 'transactionFilters', _searchChipData)
+UI.filterCounts = memoizeReduxStatePerKey(
+    ['transactions', 'categories', 'securities'],
+    'transactionFilters',
+    _filterCounts,
+)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tab layout derived

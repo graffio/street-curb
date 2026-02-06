@@ -4,7 +4,7 @@
 import {
     Box,
     calculateDateRange,
-    FilterChipPopover,
+    SelectableListPopover,
     DATE_RANGES,
     Flex,
     KeyboardDateInput,
@@ -29,7 +29,7 @@ const T = {
     // @sig toCurrentOption :: ([{ value, label }], String?) -> { value, label }
     toCurrentOption: (options, groupBy) => options.find(o => o.value === groupBy) || options[0],
 
-    // Converts options ({value, label}) to items ({id, label}) format for FilterChipPopover
+    // Converts options ({value, label}) to items ({id, label}) format for SelectableListPopover
     // @sig toItems :: [{ value, label }] -> [{ id, label }]
     toItems: options => options.map(({ value, label }) => ({ id: value, label })),
 
@@ -218,7 +218,7 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const isOpen = popoverId === POPOVER_ID
 
     return (
-        <FilterChipPopover
+        <SelectableListPopover
             label="Accounts"
             open={isOpen}
             onOpenChange={handleOpenChange}
@@ -275,7 +275,7 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
     const isOpen = popoverId === POPOVER_ID
 
     return (
-        <FilterChipPopover
+        <SelectableListPopover
             label="Actions"
             open={isOpen}
             onOpenChange={handleOpenChange}
@@ -330,7 +330,7 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const isOpen = popoverId === POPOVER_ID
 
     return (
-        <FilterChipPopover
+        <SelectableListPopover
             label="Categories"
             open={isOpen}
             onOpenChange={handleOpenChange}
@@ -593,7 +593,7 @@ const GroupByFilterChip = ({ viewId, options }) => {
     const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
 
     return (
-        <FilterChipPopover
+        <SelectableListPopover
             label="Group by"
             open={isOpen}
             onOpenChange={handleOpenChange}
@@ -712,7 +712,7 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
     const isOpen = popoverId === POPOVER_ID
 
     return (
-        <FilterChipPopover
+        <SelectableListPopover
             label="Securities"
             open={isOpen}
             onOpenChange={handleOpenChange}

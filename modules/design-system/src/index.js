@@ -5,6 +5,8 @@
 // Import Radix Themes CSS
 import '@radix-ui/themes/styles.css'
 
+import { SelectableListPopover } from '@graffio/design-system/src/components/SelectableListPopover.jsx'
+
 import {
     Avatar,
     Badge,
@@ -32,8 +34,6 @@ import {
     Theme,
     Tooltip,
 } from '@radix-ui/themes'
-
-import { FilterChipPopover } from './components/FilterChipPopover.jsx'
 import { DataTable } from './components/DataTable.jsx'
 import { Dialog } from './components/Dialog/Dialog.jsx'
 import { FilePickerButton } from './components/FilePickerButton.jsx'
@@ -77,7 +77,7 @@ export {
     Tooltip,
 
     // ours
-    FilterChipPopover,
+    SelectableListPopover,
     DataTable,
     DateRangePicker,
     Dialog,

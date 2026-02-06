@@ -93,9 +93,9 @@ const SelectedItemBadge = ({ item, onToggle }) => (
 
 /**
  * Fully controlled filter chip popover — all state managed by consumer
- * @sig FilterChipPopover :: FilterChipPopoverProps -> ReactElement
+ * @sig SelectableListPopover :: SelectableListPopoverProps -> ReactElement
  */
-const FilterChipPopover = ({
+const SelectableListPopover = ({
     label,
     open,
     onOpenChange,
@@ -238,7 +238,7 @@ const FilterChipPopover = ({
     )
 }
 
-FilterChipPopover.propTypes = {
+SelectableListPopover.propTypes = {
     label: PropTypes.string.isRequired,
     open: PropTypes.bool.isRequired,
     onOpenChange: PropTypes.func.isRequired,
@@ -267,4 +267,4 @@ FilterChipPopover.propTypes = {
     onClear: PropTypes.func.isRequired,
 }
 
-export { FilterChipPopover }
+export { SelectableListPopover }
