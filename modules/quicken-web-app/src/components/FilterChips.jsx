@@ -14,7 +14,8 @@ import {
     TextField,
 } from '@graffio/design-system'
 import { endOfDay } from '@graffio/functional'
-import React, { useRef } from 'react'
+import { KeymapModule } from '@graffio/keymap'
+import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
@@ -28,6 +29,14 @@ const T = {
     // Finds current group-by option from options list
     // @sig toCurrentOption :: ([{ value, label }], String?) -> { value, label }
     toCurrentOption: (options, groupBy) => options.find(o => o.value === groupBy) || options[0],
+
+    // Converts options ({value, label}) to items ({id, label}) format for FilterChipPopover
+    // @sig toItems :: [{ value, label }] -> [{ id, label }]
+    toItems: options => options.map(({ value, label }) => ({ id: value, label })),
+
+    // Gets selected item from items array by ID
+    // @sig toSelectedItems :: ([{ id, label }], String?) -> [{ id, label }]
+    toSelectedItems: (items, selectedId) => items.filter(item => item.id === selectedId),
 }
 
 const F = {
@@ -403,10 +412,11 @@ const AsOfDateChip = ({ viewId }) => {
 // DateFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Date filter chip with inline date range options popover
+// Date filter chip with inline date range options popover — Escape closes, date inputs have own keymaps
 // @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const DateFilterChip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
     const handleSelect = key => {
         const dateRange = calculateDateRange(key) ?? { start: null, end: null }
@@ -430,6 +440,18 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
+    // Escape keymap effect — closes popover when Escape pressed
+    // @sig escapeKeymapEffect :: () -> (() -> void)?
+    const escapeKeymapEffect = () => {
+        if (!isOpen) return undefined
+        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Date Filter', [
+            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+        ])
+        E.handleRegisterKeymap(keymap)
+        return () => E.handleUnregisterKeymap(KEYMAP_ID)
+    }
+
+    const KEYMAP_ID = `${viewId}_date`
     const POPOVER_ID = 'date'
     const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const startDateRef = useRef(null)
@@ -441,6 +463,8 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
+
+    useEffect(escapeKeymapEffect, [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -509,40 +533,61 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 // GroupByFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Group by filter chip with inline dimension selector popover
+// Group by filter chip with keyboard-navigable single-select popover
 // @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
 const GroupByFilterChip = ({ viewId, options }) => {
-    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
-    const handleSelect = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
+    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
+    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
+    const handleToggle = value => {
+        post(Action.SetTransactionFilter(viewId, { groupBy: value }))
+        handleDismiss()
+    }
+
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleToggleHighlighted = () => items[highlightedIndex] && handleToggle(items[highlightedIndex].id)
+
+    const KEYMAP_ID = `${viewId}_group_by`
     const POPOVER_ID = 'groupBy'
     const resolvedOptions = options ?? defaultGroupByOptions
+    const items = T.toItems(resolvedOptions)
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const rawHighlight = useSelector(state => S.UI.filterPopoverHighlight(state, viewId))
     const isOpen = popoverId === POPOVER_ID
-    const triggerStyle = F.makeChipTriggerStyle(155, false)
-    const currentOption = T.toCurrentOption(resolvedOptions, groupBy)
-    const defaultValue = resolvedOptions[0]?.value
+    const selectedId = groupBy || items[0]?.id
+    const selectedIds = selectedId ? [selectedId] : []
+    const selectedItems = T.toSelectedItems(items, selectedId)
+    const count = items.length
+    const highlightedIndex = count === 0 ? 0 : Math.min(rawHighlight || 0, count - 1)
+    const nextHighlightIndex = count === 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
+    const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
 
     return (
-        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
-            <Popover.Trigger>
-                <Box style={triggerStyle}>
-                    <Text size="1" weight="medium">
-                        Group by: {currentOption.label}
-                    </Text>
-                </Box>
-            </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-1)' }}>
-                {/* prettier-ignore */}
-                <Flex direction="column">
-                    {resolvedOptions.map(({ value, label }) => (
-                        <SelectableOption key={value} id={value} label={label}
-                            isSelected={value === (groupBy || defaultValue)} onSelect={handleSelect} />
-                    ))}
-                </Flex>
-            </Popover.Content>
-        </Popover.Root>
+        <FilterChipPopover
+            label="Group by"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            items={items}
+            selectedIds={selectedIds}
+            selectedItems={selectedItems}
+            highlightedIndex={highlightedIndex}
+            singleSelect
+            width={155}
+            keymapId={KEYMAP_ID}
+            onRegisterKeymap={E.handleRegisterKeymap}
+            onUnregisterKeymap={E.handleUnregisterKeymap}
+            onMoveDown={handleMoveDown}
+            onMoveUp={handleMoveUp}
+            onToggle={handleToggle}
+            onToggleHighlighted={handleToggleHighlighted}
+            onDismiss={handleDismiss}
+            onClear={handleDismiss}
+        />
     )
 }
 

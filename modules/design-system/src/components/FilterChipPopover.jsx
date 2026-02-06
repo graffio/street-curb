@@ -51,7 +51,7 @@ const F = {
     }),
 }
 
-// Checkbox row for a single navigable item
+// Checkbox row for a single navigable item (multi-select mode)
 // @sig ItemRow :: { item, isSelected, isHighlighted, onToggle, itemRef? } -> ReactElement
 const ItemRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
     <Flex
@@ -63,6 +63,22 @@ const ItemRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
     >
         <Checkbox checked={isSelected} />
         <Text size="2">{item.label}</Text>
+    </Flex>
+)
+
+// Single-select row without checkbox
+// @sig SingleSelectRow :: { item, isSelected, isHighlighted, onToggle, itemRef? } -> ReactElement
+const SingleSelectRow = ({ item, isSelected, isHighlighted, onToggle, itemRef }) => (
+    <Flex
+        ref={itemRef}
+        align="center"
+        gap="2"
+        style={F.makeItemRowStyle(isHighlighted)}
+        onClick={() => onToggle(item.id)}
+    >
+        <Text size="2" weight={isSelected ? 'medium' : 'regular'}>
+            {item.label}
+        </Text>
     </Flex>
 )
 
@@ -88,6 +104,8 @@ const FilterChipPopover = ({
     highlightedIndex,
     searchText,
     searchable = false,
+    singleSelect = false,
+    customContent,
     width = 175,
     isActive = false,
     keymapId,
@@ -137,18 +155,21 @@ const FilterChipPopover = ({
         return () => onUnregisterKeymap(keymapId)
     }
 
-    // Maps an item and its position to an ItemRow element
+    // Maps an item and its position to an ItemRow or SingleSelectRow element
     // @sig toItemRow :: ({ id, label }, Number) -> ReactElement
-    const toItemRow = (item, i) => (
-        <ItemRow
-            key={item.id}
-            item={item}
-            isSelected={selectedSet.has(item.id)}
-            isHighlighted={i === highlightedIndex}
-            onToggle={onToggle}
-            itemRef={i === highlightedIndex ? highlightedRef : null}
-        />
-    )
+    const toItemRow = (item, i) => {
+        const Row = singleSelect ? SingleSelectRow : ItemRow
+        return (
+            <Row
+                key={item.id}
+                item={item}
+                isSelected={selectedSet.has(item.id)}
+                isHighlighted={i === highlightedIndex}
+                onToggle={onToggle}
+                itemRef={i === highlightedIndex ? highlightedRef : null}
+            />
+        )
+    }
 
     // Refs to capture latest callbacks without triggering effect re-runs
     const handlersRef = useRef({ onMoveDown, onMoveUp, onToggleHighlighted, onDismiss })
@@ -165,7 +186,10 @@ const FilterChipPopover = ({
     useEffect(keymapLifecycleEffect, [open, keymapId, label, onRegisterKeymap, onUnregisterKeymap])
 
     const triggerStyle = F.makeTriggerStyle(width, isActive)
-    const displayLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
+    const multiSelectLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
+    const singleSelectLabel = selectedItems.length > 0 ? selectedItems[0].label : 'All'
+    const displayLabel = singleSelect ? singleSelectLabel : multiSelectLabel
+    const showClearButton = !singleSelect && selectedCount > 0
 
     return (
         <Popover.Root open={open} onOpenChange={onOpenChange}>
@@ -174,7 +198,7 @@ const FilterChipPopover = ({
                     <Text size="1" weight="medium">
                         {label}: {displayLabel}
                     </Text>
-                    {selectedCount > 0 && (
+                    {showClearButton && (
                         <Box style={clearButtonStyle} onClick={handleClear}>
                             ×
                         </Box>
@@ -182,7 +206,7 @@ const FilterChipPopover = ({
                 </button>
             </Popover.Trigger>
             <Popover.Content style={popoverContentStyle}>
-                {selectedItems.length > 0 && (
+                {!singleSelect && selectedItems.length > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
                         {selectedItems.map(item => (
                             <SelectedItemBadge key={item.id} item={item} onToggle={onToggle} />
@@ -207,6 +231,7 @@ const FilterChipPopover = ({
                         </Text>
                     )}
                 </ScrollArea>
+                {customContent}
             </Popover.Content>
         </Popover.Root>
     )
@@ -225,6 +250,8 @@ FilterChipPopover.propTypes = {
     highlightedIndex: PropTypes.number.isRequired,
     searchText: PropTypes.string,
     searchable: PropTypes.bool,
+    singleSelect: PropTypes.bool,
+    customContent: PropTypes.node,
     width: PropTypes.number,
     isActive: PropTypes.bool,
     keymapId: PropTypes.string,

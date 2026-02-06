@@ -104,6 +104,7 @@ const UI = {
     dateRange                : (state, viewId) => filter(state, viewId).dateRange,
     dateRangeKey             : (state, viewId) => filter(state, viewId).dateRangeKey,
     filterPopoverId          : (state, viewId) => filter(state, viewId).filterPopoverId,
+    filterPopoverHighlight   : (state, viewId) => filter(state, viewId).filterPopoverHighlight,
     filterQuery              : (state, viewId) => filter(state, viewId).filterQuery,
     groupBy                  : (state, viewId) => filter(state, viewId).groupBy,
     searchQuery              : (state, viewId) => filter(state, viewId).searchQuery,
