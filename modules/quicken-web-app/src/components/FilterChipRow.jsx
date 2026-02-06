@@ -2,9 +2,11 @@
 // ABOUTME: Each column shows chip + details below it (up to 3 lines)
 
 import { Flex, Text } from '@graffio/design-system'
-import React from 'react'
+import { KeymapModule } from '@graffio/keymap'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { CellRenderers } from '../columns/CellRenderers.jsx'
+import { Action, post } from '../store/actions.js'
 import * as S from '../store/selectors.js'
 import { formatDateRange } from '../utils/formatters.js'
 import { FilterChips } from './FilterChips.jsx'
@@ -61,6 +63,32 @@ const T = {
         accountId ? transactions.filter(t => t.accountId === accountId) : transactions,
 }
 
+const F = {
+    // Creates keymap with bindings for visible filter chips
+    // @sig createFilterShortcutsKeymap :: (String, FilterConfig, Function) -> Keymap
+    //     FilterConfig = { accounts, categories, date, actions, securities, groupBy, search }
+    createFilterShortcutsKeymap: (viewId, config, openPopover) => {
+        const { accounts, actions, asOfDate, categories, date, groupBy, search, securities } = config
+        const bindings = []
+        if (accounts) bindings.push({ description: 'Accounts', keys: ['a'], action: () => openPopover('accounts') })
+        if (categories)
+            bindings.push({ description: 'Categories', keys: ['c'], action: () => openPopover('categories') })
+        if (date) bindings.push({ description: 'Date', keys: ['d'], action: () => openPopover('date') })
+        if (asOfDate) bindings.push({ description: 'As of date', keys: ['d'], action: () => openPopover('asOfDate') })
+        if (actions) bindings.push({ description: 'Actions', keys: ['x'], action: () => openPopover('actions') })
+        if (securities)
+            bindings.push({ description: 'Securities', keys: ['h'], action: () => openPopover('securities') })
+        if (groupBy) bindings.push({ description: 'Group by', keys: ['g'], action: () => openPopover('groupBy') })
+        if (search) bindings.push({ description: 'Search', keys: ['/', 'f'], action: () => openPopover('search') })
+        return KeymapModule.fromBindings(`${viewId}_filters`, 'Filter shortcuts', bindings, { activeForViewId: viewId })
+    },
+}
+
+const E = {
+    handleRegisterKeymap: keymap => post(Action.RegisterKeymap(keymap)),
+    handleUnregisterKeymap: keymapId => post(Action.UnregisterKeymap(keymapId)),
+}
+
 /*
  * Row of filter chips organized in columns with details below each chip
  *
@@ -69,6 +97,25 @@ const T = {
  *         accountId?, groupByOptions?, filteredCount?, totalCount?, itemLabel? }
  */
 const FilterChipRow = props => {
+    // Register filter shortcut keymap on mount, unregister on unmount
+    // @sig keymapEffect :: () -> (() -> void)
+    const keymapEffect = () => {
+        const openPopover = popoverId => post(Action.SetFilterPopoverOpen(viewId, popoverId))
+        const config = {
+            accounts: showGroupBy,
+            categories: showCategories,
+            date: !showAsOfDate,
+            asOfDate: showAsOfDate,
+            actions: showActions,
+            securities: showSecurities,
+            groupBy: showGroupBy,
+            search: true,
+        }
+        const keymap = F.createFilterShortcutsKeymap(viewId, config, openPopover)
+        E.handleRegisterKeymap(keymap)
+        return () => E.handleUnregisterKeymap(`${viewId}_filters`)
+    }
+
     const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
     const { showSecurities = false, showActions = false } = props
     const { accountId = null, groupByOptions = null } = props
@@ -89,6 +136,8 @@ const FilterChipRow = props => {
     const selectedActions = useSelector(state => (showActions ? S.UI.selectedInvestmentActions(state, viewId) : []))
     const accounts = useSelector(S.accounts)
     const securitiesLookup = useSelector(state => (showSecurities ? S.securities(state) : null))
+
+    useEffect(keymapEffect, [viewId, showGroupBy, showAsOfDate, showCategories, showSecurities, showActions])
 
     const dateLabel = dateRange ? formatDateRange(dateRange.start, dateRange.end) : null
     const dateDetails = dateLabel ? [dateLabel] : []
