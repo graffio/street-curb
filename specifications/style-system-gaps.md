@@ -16,6 +16,11 @@ Calibrated via end-to-end test (date-filter-keyboard-nav plan generation):
 - **Keymap parity**: Keyboard accessibility must match mouse interactions. Need guidance on when/how to validate this. Related to the keyboard-accessibility specs in `specifications/keyboard-accessibility/`.
 - **Keymap testing**: The deleted `agent-native-testing.md` had some relevant content about validating that keybindings work. Need a replacement — possibly a test pattern or browser-test checklist.
 
+## Layer Boundary Validation (cli-style-validator)
+
+- **Import-based layer checks**: Validate that files don't import from wrong layers. File type determined by style_card mapping (*.jsx → component, **/selectors.js → selector, *.type.js → business logic, *.tap.js → test, other *.js → utility). Rules: component must not import store internals directly; selector must not import React; utility must not import Redux. ~1-2 AST rules.
+- **Bulk validator runs**: Run all files in quicken-web-app/src/ and design-system/src/ through the validator once layer rules are stable. Expect significant output — track as a dedicated cleanup effort.
+
 ## Complexity Heuristics (cli-style-validator)
 
 - 5 new AST rules from the spec (useSelector >5, useCallback >3, params >4, chained ops >2, local bindings >8) — not yet implemented. Need to prototype on real files to validate thresholds before adding to validator.
