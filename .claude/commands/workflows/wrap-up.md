@@ -22,7 +22,7 @@ Check each commit message for Problem/Solution/Impact format (see `.claude/tasks
 
 **If commits lack this format or are disorganized:**
 - Present the issue to the user
-- Offer to reorganize using interactive rebase
+- Offer to reorganize using `.claude/tasks/reorganize-commits.md`
 - **[CHECKPOINT]** — get approval before any history rewriting
 
 **If commits look good:** Move to step 2.
@@ -60,7 +60,6 @@ Determine if a non-trivial problem was solved during this work. Trivial = obviou
 ### 4. Artifact Cleanup
 
 - Delete `.claude/current-task.json`
-- Delete `.claude/active-goal.md`
 - Ask about stale spec files: "Delete specifications/{spec-used-for-this-work}.md?"
 
 ## Rules

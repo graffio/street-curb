@@ -2,11 +2,13 @@
 
 Known gaps discovered during workflow consolidation. Each needs real-world usage to calibrate before implementing.
 
-## Testing Strategy
+## Testing Strategy — Resolved
 
-- **Agent-browser integration tests for UI**: When to write them, how many is too many (they're slow). Need a heuristic for "this UI interaction warrants a browser test" vs "tap test on the selector/action is sufficient."
-- **TDD as a generation rule**: Should `/workflows:plan` mechanically insert "write failing test" steps before implementation steps? Or is the style card reminder enough?
-- **Test coverage for Actions**: Every Action variant should have at least one test exercising the round-trip (dispatch → reducer → new state).
+Calibrated via end-to-end test (date-filter-keyboard-nav plan generation):
+
+- **TDD generation rule**: Generate TDD steps only when implementation introduces domain logic (branching, data transformation, business rules). Skip for wiring, config/lookup entries, pass-through props — those test plumbing, not behavior. Rule added to `plan.md` generation rules table.
+- **Browser vs TAP heuristic**: TAP when code under test is a pure function (selector, action reducer, utility). Browser test when behavior requires DOM interaction (focus, keyboard events, visual state). DOM-dependent behaviors go in `verification` list for manual checking until automated browser test infrastructure matures.
+- **Action test coverage**: Every new Action variant gets a TAP test exercising dispatch → reducer → new state. Rule added to `plan.md` generation rules table.
 
 ## UI / Action / Keymap Coverage
 

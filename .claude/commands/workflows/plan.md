@@ -40,11 +40,12 @@ Consolidate findings:
 
 ## Step 2: Produce Plan
 
-Write a plan file in `specifications/`:
+**If the spec already contains approach, acceptance criteria, and key decisions** — use it as the plan. Present it to the user and skip to Step 3.
+
+**Otherwise** — write a plan file in `specifications/`:
 - Filename: `specifications/{descriptive-name}.md` (kebab-case, 3-5 words)
 - Content: problem statement, proposed approach, acceptance criteria, key decisions
-
-Keep it concise. The plan is a working document, not a formal spec.
+- Keep it concise. The plan is a working document, not a formal spec.
 
 **Present plan to user for review.**
 
@@ -84,7 +85,7 @@ Every implementation step that creates or modifies a file MUST include a `style_
 | File pattern        | style_card        |
 |---------------------|-------------------|
 | `*.jsx`             | `react-component` |
-| `selectors/**/*.js` | `selector`        |
+| `**/selectors.js`   | `selector`        |
 | `*.tap.js`          | `test-file`       |
 | Other `*.js`        | `utility-module`  |
 
@@ -100,18 +101,20 @@ These rules make JSON generation mechanical, not ad-hoc. Apply all of them:
 |------|-----------|------------------|
 | **Style card** | Every step that creates/modifies code | `style_card` field based on file type mapping above |
 | **Review agents** | Before every `git commit` step (unconditional) | Step: "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues." |
-| **Commit** | After each logical chunk (unconditional) | `git add` + commit step using commit-changes.md format |
+| **Commit** | When implementation steps transition to a different `style_card` value, and at the end | Insert review + `git add` + commit steps at each `style_card` boundary. Use commit-changes.md format. |
 | **Checkpoint** | At decision points (judgment) | `[CHECKPOINT]` prefix on step action |
-| **Complexity review** | Before modifying file >100 lines | Step: "Run complexity review on {file}" |
+| **Complexity review** | Before modifying any existing file (unconditional) | Step: "Run complexity review on {file}" |
 | **Style-compliance debt** | When touching modules listed in style-compliance-debt.md | Step: "Review known debt in {module} — see specifications/style-compliance-debt.md" |
+| **TDD step** | Implementation introduces NEW branching logic or business rules that don't exist yet in the codebase | Step: "Write failing test for {behavior}" with `style_card: test-file`. Do NOT generate test steps for: adding entries to lookup tables/registries, filtering/mapping data with standard operations, passing new input to existing infrastructure, or wiring components to existing selectors. |
+| **Action test** | Step introduces a new Action variant | Step: "Write TAP test for {Action} round-trip (dispatch → reducer → new state)" with `style_card: test-file` |
+| **UI verification** | Step adds keyboard, focus, or visual interaction | Add specific manual verification items to `verification` list describing expected browser behavior |
 | **Learnings** | When a previously-solved domain is involved | "Related: {solution path} — {summary}" in plan markdown |
 
 ### Step Rules
 
 - Steps must be specific enough to follow without reading anything else
 - **Validator after each implementation step** — add: "Run style validator on changed files, fix violations"
-- **Intermediate commits** — after each logical chunk, not batched to the end
-- Always include final commit step at the end
+- **Commit at style_card boundaries** — when steps transition from one `style_card` to another, insert review + commit before continuing. Always include a final commit at the end.
 - Mark decision points with `[CHECKPOINT]` prefix
 
 ### Checkpoint Identification
