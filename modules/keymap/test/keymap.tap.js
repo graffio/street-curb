@@ -124,23 +124,23 @@ test('Keymap.resolve', t => {
         t.end()
     })
 
-    t.test('Given a keymap with activeWhen', t => {
+    t.test('Given a keymap with activeForViewId', t => {
         const conditionalKeymap = Keymap.from({
             id: 'register-123',
             name: 'Register 123',
             priority: 10,
-            activeWhen: activeId => activeId === 'register-123',
+            activeForViewId: 'register-123',
             intents: intents(Intent.from({ description: 'Delete item', keys: ['Delete'], action: () => {} })),
         })
         const keymaps = [conditionalKeymap, globalKeymap]
 
-        t.test('When activeWhen returns true', t => {
+        t.test('When activeForViewId matches', t => {
             const result = Keymap.resolve('Delete', keymaps, 'register-123')
             t.equal(result.description, 'Delete item', 'Then the keymap participates')
             t.end()
         })
 
-        t.test('When activeWhen returns false', t => {
+        t.test('When activeForViewId does not match', t => {
             const result = Keymap.resolve('Delete', keymaps, 'other-view')
             t.equal(result, null, 'Then the keymap is skipped')
             t.end()
@@ -236,12 +236,12 @@ test('Keymap.collectAvailable', t => {
         t.end()
     })
 
-    t.test('Given a keymap with activeWhen that is false', t => {
+    t.test('Given a keymap with activeForViewId that does not match', t => {
         const conditionalKeymap = Keymap.from({
             id: 'conditional',
             name: 'Conditional',
             priority: 50,
-            activeWhen: () => false,
+            activeForViewId: 'some-other-view',
             intents: intents(Intent.from({ description: 'Hidden', keys: ['h'], action: () => {} })),
         })
         const keymaps = [conditionalKeymap, globalKeymap]
