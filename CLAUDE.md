@@ -20,6 +20,8 @@ See `.claude/README.md` for full protocol explanation. Key files:
 - Fail-fast: internal data errors should throw, not return silent fallbacks
 - Guard only: user input, API responses, optional fields, async data during load
 - Import from `@graffio/design-system`, never `@radix-ui/themes` directly
+- Never modify generated type files (x.js) — add business logic to x.type.js instead
+- Use Tagged and TaggedSum types for all domain entities
 
 ## Workflow
 

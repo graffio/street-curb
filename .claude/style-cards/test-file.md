@@ -24,6 +24,8 @@ t.test('Given a user with valid credentials', t => {
 - **Capture expected errors** — if a test triggers expected errors, capture and verify them
 - **Descriptions document behavior** — someone running tests should understand the code from test names alone
 - **Test the exported API** — import the module's export object, test its public functions
+- **Test behavior, not plumbing** — don't test that JS works (`Array.filter filters`), don't test that `@graffio/functional` functions work. Test YOUR logic: domain rules, edge cases, transformations specific to this module
+- **Each test should fail for exactly one reason** — if the code under test breaks, which test fails should tell you what broke
 
 ## Running Tests
 

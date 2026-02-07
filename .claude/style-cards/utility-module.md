@@ -26,6 +26,10 @@ Every function goes in a group, even if it's the only one of its type:
 
 If a function doesn't fit any group — stop and ask. Don't leave it uncategorized.
 
+## Tagged Types
+
+Domain entities should be Tagged or TaggedSum types. When adding behavior to a domain type, put it in the `.type.js` file — never modify the generated `.js` file. The `.type.js` file follows the same cohesion group structure as any other module.
+
 ## Naming
 
 - Names describe WHAT, not HOW: `Tool` not `ToolFactory`, `Registry` not `RegistryManager`

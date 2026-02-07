@@ -6,8 +6,9 @@ Selectors handle **Redux mechanics and simple derivation**. Complex business log
 
 - Selectors read state and compose other selectors
 - Simple transformations (map, filter, lookup) are fine here
-- Complex domain logic (scoring, matching, tree-building) → delegate to a business module function
+- Complex domain logic (scoring, matching, tree-building) → delegate to a business module or type.js file
 - Cross-type transformations → use `Type.from{InputType}()` methods, not inline logic
+- When simplifying a selector, consider: does this logic belong as a method on the Tagged type? If so, add it to the type's `.type.js` file (never the generated `.js` file)
 
 ## createSelector
 
