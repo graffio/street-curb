@@ -1,191 +1,122 @@
 # How We Work
 
-The rules Claude follows are in **`workflow.md`** (imported into CLAUDE.md). This document explains the protocol for
-humans.
+This document explains the system for humans. Claude reads `CLAUDE.md` (which imports `preferences.md`).
 
 ## Quick Start
 
-To start a new feature:
-
+Plan a feature:
 ```
-Generate current-task.json from [plan source] following .claude/tasks/plan-feature.md
+/workflows:plan [description or spec file]
 ```
 
-To resume implementation:
-
+Resume implementation:
 ```
 Continue implementing current-task.json
 ```
 
-To review a file before modifying it (> 100 lines):
-
+Review files:
 ```
 review <file>
-```
-
-To review all staged files before a PR:
-
-```
 review staged
 ```
 
-To finish:
-
+Finish up:
 ```
-Record completion following .claude/tasks/record-completion.md
+/workflows:wrap-up
 ```
 
-## Why This Protocol Exists
+## The System
+
+### Three Tiers of Reference Material
+
+| Tier | What | When loaded | Where |
+|------|------|-------------|-------|
+| Always in context | Universal principles, workflow, pattern triggers, functional names | Session start | `CLAUDE.md` (inline) |
+| Per-step | File-type-specific style rules | Before each implementation step | `.claude/style-cards/*.md` |
+| On-demand | Full API references, detailed pattern guides | When signaled by triggers or style cards | `.claude/pattern-catalog/*.md`, `.claude/api-cheatsheets/*.md` |
+
+### Style Cards
+
+~40-line files with judgment rules the validator can't catch:
+- `react-component.md` — handler patterns, hook rules, layer boundaries
+- `selector.md` — composition, layer boundaries, createSelector usage
+- `utility-module.md` — cohesion groups, naming, fail-fast philosophy
+- `test-file.md` — TAP structure, Given/When/Then, TDD flow
+
+Loaded via `style_card` field in current-task.json steps. `/workflows:plan` maps file types to cards automatically.
+
+### current-task.json
+
+The implementation driver. JSON steps with `done` boolean. Can't be reinterpreted.
+
+Schema adds `style_card` field:
+```json
+{ "step": 3, "action": "Implement component", "style_card": "react-component", "done": false }
+```
+
+### Mechanical Enforcement
+
+| Gate | When | What |
+|------|------|------|
+| Pre-commit hook | `git commit` | cli-style-validator + eslint/prettier |
+| PostToolUse hook | After Write/Edit on .js/.jsx | eslint --fix + prettier --write |
+| current-task.json | During implementation | Whatever the plan says |
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/workflows:plan` | Research → plan → generate current-task.json |
+| `/workflows:wrap-up` | Commit quality → knowledge capture → cleanup |
+| `/workflows:review` | Parallel agent review (pre-merge) |
+| `/workflows:brainstorm` | Exploration before planning |
+| `review <file>` | Quick quality check during development |
+| `review staged` | Quality check on all staged files |
+
+### Review Agents
+
+| Agent | Focus |
+|-------|-------|
+| jeff-js-reviewer | Naming, layer placement, pattern choice, fail-fast |
+| code-simplicity-reviewer | Complexity, unnecessary abstraction |
+| performance-oracle | Performance issues |
+| architecture-strategist | Layer violations, structural issues |
+| security-sentinel | Security concerns |
+| learnings-researcher | Past solutions from docs/solutions/ |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Entry point — principles, workflow, triggers, functional API |
+| `preferences.md` | Architectural judgment calls (imported by CLAUDE.md) |
+| `conventions.md` | Pointer file — where style rules actually live |
+| `workflow.md` | Pointer file — where workflow rules actually live |
+| `current-task.json` | Active task spec |
+| `style-cards/*.md` | Per-step style guidance |
+| `pattern-catalog/*.md` | Tactical pattern references |
+| `api-cheatsheets/*.md` | API references for custom data structures |
+| `tasks/*.md` | Templates for specific activities |
+
+## Why This Protocol
 
 Claude needs constraints to stay on track. Without them, it:
-
-- Improvises instead of following the plan
-- Batches commits to the end (skipping validation)
+- Reverts to default style under cognitive load
+- Skips advisory review steps
 - Interprets instructions loosely
 
 The protocol addresses this with:
+- **JSON task spec** — enumerable steps, no room for interpretation
+- **Style cards per step** — style guidance in fresh context when needed
+- **Mechanical enforcement** — hooks that can't be skipped
+- **Checkpoints** — forced approval at decision points
 
-- **JSON task spec** — Enumerable steps, no room for interpretation
-- **Intermediate commits** — Triggers style validator hook during work
-- **Checkpoints** — Forces explicit approval at decision points
+## Complexity-Budget Failures = CHECKPOINT
 
-## Workflow Phases
-
-### 1. Brainstorm
-
-Free discussion about what to build. No templates, no structure. Output: shared understanding.
-
-### 2. Plan
-
-Generate `current-task.json` from a plan source (markdown file or conversation).
-
-Claude reads `tasks/plan-feature.md` and produces a JSON file with:
-
-- Specific, self-contained steps
-- `[CHECKPOINT]` markers for decisions needing approval
-- Intermediate commit steps after logical chunks
-
-### 3. Implement
-
-Claude follows `current-task.json` exactly, marking steps done as completed.
-
-Enforcement:
-
-- `git add` triggers `cli-style-validator` via hook
-- Violations block until fixed
-- `[CHECKPOINT]` steps require explicit approval
-
-### 4. Record
-
-Archive the work using `tasks/record-completion.md`:
-
-- Architectural decisions → `docs/architecture/`
-- Summary → `specifications/completed-specifications.md`
-- Delete `current-task.json`
-
-## Files
-
-| File                | Purpose                                                      |
-|---------------------|--------------------------------------------------------------|
-| `CLAUDE.md`         | Entry point, imports workflow.md + conventions + preferences |
-| `workflow.md`       | Rules for Claude (short, actionable)                         |
-| `conventions.md`    | Code style (mechanical rules)                                |
-| `preferences.md`    | Architectural preferences (judgment calls)                   |
-| `current-task.json` | Active task spec                                             |
-| `tasks/*.md`        | Templates for specific activities                            |
-| `pattern-catalog.md`| Tactical patterns and complexity budgets                     |
-| `settings.json`     | Claude hook configuration                                    |
-
-## Task Templates
-
-| Template                       | When                          |
-|--------------------------------|-------------------------------|
-| `plan-feature.md`              | Creating `current-task.json`  |
-| `commit-changes.md`            | Writing commit messages       |
-| `record-completion.md`         | Archiving completed work      |
-| `implementation-checkpoint.md` | Handling `[CHECKPOINT]` steps |
-| `add-redux-action.md`          | Adding Redux actions          |
-| `write-tests.md`               | Writing tests                 |
-| `debug-issue.md`               | Debugging                     |
-| `start-work.md`                | Session startup checks        |
-| `review-complexity.md`         | Complexity assessment         |
-
-## Two Kinds of Code Checks
-
-We have two different tools that serve different purposes:
-
-### Style Validator (mechanical, automatic)
-
-Runs automatically on every commit via pre-commit hook. Checks:
-- Line length, @sig documentation, file naming, spacing
-- **complexity-budget**: function count, line count, style object count
-
-**When it fails**: Fix the issue and retry commit. Most violations are quick fixes.
-
-**Exception**: complexity-budget failures are different — see below.
-
-### Complexity Review (structural, manual)
-
-Run manually with `review <file>` or `review staged`. Checks:
-- **Cohesion grouping**: Are all functions in P/T/F/V/A namespace objects?
-- **Layer violations**: Is business logic in React files? Should it move to selectors or business modules?
-- **Pattern opportunities**: Could Action, LookupTable, or selectors apply?
-- **Simplification strategies**: What to extract, where to move it
-
-**P/T/F/V/A**: Single-letter namespaces for function cohesion types:
-- **P** (Predicates): `is*`, `has*`, `should*`, `can*`, `exports*`
-- **T** (Transformers): `to*`, `get*`, `extract*`, `parse*`, `format*`
-- **F** (Factories): `create*`, `make*`, `build*`
-- **V** (Validators): `check*`, `validate*`
-- **A** (Aggregators): `collect*`, `count*`, `gather*`, `find*`
-
-Every function goes in a namespace, even if it's the only one of its type. See `conventions.md` for full spec.
-
-**When to run**:
-- Before modifying a file > 100 lines (during planning)
-- When complexity-budget fails (as a checkpoint)
-- Before creating a PR (`review staged`)
-
-### Complexity-Budget Failures = CHECKPOINT
-
-When the style validator reports "exceeds budget", this is NOT a quick fix:
-
-1. **Stop** — don't shuffle code around hoping to pass
+When the style validator reports "exceeds budget":
+1. **Stop** — don't shuffle code to pass
 2. **Run `review <file>`** — understand the structural issues
-3. **Rethink approach** — might need to:
-   - Move logic to proper architectural layer (React → selectors → business modules)
-   - Apply a different pattern (Action, LookupTable, selectors)
-   - Revise the plan with a new approach
-4. **Get approval** — if the plan changes, confirm with user
+3. **Rethink approach** — move logic to proper layer, use different pattern
+4. **Get approval** — if the plan changes, confirm with Jeff
 
-"Split file" means moving logic to where it architecturally belongs, not arbitrarily splitting to reduce line count. This decision is made together.
-
-## Git Hooks
-
-### Pre-commit Hook
-
-`bash/pre-commit-validate.sh`:
-1. Finds staged JS/JSX files
-2. Runs `cli-style-validator` on each
-3. If violations: blocks commit
-4. If clean: creates `.claude/.needs-reread` flag
-
-### Reread Reminder Hook
-
-`bash/check-reread-flag.sh` runs on every user message:
-1. If `.needs-reread` flag exists: reminds Claude to reread conventions
-2. Deletes flag after reminder
-
-## Why JSON for current-task.json?
-
-Markdown allows interpretation. JSON forces structure:
-- Steps are enumerable and checkable
-- `done` flag is boolean, not prose
-- No "wriggle room" for Claude to reinterpret instructions
-
-## Key Principles
-
-1. **Templates are steps, not rules** — If it matters, it's a step in a template
-2. **current-task.json is the constraint** — Follow exactly, no improvisation
-3. **Intermediate commits trigger validation** — Don't batch to the end
-4. **Checkpoints require approval** — Stop and ask at `[CHECKPOINT]` steps
+Never add COMPLEXITY or COMPLEXITY-TODO comments without asking Jeff.
