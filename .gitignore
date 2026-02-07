@@ -22,8 +22,8 @@ test-results
 .claude/developer-output.md
 .claude/agent-context/
 
-# Multi-agent workflow scratch work (ephemeral)
-specifications/*/agent-context/
+# Specifications are local working documents
+specifications/
 
 # don't save files generated in testing type-generation
 modules/cli-type-generator/test/generated/*
