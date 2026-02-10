@@ -13,7 +13,7 @@ See `.claude/README.md` for full protocol explanation. Key files:
 ## Universal Principles
 
 - JavaScript only (no TypeScript, no `.ts` files, no JSDoc types)
-- Functional only (no `class`, no `new`, no `for`/`while` loops)
+- Functional only (no `class`, no `new`, no `for`/`while` loops, no custom React hooks)
 - Arrow functions, `const` preferred, `let` if needed, never `var`
 - Cohesion groups P/T/F/V/A/E — every function goes in a namespace object
 - One named export per file matching file name (kebab-case → PascalCase)
