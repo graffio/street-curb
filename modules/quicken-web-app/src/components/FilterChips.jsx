@@ -528,7 +528,10 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                     )}
                 </Box>
             </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-1)', width: 220 }}>
+            <Popover.Content
+                style={{ padding: 'var(--space-1)', width: 220 }}
+                onOpenAutoFocus={e => e.preventDefault()}
+            >
                 {/* prettier-ignore */}
                 <Flex direction="column">
                     {dateRangeOptions.map(opt => (
