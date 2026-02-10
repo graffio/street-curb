@@ -23,12 +23,18 @@ const E = {
     // Resolves TanStack updater and dispatches tree expansion change
     // @sig dispatchTreeExpanded :: (String, Object) -> (Function | Object) -> void
     dispatchTreeExpanded: (viewId, current) => updater =>
-        post(Action.SetTreeExpanded(viewId, typeof updater === 'function' ? updater(current) : updater)),
+        post(
+            Action.SetViewUiState(viewId, {
+                treeExpansion: typeof updater === 'function' ? updater(current) : updater,
+            }),
+        ),
 
     // Resolves TanStack updater and dispatches column sizing change
     // @sig dispatchColumnSizing :: (String, Object) -> (Function | Object) -> void
     dispatchColumnSizing: (viewId, current) => updater =>
-        post(Action.SetColumnSizing(viewId, typeof updater === 'function' ? updater(current) : updater)),
+        post(
+            Action.SetViewUiState(viewId, { columnSizing: typeof updater === 'function' ? updater(current) : updater }),
+        ),
 }
 
 /*
@@ -46,7 +52,10 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
 
     const handleExpandedChange = useCallback(E.dispatchTreeExpanded(viewId, expanded), [viewId, expanded])
     const handleColumnSizingChange = useCallback(E.dispatchColumnSizing(viewId, columnSizing), [viewId, columnSizing])
-    const handleColumnOrderChange = useCallback(order => post(Action.SetColumnOrder(viewId, order)), [viewId])
+    const handleColumnOrderChange = useCallback(
+        order => post(Action.SetViewUiState(viewId, { columnOrder: order })),
+        [viewId],
+    )
 
     const totalHoldingsCount = holdings?.length ?? 0
 

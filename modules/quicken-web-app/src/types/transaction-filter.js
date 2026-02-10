@@ -15,16 +15,8 @@
  *  selectedSecurities       : "[String]",
  *  selectedInvestmentActions: "[String]",
  *  groupBy                  : "String?",
- *  currentSearchIndex       : "Number",
- *  currentRowIndex          : "Number",
  *  customStartDate          : "Object?",
- *  customEndDate            : "Object?",
- *  treeExpansion            : "Object?",
- *  columnSizing             : "Object?",
- *  columnOrder              : "[String]?",
- *  filterPopoverId          : "String?",
- *  filterPopoverSearch      : "String",
- *  filterPopoverHighlight   : "Number"
+ *  customEndDate            : "Object?"
  *
  */
 
@@ -41,7 +33,7 @@ import * as R from '@graffio/cli-type-generator'
 
 /*
  * Construct a TransactionFilter instance
- * @sig TransactionFilter :: (String, String?, Object?, String, String, String, [String], [String], [String], [String], String?, Number, Number, Object?, Object?, Object?, Object?, [String]?, String?, String, Number) -> TransactionFilter
+ * @sig TransactionFilter :: (String, String?, Object?, String, String, String, [String], [String], [String], [String], String?, Object?, Object?) -> TransactionFilter
  */
 const TransactionFilter = function TransactionFilter(
     id,
@@ -55,19 +47,11 @@ const TransactionFilter = function TransactionFilter(
     selectedSecurities,
     selectedInvestmentActions,
     groupBy,
-    currentSearchIndex,
-    currentRowIndex,
     customStartDate,
     customEndDate,
-    treeExpansion,
-    columnSizing,
-    columnOrder,
-    filterPopoverId,
-    filterPopoverSearch,
-    filterPopoverHighlight,
 ) {
     const constructorName =
-        'TransactionFilter(id, asOfDate, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, currentSearchIndex, currentRowIndex, customStartDate, customEndDate, treeExpansion, columnSizing, columnOrder, filterPopoverId, filterPopoverSearch, filterPopoverHighlight)'
+        'TransactionFilter(id, asOfDate, dateRange, dateRangeKey, filterQuery, searchQuery, selectedCategories, selectedAccounts, selectedSecurities, selectedInvestmentActions, groupBy, customStartDate, customEndDate)'
 
     R.validateRegex(constructorName, FieldTypes.viewId, 'id', false, id)
     R.validateString(constructorName, 'asOfDate', true, asOfDate)
@@ -88,16 +72,8 @@ const TransactionFilter = function TransactionFilter(
         selectedInvestmentActions,
     )
     R.validateString(constructorName, 'groupBy', true, groupBy)
-    R.validateNumber(constructorName, 'currentSearchIndex', false, currentSearchIndex)
-    R.validateNumber(constructorName, 'currentRowIndex', false, currentRowIndex)
     R.validateObject(constructorName, 'customStartDate', true, customStartDate)
     R.validateObject(constructorName, 'customEndDate', true, customEndDate)
-    R.validateObject(constructorName, 'treeExpansion', true, treeExpansion)
-    R.validateObject(constructorName, 'columnSizing', true, columnSizing)
-    R.validateArray(constructorName, 1, 'String', undefined, 'columnOrder', true, columnOrder)
-    R.validateString(constructorName, 'filterPopoverId', true, filterPopoverId)
-    R.validateString(constructorName, 'filterPopoverSearch', false, filterPopoverSearch)
-    R.validateNumber(constructorName, 'filterPopoverHighlight', false, filterPopoverHighlight)
 
     const result = Object.create(prototype)
     result.id = id
@@ -111,16 +87,8 @@ const TransactionFilter = function TransactionFilter(
     result.selectedSecurities = selectedSecurities
     result.selectedInvestmentActions = selectedInvestmentActions
     if (groupBy != null) result.groupBy = groupBy
-    result.currentSearchIndex = currentSearchIndex
-    result.currentRowIndex = currentRowIndex
     if (customStartDate != null) result.customStartDate = customStartDate
     if (customEndDate != null) result.customEndDate = customEndDate
-    if (treeExpansion != null) result.treeExpansion = treeExpansion
-    if (columnSizing != null) result.columnSizing = columnSizing
-    if (columnOrder != null) result.columnOrder = columnOrder
-    if (filterPopoverId != null) result.filterPopoverId = filterPopoverId
-    result.filterPopoverSearch = filterPopoverSearch
-    result.filterPopoverHighlight = filterPopoverHighlight
     return result
 }
 
@@ -146,16 +114,8 @@ const transactionfilterToString = function () {
         ${R._toString(this.selectedSecurities)},
         ${R._toString(this.selectedInvestmentActions)},
         ${R._toString(this.groupBy)},
-        ${R._toString(this.currentSearchIndex)},
-        ${R._toString(this.currentRowIndex)},
         ${R._toString(this.customStartDate)},
-        ${R._toString(this.customEndDate)},
-        ${R._toString(this.treeExpansion)},
-        ${R._toString(this.columnSizing)},
-        ${R._toString(this.columnOrder)},
-        ${R._toString(this.filterPopoverId)},
-        ${R._toString(this.filterPopoverSearch)},
-        ${R._toString(this.filterPopoverHighlight)})`
+        ${R._toString(this.customEndDate)})`
 }
 
 /*
@@ -201,16 +161,8 @@ TransactionFilter._from = _input => {
         selectedSecurities,
         selectedInvestmentActions,
         groupBy,
-        currentSearchIndex,
-        currentRowIndex,
         customStartDate,
         customEndDate,
-        treeExpansion,
-        columnSizing,
-        columnOrder,
-        filterPopoverId,
-        filterPopoverSearch,
-        filterPopoverHighlight,
     } = _input
     return TransactionFilter(
         id,
@@ -224,16 +176,8 @@ TransactionFilter._from = _input => {
         selectedSecurities,
         selectedInvestmentActions,
         groupBy,
-        currentSearchIndex,
-        currentRowIndex,
         customStartDate,
         customEndDate,
-        treeExpansion,
-        columnSizing,
-        columnOrder,
-        filterPopoverId,
-        filterPopoverSearch,
-        filterPopoverHighlight,
     )
 }
 TransactionFilter.from = TransactionFilter._from

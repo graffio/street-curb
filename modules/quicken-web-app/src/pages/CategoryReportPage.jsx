@@ -54,7 +54,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const handleExpandedChange = useCallback(
         updater => {
             const next = typeof updater === 'function' ? updater(expanded) : updater
-            post(Action.SetTreeExpanded(viewId, next))
+            post(Action.SetViewUiState(viewId, { treeExpansion: next }))
         },
         [viewId, expanded],
     )

@@ -1,6 +1,5 @@
-// ABOUTME: Type definition for TransactionFilter - per-view filter and UI state
-// ABOUTME: Contains filter criteria (dateRange, selectedCategories) and UI state (columnSizing, treeExpansion)
-// TODO: Split into FilterCriteria (what to show) and ViewUIState (how to show it)
+// ABOUTME: Type definition for TransactionFilter - per-view filter criteria
+// ABOUTME: Contains only filter criteria (dateRange, selectedCategories, etc.) — ephemeral UI state is in ViewUiState
 
 import { FieldTypes } from './field-types.js'
 import { Transaction } from './transaction.js'
@@ -20,16 +19,8 @@ export const TransactionFilter = {
         selectedSecurities: '[String]',
         selectedInvestmentActions: '[String]',
         groupBy: 'String?',
-        currentSearchIndex: 'Number',
-        currentRowIndex: 'Number',
         customStartDate: 'Object?',
         customEndDate: 'Object?',
-        treeExpansion: 'Object?',
-        columnSizing: 'Object?',
-        columnOrder: '[String]?',
-        filterPopoverId: 'String?',
-        filterPopoverSearch: 'String',
-        filterPopoverHighlight: 'Number',
     },
 }
 
