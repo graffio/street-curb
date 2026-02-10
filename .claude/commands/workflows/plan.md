@@ -144,10 +144,13 @@ Only flag when introducing something genuinely new:
 
 ## Post-Generation
 
-Before presenting the plan, run review agents in parallel (unconditional):
+Before presenting the plan, spawn ALL review agents in parallel (unconditional):
 
-- Spawn **architecture-strategist** — review the plan for architectural concerns, scope, and pattern choices
-- Spawn **code-simplicity-reviewer** — review the plan for over-engineering, unnecessary steps, and YAGNI violations
+- **architecture-strategist** — architectural concerns, scope, pattern choices
+- **code-simplicity-reviewer** — over-engineering, unnecessary steps, YAGNI
+- **jeff-js-reviewer** — JS pattern choices, naming, layer placement
+- **performance-oracle** — performance implications, scalability concerns
+- **security-sentinel** — security implications, auth/input handling
 
 Incorporate blocking feedback into the plan before presenting.
 
