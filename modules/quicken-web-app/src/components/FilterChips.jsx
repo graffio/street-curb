@@ -53,11 +53,11 @@ const F = {
         backgroundColor: isActive ? 'var(--ruby-5)' : 'var(--accent-3)',
     }),
 
-    // Creates option style with selected state
-    // @sig makeOptionStyle :: Boolean -> Style
-    makeOptionStyle: isSelected => ({
+    // Creates option style with selected and highlighted states
+    // @sig makeOptionStyle :: (Boolean, Boolean?) -> Style
+    makeOptionStyle: (isSelected, isHighlighted = false) => ({
         ...optionStyle,
-        backgroundColor: isSelected ? 'var(--accent-3)' : 'transparent',
+        backgroundColor: isHighlighted ? 'var(--accent-4)' : isSelected ? 'var(--accent-3)' : 'transparent',
     }),
 }
 
@@ -156,9 +156,9 @@ const OptionSeparator = ({ id }) => (
 )
 
 // Selectable option row for dropdown menus
-// @sig SelectableOption :: { id, label, isSelected, onSelect, closeOnSelect? } -> ReactElement
-const SelectableOption = ({ id, label, isSelected, onSelect, closeOnSelect = true }) => {
-    const style = F.makeOptionStyle(isSelected)
+// @sig SelectableOption :: { id, label, isSelected, isHighlighted?, onSelect, closeOnSelect? } -> ReactElement
+const SelectableOption = ({ id, label, isSelected, isHighlighted = false, onSelect, closeOnSelect = true }) => {
+    const style = F.makeOptionStyle(isSelected, isHighlighted)
     const content = (
         <Box key={id} style={style} onClick={() => onSelect(id)}>
             <Text size="2" weight={isSelected ? 'medium' : 'regular'}>
@@ -170,8 +170,8 @@ const SelectableOption = ({ id, label, isSelected, onSelect, closeOnSelect = tru
 }
 
 // Date range option that handles both separators and selectable options
-// @sig DateRangeOption :: { option: { key, label }, selectedKey: String, onSelect: Function } -> ReactElement
-const DateRangeOption = ({ option, selectedKey, onSelect }) => {
+// @sig DateRangeOption :: { option: { key, label }, selectedKey, isHighlighted?, onSelect } -> ReactElement
+const DateRangeOption = ({ option, selectedKey, isHighlighted = false, onSelect }) => {
     const { key, label } = option
     if (key.startsWith('separator')) return <OptionSeparator key={key} id={key} />
     const closeOnSelect = key !== 'customDates'
@@ -181,6 +181,7 @@ const DateRangeOption = ({ option, selectedKey, onSelect }) => {
             id={key}
             label={label}
             isSelected={key === selectedKey}
+            isHighlighted={isHighlighted}
             onSelect={onSelect}
             closeOnSelect={closeOnSelect}
         />
@@ -437,7 +438,7 @@ const AsOfDateChip = ({ viewId }) => {
 // DateFilterChip
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Date filter chip with inline date range options popover — Escape closes, date inputs have own keymaps
+// Date filter chip with keyboard-navigable date range options popover
 // @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const DateFilterChip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
@@ -465,12 +466,31 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
-    // Escape keymap effect — closes popover when Escape pressed
-    // @sig escapeKeymapEffect :: () -> (() -> void)?
-    const escapeKeymapEffect = () => {
+    const handleMoveDown = () =>
+        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+
+    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+
+    const handleSelectHighlighted = () => {
+        if (!highlightedItemId) return
+        handleSelect(highlightedItemId)
+        if (highlightedItemId === 'customDates') setTimeout(() => startDateRef.current?.focus('month'), 0)
+    }
+
+    const handleTab = () => {
+        if (dateRangeKey === 'customDates') startDateRef.current?.focus('month')
+    }
+
+    // Registers/unregisters full keyboard navigation keymap when popover opens/closes
+    // @sig keymapEffect :: () -> (() -> void)?
+    const keymapEffect = () => {
         if (!isOpen) return undefined
         const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Date Filter', [
-            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
+            { description: 'Move down', keys: ['ArrowDown'], action: () => handlersRef.current.handleMoveDown() },
+            { description: 'Move up', keys: ['ArrowUp'], action: () => handlersRef.current.handleMoveUp() },
+            { description: 'Select', keys: ['Enter'], action: () => handlersRef.current.handleSelectHighlighted() },
+            { description: 'Focus dates', keys: ['Tab'], action: () => handlersRef.current.handleTab() },
+            { description: 'Dismiss', keys: ['Escape'], action: () => handlersRef.current.handleDismiss() },
         ])
         E.handleRegisterKeymap(keymap)
         return () => E.handleUnregisterKeymap(KEYMAP_ID)
@@ -479,17 +499,20 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     const KEYMAP_ID = `${viewId}_date`
     const POPOVER_ID = 'date'
     const { handleRegisterKeymap, handleUnregisterKeymap } = E
+    const handlersRef = useRef({ handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab })
+    handlersRef.current = { handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab }
     const startDateRef = useRef(null)
     const endDateRef = useRef(null)
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
-    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
+    const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
+    const { popoverId, nextHighlightIndex, prevHighlightIndex, highlightedItemId } = popoverData
     const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
 
-    useEffect(escapeKeymapEffect, [isOpen, viewId])
+    useEffect(keymapEffect, [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -509,8 +532,8 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                 {/* prettier-ignore */}
                 <Flex direction="column">
                     {dateRangeOptions.map(opt => (
-                        <DateRangeOption key={opt.key} option={opt}
-                            selectedKey={dateRangeKey} onSelect={handleSelect} />
+                        <DateRangeOption key={opt.key} option={opt} selectedKey={dateRangeKey}
+                            isHighlighted={highlightedItemId === opt.key} onSelect={handleSelect} />
                     ))}
                 </Flex>
                 {dateRangeKey === 'customDates' && (
