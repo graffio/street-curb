@@ -3,7 +3,23 @@
 
 import { KeymapModule } from '@graffio/keymap'
 
-const { Keymap, normalizeKey } = KeymapModule
+const { ActionRegistry, Keymap, normalizeKey } = KeymapModule
+
+const DEFAULT_BINDINGS = {
+    ArrowDown: 'navigate:down',
+    ArrowUp: 'navigate:up',
+    j: 'navigate:down',
+    k: 'navigate:up',
+    Escape: 'dismiss',
+    Enter: 'select',
+    '?': 'toggle-shortcuts',
+    ArrowLeft: 'navigate:left',
+    ArrowRight: 'navigate:right',
+    t: 'date:today',
+    '[': 'date:decrement-day',
+    ']': 'date:increment-day',
+    Tab: 'navigate:next-apply',
+}
 
 const P = {
     // Checks if the element is a text input that should receive keystrokes
@@ -45,13 +61,22 @@ const E = {
         return () => window.removeEventListener('keydown', handler)
     },
 
-    // Handles keydown events by resolving keymaps and executing actions
+    // Handles keydown events — resolves via ActionRegistry bindings, then Keymap bindings
     // @sig handleKeydown :: ([Keymap], TabLayout) -> KeyboardEvent -> void
     handleKeydown: (keymaps, tabLayout) => event => {
         if (P.isInputElement(event.target)) return
 
         const key = normalizeKey(event)
         const activeViewId = T.toActiveViewId(tabLayout)
+
+        const actionId = DEFAULT_BINDINGS[key]
+        const action = actionId ? ActionRegistry.resolve(actionId, activeViewId) : null
+        if (action) {
+            event.preventDefault()
+            action.execute()
+            return
+        }
+
         const sortedKeymaps = T.toSortedKeymaps(keymaps)
         const result = Keymap.resolve(key, sortedKeymaps, activeViewId)
 
