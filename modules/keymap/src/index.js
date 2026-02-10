@@ -2,6 +2,7 @@
 // ABOUTME: Exports types (Intent, Keymap), normalizeKey, and formatKey utilities
 
 import { LookupTable } from '@graffio/functional'
+import { ActionRegistry } from './action-registry.js'
 import { Intent } from './types/intent.js'
 import { Keymap } from './types/keymap.js'
 import { normalizeKey } from './keymap.js'
@@ -57,6 +58,14 @@ const F = {
 
 const fromBindings = F.fromBindings
 
-const KeymapModule = { Intent, Keymap, normalizeKey, formatKey: T.formatKey, formatKeys: T.formatKeys, fromBindings }
+const KeymapModule = {
+    ActionRegistry,
+    Intent,
+    Keymap,
+    normalizeKey,
+    formatKey: T.formatKey,
+    formatKeys: T.formatKeys,
+    fromBindings,
+}
 
 export { KeymapModule }
