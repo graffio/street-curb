@@ -50,7 +50,7 @@ const E = {
         const inSearchMode = matchCount > 0
         const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(getData(), newId)
         if (idx < 0) return
-        post(Action.SetTransactionFilter(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
+        post(Action.SetViewUiState(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
     },
 
     // Initializes the date range to last 12 months if not already set
@@ -58,6 +58,14 @@ const E = {
     initDateRangeIfNeeded: (dateRangeKey, dateRange, viewId) => {
         if (P.shouldInitializeDateRange(dateRangeKey, dateRange))
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
+    },
+
+    // Clears search query and resets search index when escaping search mode
+    // @sig clearSearch :: (String, String) -> void
+    clearSearch: (searchQuery, viewId) => {
+        if (!searchQuery) return
+        post(Action.SetTransactionFilter(viewId, { searchQuery: '' }))
+        post(Action.SetViewUiState(viewId, { currentSearchIndex: 0 }))
     },
 
     // Ensures table layout exists in Redux (idempotent, only creates if missing)
@@ -144,10 +152,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
         viewId,
     ])
 
-    const handleEscape = useCallback(
-        () => searchQuery && post(Action.SetTransactionFilter(viewId, { searchQuery: '', currentSearchIndex: 0 })),
-        [searchQuery, viewId],
-    )
+    const handleEscape = useCallback(() => E.clearSearch(searchQuery, viewId), [searchQuery, viewId])
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
 
     const handleRegisterKeymap = useCallback(keymap => post(Action.RegisterKeymap(keymap)), [])
