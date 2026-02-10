@@ -18,7 +18,7 @@ symptoms:
   - Any rapid SetTransactionFilter dispatches cause cascading recomputation
 severity: high
 date_resolved: '2026-02-10'
-status: root-cause-identified
+status: resolved
 related:
   - docs/solutions/architecture/filter-chip-selector-extraction.md
   - specifications/keyboard-accessibility/keymap-system-issues.md
@@ -70,8 +70,18 @@ if (cached && cached.keyedValue === keyedValue) return cached.value
 
 ## Solution
 
-Extract the 8 ephemeral UI fields into a separate state slice (e.g., `viewUiState`). The expensive transaction selectors depend on `'transactionFilters'` which would then only change when actual filter criteria change. Ephemeral UI changes only touch the new slice, which the transaction selectors don't watch.
+Extracted 8 ephemeral UI fields into a `ViewUiState` slice (`state.viewUiState`). Implementation:
+
+1. **Type split**: Removed 8 fields from `TransactionFilter` (13 fields remain). Created `ViewUiState` type with the ephemeral fields.
+2. **Reducer**: New `view-ui-state.js` reducer handles `SetViewUiState`, `SetFilterPopoverOpen`, `SetFilterPopoverSearch`. Root reducer routes these actions and chains `ResetTransactionFilters` to reset both slices.
+3. **Action simplification**: Collapsed 3 trivial single-field actions (`SetTreeExpanded`, `SetColumnSizing`, `SetColumnOrder`) into generic `SetViewUiState`. Kept `SetFilterPopoverOpen`/`SetFilterPopoverSearch` for their multi-field reset semantics.
+4. **Selectors**: Added `viewUi` accessor. Switched 8 ephemeral selectors to read from `viewUi`. Changed `filterPopoverData` memoization key to `'viewUiState'`. Added `'viewUiState'` to `globalKeys` for `highlightedId`/`highlightedIdForBank` (cheap lookups only).
+5. **Components**: All dispatch sites in FilterChips, TransactionRegisterPage, InvestmentRegisterPage, report pages switched from `SetTransactionFilter` to `SetViewUiState` for ephemeral fields.
+
+Key design decision: `searchQuery` stays in `TransactionFilter` because it drives `_searchMatches` which filters actual transaction data — that's filter state, not UI state. `currentSearchIndex` (which search match is highlighted) moved to `ViewUiState`.
 
 ## Prevention
 
 When adding fields to a memoization-keyed type, consider whether the field's change frequency matches the other fields. High-frequency ephemeral state should not share a memoization boundary with expensive derived computations.
+
+Rule of thumb: if a field changes on every keystroke/arrow press but doesn't affect the data pipeline, it belongs in a separate state slice.
