@@ -13,6 +13,7 @@ import {
     memoizeReduxState,
     memoizeReduxStatePerKey,
 } from '@graffio/functional'
+import { DATE_RANGES } from '@graffio/design-system'
 import { formatDateRange } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { KeymapModule } from '@graffio/keymap'
@@ -168,10 +169,15 @@ const CLOSED_POPOVER = {
     filteredItems: [],
 }
 
+const DATE_RANGE_ITEMS = Object.entries(DATE_RANGES)
+    .filter(([key]) => !key.startsWith('separator'))
+    .map(([key, label]) => ({ id: key, label }))
+
 const POPOVER_ITEM_SOURCES = {
     accounts: state => Array.from(accounts(state)).map(({ id, name }) => ({ id, label: name })),
     actions: () => INVESTMENT_ACTIONS.map(({ id, label }) => ({ id, label })),
     categories: state => Category.collectAllNames(categories(state)).map(name => ({ id: name, label: name })),
+    date: () => DATE_RANGE_ITEMS,
     securities: state => Array.from(securities(state)).map(({ id, symbol }) => ({ id, label: symbol })),
 }
 
