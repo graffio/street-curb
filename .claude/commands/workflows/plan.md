@@ -103,7 +103,7 @@ These rules make JSON generation mechanical, not ad-hoc. Apply all of them:
 | **Review agents** | Before every `git commit` step (unconditional) | Step: "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues." |
 | **Commit** | When implementation steps transition to a different `style_card` value, and at the end | Insert review + `git add` + commit steps at each `style_card` boundary. Use commit-changes.md format. |
 | **Checkpoint** | At decision points (judgment) | `[CHECKPOINT]` prefix on step action |
-| **Complexity review** | Before modifying any existing file (unconditional) | Step: "Run complexity review on {file}. If review surfaces style card violations, add remediation steps before the modification step." |
+| **Complexity review** | Before modifying any existing file (unconditional) | Step: "[CHECKPOINT] Run complexity review on {file}. Report style card violations found. Wait for approval before proceeding." |
 | **Style-compliance debt** | When touching modules listed in style-compliance-debt.md | Step: "Review known debt in {module} — see specifications/style-compliance-debt.md" |
 | **TDD step** | Implementation introduces NEW branching logic or business rules that don't exist yet in the codebase | Step: "Write failing test for {behavior}" with `style_card: test-file`. Do NOT generate test steps for: adding entries to lookup tables/registries, filtering/mapping data with standard operations, passing new input to existing infrastructure, or wiring components to existing selectors. |
 | **Action test** | Step introduces a new Action variant | Step: "Write TAP test for {Action} round-trip (dispatch → reducer → new state)" with `style_card: test-file` |
