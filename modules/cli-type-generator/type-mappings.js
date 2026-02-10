@@ -107,6 +107,7 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/tab-group.type.js`]       : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/tab-layout.type.js`]      : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/transaction-filter.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/view-ui-state.type.js`]   : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/sort-mode.type.js`]       : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/enriched-account.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/account-section.type.js`] : [targets.quickenWebApp],

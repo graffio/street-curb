@@ -28,16 +28,8 @@ const createDefaultFilter = viewId =>
         [], // selectedSecurities
         [], // selectedInvestmentActions
         null, // groupBy
-        0, // currentSearchIndex
-        0, // currentRowIndex
         null, // customStartDate
         null, // customEndDate
-        {}, // treeExpansion
-        {}, // columnSizing
-        [], // columnOrder
-        null, // filterPopoverId
-        '', // filterPopoverSearch
-        -1, // filterPopoverHighlight (no highlight until arrow key pressed)
     )
 
 // Merges partial filter changes into transaction filter state for a specific view
@@ -57,39 +49,6 @@ const resetTransactionFilters = (state, action) => {
     const defaultFilter = createDefaultFilter(action.viewId)
     // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(defaultFilter) }
-}
-
-// Sets tree expansion state for a specific view
-// @sig setTreeExpanded :: (State, Action.SetTreeExpanded) -> State
-const setTreeExpanded = (state, action) => {
-    const { viewId, expanded } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const updated = TransactionFilter.from({ ...existing, treeExpansion: expanded })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
-}
-
-// Sets column sizing state for a specific view
-// @sig setColumnSizing :: (State, Action.SetColumnSizing) -> State
-const setColumnSizing = (state, action) => {
-    const { viewId, sizing } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const updated = TransactionFilter.from({ ...existing, columnSizing: sizing })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
-}
-
-// Sets column order state for a specific view
-// @sig setColumnOrder :: (State, Action.SetColumnOrder) -> State
-const setColumnOrder = (state, action) => {
-    const { viewId, order } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const updated = TransactionFilter.from({ ...existing, columnOrder: order })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
 // Toggles an account in the selected accounts list for a specific view
@@ -158,44 +117,12 @@ const removeCategoryFilter = (state, action) => {
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
-// Opens/closes a filter popover, resetting search and highlight
-// @sig setFilterPopoverOpen :: (State, Action.SetFilterPopoverOpen) -> State
-const setFilterPopoverOpen = (state, action) => {
-    const { viewId, popoverId } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const updated = TransactionFilter.from({
-        ...existing,
-        filterPopoverId: popoverId,
-        filterPopoverSearch: '',
-        filterPopoverHighlight: -1,
-    })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
-}
-
-// Updates filter popover search text, resetting highlight to first item
-// @sig setFilterPopoverSearch :: (State, Action.SetFilterPopoverSearch) -> State
-const setFilterPopoverSearch = (state, action) => {
-    const { viewId, searchText } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const updated = TransactionFilter.from({ ...existing, filterPopoverSearch: searchText, filterPopoverHighlight: 0 })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
-}
-
 const TransactionFilters = {
     addCategoryFilter,
     createDefaultFilter,
     removeCategoryFilter,
     resetTransactionFilters,
-    setColumnOrder,
-    setColumnSizing,
-    setFilterPopoverOpen,
-    setFilterPopoverSearch,
     setTransactionFilter,
-    setTreeExpanded,
     toggleAccountFilter,
     toggleActionFilter,
     toggleSecurityFilter,

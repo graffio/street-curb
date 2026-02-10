@@ -23,6 +23,7 @@ import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter 
 import { HoldingsTree } from '../utils/holdings-tree.js'
 import { toDataTableProps } from '../utils/table-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
+import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
 const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsModule
 const { Keymap } = KeymapModule
@@ -94,19 +95,29 @@ const getDefaultFilter = viewId => {
 
 const filter = (state, viewId) => state.transactionFilters.get(viewId) || getDefaultFilter(viewId)
 
+const defaultViewUiCache = new Map()
+
+const getDefaultViewUi = viewId => {
+    if (!defaultViewUiCache.has(viewId))
+        defaultViewUiCache.set(viewId, ViewUiStateReducer.createDefaultViewUiState(viewId))
+    return defaultViewUiCache.get(viewId)
+}
+
+const viewUi = (state, viewId) => state.viewUiState.get(viewId) || getDefaultViewUi(viewId)
+
 // prettier-ignore
 const UI = {
     asOfDate                 : (state, viewId) => filter(state, viewId).asOfDate,
     pageTitle                : state => state.pageTitle,
     pageSubtitle             : state => state.pageSubtitle,
-    currentRowIndex          : (state, viewId) => filter(state, viewId).currentRowIndex,
-    currentSearchIndex       : (state, viewId) => filter(state, viewId).currentSearchIndex,
+    currentRowIndex          : (state, viewId) => viewUi(state, viewId).currentRowIndex,
+    currentSearchIndex       : (state, viewId) => viewUi(state, viewId).currentSearchIndex,
     customEndDate            : (state, viewId) => filter(state, viewId).customEndDate,
     customStartDate          : (state, viewId) => filter(state, viewId).customStartDate,
     dateRange                : (state, viewId) => filter(state, viewId).dateRange,
     dateRangeKey             : (state, viewId) => filter(state, viewId).dateRangeKey,
-    filterPopoverId          : (state, viewId) => filter(state, viewId).filterPopoverId,
-    filterPopoverHighlight   : (state, viewId) => filter(state, viewId).filterPopoverHighlight,
+    filterPopoverId          : (state, viewId) => viewUi(state, viewId).filterPopoverId,
+    filterPopoverHighlight   : (state, viewId) => viewUi(state, viewId).filterPopoverHighlight,
     filterQuery              : (state, viewId) => filter(state, viewId).filterQuery,
     groupBy                  : (state, viewId) => filter(state, viewId).groupBy,
     searchQuery              : (state, viewId) => filter(state, viewId).searchQuery,
@@ -114,10 +125,10 @@ const UI = {
     selectedCategories       : (state, viewId) => filter(state, viewId).selectedCategories,
     selectedInvestmentActions: (state, viewId) => filter(state, viewId).selectedInvestmentActions,
     selectedSecurities       : (state, viewId) => filter(state, viewId).selectedSecurities,
-    treeExpansion            : (state, viewId) => filter(state, viewId).treeExpansion,
+    treeExpansion            : (state, viewId) => viewUi(state, viewId).treeExpansion,
     collapsedSections        : state => state.collapsedSections,
-    columnSizing             : (state, viewId) => filter(state, viewId).columnSizing,
-    columnOrder              : (state, viewId) => filter(state, viewId).columnOrder,
+    columnSizing             : (state, viewId) => viewUi(state, viewId).columnSizing,
+    columnOrder              : (state, viewId) => viewUi(state, viewId).columnOrder,
     sortMode                 : state => state.accountListSortMode,
 }
 
@@ -182,8 +193,8 @@ const POPOVER_ITEM_SOURCES = {
 }
 
 const _filterPopoverData = (state, viewId) => {
-    const f = filter(state, viewId)
-    const { filterPopoverId, filterPopoverSearch, filterPopoverHighlight } = f
+    const ui = viewUi(state, viewId)
+    const { filterPopoverId, filterPopoverSearch, filterPopoverHighlight } = ui
     if (!filterPopoverId) return CLOSED_POPOVER
 
     const source = POPOVER_ITEM_SOURCES[filterPopoverId]
@@ -219,7 +230,7 @@ const _filterPopoverData = (state, viewId) => {
     }
 }
 
-UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'transactionFilters', _filterPopoverData)
+UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'viewUiState', _filterPopoverData)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Per-chip selectors (each returns { isActive, details } for FilterChipRow)
@@ -454,8 +465,8 @@ const T= {
     forAccount           : memoizeReduxStatePerKey(['transactions'                                              ], 'transactionFilters', _forAccount),
     filteredForAccount   : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForAccount,),
     filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForInvestment,),
-    highlightedId        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _highlightedId,),
-    highlightedIdForBank : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _highlightedIdForBank,),
+    highlightedId        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts', 'viewUiState'], 'transactionFilters', _highlightedId,),
+    highlightedIdForBank : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts', 'viewUiState'], 'transactionFilters', _highlightedIdForBank,),
     searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories'                              ], 'transactionFilters', _searchMatches),
     sortedForBankDisplay : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForBankDisplay,),
     sortedForDisplay     : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForDisplay,),

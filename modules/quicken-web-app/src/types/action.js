@@ -16,6 +16,9 @@
  *  SetTransactionFilter
  *      viewId : "String",
  *      changes: "Object"
+ *  SetViewUiState
+ *      viewId : "String",
+ *      changes: "Object"
  *  ResetTransactionFilters
  *      viewId: "String"
  *  ToggleAccountFilter
@@ -33,15 +36,6 @@
  *  RemoveCategoryFilter
  *      viewId  : "String",
  *      category: "String"
- *  SetTreeExpanded
- *      viewId  : "String",
- *      expanded: "Object"
- *  SetColumnSizing
- *      viewId: "String",
- *      sizing: "Object"
- *  SetColumnOrder
- *      viewId: "String",
- *      order : "[String]"
  *  SetFilterPopoverOpen
  *      viewId   : "String",
  *      popoverId: "String?"
@@ -130,15 +124,13 @@ Object.defineProperty(Action, '@@tagNames', {
     value: [
         'LoadFile',
         'SetTransactionFilter',
+        'SetViewUiState',
         'ResetTransactionFilters',
         'ToggleAccountFilter',
         'ToggleSecurityFilter',
         'ToggleActionFilter',
         'AddCategoryFilter',
         'RemoveCategoryFilter',
-        'SetTreeExpanded',
-        'SetColumnSizing',
-        'SetColumnOrder',
         'SetFilterPopoverOpen',
         'SetFilterPopoverSearch',
         'SetTableLayout',
@@ -191,15 +183,13 @@ Action.prototype = ActionPrototype
 const toString = {
     loadFile               : function () { return `Action.LoadFile(${R._toString(this.accounts)}, ${R._toString(this.categories)}, ${R._toString(this.securities)}, ${R._toString(this.tags)}, ${R._toString(this.splits)}, ${R._toString(this.transactions)}, ${R._toString(this.lots)}, ${R._toString(this.lotAllocations)}, ${R._toString(this.prices)})` },
     setTransactionFilter   : function () { return `Action.SetTransactionFilter(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
+    setViewUiState         : function () { return `Action.SetViewUiState(${R._toString(this.viewId)}, ${R._toString(this.changes)})` },
     resetTransactionFilters: function () { return `Action.ResetTransactionFilters(${R._toString(this.viewId)})` },
     toggleAccountFilter    : function () { return `Action.ToggleAccountFilter(${R._toString(this.viewId)}, ${R._toString(this.accountId)})` },
     toggleSecurityFilter   : function () { return `Action.ToggleSecurityFilter(${R._toString(this.viewId)}, ${R._toString(this.securityId)})` },
     toggleActionFilter     : function () { return `Action.ToggleActionFilter(${R._toString(this.viewId)}, ${R._toString(this.actionId)})` },
     addCategoryFilter      : function () { return `Action.AddCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
     removeCategoryFilter   : function () { return `Action.RemoveCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
-    setTreeExpanded        : function () { return `Action.SetTreeExpanded(${R._toString(this.viewId)}, ${R._toString(this.expanded)})` },
-    setColumnSizing        : function () { return `Action.SetColumnSizing(${R._toString(this.viewId)}, ${R._toString(this.sizing)})` },
-    setColumnOrder         : function () { return `Action.SetColumnOrder(${R._toString(this.viewId)}, ${R._toString(this.order)})` },
     setFilterPopoverOpen   : function () { return `Action.SetFilterPopoverOpen(${R._toString(this.viewId)}, ${R._toString(this.popoverId)})` },
     setFilterPopoverSearch : function () { return `Action.SetFilterPopoverSearch(${R._toString(this.viewId)}, ${R._toString(this.searchText)})` },
     setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
@@ -233,15 +223,13 @@ const toString = {
 const toJSON = {
     loadFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTransactionFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setViewUiState         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     resetTransactionFilters: function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleAccountFilter    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleSecurityFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleActionFilter     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     addCategoryFilter      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     removeCategoryFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    setTreeExpanded        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    setColumnSizing        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    setColumnOrder         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setFilterPopoverOpen   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setFilterPopoverSearch : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -332,6 +320,24 @@ const SetTransactionFilterConstructor = function SetTransactionFilter(viewId, ch
 }
 
 Action.SetTransactionFilter = SetTransactionFilterConstructor
+
+/*
+ * Construct a Action.SetViewUiState instance
+ * @sig SetViewUiState :: (String, Object) -> Action.SetViewUiState
+ */
+const SetViewUiStateConstructor = function SetViewUiState(viewId, changes) {
+    const constructorName = 'Action.SetViewUiState(viewId, changes)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateObject(constructorName, 'changes', false, changes)
+
+    const result = Object.create(SetViewUiStatePrototype)
+    result.viewId = viewId
+    result.changes = changes
+    return result
+}
+
+Action.SetViewUiState = SetViewUiStateConstructor
 
 /*
  * Construct a Action.ResetTransactionFilters instance
@@ -438,60 +444,6 @@ const RemoveCategoryFilterConstructor = function RemoveCategoryFilter(viewId, ca
 }
 
 Action.RemoveCategoryFilter = RemoveCategoryFilterConstructor
-
-/*
- * Construct a Action.SetTreeExpanded instance
- * @sig SetTreeExpanded :: (String, Object) -> Action.SetTreeExpanded
- */
-const SetTreeExpandedConstructor = function SetTreeExpanded(viewId, expanded) {
-    const constructorName = 'Action.SetTreeExpanded(viewId, expanded)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateObject(constructorName, 'expanded', false, expanded)
-
-    const result = Object.create(SetTreeExpandedPrototype)
-    result.viewId = viewId
-    result.expanded = expanded
-    return result
-}
-
-Action.SetTreeExpanded = SetTreeExpandedConstructor
-
-/*
- * Construct a Action.SetColumnSizing instance
- * @sig SetColumnSizing :: (String, Object) -> Action.SetColumnSizing
- */
-const SetColumnSizingConstructor = function SetColumnSizing(viewId, sizing) {
-    const constructorName = 'Action.SetColumnSizing(viewId, sizing)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateObject(constructorName, 'sizing', false, sizing)
-
-    const result = Object.create(SetColumnSizingPrototype)
-    result.viewId = viewId
-    result.sizing = sizing
-    return result
-}
-
-Action.SetColumnSizing = SetColumnSizingConstructor
-
-/*
- * Construct a Action.SetColumnOrder instance
- * @sig SetColumnOrder :: (String, [String]) -> Action.SetColumnOrder
- */
-const SetColumnOrderConstructor = function SetColumnOrder(viewId, order) {
-    const constructorName = 'Action.SetColumnOrder(viewId, order)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateArray(constructorName, 1, 'String', undefined, 'order', false, order)
-
-    const result = Object.create(SetColumnOrderPrototype)
-    result.viewId = viewId
-    result.order = order
-    return result
-}
-
-Action.SetColumnOrder = SetColumnOrderConstructor
 
 /*
  * Construct a Action.SetFilterPopoverOpen instance
@@ -886,6 +838,14 @@ const SetTransactionFilterPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetTransactionFilterConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetViewUiStatePrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetViewUiState', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setViewUiState, enumerable: false },
+    toJSON: { value: toJSON.setViewUiState, enumerable: false },
+    constructor: { value: SetViewUiStateConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const ResetTransactionFiltersPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'ResetTransactionFilters', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -932,30 +892,6 @@ const RemoveCategoryFilterPrototype = Object.create(ActionPrototype, {
     toString: { value: toString.removeCategoryFilter, enumerable: false },
     toJSON: { value: toJSON.removeCategoryFilter, enumerable: false },
     constructor: { value: RemoveCategoryFilterConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-const SetTreeExpandedPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetTreeExpanded', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.setTreeExpanded, enumerable: false },
-    toJSON: { value: toJSON.setTreeExpanded, enumerable: false },
-    constructor: { value: SetTreeExpandedConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-const SetColumnSizingPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetColumnSizing', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.setColumnSizing, enumerable: false },
-    toJSON: { value: toJSON.setColumnSizing, enumerable: false },
-    constructor: { value: SetColumnSizingConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-const SetColumnOrderPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetColumnOrder', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.setColumnOrder, enumerable: false },
-    toJSON: { value: toJSON.setColumnOrder, enumerable: false },
-    constructor: { value: SetColumnOrderConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetFilterPopoverOpenPrototype = Object.create(ActionPrototype, {
@@ -1139,15 +1075,13 @@ const SetPageTitlePrototype = Object.create(ActionPrototype, {
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.prototype = LoadFilePrototype
 SetTransactionFilterConstructor.prototype = SetTransactionFilterPrototype
+SetViewUiStateConstructor.prototype = SetViewUiStatePrototype
 ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
 ToggleAccountFilterConstructor.prototype = ToggleAccountFilterPrototype
 ToggleSecurityFilterConstructor.prototype = ToggleSecurityFilterPrototype
 ToggleActionFilterConstructor.prototype = ToggleActionFilterPrototype
 AddCategoryFilterConstructor.prototype = AddCategoryFilterPrototype
 RemoveCategoryFilterConstructor.prototype = RemoveCategoryFilterPrototype
-SetTreeExpandedConstructor.prototype = SetTreeExpandedPrototype
-SetColumnSizingConstructor.prototype = SetColumnSizingPrototype
-SetColumnOrderConstructor.prototype = SetColumnOrderPrototype
 SetFilterPopoverOpenConstructor.prototype = SetFilterPopoverOpenPrototype
 SetFilterPopoverSearchConstructor.prototype = SetFilterPopoverSearchPrototype
 SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
@@ -1175,15 +1109,13 @@ SetPageTitleConstructor.prototype = SetPageTitlePrototype
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.is = val => val && val.constructor === LoadFileConstructor
 SetTransactionFilterConstructor.is = val => val && val.constructor === SetTransactionFilterConstructor
+SetViewUiStateConstructor.is = val => val && val.constructor === SetViewUiStateConstructor
 ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetTransactionFiltersConstructor
 ToggleAccountFilterConstructor.is = val => val && val.constructor === ToggleAccountFilterConstructor
 ToggleSecurityFilterConstructor.is = val => val && val.constructor === ToggleSecurityFilterConstructor
 ToggleActionFilterConstructor.is = val => val && val.constructor === ToggleActionFilterConstructor
 AddCategoryFilterConstructor.is = val => val && val.constructor === AddCategoryFilterConstructor
 RemoveCategoryFilterConstructor.is = val => val && val.constructor === RemoveCategoryFilterConstructor
-SetTreeExpandedConstructor.is = val => val && val.constructor === SetTreeExpandedConstructor
-SetColumnSizingConstructor.is = val => val && val.constructor === SetColumnSizingConstructor
-SetColumnOrderConstructor.is = val => val && val.constructor === SetColumnOrderConstructor
 SetFilterPopoverOpenConstructor.is = val => val && val.constructor === SetFilterPopoverOpenConstructor
 SetFilterPopoverSearchConstructor.is = val => val && val.constructor === SetFilterPopoverSearchConstructor
 SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
@@ -1211,15 +1143,13 @@ SetPageTitleConstructor.is = val => val && val.constructor === SetPageTitleConst
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.toString = () => 'Action.LoadFile'
 SetTransactionFilterConstructor.toString = () => 'Action.SetTransactionFilter'
+SetViewUiStateConstructor.toString = () => 'Action.SetViewUiState'
 ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilters'
 ToggleAccountFilterConstructor.toString = () => 'Action.ToggleAccountFilter'
 ToggleSecurityFilterConstructor.toString = () => 'Action.ToggleSecurityFilter'
 ToggleActionFilterConstructor.toString = () => 'Action.ToggleActionFilter'
 AddCategoryFilterConstructor.toString = () => 'Action.AddCategoryFilter'
 RemoveCategoryFilterConstructor.toString = () => 'Action.RemoveCategoryFilter'
-SetTreeExpandedConstructor.toString = () => 'Action.SetTreeExpanded'
-SetColumnSizingConstructor.toString = () => 'Action.SetColumnSizing'
-SetColumnOrderConstructor.toString = () => 'Action.SetColumnOrder'
 SetFilterPopoverOpenConstructor.toString = () => 'Action.SetFilterPopoverOpen'
 SetFilterPopoverSearchConstructor.toString = () => 'Action.SetFilterPopoverSearch'
 SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
@@ -1250,15 +1180,13 @@ LoadFileConstructor._from = _input => {
     return Action.LoadFile(accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices)
 }
 SetTransactionFilterConstructor._from = _input => Action.SetTransactionFilter(_input.viewId, _input.changes)
+SetViewUiStateConstructor._from = _input => Action.SetViewUiState(_input.viewId, _input.changes)
 ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilters(_input.viewId)
 ToggleAccountFilterConstructor._from = _input => Action.ToggleAccountFilter(_input.viewId, _input.accountId)
 ToggleSecurityFilterConstructor._from = _input => Action.ToggleSecurityFilter(_input.viewId, _input.securityId)
 ToggleActionFilterConstructor._from = _input => Action.ToggleActionFilter(_input.viewId, _input.actionId)
 AddCategoryFilterConstructor._from = _input => Action.AddCategoryFilter(_input.viewId, _input.category)
 RemoveCategoryFilterConstructor._from = _input => Action.RemoveCategoryFilter(_input.viewId, _input.category)
-SetTreeExpandedConstructor._from = _input => Action.SetTreeExpanded(_input.viewId, _input.expanded)
-SetColumnSizingConstructor._from = _input => Action.SetColumnSizing(_input.viewId, _input.sizing)
-SetColumnOrderConstructor._from = _input => Action.SetColumnOrder(_input.viewId, _input.order)
 SetFilterPopoverOpenConstructor._from = _input => Action.SetFilterPopoverOpen(_input.viewId, _input.popoverId)
 SetFilterPopoverSearchConstructor._from = _input => Action.SetFilterPopoverSearch(_input.viewId, _input.searchText)
 SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
@@ -1289,15 +1217,13 @@ SetPageTitleConstructor._from = _input => Action.SetPageTitle(_input.title, _inp
 // -------------------------------------------------------------------------------------------------------------
 LoadFileConstructor.from = LoadFileConstructor._from
 SetTransactionFilterConstructor.from = SetTransactionFilterConstructor._from
+SetViewUiStateConstructor.from = SetViewUiStateConstructor._from
 ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._from
 ToggleAccountFilterConstructor.from = ToggleAccountFilterConstructor._from
 ToggleSecurityFilterConstructor.from = ToggleSecurityFilterConstructor._from
 ToggleActionFilterConstructor.from = ToggleActionFilterConstructor._from
 AddCategoryFilterConstructor.from = AddCategoryFilterConstructor._from
 RemoveCategoryFilterConstructor.from = RemoveCategoryFilterConstructor._from
-SetTreeExpandedConstructor.from = SetTreeExpandedConstructor._from
-SetColumnSizingConstructor.from = SetColumnSizingConstructor._from
-SetColumnOrderConstructor.from = SetColumnOrderConstructor._from
 SetFilterPopoverOpenConstructor.from = SetFilterPopoverOpenConstructor._from
 SetFilterPopoverSearchConstructor.from = SetFilterPopoverSearchConstructor._from
 SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
@@ -1372,6 +1298,9 @@ LoadFileConstructor.fromFirestore = LoadFileConstructor._fromFirestore
 SetTransactionFilterConstructor.toFirestore = o => ({ ...o })
 SetTransactionFilterConstructor.fromFirestore = SetTransactionFilterConstructor._from
 
+SetViewUiStateConstructor.toFirestore = o => ({ ...o })
+SetViewUiStateConstructor.fromFirestore = SetViewUiStateConstructor._from
+
 ResetTransactionFiltersConstructor.toFirestore = o => ({ ...o })
 ResetTransactionFiltersConstructor.fromFirestore = ResetTransactionFiltersConstructor._from
 
@@ -1389,15 +1318,6 @@ AddCategoryFilterConstructor.fromFirestore = AddCategoryFilterConstructor._from
 
 RemoveCategoryFilterConstructor.toFirestore = o => ({ ...o })
 RemoveCategoryFilterConstructor.fromFirestore = RemoveCategoryFilterConstructor._from
-
-SetTreeExpandedConstructor.toFirestore = o => ({ ...o })
-SetTreeExpandedConstructor.fromFirestore = SetTreeExpandedConstructor._from
-
-SetColumnSizingConstructor.toFirestore = o => ({ ...o })
-SetColumnSizingConstructor.fromFirestore = SetColumnSizingConstructor._from
-
-SetColumnOrderConstructor.toFirestore = o => ({ ...o })
-SetColumnOrderConstructor.fromFirestore = SetColumnOrderConstructor._from
 
 SetFilterPopoverOpenConstructor.toFirestore = o => ({ ...o })
 SetFilterPopoverOpenConstructor.fromFirestore = SetFilterPopoverOpenConstructor._from
@@ -1524,15 +1444,13 @@ Action.is = v => {
     const {
         LoadFile,
         SetTransactionFilter,
+        SetViewUiState,
         ResetTransactionFilters,
         ToggleAccountFilter,
         ToggleSecurityFilter,
         ToggleActionFilter,
         AddCategoryFilter,
         RemoveCategoryFilter,
-        SetTreeExpanded,
-        SetColumnSizing,
-        SetColumnOrder,
         SetFilterPopoverOpen,
         SetFilterPopoverSearch,
         SetTableLayout,
@@ -1561,15 +1479,13 @@ Action.is = v => {
     return (
         constructor === LoadFile ||
         constructor === SetTransactionFilter ||
+        constructor === SetViewUiState ||
         constructor === ResetTransactionFilters ||
         constructor === ToggleAccountFilter ||
         constructor === ToggleSecurityFilter ||
         constructor === ToggleActionFilter ||
         constructor === AddCategoryFilter ||
         constructor === RemoveCategoryFilter ||
-        constructor === SetTreeExpanded ||
-        constructor === SetColumnSizing ||
-        constructor === SetColumnOrder ||
         constructor === SetFilterPopoverOpen ||
         constructor === SetFilterPopoverSearch ||
         constructor === SetTableLayout ||
@@ -1613,15 +1529,13 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     const {
         LoadFile,
         SetTransactionFilter,
+        SetViewUiState,
         ResetTransactionFilters,
         ToggleAccountFilter,
         ToggleSecurityFilter,
         ToggleActionFilter,
         AddCategoryFilter,
         RemoveCategoryFilter,
-        SetTreeExpanded,
-        SetColumnSizing,
-        SetColumnOrder,
         SetFilterPopoverOpen,
         SetFilterPopoverSearch,
         SetTableLayout,
@@ -1648,15 +1562,13 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     const tagName = doc['@@tagName']
     if (tagName === 'LoadFile') return LoadFile.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTransactionFilter') return SetTransactionFilter.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetViewUiState') return SetViewUiState.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ResetTransactionFilters') return ResetTransactionFilters.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleAccountFilter') return ToggleAccountFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleSecurityFilter') return ToggleSecurityFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleActionFilter') return ToggleActionFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'AddCategoryFilter') return AddCategoryFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'RemoveCategoryFilter') return RemoveCategoryFilter.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'SetTreeExpanded') return SetTreeExpanded.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'SetColumnSizing') return SetColumnSizing.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'SetColumnOrder') return SetColumnOrder.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetFilterPopoverOpen') return SetFilterPopoverOpen.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetFilterPopoverSearch') return SetFilterPopoverSearch.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTableLayout') return SetTableLayout.fromFirestore(doc, decodeTimestamps)

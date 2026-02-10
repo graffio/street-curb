@@ -201,10 +201,9 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
     const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleMoveDown = () =>
-        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
@@ -257,10 +256,9 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
     const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
     const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleMoveDown = () =>
-        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleActionFilter(viewId, highlightedItemId))
@@ -311,10 +309,9 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
     const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleMoveDown = () =>
-        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
     const handleToggle = categoryName => E.handleToggleCategory(viewId, categoryName, selectedIds)
 
@@ -466,10 +463,9 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
-    const handleMoveDown = () =>
-        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
     const handleSelectHighlighted = () => {
         if (!highlightedItemId) return
@@ -595,10 +591,9 @@ const GroupByFilterChip = ({ viewId, options }) => {
         handleDismiss()
     }
 
-    const handleMoveDown = () =>
-        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
     const handleToggleHighlighted = () => items[highlightedIndex] && handleToggle(items[highlightedIndex].id)
 
@@ -719,10 +714,9 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
     const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
     const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
-    const handleMoveDown = () =>
-        post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
 
-    const handleMoveUp = () => post(Action.SetTransactionFilter(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleSecurityFilter(viewId, highlightedItemId))

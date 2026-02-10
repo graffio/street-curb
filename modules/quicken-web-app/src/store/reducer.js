@@ -1,5 +1,5 @@
 // ABOUTME: Root reducer for application state
-// ABOUTME: Manages all entities (LookupTables) and transaction filter state
+// ABOUTME: Manages entities (LookupTables), transaction filters, and view UI state
 
 import { LookupTable } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
@@ -20,15 +20,18 @@ import {
     Transaction,
     TransactionFilter,
     View,
+    ViewUiState,
 } from '../types/index.js'
 import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
+import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { initializeTableLayout } from '../utils/table-layout.js'
 
 const { closeTabGroup, closeView, createTabGroup, moveView } = TabLayoutReducers
 const { openView, setActiveTabGroup, setActiveView, setTabGroupWidth } = TabLayoutReducers
 const { Keymap } = KeymapModule
 const { createDefaultFilter } = TransactionFilters
+const { createDefaultViewUiState } = ViewUiStateReducer
 
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
@@ -65,6 +68,7 @@ const createEmptyState = () => ({
         2,
     ),
     transactionFilters: LookupTable([createDefaultFilter(ACCOUNT_LIST_VIEW_ID)], TransactionFilter, 'id'),
+    viewUiState: LookupTable([createDefaultViewUiState(ACCOUNT_LIST_VIEW_ID)], ViewUiState, 'id'),
     accountListSortMode: SortMode.ByType(),
     collapsedSections: new Set(),
     keymaps: LookupTable([], Keymap, 'id'),
@@ -106,20 +110,18 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
     // prettier-ignore
     return action.match({
         LoadFile               : () => loadFile(action),
-        ResetTransactionFilters: () => TransactionFilters.resetTransactionFilters(state, action),
+        ResetTransactionFilters: () => ViewUiStateReducer.resetViewUiState(TransactionFilters.resetTransactionFilters(state, action), action),
         SetTableLayout         : () => setTableLayout(action),
         EnsureTableLayout      : () => ensureTableLayout(action),
         SetTransactionFilter   : () => TransactionFilters.setTransactionFilter(state, action),
+        SetViewUiState         : () => ViewUiStateReducer.setViewUiState(state, action),
         ToggleAccountFilter    : () => TransactionFilters.toggleAccountFilter(state, action),
         ToggleSecurityFilter   : () => TransactionFilters.toggleSecurityFilter(state, action),
         ToggleActionFilter     : () => TransactionFilters.toggleActionFilter(state, action),
         AddCategoryFilter      : () => TransactionFilters.addCategoryFilter(state, action),
         RemoveCategoryFilter   : () => TransactionFilters.removeCategoryFilter(state, action),
-        SetTreeExpanded        : () => TransactionFilters.setTreeExpanded(state, action),
-        SetColumnSizing        : () => TransactionFilters.setColumnSizing(state, action),
-        SetColumnOrder         : () => TransactionFilters.setColumnOrder(state, action),
-        SetFilterPopoverOpen   : () => TransactionFilters.setFilterPopoverOpen(state, action),
-        SetFilterPopoverSearch : () => TransactionFilters.setFilterPopoverSearch(state, action),
+        SetFilterPopoverOpen   : () => ViewUiStateReducer.setFilterPopoverOpen(state, action),
+        SetFilterPopoverSearch : () => ViewUiStateReducer.setFilterPopoverSearch(state, action),
 
         // Tab layout actions
         OpenView          : () => openView(state, action),
