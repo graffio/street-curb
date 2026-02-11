@@ -154,11 +154,18 @@ EnrichedAccount.sumBankBalance = (transactions, accountId) => {
     return Transaction.currentBalance(accountTransactions)
 }
 
+EnrichedAccount.cashBalanceFromRunning = (transactions, accountId) => {
+    const accountTxns = transactions.filter(t => t.accountId === accountId)
+    if (accountTxns.length === 0) return 0
+    return accountTxns[accountTxns.length - 1].runningBalance ?? 0
+}
+
 EnrichedAccount.fromAccount = (account, holdings, transactions) => {
     const { id } = account
     if (EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)) {
         const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
-        return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
+        if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
+        return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, null)
     }
     return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
 }
