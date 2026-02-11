@@ -26,6 +26,7 @@
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { path } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex } from '@radix-ui/themes'
 import {
@@ -73,6 +74,22 @@ const T = {
         if (ids.length === 0) return
         const nextIndex = T.toNextIndex(direction, ids, highlightedId)
         onHighlightChange(ids[nextIndex])
+    },
+
+    // Converts nested accessorKey paths to accessorFn to avoid TanStack "deeply nested key" warnings
+    // @sig toSafeAccessor :: ColumnDefinition -> ColumnDefinition
+    toSafeAccessor: col =>
+        col.accessorKey?.includes('.')
+            ? { ...col, accessorFn: row => path(col.accessorKey, row), accessorKey: undefined }
+            : col,
+}
+
+const A = {
+    // Finds index of highlighted row in current row list
+    // @sig findHighlightedRowIndex :: (String?, [Row]) -> Number
+    findHighlightedRowIndex: (highlightedId, rows) => {
+        if (highlightedId == null) return -1
+        return rows.findIndex(row => T.toRowId(row.original) === highlightedId)
     },
 }
 
@@ -311,16 +328,6 @@ const DataTable = ({
     actionContext,
     context = {},
 }) => {
-    // Hack: convert nested accessorKey paths to accessorFn to avoid TanStack "deeply nested key" warnings
-    // @sig toSafeAccessor :: ColumnDefinition -> ColumnDefinition
-    const toSafeAccessor = col => {
-        const path = (row, path) => path.split('.').reduce((obj, key) => obj?.[key], row)
-
-        return col.accessorKey?.includes('.')
-            ? { ...col, accessorFn: row => path(row, col.accessorKey), accessorKey: undefined }
-            : col
-    }
-
     // Toggles sort on a column
     // @sig sortColumn :: (Column, Boolean) -> void
     const sortColumn = (column, isMulti) => {
@@ -358,17 +365,10 @@ const DataTable = ({
         return table.getFlatHeaders().reduce(addHeaderVars, {})
     }
 
-    // Finds index of highlighted row in current row list
-    // @sig findHighlightedRowIndex :: () -> Number
-    const findHighlightedRowIndex = () => {
-        if (highlightedId == null) return -1
-        return rows.findIndex(row => T.toRowId(row.original) === highlightedId)
-    }
-
     // Scrolls to highlighted row if not visible
     // @sig scrollToHighlightedRow :: () -> void
     const scrollToHighlightedRow = () => {
-        const highlightedRowIndex = findHighlightedRowIndex()
+        const highlightedRowIndex = A.findHighlightedRowIndex(highlightedId, rows)
         if (highlightedRowIndex < 0 || highlightedRowIndex >= rows.length) return
 
         // Skip scroll if row is already visible
@@ -415,7 +415,7 @@ const DataTable = ({
         ...(expanded                                             && { expanded }),
     }
 
-    const safeColumns = columns.map(toSafeAccessor)
+    const safeColumns = columns.map(T.toSafeAccessor)
 
     const table = useReactTable({
         data,
@@ -456,7 +456,10 @@ const DataTable = ({
     const handleSort = useCallback(sortColumn, [onSortingChange])
     const handleColumnReorder = useCallback(reorderColumns, [onColumnOrderChange, table, columns])
     const columnSizeVars = React.useMemo(computeColumnSizeVars, [columnSizing, columns, table])
-    const highlightedRowIndex = React.useMemo(findHighlightedRowIndex, [highlightedId, rows])
+    const highlightedRowIndex = React.useMemo(
+        () => A.findHighlightedRowIndex(highlightedId, rows),
+        [highlightedId, rows],
+    )
     useEffect(scrollToHighlightedRow, [highlightedId, rows.length, virtualizer])
     useEffect(E.actionRegistrationEffect(actionContext, navRef), [actionContext])
 

@@ -18,7 +18,6 @@ simplification.
 ## Inputs
 
 - Target file path (or "staged" for all staged files)
-- Context type (cli, react-page, react-component, selector, utility)
 
 ### Multi-file mode (review staged)
 
@@ -46,36 +45,21 @@ the code evolves.
 
 1. **Read the file** - Get full contents
 
-2. **Identify context** - If not specified, infer from path/content:
-    - `cli-*` modules → cli
-    - `pages/*.jsx` → react-page
-    - `components/*.jsx` → react-component
-    - `selectors/*.js` → selector
-    - Otherwise → utility
-
-3. **Measure against budgets** (from pattern-catalog.md):
-   | Context | Max Lines | Max Style Objects | Max Functions |
-   |---------|-----------|-------------------|---------------|
-   | cli | 150 | 0 | 10 |
-   | react-page | 200 | 5 | 8 |
-   | react-component | 100 | 3 | 5 |
-   | selector | 80 | 0 | 5 |
-   | utility | 150 | 0 | 10 |
-
-4. **Identify cohesion types** - Categorize ALL functions into P/T/F/V/A:
+2. **Identify cohesion types** - Categorize ALL functions into P/T/F/V/A/E:
     - **P** (Predicates): `is*`, `has*`, `should*`, `can*`, `exports*` — pure, returns boolean
     - **T** (Transformers): `to*`, `get*`, `extract*`, `parse*`, `format*` — pure, data → data
     - **F** (Factories): `create*`, `make*`, `build*` — constructs objects
     - **V** (Validators): `check*`, `validate*` — returns violations/errors
     - **A** (Aggregators): `collect*`, `count*`, `gather*`, `find*` — collects/counts items
+    - **E** (Effects): `useEffect` callbacks, side-effect-producing functions (I/O, DOM, subscriptions)
     - Configuration: static objects, constants (not in namespace, at top)
     - Exports: main entry point(s) at bottom
 
-5. **Verify cohesion grouping** - Every function must be in a P/T/F/V/A namespace:
+3. **Verify cohesion grouping** - Every function must be in a P/T/F/V/A/E namespace:
     - Even a single function goes in its group (it's a way of thinking, not window dressing)
     - Uncategorized functions are a CHECKPOINT — rename to match a pattern or justify with `// COMPLEXITY:`
 
-6. **Apply simplification strategies** (in order of preference):
+4. **Apply simplification strategies** (in order of preference):
 
 | Signal                                  | Simplification               | Destination                                  | Why it helps                            |
 |-----------------------------------------|------------------------------|----------------------------------------------|-----------------------------------------|
@@ -84,7 +68,7 @@ the code evolves.
 | Style objects in component              | Use semantic CSS vars        | `styles.css` or inline vars                  | Eliminates objects entirely             |
 | Style objects (if vars won't work)      | Move to shared module        | `styles/*.js`                                | Reusable across files                   |
 | `renderFoo` function with logic         | Convert to `<Foo>` component | Same file (if small) or own file (if reused) | Encapsulates, testable                  |
-| Any function not in P/T/F/V/A namespace | Add to appropriate namespace | Stays in file                                | Forces categorization, self-documenting |
+| Any function not in P/T/F/V/A/E namespace | Add to appropriate namespace | Stays in file                                | Forces categorization, self-documenting |
 | if/else on type field                   | TaggedSum with `.match()`    | Type definition file                         | Exhaustive, self-documenting            |
 
 **Anti-examples (these are NOT simplification):**
@@ -101,10 +85,10 @@ the code evolves.
 | What it looks like                                | Why it's valid                                                   |
 |---------------------------------------------------|------------------------------------------------------------------|
 | `renderFoo` → `<Foo>` component (same file)       | Disentangles row logic from table orchestration                  |
-| All functions organized into P/T/F/V/A namespaces | Forces categorization, self-documenting (e.g., `P.isPascalCase`) |
+| All functions organized into P/T/F/V/A/E namespaces | Forces categorization, self-documenting (e.g., `P.isPascalCase`) |
 | Extract hook logic to custom hook (same file)     | Disentangles state logic from render logic                       |
 
-7. **Verify each recommendation passes the litmus test:**
+5. **Verify each recommendation passes the litmus test:**
 
    For each proposed change, at least ONE must be true:
     - [ ] **Disentangles concerns**: separates unrelated logic (e.g., `renderFoo` → `<Foo>`)
@@ -117,23 +101,22 @@ the code evolves.
 
    If none of the boxes apply, it's just reorganization. Don't recommend it.
 
-8. **Check catalog for existing patterns** - Is this already solved elsewhere?
+6. **Check catalog for existing patterns** - Is this already solved elsewhere?
 
 ## Output Format
 
 ```
 ## Complexity Review: <file>
 
-### Measurements
-- Lines: X (budget: Y) [OK/OVER]
-- Style objects: X (budget: Y) [OK/OVER]
-- Functions: X (budget: Y) [OK/OVER]
-
 ### Cohesion Analysis
-- Predicates: <list or "none">
-- Transformers: <list or "none">
+- Predicates (P): <list or "none">
+- Transformers (T): <list or "none">
+- Factories (F): <list or "none">
+- Validators (V): <list or "none">
+- Aggregators (A): <list or "none">
+- Effects (E): <list or "none">
 - Configuration: <list or "none">
-- Orchestration: <list or "none">
+- Uncategorized: <list — these are CHECKPOINTs>
 
 ### Previous Decisions (if any)
 <list any // COMPLEXITY: comments found, with line numbers>
@@ -200,7 +183,7 @@ Complexity reduces when logic moves to a **more testable or more reusable** plac
 - State what becomes testable or reusable
 - Verify line count impact: "Removes ~8 lines from this file"
 - Reference catalog patterns by name
-- If file is within budgets and has no actionable issues: "No action needed"
+- If file has no actionable issues: "No action needed"
 
 ### Self-check before finalizing
 
