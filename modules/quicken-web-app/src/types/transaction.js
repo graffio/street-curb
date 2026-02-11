@@ -421,6 +421,13 @@ Transaction.toSecurityName = (txn, securities) => {
     return security.symbol || security.name
 }
 
+Transaction.matchesSecurityText = (query, txn, securities) => {
+    if (!txn.securityId) return false
+    const security = securities.get(txn.securityId)
+    const matches = containsIgnoreCase(query)
+    return matches(security.symbol) || matches(security.name)
+}
+
 Transaction.toRegisterRow = txn => ({
     transaction: txn,
     runningBalance: txn.runningBalance,
@@ -437,7 +444,7 @@ Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     const matches = containsIgnoreCase(query)
     if (matchesFields(txn)) return true
     if (matches(Transaction.toCategoryName(txn, categories))) return true
-    if (securities && matches(Transaction.toSecurityName(txn, securities))) return true
+    if (securities && Transaction.matchesSecurityText(query, txn, securities)) return true
     return false
 }
 

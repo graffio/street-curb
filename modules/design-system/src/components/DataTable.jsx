@@ -366,18 +366,8 @@ const DataTable = ({
     }
 
     // Scrolls to highlighted row if not visible
-    // @sig scrollToHighlightedRow :: () -> Function | undefined
+    // @sig scrollToHighlightedRow :: () -> void
     const scrollToHighlightedRow = () => {
-        // Performs the scroll with error handling
-        // @sig doScroll :: () -> void
-        const doScroll = () => {
-            try {
-                virtualizer.scrollToIndex(highlightedRowIndex, { align: 'auto' })
-            } catch {
-                // Scroll failures are non-critical
-            }
-        }
-
         const highlightedRowIndex = findHighlightedRowIndex()
         if (highlightedRowIndex < 0 || highlightedRowIndex >= rows.length) return
 
@@ -385,8 +375,11 @@ const DataTable = ({
         const { startIndex, endIndex } = virtualizer.range ?? {}
         if (highlightedRowIndex >= startIndex && highlightedRowIndex <= endIndex) return
 
-        const timeout = setTimeout(doScroll, 50)
-        return () => clearTimeout(timeout)
+        try {
+            virtualizer.scrollToIndex(highlightedRowIndex, { align: 'auto' })
+        } catch {
+            // Scroll failures are non-critical
+        }
     }
 
     // Renders a virtual row for a given virtual item

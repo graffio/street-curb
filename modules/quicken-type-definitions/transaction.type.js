@@ -78,6 +78,15 @@ Transaction.toSecurityName = (txn, securities) => {
     return security.symbol || security.name
 }
 
+// Checks if query matches a transaction's security symbol or name
+// @sig matchesSecurityText :: (String, Transaction, LookupTable<Security>) -> Boolean
+Transaction.matchesSecurityText = (query, txn, securities) => {
+    if (!txn.securityId) return false
+    const security = securities.get(txn.securityId)
+    const matches = containsIgnoreCase(query)
+    return matches(security.symbol) || matches(security.name)
+}
+
 // Wraps transaction for DataTable row format (includes runningBalance)
 // @sig toRegisterRow :: Transaction -> { transaction: Transaction, runningBalance: Number? }
 Transaction.toRegisterRow = txn => ({ transaction: txn, runningBalance: txn.runningBalance })
@@ -102,7 +111,7 @@ Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     const matches = containsIgnoreCase(query)
     if (matchesFields(txn)) return true
     if (matches(Transaction.toCategoryName(txn, categories))) return true
-    if (securities && matches(Transaction.toSecurityName(txn, securities))) return true
+    if (securities && Transaction.matchesSecurityText(query, txn, securities)) return true
     return false
 }
 
