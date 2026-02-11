@@ -414,10 +414,7 @@ const AsOfDateChip = ({ viewId }) => {
                         ref={dateInputRef}
                         value={dateValue}
                         onChange={handleDateChange}
-                        keymapId={`${viewId}_date_asof`}
-                        keymapName="Date Input"
-                        onRegisterKeymap={E.handleRegisterKeymap}
-                        onUnregisterKeymap={E.handleUnregisterKeymap}
+                        actionContext={`${viewId}_date_asof`}
                     />
                 </Flex>
             </Popover.Content>
@@ -488,7 +485,6 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 
     const KEYMAP_ID = `${viewId}_date`
     const POPOVER_ID = 'date'
-    const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const handlersRef = useRef({ handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab })
     handlersRef.current = { handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab }
     const startDateRef = useRef(null)
@@ -541,10 +537,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 onChange={handleCustomStartChange}
                                 placeholder="MM/DD/YYYY"
                                 onTabOut={() => endDateRef?.current?.focus('month')}
-                                keymapId={`${viewId}_date_start`}
-                                keymapName="Date Input"
-                                onRegisterKeymap={handleRegisterKeymap}
-                                onUnregisterKeymap={handleUnregisterKeymap}
+                                actionContext={`${viewId}_date_start`}
                             />
                         </Flex>
                         <Flex direction="column" gap="1">
@@ -557,10 +550,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 onChange={handleCustomEndChange}
                                 placeholder="MM/DD/YYYY"
                                 onTabOut={() => startDateRef?.current?.focus('month')}
-                                keymapId={`${viewId}_date_end`}
-                                keymapName="Date Input"
-                                onRegisterKeymap={handleRegisterKeymap}
-                                onUnregisterKeymap={handleUnregisterKeymap}
+                                actionContext={`${viewId}_date_end`}
                             />
                         </Flex>
                     </Flex>
