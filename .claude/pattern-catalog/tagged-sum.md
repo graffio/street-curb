@@ -28,4 +28,4 @@ result.match({
 - Prefer TaggedSum over plain objects with type fields
 - All domain entities should be Tagged types
 
-**Reference:** `modules/cli-type-generator/tagged-types.md`
+**Reference:** `docs/tagged-types.md`
