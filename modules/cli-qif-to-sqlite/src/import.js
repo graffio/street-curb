@@ -7,6 +7,7 @@ import { Matching } from './Matching.js'
 import { PlaceholderCreator } from './placeholder-creator.js'
 import { Signatures as SigT } from './signatures.js'
 import { StableIdentity } from './stable-identity.js'
+import { ImportIssue } from './types/index.js'
 
 const BANK_TRANSACTION_TYPES = new Set(['Bank', 'Cash', 'Credit Card', 'Invoice', 'Other Asset', 'Other Liability'])
 
@@ -15,6 +16,14 @@ const BANK_TRANSACTION_TYPES = new Set(['Bank', 'Cash', 'Credit Card', 'Invoice'
 const CASH_IMPACT_ACTIONS = new Set([
     'Buy', 'Cash', 'CGLong', 'CGShort', 'ContribX', 'CvrShrt', 'Div', 'IntInc', 'MargInt',
     'MiscExp', 'MiscInc', 'Sell', 'ShtSell', 'WithdrwX', 'XIn', 'XOut',
+])
+
+// Investment actions that carry a meaningful per-share price for price table extraction
+// prettier-ignore
+const PRICE_QUALIFYING_ACTIONS = new Set([
+    'Buy', 'BuyX', 'Sell', 'SellX',
+    'ReinvDiv', 'ReinvLg', 'ReinvSh', 'ReinvMd',
+    'ShrsIn', 'ShrsOut',
 ])
 
 const P = {
@@ -30,6 +39,10 @@ const P = {
     // Check if QIF transaction type is a bank type (vs investment)
     // @sig isBankTransactionType :: String -> Boolean
     isBankTransactionType: type => BANK_TRANSACTION_TYPES.has(type),
+
+    // Check if investment action type carries a meaningful per-share price
+    // @sig isPriceQualifyingAction :: String -> Boolean
+    isPriceQualifyingAction: action => PRICE_QUALIFYING_ACTIONS.has(action),
 }
 
 const T = {
@@ -62,6 +75,14 @@ const T = {
         if (!cat || CategoryResolver.P.isTransfer(cat) || P.isSpecialMarker(cat)) return null
         return cat.split('/')[0]
     },
+
+    // Extract price record from an investment transaction for price table upsert
+    // @sig toPriceFromTransaction :: Transaction -> {symbol, date, price}
+    toPriceFromTransaction: ({ security, securitySignature, date, price }) => ({
+        symbol: security || securitySignature,
+        date: T.toDateString(date),
+        price,
+    }),
 
     // Convert QIF transaction type to schema type ('bank' or 'investment')
     // @sig toSchemaTransactionType :: String -> String
@@ -205,6 +226,10 @@ const E = {
 
         T.toTimedResult(report, `Importing ${prices?.length || 0} prices`, () =>
             importFns.prices(db, priceLookup, securityMap, prices, changeTracker),
+        )
+
+        T.toTimedResult(report, 'Extracting prices from transactions', () =>
+            E.importTransactionDerivedPrices(db, transactions, securityMap, changeTracker),
         )
 
         T.toTimedResult(report, 'Computing running balances', () => E.updateRunningBalances(db))
@@ -460,6 +485,50 @@ const E = {
         return { id, isNew: true }
     },
 
+    // Upsert a single transaction-derived price into the prices table
+    // Queries DB directly by (securityId, date) — bypasses consumed priceLookup
+    // @sig upsertTransactionPrice :: (Database, {find, update, insert}, Map, ChangeTracker, Transaction) -> void
+    upsertTransactionPrice: (db, { find, update, insert }, securityMap, changeTracker, txn) => {
+        const { symbol, date, price } = T.toPriceFromTransaction(txn)
+        const securityId = securityMap.get(symbol)
+        if (!securityId)
+            throw new Error(`Security not found for symbol "${symbol}" during transaction price extraction`)
+
+        const existing = find.get(securityId, date)
+        if (existing) {
+            const { id, orphanedAt } = existing
+            update.run(price, id)
+            E.restoreOrphanedEntity(db, 'Price', id, changeTracker, orphanedAt)
+            return
+        }
+
+        const signature = SigT.priceSignature(securityId, date)
+        const id = StableIdentity.createStableId(db, 'Price')
+        insert.run(id, securityId, date, price)
+        StableIdentity.insertStableIdentity(db, { id, entityType: 'Price', signature })
+        changeTracker.record('Price', id, 'created')
+    },
+
+    // Extract prices from qualifying investment transactions and upsert into prices table
+    // Called AFTER importPrices so transaction-derived prices overwrite QIF !Type:Prices entries
+    // @sig importTransactionDerivedPrices :: (Database, [Transaction], Map, ChangeTracker) -> void
+    importTransactionDerivedPrices: (db, transactions, securityMap, changeTracker) => {
+        const qualifying = transactions.filter(
+            ({ transactionType, price, security, securitySignature }) =>
+                P.isPriceQualifyingAction(transactionType) && price != null && (security || securitySignature),
+        )
+        if (qualifying.length === 0) return
+
+        const statements = {
+            find: db.prepare('SELECT id, orphanedAt FROM prices WHERE securityId = ? AND date = ?'),
+            update: db.prepare('UPDATE prices SET price = ?, orphanedAt = NULL WHERE id = ?'),
+            insert: db.prepare(
+                'INSERT INTO prices (id, securityId, date, price, orphanedAt) VALUES (?, ?, ?, ?, NULL)',
+            ),
+        }
+        qualifying.forEach(txn => E.upsertTransactionPrice(db, statements, securityMap, changeTracker, txn))
+    },
+
     // Clear derived tables before reimport (lots are fully recomputed from transactions)
     // Base tables use INSERT OR REPLACE for incremental updates
     // @sig clearDerivedTables :: Database -> void
@@ -648,6 +717,25 @@ const markOrphanedEntities = (db, lookups, changeTracker) => {
     Matching.collectUnmatchedIds(prices).forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Price', id))
 }
 
+// Validate import data against existing database state before executing
+// Returns array of ImportIssue variants (empty = valid, safe to proceed)
+// @sig validateImport :: (Database, Object) -> [ImportIssue]
+const validateImport = (db, data) => {
+    const issues = []
+    const qifAccountNames = data.accounts.map(a => a.name)
+
+    // Check: QIF has exactly 1 account (likely forgot "All Accounts" in Quicken export)
+    if (qifAccountNames.length === 1) issues.push(ImportIssue.SingleAccount(qifAccountNames))
+
+    // Check: any non-orphaned existing account is absent from the QIF
+    const existingAccounts = db.prepare('SELECT name FROM accounts WHERE orphanedAt IS NULL').all()
+    const qifAccountSet = new Set(qifAccountNames)
+    const missingNames = existingAccounts.filter(a => !qifAccountSet.has(a.name)).map(a => a.name)
+    if (missingNames.length > 0) issues.push(ImportIssue.MissingAccounts(missingNames))
+
+    return issues
+}
+
 // Orchestrate full import with stable matching
 // Order: clear → build maps → accounts → categories → tags → securities → transactions+splits → prices → mark orphans
 // Returns { changeCounts, changes } for reporting to caller
@@ -676,6 +764,7 @@ const Import = {
     importSplits,
     importPrices,
     markOrphanedEntities,
+    validateImport,
     processImport,
 }
 

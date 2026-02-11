@@ -17,7 +17,6 @@ const sources = {
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     designSystem            : `${REPO_ROOT}/modules/design-system/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
-    keymap                  : `${REPO_ROOT}/modules/keymap/type-definitions`,
     quickenTypes            : `${REPO_ROOT}/modules/quicken-type-definitions`,
     quickenWebApp           : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
     typesGeneration         : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
@@ -31,7 +30,6 @@ const targets = {
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
     designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
-    keymap               : `${REPO_ROOT}/modules/keymap/src/types`,
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
@@ -73,10 +71,6 @@ export const typeMappings = {
     [`${sources.designSystem}/column-definition.type.js`] : [targets.designSystem],
 
 
-    // keymap
-    [`${sources.keymap}/intent.type.js`]                  : [targets.keymap],
-    [`${sources.keymap}/keymap.type.js`]                  : [targets.keymap],
-
 
     // functional
     [`${sources.functional}/filter-spec.type.js`]         : [targets.functional],
@@ -97,6 +91,7 @@ export const typeMappings = {
     // cli-qif-to-sqlite
     [`${sources.cliQifToSqlite}/qif-entry.type.js`]       : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/qif-split.type.js`]       : [targets.cliQifToSqlite],
+    [`${sources.cliQifToSqlite}/import-issue.type.js`]     : [targets.cliQifToSqlite],
 
     // quicken-web-app (types must come before Action since Action references them)
     [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
