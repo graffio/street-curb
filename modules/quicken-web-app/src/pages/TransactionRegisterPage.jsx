@@ -78,10 +78,9 @@ const E = {
  * Transaction Register page with filtering, search, and navigation
  *
  * @sig TransactionRegisterPage :: (TransactionRegisterPageProps) -> ReactElement
- *     TransactionRegisterPageProps = { accountId: String, startingBalance?: Number, height?: Number,
- *         isActive?: Boolean }
+ *     TransactionRegisterPageProps = { accountId: String, height?: Number }
  */
-const TransactionRegisterPage = ({ accountId, startingBalance = 0, height = '100%', isActive = false }) => {
+const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
     // -----------------------------------------------------------------------------------------------------------------
     // Derived values (computed from props)
     // -----------------------------------------------------------------------------------------------------------------
