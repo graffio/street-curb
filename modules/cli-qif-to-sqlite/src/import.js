@@ -18,14 +18,6 @@ const CASH_IMPACT_ACTIONS = new Set([
     'MiscExp', 'MiscInc', 'Sell', 'ShtSell', 'WithdrwX', 'XIn', 'XOut',
 ])
 
-// Investment actions that carry a meaningful per-share price for price table extraction
-// prettier-ignore
-const PRICE_QUALIFYING_ACTIONS = new Set([
-    'Buy', 'BuyX', 'Sell', 'SellX',
-    'ReinvDiv', 'ReinvLg', 'ReinvSh', 'ReinvMd',
-    'ShrsIn', 'ShrsOut',
-])
-
 const P = {
     // Check if category string is a special marker that should not resolve to categoryId
     // Includes _RlzdGain, _UnrlzdGain (Quicken internal markers), --Split--, and CGLong/CGShort/CGMid
@@ -39,10 +31,6 @@ const P = {
     // Check if QIF transaction type is a bank type (vs investment)
     // @sig isBankTransactionType :: String -> Boolean
     isBankTransactionType: type => BANK_TRANSACTION_TYPES.has(type),
-
-    // Check if investment action type carries a meaningful per-share price
-    // @sig isPriceQualifyingAction :: String -> Boolean
-    isPriceQualifyingAction: action => PRICE_QUALIFYING_ACTIONS.has(action),
 }
 
 const T = {
@@ -75,14 +63,6 @@ const T = {
         if (!cat || CategoryResolver.P.isTransfer(cat) || P.isSpecialMarker(cat)) return null
         return cat.split('/')[0]
     },
-
-    // Extract price record from an investment transaction for price table upsert
-    // @sig toPriceFromTransaction :: Transaction -> {symbol, date, price}
-    toPriceFromTransaction: ({ security, securitySignature, date, price }) => ({
-        symbol: security || securitySignature,
-        date: T.toDateString(date),
-        price,
-    }),
 
     // Convert QIF transaction type to schema type ('bank' or 'investment')
     // @sig toSchemaTransactionType :: String -> String
@@ -226,10 +206,6 @@ const E = {
 
         T.toTimedResult(report, `Importing ${prices?.length || 0} prices`, () =>
             importFns.prices(db, priceLookup, securityMap, prices, changeTracker),
-        )
-
-        T.toTimedResult(report, 'Extracting prices from transactions', () =>
-            E.importTransactionDerivedPrices(db, transactions, securityMap, changeTracker),
         )
 
         T.toTimedResult(report, 'Computing running balances', () => E.updateRunningBalances(db))
@@ -461,9 +437,12 @@ const E = {
     },
 
     // Import or match a single price, records changes to tracker
-    // @sig importSinglePrice :: (Database, {insert, update}, Map, Map, Price, ChangeTracker) -> {id, isNew}
+    // Multiple symbols can resolve to the same securityId (name vs ticker), so
+    // a DB-level check prevents UNIQUE(securityId, date) violations after dedup
+    // @sig importSinglePrice :: (Database, Statements, Map, Map, Price, ChangeTracker) -> {id, isNew}
     importSinglePrice: (db, statements, priceLookup, securityMap, price, changeTracker) => {
         const { date, price: priceValue } = price
+        const { findBySecurityDate, insert, update } = statements
         const securityKey = SigT.securitySignature(price)
         const securityId = securityMap.get(securityKey)
         if (!securityId) return null
@@ -473,60 +452,22 @@ const E = {
         const existing = Matching.findTransactionMatch(priceLookup, signature)
         if (existing) {
             const { id, orphanedAt } = existing
-            statements.update.run(priceValue, id)
+            update.run(priceValue, id)
             E.restoreOrphanedEntity(db, 'Price', id, changeTracker, orphanedAt)
             return { id, isNew: false }
         }
 
+        const duplicate = findBySecurityDate.get(securityId, dateString)
+        if (duplicate) {
+            update.run(priceValue, duplicate.id)
+            return { id: duplicate.id, isNew: false }
+        }
+
         const id = StableIdentity.createStableId(db, 'Price')
-        statements.insert.run(id, securityId, dateString, priceValue)
+        insert.run(id, securityId, dateString, priceValue)
         StableIdentity.insertStableIdentity(db, { id, entityType: 'Price', signature })
         changeTracker.record('Price', id, 'created')
         return { id, isNew: true }
-    },
-
-    // Upsert a single transaction-derived price into the prices table
-    // Queries DB directly by (securityId, date) — bypasses consumed priceLookup
-    // @sig upsertTransactionPrice :: (Database, {find, update, insert}, Map, ChangeTracker, Transaction) -> void
-    upsertTransactionPrice: (db, { find, update, insert }, securityMap, changeTracker, txn) => {
-        const { symbol, date, price } = T.toPriceFromTransaction(txn)
-        const securityId = securityMap.get(symbol)
-        if (!securityId)
-            throw new Error(`Security not found for symbol "${symbol}" during transaction price extraction`)
-
-        const existing = find.get(securityId, date)
-        if (existing) {
-            const { id, orphanedAt } = existing
-            update.run(price, id)
-            E.restoreOrphanedEntity(db, 'Price', id, changeTracker, orphanedAt)
-            return
-        }
-
-        const signature = SigT.priceSignature(securityId, date)
-        const id = StableIdentity.createStableId(db, 'Price')
-        insert.run(id, securityId, date, price)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Price', signature })
-        changeTracker.record('Price', id, 'created')
-    },
-
-    // Extract prices from qualifying investment transactions and upsert into prices table
-    // Called AFTER importPrices so transaction-derived prices overwrite QIF !Type:Prices entries
-    // @sig importTransactionDerivedPrices :: (Database, [Transaction], Map, ChangeTracker) -> void
-    importTransactionDerivedPrices: (db, transactions, securityMap, changeTracker) => {
-        const qualifying = transactions.filter(
-            ({ transactionType, price, security, securitySignature }) =>
-                P.isPriceQualifyingAction(transactionType) && price != null && (security || securitySignature),
-        )
-        if (qualifying.length === 0) return
-
-        const statements = {
-            find: db.prepare('SELECT id, orphanedAt FROM prices WHERE securityId = ? AND date = ?'),
-            update: db.prepare('UPDATE prices SET price = ?, orphanedAt = NULL WHERE id = ?'),
-            insert: db.prepare(
-                'INSERT INTO prices (id, securityId, date, price, orphanedAt) VALUES (?, ?, ?, ?, NULL)',
-            ),
-        }
-        qualifying.forEach(txn => E.upsertTransactionPrice(db, statements, securityMap, changeTracker, txn))
     },
 
     // Clear derived tables before reimport (lots are fully recomputed from transactions)
@@ -692,6 +633,7 @@ const importPrices = (db, priceLookup, securityMap, prices, changeTracker) => {
     const statements = {
         insert: db.prepare('INSERT INTO prices (id, securityId, date, price, orphanedAt) VALUES (?, ?, ?, ?, NULL)'),
         update: db.prepare('UPDATE prices SET price = ?, orphanedAt = NULL WHERE id = ?'),
+        findBySecurityDate: db.prepare('SELECT id FROM prices WHERE securityId = ? AND date = ?'),
     }
     prices.forEach(price => E.importSinglePrice(db, statements, priceLookup, securityMap, price, changeTracker))
 }

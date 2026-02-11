@@ -65,26 +65,52 @@ const T = {
         })
     },
 
-    // Pass through price unchanged (Date stays as Date object)
-    // @sig toImportPrice :: Object -> Object
-    toImportPrice: price => price,
+    // Extract price entries from qualifying investment transactions
+    // @sig toTransactionPrices :: [Transaction] -> [{symbol, date, price}]
+    toTransactionPrices: investTxns => {
+        // prettier-ignore
+        const qualifying = new Set([
+            'Buy', 'BuyX', 'Sell', 'SellX',
+            'ReinvDiv', 'ReinvLg', 'ReinvSh', 'ReinvMd',
+            'ShrsIn', 'ShrsOut',
+        ])
+        return investTxns
+            .filter(
+                ({ transactionType, price, security }) => qualifying.has(transactionType) && price != null && security,
+            )
+            .map(({ security, date, price }) => ({ symbol: security, date, price }))
+    },
+
+    // Normalize date to ISO string for use as dedup key
+    // @sig toDateKey :: Date|String -> String
+    toDateKey: date => (date instanceof Date ? date.toISOString().slice(0, 10) : String(date)),
+
+    // Merge QIF prices with transaction-derived prices, deduplicating by symbol+date (last wins)
+    // @sig toMergedPrices :: ([Price], [Price]) -> [Price]
+    toMergedPrices: (qifPrices, txnPrices) => {
+        const byKey = new Map()
+        ;[...qifPrices, ...txnPrices].forEach(p => byKey.set(`${p.symbol}|${T.toDateKey(p.date)}`, p))
+        return [...byKey.values()]
+    },
 
     // Transform parsed QIF data into import format (combine bank and investment transactions)
+    // Merges transaction-derived prices into the price array (transaction prices win for same symbol+date)
     // @sig toImportData :: Object -> Object
     toImportData: parsed => {
-        const { toImportBankTransaction, toImportCategory, toImportInvestmentTransaction, toImportPrice } = T
+        const { toImportBankTransaction, toImportCategory, toImportInvestmentTransaction } = T
         const { accounts, bankTransactions, categories, investmentTransactions, prices, securities, tags } = parsed
         const importCategories = (categories || []).map(toImportCategory)
         const bankTxns = (bankTransactions || []).map(toImportBankTransaction)
         const investTxns = (investmentTransactions || []).map(toImportInvestmentTransaction)
-        const importPrices = (prices || []).map(toImportPrice)
+        const txnPrices = T.toTransactionPrices(investTxns)
+        const mergedPrices = T.toMergedPrices(prices || [], txnPrices)
         return {
             accounts,
             categories: importCategories,
             tags,
             securities,
             transactions: [...bankTxns, ...investTxns],
-            prices: importPrices,
+            prices: mergedPrices,
         }
     },
 

@@ -1,5 +1,5 @@
-// ABOUTME: Tests for price extraction from investment transactions
-// ABOUTME: Verifies Buy/Sell/Reinv transactions create price entries, overwrite QIF prices, and skip non-qualifying
+// ABOUTME: Tests for transaction-derived price extraction and import
+// ABOUTME: Verifies CLI extracts prices from transactions, merges with QIF prices, and prices survive reimport
 
 import { test } from 'tap'
 import Database from 'better-sqlite3'
@@ -20,8 +20,27 @@ const createTestDb = () => {
 
 const emptyImportData = { accounts: [], categories: [], tags: [], securities: [], transactions: [], prices: [] }
 
-test('Buy transaction with price field creates price entry', async t =>
-    t.test('Given an investment account with a security and a Buy transaction', async t => {
+const buyTransaction = {
+    accountName: 'Brokerage',
+    date: '2024-01-15',
+    amount: -1000,
+    transactionType: 'Buy',
+    payee: null,
+    memo: null,
+    number: null,
+    cleared: null,
+    categoryId: null,
+    address: null,
+    runningBalance: null,
+    securitySignature: 'AAPL',
+    quantity: 10,
+    price: 100,
+    commission: 0,
+    splits: [],
+}
+
+test('Transaction-derived price is imported when included in prices array', async t =>
+    t.test('Given import data with a price extracted from a Buy transaction', async t => {
         const db = createTestDb()
         t.teardown(() => db.close())
 
@@ -29,32 +48,14 @@ test('Buy transaction with price field creates price entry', async t =>
             ...emptyImportData,
             accounts: [{ name: 'Brokerage', type: 'Investment', description: null, creditLimit: null }],
             securities: [{ name: 'Apple Inc', symbol: 'AAPL', type: 'Stock', goal: null }],
-            transactions: [
-                {
-                    accountName: 'Brokerage',
-                    date: '2024-01-15',
-                    amount: -1000,
-                    transactionType: 'Buy',
-                    payee: null,
-                    memo: null,
-                    number: null,
-                    cleared: null,
-                    categoryId: null,
-                    address: null,
-                    runningBalance: null,
-                    securitySignature: 'AAPL',
-                    quantity: 10,
-                    price: 100,
-                    commission: 0,
-                    splits: [],
-                },
-            ],
+            prices: [{ symbol: 'AAPL', date: '2024-01-15', price: 100 }],
+            transactions: [buyTransaction],
         }
 
         t.test('When importing the data', async t => {
             Import.processImport(db, data)
 
-            t.test('Then a price entry is created from the transaction', async t => {
+            t.test('Then the price entry exists', async t => {
                 const prices = db.prepare('SELECT * FROM prices WHERE orphanedAt IS NULL').all()
                 t.equal(prices.length, 1)
                 t.equal(prices[0].price, 100)
@@ -63,8 +64,8 @@ test('Buy transaction with price field creates price entry', async t =>
         })
     }))
 
-test('Transaction-derived price overwrites QIF !Type:Prices entry for same security+date', async t =>
-    t.test('Given a security with both a QIF price and a Buy transaction on the same date', async t => {
+test('Transaction-derived prices survive reimport', async t =>
+    t.test('Given a first import with a transaction-derived price', async t => {
         const db = createTestDb()
         t.teardown(() => db.close())
 
@@ -72,46 +73,53 @@ test('Transaction-derived price overwrites QIF !Type:Prices entry for same secur
             ...emptyImportData,
             accounts: [{ name: 'Brokerage', type: 'Investment', description: null, creditLimit: null }],
             securities: [{ name: 'Apple Inc', symbol: 'AAPL', type: 'Stock', goal: null }],
-            prices: [{ symbol: 'AAPL', date: '2024-01-15', price: 95.0 }],
-            transactions: [
-                {
-                    accountName: 'Brokerage',
-                    date: '2024-01-15',
-                    amount: -1000,
-                    transactionType: 'Buy',
-                    payee: null,
-                    memo: null,
-                    number: null,
-                    cleared: null,
-                    categoryId: null,
-                    address: null,
-                    runningBalance: null,
-                    securitySignature: 'AAPL',
-                    quantity: 10,
-                    price: 100,
-                    commission: 0,
-                    splits: [],
-                },
+            prices: [{ symbol: 'AAPL', date: '2024-01-15', price: 100 }],
+            transactions: [buyTransaction],
+        }
+
+        Import.processImport(db, data)
+
+        t.test('When reimporting the same data', async t => {
+            const result = Import.processImport(db, data)
+
+            t.test('Then the price is not orphaned', async t => {
+                const prices = db.prepare('SELECT * FROM prices WHERE orphanedAt IS NULL').all()
+                t.equal(prices.length, 1, 'price should still be active')
+                t.equal(prices[0].price, 100)
+                t.equal(result.changeCounts.orphaned, 0, 'nothing should be orphaned')
+            })
+        })
+    }))
+
+test('Prices with different symbols resolving to same security do not cause UNIQUE violation', async t =>
+    t.test('Given prices using security name and ticker for the same security and date', async t => {
+        const db = createTestDb()
+        t.teardown(() => db.close())
+
+        const data = {
+            ...emptyImportData,
+            accounts: [{ name: 'Brokerage', type: 'Investment', description: null, creditLimit: null }],
+            securities: [{ name: 'Apple Inc', symbol: 'AAPL', type: 'Stock', goal: null }],
+            prices: [
+                { symbol: 'Apple Inc', date: '2024-01-15', price: 99 },
+                { symbol: 'AAPL', date: '2024-01-15', price: 100 },
             ],
+            transactions: [buyTransaction],
         }
 
         t.test('When importing the data', async t => {
             Import.processImport(db, data)
 
-            t.test('Then only one price entry exists for that security+date', async t => {
+            t.test('Then only one price entry exists (last wins)', async t => {
                 const prices = db.prepare('SELECT * FROM prices WHERE orphanedAt IS NULL').all()
                 t.equal(prices.length, 1)
-            })
-
-            t.test('Then the price reflects the transaction price, not the QIF price', async t => {
-                const price = db.prepare('SELECT * FROM prices WHERE orphanedAt IS NULL').get()
-                t.equal(price.price, 100, 'transaction price (100) should overwrite QIF price (95)')
+                t.equal(prices[0].price, 100)
             })
         })
     }))
 
-test('Transactions without price or security are skipped', async t =>
-    t.test('Given an investment account with a Div transaction (no price)', async t => {
+test('Div transactions do not produce price entries', async t =>
+    t.test('Given an investment account with a Div transaction (no qualifying price)', async t => {
         const db = createTestDb()
         t.teardown(() => db.close())
 
