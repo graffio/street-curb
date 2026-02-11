@@ -6,6 +6,8 @@ import { Badge, Box, Checkbox, Flex, Popover, ScrollArea, Text, TextField } from
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef } from 'react'
 
+const { ActionRegistry } = KeymapModule
+
 const clearButtonStyle = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -109,9 +111,7 @@ const SelectableListPopover = ({
     customContent,
     width = 175,
     isActive = false,
-    keymapId,
-    onRegisterKeymap,
-    onUnregisterKeymap,
+    actionContext,
     onSearchChange,
     onMoveDown,
     onMoveUp,
@@ -142,18 +142,17 @@ const SelectableListPopover = ({
         if (open && searchable) searchRef.current?.focus()
     }
 
-    // Creates and registers navigation keymap when popover is open
-    // @sig keymapLifecycleEffect :: () -> (() -> void)?
-    const keymapLifecycleEffect = () => {
-        if (!keymapId || !onRegisterKeymap || !onUnregisterKeymap || !open) return undefined
-        const keymap = KeymapModule.fromBindings(keymapId, `${label} Filter`, [
-            { description: 'Move down', keys: ['ArrowDown'], action: () => handlersRef.current.onMoveDown() },
-            { description: 'Move up', keys: ['ArrowUp'], action: () => handlersRef.current.onMoveUp() },
-            { description: 'Toggle', keys: ['Enter'], action: () => handlersRef.current.onToggleHighlighted() },
-            { description: 'Dismiss', keys: ['Escape'], action: () => handlersRef.current.onDismiss() },
+    // Registers navigation actions when popover is open
+    // @sig actionRegistrationEffect :: () -> (() -> void)?
+    const actionRegistrationEffect = () => {
+        if (!actionContext || !open) return undefined
+        ActionRegistry.register(actionContext, [
+            { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.onMoveDown() },
+            { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.onMoveUp() },
+            { id: 'select', description: 'Toggle', execute: () => handlersRef.current.onToggleHighlighted() },
+            { id: 'dismiss', description: 'Dismiss', execute: () => handlersRef.current.onDismiss() },
         ])
-        onRegisterKeymap(keymap)
-        return () => onUnregisterKeymap(keymapId)
+        return () => ActionRegistry.unregister(actionContext)
     }
 
     // Maps an item and its position to an ItemRow or SingleSelectRow element
@@ -184,7 +183,7 @@ const SelectableListPopover = ({
     // DOM effects: scroll highlighted item into view, focus search input, manage keymap
     useEffect(() => highlightedRef.current?.scrollIntoView({ block: 'nearest' }), [highlightedIndex])
     useEffect(focusSearchEffect, [open, searchable])
-    useEffect(keymapLifecycleEffect, [open, keymapId, label, onRegisterKeymap, onUnregisterKeymap])
+    useEffect(actionRegistrationEffect, [open, actionContext])
 
     const triggerStyle = F.makeTriggerStyle(width, isActive)
     const multiSelectLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
@@ -255,9 +254,7 @@ SelectableListPopover.propTypes = {
     customContent: PropTypes.node,
     width: PropTypes.number,
     isActive: PropTypes.bool,
-    keymapId: PropTypes.string,
-    onRegisterKeymap: PropTypes.func,
-    onUnregisterKeymap: PropTypes.func,
+    actionContext: PropTypes.string,
     onSearchChange: PropTypes.func,
     onMoveDown: PropTypes.func.isRequired,
     onMoveUp: PropTypes.func.isRequired,

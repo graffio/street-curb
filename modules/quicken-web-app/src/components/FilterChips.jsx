@@ -230,9 +230,7 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={175}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={KEYMAP_ID}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
@@ -284,9 +282,7 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
             highlightedIndex={highlightedIndex}
             width={150}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={KEYMAP_ID}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
             onToggle={handleToggle}
@@ -340,9 +336,7 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={185}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={KEYMAP_ID}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
@@ -624,9 +618,7 @@ const GroupByFilterChip = ({ viewId, options }) => {
             highlightedIndex={highlightedIndex}
             singleSelect
             width={155}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={KEYMAP_ID}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
             onToggle={handleToggle}
@@ -744,9 +736,7 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={175}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={KEYMAP_ID}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
