@@ -2,9 +2,11 @@
 // ABOUTME: Thin wrappers that call services and handle presentation
 
 import Database from 'better-sqlite3'
+import { createInterface } from 'readline'
 import { existsSync, readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
+import { groupBy } from '@graffio/functional'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { ImportHistory } from './import-history.js'
@@ -86,6 +88,41 @@ const T = {
         }
     },
 
+    // Count entities within a single change type group
+    // @sig toEntityCounts :: [Object] -> {String: Number}
+    toEntityCounts: items => {
+        const byEntity = groupBy(c => c.entityType, items)
+        return Object.fromEntries(Object.entries(byEntity).map(([type, arr]) => [type, arr.length]))
+    },
+
+    // Group changes by changeType, then by entityType with counts
+    // @sig toGroupedChangeSummary :: [Object] -> {String: {String: Number}}
+    toGroupedChangeSummary: changes => {
+        const byChangeType = groupBy(c => c.changeType, changes)
+        return Object.fromEntries(
+            Object.entries(byChangeType).map(([changeType, items]) => [changeType, T.toEntityCounts(items)]),
+        )
+    },
+
+    // Format a SingleAccount issue for display
+    // @sig toSingleAccountMessage :: {accounts: [String]} -> String
+    toSingleAccountMessage: ({ accounts }) => {
+        const name = accounts[0]
+        return `WARNING: QIF contains only 1 account ("${name}"). Did you forget to export "All Accounts" from Quicken?`
+    },
+
+    // Format a MissingAccounts issue for display
+    // @sig toMissingAccountsMessage :: {missing: [String]} -> String
+    toMissingAccountsMessage: ({ missing }) => {
+        const list = missing.map(n => `  - ${n}`).join('\n')
+        return `WARNING: ${missing.length} existing account(s) not found in QIF:\n${list}`
+    },
+
+    // Format an ImportIssue for display
+    // @sig toIssueMessage :: ImportIssue -> String
+    toIssueMessage: issue =>
+        issue.match({ SingleAccount: T.toSingleAccountMessage, MissingAccounts: T.toMissingAccountsMessage }),
+
     // Collect database statistics for info command
     // @sig toStats :: Database -> Object
     toStats: db => ({
@@ -159,52 +196,6 @@ const T = {
         if (!existsSync(path) || tableCount === 0) db.exec(readFileSync(schemaPath, 'utf-8'))
         return db
     },
-
-    // Look up transaction details (works for both active and orphaned transactions)
-    // @sig toTransactionDetails :: (Database, String) -> Object|null
-    toTransactionDetails: (db, entityId) =>
-        db
-            .prepare(
-                `SELECT t.date, t.payee, t.amount, t.memo, a.name as accountName
-                 FROM transactions t JOIN accounts a ON t.accountId = a.id
-                 WHERE t.id = ?`,
-            )
-            .get(entityId),
-
-    // Look up entity details from database for change reporting
-    // @sig toEntityDetails :: (Database, String, String) -> Object|null
-    toEntityDetails: (db, entityType, entityId) => {
-        if (entityType === 'Transaction') return T.toTransactionDetails(db, entityId)
-        if (entityType === 'Account') return db.prepare('SELECT name FROM accounts WHERE id = ?').get(entityId)
-        if (entityType === 'Security')
-            return db.prepare('SELECT name, symbol FROM securities WHERE id = ?').get(entityId)
-        if (entityType === 'Category') return db.prepare('SELECT name FROM categories WHERE id = ?').get(entityId)
-        if (entityType === 'Price')
-            return db
-                .prepare(
-                    `SELECT p.date, p.price, s.symbol FROM prices p
-                     JOIN securities s ON p.securityId = s.id WHERE p.id = ?`,
-                )
-                .get(entityId)
-
-        return null
-    },
-
-    // Format entity details as a readable string
-    // @sig toEntityDescription :: (String, Object|null) -> String
-    toEntityDescription: (entityType, details) => {
-        if (!details) return '(details unavailable)'
-        const { accountName, amount, date, memo, name, payee, price, symbol } = details
-        if (entityType === 'Transaction') {
-            const desc = payee || memo || '(no description)'
-            return `${date} ${accountName}: ${desc} $${(amount || 0).toFixed(2)}`
-        }
-        if (entityType === 'Account') return name
-        if (entityType === 'Security') return `${symbol} (${name})`
-        if (entityType === 'Category') return name
-        if (entityType === 'Price') return `${symbol} ${date} $${price}`
-        return JSON.stringify(details)
-    },
 }
 
 const F = {
@@ -277,39 +268,32 @@ const E = {
         history.forEach(E.emitHistoryEntry)
     },
 
-    // Output a single change detail line
-    // @sig emitChangeDetail :: (Database, Object) -> void
-    emitChangeDetail: (db, change) => {
-        const { changeType, entityId, entityType } = change
-        const details = T.toEntityDetails(db, entityType, entityId)
-        const description = T.toEntityDescription(entityType, details)
-        console.log(`  ${changeType.toUpperCase()}: ${entityType} - ${description}`)
+    // Output entity type breakdown indented under a status line
+    // @sig emitEntityBreakdown :: Object -> void
+    emitEntityBreakdown: entityCounts => {
+        const maxLen = Math.max(...Object.values(entityCounts).map(n => String(n).length))
+        Object.entries(entityCounts)
+            .sort(([, a], [, b]) => b - a)
+            .forEach(([type, count]) => console.log(`  ${type + ':'}  ${String(count).padStart(maxLen)}`))
     },
 
-    // Output change summary to console after import
-    // Shows details for all changes, but limits created to 100 items
-    // @sig emitChangeSummary :: (Object, [Object], Database) -> void
-    emitChangeSummary: (changeCounts, changes, db) => {
-        const { created, modified, orphaned, restored } = changeCounts
-        const CREATED_DETAIL_LIMIT = 100
+    // Output a single summary section (e.g. "Created: 42" with entity breakdown)
+    // @sig emitSummarySection :: (Object, Object, String) -> void
+    emitSummarySection: (changeCounts, grouped, type) => {
+        if (changeCounts[type] === 0) return
+        const label = type[0].toUpperCase() + type.slice(1)
+        console.log(`${label + ':'}  ${changeCounts[type]}`)
+        E.emitEntityBreakdown(grouped[type])
+    },
 
+    // Output change summary to console after import with per-type breakdown
+    // @sig emitChangeSummary :: (Object, [Object]) -> void
+    emitChangeSummary: (changeCounts, changes) => {
+        const grouped = T.toGroupedChangeSummary(changes)
         console.log('\n=== Import Summary ===')
-        if (created > CREATED_DETAIL_LIMIT) console.log(`Created:  ${created} (many new entities - details omitted)`)
-        else console.log(`Created:  ${created}`)
-
-        if (modified > 0) console.log(`Modified: ${modified}`)
-        if (orphaned > 0) console.log(`Orphaned: ${orphaned}`)
-        if (restored > 0) console.log(`Restored: ${restored}`)
-
-        const createdChanges = changes.filter(c => c.changeType === 'created')
-        const otherChanges = changes.filter(c => c.changeType !== 'created')
-        const showCreatedDetails = createdChanges.length > 0 && createdChanges.length <= CREATED_DETAIL_LIMIT
-        const hasDetails = showCreatedDetails || otherChanges.length > 0
-
-        if (!hasDetails) return
-        console.log('\n=== Change Details ===')
-        if (showCreatedDetails) createdChanges.forEach(c => E.emitChangeDetail(db, c))
-        otherChanges.forEach(c => E.emitChangeDetail(db, c))
+        ;['created', 'modified', 'orphaned', 'restored'].forEach(type =>
+            E.emitSummarySection(changeCounts, grouped, type),
+        )
     },
 
     // Output import error to console with full context
@@ -328,9 +312,34 @@ const E = {
         }
     },
 
+    // Prompt user for y/n confirmation, resolves to boolean
+    // @sig promptConfirm :: String -> Promise Boolean
+    promptConfirm: question => {
+        const rl = createInterface({ input: process.stdin, output: process.stdout })
+        return new Promise(resolve =>
+            rl.question(`${question} (y/n) `, answer => {
+                rl.close()
+                resolve(answer.trim().toLowerCase() === 'y')
+            }),
+        )
+    },
+
+    // Display validation issues and prompt for confirmation. Opens/closes its own DB.
+    // @sig validateAndConfirm :: (String, Object) -> Promise Boolean
+    validateAndConfirm: async (database, data) => {
+        if (!existsSync(database)) return true
+        const db = new Database(database)
+        const issues = Import.validateImport(db, data)
+        db.close()
+        if (issues.length === 0) return true
+        console.log('\n=== Import Validation ===')
+        issues.forEach(issue => console.log(T.toIssueMessage(issue)))
+        return E.promptConfirm('\nProceed with import?')
+    },
+
     // Handle import command with rollback protection
-    // @sig handleImport :: Object -> void
-    handleImport: argv => {
+    // @sig handleImport :: Object -> Promise void
+    handleImport: async argv => {
         const { database, file } = argv
         if (!file) throw new Error('Import command requires a file path')
         if (!existsSync(file)) throw new Error(`File not found: ${file}`)
@@ -343,13 +352,17 @@ const E = {
         console.log(`\nParsed: ${data.accounts.length} accounts, ${data.transactions.length} transactions`)
         console.log(`        ${data.securities.length} securities, ${data.prices.length} prices`)
 
+        const confirmed = await E.validateAndConfirm(database, data)
+        if (!confirmed) {
+            console.log('Import aborted.')
+            return
+        }
+
         const importFn = F.createImportFn(data, qifContent)
         const { success, result, error } = Rollback.withRollback(database, T.toOpenDatabase, importFn)
 
         if (success) {
-            const db = new Database(database)
-            E.emitChangeSummary(result.changeCounts, result.changes, db)
-            db.close()
+            E.emitChangeSummary(result.changeCounts, result.changes)
             console.log('\nImport completed successfully!')
             console.log(`Database: ${database}`)
         } else {
@@ -400,8 +413,8 @@ const E = {
     },
 
     // Dispatch command to appropriate handler
-    // @sig dispatchCommand :: Object -> void
-    dispatchCommand: argv => {
+    // @sig dispatchCommand :: Object -> Promise void
+    dispatchCommand: async argv => {
         const { _ } = argv
         const [command] = _
 
@@ -415,8 +428,8 @@ const E = {
     },
 
     // Main CLI entry point
-    // @sig main :: () -> void
-    main: () => {
+    // @sig main :: () -> Promise void
+    main: async () => {
         try {
             const argv = yargs(hideBin(process.argv))
                 .usage('Usage: qif-db <command> [options]')
@@ -435,7 +448,7 @@ const E = {
                 .check(P.hasRequiredArgs)
                 .parse()
 
-            E.dispatchCommand(argv)
+            await E.dispatchCommand(argv)
         } catch (error) {
             console.error(`Error: ${error.message}`)
             process.exit(1)
