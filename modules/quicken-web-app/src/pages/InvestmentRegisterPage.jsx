@@ -155,9 +155,6 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
     const handleEscape = useCallback(() => E.clearSearch(searchQuery, viewId), [searchQuery, viewId])
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
 
-    const handleRegisterKeymap = useCallback(keymap => post(Action.RegisterKeymap(keymap)), [])
-    const handleUnregisterKeymap = useCallback(id => post(Action.UnregisterKeymap(id)), [])
-
     // -----------------------------------------------------------------------------------------------------------------
     // Effects
     // -----------------------------------------------------------------------------------------------------------------
@@ -198,12 +195,7 @@ const InvestmentRegisterPage = ({ accountId, startingBalance = 0, height = '100%
                     onRowClick={handleRowClick}
                     onHighlightChange={handleHighlightChange}
                     onEscape={handleEscape}
-                    enableKeyboardNav={isActive}
-                    keymapId={`${viewId}_table`}
-                    keymapActiveViewId={viewId}
-                    keymapName={accountName}
-                    onRegisterKeymap={handleRegisterKeymap}
-                    onUnregisterKeymap={handleUnregisterKeymap}
+                    actionContext={viewId}
                     context={{ searchQuery }}
                 />
             </div>
