@@ -83,12 +83,12 @@ const T = {
 
 const F = {
     // Returns the appropriate register page component for an account type
-    // @sig createRegisterPage :: (Account, String, Boolean) -> ReactElement
-    createRegisterPage: (account, accountId, isActive) =>
+    // @sig createRegisterPage :: (Account, String) -> ReactElement
+    createRegisterPage: (account, accountId) =>
         P.isInvestmentAccount(account) ? (
-            <InvestmentRegisterPage accountId={accountId} isActive={isActive} />
+            <InvestmentRegisterPage accountId={accountId} />
         ) : (
-            <TransactionRegisterPage accountId={accountId} isActive={isActive} />
+            <TransactionRegisterPage accountId={accountId} />
         ),
 }
 
@@ -214,8 +214,8 @@ const EmptyState = () => (
 )
 
 // Renders the appropriate page component for the active view
-// @sig ViewContent :: { group: TabGroup, isActive: Boolean } -> ReactElement
-const ViewContent = ({ group, isActive }) => {
+// @sig ViewContent :: { group: TabGroup } -> ReactElement
+const ViewContent = ({ group }) => {
     const accounts = useSelector(S.accounts)
 
     if (!group.activeViewId) return <EmptyState />
@@ -228,7 +228,7 @@ const ViewContent = ({ group, isActive }) => {
         Register: () => {
             const account = accounts.get(accountId)
             if (!account) return <EmptyState /> // Account not loaded yet
-            return F.createRegisterPage(account, accountId, isActive)
+            return F.createRegisterPage(account, accountId)
         },
         Report: () => {
             if (reportType === 'holdings') return <InvestmentReportPage viewId={id} />
@@ -261,7 +261,7 @@ const TabGroup = ({ group }) => {
             <TabBar group={group} groupCount={groupCount} isActiveGroup={isActive} />
             <Box style={contentStyle}>
                 <Box style={innerStyle}>
-                    <ViewContent group={group} isActive={isActive} />
+                    <ViewContent group={group} />
                 </Box>
             </Box>
         </Flex>

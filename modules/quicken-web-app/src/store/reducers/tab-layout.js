@@ -2,7 +2,6 @@
 // ABOUTME: Manages tab groups, views, and layout state
 
 import { LookupTable, updateLookupTablePath } from '@graffio/functional'
-import { KeymapModule } from '@graffio/keymap'
 import { TabGroup, TabLayout as TabLayoutType, View } from '../../types/index.js'
 import { TransactionFilters } from './transaction-filters.js'
 
@@ -35,19 +34,6 @@ const F = {
         const { activeViewId, id, views } = group
         return TabGroup(id, views, activeViewId, width)
     },
-
-    // Creates a keymap for register views with j/k navigation
-    // @sig createRegisterKeymap :: (String, String) -> Keymap
-    createRegisterKeymap: (viewId, title) =>
-        KeymapModule.fromBindings(
-            viewId,
-            title,
-            [
-                { description: 'Move down', keys: ['j'], action: 'ArrowDown' },
-                { description: 'Move up', keys: ['k'], action: 'ArrowUp' },
-            ],
-            { activeForViewId: viewId },
-        ),
 }
 
 const MAX_GROUPS = 4
@@ -66,15 +52,6 @@ const openView = (state, action) => {
         return updateLookupTablePath(updated, ['activeTabGroupId'], groupId)
     }
 
-    // Registers a keymap for Register views if not already registered
-    // @sig maybeAddKeymap :: (State, View) -> State
-    const maybeAddKeymap = (newState, v) => {
-        const { tag, id, title } = v
-        // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
-        if (tag !== 'Register' || state.keymaps.get(id)) return newState
-        return { ...newState, keymaps: newState.keymaps.addItemWithId(F.createRegisterKeymap(id, title)) }
-    }
-
     // Creates a transaction filter for the view if not already present
     // @sig maybeAddFilter :: (State, View) -> State
     const maybeAddFilter = (newState, v) => {
@@ -89,7 +66,7 @@ const openView = (state, action) => {
     const addToGroup = targetId => {
         const layout = updateLookupTablePath(tabLayout, ['tabGroups', targetId, 'views'], vs => vs.addItemWithId(view))
         const withLayout = { ...state, tabLayout: activateView(layout, targetId, view.id) }
-        return maybeAddFilter(maybeAddKeymap(withLayout, view), view)
+        return maybeAddFilter(withLayout, view)
     }
 
     const { tabLayout } = state

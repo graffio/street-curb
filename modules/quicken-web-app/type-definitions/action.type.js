@@ -54,10 +54,6 @@ export const Action = {
         SetAccountListSortMode : { sortMode: 'SortMode' },
         ToggleSectionCollapsed : { sectionId: 'String' },
 
-        // Keymap actions
-        RegisterKeymap   : { keymap: 'Any' },
-        UnregisterKeymap : { keymapId: FieldTypes.keymapId },
-
         // Global UI actions
         SetShowReopenBanner : { show: 'Boolean' },
         SetShowDrawer       : { show: 'Boolean' },

@@ -99,10 +99,6 @@ const post = action => {
         SetAccountListSortMode : handleAccountListAction,
         ToggleSectionCollapsed : handleAccountListAction,
 
-        // Keymap actions (no persistence needed)
-        RegisterKeymap   : () => dispatch(action),
-        UnregisterKeymap : () => dispatch(action),
-
         // Global UI actions (no persistence needed)
         SetShowReopenBanner : () => dispatch(action),
         SetShowDrawer       : () => dispatch(action),

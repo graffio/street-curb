@@ -61,9 +61,10 @@ Determine if a non-trivial problem was solved during this work. Trivial = obviou
 
 - Delete `.claude/current-task.json`
 - Ask about stale spec files: "Delete specifications/{spec-used-for-this-work}.md?"
+- Check for brainstorm files linked from the spec or current-task.json (`docs/brainstorms/`). Delete if fully consumed; keep if unresolved ideas remain. Always ask before deleting.
 
 ## Rules
 
 - Don't skip the commit quality check — it's how we maintain a readable history
 - Knowledge capture is judgment — not every fix deserves a doc
-- Always ask before deleting spec files
+- Always ask before deleting spec or brainstorm files

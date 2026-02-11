@@ -73,10 +73,6 @@
  *      sortMode: "SortMode"
  *  ToggleSectionCollapsed
  *      sectionId: "String"
- *  RegisterKeymap
- *      keymap: "Any"
- *  UnregisterKeymap
- *      keymapId: FieldTypes.keymapId
  *  SetShowReopenBanner
  *      show: "Boolean"
  *  SetShowDrawer
@@ -145,8 +141,6 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetTabGroupWidth',
         'SetAccountListSortMode',
         'ToggleSectionCollapsed',
-        'RegisterKeymap',
-        'UnregisterKeymap',
         'SetShowReopenBanner',
         'SetShowDrawer',
         'SetLoadingStatus',
@@ -204,8 +198,6 @@ const toString = {
     setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
     setAccountListSortMode : function () { return `Action.SetAccountListSortMode(${R._toString(this.sortMode)})` },
     toggleSectionCollapsed : function () { return `Action.ToggleSectionCollapsed(${R._toString(this.sectionId)})` },
-    registerKeymap         : function () { return `Action.RegisterKeymap(${R._toString(this.keymap)})` },
-    unregisterKeymap       : function () { return `Action.UnregisterKeymap(${R._toString(this.keymapId)})` },
     setShowReopenBanner    : function () { return `Action.SetShowReopenBanner(${R._toString(this.show)})` },
     setShowDrawer          : function () { return `Action.SetShowDrawer(${R._toString(this.show)})` },
     setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
@@ -244,8 +236,6 @@ const toJSON = {
     setTabGroupWidth       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setAccountListSortMode : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleSectionCollapsed : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    registerKeymap         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    unregisterKeymap       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setShowReopenBanner    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setShowDrawer          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -689,37 +679,6 @@ const ToggleSectionCollapsedConstructor = function ToggleSectionCollapsed(sectio
 Action.ToggleSectionCollapsed = ToggleSectionCollapsedConstructor
 
 /*
- * Construct a Action.RegisterKeymap instance
- * @sig RegisterKeymap :: (Any) -> Action.RegisterKeymap
- */
-const RegisterKeymapConstructor = function RegisterKeymap(keymap) {
-    const constructorName = 'Action.RegisterKeymap(keymap)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-
-    const result = Object.create(RegisterKeymapPrototype)
-    result.keymap = keymap
-    return result
-}
-
-Action.RegisterKeymap = RegisterKeymapConstructor
-
-/*
- * Construct a Action.UnregisterKeymap instance
- * @sig UnregisterKeymap :: (String) -> Action.UnregisterKeymap
- */
-const UnregisterKeymapConstructor = function UnregisterKeymap(keymapId) {
-    const constructorName = 'Action.UnregisterKeymap(keymapId)'
-    R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateRegex(constructorName, FieldTypes.keymapId, 'keymapId', false, keymapId)
-
-    const result = Object.create(UnregisterKeymapPrototype)
-    result.keymapId = keymapId
-    return result
-}
-
-Action.UnregisterKeymap = UnregisterKeymapConstructor
-
-/*
  * Construct a Action.SetShowReopenBanner instance
  * @sig SetShowReopenBanner :: (Boolean) -> Action.SetShowReopenBanner
  */
@@ -1006,22 +965,6 @@ const ToggleSectionCollapsedPrototype = Object.create(ActionPrototype, {
     constructor: { value: ToggleSectionCollapsedConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const RegisterKeymapPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'RegisterKeymap', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.registerKeymap, enumerable: false },
-    toJSON: { value: toJSON.registerKeymap, enumerable: false },
-    constructor: { value: RegisterKeymapConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-const UnregisterKeymapPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'UnregisterKeymap', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.unregisterKeymap, enumerable: false },
-    toJSON: { value: toJSON.unregisterKeymap, enumerable: false },
-    constructor: { value: UnregisterKeymapConstructor, enumerable: false, writable: true, configurable: true },
-})
-
 const SetShowReopenBannerPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetShowReopenBanner', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1096,8 +1039,6 @@ SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
 SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
 SetAccountListSortModeConstructor.prototype = SetAccountListSortModePrototype
 ToggleSectionCollapsedConstructor.prototype = ToggleSectionCollapsedPrototype
-RegisterKeymapConstructor.prototype = RegisterKeymapPrototype
-UnregisterKeymapConstructor.prototype = UnregisterKeymapPrototype
 SetShowReopenBannerConstructor.prototype = SetShowReopenBannerPrototype
 SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
 SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
@@ -1130,8 +1071,6 @@ SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTab
 SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
 SetAccountListSortModeConstructor.is = val => val && val.constructor === SetAccountListSortModeConstructor
 ToggleSectionCollapsedConstructor.is = val => val && val.constructor === ToggleSectionCollapsedConstructor
-RegisterKeymapConstructor.is = val => val && val.constructor === RegisterKeymapConstructor
-UnregisterKeymapConstructor.is = val => val && val.constructor === UnregisterKeymapConstructor
 SetShowReopenBannerConstructor.is = val => val && val.constructor === SetShowReopenBannerConstructor
 SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerConstructor
 SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
@@ -1164,8 +1103,6 @@ SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
 SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
 SetAccountListSortModeConstructor.toString = () => 'Action.SetAccountListSortMode'
 ToggleSectionCollapsedConstructor.toString = () => 'Action.ToggleSectionCollapsed'
-RegisterKeymapConstructor.toString = () => 'Action.RegisterKeymap'
-UnregisterKeymapConstructor.toString = () => 'Action.UnregisterKeymap'
 SetShowReopenBannerConstructor.toString = () => 'Action.SetShowReopenBanner'
 SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
 SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
@@ -1204,8 +1141,6 @@ SetActiveTabGroupConstructor._from = _input => Action.SetActiveTabGroup(_input.g
 SetTabGroupWidthConstructor._from = _input => Action.SetTabGroupWidth(_input.groupId, _input.width)
 SetAccountListSortModeConstructor._from = _input => Action.SetAccountListSortMode(_input.sortMode)
 ToggleSectionCollapsedConstructor._from = _input => Action.ToggleSectionCollapsed(_input.sectionId)
-RegisterKeymapConstructor._from = _input => Action.RegisterKeymap(_input.keymap)
-UnregisterKeymapConstructor._from = _input => Action.UnregisterKeymap(_input.keymapId)
 SetShowReopenBannerConstructor._from = _input => Action.SetShowReopenBanner(_input.show)
 SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
 SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
@@ -1238,8 +1173,6 @@ SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
 SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
 SetAccountListSortModeConstructor.from = SetAccountListSortModeConstructor._from
 ToggleSectionCollapsedConstructor.from = ToggleSectionCollapsedConstructor._from
-RegisterKeymapConstructor.from = RegisterKeymapConstructor._from
-UnregisterKeymapConstructor.from = UnregisterKeymapConstructor._from
 SetShowReopenBannerConstructor.from = SetShowReopenBannerConstructor._from
 SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
 SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
@@ -1410,12 +1343,6 @@ SetAccountListSortModeConstructor.fromFirestore = SetAccountListSortModeConstruc
 ToggleSectionCollapsedConstructor.toFirestore = o => ({ ...o })
 ToggleSectionCollapsedConstructor.fromFirestore = ToggleSectionCollapsedConstructor._from
 
-RegisterKeymapConstructor.toFirestore = o => ({ ...o })
-RegisterKeymapConstructor.fromFirestore = RegisterKeymapConstructor._from
-
-UnregisterKeymapConstructor.toFirestore = o => ({ ...o })
-UnregisterKeymapConstructor.fromFirestore = UnregisterKeymapConstructor._from
-
 SetShowReopenBannerConstructor.toFirestore = o => ({ ...o })
 SetShowReopenBannerConstructor.fromFirestore = SetShowReopenBannerConstructor._from
 
@@ -1465,8 +1392,6 @@ Action.is = v => {
         SetTabGroupWidth,
         SetAccountListSortMode,
         ToggleSectionCollapsed,
-        RegisterKeymap,
-        UnregisterKeymap,
         SetShowReopenBanner,
         SetShowDrawer,
         SetLoadingStatus,
@@ -1500,8 +1425,6 @@ Action.is = v => {
         constructor === SetTabGroupWidth ||
         constructor === SetAccountListSortMode ||
         constructor === ToggleSectionCollapsed ||
-        constructor === RegisterKeymap ||
-        constructor === UnregisterKeymap ||
         constructor === SetShowReopenBanner ||
         constructor === SetShowDrawer ||
         constructor === SetLoadingStatus ||
@@ -1550,8 +1473,6 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetTabGroupWidth,
         SetAccountListSortMode,
         ToggleSectionCollapsed,
-        RegisterKeymap,
-        UnregisterKeymap,
         SetShowReopenBanner,
         SetShowDrawer,
         SetLoadingStatus,
@@ -1583,8 +1504,6 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetTabGroupWidth') return SetTabGroupWidth.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetAccountListSortMode') return SetAccountListSortMode.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleSectionCollapsed') return ToggleSectionCollapsed.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'RegisterKeymap') return RegisterKeymap.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'UnregisterKeymap') return UnregisterKeymap.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetShowReopenBanner') return SetShowReopenBanner.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetShowDrawer') return SetShowDrawer.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)

@@ -17,36 +17,35 @@ const containerBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBot
 const containerActiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--ruby-3)' }
 const containerInactiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--gray-2)' }
 
-const F = {
-    // Creates keymap with bindings for visible filter chips
-    // @sig createFilterShortcutsKeymap :: (String, FilterConfig, Function) -> Keymap
+const { ActionRegistry } = KeymapModule
+
+const T = {
+    // Builds filter actions array from visibility config
+    // @sig toFilterActions :: (FilterConfig, (String -> void)) -> [Action]
     //     FilterConfig = { accounts, categories, date, actions, securities, groupBy, search }
     // prettier-ignore
-    createFilterShortcutsKeymap: (viewId, config, openPopover) => {
-        const { accounts, actions, asOfDate, categories, date, groupBy, search, securities } = config
-        const bindings = []
-        if (accounts)   bindings.push({ description: 'Accounts'  , keys: ['a']      , action : () => openPopover('accounts') })
-        if (categories) bindings.push({ description: 'Categories', keys: ['c']      , action : () => openPopover('categories') })
-        if (date)       bindings.push({ description: 'Date'      , keys: ['d']      , action : () => openPopover('date') })
-        if (asOfDate)   bindings.push({ description: 'As of date', keys: ['d']      , action : () => openPopover('asOfDate') })
-        if (actions)    bindings.push({ description: 'Actions'   , keys: ['x']      , action : () => openPopover('actions') })
-        if (securities) bindings.push({ description: 'Securities', keys: ['h']      , action : () => openPopover('securities') })
-        if (groupBy)    bindings.push({ description: 'Group by'  , keys: ['g']      , action : () => openPopover('groupBy') })
-        if (search)     bindings.push({ description: 'Search'    , keys: ['/' , 'f'], action : () => openPopover('search') })
-
-        return KeymapModule.fromBindings(`${viewId}_filters`, 'Filter shortcuts', bindings, { activeForViewId: viewId })
+    toFilterActions: (config, openPopover) => {
+        const { accounts, actions, categories, date, groupBy, search, securities } = config
+        const result = []
+        if (accounts)   result.push({ id: 'filter:accounts'  , description: 'Accounts'  , execute: () => openPopover('accounts') })
+        if (categories) result.push({ id: 'filter:categories', description: 'Categories', execute: () => openPopover('categories') })
+        if (date || config.asOfDate) result.push({ id: 'filter:date', description: 'Date', execute: () => openPopover(config.asOfDate ? 'asOfDate' : 'date') })
+        if (actions)    result.push({ id: 'filter:actions'   , description: 'Actions'   , execute: () => openPopover('actions') })
+        if (securities) result.push({ id: 'filter:securities', description: 'Securities', execute: () => openPopover('securities') })
+        if (groupBy)    result.push({ id: 'filter:group-by'  , description: 'Group by'  , execute: () => openPopover('groupBy') })
+        if (search)     result.push({ id: 'filter:search'    , description: 'Search'    , execute: () => openPopover('search') })
+        return result
     },
 }
 
 const E = {
-    // Registers keymap effect for filter shortcuts
-    // @sig keymapEffect :: (String, FilterConfig) -> (() -> void)
-    keymapEffect: (viewId, config) => {
-        const openPopover = popoverId => post(Action.SetFilterPopoverOpen(viewId, popoverId))
-        const keymap = F.createFilterShortcutsKeymap(viewId, config, openPopover)
-        post(Action.RegisterKeymap(keymap))
-        return () => post(Action.UnregisterKeymap(`${viewId}_filters`))
-    },
+    // Registers filter-focus actions for visible chips
+    // @sig filterActionsEffect :: (String, FilterConfig) -> () -> (() -> void)
+    filterActionsEffect: (viewId, config) => () =>
+        ActionRegistry.register(
+            viewId,
+            T.toFilterActions(config, popoverId => post(Action.SetFilterPopoverOpen(viewId, popoverId))),
+        ),
 }
 
 /*
@@ -72,7 +71,7 @@ const FilterChipRow = props => {
     const counts = useSelector(state => S.UI.filterCounts(state, viewId, accountId))
     const { filtered, total, isFiltering: countsIsFiltering } = counts
 
-    const keymapConfig = {
+    const filterConfig = {
         accounts: showGroupBy,
         categories: showCategories,
         date: !showAsOfDate,
@@ -82,10 +81,14 @@ const FilterChipRow = props => {
         groupBy: showGroupBy,
         search: true,
     }
-    useEffect(
-        () => E.keymapEffect(viewId, keymapConfig),
-        [viewId, showGroupBy, showAsOfDate, showCategories, showSecurities, showActions],
-    )
+    useEffect(E.filterActionsEffect(viewId, filterConfig), [
+        viewId,
+        showGroupBy,
+        showAsOfDate,
+        showCategories,
+        showSecurities,
+        showActions,
+    ])
 
     // Use props if provided, otherwise use selector data
     const filteredCount = filteredCountProp ?? filtered

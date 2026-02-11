@@ -20,6 +20,8 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
+const { ActionRegistry } = KeymapModule
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Cohesion groups
 // ---------------------------------------------------------------------------------------------------------------------
@@ -62,14 +64,6 @@ const F = {
 }
 
 const E = {
-    // Dispatches keymap registration action
-    // @sig handleRegisterKeymap :: Keymap -> void
-    handleRegisterKeymap: keymap => post(Action.RegisterKeymap(keymap)),
-
-    // Dispatches keymap unregistration action
-    // @sig handleUnregisterKeymap :: String -> void
-    handleUnregisterKeymap: id => post(Action.UnregisterKeymap(id)),
-
     // Toggles a category filter: adds if not selected, removes if selected
     // @sig handleToggleCategory :: (String, String, [String]) -> void
     handleToggleCategory: (viewId, categoryName, selectedIds) => {
@@ -208,7 +202,6 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
 
-    const KEYMAP_ID = `${viewId}_accounts`
     const POPOVER_ID = 'accounts'
     const { badges, selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
 
@@ -230,9 +223,7 @@ const AccountFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={175}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={viewId}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
@@ -263,7 +254,6 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleActionFilter(viewId, highlightedItemId))
 
-    const KEYMAP_ID = `${viewId}_actions`
     const POPOVER_ID = 'actions'
     const { badges } = useSelector(state => S.UI.actionFilterData(state, viewId))
     const selectedIds = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
@@ -284,9 +274,7 @@ const ActionFilterChip = ({ viewId, isActive = false }) => {
             highlightedIndex={highlightedIndex}
             width={150}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={viewId}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
             onToggle={handleToggle}
@@ -318,7 +306,6 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleHighlighted = () =>
         highlightedItemId && E.handleToggleCategory(viewId, highlightedItemId, selectedIds)
 
-    const KEYMAP_ID = `${viewId}_categories`
     const POPOVER_ID = 'categories'
     const { badges, selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
 
@@ -340,9 +327,7 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={185}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={viewId}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
@@ -380,17 +365,12 @@ const AsOfDateChip = ({ viewId }) => {
     }
 
     // Escape keymap effect — closes popover when Escape pressed
-    // @sig escapeKeymapEffect :: () -> (() -> void)?
-    const escapeKeymapEffect = () => {
+    // @sig dismissActionEffect :: () -> (() -> void)?
+    const dismissActionEffect = () => {
         if (!isOpen) return undefined
-        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'As-of Date Dismiss', [
-            { description: 'Dismiss', keys: ['Escape'], action: handleDismiss },
-        ])
-        E.handleRegisterKeymap(keymap)
-        return () => E.handleUnregisterKeymap(KEYMAP_ID)
+        return ActionRegistry.register(viewId, [{ id: 'dismiss', description: 'Dismiss', execute: handleDismiss }])
     }
 
-    const KEYMAP_ID = `${viewId}_asof_dismiss`
     const POPOVER_ID = 'asOfDate'
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
@@ -400,7 +380,7 @@ const AsOfDateChip = ({ viewId }) => {
     const triggerStyle = F.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-    useEffect(escapeKeymapEffect, [isOpen, viewId])
+    useEffect(dismissActionEffect, [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -420,10 +400,7 @@ const AsOfDateChip = ({ viewId }) => {
                         ref={dateInputRef}
                         value={dateValue}
                         onChange={handleDateChange}
-                        keymapId={`${viewId}_date_asof`}
-                        keymapName="Date Input"
-                        onRegisterKeymap={E.handleRegisterKeymap}
-                        onUnregisterKeymap={E.handleUnregisterKeymap}
+                        actionContext={viewId}
                     />
                 </Flex>
             </Popover.Content>
@@ -478,23 +455,19 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     }
 
     // Registers/unregisters full keyboard navigation keymap when popover opens/closes
-    // @sig keymapEffect :: () -> (() -> void)?
-    const keymapEffect = () => {
+    // @sig actionRegistrationEffect :: () -> (() -> void)?
+    const actionRegistrationEffect = () => {
         if (!isOpen) return undefined
-        const keymap = KeymapModule.fromBindings(KEYMAP_ID, 'Date Filter', [
-            { description: 'Move down', keys: ['ArrowDown'], action: () => handlersRef.current.handleMoveDown() },
-            { description: 'Move up', keys: ['ArrowUp'], action: () => handlersRef.current.handleMoveUp() },
-            { description: 'Select', keys: ['Enter'], action: () => handlersRef.current.handleSelectHighlighted() },
-            { description: 'Focus dates', keys: ['Tab'], action: () => handlersRef.current.handleTab() },
-            { description: 'Dismiss', keys: ['Escape'], action: () => handlersRef.current.handleDismiss() },
+        return ActionRegistry.register(viewId, [
+            { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.handleMoveDown() },
+            { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.handleMoveUp() },
+            { id: 'select', description: 'Select', execute: () => handlersRef.current.handleSelectHighlighted() },
+            { id: 'navigate:next-apply', description: 'Focus dates', execute: () => handlersRef.current.handleTab() },
+            { id: 'dismiss', description: 'Dismiss', execute: () => handlersRef.current.handleDismiss() },
         ])
-        E.handleRegisterKeymap(keymap)
-        return () => E.handleUnregisterKeymap(KEYMAP_ID)
     }
 
-    const KEYMAP_ID = `${viewId}_date`
     const POPOVER_ID = 'date'
-    const { handleRegisterKeymap, handleUnregisterKeymap } = E
     const handlersRef = useRef({ handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab })
     handlersRef.current = { handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab }
     const startDateRef = useRef(null)
@@ -508,7 +481,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
     const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
 
-    useEffect(keymapEffect, [isOpen, viewId])
+    useEffect(actionRegistrationEffect, [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -547,10 +520,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 onChange={handleCustomStartChange}
                                 placeholder="MM/DD/YYYY"
                                 onTabOut={() => endDateRef?.current?.focus('month')}
-                                keymapId={`${viewId}_date_start`}
-                                keymapName="Date Input"
-                                onRegisterKeymap={handleRegisterKeymap}
-                                onUnregisterKeymap={handleUnregisterKeymap}
+                                actionContext={viewId}
                             />
                         </Flex>
                         <Flex direction="column" gap="1">
@@ -563,10 +533,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 onChange={handleCustomEndChange}
                                 placeholder="MM/DD/YYYY"
                                 onTabOut={() => startDateRef?.current?.focus('month')}
-                                keymapId={`${viewId}_date_end`}
-                                keymapName="Date Input"
-                                onRegisterKeymap={handleRegisterKeymap}
-                                onUnregisterKeymap={handleUnregisterKeymap}
+                                actionContext={viewId}
                             />
                         </Flex>
                     </Flex>
@@ -597,7 +564,6 @@ const GroupByFilterChip = ({ viewId, options }) => {
 
     const handleToggleHighlighted = () => items[highlightedIndex] && handleToggle(items[highlightedIndex].id)
 
-    const KEYMAP_ID = `${viewId}_group_by`
     const POPOVER_ID = 'groupBy'
     const resolvedOptions = options ?? defaultGroupByOptions
     const items = T.toItems(resolvedOptions)
@@ -624,9 +590,7 @@ const GroupByFilterChip = ({ viewId, options }) => {
             highlightedIndex={highlightedIndex}
             singleSelect
             width={155}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={viewId}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}
             onToggle={handleToggle}
@@ -721,7 +685,6 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
     const handleToggleHighlighted = () =>
         highlightedItemId && post(Action.ToggleSecurityFilter(viewId, highlightedItemId))
 
-    const KEYMAP_ID = `${viewId}_securities`
     const POPOVER_ID = 'securities'
     const { badges } = useSelector(state => S.UI.securityFilterData(state, viewId))
     const selectedIds = useSelector(state => S.UI.selectedSecurities(state, viewId))
@@ -744,9 +707,7 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
             searchable
             width={175}
             isActive={isActive}
-            keymapId={KEYMAP_ID}
-            onRegisterKeymap={E.handleRegisterKeymap}
-            onUnregisterKeymap={E.handleUnregisterKeymap}
+            actionContext={viewId}
             onSearchChange={handleSearchChange}
             onMoveDown={handleMoveDown}
             onMoveUp={handleMoveUp}

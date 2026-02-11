@@ -2,7 +2,6 @@
 // ABOUTME: Manages entities (LookupTables), transaction filters, and view UI state
 
 import { LookupTable } from '@graffio/functional'
-import { KeymapModule } from '@graffio/keymap'
 import {
     Account,
     Action,
@@ -29,7 +28,6 @@ import { initializeTableLayout } from '../utils/table-layout.js'
 
 const { closeTabGroup, closeView, createTabGroup, moveView } = TabLayoutReducers
 const { openView, setActiveTabGroup, setActiveView, setTabGroupWidth } = TabLayoutReducers
-const { Keymap } = KeymapModule
 const { createDefaultFilter } = TransactionFilters
 const { createDefaultViewUiState } = ViewUiStateReducer
 
@@ -71,7 +69,6 @@ const createEmptyState = () => ({
     viewUiState: LookupTable([createDefaultViewUiState(ACCOUNT_LIST_VIEW_ID)], ViewUiState, 'id'),
     accountListSortMode: SortMode.ByType(),
     collapsedSections: new Set(),
-    keymaps: LookupTable([], Keymap, 'id'),
     showReopenBanner: false,
     showDrawer: false,
     loadingStatus: null,
@@ -136,10 +133,6 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         // Account list actions
         SetAccountListSortMode : () => ({ ...state, accountListSortMode: action.sortMode }),
         ToggleSectionCollapsed : () => toggleSectionCollapsed(state, action),
-
-        // Keymap actions
-        RegisterKeymap   : () => ({ ...state, keymaps: state.keymaps.addItemWithId(action.keymap) }),
-        UnregisterKeymap : () => ({ ...state, keymaps: state.keymaps.removeItemWithId(action.keymapId) }),
 
         // Global UI actions
         SetShowReopenBanner : () => ({ ...state, showReopenBanner: action.show }),

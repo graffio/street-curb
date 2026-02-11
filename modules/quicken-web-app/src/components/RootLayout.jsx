@@ -2,9 +2,8 @@
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
 
 import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
-import { memoizeOnceWithIdenticalParams } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { FileHandling } from '../services/file-handling.js'
@@ -17,33 +16,19 @@ import { SidebarNav } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
-const GLOBAL_KEYMAP_ID = 'global'
-
-const T = {
-    // Creates a global keymap from a toggle drawer handler
-    // @sig toGlobalKeymap :: Function -> Keymap
-    toGlobalKeymap: toggleDrawer =>
-        KeymapModule.fromBindings(
-            GLOBAL_KEYMAP_ID,
-            'Global',
-            [{ description: 'Toggle shortcuts', keys: ['?'], action: toggleDrawer }],
-            { priority: 0 },
-        ),
-}
-
-const F = {
-    // Memoized global keymap factory (only recreates when toggleDrawer identity changes)
-    // @sig createGlobalKeymap :: Function -> Keymap
-    createGlobalKeymap: memoizeOnceWithIdenticalParams(T.toGlobalKeymap),
-}
+const { ActionRegistry } = KeymapModule
 
 const E = {
-    // Effect to register/unregister global keymap
-    // @sig globalKeymapEffect :: Keymap -> () -> () -> void
-    globalKeymapEffect: keymap => () => {
-        post(Action.RegisterKeymap(keymap))
-        return () => post(Action.UnregisterKeymap(GLOBAL_KEYMAP_ID))
-    },
+    // Registers global toggle-shortcuts action (reads showDrawer from ref for stable identity)
+    // @sig toggleShortcutsEffect :: React.Ref -> () -> (() -> void)
+    toggleShortcutsEffect: showDrawerRef => () =>
+        ActionRegistry.register(null, [
+            {
+                id: 'toggle-shortcuts',
+                description: 'Toggle shortcuts',
+                execute: () => post(Action.SetShowDrawer(!showDrawerRef.current)),
+            },
+        ]),
 }
 
 const LOADING_OVERLAY_STYLE = {
@@ -79,25 +64,24 @@ const RootLayout = () => {
     const loadingStatus = useSelector(S.loadingStatus)
     const pageTitle = useSelector(S.UI.pageTitle)
     const pageSubtitle = useSelector(S.UI.pageSubtitle)
-    const registeredKeymaps = useSelector(S.keymaps)
     const tabLayout = useSelector(S.tabLayout)
-    const availableIntents = useSelector(S.Keymaps.availableIntents)
+    const activeViewId = useSelector(S.activeViewId)
 
-    const toggleDrawer = useCallback(() => post(Action.SetShowDrawer(!showDrawer)), [showDrawer])
-    const globalKeymap = F.createGlobalKeymap(toggleDrawer)
+    // EXEMPT: non-DOM ref — stable closure for ActionRegistry execute callback
+    const showDrawerRef = useRef(showDrawer)
+    showDrawerRef.current = showDrawer
 
     const handleOpenFile = useCallback(() => FileHandling.openFile(setStoredHandle), [])
     const handleReopen = useCallback(() => FileHandling.reopenFile(storedHandle), [storedHandle])
     const handleOpenNew = useCallback(() => FileHandling.openNewFile(setStoredHandle), [])
-    const handleKeyDown = useCallback(KeymapRouting.handleKeydown(registeredKeymaps, tabLayout), [
-        registeredKeymaps,
-        tabLayout,
-    ])
+    const handleKeyDown = useCallback(KeymapRouting.handleKeydown(tabLayout), [tabLayout])
+
+    const availableIntents = showDrawer ? KeymapRouting.collectAvailableIntents(activeViewId) : []
 
     useEffect(() => FileHandling.loadStoredHandle(setStoredHandle), [])
     useEffect(() => FileHandling.loadTestFileIfPresent(), [])
     useEffect(KeymapRouting.keydownEffect(handleKeyDown), [handleKeyDown])
-    useEffect(E.globalKeymapEffect(globalKeymap), [globalKeymap])
+    useEffect(E.toggleShortcutsEffect(showDrawerRef), [])
 
     return (
         <MainLayout title={pageTitle} subtitle={pageSubtitle}>

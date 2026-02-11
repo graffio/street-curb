@@ -43,7 +43,7 @@ import { datePartsToDate, dateToDateParts, formatDateString } from '@graffio/fun
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import {
     expandTwoDigitYear,
     parseDateString,
@@ -51,14 +51,7 @@ import {
     updateDatePartWithValidation,
 } from '../utils/date-input-utils.js'
 
-const E = {
-    // Registers keymap and returns cleanup that unregisters it
-    // @sig keymapRegistrationEffect :: (Keymap, String, Function, Function) -> (() -> void)
-    keymapRegistrationEffect: (keymap, keymapId, onRegister, onUnregister) => {
-        onRegister(keymap)
-        return () => onUnregister(keymapId)
-    },
-}
+const { ActionRegistry } = KeymapModule
 
 /*
  * KeyboardDateInput component
@@ -66,7 +59,7 @@ const E = {
 // prettier-ignore
 const KeyboardDateInput = forwardRef((props, ref) => {
     const { value = null, onChange, disabled = false, placeholder = 'MM/DD/YYYY', style = {}, onTabOut, onShiftTabOut,
-        keymapId, keymapName = 'Date Input', onRegisterKeymap, onUnregisterKeymap, ...restProps } = props
+        actionContext, ...restProps } = props
 
     // Helper functions for keyboard navigation
     const handleTabNavigation = (event, isShiftTab) => {
@@ -397,30 +390,21 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         [typingTimeout],
     )
 
-    // Create keymap with current handlers when in keyboard mode
-    const keymap = useMemo(() => {
-        if (!isKeyboardMode || !onRegisterKeymap || !keymapId) return null
-        return KeymapModule.fromBindings(keymapId, keymapName, [
-            { description: 'Decrement value', keys: ['ArrowUp'], action: () => updateDatePart(false) },
-            { description: 'Increment value', keys: ['ArrowDown'], action: () => updateDatePart(true) },
-            { description: 'Previous field', keys: ['ArrowLeft'], action: handleArrowLeft },
-            { description: 'Next field', keys: ['ArrowRight', '/'], action: handleArrowRight },
-            { description: 'Next field (apply)', keys: ['Tab'], action: handleSlashKey },
-            { description: 'Set to today', keys: ['t'], action: handleTodayKey },
-            { description: 'Decrease by day', keys: ['['], action: () => handleDayAdjustment(false) },
-            { description: 'Increase by day', keys: [']'], action: () => handleDayAdjustment(true) },
-            { description: 'Exit', keys: ['Enter'], action: handleEnterKey },
-        ])
-
-    // Note: Keymap is only for displaying shortcuts in KeymapDrawer; local handleKeyDown processes actual keys.
-    // No need to recreate keymap on state changes since global keymap routing skips input elements.
-    }, [isKeyboardMode, onRegisterKeymap, keymapId, keymapName])
-
-    // Register/unregister keymap when entering/exiting keyboard mode
+    // Display-only: registers actions for KeymapDrawer when in keyboard mode.
+    // Actual key handling is done by local handleKeyDown — global dispatch skips focused inputs.
     useEffect(() => {
-        if (!keymap || !onRegisterKeymap || !onUnregisterKeymap) return undefined
-        return E.keymapRegistrationEffect(keymap, keymapId, onRegisterKeymap, onUnregisterKeymap)
-    }, [keymap, keymapId, onRegisterKeymap, onUnregisterKeymap])
+        if (!isKeyboardMode || !actionContext) return undefined
+        return ActionRegistry.register(actionContext, [
+            { id: 'date:decrement', description: 'Decrement value', execute: () => {} },
+            { id: 'date:increment', description: 'Increment value', execute: () => {} },
+            { id: 'date:prev-field', description: 'Previous field', execute: () => {} },
+            { id: 'date:next-field', description: 'Next field', execute: () => {} },
+            { id: 'date:today', description: 'Set to today', execute: () => {} },
+            { id: 'date:decrement-day', description: 'Decrease by day', execute: () => {} },
+            { id: 'date:increment-day', description: 'Increase by day', execute: () => {} },
+            { id: 'date:exit', description: 'Exit', execute: () => {} },
+        ])
+    }, [isKeyboardMode, actionContext])
 
     return isKeyboardMode ? renderKeyboardModeWrapper() : renderTextMode()
 })
@@ -433,10 +417,7 @@ KeyboardDateInput.propTypes = {
     style: PropTypes.object,
     onTabOut: PropTypes.func,
     onShiftTabOut: PropTypes.func,
-    keymapId: PropTypes.string,
-    keymapName: PropTypes.string,
-    onRegisterKeymap: PropTypes.func,
-    onUnregisterKeymap: PropTypes.func,
+    actionContext: PropTypes.string,
 }
 
 export { KeyboardDateInput }

@@ -6,17 +6,10 @@
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
 /* eslint-disable no-restricted-syntax -- selectors must access state directly */
 
-import {
-    applySort,
-    containsIgnoreCase,
-    memoizeOnceWithIdenticalParams,
-    memoizeReduxState,
-    memoizeReduxStatePerKey,
-} from '@graffio/functional'
+import { applySort, containsIgnoreCase, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
 import { DATE_RANGES } from '@graffio/design-system'
 import { formatDateRange } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { KeymapModule } from '@graffio/keymap'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
 import { accountOrganization } from '../services/account-organization.js'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
@@ -26,7 +19,6 @@ import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
 const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsModule
-const { Keymap } = KeymapModule
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
@@ -66,7 +58,6 @@ const lots = state => state.lots
 const prices = state => state.prices
 const tableLayouts = state => state.tableLayouts
 const tabLayout = state => state.tabLayout
-const keymaps = state => state.keymaps
 const showReopenBanner = state => state.showReopenBanner
 const showDrawer = state => state.showDrawer
 const loadingStatus = state => state.loadingStatus
@@ -400,14 +391,6 @@ const holdingsTree = memoizeReduxStatePerKey(
 const Holdings = { asOf: holdingsAsOf, tree: holdingsTree }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Keymaps
-// ---------------------------------------------------------------------------------------------------------------------
-
-const toAvailableIntents = memoizeOnceWithIdenticalParams((maps, viewId) => Keymap.collectAvailable(maps, viewId))
-
-const Keymaps = { availableIntents: state => toAvailableIntents(keymaps(state), activeViewId(state)) }
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Transactions - memoized selectors
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -483,7 +466,6 @@ export {
     Accounts,
     Categories,
     Holdings,
-    Keymaps,
     Transactions,
     UI,
 
@@ -494,7 +476,6 @@ export {
     draggingViewId,
     dropTargetGroupId,
     initialized,
-    keymaps,
     loadingStatus,
     lots,
     prices,
