@@ -68,3 +68,4 @@ Determine if a non-trivial problem was solved during this work. Trivial = obviou
 - Don't skip the commit quality check — it's how we maintain a readable history
 - Knowledge capture is judgment — not every fix deserves a doc
 - Always ask before deleting spec or brainstorm files
+- After all steps complete, `git add` and `git commit` any files created, modified, or deleted during wrap-up

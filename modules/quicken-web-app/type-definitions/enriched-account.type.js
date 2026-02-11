@@ -1,3 +1,5 @@
+// ABOUTME: Type definition for EnrichedAccount with balance computation logic
+// ABOUTME: Handles holdings-based (investment) and transaction-based (bank) balance strategies
 import { Transaction } from './transaction.js'
 
 // prettier-ignore
@@ -34,15 +36,23 @@ EnrichedAccount.sumBankBalance = (transactions, accountId) => {
     return Transaction.currentBalance(accountTransactions)
 }
 
+// Gets cash balance from DB-computed running balance (respects CASH_IMPACT_ACTIONS)
+// @sig cashBalanceFromRunning :: ([Transaction], String) -> Number
+EnrichedAccount.cashBalanceFromRunning = (transactions, accountId) => {
+    const accountTxns = transactions.filter(t => t.accountId === accountId)
+    if (accountTxns.length === 0) return 0
+    return accountTxns[accountTxns.length - 1].runningBalance ?? 0
+}
+
 // Creates EnrichedAccount from Account with computed balance
 // @sig fromAccount :: (Account, [Holding], [Transaction]) -> EnrichedAccount
 EnrichedAccount.fromAccount = (account, holdings, transactions) => {
     const { id } = account
-    if (EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)) {
-        const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
-        return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
-    }
-    return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
+    const isHoldingsType = EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)
+    if (!isHoldingsType) return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
+    const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
+    if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
+    return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, null)
 }
 
 // Enriches all accounts with computed balances

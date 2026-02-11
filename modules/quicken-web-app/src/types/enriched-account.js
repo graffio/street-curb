@@ -162,12 +162,11 @@ EnrichedAccount.cashBalanceFromRunning = (transactions, accountId) => {
 
 EnrichedAccount.fromAccount = (account, holdings, transactions) => {
     const { id } = account
-    if (EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)) {
-        const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
-        if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
-        return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, null)
-    }
-    return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
+    const isHoldingsType = EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)
+    if (!isHoldingsType) return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
+    const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
+    if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
+    return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, null)
 }
 
 EnrichedAccount.enrichAll = (accounts, holdings, transactions) =>
