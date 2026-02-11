@@ -26,6 +26,13 @@ Every function goes in a group, even if it's the only one of its type:
 
 If a function doesn't fit any group — stop and ask. Don't leave it uncategorized.
 
+**Don't over-extract.** Extract into a named function when:
+- Used 3+ times
+- A name makes the purpose clearer than the expression itself (compound checks, non-obvious logic)
+- Indentation would force a line break
+
+Leave inline when the expression is already self-documenting (`MY_SET.has(x)`, `arr.includes(y)`, `obj.field`).
+
 ## Tagged Types
 
 Domain entities should be Tagged or TaggedSum types. When adding behavior to a domain type, put it in the `.type.js` file — never modify the generated `.js` file. The `.type.js` file follows the same cohesion group structure as any other module.

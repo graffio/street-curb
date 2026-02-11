@@ -6,7 +6,7 @@ Components are **wiring** between selectors (reads) and actions (writes). No log
 
 Config constants → P/T groups (module level) → helper components → exported component(s) LAST.
 
-**Don't over-extract.** A single readable expression (`MY_SET.has(x)`, `obj.field`) stays inline. Extract only when indentation would force a line break or the logic is non-obvious.
+**Don't over-extract.** Extract when: used 3+ times, a name clarifies non-obvious logic, or indentation forces a line break. Leave self-documenting expressions inline (`MY_SET.has(x)`, `obj.field`).
 
 ## Handlers
 
