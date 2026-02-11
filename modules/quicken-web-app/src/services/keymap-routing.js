@@ -1,32 +1,41 @@
 // ABOUTME: Global keymap routing service
-// ABOUTME: Resolves keypresses to actions using registered keymaps
+// ABOUTME: Resolves keypresses to actions via ActionRegistry + DEFAULT_BINDINGS
 
 import { KeymapModule } from '@graffio/keymap'
 
-const { ActionRegistry, Keymap, normalizeKey } = KeymapModule
+const { ActionRegistry, normalizeKey } = KeymapModule
 
+// prettier-ignore
 const DEFAULT_BINDINGS = {
-    ArrowDown: 'navigate:down',
-    ArrowUp: 'navigate:up',
-    j: 'navigate:down',
-    k: 'navigate:up',
-    Escape: 'dismiss',
-    Enter: 'select',
-    '?': 'toggle-shortcuts',
-    ArrowLeft: 'navigate:left',
+    ArrowDown : 'navigate:down',
+    ArrowUp   : 'navigate:up',
+    j         : 'navigate:down',
+    k         : 'navigate:up',
+    Escape    : 'dismiss',
+    Enter     : 'select',
+    '?'       : 'toggle-shortcuts',
+    ArrowLeft : 'navigate:left',
     ArrowRight: 'navigate:right',
-    t: 'date:today',
-    '[': 'date:decrement-day',
-    ']': 'date:increment-day',
-    Tab: 'navigate:next-apply',
-    a: 'filter:accounts',
-    c: 'filter:categories',
-    d: 'filter:date',
-    x: 'filter:actions',
-    h: 'filter:securities',
-    g: 'filter:group-by',
-    f: 'filter:search',
-    '/': 'filter:search',
+    t         : 'date:today',
+    '['       : 'date:decrement-day',
+    ']'       : 'date:increment-day',
+    Tab       : 'navigate:next-apply',
+    a         : 'filter:accounts',
+    c         : 'filter:categories',
+    d         : 'filter:date',
+    x         : 'filter:actions',
+    h         : 'filter:securities',
+    g         : 'filter:group-by',
+    f         : 'filter:search',
+    '/'       : 'filter:search',
+}
+
+const GROUP_NAMES = {
+    navigate: 'Navigation',
+    filter: 'Filters',
+    date: 'Date',
+    dismiss: 'Navigation',
+    select: 'Navigation',
 }
 
 const P = {
@@ -46,22 +55,41 @@ const T = {
         return activeGroup?.activeViewId ?? null
     },
 
-    // Sorts keymaps by priority descending
-    // @sig toSortedKeymaps :: [Keymap] -> [Keymap]
-    toSortedKeymaps: keymaps => [...keymaps].sort((a, b) => b.priority - a.priority),
+    // Inverts DEFAULT_BINDINGS: { key: actionId } → { actionId: [key1, key2] }
+    // @sig toReverseBindings :: () -> { [actionId]: [String] }
+    toReverseBindings: () =>
+        Object.entries(DEFAULT_BINDINGS).reduce((acc, [key, actionId]) => {
+            acc[actionId] = [...(acc[actionId] || []), key]
+            return acc
+        }, {}),
+
+    // Derives group name from action ID prefix
+    // @sig toGroupName :: String -> String
+    toGroupName: actionId => {
+        const prefix = actionId.includes(':') ? actionId.slice(0, actionId.indexOf(':')) : actionId
+        return GROUP_NAMES[prefix] || 'Global'
+    },
+
+    // Deduplicates actions by id, keeping first occurrence
+    // @sig toUniqueActions :: [{ id }] -> [{ id }]
+    toUniqueActions: actions => [...new Map(actions.map(a => [a.id, a])).values()],
+
+    // Maps a registered action to a display intent using reverse bindings
+    // @sig toIntent :: { [actionId]: [String] } -> { id, description } -> { description, keys, from }
+    toIntent:
+        reverseBindings =>
+        ({ id, description }) => ({ description, keys: reverseBindings[id], from: T.toGroupName(id) }),
+
+    // Collects display intents for KeymapDrawer from ActionRegistry + DEFAULT_BINDINGS
+    // @sig toAvailableIntents :: String|null -> [{ description, keys, from }]
+    toAvailableIntents: activeViewId => {
+        const reverseBindings = T.toReverseBindings()
+        const actions = T.toUniqueActions(ActionRegistry.collectForContext(activeViewId))
+        return actions.filter(a => reverseBindings[a.id]).map(T.toIntent(reverseBindings))
+    },
 }
 
 const E = {
-    // Executes a resolved keymap action (function call or key translation)
-    // @sig executeAction :: (Any, EventTarget) -> void
-    executeAction: (action, target) => {
-        if (typeof action === 'function') return action()
-        if (typeof action === 'string') {
-            const syntheticEvent = new window.KeyboardEvent('keydown', { key: action, bubbles: true })
-            target.dispatchEvent(syntheticEvent)
-        }
-    },
-
     // Creates keydown listener effect for global keyboard handling
     // @sig keydownEffect :: (KeyboardEvent -> void) -> () -> () -> void
     keydownEffect: handler => () => {
@@ -69,31 +97,26 @@ const E = {
         return () => window.removeEventListener('keydown', handler)
     },
 
-    // Handles keydown events — resolves via ActionRegistry bindings, then Keymap bindings
-    // @sig handleKeydown :: ([Keymap], TabLayout) -> KeyboardEvent -> void
-    handleKeydown: (keymaps, tabLayout) => event => {
+    // Handles keydown events — resolves via ActionRegistry with DEFAULT_BINDINGS
+    // @sig handleKeydown :: TabLayout -> KeyboardEvent -> void
+    handleKeydown: tabLayout => event => {
         if (P.isInputElement(event.target)) return
 
         const key = normalizeKey(event)
         const activeViewId = T.toActiveViewId(tabLayout)
-
         const actionId = DEFAULT_BINDINGS[key]
-        const action = actionId ? ActionRegistry.resolve(actionId, activeViewId) : null
-        if (action) {
-            event.preventDefault()
-            action.execute()
-            return
-        }
+        if (!actionId) return
 
-        const sortedKeymaps = T.toSortedKeymaps(keymaps)
-        const result = Keymap.resolve(key, sortedKeymaps, activeViewId)
-
-        if (!result) return
-        if (result.blocked) return event.preventDefault()
+        const action = ActionRegistry.resolve(actionId, activeViewId)
+        if (!action) return
 
         event.preventDefault()
-        E.executeAction(result.action, event.target)
+        action.execute()
     },
+
+    // Collects display intents for KeymapDrawer
+    // @sig collectAvailableIntents :: String|null -> [{ description, keys, from }]
+    collectAvailableIntents: T.toAvailableIntents,
 }
 
 export { E as KeymapRouting }

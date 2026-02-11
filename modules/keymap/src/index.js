@@ -1,10 +1,7 @@
 // ABOUTME: Public API for @graffio/keymap
-// ABOUTME: Exports types (Intent, Keymap), normalizeKey, and formatKey utilities
+// ABOUTME: Exports ActionRegistry, normalizeKey, and formatKey utilities
 
-import { LookupTable } from '@graffio/functional'
 import { ActionRegistry } from './action-registry.js'
-import { Intent } from './types/intent.js'
-import { Keymap } from './types/keymap.js'
 import { normalizeKey } from './keymap.js'
 
 const KEY_SYMBOLS = {
@@ -43,29 +40,6 @@ const T = {
     formatKeys: keys => keys.map(T.formatKey).join(', '),
 }
 
-const F = {
-    // Creates a Keymap from a plain array of binding specs
-    // @sig fromBindings :: (String, String, [{ description, keys, action }], Options?) -> Keymap
-    fromBindings: (id, name, bindings, { priority = 10, blocking = false, activeForViewId = null } = {}) => {
-        const intents = LookupTable(
-            bindings.map(({ description, keys, action }) => Intent(description, keys, action)),
-            Intent,
-            'description',
-        )
-        return Keymap(id, name, priority, blocking, activeForViewId, intents)
-    },
-}
-
-const fromBindings = F.fromBindings
-
-const KeymapModule = {
-    ActionRegistry,
-    Intent,
-    Keymap,
-    normalizeKey,
-    formatKey: T.formatKey,
-    formatKeys: T.formatKeys,
-    fromBindings,
-}
+const KeymapModule = { ActionRegistry, normalizeKey, formatKey: T.formatKey, formatKeys: T.formatKeys }
 
 export { KeymapModule }

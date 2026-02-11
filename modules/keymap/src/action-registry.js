@@ -34,6 +34,10 @@ const ActionRegistry = {
     resolve: (actionId, activeContext) =>
         find(P.isMatchingAction(actionId, activeContext), [...registrations].reverse()) ?? null,
 
+    // Returns all actions available for a given context (includes global actions with null context)
+    // @sig collectForContext :: String|null -> [{ id, description, context }]
+    collectForContext: activeContext => filter(r => r.context === null || r.context === activeContext, registrations),
+
     // Empties the registry (test-only)
     // @sig clear :: () -> void
     clear: () => {
