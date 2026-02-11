@@ -394,7 +394,7 @@ const KeyboardDateInput = forwardRef((props, ref) => {
     // Actual key handling is done by local handleKeyDown — global dispatch skips focused inputs.
     useEffect(() => {
         if (!isKeyboardMode || !actionContext) return undefined
-        ActionRegistry.register(actionContext, [
+        return ActionRegistry.register(actionContext, [
             { id: 'date:decrement', description: 'Decrement value', execute: () => {} },
             { id: 'date:increment', description: 'Increment value', execute: () => {} },
             { id: 'date:prev-field', description: 'Previous field', execute: () => {} },
@@ -404,7 +404,6 @@ const KeyboardDateInput = forwardRef((props, ref) => {
             { id: 'date:increment-day', description: 'Increase by day', execute: () => {} },
             { id: 'date:exit', description: 'Exit', execute: () => {} },
         ])
-        return () => ActionRegistry.unregister(actionContext)
     }, [isKeyboardMode, actionContext])
 
     return isKeyboardMode ? renderKeyboardModeWrapper() : renderTextMode()

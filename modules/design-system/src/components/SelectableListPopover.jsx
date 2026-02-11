@@ -146,13 +146,12 @@ const SelectableListPopover = ({
     // @sig actionRegistrationEffect :: () -> (() -> void)?
     const actionRegistrationEffect = () => {
         if (!actionContext || !open) return undefined
-        ActionRegistry.register(actionContext, [
+        return ActionRegistry.register(actionContext, [
             { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.onMoveDown() },
             { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.onMoveUp() },
             { id: 'select', description: 'Toggle', execute: () => handlersRef.current.onToggleHighlighted() },
             { id: 'dismiss', description: 'Dismiss', execute: () => handlersRef.current.onDismiss() },
         ])
-        return () => ActionRegistry.unregister(actionContext)
     }
 
     // Maps an item and its position to an ItemRow or SingleSelectRow element

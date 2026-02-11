@@ -19,6 +19,14 @@ const DEFAULT_BINDINGS = {
     '[': 'date:decrement-day',
     ']': 'date:increment-day',
     Tab: 'navigate:next-apply',
+    a: 'filter:accounts',
+    c: 'filter:categories',
+    d: 'filter:date',
+    x: 'filter:actions',
+    h: 'filter:securities',
+    g: 'filter:group-by',
+    f: 'filter:search',
+    '/': 'filter:search',
 }
 
 const P = {

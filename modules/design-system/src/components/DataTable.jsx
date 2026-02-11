@@ -82,12 +82,11 @@ const E = {
     actionRegistrationEffect: (actionContext, navRef) => () => {
         if (!actionContext) return undefined
 
-        ActionRegistry.register(actionContext, [
+        return ActionRegistry.register(actionContext, [
             { id: 'navigate:down', description: 'Move down', execute: T.toNavigateHandler('ArrowDown', navRef) },
             { id: 'navigate:up', description: 'Move up', execute: T.toNavigateHandler('ArrowUp', navRef) },
             { id: 'dismiss', description: 'Dismiss', execute: () => navRef.current.onEscape?.() },
         ])
-        return () => ActionRegistry.unregister(actionContext)
     },
 }
 

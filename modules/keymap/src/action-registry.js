@@ -4,6 +4,7 @@
 import { filter, find } from '@graffio/functional'
 
 let registrations = []
+let nextBatchId = 0
 
 const P = {
     // Checks if a registration matches the given action ID and is valid for the active context
@@ -15,11 +16,13 @@ const P = {
 }
 
 const ActionRegistry = {
-    // Appends actions for a context to the registry
-    // @sig register :: (String|null, [{ id, description, execute }]) -> void
+    // Appends actions for a context; returns cleanup function that removes only this batch
+    // @sig register :: (String|null, [{ id, description, execute }]) -> (() -> void)
     register: (context, actions) => {
-        const entries = actions.map(({ id, description, execute }) => ({ context, id, description, execute }))
+        const batchId = nextBatchId++
+        const entries = actions.map(({ id, description, execute }) => ({ batchId, context, id, description, execute }))
         registrations = [...registrations, ...entries]
+        return () => (registrations = filter(r => r.batchId !== batchId, registrations))
     },
 
     // Removes all actions registered under a context
@@ -33,7 +36,10 @@ const ActionRegistry = {
 
     // Empties the registry (test-only)
     // @sig clear :: () -> void
-    clear: () => (registrations = []),
+    clear: () => {
+        registrations = []
+        nextBatchId = 0
+    },
 }
 
 export { ActionRegistry }

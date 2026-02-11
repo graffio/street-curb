@@ -87,6 +87,48 @@ test('ActionRegistry.resolve', t => {
     t.end()
 })
 
+test('ActionRegistry.register cleanup function', t => {
+    t.beforeEach(() => ActionRegistry.clear())
+
+    t.test('Given two registrations with the same context', t => {
+        t.test('When I call the first cleanup function', t => {
+            const tableExecute = () => 'table'
+            const popoverExecute = () => 'popover'
+
+            const cleanupTable = ActionRegistry.register('view-1', [
+                { id: 'navigate:down', description: 'Move down', execute: tableExecute },
+            ])
+            ActionRegistry.register('view-1', [
+                { id: 'navigate:down', description: 'Move down', execute: popoverExecute },
+            ])
+
+            cleanupTable()
+            const result = ActionRegistry.resolve('navigate:down', 'view-1')
+            t.equal(result.execute, popoverExecute, 'Then only the first batch is removed')
+            t.end()
+        })
+
+        t.test('When I call the second cleanup function', t => {
+            const tableExecute = () => 'table'
+            const popoverExecute = () => 'popover'
+
+            ActionRegistry.register('view-1', [
+                { id: 'navigate:down', description: 'Move down', execute: tableExecute },
+            ])
+            const cleanupPopover = ActionRegistry.register('view-1', [
+                { id: 'navigate:down', description: 'Move down', execute: popoverExecute },
+            ])
+
+            cleanupPopover()
+            const result = ActionRegistry.resolve('navigate:down', 'view-1')
+            t.equal(result.execute, tableExecute, 'Then the earlier registration is revealed')
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
 test('ActionRegistry.unregister', t => {
     t.beforeEach(() => ActionRegistry.clear())
 
