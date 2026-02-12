@@ -4,6 +4,7 @@
 
 // Import Radix Themes CSS
 import '@radix-ui/themes/styles.css'
+import './styles/datatable.css'
 
 import { SelectableListPopover } from '@graffio/design-system/src/components/SelectableListPopover.jsx'
 

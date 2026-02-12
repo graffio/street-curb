@@ -28,13 +28,16 @@ const DEFAULT_BINDINGS = {
     g         : 'filter:group-by',
     f         : 'filter:search',
     '/'       : 'filter:search',
+    s             : 'search:open',
+    'shift+Enter' : 'search:prev',
 }
 
 const GROUP_NAMES = {
     navigate: 'Navigation',
     filter: 'Filters',
+    search: 'Search',
     date: 'Date',
-    dismiss: 'Navigation',
+    dismiss: 'Search',
     select: 'Navigation',
 }
 

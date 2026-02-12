@@ -2,6 +2,7 @@
 // ABOUTME: Displays investment account transactions with running cash balance
 
 import { DataTable, Flex } from '@graffio/design-system'
+import { KeymapModule } from '@graffio/keymap'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { TransactionColumns } from '../columns/index.js'
@@ -9,6 +10,7 @@ import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { Action, TableLayout } from '../types/index.js'
+const { ActionRegistry } = KeymapModule
 const { investmentColumns } = TransactionColumns
 
 const pageContainerStyle = { height: '100%' }
@@ -29,6 +31,27 @@ const T = {
     // @sig toRowIndex :: ([Row], String) -> Number
     toRowIndex: (data, id) => data.findIndex(r => r.transaction?.id === id),
 
+    // Finds the row index of the adjacent match in match-list order
+    // @sig toAdjacentMatchRowIdx :: ([Row], [String], Number, Number) -> Number
+    toAdjacentMatchRowIdx: (data, matchIds, currentIdx, dir) => {
+        const targetIdx = (currentIdx + dir + matchIds.length) % matchIds.length
+        return T.toRowIndex(data, matchIds[targetIdx])
+    },
+
+    // Reducer: picks the match closest to fromRowIdx in the given direction (wrapping)
+    // @sig toClosestMatch :: ([Row], Number, Number, Number) -> ({ dist, rowIdx }, String) -> { dist, rowIdx }
+    toClosestMatch: (data, fromRowIdx, len, dir) => (best, id) => {
+        const idx = data.findIndex(r => r.transaction?.id === id)
+        if (idx < 0) return best
+        const dist = ((idx - fromRowIdx) * dir + len) % len
+        return dist > 0 && dist < best.dist ? { dist, rowIdx: idx } : best
+    },
+
+    // Finds the display row index of the nearest match forward (dir=1) or backward (dir=-1)
+    // @sig toNearestMatchRowIdx :: ([Row], [String], Number, Number) -> Number
+    toNearestMatchRowIdx: (data, matchIds, fromRowIdx, dir) =>
+        matchIds.reduce(T.toClosestMatch(data, fromRowIdx, data.length, dir), { dist: Infinity, rowIdx: -1 }).rowIdx,
+
     // Creates a date range spanning the last 12 months
     // @sig toDefaultDateRange :: () -> DateRange
     toDefaultDateRange: () => {
@@ -41,15 +64,14 @@ const T = {
 }
 
 const E = {
-    /* Dispatch highlight change, resolving ID to index based on search mode
+    /* Dispatch highlight change — always updates currentRowIndex
      * Uses getData() to fetch current data at call time (avoids stale closures)
-     * @sig dispatchHighlightChange :: (Number, [String], () -> [Row], String) -> String -> void
+     * @sig dispatchHighlightChange :: (() -> [Row], String) -> String -> void
      */
-    dispatchHighlightChange: (matchCount, searchMatches, getData, viewId) => newId => {
-        const inSearchMode = matchCount > 0
-        const idx = inSearchMode ? searchMatches.indexOf(newId) : T.toRowIndex(getData(), newId)
+    dispatchHighlightChange: (getData, viewId) => newId => {
+        const idx = T.toRowIndex(getData(), newId)
         if (idx < 0) return
-        post(Action.SetViewUiState(viewId, { [inSearchMode ? 'currentSearchIndex' : 'currentRowIndex']: idx }))
+        post(Action.SetViewUiState(viewId, { currentRowIndex: idx }))
     },
 
     // Initializes the date range to last 12 months if not already set
@@ -59,17 +81,37 @@ const E = {
             post(Action.SetTransactionFilter(viewId, { dateRange: T.toDefaultDateRange() }))
     },
 
-    // Clears search query and resets search index when escaping search mode
+    // Navigates to next/prev search match, finding nearest in display order if between matches
+    // @sig navigateToMatch :: ([Row], [String], String, String, Number) -> void
+    navigateToMatch: (data, searchMatches, highlightedId, viewId, dir) => {
+        if (searchMatches.length === 0) return
+        const currentIdx = searchMatches.indexOf(highlightedId)
+        const rowIdx =
+            currentIdx >= 0
+                ? T.toAdjacentMatchRowIdx(data, searchMatches, currentIdx, dir)
+                : T.toNearestMatchRowIdx(data, searchMatches, T.toRowIndex(data, highlightedId), dir)
+        if (rowIdx >= 0) post(Action.SetViewUiState(viewId, { currentRowIndex: rowIdx }))
+    },
+
+    // Clears search query when escaping search mode
     // @sig clearSearch :: (String, String) -> void
     clearSearch: (searchQuery, viewId) => {
         if (!searchQuery) return
         post(Action.SetTransactionFilter(viewId, { searchQuery: '' }))
-        post(Action.SetViewUiState(viewId, { currentSearchIndex: 0 }))
     },
 
     // Ensures table layout exists in Redux (idempotent, only creates if missing)
     // @sig ensureTableLayoutEffect :: (String, [Column]) -> () -> void
     ensureTableLayoutEffect: (tableLayoutId, columns) => () => post(Action.EnsureTableLayout(tableLayoutId, columns)),
+
+    // Registers search + select actions with ActionRegistry
+    // @sig searchActionsEffect :: (String, Ref, Ref) -> () -> (() -> void)
+    searchActionsEffect: (viewId, handlersRef, searchInputRef) => () =>
+        ActionRegistry.register(viewId, [
+            { id: 'select', description: 'Next match', execute: () => handlersRef.current.onSearchNext() },
+            { id: 'search:prev', description: 'Previous match', execute: () => handlersRef.current.onSearchPrev() },
+            { id: 'search:open', description: 'Open search', execute: () => searchInputRef.current?.focus() },
+        ]),
 }
 
 /*
@@ -95,7 +137,8 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
     const allTableLayouts = useSelector(S.tableLayouts)
     const allAccountTransactions = useSelector(state => S.Transactions.forAccount(state, viewId, accountId))
     const investmentFiltered = useSelector(state => S.Transactions.filteredForInvestment(state, viewId, accountId))
-    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId))
+    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
+    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
     useEffect(E.ensureTableLayoutEffect(tableLayoutId, investmentColumns), [tableLayoutId])
@@ -115,13 +158,19 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
     const dataRef = useRef(data)
     dataRef.current = data
 
-    // Highlighted transaction ID based on search mode or row index
+    // Highlighted transaction ID based on row index
     const highlightedId = useSelector(state =>
         S.Transactions.highlightedId(state, viewId, accountId, tableLayoutId, investmentColumns),
     )
-    const matchCount = searchMatches.length
     const { length: filteredCount } = investmentFiltered
     const { length: totalCount } = allAccountTransactions
+
+    const searchInputRef = useRef(null)
+    const searchHandlersRef = useRef({})
+    searchHandlersRef.current = {
+        onSearchNext: () => E.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, 1),
+        onSearchPrev: () => E.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, -1),
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Callbacks
@@ -143,12 +192,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
 
     // Uses getData() to access current data without adding to deps (prevents keymap registration loop)
     const getData = useCallback(() => dataRef.current, [])
-    const handleHighlightChange = useCallback(E.dispatchHighlightChange(matchCount, searchMatches, getData, viewId), [
-        matchCount,
-        searchMatches,
-        getData,
-        viewId,
-    ])
+    const handleHighlightChange = useCallback(E.dispatchHighlightChange(getData, viewId), [getData, viewId])
 
     const handleEscape = useCallback(() => E.clearSearch(searchQuery, viewId), [searchQuery, viewId])
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
@@ -162,6 +206,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
     )
 
     useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])
+    useEffect(E.searchActionsEffect(viewId, searchHandlersRef, searchInputRef), [viewId])
 
     // Wait for EnsureTableLayout to populate Redux on first render
     if (!tableLayout) return null
@@ -175,6 +220,12 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
                 showCategories={false}
                 filteredCount={filteredCount}
                 totalCount={totalCount}
+                searchQuery={searchQuery}
+                searchMatches={searchMatches}
+                highlightedId={highlightedId}
+                searchInputRef={searchInputRef}
+                onSearchNext={() => searchHandlersRef.current.onSearchNext()}
+                onSearchPrev={() => searchHandlersRef.current.onSearchPrev()}
             />
             <div style={mainContentStyle}>
                 <DataTable
@@ -183,7 +234,6 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
                     height={height}
                     rowHeight={60}
                     highlightedId={highlightedId}
-                    focusableIds={matchCount > 0 ? searchMatches : undefined}
                     sorting={sorting}
                     columnSizing={columnSizing}
                     columnOrder={columnOrder}
@@ -194,7 +244,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
                     onHighlightChange={handleHighlightChange}
                     onEscape={handleEscape}
                     actionContext={viewId}
-                    context={{ searchQuery }}
+                    context={{ searchQuery: searchQuery || filterQuery }}
                 />
             </div>
         </Flex>
