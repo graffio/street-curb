@@ -6,7 +6,14 @@
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
 /* eslint-disable no-restricted-syntax -- selectors must access state directly */
 
-import { applySort, containsIgnoreCase, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
+import {
+    applySort,
+    containsIgnoreCase,
+    memoizeReduxState,
+    memoizeReduxStatePerKey,
+    truncateWithCount,
+    wrapIndex,
+} from '@graffio/functional'
 import { DATE_RANGES } from '@graffio/design-system'
 import { Formatters } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
@@ -21,28 +28,7 @@ const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = Holding
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
-
-// prettier-ignore
-const INVESTMENT_ACTIONS = [
-    { id: 'Buy',      label: 'Buy' },
-    { id: 'Sell',     label: 'Sell' },
-    { id: 'Div',      label: 'Dividend' },
-    { id: 'ReinvDiv', label: 'Reinvest Dividend' },
-    { id: 'XIn',      label: 'Transfer In' },
-    { id: 'XOut',     label: 'Transfer Out' },
-    { id: 'ContribX', label: 'Contribution' },
-    { id: 'WithdrwX', label: 'Withdrawal' },
-    { id: 'ShtSell',  label: 'Short Sell' },
-    { id: 'CvrShrt',  label: 'Cover Short' },
-    { id: 'CGLong',   label: 'Long-Term Gain' },
-    { id: 'CGShort',  label: 'Short-Term Gain' },
-    { id: 'MargInt',  label: 'Margin Interest' },
-    { id: 'ShrsIn',   label: 'Shares In' },
-    { id: 'ShrsOut',  label: 'Shares Out' },
-    { id: 'StkSplit', label: 'Stock Split' },
-    { id: 'Exercise', label: 'Exercise Option' },
-    { id: 'Expire',   label: 'Expire Option' },
-]
+const INVESTMENT_ACTIONS = TransactionFilter.INVESTMENT_ACTIONS
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Pure state accessors
@@ -197,16 +183,8 @@ const _filterPopoverData = (state, viewId) => {
         : allItems
     const count = filteredItems.length
 
-    // -1 means no highlight (initial state), otherwise clamp to valid range
-    const highlightedIndex = count === 0 ? -1 : Math.max(-1, Math.min(filterPopoverHighlight, count - 1))
-
-    // Arrow down from -1 goes to 0, otherwise wrap around
-    const nextHighlightIndex =
-        count === 0 ? -1 : highlightedIndex < 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
-
-    // Arrow up from -1 goes to last item, otherwise wrap around
-    const prevHighlightIndex =
-        count === 0 ? -1 : highlightedIndex < 0 ? count - 1 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
+    // prettier-ignore
+    const { index: highlightedIndex, next: nextHighlightIndex, prev: prevHighlightIndex } = wrapIndex(filterPopoverHighlight, count)
     const highlightedItemId = highlightedIndex >= 0 && count > 0 ? filteredItems[highlightedIndex].id : null
 
     return {
@@ -229,16 +207,6 @@ UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'view
 const MAX_DETAIL_LINES = 3
 const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label }) => [id, label]))
 
-// Truncates a list of strings to MAX_DETAIL_LINES with "+N more" suffix
-// @sig toTruncatedDetails :: [String] -> [String]
-const toTruncatedDetails = items => {
-    const { length } = items
-    if (length === 0) return []
-    if (length <= MAX_DETAIL_LINES) return items
-    const shown = items.slice(0, MAX_DETAIL_LINES - 1)
-    return [...shown, `+${length - shown.length} more`]
-}
-
 const _dateChipData = (state, viewId) => {
     const { dateRange, dateRangeKey } = filter(state, viewId)
     const label = dateRange ? Formatters.formatDateRange(dateRange.start, dateRange.end) : null
@@ -247,25 +215,25 @@ const _dateChipData = (state, viewId) => {
 
 const _categoryChipData = (state, viewId) => {
     const selected = filter(state, viewId).selectedCategories
-    return { isActive: selected.length > 0, details: toTruncatedDetails(selected) }
+    return { isActive: selected.length > 0, details: truncateWithCount(selected, MAX_DETAIL_LINES) }
 }
 
 const _accountChipData = (state, viewId) => {
     const selected = filter(state, viewId).selectedAccounts
     const names = selected.map(id => accounts(state).get(id)?.name || id)
-    return { isActive: selected.length > 0, details: toTruncatedDetails(names) }
+    return { isActive: selected.length > 0, details: truncateWithCount(names, MAX_DETAIL_LINES) }
 }
 
 const _securityChipData = (state, viewId) => {
     const selected = filter(state, viewId).selectedSecurities
     const symbols = selected.map(id => securities(state).get(id)?.symbol || id)
-    return { isActive: selected.length > 0, details: toTruncatedDetails(symbols) }
+    return { isActive: selected.length > 0, details: truncateWithCount(symbols, MAX_DETAIL_LINES) }
 }
 
 const _actionChipData = (state, viewId) => {
     const selected = filter(state, viewId).selectedInvestmentActions
     const labels = selected.map(code => ACTION_LABELS_MAP[code] || code)
-    return { isActive: selected.length > 0, details: toTruncatedDetails(labels) }
+    return { isActive: selected.length > 0, details: truncateWithCount(labels, MAX_DETAIL_LINES) }
 }
 
 const _searchChipData = (state, viewId) => {
@@ -281,7 +249,7 @@ const _filterCounts = (state, viewId, accountId = null) => {
     const accountFilteredTxns = accountId ? filteredTxns.filter(t => t.accountId === accountId) : filteredTxns
     const total = baseTxns.length
     const filtered = accountFilteredTxns.length
-    const isFiltering = filtered < total || f.dateRangeKey !== 'all' || f.filterQuery?.length > 0
+    const isFiltering = TransactionFilter.isActive(f)
     return { filtered, total, isFiltering }
 }
 
@@ -418,41 +386,51 @@ const _filteredForInvestment = (state, viewId, accountId) => {
     return TransactionFilter.applyInvestment(filter(state, viewId), transactions, categories, securities, accountId)
 }
 
-const _sortedForDisplay = (state, viewId, accountId, tableLayoutId, columns) => {
+const _makeSortedSelector = filterFn => (state, viewId, accountId, tableLayoutId, columns) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
-    const rows = Transaction.toRegisterRows(T.filteredForInvestment(state, viewId, accountId))
+    const rows = Transaction.toRegisterRows(filterFn(state, viewId, accountId))
     return tableLayout ? applySort(TableLayout.toSorting(tableLayout), rows, columns) : rows
 }
 
-const _highlightedId = (state, viewId, accountId, tableLayoutId, columns) => {
-    const data = T.sortedForDisplay(state, viewId, accountId, tableLayoutId, columns)
+const _makeHighlightSelector = sortFn => (state, viewId, accountId, tableLayoutId, columns) => {
+    const data = sortFn(state, viewId, accountId, tableLayoutId, columns)
     return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
 }
 
-const _sortedForBankDisplay = (state, viewId, accountId, tableLayoutId, columns) => {
-    const tableLayout = state.tableLayouts.get(tableLayoutId)
-    const rows = Transaction.toRegisterRows(T.filteredForAccount(state, viewId, accountId))
-    return tableLayout ? applySort(TableLayout.toSorting(tableLayout), rows, columns) : rows
-}
-
-const _highlightedIdForBank = (state, viewId, accountId, tableLayoutId, columns) => {
-    const data = T.sortedForBankDisplay(state, viewId, accountId, tableLayoutId, columns)
-    return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
-}
+const SORT_STATE_KEYS = ['transactions', 'categories', 'securities', 'tableLayouts']
+const HIGHLIGHT_STATE_KEYS = [...SORT_STATE_KEYS, 'viewUiState']
 
 // prettier-ignore
 const T= {
-    enriched             : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'                  ], 'transactionFilters', _enriched),
-    filtered             : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filtered),
-    forAccount           : memoizeReduxStatePerKey(['transactions'                                              ], 'transactionFilters', _forAccount),
-    filteredForAccount   : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForAccount,),
-    filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForInvestment,),
-    highlightedId        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts', 'viewUiState'], 'transactionFilters', _highlightedId,),
-    highlightedIdForBank : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts', 'viewUiState'], 'transactionFilters', _highlightedIdForBank,),
-    searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'               ], 'transactionFilters', _searchMatches),
-    sortedForBankDisplay : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForBankDisplay,),
-    sortedForDisplay     : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForDisplay,),
+    enriched             : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'  ], 'transactionFilters', _enriched),
+    filtered             : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _filtered),
+    forAccount           : memoizeReduxStatePerKey(['transactions'                            ], 'transactionFilters', _forAccount),
+    filteredForAccount   : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _filteredForAccount),
+    filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _filteredForInvestment),
+    searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _searchMatches),
 }
+
+// Parameterized sort/highlight pairs — wired after T is defined so factory receives memoized filter functions
+T.sortedForDisplay = memoizeReduxStatePerKey(
+    SORT_STATE_KEYS,
+    'transactionFilters',
+    _makeSortedSelector(T.filteredForInvestment),
+)
+T.sortedForBankDisplay = memoizeReduxStatePerKey(
+    SORT_STATE_KEYS,
+    'transactionFilters',
+    _makeSortedSelector(T.filteredForAccount),
+)
+T.highlightedId = memoizeReduxStatePerKey(
+    HIGHLIGHT_STATE_KEYS,
+    'transactionFilters',
+    _makeHighlightSelector(T.sortedForDisplay),
+)
+T.highlightedIdForBank = memoizeReduxStatePerKey(
+    HIGHLIGHT_STATE_KEYS,
+    'transactionFilters',
+    _makeHighlightSelector(T.sortedForBankDisplay),
+)
 
 const Transactions = T
 
