@@ -9,6 +9,7 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { FilterChips } from './FilterChips.jsx'
+import { SearchChip } from './SearchChip.jsx'
 
 const { AccountFilterChip, ActionFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
 const { FilterColumn, GroupByFilterChip, SearchFilterChip, SecurityFilterChip } = FilterChips
@@ -60,6 +61,7 @@ const FilterChipRow = props => {
     const { showSecurities = false, showActions = false } = props
     const { accountId = null, groupByOptions = null } = props
     const { filteredCount: filteredCountProp, totalCount: totalCountProp, itemLabel = 'transactions' } = props
+    const { searchQuery, searchMatches, highlightedId, searchInputRef, onSearchNext, onSearchPrev } = props
 
     // Per-chip data selectors
     const { isActive: isDateActive, details: dateDetails } = useSelector(state => S.UI.dateChipData(state, viewId))
@@ -158,6 +160,18 @@ const FilterChipRow = props => {
                 )}
 
                 <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isSearchActive} />} details={[]} />
+
+                {searchMatches && (
+                    <SearchChip
+                        viewId={viewId}
+                        searchQuery={searchQuery}
+                        searchMatches={searchMatches}
+                        highlightedId={highlightedId}
+                        inputRef={searchInputRef}
+                        onNext={onSearchNext}
+                        onPrev={onSearchPrev}
+                    />
+                )}
             </Flex>
         </Flex>
     )

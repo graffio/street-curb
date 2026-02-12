@@ -115,19 +115,28 @@ Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     return false
 }
 
-// Returns predicate for search highlighting (checks payee, memo, address, number, amount, category)
-// @sig matchesSearch :: (String, LookupTable<Category>) -> Transaction -> Boolean
-Transaction.matchesSearch = (query, categories) => txn => {
+// Checks all user-visible text fields, category, security, and amount
+// @sig matchesAllVisibleFields :: (String, LookupTable<Category>, LookupTable<Security>, Transaction) -> Boolean
+Transaction.matchesAllVisibleFields = (query, categories, securities, txn) =>
+    Transaction.matchesAnyText(
+        query,
+        ['payee', 'memo', 'number', 'investmentAction', 'date'],
+        categories,
+        securities,
+    )(txn) || containsIgnoreCase(query)(String(txn.amount))
+
+// Returns predicate for search highlighting (false for empty query)
+// @sig matchesSearch :: (String, LookupTable<Category>, LookupTable<Security>) -> Transaction -> Boolean
+Transaction.matchesSearch = (query, categories, securities) => txn => {
     if (!query.trim()) return false
-    if (Transaction.matchesAnyText(query, ['payee', 'memo', 'address', 'number'], categories, null)(txn)) return true
-    return containsIgnoreCase(query)(String(txn.amount))
+    return Transaction.matchesAllVisibleFields(query, categories, securities, txn)
 }
 
-// Returns predicate for text filtering (checks memo, payee, action, category, security)
+// Returns predicate for text filtering (true for empty query — shows all rows)
 // @sig matchesText :: (String, LookupTable<Category>, LookupTable<Security>) -> Transaction -> Boolean
 Transaction.matchesText = (query, categories, securities) => txn => {
     if (!query.trim()) return true
-    return Transaction.matchesAnyText(query, ['memo', 'payee', 'investmentAction'], categories, securities)(txn)
+    return Transaction.matchesAllVisibleFields(query, categories, securities, txn)
 }
 
 // Returns predicate for date range filtering (ISO string comparison)
@@ -170,9 +179,9 @@ Transaction.matchesInvestmentActions = actions => txn => !actions.length || acti
 // -----------------------------------------------------------------------------
 
 // Collects IDs of transactions matching search query (for highlighting)
-// @sig collectSearchMatchIds :: ([Transaction], String, LookupTable<Category>) -> [String]
-Transaction.collectSearchMatchIds = (transactions, query, categories) =>
-    transactions.filter(Transaction.matchesSearch(query, categories)).map(t => t.id)
+// @sig collectSearchMatchIds :: ([Transaction], String, LookupTable<Category>, LookupTable<Security>) -> [String]
+Transaction.collectSearchMatchIds = (transactions, query, categories, securities) =>
+    transactions.filter(Transaction.matchesSearch(query, categories, securities)).map(t => t.id)
 
 // Enriches all transactions with category and account names
 // @sig enrichAll :: ([Transaction], LookupTable<Category>, LookupTable<Account>) -> [EnrichedTransaction]

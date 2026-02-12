@@ -42,6 +42,8 @@ import React, { useCallback, useEffect, useRef } from 'react'
 
 const { ActionRegistry } = KeymapModule
 
+const SCROLLBAR_CLASS = 'dt-scroll'
+
 const T = {
     // Gets row id, handling both plain objects and ViewRow.Detail structure
     // @sig toRowId :: Object -> String | undefined
@@ -477,7 +479,11 @@ const DataTable = ({
             />
 
             <Box style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-                <Box ref={tableContainerRef} style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
+                <Box
+                    ref={tableContainerRef}
+                    className={SCROLLBAR_CLASS}
+                    style={{ position: 'absolute', inset: 0, overflow: 'auto' }}
+                >
                     <Box style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
                         {virtualizer.getVirtualItems().map(toVirtualRow)}
                     </Box>

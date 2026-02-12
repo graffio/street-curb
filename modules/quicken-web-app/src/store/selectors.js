@@ -14,7 +14,6 @@ import { Holdings as HoldingsModule } from '../financial-computations/holdings.j
 import { accountOrganization } from '../services/account-organization.js'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
-import { toDataTableProps } from '../utils/table-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
@@ -310,7 +309,7 @@ const activeViewId = state => {
 
 const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', (state, tableLayoutId) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
-    return tableLayout ? toDataTableProps(tableLayout) : defaultTableLayoutProps
+    return tableLayout ? TableLayout.toDataTableProps(tableLayout) : defaultTableLayoutProps
 })
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -399,8 +398,13 @@ const _filtered = (state, viewId) => {
     return TransactionFilter.apply(filter(state, viewId), transactions, categories, securities)
 }
 
-const _searchMatches = (state, viewId) =>
-    Transaction.collectSearchMatchIds(T.filtered(state, viewId), filter(state, viewId).searchQuery, state.categories)
+const _searchMatches = (state, viewId, accountId) =>
+    Transaction.collectSearchMatchIds(
+        T.filteredForAccount(state, viewId, accountId),
+        filter(state, viewId).searchQuery,
+        state.categories,
+        state.securities,
+    )
 
 const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, viewId), state.categories, state.accounts)
 
@@ -421,9 +425,6 @@ const _sortedForDisplay = (state, viewId, accountId, tableLayoutId, columns) => 
 }
 
 const _highlightedId = (state, viewId, accountId, tableLayoutId, columns) => {
-    const matches = T.searchMatches(state, viewId)
-    if (matches.length > 0) return matches[UI.currentSearchIndex(state, viewId)]
-
     const data = T.sortedForDisplay(state, viewId, accountId, tableLayoutId, columns)
     return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
 }
@@ -435,8 +436,6 @@ const _sortedForBankDisplay = (state, viewId, accountId, tableLayoutId, columns)
 }
 
 const _highlightedIdForBank = (state, viewId, accountId, tableLayoutId, columns) => {
-    const matches = T.searchMatches(state, viewId)
-    if (matches.length > 0) return matches[UI.currentSearchIndex(state, viewId)]
     const data = T.sortedForBankDisplay(state, viewId, accountId, tableLayoutId, columns)
     return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
 }
@@ -450,7 +449,7 @@ const T= {
     filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'                ], 'transactionFilters', _filteredForInvestment,),
     highlightedId        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts', 'viewUiState'], 'transactionFilters', _highlightedId,),
     highlightedIdForBank : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts', 'viewUiState'], 'transactionFilters', _highlightedIdForBank,),
-    searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories'                              ], 'transactionFilters', _searchMatches),
+    searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'               ], 'transactionFilters', _searchMatches),
     sortedForBankDisplay : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForBankDisplay,),
     sortedForDisplay     : memoizeReduxStatePerKey(['transactions', 'categories', 'securities', 'tableLayouts'], 'transactionFilters', _sortedForDisplay,),
 }

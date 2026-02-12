@@ -448,15 +448,22 @@ Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     return false
 }
 
-Transaction.matchesSearch = (query, categories) => txn => {
+Transaction.matchesAllVisibleFields = (query, categories, securities, txn) =>
+    Transaction.matchesAnyText(
+        query,
+        ['payee', 'memo', 'number', 'investmentAction', 'date'],
+        categories,
+        securities,
+    )(txn) || containsIgnoreCase(query)(String(txn.amount))
+
+Transaction.matchesSearch = (query, categories, securities) => txn => {
     if (!query.trim()) return false
-    if (Transaction.matchesAnyText(query, ['payee', 'memo', 'address', 'number'], categories, null)(txn)) return true
-    return containsIgnoreCase(query)(String(txn.amount))
+    return Transaction.matchesAllVisibleFields(query, categories, securities, txn)
 }
 
 Transaction.matchesText = (query, categories, securities) => txn => {
     if (!query.trim()) return true
-    return Transaction.matchesAnyText(query, ['memo', 'payee', 'investmentAction'], categories, securities)(txn)
+    return Transaction.matchesAllVisibleFields(query, categories, securities, txn)
 }
 
 Transaction.isInDateRange = dateRange => txn => {
@@ -483,8 +490,8 @@ Transaction.matchesSecurities = securityIds => txn => !securityIds.length || sec
 
 Transaction.matchesInvestmentActions = actions => txn => !actions.length || actions.includes(txn.investmentAction)
 
-Transaction.collectSearchMatchIds = (transactions, query, categories) =>
-    transactions.filter(Transaction.matchesSearch(query, categories)).map(t => t.id)
+Transaction.collectSearchMatchIds = (transactions, query, categories, securities) =>
+    transactions.filter(Transaction.matchesSearch(query, categories, securities)).map(t => t.id)
 
 Transaction.enrichAll = (transactions, categories, accounts) =>
     transactions.map(txn => Transaction.toEnriched(txn, categories, accounts))

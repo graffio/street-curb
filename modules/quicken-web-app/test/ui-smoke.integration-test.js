@@ -92,6 +92,45 @@ test('setup: launch browser with test data', async t => {
     await wait(1500)
 })
 
+test('search chip: type query, verify counter, clear search', async t => {
+    // Navigate to Primary Checking register
+    const snapshot = browser('snapshot', ['-i'])
+    const elements = parseSnapshot(snapshot)
+    const primaryChecking = elements.find(e => e.text.includes('Primary Checking'))
+    if (!primaryChecking?.ref) return t.bailout('Primary Checking not clickable — cannot test search')
+    browser('click', [`@${primaryChecking.ref}`])
+    await wait(500)
+
+    const registerSnap = browser('snapshot')
+    if (registerSnap.includes('Something went wrong')) return t.bailout('register crashed on load')
+
+    // Verify search input is visible
+    const hasSearchInput = registerSnap.includes('Search...')
+    if (!hasSearchInput) return t.bailout('Search input not found on register page')
+    t.ok(hasSearchInput, 'search input is visible')
+
+    // Type in search box
+    browser('find', ['placeholder', 'Search...', 'fill', 'Acme'])
+    await wait(500) // wait for debounce (300ms) + render
+
+    const afterSearch = browser('snapshot')
+    t.notOk(afterSearch.includes('Something went wrong'), 'no crash after typing search query')
+    t.ok(afterSearch.includes('of'), 'match counter is visible')
+
+    // Clear search via × button
+    clickClear()
+    await wait(200)
+    const afterClear = browser('snapshot')
+    t.notOk(afterClear.includes('Something went wrong'), 'no crash after clearing search')
+
+    // Navigate back to overview for subsequent tests
+    const backSnap = browser('snapshot', ['-i'])
+    const backElements = parseSnapshot(backSnap)
+    const overview = backElements.find(e => e.text.includes('Overview'))
+    if (overview?.ref) browser('click', [`@${overview.ref}`])
+    await wait(200)
+})
+
 test('account list shows all accounts', async t => {
     const snapshot = browser('snapshot', ['-i'])
     const expected = loadExpected()
@@ -212,6 +251,8 @@ test('transaction register: filter chip interactions', async t => {
     await wait(200)
     t.notOk(browser('snapshot').includes('Something went wrong'), 'no crash after clearing search')
 })
+
+// Search test removed — moved to top of file (runs right after setup)
 
 test('clicking investment account opens register with correct transactions', async t => {
     // Navigate back to account list first
