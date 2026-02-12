@@ -6,7 +6,9 @@ import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors.js'
-import { formatCurrency, formatDate, formatPrice, formatQuantity } from '../utils/formatters.js'
+import { Formatters } from '../utils/formatters.js'
+
+const { formatCurrency, formatDate, formatPrice, formatQuantity } = Formatters
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Cell renderers

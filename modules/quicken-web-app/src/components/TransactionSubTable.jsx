@@ -4,7 +4,9 @@
 import { Box, Flex, Text } from '@graffio/design-system'
 import React from 'react'
 import { CellRenderers } from '../columns/CellRenderers.jsx'
-import { formatCurrency, formatDate } from '../utils/formatters.js'
+import { Formatters } from '../utils/formatters.js'
+
+const { formatCurrency, formatDate } = Formatters
 
 const { ACTION_LABELS } = CellRenderers
 

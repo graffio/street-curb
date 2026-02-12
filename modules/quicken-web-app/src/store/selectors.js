@@ -8,7 +8,7 @@
 
 import { applySort, containsIgnoreCase, memoizeReduxState, memoizeReduxStatePerKey } from '@graffio/functional'
 import { DATE_RANGES } from '@graffio/design-system'
-import { formatDateRange } from '../utils/formatters.js'
+import { Formatters } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
 import { AccountOrganization } from '../services/account-organization.js'
@@ -241,7 +241,7 @@ const toTruncatedDetails = items => {
 
 const _dateChipData = (state, viewId) => {
     const { dateRange, dateRangeKey } = filter(state, viewId)
-    const label = dateRange ? formatDateRange(dateRange.start, dateRange.end) : null
+    const label = dateRange ? Formatters.formatDateRange(dateRange.start, dateRange.end) : null
     return { isActive: dateRangeKey !== 'all', details: label ? [label] : [] }
 }
 

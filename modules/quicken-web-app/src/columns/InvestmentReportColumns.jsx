@@ -4,8 +4,10 @@
 import { ColumnDefinition } from '@graffio/design-system/src/types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
-import { formatCurrency, formatPercentage, formatPrice, formatQuantity } from '../utils/formatters.js'
+import { Formatters } from '../utils/formatters.js'
 import { HoldingsTreeNode } from '../types/holdings-tree-node.js'
+
+const { formatCurrency, formatPercentage, formatPrice, formatQuantity } = Formatters
 
 const NUMERIC = { enableResizing: false, textAlign: 'right' }
 

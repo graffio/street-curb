@@ -73,4 +73,47 @@ const formatPercentage = value => {
     return `${formatted}%`
 }
 
-export { formatCurrency, formatDate, formatDateRange, formatPercentage, formatPrice, formatQuantity, formatShortDate }
+/*
+ * Format currency for sidebar display (treats near-zero as $0.00, parenthesizes negatives)
+ *
+ * @sig toFormattedBalance :: Number -> String
+ */
+const toFormattedBalance = balance => {
+    const rounded = Math.round(balance * 100) / 100
+    if (rounded === 0) return '$0.00'
+    const formatted = Math.abs(rounded).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+    return rounded < 0 ? `(${formatted})` : formatted
+}
+
+/*
+ * Format day change with sign (returns null for zero/nil)
+ *
+ * @sig toFormattedDayChange :: Number -> String?
+ */
+const toFormattedDayChange = change => {
+    if (change === 0 || change == null) return null
+    const sign = change > 0 ? '+' : ''
+    return `${sign}${change.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`
+}
+
+/*
+ * Gets color token for day change direction
+ *
+ * @sig toDayChangeColor :: Number -> String
+ */
+const toDayChangeColor = change => (change > 0 ? 'green' : 'red')
+
+const Formatters = {
+    formatCurrency,
+    formatDate,
+    formatDateRange,
+    formatPercentage,
+    formatPrice,
+    formatQuantity,
+    formatShortDate,
+    toDayChangeColor,
+    toFormattedBalance,
+    toFormattedDayChange,
+}
+
+export { Formatters }
