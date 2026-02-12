@@ -1,8 +1,25 @@
 # Cohesion Group Migration
 
 **Date:** 2026-02-10
-**Status:** Brainstorm
+**Status:** Brainstorm (reevaluated 2026-02-12)
 **Scope:** `modules/quicken-web-app/src/`
+
+### Post-brainstorm changes (2026-02-10 through 2026-02-12)
+
+Three work streams landed after the initial brainstorm:
+
+1. **ViewUiState extraction** (4 commits, Feb 10) — Moved 8 high-frequency ephemeral UI fields from `TransactionFilter`
+   into a new `ViewUiState` Redux slice. New files: `types/view-ui-state.js`, `store/reducers/view-ui-state.js`.
+2. **ActionRegistry keyboard migration** (8 commits, Feb 10) — Replaced the entire old `Keymap` system with imperative
+   `ActionRegistry`. Deleted `RegisterKeymap`/`UnregisterKeymap` actions, removed `Keymaps` selector namespace, rewrote
+   `keymap-routing.js` and `RootLayout.jsx`.
+3. **Register search** (3 commits, Feb 11–12) — Added `SearchChip.jsx` component with debounced input,
+   Enter/Shift+Enter match navigation, "N of M" counter. Added search-navigation functions to both register pages
+   (identical in both — worsened the DEDUP situation from 8 to 14 functions). Moved `utils/table-layout.js` functions
+   to `TableLayout.type.js` and deleted the file. Added payee/memo column to investment register.
+
+Items already resolved by this work: RootLayout cleanup (old keymap functions gone), `Keymaps` selector namespace
+(removed), `utils/table-layout.js` standalone exports (moved to type, file deleted).
 
 ## What We're Building
 
@@ -17,7 +34,7 @@ that should live in selectors, utilities, or business modules.
 
 - Pre-style-card files teach bad patterns — new code copies what it sees
 - T groups in components are catch-all buckets because they contain misplaced logic
-- Register page duplication (8 identical functions) is the most concrete debt
+- Register page duplication (14 identical functions after search feature) is the most concrete debt
 
 ## Findings
 
@@ -38,7 +55,7 @@ These use standalone exports instead of P/T/F/A/E namespaces. This correlates wi
 single-namespace domain" modules — pragmatic, not inconsistent.
 
 - `utils/formatters.js` — 7 standalone formatting functions
-- `utils/table-layout.js` — 5 standalone transform functions
+- ~~`utils/table-layout.js`~~ — **RESOLVED**: functions moved to `TableLayout.type.js`, file deleted (commit `e902123`)
 - `utils/category-tree.js` — mixed standalone functions
 - `commands/post.js` — single export, explicitly noted as not fitting P/T/F/V/A
 - `store/selectors.js` — uses domain namespaces (UI, Transactions, Holdings, Accounts)
@@ -94,7 +111,7 @@ COMPLEXITY comment. The `T` namespace is aliased as `Transactions`.
 | T     | `sortedForBankDisplay`  | Sorted bank register rows             | STAY        |
 | T     | `sortedForDisplay`      | Sorted investment register rows       | STAY        |
 
-### services/account-organization.js
+### services/to-account-sections.js
 
 | Group | Function                  | Description                                | Disposition |
 |-------|---------------------------|--------------------------------------------|-------------|
@@ -107,7 +124,7 @@ COMPLEXITY comment. The `T` namespace is aliased as `Transactions`.
 | F     | `createSection`           | Construct AccountSection                   | STAY        |
 | F     | `createZeroBalanceByType` | Construct nested $0 sections               | STAY        |
 | A     | `collectByTypeSections`   | Orchestrate ByType section creation        | STAY        |
-| A     | `collectSections`         | Entry point: accounts → organized sections | STAY        |
+| A     | `toAccountSections`         | Entry point: accounts → organized sections | STAY        |
 
 ### services/file-handling.js
 
@@ -188,9 +205,9 @@ COMPLEXITY comment. The `T` namespace is aliased as `Transactions`.
 
 | Group | Function               | Description                            | Disposition         |
 |-------|------------------------|----------------------------------------|---------------------|
-| T     | `toCurrentOption`      | Find option from list by value         | **MOVE** → selector |
-| T     | `toItems`              | `{value,label}` → `{id,label}`         | **MOVE** → selector |
-| T     | `toSelectedItems`      | Filter items by ID                     | **MOVE** → selector |
+| T     | `toCurrentOption`      | Find option from list by value         | ~~**MOVE**~~ → **REMOVE** (dead code — no callers after ActionRegistry migration) |
+| T     | `toItems`              | `{value,label}` → `{id,label}`         | **MOVE** → selector (used by GroupByFilterChip local highlight computation) |
+| T     | `toSelectedItems`      | Filter items by ID                     | **MOVE** → selector (used by GroupByFilterChip local highlight computation) |
 | F     | `makeChipTriggerStyle` | Chip trigger style with width/active   | STAY                |
 | F     | `makeOptionStyle`      | Option style with selected/highlighted | STAY                |
 | E     | `handleToggleCategory` | Dispatch add/remove category filter    | STAY                |
@@ -232,16 +249,21 @@ COMPLEXITY comment. The `T` namespace is aliased as `Transactions`.
 
 ### pages/TransactionRegisterPage.jsx
 
-| Group | Function                    | Description                    | Disposition                        |
-|-------|-----------------------------|--------------------------------|------------------------------------|
-| P     | `shouldInitializeDateRange` | Check if date range needs init | **DEDUP** → shared register module |
-| T     | `toTableLayoutId`           | `cols_account_${id}`           | **DEDUP** → shared register module |
-| T     | `toRowIndex`                | Find transaction index by ID   | **DEDUP** → shared register module |
-| T     | `toDefaultDateRange`        | Last 12 months date range      | **DEDUP** → shared register module |
-| E     | `dispatchHighlightChange`   | Resolve ID to index, dispatch  | **DEDUP** → shared register module |
-| E     | `initDateRangeIfNeeded`     | Init date range if not set     | **DEDUP** → shared register module |
-| E     | `clearSearch`               | Clear search query and index   | **DEDUP** → shared register module |
-| E     | `ensureTableLayoutEffect`   | Ensure table layout exists     | **DEDUP** → shared register module |
+| Group | Function                    | Description                                            | Disposition                        |
+|-------|-----------------------------|--------------------------------------------------------|------------------------------------|
+| P     | `shouldInitializeDateRange` | Check if date range needs init                         | **DEDUP** → shared register module |
+| T     | `toTableLayoutId`           | `cols_account_${id}`                                   | **DEDUP** → shared register module |
+| T     | `toRowIndex`                | Find transaction index by ID                           | **DEDUP** → shared register module |
+| T     | `toAdjacentMatchRowIdx`     | Row index of adjacent match in match-list order        | **DEDUP** → shared register module *(new: search feature)* |
+| T     | `toClosestMatch`            | Reducer: nearest match in display order by direction   | **DEDUP** → shared register module *(new: search feature)* |
+| T     | `toNearestMatchRowIdx`      | Display row index of nearest match forward/backward    | **DEDUP** → shared register module *(new: search feature)* |
+| T     | `toDefaultDateRange`        | Last 12 months date range                              | **DEDUP** → shared register module |
+| E     | `dispatchHighlightChange`   | Resolve ID to index, dispatch                          | **DEDUP** → shared register module |
+| E     | `initDateRangeIfNeeded`     | Init date range if not set                             | **DEDUP** → shared register module |
+| E     | `navigateToMatch`           | Navigate to next/prev search match in display order    | **DEDUP** → shared register module *(new: search feature)* |
+| E     | `clearSearch`               | Clear search query                                     | **DEDUP** → shared register module |
+| E     | `ensureTableLayoutEffect`   | Ensure table layout exists                             | **DEDUP** → shared register module |
+| E     | `searchActionsEffect`       | Register search + select actions with ActionRegistry   | **DEDUP** → shared register module *(new: search feature)* |
 
 ### pages/InvestmentRegisterPage.jsx
 
@@ -250,11 +272,38 @@ COMPLEXITY comment. The `T` namespace is aliased as `Transactions`.
 | P     | `shouldInitializeDateRange` | (identical to TransactionRegisterPage)        | **DEDUP**                       |
 | T     | `toTableLayoutId`           | `cols_investment_${id}` (only prefix differs) | **DEDUP** (parameterize prefix) |
 | T     | `toRowIndex`                | (identical)                                   | **DEDUP**                       |
+| T     | `toAdjacentMatchRowIdx`     | (identical)                                   | **DEDUP**                       |
+| T     | `toClosestMatch`            | (identical)                                   | **DEDUP**                       |
+| T     | `toNearestMatchRowIdx`      | (identical)                                   | **DEDUP**                       |
 | T     | `toDefaultDateRange`        | (identical)                                   | **DEDUP**                       |
 | E     | `dispatchHighlightChange`   | (identical)                                   | **DEDUP**                       |
 | E     | `initDateRangeIfNeeded`     | (identical)                                   | **DEDUP**                       |
+| E     | `navigateToMatch`           | (identical)                                   | **DEDUP**                       |
 | E     | `clearSearch`               | (identical)                                   | **DEDUP**                       |
 | E     | `ensureTableLayoutEffect`   | (identical)                                   | **DEDUP**                       |
+| E     | `searchActionsEffect`       | (identical)                                   | **DEDUP**                       |
+
+### components/SearchChip.jsx *(new: search feature)*
+
+| Group | Function               | Description                                  | Disposition |
+|-------|------------------------|----------------------------------------------|-------------|
+| E     | `dispatchSearchQuery`  | Debounced search dispatch to Redux           | STAY        |
+| E     | `clearSearch`          | Clear query + sync local state               | STAY        |
+| E     | `syncOnExternalClear`  | Sync local state when Redux clears externally | STAY        |
+
+Clean component — only E group (wiring handlers), no misplaced transforms.
+
+### store/reducers/view-ui-state.js *(new: ViewUiState extraction)*
+
+| Group | Function                  | Description                                  | Disposition |
+|-------|---------------------------|----------------------------------------------|-------------|
+| —     | `createDefaultViewUiState`| Factory for default per-view UI state        | STAY        |
+| —     | `setViewUiState`          | Merge partial UI state changes               | STAY        |
+| —     | `setFilterPopoverOpen`    | Open/close popover with search/highlight reset | STAY      |
+| —     | `setFilterPopoverSearch`  | Update popover search text with highlight reset | STAY     |
+| —     | `resetViewUiState`        | Reset view UI state to defaults              | STAY        |
+
+Has 5 `eslint-disable-next-line no-restricted-syntax` comments that the eslint glob fix would eliminate.
 
 ### pages/InvestmentReportPage.jsx
 
@@ -265,16 +314,17 @@ COMPLEXITY comment. The `T` namespace is aliased as `Transactions`.
 
 ## Effort Estimate
 
-| Work item                                           | Time           | Risk    |
-|-----------------------------------------------------|----------------|---------|
-| Extract shared register module (8 functions, dedup) | 45 min         | Low     |
-| Move AccountList T (3 functions) to formatters/type | 30 min         | Low     |
-| Move TabGroup `toViewColor` + `toTabStyle`          | 20 min         | Low     |
-| Move TabGroupContainer `toClampedWidths`            | 10 min         | Low     |
-| Reclass `file-handling.js` T→E                      | 5 min          | Low     |
-| Remove `keymap-routing.js` alias                    | 5 min          | Low     |
-| Update imports, run tests                           | 30 min         | Low     |
-| **Clear violations total**                          | **~2.5 hours** | **Low** |
+| Work item                                            | Time           | Risk    |
+|------------------------------------------------------|----------------|---------|
+| Extract shared register module (14 functions, dedup) | 1.5 hours      | Low     |
+| Move AccountList T (3 functions) to formatters/type  | 30 min         | Low     |
+| Move TabGroup `toViewColor` + `toTabStyle`           | 20 min         | Low     |
+| Move TabGroupContainer `toClampedWidths`             | 10 min         | Low     |
+| Reclass `file-handling.js` T→E                       | 5 min          | Low     |
+| Remove `keymap-routing.js` alias                     | 5 min          | Low     |
+| Remove FilterChips `toCurrentOption` (dead code)     | 5 min          | Low     |
+| Update imports, run tests                            | 30 min         | Low     |
+| **Clear violations total**                           | **~3 hours**   | **Low** |
 
 Borderlines are resolved — see decisions below. Total scope increases by ~1.5 hours.
 
@@ -284,8 +334,8 @@ Borderlines are resolved — see decisions below. Total scope increases by ~1.5 
    reifying "formatting" as a broader concept in the style cards.
 
 2. **map/filter/find in components → move to selectors.** Even trivial shape conversions should be centralized. Leaving
-   transforms in components loses abstraction opportunities, even small ones. FilterChips `toCurrentOption`, `toItems`,
-   `toSelectedItems` all move.
+   transforms in components loses abstraction opportunities, even small ones. FilterChips `toItems` and `toSelectedItems`
+   move; `toCurrentOption` is dead code after ActionRegistry migration — remove instead.
 
 3. **selectors.js splitting → not yet.** Revisit after the migration — if new `@graffio/functional` utilities absorb
    repeated patterns, it may shrink.
@@ -294,9 +344,9 @@ Borderlines are resolved — see decisions below. Total scope increases by ~1.5 
 
 | Function               | File               | Decision | Destination                                                          |
 |------------------------|--------------------|----------|----------------------------------------------------------------------|
-| `toCurrentOption`      | FilterChips        | **MOVE** | Selector                                                             |
-| `toItems`              | FilterChips        | **MOVE** | Selector                                                             |
-| `toSelectedItems`      | FilterChips        | **MOVE** | Selector                                                             |
+| `toCurrentOption`      | FilterChips        | **REMOVE** | Dead code — no callers after ActionRegistry migration             |
+| `toItems`              | FilterChips        | **MOVE** | Selector (used by GroupByFilterChip)                                 |
+| `toSelectedItems`      | FilterChips        | **MOVE** | Selector (used by GroupByFilterChip)                                 |
 | `toFilterActions`      | FilterChipRow      | **STAY** | Wiring (ActionRegistry config construction)                          |
 | `isInvestmentAccount`  | TabGroup           | **MOVE** | `Account.type.js`                                                    |
 | `toDragData`           | TabGroup           | **STAY** | Wiring (DataTransfer JSON parse)                                     |
@@ -312,8 +362,9 @@ Borderlines are resolved — see decisions below. Total scope increases by ~1.5 
 
 ## Selectors Assessment (`store/selectors.js`)
 
-496 lines. Uses domain namespaces (UI, Transactions, Holdings, Accounts, Categories) instead of P/T/F/V/A/E — documented
-via COMPLEXITY comment.
+~495 lines. Uses domain namespaces (UI, Transactions, Holdings, Accounts, Categories) instead of P/T/F/V/A/E — documented
+via COMPLEXITY comment. Since the brainstorm: `Keymaps` namespace removed (ActionRegistry migration), `viewUi` accessor
+added (ViewUiState extraction), `_searchMatches` now takes `accountId` parameter and includes securities in match.
 
 ### 1. Naming Quality
 
@@ -377,11 +428,13 @@ The highlight arithmetic is pure math independent of Redux state. Extracting it 
 The `isFiltering` check duplicates knowledge about what "unfiltered" means (`dateRangeKey !== 'all'`,
 `filterQuery?.length > 0`). This could be `TransactionFilter.isActive(f)`.
 
-**`_sortedForDisplay` / `_sortedForBankDisplay`** (lines 417–434) — these are identical except for which filter selector
+**`_sortedForDisplay` / `_sortedForBankDisplay`** (lines 421–436) — these are identical except for which filter selector
 they call (`filteredForInvestment` vs `filteredForAccount`). Should be parameterized.
 
-**`_highlightedId` / `_highlightedIdForBank`** (lines 423–442) — same: identical logic, different sort selector. Should
-be parameterized.
+**`_highlightedId` / `_highlightedIdForBank`** (lines 427–441) — same: identical logic, different sort selector. Should
+be parameterized. *Reevaluation note:* These were simplified during the search feature — the old search-index-based match
+lookup (3 lines each) was removed. Both are now purely `data[currentRowIndex]?.transaction.id ?? null`, making the DEDUP
+case even stronger.
 
 **`_organizedAccounts`** (lines 338–343) — calls `Holdings.asOf` with a hardcoded view ID (`ACCOUNT_LIST_VIEW_ID`). This
 couples the account list to a specific view slot. Not necessarily "too much" but the coupling is worth noting.
@@ -540,7 +593,7 @@ view ID. **Low priority — works today.**
 | `_sortedForBankDisplay`                               | **DEDUP**             | Parameterize with `_sortedForDisplay`                   |
 | `_highlightedId`                                      | **DEDUP**             | Parameterize with `_highlightedIdForBank`               |
 | `_highlightedIdForBank`                               | **DEDUP**             | Parameterize with `_highlightedId`                      |
-| `_searchMatches`                                      | **STAY**              | One-liner delegation                                    |
+| `_searchMatches`                                      | **STAY**              | Now `(state, viewId, accountId)` — scopes to account, includes securities |
 | `INVESTMENT_ACTIONS`                                  | **MOVE**              | → Transaction type                                      |
 | `toTruncatedDetails`                                  | **MOVE**              | → `utils/formatters.js`                                 |
 | `POPOVER_ITEM_SOURCES`                                | **BORDER**            | Could become `toFilterItem()` methods on types          |
@@ -577,7 +630,7 @@ The eslint rule at `eslint.config.js:68-75` flags any `state.xxx` access — goo
 - `**/store/reducer.js` — should be `**/store/reducers/*.js` (reducers are in a `reducers/` directory)
 - `**/store/selectors/**/*.js` — should be `**/store/selectors.js` (it's a single file, not a directory)
 
-This mismatch is why every reducer has `// eslint-disable-next-line no-restricted-syntax` on every `state.` access, and `selectors.js` has a file-level `/* eslint-disable */`. Fixing the two glob patterns eliminates all those inline disables — a good cleanup to bundle with the migration.
+This mismatch is why every reducer has `// eslint-disable-next-line no-restricted-syntax` on every `state.` access, and `selectors.js` has a file-level `/* eslint-disable */`. Fixing the two glob patterns eliminates all those inline disables — a good cleanup to bundle with the migration. *Reevaluation note:* The new `store/reducers/view-ui-state.js` has 5 more of these inline disables, adding to the case for fixing the glob patterns.
 
 ---
 
@@ -590,8 +643,8 @@ The regrouping changes what's visible and what becomes possible. These are thing
 **Components become auditable.** Once all T functions are out, a component that has anything beyond P (show/hide predicates), F (style factories), and E (handlers calling `post()`) is a new violation. This makes the style card mechanically enforceable — a linter or review agent could flag any T/A function in a `.jsx` file.
 
 **Selectors.js: split or shrink?** We deferred splitting. After the migration, two forces act on it:
-- *Growth*: FilterChips `toCurrentOption`/`toItems`/`toSelectedItems`, CategoryReportPage `toChildRows`, and SectionHeader subtotals all move into selectors
-- *Shrinkage*: if the `@graffio/functional` additions (`pluckMany`, `truncateWithCount`, `wrapIndex`, `withSelection`) absorb repeated patterns, chip/filter selectors get shorter
+- *Growth*: FilterChips `toItems`/`toSelectedItems`, CategoryReportPage `toChildRows`, and SectionHeader subtotals all move into selectors
+- *Shrinkage*: if the `@graffio/functional` additions (`pluckMany`, `truncateWithCount`, `wrapIndex`, `withSelection`) absorb repeated patterns, chip/filter selectors get shorter. The `Keymaps` namespace removal already shrank the file.
 
 Revisit the line count and cohesion after both forces have played out. If it grew, the UI-derived selectors (chip data, filter data, popover data) are the natural split point — they serve a different consumer (FilterChips) than the transaction/holdings selectors.
 
@@ -613,10 +666,13 @@ Revisit the line count and cohesion after both forces have played out. If it gre
 
 If `toFilterItem()` methods land on the types, the `POPOVER_ITEM_SOURCES` object becomes trivial delegation and might not need to exist as a separate lookup at all.
 
-**Shared register module as an abstraction surface.** After deduping the 8 register functions into a shared module, that module becomes the single place to evolve register behavior. Questions to ask:
+**Shared register module as an abstraction surface.** After deduping the 14 register functions into a shared module, that
+module becomes the single place to evolve register behavior. The search feature made this more urgent — 6 new identical
+functions were added to both pages simultaneously (`toAdjacentMatchRowIdx`, `toClosestMatch`, `toNearestMatchRowIdx`,
+`navigateToMatch`, `searchActionsEffect`, plus search wiring in the component body). Questions to ask:
 - Should the shared module parameterize more than just the table layout prefix? (e.g., which filter selector, which columns)
 - Does the pattern suggest a `RegisterView` type or configuration object?
-- Can the two register pages become a single parameterized component?
+- Can the two register pages become a single parameterized component? (The component bodies are now ~95% identical.)
 
 **`@graffio/functional` additions ripple outward.** The 5 proposed utilities (`pluckMany`, `truncateWithCount`, `wrapIndex`, `withSelection`, `toIdLabelPairs`) were identified from selectors, but they're general-purpose. After adding them, audit other files for the same inline patterns — they likely appear in components, services, and business modules too.
 

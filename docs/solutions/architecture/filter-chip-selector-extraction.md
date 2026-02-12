@@ -23,7 +23,6 @@ date_resolved: '2026-02-06'
 related:
   - docs/solutions/architecture/migrate-component-state-to-redux.md
   - docs/solutions/code-quality/keymap-factory-boilerplate-reduction.md
-  - specifications/keyboard-accessibility/component-owned-keymaps.md
 ---
 
 # Filter Chip Selector Extraction and Polish

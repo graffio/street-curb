@@ -21,7 +21,6 @@ date_resolved: '2026-02-10'
 status: resolved
 related:
   - docs/solutions/architecture/filter-chip-selector-extraction.md
-  - specifications/keyboard-accessibility/keymap-system-issues.md
 ---
 
 # TransactionFilter ephemeral state invalidates expensive selector caches

@@ -87,7 +87,7 @@ placement, pattern choice, complexity. The validator handles structure, exports,
 ### 6. Track Fuzzy Gaps Separately
 
 Clear rules → implement immediately. Fuzzy rules (browser test strategy, complexity
-heuristics) → `specifications/style-system-gaps.md` for calibration against real usage.
+heuristics) → `specifications/close-style-system-gaps.md` for calibration against real usage.
 Don't block on rules you can't yet specify.
 
 ## Why This Works
