@@ -6,11 +6,13 @@ import {
     Account,
     Action,
     Category,
+    ColumnDescriptor,
     Lot,
     LotAllocation,
     Price,
     Security,
     SortMode,
+    SortOrder,
     Split,
     TabGroup,
     TabLayout,
@@ -24,7 +26,6 @@ import {
 import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
-import { initializeTableLayout } from '../utils/table-layout.js'
 
 const { closeTabGroup, closeView, createTabGroup, moveView } = TabLayoutReducers
 const { openView, setActiveTabGroup, setActiveView, setTabGroupWidth } = TabLayoutReducers
@@ -90,10 +91,13 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
     const ensureTableLayout = action => {
         const { tableLayoutId, columns } = action
         if (state.tableLayouts[tableLayoutId]) return state
-        return {
-            ...state,
-            tableLayouts: state.tableLayouts.addItemWithId(initializeTableLayout(tableLayoutId, columns)),
-        }
+        const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+        const layout = TableLayout(
+            tableLayoutId,
+            LookupTable(descriptors, ColumnDescriptor, 'id'),
+            LookupTable([], SortOrder, 'id'),
+        )
+        return { ...state, tableLayouts: state.tableLayouts.addItemWithId(layout) }
     }
 
     // Replaces state with loaded file data (accounts, transactions, etc.)

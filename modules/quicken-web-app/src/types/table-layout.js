@@ -124,4 +124,51 @@ TableLayout.toSorting = layout =>
         desc: s.isDescending,
     }))
 
+TableLayout.toDataTableProps = tableLayout => {
+    const { columnDescriptors, sortOrder } = tableLayout
+    const columnOrder = columnDescriptors.map(d => d.id)
+    const columnSizing = Object.fromEntries(columnDescriptors.map(d => [d.id, d.width]))
+    const sorting = sortOrder.map(s => ({
+        id: s.id,
+        desc: s.isDescending,
+    }))
+    return {
+        sorting,
+        columnSizing,
+        columnOrder,
+    }
+}
+
+TableLayout.applySortingChange = (tableLayout, newSorting) => {
+    const applySort = descriptor => {
+        const sortEntry = newSorting.find(s => s.id === descriptor.id)
+        const direction = sortEntry ? (sortEntry.desc ? 'desc' : 'asc') : 'none'
+        return ColumnDescriptor(descriptor.id, descriptor.width, direction)
+    }
+    const { id, columnDescriptors } = tableLayout
+    const updatedDescriptors = columnDescriptors.updateAll(applySort)
+    const newSortOrder = LookupTable(
+        newSorting.map(s => SortOrder(s.id, s.desc)),
+        SortOrder,
+        'id',
+    )
+    return TableLayout(id, updatedDescriptors, newSortOrder)
+}
+
+TableLayout.applySizingChange = (tableLayout, newSizing) => {
+    const applyWidth = descriptor => {
+        const { id, sortDirection } = descriptor
+        const newWidth = newSizing[id] ?? descriptor.width
+        return ColumnDescriptor(id, newWidth, sortDirection)
+    }
+    const { id, columnDescriptors, sortOrder } = tableLayout
+    const updatedDescriptors = columnDescriptors.updateAll(applyWidth)
+    return TableLayout(id, updatedDescriptors, sortOrder)
+}
+
+TableLayout.applyOrderChange = (tableLayout, newOrder) => {
+    const { id, columnDescriptors, sortOrder } = tableLayout
+    return TableLayout(id, columnDescriptors.pick(newOrder), sortOrder)
+}
+
 export { TableLayout }

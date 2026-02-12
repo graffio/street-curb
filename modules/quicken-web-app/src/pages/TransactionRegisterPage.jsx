@@ -8,8 +8,7 @@ import { TransactionColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
 import * as S from '../store/selectors.js'
-import { Action } from '../types/action.js'
-import { applyOrderChange, applySizingChange, applySortingChange } from '../utils/table-layout.js'
+import { Action, TableLayout } from '../types/index.js'
 
 const { bankColumns } = TransactionColumns
 
@@ -121,17 +120,17 @@ const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
     // Callbacks
     // -----------------------------------------------------------------------------------------------------------------
     const handleSortingChange = useCallback(
-        updater => post(Action.SetTableLayout(applySortingChange(tableLayout, updater(sorting)))),
+        updater => post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting)))),
         [tableLayout, sorting],
     )
 
     const handleColumnSizingChange = useCallback(
-        updater => post(Action.SetTableLayout(applySizingChange(tableLayout, updater(columnSizing)))),
+        updater => post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing)))),
         [tableLayout, columnSizing],
     )
 
     const handleColumnOrderChange = useCallback(
-        newOrder => post(Action.SetTableLayout(applyOrderChange(tableLayout, newOrder))),
+        newOrder => post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder))),
         [tableLayout],
     )
 

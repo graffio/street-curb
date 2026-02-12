@@ -14,7 +14,7 @@ import { Holdings as HoldingsModule } from '../financial-computations/holdings.j
 import { accountOrganization } from '../services/account-organization.js'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
-import { toDataTableProps } from '../utils/table-layout.js'
+
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
@@ -310,7 +310,7 @@ const activeViewId = state => {
 
 const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', (state, tableLayoutId) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
-    return tableLayout ? toDataTableProps(tableLayout) : defaultTableLayoutProps
+    return tableLayout ? TableLayout.toDataTableProps(tableLayout) : defaultTableLayoutProps
 })
 
 // ---------------------------------------------------------------------------------------------------------------------
