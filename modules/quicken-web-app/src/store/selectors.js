@@ -11,7 +11,7 @@ import { DATE_RANGES } from '@graffio/design-system'
 import { formatDateRange } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
-import { accountOrganization } from '../services/account-organization.js'
+import { AccountOrganization } from '../services/account-organization.js'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
@@ -338,7 +338,7 @@ const _organizedAccounts = state => {
     const { accounts, transactions, accountListSortMode } = state
     const holdings = Holdings.asOf(state, ACCOUNT_LIST_VIEW_ID)
     const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, holdings, transactions), EnrichedAccount, 'id')
-    return accountOrganization.A.collectSections(enriched, accountListSortMode)
+    return AccountOrganization.A.collectSections(enriched, accountListSortMode)
 }
 
 const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }

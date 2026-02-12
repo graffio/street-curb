@@ -196,6 +196,89 @@ TransactionFilter.fromFirestore = TransactionFilter._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
+TransactionFilter.INVESTMENT_ACTIONS = [
+    {
+        id: 'Buy',
+        label: 'Buy',
+    },
+    {
+        id: 'Sell',
+        label: 'Sell',
+    },
+    {
+        id: 'Div',
+        label: 'Dividend',
+    },
+    {
+        id: 'ReinvDiv',
+        label: 'Reinvest Dividend',
+    },
+    {
+        id: 'XIn',
+        label: 'Transfer In',
+    },
+    {
+        id: 'XOut',
+        label: 'Transfer Out',
+    },
+    {
+        id: 'ContribX',
+        label: 'Contribution',
+    },
+    {
+        id: 'WithdrwX',
+        label: 'Withdrawal',
+    },
+    {
+        id: 'ShtSell',
+        label: 'Short Sell',
+    },
+    {
+        id: 'CvrShrt',
+        label: 'Cover Short',
+    },
+    {
+        id: 'CGLong',
+        label: 'Long-Term Gain',
+    },
+    {
+        id: 'CGShort',
+        label: 'Short-Term Gain',
+    },
+    {
+        id: 'MargInt',
+        label: 'Margin Interest',
+    },
+    {
+        id: 'ShrsIn',
+        label: 'Shares In',
+    },
+    {
+        id: 'ShrsOut',
+        label: 'Shares Out',
+    },
+    {
+        id: 'StkSplit',
+        label: 'Stock Split',
+    },
+    {
+        id: 'Exercise',
+        label: 'Exercise Option',
+    },
+    {
+        id: 'Expire',
+        label: 'Expire Option',
+    },
+]
+
+TransactionFilter.isActive = filter =>
+    filter.dateRangeKey !== 'all' ||
+    filter.filterQuery.length > 0 ||
+    filter.selectedCategories.length > 0 ||
+    filter.selectedAccounts.length > 0 ||
+    filter.selectedSecurities.length > 0 ||
+    filter.selectedInvestmentActions.length > 0
+
 TransactionFilter.apply = (filter, transactions, categories, securities) => {
     const { dateRange, filterQuery, selectedAccounts, selectedCategories } = filter
     return transactions

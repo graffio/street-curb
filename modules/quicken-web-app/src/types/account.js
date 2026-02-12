@@ -119,4 +119,6 @@ Account.fromFirestore = Account._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
+Account.isInvestment = account => account.type === 'Investment' || account.type === '401(k)/403(b)'
+
 export { Account }

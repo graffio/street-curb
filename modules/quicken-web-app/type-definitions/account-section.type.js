@@ -7,5 +7,7 @@ export const AccountSection = {
         isCollapsible: 'Boolean',
         accounts: '{EnrichedAccount:id}',
         children: '{AccountSection:id}',
+        totalBalance: 'Number?',
+        totalCount: 'Number?',
     },
 }

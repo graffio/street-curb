@@ -14,3 +14,7 @@ export const Account = {
         creditLimit: 'Number?',
     },
 }
+
+// Checks if an account is an investment-class account (Investment or 401(k)/403(b))
+// @sig isInvestment :: Account -> Boolean
+Account.isInvestment = account => account.type === 'Investment' || account.type === '401(k)/403(b)'
