@@ -3,7 +3,7 @@
 
 import { post } from '../commands/post.js'
 import { SqliteService } from './sqlite-service.js'
-import { getRaw, setRaw } from './storage.js'
+import { Storage } from './storage.js'
 import { Action } from '../types/action.js'
 const { loadEntitiesFromFile } = SqliteService
 
@@ -63,50 +63,6 @@ const E = {
         }
     },
 
-    // Opens file picker and loads selected file
-    // @sig openFile :: Function -> Promise<void>
-    openFile: async setStoredHandle => {
-        try {
-            const [handle] = await window.showOpenFilePicker({
-                types: [{ description: 'Financial files', accept: { 'application/*': ['.sqlite', '.qif'] } }],
-            })
-            setRaw(FILE_HANDLE_KEY, handle)
-            setStoredHandle(handle)
-            await E.loadFromHandle(handle)
-        } catch (error) {
-            if (error.name !== 'AbortError') console.error('Failed to open file:', error.message)
-        }
-    },
-
-    // Requests permission and reopens previously stored file
-    // @sig reopenFile :: FileSystemFileHandle -> Promise<void>
-    reopenFile: async storedHandle => {
-        try {
-            const permission = await storedHandle.requestPermission({ mode: 'read' })
-            if (permission === 'granted') {
-                post(Action.SetShowReopenBanner(false))
-                await E.loadFromHandle(storedHandle)
-            }
-        } catch (error) {
-            console.error('Failed to reopen file:', error.message)
-            post(Action.SetShowReopenBanner(false))
-        }
-    },
-
-    // Loads stored file handle from IndexedDB on startup
-    // @sig loadStoredHandle :: Function -> undefined
-    loadStoredHandle: setStoredHandle => {
-        getRaw(FILE_HANDLE_KEY).then(E.hydrateFileHandle(setStoredHandle))
-        return undefined
-    },
-
-    // Dismisses banner and opens file picker for new file
-    // @sig openNewFile :: Function -> Promise<void>
-    openNewFile: async setStoredHandle => {
-        post(Action.SetShowReopenBanner(false))
-        await E.openFile(setStoredHandle)
-    },
-
     // Loads entities from a URL (for test mode)
     // @sig loadFromUrl :: String -> Promise<void>
     loadFromUrl: async url => {
@@ -137,18 +93,64 @@ const E = {
             post(Action.SetLoadingStatus(null))
         }
     },
-
-    // Loads test file from URL param if in test mode (fire-and-forget for useEffect)
-    // @sig loadTestFileIfPresent :: () -> undefined
-    loadTestFileIfPresent: () => {
-        if (!P.isTestMode()) return undefined
-        const fileName = new URLSearchParams(window.location.search).get(TEST_FILE_PARAM)
-        if (!fileName) return undefined
-        const url = T.toTestFixtureUrl(fileName)
-        console.log(`[Test Mode] Loading fixture: ${url}`)
-        E.loadFromUrl(url)
-        return undefined
-    },
 }
 
-export { E as FileHandling }
+// Opens file picker and loads selected file
+// @sig openFile :: Function -> Promise<void>
+const openFile = async setStoredHandle => {
+    try {
+        const [handle] = await window.showOpenFilePicker({
+            types: [{ description: 'Financial files', accept: { 'application/*': ['.sqlite', '.qif'] } }],
+        })
+        Storage.setRaw(FILE_HANDLE_KEY, handle)
+        setStoredHandle(handle)
+        await E.loadFromHandle(handle)
+    } catch (error) {
+        if (error.name !== 'AbortError') console.error('Failed to open file:', error.message)
+    }
+}
+
+// Requests permission and reopens previously stored file
+// @sig reopenFile :: FileSystemFileHandle -> Promise<void>
+const reopenFile = async storedHandle => {
+    try {
+        const permission = await storedHandle.requestPermission({ mode: 'read' })
+        if (permission === 'granted') {
+            post(Action.SetShowReopenBanner(false))
+            await E.loadFromHandle(storedHandle)
+        }
+    } catch (error) {
+        console.error('Failed to reopen file:', error.message)
+        post(Action.SetShowReopenBanner(false))
+    }
+}
+
+// Loads stored file handle from IndexedDB on startup
+// @sig loadStoredHandle :: Function -> undefined
+const loadStoredHandle = setStoredHandle => {
+    Storage.getRaw(FILE_HANDLE_KEY).then(E.hydrateFileHandle(setStoredHandle))
+    return undefined
+}
+
+// Dismisses banner and opens file picker for new file
+// @sig openNewFile :: Function -> Promise<void>
+const openNewFile = async setStoredHandle => {
+    post(Action.SetShowReopenBanner(false))
+    await openFile(setStoredHandle)
+}
+
+// Loads test file from URL param if in test mode (fire-and-forget for useEffect)
+// @sig loadTestFileIfPresent :: () -> undefined
+const loadTestFileIfPresent = () => {
+    if (!P.isTestMode()) return undefined
+    const fileName = new URLSearchParams(window.location.search).get(TEST_FILE_PARAM)
+    if (!fileName) return undefined
+    const url = T.toTestFixtureUrl(fileName)
+    console.log(`[Test Mode] Loading fixture: ${url}`)
+    E.loadFromUrl(url)
+    return undefined
+}
+
+const FileHandling = { openFile, reopenFile, loadStoredHandle, openNewFile, loadTestFileIfPresent }
+
+export { FileHandling }

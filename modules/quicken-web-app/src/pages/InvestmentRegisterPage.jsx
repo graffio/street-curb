@@ -13,8 +13,6 @@ import { post } from '../commands/post.js'
 
 const { investmentColumns } = TransactionColumns
 
-const { T, E } = RegisterPage
-
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
 
@@ -30,7 +28,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
     // -----------------------------------------------------------------------------------------------------------------
     // Use reg_ prefix to match View.Register's id pattern (FieldTypes.viewId)
     const viewId = `reg_${accountId}`
-    const tableLayoutId = T.toTableLayoutId('investment', accountId)
+    const tableLayoutId = RegisterPage.toTableLayoutId('investment', accountId)
 
     // -----------------------------------------------------------------------------------------------------------------
     // Hooks (selectors)
@@ -45,7 +43,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
 
-    useEffect(E.ensureTableLayoutEffect(tableLayoutId, investmentColumns), [tableLayoutId])
+    useEffect(RegisterPage.ensureTableLayoutEffect(tableLayoutId, investmentColumns), [tableLayoutId])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Memos (data transformations)
@@ -72,8 +70,8 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
     const searchInputRef = useRef(null)
     const searchHandlersRef = useRef({})
     searchHandlersRef.current = {
-        onSearchNext: () => E.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, 1),
-        onSearchPrev: () => E.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, -1),
+        onSearchNext: () => RegisterPage.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, 1),
+        onSearchPrev: () => RegisterPage.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, -1),
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -96,9 +94,9 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
 
     // Uses getData() to access current data without adding to deps (prevents keymap registration loop)
     const getData = useCallback(() => dataRef.current, [])
-    const handleHighlightChange = useCallback(E.dispatchHighlightChange(getData, viewId), [getData, viewId])
+    const handleHighlightChange = useCallback(RegisterPage.dispatchHighlightChange(getData, viewId), [getData, viewId])
 
-    const handleEscape = useCallback(() => E.clearSearch(searchQuery, viewId), [searchQuery, viewId])
+    const handleEscape = useCallback(() => RegisterPage.clearSearch(searchQuery, viewId), [searchQuery, viewId])
     const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -109,8 +107,11 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
         [accountName],
     )
 
-    useEffect(() => E.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])
-    useEffect(E.searchActionsEffect(viewId, searchHandlersRef, searchInputRef), [viewId])
+    useEffect(
+        () => RegisterPage.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId),
+        [dateRangeKey, dateRange, viewId],
+    )
+    useEffect(RegisterPage.searchActionsEffect(viewId, searchHandlersRef, searchInputRef), [viewId])
 
     // Wait for EnsureTableLayout to populate Redux on first render
     if (!tableLayout) return null

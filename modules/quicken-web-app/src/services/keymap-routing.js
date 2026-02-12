@@ -82,44 +82,40 @@ const T = {
     toIntent:
         reverseBindings =>
         ({ id, description }) => ({ description, keys: reverseBindings[id], from: T.toGroupName(id) }),
-
-    // Collects display intents for KeymapDrawer from ActionRegistry + DEFAULT_BINDINGS
-    // @sig toAvailableIntents :: String|null -> [{ description, keys, from }]
-    toAvailableIntents: activeViewId => {
-        const reverseBindings = T.toReverseBindings()
-        const actions = T.toUniqueActions(ActionRegistry.collectForContext(activeViewId))
-        return actions.filter(a => reverseBindings[a.id]).map(T.toIntent(reverseBindings))
-    },
 }
 
-const E = {
-    // Creates keydown listener effect for global keyboard handling
-    // @sig keydownEffect :: (KeyboardEvent -> void) -> () -> () -> void
-    keydownEffect: handler => () => {
-        window.addEventListener('keydown', handler)
-        return () => window.removeEventListener('keydown', handler)
-    },
-
-    // Handles keydown events — resolves via ActionRegistry with DEFAULT_BINDINGS
-    // @sig handleKeydown :: TabLayout -> KeyboardEvent -> void
-    handleKeydown: tabLayout => event => {
-        if (P.isInputElement(event.target)) return
-
-        const key = normalizeKey(event)
-        const activeViewId = T.toActiveViewId(tabLayout)
-        const actionId = DEFAULT_BINDINGS[key]
-        if (!actionId) return
-
-        const action = ActionRegistry.resolve(actionId, activeViewId)
-        if (!action) return
-
-        event.preventDefault()
-        action.execute()
-    },
-
-    // Collects display intents for KeymapDrawer
-    // @sig toAvailableIntents :: String|null -> [{ description, keys, from }]
-    toAvailableIntents: T.toAvailableIntents,
+// Collects display intents for KeymapDrawer from ActionRegistry + DEFAULT_BINDINGS
+// @sig toAvailableIntents :: String|null -> [{ description, keys, from }]
+const toAvailableIntents = activeViewId => {
+    const reverseBindings = T.toReverseBindings()
+    const actions = T.toUniqueActions(ActionRegistry.collectForContext(activeViewId))
+    return actions.filter(a => reverseBindings[a.id]).map(T.toIntent(reverseBindings))
 }
 
-export { E as KeymapRouting }
+// Handles keydown events — resolves via ActionRegistry with DEFAULT_BINDINGS
+// @sig handleKeydown :: TabLayout -> KeyboardEvent -> void
+const handleKeydown = tabLayout => event => {
+    if (P.isInputElement(event.target)) return
+
+    const key = normalizeKey(event)
+    const activeViewId = T.toActiveViewId(tabLayout)
+    const actionId = DEFAULT_BINDINGS[key]
+    if (!actionId) return
+
+    const action = ActionRegistry.resolve(actionId, activeViewId)
+    if (!action) return
+
+    event.preventDefault()
+    action.execute()
+}
+
+// Creates keydown listener effect for global keyboard handling
+// @sig keydownEffect :: (KeyboardEvent -> void) -> () -> () -> void
+const keydownEffect = handler => () => {
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+}
+
+const KeymapRouting = { toAvailableIntents, handleKeydown, keydownEffect }
+
+export { KeymapRouting }

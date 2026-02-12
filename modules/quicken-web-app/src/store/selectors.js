@@ -5,6 +5,7 @@
 // COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
 
+import { DATE_RANGES } from '@graffio/design-system/src/utils/date-range-utils.js'
 import {
     applySort,
     containsIgnoreCase,
@@ -13,12 +14,11 @@ import {
     truncateWithCount,
     wrapIndex,
 } from '@graffio/functional'
-import { DATE_RANGES } from '@graffio/design-system'
-import { Formatters } from '../utils/formatters.js'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
-import { AccountOrganization } from '../services/account-organization.js'
+import { toAccountSections } from '../services/to-account-sections.js'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
+import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
@@ -305,7 +305,7 @@ const _organizedAccounts = state => {
     const { accounts, transactions, accountListSortMode } = state
     const holdings = Holdings.asOf(state, ACCOUNT_LIST_VIEW_ID)
     const enriched = LookupTable(EnrichedAccount.enrichAll(accounts, holdings, transactions), EnrichedAccount, 'id')
-    return AccountOrganization.A.collectSections(enriched, accountListSortMode)
+    return toAccountSections(enriched, accountListSortMode)
 }
 
 const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }

@@ -3,7 +3,7 @@
 
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
-import { Api } from './lib/api.js'
+import { checkFile } from './lib/check-file.js'
 
 // COMPLEXITY: cohesion-structure — CLI entry point functions don't fit cohesion model
 /**
@@ -27,7 +27,7 @@ const main = async () => {
 
     try {
         const options = { strictReact }
-        const result = await Api.checkFile(file, options)
+        const result = await checkFile(file, options)
 
         // Output JSON result for LLM consumption
         console.log(JSON.stringify(result, null, 2))

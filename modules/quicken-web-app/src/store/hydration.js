@@ -3,7 +3,7 @@
 // COMPLEXITY: Exports both table and tab layout hydration - single responsibility per entity type
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { get } from '../services/storage.js'
+import { Storage } from '../services/storage.js'
 import { ColumnDescriptor, SortMode, SortOrder, TabGroup, TabLayout, TableLayout, View } from '../types/index.js'
 
 const TABLE_LAYOUTS_KEY = 'tableLayouts'
@@ -46,7 +46,7 @@ const hydrateTableLayouts = async () => {
     }
 
     try {
-        const stored = await get(TABLE_LAYOUTS_KEY)
+        const stored = await Storage.get(TABLE_LAYOUTS_KEY)
         if (!stored) return LookupTable([], TableLayout, 'id')
 
         const layouts = Object.values(stored).map(hydrateTableLayout)
@@ -86,7 +86,7 @@ const hydrateTabLayout = async () => {
     }
 
     try {
-        const stored = await get(TAB_LAYOUT_KEY)
+        const stored = await Storage.get(TAB_LAYOUT_KEY)
         if (!stored) return createDefaultTabLayout()
 
         const { activeTabGroupId, id, nextTabGroupId, tabGroups: rawGroups } = stored
@@ -103,7 +103,7 @@ const hydrateTabLayout = async () => {
 const hydrateAccountListPrefs = async () => {
     const defaults = { sortMode: SortMode.ByType(), collapsedSections: new Set() }
     try {
-        const stored = await get(ACCOUNT_LIST_PREFS_KEY)
+        const stored = await Storage.get(ACCOUNT_LIST_PREFS_KEY)
         if (!stored) return defaults
 
         const sortMode = SortMode[stored.sortMode]?.() || SortMode.ByType()
@@ -115,4 +115,5 @@ const hydrateAccountListPrefs = async () => {
     }
 }
 
-export { hydrateAccountListPrefs, hydrateTabLayout, hydrateTableLayouts }
+const Hydration = { hydrateTableLayouts, hydrateTabLayout, hydrateAccountListPrefs }
+export { Hydration }

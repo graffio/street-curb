@@ -8,8 +8,9 @@ Every JS file follows this structure. No exceptions.
 2. **Configuration constants** — `PRIORITY`, `MAX_LENGTH`, lookup tables
 3. **Cohesion groups** — P → T → F → V → A → E (only the ones needed)
 4. **Exported function(s)** — at module level, NOT inside cohesion groups
-5. **Export object** — single named object matching file name (kebab-case → PascalCase)
-6. **Export statement** — `export { MyModule }`
+5. **Export** — one of:
+   - **Object** (multi-function file): PascalCase matching file name → `export { MyModule }`
+   - **Function** (single-function file): camelCase matching file name → `export { myModule }`
 
 ## Cohesion Groups
 

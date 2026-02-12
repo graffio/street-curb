@@ -1,15 +1,22 @@
-// ABOUTME: Tests for table layout utility functions
-// ABOUTME: Verifies initialization, conversion, and state application
+// ABOUTME: Tests for TableLayout type methods
+// ABOUTME: Verifies conversion, sorting, sizing, and ordering
 
 import tap from 'tap'
-import {
-    applyOrderChange,
-    applySizingChange,
-    applySortingChange,
-    initializeTableLayout,
-    toDataTableProps,
-} from '../../src/utils/table-layout.js'
-import { SortOrder } from '../../src/types/index.js'
+import { LookupTable } from '@graffio/functional'
+import { ColumnDescriptor } from '../../src/types/column-descriptor.js'
+import { SortOrder } from '../../src/types/sort-order.js'
+import { TableLayout } from '../../src/types/table-layout.js'
+
+const toLayout = columns =>
+    TableLayout(
+        'cols_test',
+        LookupTable(
+            columns.map(c => ColumnDescriptor(c.id, c.size, 'none')),
+            ColumnDescriptor,
+            'id',
+        ),
+        LookupTable([], SortOrder, 'id'),
+    )
 
 const mockColumns = [
     { id: 'date', size: 100 },
@@ -17,34 +24,13 @@ const mockColumns = [
     { id: 'amount', size: 80 },
 ]
 
-tap.test('initializeTableLayout', t => {
-    t.test('Given a viewId and column definitions', t => {
-        t.test('When I initialize a table layout', t => {
-            const layout = initializeTableLayout('cols_test', mockColumns)
-
-            t.equal(layout.id, 'cols_test', 'Then id should match viewId')
-            t.equal(layout.columnDescriptors.length, 3, 'Then it should have 3 column descriptors')
-            t.equal(layout.sortOrder.length, 0, 'Then sortOrder should be empty')
-
-            const { id, width, sortDirection } = layout.columnDescriptors[0]
-            t.equal(id, 'date', 'Then first column id should be date')
-            t.equal(width, 100, 'Then first column width should be 100')
-            t.equal(sortDirection, 'none', 'Then first column should have no sort')
-
-            t.end()
-        })
-        t.end()
-    })
-    t.end()
-})
-
 tap.test('toDataTableProps', t => {
     t.test('Given a TableLayout with sorting', t => {
-        const layout = initializeTableLayout('cols_test', mockColumns)
-        const sortedLayout = applySortingChange(layout, [{ id: 'date', desc: false }])
+        const layout = toLayout(mockColumns)
+        const sortedLayout = TableLayout.applySortingChange(layout, [{ id: 'date', desc: false }])
 
         t.test('When I convert to DataTable props', t => {
-            const { columnOrder, columnSizing, sorting } = toDataTableProps(sortedLayout)
+            const { columnOrder, columnSizing, sorting } = TableLayout.toDataTableProps(sortedLayout)
 
             t.same(columnOrder, ['date', 'payee', 'amount'], 'Then columnOrder should match descriptor order')
             t.same(columnSizing, { date: 100, payee: 200, amount: 80 }, 'Then columnSizing should have all widths')
@@ -59,10 +45,10 @@ tap.test('toDataTableProps', t => {
 
 tap.test('applySortingChange', t => {
     t.test('Given a TableLayout with no sorting', t => {
-        const layout = initializeTableLayout('cols_test', mockColumns)
+        const layout = toLayout(mockColumns)
 
         t.test('When I apply a multi-column sort', t => {
-            const sorted = applySortingChange(layout, [
+            const sorted = TableLayout.applySortingChange(layout, [
                 { id: 'date', desc: false },
                 { id: 'payee', desc: true },
             ])
@@ -86,10 +72,10 @@ tap.test('applySortingChange', t => {
 
 tap.test('applySizingChange', t => {
     t.test('Given a TableLayout', t => {
-        const layout = initializeTableLayout('cols_test', mockColumns)
+        const layout = toLayout(mockColumns)
 
         t.test('When I change a column width', t => {
-            const resized = applySizingChange(layout, { payee: 300 })
+            const resized = TableLayout.applySizingChange(layout, { payee: 300 })
 
             t.equal(resized.columnDescriptors.date.width, 100, 'Then unchanged columns keep width')
             t.equal(resized.columnDescriptors.payee.width, 300, 'Then changed column has new width')
@@ -104,10 +90,10 @@ tap.test('applySizingChange', t => {
 
 tap.test('applyOrderChange', t => {
     t.test('Given a TableLayout', t => {
-        const layout = initializeTableLayout('cols_test', mockColumns)
+        const layout = toLayout(mockColumns)
 
         t.test('When I reorder columns', t => {
-            const reordered = applyOrderChange(layout, ['amount', 'date', 'payee'])
+            const reordered = TableLayout.applyOrderChange(layout, ['amount', 'date', 'payee'])
 
             const order = reordered.columnDescriptors.map(d => d.id)
             t.same(order, ['amount', 'date', 'payee'], 'Then columns should be in new order')

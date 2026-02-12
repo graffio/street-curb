@@ -117,8 +117,9 @@ test('search chip: type query, verify counter, clear search', async t => {
     t.notOk(afterSearch.includes('Something went wrong'), 'no crash after typing search query')
     t.ok(afterSearch.includes('of'), 'match counter is visible')
 
-    // Clear search via × button
-    clickClear()
+    // Clear search via Escape (SearchChip handles Escape → clear + blur)
+    browser('find', ['placeholder', 'Search...', 'click'])
+    browser('press', ['Escape'])
     await wait(200)
     const afterClear = browser('snapshot')
     t.notOk(afterClear.includes('Something went wrong'), 'no crash after clearing search')

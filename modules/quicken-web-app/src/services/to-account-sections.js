@@ -100,28 +100,25 @@ const A = {
         if (zeroBalance.length > 0) result.push(F.createZeroBalanceByType(zeroBalance))
         return result
     },
-
-    // Organizes accounts into sections based on sort mode (always segregates $0)
-    // @sig collectSections :: (LookupTable<EnrichedAccount>, SortMode) -> LookupTable<AccountSection>
-    collectSections: (enriched, sortMode) => {
-        const sorted = T.toAlphabetized(enriched)
-        const byAmount = T.toSortedByAmount(enriched)
-        const withBalance = sorted.filter(e => !P.hasZeroBalance(e))
-        const zeroBalance = sorted.filter(P.hasZeroBalance)
-        const withBalanceByAmount = byAmount.filter(e => !P.hasZeroBalance(e))
-
-        const sections = sortMode.match({
-            Alphabetical: () => T.toWithZeroSection([F.createSection('All Accounts', withBalance, false)], zeroBalance),
-            ByAmount: () =>
-                T.toWithZeroSection([F.createSection('All Accounts', withBalanceByAmount, false)], zeroBalance),
-            ByType: () => A.collectByTypeSections(withBalance, zeroBalance),
-            Manual: () => T.toWithZeroSection([F.createSection('All Accounts', withBalance, false)], zeroBalance),
-        })
-
-        return LookupTable(sections, AccountSection, 'id')
-    },
 }
 
-const AccountOrganization = { P, T, F, A }
+// Organizes accounts into sections based on sort mode (always segregates $0)
+// @sig toAccountSections :: (LookupTable<EnrichedAccount>, SortMode) -> LookupTable<AccountSection>
+const toAccountSections = (enriched, sortMode) => {
+    const sorted = T.toAlphabetized(enriched)
+    const byAmount = T.toSortedByAmount(enriched)
+    const withBalance = sorted.filter(e => !P.hasZeroBalance(e))
+    const zeroBalance = sorted.filter(P.hasZeroBalance)
+    const withBalanceByAmount = byAmount.filter(e => !P.hasZeroBalance(e))
 
-export { AccountOrganization }
+    const sections = sortMode.match({
+        Alphabetical: () => T.toWithZeroSection([F.createSection('All Accounts', withBalance, false)], zeroBalance),
+        ByAmount: () => T.toWithZeroSection([F.createSection('All Accounts', withBalanceByAmount, false)], zeroBalance),
+        ByType: () => A.collectByTypeSections(withBalance, zeroBalance),
+        Manual: () => T.toWithZeroSection([F.createSection('All Accounts', withBalance, false)], zeroBalance),
+    })
+
+    return LookupTable(sections, AccountSection, 'id')
+}
+
+export { toAccountSections }

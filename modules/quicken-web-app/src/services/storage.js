@@ -1,7 +1,5 @@
 // ABOUTME: IndexedDB wrapper providing simple key-value storage API
 // ABOUTME: Replaces localStorage for persistence with support for non-serializable values
-// COMPLEXITY: Utility module with flat exports; cohesion groups would obscure API
-// COMPLEXITY: 11 functions for complete key-value API (get/set + getRaw/setRaw + helpers)
 
 const DB_NAME = 'quicken-web-app'
 const DB_VERSION = 1
@@ -79,4 +77,6 @@ const setRaw = async (key, value) => {
     }
 }
 
-export { get, getRaw, set, setRaw }
+const Storage = { get, getRaw, set, setRaw }
+
+export { Storage }

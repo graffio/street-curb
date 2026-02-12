@@ -7,7 +7,7 @@ import { PS } from './shared/predicates.js'
 import { AboutmeComment } from './rules/aboutme-comment.js'
 import { ChainExtraction } from './rules/chain-extraction.js'
 import { CohesionStructure } from './rules/cohesion-structure.js'
-import { ExportStructure } from './rules/export-structure.js'
+import { exportStructure } from './rules/export-structure.js'
 import { FileNaming } from './rules/file-naming.js'
 import { FunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
 import { FunctionSpacing } from './rules/function-spacing.js'
@@ -60,7 +60,7 @@ const checkFile = async (filePath, options = {}) => {
         ...AboutmeComment.checkAboutmeComment(ast, sourceCode, filePath),
         ...ChainExtraction.checkChainExtraction(ast, sourceCode, filePath),
         ...CohesionStructure.checkCohesionStructure(ast, sourceCode, filePath),
-        ...ExportStructure.checkExportStructure(ast, sourceCode, filePath),
+        ...exportStructure(ast, sourceCode, filePath),
         ...FileNaming.checkFileNaming(ast, sourceCode, filePath),
         ...FunctionDeclarationOrdering.checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
         ...FunctionSpacing.checkFunctionSpacing(ast, sourceCode, filePath),
@@ -81,5 +81,4 @@ const checkFile = async (filePath, options = {}) => {
     return { filePath, violations, isCompliant: errors.length === 0 }
 }
 
-const Api = { checkFile }
-export { Api }
+export { checkFile }

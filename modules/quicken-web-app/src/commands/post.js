@@ -4,7 +4,7 @@
 // COMPLEXITY: export-structure — post is a function, not a namespace; lowercase matches usage pattern
 
 import { debounce } from '@graffio/functional'
-import { set } from '../services/storage.js'
+import { Storage } from '../services/storage.js'
 import { currentStore, Selectors as S } from '../store/index.js'
 import { Action } from '../types/action.js'
 
@@ -17,7 +17,7 @@ const TABLE_LAYOUT_PERSIST_DELAY_MS = 500
 
 // Writes table layouts to IndexedDB (fire-and-forget)
 // @sig persistTableLayouts :: () -> ()
-const persistTableLayouts = () => set(TABLE_LAYOUTS_KEY, S.tableLayouts(currentStore().getState()))
+const persistTableLayouts = () => Storage.set(TABLE_LAYOUTS_KEY, S.tableLayouts(currentStore().getState()))
 
 // Module-level debounced function preserves timeout state across post() calls
 // @sig debouncedPersistTableLayouts :: () -> ()
@@ -34,7 +34,7 @@ const post = action => {
     // @sig persistTabLayout :: () -> ()
     const persistTabLayout = () => {
         const tabLayout = S.tabLayout(currentStore().getState())
-        if (tabLayout) set(TAB_LAYOUT_KEY, tabLayout)
+        if (tabLayout) Storage.set(TAB_LAYOUT_KEY, tabLayout)
     }
 
     // Dispatches and persists table layout (debounced)
@@ -57,7 +57,7 @@ const post = action => {
         const state = currentStore().getState()
         const sortMode = S.UI.sortMode(state)['@@tagName']
         const collapsedSections = [...S.UI.collapsedSections(state)]
-        set(ACCOUNT_LIST_PREFS_KEY, { sortMode, collapsedSections })
+        Storage.set(ACCOUNT_LIST_PREFS_KEY, { sortMode, collapsedSections })
     }
 
     // Dispatches and persists account list preferences (immediate)
