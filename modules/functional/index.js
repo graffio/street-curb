@@ -3,6 +3,8 @@
 // COMPLEXITY: Barrel file - many exports intentional to provide single import point for all utilities
 
 import applySort from './src/apply-sort.js'
+import { TruncateWithCount as truncateWithCount } from './src/truncate-with-count.js'
+import { WrapIndex as wrapIndex } from './src/wrap-index.js'
 import { PromiseCache, PromiseCacheWithCacheBusting } from './promise-cache.js'
 import LookupTable from './src/lookup-table.js'
 import addOrReplaceAtPath from './src/ramda-like/add-or-replace-at-path.js'
@@ -181,6 +183,8 @@ export {
     updateLookupTablePath,
     without,
     zipObject,
+    truncateWithCount,
+    wrapIndex,
 
     //
     LookupTable,
