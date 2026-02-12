@@ -1,5 +1,7 @@
 // ABOUTME: ESLint configuration for the monorepo
 // ABOUTME: Includes stylistic rules, React, Storybook, and custom arrow-expression-body rule
+// COMPLEXITY: cohesion-structure — Config file; inline ESLint rule helpers don't fit P/T/F/V/A/E
+// COMPLEXITY: export-structure — ESLint flat config API requires default export
 import { FlatCompat } from '@eslint/eslintrc'
 import stylistic from '@stylistic/eslint-plugin'
 import eslintPluginReact from 'eslint-plugin-react'
@@ -75,6 +77,9 @@ export default defineConfig([
             ],
         },
     },
-    { files: ['**/store/reducer.js', '**/store/selectors/**/*.js'], rules: { 'no-restricted-syntax': 'off' } },
+    {
+        files: ['**/store/reducer.js', '**/store/reducers/*.js', '**/store/selectors.js'],
+        rules: { 'no-restricted-syntax': 'off' },
+    },
     { files: ['**/*.stories.{js,jsx}'], plugins: { storybook }, rules: { ...storybook.configs.recommended.rules } },
 ])

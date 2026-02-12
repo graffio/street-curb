@@ -4,7 +4,6 @@
 // COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
 // COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
-/* eslint-disable no-restricted-syntax -- selectors must access state directly */
 
 import {
     applySort,
@@ -439,7 +438,6 @@ const Transactions = T
 // ---------------------------------------------------------------------------------------------------------------------
 
 export {
-    // Namespaces
     Accounts,
     Categories,
     Holdings,

@@ -22,10 +22,10 @@ const createDefaultViewUiState = viewId =>
 // @sig setViewUiState :: (State, Action.SetViewUiState) -> State
 const setViewUiState = (state, action) => {
     const { viewId, changes } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.viewUiState.get(viewId) || createDefaultViewUiState(viewId)
     const updated = ViewUiStateType.from({ ...existing, ...changes })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, viewUiState: state.viewUiState.addItemWithId(updated) }
 }
 
@@ -33,7 +33,7 @@ const setViewUiState = (state, action) => {
 // @sig setFilterPopoverOpen :: (State, Action.SetFilterPopoverOpen) -> State
 const setFilterPopoverOpen = (state, action) => {
     const { viewId, popoverId } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.viewUiState.get(viewId) || createDefaultViewUiState(viewId)
     const updated = ViewUiStateType.from({
         ...existing,
@@ -41,7 +41,7 @@ const setFilterPopoverOpen = (state, action) => {
         filterPopoverSearch: '',
         filterPopoverHighlight: -1,
     })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, viewUiState: state.viewUiState.addItemWithId(updated) }
 }
 
@@ -49,10 +49,10 @@ const setFilterPopoverOpen = (state, action) => {
 // @sig setFilterPopoverSearch :: (State, Action.SetFilterPopoverSearch) -> State
 const setFilterPopoverSearch = (state, action) => {
     const { viewId, searchText } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.viewUiState.get(viewId) || createDefaultViewUiState(viewId)
     const updated = ViewUiStateType.from({ ...existing, filterPopoverSearch: searchText, filterPopoverHighlight: 0 })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, viewUiState: state.viewUiState.addItemWithId(updated) }
 }
 
@@ -60,7 +60,7 @@ const setFilterPopoverSearch = (state, action) => {
 // @sig resetViewUiState :: (State, Action.ResetTransactionFilters) -> State
 const resetViewUiState = (state, action) => {
     const defaultUiState = createDefaultViewUiState(action.viewId)
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, viewUiState: state.viewUiState.addItemWithId(defaultUiState) }
 }
 

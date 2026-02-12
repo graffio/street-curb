@@ -36,10 +36,10 @@ const createDefaultFilter = viewId =>
 // @sig setTransactionFilter :: (State, Action.SetTransactionFilter) -> State
 const setTransactionFilter = (state, action) => {
     const { viewId, changes } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({ ...existing, ...changes })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
@@ -47,7 +47,7 @@ const setTransactionFilter = (state, action) => {
 // @sig resetTransactionFilters :: (State, Action.ResetTransactionFilters) -> State
 const resetTransactionFilters = (state, action) => {
     const defaultFilter = createDefaultFilter(action.viewId)
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(defaultFilter) }
 }
 
@@ -55,13 +55,13 @@ const resetTransactionFilters = (state, action) => {
 // @sig toggleAccountFilter :: (State, Action.ToggleAccountFilter) -> State
 const toggleAccountFilter = (state, action) => {
     const { viewId, accountId } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({
         ...existing,
         selectedAccounts: T.toggleItem(existing.selectedAccounts, accountId),
     })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
@@ -69,13 +69,13 @@ const toggleAccountFilter = (state, action) => {
 // @sig toggleSecurityFilter :: (State, Action.ToggleSecurityFilter) -> State
 const toggleSecurityFilter = (state, action) => {
     const { viewId, securityId } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({
         ...existing,
         selectedSecurities: T.toggleItem(existing.selectedSecurities, securityId),
     })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
@@ -83,11 +83,11 @@ const toggleSecurityFilter = (state, action) => {
 // @sig toggleActionFilter :: (State, Action.ToggleActionFilter) -> State
 const toggleActionFilter = (state, action) => {
     const { viewId, actionId } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const selectedInvestmentActions = T.toggleItem(existing.selectedInvestmentActions, actionId)
     const updated = TransactionFilter.from({ ...existing, selectedInvestmentActions })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
@@ -95,13 +95,13 @@ const toggleActionFilter = (state, action) => {
 // @sig addCategoryFilter :: (State, Action.AddCategoryFilter) -> State
 const addCategoryFilter = (state, action) => {
     const { viewId, category } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({
         ...existing,
         selectedCategories: [...existing.selectedCategories, category],
     })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
@@ -109,11 +109,11 @@ const addCategoryFilter = (state, action) => {
 // @sig removeCategoryFilter :: (State, Action.RemoveCategoryFilter) -> State
 const removeCategoryFilter = (state, action) => {
     const { viewId, category } = action
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const selectedCategories = existing.selectedCategories.filter(c => c !== category)
     const updated = TransactionFilter.from({ ...existing, selectedCategories })
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
+
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 

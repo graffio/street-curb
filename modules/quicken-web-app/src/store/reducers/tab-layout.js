@@ -55,7 +55,6 @@ const openView = (state, action) => {
     // Creates a transaction filter for the view if not already present
     // @sig maybeAddFilter :: (State, View) -> State
     const maybeAddFilter = (newState, v) => {
-        // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
         if (state.transactionFilters.get(v.id)) return newState
         const filter = TransactionFilters.createDefaultFilter(v.id)
         return { ...newState, transactionFilters: newState.transactionFilters.addItemWithId(filter) }
@@ -106,7 +105,6 @@ const moveView = (state, action) => {
         return viewList.moveElement(currentIndex, targetIndex)
     }
 
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     const { id, tabGroups, activeTabGroupId, nextTabGroupId } = state.tabLayout
     const { viewId, fromGroupId, toGroupId, toIndex } = action
     const fromGroup = tabGroups[fromGroupId]
@@ -152,7 +150,6 @@ const createTabGroup = state => {
 // Closes a tab group; moves its views to the first remaining group
 // @sig closeTabGroup :: (State, Action.CloseTabGroup) -> State
 const closeTabGroup = (state, action) => {
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     const { id, tabGroups, activeTabGroupId, nextTabGroupId } = state.tabLayout
     if (tabGroups.length <= 1) return state
 
@@ -180,7 +177,6 @@ const closeTabGroup = (state, action) => {
 // @sig setActiveView :: (State, Action.SetActiveView) -> State
 const setActiveView = (state, action) => ({
     ...state,
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     tabLayout: updateLookupTablePath(state.tabLayout, ['tabGroups', action.groupId, 'activeViewId'], action.viewId),
 })
 
@@ -188,7 +184,6 @@ const setActiveView = (state, action) => ({
 // @sig setActiveTabGroup :: (State, Action.SetActiveTabGroup) -> State
 const setActiveTabGroup = (state, action) => ({
     ...state,
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     tabLayout: updateLookupTablePath(state.tabLayout, ['activeTabGroupId'], action.groupId),
 })
 
@@ -196,7 +191,6 @@ const setActiveTabGroup = (state, action) => ({
 // @sig setTabGroupWidth :: (State, Action.SetTabGroupWidth) -> State
 const setTabGroupWidth = (state, action) => ({
     ...state,
-    // eslint-disable-next-line no-restricted-syntax -- reducer must access state directly
     tabLayout: updateLookupTablePath(state.tabLayout, ['tabGroups', action.groupId, 'width'], action.width),
 })
 
