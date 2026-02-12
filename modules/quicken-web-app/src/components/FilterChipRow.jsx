@@ -54,12 +54,12 @@ const E = {
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
  *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, showSecurities?, showActions?,
- *         accountId?, groupByOptions?, filteredCount?, totalCount?, itemLabel? }
+ *         accountId?, groupByItems?, filteredCount?, totalCount?, itemLabel? }
  */
 const FilterChipRow = props => {
     const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
     const { showSecurities = false, showActions = false } = props
-    const { accountId = null, groupByOptions = null } = props
+    const { accountId = null, groupByItems = null } = props
     const { filteredCount: filteredCountProp, totalCount: totalCountProp, itemLabel = 'transactions' } = props
     const { searchQuery, searchMatches, highlightedId, searchInputRef, onSearchNext, onSearchPrev } = props
 
@@ -138,10 +138,7 @@ const FilterChipRow = props => {
                             chip={<AccountFilterChip viewId={viewId} isActive={account.isActive} />}
                             details={account.details}
                         />
-                        <FilterColumn
-                            chip={<GroupByFilterChip viewId={viewId} options={groupByOptions} />}
-                            details={[]}
-                        />
+                        <FilterColumn chip={<GroupByFilterChip viewId={viewId} items={groupByItems} />} details={[]} />
                     </>
                 )}
 

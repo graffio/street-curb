@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
+import { TabStyles } from '../utils/tab-styles.js'
 import { TabGroup } from './TabGroup.jsx'
 
 const HANDLE_WIDTH = 4
@@ -20,16 +21,6 @@ const handleStyle = {
     transition: 'background-color 0.1s',
 }
 
-const T = {
-    // Clamps widths to ensure neither group falls below minimum
-    // @sig toClampedWidths :: (Number, Number, Number, Number) -> { left: Number, right: Number }
-    toClampedWidths: (leftWidth, rightWidth, totalWidth, minWidth) => {
-        if (leftWidth < minWidth) return { left: minWidth, right: totalWidth - minWidth }
-        if (rightWidth < minWidth) return { left: totalWidth - minWidth, right: minWidth }
-        return { left: leftWidth, right: rightWidth }
-    },
-}
-
 const E = {
     // Calculates and persists new widths based on drag delta
     // @sig persistGroupWidths :: (Object, Number) -> void
@@ -39,7 +30,7 @@ const E = {
         const deltaPercent = (deltaX / containerWidth) * 100
         const newLeft = startLeftWidth + deltaPercent
         const newRight = startRightWidth - deltaPercent
-        const { left, right } = T.toClampedWidths(newLeft, newRight, totalWidth, MIN_GROUP_WIDTH)
+        const { left, right } = TabStyles.toClampedWidths(newLeft, newRight, totalWidth, MIN_GROUP_WIDTH)
         post(Action.SetTabGroupWidth(leftGroupId, left))
         post(Action.SetTabGroupWidth(rightGroupId, right))
     },

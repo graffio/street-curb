@@ -118,8 +118,8 @@ const E = {
     },
 
     // Collects display intents for KeymapDrawer
-    // @sig collectAvailableIntents :: String|null -> [{ description, keys, from }]
-    collectAvailableIntents: T.toAvailableIntents,
+    // @sig toAvailableIntents :: String|null -> [{ description, keys, from }]
+    toAvailableIntents: T.toAvailableIntents,
 }
 
 export { E as KeymapRouting }

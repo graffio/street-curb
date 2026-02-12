@@ -6,7 +6,7 @@ import { useCallback, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
-import { FilterChipRow, investmentGroupByOptions } from '../components/index.js'
+import { FilterChipRow, investmentGroupByItems } from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
@@ -69,7 +69,7 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 showGroupBy
                 showAsOfDate
                 showCategories={false}
-                groupByOptions={investmentGroupByOptions}
+                groupByItems={investmentGroupByItems}
                 filteredCount={totalHoldingsCount}
                 totalCount={totalHoldingsCount}
                 itemLabel="holdings"

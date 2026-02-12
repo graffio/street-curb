@@ -27,17 +27,13 @@ const { ActionRegistry } = KeymapModule
 // ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
-    // Finds current group-by option from options list
-    // @sig toCurrentOption :: ([{ value, label }], String?) -> { value, label }
-    toCurrentOption: (options, groupBy) => options.find(o => o.value === groupBy) || options[0],
-
-    // Converts options ({value, label}) to items ({id, label}) format for SelectableListPopover
-    // @sig toItems :: [{ value, label }] -> [{ id, label }]
-    toItems: options => options.map(({ value, label }) => ({ id: value, label })),
-
-    // Gets selected item from items array by ID
-    // @sig toSelectedItems :: ([{ id, label }], String?) -> [{ id, label }]
-    toSelectedItems: (items, selectedId) => items.filter(item => item.id === selectedId),
+    // Finds the selected item by ID from items list
+    // @sig toSelectedItems :: ([{ id }], String?) -> [{ id }]
+    toSelectedItems: (items, selectedId) => {
+        if (!selectedId) return []
+        const item = items.find(i => i.id === selectedId)
+        return item ? [item] : []
+    },
 }
 
 const F = {
@@ -104,18 +100,18 @@ const detailTextStyle = {
 // Constants
 // ---------------------------------------------------------------------------------------------------------------------
 
-const defaultGroupByOptions = [
-    { value: 'category', label: 'Category' },
-    { value: 'account', label: 'Account' },
-    { value: 'payee', label: 'Payee' },
-    { value: 'month', label: 'Month' },
+const defaultGroupByItems = [
+    { id: 'category', label: 'Category' },
+    { id: 'account', label: 'Account' },
+    { id: 'payee', label: 'Payee' },
+    { id: 'month', label: 'Month' },
 ]
 
-const investmentGroupByOptions = [
-    { value: 'account', label: 'Account' },
-    { value: 'security', label: 'Security' },
-    { value: 'securityType', label: 'Type' },
-    { value: 'goal', label: 'Goal' },
+const investmentGroupByItems = [
+    { id: 'account', label: 'Account' },
+    { id: 'security', label: 'Security' },
+    { id: 'securityType', label: 'Type' },
+    { id: 'goal', label: 'Goal' },
 ]
 
 // Convert DATE_RANGES object to array of {key, label} entries
@@ -548,8 +544,8 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Group by filter chip with keyboard-navigable single-select popover
-// @sig GroupByFilterChip :: { viewId: String, options?: [{ value, label }] } -> ReactElement
-const GroupByFilterChip = ({ viewId, options }) => {
+// @sig GroupByFilterChip :: { viewId: String, items?: [{ id, label }] } -> ReactElement
+const GroupByFilterChip = ({ viewId, items }) => {
     const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
     const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
@@ -562,19 +558,19 @@ const GroupByFilterChip = ({ viewId, options }) => {
 
     const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
-    const handleToggleHighlighted = () => items[highlightedIndex] && handleToggle(items[highlightedIndex].id)
+    const handleToggleHighlighted = () =>
+        resolvedItems[highlightedIndex] && handleToggle(resolvedItems[highlightedIndex].id)
 
     const POPOVER_ID = 'groupBy'
-    const resolvedOptions = options ?? defaultGroupByOptions
-    const items = T.toItems(resolvedOptions)
+    const resolvedItems = items ?? defaultGroupByItems
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
     const rawHighlight = useSelector(state => S.UI.filterPopoverHighlight(state, viewId))
     const isOpen = popoverId === POPOVER_ID
-    const selectedId = groupBy || items[0]?.id
+    const selectedId = groupBy || resolvedItems[0]?.id
     const selectedIds = selectedId ? [selectedId] : []
-    const selectedItems = T.toSelectedItems(items, selectedId)
-    const count = items.length
+    const selectedItems = T.toSelectedItems(resolvedItems, selectedId)
+    const count = resolvedItems.length
     const highlightedIndex = count === 0 ? 0 : Math.min(rawHighlight || 0, count - 1)
     const nextHighlightIndex = count === 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
     const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
@@ -584,7 +580,7 @@ const GroupByFilterChip = ({ viewId, options }) => {
             label="Group by"
             open={isOpen}
             onOpenChange={handleOpenChange}
-            items={items}
+            items={resolvedItems}
             selectedIds={selectedIds}
             selectedItems={selectedItems}
             highlightedIndex={highlightedIndex}
@@ -731,7 +727,7 @@ const FilterChips = {
     DateFilterChip,
     FilterColumn,
     GroupByFilterChip,
-    investmentGroupByOptions,
+    investmentGroupByItems,
     SearchFilterChip,
     SecurityFilterChip,
 }

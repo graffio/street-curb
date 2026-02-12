@@ -76,7 +76,7 @@ const RootLayout = () => {
     const handleOpenNew = useCallback(() => FileHandling.openNewFile(setStoredHandle), [])
     const handleKeyDown = useCallback(KeymapRouting.handleKeydown(tabLayout), [tabLayout])
 
-    const availableIntents = showDrawer ? KeymapRouting.collectAvailableIntents(activeViewId) : []
+    const availableIntents = showDrawer ? KeymapRouting.toAvailableIntents(activeViewId) : []
 
     useEffect(() => FileHandling.loadStoredHandle(setStoredHandle), [])
     useEffect(() => FileHandling.loadTestFileIfPresent(), [])

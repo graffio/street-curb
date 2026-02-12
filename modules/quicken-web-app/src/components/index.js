@@ -15,5 +15,5 @@ export { TransactionSubTable } from './TransactionSubTable.jsx'
 
 // Re-export individual filter chips for backward compatibility
 export const { AccountFilterChip, ActionFilterChip, CategoryFilterChip, DateFilterChip } = FilterChips
-export const { FilterColumn, GroupByFilterChip, investmentGroupByOptions, SearchFilterChip, SecurityFilterChip } =
+export const { FilterColumn, GroupByFilterChip, investmentGroupByItems, SearchFilterChip, SecurityFilterChip } =
     FilterChips

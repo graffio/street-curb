@@ -17,15 +17,6 @@ const P = {
 }
 
 const T = {
-    // Stores handle and shows reopen banner if handle exists
-    // @sig hydrateFileHandle :: Function -> FileSystemFileHandle? -> void
-    hydrateFileHandle: setStoredHandle => handle => {
-        if (handle) {
-            setStoredHandle(handle)
-            post(Action.SetShowReopenBanner(true))
-        }
-    },
-
     // Build URL for test fixture file (served from public/test-fixtures symlink)
     // @sig toTestFixtureUrl :: String -> String
     toTestFixtureUrl: fileName => {
@@ -35,6 +26,15 @@ const T = {
 }
 
 const E = {
+    // Stores handle and shows reopen banner if handle exists
+    // @sig hydrateFileHandle :: Function -> FileSystemFileHandle? -> void
+    hydrateFileHandle: setStoredHandle => handle => {
+        if (handle) {
+            setStoredHandle(handle)
+            post(Action.SetShowReopenBanner(true))
+        }
+    },
+
     // Loads entities from a file handle into Redux store
     // @sig loadFromHandle :: FileSystemFileHandle -> Promise<void>
     loadFromHandle: async handle => {
@@ -96,7 +96,7 @@ const E = {
     // Loads stored file handle from IndexedDB on startup
     // @sig loadStoredHandle :: Function -> undefined
     loadStoredHandle: setStoredHandle => {
-        getRaw(FILE_HANDLE_KEY).then(T.hydrateFileHandle(setStoredHandle))
+        getRaw(FILE_HANDLE_KEY).then(E.hydrateFileHandle(setStoredHandle))
         return undefined
     },
 

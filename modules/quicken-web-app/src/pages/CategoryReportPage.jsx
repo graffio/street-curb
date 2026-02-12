@@ -1,5 +1,6 @@
 // ABOUTME: Category spending report page with hierarchical tree display
 // ABOUTME: Aggregates transactions by category with expand/collapse and totals
+// COMPLEXITY: react-redux-separation — useMemo for expensive tree building, updater-pattern useCallback
 
 import { DataTable, Flex } from '@graffio/design-system'
 import { useCallback, useEffect, useMemo } from 'react'
@@ -27,12 +28,6 @@ const P = {
         const { children, value } = row.original
         return children?.length > 0 || value?.length > 0
     },
-}
-
-const T = {
-    // Get children from a tree node for DataTable getChildRows prop
-    // @sig toChildRows :: TreeNode -> [TreeNode]
-    toChildRows: row => row.children,
 }
 
 /*
@@ -75,7 +70,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
                 data={transactionTree}
                 height={height}
                 rowHeight={40}
-                getChildRows={T.toChildRows}
+                getChildRows={row => row.children}
                 getRowCanExpand={P.canExpand}
                 renderSubComponent={renderSubComponent}
                 expanded={expanded}

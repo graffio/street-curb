@@ -1,5 +1,5 @@
 // ABOUTME: Visual layout utilities for tab groups — colors, styles, and width clamping
-// ABOUTME: Extracted from TabGroup.jsx and TabGroupContainer.jsx
+// ABOUTME: Provides view-type color mappings and layout clamping for tab groups
 
 const VIEW_COLORS = {
     Register: { focused: 'var(--blue-6)', active: 'var(--blue-4)', inactive: 'var(--blue-2)' },

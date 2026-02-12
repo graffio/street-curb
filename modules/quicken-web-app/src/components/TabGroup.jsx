@@ -10,32 +10,12 @@ import { InvestmentRegisterPage } from '../pages/InvestmentRegisterPage.jsx'
 import { InvestmentReportPage } from '../pages/InvestmentReportPage.jsx'
 import { TransactionRegisterPage } from '../pages/TransactionRegisterPage.jsx'
 import * as S from '../store/selectors.js'
-import { Action } from '../types/action.js'
+import { Account, Action } from '../types/index.js'
+import { TabStyles } from '../utils/tab-styles.js'
 
 const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
 const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
-const VIEW_COLORS = {
-    Register: { focused: 'var(--blue-6)', active: 'var(--blue-4)', inactive: 'var(--blue-2)' },
-    Report: { focused: 'var(--purple-6)', active: 'var(--purple-4)', inactive: 'var(--purple-3)' },
-    Reconciliation: { focused: 'var(--green-6)', active: 'var(--green-4)', inactive: 'var(--green-2)' },
-}
-
-const P = {
-    // Checks if account type requires investment register
-    // @sig isInvestmentAccount :: Account -> Boolean
-    isInvestmentAccount: account => account.type === 'Investment' || account.type === '401(k)/403(b)',
-}
-
 const T = {
-    // Gets the accent color for a view based on type and active state
-    // @sig toViewColor :: (View, Boolean) -> String
-    toViewColor: (view, isActiveGroup) => {
-        if (!view) return 'var(--accent-8)'
-        const colors = VIEW_COLORS[view['@@tagName']]
-        if (!colors) return 'var(--accent-8)'
-        return isActiveGroup ? colors.focused : colors.active
-    },
-
     // Parses drag data JSON, returns null on failure
     // @sig toDragData :: String -> { viewId: String, groupId: String } | null
     toDragData: data => {
@@ -43,27 +23,6 @@ const T = {
             return JSON.parse(data)
         } catch {
             return null
-        }
-    },
-
-    // Computes tab styling based on view type and state
-    // @sig toTabStyle :: (String, Boolean, Boolean, Boolean) -> Object
-    toTabStyle: (tagName, active, isDragging, activeGroup) => {
-        const { focused, active: activeColor, inactive } = VIEW_COLORS[tagName] || VIEW_COLORS.Register
-        const bg = active && activeGroup ? focused : active ? activeColor : inactive
-        return {
-            padding: '6px 12px',
-            marginRight: 'var(--space-1)',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            opacity: isDragging ? 0.5 : 1,
-            backgroundColor: bg,
-            borderRadius: 'var(--radius-3) var(--radius-3) 0 0',
-            border: '1px solid var(--gray-5)',
-            borderBottom: 'none',
-            width: '160px',
         }
     },
 
@@ -85,7 +44,7 @@ const F = {
     // Returns the appropriate register page component for an account type
     // @sig createRegisterPage :: (Account, String) -> ReactElement
     createRegisterPage: (account, accountId) =>
-        P.isInvestmentAccount(account) ? (
+        Account.isInvestment(account) ? (
             <InvestmentRegisterPage accountId={accountId} />
         ) : (
             <TransactionRegisterPage accountId={accountId} />
@@ -121,7 +80,7 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
                 draggable
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                style={T.toTabStyle(tagName, isActive, isDragging, isActiveGroup)}
+                style={TabStyles.toTabStyle(tagName, isActive, isDragging, isActiveGroup)}
                 onClick={handleClick}
             >
                 <Text size="2" color="gray">
@@ -250,7 +209,7 @@ const TabGroup = ({ group }) => {
     const isActive = tabLayout.activeTabGroupId === id
     const groupCount = tabLayout.tabGroups.length
     const activeView = views.get ? views.get(activeViewId) : views[activeViewId]
-    const activeColor = T.toViewColor(activeView, isActive)
+    const activeColor = TabStyles.toViewColor(activeView, isActive)
 
     const style = { width: `${width}%`, height: '100%', borderRight: '4px solid var(--color-background)' }
     const contentStyle = { flex: 1, overflow: 'auto', backgroundColor: activeColor, padding: '2px' }

@@ -8,36 +8,16 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { SortMode } from '../types/sort-mode.js'
+import { Formatters } from '../utils/formatters.js'
 import { View } from '../types/view.js'
+
+const { toFormattedBalance, toFormattedDayChange, toDayChangeColor } = Formatters
 
 const SORT_MODE_OPTIONS = [
     { value: 'ByType', label: 'By Type' },
     { value: 'Alphabetical', label: 'A-Z' },
     { value: 'ByAmount', label: 'By Amount' },
 ]
-
-const T = {
-    // Formats currency value for display (treats near-zero as $0.00)
-    // @sig toFormattedBalance :: Number -> String
-    toFormattedBalance: balance => {
-        const rounded = Math.round(balance * 100) / 100
-        if (rounded === 0) return '$0.00'
-        const formatted = Math.abs(rounded).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-        return rounded < 0 ? `(${formatted})` : formatted
-    },
-
-    // Formats day change for display with sign
-    // @sig toFormattedDayChange :: Number -> String
-    toFormattedDayChange: change => {
-        if (change === 0 || change == null) return null
-        const sign = change > 0 ? '+' : ''
-        return `${sign}${change.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`
-    },
-
-    // Gets color for day change (green for positive, red for negative)
-    // @sig toDayChangeColor :: Number -> String
-    toDayChangeColor: change => (change > 0 ? 'green' : 'red'),
-}
 
 const E = {
     // Dispatches sort mode change action
@@ -65,7 +45,7 @@ const E = {
 // @sig AccountRow :: { enriched: EnrichedAccount } -> ReactElement
 const AccountRow = ({ enriched }) => {
     const { account, balance, dayChange } = enriched
-    const formattedDayChange = T.toFormattedDayChange(dayChange)
+    const formattedDayChange = toFormattedDayChange(dayChange)
 
     return (
         <Button
@@ -79,10 +59,10 @@ const AccountRow = ({ enriched }) => {
                 </Text>
                 <Flex direction="column" align="end" gap="0">
                     <Text size="2" color="gray">
-                        {T.toFormattedBalance(balance)}
+                        {toFormattedBalance(balance)}
                     </Text>
                     {formattedDayChange && (
-                        <Text size="1" color={T.toDayChangeColor(dayChange)}>
+                        <Text size="1" color={toDayChangeColor(dayChange)}>
                             {formattedDayChange}
                         </Text>
                     )}
@@ -92,26 +72,16 @@ const AccountRow = ({ enriched }) => {
     )
 }
 
-const SECTION_HEADER_STYLE = { backgroundColor: 'var(--gray-4)', borderRadius: 'var(--radius-2)' }
 const SECTION_CHEVRON_STYLE = { width: '20px', textAlign: 'center', fontSize: '12px', lineHeight: 1 }
 
 // Displays a collapsible section header with balance subtotal
 // @sig SectionHeader :: { section: AccountSection, isCollapsed: Boolean, onToggle: Function } -> ReactElement
 const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
-    const { accounts, children, id, isCollapsible, label } = section
-
-    // Count includes direct accounts plus all accounts in children
-    const childAccountCount = children.reduce((sum, child) => sum + child.accounts.length, 0)
-    const totalCount = accounts.length + childAccountCount
-
-    // Subtotal includes direct accounts plus all accounts in children
-    const directSubtotal = accounts.reduce((sum, e) => sum + e.balance, 0)
-    const childSubtotal = children.reduce((sum, child) => sum + child.accounts.reduce((s, e) => s + e.balance, 0), 0)
-    const subtotal = directSubtotal + childSubtotal
+    const { id, isCollapsible, label, totalBalance, totalCount } = section
 
     const style = {
-        ...SECTION_HEADER_STYLE,
         backgroundColor: indent > 0 ? 'var(--gray-3)' : 'var(--gray-4)',
+        borderRadius: 'var(--radius-2)',
         cursor: isCollapsible ? 'pointer' : 'default',
         paddingLeft: `${8 + indent * 12}px`,
     }
@@ -135,7 +105,7 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
                 </Text>
             </Flex>
             <Text size="2" color="gray">
-                {T.toFormattedBalance(subtotal)}
+                {toFormattedBalance(totalBalance)}
             </Text>
         </Flex>
     )
