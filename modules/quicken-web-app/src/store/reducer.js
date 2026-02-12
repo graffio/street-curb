@@ -86,18 +86,23 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
     // @sig setTableLayout :: Action.SetTableLayout -> State
     const setTableLayout = action => ({ ...state, tableLayouts: state.tableLayouts.addItemWithId(action.tableLayout) })
 
-    // Creates table layout if it doesn't exist (idempotent initialization)
+    // Creates table layout or reconciles missing columns into existing layout
     // @sig ensureTableLayout :: Action.EnsureTableLayout -> State
     const ensureTableLayout = action => {
         const { tableLayoutId, columns } = action
-        if (state.tableLayouts[tableLayoutId]) return state
-        const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
-        const layout = TableLayout(
-            tableLayoutId,
-            LookupTable(descriptors, ColumnDescriptor, 'id'),
-            LookupTable([], SortOrder, 'id'),
-        )
-        return { ...state, tableLayouts: state.tableLayouts.addItemWithId(layout) }
+        const existing = state.tableLayouts[tableLayoutId]
+        if (!existing) {
+            const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+            const layout = TableLayout(
+                tableLayoutId,
+                LookupTable(descriptors, ColumnDescriptor, 'id'),
+                LookupTable([], SortOrder, 'id'),
+            )
+            return { ...state, tableLayouts: state.tableLayouts.addItemWithId(layout) }
+        }
+        const reconciled = TableLayout.reconcile(existing, columns)
+        if (reconciled === existing) return state
+        return { ...state, tableLayouts: state.tableLayouts.addItemWithId(reconciled) }
     }
 
     // Replaces state with loaded file data (accounts, transactions, etc.)

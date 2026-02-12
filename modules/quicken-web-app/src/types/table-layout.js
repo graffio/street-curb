@@ -139,6 +139,17 @@ TableLayout.toDataTableProps = tableLayout => {
     }
 }
 
+TableLayout.reconcile = (tableLayout, columns) => {
+    const { columnDescriptors, sortOrder } = tableLayout
+    const missing = columns.filter(col => !columnDescriptors.includesWithId(col.id))
+    if (missing.length === 0) return tableLayout
+    const merged = missing.reduce(
+        (lt, col) => lt.addItem(ColumnDescriptor(col.id, col.size || 100, 'none')),
+        columnDescriptors,
+    )
+    return TableLayout(tableLayout.id, merged, sortOrder)
+}
+
 TableLayout.applySortingChange = (tableLayout, newSorting) => {
     const applySort = descriptor => {
         const sortEntry = newSorting.find(s => s.id === descriptor.id)

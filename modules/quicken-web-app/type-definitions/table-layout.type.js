@@ -35,6 +35,19 @@ TableLayout.toDataTableProps = tableLayout => {
     return { sorting, columnSizing, columnOrder }
 }
 
+// Adds descriptors for columns missing from an existing layout (preserves user customizations)
+// @sig reconcile :: (TableLayout, [ColumnDefinition]) -> TableLayout
+TableLayout.reconcile = (tableLayout, columns) => {
+    const { columnDescriptors, sortOrder } = tableLayout
+    const missing = columns.filter(col => !columnDescriptors.includesWithId(col.id))
+    if (missing.length === 0) return tableLayout
+    const merged = missing.reduce(
+        (lt, col) => lt.addItem(ColumnDescriptor(col.id, col.size || 100, 'none')),
+        columnDescriptors,
+    )
+    return TableLayout(tableLayout.id, merged, sortOrder)
+}
+
 // Applies TanStack sorting state change to TableLayout
 // @sig applySortingChange :: (TableLayout, SortingState) -> TableLayout
 TableLayout.applySortingChange = (tableLayout, newSorting) => {
