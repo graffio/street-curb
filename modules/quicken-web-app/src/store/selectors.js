@@ -17,7 +17,15 @@ import {
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
 import { toAccountSections } from '../services/to-account-sections.js'
-import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter } from '../types/index.js'
+import {
+    Category,
+    ColumnDescriptor,
+    EnrichedAccount,
+    SortOrder,
+    TableLayout,
+    Transaction,
+    TransactionFilter,
+} from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
@@ -279,6 +287,22 @@ const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts
     return tableLayout ? TableLayout.toDataTableProps(tableLayout) : defaultTableLayoutProps
 })
 
+// Resolves a tableLayout: reconcile existing or construct default from columns
+const resolveTableLayout = (state, tableLayoutId, columns) => {
+    const existing = state.tableLayouts.get(tableLayoutId)
+    if (existing) return TableLayout.reconcile(existing, columns)
+    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+    return TableLayout(
+        tableLayoutId,
+        LookupTable(descriptors, ColumnDescriptor, 'id'),
+        LookupTable([], SortOrder, 'id'),
+    )
+}
+
+// Returns existing tableLayout (reconciled with columns) or constructs a default
+// Replaces ensureTableLayoutEffect — selectors handle "not yet initialized"
+const tableLayoutOrDefault = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', resolveTableLayout)
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Categories
 // ---------------------------------------------------------------------------------------------------------------------
@@ -458,6 +482,7 @@ export {
     showDrawer,
     showReopenBanner,
     tabLayout,
+    tableLayoutOrDefault,
     tableLayoutProps,
     tableLayouts,
     transactions,
