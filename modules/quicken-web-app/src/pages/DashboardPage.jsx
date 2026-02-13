@@ -1,5 +1,6 @@
 // ABOUTME: Dashboard overview page
 // ABOUTME: Sets page title via Redux
+// COMPLEXITY: react-redux-separation — SetPageTitle useEffect awaiting tab-system title mechanism
 
 import { Box, Flex, Text } from '@graffio/design-system'
 import { useEffect } from 'react'

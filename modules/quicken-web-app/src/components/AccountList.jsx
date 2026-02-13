@@ -2,7 +2,7 @@
 // ABOUTME: Reads accounts from Redux and dispatches OpenView actions
 
 import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@graffio/design-system'
-import React, { useCallback } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
@@ -116,7 +116,6 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
 const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
     const { accounts, children, id } = section
     const isCollapsed = collapsedSections.has(id)
-    const onToggle = useCallback(sectionId => E.handleSectionToggle(sectionId), [])
     const hasChildren = children.length > 0
     const paddingLeft = `${8 + indent * 12}px`
     const nextIndent = indent + 1
@@ -124,7 +123,12 @@ const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
 
     return (
         <Box>
-            <SectionHeader section={section} isCollapsed={isCollapsed} onToggle={onToggle} indent={indent} />
+            <SectionHeader
+                section={section}
+                isCollapsed={isCollapsed}
+                onToggle={E.handleSectionToggle}
+                indent={indent}
+            />
             {!isCollapsed && (
                 <>
                     {accounts.length > 0 && (

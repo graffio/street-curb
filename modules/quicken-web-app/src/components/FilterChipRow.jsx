@@ -1,5 +1,6 @@
 // ABOUTME: Horizontal row of filter chips organized in columns
 // ABOUTME: Each column shows chip + details below it (up to 3 lines)
+// COMPLEXITY: react-redux-separation — ActionRegistry useEffect lifecycle awaiting non-React mechanism
 
 import { Flex, Text } from '@graffio/design-system'
 import { KeymapModule } from '@graffio/keymap'
