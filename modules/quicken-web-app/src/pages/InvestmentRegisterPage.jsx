@@ -1,159 +1,30 @@
-// ABOUTME: Investment transaction register page with security/action filtering
-// ABOUTME: Displays investment account transactions with running cash balance
+// ABOUTME: Investment transaction register page — thin wrapper around RegisterPageView
+// ABOUTME: Configures columns, selectors, and title for investment account display
 
-import { DataTable, Flex } from '@graffio/design-system'
-import React, { useCallback, useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
+import React from 'react'
 import { TransactionColumns } from '../columns/index.js'
-import { FilterChipRow } from '../components/index.js'
-import { RegisterPage } from '../services/register-page.js'
 import * as S from '../store/selectors.js'
-import { Action, TableLayout } from '../types/index.js'
-import { post } from '../commands/post.js'
+import { RegisterPageView } from './RegisterPageView.jsx'
 
 const { investmentColumns } = TransactionColumns
 
-const pageContainerStyle = { height: '100%' }
-const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
+const investmentConfig = {
+    prefix: 'investment',
+    columns: investmentColumns,
+    sortSelector: S.Transactions.sortedForDisplay,
+    highlightSelector: S.Transactions.highlightedId,
+    pageTitle: name => [name || 'Investment Account', 'Investment transactions with running cash balance'],
+    filterChipRowProps: { showSecurities: true, showActions: true, showCategories: false },
+    useManualCounts: true,
+}
 
 /*
- * Investment Transaction Register page with filtering, search, and navigation
+ * Thin wrapper — renders RegisterPageView with investment-specific config
  *
- * @sig InvestmentRegisterPage :: (InvestmentRegisterPageProps) -> ReactElement
- *     InvestmentRegisterPageProps = { accountId: String, height?: Number }
+ * @sig InvestmentRegisterPage :: ({ accountId: String, height?: Number }) -> ReactElement
  */
-const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
-    // -----------------------------------------------------------------------------------------------------------------
-    // Derived values (computed from props)
-    // -----------------------------------------------------------------------------------------------------------------
-    // Use reg_ prefix to match View.Register's id pattern (FieldTypes.viewId)
-    const viewId = `reg_${accountId}`
-    const tableLayoutId = RegisterPage.toTableLayoutId('investment', accountId)
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Hooks (selectors)
-    // -----------------------------------------------------------------------------------------------------------------
-    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
-    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
-    const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
-    const allTableLayouts = useSelector(S.tableLayouts)
-    const allAccountTransactions = useSelector(state => S.Transactions.forAccount(state, viewId, accountId))
-    const investmentFiltered = useSelector(state => S.Transactions.filteredForInvestment(state, viewId, accountId))
-    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
-    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
-    const accountName = useSelector(state => S.accountName(state, accountId)) || 'Investment Account'
-
-    useEffect(RegisterPage.ensureTableLayoutEffect(tableLayoutId, investmentColumns), [tableLayoutId])
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Memos (data transformations)
-    // -----------------------------------------------------------------------------------------------------------------
-    const tableLayout = allTableLayouts?.[tableLayoutId]
-    const { sorting, columnSizing, columnOrder } = useSelector(state => S.tableLayoutProps(state, tableLayoutId))
-
-    // Sorted register rows for display (wraps with balances, applies sort)
-    const data = useSelector(state =>
-        S.Transactions.sortedForDisplay(state, viewId, accountId, tableLayoutId, investmentColumns),
-    )
-
-    // Ref to access current data in callbacks without adding to deps (prevents keymap recreation)
-    const dataRef = useRef(data)
-    dataRef.current = data
-
-    // Highlighted transaction ID based on row index
-    const highlightedId = useSelector(state =>
-        S.Transactions.highlightedId(state, viewId, accountId, tableLayoutId, investmentColumns),
-    )
-    const { length: filteredCount } = investmentFiltered
-    const { length: totalCount } = allAccountTransactions
-
-    const searchInputRef = useRef(null)
-    const searchHandlersRef = useRef({})
-    searchHandlersRef.current = {
-        onSearchNext: () => RegisterPage.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, 1),
-        onSearchPrev: () => RegisterPage.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, -1),
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Callbacks
-    // -----------------------------------------------------------------------------------------------------------------
-    const handleSortingChange = useCallback(
-        updater => post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting)))),
-        [tableLayout, sorting],
-    )
-
-    const handleColumnSizingChange = useCallback(
-        updater => post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing)))),
-        [tableLayout, columnSizing],
-    )
-
-    const handleColumnOrderChange = useCallback(
-        newOrder => post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder))),
-        [tableLayout],
-    )
-
-    // Uses getData() to access current data without adding to deps (prevents keymap registration loop)
-    const getData = useCallback(() => dataRef.current, [])
-    const handleHighlightChange = useCallback(RegisterPage.dispatchHighlightChange(getData, viewId), [getData, viewId])
-
-    const handleEscape = useCallback(() => RegisterPage.clearSearch(searchQuery, viewId), [searchQuery, viewId])
-    const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Effects
-    // -----------------------------------------------------------------------------------------------------------------
-    useEffect(
-        () => post(Action.SetPageTitle(accountName, 'Investment transactions with running cash balance')),
-        [accountName],
-    )
-
-    useEffect(
-        () => RegisterPage.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId),
-        [dateRangeKey, dateRange, viewId],
-    )
-    useEffect(RegisterPage.searchActionsEffect(viewId, searchHandlersRef, searchInputRef), [viewId])
-
-    // Wait for EnsureTableLayout to populate Redux on first render
-    if (!tableLayout) return null
-
-    return (
-        <Flex direction="column" style={pageContainerStyle}>
-            <FilterChipRow
-                viewId={viewId}
-                showSecurities
-                showActions
-                showCategories={false}
-                filteredCount={filteredCount}
-                totalCount={totalCount}
-                searchQuery={searchQuery}
-                searchMatches={searchMatches}
-                highlightedId={highlightedId}
-                searchInputRef={searchInputRef}
-                onSearchNext={() => searchHandlersRef.current.onSearchNext()}
-                onSearchPrev={() => searchHandlersRef.current.onSearchPrev()}
-            />
-            <div style={mainContentStyle}>
-                <DataTable
-                    columns={investmentColumns}
-                    data={data}
-                    height={height}
-                    rowHeight={60}
-                    highlightedId={highlightedId}
-                    sorting={sorting}
-                    columnSizing={columnSizing}
-                    columnOrder={columnOrder}
-                    onSortingChange={handleSortingChange}
-                    onColumnSizingChange={handleColumnSizingChange}
-                    onColumnOrderChange={handleColumnOrderChange}
-                    onRowClick={handleRowClick}
-                    onHighlightChange={handleHighlightChange}
-                    onEscape={handleEscape}
-                    actionContext={viewId}
-                    context={{ searchQuery: searchQuery || filterQuery }}
-                />
-            </div>
-        </Flex>
-    )
-}
+const InvestmentRegisterPage = ({ accountId, height }) => (
+    <RegisterPageView accountId={accountId} height={height} config={investmentConfig} />
+)
 
 export { InvestmentRegisterPage }
