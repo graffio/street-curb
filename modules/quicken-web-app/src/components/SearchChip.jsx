@@ -1,5 +1,6 @@
 // ABOUTME: Search input with navigation controls for transaction register search
 // ABOUTME: Always-visible text input with debounced dispatch, prev/next buttons, and match counter
+// COMPLEXITY: react-redux-separation — useState/useRef/useEffect for debounced input pattern
 
 import { Button, Flex, Text, TextField } from '@graffio/design-system'
 import { debounce } from '@graffio/functional'

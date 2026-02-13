@@ -2,7 +2,7 @@
 // ABOUTME: Reads tabLayout from Redux, renders groups with resize handles
 
 import { Box, Flex } from '@graffio/design-system'
-import React, { useRef } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
@@ -21,7 +21,16 @@ const handleStyle = {
     transition: 'background-color 0.1s',
 }
 
+// Module-level drag state — only one drag at a time
+let currentDrag = null
+let dragHandleEl = null
+const containerEl = { current: null }
+
 const E = {
+    // Whether a specific handle element is the one being dragged
+    // @sig isDraggingHandle :: Element -> Boolean
+    isDraggingHandle: el => dragHandleEl === el,
+
     // Calculates and persists new widths based on drag delta
     // @sig persistGroupWidths :: (Object, Number) -> void
     persistGroupWidths: (drag, clientX) => {
@@ -35,32 +44,33 @@ const E = {
         post(Action.SetTabGroupWidth(rightGroupId, right))
     },
 
-    // Resets drag state and removes mouse event listeners
-    // @sig handleDragCleanup :: (Object, Function, Function) -> void
-    handleDragCleanup: (drag, onMove, onUp) => {
-        drag.active = false
-        if (drag.handleRef?.current) drag.handleRef.current.style.backgroundColor = 'var(--color-background)'
-        document.removeEventListener('mousemove', onMove)
-        document.removeEventListener('mouseup', onUp)
+    // Handles mousemove during drag — updates group widths
+    // @sig handleDragMove :: MouseEvent -> void
+    handleDragMove: moveEvent => currentDrag && E.persistGroupWidths(currentDrag, moveEvent.clientX),
+
+    // Handles mouseup — cleans up drag state and listeners
+    // @sig handleDragUp :: () -> void
+    handleDragUp: () => {
+        const el = dragHandleEl
+        currentDrag = null
+        dragHandleEl = null
+        if (el) el.style.backgroundColor = 'var(--color-background)'
+        document.removeEventListener('mousemove', E.handleDragMove)
+        document.removeEventListener('mouseup', E.handleDragUp)
     },
 
     // Initializes drag state and attaches mouse event listeners
-    // @sig handleDragInit :: (MouseEvent, Ref, Ref, TabGroup, TabGroup, Ref) -> void
-    handleDragInit: (e, containerRef, dragStateRef, leftGroup, rightGroup, handleRef) => {
-        const onMove = moveEvent =>
-            dragStateRef.current.active && E.persistGroupWidths(dragStateRef.current, moveEvent.clientX)
-
-        const onUp = () => E.handleDragCleanup(dragStateRef.current, onMove, onUp)
-
+    // @sig handleDragInit :: (MouseEvent, TabGroup, TabGroup) -> void
+    handleDragInit: (e, leftGroup, rightGroup) => {
         e.preventDefault()
-        const container = containerRef.current
+        const container = containerEl.current
         if (!container) return
 
+        dragHandleEl = e.currentTarget
         const { width: leftWidth, id: leftId } = leftGroup
         const { width: rightWidth, id: rightId } = rightGroup
         const containerRect = container.getBoundingClientRect()
-        dragStateRef.current = {
-            active: true,
+        currentDrag = {
             startX: e.clientX,
             containerWidth: containerRect.width,
             startLeftWidth: leftWidth,
@@ -68,49 +78,33 @@ const E = {
             totalWidth: leftWidth + rightWidth,
             leftGroupId: leftId,
             rightGroupId: rightId,
-            handleRef,
         }
 
-        document.addEventListener('mousemove', onMove)
-        document.addEventListener('mouseup', onUp)
+        document.addEventListener('mousemove', E.handleDragMove)
+        document.addEventListener('mouseup', E.handleDragUp)
     },
-
-    // Updates handle background color for hover/drag feedback
-    // @sig persistHandleColor :: (Ref, String) -> void
-    persistHandleColor: (handleRef, color) => handleRef.current && (handleRef.current.style.backgroundColor = color),
 }
 
 // Draggable divider between adjacent tab groups
-// @sig ResizeHandle :: { leftGroup: TabGroup, rightGroup: TabGroup, containerRef: Ref } -> ReactElement
-const ResizeHandle = ({ leftGroup, rightGroup, containerRef }) => {
-    const handleRef = useRef(null)
-    const dragStateRef = useRef({ active: false })
-
-    return (
-        <Box
-            ref={handleRef}
-            style={handleStyle}
-            onMouseDown={e => E.handleDragInit(e, containerRef, dragStateRef, leftGroup, rightGroup, handleRef)}
-            onMouseEnter={() => E.persistHandleColor(handleRef, 'var(--accent-8)')}
-            onMouseLeave={() =>
-                !dragStateRef.current.active && E.persistHandleColor(handleRef, 'var(--color-background)')
-            }
-        />
-    )
-}
+// @sig ResizeHandle :: { leftGroup: TabGroup, rightGroup: TabGroup } -> ReactElement
+const ResizeHandle = ({ leftGroup, rightGroup }) => (
+    <Box
+        style={handleStyle}
+        onMouseDown={e => E.handleDragInit(e, leftGroup, rightGroup)}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--accent-8)')}
+        onMouseLeave={e => {
+            if (!E.isDraggingHandle(e.currentTarget)) e.currentTarget.style.backgroundColor = 'var(--color-background)'
+        }}
+    />
+)
 
 // Renders a tab group with optional resize handle to next group
-// @sig GroupWithHandle :: { group: TabGroup, nextGroup: TabGroup|null, containerRef: Ref } -> ReactElement
-const GroupWithHandle = ({ group, nextGroup, containerRef }) => (
+// @sig GroupWithHandle :: { group: TabGroup, nextGroup: TabGroup|null } -> ReactElement
+const GroupWithHandle = ({ group, nextGroup }) => (
     <>
         <TabGroup key={group.id} group={group} />
         {nextGroup && (
-            <ResizeHandle
-                key={`handle-${group.id}-${nextGroup.id}`}
-                leftGroup={group}
-                rightGroup={nextGroup}
-                containerRef={containerRef}
-            />
+            <ResizeHandle key={`handle-${group.id}-${nextGroup.id}`} leftGroup={group} rightGroup={nextGroup} />
         )}
     </>
 )
@@ -119,13 +113,12 @@ const GroupWithHandle = ({ group, nextGroup, containerRef }) => (
 // @sig TabGroupContainer :: () -> ReactElement
 const TabGroupContainer = () => {
     const tabLayout = useSelector(S.tabLayout)
-    const containerRef = useRef(null)
     const { tabGroups } = tabLayout
 
     return (
-        <Flex ref={containerRef} style={{ flex: 1, minHeight: 0, width: '100%' }}>
+        <Flex ref={el => (containerEl.current = el)} style={{ flex: 1, minHeight: 0, width: '100%' }}>
             {tabGroups.map((g, i) => (
-                <GroupWithHandle key={g.id} group={g} nextGroup={tabGroups[i + 1]} containerRef={containerRef} />
+                <GroupWithHandle key={g.id} group={g} nextGroup={tabGroups[i + 1]} />
             ))}
         </Flex>
     )
