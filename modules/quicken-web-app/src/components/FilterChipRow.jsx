@@ -2,7 +2,7 @@
 // ABOUTME: Each column shows chip + details below it (up to 3 lines)
 // COMPLEXITY: react-redux-separation — ActionRegistry useEffect lifecycle awaiting non-React mechanism
 
-import { Flex, Text } from '@graffio/design-system'
+import { Flex, Text } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'
 import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'

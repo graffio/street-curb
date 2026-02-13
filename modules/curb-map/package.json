@@ -52,6 +52,8 @@
     "dependencies": {
         "@graffio/functional": "0.1.0",
         "@paralleldrive/cuid2": "^2.2.2",
+        "@radix-ui/react-dialog": "^1.1.14",
+        "@radix-ui/themes": "^3.0.0",
         "@reduxjs/toolkit": "^2.8.2",
         "@tanstack/react-router": "^1.135.2",
         "@tanstack/router-devtools": "^1.135.2",

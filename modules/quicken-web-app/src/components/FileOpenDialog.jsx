@@ -1,7 +1,8 @@
 // ABOUTME: Dialog for reopening last file or opening a new one
 // ABOUTME: Shown on app startup when a previous file handle exists
 
-import { Button, Dialog, Flex, Text } from '@graffio/design-system'
+import { Button, Flex, Text } from '@radix-ui/themes'
+import { Dialog } from './Dialog.jsx'
 
 // Dialog prompting user to reopen last file or open new one
 // @sig FileOpenDialog :: { open, onOpenChange, onReopen, onOpenNew } -> ReactElement

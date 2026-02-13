@@ -2,7 +2,9 @@
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
 // COMPLEXITY: react-redux-separation — 4 useEffect for mount-time init and keyboard routing lifecycle
 
-import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
+import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
+import { KeymapDrawer } from './KeymapDrawer.jsx'
+import { MainLayout } from './MainLayout.jsx'
 import { KeymapModule } from '@graffio/keymap'
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
@@ -14,7 +16,7 @@ import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 import { AccountList } from './AccountList.jsx'
 import { FileOpenDialog } from './FileOpenDialog.jsx'
-import { SidebarNav } from './MainSidebar.jsx'
+import { MainSidebar } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
@@ -104,7 +106,7 @@ const RootLayout = () => {
     return (
         <MainLayout title={pageTitle} subtitle={pageSubtitle}>
             <MainLayout.Sidebar>
-                <SidebarNav />
+                <MainSidebar />
                 <Separator size="4" my="3" />
                 <AccountList />
                 <Separator size="4" my="3" />

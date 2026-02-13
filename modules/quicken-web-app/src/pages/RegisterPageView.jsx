@@ -2,7 +2,8 @@
 // ABOUTME: Shared logic for bank and investment transaction registers (filtering, search, table layout)
 // COMPLEXITY: react-redux-separation — 4 useEffect lifecycle dispatches need infrastructure to eliminate
 
-import { DataTable, Flex } from '@graffio/design-system'
+import { Flex } from '@radix-ui/themes'
+import { DataTable } from '../components/DataTable.jsx'
 import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'

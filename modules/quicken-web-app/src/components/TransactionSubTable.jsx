@@ -1,7 +1,7 @@
 // ABOUTME: Sub-table for displaying transactions within expanded report rows
 // ABOUTME: Hides the column matching groupBy dimension (redundant when grouped)
 
-import { Box, Flex, Text } from '@graffio/design-system'
+import { Box, Flex, Text } from '@radix-ui/themes'
 import React from 'react'
 import { CellRenderers } from '../columns/CellRenderers.jsx'
 import { Formatters } from '../utils/formatters.js'

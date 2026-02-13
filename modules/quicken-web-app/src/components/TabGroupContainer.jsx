@@ -1,7 +1,7 @@
 // ABOUTME: Container for tab groups with horizontal flex layout
 // ABOUTME: Reads tabLayout from Redux, renders groups with resize handles
 
-import { Box, Flex } from '@graffio/design-system'
+import { Box, Flex } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'

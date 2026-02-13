@@ -2,17 +2,10 @@
 // ABOUTME: Consolidated chips with shared styles for accounts, actions, categories, dates, search, securities, groupBy
 // COMPLEXITY: react-redux-separation — 2 useEffect for ActionRegistry lifecycle awaiting non-React mechanism
 
-import {
-    Box,
-    calculateDateRange,
-    SelectableListPopover,
-    DATE_RANGES,
-    Flex,
-    KeyboardDateInput,
-    Popover,
-    Text,
-    TextField,
-} from '@graffio/design-system'
+import { Box, Flex, Popover, Text, TextField } from '@radix-ui/themes'
+import { DateRangeUtils } from '../utils/date-range-utils.js'
+import { KeyboardDateInput } from './KeyboardDateInput.jsx'
+import { SelectableListPopover } from './SelectableListPopover.jsx'
 import { endOfDay, wrapIndex } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import React, { useEffect } from 'react'
@@ -91,7 +84,7 @@ const E = {
         const state = currentStore().getState()
         const { highlightedItemId } = S.UI.filterPopoverData(state, viewId)
         if (!highlightedItemId) return
-        const dateRange = calculateDateRange(highlightedItemId) ?? { start: null, end: null }
+        const dateRange = DateRangeUtils.calculateDateRange(highlightedItemId) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: highlightedItemId, dateRange }))
         if (highlightedItemId === 'customDates') setTimeout(() => startDateEl.current?.focus('month'), 0)
     },
@@ -180,7 +173,7 @@ const investmentGroupByItems = [
 
 // Convert DATE_RANGES object to array of {key, label} entries
 // @sig dateRangeOptions :: [{ key: String, label: String }]
-const dateRangeOptions = Object.entries(DATE_RANGES).map(([key, label]) => ({ key, label }))
+const dateRangeOptions = Object.entries(DateRangeUtils.DATE_RANGES).map(([key, label]) => ({ key, label }))
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Shared helper components
@@ -468,7 +461,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
 
     const handleSelect = key => {
-        const dateRange = calculateDateRange(key) ?? { start: null, end: null }
+        const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
     }
 
@@ -497,7 +490,7 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
     const { popoverId, highlightedItemId } = popoverData
     const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
-    const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
+    const currentLabel = DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
 
     useEffect(E.dateFilterActionsEffect(viewId), [isOpen, viewId])
 

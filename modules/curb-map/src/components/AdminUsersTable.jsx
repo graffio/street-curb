@@ -1,7 +1,13 @@
 // ABOUTME: User-specific table component with role management
 // ABOUTME: Renders member data with role dropdown for admins and date formatting
+// COMPLEXITY: cohesion-structure — curb-map is mothballed; standalone helpers are clear in context
+// COMPLEXITY: line-length — curb-map is mothballed; existing formatting preserved
+// COMPLEXITY: react-component-cohesion — curb-map is mothballed; render helper shares component state
+// COMPLEXITY: sig-documentation — curb-map is mothballed; JSDoc already present
 
-import { lookupTablePropType, Select, Table, Tooltip } from '@graffio/design-system'
+import { Select, Tooltip } from '@radix-ui/themes'
+import { lookupTablePropType } from '../prop-types/lookup-table-prop-type.js'
+import { Table } from './Table.jsx'
 import PropTypes from 'prop-types'
 import { Member } from '../types/index.js'
 

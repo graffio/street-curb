@@ -2,7 +2,7 @@
 // ABOUTME: Always-visible text input with debounced dispatch, prev/next buttons, and match counter
 // COMPLEXITY: react-redux-separation — useState/useRef/useEffect for debounced input pattern
 
-import { Button, Flex, Text, TextField } from '@graffio/design-system'
+import { Button, Flex, Text, TextField } from '@radix-ui/themes'
 import { debounce } from '@graffio/functional'
 import React, { useEffect, useRef, useState } from 'react'
 import { post } from '../commands/post.js'

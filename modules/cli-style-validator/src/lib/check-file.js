@@ -63,7 +63,7 @@ const checkFile = async (filePath, options = {}) => {
         ...FunctionDeclarationOrdering.checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
         ...FunctionSpacing.checkFunctionSpacing(ast, sourceCode, filePath),
         ...FunctionalPatterns.checkFunctionalPatterns(ast, sourceCode, filePath),
-        ...ImportOrdering.checkImportOrdering(ast, sourceCode, filePath),
+        ...ImportOrdering(ast, sourceCode, filePath),
         ...LineLength.checkLineLength(ast, sourceCode, filePath),
         ...MultilineDestructuring.checkMultilineDestructuring(ast, sourceCode, filePath),
         ...ReactComponentCohesion.checkReactComponentCohesion(ast, sourceCode, filePath),

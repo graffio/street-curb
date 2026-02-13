@@ -1,7 +1,8 @@
 // ABOUTME: Application entry point
 // ABOUTME: Initializes store from IndexedDB, then renders React app
 
-import { Theme } from '@graffio/design-system'
+import '@radix-ui/themes/styles.css'
+import { Theme } from '@radix-ui/themes'
 import { RouterProvider } from '@tanstack/react-router'
 import React from 'react'
 import ReactDOM from 'react-dom/client'

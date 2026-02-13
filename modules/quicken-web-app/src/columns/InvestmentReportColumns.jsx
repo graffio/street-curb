@@ -1,7 +1,8 @@
 // ABOUTME: Column definitions for investment holdings report
 // ABOUTME: Displays HoldingsTreeNode tree with aggregate/holding data and stale price indicators
+// COMPLEXITY: react-redux-separation — Cell renderers use conditional spread for stale styling (display-only)
 
-import { ColumnDefinition } from '@graffio/design-system/src/types/column-definition.js'
+import { ColumnDefinition } from '../types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
 import { Formatters } from '../utils/formatters.js'
@@ -223,6 +224,4 @@ const columns = LookupTable([
     ColumnDefinition.from({ id: 'mktValue',  accessorFn: D.toMarketValue,                     header: 'Mkt Value', size: 110, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
 ], ColumnDefinition, 'id')
 
-const InvestmentReportColumns = { columns }
-
-export { InvestmentReportColumns }
+export { columns as InvestmentReportColumns }

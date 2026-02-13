@@ -2,7 +2,8 @@
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
 // COMPLEXITY: react-redux-separation — SetPageTitle useEffect awaiting tab-system title mechanism
 
-import { DataTable, Flex } from '@graffio/design-system'
+import { Flex } from '@radix-ui/themes'
+import { DataTable } from '../components/DataTable.jsx'
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
@@ -78,7 +79,7 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 itemLabel="holdings"
             />
             <DataTable
-                columns={InvestmentReportColumns.columns}
+                columns={InvestmentReportColumns}
                 data={holdingsTree}
                 height={height}
                 rowHeight={40}

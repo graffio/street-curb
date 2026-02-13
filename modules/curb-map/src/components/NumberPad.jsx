@@ -1,4 +1,14 @@
-import { Box, Button, Dialog, Grid, Text } from '@graffio/design-system'
+// ABOUTME: Numeric keypad dialog for touch-friendly number input
+// ABOUTME: Used in curb-map editor for entering parking regulation values
+// COMPLEXITY: cohesion-structure — curb-map is mothballed; original structure preserved
+// COMPLEXITY: export-structure — curb-map is mothballed; existing export pattern preserved
+// COMPLEXITY: line-length — curb-map is mothballed; existing formatting preserved
+// COMPLEXITY: react-component-cohesion — curb-map is mothballed; render helpers share component state
+// COMPLEXITY: react-redux-separation — curb-map is mothballed; local state with useState is standard React
+// COMPLEXITY: sig-documentation — curb-map is mothballed; functions are self-documenting by name
+
+import { Box, Button, Grid, Text } from '@radix-ui/themes'
+import { Dialog } from './Dialog.jsx'
 import { useState } from 'react'
 
 /**

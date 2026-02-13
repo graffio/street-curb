@@ -5,7 +5,7 @@
 // COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
 
-import { DATE_RANGES } from '@graffio/design-system/src/utils/date-range-utils.js'
+import { DateRangeUtils } from '../utils/date-range-utils.js'
 import {
     applySort,
     containsIgnoreCase,
@@ -163,7 +163,7 @@ const CLOSED_POPOVER = {
     filteredItems: [],
 }
 
-const DATE_RANGE_ITEMS = Object.entries(DATE_RANGES)
+const DATE_RANGE_ITEMS = Object.entries(DateRangeUtils.DATE_RANGES)
     .filter(([key]) => !key.startsWith('separator'))
     .map(([key, label]) => ({ id: key, label }))
 

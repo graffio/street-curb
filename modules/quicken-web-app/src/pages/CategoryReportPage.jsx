@@ -2,7 +2,8 @@
 // ABOUTME: Aggregates transactions by category with expand/collapse and totals
 // COMPLEXITY: react-redux-separation — useMemo for expensive tree building, useEffect for page title
 
-import { DataTable, Flex } from '@graffio/design-system'
+import { Flex } from '@radix-ui/themes'
+import { DataTable } from '../components/DataTable.jsx'
 import { useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
@@ -64,7 +65,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         <Flex direction="column" style={pageContainerStyle}>
             <FilterChipRow viewId={viewId} showGroupBy />
             <DataTable
-                columns={CategoryReportColumns.columns}
+                columns={CategoryReportColumns}
                 data={transactionTree}
                 height={height}
                 rowHeight={40}

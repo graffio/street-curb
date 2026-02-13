@@ -1,7 +1,7 @@
 // ABOUTME: Sidebar account list with collapsible sections and sort modes
 // ABOUTME: Reads accounts from Redux and dispatches OpenView actions
 
-import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@graffio/design-system'
+import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'

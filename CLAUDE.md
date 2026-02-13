@@ -19,7 +19,7 @@ See `.claude/README.md` for full protocol explanation. Key files:
 - One named export per file matching file name (kebab-case → PascalCase)
 - Fail-fast: internal data errors should throw, not return silent fallbacks
 - Guard only: user input, API responses, optional fields, async data during load
-- Import from `@graffio/design-system`, never `@radix-ui/themes` directly
+- Import from `@radix-ui/themes` directly — no design-system facade
 - Never modify generated type files (x.js) — add business logic to x.type.js instead
 - Use Tagged and TaggedSum types for all domain entities
 
@@ -43,7 +43,6 @@ When you see these signals, read the corresponding pattern file before proceedin
 | if/else chain on type field | `.claude/pattern-catalog/tagged-sum.md` |
 | Finite set of state changes | `.claude/pattern-catalog/action.md` |
 | Complex derived state from Redux | `.claude/pattern-catalog/selector-composition.md` |
-| Repeated style objects across components | `.claude/pattern-catalog/design-system-extraction.md` |
 
 ## @graffio/functional
 
@@ -95,7 +94,6 @@ modules/
 ├── curb-map/          # Main app
 ├── quicken-web-app/   # Financial tools
 ├── functional/        # @graffio/functional
-├── design-system/     # @graffio/design-system
 └── cli-*/             # Internal tooling
 ```
 

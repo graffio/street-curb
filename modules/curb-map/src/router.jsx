@@ -8,7 +8,9 @@
 // COMPLEXITY-TODO: react-redux-separation — File predates style rules (expires 2026-04-01)
 // COMPLEXITY-TODO: sig-documentation — File predates style rules (expires 2026-04-01)
 
-import { Box, Button, Flex, Heading, LoadingSpinner, MainLayout } from '@graffio/design-system'
+import { Box, Button, Flex, Heading } from '@radix-ui/themes'
+import { LoadingSpinner } from './components/LoadingSpinner.jsx'
+import { MainLayout } from './components/MainLayout.jsx'
 import {
     createRootRoute,
     createRoute,

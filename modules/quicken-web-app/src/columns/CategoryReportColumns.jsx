@@ -1,7 +1,7 @@
 // ABOUTME: Column definitions for category spending report
 // ABOUTME: Hierarchical tree display with expand/collapse and aggregate totals
 
-import { ColumnDefinition } from '@graffio/design-system/src/types/column-definition.js'
+import { ColumnDefinition } from '../types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
 import { CellRenderers } from './CellRenderers.jsx'
 
@@ -29,6 +29,4 @@ const columns = LookupTable([
     col({ id: 'count', accessorKey: 'aggregate.count', header: 'Count', size: 80, minSize: 60, cell: CountCell, ...R }),
 ], ColumnDefinition, 'id')
 
-const CategoryReportColumns = { columns }
-
-export { CategoryReportColumns }
+export { columns as CategoryReportColumns }
