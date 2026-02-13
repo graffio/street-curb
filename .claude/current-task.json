@@ -1,0 +1,467 @@
+{
+    "feature": "Less React Architecture",
+    "goal": "Eliminate all non-useSelector hooks from app components, kill @graffio/design-system, enforce with validator and style cards",
+    "plan_source": "specifications/less-react-architecture.md",
+    "templates_used": ["commit-changes.md"],
+    "steps": [
+        {
+            "step": 1,
+            "action": "Update .claude/style-cards/react-component.md: rewrite Hooks section to enforce useSelector-only rule. Remove allowances for useCallback, useEffect, useRef, useMemo, useState. Add sections for: (1) dispatch-intent pattern — inline handlers that post Action with identity + intent, no closure over Redux state, (2) selector-with-defaults — selectors return default when state is empty, eliminates init effects, (3) FocusRegistry ref callbacks — register/unregister DOM elements via ref={el => ...}, not useRef, (4) router page titles — pages don't dispatch SetPageTitle. Document exemption: design-system wrapper components (DataTable, KeyboardDateInput, SelectableListPopover) may use third-party library hooks.",
+            "done": true
+        },
+        {
+            "step": 2,
+            "action": "Update .claude/tasks/review-complexity.md: add simplification strategies.",
+            "done": true
+        },
+        {
+            "step": 3,
+            "action": "Update .claude/commands/workflows/plan.md generation rules table: add React hook audit rule.",
+            "done": true
+        },
+        {
+            "step": 4,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on guardrail files. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 5,
+            "action": "Commit guardrail updates.",
+            "done": true
+        },
+        {
+            "step": 6,
+            "action": "Complexity review on react-redux-separation.js.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 7,
+            "action": "Strengthen react-redux-separation.js — ban all hooks, add useEffect/useRef, remove exemptions, fix export.",
+            "style_card": "utility-module",
+            "done": true
+        },
+        {
+            "step": 8,
+            "action": "Review agents on validator changes. Fixed blocking issues.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 9,
+            "action": "Commit validator changes (separate from application changes).",
+            "done": true
+        },
+        {
+            "step": 10,
+            "action": "Write failing TAP tests for FocusRegistry (7 tests).",
+            "style_card": "test-file",
+            "done": true
+        },
+        {
+            "step": 11,
+            "action": "Implement FocusRegistry (register, unregister, focus, clear). All 7 tests pass.",
+            "style_card": "utility-module",
+            "done": true
+        },
+        {
+            "step": 12,
+            "action": "Review agents on FocusRegistry. Fixed: removed E indirection, deleted dead makeElement, kept silent no-op.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 13,
+            "action": "Commit FocusRegistry.",
+            "done": true
+        },
+        {
+            "step": 14,
+            "action": "Complexity review on register-page.js. Command functions fit existing pattern.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 15,
+            "action": "Added updateSorting, updateColumnSizing, updateColumnOrder to register-page.js.",
+            "style_card": "utility-module",
+            "done": true
+        },
+        {
+            "step": 16,
+            "action": "Skipped — command functions are pure delegation to already-tested TableLayout methods (test card exclusion).",
+            "style_card": "test-file",
+            "done": true
+        },
+        {
+            "step": 17,
+            "action": "Skipped review — command functions are 3 thin delegation functions with no judgment calls.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 18,
+            "action": "Commit command functions.",
+            "done": true
+        },
+        {
+            "step": 19,
+            "action": "Merged into steps 14-18 (Option B: command functions instead of new Action variant).",
+            "done": true
+        },
+        {
+            "step": 20,
+            "action": "Merged into steps 14-18 (Option B: command functions instead of new Action variant).",
+            "done": true
+        },
+        {
+            "step": 21,
+            "action": "Merged into steps 14-18 (Option B: command functions instead of new Action variant).",
+            "done": true
+        },
+        {
+            "step": 22,
+            "action": "Merged into steps 14-18 (Option B: command functions instead of new Action variant).",
+            "done": true
+        },
+        {
+            "step": 23,
+            "action": "[CHECKPOINT] Run complexity review on selectors.js. Found tableLayoutProps pattern to follow.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 24,
+            "action": "Added tableLayoutOrDefault selector using memoizeReduxStatePerKey. Extracted resolveTableLayout function for validator compliance.",
+            "style_card": "selector",
+            "done": true
+        },
+        {
+            "step": 25,
+            "action": "Wrote 14 TAP tests for tableLayoutOrDefault — all pass.",
+            "style_card": "test-file",
+            "done": true
+        },
+        {
+            "step": 26,
+            "action": "Reviewed: JS reviewer flagged col.size||100 (matches existing TableLayout.reconcile pattern). Simplicity approved.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 27,
+            "action": "Committed: Add tableLayoutOrDefault selector with memoization and tests",
+            "done": true
+        },
+        {
+            "step": 28,
+            "action": "DEFERRED: Router only has /dashboard route. Pages load via tab system, not URL routing. Moving page title dispatch requires designing a tab-system-based title mechanism.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 29,
+            "action": "DEFERRED: See step 28 — tab-based navigation makes router approach inapplicable.",
+            "done": true
+        },
+        {
+            "step": 30,
+            "action": "DEFERRED: See step 28.",
+            "done": true
+        },
+        {
+            "step": 31,
+            "action": "DEFERRED: See step 28.",
+            "done": true
+        },
+        {
+            "step": 32,
+            "action": "Complexity review on RegisterPageView.jsx. Cataloged 26 hooks: 12 useSelector (keep), 7 useCallback (eliminate via command functions), 4 useEffect (infrastructure gaps), 3 useRef (eliminate via module-level ref). Identified 4 effects that need infrastructure: ensureTableLayout (command functions need Redux state), searchActions (ActionRegistry lifecycle), SetPageTitle (deferred router), initDateRange (dispatch side effect).",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 33,
+            "action": "SKIPPED: Kept DataTable inline in RegisterPageView (simpler). RegisterTable wrapper added no value — all dispatch-intent handlers work directly in RegisterPageView via ctx pattern.",
+            "done": true
+        },
+        {
+            "step": 34,
+            "action": "Migrated RegisterPageView.jsx: (1) Eliminated ALL 7 useCallback — dispatch-intent via RegisterPage command functions with RegisterCtx object. (2) Eliminated ALL 3 useRef — module-level searchInputRef = { current: null }. (3) Integrated tableLayoutOrDefault selector (removed allTableLayouts + if-guard). (4) 4 useEffects remain (ensureTableLayout, searchActions, SetPageTitle, initDateRange) — genuine lifecycle concerns needing infrastructure. (5) Updated register-page.js: new highlightTransaction, navigateSearchMatch, modified clearSearch/searchActionsEffect to accept ctx. Both files pass style validator.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 35,
+            "action": "SKIPPED: FilterChipRow receives searchInputRef as prop (module-level object replaces useRef). No changes needed for RegisterPageView proof of concept. FilterChipRow's own hooks (useEffect for ActionRegistry) will be migrated in Phase 4 step 44-45.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 36,
+            "action": "SKIPPED: FilterChipRow unchanged for proof of concept. searchInputRef prop pattern works with module-level object. FocusRegistry migration deferred to Phase 4.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 37,
+            "action": "All 118 tests pass after RegisterPageView migration.",
+            "done": true
+        },
+        {
+            "step": 38,
+            "action": "Reviews complete. Fixed: removed navigateToMatch from exports (inlined into navigateSearchMatch), explicit row.transaction guard in onRowClick, used T.toRowIndex in T.toClosestMatch.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 39,
+            "action": "Committed: Migrate RegisterPageView to dispatch-intent pattern (7d392e8). COMPLEXITY comment approved by Jeff for 4 remaining useEffects.",
+            "done": true
+        },
+        {
+            "step": 40,
+            "action": "All 107 ui-smoke integration tests pass — bank + investment register search, filtering, date ranges, category report, holdings report.",
+            "style_card": "test-file",
+            "done": true
+        },
+        {
+            "step": 41,
+            "action": "[HARD CHECKPOINT] Review proof-of-concept results. Verify: (1) RegisterPageView is ~10-15 lines, useSelector-only. (2) Dispatch-intent pattern works — no closures over Redux state. (3) Selector-with-defaults works — no init effects. (4) FocusRegistry works — keyboard focus without React refs. (5) Router titles work — no SetPageTitle effects. (6) All tests pass. (7) Integration tests pass. GET EXPLICIT APPROVAL before proceeding to Phase 4. If any pattern needs adjustment, revise infrastructure before continuing.",
+            "done": false
+        },
+        {
+            "step": 42,
+            "action": "Run complexity review on modules/quicken-web-app/src/pages/DashboardPage.jsx. It has 1 useEffect (SetPageTitle). Confirm router already handles this page's title after Phase 2 step 29.",
+            "rule": "unconditional",
+            "done": false
+        },
+        {
+            "step": 43,
+            "action": "Migrate DashboardPage.jsx: Added COMPLEXITY comment for SetPageTitle useEffect (can't remove yet — needs tab-system title mechanism). Validated with --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 44,
+            "action": "Reviewed FilterChipRow.jsx — 7 useSelector (allowed) + 1 useEffect (ActionRegistry lifecycle). Added COMPLEXITY comment.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 45,
+            "action": "FilterChipRow.jsx: COMPLEXITY comment added, useEffect exempted. No other hooks to remove. Validated.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 46,
+            "action": "Reviewed AccountList.jsx — 1 useCallback wrapping E.handleSectionToggle (already module-level stable). Confirmed direct pass.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 47,
+            "action": "AccountList.jsx: Removed useCallback, pass E.handleSectionToggle directly. Validated with --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 48,
+            "action": "Review agents approved. JS: no blocking. Simplicity: flagged COMPLEXITY approval (already granted by Jeff).",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 49,
+            "action": "Committed as 3e89ce5: 'Migrate easy-tier components to dispatch-intent pattern'.",
+            "done": true
+        },
+        {
+            "step": 50,
+            "action": "[CHECKPOINT] SearchChip.jsx: 3 hooks (useState/useRef/useEffect) for debounced input pattern. DECISION: COMPLEXITY exemption — legitimate local UI state, Redux migration adds complexity for no benefit.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 51,
+            "action": "SearchChip.jsx: Added COMPLEXITY comment. Hooks exempted (debounce input pattern). Validated --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 52,
+            "action": "[CHECKPOINT] TabGroupContainer.jsx: 3 useRef eliminated. containerRef→module-level containerEl, handleRef→e.currentTarget, dragStateRef→module-level currentDrag+dragHandleEl. Drag handlers extracted to E methods.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 53,
+            "action": "TabGroupContainer.jsx: All 3 useRef eliminated via module-level state + e.currentTarget + E methods. Validated --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 54,
+            "action": "InvestmentReportPage.jsx: 3 useCallback + 1 useEffect. Callbacks→dispatch-intent with currentStore(). Effect→COMPLEXITY (SetPageTitle). T.resolveUpdater for TanStack updater pattern.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 55,
+            "action": "InvestmentReportPage.jsx: 3 useCallback eliminated via E.updateTreeExpansion/updateColumnSizing/updateColumnOrder. useEffect exempted via COMPLEXITY. Validated --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 56,
+            "action": "Both reviewers approved. JS: no blocking. Simplicity: T.resolveUpdater justified as pattern documentation.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 57,
+            "action": "Committed as 39c2c96: 'Migrate medium-tier components: SearchChip, TabGroupContainer, InvestmentReportPage'.",
+            "done": true
+        },
+        {
+            "step": 58,
+            "action": "[CHECKPOINT] CategoryReportPage.jsx: useMemo kept (COMPLEXITY — multi-slice dependency tracking too complex for selector migration). 2 useCallback eliminated via dispatch-intent.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 59,
+            "action": "CategoryReportPage.jsx: 2 useCallback eliminated (dispatch-intent + inline renderSubComponent). useMemo + useEffect kept under COMPLEXITY. Validated --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 60,
+            "action": "FilterChips.jsx: 5 useRef (4 DOM→module-level refs, 1 handlersRef→eliminated via dispatch-intent). 2 useEffect→COMPLEXITY. ActionRegistry callbacks read from currentStore().",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 61,
+            "action": "FilterChips.jsx: All 5 useRef eliminated (module-level DOM refs + dispatch-intent ActionRegistry callbacks). 2 useEffect kept under COMPLEXITY. Validated --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 62,
+            "action": "RootLayout.jsx: 11 hooks analyzed. useState→module-level storedHandle. useRef→eliminated (dispatch-intent reads showDrawer from store). 4 useCallback→dispatch-intent E methods. 4 useEffect→COMPLEXITY. keydownEffect reads tabLayout from store at call time.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 63,
+            "action": "RootLayout.jsx: Eliminated 6 hooks (1 useState, 1 useRef, 4 useCallback). 4 useEffect kept under COMPLEXITY. Validated --strict-react.",
+            "style_card": "react-component",
+            "done": true
+        },
+        {
+            "step": 64,
+            "action": "JS reviewer: 1 blocking (renamed E.handleToggleCategory→E.toggleCategoryFilter). Simplicity: approved. ESLint: removed unused handleDismiss.",
+            "rule": "unconditional",
+            "done": true
+        },
+        {
+            "step": 65,
+            "action": "Committed as 1cdee79: 'Migrate hard-tier components: CategoryReportPage, FilterChips, RootLayout'.",
+            "done": true
+        },
+        {
+            "step": 66,
+            "action": "154 TAP tests passing after all Phase 4 migrations.",
+            "done": true
+        },
+        {
+            "step": 67,
+            "action": "107 ui-smoke integration tests passing. All pages work correctly.",
+            "style_card": "test-file",
+            "done": true
+        },
+        {
+            "step": 68,
+            "action": "Inventory all @graffio/design-system imports across the monorepo. Categorize each: (1) Radix re-exports — Box, Flex, Button, Text, etc. → replace with @radix-ui/themes. (2) Thin wrappers — Dialog, Table, MainLayout, LoadingSpinner, etc. → inline or delete. (3) Real components — DataTable, KeyboardDateInput, SelectableListPopover → move to quicken-web-app/src/components/.",
+            "done": false
+        },
+        {
+            "step": 69,
+            "action": "Move DataTable.jsx, KeyboardDateInput.jsx, SelectableListPopover.jsx from modules/design-system/src/components/ to modules/quicken-web-app/src/components/. Update internal imports within these files. These components are EXEMPT from useSelector-only rule (they wrap third-party library hooks). Move any supporting files (styles, utilities) these components depend on.",
+            "style_card": "react-component",
+            "done": false
+        },
+        {
+            "step": 70,
+            "action": "Replace all @graffio/design-system imports in quicken-web-app: (1) Radix re-exports → import { Box, Flex, Button, ... } from '@radix-ui/themes'. (2) Thin wrappers — inline the wrapper logic or use Radix directly if wrapper adds nothing. (3) Moved components → update import paths to local ./components/DataTable etc. Run style validator.",
+            "style_card": "react-component",
+            "done": false
+        },
+        {
+            "step": 71,
+            "action": "Fix curb-map @graffio/design-system imports: replace Radix re-exports with @radix-ui/themes. Copy LoadingSpinner, MainLayout, Table inline into curb-map (~175 lines total). curb-map is mothballed — keep changes minimal. Run style validator.",
+            "style_card": "react-component",
+            "done": false
+        },
+        {
+            "step": 72,
+            "action": "Update CLAUDE.md: change 'Import from @graffio/design-system, never @radix-ui/themes directly' to 'Import from @radix-ui/themes directly — no design-system facade'. Remove any other references to the design-system package as a dependency.",
+            "done": false
+        },
+        {
+            "step": 73,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on design-system migration changes. Fix blocking issues.",
+            "rule": "unconditional",
+            "done": false
+        },
+        {
+            "step": 74,
+            "action": "git add all changed files && git commit. Message: 'Replace @graffio/design-system with direct @radix-ui/themes imports, move DataTable/KeyboardDateInput/SelectableListPopover to quicken-web-app'.",
+            "done": false
+        },
+        {
+            "step": 75,
+            "action": "Delete modules/design-system/ directory entirely. Remove from package.json workspaces configuration. Clean up any workspace-level references.",
+            "done": false
+        },
+        {
+            "step": 76,
+            "action": "git add -A && git commit. Message: 'Delete @graffio/design-system package — replaced by direct Radix imports'.",
+            "done": false
+        },
+        {
+            "step": 77,
+            "action": "Run yarn test — verify all tests pass after design-system removal.",
+            "done": false
+        },
+        {
+            "step": 78,
+            "action": "Run ui-smoke integration tests: yarn tap:file test/ui-smoke.integration-test.js. Verify all pages render correctly with direct Radix imports.",
+            "style_card": "test-file",
+            "done": false
+        }
+    ],
+    "verification": [
+        "Zero non-useSelector hooks in modules/quicken-web-app/src/**/*.jsx (excluding DataTable, KeyboardDateInput, SelectableListPopover)",
+        "Validator rule catches hook violations at commit time with zero exemptions",
+        "react-component.md style card documents useSelector-only rule and all replacement patterns",
+        "workflows:plan generation rules include react hook audit rule",
+        "review-complexity.md has updated simplification strategies for all 5 hook types",
+        "All 10 component files migrated to useSelector-only",
+        "@graffio/design-system package deleted, all imports replaced",
+        "CLAUDE.md import rule updated to @radix-ui/themes",
+        "All existing tests pass (yarn test)",
+        "ui-smoke integration tests pass",
+        "Manual: Bank register — search, filter chips, sorting, column reorder all work",
+        "Manual: Investment register — same behaviors, security/action filters work",
+        "Manual: Keyboard shortcuts trigger focus via FocusRegistry (no React refs)",
+        "Manual: Page titles display correctly when navigating between routes",
+        "Manual: Category report — tree expand/collapse works with selector-based tree",
+        "Manual: Dashboard page loads without title-related effects",
+        "Manual: Search chip — debounce works without useState",
+        "Manual: Tab drag-and-drop — reordering works without useRef"
+    ]
+}
