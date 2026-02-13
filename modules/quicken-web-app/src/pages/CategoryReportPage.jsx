@@ -1,14 +1,15 @@
 // ABOUTME: Category spending report page with hierarchical tree display
 // ABOUTME: Aggregates transactions by category with expand/collapse and totals
-// COMPLEXITY: react-redux-separation — useMemo for expensive tree building, updater-pattern useCallback
+// COMPLEXITY: react-redux-separation — useMemo for expensive tree building, useEffect for page title
 
 import { DataTable, Flex } from '@graffio/design-system'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
 import { FilterChipRow, TransactionSubTable } from '../components/index.js'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
+import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 
@@ -30,6 +31,16 @@ const P = {
     },
 }
 
+const E = {
+    // Reads current tree expansion from store, resolves TanStack updater, dispatches
+    // @sig updateTreeExpansion :: (String, Function | Object) -> void
+    updateTreeExpansion: (viewId, updater) => {
+        const current = S.UI.treeExpansion(currentStore().getState(), viewId)
+        const next = typeof updater === 'function' ? updater(current) : updater
+        post(Action.SetViewUiState(viewId, { treeExpansion: next }))
+    },
+}
+
 /*
  * Category spending report with hierarchical tree display
  *
@@ -40,23 +51,10 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
 
-    // EXEMPT: useMemo - tree building is expensive; keeping as useMemo for render optimization
+    // EXEMPT: useMemo — tree building is expensive, selector migration requires multi-slice dependency tracking
     const transactionTree = useMemo(
         () => buildTransactionTree(groupBy || 'category', enrichedTransactions),
         [groupBy, enrichedTransactions],
-    )
-
-    const handleExpandedChange = useCallback(
-        updater => {
-            const next = typeof updater === 'function' ? updater(expanded) : updater
-            post(Action.SetViewUiState(viewId, { treeExpansion: next }))
-        },
-        [viewId, expanded],
-    )
-
-    const renderSubComponent = useCallback(
-        ({ row }) => <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />,
-        [groupBy],
     )
 
     const layout = dimensionLayouts[groupBy] || dimensionLayouts.category
@@ -72,9 +70,11 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
                 rowHeight={40}
                 getChildRows={row => row.children}
                 getRowCanExpand={P.canExpand}
-                renderSubComponent={renderSubComponent}
+                renderSubComponent={({ row }) => (
+                    <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />
+                )}
                 expanded={expanded}
-                onExpandedChange={handleExpandedChange}
+                onExpandedChange={updater => E.updateTreeExpansion(viewId, updater)}
             />
         </Flex>
     )
