@@ -63,8 +63,13 @@ the code evolves.
 
 | Signal                                  | Simplification               | Destination                                  | Why it helps                            |
 |-----------------------------------------|------------------------------|----------------------------------------------|-----------------------------------------|
+| `useCallback`/`useRef` closure over Redux state | Dispatch-intent command fn | Service module (e.g. `register-page.js`) | No closure, reads state at call time    |
+| `useEffect` for init/ensure             | Selector-with-defaults       | `selectors.js` (memoized selector)           | Testable, no mount-time side effect     |
+| `useRef` for DOM focus                  | FocusRegistry ref callback   | `services/focus-registry.js` + JSX ref attr  | Plain JS, testable, no hook             |
+| `useEffect` for page title              | Router-layer dispatch        | `router.js`                                  | Pages don't know their own title        |
+| `useMemo` from Redux state              | Memoized selector            | `selectors.js`                               | Testable, reusable, memoized            |
+| `useState` for non-serializable state   | Plain JS service module      | `services/*.js`                              | Like FocusRegistry pattern              |
 | Handler with inline logic               | Move to `post(Action.X)`     | `reducer.js`                                 | Logic in reducer = testable             |
-| `useMemo` from Redux state              | Convert to selector          | `selectors/*.js`                             | Testable, reusable, memoized            |
 | Style objects in component              | Use semantic CSS vars        | `styles.css` or inline vars                  | Eliminates objects entirely             |
 | Style objects (if vars won't work)      | Move to shared module        | `styles/*.js`                                | Reusable across files                   |
 | `renderFoo` function with logic         | Convert to `<Foo>` component | Same file (if small) or own file (if reused) | Encapsulates, testable                  |
