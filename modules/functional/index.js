@@ -4,6 +4,7 @@
 
 import applySort from './src/apply-sort.js'
 import { truncateWithCount } from './src/truncate-with-count.js'
+import { toggleItem } from './src/toggle-item.js'
 import { wrapIndex } from './src/wrap-index.js'
 import { PromiseCache, PromiseCacheWithCacheBusting } from './promise-cache.js'
 import LookupTable from './src/lookup-table.js'
@@ -176,6 +177,7 @@ export {
     splitByKey,
     splitEvery,
     throttle,
+    toggleItem,
     type,
     uniq,
     uniqBy,

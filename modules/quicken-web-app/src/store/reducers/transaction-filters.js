@@ -1,24 +1,15 @@
 // ABOUTME: Transaction filter action handlers for the Redux reducer
 // ABOUTME: Manages per-view filter state (date range, text, categories, search)
 
+import { toggleItem } from '@graffio/functional'
 import { TransactionFilter } from '../../types/index.js'
-
-const T = {
-    // Gets today's date as ISO string (YYYY-MM-DD)
-    // @sig toTodayIso :: () -> String
-    toTodayIso: () => new Date().toISOString().slice(0, 10),
-
-    // Toggles an item in a list (add if absent, remove if present)
-    // @sig toggleItem :: ([a], a) -> [a]
-    toggleItem: (list, item) => (list.includes(item) ? list.filter(x => x !== item) : [...list, item]),
-}
 
 // Creates a TransactionFilter with default values for a given viewId
 // @sig createDefaultFilter :: String -> TransactionFilter
 const createDefaultFilter = viewId =>
     TransactionFilter(
         viewId,
-        T.toTodayIso(), // asOfDate
+        new Date().toISOString().slice(0, 10), // asOfDate
         { start: null, end: null }, // dateRange
         'all', // dateRangeKey
         '', // filterQuery
@@ -59,7 +50,7 @@ const toggleAccountFilter = (state, action) => {
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({
         ...existing,
-        selectedAccounts: T.toggleItem(existing.selectedAccounts, accountId),
+        selectedAccounts: toggleItem(accountId, existing.selectedAccounts),
     })
 
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
@@ -73,7 +64,7 @@ const toggleSecurityFilter = (state, action) => {
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({
         ...existing,
-        selectedSecurities: T.toggleItem(existing.selectedSecurities, securityId),
+        selectedSecurities: toggleItem(securityId, existing.selectedSecurities),
     })
 
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
@@ -85,7 +76,7 @@ const toggleActionFilter = (state, action) => {
     const { viewId, actionId } = action
 
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const selectedInvestmentActions = T.toggleItem(existing.selectedInvestmentActions, actionId)
+    const selectedInvestmentActions = toggleItem(actionId, existing.selectedInvestmentActions)
     const updated = TransactionFilter.from({ ...existing, selectedInvestmentActions })
 
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
