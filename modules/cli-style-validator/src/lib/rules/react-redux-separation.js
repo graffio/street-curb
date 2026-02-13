@@ -7,7 +7,7 @@ import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 8
 const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
-const EXEMPT_PATTERNS = ['hover', 'focus', 'drag', 'non-serializable']
+const EXEMPT_COMPONENTS = ['DataTable.jsx', 'KeyboardDateInput.jsx', 'SelectableListPopover.jsx']
 const SELECTOR_MAX_LINES = 6
 const SELECTOR_MAX_COLLECTION_CHAIN = 2
 
@@ -32,6 +32,18 @@ const P = {
     // Check if node is a call to useCallback
     // @sig isUseCallbackCall :: ASTNode -> Boolean
     isUseCallbackCall: node => P.isHookCall('useCallback')(node),
+
+    // Check if node is a call to useEffect
+    // @sig isUseEffectCall :: ASTNode -> Boolean
+    isUseEffectCall: node => P.isHookCall('useEffect')(node),
+
+    // Check if node is a call to useRef
+    // @sig isUseRefCall :: ASTNode -> Boolean
+    isUseRefCall: node => P.isHookCall('useRef')(node),
+
+    // Check if file path is an exempt design-system wrapper component
+    // @sig isExemptComponent :: String -> Boolean
+    isExemptComponent: filePath => EXEMPT_COMPONENTS.some(name => filePath.endsWith('/' + name)),
 
     // Check if node is an import of useChannel
     // @sig isUseChannelImport :: ASTNode -> Boolean
@@ -78,34 +90,6 @@ const P = {
     // Check if node is a spread element {...obj} or [...arr]
     // @sig isSpreadElement :: ASTNode -> Boolean
     isSpreadElement: node => node.esTree?.type === 'SpreadElement',
-
-    // Check if line has an EXEMPT comment for useState
-    // @sig hasUseStateExemption :: (String, Number) -> Boolean
-    hasUseStateExemption: (sourceCode, line) => {
-        const lines = sourceCode.split('\n')
-        const lineContent = lines[line - 1] || ''
-        const prevLineContent = lines[line - 2] || ''
-        const combined = prevLineContent + ' ' + lineContent
-        return EXEMPT_PATTERNS.some(pattern => combined.includes(`// EXEMPT: ${pattern}`))
-    },
-
-    // Check if callback AST node has multiple statements in body
-    // @sig hasMultipleStatements :: Object -> Boolean
-    hasMultipleStatements: callback => {
-        if (!callback) return false
-        const { type, body } = callback
-        const isFunctionExpr = type === 'ArrowFunctionExpression' || type === 'FunctionExpression'
-        if (!isFunctionExpr || !body) return false
-        return body.type === 'BlockStatement' && body.body.length > 1
-    },
-
-    // Check if useCallback body has more than one expression (complex)
-    // @sig isComplexUseCallback :: ASTNode -> Boolean
-    isComplexUseCallback: node => {
-        if (!P.isUseCallbackCall(node)) return false
-        const args = node.esTree.arguments || []
-        return P.hasMultipleStatements(args[0])
-    },
 
     // Check if file path indicates a selector file
     // @sig isSelectorFile :: String -> Boolean
@@ -217,7 +201,7 @@ const F = {
         line: node.line,
         column: node.column || 1,
         priority: PRIORITY,
-        message: 'useState in component body. FIX: Move state to Redux, or add // EXEMPT: hover|focus|drag comment.',
+        message: 'useState in component. FIX: Move state to Redux or a plain JS service module.',
         rule: 'react-redux-separation',
     }),
 
@@ -232,14 +216,36 @@ const F = {
         rule: 'react-redux-separation',
     }),
 
-    // Create violation for useCallback with complex body
+    // Create violation for useCallback
     // @sig createUseCallbackViolation :: ASTNode -> Violation
     createUseCallbackViolation: node => ({
         type: 'react-redux-separation',
         line: node.line,
         column: node.column || 1,
         priority: PRIORITY,
-        message: 'useCallback with complex body. FIX: Handler should be single post(Action.X()) call.',
+        message: 'useCallback in component. FIX: Use dispatch-intent command function instead.',
+        rule: 'react-redux-separation',
+    }),
+
+    // Create violation for useEffect
+    // @sig createUseEffectViolation :: ASTNode -> Violation
+    createUseEffectViolation: node => ({
+        type: 'react-redux-separation',
+        line: node.line,
+        column: node.column || 1,
+        priority: PRIORITY,
+        message: 'useEffect in component. FIX: Use selector-with-defaults, router page titles, or service module.',
+        rule: 'react-redux-separation',
+    }),
+
+    // Create violation for useRef
+    // @sig createUseRefViolation :: ASTNode -> Violation
+    createUseRefViolation: node => ({
+        type: 'react-redux-separation',
+        line: node.line,
+        column: node.column || 1,
+        priority: PRIORITY,
+        message: 'useRef in component. FIX: Use FocusRegistry ref callback or plain JS service.',
         rule: 'react-redux-separation',
     }),
 
@@ -357,22 +363,21 @@ const V = {
     // @sig checkComponents :: (AST, String, String) -> [Violation]
     checkComponents: (ast, sourceCode, filePath) => {
         if (!A.hasJSXContext(ast)) return []
+        if (P.isExemptComponent(filePath)) return []
 
-        const { isUseStateCall, hasUseStateExemption, isUseMemoCall, isComplexUseCallback } = P
+        const { isUseStateCall, isUseMemoCall, isUseCallbackCall, isUseEffectCall, isUseRefCall } = P
         const { isCollectionMethodCall, isSpreadElement, hasActionFunctionArg } = P
         const { createUseStateViolation, createUseMemoViolation, createUseCallbackViolation } = F
+        const { createUseEffectViolation, createUseRefViolation } = F
         const { createCollectionMethodViolation, createSpreadViolation, createActionFunctionViolation } = F
         const { findInComponentBodies, collectUseChannelViolations } = A
 
         const useChannelViolations = collectUseChannelViolations(ast)
-
-        const useStateNodes = findInComponentBodies(ast, isUseStateCall)
-        const useStateViolations = useStateNodes
-            .filter(node => !hasUseStateExemption(sourceCode, node.line))
-            .map(createUseStateViolation)
-
+        const useStateViolations = findInComponentBodies(ast, isUseStateCall).map(createUseStateViolation)
         const useMemoViolations = findInComponentBodies(ast, isUseMemoCall).map(createUseMemoViolation)
-        const useCallbackViolations = findInComponentBodies(ast, isComplexUseCallback).map(createUseCallbackViolation)
+        const useCallbackViolations = findInComponentBodies(ast, isUseCallbackCall).map(createUseCallbackViolation)
+        const useEffectViolations = findInComponentBodies(ast, isUseEffectCall).map(createUseEffectViolation)
+        const useRefViolations = findInComponentBodies(ast, isUseRefCall).map(createUseRefViolation)
         const collectionViolations = findInComponentBodies(ast, isCollectionMethodCall)
             .filter(node => !P.isJsxRenderMap(node))
             .map(createCollectionMethodViolation)
@@ -386,6 +391,8 @@ const V = {
             ...useStateViolations,
             ...useMemoViolations,
             ...useCallbackViolations,
+            ...useEffectViolations,
+            ...useRefViolations,
             ...collectionViolations,
             ...spreadViolations,
             ...actionFunctionViolations,
@@ -570,5 +577,4 @@ const A = {
 }
 
 const checkReactReduxSeparation = FS.withExemptions('react-redux-separation', V.check)
-const ReactReduxSeparation = { checkReactReduxSeparation }
-export { ReactReduxSeparation }
+export { checkReactReduxSeparation }

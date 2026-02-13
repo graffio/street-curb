@@ -16,7 +16,7 @@ import { ImportOrdering } from './rules/import-ordering.js'
 import { LineLength } from './rules/line-length.js'
 import { MultilineDestructuring } from './rules/multiline-destructuring.js'
 import { ReactComponentCohesion } from './rules/react-component-cohesion.js'
-import { ReactReduxSeparation } from './rules/react-redux-separation.js'
+import { checkReactReduxSeparation } from './rules/react-redux-separation.js'
 import { SigDocumentation } from './rules/sig-documentation.js'
 import { SingleLevelIndentation } from './rules/single-level-indentation.js'
 
@@ -52,9 +52,7 @@ const checkFile = async (filePath, options = {}) => {
         console.warn(`AST parsing failed for ${filePath}: ${parseError.message}`)
     }
 
-    const strictReactViolations = options.strictReact
-        ? ReactReduxSeparation.checkReactReduxSeparation(ast, sourceCode, filePath)
-        : []
+    const strictReactViolations = options.strictReact ? checkReactReduxSeparation(ast, sourceCode, filePath) : []
 
     const allViolations = [
         ...AboutmeComment.checkAboutmeComment(ast, sourceCode, filePath),
