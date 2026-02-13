@@ -10,38 +10,58 @@ Config constants → P/T groups (module level) → helper components → exporte
 
 ## Handlers
 
-- Handlers call `post(Action.X(...))` or `setState()`. Nothing else.
-- No data prep in handlers — if you need to transform before dispatching, that's a selector or `from{InputType}`.
-- Complex effects: use E group at module level, pass setters as parameters for testability.
+- Handlers call `post(Action.X(...))` or a command function (e.g. `RegisterPage.updateSorting`). Nothing else.
+- No data prep in handlers — if you need to transform before dispatching, that belongs in the command function or reducer.
+- **Inline single `post()` calls directly in JSX.** Don't extract `() => post(Action.X(...))` into an E group function — the Action variant name IS the intent. Extract to E group only when the handler has branching, multiple steps, state reads, or timing wrappers.
 
 ## Hooks
 
-- `useSelector` — all state reads. Derived state belongs in selectors, not here.
-- `useCallback` — only for simple `() => post(Action.X)` or `() => set(value)` bodies.
-- `useRef` — DOM refs and action-execute stability refs (for ActionRegistry callbacks that need current state).
-- `useEffect` — wiring only (subscriptions, layout effects). No business logic.
-- `useState` — requires `// EXEMPT: reason` comment. Valid: drag, hover, focus, file-handling, drawer, loading.
+**The only hook allowed in app components is `useSelector`.** Zero exceptions.
 
-## Updater Pattern (TanStack Table etc.)
+No `useCallback`, `useEffect`, `useRef`, `useMemo`, `useState` in `quicken-web-app/src/**/*.jsx`.
 
-When a library passes updater functions: resolve the updater, then dispatch.
+**Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`, `SelectableListPopover.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) — these are unavoidable API surfaces.
 
-```javascript
-const handleChange = useCallback(
-    updater => {
-        const next = typeof updater === 'function' ? updater(current) : updater
-        post(Action.SetValue(viewId, next))
-    },
-    [viewId, current],
-)
+### Dispatch-Intent Pattern (replaces useCallback)
+
+Handlers call command functions that read state from the store. Component only passes stable identifiers.
+
+```jsx
+onSortingChange={updater => RegisterPage.updateSorting(tableLayoutId, updater)}
 ```
+
+The command function (in a service module) reads current state via `currentStore()`, resolves the updater, and dispatches a data-only Action. No closure over Redux state in the component.
+
+### Selector-with-Defaults (replaces init useEffect)
+
+Selectors return a default when state is empty. No mount-time effects needed.
+
+```jsx
+const tableLayout = useSelector(state => S.tableLayoutOrDefault(state, tableLayoutId, columns))
+```
+
+### FocusRegistry Ref Callbacks (replaces useRef for DOM)
+
+Register DOM elements via ref callbacks (a JSX attribute, not a hook). FocusRegistry is a plain JS module.
+
+```jsx
+<input ref={el => {
+    if (el) FocusRegistry.register(`search_${viewId}`, el)
+    else FocusRegistry.unregister(`search_${viewId}`)
+}} />
+```
+
+Keyboard system calls `FocusRegistry.focus(id)` directly.
+
+### Router Page Titles (replaces SetPageTitle useEffect)
+
+Pages don't dispatch their own title. The routing layer handles page title dispatch.
 
 ## Actions (Keyboard System)
 
-Interactive components register actions via `ActionRegistry.register()` in a mount effect:
+Interactive components register actions via `ActionRegistry.register()`:
 - Accept `actionContext` prop (viewId or null for global)
-- Return the cleanup function from `register()` as the effect cleanup
-- Use `handlersRef` pattern when execute functions need current callback values
+- Registration and cleanup happen in the service layer, not in React effects
 - Never reference specific key names — keybindings live in `DEFAULT_BINDINGS` (keymap-routing.js)
 
 ## Layer Check

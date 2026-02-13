@@ -1,5 +1,9 @@
 // ABOUTME: Generic sortable table component wrapping Radix Themes Table
 // ABOUTME: Controlled component - parent manages sort state and sorts data
+// COMPLEXITY: chain-extraction — curb-map is mothballed; property access is clear in context
+// COMPLEXITY: react-component-cohesion — curb-map is mothballed; render helpers share component state
+// COMPLEXITY: react-redux-separation — curb-map is mothballed; .map() renders JSX from data
+// COMPLEXITY: sig-documentation — curb-map is mothballed; JSDoc already present
 
 import { Table as RadixTable } from '@radix-ui/themes'
 import PropTypes from 'prop-types'

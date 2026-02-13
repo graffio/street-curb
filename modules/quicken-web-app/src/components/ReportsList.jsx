@@ -1,7 +1,7 @@
 // ABOUTME: Sidebar reports list that opens report tabs on click
 // ABOUTME: Dispatches OpenView actions for report views
 
-import { Box, Button, Flex, Heading, Text } from '@graffio/design-system'
+import { Box, Button, Flex, Heading, Text } from '@radix-ui/themes'
 import React from 'react'
 import { post } from '../commands/post.js'
 import { Action } from '../types/action.js'
@@ -13,6 +13,7 @@ const reports = [
     { id: 'holdings', type: 'holdings', name: 'Investment Holdings' },
 ]
 
+// Opens a report view when clicked
 // @sig ReportButton :: { report: Object } -> ReactElement
 const ReportButton = ({ report }) => {
     // Open a report view
@@ -33,6 +34,7 @@ const ReportButton = ({ report }) => {
     )
 }
 
+// Sidebar section listing available reports
 // @sig ReportsList :: () -> ReactElement
 const ReportsList = () => (
     <Box>

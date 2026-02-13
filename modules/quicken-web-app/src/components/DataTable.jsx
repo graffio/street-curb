@@ -1,8 +1,10 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
 // ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
 
+import '../styles/datatable.css'
+
 /*
- * DataTable - TanStack Table integration for the design system
+ * DataTable - TanStack Table integration
  *
  * A flexible table component built on TanStack Table and TanStack Virtual.
  * Accepts ColumnDefinition[] (aligned with TanStack format) and row data.

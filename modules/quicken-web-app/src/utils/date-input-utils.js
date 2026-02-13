@@ -181,23 +181,19 @@ const applyDateDefaults = ({ currentStartDate, currentEndDate, startDefault, end
     }
 }
 
-// Export all input-related utilities
-export {
-    // Validation and constraints
+const DateInputUtils = {
     createDefaultParts,
     constrainDatePart,
     expandTwoDigitYear,
     updateDatePartWithValidation,
-
-    // Parsing and formatting for inputs
     parseDateString,
     toDisplayDateString,
     formatDateForInput,
     convertSlashToIso,
     parseDateFromInput,
-
-    // Form defaults
     getDefaultStartDate,
     getDefaultEndDate,
     applyDateDefaults,
 }
+
+export { DateInputUtils }

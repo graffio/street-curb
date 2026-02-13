@@ -6,7 +6,9 @@
  */
 
 import { test } from 'tap'
-import {
+import { DateInputUtils } from '../src/utils/date-input-utils.js'
+
+const {
     createDefaultParts,
     constrainDatePart,
     updateDatePartWithValidation,
@@ -18,7 +20,7 @@ import {
     getDefaultStartDate,
     getDefaultEndDate,
     applyDateDefaults,
-} from '../src/utils/date-input-utils.js'
+} = DateInputUtils
 
 test('createDefaultParts', t => {
     t.test('Given current date', t => {

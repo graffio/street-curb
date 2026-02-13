@@ -1,7 +1,13 @@
 // ABOUTME: User management page container component
 // ABOUTME: Manages tabs, filters, sorting, and orchestrates the entire user management UI
+// COMPLEXITY: react-redux-separation — curb-map is mothballed; local state with useState/useMemo is standard React
+// COMPLEXITY: chain-extraction — curb-map is mothballed; member property access is clear in context
+// COMPLEXITY: single-level-indentation — curb-map is mothballed; sort comparison requires if/else
+// COMPLEXITY: function-declaration-ordering — curb-map is mothballed; handleSort defined near sort UI
+// COMPLEXITY: sig-documentation — curb-map is mothballed; JSDoc already documents these functions
 
-import { Box, Flex, lookupTablePropType, Select, Tabs, TextField } from '@graffio/design-system'
+import { Box, Flex, Select, Tabs, TextField } from '@radix-ui/themes'
+import { lookupTablePropType } from '../prop-types/lookup-table-prop-type.js'
 import PropTypes from 'prop-types'
 import { useMemo, useState } from 'react'
 import { Member } from '../types/index.js'

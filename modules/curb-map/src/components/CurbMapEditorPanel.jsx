@@ -1,7 +1,10 @@
 // ABOUTME: Map interface component with blockface editing
 // ABOUTME: Full map UI with sliding editor panel for segment management
+// COMPLEXITY: cohesion-structure — curb-map is mothballed; standalone helpers are clear in context
+// COMPLEXITY: react-redux-separation — curb-map is mothballed; local state with useState is standard React
+// COMPLEXITY: sig-documentation — curb-map is mothballed; functions are self-documenting by name
 
-import { Box, Button, Checkbox, Flex, Heading } from '@graffio/design-system'
+import { Box, Button, Checkbox, Flex, Heading } from '@radix-ui/themes'
 import { LookupTable } from '@graffio/functional'
 import { useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'

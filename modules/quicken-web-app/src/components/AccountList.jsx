@@ -1,15 +1,15 @@
 // ABOUTME: Sidebar account list with collapsible sections and sort modes
 // ABOUTME: Reads accounts from Redux and dispatches OpenView actions
 
-import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@graffio/design-system'
-import React, { useCallback } from 'react'
+import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@radix-ui/themes'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 import { SortMode } from '../types/sort-mode.js'
-import { Formatters } from '../utils/formatters.js'
 import { View } from '../types/view.js'
+import { Formatters } from '../utils/formatters.js'
 
 const { toFormattedBalance, toFormattedDayChange, toDayChangeColor } = Formatters
 
@@ -19,38 +19,17 @@ const SORT_MODE_OPTIONS = [
     { value: 'ByAmount', label: 'By Amount' },
 ]
 
-const E = {
-    // Dispatches sort mode change action
-    // @sig handleSortModeChange :: String -> ()
-    handleSortModeChange: value => {
-        const sortMode = SortMode[value]()
-        post(Action.SetAccountListSortMode(sortMode))
-    },
-
-    // Dispatches toggle section collapsed action
-    // @sig handleSectionToggle :: String -> ()
-    handleSectionToggle: sectionId => post(Action.ToggleSectionCollapsed(sectionId)),
-
-    // Opens a register view for the account
-    // @sig handleAccountClick :: Account -> ()
-    handleAccountClick: account => {
-        const { id, name } = account
-        const viewId = `reg_${id}`
-        const view = View.Register(viewId, id, name)
-        post(Action.OpenView(view))
-    },
-}
-
 // Displays an enriched account with balance and day change
 // @sig AccountRow :: { enriched: EnrichedAccount } -> ReactElement
 const AccountRow = ({ enriched }) => {
     const { account, balance, dayChange } = enriched
+    const { id, name } = account
     const formattedDayChange = toFormattedDayChange(dayChange)
 
     return (
         <Button
             variant="ghost"
-            onClick={() => E.handleAccountClick(account)}
+            onClick={() => post(Action.OpenView(View.Register(`reg_${id}`, id, name)))}
             style={{ justifyContent: 'flex-start', width: '100%', padding: '4px 8px' }}
         >
             <Flex justify="between" width="100%" align="center" gap="2">
@@ -116,7 +95,6 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
 const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
     const { accounts, children, id } = section
     const isCollapsed = collapsedSections.has(id)
-    const onToggle = useCallback(sectionId => E.handleSectionToggle(sectionId), [])
     const hasChildren = children.length > 0
     const paddingLeft = `${8 + indent * 12}px`
     const nextIndent = indent + 1
@@ -124,7 +102,12 @@ const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
 
     return (
         <Box>
-            <SectionHeader section={section} isCollapsed={isCollapsed} onToggle={onToggle} indent={indent} />
+            <SectionHeader
+                section={section}
+                isCollapsed={isCollapsed}
+                onToggle={sectionId => post(Action.ToggleSectionCollapsed(sectionId))}
+                indent={indent}
+            />
             {!isCollapsed && (
                 <>
                     {accounts.length > 0 && (
@@ -186,7 +169,10 @@ const AccountList = () => {
                 <Heading as="h3" size="3" style={{ fontWeight: 'lighter' }}>
                     Accounts
                 </Heading>
-                <SortModeDropdown value={sortModeValue} onChange={E.handleSortModeChange} />
+                <SortModeDropdown
+                    value={sortModeValue}
+                    onChange={value => post(Action.SetAccountListSortMode(SortMode[value]()))}
+                />
             </Flex>
             <ScrollArea style={{ flex: 1 }}>
                 <Flex direction="column" gap="2" mx="2" pb="3">

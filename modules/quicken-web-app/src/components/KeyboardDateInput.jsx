@@ -44,12 +44,9 @@ import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import {
-    expandTwoDigitYear,
-    parseDateString,
-    toDisplayDateString,
-    updateDatePartWithValidation,
-} from '../utils/date-input-utils.js'
+import { DateInputUtils } from '../utils/date-input-utils.js'
+
+const { expandTwoDigitYear, parseDateString, toDisplayDateString, updateDatePartWithValidation } = DateInputUtils
 
 const { ActionRegistry } = KeymapModule
 

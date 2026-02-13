@@ -1,3 +1,11 @@
+// ABOUTME: Portal-aware Dialog wrapping @radix-ui/react-dialog with theme inheritance
+// ABOUTME: Copied inline for curb-map (mothballed) — canonical version in quicken-web-app
+// COMPLEXITY: aboutme-comment — added above
+// COMPLEXITY: cohesion-structure — curb-map is mothballed; original design-system structure preserved
+// COMPLEXITY: react-redux-separation — Portal manages DOM lifecycle (useState + useEffect required)
+// COMPLEXITY: sig-documentation — curb-map is mothballed; JSDoc already documents these functions
+// COMPLEXITY: single-level-indentation — curb-map is mothballed; useEffect callback manages lifecycle
+
 import * as RadixDialog from '@radix-ui/react-dialog'
 import { forwardRef, useEffect, useState } from 'react'
 
@@ -61,6 +69,7 @@ const createPortalContainer = () => {
     container.style.inset = '0'
     container.style.pointerEvents = 'none'
     container.style.zIndex = '9999'
+
     // Append to body instead of documentElement to work with Radix accessibility features
     document.body.appendChild(container)
     return container

@@ -1,7 +1,7 @@
 // ABOUTME: Sidebar navigation components
 // ABOUTME: Renders titled sections with navigation links
 
-import { Box, Button, Flex, Heading } from '@graffio/design-system'
+import { Box, Button, Flex, Heading } from '@radix-ui/themes'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
 
@@ -37,7 +37,7 @@ const SidebarSection = ({ title, items }) => (
 
 // Renders all sidebar navigation sections
 // @sig SidebarNav :: () -> ReactElement
-const SidebarNav = () => (
+const MainSidebar = () => (
     <>
         {sidebarSections.map(({ title, items }) => (
             <SidebarSection key={title} title={title} items={items} />
@@ -45,4 +45,4 @@ const SidebarNav = () => (
     </>
 )
 
-export { SidebarNav }
+export { MainSidebar }

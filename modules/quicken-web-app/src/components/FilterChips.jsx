@@ -1,23 +1,18 @@
 // ABOUTME: All filter chip components for transaction filtering UI
 // ABOUTME: Consolidated chips with shared styles for accounts, actions, categories, dates, search, securities, groupBy
+// COMPLEXITY: react-redux-separation — 2 useEffect for ActionRegistry lifecycle awaiting non-React mechanism
 
-import {
-    Box,
-    calculateDateRange,
-    SelectableListPopover,
-    DATE_RANGES,
-    Flex,
-    KeyboardDateInput,
-    Popover,
-    Text,
-    TextField,
-} from '@graffio/design-system'
+import { Box, Flex, Popover, Text, TextField } from '@radix-ui/themes'
+import { DateRangeUtils } from '../utils/date-range-utils.js'
+import { KeyboardDateInput } from './KeyboardDateInput.jsx'
+import { SelectableListPopover } from './SelectableListPopover.jsx'
 import { endOfDay, wrapIndex } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
+import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 
 const { ActionRegistry } = KeymapModule
@@ -59,12 +54,74 @@ const F = {
     }),
 }
 
+// Module-level DOM refs — only one popover open at a time
+const dateInputEl = { current: null }
+const startDateEl = { current: null }
+const endDateEl = { current: null }
+const searchInputEl = { current: null }
+
 const E = {
     // Toggles a category filter: adds if not selected, removes if selected
-    // @sig handleToggleCategory :: (String, String, [String]) -> void
-    handleToggleCategory: (viewId, categoryName, selectedIds) => {
+    // @sig toggleCategoryFilter :: (String, String, [String]) -> void
+    toggleCategoryFilter: (viewId, categoryName, selectedIds) => {
         if (selectedIds.includes(categoryName)) post(Action.RemoveCategoryFilter(viewId, categoryName))
         else post(Action.AddCategoryFilter(viewId, categoryName))
+    },
+
+    // Registers dismiss action for AsOfDate popover when open
+    // @sig asOfDateActionsEffect :: String -> () -> (() -> void)?
+    asOfDateActionsEffect: viewId => () => {
+        const popoverId = S.UI.filterPopoverId(currentStore().getState(), viewId)
+        if (popoverId !== 'asOfDate') return undefined
+        return ActionRegistry.register(viewId, [
+            { id: 'dismiss', description: 'Dismiss', execute: () => post(Action.SetFilterPopoverOpen(viewId, null)) },
+        ])
+    },
+
+    // Selects highlighted date range option, focuses custom date input if applicable
+    // @sig dateFilterSelectHighlighted :: String -> void
+    dateFilterSelectHighlighted: viewId => {
+        const state = currentStore().getState()
+        const { highlightedItemId } = S.UI.filterPopoverData(state, viewId)
+        if (!highlightedItemId) return
+        const dateRange = DateRangeUtils.calculateDateRange(highlightedItemId) ?? { start: null, end: null }
+        post(Action.SetTransactionFilter(viewId, { dateRangeKey: highlightedItemId, dateRange }))
+        if (highlightedItemId === 'customDates') setTimeout(() => startDateEl.current?.focus('month'), 0)
+    },
+
+    // Registers keyboard navigation actions for DateFilter popover when open
+    // @sig dateFilterActionsEffect :: String -> () -> (() -> void)?
+    dateFilterActionsEffect: viewId => () => {
+        const popoverId = S.UI.filterPopoverId(currentStore().getState(), viewId)
+        if (popoverId !== 'date') return undefined
+        return ActionRegistry.register(viewId, [
+            {
+                id: 'navigate:down',
+                description: 'Move down',
+                execute: () => {
+                    const { nextHighlightIndex } = S.UI.filterPopoverData(currentStore().getState(), viewId)
+                    post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+                },
+            },
+            {
+                id: 'navigate:up',
+                description: 'Move up',
+                execute: () => {
+                    const { prevHighlightIndex } = S.UI.filterPopoverData(currentStore().getState(), viewId)
+                    post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+                },
+            },
+            { id: 'select', description: 'Select', execute: () => E.dateFilterSelectHighlighted(viewId) },
+            {
+                id: 'navigate:next-apply',
+                description: 'Focus dates',
+                execute: () => {
+                    const dateRangeKey = S.UI.dateRangeKey(currentStore().getState(), viewId)
+                    if (dateRangeKey === 'customDates') startDateEl.current?.focus('month')
+                },
+            },
+            { id: 'dismiss', description: 'Dismiss', execute: () => post(Action.SetFilterPopoverOpen(viewId, null)) },
+        ])
     },
 }
 
@@ -116,7 +173,7 @@ const investmentGroupByItems = [
 
 // Convert DATE_RANGES object to array of {key, label} entries
 // @sig dateRangeOptions :: [{ key: String, label: String }]
-const dateRangeOptions = Object.entries(DATE_RANGES).map(([key, label]) => ({ key, label }))
+const dateRangeOptions = Object.entries(DateRangeUtils.DATE_RANGES).map(([key, label]) => ({ key, label }))
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Shared helper components
@@ -297,10 +354,10 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 
     const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
 
-    const handleToggle = categoryName => E.handleToggleCategory(viewId, categoryName, selectedIds)
+    const handleToggle = categoryName => E.toggleCategoryFilter(viewId, categoryName, selectedIds)
 
     const handleToggleHighlighted = () =>
-        highlightedItemId && E.handleToggleCategory(viewId, highlightedItemId, selectedIds)
+        highlightedItemId && E.toggleCategoryFilter(viewId, highlightedItemId, selectedIds)
 
     const POPOVER_ID = 'categories'
     const { badges, selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
@@ -344,10 +401,8 @@ const CategoryFilterChip = ({ viewId, isActive = false }) => {
 const AsOfDateChip = ({ viewId }) => {
     const handleOpenChange = open => {
         post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
-        if (open) setTimeout(() => dateInputRef.current?.focus('month'), 0)
+        if (open) setTimeout(() => dateInputEl.current?.focus('month'), 0)
     }
-
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
     // Converts Date to YYYY-MM-DD string and dispatches filter update
     // @sig handleDateChange :: Date? -> void
@@ -360,23 +415,15 @@ const AsOfDateChip = ({ viewId }) => {
         }
     }
 
-    // Escape keymap effect — closes popover when Escape pressed
-    // @sig dismissActionEffect :: () -> (() -> void)?
-    const dismissActionEffect = () => {
-        if (!isOpen) return undefined
-        return ActionRegistry.register(viewId, [{ id: 'dismiss', description: 'Dismiss', execute: handleDismiss }])
-    }
-
     const POPOVER_ID = 'asOfDate'
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
     const isOpen = popoverId === POPOVER_ID
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
-    const dateInputRef = useRef(null)
     const triggerStyle = F.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-    useEffect(dismissActionEffect, [isOpen, viewId])
+    useEffect(E.asOfDateActionsEffect(viewId), [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -393,7 +440,7 @@ const AsOfDateChip = ({ viewId }) => {
                         Show holdings as of date
                     </Text>
                     <KeyboardDateInput
-                        ref={dateInputRef}
+                        ref={el => (dateInputEl.current = el)}
                         value={dateValue}
                         onChange={handleDateChange}
                         actionContext={viewId}
@@ -412,10 +459,9 @@ const AsOfDateChip = ({ viewId }) => {
 // @sig DateFilterChip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const DateFilterChip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
 
     const handleSelect = key => {
-        const dateRange = calculateDateRange(key) ?? { start: null, end: null }
+        const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
     }
 
@@ -436,48 +482,17 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
-    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
-
-    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
-
-    const handleSelectHighlighted = () => {
-        if (!highlightedItemId) return
-        handleSelect(highlightedItemId)
-        if (highlightedItemId === 'customDates') setTimeout(() => startDateRef.current?.focus('month'), 0)
-    }
-
-    const handleTab = () => {
-        if (dateRangeKey === 'customDates') startDateRef.current?.focus('month')
-    }
-
-    // Registers/unregisters full keyboard navigation keymap when popover opens/closes
-    // @sig actionRegistrationEffect :: () -> (() -> void)?
-    const actionRegistrationEffect = () => {
-        if (!isOpen) return undefined
-        return ActionRegistry.register(viewId, [
-            { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.handleMoveDown() },
-            { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.handleMoveUp() },
-            { id: 'select', description: 'Select', execute: () => handlersRef.current.handleSelectHighlighted() },
-            { id: 'navigate:next-apply', description: 'Focus dates', execute: () => handlersRef.current.handleTab() },
-            { id: 'dismiss', description: 'Dismiss', execute: () => handlersRef.current.handleDismiss() },
-        ])
-    }
-
     const POPOVER_ID = 'date'
-    const handlersRef = useRef({ handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab })
-    handlersRef.current = { handleMoveDown, handleMoveUp, handleSelectHighlighted, handleDismiss, handleTab }
-    const startDateRef = useRef(null)
-    const endDateRef = useRef(null)
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
     const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
-    const { popoverId, nextHighlightIndex, prevHighlightIndex, highlightedItemId } = popoverData
+    const { popoverId, highlightedItemId } = popoverData
     const isOpen = popoverId === POPOVER_ID
     const triggerStyle = F.makeChipTriggerStyle(180, isActive)
-    const currentLabel = DATE_RANGES[dateRangeKey] || 'All dates'
+    const currentLabel = DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
 
-    useEffect(actionRegistrationEffect, [isOpen, viewId])
+    useEffect(E.dateFilterActionsEffect(viewId), [isOpen, viewId])
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -511,11 +526,11 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 Start Date
                             </Text>
                             <KeyboardDateInput
-                                ref={startDateRef}
+                                ref={el => (startDateEl.current = el)}
                                 value={customStartDate}
                                 onChange={handleCustomStartChange}
                                 placeholder="MM/DD/YYYY"
-                                onTabOut={() => endDateRef?.current?.focus('month')}
+                                onTabOut={() => endDateEl.current?.focus('month')}
                                 actionContext={viewId}
                             />
                         </Flex>
@@ -524,11 +539,11 @@ const DateFilterChip = ({ viewId, isActive = false }) => {
                                 End Date
                             </Text>
                             <KeyboardDateInput
-                                ref={endDateRef}
+                                ref={el => (endDateEl.current = el)}
                                 value={customEndDate}
                                 onChange={handleCustomEndChange}
                                 placeholder="MM/DD/YYYY"
-                                onTabOut={() => startDateRef?.current?.focus('month')}
+                                onTabOut={() => startDateEl.current?.focus('month')}
                                 actionContext={viewId}
                             />
                         </Flex>
@@ -605,7 +620,7 @@ const GroupByFilterChip = ({ viewId, items }) => {
 const SearchFilterChip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => {
         post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
-        if (open) setTimeout(() => inputRef.current?.focus(), 0)
+        if (open) setTimeout(() => searchInputEl.current?.focus(), 0)
     }
 
     const handleChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
@@ -620,7 +635,6 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
     const handleKeyDown = e => e.key === 'Escape' && (e.preventDefault(), handleDismiss())
 
     const POPOVER_ID = 'search'
-    const inputRef = useRef(null)
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
     const isOpen = popoverId === POPOVER_ID
@@ -648,7 +662,7 @@ const SearchFilterChip = ({ viewId, isActive = false }) => {
                         Search transactions
                     </Text>
                     <TextField.Root
-                        ref={inputRef}
+                        ref={el => (searchInputEl.current = el)}
                         placeholder="Type to filter..."
                         value={filterQuery || ''}
                         onChange={handleChange}

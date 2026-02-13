@@ -1,5 +1,6 @@
 // ABOUTME: Bottom drawer showing available keyboard shortcuts
 // ABOUTME: Groups keybindings by source context with formatted key symbols
+// COMPLEXITY: react-redux-separation — .map() renders JSX from data (not a selector concern)
 
 import { Box, Button, Flex, Heading, ScrollArea, Text } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'

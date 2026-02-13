@@ -1,13 +1,16 @@
 // ABOUTME: Investment holdings report page with hierarchical tree display
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
+// COMPLEXITY: react-redux-separation — SetPageTitle useEffect awaiting tab-system title mechanism
 
-import { DataTable, Flex } from '@graffio/design-system'
-import { useCallback, useEffect } from 'react'
+import { Flex } from '@radix-ui/themes'
+import { DataTable } from '../components/DataTable.jsx'
+import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
 import { FilterChipRow, investmentGroupByItems } from '../components/index.js'
 import * as S from '../store/selectors.js'
+import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 
 const pageContainerStyle = { height: '100%' }
@@ -19,22 +22,30 @@ const dimensionLayouts = {
     goal: { title: 'Holdings by Goal', subtitle: 'View portfolio positions by investment goal' },
 }
 
-const E = {
-    // Resolves TanStack updater and dispatches tree expansion change
-    // @sig dispatchTreeExpanded :: (String, Object) -> (Function | Object) -> void
-    dispatchTreeExpanded: (viewId, current) => updater =>
-        post(
-            Action.SetViewUiState(viewId, {
-                treeExpansion: typeof updater === 'function' ? updater(current) : updater,
-            }),
-        ),
+const T = {
+    // Resolves a TanStack updater (function or value) against current state
+    // @sig resolveUpdater :: (Function | Object, Object) -> Object
+    resolveUpdater: (updater, current) => (typeof updater === 'function' ? updater(current) : updater),
+}
 
-    // Resolves TanStack updater and dispatches column sizing change
-    // @sig dispatchColumnSizing :: (String, Object) -> (Function | Object) -> void
-    dispatchColumnSizing: (viewId, current) => updater =>
-        post(
-            Action.SetViewUiState(viewId, { columnSizing: typeof updater === 'function' ? updater(current) : updater }),
-        ),
+const E = {
+    // Reads current tree expansion from store, resolves updater, dispatches
+    // @sig updateTreeExpansion :: (String, Function | Object) -> void
+    updateTreeExpansion: (viewId, updater) => {
+        const current = S.UI.treeExpansion(currentStore().getState(), viewId)
+        post(Action.SetViewUiState(viewId, { treeExpansion: T.resolveUpdater(updater, current) }))
+    },
+
+    // Reads current column sizing from store, resolves updater, dispatches
+    // @sig updateColumnSizing :: (String, Function | Object) -> void
+    updateColumnSizing: (viewId, updater) => {
+        const current = S.UI.columnSizing(currentStore().getState(), viewId)
+        post(Action.SetViewUiState(viewId, { columnSizing: T.resolveUpdater(updater, current) }))
+    },
+
+    // Dispatches column order change
+    // @sig updateColumnOrder :: (String, Object) -> void
+    updateColumnOrder: (viewId, order) => post(Action.SetViewUiState(viewId, { columnOrder: order })),
 }
 
 /*
@@ -49,13 +60,6 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
-
-    const handleExpandedChange = useCallback(E.dispatchTreeExpanded(viewId, expanded), [viewId, expanded])
-    const handleColumnSizingChange = useCallback(E.dispatchColumnSizing(viewId, columnSizing), [viewId, columnSizing])
-    const handleColumnOrderChange = useCallback(
-        order => post(Action.SetViewUiState(viewId, { columnOrder: order })),
-        [viewId],
-    )
 
     const totalHoldingsCount = holdings?.length ?? 0
 
@@ -75,18 +79,18 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 itemLabel="holdings"
             />
             <DataTable
-                columns={InvestmentReportColumns.columns}
+                columns={InvestmentReportColumns}
                 data={holdingsTree}
                 height={height}
                 rowHeight={40}
                 getChildRows={row => row.children}
                 getRowCanExpand={row => row.original.children && row.original.children.length > 0}
                 expanded={expanded}
-                onExpandedChange={handleExpandedChange}
+                onExpandedChange={updater => E.updateTreeExpansion(viewId, updater)}
                 columnSizing={columnSizing}
-                onColumnSizingChange={handleColumnSizingChange}
+                onColumnSizingChange={updater => E.updateColumnSizing(viewId, updater)}
                 columnOrder={columnOrder}
-                onColumnOrderChange={handleColumnOrderChange}
+                onColumnOrderChange={order => E.updateColumnOrder(viewId, order)}
                 context={{ groupBy }}
             />
         </Flex>

@@ -1,7 +1,7 @@
 // ABOUTME: Individual tab group with tab bar and content area
 // ABOUTME: Uses View.match() for exhaustive content rendering
 
-import { Box, Button, Flex, Text, Tooltip } from '@graffio/design-system'
+import { Box, Button, Flex, Text, Tooltip } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'

@@ -1,34 +1,65 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
+// COMPLEXITY: react-redux-separation — 4 useEffect for mount-time init and keyboard routing lifecycle
 
-import { Box, Button, Flex, KeymapDrawer, MainLayout, Separator, Spinner, Text } from '@graffio/design-system'
+import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
+import { KeymapDrawer } from './KeymapDrawer.jsx'
+import { MainLayout } from './MainLayout.jsx'
 import { KeymapModule } from '@graffio/keymap'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import { FileHandling } from '../services/file-handling.js'
 import { KeymapRouting } from '../services/keymap-routing.js'
 import * as S from '../store/selectors.js'
+import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 import { AccountList } from './AccountList.jsx'
 import { FileOpenDialog } from './FileOpenDialog.jsx'
-import { SidebarNav } from './MainSidebar.jsx'
+import { MainSidebar } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
 const { ActionRegistry } = KeymapModule
 
+// Module-level state — FileSystemFileHandle is non-serializable (can't go in Redux)
+let storedHandle = null
+
 const E = {
-    // Registers global toggle-shortcuts action (reads showDrawer from ref for stable identity)
-    // @sig toggleShortcutsEffect :: React.Ref -> () -> (() -> void)
-    toggleShortcutsEffect: showDrawerRef => () =>
+    // Stores a FileSystemFileHandle in module-level state
+    // @sig setStoredHandle :: FileSystemFileHandle? -> void
+    setStoredHandle: handle => (storedHandle = handle),
+
+    // Opens file picker and loads selected file
+    // @sig handleOpenFile :: () -> void
+    handleOpenFile: () => FileHandling.openFile(E.setStoredHandle),
+
+    // Reopens previously stored file handle
+    // @sig handleReopen :: () -> void
+    handleReopen: () => FileHandling.reopenFile(storedHandle),
+
+    // Dismisses banner and opens file picker for new file
+    // @sig handleOpenNew :: () -> void
+    handleOpenNew: () => FileHandling.openNewFile(E.setStoredHandle),
+
+    // Registers global toggle-shortcuts action (reads showDrawer from store at call time)
+    // @sig toggleShortcutsEffect :: () -> () -> void
+    toggleShortcutsEffect: () =>
         ActionRegistry.register(null, [
             {
                 id: 'toggle-shortcuts',
                 description: 'Toggle shortcuts',
-                execute: () => post(Action.SetShowDrawer(!showDrawerRef.current)),
+                execute: () => post(Action.SetShowDrawer(!S.showDrawer(currentStore().getState()))),
             },
         ]),
+
+    // Keydown handler that reads tabLayout from store at call time
+    // @sig keydownEffect :: () -> () -> void
+    keydownEffect: () => {
+        const handler = e => KeymapRouting.handleKeydown(S.tabLayout(currentStore().getState()))(e)
+        window.addEventListener('keydown', handler)
+        return () => window.removeEventListener('keydown', handler)
+    },
 }
 
 const LOADING_OVERLAY_STYLE = {
@@ -56,37 +87,26 @@ const LoadingOverlay = ({ status }) => (
 // Main application layout with sidebar, file handling, and keyboard routing
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
-    // EXEMPT: non-serializable - FileSystemFileHandle can't be stored in Redux
-    const [storedHandle, setStoredHandle] = useState(null)
+    const { handleOpenFile, handleReopen, handleOpenNew, setStoredHandle, keydownEffect, toggleShortcutsEffect } = E
 
     const showReopenBanner = useSelector(S.showReopenBanner)
     const showDrawer = useSelector(S.showDrawer)
     const loadingStatus = useSelector(S.loadingStatus)
     const pageTitle = useSelector(S.UI.pageTitle)
     const pageSubtitle = useSelector(S.UI.pageSubtitle)
-    const tabLayout = useSelector(S.tabLayout)
     const activeViewId = useSelector(S.activeViewId)
-
-    // EXEMPT: non-DOM ref — stable closure for ActionRegistry execute callback
-    const showDrawerRef = useRef(showDrawer)
-    showDrawerRef.current = showDrawer
-
-    const handleOpenFile = useCallback(() => FileHandling.openFile(setStoredHandle), [])
-    const handleReopen = useCallback(() => FileHandling.reopenFile(storedHandle), [storedHandle])
-    const handleOpenNew = useCallback(() => FileHandling.openNewFile(setStoredHandle), [])
-    const handleKeyDown = useCallback(KeymapRouting.handleKeydown(tabLayout), [tabLayout])
 
     const availableIntents = showDrawer ? KeymapRouting.toAvailableIntents(activeViewId) : []
 
     useEffect(() => FileHandling.loadStoredHandle(setStoredHandle), [])
     useEffect(() => FileHandling.loadTestFileIfPresent(), [])
-    useEffect(KeymapRouting.keydownEffect(handleKeyDown), [handleKeyDown])
-    useEffect(E.toggleShortcutsEffect(showDrawerRef), [])
+    useEffect(keydownEffect, [])
+    useEffect(toggleShortcutsEffect, [])
 
     return (
         <MainLayout title={pageTitle} subtitle={pageSubtitle}>
             <MainLayout.Sidebar>
-                <SidebarNav />
+                <MainSidebar />
                 <Separator size="4" my="3" />
                 <AccountList />
                 <Separator size="4" my="3" />

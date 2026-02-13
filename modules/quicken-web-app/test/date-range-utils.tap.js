@@ -6,12 +6,9 @@
  */
 
 import { test } from 'tap'
-import {
-    calculateDateRange,
-    createDateRangeFromStrings,
-    createDateRangeIfComplete,
-    DATE_RANGES,
-} from '../src/utils/date-range-utils.js'
+import { DateRangeUtils } from '../src/utils/date-range-utils.js'
+
+const { calculateDateRange, createDateRangeFromStrings, createDateRangeIfComplete, DATE_RANGES } = DateRangeUtils
 
 test('calculateDateRange', t => {
     // Mock Date.now() to return our fixed date

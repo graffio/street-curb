@@ -2,11 +2,10 @@
 // ABOUTME: Verifies detection of forbidden patterns in React component bodies
 
 import t from 'tap'
-import { ReactReduxSeparation } from '../src/lib/rules/react-redux-separation.js'
+import { checkReactReduxSeparation } from '../src/lib/rules/react-redux-separation.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser
-const { checkReactReduxSeparation } = ReactReduxSeparation
 
 t.test('Given a JSX file with useState', t => {
     t.test('When useState is called in component body', t => {
@@ -23,7 +22,7 @@ t.test('Given a JSX file with useState', t => {
         t.end()
     })
 
-    t.test('When useState has an EXEMPT: hover comment', t => {
+    t.test('When useState has an EXEMPT comment (no longer honored)', t => {
         const code = `const MyComponent = () => {
     // EXEMPT: hover
     const [hovered, setHovered] = useState(false)
@@ -33,21 +32,7 @@ t.test('Given a JSX file with useState', t => {
         const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
 
         const useStateViolation = violations.find(v => v.message.includes('useState'))
-        t.notOk(useStateViolation, 'Then no useState violation should be detected')
-        t.end()
-    })
-
-    t.test('When useState has an EXEMPT: focus comment', t => {
-        const code = `const MyComponent = () => {
-    // EXEMPT: focus
-    const [focused, setFocused] = useState(false)
-    return <div>{focused}</div>
-}`
-        const ast = parseCode(code)
-        const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
-
-        const useStateViolation = violations.find(v => v.message.includes('useState'))
-        t.notOk(useStateViolation, 'Then no useState violation should be detected')
+        t.ok(useStateViolation, 'Then a useState violation should still be detected (no exemptions)')
         t.end()
     })
 
@@ -192,7 +177,7 @@ t.test('Given a test file', t => {
     t.end()
 })
 
-t.test('Given a useCallback with complex body', t => {
+t.test('Given a useCallback in component', t => {
     t.test('When useCallback has multiple statements', t => {
         const code = `const MyComponent = () => {
     const handleClick = useCallback(() => {
@@ -206,11 +191,11 @@ t.test('Given a useCallback with complex body', t => {
 
         const callbackViolation = violations.find(v => v.message.includes('useCallback'))
         t.ok(callbackViolation, 'Then a useCallback violation should be detected')
-        t.match(callbackViolation.message, /single/, 'Then the message should mention single call')
+        t.match(callbackViolation.message, /dispatch-intent/, 'Then the message should mention dispatch-intent')
         t.end()
     })
 
-    t.test('When useCallback has single expression', t => {
+    t.test('When useCallback has single expression (still banned)', t => {
         const code = `const MyComponent = () => {
     const handleClick = useCallback(() => post(Action.Click()), [])
     return <button onClick={handleClick}>Click</button>
@@ -219,7 +204,73 @@ t.test('Given a useCallback with complex body', t => {
         const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
 
         const callbackViolation = violations.find(v => v.message.includes('useCallback'))
-        t.notOk(callbackViolation, 'Then no useCallback violation should be detected')
+        t.ok(callbackViolation, 'Then a useCallback violation should be detected (all useCallback banned)')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a JSX file with useEffect', t => {
+    t.test('When useEffect is called in component body', t => {
+        const code = `const MyComponent = () => {
+    useEffect(() => { document.title = 'Hello' }, [])
+    return <div>Hello</div>
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
+
+        const useEffectViolation = violations.find(v => v.message.includes('useEffect'))
+        t.ok(useEffectViolation, 'Then a useEffect violation should be detected')
+        t.match(useEffectViolation.message, /selector-with-defaults/, 'Then the message should mention alternatives')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a JSX file with useRef', t => {
+    t.test('When useRef is called in component body', t => {
+        const code = `const MyComponent = () => {
+    const inputRef = useRef(null)
+    return <input ref={inputRef} />
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'Component.jsx')
+
+        const useRefViolation = violations.find(v => v.message.includes('useRef'))
+        t.ok(useRefViolation, 'Then a useRef violation should be detected')
+        t.match(useRefViolation.message, /FocusRegistry/, 'Then the message should mention FocusRegistry')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given an exempt design-system component', t => {
+    t.test('When DataTable.jsx uses hooks', t => {
+        const code = `const DataTable = () => {
+    const [state, setState] = useState({})
+    const ref = useRef(null)
+    useEffect(() => {}, [])
+    return <table ref={ref}>{state.data}</table>
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'src/components/DataTable.jsx')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for exempt components')
+        t.end()
+    })
+
+    t.test('When KeyboardDateInput.jsx uses hooks', t => {
+        const code = `const KeyboardDateInput = () => {
+    const ref = useRef(null)
+    return <input ref={ref} />
+}`
+        const ast = parseCode(code)
+        const violations = checkReactReduxSeparation(ast, code, 'components/KeyboardDateInput.jsx')
+
+        t.equal(violations.length, 0, 'Then no violations should be detected for exempt components')
         t.end()
     })
 

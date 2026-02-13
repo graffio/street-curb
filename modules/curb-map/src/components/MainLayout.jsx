@@ -1,5 +1,6 @@
 // ABOUTME: Main application layout with grid structure for topbar, sidebar, and main content
 // ABOUTME: Uses compound component pattern (MainLayout.TopBar, MainLayout.Sidebar)
+// COMPLEXITY: react-redux-separation — React.Children.find/filter for compound component slot detection
 
 import { Box, Button, Flex, Grid } from '@radix-ui/themes'
 import React from 'react'

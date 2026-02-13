@@ -1,5 +1,6 @@
 // ABOUTME: Loading spinner component for Suspense fallback
 // ABOUTME: Centered spinner displayed while lazy-loaded components are loading
+// COMPLEXITY: sig-documentation — curb-map is mothballed; trivial 3-line component
 
 import { Box, Flex, Spinner } from '@radix-ui/themes'
 

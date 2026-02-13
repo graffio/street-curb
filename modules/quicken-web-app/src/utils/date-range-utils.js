@@ -15,7 +15,7 @@ import {
     subtractDays,
 } from '@graffio/functional'
 
-import { parseDateFromInput } from './date-input-utils.js'
+import { DateInputUtils } from './date-input-utils.js'
 
 // ==================== DATE RANGE CONSTANTS ====================
 
@@ -107,6 +107,7 @@ const lastTwelveMonthsRange = (now, today) => ({
  */
 // prettier-ignore
 const calculateDateRange = key => {
+    // Maps range key to raw start/end dates before day normalization
     // @sig startEndDateTimes :: String -> { start: Date?, end: Date? }
     const startEndDateTimes = key => {
         const now = new Date()
@@ -146,8 +147,8 @@ const calculateDateRange = key => {
  *     DateRange = { start: Date, end: Date }
  */
 const createDateRangeFromStrings = (startDateString, endDateString) => {
-    const startDate = parseDateFromInput(startDateString)
-    const endDate = parseDateFromInput(endDateString)
+    const startDate = DateInputUtils.parseDateFromInput(startDateString)
+    const endDate = DateInputUtils.parseDateFromInput(endDateString)
 
     if (!startDate || !endDate) return null
 
@@ -164,20 +165,16 @@ const createDateRangeIfComplete = (startDateString, endDateString) => {
     return createDateRangeFromStrings(startDateString, endDateString)
 }
 
-// Export all date range utilities
-export {
-    // Constants
+const DateRangeUtils = {
     DATE_RANGES,
-
-    // Range calculations
     calculateDateRange,
     createDateRangeFromStrings,
     createDateRangeIfComplete,
-
-    // Helper functions (exported for testing)
     lastNDaysRange,
     lastMonthRange,
     lastQuarterRange,
     lastYearRange,
     lastTwelveMonthsRange,
 }
+
+export { DateRangeUtils }

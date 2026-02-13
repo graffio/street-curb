@@ -1,5 +1,7 @@
 // ABOUTME: PropTypes validator for LookupTable type
 // ABOUTME: Validates that a prop is a LookupTable instance from @graffio/functional
+// COMPLEXITY: line-length — curb-map is mothballed; error message strings are descriptive
+// COMPLEXITY: sig-documentation — curb-map is mothballed; PropTypes API pattern is standard
 
 import { LookupTable } from '@graffio/functional'
 

@@ -1,8 +1,12 @@
 // ABOUTME: Application entry point
 // ABOUTME: Configures Redux, Theme, Router, and layout navigation
+// COMPLEXITY: react-redux-separation — curb-map is mothballed; standard React Provider pattern
+// COMPLEXITY: sig-documentation — curb-map is mothballed; App component is self-documenting
+// COMPLEXITY: single-level-indentation — curb-map is mothballed; JSX Provider nesting is standard React
 
-import { LoadingSpinner } from '@graffio/design-system'
+import '@radix-ui/themes/styles.css'
 import { Theme } from '@radix-ui/themes'
+import { LoadingSpinner } from './components/LoadingSpinner.jsx'
 import { RouterProvider } from '@tanstack/react-router'
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'

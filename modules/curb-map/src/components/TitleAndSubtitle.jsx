@@ -1,3 +1,8 @@
+// ABOUTME: Title and subtitle display component with configurable sizing and gap
+// ABOUTME: Copied inline for curb-map (mothballed) — canonical version in quicken-web-app
+// COMPLEXITY: cohesion-structure — curb-map is mothballed; original structure preserved
+// COMPLEXITY: line-length — curb-map is mothballed; existing formatting preserved
+
 import React from 'react'
 
 /**

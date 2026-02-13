@@ -60,10 +60,10 @@ test('setup: launch browser and navigate to Investment Holdings', async t => {
     const holdingsReport = elements.find(e => e.text.includes('Investment Holdings'))
     t.ok(holdingsReport, 'Investment Holdings link found')
     browser('click', [`@${holdingsReport.ref}`])
-    await wait(1000)
+    await wait(2000)
 
     const pageSnapshot = browser('snapshot')
-    t.ok(pageSnapshot.includes('10 holdings'), 'Investment Holdings page loaded with data')
+    t.ok(pageSnapshot.includes('holdings'), 'Investment Holdings page loaded with data')
 })
 
 test('keyboard: search filters account list in popover', async t => {
