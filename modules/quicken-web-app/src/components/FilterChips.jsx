@@ -12,7 +12,7 @@ import {
     Text,
     TextField,
 } from '@graffio/design-system'
-import { endOfDay } from '@graffio/functional'
+import { endOfDay, wrapIndex } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
@@ -570,10 +570,9 @@ const GroupByFilterChip = ({ viewId, items }) => {
     const selectedId = groupBy || resolvedItems[0]?.id
     const selectedIds = selectedId ? [selectedId] : []
     const selectedItems = T.toSelectedItems(resolvedItems, selectedId)
-    const count = resolvedItems.length
-    const highlightedIndex = count === 0 ? 0 : Math.min(rawHighlight || 0, count - 1)
-    const nextHighlightIndex = count === 0 ? 0 : highlightedIndex < count - 1 ? highlightedIndex + 1 : 0
-    const prevHighlightIndex = count === 0 ? 0 : highlightedIndex > 0 ? highlightedIndex - 1 : count - 1
+
+    // prettier-ignore
+    const { index: highlightedIndex, next: nextHighlightIndex, prev: prevHighlightIndex } = wrapIndex(rawHighlight || 0, resolvedItems.length)
 
     return (
         <SelectableListPopover
