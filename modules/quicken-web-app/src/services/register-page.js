@@ -4,7 +4,8 @@
 import { endOfDay, startOfMonth } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { post } from '../commands/post.js'
-import { Action } from '../types/index.js'
+import { currentStore } from '../store/index.js'
+import { Action, TableLayout } from '../types/index.js'
 
 const { ActionRegistry } = KeymapModule
 
@@ -104,6 +105,32 @@ const searchActionsEffect = (viewId, handlersRef, searchInputRef) => () =>
         { id: 'search:open', description: 'Open search', execute: () => searchInputRef.current?.focus() },
     ])
 
+// Reads current tableLayout from store, resolves TanStack sorting updater, dispatches result
+// @sig updateSorting :: (String, (SortingState -> SortingState)) -> void
+const updateSorting = (tableLayoutId, updater) => {
+    const tableLayout = currentStore().getState().tableLayouts.get(tableLayoutId)
+    if (!tableLayout) return
+    const { sorting } = TableLayout.toDataTableProps(tableLayout)
+    post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting))))
+}
+
+// Reads current tableLayout from store, resolves TanStack sizing updater, dispatches result
+// @sig updateColumnSizing :: (String, (SizingState -> SizingState)) -> void
+const updateColumnSizing = (tableLayoutId, updater) => {
+    const tableLayout = currentStore().getState().tableLayouts.get(tableLayoutId)
+    if (!tableLayout) return
+    const { columnSizing } = TableLayout.toDataTableProps(tableLayout)
+    post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing))))
+}
+
+// Reads current tableLayout from store, dispatches with new column order
+// @sig updateColumnOrder :: (String, [String]) -> void
+const updateColumnOrder = (tableLayoutId, newOrder) => {
+    const tableLayout = currentStore().getState().tableLayouts.get(tableLayoutId)
+    if (!tableLayout) return
+    post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder)))
+}
+
 const RegisterPage = {
     toTableLayoutId,
     dispatchHighlightChange,
@@ -112,6 +139,9 @@ const RegisterPage = {
     clearSearch,
     ensureTableLayoutEffect,
     searchActionsEffect,
+    updateSorting,
+    updateColumnSizing,
+    updateColumnOrder,
 }
 
 export { RegisterPage }
