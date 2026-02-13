@@ -67,6 +67,26 @@ onSortingChange={updater => RegisterPage.updateSorting(tableLayoutId, updater)}
 Key insight: command functions close over **stable config-derived values** (tableLayoutId, viewId), not Redux
 state. They read fresh state from `currentStore()` at call time.
 
+### When to Inline vs Extract
+
+**Inline** when the handler body is a single `post(Action.X(...))` expression:
+```jsx
+onClick={() => post(Action.OpenView(View.Register(`reg_${account.id}`, account.id, account.name)))}
+onToggle={sectionId => post(Action.ToggleSectionCollapsed(sectionId))}
+onChange={value => post(Action.SetAccountListSortMode(SortMode[value]()))}
+```
+
+The Action variant name IS the intent documentation. Wrapping `post(Action.ToggleSectionCollapsed(id))` in
+`E.toggleSection(id)` creates a lossy alias — you lose the Action name and gain nothing.
+
+**Extract to E group** when the handler does more than dispatch:
+- Branching: `if (selected) post(Action.Remove(...)) else post(Action.Add(...))`
+- Multiple steps: `setLocalQuery(''); post(Action.SetTransactionFilter(...))`
+- State reads: `const layout = currentStore().getState()...` before dispatch
+- Timing: `debounce(300, (viewId, query) => post(...))`
+
+Countable rule: count expressions in the handler body. If 1 and it's `post(Action.X(...))`, inline it.
+
 ### Pattern 2: RegisterCtx Object
 
 When multiple command functions need the same 6 stable values, group them:

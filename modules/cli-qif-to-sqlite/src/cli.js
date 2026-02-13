@@ -486,8 +486,7 @@ const E = {
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('cli.js')) E.main()
 
 // CLI entry point for programmatic use
-// @sig run :: () -> void
-const run = () => E.main()
+// @sig cli :: () -> void
+const cli = () => E.main()
 
-const Cli = { run }
-export { Cli }
+export { cli }

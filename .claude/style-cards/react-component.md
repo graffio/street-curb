@@ -12,6 +12,7 @@ Config constants → P/T groups (module level) → helper components → exporte
 
 - Handlers call `post(Action.X(...))` or a command function (e.g. `RegisterPage.updateSorting`). Nothing else.
 - No data prep in handlers — if you need to transform before dispatching, that belongs in the command function or reducer.
+- **Inline single `post()` calls directly in JSX.** Don't extract `() => post(Action.X(...))` into an E group function — the Action variant name IS the intent. Extract to E group only when the handler has branching, multiple steps, state reads, or timing wrappers.
 
 ## Hooks
 
