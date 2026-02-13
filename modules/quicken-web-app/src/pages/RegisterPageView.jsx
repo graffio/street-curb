@@ -1,17 +1,21 @@
 // ABOUTME: Unified register page component parameterized by config
 // ABOUTME: Shared logic for bank and investment transaction registers (filtering, search, table layout)
+// COMPLEXITY: react-redux-separation — 4 useEffect lifecycle dispatches need infrastructure to eliminate
 
 import { DataTable, Flex } from '@graffio/design-system'
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { post } from '../commands/post.js'
 import { FilterChipRow } from '../components/index.js'
 import { RegisterPage } from '../services/register-page.js'
 import * as S from '../store/selectors.js'
 import { Action, TableLayout } from '../types/index.js'
-import { post } from '../commands/post.js'
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
+
+// Module-level ref for search input — only one register page is active at a time
+const searchInputRef = { current: null }
 
 /*
  * Parameterized register page — bank and investment share this component via config objects
@@ -20,92 +24,37 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
  */
 const RegisterPageView = ({ accountId, height = '100%', config }) => {
     const { columns, prefix, sortSelector, highlightSelector, filterChipRowProps, useManualCounts } = config
-    const toPageTitle = config.pageTitle
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Derived values
-    // -----------------------------------------------------------------------------------------------------------------
     const viewId = `reg_${accountId}`
     const tableLayoutId = RegisterPage.toTableLayoutId(prefix, accountId)
+    const ctx = { sortSelector, highlightSelector, viewId, accountId, tableLayoutId, columns }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // Hooks (selectors)
-    // -----------------------------------------------------------------------------------------------------------------
+    // --- Effects (remaining lifecycle concerns — each documents why useEffect is needed) ---
     useEffect(RegisterPage.ensureTableLayoutEffect(tableLayoutId, columns), [tableLayoutId])
-
-    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
+    useEffect(RegisterPage.searchActionsEffect(ctx, searchInputRef), [viewId])
+    const accountName = useSelector(state => S.accountName(state, accountId))
+    const [pageTitle, pageSubtitle] = config.pageTitle(accountName)
+    useEffect(() => post(Action.SetPageTitle(pageTitle, pageSubtitle)), [pageTitle, pageSubtitle])
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
+    useEffect(
+        () => RegisterPage.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId),
+        [dateRangeKey, dateRange, viewId],
+    )
+
+    // --- Selectors ---
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
-    const allTableLayouts = useSelector(S.tableLayouts)
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
-    const accountName = useSelector(state => S.accountName(state, accountId))
-
-    // Investment-only: compute filtered/total counts when config requires manual counts
+    const tableLayout = useSelector(state => S.tableLayoutOrDefault(state, tableLayoutId, columns))
+    const { sorting, columnSizing, columnOrder } = TableLayout.toDataTableProps(tableLayout)
+    const data = useSelector(state => sortSelector(state, viewId, accountId, tableLayoutId, columns))
+    const highlightedId = useSelector(state => highlightSelector(state, viewId, accountId, tableLayoutId, columns))
     const filteredCount = useSelector(state =>
         useManualCounts ? S.Transactions.filteredForInvestment(state, viewId, accountId).length : 0,
     )
     const totalCount = useSelector(state =>
         useManualCounts ? S.Transactions.forAccount(state, viewId, accountId).length : 0,
     )
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Selectors (derived state)
-    // -----------------------------------------------------------------------------------------------------------------
-    const tableLayout = allTableLayouts?.[tableLayoutId]
-
-    // prettier-ignore
-    const { sorting, columnSizing, columnOrder } = useSelector(state => S.tableLayoutProps(state, tableLayoutId))
-    const data = useSelector(state => sortSelector(state, viewId, accountId, tableLayoutId, columns))
-
-    const dataRef = useRef(data)
-    dataRef.current = data
-
-    const highlightedId = useSelector(state => highlightSelector(state, viewId, accountId, tableLayoutId, columns))
-
-    const searchInputRef = useRef(null)
-    const searchHandlersRef = useRef({})
-    searchHandlersRef.current = {
-        onSearchNext: () => RegisterPage.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, 1),
-        onSearchPrev: () => RegisterPage.navigateToMatch(dataRef.current, searchMatches, highlightedId, viewId, -1),
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Callbacks
-    // -----------------------------------------------------------------------------------------------------------------
-    const handleSortingChange = useCallback(
-        updater => post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting)))),
-        [tableLayout, sorting],
-    )
-
-    const handleColumnSizingChange = useCallback(
-        updater => post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing)))),
-        [tableLayout, columnSizing],
-    )
-
-    const handleColumnOrderChange = useCallback(
-        newOrder => post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder))),
-        [tableLayout],
-    )
-
-    const getData = useCallback(() => dataRef.current, [])
-    const handleHighlightChange = useCallback(RegisterPage.dispatchHighlightChange(getData, viewId), [getData, viewId])
-    const handleEscape = useCallback(() => RegisterPage.clearSearch(searchQuery, viewId), [searchQuery, viewId])
-    const handleRowClick = useCallback(row => handleHighlightChange(row.transaction?.id), [handleHighlightChange])
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Effects
-    // -----------------------------------------------------------------------------------------------------------------
-    const [pageTitle, pageSubtitle] = toPageTitle(accountName)
-    useEffect(() => post(Action.SetPageTitle(pageTitle, pageSubtitle)), [pageTitle, pageSubtitle])
-
-    useEffect(
-        () => RegisterPage.initDateRangeIfNeeded(dateRangeKey, dateRange, viewId),
-        [dateRangeKey, dateRange, viewId],
-    )
-    useEffect(RegisterPage.searchActionsEffect(viewId, searchHandlersRef, searchInputRef), [viewId])
-
-    if (!tableLayout) return null
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
@@ -118,8 +67,8 @@ const RegisterPageView = ({ accountId, height = '100%', config }) => {
                 searchMatches={searchMatches}
                 highlightedId={highlightedId}
                 searchInputRef={searchInputRef}
-                onSearchNext={() => searchHandlersRef.current.onSearchNext()}
-                onSearchPrev={() => searchHandlersRef.current.onSearchPrev()}
+                onSearchNext={() => RegisterPage.navigateSearchMatch(ctx, 1)}
+                onSearchPrev={() => RegisterPage.navigateSearchMatch(ctx, -1)}
             />
             <div style={mainContentStyle}>
                 <DataTable
@@ -131,12 +80,12 @@ const RegisterPageView = ({ accountId, height = '100%', config }) => {
                     sorting={sorting}
                     columnSizing={columnSizing}
                     columnOrder={columnOrder}
-                    onSortingChange={handleSortingChange}
-                    onColumnSizingChange={handleColumnSizingChange}
-                    onColumnOrderChange={handleColumnOrderChange}
-                    onRowClick={handleRowClick}
-                    onHighlightChange={handleHighlightChange}
-                    onEscape={handleEscape}
+                    onSortingChange={updater => RegisterPage.updateSorting(tableLayoutId, updater)}
+                    onColumnSizingChange={updater => RegisterPage.updateColumnSizing(tableLayoutId, updater)}
+                    onColumnOrderChange={newOrder => RegisterPage.updateColumnOrder(tableLayoutId, newOrder)}
+                    onRowClick={row => row.transaction && RegisterPage.highlightTransaction(ctx, row.transaction.id)}
+                    onHighlightChange={newId => RegisterPage.highlightTransaction(ctx, newId)}
+                    onEscape={() => RegisterPage.clearSearch(viewId)}
                     actionContext={viewId}
                     context={{ searchQuery: searchQuery || filterQuery }}
                 />
