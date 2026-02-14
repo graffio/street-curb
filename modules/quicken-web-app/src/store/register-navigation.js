@@ -23,11 +23,11 @@ const shouldInitializeDateRange = (dateRangeKey, dateRange) => dateRangeKey === 
 // @sig toRowIndex :: ([Row], String) -> Number
 const toRowIndex = (data, id) => data.findIndex(r => r.transaction?.id === id)
 
-// Finds the row index of the adjacent match in match-list order
+// Finds the row index of the next match in display order (respects column sorting)
 // @sig toAdjacentMatchRowIdx :: ([Row], [String], Number, Number) -> Number
 const toAdjacentMatchRowIdx = (data, matchIds, currentIdx, dir) => {
-    const targetIdx = (currentIdx + dir + matchIds.length) % matchIds.length
-    return toRowIndex(data, matchIds[targetIdx])
+    const currentRowIdx = toRowIndex(data, matchIds[currentIdx])
+    return toNearestMatchRowIdx(data, matchIds, currentRowIdx, dir)
 }
 
 // Finds the display row index of the nearest match forward (dir=1) or backward (dir=-1)
