@@ -7,13 +7,7 @@ import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
-const COHESION_GROUPS = ['P', 'T', 'F', 'V', 'A', 'E']
-
 const P = {
-    // Check if name is a cohesion group identifier
-    // @sig isCohesionGroup :: String -> Boolean
-    isCohesionGroup: name => COHESION_GROUPS.includes(name),
-
     // Check if this is an index file (exempt from single export rule)
     // @sig isIndexFile :: String -> Boolean
     isIndexFile: filePath => /(?:^|[/\\])index\.js$/.test(filePath),
@@ -108,7 +102,7 @@ const V = {
 
         // Check for cohesion group rename: export { E as FileHandling }
         namedExports.forEach(exp => {
-            if (exp.localName !== exp.name && P.isCohesionGroup(exp.localName))
+            if (exp.localName !== exp.name && PS.isCohesionGroup(exp.localName))
                 violations.push(
                     F.createViolation(
                         exp.line,
@@ -148,7 +142,7 @@ const V = {
                 const cohesionFunctions = A.collectCohesionGroupFunctions(ast)
 
                 // Object whose properties are cohesion group letters: { P, T, E }
-                const leakedGroups = propertyNames.filter(P.isCohesionGroup)
+                const leakedGroups = propertyNames.filter(PS.isCohesionGroup)
                 if (leakedGroups.length > 0)
                     violations.push(
                         F.createViolation(
@@ -229,7 +223,7 @@ const A = {
             .filter(node => ASTNode.VariableDeclaration.is(node))
             .forEach(node => {
                 const name = node.firstName
-                if (!name || !P.isCohesionGroup(name)) return
+                if (!name || !PS.isCohesionGroup(name)) return
                 const value = node.firstValue
                 if (!ASTNode.ObjectExpression.is(value)) return
                 value.properties.forEach(prop => {
@@ -247,7 +241,7 @@ const A = {
     },
 }
 
-// @sig exportStructure :: (AST?, String, String) -> [Violation]
-const exportStructure = (ast, sourceCode, filePath) =>
+// @sig checkExportStructure :: (AST?, String, String) -> [Violation]
+const checkExportStructure = (ast, sourceCode, filePath) =>
     FS.withExemptions('export-structure', V.check)(ast, sourceCode, filePath)
-export { exportStructure }
+export { checkExportStructure }

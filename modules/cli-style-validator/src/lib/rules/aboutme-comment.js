@@ -33,6 +33,7 @@ const F = {
         type: 'aboutme-comment',
         line,
         column: 1,
+        priority: 6,
         message,
         rule: 'aboutme-comment',
     }),

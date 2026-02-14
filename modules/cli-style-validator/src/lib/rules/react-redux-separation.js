@@ -100,10 +100,6 @@ const P = {
         )
     },
 
-    // Check if name is a cohesion group identifier (P, T, F, V, A, E)
-    // @sig isCohesionGroupName :: String -> Boolean
-    isCohesionGroupName: name => ['P', 'T', 'F', 'V', 'A', 'E'].includes(name),
-
     // Check if node is an if statement
     // @sig isIfStatement :: ASTNode -> Boolean
     isIfStatement: node => ASTNode.IfStatement.is(node),
@@ -362,7 +358,7 @@ const V = {
     // Validate React component patterns (JSX files)
     // @sig checkComponents :: (AST, String, String) -> [Violation]
     checkComponents: (ast, sourceCode, filePath) => {
-        if (!A.hasJSXContext(ast)) return []
+        if (!PS.hasJSXContext(ast)) return []
         if (P.isExemptComponent(filePath)) return []
 
         const { isUseStateCall, isUseMemoCall, isUseCallbackCall, isUseEffectCall, isUseRefCall } = P
@@ -420,10 +416,6 @@ const V = {
 }
 
 const A = {
-    // Check if AST contains any JSX (file context check)
-    // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AST.from(ast).some(n => ASTNode.JSXElement.is(n) || ASTNode.JSXFragment.is(n)),
-
     // Extract body from PascalCase function declaration
     // @sig toFunctionDeclBody :: ASTNode -> ASTNode?
     toFunctionDeclBody: statement => {
@@ -492,7 +484,7 @@ const A = {
     // @sig toCohesionGroupFunctions :: Object -> [{name, line, node}]
     toCohesionGroupFunctions: d => {
         const { name, value } = d
-        if (!P.isCohesionGroupName(name) || !value || !ASTNode.ObjectExpression.is(value)) return []
+        if (!PS.isCohesionGroup(name) || !value || !ASTNode.ObjectExpression.is(value)) return []
         const funcProps = value.properties.filter(prop => prop.value && PS.isFunctionNode(prop.value))
         return funcProps.map(prop => A.toPropFunctionInfo(name, prop))
     },
@@ -517,7 +509,7 @@ const A = {
         const { MemberExpression, Identifier } = ASTNode
         if (!value || !MemberExpression.is(value)) return null
         const { base, member } = value
-        if (!Identifier.is(base) || !P.isCohesionGroupName(base.name)) return null
+        if (!Identifier.is(base) || !PS.isCohesionGroup(base.name)) return null
         const memberName = member && Identifier.is(member) ? member.name : 'unknown'
         return `${base.name}.${memberName}`
     },

@@ -6,15 +6,12 @@ import { FS } from '../shared/factories.js'
 import { PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
-const COHESION_GROUPS = ['P', 'T', 'F', 'V', 'A', 'E']
 
 const P = {
     // Check if node is a cohesion group definition (const P = {}, etc.)
     // @sig isCohesionGroupDef :: ASTNode -> Boolean
     isCohesionGroupDef: node =>
-        ASTNode.VariableDeclarator.is(node) &&
-        COHESION_GROUPS.includes(node.name) &&
-        ASTNode.ObjectExpression.is(node.value),
+        ASTNode.VariableDeclarator.is(node) && PS.isCohesionGroup(node.name) && ASTNode.ObjectExpression.is(node.value),
 
     // Check if node is a render function (declaration or variable with render* name)
     // @sig isRenderNode :: ASTNode -> Boolean
@@ -66,7 +63,7 @@ const V = {
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
-        if (!A.hasJSXContext(ast)) return []
+        if (!PS.hasJSXContext(ast)) return []
 
         const renderViolations = AST.from(ast).filter(P.isRenderNode).map(F.createRenderViolation)
         return [...renderViolations, ...A.collectCohesionViolations(ast)]
@@ -104,10 +101,6 @@ const A = {
 
         return [...funcDecls, ...varDecls]
     },
-
-    // Check if AST contains any JSX (file context check)
-    // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AST.from(ast).some(n => ASTNode.JSXElement.is(n) || ASTNode.JSXFragment.is(n)),
 }
 
 const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.check)

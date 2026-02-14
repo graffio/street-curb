@@ -4,7 +4,7 @@
 // COMPLEXITY: functions — Shared module consolidating predicates from multiple rules
 // COMPLEXITY: export-structure — Abbreviated export name PS per conventions.md
 
-import { ASTNode } from '@graffio/ast'
+import { AST, ASTNode } from '@graffio/ast'
 import { TS } from './transformers.js'
 
 const { ArrowFunctionExpression, BlockStatement, FunctionDeclaration, FunctionExpression } = ASTNode
@@ -133,6 +133,14 @@ const PS = {
     // @sig isExempt :: (String, String) -> Boolean
     isExempt: (sourceCode, ruleName) =>
         TS.parseComplexityComments(sourceCode).some(c => PS.isPermanentExemption(ruleName, c)),
+
+    // Check if name is a cohesion group identifier (P, T, F, V, A, E)
+    // @sig isCohesionGroup :: String -> Boolean
+    isCohesionGroup: name => ['P', 'T', 'F', 'V', 'A', 'E'].includes(name),
+
+    // Check if AST contains any JSX elements or fragments
+    // @sig hasJSXContext :: AST -> Boolean
+    hasJSXContext: ast => AST.from(ast).some(n => ASTNode.JSXElement.is(n) || ASTNode.JSXFragment.is(n)),
 }
 
 export { PS }

@@ -17,6 +17,7 @@ const F = {
         type: 'import-ordering',
         line,
         column: 1,
+        priority: 4,
         message,
         rule: 'import-ordering',
     }),
@@ -45,5 +46,5 @@ const A = {
     },
 }
 
-const ImportOrdering = FS.withExemptions('import-ordering', V.check)
-export { ImportOrdering }
+const checkImportOrdering = FS.withExemptions('import-ordering', V.check)
+export { checkImportOrdering }

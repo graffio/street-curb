@@ -46,6 +46,7 @@ const F = {
         type: 'functional-patterns',
         line: node.line,
         column: node.column,
+        priority: 1,
         message,
         rule: 'functional-patterns',
     }),

@@ -28,10 +28,6 @@ const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A', 'E']
 const EXEMPT_NAMES = ['rootReducer']
 
 const P = {
-    // Check if name is a cohesion group identifier (P, T, F, V, A)
-    // @sig isCohesionGroup :: String -> Boolean
-    isCohesionGroup: name => COHESION_ORDER.includes(name),
-
     // Check if name is exempt from cohesion requirements
     // @sig isExemptName :: String -> Boolean
     isExemptName: name => EXEMPT_NAMES.includes(name) || PS.isPascalCase(name),
@@ -40,7 +36,7 @@ const P = {
     // @sig isStatementContainingNode :: (ASTNode, ASTNode) -> Boolean
     isStatementContainingNode: (stmt, node) => {
         const name = stmt.firstName
-        if (!name || !P.isCohesionGroup(name)) return false
+        if (!name || !PS.isCohesionGroup(name)) return false
         const value = stmt.firstValue
         if (!ASTNode.ObjectExpression.is(value)) return false
         return value.properties.some(prop => prop.value?.isSameAs(node))
@@ -87,7 +83,7 @@ const T = {
     toCohesionDecl: stmt => {
         if (!ASTNode.VariableDeclaration.is(stmt)) return null
         const { firstName, firstValue, line } = stmt
-        if (!firstName || !P.isCohesionGroup(firstName)) return null
+        if (!firstName || !PS.isCohesionGroup(firstName)) return null
         if (!ASTNode.ObjectExpression.is(firstValue)) return null
         return { name: firstName, line, value: firstValue }
     },
@@ -191,7 +187,7 @@ const V = {
     // Check single function for uncategorized violation
     // @sig checkUncategorizedFunction :: (FunctionInfo, Set, [ComplexityComment], [Violation]) -> Void
     checkUncategorizedFunction: ({ name, line }, exportedNames, complexityComments, violations) => {
-        if (P.isCohesionGroup(name) || P.isExemptName(name) || exportedNames.has(name)) return
+        if (PS.isCohesionGroup(name) || P.isExemptName(name) || exportedNames.has(name)) return
         const hasJustification = complexityComments.some(c => c.line < line && c.line > line - 5)
         if (hasJustification) return
         violations.push(F.createUncategorizedViolation(line, name, P.matchesCohesionPattern(name)))

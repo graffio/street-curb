@@ -78,5 +78,5 @@ const A = {
         ]),
 }
 
-const FunctionNaming = FS.withExemptions('function-naming', V.check)
-export { FunctionNaming }
+const checkFunctionNaming = FS.withExemptions('function-naming', V.check)
+export { checkFunctionNaming }
