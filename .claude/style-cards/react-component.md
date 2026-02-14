@@ -4,9 +4,20 @@ Components are **wiring** between selectors (reads) and actions (writes). No log
 
 ## Structure
 
-Config constants → P/T groups (module level) → helper components → exported component(s) LAST.
+Config constants → helper components → exported component(s) LAST.
 
-**Don't over-extract.** Extract when: used 3+ times, a name clarifies non-obvious logic, or indentation forces a line break. Leave self-documenting expressions inline (`MY_SET.has(x)`, `obj.field`).
+No cohesion groups (P/T/F/V/A/E) — those are for JS modules with business logic. Components are wiring, not logic.
+
+## Extract Subcomponents Aggressively
+
+Components should be small and flat. These patterns signal a missing subcomponent:
+
+- **`{condition && <...>}`** — the child should select its own visibility via `useSelector` and return null when hidden
+- **`{x ? <A> : <B>}`** — a single subcomponent selects state and renders the right variant
+- **`.map()` with multi-line JSX** — each mapped item is its own component
+- **Multiple `useSelector` calls feeding different JSX regions** — each region with its own data dependency is a subcomponent
+
+Subcomponents receive business identifiers (`viewId`, `accountId`) and select their own data. This keeps the parent flat and each subcomponent focused on one piece of state.
 
 ## Props — No Prop Drilling
 
@@ -28,7 +39,7 @@ A component must not accept props it does not directly use. If data is only pass
 
 - Handlers call `post(Action.X(...))`. Nothing else.
 - No data prep in handlers — if you need to transform before dispatching, that belongs in the reducer.
-- **Inline single `post()` calls directly in JSX.** Don't extract `() => post(Action.X(...))` into an E group function — the Action variant name IS the intent. Extract to E group only when the handler needs to read current state first (dispatch-intent pattern), or has branching, multiple steps, or timing wrappers.
+- **Inline `post()` calls directly in JSX.** The Action variant name IS the intent — no extraction needed.
 
 ## All Writes Go Through `post`
 
@@ -45,22 +56,6 @@ Every state change goes through `post(Action.X(...))`. No exceptions. Components
 No `useCallback`, `useEffect`, `useRef`, `useMemo`, `useState` in `quicken-web-app/src/**/*.jsx`.
 
 **Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`, `SelectableListPopover.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) — these are unavoidable API surfaces.
-
-### Dispatch-Intent Pattern (replaces useCallback)
-
-When a handler needs current state, extract it to the E group. The E group function reads state via `currentStore()` and calls `post()`. Component only passes stable identifiers — no closure over Redux state.
-
-```jsx
-// In JSX:
-onSortingChange={updater => E.updateSorting(tableLayoutId, updater)}
-
-// In E group:
-// @sig updateSorting :: (String, Function | Object) -> void
-updateSorting: (tableLayoutId, updater) => {
-    const current = S.tableLayout(currentStore().getState(), tableLayoutId)
-    post(Action.SetTableLayout(tableLayoutId, resolveUpdater(updater, current)))
-},
-```
 
 ### Selector-with-Defaults (replaces init useEffect)
 
