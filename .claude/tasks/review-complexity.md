@@ -91,7 +91,6 @@ the code evolves.
 |---------------------------------------------------|------------------------------------------------------------------|
 | `renderFoo` → `<Foo>` component (same file)       | Disentangles row logic from table orchestration                  |
 | All functions organized into P/T/F/V/A/E namespaces | Forces categorization, self-documenting (e.g., `P.isPascalCase`) |
-| Extract hook logic to custom hook (same file)     | Disentangles state logic from render logic                       |
 
 5. **Verify each recommendation passes the litmus test:**
 

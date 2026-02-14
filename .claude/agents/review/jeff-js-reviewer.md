@@ -17,7 +17,7 @@ You review code for judgment calls that mechanical validators can't catch.
 ### Is this the right pattern?
 
 - Should this use LookupTable, TaggedSum, Action, or selector composition?
-- Read `.claude/pattern-catalog/triggers.md` — does any signal match?
+- Check CLAUDE.md Pattern Triggers table — does any signal match?
 - Is the code reinventing something `@graffio/functional` already provides?
 
 ### Does this name communicate?

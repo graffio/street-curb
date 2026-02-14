@@ -1,65 +1,34 @@
-# YAML Frontmatter Schema
-
-**See `.claude/skills/codify-docs/schema.yaml` for the complete schema specification.**
+# Frontmatter Schema for docs/solutions/
 
 ## Required Fields
 
-- **module** (string): Module name (e.g., "EmailProcessing") or "System" for system-wide issues
-- **date** (string): ISO 8601 date (YYYY-MM-DD)
-- **problem_type** (enum): One of [build_error, test_failure, runtime_error, performance_issue, database_issue, security_issue, ui_bug, integration_issue, logic_error, developer_experience, workflow_issue, best_practice, documentation_gap]
-- **component** (enum): One of [rails_model, rails_controller, rails_view, service_object, background_job, database, frontend_stimulus, hotwire_turbo, email_processing, brief_system, assistant, authentication, payments, development_workflow, testing_framework, documentation, tooling]
-- **symptoms** (array): 1-5 specific observable symptoms
-- **root_cause** (enum): One of [missing_association, missing_include, missing_index, wrong_api, scope_issue, thread_violation, async_timing, memory_leak, config_error, logic_error, test_isolation, missing_validation, missing_permission, missing_workflow_step, inadequate_documentation, missing_tooling, incomplete_setup]
-- **resolution_type** (enum): One of [code_fix, migration, config_change, test_fix, dependency_update, environment_setup, workflow_improvement, documentation_update, tooling_addition, seed_data_update]
-- **severity** (enum): One of [critical, high, medium, low]
-
-## Optional Fields
-
-- **rails_version** (string): Rails version in X.Y.Z format
-- **tags** (array): Searchable keywords (lowercase, hyphen-separated)
-
-## Validation Rules
-
-1. All required fields must be present
-2. Enum fields must match allowed values exactly (case-sensitive)
-3. symptoms must be YAML array with 1-5 items
-4. date must match YYYY-MM-DD format
-5. rails_version (if provided) must match X.Y.Z format
-6. tags should be lowercase, hyphen-separated
+- **title** (string): Clear problem title
+- **date** (string): YYYY-MM-DD
+- **category** (enum): `architecture` | `runtime-errors` | `test-failures` | `integration-issues` | `workflow-issues`
+- **module** (string): Module name or "System"
+- **tags** (array): Searchable keywords, lowercase, hyphen-separated
+- **symptoms** (array): 1-5 exact error messages or observable behaviors
 
 ## Example
 
 ```yaml
 ---
-module: Email Processing
-date: 2025-11-12
-problem_type: performance_issue
-component: rails_model
+title: Exhaustive match missed in two-layer dispatch
+date: 2026-02-02
+category: runtime-errors
+module: quicken-web-app
+tags: [tagged-sum, action-dispatch, exhaustive-matching]
 symptoms:
-  - "N+1 query when loading email threads"
-  - "Brief generation taking >5 seconds"
-root_cause: missing_include
-rails_version: 7.1.2
-resolution_type: code_fix
-severity: high
-tags: [n-plus-one, eager-loading, performance]
+  - "Uncaught TypeError: Constructors given to match didn't include: ToggleAccountFilter"
 ---
 ```
 
-## Category Mapping
+## Category → Directory
 
-Based on `problem_type`, documentation is filed in:
-
-- **build_error** → `docs/solutions/build-errors/`
-- **test_failure** → `docs/solutions/test-failures/`
-- **runtime_error** → `docs/solutions/runtime-errors/`
-- **performance_issue** → `docs/solutions/performance-issues/`
-- **database_issue** → `docs/solutions/database-issues/`
-- **security_issue** → `docs/solutions/security-issues/`
-- **ui_bug** → `docs/solutions/ui-bugs/`
-- **integration_issue** → `docs/solutions/integration-issues/`
-- **logic_error** → `docs/solutions/logic-errors/`
-- **developer_experience** → `docs/solutions/developer-experience/`
-- **workflow_issue** → `docs/solutions/workflow-issues/`
-- **best_practice** → `docs/solutions/best-practices/`
-- **documentation_gap** → `docs/solutions/documentation-gaps/`
+| Category | Directory |
+|----------|-----------|
+| architecture | `docs/solutions/architecture/` |
+| runtime-errors | `docs/solutions/runtime-errors/` |
+| test-failures | `docs/solutions/test-failures/` |
+| integration-issues | `docs/solutions/integration-issues/` |
+| workflow-issues | `docs/solutions/workflow-issues/` |
