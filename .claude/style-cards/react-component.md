@@ -26,9 +26,17 @@ A component must not accept props it does not directly use. If data is only pass
 
 ## Handlers
 
-- Handlers call `post(Action.X(...))` or a command function (e.g. `RegisterPage.updateSorting`). Nothing else.
-- No data prep in handlers — if you need to transform before dispatching, that belongs in the command function or reducer.
-- **Inline single `post()` calls directly in JSX.** Don't extract `() => post(Action.X(...))` into an E group function — the Action variant name IS the intent. Extract to E group only when the handler has branching, multiple steps, state reads, or timing wrappers.
+- Handlers call `post(Action.X(...))`. Nothing else.
+- No data prep in handlers — if you need to transform before dispatching, that belongs in the reducer.
+- **Inline single `post()` calls directly in JSX.** Don't extract `() => post(Action.X(...))` into an E group function — the Action variant name IS the intent. Extract to E group only when the handler needs to read current state first (dispatch-intent pattern), or has branching, multiple steps, or timing wrappers.
+
+## All Writes Go Through `post`
+
+Every state change goes through `post(Action.X(...))`. No exceptions. Components never perform side effects directly — they call `post` and `post` handles dispatch, persistence, authorization, and rollback.
+
+- `commands/post.js` — routes each Action to Redux dispatch + persistence side effects
+- `commands/operations/` — multi-step operations (file loading, initialization)
+- `commands/data-sources/` — non-Redux state (IndexedDB, FocusRegistry)
 
 ## Hooks
 
@@ -40,13 +48,19 @@ No `useCallback`, `useEffect`, `useRef`, `useMemo`, `useState` in `quicken-web-a
 
 ### Dispatch-Intent Pattern (replaces useCallback)
 
-Handlers call command functions that read state from the store. Component only passes stable identifiers.
+When a handler needs current state, extract it to the E group. The E group function reads state via `currentStore()` and calls `post()`. Component only passes stable identifiers — no closure over Redux state.
 
 ```jsx
-onSortingChange={updater => RegisterPage.updateSorting(tableLayoutId, updater)}
-```
+// In JSX:
+onSortingChange={updater => E.updateSorting(tableLayoutId, updater)}
 
-The command function (in a service module) reads current state via `currentStore()`, resolves the updater, and dispatches a data-only Action. No closure over Redux state in the component.
+// In E group:
+// @sig updateSorting :: (String, Function | Object) -> void
+updateSorting: (tableLayoutId, updater) => {
+    const current = S.tableLayout(currentStore().getState(), tableLayoutId)
+    post(Action.SetTableLayout(tableLayoutId, resolveUpdater(updater, current)))
+},
+```
 
 ### Selector-with-Defaults (replaces init useEffect)
 
@@ -77,8 +91,8 @@ Pages don't dispatch their own title. The routing layer handles page title dispa
 
 Interactive components register actions via `ActionRegistry.register()`:
 - Accept `actionContext` prop (viewId or null for global)
-- Registration and cleanup happen in the service layer, not in React effects
-- Never reference specific key names — keybindings live in `DEFAULT_BINDINGS` (keymap-routing.js)
+- Registration currently uses `useEffect` (acknowledged COMPLEXITY — awaiting non-React mechanism)
+- Never reference specific key names — keybindings live in `DEFAULT_BINDINGS` (`keymap-config.js`)
 
 ## Layer Check
 

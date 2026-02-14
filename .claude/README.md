@@ -39,8 +39,8 @@ Finish up:
 
 ~40-line files with judgment rules the validator can't catch:
 - `react-component.md` — handler patterns, hook rules, layer boundaries
-- `selector.md` — composition, layer boundaries, createSelector usage
-- `utility-module.md` — cohesion groups, naming, fail-fast philosophy
+- `selector.md` — composition, layer boundaries, memoization
+- `js-module.md` — cohesion groups, naming, fail-fast philosophy
 - `test-file.md` — TAP structure, Given/When/Then, TDD flow
 
 Loaded via `style_card` field in current-task.json steps. `/workflows:plan` maps file types to cards automatically.

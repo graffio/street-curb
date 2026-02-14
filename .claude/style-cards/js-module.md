@@ -1,4 +1,4 @@
-# Utility Module Style Card
+# JS Module Style Card
 
 Every JS file follows this structure. No exceptions.
 
@@ -43,6 +43,14 @@ Domain entities should be Tagged or TaggedSum types. When adding behavior to a d
 - Names describe WHAT, not HOW: `Tool` not `ToolFactory`, `Registry` not `RegistryManager`
 - No abbreviations: `declaration` not `decl`, `reference` not `ref`
 - No temporal context: never `NewAPI`, `LegacyHandler`, `ImprovedX`
+
+## The `commands/` Directory
+
+Every state change goes through `post(Action.X(...))`. No exceptions.
+
+- `commands/post.js` — routes each Action to Redux dispatch + persistence side effects
+- `commands/operations/` — multi-step operations (file loading, initialization)
+- `commands/data-sources/` — non-Redux state (IndexedDB, FocusRegistry) — plain JS modules, no React
 
 ## Fail-Fast
 

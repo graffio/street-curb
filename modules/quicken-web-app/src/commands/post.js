@@ -7,9 +7,9 @@ import { debounce } from '@graffio/functional'
 import { currentStore, Selectors as S } from '../store/index.js'
 import { Action } from '../types/action.js'
 import { IndexedDbStorage } from './data-sources/indexed-db-storage.js'
-import { handleInitializeSystem } from './handlers/handle-initialize-system.js'
-import { handleOpenFile } from './handlers/handle-open-file.js'
-import { handleReopenFile } from './handlers/handle-reopen-file.js'
+import { handleInitializeSystem } from './operations/handle-initialize-system.js'
+import { handleOpenFile } from './operations/handle-open-file.js'
+import { handleReopenFile } from './operations/handle-reopen-file.js'
 
 const TABLE_LAYOUT_PERSIST_DELAY_MS = 500
 
@@ -108,7 +108,7 @@ const post = action => {
         SetDraggingView : () => dispatch(action),
         SetDropTarget   : () => dispatch(action),
 
-        // Effect-only actions (handlers dispatch directly to Redux, bypassing post)
+        // Multi-step operations (dispatch directly to Redux, bypassing post)
         InitializeSystem : () => handleInitializeSystem(dispatch),
         OpenFile         : () => handleOpenFile(dispatch),
         ReopenFile       : () => handleReopenFile(dispatch),

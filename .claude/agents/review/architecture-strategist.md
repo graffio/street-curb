@@ -14,7 +14,7 @@ Read `.claude/preferences.md` and the relevant style card before reviewing.
 - Business logic in React components → should be in selectors or business modules
 - Side effects in reducers → should be in `post()` effect coordinator
 - Redux mechanics in business modules → should be in selectors
-- UI concerns in service modules → should be in components
+- UI concerns in operations → should be in components
 
 ### Component Coupling
 - Circular dependencies between modules
@@ -24,7 +24,7 @@ Read `.claude/preferences.md` and the relevant style card before reviewing.
 ### Pattern Consistency
 - Actions using TaggedSum `.match()` for exhaustive handling
 - Collections using LookupTable instead of arrays with `.find()`
-- Selectors using `createSelector` for memoization where needed
+- Selectors using `memoizeReduxState`/`memoizeReduxStatePerKey` for memoization where needed
 - Cohesion groups (P/T/F/V/A/E) followed in utility modules
 
 ### Import Structure

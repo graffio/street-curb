@@ -2,8 +2,8 @@
 // ABOUTME: Children are self-selecting column components that call their own useSelector
 // COMPLEXITY: react-redux-separation — ActionRegistry useEffect lifecycle awaiting non-React mechanism
 
-import { Flex, Text } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'
+import { Flex, Text } from '@radix-ui/themes'
 import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
@@ -24,13 +24,13 @@ const T = {
     toFilterActions: (config, openPopover) => {
         const { accounts, actions, categories, date, groupBy, search, securities } = config
         const result = []
-        if (accounts)   result.push({ id: 'filter:accounts'  , description: 'Accounts'  , execute: () => openPopover('accounts') })
-        if (categories) result.push({ id: 'filter:categories', description: 'Categories', execute: () => openPopover('categories') })
-        if (date || config.asOfDate) result.push({ id: 'filter:date', description: 'Date', execute: () => openPopover(config.asOfDate ? 'asOfDate' : 'date') })
-        if (actions)    result.push({ id: 'filter:actions'   , description: 'Actions'   , execute: () => openPopover('actions') })
-        if (securities) result.push({ id: 'filter:securities', description: 'Securities', execute: () => openPopover('securities') })
-        if (groupBy)    result.push({ id: 'filter:group-by'  , description: 'Group by'  , execute: () => openPopover('groupBy') })
-        if (search)     result.push({ id: 'filter:search'    , description: 'Search'    , execute: () => openPopover('search') })
+        if (accounts)                result.push({ id: 'filter:accounts'  , description: 'Accounts'  , execute: () => openPopover('accounts') })
+        if (categories)              result.push({ id: 'filter:categories', description: 'Categories', execute: () => openPopover('categories') })
+        if (date || config.asOfDate) result.push({ id: 'filter:date',       description: 'Date',       execute: () => openPopover(config.asOfDate ? 'asOfDate' : 'date') })
+        if (actions)                 result.push({ id: 'filter:actions'   , description: 'Actions'   , execute: () => openPopover('actions') })
+        if (securities)              result.push({ id: 'filter:securities', description: 'Securities', execute: () => openPopover('securities') })
+        if (groupBy)                 result.push({ id: 'filter:group-by'  , description: 'Group by'  , execute: () => openPopover('groupBy') })
+        if (search)                  result.push({ id: 'filter:search'    , description: 'Search'    , execute: () => openPopover('search') })
         return result
     },
 }
@@ -70,7 +70,7 @@ const FilterChipRow = props => {
                 <Text size="1" color="gray">
                     {filteredCount} {itemLabel}
                 </Text>
-                {isFiltering && (
+                {isFiltering && filteredCount < totalCount && (
                     <Text size="1" color="ruby" weight="medium">
                         (filtered from {totalCount})
                     </Text>

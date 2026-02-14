@@ -2,7 +2,7 @@
 
 **When:** Complex derived state from Redux store.
 
-**Where:** `store/selectors/` directory.
+**Where:** `store/selectors.js`
 
 **Instead of:**
 
@@ -18,19 +18,21 @@ const getVisibleTransactions = state => {
 **Use:**
 
 ```js
-const transactions = state => state.transactions
-const filters = state => state.ui.filters
-const accounts = state => state.accounts
+// Pure function — business logic lives here
+const _filtered = (state, viewId) => {
+    const { categories, securities, transactions } = state
+    return TransactionFilter.apply(filter(state, viewId), transactions, categories, securities)
+}
 
-const visibleTransactions = createSelector(
-    [transactions, filters, accounts],
-    (txns, filters, accts) => applyFilters(txns, filters, accts)
+// Memoized — only recomputes when watched state slices change
+const filtered = memoizeReduxStatePerKey(
+    ['transactions', 'categories', 'securities'],
+    'transactionFilters',
+    _filtered,
 )
 ```
 
 **Key rules:**
 - Compose small selectors rather than chaining operations
 - Delegate complex logic to business module functions
-- Use `createSelector` from `@graffio/functional` when curried usage is needed
-
-**Reference:** `modules/quicken-web-app/src/store/selectors/`
+- Memoize with `memoizeReduxState` or `memoizeReduxStatePerKey`
