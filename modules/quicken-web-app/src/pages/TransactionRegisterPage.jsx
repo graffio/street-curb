@@ -13,7 +13,6 @@ const bankConfig = {
     columns: bankColumns,
     sortSelector: S.Transactions.sortedForBankDisplay,
     highlightSelector: S.Transactions.highlightedIdForBank,
-    pageTitle: () => ['Checking Account', 'View and filter your checking account transactions'],
 }
 
 /*

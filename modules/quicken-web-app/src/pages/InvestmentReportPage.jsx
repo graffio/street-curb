@@ -1,10 +1,7 @@
 // ABOUTME: Investment holdings report page with hierarchical tree display
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
-// COMPLEXITY: react-redux-separation — SetPageTitle useEffect awaiting tab-system title mechanism
-
 import { Flex } from '@radix-ui/themes'
 import { DataTable } from '../components/DataTable.jsx'
-import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
@@ -14,13 +11,6 @@ import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 
 const pageContainerStyle = { height: '100%' }
-
-const dimensionLayouts = {
-    account: { title: 'Holdings by Account', subtitle: 'View portfolio positions by account' },
-    security: { title: 'Holdings by Security', subtitle: 'View portfolio positions by security' },
-    securityType: { title: 'Holdings by Type', subtitle: 'View portfolio positions by security type' },
-    goal: { title: 'Holdings by Goal', subtitle: 'View portfolio positions by investment goal' },
-}
 
 const T = {
     // Resolves a TanStack updater (function or value) against current state
@@ -62,9 +52,6 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
 
     const totalHoldingsCount = holdings?.length ?? 0
-
-    const layout = dimensionLayouts[groupBy] || dimensionLayouts.account
-    useEffect(() => post(Action.SetPageTitle(layout.title, layout.subtitle)), [layout])
 
     return (
         <Flex direction="column" style={pageContainerStyle}>

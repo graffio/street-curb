@@ -80,8 +80,7 @@ const RootLayout = () => {
     const showReopenBanner = useSelector(S.showReopenBanner)
     const showDrawer = useSelector(S.showDrawer)
     const loadingStatus = useSelector(S.loadingStatus)
-    const pageTitle = useSelector(S.UI.pageTitle)
-    const pageSubtitle = useSelector(S.UI.pageSubtitle)
+    const { title: pageTitle, subtitle: pageSubtitle } = useSelector(S.activeViewPageTitle)
     const activeViewId = useSelector(S.activeViewId)
 
     const availableIntents = showDrawer ? toAvailableIntents(DEFAULT_BINDINGS, GROUP_NAMES, activeViewId) : []

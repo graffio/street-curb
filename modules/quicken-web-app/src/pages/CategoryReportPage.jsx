@@ -1,10 +1,10 @@
 // ABOUTME: Category spending report page with hierarchical tree display
 // ABOUTME: Aggregates transactions by category with expand/collapse and totals
-// COMPLEXITY: react-redux-separation — useMemo for expensive tree building, useEffect for page title
+// COMPLEXITY: react-redux-separation — useMemo for expensive tree building
 
 import { Flex } from '@radix-ui/themes'
 import { DataTable } from '../components/DataTable.jsx'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
 import { FilterChipRow, TransactionSubTable } from '../components/index.js'
@@ -15,13 +15,6 @@ import { Action } from '../types/action.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 
 const pageContainerStyle = { height: '100%' }
-
-const dimensionLayouts = {
-    category: { title: 'Spending by Category', subtitle: 'View spending breakdown by category hierarchy' },
-    account: { title: 'Spending by Account', subtitle: 'View spending breakdown by account' },
-    payee: { title: 'Spending by Payee', subtitle: 'View spending breakdown by payee' },
-    month: { title: 'Spending by Month', subtitle: 'View spending breakdown by month' },
-}
 
 const P = {
     // Rows can expand if they have children (tree) or are leaves with transactions (sub-component)
@@ -57,9 +50,6 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         () => buildTransactionTree(groupBy || 'category', enrichedTransactions),
         [groupBy, enrichedTransactions],
     )
-
-    const layout = dimensionLayouts[groupBy] || dimensionLayouts.category
-    useEffect(() => post(Action.SetPageTitle(layout.title, layout.subtitle)), [layout])
 
     return (
         <Flex direction="column" style={pageContainerStyle}>

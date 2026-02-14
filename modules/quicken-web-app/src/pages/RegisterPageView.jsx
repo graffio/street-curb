@@ -1,6 +1,6 @@
 // ABOUTME: Unified register page component parameterized by config
 // ABOUTME: Shared logic for bank and investment transaction registers (filtering, search, table layout)
-// COMPLEXITY: react-redux-separation — 3 useEffect lifecycle dispatches need infrastructure to eliminate
+// COMPLEXITY: react-redux-separation — 2 useEffect lifecycle dispatches need infrastructure to eliminate
 
 import { Flex } from '@radix-ui/themes'
 import { DataTable } from '../components/DataTable.jsx'
@@ -88,9 +88,6 @@ const RegisterPageView = ({ accountId, height = '100%', config }) => {
 
     // --- Effects (remaining lifecycle concerns — each documents why useEffect is needed) ---
     useEffect(E.registerSearchActions(ctx, searchInputRef), [viewId])
-    const accountName = useSelector(state => S.accountName(state, accountId))
-    const [pageTitle, pageSubtitle] = config.pageTitle(accountName)
-    useEffect(() => post(Action.SetPageTitle(pageTitle, pageSubtitle)), [pageTitle, pageSubtitle])
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
     useEffect(() => E.handleInitDateRange(dateRangeKey, dateRange, viewId), [dateRangeKey, dateRange, viewId])
