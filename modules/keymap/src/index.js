@@ -3,6 +3,7 @@
 
 import { ActionRegistry } from './action-registry.js'
 import { normalizeKey } from './keymap.js'
+import { KeymapRouting } from './keymap-routing.js'
 
 const KEY_SYMBOLS = {
     ArrowDown: '↓',
@@ -40,6 +41,15 @@ const T = {
     formatKeys: keys => keys.map(T.formatKey).join(', '),
 }
 
-const KeymapModule = { ActionRegistry, normalizeKey, formatKey: T.formatKey, formatKeys: T.formatKeys }
+const { handleKeydown, toAvailableIntents } = KeymapRouting
+
+const KeymapModule = {
+    ActionRegistry,
+    normalizeKey,
+    formatKey: T.formatKey,
+    formatKeys: T.formatKeys,
+    handleKeydown,
+    toAvailableIntents,
+}
 
 export { KeymapModule }
