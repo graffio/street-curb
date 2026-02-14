@@ -8,6 +8,22 @@ Config constants → P/T groups (module level) → helper components → exporte
 
 **Don't over-extract.** Extract when: used 3+ times, a name clarifies non-obvious logic, or indentation forces a line break. Leave self-documenting expressions inline (`MY_SET.has(x)`, `obj.field`).
 
+## Props — No Prop Drilling
+
+A component must not accept props it does not directly use. If data is only passed through to a child, the child should select it via `useSelector`.
+
+**What counts as direct use:**
+- Component renders or branches on the value (`isFiltering`, `itemLabel`)
+- Component passes it to its own `useSelector` call (`viewId`, `accountId`)
+- Component invokes the callback itself (`onClick`, `onNext`)
+- Static configuration the component consumes (`columns`, `items`)
+
+**What is prop drilling (violation):**
+- Selecting data via `useSelector` and passing it to a child that could select it itself
+- Accepting a prop only to spread it onto a child component
+
+**Fix:** Wrap the child in a self-selecting component that calls `useSelector` internally. Pass business identifiers (`viewId`, `accountId`) so children can select their own data.
+
 ## Handlers
 
 - Handlers call `post(Action.X(...))` or a command function (e.g. `RegisterPage.updateSorting`). Nothing else.
