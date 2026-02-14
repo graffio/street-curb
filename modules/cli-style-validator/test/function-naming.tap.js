@@ -1,5 +1,5 @@
 import t from 'tap'
-import { checkFunctionNaming } from '../src/lib/rules/function-naming.js'
+import { checkFunctionNaming } from '../src/lib/rules/check-function-naming.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser

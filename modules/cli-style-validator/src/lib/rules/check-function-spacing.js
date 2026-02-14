@@ -1,9 +1,9 @@
 // ABOUTME: Rule to enforce blank lines before multiline function declarations
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
-import { AST, ASTNode } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { AST } from '@graffio/ast'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 5
 
@@ -17,17 +17,12 @@ const T = {
     },
 }
 
+const violation = FS.createViolation('function-spacing', PRIORITY)
+
 const F = {
-    // Create a violation object for this rule
+    // Create a function-spacing violation
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) => ({
-        type: 'function-spacing',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message,
-        rule: 'function-spacing',
-    }),
+    createViolation: (line, message) => violation(line, 1, message),
 }
 
 const V = {
@@ -88,12 +83,13 @@ const A = {
     // Check spacing for functions inside a function body
     // @sig checkInnerFunctions :: (ASTNode, String) -> [Violation]
     checkInnerFunctions: (node, sourceCode) => {
-        if (!PS.isFunctionNode(node)) return []
-        const body = node.body
-        if (!body || !ASTNode.BlockStatement.is(body)) return []
-        return A.checkBlockFunctions(A.findFunctionsInBlock(body.body), sourceCode)
+        if (!PS.isFunctionWithBlockBody(node)) return []
+        return A.checkBlockFunctions(A.findFunctionsInBlock(node.body.body), sourceCode)
     },
 }
 
-const checkFunctionSpacing = FS.withExemptions('function-spacing', V.check)
+// Run function-spacing rule with COMPLEXITY exemption support
+// @sig checkFunctionSpacing :: (AST?, String, String) -> [Violation]
+const checkFunctionSpacing = (ast, sourceCode, filePath) =>
+    FS.withExemptions('function-spacing', V.check, ast, sourceCode, filePath)
 export { checkFunctionSpacing }

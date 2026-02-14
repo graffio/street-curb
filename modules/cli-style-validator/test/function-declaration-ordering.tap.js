@@ -1,5 +1,5 @@
 import { test } from 'tap'
-import { checkFunctionDeclarationOrdering } from '../src/lib/rules/function-declaration-ordering.js'
+import { checkFunctionDeclarationOrdering } from '../src/lib/rules/check-function-declaration-ordering.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser

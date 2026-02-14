@@ -1,10 +1,9 @@
 // ABOUTME: Rule to enforce verb-prefix naming on all functions
 // ABOUTME: Catches function names that don't start with a recognized cohesion verb prefix
 
-import { AST, ASTNode } from '@graffio/ast'
-import { Violation } from '../../types/index.js'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 6
 
@@ -21,37 +20,17 @@ const P = {
     hasRecognizedPrefix: name => RECOGNIZED_PREFIX.test(name),
 }
 
-const T = {
-    // Transform variable declaration to function name entries
-    // @sig toFunctionVariableNames :: ASTNode -> [{ name: String, line: Number }]
-    toFunctionVariableNames: statement => {
-        if (!ASTNode.VariableDeclaration.is(statement)) return []
-        return statement.declarations
-            .filter(({ value, name }) => value && PS.isFunctionNode(value) && name)
-            .map(({ name, line }) => ({ name, line }))
-    },
-
-    // Transform function declaration to name entry
-    // @sig toFunctionDeclarationNames :: ASTNode -> [{ name: String, line: Number }]
-    toFunctionDeclarationNames: statement => {
-        if (!ASTNode.FunctionDeclaration.is(statement)) return []
-        const { name, line } = statement
-        return name ? [{ name, line }] : []
-    },
-}
+const violation = FS.createViolation('function-naming', PRIORITY)
 
 const F = {
     // Create a function-naming violation
     // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, name) =>
-        Violation(
-            'function-naming',
+        violation(
             line,
             1,
-            PRIORITY,
             `"${name}" does not start with a recognized verb prefix. ` +
                 `FIX: Rename to start with one of: ${VERB_PREFIXES.replaceAll('|', ', ')}.`,
-            'function-naming',
         ),
 }
 
@@ -61,22 +40,15 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
 
-        return A.collectModuleLevelFunctionNames(ast)
+        return AS.collectModuleLevelFunctions(ast)
             .filter(({ name }) => !PS.isPascalCase(name))
             .filter(({ name }) => !P.hasRecognizedPrefix(name))
             .map(({ name, line }) => F.createViolation(line, name))
     },
 }
 
-const A = {
-    // Collect all module-level function names from AST
-    // @sig collectModuleLevelFunctionNames :: AST -> [{ name: String, line: Number }]
-    collectModuleLevelFunctionNames: ast =>
-        AST.topLevelStatements(ast).flatMap(statement => [
-            ...T.toFunctionVariableNames(statement),
-            ...T.toFunctionDeclarationNames(statement),
-        ]),
-}
-
-const checkFunctionNaming = FS.withExemptions('function-naming', V.check)
+// Run function-naming rule with COMPLEXITY exemption support
+// @sig checkFunctionNaming :: (AST?, String, String) -> [Violation]
+const checkFunctionNaming = (ast, sourceCode, filePath) =>
+    FS.withExemptions('function-naming', V.check, ast, sourceCode, filePath)
 export { checkFunctionNaming }

@@ -2,9 +2,10 @@
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
 
 import { AST, ASTNode, Lines } from '@graffio/ast'
-import { FunctionInfo, NamedLocation, Violation } from '../../types/index.js'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { NamedLocation } from '../../types/index.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 0 // High priority - structural issue
 
@@ -60,24 +61,6 @@ const P = {
 }
 
 const T = {
-    // Transform statement to function info if it's a function declaration
-    // @sig toFunctionDeclaration :: Statement -> [{ name, line, node }]
-    toFunctionDeclaration: stmt =>
-        ASTNode.FunctionDeclaration.is(stmt) && stmt.name ? [F.createFunctionInfo(stmt.name, stmt, stmt)] : [],
-
-    // Transform statement to function infos if it's a variable with function value
-    // @sig toFunctionVariables :: Statement -> [{ name, line, node }]
-    toFunctionVariables: stmt => {
-        if (!ASTNode.VariableDeclaration.is(stmt)) return []
-        return stmt.declarations
-            .filter(({ value, name }) => value && PS.isFunctionNode(value) && name)
-            .map(({ name, value }) => F.createFunctionInfo(name, stmt, value))
-    },
-
-    // Transform statement to module-level function info (declaration or variable)
-    // @sig toModuleLevelFunction :: Statement -> [{ name, line, node }]
-    toModuleLevelFunction: stmt => [...T.toFunctionDeclaration(stmt), ...T.toFunctionVariables(stmt)],
-
     // Transform statement to cohesion group declaration if it is one
     // @sig toCohesionDecl :: Statement -> { name, line, value }?
     toCohesionDecl: stmt => {
@@ -105,19 +88,16 @@ const T = {
     },
 }
 
+const violation = FS.createViolation('cohesion-structure', PRIORITY)
+
 const F = {
     // Create a named info object with line from a node
     // @sig createNameInfo :: (String, ASTNode) -> NamedLocation
     createNameInfo: (name, node) => NamedLocation(name, node.line),
 
-    // Create a function info object with name, line, and node reference
-    // @sig createFunctionInfo :: (String, ASTNode, ASTNode) -> FunctionInfo
-    createFunctionInfo: (name, lineNode, node) => FunctionInfo(name, lineNode.line, node),
-
     // Create a cohesion-structure violation at given line
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) =>
-        Violation('cohesion-structure', line, 1, PRIORITY, message, 'cohesion-structure'),
+    createViolation: (line, message) => violation(line, 1, message),
 
     // Create violation for function not in any cohesion group
     // @sig createUncategorizedViolation :: (Number, String, String?) -> Violation
@@ -208,12 +188,11 @@ const V = {
 
         const violations = []
         const complexityComments = A.findComplexityComments(sourceCode)
-        const moduleFunctions = A.collectModuleLevelFunctions(ast)
+        const moduleFunctions = AS.collectModuleLevelFunctions(ast)
         const cohesionGroups = A.collectCohesionGroups(ast)
         const declarations = A.collectCohesionDeclarationOrder(ast)
         const externalRefs = A.collectExternalReferences(ast)
-        const exports = A.collectExports(ast)
-        const exportedNames = new Set(exports.map(e => e.name))
+        const exportedNames = new Set(AS.toExportedNames(ast))
         A.collectExportedFunctionRefs(ast, exportedNames).forEach(name => exportedNames.add(name))
 
         V.checkOrdering(declarations, violations)
@@ -236,10 +215,6 @@ const A = {
     // Collect all cohesion group declarations from AST
     // @sig collectCohesionDecls :: AST -> [{ name, line, value }]
     collectCohesionDecls: ast => AST.topLevelStatements(ast).map(T.toCohesionDecl).filter(Boolean),
-
-    // Collect all function declarations at module level (outside cohesion groups)
-    // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number, node: ASTNode }]
-    collectModuleLevelFunctions: ast => AST.topLevelStatements(ast).flatMap(T.toModuleLevelFunction),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
@@ -272,17 +247,6 @@ const A = {
             })
             .filter(Boolean),
 
-    // Collect exported names from export statements
-    // @sig collectExports :: AST -> [{ name: String, line: Number }]
-    collectExports: ast =>
-        AST.topLevelStatements(ast)
-            .filter(node => ASTNode.ExportNamedDeclaration.is(node))
-            .flatMap(node =>
-                node.specifiers
-                    .filter(spec => spec.exportedName)
-                    .map(spec => F.createNameInfo(spec.exportedName, node)),
-            ),
-
     // Collect function names referenced in exported objects (e.g., `const Api = { checkFile }`)
     // @sig collectExportedFunctionRefs :: (AST, Set<String>) -> [String]
     collectExportedFunctionRefs: (ast, exportedNames) =>
@@ -295,5 +259,8 @@ const A = {
             .map(prop => prop.value.name),
 }
 
-const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.check)
+// Run cohesion-structure rule with COMPLEXITY exemption support
+// @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]
+const checkCohesionStructure = (ast, sourceCode, filePath) =>
+    FS.withExemptions('cohesion-structure', V.check, ast, sourceCode, filePath)
 export { checkCohesionStructure }

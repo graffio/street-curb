@@ -2,9 +2,9 @@
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
 import { AST } from '@graffio/ast'
-import { AS } from '../shared/aggregators.js'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 3
 
@@ -30,19 +30,18 @@ const P = {
     shouldReportLine: (line, lineNumber, ignoredLines) => line.length > 120 && !ignoredLines.has(lineNumber),
 }
 
+const violation = FS.createViolation('line-length', PRIORITY)
+
 const F = {
-    // Create a violation object for this rule
+    // Create a line-length violation
     // @sig createViolation :: (Number, Number) -> Violation
-    createViolation: (line, column) => ({
-        type: 'line-length',
-        line,
-        column,
-        priority: PRIORITY,
-        message:
+    createViolation: (line, column) =>
+        violation(
+            line,
+            column,
             'Line exceeds 120 characters. ' +
-            'FIX: Extract a sub-expression into a named variable to shorten. Do NOT just wrap the line.',
-        rule: 'line-length',
-    }),
+                'FIX: Extract a sub-expression into a named variable to shorten. Do NOT just wrap the line.',
+        ),
 }
 
 const V = {
@@ -84,5 +83,8 @@ const A = {
     },
 }
 
-const checkLineLength = FS.withExemptions('line-length', V.check)
+// Run line-length rule with COMPLEXITY exemption support
+// @sig checkLineLength :: (AST?, String, String) -> [Violation]
+const checkLineLength = (ast, sourceCode, filePath) =>
+    FS.withExemptions('line-length', V.check, ast, sourceCode, filePath)
 export { checkLineLength }

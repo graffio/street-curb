@@ -2,9 +2,9 @@
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
 import { AST, Lines } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
-import { TS } from '../shared/transformers.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
+import { Transformers as TS } from '../shared/transformers.js'
 
 const PRIORITY = 6
 
@@ -59,17 +59,12 @@ const T = {
         AST.isTopLevel(node, ast) ? 'top-level function' : 'function longer than 5 lines',
 }
 
+const violation = FS.createViolation('sig-documentation', PRIORITY)
+
 const F = {
-    // Create a violation object from an AST node
+    // Create a violation from an AST node
     // @sig createViolation :: (ASTNode, String) -> Violation
-    createViolation: (node, message) => ({
-        type: 'sig-documentation',
-        line: node.line,
-        column: node.column,
-        priority: PRIORITY,
-        message,
-        rule: 'sig-documentation',
-    }),
+    createViolation: (node, message) => violation(node.line, node.column, message),
 }
 
 const A = {
@@ -137,5 +132,8 @@ const V = {
     },
 }
 
-const checkSigDocumentation = FS.withExemptions('sig-documentation', V.check)
+// Run sig-documentation rule with COMPLEXITY exemption support
+// @sig checkSigDocumentation :: (AST?, String, String) -> [Violation]
+const checkSigDocumentation = (ast, sourceCode, filePath) =>
+    FS.withExemptions('sig-documentation', V.check, ast, sourceCode, filePath)
 export { checkSigDocumentation }

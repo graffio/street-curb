@@ -1,11 +1,8 @@
 // ABOUTME: Shared AST traversal/aggregation utilities for style validator rules
 // ABOUTME: Provides higher-level aggregation over AST module primitives
-// COMPLEXITY: lines — Shared module consolidating utilities from multiple rules
-// COMPLEXITY: functions — Shared module consolidating utilities from multiple rules
-// COMPLEXITY: export-structure — Abbreviated export name AS per conventions.md
 
 import { AST, ASTNode } from '@graffio/ast'
-import { PS } from './predicates.js'
+import { Predicates as PS } from './predicates.js'
 
 const { ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportNamedDeclaration } = ASTNode
 const { FunctionDeclaration, VariableDeclaration, VariableDeclarator } = ASTNode
@@ -97,6 +94,17 @@ const AS = {
     // @sig toNodeLineNumbers :: ASTNode -> [Number]
     toNodeLineNumbers: node => AS.lineRange(node.startLine, node.endLine),
 
+    // Collect all module-level function declarations and variable-assigned functions
+    // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number }]
+    collectModuleLevelFunctions: ast =>
+        AST.topLevelStatements(ast).flatMap(stmt => {
+            if (FunctionDeclaration.is(stmt) && stmt.name) return [{ name: stmt.name, line: stmt.line }]
+            if (!VariableDeclaration.is(stmt)) return []
+            return stmt.declarations
+                .filter(({ value, name }) => value && PS.isFunctionNode(value) && name)
+                .map(({ name, line }) => ({ name, line }))
+        }),
+
     // Transform AST to unique exported names
     // @sig toExportedNames :: ESTreeAST -> [String]
     toExportedNames: ast =>
@@ -118,4 +126,4 @@ const AS = {
     },
 }
 
-export { AS }
+export { AS as Aggregators }

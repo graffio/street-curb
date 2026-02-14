@@ -2,7 +2,7 @@
 // ABOUTME: Verifies detection of forbidden patterns in React component bodies
 
 import t from 'tap'
-import { checkReactReduxSeparation } from '../src/lib/rules/react-redux-separation.js'
+import { checkReactReduxSeparation } from '../src/lib/rules/check-react-redux-separation.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser

@@ -3,7 +3,7 @@
 
 import t from 'tap'
 import { Parser } from '../src/lib/parser.js'
-import { checkSigDocumentation } from '../src/lib/rules/sig-documentation.js'
+import { checkSigDocumentation } from '../src/lib/rules/check-sig-documentation.js'
 
 const { parseCode } = Parser
 

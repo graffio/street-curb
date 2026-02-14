@@ -2,8 +2,9 @@
 // ABOUTME: Flags forbidden patterns in components and complex selectors
 
 import { AST, ASTNode } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 8
 const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
@@ -189,169 +190,84 @@ const T = {
     },
 }
 
+const violation = FS.createViolation('react-redux-separation', PRIORITY)
+
+// Create a curried violation factory that fixes the message, taking a node to fill line/column
+// @sig createNodeViolation :: String -> ASTNode -> Violation
+const createNodeViolation = message => node => violation(node.line, node.column || 1, message)
+
 const F = {
-    // Create violation for useState
-    // @sig createUseStateViolation :: ASTNode -> Violation
-    createUseStateViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'useState in component for domain/business state. FIX: Move state to Redux.',
-        rule: 'react-redux-separation',
-    }),
+    // Component hook violations — each takes a node and returns a violation with a fixed message
+    createUseStateViolation: createNodeViolation(
+        'useState in component for domain/business state. FIX: Move state to Redux.',
+    ),
+    createUseMemoViolation: createNodeViolation('useMemo in component body. FIX: Move derived state to a selector.'),
+    createUseCallbackViolation: createNodeViolation(
+        'useCallback in component. FIX: Use dispatch-intent command function instead.',
+    ),
+    createUseEffectViolation: createNodeViolation(
+        'useEffect in component. FIX: Use selector-with-defaults, page titles, or post effect handler.',
+    ),
+    createUseRefViolation: createNodeViolation(
+        'useRef in component. FIX: Use FocusRegistry ref callback or commands/post effect handler.',
+    ),
+    createUseChannelViolation: createNodeViolation('useChannel import. FIX: Use Redux actions/selectors instead.'),
+    createSpreadViolation: createNodeViolation(
+        'Spread in component body. FIX: Pre-compute in selector or use separate style constants.',
+    ),
+    createActionFunctionViolation: createNodeViolation(
+        'Function passed to Action. FIX: Actions should only carry data, not functions.',
+    ),
 
-    // Create violation for useMemo
-    // @sig createUseMemoViolation :: ASTNode -> Violation
-    createUseMemoViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'useMemo in component body. FIX: Move derived state to a selector.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for useCallback
-    // @sig createUseCallbackViolation :: ASTNode -> Violation
-    createUseCallbackViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'useCallback in component. FIX: Use dispatch-intent command function instead.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for useEffect
-    // @sig createUseEffectViolation :: ASTNode -> Violation
-    createUseEffectViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'useEffect in component. FIX: Use selector-with-defaults, page titles, or post effect handler.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for useRef
-    // @sig createUseRefViolation :: ASTNode -> Violation
-    createUseRefViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'useRef in component. FIX: Use FocusRegistry ref callback or commands/post effect handler.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for useChannel import
-    // @sig createUseChannelViolation :: ASTNode -> Violation
-    createUseChannelViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'useChannel import. FIX: Use Redux actions/selectors instead.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for collection method
+    // Create violation for collection method in component body
     // @sig createCollectionMethodViolation :: ASTNode -> Violation
-    createCollectionMethodViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: `.${T.toMethodName(node)}() in component body. FIX: Move to selector.`,
-        rule: 'react-redux-separation',
-    }),
+    createCollectionMethodViolation: node =>
+        violation(node.line, node.column || 1, `.${T.toMethodName(node)}() in component body. FIX: Move to selector.`),
 
-    // Create violation for spread element
-    // @sig createSpreadViolation :: ASTNode -> Violation
-    createSpreadViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'Spread in component body. FIX: Pre-compute in selector or use separate style constants.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for Action call with function argument
-    // @sig createActionFunctionViolation :: ASTNode -> Violation
-    createActionFunctionViolation: node => ({
-        type: 'react-redux-separation',
-        line: node.line,
-        column: node.column || 1,
-        priority: PRIORITY,
-        message: 'Function passed to Action. FIX: Actions should only carry data, not functions.',
-        rule: 'react-redux-separation',
-    }),
-
-    // Create violation for selector too long
+    // Create violation for selector exceeding line limit
     // @sig createSelectorTooLongViolation :: (String, Number, Number) -> Violation
-    createSelectorTooLongViolation: (name, line, lineCount) => {
-        const fix = 'FIX: Move logic to Type.from{InputType}() or business module.'
-        return {
-            type: 'react-redux-separation',
+    createSelectorTooLongViolation: (name, line, lineCount) =>
+        violation(
             line,
-            column: 1,
-            priority: PRIORITY,
-            message: `Selector "${name}" is ${lineCount} lines. ${fix}`,
-            rule: 'react-redux-separation',
-        }
-    },
+            1,
+            `Selector "${name}" is ${lineCount} lines. FIX: Move logic to Type.from{InputType}() or business module.`,
+        ),
 
-    // Create violation for nested if in selector
+    // Create violation for selector with nested if statements
     // @sig createSelectorNestedIfViolation :: (String, Number) -> Violation
-    createSelectorNestedIfViolation: (name, line) => ({
-        type: 'react-redux-separation',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message: `Selector "${name}" has nested conditionals. FIX: Move to Type.from{InputType}() or business module.`,
-        rule: 'react-redux-separation',
-    }),
+    createSelectorNestedIfViolation: (name, line) =>
+        violation(
+            line,
+            1,
+            `Selector "${name}" has nested conditionals. FIX: Move to Type.from{InputType}() or business module.`,
+        ),
 
-    // Create violation for nested ternary in selector
+    // Create violation for selector with nested ternary expressions
     // @sig createSelectorNestedTernaryViolation :: (String, Number) -> Violation
-    createSelectorNestedTernaryViolation: (name, line) => ({
-        type: 'react-redux-separation',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message: `Selector "${name}" has nested ternary. FIX: Move to Type.from{InputType}() or use if/else.`,
-        rule: 'react-redux-separation',
-    }),
+    createSelectorNestedTernaryViolation: (name, line) =>
+        violation(
+            line,
+            1,
+            `Selector "${name}" has nested ternary. FIX: Move to Type.from{InputType}() or use if/else.`,
+        ),
 
-    // Create violation for too many collection methods in selector
+    // Create violation for selector chaining too many collection methods
     // @sig createSelectorTooManyCollectionsViolation :: (String, Number, Number) -> Violation
-    createSelectorTooManyCollectionsViolation: (name, line, count) => {
-        const fix = 'FIX: Move to Type.from{InputType}() or business module.'
-        return {
-            type: 'react-redux-separation',
+    createSelectorTooManyCollectionsViolation: (name, line, count) =>
+        violation(
             line,
-            column: 1,
-            priority: PRIORITY,
-            message: `Selector "${name}" chains ${count} collection methods. ${fix}`,
-            rule: 'react-redux-separation',
-        }
-    },
+            1,
+            `Selector "${name}" chains ${count} collection methods. FIX: Move to Type.from{InputType}() or business module.`,
+        ),
 
-    // Create violation for export referencing cohesion group function
+    // Create violation for export that references a cohesion group function
     // @sig createExportFromCohesionViolation :: (String, String, Number) -> Violation
-    createExportFromCohesionViolation: (exportName, groupRef, line) => {
-        const fix = 'FIX: Define exported functions at module level, not in cohesion groups.'
-        return {
-            type: 'react-redux-separation',
+    createExportFromCohesionViolation: (exportName, groupRef, line) =>
+        violation(
             line,
-            column: 1,
-            priority: PRIORITY,
-            message: `Export "${exportName}" references ${groupRef}. ${fix}`,
-            rule: 'react-redux-separation',
-        }
-    },
+            1,
+            `Export "${exportName}" references ${groupRef}. FIX: Define exported functions at module level, not in cohesion groups.`,
+        ),
 }
 
 const V = {
@@ -416,42 +332,13 @@ const V = {
 }
 
 const A = {
-    // Extract body from PascalCase function declaration
-    // @sig toFunctionDeclBody :: ASTNode -> ASTNode?
-    toFunctionDeclBody: statement => {
-        const { name, body } = statement
-        return PS.isPascalCase(name) && body ? body : null
-    },
-
-    // Extract body from PascalCase variable function
-    // @sig toVarFunctionBody :: Object -> ASTNode?
-    toVarFunctionBody: declaration => {
-        const { name, value } = declaration
-        if (!PS.isPascalCase(name) || !value || !PS.isFunctionNode(value)) return null
-        return value.body || null
-    },
-
-    // Find all React component function bodies (PascalCase functions that return JSX)
-    // @sig collectComponentBodies :: AST -> [ASTNode]
-    collectComponentBodies: ast => {
-        const statements = AST.topLevelStatements(ast)
-        const { FunctionDeclaration, VariableDeclaration } = ASTNode
-
-        const functionBodies = statements.filter(FunctionDeclaration.is).map(A.toFunctionDeclBody).filter(Boolean)
-
-        const varBodies = statements
-            .filter(VariableDeclaration.is)
-            .flatMap(decl => decl.declarations)
-            .map(A.toVarFunctionBody)
-            .filter(Boolean)
-
-        return [...functionBodies, ...varBodies]
-    },
-
     // Find all nodes within component bodies matching predicate
     // @sig findInComponentBodies :: (AST, (ASTNode -> Boolean)) -> [ASTNode]
     findInComponentBodies: (ast, predicate) =>
-        A.collectComponentBodies(ast).flatMap(body => AST.from(body.esTree).filter(predicate)),
+        AS.findComponents(ast)
+            .map(c => c.node.body)
+            .filter(Boolean)
+            .flatMap(body => AST.from(body.esTree).filter(predicate)),
 
     // Collect useChannel import violations (file-level, not component-level)
     // @sig collectUseChannelViolations :: AST -> [Violation]
@@ -568,5 +455,8 @@ const A = {
     },
 }
 
-const checkReactReduxSeparation = FS.withExemptions('react-redux-separation', V.check)
+// Run react-redux-separation rule with COMPLEXITY exemption support
+// @sig checkReactReduxSeparation :: (AST?, String, String) -> [Violation]
+const checkReactReduxSeparation = (ast, sourceCode, filePath) =>
+    FS.withExemptions('react-redux-separation', V.check, ast, sourceCode, filePath)
 export { checkReactReduxSeparation }

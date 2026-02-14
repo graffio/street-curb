@@ -2,7 +2,7 @@
 // ABOUTME: Covers blank line requirements for multiline vs single-line functions
 
 import t from 'tap'
-import { checkFunctionSpacing } from '../src/lib/rules/function-spacing.js'
+import { checkFunctionSpacing } from '../src/lib/rules/check-function-spacing.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser

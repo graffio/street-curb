@@ -1,5 +1,5 @@
 import t from 'tap'
-import { checkSingleLevelIndentation } from '../src/lib/rules/single-level-indentation.js'
+import { checkSingleLevelIndentation } from '../src/lib/rules/check-single-level-indentation.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser
