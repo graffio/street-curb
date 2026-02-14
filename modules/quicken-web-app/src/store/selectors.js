@@ -92,8 +92,6 @@ const viewUi = (state, viewId) => state.viewUiState.get(viewId) || getDefaultVie
 // prettier-ignore
 const UI = {
     asOfDate                 : (state, viewId) => filter(state, viewId).asOfDate,
-    pageTitle                : state => state.pageTitle,
-    pageSubtitle             : state => state.pageSubtitle,
     currentRowIndex          : (state, viewId) => viewUi(state, viewId).currentRowIndex,
     currentSearchIndex       : (state, viewId) => viewUi(state, viewId).currentSearchIndex,
     customEndDate            : (state, viewId) => filter(state, viewId).customEndDate,

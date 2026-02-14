@@ -140,13 +140,14 @@ The `FS.withExemptions` wrapper in the validator reads this and skips the rule f
 
 ### What CAN'T be a selector
 
-Effects that **dispatch actions** (side effects) cannot become selectors:
-- `ensureTableLayoutEffect` — creates Redux state for command functions
+Effects with genuine lifecycle concerns (mount/unmount registration, state initialization) cannot become selectors:
 - `searchActionsEffect` — registers with ActionRegistry (mount/unmount lifecycle)
-- `SetPageTitle` — dispatches page title action
-- `initDateRange` — dispatches initial date range filter
+- `initDateRange` — dispatches initial date range filter (one-time initialization)
 
-These need separate infrastructure (event-driven dispatch, tab-system titles, etc.).
+Previously this list included `SetPageTitle` and `ensureTableLayoutEffect`. Both turned out to be derived
+state, not side effects: `ensureTableLayoutEffect` → `tableLayoutOrDefault` selector, `SetPageTitle` →
+`activeViewPageTitle` selector (see `specifications/derived-page-title.md`). Lesson: if the "effect" just
+computes a value from existing state and stores it, it's a selector waiting to be discovered.
 
 ## Prevention
 
