@@ -13,26 +13,22 @@ import { checkFile } from './lib/check-file.js'
  */
 const main = async () => {
     const argv = yargs(hideBin(process.argv))
-        .usage('Usage: $0 <file> [options]')
-        .command('$0 <file>', 'Check JavaScript file for coding standards violations', yargs =>
-            yargs.positional('file', { describe: 'Path to JavaScript file to check', type: 'string' }),
+        .usage('Usage: $0 <file...> [options]')
+        .command('$0 <file...>', 'Check JavaScript files for coding standards violations', yargs =>
+            yargs.positional('file', { describe: 'Paths to JavaScript files to check', type: 'string', array: true }),
         )
         .help().argv
 
-    const { file } = argv
+    const { file: files } = argv
 
-    try {
-        const result = await checkFile(file)
+    const results = await Promise.all(
+        files.map(filePath =>
+            checkFile(filePath).catch(error => ({ error: true, message: error.message, filePath, isCompliant: false })),
+        ),
+    )
 
-        // Output JSON result for LLM consumption
-        console.log(JSON.stringify(result, null, 2))
-
-        // Exit with error code if violations found
-        process.exit(result.isCompliant ? 0 : 1)
-    } catch (error) {
-        console.error(JSON.stringify({ error: true, message: error.message, filePath: file }, null, 2))
-        process.exit(1)
-    }
+    results.forEach(r => console.log(JSON.stringify(r, null, 2)))
+    process.exit(results.some(r => !r.isCompliant) ? 1 : 0)
 }
 
 // COMPLEXITY: cohesion-structure — CLI error handler doesn't fit cohesion model

@@ -729,20 +729,84 @@ const SecurityFilterChip = ({ viewId, isActive = false }) => {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Self-selecting column wrappers — each calls useSelector for its chipData and renders FilterColumn
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Self-selecting date filter column — selects chipData and renders DateFilterChip
+// @sig DateFilterColumn :: { viewId: String } -> ReactElement
+const DateFilterColumn = ({ viewId }) => {
+    const { isActive, details } = useSelector(state => S.UI.dateChipData(state, viewId))
+    return <FilterColumn chip={<DateFilterChip viewId={viewId} isActive={isActive} />} details={details} />
+}
+
+// Self-selecting category filter column — selects chipData and renders CategoryFilterChip
+// @sig CategoryFilterColumn :: { viewId: String } -> ReactElement
+const CategoryFilterColumn = ({ viewId }) => {
+    const { isActive, details } = useSelector(state => S.UI.categoryChipData(state, viewId))
+    return <FilterColumn chip={<CategoryFilterChip viewId={viewId} isActive={isActive} />} details={details} />
+}
+
+// Self-selecting account filter column — selects chipData and renders AccountFilterChip
+// @sig AccountFilterColumn :: { viewId: String } -> ReactElement
+const AccountFilterColumn = ({ viewId }) => {
+    const { isActive, details } = useSelector(state => S.UI.accountChipData(state, viewId))
+    return <FilterColumn chip={<AccountFilterChip viewId={viewId} isActive={isActive} />} details={details} />
+}
+
+// Self-selecting security filter column — selects chipData and renders SecurityFilterChip
+// @sig SecurityFilterColumn :: { viewId: String } -> ReactElement
+const SecurityFilterColumn = ({ viewId }) => {
+    const { isActive, details } = useSelector(state => S.UI.securityChipData(state, viewId))
+    return <FilterColumn chip={<SecurityFilterChip viewId={viewId} isActive={isActive} />} details={details} />
+}
+
+// Self-selecting action filter column — selects chipData and renders ActionFilterChip
+// @sig ActionFilterColumn :: { viewId: String } -> ReactElement
+const ActionFilterColumn = ({ viewId }) => {
+    const { isActive, details } = useSelector(state => S.UI.actionChipData(state, viewId))
+    return <FilterColumn chip={<ActionFilterChip viewId={viewId} isActive={isActive} />} details={details} />
+}
+
+// Self-selecting search filter column — selects active state and renders SearchFilterChip
+// @sig SearchFilterColumn :: { viewId: String } -> ReactElement
+const SearchFilterColumn = ({ viewId }) => {
+    const { isActive } = useSelector(state => S.UI.searchChipData(state, viewId))
+    return <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isActive} />} details={[]} />
+}
+
+// As-of date column wrapper — no chipData, renders AsOfDateChip in FilterColumn
+// @sig AsOfDateColumn :: { viewId: String } -> ReactElement
+const AsOfDateColumn = ({ viewId }) => <FilterColumn chip={<AsOfDateChip viewId={viewId} />} details={[]} />
+
+// Group-by filter column wrapper — no chipData, renders GroupByFilterChip in FilterColumn
+// @sig GroupByFilterColumn :: { viewId: String, items?: [{ id, label }] } -> ReactElement
+const GroupByFilterColumn = ({ viewId, items }) => (
+    <FilterColumn chip={<GroupByFilterChip viewId={viewId} items={items} />} details={[]} />
+)
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Export
 // ---------------------------------------------------------------------------------------------------------------------
 
 const FilterChips = {
     AccountFilterChip,
+    AccountFilterColumn,
     ActionFilterChip,
+    ActionFilterColumn,
     AsOfDateChip,
+    AsOfDateColumn,
     CategoryFilterChip,
+    CategoryFilterColumn,
     DateFilterChip,
+    DateFilterColumn,
     FilterColumn,
     GroupByFilterChip,
+    GroupByFilterColumn,
     investmentGroupByItems,
     SearchFilterChip,
+    SearchFilterColumn,
     SecurityFilterChip,
+    SecurityFilterColumn,
 }
 
 export { FilterChips }

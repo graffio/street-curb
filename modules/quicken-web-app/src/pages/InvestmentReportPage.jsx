@@ -5,12 +5,20 @@ import { DataTable } from '../components/DataTable.jsx'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
-import { FilterChipRow, investmentGroupByItems } from '../components/index.js'
+import {
+    AccountFilterColumn,
+    AsOfDateColumn,
+    FilterChipRow,
+    GroupByFilterColumn,
+    investmentGroupByItems,
+    SearchFilterColumn,
+} from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 
 const pageContainerStyle = { height: '100%' }
+const investmentReportFilterConfig = { accounts: true, asOfDate: true, groupBy: true, search: true }
 
 const T = {
     // Resolves a TanStack updater (function or value) against current state
@@ -57,14 +65,16 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
         <Flex direction="column" style={pageContainerStyle}>
             <FilterChipRow
                 viewId={viewId}
-                showGroupBy
-                showAsOfDate
-                showCategories={false}
-                groupByItems={investmentGroupByItems}
                 filteredCount={totalHoldingsCount}
                 totalCount={totalHoldingsCount}
                 itemLabel="holdings"
-            />
+                filterConfig={investmentReportFilterConfig}
+            >
+                <AsOfDateColumn viewId={viewId} />
+                <AccountFilterColumn viewId={viewId} />
+                <GroupByFilterColumn viewId={viewId} items={investmentGroupByItems} />
+                <SearchFilterColumn viewId={viewId} />
+            </FilterChipRow>
             <DataTable
                 columns={InvestmentReportColumns}
                 data={holdingsTree}

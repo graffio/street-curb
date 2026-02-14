@@ -1,5 +1,5 @@
-// ABOUTME: Horizontal row of filter chips organized in columns
-// ABOUTME: Each column shows chip + details below it (up to 3 lines)
+// ABOUTME: Composition layout shell for filter chips — renders count summary and children
+// ABOUTME: Children are self-selecting column components that call their own useSelector
 // COMPLEXITY: react-redux-separation — ActionRegistry useEffect lifecycle awaiting non-React mechanism
 
 import { Flex, Text } from '@radix-ui/themes'
@@ -9,11 +9,6 @@ import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
-import { FilterChips } from './FilterChips.jsx'
-import { SearchChip } from './SearchChip.jsx'
-
-const { AccountFilterChip, ActionFilterChip, AsOfDateChip, CategoryFilterChip, DateFilterChip } = FilterChips
-const { FilterColumn, GroupByFilterChip, SearchFilterChip, SecurityFilterChip } = FilterChips
 
 const containerBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 const containerActiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--ruby-3)' }
@@ -51,56 +46,22 @@ const E = {
 }
 
 /*
- * Row of filter chips organized in columns with details below each chip
+ * Composition layout shell for filter chips — renders count summary, container highlight, and children
+ * filterConfig is a temporary prop for ActionRegistry — will be removed when registration moves out of React
  *
  * @sig FilterChipRow :: FilterChipRowProps -> ReactElement
- *     FilterChipRowProps = { viewId, showGroupBy?, showAsOfDate?, showCategories?, showSecurities?, showActions?,
- *         accountId?, groupByItems?, filteredCount?, totalCount?, itemLabel? }
+ *     FilterChipRowProps = { viewId, accountId?, filteredCount?, totalCount?, itemLabel?, filterConfig, children }
  */
 const FilterChipRow = props => {
-    const { viewId, showGroupBy = false, showAsOfDate = false, showCategories = true } = props
-    const { showSecurities = false, showActions = false } = props
-    const { accountId = null, groupByItems = null } = props
-    const { filteredCount: filteredCountProp, totalCount: totalCountProp, itemLabel = 'transactions' } = props
-    const { searchQuery, searchMatches, highlightedId, searchInputRef, onSearchNext, onSearchPrev } = props
+    const { viewId, accountId, filteredCount: filteredCountProp, totalCount: totalCountProp } = props
+    const { itemLabel = 'transactions', filterConfig, children } = props
 
-    // Per-chip data selectors
-    const { isActive: isDateActive, details: dateDetails } = useSelector(state => S.UI.dateChipData(state, viewId))
-    const category = useSelector(state => S.UI.categoryChipData(state, viewId))
-    const account = useSelector(state => S.UI.accountChipData(state, viewId))
-    const security = useSelector(state => S.UI.securityChipData(state, viewId))
-    const action = useSelector(state => S.UI.actionChipData(state, viewId))
-    const { isActive: isSearchActive } = useSelector(state => S.UI.searchChipData(state, viewId))
-    const counts = useSelector(state => S.UI.filterCounts(state, viewId, accountId))
-    const { filtered, total, isFiltering: countsIsFiltering } = counts
+    const { filtered, total, isFiltering } = useSelector(state => S.UI.filterCounts(state, viewId, accountId))
 
-    const filterConfig = {
-        accounts: showGroupBy,
-        categories: showCategories,
-        date: !showAsOfDate,
-        asOfDate: showAsOfDate,
-        actions: showActions,
-        securities: showSecurities,
-        groupBy: showGroupBy,
-        search: true,
-    }
-    useEffect(E.filterActionsEffect(viewId, filterConfig), [
-        viewId,
-        showGroupBy,
-        showAsOfDate,
-        showCategories,
-        showSecurities,
-        showActions,
-    ])
+    useEffect(E.filterActionsEffect(viewId, filterConfig), [viewId, filterConfig])
 
-    // Use props if provided, otherwise use selector data
     const filteredCount = filteredCountProp ?? filtered
     const totalCount = totalCountProp ?? total
-    const isFiltering =
-        filteredCountProp !== undefined
-            ? filteredCount < totalCount || isDateActive || isSearchActive
-            : countsIsFiltering
-
     const containerStyle = isFiltering ? containerActiveStyle : containerInactiveStyle
 
     return (
@@ -115,61 +76,8 @@ const FilterChipRow = props => {
                     </Text>
                 )}
             </Flex>
-
             <Flex align="start" gap="3" wrap="wrap">
-                {showAsOfDate ? (
-                    <FilterColumn chip={<AsOfDateChip viewId={viewId} />} details={[]} />
-                ) : (
-                    <FilterColumn
-                        chip={<DateFilterChip viewId={viewId} isActive={isDateActive} />}
-                        details={dateDetails}
-                    />
-                )}
-
-                {showCategories && (
-                    <FilterColumn
-                        chip={<CategoryFilterChip viewId={viewId} isActive={category.isActive} />}
-                        details={category.details}
-                    />
-                )}
-
-                {showGroupBy && (
-                    <>
-                        <FilterColumn
-                            chip={<AccountFilterChip viewId={viewId} isActive={account.isActive} />}
-                            details={account.details}
-                        />
-                        <FilterColumn chip={<GroupByFilterChip viewId={viewId} items={groupByItems} />} details={[]} />
-                    </>
-                )}
-
-                {showSecurities && (
-                    <FilterColumn
-                        chip={<SecurityFilterChip viewId={viewId} isActive={security.isActive} />}
-                        details={security.details}
-                    />
-                )}
-
-                {showActions && (
-                    <FilterColumn
-                        chip={<ActionFilterChip viewId={viewId} isActive={action.isActive} />}
-                        details={action.details}
-                    />
-                )}
-
-                <FilterColumn chip={<SearchFilterChip viewId={viewId} isActive={isSearchActive} />} details={[]} />
-
-                {searchMatches && (
-                    <SearchChip
-                        viewId={viewId}
-                        searchQuery={searchQuery}
-                        searchMatches={searchMatches}
-                        highlightedId={highlightedId}
-                        inputRef={searchInputRef}
-                        onNext={onSearchNext}
-                        onPrev={onSearchPrev}
-                    />
-                )}
+                {children}
             </Flex>
         </Flex>
     )

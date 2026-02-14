@@ -7,7 +7,15 @@ import { DataTable } from '../components/DataTable.jsx'
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CategoryReportColumns } from '../columns/index.js'
-import { FilterChipRow, TransactionSubTable } from '../components/index.js'
+import {
+    AccountFilterColumn,
+    CategoryFilterColumn,
+    DateFilterColumn,
+    FilterChipRow,
+    GroupByFilterColumn,
+    SearchFilterColumn,
+    TransactionSubTable,
+} from '../components/index.js'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { currentStore } from '../store/index.js'
@@ -15,6 +23,7 @@ import { Action } from '../types/action.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 
 const pageContainerStyle = { height: '100%' }
+const categoryFilterConfig = { accounts: true, categories: true, date: true, groupBy: true, search: true }
 
 const P = {
     // Rows can expand if they have children (tree) or are leaves with transactions (sub-component)
@@ -53,7 +62,13 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
-            <FilterChipRow viewId={viewId} showGroupBy />
+            <FilterChipRow viewId={viewId} filterConfig={categoryFilterConfig}>
+                <DateFilterColumn viewId={viewId} />
+                <CategoryFilterColumn viewId={viewId} />
+                <AccountFilterColumn viewId={viewId} />
+                <GroupByFilterColumn viewId={viewId} />
+                <SearchFilterColumn viewId={viewId} />
+            </FilterChipRow>
             <DataTable
                 columns={CategoryReportColumns}
                 data={transactionTree}

@@ -13,7 +13,7 @@ export { TabGroup } from './TabGroup.jsx'
 export { TabGroupContainer } from './TabGroupContainer.jsx'
 export { TransactionSubTable } from './TransactionSubTable.jsx'
 
-// Re-export individual filter chips for backward compatibility
-export const { AccountFilterChip, ActionFilterChip, CategoryFilterChip, DateFilterChip } = FilterChips
-export const { FilterColumn, GroupByFilterChip, investmentGroupByItems, SearchFilterChip, SecurityFilterChip } =
-    FilterChips
+// Re-export self-selecting column wrappers and shared constants
+export const { AccountFilterColumn, ActionFilterColumn, AsOfDateColumn, CategoryFilterColumn } = FilterChips
+export const { DateFilterColumn, GroupByFilterColumn, SearchFilterColumn, SecurityFilterColumn } = FilterChips
+export const { investmentGroupByItems } = FilterChips

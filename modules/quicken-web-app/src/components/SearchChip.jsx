@@ -5,7 +5,9 @@
 import { debounce } from '@graffio/functional'
 import { Button, Flex, Text, TextField } from '@radix-ui/themes'
 import React, { useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
+import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
 const DEBOUNCE_MS = 300
@@ -31,12 +33,13 @@ const E = {
 
 /*
  * Search input with prev/next navigation and match counter
+ * Self-selects searchQuery and searchMatches via business identifiers (viewId, accountId)
  *
  * @sig SearchChip :: SearchChipProps -> ReactElement
- *     SearchChipProps = { viewId: String, searchQuery: String, searchMatches: [String],
- *         highlightedId: String | null, inputRef: Ref, onNext: () -> void, onPrev: () -> void }
+ *     SearchChipProps = { viewId: String, accountId: String, highlightedId: String | null,
+ *         inputRef: Ref, onNext: () -> void, onPrev: () -> void }
  */
-const SearchChip = ({ viewId, searchQuery, searchMatches, highlightedId, inputRef, onNext, onPrev }) => {
+const SearchChip = ({ viewId, accountId, highlightedId, inputRef, onNext, onPrev }) => {
     // Handlers (closures capture variable bindings, not values — safe before hooks)
     const handleChange = e => {
         setLocalQuery(e.target.value)
@@ -71,6 +74,9 @@ const SearchChip = ({ viewId, searchQuery, searchMatches, highlightedId, inputRe
         else onNext()
         inputRef.current?.blur()
     }
+
+    const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
+    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
 
     // EXEMPT: focus — local state for instant keystroke feedback while debouncing Redux dispatch
     const [localQuery, setLocalQuery] = useState('')
