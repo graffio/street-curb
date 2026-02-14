@@ -43,6 +43,7 @@ When you see these signals, read the corresponding pattern file before proceedin
 | if/else chain on type field | `.claude/pattern-catalog/tagged-sum.md` |
 | Finite set of state changes | `.claude/pattern-catalog/action.md` |
 | Complex derived state from Redux | `.claude/pattern-catalog/selector-composition.md` |
+| Side effect logic | `.claude/pattern-catalog/action.md` |
 
 ## @graffio/functional
 
@@ -95,6 +96,17 @@ modules/
 ├── quicken-web-app/   # Financial tools
 ├── functional/        # @graffio/functional
 └── cli-*/             # Internal tooling
+```
+
+### quicken-web-app/src/ internal structure
+
+```
+commands/   # post.js (effect coordination) + infrastructure (storage, focus-registry)
+store/      # Redux state, reducers, selectors, pure transforms
+components/ # Presentation only — no side effects, no derived state
+pages/      # Page-level components (presentation, call post() for actions)
+types/      # Tagged types, type definitions
+columns/    # Table column definitions
 ```
 
 Use `yarn`, never `npm`. Run `yarn types:generate` after changing type definitions.
