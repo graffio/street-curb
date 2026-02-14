@@ -1,16 +1,15 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
-// COMPLEXITY: react-redux-separation — 4 useEffect for mount-time init and keyboard routing lifecycle
+// COMPLEXITY: react-redux-separation — 3 useEffect for mount-time init and keyboard routing lifecycle
 
 import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
 import { KeymapDrawer } from './KeymapDrawer.jsx'
 import { MainLayout } from './MainLayout.jsx'
 import { KeymapModule } from '@graffio/keymap'
+import { KeymapConfig } from '../keymap-config.js'
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
-import { FileHandling } from '../services/file-handling.js'
-import { KeymapRouting } from '../services/keymap-routing.js'
 import * as S from '../store/selectors.js'
 import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
@@ -20,27 +19,17 @@ import { MainSidebar } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
-const { ActionRegistry } = KeymapModule
-
-// Module-level state — FileSystemFileHandle is non-serializable (can't go in Redux)
-let storedHandle = null
+const { ActionRegistry, handleKeydown, toAvailableIntents } = KeymapModule
+const { DEFAULT_BINDINGS, GROUP_NAMES } = KeymapConfig
+const keydownHandler = handleKeydown(DEFAULT_BINDINGS)
 
 const E = {
-    // Stores a FileSystemFileHandle in module-level state
-    // @sig setStoredHandle :: FileSystemFileHandle? -> void
-    setStoredHandle: handle => (storedHandle = handle),
-
-    // Opens file picker and loads selected file
-    // @sig handleOpenFile :: () -> void
-    handleOpenFile: () => FileHandling.openFile(E.setStoredHandle),
-
-    // Reopens previously stored file handle
-    // @sig handleReopen :: () -> void
-    handleReopen: () => FileHandling.reopenFile(storedHandle),
-
     // Dismisses banner and opens file picker for new file
     // @sig handleOpenNew :: () -> void
-    handleOpenNew: () => FileHandling.openNewFile(E.setStoredHandle),
+    handleOpenNew: () => {
+        post(Action.SetShowReopenBanner(false))
+        post(Action.OpenFile())
+    },
 
     // Registers global toggle-shortcuts action (reads showDrawer from store at call time)
     // @sig toggleShortcutsEffect :: () -> () -> void
@@ -53,10 +42,10 @@ const E = {
             },
         ]),
 
-    // Keydown handler that reads tabLayout from store at call time
+    // Keydown handler parameterized by app bindings, reads tabLayout at call time
     // @sig keydownEffect :: () -> () -> void
     keydownEffect: () => {
-        const handler = e => KeymapRouting.handleKeydown(S.tabLayout(currentStore().getState()))(e)
+        const handler = e => keydownHandler(S.tabLayout(currentStore().getState()), e)
         window.addEventListener('keydown', handler)
         return () => window.removeEventListener('keydown', handler)
     },
@@ -87,8 +76,7 @@ const LoadingOverlay = ({ status }) => (
 // Main application layout with sidebar, file handling, and keyboard routing
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
-    const { handleOpenFile, handleReopen, handleOpenNew, setStoredHandle, keydownEffect, toggleShortcutsEffect } = E
-
+    const { handleOpenNew, keydownEffect, toggleShortcutsEffect } = E
     const showReopenBanner = useSelector(S.showReopenBanner)
     const showDrawer = useSelector(S.showDrawer)
     const loadingStatus = useSelector(S.loadingStatus)
@@ -96,10 +84,9 @@ const RootLayout = () => {
     const pageSubtitle = useSelector(S.UI.pageSubtitle)
     const activeViewId = useSelector(S.activeViewId)
 
-    const availableIntents = showDrawer ? KeymapRouting.toAvailableIntents(activeViewId) : []
+    const availableIntents = showDrawer ? toAvailableIntents(DEFAULT_BINDINGS, GROUP_NAMES, activeViewId) : []
 
-    useEffect(() => FileHandling.loadStoredHandle(setStoredHandle), [])
-    useEffect(() => FileHandling.loadTestFileIfPresent(), [])
+    useEffect(() => post(Action.InitializeSystem()), [])
     useEffect(keydownEffect, [])
     useEffect(toggleShortcutsEffect, [])
 
@@ -113,7 +100,7 @@ const RootLayout = () => {
                 <ReportsList />
                 <Separator size="4" my="3" />
                 <Box mx="3">
-                    <Button variant="soft" style={{ width: '100%' }} onClick={handleOpenFile}>
+                    <Button variant="soft" style={{ width: '100%' }} onClick={() => post(Action.OpenFile())}>
                         Open File
                     </Button>
                 </Box>
@@ -121,7 +108,7 @@ const RootLayout = () => {
             <FileOpenDialog
                 open={showReopenBanner}
                 onOpenChange={show => post(Action.SetShowReopenBanner(show))}
-                onReopen={handleReopen}
+                onReopen={() => post(Action.ReopenFile())}
                 onOpenNew={handleOpenNew}
             />
             <Flex direction="column" style={{ flex: 1 }}>
