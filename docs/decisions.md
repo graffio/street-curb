@@ -732,6 +732,35 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 - **Reserved Capacity**: Optimize for reserved GCP capacity when monthly costs exceed $5000?
 - **Multi-Cloud**: Support AWS, Azure when enterprise customers require specific cloud providers?
 
+## Quicken Web App Decisions
+
+### 2026-02-14: No cohesion groups in React components
+Context: Components are wiring (selectors → JSX → post), not business logic.
+Decision: P/T/F/V/A/E namespace objects are forbidden in .jsx files.
+Why: Cohesion groups exist for modules with logic; components have none.
+
+### 2026-02-14: Handlers never read current state
+Context: E group functions were reading `currentStore().getState()` to compute next state.
+Decision: Handlers inline `post(Action.X(...))` only. State reads belong in reducers.
+Why: Reducers already have current state; reading it in handlers leaks reducer logic into components.
+
+### 2026-02-14: Aggressive subcomponent extraction
+Context: Components grew large with deep nesting and conditional rendering.
+Decision: `{condition && <...>}`, ternaries, `.map()` with multi-line JSX, and multiple selectors feeding different regions all signal a missing subcomponent.
+Why: Flat, small components with one data dependency each are easier to follow.
+
+### 2026-02-14: Rename handlers/ → operations/
+Context: "Handler" means two things — React event handler and post operation.
+Decision: `commands/handlers/` → `commands/operations/`. Functions keep `handle` prefix (validator requirement).
+Why: Eliminates terminology collision while keeping validator happy.
+
+### 2026-02-14: No "service layer" concept
+Context: .claude/ docs referenced a nonexistent "service layer" abstraction.
+Decision: The only write API is `post(Action.X(...))`. No intermediate abstractions.
+Why: "Service" had no concrete meaning; `post` is the actual mechanism.
+
+---
+
 ## Decision Framework
 
 ### Criteria for Revisiting
