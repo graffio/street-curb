@@ -59,8 +59,20 @@ This avoids the cascade by separating "rule addition" from "rule application."
 
 - `FS.withExemptions(...)` returns a CallExpression, not ArrowFunctionExpression — the validator can't see through
   function calls. Wrap in an explicit arrow if you need the validator to detect a function export:
-  `const foo = (a, b) => FS.withExemptions('rule', V.check)(a, b)`
+  `const checkFoo = (ast, sourceCode, filePath) => FS.withExemptions('foo', V.check, ast, sourceCode, filePath)`
 - Cohesion group ordering (P → T → F → V → A → E) is enforced — reordering groups is safe when later groups
   reference earlier ones via closures (resolved at call time, not declaration time)
 - JSX files need PascalCase function exports (React components) — added `P.isJsxFile` predicate to accept both
   PascalCase and camelCase for function exports in `.jsx` files
+
+## Naming Rule Conflicts (2026-02-13)
+
+`export-structure` requires `camelCase(fileName)` and `function-naming` requires a verb prefix. These conflict
+when file names lack verbs (e.g., `aboutme-comment.js` → `aboutmeComment` has no verb prefix).
+
+**Resolution:** Choose file names that produce valid verb-prefixed camelCase. Renaming rule files to `check-*.js`
+gives `checkX` exports that satisfy both rules.
+
+**Abbreviated shared module exports:** When internal code uses short namespace names (AS, PS, TS, FS) but
+export-structure requires file-matching names, use `export { AS as Aggregators }` in the module and
+`import { Aggregators as AS }` at call sites. Export rule satisfied, short names preserved.
