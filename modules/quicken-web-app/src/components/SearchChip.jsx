@@ -2,8 +2,8 @@
 // ABOUTME: Always-visible text input with debounced dispatch, prev/next buttons, and match counter
 // COMPLEXITY: react-redux-separation — useState/useRef/useEffect for debounced input pattern
 
-import { Button, Flex, Text, TextField } from '@radix-ui/themes'
 import { debounce } from '@graffio/functional'
+import { Button, Flex, Text, TextField } from '@radix-ui/themes'
 import React, { useEffect, useRef, useState } from 'react'
 import { post } from '../commands/post.js'
 import { Action } from '../types/action.js'
@@ -21,13 +21,6 @@ const E = {
     dispatchSearchQuery: debounce(DEBOUNCE_MS, (viewId, query) =>
         post(Action.SetTransactionFilter(viewId, { searchQuery: query })),
     ),
-
-    // Clears search query
-    // @sig clearSearch :: (String, (String -> void)) -> void
-    clearSearch: (viewId, setLocalQuery) => {
-        setLocalQuery('')
-        post(Action.SetTransactionFilter(viewId, { searchQuery: '' }))
-    },
 
     // Syncs local state when Redux searchQuery is cleared externally (e.g. Escape in DataTable)
     // @sig syncOnExternalClear :: (String, String, (String -> void)) -> void
@@ -50,7 +43,10 @@ const SearchChip = ({ viewId, searchQuery, searchMatches, highlightedId, inputRe
         E.dispatchSearchQuery(viewId, e.target.value)
     }
 
-    const handleClear = () => E.clearSearch(viewId, setLocalQuery)
+    const handleClear = () => {
+        setLocalQuery('')
+        post(Action.SetTransactionFilter(viewId, { searchQuery: '' }))
+    }
 
     // Enter: flush query immediately, navigate to next match, blur
     // Shift+Enter: navigate to previous match, blur
