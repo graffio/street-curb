@@ -1,8 +1,7 @@
 import t from 'tap'
-import { MultilineDestructuring } from '../src/lib/rules/multiline-destructuring.js'
+import { checkMultilineDestructuring } from '../src/lib/rules/multiline-destructuring.js'
 import { Parser } from '../src/lib/parser.js'
 
-const { checkMultilineDestructuring } = MultilineDestructuring
 const { parseCode } = Parser
 
 t.test('Given destructuring that could fit on one line', t => {

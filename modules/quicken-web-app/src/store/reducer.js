@@ -35,6 +35,7 @@ const { createDefaultViewUiState } = ViewUiStateReducer
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
 // COMPLEXITY: Exporting both reducer and state factory is standard Redux pattern
+// COMPLEXITY: function-naming — rootReducer and toggleSectionCollapsed are standard Redux naming
 
 // Toggles a section's collapsed state (add if not present, remove if present)
 // @sig toggleSectionCollapsed :: (State, Action.ToggleSectionCollapsed) -> State
@@ -154,6 +155,11 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
 
         // Page title actions
         SetPageTitle    : () => ({ ...state, pageTitle: action.title, pageSubtitle: action.subtitle ?? '' }),
+
+        // Effect-only actions (handled in post.js, no state change)
+        InitializeSystem : () => state,
+        OpenFile         : () => state,
+        ReopenFile       : () => state,
     })
 }
 

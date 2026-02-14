@@ -1,8 +1,7 @@
 import t from 'tap'
-import { SingleLevelIndentation } from '../src/lib/rules/single-level-indentation.js'
+import { checkSingleLevelIndentation } from '../src/lib/rules/single-level-indentation.js'
 import { Parser } from '../src/lib/parser.js'
 
-const { checkSingleLevelIndentation } = SingleLevelIndentation
 const { parseCode } = Parser
 
 t.test('Given a function with nested indentation violations', t => {

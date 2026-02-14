@@ -2,10 +2,9 @@
 // ABOUTME: Suggests extracting repeated property chains into destructured variables
 
 import t from 'tap'
-import { ChainExtraction } from '../src/lib/rules/chain-extraction.js'
+import { checkChainExtraction } from '../src/lib/rules/chain-extraction.js'
 import { Parser } from '../src/lib/parser.js'
 
-const { checkChainExtraction } = ChainExtraction
 const { parseCode } = Parser
 
 t.test('Given property chains in a function', t => {

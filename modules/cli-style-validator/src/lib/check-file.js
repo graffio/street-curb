@@ -4,21 +4,22 @@
 import { readFile } from 'fs/promises'
 import { Parser } from './parser.js'
 import { PS } from './shared/predicates.js'
-import { AboutmeComment } from './rules/aboutme-comment.js'
-import { ChainExtraction } from './rules/chain-extraction.js'
-import { CohesionStructure } from './rules/cohesion-structure.js'
+import { checkAboutmeComment } from './rules/aboutme-comment.js'
+import { checkChainExtraction } from './rules/chain-extraction.js'
+import { checkCohesionStructure } from './rules/cohesion-structure.js'
 import { exportStructure } from './rules/export-structure.js'
-import { FileNaming } from './rules/file-naming.js'
-import { FunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
-import { FunctionSpacing } from './rules/function-spacing.js'
-import { FunctionalPatterns } from './rules/functional-patterns.js'
+import { checkFileNaming } from './rules/file-naming.js'
+import { FunctionNaming } from './rules/function-naming.js'
+import { checkFunctionDeclarationOrdering } from './rules/function-declaration-ordering.js'
+import { checkFunctionSpacing } from './rules/function-spacing.js'
+import { checkFunctionalPatterns } from './rules/functional-patterns.js'
 import { ImportOrdering } from './rules/import-ordering.js'
-import { LineLength } from './rules/line-length.js'
-import { MultilineDestructuring } from './rules/multiline-destructuring.js'
-import { ReactComponentCohesion } from './rules/react-component-cohesion.js'
+import { checkLineLength } from './rules/line-length.js'
+import { checkMultilineDestructuring } from './rules/multiline-destructuring.js'
+import { checkReactComponentCohesion } from './rules/react-component-cohesion.js'
 import { checkReactReduxSeparation } from './rules/react-redux-separation.js'
-import { SigDocumentation } from './rules/sig-documentation.js'
-import { SingleLevelIndentation } from './rules/single-level-indentation.js'
+import { checkSigDocumentation } from './rules/sig-documentation.js'
+import { checkSingleLevelIndentation } from './rules/single-level-indentation.js'
 
 /**
  * Check single file for coding standards violations
@@ -55,20 +56,21 @@ const checkFile = async (filePath, options = {}) => {
     const strictReactViolations = options.strictReact ? checkReactReduxSeparation(ast, sourceCode, filePath) : []
 
     const allViolations = [
-        ...AboutmeComment.checkAboutmeComment(ast, sourceCode, filePath),
-        ...ChainExtraction.checkChainExtraction(ast, sourceCode, filePath),
-        ...CohesionStructure.checkCohesionStructure(ast, sourceCode, filePath),
+        ...checkAboutmeComment(ast, sourceCode, filePath),
+        ...checkChainExtraction(ast, sourceCode, filePath),
+        ...checkCohesionStructure(ast, sourceCode, filePath),
         ...exportStructure(ast, sourceCode, filePath),
-        ...FileNaming.checkFileNaming(ast, sourceCode, filePath),
-        ...FunctionDeclarationOrdering.checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
-        ...FunctionSpacing.checkFunctionSpacing(ast, sourceCode, filePath),
-        ...FunctionalPatterns.checkFunctionalPatterns(ast, sourceCode, filePath),
+        ...checkFileNaming(ast, sourceCode, filePath),
+        ...checkFunctionDeclarationOrdering(ast, sourceCode, filePath),
+        ...checkFunctionSpacing(ast, sourceCode, filePath),
+        ...FunctionNaming(ast, sourceCode, filePath),
+        ...checkFunctionalPatterns(ast, sourceCode, filePath),
         ...ImportOrdering(ast, sourceCode, filePath),
-        ...LineLength.checkLineLength(ast, sourceCode, filePath),
-        ...MultilineDestructuring.checkMultilineDestructuring(ast, sourceCode, filePath),
-        ...ReactComponentCohesion.checkReactComponentCohesion(ast, sourceCode, filePath),
-        ...SigDocumentation.checkSigDocumentation(ast, sourceCode, filePath),
-        ...SingleLevelIndentation.checkSingleLevelIndentation(ast, sourceCode, filePath),
+        ...checkLineLength(ast, sourceCode, filePath),
+        ...checkMultilineDestructuring(ast, sourceCode, filePath),
+        ...checkReactComponentCohesion(ast, sourceCode, filePath),
+        ...checkSigDocumentation(ast, sourceCode, filePath),
+        ...checkSingleLevelIndentation(ast, sourceCode, filePath),
         ...strictReactViolations,
     ]
 

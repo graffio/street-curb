@@ -65,5 +65,10 @@ export const Action = {
 
         // Page title actions
         SetPageTitle     : { title: 'String', subtitle: 'String?' },
+
+        // Effect-only actions (reducer returns state unchanged, post performs side effect)
+        InitializeSystem : {},
+        OpenFile         : {},
+        ReopenFile       : {},
     }
 }

@@ -111,5 +111,4 @@ const A = {
 }
 
 const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.check)
-const ReactComponentCohesion = { checkReactComponentCohesion }
-export { ReactComponentCohesion }
+export { checkReactComponentCohesion }

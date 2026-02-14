@@ -138,5 +138,4 @@ const A = {
 }
 
 const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', V.check)
-const SingleLevelIndentation = { checkSingleLevelIndentation }
-export { SingleLevelIndentation }
+export { checkSingleLevelIndentation }

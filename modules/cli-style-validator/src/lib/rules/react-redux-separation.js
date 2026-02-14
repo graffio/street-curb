@@ -201,7 +201,7 @@ const F = {
         line: node.line,
         column: node.column || 1,
         priority: PRIORITY,
-        message: 'useState in component. FIX: Move state to Redux or a plain JS service module.',
+        message: 'useState in component for domain/business state. FIX: Move state to Redux.',
         rule: 'react-redux-separation',
     }),
 
@@ -234,7 +234,7 @@ const F = {
         line: node.line,
         column: node.column || 1,
         priority: PRIORITY,
-        message: 'useEffect in component. FIX: Use selector-with-defaults, router page titles, or service module.',
+        message: 'useEffect in component. FIX: Use selector-with-defaults, page titles, or post effect handler.',
         rule: 'react-redux-separation',
     }),
 
@@ -245,7 +245,7 @@ const F = {
         line: node.line,
         column: node.column || 1,
         priority: PRIORITY,
-        message: 'useRef in component. FIX: Use FocusRegistry ref callback or plain JS service.',
+        message: 'useRef in component. FIX: Use FocusRegistry ref callback or commands/post effect handler.',
         rule: 'react-redux-separation',
     }),
 

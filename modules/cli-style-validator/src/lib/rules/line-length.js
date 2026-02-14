@@ -85,5 +85,4 @@ const A = {
 }
 
 const checkLineLength = FS.withExemptions('line-length', V.check)
-const LineLength = { checkLineLength }
-export { LineLength }
+export { checkLineLength }

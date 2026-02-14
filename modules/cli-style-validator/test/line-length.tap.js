@@ -1,8 +1,7 @@
 import t from 'tap'
-import { LineLength } from '../src/lib/rules/line-length.js'
+import { checkLineLength } from '../src/lib/rules/line-length.js'
 import { Parser } from '../src/lib/parser.js'
 
-const { checkLineLength } = LineLength
 const { parseCode } = Parser
 
 t.test('Given a file with line length violations', t => {

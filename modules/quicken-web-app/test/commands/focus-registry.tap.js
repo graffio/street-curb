@@ -1,8 +1,8 @@
-// ABOUTME: Tests for FocusRegistry plain JS service
+// ABOUTME: Tests for FocusRegistry commands infrastructure module
 // ABOUTME: Verifies register, unregister, and focus behavior with DOM element stubs
 
 import tap from 'tap'
-import { FocusRegistry } from '../../src/services/focus-registry.js'
+import { FocusRegistry } from '../../src/commands/data-sources/focus-registry.js'
 
 tap.test('Given a registered element', t => {
     t.beforeEach(() => FocusRegistry.clear())
