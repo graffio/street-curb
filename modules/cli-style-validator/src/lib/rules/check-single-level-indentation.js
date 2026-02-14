@@ -2,9 +2,9 @@
 // ABOUTME: Enforces single-level indentation via early returns and extraction
 
 import { AST, ASTNode } from '@graffio/ast'
-import { AS } from '../shared/aggregators.js'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const { ArrayExpression, CatchClause, ForInStatement, ForOfStatement, ForStatement } = ASTNode
 const { IfStatement, JSXElement, JSXFragment, ObjectExpression, SwitchStatement } = ASTNode
@@ -61,17 +61,12 @@ const T = {
     },
 }
 
+const violation = FS.createViolation('single-level-indentation', PRIORITY)
+
 const F = {
-    // Create a single-level-indentation violation at node location
+    // Create a violation from an AST node
     // @sig createViolation :: (ASTNode, String) -> Violation
-    createViolation: (node, message) => ({
-        type: 'single-level-indentation',
-        line: node.line,
-        column: node.column,
-        priority: PRIORITY,
-        message,
-        rule: 'single-level-indentation',
-    }),
+    createViolation: (node, message) => violation(node.line, node.column, message),
 }
 
 const V = {
@@ -137,5 +132,8 @@ const A = {
     },
 }
 
-const checkSingleLevelIndentation = FS.withExemptions('single-level-indentation', V.check)
+// Run single-level-indentation rule with COMPLEXITY exemption support
+// @sig checkSingleLevelIndentation :: (AST?, String, String) -> [Violation]
+const checkSingleLevelIndentation = (ast, sourceCode, filePath) =>
+    FS.withExemptions('single-level-indentation', V.check, ast, sourceCode, filePath)
 export { checkSingleLevelIndentation }

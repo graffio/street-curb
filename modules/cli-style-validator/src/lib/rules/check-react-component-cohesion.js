@@ -2,19 +2,17 @@
 // ABOUTME: Detects render* functions and cohesion groups defined inside components
 
 import { AST, ASTNode } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 2
-const COHESION_GROUPS = ['P', 'T', 'F', 'V', 'A', 'E']
 
 const P = {
     // Check if node is a cohesion group definition (const P = {}, etc.)
     // @sig isCohesionGroupDef :: ASTNode -> Boolean
     isCohesionGroupDef: node =>
-        ASTNode.VariableDeclarator.is(node) &&
-        COHESION_GROUPS.includes(node.name) &&
-        ASTNode.ObjectExpression.is(node.value),
+        ASTNode.VariableDeclarator.is(node) && PS.isCohesionGroup(node.name) && ASTNode.ObjectExpression.is(node.value),
 
     // Check if node is a render function (declaration or variable with render* name)
     // @sig isRenderNode :: ASTNode -> Boolean
@@ -33,32 +31,28 @@ const T = {
     toComponentName: name => name.replace(/^render/, ''),
 }
 
+const violation = FS.createViolation('react-component-cohesion', PRIORITY)
+
 const F = {
     // Create violation for render function
     // @sig createRenderViolation :: ASTNode -> Violation
-    createRenderViolation: node => ({
-        type: 'react-component-cohesion',
-        line: node.line,
-        column: 1,
-        priority: PRIORITY,
-        message:
+    createRenderViolation: node =>
+        violation(
+            node.line,
+            1,
             `"${node.name}" should be extracted to a <${T.toComponentName(node.name)} /> component. ` +
-            `FIX: Move to its own component, not a render function inside the parent.`,
-        rule: 'react-component-cohesion',
-    }),
+                `FIX: Move to its own component, not a render function inside the parent.`,
+        ),
 
     // Create violation for cohesion group inside component
     // @sig createCohesionGroupViolation :: (ASTNode, String) -> Violation
-    createCohesionGroupViolation: (node, componentName) => ({
-        type: 'react-component-cohesion',
-        line: node.line,
-        column: 1,
-        priority: PRIORITY,
-        message:
+    createCohesionGroupViolation: (node, componentName) =>
+        violation(
+            node.line,
+            1,
             `Cohesion group "${node.name}" defined inside component "${componentName}". ` +
-            `FIX: Move to module level, above the component.`,
-        rule: 'react-component-cohesion',
-    }),
+                `FIX: Move to module level, above the component.`,
+        ),
 }
 
 const V = {
@@ -66,7 +60,7 @@ const V = {
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
-        if (!A.hasJSXContext(ast)) return []
+        if (!PS.hasJSXContext(ast)) return []
 
         const renderViolations = AST.from(ast).filter(P.isRenderNode).map(F.createRenderViolation)
         return [...renderViolations, ...A.collectCohesionViolations(ast)]
@@ -77,9 +71,8 @@ const A = {
     // Find cohesion groups inside a component function body
     // @sig findCohesionGroupsIn :: (ASTNode, String) -> [Violation]
     findCohesionGroupsIn: (funcNode, name) => {
-        const bodyBlock = funcNode.body
-        if (!bodyBlock || !ASTNode.BlockStatement.is(bodyBlock)) return []
-        return bodyBlock.body
+        if (!PS.isFunctionWithBlockBody(funcNode)) return []
+        return funcNode.body.body
             .filter(ASTNode.VariableDeclaration.is)
             .flatMap(decl => decl.declarations)
             .filter(P.isCohesionGroupDef)
@@ -88,27 +81,11 @@ const A = {
 
     // Collect cohesion violations from all React components in AST
     // @sig collectCohesionViolations :: AST -> [Violation]
-    collectCohesionViolations: ast => {
-        const statements = AST.topLevelStatements(ast)
-
-        const funcDecls = statements
-            .filter(ASTNode.FunctionDeclaration.is)
-            .filter(s => PS.isPascalCase(s.name))
-            .flatMap(s => A.findCohesionGroupsIn(s, s.name))
-
-        const varDecls = statements
-            .filter(ASTNode.VariableDeclaration.is)
-            .flatMap(decl => decl.declarations)
-            .filter(d => PS.isPascalCase(d.name) && d.value && PS.isFunctionNode(d.value))
-            .flatMap(d => A.findCohesionGroupsIn(d.value, d.name))
-
-        return [...funcDecls, ...varDecls]
-    },
-
-    // Check if AST contains any JSX (file context check)
-    // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AST.from(ast).some(n => ASTNode.JSXElement.is(n) || ASTNode.JSXFragment.is(n)),
+    collectCohesionViolations: ast => AS.findComponents(ast).flatMap(c => A.findCohesionGroupsIn(c.node, c.name)),
 }
 
-const checkReactComponentCohesion = FS.withExemptions('react-component-cohesion', V.check)
+// Run react-component-cohesion rule with COMPLEXITY exemption support
+// @sig checkReactComponentCohesion :: (AST?, String, String) -> [Violation]
+const checkReactComponentCohesion = (ast, sourceCode, filePath) =>
+    FS.withExemptions('react-component-cohesion', V.check, ast, sourceCode, filePath)
 export { checkReactComponentCohesion }

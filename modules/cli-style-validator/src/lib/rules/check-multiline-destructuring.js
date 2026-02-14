@@ -2,8 +2,8 @@
 // ABOUTME: Suggests compacting destructuring to fit on fewer lines when possible
 
 import { AST, ASTNode } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 3
 const MAX_LINE_LENGTH = 120
@@ -119,17 +119,12 @@ const T = {
     },
 }
 
+const violation = FS.createViolation('multiline-destructuring', PRIORITY)
+
 const F = {
     // Create a multiline-destructuring violation
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) => ({
-        type: 'multiline-destructuring',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message,
-        rule: 'multiline-destructuring',
-    }),
+    createViolation: (line, message) => violation(line, 1, message),
 }
 
 const V = {
@@ -176,5 +171,8 @@ const V = {
     },
 }
 
-const checkMultilineDestructuring = FS.withExemptions('multiline-destructuring', V.check)
+// Run multiline-destructuring rule with COMPLEXITY exemption support
+// @sig checkMultilineDestructuring :: (AST?, String, String) -> [Violation]
+const checkMultilineDestructuring = (ast, sourceCode, filePath) =>
+    FS.withExemptions('multiline-destructuring', V.check, ast, sourceCode, filePath)
 export { checkMultilineDestructuring }

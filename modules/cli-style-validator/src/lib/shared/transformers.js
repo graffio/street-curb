@@ -1,6 +1,5 @@
 // ABOUTME: Shared transformer functions for style validator rules
 // ABOUTME: Parsing and transformation utilities for COMPLEXITY comments
-// COMPLEXITY: export-structure — Abbreviated export name TS per conventions.md
 
 // Regex patterns for COMPLEXITY comments
 const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/
@@ -8,6 +7,14 @@ const COMPLEXITY_TODO_BASE = /^\/\/\s*COMPLEXITY-TODO:\s*(\S+)/
 const EXPIRES_PATTERN = /\(expires\s+(\S+)\)\s*$/
 
 const TS = {
+    // Convert kebab-case or snake_case to PascalCase
+    // @sig toPascalCase :: String -> String
+    toPascalCase: str =>
+        str
+            .split(/[-_]/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(''),
+
     // Strip comment markers (//, /*, *, */) from a line to get content
     // @sig toCommentContent :: String -> String
     toCommentContent: line =>
@@ -105,4 +112,4 @@ const TS = {
     },
 }
 
-export { TS }
+export { TS as Transformers }

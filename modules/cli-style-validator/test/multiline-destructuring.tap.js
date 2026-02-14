@@ -1,5 +1,5 @@
 import t from 'tap'
-import { checkMultilineDestructuring } from '../src/lib/rules/multiline-destructuring.js'
+import { checkMultilineDestructuring } from '../src/lib/rules/check-multiline-destructuring.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser

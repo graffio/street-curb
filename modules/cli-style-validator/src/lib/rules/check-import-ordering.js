@@ -1,8 +1,8 @@
 // ABOUTME: Rule to detect import violations (ES6 imports)
 // ABOUTME: Enforces standard import patterns across the codebase
 
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const P = {
     // Check if line uses CommonJS require syntax
@@ -10,16 +10,12 @@ const P = {
     hasRequire: line => /\brequire\s*\(/.test(line),
 }
 
+const violation = FS.createViolation('import-ordering', 4)
+
 const F = {
-    // Create a violation object for this rule
+    // Create an import-ordering violation
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) => ({
-        type: 'import-ordering',
-        line,
-        column: 1,
-        message,
-        rule: 'import-ordering',
-    }),
+    createViolation: (line, message) => violation(line, 1, message),
 }
 
 const V = {
@@ -45,5 +41,8 @@ const A = {
     },
 }
 
-const ImportOrdering = FS.withExemptions('import-ordering', V.check)
-export { ImportOrdering }
+// Run import-ordering rule with COMPLEXITY exemption support
+// @sig checkImportOrdering :: (AST?, String, String) -> [Violation]
+const checkImportOrdering = (ast, sourceCode, filePath) =>
+    FS.withExemptions('import-ordering', V.check, ast, sourceCode, filePath)
+export { checkImportOrdering }

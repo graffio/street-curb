@@ -1,8 +1,8 @@
 // ABOUTME: Rule to detect missing ABOUTME comments at file top
 // ABOUTME: Enforces two-line ABOUTME header in all source files
 
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const P = {
     // Check if line starts with ABOUTME marker
@@ -26,16 +26,12 @@ const P = {
     isShebang: line => line.trim().startsWith('#!'),
 }
 
+const violation = FS.createViolation('aboutme-comment', 6)
+
 const F = {
-    // Create a violation object for this rule
+    // Create a violation for this rule
     // @sig createViolation :: (Number, String) -> Violation
-    createViolation: (line, message) => ({
-        type: 'aboutme-comment',
-        line,
-        column: 1,
-        message,
-        rule: 'aboutme-comment',
-    }),
+    createViolation: (line, message) => violation(line, 1, message),
 }
 
 const V = {
@@ -80,5 +76,8 @@ const A = {
     },
 }
 
-const checkAboutmeComment = FS.withExemptions('aboutme-comment', V.check)
+// Run aboutme-comment rule with COMPLEXITY exemption support
+// @sig checkAboutmeComment :: (AST?, String, String) -> [Violation]
+const checkAboutmeComment = (ast, sourceCode, filePath) =>
+    FS.withExemptions('aboutme-comment', V.check, ast, sourceCode, filePath)
 export { checkAboutmeComment }

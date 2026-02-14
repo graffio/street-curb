@@ -6,6 +6,7 @@ import { hideBin } from 'yargs/helpers'
 import { checkFile } from './lib/check-file.js'
 
 // COMPLEXITY: cohesion-structure — CLI entry point functions don't fit cohesion model
+// COMPLEXITY: function-naming — CLI entry point; "main" is conventional
 /**
  * Main CLI function
  * @sig main :: () -> Promise<Void>
@@ -16,18 +17,12 @@ const main = async () => {
         .command('$0 <file>', 'Check JavaScript file for coding standards violations', yargs =>
             yargs.positional('file', { describe: 'Path to JavaScript file to check', type: 'string' }),
         )
-        .option('strict-react', {
-            type: 'boolean',
-            description: 'Enable experimental React/Redux separation checks',
-            default: false,
-        })
         .help().argv
 
-    const { file, strictReact } = argv
+    const { file } = argv
 
     try {
-        const options = { strictReact }
-        const result = await checkFile(file, options)
+        const result = await checkFile(file)
 
         // Output JSON result for LLM consumption
         console.log(JSON.stringify(result, null, 2))
@@ -41,6 +36,7 @@ const main = async () => {
 }
 
 // COMPLEXITY: cohesion-structure — CLI error handler doesn't fit cohesion model
+// COMPLEXITY: function-naming — Promise rejection handler; "onrejected" is conventional
 // @sig onrejected :: Error -> ()
 const onrejected = error => {
     console.error('CLI error:', error.message)

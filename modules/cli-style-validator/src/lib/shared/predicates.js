@@ -1,14 +1,12 @@
 // ABOUTME: Shared predicate functions for style validator rules
 // ABOUTME: Unified file/AST predicates to avoid duplication across rules
-// COMPLEXITY: lines — Shared module consolidating predicates from multiple rules
-// COMPLEXITY: functions — Shared module consolidating predicates from multiple rules
-// COMPLEXITY: export-structure — Abbreviated export name PS per conventions.md
 
-import { ASTNode } from '@graffio/ast'
-import { TS } from './transformers.js'
+import { AST, ASTNode } from '@graffio/ast'
+import { Transformers as TS } from './transformers.js'
 
-const { ArrowFunctionExpression, BlockStatement, FunctionDeclaration, FunctionExpression } = ASTNode
-const { JSXElement, JSXFragment, ReturnStatement, VariableDeclaration } = ASTNode
+const { ArrowFunctionExpression, BlockStatement, DoWhileStatement, ForInStatement } = ASTNode
+const { ForOfStatement, ForStatement, FunctionDeclaration, FunctionExpression } = ASTNode
+const { JSXElement, JSXFragment, ReturnStatement, VariableDeclaration, WhileStatement } = ASTNode
 
 const PS = {
     // Check if file is a test file that should skip validation
@@ -133,6 +131,23 @@ const PS = {
     // @sig isExempt :: (String, String) -> Boolean
     isExempt: (sourceCode, ruleName) =>
         TS.parseComplexityComments(sourceCode).some(c => PS.isPermanentExemption(ruleName, c)),
+
+    // Check if name is a cohesion group identifier (P, T, F, V, A, E)
+    // @sig isCohesionGroup :: String -> Boolean
+    isCohesionGroup: name => ['P', 'T', 'F', 'V', 'A', 'E'].includes(name),
+
+    // Check if AST contains any JSX elements or fragments
+    // @sig hasJSXContext :: AST -> Boolean
+    hasJSXContext: ast => AST.from(ast).some(n => ASTNode.JSXElement.is(n) || ASTNode.JSXFragment.is(n)),
+
+    // Check if node is a loop statement (for, while, do-while, for-in, for-of)
+    // @sig isLoop :: ASTNode -> Boolean
+    isLoop: node =>
+        ForStatement.is(node) ||
+        WhileStatement.is(node) ||
+        DoWhileStatement.is(node) ||
+        ForInStatement.is(node) ||
+        ForOfStatement.is(node),
 }
 
-export { PS }
+export { PS as Predicates }

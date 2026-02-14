@@ -2,9 +2,9 @@
 // ABOUTME: Enforces functions-at-top-of-block coding standard
 
 import { AST, ASTNode } from '@graffio/ast'
-import { AS } from '../shared/aggregators.js'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const { ArrowFunctionExpression, BreakStatement, ContinueStatement, DoWhileStatement } = ASTNode
 const { ExpressionStatement, ForInStatement, ForOfStatement, ForStatement, FunctionDeclaration } = ASTNode
@@ -70,17 +70,12 @@ const T = {
         'variables will be initialized before the function is called.',
 }
 
+const violation = FS.createViolation('function-declaration-ordering', PRIORITY)
+
 const F = {
-    // Create a violation object from an AST node
+    // Create a violation from an AST node
     // @sig createViolation :: (ASTNode, String) -> Violation
-    createViolation: (node, message) => ({
-        type: 'function-declaration-ordering',
-        line: node.line,
-        column: node.column,
-        priority: PRIORITY,
-        message,
-        rule: 'function-declaration-ordering',
-    }),
+    createViolation: (node, message) => violation(node.line, node.column, message),
 }
 
 const V = {
@@ -137,5 +132,8 @@ const A = {
     },
 }
 
-const checkFunctionDeclarationOrdering = FS.withExemptions('function-declaration-ordering', V.check)
+// Run function-declaration-ordering rule with COMPLEXITY exemption support
+// @sig checkFunctionDeclarationOrdering :: (AST?, String, String) -> [Violation]
+const checkFunctionDeclarationOrdering = (ast, sourceCode, filePath) =>
+    FS.withExemptions('function-declaration-ordering', V.check, ast, sourceCode, filePath)
 export { checkFunctionDeclarationOrdering }

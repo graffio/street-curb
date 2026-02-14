@@ -1,10 +1,15 @@
 // ABOUTME: Shared factory functions for style validator rules
 // ABOUTME: Standardized violation creation to ensure consistent structure
-// COMPLEXITY: export-structure — Abbreviated export name FS per conventions.md
 
-import { TS } from './transformers.js'
+import { Violation } from '../../types/index.js'
+import { Transformers as TS } from './transformers.js'
 
 const FS = {
+    // Create a curried violation factory for a rule
+    // @sig createViolation :: (String, Number) -> (Number, Number, String) -> Violation
+    createViolation: (rule, priority) => (line, column, message) =>
+        Violation(rule, line, column, priority, message, rule),
+
     // Create a deferral warning for a rule with active COMPLEXITY-TODO
     // @sig createDeferralWarning :: (String, String, Number) -> Warning
     createDeferralWarning: (ruleName, reason, daysRemaining) => ({
@@ -21,9 +26,9 @@ const FS = {
     // @sig createExpiredViolation :: Violation -> Violation
     createExpiredViolation: violation => ({ ...violation, message: `${violation.message} (COMPLEXITY-TODO expired)` }),
 
-    // Wrap a rule check function with COMPLEXITY exemption handling
-    // @sig withExemptions :: (String, CheckFn) -> CheckFn
-    withExemptions: (ruleName, checkFn) => (ast, sourceCode, filePath) => {
+    // Wrap a rule check with COMPLEXITY exemption handling
+    // @sig withExemptions :: (String, CheckFn, AST?, String, String) -> [Violation]
+    withExemptions: (ruleName, checkFn, ast, sourceCode, filePath) => {
         const { exempt, deferred, expired, reason, daysRemaining } = TS.getExemptionStatus(sourceCode, ruleName)
 
         if (exempt) return []
@@ -37,4 +42,4 @@ const FS = {
     },
 }
 
-export { FS }
+export { FS as Factories }

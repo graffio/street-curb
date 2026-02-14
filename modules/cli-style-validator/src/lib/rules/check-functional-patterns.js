@@ -2,26 +2,17 @@
 // ABOUTME: Enforces functional programming style (no for/while loops)
 
 import { AST, ASTNode } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const { DoWhileStatement, ForInStatement, ForOfStatement, ForStatement, WhileStatement } = ASTNode
 
 const P = {
-    // Check if node is a loop type
-    // @sig isLoop :: ASTNode -> Boolean
-    isLoop: node =>
-        ForStatement.is(node) ||
-        WhileStatement.is(node) ||
-        DoWhileStatement.is(node) ||
-        ForInStatement.is(node) ||
-        ForOfStatement.is(node),
-
     // Check if node is a loop (for/while/do-while), excluding async for-of
     // @sig isImperativeLoop :: ASTNode -> Boolean
     isImperativeLoop: node => {
         if (ForOfStatement.is(node) && AST.bodyContainsAwait(node)) return false
-        return P.isLoop(node)
+        return PS.isLoop(node)
     },
 }
 
@@ -39,16 +30,12 @@ const T = {
     },
 }
 
+const violation = FS.createViolation('functional-patterns', 1)
+
 const F = {
-    // Create a violation object from an AST node
+    // Create a violation from an AST node
     // @sig createViolation :: (ASTNode, String) -> Violation
-    createViolation: (node, message) => ({
-        type: 'functional-patterns',
-        line: node.line,
-        column: node.column,
-        message,
-        rule: 'functional-patterns',
-    }),
+    createViolation: (node, message) => violation(node.line, node.column, message),
 }
 
 const V = {
@@ -77,5 +64,8 @@ const A = {
     },
 }
 
-const checkFunctionalPatterns = FS.withExemptions('functional-patterns', V.check)
+// Run functional-patterns rule with COMPLEXITY exemption support
+// @sig checkFunctionalPatterns :: (AST?, String, String) -> [Violation]
+const checkFunctionalPatterns = (ast, sourceCode, filePath) =>
+    FS.withExemptions('functional-patterns', V.check, ast, sourceCode, filePath)
 export { checkFunctionalPatterns }

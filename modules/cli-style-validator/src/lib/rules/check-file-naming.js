@@ -1,12 +1,12 @@
 // ABOUTME: Rule to detect file naming convention violations
 // ABOUTME: Enforces PascalCase.jsx for component files, kebab-case for config/utility files
-// COMPLEXITY: functions — Export-based naming rules require multiple export predicates
 
 import { basename } from 'path'
 
-import { AS } from '../shared/aggregators.js'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Aggregators as AS } from '../shared/aggregators.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
+import { Transformers as TS } from '../shared/transformers.js'
 
 const PRIORITY = 7
 
@@ -52,26 +52,12 @@ const P = {
     },
 }
 
-const T = {
-    // Convert kebab-case or snake_case to PascalCase
-    // @sig toPascalCase :: String -> String
-    toPascalCase: str => {
-        const capitalize = word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        return str.split(/[-_]/).map(capitalize).join('')
-    },
-}
+const violation = FS.createViolation('file-naming', PRIORITY)
 
 const F = {
-    // Create a file-naming violation with given message
+    // Create a file-naming violation
     // @sig createViolation :: String -> Violation
-    createViolation: message => ({
-        type: 'file-naming',
-        line: 1,
-        column: 1,
-        priority: PRIORITY,
-        message,
-        rule: 'file-naming',
-    }),
+    createViolation: message => violation(1, 1, message),
 }
 
 const V = {
@@ -79,7 +65,7 @@ const V = {
     // @sig checkJsxComponentNaming :: (String, String) -> [Violation]
     checkJsxComponentNaming: (name, fileName) => {
         if (PS.isPascalCase(name)) return []
-        const suggestion = `${T.toPascalCase(name)}.jsx`
+        const suggestion = `${TS.toPascalCase(name)}.jsx`
         return [F.createViolation(`Component files must be PascalCase: ${fileName} should be ${suggestion}`)]
     },
 
@@ -130,5 +116,8 @@ const V = {
     },
 }
 
-const checkFileNaming = FS.withExemptions('file-naming', V.check)
+// Run file-naming rule with COMPLEXITY exemption support
+// @sig checkFileNaming :: (AST?, String, String) -> [Violation]
+const checkFileNaming = (ast, sourceCode, filePath) =>
+    FS.withExemptions('file-naming', V.check, ast, sourceCode, filePath)
 export { checkFileNaming }

@@ -1,12 +1,10 @@
 // ABOUTME: Rule to suggest extracting repeated property chains into variables
 // ABOUTME: Flags when base.* appears 3+ times and suggests const { props } = base
-// COMPLEXITY: cohesion-structure — Functional style requires more small functions
-// COMPLEXITY: functions — Functional style requires more small functions
 // COMPLEXITY: chain-extraction — Rule files naturally access AST properties repeatedly
 
 import { AST, ASTNode } from '@graffio/ast'
-import { FS } from '../shared/factories.js'
-import { PS } from '../shared/predicates.js'
+import { Factories as FS } from '../shared/factories.js'
+import { Predicates as PS } from '../shared/predicates.js'
 
 const THRESHOLD = 3
 const PRIORITY = 1
@@ -98,20 +96,19 @@ const T = {
     toGroupedBases: accesses => accesses.reduce(T.toUpdatedGroups, {}),
 }
 
+const violation = FS.createViolation('chain-extraction', PRIORITY)
+
 const F = {
     // Create a suggestion to destructure repeated property access
     // @sig createSuggestion :: (Number, String, [String]) -> Violation
-    createSuggestion: (line, base, properties) => ({
-        type: 'chain-extraction',
-        line,
-        column: 1,
-        priority: PRIORITY,
-        message:
+    createSuggestion: (line, base, properties) =>
+        violation(
+            line,
+            1,
             `"${base}" accessed ${properties.length} times. ` +
-            `FIX: Add \`const { ${properties.join(', ')} } = ${base}\` at the top of the function, ` +
-            `then use the destructured names.`,
-        rule: 'chain-extraction',
-    }),
+                `FIX: Add \`const { ${properties.join(', ')} } = ${base}\` at the top of the function, ` +
+                `then use the destructured names.`,
+        ),
 }
 
 const V = {
@@ -172,5 +169,8 @@ const A = {
             .flatMap(funcNode => A.collectSuggestionsForFunction(funcNode, namespaces)),
 }
 
-const checkChainExtraction = FS.withExemptions('chain-extraction', V.check)
+// Run chain-extraction rule with COMPLEXITY exemption support
+// @sig checkChainExtraction :: (AST?, String, String) -> [Violation]
+const checkChainExtraction = (ast, sourceCode, filePath) =>
+    FS.withExemptions('chain-extraction', V.check, ast, sourceCode, filePath)
 export { checkChainExtraction }

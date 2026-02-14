@@ -1,5 +1,5 @@
 import t from 'tap'
-import { checkLineLength } from '../src/lib/rules/line-length.js'
+import { checkLineLength } from '../src/lib/rules/check-line-length.js'
 import { Parser } from '../src/lib/parser.js'
 
 const { parseCode } = Parser
