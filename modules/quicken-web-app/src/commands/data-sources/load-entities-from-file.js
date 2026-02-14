@@ -1,4 +1,4 @@
-// ABOUTME: Service for loading SQLite databases in the browser
+// ABOUTME: SQLite database loader for the browser
 // ABOUTME: Uses sql.js (WebAssembly SQLite) to read .sqlite files and extract all entities
 
 // COMPLEXITY-TODO: lines — Pre-existing debt, needs splitting (expires 2026-04-01)
@@ -11,15 +11,15 @@
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import initSqlJs from 'sql.js'
 
-import { Account } from '../types/account.js'
-import { Category } from '../types/category.js'
-import { LotAllocation } from '../types/lot-allocation.js'
-import { Lot } from '../types/lot.js'
-import { Price } from '../types/price.js'
-import { Security } from '../types/security.js'
-import { Split } from '../types/split.js'
-import { Tag } from '../types/tag.js'
-import { Transaction } from '../types/transaction.js'
+import { Account } from '../../types/account.js'
+import { Category } from '../../types/category.js'
+import { LotAllocation } from '../../types/lot-allocation.js'
+import { Lot } from '../../types/lot.js'
+import { Price } from '../../types/price.js'
+import { Security } from '../../types/security.js'
+import { Split } from '../../types/split.js'
+import { Tag } from '../../types/tag.js'
+import { Transaction } from '../../types/transaction.js'
 
 // Cache sql.js WASM module - initialized once on first use
 let sqlModulePromise = null
@@ -295,5 +295,4 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     }
 }
 
-const SqliteService = { loadEntitiesFromFile, isSqliteFile }
-export { SqliteService }
+export { loadEntitiesFromFile }

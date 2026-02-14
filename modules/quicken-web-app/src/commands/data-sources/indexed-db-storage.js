@@ -1,11 +1,16 @@
-// ABOUTME: IndexedDB wrapper providing simple key-value storage API
-// ABOUTME: Replaces localStorage for persistence with support for non-serializable values
+// ABOUTME: IndexedDB persistence for application state
+// ABOUTME: Domain-specific read/write for table layouts, tab layout, account prefs, and file handle
 
 const DB_NAME = 'quicken-web-app'
 const DB_VERSION = 1
 const STORE_NAME = 'keyval'
+const TABLE_LAYOUTS_KEY = 'tableLayouts'
+const TAB_LAYOUT_KEY = 'tabLayout'
+const ACCOUNT_LIST_PREFS_KEY = 'accountListPrefs'
+const FILE_HANDLE_KEY = 'fileHandle'
 
-// COMPLEXITY: Internal helper for Promise binding; naming doesn't fit cohesion patterns
+// COMPLEXITY: cohesion-structure — internal IndexedDB helpers don't fit P/T/F/V/A groups
+
 // Binds resolve/reject to IDBRequest events
 // @sig bindRequestCallbacks :: (IDBRequest, Function, Function) -> ()
 const bindRequestCallbacks = (request, resolve, reject) => {
@@ -13,12 +18,10 @@ const bindRequestCallbacks = (request, resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
 }
 
-// COMPLEXITY: "promisifyRequest" describes transformation; doesn't fit to*/get* naturally
 // Wraps an IDBRequest in a Promise
 // @sig promisifyRequest :: IDBRequest -> Promise<any>
 const promisifyRequest = request => new Promise((resolve, reject) => bindRequestCallbacks(request, resolve, reject))
 
-// COMPLEXITY: "openDb" is internal helper; doesn't fit get*/create* pattern naturally
 // Opens the IndexedDB database, creating the object store on first access
 // @sig openDb :: () -> Promise<IDBDatabase>
 const openDb = () => {
@@ -27,10 +30,9 @@ const openDb = () => {
     return promisifyRequest(request)
 }
 
-// COMPLEXITY: "get" is standard key-value API naming; renaming would obscure intent
-// Retrieves a value from IndexedDB by key (JSON parsed)
-// @sig get :: String -> Promise<any>
-const get = async key => {
+// Retrieves a JSON-serialized value from IndexedDB
+// @sig queryJson :: String -> Promise<any>
+const queryJson = async key => {
     const db = await openDb()
     const tx = db.transaction(STORE_NAME, 'readonly')
     const result = await promisifyRequest(tx.objectStore(STORE_NAME).get(key))
@@ -38,24 +40,22 @@ const get = async key => {
     return result ? JSON.parse(result) : result
 }
 
-// COMPLEXITY: "set" is standard key-value API naming; renaming would obscure intent
-// Stores a value in IndexedDB under the given key (JSON stringified to preserve non-enumerable props)
-// @sig set :: (String, any) -> Promise<void>
-const set = async (key, value) => {
+// Stores a JSON-serialized value in IndexedDB
+// @sig persistJson :: (String, any) -> Promise<void>
+const persistJson = async (key, value) => {
     try {
         const db = await openDb()
         const tx = db.transaction(STORE_NAME, 'readwrite')
         await promisifyRequest(tx.objectStore(STORE_NAME).put(JSON.stringify(value), key))
         db.close()
     } catch (e) {
-        console.error('IndexedDB set failed:', key, e)
+        console.error('IndexedDB persist failed:', key, e)
     }
 }
 
-// COMPLEXITY: "getRaw" is standard key-value API naming; renaming would obscure intent
-// Retrieves a value using structured cloning (for FileSystemFileHandle, etc.)
-// @sig getRaw :: String -> Promise<any>
-const getRaw = async key => {
+// Retrieves a value using structured cloning (for non-serializable values)
+// @sig queryRaw :: String -> Promise<any>
+const queryRaw = async key => {
     const db = await openDb()
     const tx = db.transaction(STORE_NAME, 'readonly')
     const result = await promisifyRequest(tx.objectStore(STORE_NAME).get(key))
@@ -63,20 +63,28 @@ const getRaw = async key => {
     return result
 }
 
-// COMPLEXITY: "setRaw" is standard key-value API naming; renaming would obscure intent
-// Stores a value using structured cloning (for FileSystemFileHandle, etc.)
-// @sig setRaw :: (String, any) -> Promise<void>
-const setRaw = async (key, value) => {
+// Stores a value using structured cloning (for non-serializable values)
+// @sig persistRaw :: (String, any) -> Promise<void>
+const persistRaw = async (key, value) => {
     try {
         const db = await openDb()
         const tx = db.transaction(STORE_NAME, 'readwrite')
         await promisifyRequest(tx.objectStore(STORE_NAME).put(value, key))
         db.close()
     } catch (e) {
-        console.error('IndexedDB setRaw failed:', key, e)
+        console.error('IndexedDB persist failed:', key, e)
     }
 }
 
-const Storage = { get, getRaw, set, setRaw }
+const IndexedDbStorage = {
+    queryTableLayouts: () => queryJson(TABLE_LAYOUTS_KEY),
+    persistTableLayouts: value => persistJson(TABLE_LAYOUTS_KEY, value),
+    queryTabLayout: () => queryJson(TAB_LAYOUT_KEY),
+    persistTabLayout: value => persistJson(TAB_LAYOUT_KEY, value),
+    queryAccountListPrefs: () => queryJson(ACCOUNT_LIST_PREFS_KEY),
+    persistAccountListPrefs: value => persistJson(ACCOUNT_LIST_PREFS_KEY, value),
+    queryFileHandle: () => queryRaw(FILE_HANDLE_KEY),
+    persistFileHandle: value => persistRaw(FILE_HANDLE_KEY, value),
+}
 
-export { Storage }
+export { IndexedDbStorage }

@@ -4,6 +4,7 @@
 // COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
 // COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
+// COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
 
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import {
@@ -16,7 +17,7 @@ import {
 } from '@graffio/functional'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
-import { toAccountSections } from '../services/to-account-sections.js'
+import { toAccountSections } from './to-account-sections.js'
 import {
     Category,
     ColumnDescriptor,

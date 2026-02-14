@@ -4,20 +4,20 @@
 // COMPLEXITY: export-structure — post is a function, not a namespace; lowercase matches usage pattern
 
 import { debounce } from '@graffio/functional'
-import { Storage } from '../services/storage.js'
 import { currentStore, Selectors as S } from '../store/index.js'
 import { Action } from '../types/action.js'
+import { IndexedDbStorage } from './data-sources/indexed-db-storage.js'
+import { handleInitializeSystem } from './handlers/handle-initialize-system.js'
+import { handleOpenFile } from './handlers/handle-open-file.js'
+import { handleReopenFile } from './handlers/handle-reopen-file.js'
 
-const TABLE_LAYOUTS_KEY = 'tableLayouts'
-const TAB_LAYOUT_KEY = 'tabLayout'
-const ACCOUNT_LIST_PREFS_KEY = 'accountListPrefs'
 const TABLE_LAYOUT_PERSIST_DELAY_MS = 500
 
-// COMPLEXITY: Side-effect functions (persist*, handle*) don't fit P/T/F/V/A cohesion patterns
+// COMPLEXITY: cohesion-structure — side-effect functions (persist*, handle*) don't fit P/T/F/V/A groups
 
 // Writes table layouts to IndexedDB (fire-and-forget)
 // @sig persistTableLayouts :: () -> ()
-const persistTableLayouts = () => Storage.set(TABLE_LAYOUTS_KEY, S.tableLayouts(currentStore().getState()))
+const persistTableLayouts = () => IndexedDbStorage.persistTableLayouts(S.tableLayouts(currentStore().getState()))
 
 // Module-level debounced function preserves timeout state across post() calls
 // @sig debouncedPersistTableLayouts :: () -> ()
@@ -34,7 +34,7 @@ const post = action => {
     // @sig persistTabLayout :: () -> ()
     const persistTabLayout = () => {
         const tabLayout = S.tabLayout(currentStore().getState())
-        if (tabLayout) Storage.set(TAB_LAYOUT_KEY, tabLayout)
+        if (tabLayout) IndexedDbStorage.persistTabLayout(tabLayout)
     }
 
     // Dispatches and persists table layout (debounced)
@@ -57,7 +57,7 @@ const post = action => {
         const state = currentStore().getState()
         const sortMode = S.UI.sortMode(state)['@@tagName']
         const collapsedSections = [...S.UI.collapsedSections(state)]
-        Storage.set(ACCOUNT_LIST_PREFS_KEY, { sortMode, collapsedSections })
+        IndexedDbStorage.persistAccountListPrefs({ sortMode, collapsedSections })
     }
 
     // Dispatches and persists account list preferences (immediate)
@@ -110,6 +110,11 @@ const post = action => {
 
         // Page title actions (no persistence needed)
         SetPageTitle : () => dispatch(action),
+
+        // Effect-only actions (handlers dispatch directly to Redux, bypassing post)
+        InitializeSystem : () => handleInitializeSystem(dispatch),
+        OpenFile         : () => handleOpenFile(dispatch),
+        ReopenFile       : () => handleReopenFile(dispatch),
     })
 }
 

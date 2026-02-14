@@ -3,12 +3,8 @@
 // COMPLEXITY: Exports both table and tab layout hydration - single responsibility per entity type
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { Storage } from '../services/storage.js'
+import { IndexedDbStorage } from '../commands/data-sources/indexed-db-storage.js'
 import { ColumnDescriptor, SortMode, SortOrder, TabGroup, TabLayout, TableLayout, View } from '../types/index.js'
-
-const TABLE_LAYOUTS_KEY = 'tableLayouts'
-const TAB_LAYOUT_KEY = 'tabLayout'
-const ACCOUNT_LIST_PREFS_KEY = 'accountListPrefs'
 
 // COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
 // @sig hydrateTableLayouts :: () -> Promise<LookupTable<TableLayout>>
@@ -46,7 +42,7 @@ const hydrateTableLayouts = async () => {
     }
 
     try {
-        const stored = await Storage.get(TABLE_LAYOUTS_KEY)
+        const stored = await IndexedDbStorage.queryTableLayouts()
         if (!stored) return LookupTable([], TableLayout, 'id')
 
         const layouts = Object.values(stored).map(hydrateTableLayout)
@@ -86,7 +82,7 @@ const hydrateTabLayout = async () => {
     }
 
     try {
-        const stored = await Storage.get(TAB_LAYOUT_KEY)
+        const stored = await IndexedDbStorage.queryTabLayout()
         if (!stored) return createDefaultTabLayout()
 
         const { activeTabGroupId, id, nextTabGroupId, tabGroups: rawGroups } = stored
@@ -103,7 +99,7 @@ const hydrateTabLayout = async () => {
 const hydrateAccountListPrefs = async () => {
     const defaults = { sortMode: SortMode.ByType(), collapsedSections: new Set() }
     try {
-        const stored = await Storage.get(ACCOUNT_LIST_PREFS_KEY)
+        const stored = await IndexedDbStorage.queryAccountListPrefs()
         if (!stored) return defaults
 
         const sortMode = SortMode[stored.sortMode]?.() || SortMode.ByType()
