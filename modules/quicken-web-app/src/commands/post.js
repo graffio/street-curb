@@ -108,9 +108,6 @@ const post = action => {
         SetDraggingView : () => dispatch(action),
         SetDropTarget   : () => dispatch(action),
 
-        // Page title actions (no persistence needed)
-        SetPageTitle : () => dispatch(action),
-
         // Effect-only actions (handlers dispatch directly to Redux, bypassing post)
         InitializeSystem : () => handleInitializeSystem(dispatch),
         OpenFile         : () => handleOpenFile(dispatch),

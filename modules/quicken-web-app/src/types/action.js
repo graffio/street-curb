@@ -83,9 +83,6 @@
  *      viewId: "String?"
  *  SetDropTarget
  *      groupId: "String?"
- *  SetPageTitle
- *      title   : "String",
- *      subtitle: "String?"
  *  InitializeSystem
  *  OpenFile
  *  ReopenFile
@@ -149,7 +146,6 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetLoadingStatus',
         'SetDraggingView',
         'SetDropTarget',
-        'SetPageTitle',
         'InitializeSystem',
         'OpenFile',
         'ReopenFile',
@@ -209,7 +205,6 @@ const toString = {
     setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
-    setPageTitle           : function () { return `Action.SetPageTitle(${R._toString(this.title)}, ${R._toString(this.subtitle)})` },
     initializeSystem       : function () { return `Action.InitializeSystem()` },
     openFile               : function () { return `Action.OpenFile()` },
     reopenFile             : function () { return `Action.ReopenFile()` },
@@ -250,7 +245,6 @@ const toJSON = {
     setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    setPageTitle           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     initializeSystem       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     openFile               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     reopenFile             : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -771,24 +765,6 @@ const SetDropTargetConstructor = function SetDropTarget(groupId) {
 Action.SetDropTarget = SetDropTargetConstructor
 
 /*
- * Construct a Action.SetPageTitle instance
- * @sig SetPageTitle :: (String, String?) -> Action.SetPageTitle
- */
-const SetPageTitleConstructor = function SetPageTitle(title, subtitle) {
-    const constructorName = 'Action.SetPageTitle(title, subtitle)'
-
-    R.validateString(constructorName, 'title', false, title)
-    R.validateString(constructorName, 'subtitle', true, subtitle)
-
-    const result = Object.create(SetPageTitlePrototype)
-    result.title = title
-    if (subtitle != null) result.subtitle = subtitle
-    return result
-}
-
-Action.SetPageTitle = SetPageTitleConstructor
-
-/*
  * Construct a Action.InitializeSystem instance
  * @sig InitializeSystem :: () -> Action.InitializeSystem
  */
@@ -1062,14 +1038,6 @@ const SetDropTargetPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetDropTargetConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const SetPageTitlePrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'SetPageTitle', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.setPageTitle, enumerable: false },
-    toJSON: { value: toJSON.setPageTitle, enumerable: false },
-    constructor: { value: SetPageTitleConstructor, enumerable: false, writable: true, configurable: true },
-})
-
 const InitializeSystemPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'InitializeSystem', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1125,7 +1093,6 @@ SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
 SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
-SetPageTitleConstructor.prototype = SetPageTitlePrototype
 InitializeSystemConstructor.prototype = InitializeSystemPrototype
 OpenFileConstructor.prototype = OpenFilePrototype
 ReopenFileConstructor.prototype = ReopenFilePrototype
@@ -1160,7 +1127,6 @@ SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerCon
 SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
-SetPageTitleConstructor.is = val => val && val.constructor === SetPageTitleConstructor
 InitializeSystemConstructor.is = val => val && val.constructor === InitializeSystemConstructor
 OpenFileConstructor.is = val => val && val.constructor === OpenFileConstructor
 ReopenFileConstructor.is = val => val && val.constructor === ReopenFileConstructor
@@ -1195,7 +1161,6 @@ SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
 SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
-SetPageTitleConstructor.toString = () => 'Action.SetPageTitle'
 InitializeSystemConstructor.toString = () => 'Action.InitializeSystem'
 OpenFileConstructor.toString = () => 'Action.OpenFile'
 ReopenFileConstructor.toString = () => 'Action.ReopenFile'
@@ -1236,7 +1201,6 @@ SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
 SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
-SetPageTitleConstructor._from = _input => Action.SetPageTitle(_input.title, _input.subtitle)
 InitializeSystemConstructor._from = _input => Action.InitializeSystem()
 OpenFileConstructor._from = _input => Action.OpenFile()
 ReopenFileConstructor._from = _input => Action.ReopenFile()
@@ -1271,7 +1235,6 @@ SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
 SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
-SetPageTitleConstructor.from = SetPageTitleConstructor._from
 InitializeSystemConstructor.from = InitializeSystemConstructor._from
 OpenFileConstructor.from = OpenFileConstructor._from
 ReopenFileConstructor.from = ReopenFileConstructor._from
@@ -1454,9 +1417,6 @@ SetDraggingViewConstructor.fromFirestore = SetDraggingViewConstructor._from
 SetDropTargetConstructor.toFirestore = o => ({ ...o })
 SetDropTargetConstructor.fromFirestore = SetDropTargetConstructor._from
 
-SetPageTitleConstructor.toFirestore = o => ({ ...o })
-SetPageTitleConstructor.fromFirestore = SetPageTitleConstructor._from
-
 InitializeSystemConstructor.toFirestore = o => ({ ...o })
 InitializeSystemConstructor.fromFirestore = InitializeSystemConstructor._from
 
@@ -1502,7 +1462,6 @@ Action.is = v => {
         SetLoadingStatus,
         SetDraggingView,
         SetDropTarget,
-        SetPageTitle,
         InitializeSystem,
         OpenFile,
         ReopenFile,
@@ -1538,7 +1497,6 @@ Action.is = v => {
         constructor === SetLoadingStatus ||
         constructor === SetDraggingView ||
         constructor === SetDropTarget ||
-        constructor === SetPageTitle ||
         constructor === InitializeSystem ||
         constructor === OpenFile ||
         constructor === ReopenFile
@@ -1589,7 +1547,6 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetLoadingStatus,
         SetDraggingView,
         SetDropTarget,
-        SetPageTitle,
         InitializeSystem,
         OpenFile,
         ReopenFile,
@@ -1623,7 +1580,6 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'SetPageTitle') return SetPageTitle.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'InitializeSystem') return InitializeSystem.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'OpenFile') return OpenFile.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ReopenFile') return ReopenFile.fromFirestore(doc, decodeTimestamps)

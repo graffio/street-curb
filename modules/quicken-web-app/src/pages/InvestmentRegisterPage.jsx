@@ -13,7 +13,6 @@ const investmentConfig = {
     columns: investmentColumns,
     sortSelector: S.Transactions.sortedForDisplay,
     highlightSelector: S.Transactions.highlightedId,
-    pageTitle: name => [name || 'Investment Account', 'Investment transactions with running cash balance'],
     filterChipRowProps: { showSecurities: true, showActions: true, showCategories: false },
     useManualCounts: true,
 }

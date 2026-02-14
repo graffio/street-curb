@@ -10,10 +10,12 @@ const TS = {
     // Convert kebab-case or snake_case to PascalCase
     // @sig toPascalCase :: String -> String
     toPascalCase: str =>
-        str
-            .split(/[-_]/)
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(''),
+        str.includes('-') || str.includes('_')
+            ? str
+                  .split(/[-_]/)
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join('')
+            : str.charAt(0).toUpperCase() + str.slice(1),
 
     // Strip comment markers (//, /*, *, */) from a line to get content
     // @sig toCommentContent :: String -> String

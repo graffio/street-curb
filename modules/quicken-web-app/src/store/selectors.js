@@ -92,8 +92,6 @@ const viewUi = (state, viewId) => state.viewUiState.get(viewId) || getDefaultVie
 // prettier-ignore
 const UI = {
     asOfDate                 : (state, viewId) => filter(state, viewId).asOfDate,
-    pageTitle                : state => state.pageTitle,
-    pageSubtitle             : state => state.pageSubtitle,
     currentRowIndex          : (state, viewId) => viewUi(state, viewId).currentRowIndex,
     currentSearchIndex       : (state, viewId) => viewUi(state, viewId).currentSearchIndex,
     customEndDate            : (state, viewId) => filter(state, viewId).customEndDate,
@@ -282,6 +280,51 @@ const activeViewId = state => {
     const activeGroup = tabLayout.tabGroups.get(tabLayout.activeTabGroupId)
     return activeGroup?.activeViewId ?? null
 }
+
+// prettier-ignore
+const categoryDimensionLayouts = {
+    category: { title: 'Spending by Category',  subtitle: 'View spending breakdown by category hierarchy' },
+    account : { title: 'Spending by Account',   subtitle: 'View spending breakdown by account' },
+    payee   : { title: 'Spending by Payee',     subtitle: 'View spending breakdown by payee' },
+    month   : { title: 'Spending by Month',     subtitle: 'View spending breakdown by month' },
+}
+
+// prettier-ignore
+const holdingsDimensionLayouts = {
+    account     : { title: 'Holdings by Account',  subtitle: 'View portfolio positions by account' },
+    security    : { title: 'Holdings by Security',  subtitle: 'View portfolio positions by security' },
+    securityType: { title: 'Holdings by Type',      subtitle: 'View portfolio positions by security type' },
+    goal        : { title: 'Holdings by Goal',      subtitle: 'View portfolio positions by investment goal' },
+}
+
+const defaultPageTitle = { title: 'Dashboard', subtitle: '' }
+
+// Derives page title from active view type + related state
+// @sig _activeViewPageTitle :: State -> { title: String, subtitle: String }
+const _activeViewPageTitle = state => {
+    const tl = state.tabLayout
+    const group = tl.tabGroups.get(tl.activeTabGroupId)
+    const { activeViewId: viewId, views } = group ?? {}
+    if (!viewId) return defaultPageTitle
+    const view = views.get(viewId)
+    if (!view) return defaultPageTitle
+    return view.match({
+        Register: () => {
+            const account = accounts(state).get(view.accountId)
+            if (!account) return defaultPageTitle
+            return { title: account.name, subtitle: account.type }
+        },
+        Report: () => {
+            const groupBy = filter(state, view.id).groupBy
+            if (view.reportType === 'holdings')
+                return holdingsDimensionLayouts[groupBy || 'account'] || holdingsDimensionLayouts.account
+            return categoryDimensionLayouts[groupBy || 'category'] || categoryDimensionLayouts.category
+        },
+        Reconciliation: () => ({ title: 'Reconciliation', subtitle: '' }),
+    })
+}
+
+const activeViewPageTitle = memoizeReduxState(['tabLayout', 'accounts', 'transactionFilters'], _activeViewPageTitle)
 
 const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', (state, tableLayoutId) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
@@ -472,6 +515,7 @@ export {
     // Base state
     accounts,
     activeViewId,
+    activeViewPageTitle,
     categories,
     draggingViewId,
     dropTargetGroupId,
