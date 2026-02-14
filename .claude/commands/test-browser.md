@@ -29,7 +29,7 @@ This command tests affected pages in a real browser, catching issues that unit t
 ## Prerequisites
 
 <requirements>
-- Local development server running (e.g., `bin/dev`, `rails server`, `npm run dev`)
+- Local development server running (e.g., `yarn dev`)
 - agent-browser CLI installed (see Setup below)
 - Git repository with changes to test
 </requirements>
@@ -108,15 +108,14 @@ Map changed files to testable routes:
 
 | File Pattern | Route(s) |
 |-------------|----------|
-| `app/views/users/*` | `/users`, `/users/:id`, `/users/new` |
-| `app/controllers/settings_controller.rb` | `/settings` |
-| `app/javascript/controllers/*_controller.js` | Pages using that Stimulus controller |
-| `app/components/*_component.rb` | Pages rendering that component |
-| `app/views/layouts/*` | All pages (test homepage at minimum) |
-| `app/assets/stylesheets/*` | Visual regression on key pages |
-| `app/helpers/*_helper.rb` | Pages using that helper |
-| `src/app/*` (Next.js) | Corresponding routes |
-| `src/components/*` | Pages using those components |
+| `modules/*/src/pages/*` | Corresponding page route |
+| `modules/*/src/components/*` | Pages rendering that component |
+| `modules/*/src/store/*` | Pages that read/write affected state |
+| `modules/*/src/commands/*` | Pages that trigger affected commands |
+| `modules/*/src/router.*` | All pages (test homepage at minimum) |
+| `modules/*/src/styles/*` | Visual regression on pages using those styles |
+| `modules/*/src/types/*` | Pages rendering affected types |
+| `modules/functional/src/*` | Pages using the changed utility |
 
 Build a list of URLs to test based on the mapping.
 
@@ -138,8 +137,7 @@ If server is not running, inform user:
 **Server not running**
 
 Please start your development server:
-- Rails: `bin/dev` or `rails server`
-- Node/Next.js: `npm run dev`
+- Run `yarn dev` from the project root
 
 Then run `/test-browser` again.
 ```

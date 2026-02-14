@@ -13,4 +13,4 @@ Rules live in these places:
 | Test structure                                             | `.claude/style-cards/test-file.md`       | current-task.json `style_card` field |
 | Architectural judgment calls                               | `.claude/preferences.md`                 | `[CHECKPOINT]` steps                 |
 | Universal principles                                       | `CLAUDE.md` (inline)                     | Always in context                    |
-| Tactical patterns                                          | `.claude/pattern-catalog/triggers.md`    | Always in context (triggers)         |
+| Tactical patterns                                          | `CLAUDE.md` → Pattern Triggers table     | Always in context (triggers)         |

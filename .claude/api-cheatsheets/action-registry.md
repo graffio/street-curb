@@ -53,23 +53,24 @@ keydown event
   → action.execute()
 ```
 
-## Component Pattern
+## Service-Layer Registration Pattern
+
+Command functions in service modules own ActionRegistry lifecycle — not React components.
 
 ```javascript
-const { ActionRegistry } = KeymapModule
-
-// Use handlersRef for stable execute functions that read current props
-const handlersRef = useRef({ onMoveDown, onMoveUp })
-handlersRef.current = { onMoveDown, onMoveUp }
-
-useEffect(() => {
-    if (!actionContext) return undefined
-    return ActionRegistry.register(actionContext, [
-        { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.onMoveDown() },
-        { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.onMoveUp() },
-    ])
-}, [actionContext])
+// register-page.js (service module)
+const RegisterPage = {
+    open: (viewId, columns) => {
+        // ... dispatch Action to open view ...
+        return ActionRegistry.register(viewId, [
+            { id: 'navigate:down', description: 'Move down', execute: () => RegisterPage.moveDown(viewId) },
+            { id: 'navigate:up', description: 'Move up', execute: () => RegisterPage.moveUp(viewId) },
+        ])
+    },
+}
 ```
+
+Components never call `ActionRegistry.register` — they call service functions that handle it.
 
 ## KeymapDrawer Integration
 
