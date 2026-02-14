@@ -10,12 +10,12 @@ const PRIORITY = 0 // High priority - structural issue
 
 // Cohesion group names and their naming patterns
 const COHESION_PATTERNS = {
-    P: /^(is|has|should|can|exports)[A-Z]/,
+    P: /^(is|has|should|can)[A-Z]/,
     T: /^(to|parse|format)[A-Z]/,
     F: /^(create|make|build)[A-Z]/,
     V: /^(check|validate)[A-Z]/,
     A: /^(collect|count|gather|find|process)[A-Z]/,
-    E: /^(persist|handle|dispatch|emit|send|query)[A-Z]/,
+    E: /^(persist|handle|dispatch|emit|send|query|register|hydrate)[A-Z]/,
 }
 
 // Vague prefixes that should be replaced with more specific names
@@ -128,7 +128,7 @@ const F = {
     createUncategorizedViolation: (line, name, suggestedGroup) => {
         const suggestion = suggestedGroup
             ? `Naming suggests ${suggestedGroup} group.`
-            : 'Rename to match a cohesion pattern (is*, get*, create*, check*, collect*).'
+            : 'Rename to match a cohesion pattern (is*, to*, create*, check*, collect*).'
         return F.createViolation(
             line,
             `CHECKPOINT: "${name}" is not in a P/T/F/V/A/E cohesion group. ${suggestion} ` +
@@ -300,5 +300,4 @@ const A = {
 }
 
 const checkCohesionStructure = FS.withExemptions('cohesion-structure', V.check)
-const CohesionStructure = { checkCohesionStructure }
-export { CohesionStructure }
+export { checkCohesionStructure }

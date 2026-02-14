@@ -131,5 +131,4 @@ const V = {
 }
 
 const checkFileNaming = FS.withExemptions('file-naming', V.check)
-const FileNaming = { checkFileNaming }
-export { FileNaming }
+export { checkFileNaming }

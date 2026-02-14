@@ -78,5 +78,4 @@ const A = {
 }
 
 const checkFunctionalPatterns = FS.withExemptions('functional-patterns', V.check)
-const FunctionalPatterns = { checkFunctionalPatterns }
-export { FunctionalPatterns }
+export { checkFunctionalPatterns }

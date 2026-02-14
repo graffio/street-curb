@@ -138,5 +138,4 @@ const A = {
 }
 
 const checkFunctionDeclarationOrdering = FS.withExemptions('function-declaration-ordering', V.check)
-const FunctionDeclarationOrdering = { checkFunctionDeclarationOrdering }
-export { FunctionDeclarationOrdering }
+export { checkFunctionDeclarationOrdering }

@@ -1,8 +1,7 @@
 import { test } from 'tap'
-import { FunctionalPatterns } from '../src/lib/rules/functional-patterns.js'
+import { checkFunctionalPatterns } from '../src/lib/rules/functional-patterns.js'
 import { Parser } from '../src/lib/parser.js'
 
-const { checkFunctionalPatterns } = FunctionalPatterns
 const { parseCode } = Parser
 
 test('Functional patterns rule tests', t => {

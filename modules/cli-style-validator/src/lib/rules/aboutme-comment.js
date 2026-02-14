@@ -81,5 +81,4 @@ const A = {
 }
 
 const checkAboutmeComment = FS.withExemptions('aboutme-comment', V.check)
-const AboutmeComment = { checkAboutmeComment }
-export { AboutmeComment }
+export { checkAboutmeComment }

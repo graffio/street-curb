@@ -19,11 +19,11 @@ Every function goes in a group, even if it's the only one of its type:
 | Letter | Type         | Name patterns                                        |
 |--------|--------------|------------------------------------------------------|
 | P      | Predicates   | `is*`, `has*`, `should*`, `can*`                     |
-| T      | Transformers | `to*`, `get*`, `extract*`, `parse*`, `format*`       |
-| F      | Factories    | `create*`, `make*`, `build*`                         |
-| V      | Validators   | `check*`, `validate*`                                |
-| A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`             |
-| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*` |
+| T      | Transformers | `to*`, `parse*`, `format*`                                        |
+| F      | Factories    | `create*`, `make*`, `build*`                                      |
+| V      | Validators   | `check*`, `validate*`                                             |
+| A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`, `process*`              |
+| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*`, `query*`, `register*`, `hydrate*` |
 
 If a function doesn't fit any group — stop and ask. Don't leave it uncategorized.
 
