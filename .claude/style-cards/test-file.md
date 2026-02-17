@@ -43,7 +43,7 @@ If the test would only prove that JavaScript or `@graffio/functional` works, ski
 
 Integration tests (`*.integration-test.js`) use `agent-browser` to verify real app behavior.
 
-**When to run them:** Any time you modify `.jsx` files. Run `cd modules/quicken-web-app && yarn tap:file test/ui-smoke.integration-test.js`.
+**When to run them:** Any time you modify `.jsx` files. Run the relevant feature test, e.g. `cd modules/quicken-web-app && yarn tap:file test/search.integration-test.js`. Run all with `yarn test:integration`.
 
 **When to write new ones:** Data correctness and core workflows — totals add up, transactions appear, filters work, reports show correct values. The financial data has to be right.
 
