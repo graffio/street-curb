@@ -8,6 +8,7 @@ symptoms:
   - "Failed to connect: No such file or directory (os error 2)"
   - "Could not configure browser: Invalid response: EOF"
 date: 2026-01-27
+superseded_by: test/helpers/integration-browser.js handles stale session cleanup in createSession()
 ---
 
 # agent-browser smoke tests fail on repeated runs
