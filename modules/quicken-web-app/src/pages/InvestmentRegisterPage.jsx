@@ -88,6 +88,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
                     inputRef={searchInputRef}
                     onNext={() => RegisterPageCommands.handleSearchNavigate(ctx, 1)}
                     onPrev={() => RegisterPageCommands.handleSearchNavigate(ctx, -1)}
+                    onClear={() => RegisterPageCommands.clearSearch(viewId)}
                 />
             </FilterChipRow>
             <div style={mainContentStyle}>
@@ -113,7 +114,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
                         row.transaction && RegisterPageCommands.highlightRow(data, viewId, row.transaction.id)
                     }
                     onHighlightChange={newId => RegisterPageCommands.highlightRow(data, viewId, newId)}
-                    onEscape={() => searchQuery && post(Action.SetTransactionFilter(viewId, { searchQuery: '' }))}
+                    onEscape={() => searchQuery && RegisterPageCommands.clearSearch(viewId)}
                     actionContext={viewId}
                     context={{ searchQuery: searchQuery || filterQuery }}
                 />

@@ -45,6 +45,7 @@
 - InvestmentReportPage.jsx — SetPageTitle (moved to routing)
 - CategoryReportPage.jsx — useMemo → Transactions.tree memoized selector
 - Dialog.jsx — useState/useEffect → F.createPortalContainer lazy singleton
+- SearchChip.jsx — useState/useRef/useEffect → uncontrolled input + module-level state + clearSearch command
 
 ### Still needs work
 
@@ -52,7 +53,6 @@
 |------|-------|---------------|
 | FilterChips.jsx | 2 useEffect (ActionRegistry) | See `action-registration-outside-react` brainstorm |
 | RootLayout.jsx | 4 useEffect | Init + keyboard lifecycle → move to non-React mechanism |
-| SearchChip.jsx | useState/useRef/useEffect | Uncontrolled input + module-level debounce |
 
 ### Active exemptions (NOT dead — suppress real validator violations)
 - selectors.js — selector line counts and method chaining
@@ -89,7 +89,6 @@ Decision: Import Radix directly. Move 3 real components to quicken-web-app (exem
 
 ## Open Questions
 
-- **SearchChip useState** — local input debounce. Uncontrolled input + module debounce?
 - **RootLayout useState** — file handle storage. Move to Redux or plain JS?
 - **Migration ordering** — validator rule first, or proof-of-concept first?
 
