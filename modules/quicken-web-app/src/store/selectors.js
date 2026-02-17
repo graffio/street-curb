@@ -29,6 +29,7 @@ import {
 } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
+import { buildTransactionTree } from '../utils/category-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
@@ -443,6 +444,11 @@ const _searchMatches = (state, viewId, accountId) =>
 
 const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, viewId), state.categories, state.accounts)
 
+const _transactionTree = (state, viewId) => {
+    const groupBy = filter(state, viewId).groupBy || 'category'
+    return buildTransactionTree(groupBy, T.enriched(state, viewId))
+}
+
 const _forAccount = (state, _viewId, accountId) => state.transactions.filter(Transaction.isInAccount(accountId))
 
 const _filteredForAccount = (state, viewId, accountId) =>
@@ -476,6 +482,8 @@ const T= {
     filteredForInvestment: memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _filteredForInvestment),
     searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _searchMatches),
 }
+
+T.tree = memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree)
 
 // Parameterized sort/highlight pairs — wired after T is defined so factory receives memoized filter functions
 T.sortedForDisplay = memoizeReduxStatePerKey(
