@@ -10,7 +10,21 @@ Run after completing a feature or fixing a non-trivial bug. Handles everything t
 
 ## Steps
 
-### 1. Commit Quality Check
+### 1. Integration Test Verification
+
+If the work modified `.jsx` files in `quicken-web-app/src/`, run affected integration tests before reviewing commits:
+
+```bash
+cd modules/quicken-web-app
+grep -l 'ComponentName' test/*.integration-test.js  # find the right test file
+yarn tap:file test/{feature}.integration-test.js
+```
+
+Find the right test file by grepping ABOUTME comments for the component name. Each test file's ABOUTME lists the components it covers.
+
+**If no `.jsx` files were modified:** Skip to step 2.
+
+### 2. Commit Quality Check
 
 Review commits since branch diverged from main:
 
@@ -25,9 +39,9 @@ Check each commit message for Problem/Solution/Impact format (see `.claude/tasks
 - Offer to reorganize using `.claude/tasks/reorganize-commits.md`
 - **[CHECKPOINT]** — get approval before any history rewriting
 
-**If commits look good:** Move to step 2.
+**If commits look good:** Move to step 3.
 
-### 2. Knowledge Capture
+### 3. Knowledge Capture
 
 Determine if a non-trivial problem was solved during this work. Trivial = obvious fix, typo, small config change.
 
@@ -45,7 +59,7 @@ Determine if a non-trivial problem was solved during this work. Trivial = obviou
 
 **If trivial:** Skip. Not every change needs a solution doc.
 
-### 3. Architecture & Decisions
+### 4. Architecture & Decisions
 
 **If architectural decisions were made during this work:**
 - Significant patterns → create doc in `docs/architecture/`
@@ -57,7 +71,7 @@ Determine if a non-trivial problem was solved during this work. Trivial = obviou
 
 **If no architectural decisions:** Skip.
 
-### 4. Artifact Cleanup
+### 5. Artifact Cleanup
 
 - Delete `.claude/current-task.json`
 - Ask about stale spec files: "Delete specifications/{spec-used-for-this-work}.md?"
