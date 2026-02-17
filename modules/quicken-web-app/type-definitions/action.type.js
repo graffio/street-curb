@@ -1,3 +1,5 @@
+// ABOUTME: TaggedSum type definition for all Redux actions in quicken-web-app
+// ABOUTME: Each variant represents a distinct state change or side-effect intent
 /** @module Action */
 
 import { FieldTypes } from './field-types.js'
@@ -57,6 +59,7 @@ export const Action = {
         // Global UI actions
         SetShowReopenBanner : { show: 'Boolean' },
         SetShowDrawer       : { show: 'Boolean' },
+        ToggleDrawer        : {},
         SetLoadingStatus    : { status: 'String?' },
 
         // Drag state actions

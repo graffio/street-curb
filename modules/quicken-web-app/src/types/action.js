@@ -77,6 +77,7 @@
  *      show: "Boolean"
  *  SetShowDrawer
  *      show: "Boolean"
+ *  ToggleDrawer
  *  SetLoadingStatus
  *      status: "String?"
  *  SetDraggingView
@@ -143,6 +144,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'ToggleSectionCollapsed',
         'SetShowReopenBanner',
         'SetShowDrawer',
+        'ToggleDrawer',
         'SetLoadingStatus',
         'SetDraggingView',
         'SetDropTarget',
@@ -202,6 +204,7 @@ const toString = {
     toggleSectionCollapsed : function () { return `Action.ToggleSectionCollapsed(${R._toString(this.sectionId)})` },
     setShowReopenBanner    : function () { return `Action.SetShowReopenBanner(${R._toString(this.show)})` },
     setShowDrawer          : function () { return `Action.SetShowDrawer(${R._toString(this.show)})` },
+    toggleDrawer           : function () { return `Action.ToggleDrawer()` },
     setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
@@ -242,6 +245,7 @@ const toJSON = {
     toggleSectionCollapsed : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setShowReopenBanner    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setShowDrawer          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    toggleDrawer           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -717,6 +721,21 @@ const SetShowDrawerConstructor = function SetShowDrawer(show) {
 Action.SetShowDrawer = SetShowDrawerConstructor
 
 /*
+ * Construct a Action.ToggleDrawer instance
+ * @sig ToggleDrawer :: () -> Action.ToggleDrawer
+ */
+const ToggleDrawerConstructor = function ToggleDrawer() {
+    const constructorName = 'Action.ToggleDrawer()'
+    R.validateArgumentLength(constructorName, 0, arguments)
+
+    const result = Object.create(ToggleDrawerPrototype)
+
+    return result
+}
+
+Action.ToggleDrawer = ToggleDrawerConstructor
+
+/*
  * Construct a Action.SetLoadingStatus instance
  * @sig SetLoadingStatus :: (String?) -> Action.SetLoadingStatus
  */
@@ -1014,6 +1033,14 @@ const SetShowDrawerPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetShowDrawerConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const ToggleDrawerPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ToggleDrawer', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.toggleDrawer, enumerable: false },
+    toJSON: { value: toJSON.toggleDrawer, enumerable: false },
+    constructor: { value: ToggleDrawerConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SetLoadingStatusPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetLoadingStatus', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1090,6 +1117,7 @@ SetAccountListSortModeConstructor.prototype = SetAccountListSortModePrototype
 ToggleSectionCollapsedConstructor.prototype = ToggleSectionCollapsedPrototype
 SetShowReopenBannerConstructor.prototype = SetShowReopenBannerPrototype
 SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
+ToggleDrawerConstructor.prototype = ToggleDrawerPrototype
 SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
@@ -1124,6 +1152,7 @@ SetAccountListSortModeConstructor.is = val => val && val.constructor === SetAcco
 ToggleSectionCollapsedConstructor.is = val => val && val.constructor === ToggleSectionCollapsedConstructor
 SetShowReopenBannerConstructor.is = val => val && val.constructor === SetShowReopenBannerConstructor
 SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerConstructor
+ToggleDrawerConstructor.is = val => val && val.constructor === ToggleDrawerConstructor
 SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
@@ -1158,6 +1187,7 @@ SetAccountListSortModeConstructor.toString = () => 'Action.SetAccountListSortMod
 ToggleSectionCollapsedConstructor.toString = () => 'Action.ToggleSectionCollapsed'
 SetShowReopenBannerConstructor.toString = () => 'Action.SetShowReopenBanner'
 SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
+ToggleDrawerConstructor.toString = () => 'Action.ToggleDrawer'
 SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
@@ -1198,6 +1228,7 @@ SetAccountListSortModeConstructor._from = _input => Action.SetAccountListSortMod
 ToggleSectionCollapsedConstructor._from = _input => Action.ToggleSectionCollapsed(_input.sectionId)
 SetShowReopenBannerConstructor._from = _input => Action.SetShowReopenBanner(_input.show)
 SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
+ToggleDrawerConstructor._from = _input => Action.ToggleDrawer()
 SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
@@ -1232,6 +1263,7 @@ SetAccountListSortModeConstructor.from = SetAccountListSortModeConstructor._from
 ToggleSectionCollapsedConstructor.from = ToggleSectionCollapsedConstructor._from
 SetShowReopenBannerConstructor.from = SetShowReopenBannerConstructor._from
 SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
+ToggleDrawerConstructor.from = ToggleDrawerConstructor._from
 SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
@@ -1408,6 +1440,9 @@ SetShowReopenBannerConstructor.fromFirestore = SetShowReopenBannerConstructor._f
 SetShowDrawerConstructor.toFirestore = o => ({ ...o })
 SetShowDrawerConstructor.fromFirestore = SetShowDrawerConstructor._from
 
+ToggleDrawerConstructor.toFirestore = o => ({ ...o })
+ToggleDrawerConstructor.fromFirestore = ToggleDrawerConstructor._from
+
 SetLoadingStatusConstructor.toFirestore = o => ({ ...o })
 SetLoadingStatusConstructor.fromFirestore = SetLoadingStatusConstructor._from
 
@@ -1459,6 +1494,7 @@ Action.is = v => {
         ToggleSectionCollapsed,
         SetShowReopenBanner,
         SetShowDrawer,
+        ToggleDrawer,
         SetLoadingStatus,
         SetDraggingView,
         SetDropTarget,
@@ -1494,6 +1530,7 @@ Action.is = v => {
         constructor === ToggleSectionCollapsed ||
         constructor === SetShowReopenBanner ||
         constructor === SetShowDrawer ||
+        constructor === ToggleDrawer ||
         constructor === SetLoadingStatus ||
         constructor === SetDraggingView ||
         constructor === SetDropTarget ||
@@ -1544,6 +1581,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         ToggleSectionCollapsed,
         SetShowReopenBanner,
         SetShowDrawer,
+        ToggleDrawer,
         SetLoadingStatus,
         SetDraggingView,
         SetDropTarget,
@@ -1577,6 +1615,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'ToggleSectionCollapsed') return ToggleSectionCollapsed.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetShowReopenBanner') return SetShowReopenBanner.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetShowDrawer') return SetShowDrawer.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ToggleDrawer') return ToggleDrawer.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)

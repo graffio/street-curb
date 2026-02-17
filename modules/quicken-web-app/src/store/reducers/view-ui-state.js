@@ -1,6 +1,7 @@
 // ABOUTME: ViewUiState action handlers for the Redux reducer
 // ABOUTME: Manages per-view ephemeral UI state (popover, row index, columns)
 
+import { mapObject } from '@graffio/functional'
 import { ViewUiState as ViewUiStateType } from '../../types/index.js'
 
 // Creates a ViewUiState with default values for a given viewId
@@ -19,12 +20,14 @@ const createDefaultViewUiState = viewId =>
     )
 
 // Merges partial UI state changes into view UI state for a specific view
+// Changes may be direct values or updater functions (old => new) for TanStack Table compatibility
 // @sig setViewUiState :: (State, Action.SetViewUiState) -> State
 const setViewUiState = (state, action) => {
     const { viewId, changes } = action
 
     const existing = state.viewUiState.get(viewId) || createDefaultViewUiState(viewId)
-    const updated = ViewUiStateType.from({ ...existing, ...changes })
+    const resolved = mapObject((value, key) => (typeof value === 'function' ? value(existing[key]) : value), changes)
+    const updated = ViewUiStateType.from({ ...existing, ...resolved })
 
     return { ...state, viewUiState: state.viewUiState.addItemWithId(updated) }
 }
