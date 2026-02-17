@@ -23,7 +23,7 @@ Every function goes in a group, even if it's the only one of its type:
 | F      | Factories    | `create*`, `make*`, `build*`                                      |
 | V      | Validators   | `check*`, `validate*`                                             |
 | A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`, `process*`              |
-| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*`, `query*`, `register*`, `hydrate*` |
+| E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*`, `query*`, `register*`, `set*`, `reset*`, `hydrate*` |
 
 If a function doesn't fit any group — stop and ask. Don't leave it uncategorized.
 

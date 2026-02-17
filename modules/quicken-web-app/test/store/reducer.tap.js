@@ -1,5 +1,5 @@
-// ABOUTME: Tests for Redux reducer account list actions
-// ABOUTME: Verifies SetAccountListSortMode and ToggleSectionCollapsed handling
+// ABOUTME: Tests for Redux reducer actions (account list, drawer toggle, view UI state)
+// ABOUTME: Verifies round-trip dispatch → reducer → new state for each action variant
 
 import t from 'tap'
 import { Reducer } from '../../src/store/reducer.js'
@@ -68,6 +68,77 @@ t.test('Given state with a collapsed section', t => {
 
         t.ok(result.collapsedSections.has('banking'), 'Then first section stays collapsed')
         t.ok(result.collapsedSections.has('investments'), 'Then second section is collapsed')
+        t.end()
+    })
+    t.end()
+})
+
+// -----------------------------------------------------------------------------
+// ToggleDrawer
+// -----------------------------------------------------------------------------
+
+t.test('Given initial state with drawer closed', t => {
+    const state = createEmptyState()
+
+    t.test('When ToggleDrawer is dispatched', t => {
+        const action = Action.ToggleDrawer()
+        const result = rootReducer(state, { action })
+
+        t.equal(result.showDrawer, true, 'Then drawer is open')
+        t.end()
+    })
+
+    t.test('When ToggleDrawer is dispatched twice', t => {
+        const after1 = rootReducer(state, { action: Action.ToggleDrawer() })
+        const after2 = rootReducer(after1, { action: Action.ToggleDrawer() })
+
+        t.equal(after2.showDrawer, false, 'Then drawer is closed again')
+        t.end()
+    })
+    t.end()
+})
+
+// -----------------------------------------------------------------------------
+// SetViewUiState — function-valued changes
+// -----------------------------------------------------------------------------
+
+t.test('Given state with existing view UI state', t => {
+    const initial = createEmptyState()
+    const viewId = 'rpt_test'
+    const seed = Action.SetViewUiState(viewId, { treeExpansion: { node1: true } })
+    const state = rootReducer(initial, { action: seed })
+
+    t.test('When SetViewUiState is dispatched with a function-valued change', t => {
+        const action = Action.SetViewUiState(viewId, { treeExpansion: old => ({ ...old, node2: true }) })
+        const result = rootReducer(state, { action })
+        const expansion = result.viewUiState.get(viewId).treeExpansion
+
+        t.equal(expansion.node1, true, 'Then existing expansion is preserved')
+        t.equal(expansion.node2, true, 'Then new expansion is added')
+        t.end()
+    })
+
+    t.test('When SetViewUiState is dispatched with a direct value', t => {
+        const action = Action.SetViewUiState(viewId, { treeExpansion: { replaced: true } })
+        const result = rootReducer(state, { action })
+        const expansion = result.viewUiState.get(viewId).treeExpansion
+
+        t.equal(expansion.replaced, true, 'Then direct value replaces old state')
+        t.equal(expansion.node1, undefined, 'Then old expansion is gone')
+        t.end()
+    })
+
+    t.test('When SetViewUiState is dispatched with mixed function and direct values', t => {
+        const action = Action.SetViewUiState(viewId, {
+            treeExpansion: old => ({ ...old, node3: true }),
+            columnSizing: { col1: 200 },
+        })
+        const result = rootReducer(state, { action })
+        const uiState = result.viewUiState.get(viewId)
+
+        t.equal(uiState.treeExpansion.node1, true, 'Then function-resolved value preserves existing')
+        t.equal(uiState.treeExpansion.node3, true, 'Then function-resolved value adds new')
+        t.same(uiState.columnSizing, { col1: 200 }, 'Then direct value is applied')
         t.end()
     })
     t.end()

@@ -102,6 +102,7 @@ const post = action => {
         // Global UI actions (no persistence needed)
         SetShowReopenBanner : () => dispatch(action),
         SetShowDrawer       : () => dispatch(action),
+        ToggleDrawer        : () => dispatch(action),
         SetLoadingStatus    : () => dispatch(action),
 
         // Drag state actions (no persistence needed)

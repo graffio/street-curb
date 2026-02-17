@@ -145,6 +145,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         // Global UI actions
         SetShowReopenBanner : () => ({ ...state, showReopenBanner: action.show }),
         SetShowDrawer       : () => ({ ...state, showDrawer: action.show }),
+        ToggleDrawer        : () => ({ ...state, showDrawer: !state.showDrawer }),
         SetLoadingStatus    : () => ({ ...state, loadingStatus: action.status }),
 
         // Drag state actions

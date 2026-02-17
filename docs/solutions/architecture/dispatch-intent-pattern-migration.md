@@ -149,9 +149,45 @@ state, not side effects: `ensureTableLayoutEffect` → `tableLayoutOrDefault` se
 `activeViewPageTitle` selector (see `specifications/derived-page-title.md`). Lesson: if the "effect" just
 computes a value from existing state and stores it, it's a selector waiting to be discovered.
 
+### Pattern 5: Push Updater Resolution to Reducer (2026-02-17)
+
+When the only reason a component reads `currentStore().getState()` is to resolve a TanStack Table updater
+function (`typeof updater === 'function' ? updater(current) : updater`), push that resolution into the
+reducer instead.
+
+**Before** (component E group reads state):
+```js
+const E = {
+    updateTreeExpansion: viewId => updater => {
+        const current = S.UI.treeExpansion(currentStore().getState(), viewId)
+        post(Action.SetViewUiState(viewId, { treeExpansion: typeof updater === 'function' ? updater(current) : updater }))
+    },
+}
+```
+
+**After** (reducer resolves, component just passes through):
+```jsx
+// JSX — updater function passes straight through
+onExpandedChange={updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater }))}
+
+// Reducer — resolves function-valued changes against existing state
+const resolved = mapObject(
+    (value, key) => (typeof value === 'function' ? value(existing[key]) : value),
+    changes,
+)
+```
+
+Similarly, boolean toggles (`SetShowDrawer(!S.showDrawer(currentStore().getState()))`) should be
+`ToggleDrawer()` — a zero-field action variant with the negation in the reducer.
+
+**When to use currentStore() vs push to reducer:**
+- **Push to reducer** when the handler's only state read is to resolve an updater or negate a boolean
+- **Keep currentStore()** when the handler needs state for branching, validation, or multi-step logic
+
 ## Prevention
 
 - Read `.claude/style-cards/react-component.md` before writing React components
 - The dispatch-intent pattern is now documented in the style card
 - Style validator `--strict-react` catches violations at commit time
 - When tempted to add useCallback: ask "can this read state from currentStore() instead?"
+- When tempted to read state just to resolve an updater: push resolution to the reducer

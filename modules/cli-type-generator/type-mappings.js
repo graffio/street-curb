@@ -15,7 +15,6 @@ const sources = {
     cliStyleValidator       : `${REPO_ROOT}/modules/cli-style-validator/type-definitions`,
     curbMap                 : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
-    designSystem            : `${REPO_ROOT}/modules/design-system/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
     quickenTypes            : `${REPO_ROOT}/modules/quicken-type-definitions`,
     quickenWebApp           : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
@@ -28,7 +27,6 @@ const targets = {
     cliStyleValidator       : `${REPO_ROOT}/modules/cli-style-validator/src/types`,
     curbMap                 : `${REPO_ROOT}/modules/curb-map/src/types`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/src/types`,
-    designSystem         : `${REPO_ROOT}/modules/design-system/src/types`,
     functional           : `${REPO_ROOT}/modules/functional/src/types`,
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
@@ -65,10 +63,6 @@ export const typeMappings = {
 
     // special case: source is just copied verbatim to target
     [`${sources.curbMap}/field-types.js`]                 : [targets.curbMap],
-
-
-    // design-system
-    [`${sources.designSystem}/column-definition.type.js`] : [targets.designSystem],
 
 
 
