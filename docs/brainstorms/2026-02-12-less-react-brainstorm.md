@@ -54,8 +54,12 @@
 | Dialog.jsx | useState + useEffect | Persistent portal container created at app init |
 | SearchChip.jsx | useState/useRef/useEffect | Uncontrolled input + module-level debounce |
 
-### Dead exemptions to delete (trivial)
-- selectors.js, KeymapDrawer.jsx, InvestmentReportColumns.jsx, MainLayout.jsx, CellRenderers.jsx
+### Active exemptions (NOT dead — suppress real validator violations)
+- selectors.js — selector line counts and method chaining
+- KeymapDrawer.jsx — .map() in component body
+- InvestmentReportColumns.jsx — conditional spread in cell renderers
+- MainLayout.jsx — React.Children.find/filter for slot detection
+- CellRenderers.jsx — .slice(), .includes(), spreads in cell renderers
 
 ## Patterns That Make This Work
 
