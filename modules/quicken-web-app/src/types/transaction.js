@@ -475,7 +475,7 @@ Transaction.matchesAllVisibleFields = (query, categories, securities, txn) => {
     return (
         Transaction.matchesAnyText(
             query,
-            ['memo', 'number', 'investmentAction', 'date'],
+            ['memo', 'number', 'date'],
             categories,
             securities,
         )(txn) ||
