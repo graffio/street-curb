@@ -42,7 +42,9 @@ tap.test('bank-filters: date filter This Year changes content', async t => {
     t.ok(afterClear.includes('Include all dates'), 'chip restored to "Include all dates"')
 })
 
-tap.test('bank-filters: category filter Food shows 1 selected', async t => {
+tap.test('bank-filters: category filter Food shows correct payees', async t => {
+    const expected = loadExpected()
+
     session.clickByText('Categories:')
     await wait(200)
     session.clickPopoverItem('Food')
@@ -53,6 +55,15 @@ tap.test('bank-filters: category filter Food shows 1 selected', async t => {
     const afterFilter = session.browser('snapshot')
     t.notOk(afterFilter.includes('Something went wrong'), 'no crash after category filter')
     t.ok(afterFilter.includes('1 selected'), 'category chip shows "1 selected"')
+
+    // Verify Food payees appear in filtered results
+    const foodPayees = expected.categoryFiltered.Food.payees
+    const foundPayee = foodPayees.find(p => afterFilter.includes(p))
+    t.ok(foundPayee, `at least one Food payee visible (found: ${foundPayee})`)
+
+    // Verify non-Food payee is absent
+    const nonFoodPayee = expected.categoryFiltered.nonFoodPayee
+    t.notOk(afterFilter.includes(nonFoodPayee), `non-Food payee "${nonFoodPayee}" not visible`)
 
     // Clear category filter
     session.clickClear()
@@ -106,6 +117,51 @@ tap.test('bank-filters: custom date filter shows correct filtered count', async 
     t.ok(
         afterClear.includes(`${primaryCount} transactions`),
         `shows ${primaryCount} transactions after clearing filter`,
+    )
+})
+
+tap.test('bank-filters: combined date + category filter shows intersection', async t => {
+    const expected = loadExpected()
+    const primaryCount = expected.accounts.find(a => a.name === 'Primary Checking').transactionCount
+
+    // Apply date filter (Custom dates, Feb 2024)
+    session.clickByText('Date:')
+    await wait(200)
+    session.clickPopoverItem('Custom dates')
+    await wait(200)
+    await session.enterDate('text=Start Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/01/2024')
+    await session.enterDate('text=End Date >> .. >> [placeholder="MM/DD/YYYY"]', '02/28/2024')
+    session.browser('press', ['Escape'])
+    await wait(200)
+
+    // Apply category filter (Food)
+    session.clickByText('Categories:')
+    await wait(200)
+    session.clickPopoverItem('Food')
+    await wait(200)
+    session.browser('press', ['Escape'])
+    await wait(200)
+
+    const afterBothFilters = session.browser('snapshot')
+    t.notOk(afterBothFilters.includes('Something went wrong'), 'no crash after combined filters')
+
+    // Verify intersection count
+    const intersectionCount = expected.dateCategoryIntersection.count
+    t.ok(
+        afterBothFilters.includes(`${intersectionCount} transactions`),
+        `shows ${intersectionCount} transactions (date+category intersection)`,
+    )
+    t.ok(afterBothFilters.includes(`filtered from ${primaryCount}`), `shows "filtered from ${primaryCount}"`)
+
+    // Clear both filters (use nth=0 since two clear buttons are visible)
+    session.browser('click', ['[style*="border-radius: 50%"] >> nth=0'])
+    await wait(200)
+    session.clickClear()
+    await wait(200)
+    const afterClear = session.browser('snapshot')
+    t.ok(
+        afterClear.includes(`${primaryCount} transactions`),
+        `shows ${primaryCount} transactions after clearing both filters`,
     )
 })
 
