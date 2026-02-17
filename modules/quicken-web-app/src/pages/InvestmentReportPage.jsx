@@ -32,7 +32,7 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
 
-    const totalHoldingsCount = holdings?.length ?? 0
+    const totalHoldingsCount = holdings.length
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
