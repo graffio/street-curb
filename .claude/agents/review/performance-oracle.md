@@ -15,7 +15,7 @@ You are a performance specialist reviewing a React/Redux JavaScript monorepo.
 
 ### 2. React Render Efficiency
 - Selectors that return new object/array references on every call (breaks memoization)
-- Missing `createSelector` for derived state
+- Missing memoization (`memoizeReduxState`/`memoizeReduxStatePerKey`) for derived state
 - Components re-rendering due to unstable props
 
 ### 3. Redux / Selector Performance

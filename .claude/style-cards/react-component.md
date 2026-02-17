@@ -4,15 +4,50 @@ Components are **wiring** between selectors (reads) and actions (writes). No log
 
 ## Structure
 
-Config constants → P/T groups (module level) → helper components → exported component(s) LAST.
+Config constants → helper components → exported component(s) LAST.
 
-**Don't over-extract.** Extract when: used 3+ times, a name clarifies non-obvious logic, or indentation forces a line break. Leave self-documenting expressions inline (`MY_SET.has(x)`, `obj.field`).
+No cohesion groups (P/T/F/V/A/E) — those are for JS modules with business logic. Components are wiring, not logic.
+
+## Extract Subcomponents Aggressively
+
+Components should be small and flat. These patterns signal a missing subcomponent:
+
+- **`{condition && <...>}`** — the child should select its own visibility via `useSelector` and return null when hidden
+- **`{x ? <A> : <B>}`** — a single subcomponent selects state and renders the right variant
+- **`.map()` with multi-line JSX** — each mapped item is its own component
+- **Multiple `useSelector` calls feeding different JSX regions** — each region with its own data dependency is a subcomponent
+
+Subcomponents receive business identifiers (`viewId`, `accountId`) and select their own data. This keeps the parent flat and each subcomponent focused on one piece of state.
+
+## Props — No Prop Drilling
+
+A component must not accept props it does not directly use. If data is only passed through to a child, the child should select it via `useSelector`.
+
+**What counts as direct use:**
+- Component renders or branches on the value (`isFiltering`, `itemLabel`)
+- Component passes it to its own `useSelector` call (`viewId`, `accountId`)
+- Component invokes the callback itself (`onClick`, `onNext`)
+- Static configuration the component consumes (`columns`, `items`)
+
+**What is prop drilling (violation):**
+- Selecting data via `useSelector` and passing it to a child that could select it itself
+- Accepting a prop only to spread it onto a child component
+
+**Fix:** Wrap the child in a self-selecting component that calls `useSelector` internally. Pass business identifiers (`viewId`, `accountId`) so children can select their own data.
 
 ## Handlers
 
-- Handlers call `post(Action.X(...))` or a command function (e.g. `RegisterPage.updateSorting`). Nothing else.
-- No data prep in handlers — if you need to transform before dispatching, that belongs in the command function or reducer.
-- **Inline single `post()` calls directly in JSX.** Don't extract `() => post(Action.X(...))` into an E group function — the Action variant name IS the intent. Extract to E group only when the handler has branching, multiple steps, state reads, or timing wrappers.
+- Handlers call `post(Action.X(...))`. Nothing else.
+- No data prep in handlers — if you need to transform before dispatching, that belongs in the reducer.
+- **Inline `post()` calls directly in JSX.** The Action variant name IS the intent — no extraction needed.
+
+## All Writes Go Through `post`
+
+Every state change goes through `post(Action.X(...))`. No exceptions. Components never perform side effects directly — they call `post` and `post` handles dispatch, persistence, authorization, and rollback.
+
+- `commands/post.js` — routes each Action to Redux dispatch + persistence side effects
+- `commands/operations/` — multi-step operations (file loading, initialization)
+- `commands/data-sources/` — non-Redux state (IndexedDB, FocusRegistry)
 
 ## Hooks
 
@@ -21,16 +56,6 @@ Config constants → P/T groups (module level) → helper components → exporte
 No `useCallback`, `useEffect`, `useRef`, `useMemo`, `useState` in `quicken-web-app/src/**/*.jsx`.
 
 **Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`, `SelectableListPopover.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) — these are unavoidable API surfaces.
-
-### Dispatch-Intent Pattern (replaces useCallback)
-
-Handlers call command functions that read state from the store. Component only passes stable identifiers.
-
-```jsx
-onSortingChange={updater => RegisterPage.updateSorting(tableLayoutId, updater)}
-```
-
-The command function (in a service module) reads current state via `currentStore()`, resolves the updater, and dispatches a data-only Action. No closure over Redux state in the component.
 
 ### Selector-with-Defaults (replaces init useEffect)
 
@@ -61,8 +86,8 @@ Pages don't dispatch their own title. The routing layer handles page title dispa
 
 Interactive components register actions via `ActionRegistry.register()`:
 - Accept `actionContext` prop (viewId or null for global)
-- Registration and cleanup happen in the service layer, not in React effects
-- Never reference specific key names — keybindings live in `DEFAULT_BINDINGS` (keymap-routing.js)
+- Registration currently uses `useEffect` (acknowledged COMPLEXITY — awaiting non-React mechanism)
+- Never reference specific key names — keybindings live in `DEFAULT_BINDINGS` (`keymap-config.js`)
 
 ## Layer Check
 

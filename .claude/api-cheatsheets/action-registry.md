@@ -31,7 +31,7 @@ Plain objects. No Tagged type. `id` matches keys in `DEFAULT_BINDINGS`.
 
 ## DEFAULT_BINDINGS
 
-**Location:** `modules/quicken-web-app/src/services/keymap-routing.js`
+**Location:** `modules/quicken-web-app/src/keymap-config.js`
 
 Maps normalized key strings to action IDs:
 
@@ -53,24 +53,9 @@ keydown event
   → action.execute()
 ```
 
-## Service-Layer Registration Pattern
+## Registration
 
-Command functions in service modules own ActionRegistry lifecycle — not React components.
-
-```javascript
-// register-page.js (service module)
-const RegisterPage = {
-    open: (viewId, columns) => {
-        // ... dispatch Action to open view ...
-        return ActionRegistry.register(viewId, [
-            { id: 'navigate:down', description: 'Move down', execute: () => RegisterPage.moveDown(viewId) },
-            { id: 'navigate:up', description: 'Move up', execute: () => RegisterPage.moveUp(viewId) },
-        ])
-    },
-}
-```
-
-Components never call `ActionRegistry.register` — they call service functions that handle it.
+Call `ActionRegistry.register(context, actions)` — returns a cleanup function. Currently called from FilterChipRow (filter-focus actions) and register-page-commands.js (navigation + search actions).
 
 ## KeymapDrawer Integration
 

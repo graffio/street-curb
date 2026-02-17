@@ -24,7 +24,6 @@ import clone from './src/ramda-like/clone.js'
 import compactMap from './src/ramda-like/compact-map.js'
 import compact from './src/ramda-like/compact.js'
 import containsIgnoreCase from './src/ramda-like/contains-ignore-case.js'
-import createSelector from './src/ramda-like/create-selector.js'
 import debounce from './src/ramda-like/debounce.js'
 import diffObjects from './src/ramda-like/diff-objects.js'
 import dissocPath from './src/ramda-like/dissoc-path.js'
@@ -128,7 +127,6 @@ export {
     clone,
     compact,
     containsIgnoreCase,
-    createSelector,
     debounce,
     diffObjects,
     dissoc,

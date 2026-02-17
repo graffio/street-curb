@@ -56,7 +56,6 @@ Use these instead of rolling your own. `import { ... } from '@graffio/functional
 **Object transforms:** mapObject, mapValues, filterObject, filterValues, evolve, renameKeys, mergeRight, mergeDeepRight, removeNilValues, invertObj, zipObject
 **Object queries:** findInValues, firstKey, diffObjects
 **Utilities:** pipe, isNil, type, debounce, throttle, memoizeOnce
-**Selectors:** createSelector (supports curried + uncurried usage)
 **Dates:** startOfDay/endOfDay, startOfWeek/endOfWeek, startOfMonth/endOfMonth, startOfQuarter/endOfQuarter, startOfYear/endOfYear, addDays/subtractDays, parseIsoDateFormat, parseSlashDateFormat, formatDateString
 
 **Custom data structures (read full API before using):**
@@ -101,7 +100,7 @@ modules/
 ### quicken-web-app/src/ internal structure
 
 ```
-commands/   # post.js (effect coordination) + infrastructure (storage, focus-registry)
+commands/   # post.js (all writes), operations/ (multi-step), data-sources/ (IndexedDB, FocusRegistry)
 store/      # Redux state, reducers, selectors, pure transforms
 components/ # Presentation only — no side effects, no derived state
 pages/      # Page-level components (presentation, call post() for actions)

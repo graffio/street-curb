@@ -1,0 +1,97 @@
+# Less React in React
+
+**Date:** 2026-02-12 (updated 2026-02-17)
+**Status:** Brainstorm — partially implemented, remaining work tracked here
+
+**Trigger:** Components accumulate hooks that have nothing to do with presentation.
+
+## The Principle
+
+**React is a render layer.** Its job: current state → JSX. Period.
+
+| Concern                        | Belongs in                                  | NOT in React              |
+|--------------------------------|---------------------------------------------|---------------------------|
+| Derived state                  | Selectors (memoizeReduxState)               | useMemo                   |
+| Memoization                    | Selectors                                   | useCallback, useMemo      |
+| State computation              | Reducers                                    | Event handler callbacks   |
+| Side effects on state change   | Reducers (defaults/init)                    | useEffect                 |
+| Cross-component coordination   | Redux (shared state)                        | useRef bridges            |
+| Imperative DOM (focus, scroll) | FocusRegistry (plain JS)                    | useRef + useEffect        |
+
+## The Rule (codified in react-component style card)
+
+**The only React hook allowed in app components is `useSelector`.** Zero exceptions.
+
+**Exemption:** Design-system wrapper components (DataTable, KeyboardDateInput, SelectableListPopover) may use third-party library hooks.
+
+## Completed
+
+- FilterChipRow refactored to composition layout shell (no prop drilling)
+- RegisterPageView inlined into individual register pages
+- Page titles derived from routing layer (no SetPageTitle useEffect)
+- Selectors-with-defaults pattern (tableLayoutOrDefault) — replaces init useEffects
+- FocusRegistry ref callbacks — replaces useRef + useEffect for DOM
+- Style card codified: no cohesion groups, aggressive subcomponent extraction, inline post() only
+- No-prop-drilling rule documented
+
+## Remaining COMPLEXITY: react-redux-separation Comments
+
+14 original comments. 5 were dead exemptions (validator no longer flags). Status of the 9 real ones:
+
+### Done
+- FilterChipRow.jsx — useEffect for ActionRegistry (still present, tracked in separate brainstorm)
+- RegisterPageView.jsx — eliminated (inlined into pages)
+- DashboardPage.jsx — SetPageTitle (moved to routing)
+- InvestmentReportPage.jsx — SetPageTitle (moved to routing)
+
+### Still needs work
+
+| File | Hooks | What's needed |
+|------|-------|---------------|
+| CategoryReportPage.jsx | useMemo + useEffect | Move tree building to memoized selector |
+| FilterChips.jsx | 2 useEffect (ActionRegistry) | See `action-registration-outside-react` brainstorm |
+| RootLayout.jsx | 4 useEffect | Init + keyboard lifecycle → move to non-React mechanism |
+| Dialog.jsx | useState + useEffect | Persistent portal container created at app init |
+| SearchChip.jsx | useState/useRef/useEffect | Uncontrolled input + module-level debounce |
+
+### Dead exemptions to delete (trivial)
+- selectors.js, KeymapDrawer.jsx, InvestmentReportColumns.jsx, MainLayout.jsx, CellRenderers.jsx
+
+## Patterns That Make This Work
+
+### 1. Dispatch intent, not state
+Handlers pass identifiers to `post()`. Reducers compute next state. No closures over Redux state = no useCallback. See `push-state-reads-to-reducers` brainstorm.
+
+### 2. Selectors with defaults
+Selectors return a default when state is empty. No mount-time effects.
+
+### 3. FocusRegistry (plain JS)
+Ref callbacks register DOM elements. Keyboard system calls `FocusRegistry.focus(id)`. No useRef/useEffect.
+
+### 4. Persistent portal container
+Create portal DOM node at app init. Dialog.jsx drops useState + useEffect.
+
+### 5. SearchChip → uncontrolled input + module debounce
+Input holds own display value (no useState). Module-level debounce dispatches to Redux.
+
+## Kill @graffio/design-system
+
+The design-system package adds no value:
+- 25 Radix re-exports (0 logic)
+- Thin wrappers (~356 lines)
+- 3 real components: DataTable, KeyboardDateInput, SelectableListPopover (~1,212 lines)
+
+Decision: Import Radix directly. Move 3 real components to quicken-web-app (exempt from useSelector-only rule).
+
+## Open Questions
+
+- **SearchChip useState** — local input debounce. Uncontrolled input + module debounce?
+- **RootLayout useState** — file handle storage. Move to Redux or plain JS?
+- **CategoryReportPage useMemo** — tree building. Move to memoized selector?
+- **Migration ordering** — validator rule first, or proof-of-concept first?
+
+## Related
+
+- `action-registration-outside-react` brainstorm — ActionRegistry useEffect elimination
+- `push-state-reads-to-reducers` brainstorm — currentStore().getState() in E groups
+- `require-action-registry-rule` brainstorm — validator enforcement

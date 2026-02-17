@@ -63,12 +63,12 @@ the code evolves.
 
 | Signal                                  | Simplification               | Destination                                  | Why it helps                            |
 |-----------------------------------------|------------------------------|----------------------------------------------|-----------------------------------------|
-| `useCallback`/`useRef` closure over Redux state | Dispatch-intent command fn | Service module (e.g. `register-page.js`) | No closure, reads state at call time    |
+| `useCallback`/`useRef` closure over Redux state | Dispatch-intent pattern    | Operation (`commands/operations/`)         | No closure, reads state at call time    |
 | `useEffect` for init/ensure             | Selector-with-defaults       | `selectors.js` (memoized selector)           | Testable, no mount-time side effect     |
-| `useRef` for DOM focus                  | FocusRegistry ref callback   | `services/focus-registry.js` + JSX ref attr  | Plain JS, testable, no hook             |
+| `useRef` for DOM focus                  | FocusRegistry ref callback   | `commands/data-sources/focus-registry.js` + JSX ref attr | Plain JS, testable, no hook  |
 | `useEffect` for page title              | Router-layer dispatch        | `router.js`                                  | Pages don't know their own title        |
 | `useMemo` from Redux state              | Memoized selector            | `selectors.js`                               | Testable, reusable, memoized            |
-| `useState` for non-serializable state   | Plain JS service module      | `services/*.js`                              | Like FocusRegistry pattern              |
+| `useState` for non-serializable state   | Plain JS data source           | `commands/data-sources/*.js`                | Like FocusRegistry pattern              |
 | Handler with inline logic               | Move to `post(Action.X)`     | `reducer.js`                                 | Logic in reducer = testable             |
 | Style objects in component              | Use semantic CSS vars        | `styles.css` or inline vars                  | Eliminates objects entirely             |
 | Style objects (if vars won't work)      | Move to shared module        | `styles/*.js`                                | Reusable across files                   |

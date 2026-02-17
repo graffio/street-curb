@@ -10,29 +10,33 @@ Selectors handle **Redux mechanics and simple derivation**. Complex business log
 - Cross-type transformations → use `Type.from{InputType}()` methods, not inline logic
 - When simplifying a selector, consider: does this logic belong as a method on the Tagged type? If so, add it to the type's `.type.js` file (never the generated `.js` file)
 
-## createSelector
+## Memoization
 
-Use `createSelector` from `@graffio/functional` when a selector needs both curried and uncurried usage:
+Use `memoizeReduxState` (single key) or `memoizeReduxStatePerKey` (keyed by viewId/accountId) from the store module. These track which Redux state slices a selector depends on and only recompute when those slices change.
 
 ```javascript
-const selectItem = createSelector((state, id) => state.items[id])
-selectItem(state, 'foo')        // uncurried — in selectors, tests, business logic
-useSelector(selectItem('foo'))  // curried — in components
-```
+const _filtered = (state, viewId) => {
+    const { categories, securities, transactions } = state
+    return TransactionFilter.apply(filter(state, viewId), transactions, categories, securities)
+}
 
-Only wrap selectors that actually need curried usage. Simple state-only selectors don't need it (YAGNI).
+const filtered = memoizeReduxStatePerKey(
+    ['transactions', 'categories', 'securities'],  // state slices to watch
+    'transactionFilters',                           // filter state key
+    _filtered,
+)
+```
 
 ## Composition Over Chaining
 
-Prefer composing selectors over long method chains:
+Prefer composing selectors over long method chains. Delegate complex logic to business modules:
 
 ```javascript
-// Prefer: compose small selectors
-const visible = createSelector((state, viewId) => {
+const _visible = (state, viewId) => {
     const txns = selectTransactions(state)
-    const filter = selectFilter(state, viewId)
-    return Filter.apply(txns, filter)  // business module does the work
-})
+    const f = filter(state, viewId)
+    return TransactionFilter.apply(f, txns, state.categories, state.securities)
+}
 ```
 
 ## Fail-Fast
