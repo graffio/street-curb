@@ -2,11 +2,11 @@
 // ABOUTME: Single import point for component consumers
 // COMPLEXITY: exports - barrel file for centralized component access
 
-import { FilterChips } from './FilterChips.jsx'
+import { FilterChips } from './filter-chips/index.js'
 
 export { AccountList } from './AccountList.jsx'
 export { FilterChipRow } from './FilterChipRow.jsx'
-export { FilterChips } from './FilterChips.jsx'
+export { FilterChips } from './filter-chips/index.js'
 export { ReportsList } from './ReportsList.jsx'
 export { RootLayout } from './RootLayout.jsx'
 export { TabGroup } from './TabGroup.jsx'
