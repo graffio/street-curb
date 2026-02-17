@@ -1,53 +1,51 @@
 // ABOUTME: Portal-aware Dialog wrapping @radix-ui/react-dialog with proper theme inheritance
 // ABOUTME: Automatically creates themed portal container for dialogs rendered outside app tree
-// COMPLEXITY: react-redux-separation — Portal manages DOM portal container lifecycle (useState + useEffect required)
 
 import * as RadixDialog from '@radix-ui/react-dialog'
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef } from 'react'
+
+let _portalContainer = null
+
+const TITLE_BASE_STYLE = {
+    fontSize: 'var(--font-size-4)',
+    fontWeight: '600',
+    color: 'var(--gray-12)',
+    marginBottom: 'var(--space-3)',
+}
 
 const F = {
-    // Creates a portal container with proper Radix theme attributes
+    // Merges title base style with optional overrides
+    // @sig toTitleStyle :: Style? -> Style
+    toTitleStyle: style => ({ ...TITLE_BASE_STYLE, ...style }),
+
+    // Creates (or returns cached) themed portal container for dialog rendering outside app tree
     // @sig createPortalContainer :: () -> HTMLElement
     createPortalContainer: () => {
-        const container = document.createElement('div')
-        container.className = 'radix-themes'
-        container.setAttribute('data-radius', 'medium')
-        container.setAttribute('data-scaling', '100%')
-        container.setAttribute('data-accent-color', 'blue')
-        container.setAttribute('data-gray-color', 'gray')
-        container.setAttribute('data-appearance', 'light')
-        container.style.position = 'fixed'
-        container.style.inset = '0'
-        container.style.pointerEvents = 'none'
-        container.style.zIndex = '9999'
-        document.body.appendChild(container)
-        return container
-    },
-
-    // Removes portal container from DOM
-    // @sig cleanupPortalContainer :: HTMLElement -> Void
-    cleanupPortalContainer: container => {
-        if (document.body.contains(container)) document.body.removeChild(container)
+        if (!_portalContainer) {
+            _portalContainer = document.createElement('div')
+            _portalContainer.className = 'radix-themes'
+            _portalContainer.setAttribute('data-radius', 'medium')
+            _portalContainer.setAttribute('data-scaling', '100%')
+            _portalContainer.setAttribute('data-accent-color', 'blue')
+            _portalContainer.setAttribute('data-gray-color', 'gray')
+            _portalContainer.setAttribute('data-appearance', 'light')
+            _portalContainer.style.position = 'fixed'
+            _portalContainer.style.inset = '0'
+            _portalContainer.style.pointerEvents = 'none'
+            _portalContainer.style.zIndex = '9999'
+            document.body.appendChild(_portalContainer)
+        }
+        return _portalContainer
     },
 }
 
 // Dialog Title component
 // @sig Title :: Props -> JSXElement
-const Title = ({ children, className, style, ...props }) => {
-    const titleStyle = {
-        fontSize: 'var(--font-size-4)',
-        fontWeight: '600',
-        color: 'var(--gray-12)',
-        marginBottom: 'var(--space-3)',
-        ...style,
-    }
-
-    return (
-        <RadixDialog.Title className={className} style={titleStyle} {...props}>
-            {children}
-        </RadixDialog.Title>
-    )
-}
+const Title = ({ children, className, style, ...props }) => (
+    <RadixDialog.Title className={className} style={F.toTitleStyle(style)} {...props}>
+        {children}
+    </RadixDialog.Title>
+)
 
 // Dialog Description component
 // @sig Description :: Props -> JSXElement
@@ -61,27 +59,11 @@ const Description = ({ children, className, style, ...props }) => (
 // @sig Close :: Props -> JSXElement
 const Close = ({ children, ...props }) => <RadixDialog.Close {...props}>{children}</RadixDialog.Close>
 
-const E = {
-    // Creates portal container on mount and cleans up on unmount (skips if custom container provided)
-    // @sig portalLifecycle :: (HTMLElement?, Function) -> (() -> void)?
-    portalLifecycle: (customContainer, setPortalContainer) => {
-        if (customContainer) return
-        const container = F.createPortalContainer()
-        setPortalContainer(container)
-        return () => F.cleanupPortalContainer(container)
-    },
-}
-
-// Portal with theme-aware container creation and cleanup
+// Portal with theme-aware persistent container
 // @sig Portal :: { children: ReactNode, container?: HTMLElement } -> JSXElement
-const Portal = ({ children, container: customContainer }) => {
-    const [portalContainer, setPortalContainer] = useState(customContainer || null)
-
-    useEffect(() => E.portalLifecycle(customContainer, setPortalContainer), [customContainer])
-
-    if (!portalContainer) return null
-    return <RadixDialog.Portal container={portalContainer}>{children}</RadixDialog.Portal>
-}
+const Portal = ({ children, container }) => (
+    <RadixDialog.Portal container={container || F.createPortalContainer()}>{children}</RadixDialog.Portal>
+)
 
 // Dialog Root component
 // @sig Root :: Props -> JSXElement
