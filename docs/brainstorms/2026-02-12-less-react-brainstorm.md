@@ -43,15 +43,15 @@
 - RegisterPageView.jsx — eliminated (inlined into pages)
 - DashboardPage.jsx — SetPageTitle (moved to routing)
 - InvestmentReportPage.jsx — SetPageTitle (moved to routing)
+- CategoryReportPage.jsx — useMemo → Transactions.tree memoized selector
+- Dialog.jsx — useState/useEffect → F.createPortalContainer lazy singleton
 
 ### Still needs work
 
 | File | Hooks | What's needed |
 |------|-------|---------------|
-| CategoryReportPage.jsx | useMemo + useEffect | Move tree building to memoized selector |
 | FilterChips.jsx | 2 useEffect (ActionRegistry) | See `action-registration-outside-react` brainstorm |
 | RootLayout.jsx | 4 useEffect | Init + keyboard lifecycle → move to non-React mechanism |
-| Dialog.jsx | useState + useEffect | Persistent portal container created at app init |
 | SearchChip.jsx | useState/useRef/useEffect | Uncontrolled input + module-level debounce |
 
 ### Active exemptions (NOT dead — suppress real validator violations)
@@ -91,7 +91,6 @@ Decision: Import Radix directly. Move 3 real components to quicken-web-app (exem
 
 - **SearchChip useState** — local input debounce. Uncontrolled input + module debounce?
 - **RootLayout useState** — file handle storage. Move to Redux or plain JS?
-- **CategoryReportPage useMemo** — tree building. Move to memoized selector?
 - **Migration ordering** — validator rule first, or proof-of-concept first?
 
 ## Related
