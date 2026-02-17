@@ -749,6 +749,16 @@ Context: Components grew large with deep nesting and conditional rendering.
 Decision: `{condition && <...>}`, ternaries, `.map()` with multi-line JSX, and multiple selectors feeding different regions all signal a missing subcomponent.
 Why: Flat, small components with one data dependency each are easier to follow.
 
+### 2026-02-17: Integration test discovery via ABOUTME grep
+Context: Decomposed monolithic ui-smoke test into 6 feature files; workflows need to find the right test.
+Decision: Each test file has `// ABOUTME: covers ComponentName, ...` — workflows grep for component names.
+Why: Single source of truth in test files themselves, no mapping table to maintain in two workflow files.
+
+### 2026-02-17: 6 feature test files (not 4)
+Context: Brainstorm listed 4 feature files, but bank/investment register filter tests had no destination.
+Decision: Created bank-register-filters and investment-register-filters to receive keyboard-nav tests.
+Why: Dissolving keyboard-nav requires destinations for all its tests; 4 files would leave orphans.
+
 ### 2026-02-14: Rename handlers/ → operations/
 Context: "Handler" means two things — React event handler and post operation.
 Decision: `commands/handlers/` → `commands/operations/`. Functions keep `handle` prefix (validator requirement).
