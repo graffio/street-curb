@@ -6,6 +6,7 @@ import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors.js'
+import { Transaction } from '../types/transaction.js'
 import { Formatters } from '../utils/formatters.js'
 
 const { formatCurrency, formatDate, formatPrice, formatQuantity } = Formatters
@@ -157,28 +158,6 @@ const CategoryCell = ({ getValue, row, table }) => {
     )
 }
 
-// Map QIF action codes to human-readable labels
-const ACTION_LABELS = {
-    Buy: 'Buy',
-    Sell: 'Sell',
-    Div: 'Dividend',
-    ReinvDiv: 'Reinvest Div',
-    XIn: 'Transfer In',
-    XOut: 'Transfer Out',
-    ContribX: 'Contribution',
-    WithdrwX: 'Withdrawal',
-    ShtSell: 'Short Sell',
-    CvrShrt: 'Cover Short',
-    CGLong: 'LT Cap Gain',
-    CGShort: 'ST Cap Gain',
-    MargInt: 'Margin Int',
-    ShrsIn: 'Shares In',
-    ShrsOut: 'Shares Out',
-    StkSplit: 'Stock Split',
-    Exercise: 'Exercise',
-    Expire: 'Expire',
-}
-
 // Cell renderer for investment action column — shows transfer account as subtitle when present
 // @sig ActionCell :: { getValue: Function, row: Row, table: Table } -> ReactElement
 const ActionCell = ({ getValue, row, table }) => {
@@ -186,7 +165,7 @@ const ActionCell = ({ getValue, row, table }) => {
     const transferAccountId = row.original.transaction.transferAccountId
     const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : null))
     const searchQuery = table.options.meta?.searchQuery
-    const label = ACTION_LABELS[code] || code || ''
+    const label = Transaction.ACTION_LABELS[code] || code || ''
 
     if (!transferName)
         return (
@@ -282,7 +261,7 @@ const PriceCell = ({ getValue }) => {
 
 const CellRenderers = {
     AccountCell,
-    ACTION_LABELS,
+    ACTION_LABELS: Transaction.ACTION_LABELS,
     ActionCell,
     CategoryCell,
     CurrencyCell,

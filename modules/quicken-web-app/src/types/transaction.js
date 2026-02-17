@@ -439,6 +439,27 @@ Transaction.toEnriched = (txn, categories, accounts) => ({
     accountName: accounts.get(txn.accountId).name,
 })
 
+Transaction.ACTION_LABELS = {
+    Buy: 'Buy',
+    Sell: 'Sell',
+    Div: 'Dividend',
+    ReinvDiv: 'Reinvest Div',
+    XIn: 'Transfer In',
+    XOut: 'Transfer Out',
+    ContribX: 'Contribution',
+    WithdrwX: 'Withdrawal',
+    ShtSell: 'Short Sell',
+    CvrShrt: 'Cover Short',
+    CGLong: 'LT Cap Gain',
+    CGShort: 'ST Cap Gain',
+    MargInt: 'Margin Int',
+    ShrsIn: 'Shares In',
+    ShrsOut: 'Shares Out',
+    StkSplit: 'Stock Split',
+    Exercise: 'Exercise',
+    Expire: 'Expire',
+}
+
 Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     const matchesFields = anyFieldContains(fields)(query)
     const matches = containsIgnoreCase(query)
@@ -448,13 +469,21 @@ Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     return false
 }
 
-Transaction.matchesAllVisibleFields = (query, categories, securities, txn) =>
-    Transaction.matchesAnyText(
-        query,
-        ['payee', 'memo', 'number', 'investmentAction', 'date'],
-        categories,
-        securities,
-    )(txn) || containsIgnoreCase(query)(String(txn.amount))
+Transaction.matchesAllVisibleFields = (query, categories, securities, txn) => {
+    const { amount, investmentAction, payee } = txn
+    const matches = containsIgnoreCase(query)
+    return (
+        Transaction.matchesAnyText(
+            query,
+            ['memo', 'number', 'investmentAction', 'date'],
+            categories,
+            securities,
+        )(txn) ||
+        matches(payee || 'Unknown Payee') ||
+        matches(Transaction.ACTION_LABELS[investmentAction] || '') ||
+        matches(String(amount))
+    )
+}
 
 Transaction.matchesSearch = (query, categories, securities) => txn => {
     if (!query.trim()) return false

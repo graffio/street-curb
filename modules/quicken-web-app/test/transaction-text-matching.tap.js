@@ -102,6 +102,29 @@ t.test('matchesSearch', async t => {
         })
     })
 
+    t.test('Given a bank transaction with no payee', async t => {
+        const noPayeeTxn = { ...bankTxn, payee: null }
+
+        t.test('When searching for "Unknown Payee"', async t => {
+            const matches = Transaction.matchesSearch('Unknown', emptyCategories, emptySecurities)
+            t.ok(matches(noPayeeTxn), 'Then it matches the display fallback text')
+        })
+    })
+
+    t.test('Given an investment transaction with action code "Div"', async t => {
+        const divTxn = { ...investmentTxn, investmentAction: 'Div' }
+
+        t.test('When searching by display label "Dividend"', async t => {
+            const matches = Transaction.matchesSearch('Dividend', emptyCategories, securities)
+            t.ok(matches(divTxn), 'Then it matches the display label')
+        })
+
+        t.test('When searching by raw code "Div"', async t => {
+            const matches = Transaction.matchesSearch('Div', emptyCategories, securities)
+            t.ok(matches(divTxn), 'Then it still matches the raw code')
+        })
+    })
+
     t.test('Given an empty query', async t =>
         t.test('When searching', async t => {
             const matches = Transaction.matchesSearch('', emptyCategories, emptySecurities)

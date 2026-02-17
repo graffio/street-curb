@@ -101,6 +101,33 @@ Transaction.toEnriched = (txn, categories, accounts) => ({
 })
 
 // -----------------------------------------------------------------------------
+// Display labels
+// -----------------------------------------------------------------------------
+
+// Map QIF action codes to human-readable labels shown in table cells
+// @sig ACTION_LABELS :: { String: String }
+Transaction.ACTION_LABELS = {
+    Buy: 'Buy',
+    Sell: 'Sell',
+    Div: 'Dividend',
+    ReinvDiv: 'Reinvest Div',
+    XIn: 'Transfer In',
+    XOut: 'Transfer Out',
+    ContribX: 'Contribution',
+    WithdrwX: 'Withdrawal',
+    ShtSell: 'Short Sell',
+    CvrShrt: 'Cover Short',
+    CGLong: 'LT Cap Gain',
+    CGShort: 'ST Cap Gain',
+    MargInt: 'Margin Int',
+    ShrsIn: 'Shares In',
+    ShrsOut: 'Shares Out',
+    StkSplit: 'Stock Split',
+    Exercise: 'Exercise',
+    Expire: 'Expire',
+}
+
+// -----------------------------------------------------------------------------
 // Predicates (curried for use with filter)
 // -----------------------------------------------------------------------------
 
@@ -115,15 +142,23 @@ Transaction.matchesAnyText = (query, fields, categories, securities) => txn => {
     return false
 }
 
-// Checks all user-visible text fields, category, security, and amount
+// Checks all user-visible text fields (display values, not raw data), category, security, and amount
 // @sig matchesAllVisibleFields :: (String, LookupTable<Category>, LookupTable<Security>, Transaction) -> Boolean
-Transaction.matchesAllVisibleFields = (query, categories, securities, txn) =>
-    Transaction.matchesAnyText(
-        query,
-        ['payee', 'memo', 'number', 'investmentAction', 'date'],
-        categories,
-        securities,
-    )(txn) || containsIgnoreCase(query)(String(txn.amount))
+Transaction.matchesAllVisibleFields = (query, categories, securities, txn) => {
+    const { amount, investmentAction, payee } = txn
+    const matches = containsIgnoreCase(query)
+    return (
+        Transaction.matchesAnyText(
+            query,
+            ['memo', 'number', 'investmentAction', 'date'],
+            categories,
+            securities,
+        )(txn) ||
+        matches(payee || 'Unknown Payee') ||
+        matches(Transaction.ACTION_LABELS[investmentAction] || '') ||
+        matches(String(amount))
+    )
+}
 
 // Returns predicate for search highlighting (false for empty query)
 // @sig matchesSearch :: (String, LookupTable<Category>, LookupTable<Security>) -> Transaction -> Boolean
