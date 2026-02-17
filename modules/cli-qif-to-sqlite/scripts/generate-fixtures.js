@@ -193,6 +193,85 @@ const T = {
             .map(T.toRoundedCategory)
     },
 
+    // Query payees and count for transactions matching a category on an account
+    // @sig toCategoryFilteredPayees :: (Database, String, String) -> { count: Number, payees: [String] }
+    toCategoryFilteredPayees: (db, accountName, categoryName) => {
+        const rows = db
+            .prepare(
+                `SELECT t.payee, COUNT(*) as count
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 JOIN categories c ON t.categoryId = c.id
+                 WHERE a.name = ? AND c.name LIKE ? || '%'
+                 GROUP BY t.payee ORDER BY t.payee`,
+            )
+            .all(accountName, categoryName)
+        return { count: rows.reduce((sum, r) => sum + r.count, 0), payees: rows.map(r => r.payee) }
+    },
+
+    // Query symbols and count for transactions matching an action on an account
+    // @sig toActionFilteredSymbols :: (Database, String, String) -> { count: Number, symbols: [String] }
+    toActionFilteredSymbols: (db, accountName, action) => {
+        const rows = db
+            .prepare(
+                `SELECT s.symbol, COUNT(*) as count
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 LEFT JOIN securities s ON t.securityId = s.id
+                 WHERE a.name = ? AND t.investmentAction = ?
+                 GROUP BY s.symbol ORDER BY s.symbol`,
+            )
+            .all(accountName, action)
+        return { count: rows.reduce((sum, r) => sum + r.count, 0), symbols: rows.map(r => r.symbol).filter(Boolean) }
+    },
+
+    // Query a single payee that does NOT match a category on an account
+    // @sig toNonCategoryPayee :: (Database, String, String) -> String
+    toNonCategoryPayee: (db, accountName, categoryName) => {
+        const row = db
+            .prepare(
+                `SELECT DISTINCT t.payee
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 LEFT JOIN categories c ON t.categoryId = c.id
+                 WHERE a.name = ? AND (c.name IS NULL OR c.name NOT LIKE ? || '%') AND t.payee IS NOT NULL
+                 ORDER BY t.payee LIMIT 1`,
+            )
+            .get(accountName, categoryName)
+        if (!row) throw new Error(`No non-${categoryName} payee found on ${accountName}`)
+        return row.payee
+    },
+
+    // Query count for date + category intersection on an account
+    // @sig toDateCategoryIntersection :: (Database, String, String, String, String) -> { count: Number }
+    toDateCategoryIntersection: (db, accountName, categoryName, startDate, endDate) => {
+        const count = db
+            .prepare(
+                `SELECT COUNT(*) as c
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 JOIN categories c ON t.categoryId = c.id
+                 WHERE a.name = ? AND c.name LIKE ? || '%' AND t.date BETWEEN ? AND ?`,
+            )
+            .get(accountName, categoryName, startDate, endDate).c
+        return { count }
+    },
+
+    // Query count for security + action intersection on an account
+    // @sig toSecurityActionIntersection :: (Database, String, String, String) -> { count: Number }
+    toSecurityActionIntersection: (db, accountName, symbol, action) => {
+        const count = db
+            .prepare(
+                `SELECT COUNT(*) as c
+                 FROM transactions t
+                 JOIN accounts a ON t.accountId = a.id
+                 JOIN securities s ON t.securityId = s.id
+                 WHERE a.name = ? AND s.symbol = ? AND t.investmentAction = ?`,
+            )
+            .get(accountName, symbol, action).c
+        return { count }
+    },
+
     // Query transaction count per security for an account
     // @sig toPerSecurityCounts :: (Database, String) -> Object<Symbol, Number>
     toPerSecurityCounts: (db, accountName) => {
@@ -344,6 +423,19 @@ const E = {
                 categoryTotals: T.toDateFilteredCategoryTotals(db, '2024-02-01', '2024-02-28'),
             },
             perSecurityCounts: T.toPerSecurityCounts(db, 'Fidelity Brokerage'),
+            categoryFiltered: {
+                Food: T.toCategoryFilteredPayees(db, 'Primary Checking', 'Food'),
+                nonFoodPayee: T.toNonCategoryPayee(db, 'Primary Checking', 'Food'),
+            },
+            actionFiltered: { Buy: T.toActionFilteredSymbols(db, 'Fidelity Brokerage', 'Buy') },
+            dateCategoryIntersection: T.toDateCategoryIntersection(
+                db,
+                'Primary Checking',
+                'Food',
+                '2024-02-01',
+                '2024-02-28',
+            ),
+            securityActionIntersection: T.toSecurityActionIntersection(db, 'Fidelity Brokerage', 'VTI', 'Buy'),
         }
         writeFileSync(expectedPath, JSON.stringify(expected, null, 2))
         console.log(`  Written: ${expectedPath}`)

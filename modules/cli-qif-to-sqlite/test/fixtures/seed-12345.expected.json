@@ -1,26 +1,26 @@
 {
   "seed": 12345,
-  "generatedAt": "2026-02-05T17:25:16.022Z",
+  "generatedAt": "2026-02-17T23:42:14.879Z",
   "totals": {
     "accounts": 6,
-    "transactions": 1039,
+    "transactions": 1041,
     "securities": 8,
-    "prices": 4168,
+    "prices": 4184,
     "categories": 9
   },
   "accounts": [
     {
       "name": "401k Retirement",
       "type": "Investment",
-      "transactionCount": 52,
-      "balance": -38998.28,
-      "marketValue": 45642.42
+      "transactionCount": 50,
+      "balance": -37500.08,
+      "marketValue": 50067.3
     },
     {
       "name": "Chase Sapphire",
       "type": "Credit Card",
-      "transactionCount": 402,
-      "balance": -32528.02,
+      "transactionCount": 403,
+      "balance": -31558.63,
       "marketValue": null
     },
     {
@@ -33,15 +33,15 @@
     {
       "name": "Fidelity Brokerage",
       "type": "Investment",
-      "transactionCount": 196,
-      "balance": 35645.98,
-      "marketValue": 53556.75
+      "transactionCount": 199,
+      "balance": 36751.67,
+      "marketValue": 52887.11
     },
     {
       "name": "Primary Checking",
       "type": "Bank",
       "transactionCount": 341,
-      "balance": 62903.22,
+      "balance": 63211.44,
       "marketValue": null
     },
     {
@@ -55,8 +55,8 @@
   "categoryTotals": [
     {
       "category": "Food",
-      "total": -26294.59,
-      "count": 355
+      "total": -25726.03,
+      "count": 353
     },
     {
       "category": "Income",
@@ -65,18 +65,18 @@
     },
     {
       "category": "Transportation",
-      "total": -6358.52,
-      "count": 116
+      "total": -6704.28,
+      "count": 120
     },
     {
       "category": "Uncategorized",
-      "total": -133150.58,
-      "count": 405
+      "total": -129048.49,
+      "count": 404
     },
     {
       "category": "Utilities",
-      "total": -14473.41,
-      "count": 110
+      "total": -14916.8,
+      "count": 111
     }
   ],
   "holdings": [
@@ -84,36 +84,43 @@
       "account": "401k Retirement",
       "symbol": "VFIAX",
       "securityName": "Vanguard 500 Index Fund",
-      "shares": 93.144,
-      "marketValue": 45642.42
+      "shares": 89.481,
+      "marketValue": 50067.3
+    },
+    {
+      "account": "Fidelity Brokerage",
+      "symbol": "AAPL",
+      "securityName": "Apple Inc.",
+      "shares": 5,
+      "marketValue": 917.3
     },
     {
       "account": "Fidelity Brokerage",
       "symbol": "BND",
       "securityName": "Vanguard Total Bond Market ETF",
-      "shares": 14,
-      "marketValue": 1179.5
+      "shares": 80,
+      "marketValue": 6739.2
     },
     {
       "account": "Fidelity Brokerage",
       "symbol": "JNJ",
       "securityName": "Johnson & Johnson",
-      "shares": 2.109,
-      "marketValue": 498.59
+      "shares": 1.735,
+      "marketValue": 362.77
     },
     {
       "account": "Fidelity Brokerage",
       "symbol": "PG",
       "securityName": "Procter & Gamble",
-      "shares": 28.498,
-      "marketValue": 5373.58
+      "shares": 19.745,
+      "marketValue": 3431.48
     },
     {
       "account": "Fidelity Brokerage",
       "symbol": "VTI",
       "securityName": "Vanguard Total Stock Market ETF",
-      "shares": 42,
-      "marketValue": 10859.1
+      "shares": 17,
+      "marketValue": 4684.69
     }
   ],
   "holdingsAsOf": {
@@ -123,75 +130,68 @@
         "account": "401k Retirement",
         "symbol": "VFIAX",
         "securityName": "Vanguard 500 Index Fund",
-        "shares": 19.684,
-        "marketValue": 9205.03
+        "shares": 21.467,
+        "marketValue": 10007.92
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "AAPL",
         "securityName": "Apple Inc.",
-        "shares": 72,
-        "marketValue": 12361.68
+        "shares": 52,
+        "marketValue": 9929.92
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "BND",
         "securityName": "Vanguard Total Bond Market ETF",
-        "shares": 31,
-        "marketValue": 2299.27
+        "shares": 64,
+        "marketValue": 4838.4
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "JNJ",
         "securityName": "Johnson & Johnson",
-        "shares": 4.287,
-        "marketValue": 765.92
+        "shares": 2.504,
+        "marketValue": 434.99
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "MSFT",
         "securityName": "Microsoft Corp.",
-        "shares": 3,
-        "marketValue": 1061.52
+        "shares": 2,
+        "marketValue": 824.7
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "PG",
         "securityName": "Procter & Gamble",
-        "shares": 36,
-        "marketValue": 5703.84
-      },
-      {
-        "account": "Fidelity Brokerage",
-        "symbol": "SPY",
-        "securityName": "SPDR S&P 500 ETF",
-        "shares": 2,
-        "marketValue": 991.54
+        "shares": 53.173,
+        "marketValue": 8162.06
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "VFIAX",
         "securityName": "Vanguard 500 Index Fund",
         "shares": 3,
-        "marketValue": 1402.92
+        "marketValue": 1398.6
       },
       {
         "account": "Fidelity Brokerage",
         "symbol": "VTI",
         "securityName": "Vanguard Total Stock Market ETF",
-        "shares": 72,
-        "marketValue": 16953.84
+        "shares": 67,
+        "marketValue": 16002.28
       }
     ],
     "accountTotals": {
-      "401k Retirement": 9205.03,
-      "Fidelity Brokerage": 50913.66
+      "401k Retirement": 10007.92,
+      "Fidelity Brokerage": 51479.71
     }
   },
   "spotChecks": [
     {
       "account": "Primary Checking",
-      "date": "2024-02-02",
+      "date": "2024-02-14",
       "payee": "Acme Corp",
       "amount": 4500,
       "investmentAction": null,
@@ -199,73 +199,73 @@
     },
     {
       "account": "Primary Checking",
-      "date": "2024-02-02",
+      "date": "2024-02-14",
+      "payee": "Chipotle",
+      "amount": -12.72,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Primary Checking",
+      "date": "2024-02-14",
       "payee": "Transfer to Fidelity Brokerage",
       "amount": -10000,
       "investmentAction": null,
       "symbol": null
     },
     {
-      "account": "Chase Sapphire",
-      "date": "2024-02-02",
-      "payee": "PG&E",
-      "amount": -145.98,
-      "investmentAction": null,
-      "symbol": null
-    },
-    {
       "account": "Fidelity Brokerage",
-      "date": "2024-02-02",
+      "date": "2024-02-14",
       "payee": null,
       "amount": 10000,
       "investmentAction": "XIn",
       "symbol": null
     },
     {
+      "account": "Primary Checking",
+      "date": "2024-02-15",
+      "payee": "Pacific National Mortgage",
+      "amount": -2500,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
       "account": "Chase Sapphire",
-      "date": "2024-02-05",
+      "date": "2024-02-15",
       "payee": "Whole Foods",
-      "amount": -71.58,
+      "amount": -80.82,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Emergency Savings",
+      "date": "2024-02-15",
+      "payee": "Pacific National Mortgage",
+      "amount": 800,
       "investmentAction": null,
       "symbol": null
     },
     {
       "account": "Chase Sapphire",
-      "date": "2024-02-06",
-      "payee": "Safeway",
-      "amount": -30.34,
-      "investmentAction": null,
-      "symbol": null
-    },
-    {
-      "account": "Primary Checking",
-      "date": "2024-02-09",
-      "payee": "Shell",
-      "amount": -56.48,
-      "investmentAction": null,
-      "symbol": null
-    },
-    {
-      "account": "Primary Checking",
-      "date": "2024-02-10",
+      "date": "2024-02-16",
       "payee": "Chipotle",
-      "amount": -19.81,
-      "investmentAction": null,
-      "symbol": null
-    },
-    {
-      "account": "Primary Checking",
-      "date": "2024-02-11",
-      "payee": "Shell",
-      "amount": -38.02,
+      "amount": -12.28,
       "investmentAction": null,
       "symbol": null
     },
     {
       "account": "Chase Sapphire",
-      "date": "2024-02-12",
-      "payee": "Safeway",
-      "amount": -114.72,
+      "date": "2024-02-16",
+      "payee": "PG&E",
+      "amount": -123.94,
+      "investmentAction": null,
+      "symbol": null
+    },
+    {
+      "account": "Chase Sapphire",
+      "date": "2024-02-17",
+      "payee": "Whole Foods",
+      "amount": -119.4,
       "investmentAction": null,
       "symbol": null
     }
@@ -276,11 +276,11 @@
     "accountCounts": [
       {
         "account": "401k Retirement",
-        "count": 2
+        "count": 1
       },
       {
         "account": "Chase Sapphire",
-        "count": 12
+        "count": 8
       },
       {
         "account": "Emergency Savings",
@@ -288,18 +288,18 @@
       },
       {
         "account": "Fidelity Brokerage",
-        "count": 6
+        "count": 3
       },
       {
         "account": "Primary Checking",
-        "count": 16
+        "count": 10
       }
     ],
     "categoryTotals": [
       {
         "category": "Food",
-        "total": -921.73,
-        "count": 13
+        "total": -647.81,
+        "count": 9
       },
       {
         "category": "Income",
@@ -308,29 +308,61 @@
       },
       {
         "category": "Transportation",
-        "total": -168.32,
-        "count": 3
+        "total": -53.14,
+        "count": 1
       },
       {
         "category": "Uncategorized",
-        "total": -6755.34,
-        "count": 13
+        "total": -8873.95,
+        "count": 8
       },
       {
         "category": "Utilities",
-        "total": -709,
-        "count": 6
+        "total": -456.44,
+        "count": 3
       }
     ]
   },
   "perSecurityCounts": {
-    "AAPL": 31,
-    "BND": 29,
-    "JNJ": 31,
-    "MSFT": 17,
-    "PG": 37,
-    "SPY": 15,
-    "VFIAX": 4,
-    "VTI": 23
+    "AAPL": 42,
+    "BND": 32,
+    "JNJ": 24,
+    "MSFT": 20,
+    "PG": 26,
+    "SPY": 11,
+    "VFIAX": 6,
+    "VTI": 29
+  },
+  "categoryFiltered": {
+    "Food": {
+      "count": 106,
+      "payees": [
+        "Chipotle",
+        "Safeway",
+        "Whole Foods"
+      ]
+    },
+    "nonFoodPayee": "401k Contribution"
+  },
+  "actionFiltered": {
+    "Buy": {
+      "count": 59,
+      "symbols": [
+        "AAPL",
+        "BND",
+        "JNJ",
+        "MSFT",
+        "PG",
+        "SPY",
+        "VFIAX",
+        "VTI"
+      ]
+    }
+  },
+  "dateCategoryIntersection": {
+    "count": 4
+  },
+  "securityActionIntersection": {
+    "count": 8
   }
 }
