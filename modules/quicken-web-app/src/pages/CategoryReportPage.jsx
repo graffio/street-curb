@@ -18,31 +18,11 @@ import {
 } from '../components/index.js'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
-import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 import { buildTransactionTree } from '../utils/category-tree.js'
 
 const pageContainerStyle = { height: '100%' }
 const categoryFilterConfig = { accounts: true, categories: true, date: true, groupBy: true, search: true }
-
-const P = {
-    // Rows can expand if they have children (tree) or are leaves with transactions (sub-component)
-    // @sig canExpand :: Row -> Boolean
-    canExpand: row => {
-        const { children, value } = row.original
-        return children?.length > 0 || value?.length > 0
-    },
-}
-
-const E = {
-    // Reads current tree expansion from store, resolves TanStack updater, dispatches
-    // @sig updateTreeExpansion :: (String, Function | Object) -> void
-    updateTreeExpansion: (viewId, updater) => {
-        const current = S.UI.treeExpansion(currentStore().getState(), viewId)
-        const next = typeof updater === 'function' ? updater(current) : updater
-        post(Action.SetViewUiState(viewId, { treeExpansion: next }))
-    },
-}
 
 /*
  * Category spending report with hierarchical tree display
@@ -75,12 +55,12 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
                 height={height}
                 rowHeight={40}
                 getChildRows={row => row.children}
-                getRowCanExpand={P.canExpand}
+                getRowCanExpand={row => row.original.children?.length > 0 || row.original.value?.length > 0}
                 renderSubComponent={({ row }) => (
                     <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />
                 )}
                 expanded={expanded}
-                onExpandedChange={updater => E.updateTreeExpansion(viewId, updater)}
+                onExpandedChange={updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater }))}
             />
         </Flex>
     )

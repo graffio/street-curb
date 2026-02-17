@@ -14,37 +14,10 @@ import {
     SearchFilterColumn,
 } from '../components/index.js'
 import * as S from '../store/selectors.js'
-import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 
 const pageContainerStyle = { height: '100%' }
 const investmentReportFilterConfig = { accounts: true, asOfDate: true, groupBy: true, search: true }
-
-const T = {
-    // Resolves a TanStack updater (function or value) against current state
-    // @sig resolveUpdater :: (Function | Object, Object) -> Object
-    resolveUpdater: (updater, current) => (typeof updater === 'function' ? updater(current) : updater),
-}
-
-const E = {
-    // Reads current tree expansion from store, resolves updater, dispatches
-    // @sig updateTreeExpansion :: (String, Function | Object) -> void
-    updateTreeExpansion: (viewId, updater) => {
-        const current = S.UI.treeExpansion(currentStore().getState(), viewId)
-        post(Action.SetViewUiState(viewId, { treeExpansion: T.resolveUpdater(updater, current) }))
-    },
-
-    // Reads current column sizing from store, resolves updater, dispatches
-    // @sig updateColumnSizing :: (String, Function | Object) -> void
-    updateColumnSizing: (viewId, updater) => {
-        const current = S.UI.columnSizing(currentStore().getState(), viewId)
-        post(Action.SetViewUiState(viewId, { columnSizing: T.resolveUpdater(updater, current) }))
-    },
-
-    // Dispatches column order change
-    // @sig updateColumnOrder :: (String, Object) -> void
-    updateColumnOrder: (viewId, order) => post(Action.SetViewUiState(viewId, { columnOrder: order })),
-}
 
 /*
  * Investment holdings report with hierarchical tree display
@@ -83,11 +56,11 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 getChildRows={row => row.children}
                 getRowCanExpand={row => row.original.children && row.original.children.length > 0}
                 expanded={expanded}
-                onExpandedChange={updater => E.updateTreeExpansion(viewId, updater)}
+                onExpandedChange={updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater }))}
                 columnSizing={columnSizing}
-                onColumnSizingChange={updater => E.updateColumnSizing(viewId, updater)}
+                onColumnSizingChange={updater => post(Action.SetViewUiState(viewId, { columnSizing: updater }))}
                 columnOrder={columnOrder}
-                onColumnOrderChange={order => E.updateColumnOrder(viewId, order)}
+                onColumnOrderChange={order => post(Action.SetViewUiState(viewId, { columnOrder: order }))}
                 context={{ groupBy }}
             />
         </Flex>

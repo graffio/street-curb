@@ -31,15 +31,11 @@ const E = {
         post(Action.OpenFile())
     },
 
-    // Registers global toggle-shortcuts action (reads showDrawer from store at call time)
+    // Registers global toggle-shortcuts action
     // @sig toggleShortcutsEffect :: () -> () -> void
     toggleShortcutsEffect: () =>
         ActionRegistry.register(null, [
-            {
-                id: 'toggle-shortcuts',
-                description: 'Toggle shortcuts',
-                execute: () => post(Action.SetShowDrawer(!S.showDrawer(currentStore().getState()))),
-            },
+            { id: 'toggle-shortcuts', description: 'Toggle shortcuts', execute: () => post(Action.ToggleDrawer()) },
         ]),
 
     // Keydown handler parameterized by app bindings, reads tabLayout at call time
