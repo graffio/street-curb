@@ -2,28 +2,15 @@
 // ABOUTME: Fully controlled via Redux — renders account selection with multi-select
 
 import { useSelector } from 'react-redux'
-import { SelectableListPopover } from '../SelectableListPopover.jsx'
 import { post } from '../../commands/post.js'
-import { Action } from '../../types/action.js'
 import * as S from '../../store/selectors.js'
+import { Action } from '../../types/action.js'
+import { SelectableListPopover } from '../SelectableListPopover.jsx'
 import { FilterColumn } from './FilterColumn.jsx'
 
 // Account filter chip with keyboard-navigable popover and search — fully controlled via Redux
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
-    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
-    const handleToggle = accountId => post(Action.ToggleAccountFilter(viewId, accountId))
-    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-
-    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
-
-    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
-
-    const handleToggleHighlighted = () =>
-        highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))
-
     const POPOVER_ID = 'accounts'
     const { badges, selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
 
@@ -36,7 +23,7 @@ const Chip = ({ viewId, isActive = false }) => {
         <SelectableListPopover
             label="Accounts"
             open={isOpen}
-            onOpenChange={handleOpenChange}
+            onOpenChange={nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))}
             items={filteredItems}
             selectedIds={selectedIds}
             selectedItems={badges}
@@ -46,13 +33,13 @@ const Chip = ({ viewId, isActive = false }) => {
             width={175}
             isActive={isActive}
             actionContext={viewId}
-            onSearchChange={handleSearchChange}
-            onMoveDown={handleMoveDown}
-            onMoveUp={handleMoveUp}
-            onToggle={handleToggle}
-            onToggleHighlighted={handleToggleHighlighted}
-            onDismiss={handleDismiss}
-            onClear={handleClear}
+            onSearchChange={text => post(Action.SetFilterPopoverSearch(viewId, text))}
+            onMoveDown={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))}
+            onMoveUp={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))}
+            onToggle={accountId => post(Action.ToggleAccountFilter(viewId, accountId))}
+            onToggleHighlighted={() => highlightedItemId && post(Action.ToggleAccountFilter(viewId, highlightedItemId))}
+            onDismiss={() => post(Action.SetFilterPopoverOpen(viewId, null))}
+            onClear={() => post(Action.SetTransactionFilter(viewId, { selectedAccounts: [] }))}
         />
     )
 }

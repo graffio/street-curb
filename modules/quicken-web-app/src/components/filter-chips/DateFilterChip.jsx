@@ -132,8 +132,6 @@ const DateRangeOption = ({ option, selectedKey, isHighlighted = false, onSelect 
 // Date filter chip with keyboard-navigable date range options popover
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = open => post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
-
     const handleSelect = key => {
         const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
@@ -156,20 +154,22 @@ const Chip = ({ viewId, isActive = false }) => {
             post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
     }
 
-    const POPOVER_ID = 'date'
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
     const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
     const { popoverId, highlightedItemId } = popoverData
-    const isOpen = popoverId === POPOVER_ID
+    const isOpen = popoverId === 'date'
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, isActive)
     const currentLabel = DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
 
     useEffect(E.registerDateFilterActions(viewId), [isOpen, viewId])
 
     return (
-        <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
+        <Popover.Root
+            open={isOpen}
+            onOpenChange={open => post(Action.SetFilterPopoverOpen(viewId, open ? 'date' : null))}
+        >
             <Popover.Trigger>
                 <Box style={triggerStyle}>
                     <Text size="1" weight="medium">

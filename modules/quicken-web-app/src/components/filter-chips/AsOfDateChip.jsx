@@ -35,7 +35,7 @@ const E = {
 // @sig Chip :: { viewId: String } -> ReactElement
 const Chip = ({ viewId }) => {
     const handleOpenChange = open => {
-        post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+        post(Action.SetFilterPopoverOpen(viewId, open ? 'asOfDate' : null))
         if (open) setTimeout(() => dateInputEl.current?.focus('month'), 0)
     }
 
@@ -50,10 +50,9 @@ const Chip = ({ viewId }) => {
         }
     }
 
-    const POPOVER_ID = 'asOfDate'
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
-    const isOpen = popoverId === POPOVER_ID
+    const isOpen = popoverId === 'asOfDate'
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })

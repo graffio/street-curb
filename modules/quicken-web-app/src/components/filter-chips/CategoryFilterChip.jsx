@@ -20,20 +20,6 @@ const E = {
 // Category filter chip with keyboard-navigable searchable popover — fully controlled via Redux
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
-    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
-    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-
-    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
-
-    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
-
-    const handleToggle = categoryName => E.toggleCategoryFilter(viewId, categoryName, selectedIds)
-
-    const handleToggleHighlighted = () =>
-        highlightedItemId && E.toggleCategoryFilter(viewId, highlightedItemId, selectedIds)
-
     const POPOVER_ID = 'categories'
     const { badges, selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
 
@@ -46,7 +32,7 @@ const Chip = ({ viewId, isActive = false }) => {
         <SelectableListPopover
             label="Categories"
             open={isOpen}
-            onOpenChange={handleOpenChange}
+            onOpenChange={nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))}
             items={filteredItems}
             selectedIds={selectedIds}
             selectedItems={badges}
@@ -56,13 +42,15 @@ const Chip = ({ viewId, isActive = false }) => {
             width={185}
             isActive={isActive}
             actionContext={viewId}
-            onSearchChange={handleSearchChange}
-            onMoveDown={handleMoveDown}
-            onMoveUp={handleMoveUp}
-            onToggle={handleToggle}
-            onToggleHighlighted={handleToggleHighlighted}
-            onDismiss={handleDismiss}
-            onClear={handleClear}
+            onSearchChange={text => post(Action.SetFilterPopoverSearch(viewId, text))}
+            onMoveDown={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))}
+            onMoveUp={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))}
+            onToggle={categoryName => E.toggleCategoryFilter(viewId, categoryName, selectedIds)}
+            onToggleHighlighted={() =>
+                highlightedItemId && E.toggleCategoryFilter(viewId, highlightedItemId, selectedIds)
+            }
+            onDismiss={() => post(Action.SetFilterPopoverOpen(viewId, null))}
+            onClear={() => post(Action.SetTransactionFilter(viewId, { selectedCategories: [] }))}
         />
     )
 }

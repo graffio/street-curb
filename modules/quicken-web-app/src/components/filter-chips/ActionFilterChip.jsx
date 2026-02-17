@@ -11,18 +11,6 @@ import { FilterColumn } from './FilterColumn.jsx'
 // Investment action filter chip with keyboard-navigable popover — fully controlled via Redux
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
-    const handleToggle = actionId => post(Action.ToggleActionFilter(viewId, actionId))
-    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-
-    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
-
-    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
-
-    const handleToggleHighlighted = () =>
-        highlightedItemId && post(Action.ToggleActionFilter(viewId, highlightedItemId))
-
     const POPOVER_ID = 'actions'
     const { badges } = useSelector(state => S.UI.actionFilterData(state, viewId))
     const selectedIds = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
@@ -36,7 +24,7 @@ const Chip = ({ viewId, isActive = false }) => {
         <SelectableListPopover
             label="Actions"
             open={isOpen}
-            onOpenChange={handleOpenChange}
+            onOpenChange={nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))}
             items={filteredItems}
             selectedIds={selectedIds}
             selectedItems={badges}
@@ -44,12 +32,12 @@ const Chip = ({ viewId, isActive = false }) => {
             width={150}
             isActive={isActive}
             actionContext={viewId}
-            onMoveDown={handleMoveDown}
-            onMoveUp={handleMoveUp}
-            onToggle={handleToggle}
-            onToggleHighlighted={handleToggleHighlighted}
-            onDismiss={handleDismiss}
-            onClear={handleClear}
+            onMoveDown={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))}
+            onMoveUp={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))}
+            onToggle={actionId => post(Action.ToggleActionFilter(viewId, actionId))}
+            onToggleHighlighted={() => highlightedItemId && post(Action.ToggleActionFilter(viewId, highlightedItemId))}
+            onDismiss={() => post(Action.SetFilterPopoverOpen(viewId, null))}
+            onClear={() => post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))}
         />
     )
 }

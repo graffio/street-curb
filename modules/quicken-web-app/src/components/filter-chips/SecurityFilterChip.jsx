@@ -11,19 +11,6 @@ import { FilterColumn } from './FilterColumn.jsx'
 // Security filter chip with keyboard-navigable popover — fully controlled via Redux
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
-    const handleSearchChange = text => post(Action.SetFilterPopoverSearch(viewId, text))
-    const handleToggle = securityId => post(Action.ToggleSecurityFilter(viewId, securityId))
-    const handleClear = () => post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-
-    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
-
-    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
-
-    const handleToggleHighlighted = () =>
-        highlightedItemId && post(Action.ToggleSecurityFilter(viewId, highlightedItemId))
-
     const POPOVER_ID = 'securities'
     const { badges } = useSelector(state => S.UI.securityFilterData(state, viewId))
     const selectedIds = useSelector(state => S.UI.selectedSecurities(state, viewId))
@@ -37,7 +24,7 @@ const Chip = ({ viewId, isActive = false }) => {
         <SelectableListPopover
             label="Securities"
             open={isOpen}
-            onOpenChange={handleOpenChange}
+            onOpenChange={nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))}
             items={filteredItems}
             selectedIds={selectedIds}
             selectedItems={badges}
@@ -47,13 +34,15 @@ const Chip = ({ viewId, isActive = false }) => {
             width={175}
             isActive={isActive}
             actionContext={viewId}
-            onSearchChange={handleSearchChange}
-            onMoveDown={handleMoveDown}
-            onMoveUp={handleMoveUp}
-            onToggle={handleToggle}
-            onToggleHighlighted={handleToggleHighlighted}
-            onDismiss={handleDismiss}
-            onClear={handleClear}
+            onSearchChange={text => post(Action.SetFilterPopoverSearch(viewId, text))}
+            onMoveDown={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))}
+            onMoveUp={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))}
+            onToggle={securityId => post(Action.ToggleSecurityFilter(viewId, securityId))}
+            onToggleHighlighted={() =>
+                highlightedItemId && post(Action.ToggleSecurityFilter(viewId, highlightedItemId))
+            }
+            onDismiss={() => post(Action.SetFilterPopoverOpen(viewId, null))}
+            onClear={() => post(Action.SetTransactionFilter(viewId, { selectedSecurities: [] }))}
         />
     )
 }

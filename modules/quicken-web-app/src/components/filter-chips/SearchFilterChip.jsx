@@ -16,25 +16,18 @@ const searchInputEl = { current: null }
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => {
-        post(Action.SetFilterPopoverOpen(viewId, open ? POPOVER_ID : null))
+        post(Action.SetFilterPopoverOpen(viewId, open ? 'search' : null))
         if (open) setTimeout(() => searchInputEl.current?.focus(), 0)
     }
-
-    const handleChange = e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))
 
     const handleClear = e => {
         e.stopPropagation()
         post(Action.SetTransactionFilter(viewId, { filterQuery: '' }))
     }
 
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-
-    const handleKeyDown = e => e.key === 'Escape' && (e.preventDefault(), handleDismiss())
-
-    const POPOVER_ID = 'search'
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
-    const isOpen = popoverId === POPOVER_ID
+    const isOpen = popoverId === 'search'
     const triggerStyle = ChipStyles.makeChipTriggerStyle(120, isActive)
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
@@ -62,8 +55,10 @@ const Chip = ({ viewId, isActive = false }) => {
                         ref={el => (searchInputEl.current = el)}
                         placeholder="Type to filter..."
                         value={filterQuery || ''}
-                        onChange={handleChange}
-                        onKeyDown={handleKeyDown}
+                        onChange={e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))}
+                        onKeyDown={e =>
+                            e.key === 'Escape' && (e.preventDefault(), post(Action.SetFilterPopoverOpen(viewId, null)))
+                        }
                     />
                 </Flex>
             </Popover.Content>

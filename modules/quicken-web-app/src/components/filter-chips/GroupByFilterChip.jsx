@@ -36,27 +36,16 @@ const T = {
 // Group by filter chip with keyboard-navigable single-select popover
 // @sig Chip :: { viewId: String, items?: [{ id, label }] } -> ReactElement
 const Chip = ({ viewId, items }) => {
-    const handleOpenChange = nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))
-    const handleDismiss = () => post(Action.SetFilterPopoverOpen(viewId, null))
-
     const handleToggle = value => {
         post(Action.SetTransactionFilter(viewId, { groupBy: value }))
-        handleDismiss()
+        post(Action.SetFilterPopoverOpen(viewId, null))
     }
 
-    const handleMoveDown = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
-
-    const handleMoveUp = () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
-
-    const handleToggleHighlighted = () =>
-        resolvedItems[highlightedIndex] && handleToggle(resolvedItems[highlightedIndex].id)
-
-    const POPOVER_ID = 'groupBy'
     const resolvedItems = items ?? defaultGroupByItems
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
     const rawHighlight = useSelector(state => S.UI.filterPopoverHighlight(state, viewId))
-    const isOpen = popoverId === POPOVER_ID
+    const isOpen = popoverId === 'groupBy'
     const selectedId = groupBy || resolvedItems[0]?.id
     const selectedIds = selectedId ? [selectedId] : []
     const selectedItems = T.toSelectedItems(resolvedItems, selectedId)
@@ -68,7 +57,7 @@ const Chip = ({ viewId, items }) => {
         <SelectableListPopover
             label="Group by"
             open={isOpen}
-            onOpenChange={handleOpenChange}
+            onOpenChange={nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? 'groupBy' : null))}
             items={resolvedItems}
             selectedIds={selectedIds}
             selectedItems={selectedItems}
@@ -76,12 +65,14 @@ const Chip = ({ viewId, items }) => {
             singleSelect
             width={155}
             actionContext={viewId}
-            onMoveDown={handleMoveDown}
-            onMoveUp={handleMoveUp}
+            onMoveDown={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))}
+            onMoveUp={() => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))}
             onToggle={handleToggle}
-            onToggleHighlighted={handleToggleHighlighted}
-            onDismiss={handleDismiss}
-            onClear={handleDismiss}
+            onToggleHighlighted={() =>
+                resolvedItems[highlightedIndex] && handleToggle(resolvedItems[highlightedIndex].id)
+            }
+            onDismiss={() => post(Action.SetFilterPopoverOpen(viewId, null))}
+            onClear={() => post(Action.SetFilterPopoverOpen(viewId, null))}
         />
     )
 }
