@@ -28,3 +28,8 @@ Solving #2 likely solves #1 — if registration isn't in React, there's no reaso
 - Could registration be declarative/data-driven instead of imperative? (e.g., action manifest per view)
 - If we solve per-chip registration first (within React), does that block or help the eventual move out of React?
 - Does the keymap module need changes, or just how we call it?
+
+## Related
+
+- `less-react` brainstorm — parent strategy (this is a subset)
+- `require-action-registry-rule` brainstorm — validator enforcement for ActionRegistry usage
