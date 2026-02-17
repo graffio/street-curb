@@ -62,6 +62,13 @@ const RegisterPageCommands = {
             { id: 'search:open', description: 'Open search', execute: () => searchInputRef.current?.focus() },
         ]),
 
+    // Clears search input DOM value and dispatches empty search query
+    // @sig clearSearch :: String -> void
+    clearSearch: viewId => {
+        searchInputRef.current.value = ''
+        post(Action.SetTransactionFilter(viewId, { searchQuery: '' }))
+    },
+
     // Initialize date range to last 12 months if not already set
     // @sig initDateRange :: (String, DateRange | null, String) -> void
     initDateRange: (dateRangeKey, dateRange, viewId) => {
