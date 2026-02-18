@@ -61,11 +61,12 @@ generation rules below.
 
 ```json
 {
-    "feature"       : "Short name",
-    "goal"          : "One sentence — what and why",
-    "plan_source"   : "specifications/{plan-file}.md",
-    "templates_used": ["commit-changes.md"],
-    "steps"         : [
+    "feature"           : "Short name",
+    "goal"              : "One sentence — what and why",
+    "plan_source"       : "specifications/{plan-file}.md",
+    "templates_used"    : ["commit-changes.md"],
+    "integration_tests" : ["test/search.integration-test.js"],
+    "steps"             : [
         {
             "step"      : 1,
             "action"    : "Specific action description",
@@ -79,7 +80,7 @@ generation rules below.
             "done"      : false
         }
     ],
-    "verification"  : ["How to confirm the feature works"]
+    "verification"      : ["How to confirm the feature works"]
 }
 ```
 
@@ -115,7 +116,8 @@ These rules make JSON generation mechanical, not ad-hoc. Apply all of them:
 | **TDD step**              | Implementation introduces NEW branching logic or business rules that don't exist yet in the codebase | Step: "Write failing test for {behavior}" with `style_card: test-file`. Do NOT generate test steps for: adding entries to lookup tables/registries, filtering/mapping data with standard operations, passing new input to existing infrastructure, or wiring components to existing selectors. |
 | **Action test**           | Step introduces a new Action variant                                                                 | Step: "Write TAP test for {Action} round-trip (dispatch → reducer → new state)" with `style_card: test-file`                                                                                                                                                                                   |
 | **UI verification**       | Step adds keyboard, focus, or visual interaction                                                     | Add specific manual verification items to `verification` list describing expected browser behavior                                                                                                                                                                                             |
-| **Integration test**      | Any step has `style_card: react-component` (unconditional)                                                               | Final step with `"rule": "unconditional"`: "Run affected integration tests (`cd modules/quicken-web-app && yarn tap:file test/{feature}.integration-test.js`). Find the right file by grepping ABOUTME comments: `grep -l 'ComponentName' test/*.integration-test.js`. If new critical-path behavior was added, expand the relevant test to cover it." |
+| **Integration tests field** | Any step has `style_card: react-component` (unconditional)                                                             | Populate `integration_tests` array: grep ABOUTME comments in `test/*.integration-test.js` for affected component names. Must not be empty — forces discovery during planning.                                                                                                                                                                          |
+| **Integration test step** | `integration_tests` is non-empty (unconditional)                                                                         | Final step with `"rule": "unconditional"`: "Run integration tests listed in `integration_tests`. If new critical-path behavior was added, expand the relevant test to cover it."                                                                                                                                                                        |
 | **Learnings**             | When a previously-solved domain is involved                                                          | "Related: {solution path} — {summary}" in plan markdown                                                                                                                                                                                                                                        |
 | **Type definition**       | Step adds/modifies business logic on a Tagged or TaggedSum type                                      | Step must target `type-definitions/*.type.js`, NEVER `src/types/*.js` (generated). Include "Run `yarn types:generate-all` after changes."                                                                                                                                                      |
 | **React hook audit**      | Step has `style_card: react-component` and file is in `quicken-web-app/src/` (not `components/DataTable.jsx`, `KeyboardDateInput.jsx`, `SelectableListPopover.jsx`) | Add verification: "Zero non-useSelector hooks in modified file"                                                                                                                                                                                                                                |
