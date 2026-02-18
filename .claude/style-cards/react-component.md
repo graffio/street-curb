@@ -4,9 +4,22 @@ Components are **wiring** between selectors (reads) and actions (writes). No log
 
 ## Structure
 
-Config constants → helper components → exported component(s) LAST.
+Use section separators to organize files. Canonical order (skip empty sections):
 
-No cohesion groups (P/T/F/V/A/E) — those are for JS modules with business logic. Components are wiring, not logic.
+| #  | Section            | Contains                                                    |
+|----|--------------------|-------------------------------------------------------------|
+| 1  | F (Factories)      | `create*`, `make*`, `build*` (style factories like `makeItemRowStyle`) |
+| 2  | Components         | Sub-components (ItemRow, Badge, etc.)                       |
+| 3  | Constants          | `const` values, style objects, config                       |
+| 4  | Actions            | `// prettier-ignore` action/trigger table arrays            |
+| 5  | Module-level state | `let` vars, `Map`s (hybrid files only)                      |
+| 6  | Exports            | Exported component(s) + `export` statement                  |
+
+No full P/T/F/V/A/E cohesion groups — those are for JS modules with business logic. Components may use F for style factories. Components are wiring, not logic.
+
+## JSX Single-Line Opening Tags
+
+Every JSX opening tag must fit on a single line within `printWidth: 120`. If it doesn't fit, extract prop values as consts. If it still doesn't fit, the component has too many props — refactor.
 
 ## Extract Subcomponents Aggressively
 
@@ -55,7 +68,7 @@ Every state change goes through `post(Action.X(...))`. No exceptions. Components
 
 No `useCallback`, `useEffect`, `useRef`, `useMemo`, `useState` in `quicken-web-app/src/**/*.jsx`.
 
-**Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`, `SelectableListPopover.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) — these are unavoidable API surfaces.
+**Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`, `FilterChipPopover.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) or useEffect for DOM operations — these are unavoidable API surfaces.
 
 ### Selector-with-Defaults (replaces init useEffect)
 

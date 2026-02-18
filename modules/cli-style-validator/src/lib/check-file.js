@@ -14,31 +14,34 @@ import { checkFunctionDeclarationOrdering } from './rules/check-function-declara
 import { checkFunctionSpacing } from './rules/check-function-spacing.js'
 import { checkFunctionalPatterns } from './rules/check-functional-patterns.js'
 import { checkImportOrdering } from './rules/check-import-ordering.js'
+import { checkJsxSingleLineOpening } from './rules/check-jsx-single-line-opening.js'
 import { checkLineLength } from './rules/check-line-length.js'
 import { checkMultilineDestructuring } from './rules/check-multiline-destructuring.js'
 import { checkReactComponentCohesion } from './rules/check-react-component-cohesion.js'
 import { checkReactReduxSeparation } from './rules/check-react-redux-separation.js'
+import { checkSectionSeparators } from './rules/check-section-separators.js'
 import { checkSigDocumentation } from './rules/check-sig-documentation.js'
 import { checkSingleLevelIndentation } from './rules/check-single-level-indentation.js'
 
-/**
- * Check single file for coding standards violations
- * CheckResult = { filePath: String, violations: [Violation], isCompliant: Boolean }
- * Violation = { type: String, line: Number, column: Number, message: String, rule: String, priority: Number }
- *
- * Priority determines fix order (lower = fix first):
- *   0 = cohesion-structure, export-structure (structural issues - address first)
- *   1 = chain-extraction, functional-patterns (shortens lines, may fix line-length)
- *   2 = single-level-indentation, react-component-cohesion (extracts functions, may fix line-length)
- *   3 = line-length, multiline-destructuring (fix remaining after 1 and 2)
- *   4 = function-declaration-ordering, import-ordering (just reordering)
- *   5 = function-spacing (just blank lines)
- *   6 = sig-documentation, function-naming, aboutme-comment (documentation)
- *   7 = file-naming (last - changes file paths)
- *   8 = react-redux-separation (React/Redux boundary enforcement)
- *
- * @sig checkFile :: String -> Promise<CheckResult>
- */
+// Priority determines fix order (lower = fix first):
+//   0 = cohesion-structure, export-structure, section-separators (structural issues - address first)
+//   1 = chain-extraction, functional-patterns (shortens lines, may fix line-length)
+//   2 = single-level-indentation, react-component-cohesion (extracts functions, may fix line-length)
+//   3 = line-length, multiline-destructuring, jsx-single-line-opening (fix remaining after 1 and 2)
+//   4 = function-declaration-ordering, import-ordering (just reordering)
+//   5 = function-spacing (just blank lines)
+//   6 = sig-documentation, function-naming, aboutme-comment (documentation)
+//   7 = file-naming (last - changes file paths)
+//   8 = react-redux-separation (React/Redux boundary enforcement)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Check single file for coding standards violations
+// @sig checkFile :: String -> Promise<CheckResult>
 const checkFile = async filePath => {
     const sourceCode = await readFile(filePath, 'utf8')
 
@@ -68,7 +71,9 @@ const checkFile = async filePath => {
         ...checkReactComponentCohesion(ast, sourceCode, filePath),
         ...checkReactReduxSeparation(ast, sourceCode, filePath),
         ...checkSigDocumentation(ast, sourceCode, filePath),
+        ...checkSectionSeparators(ast, sourceCode, filePath),
         ...checkSingleLevelIndentation(ast, sourceCode, filePath),
+        ...checkJsxSingleLineOpening(ast, sourceCode, filePath),
     ]
 
     const violations = allViolations.sort((a, b) => a.priority - b.priority || a.line - b.line)
