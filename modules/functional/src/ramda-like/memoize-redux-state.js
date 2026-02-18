@@ -21,6 +21,7 @@ import pick from './pick.js'
  */
 
 const memoizeReduxState = (keys, f) => {
+    // Checks whether relevant state keys still match the previous invocation
     // @sig stateMatches :: State -> Boolean
     const stateMatches = state => {
         if (keys.length === 0) return state === previousState
@@ -32,6 +33,7 @@ const memoizeReduxState = (keys, f) => {
     let previousArgsStringified
     let previousValue
 
+    // Returns cached result when state keys and args are unchanged
     // @sig memoizedSelector :: (State, ...args) -> a
     return (state, ...args) => {
         const newArgsStringified = JSON.stringify(args)
@@ -62,6 +64,10 @@ const memoizeReduxState = (keys, f) => {
  *
  * Changing view B's filters does NOT invalidate view A's cached result.
  *
+ * When multiple callers share the same (key, keyedValue) but pass different ...rest args,
+ * the memoizer disambiguates lazily — rest args are only serialized when the cheap
+ * keyedValue check passes, avoiding expensive JSON.stringify on every call.
+ *
  * Example:
  *     const filteredTransactions = memoizeReduxStatePerKey(
  *         ['transactions', 'categories'],
@@ -74,6 +80,7 @@ const memoizeReduxState = (keys, f) => {
  * @sig memoizeReduxStatePerKey :: ([String], String, (State, Key, ...args) -> a) -> (State, Key, ...args) -> a
  */
 const memoizeReduxStatePerKey = (globalKeys, keyedStateKey, f) => {
+    // Checks whether any global state key has a new reference
     // @sig globalStateChanged :: State -> Boolean
     const globalStateChanged = state =>
         // eslint-disable-next-line no-restricted-syntax -- memoizer must access state directly
@@ -82,6 +89,7 @@ const memoizeReduxStatePerKey = (globalKeys, keyedStateKey, f) => {
     const cacheByKey = new Map()
     let previousGlobalState = {}
 
+    // Returns cached result per key when global state, keyed state, and rest args match
     // @sig memoizedSelector :: (State, Key, ...args) -> a
     return (state, key, ...rest) => {
         // eslint-disable-next-line no-restricted-syntax -- memoizer must access state directly
@@ -94,13 +102,20 @@ const memoizeReduxStatePerKey = (globalKeys, keyedStateKey, f) => {
         }
 
         const cached = cacheByKey.get(key)
-        if (cached && cached.keyedValue === keyedValue) return cached.value
+        const { keyedValue: cachedKeyed, restStringified: cachedRest, value: cachedValue } = cached || {}
+
+        // Lazy rest-arg stringify: only serialize when cheap keyedValue check passes
+        const cheapHit = cached && cachedKeyed === keyedValue
+        const restMatch = cheapHit && (rest.length > 0 ? JSON.stringify(rest) : '') === cachedRest
+        if (restMatch) return cachedValue
 
         const value = f(state, key, ...rest)
-        cacheByKey.set(key, { keyedValue, value })
+        const restStringified = rest.length > 0 ? JSON.stringify(rest) : ''
+        cacheByKey.set(key, { keyedValue, restStringified, value })
         return value
     }
 }
 
-export default memoizeReduxState
-export { memoizeReduxState, memoizeReduxStatePerKey }
+const MemoizeReduxState = { memoizeReduxState, memoizeReduxStatePerKey }
+
+export { MemoizeReduxState }

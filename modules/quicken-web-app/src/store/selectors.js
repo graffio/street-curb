@@ -175,15 +175,14 @@ const POPOVER_ITEM_SOURCES = {
     securities: state => Array.from(securities(state)).map(({ id, symbol }) => ({ id, label: symbol })),
 }
 
-const _filterPopoverData = (state, viewId) => {
+// items must be a stable reference (module-level constant) for cache stability
+const _filterPopoverData = (state, viewId, items) => {
     const ui = viewUi(state, viewId)
     const { filterPopoverId, filterPopoverSearch, filterPopoverHighlight } = ui
     if (!filterPopoverId) return CLOSED_POPOVER
 
-    const source = POPOVER_ITEM_SOURCES[filterPopoverId]
-    if (!source) return CLOSED_POPOVER
-
-    const allItems = source(state)
+    const allItems = items ?? POPOVER_ITEM_SOURCES[filterPopoverId]?.(state)
+    if (!allItems) return CLOSED_POPOVER
     const searchText = filterPopoverSearch
     const filteredItems = searchText.trim()
         ? allItems.filter(item => containsIgnoreCase(searchText)(item.label))

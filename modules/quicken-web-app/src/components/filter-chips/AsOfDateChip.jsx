@@ -1,15 +1,12 @@
 // ABOUTME: As-of date filter chip with single date picker for holdings view
 // ABOUTME: Escape closes popover, KeyboardDateInput has own keymap
-// COMPLEXITY-TODO: react-redux-separation — ActionRegistry useEffect awaits non-React mechanism (expires 2026-04-01)
 
 import { Box, Flex, Popover, Text } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'
-import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { KeyboardDateInput } from '../KeyboardDateInput.jsx'
 import { post } from '../../commands/post.js'
 import * as S from '../../store/selectors.js'
-import { currentStore } from '../../store/index.js'
 import { Action } from '../../types/action.js'
 import { ChipStyles } from './chip-styles.js'
 import { FilterColumn } from './FilterColumn.jsx'
@@ -19,15 +16,40 @@ const { ActionRegistry } = KeymapModule
 // Module-level DOM ref — only one popover open at a time
 const dateInputEl = { current: null }
 
+// Module-level state — single instance per view, updated on each render
+let chipState = { viewId: null }
+let triggerCleanup = null
+let contentCleanup = null
+
 const E = {
-    // Registers dismiss action for AsOfDate popover when open
-    // @sig registerAsOfDateActions :: String -> () -> (() -> void)?
-    registerAsOfDateActions: viewId => () => {
-        const popoverId = S.UI.filterPopoverId(currentStore().getState(), viewId)
-        if (popoverId !== 'asOfDate') return undefined
-        return ActionRegistry.register(viewId, [
-            { id: 'dismiss', description: 'Dismiss', execute: () => post(Action.SetFilterPopoverOpen(viewId, null)) },
-        ])
+    // Registers filter:asOfDate focus action on trigger button mount
+    // @sig registerTriggerActions :: Element? -> void
+    registerTriggerActions: element => {
+        triggerCleanup?.()
+        triggerCleanup = null
+        if (element)
+            triggerCleanup = ActionRegistry.register(chipState.viewId, [
+                {
+                    id: 'filter:asOfDate',
+                    description: 'As of date',
+                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, 'asOfDate')),
+                },
+            ])
+    },
+
+    // Registers dismiss action on popover content mount
+    // @sig registerContentActions :: Element? -> void
+    registerContentActions: element => {
+        contentCleanup?.()
+        contentCleanup = null
+        if (element)
+            contentCleanup = ActionRegistry.register(chipState.viewId, [
+                {
+                    id: 'dismiss',
+                    description: 'Dismiss',
+                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, null)),
+                },
+            ])
     },
 }
 
@@ -57,18 +79,18 @@ const Chip = ({ viewId }) => {
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, false)
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-    useEffect(E.registerAsOfDateActions(viewId), [isOpen, viewId])
+    chipState = { viewId }
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
-                <Box style={triggerStyle}>
+                <Box ref={E.registerTriggerActions} style={triggerStyle}>
                     <Text size="1" weight="medium">
                         As of: {displayDate}
                     </Text>
                 </Box>
             </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-3)', width: 200 }}>
+            <Popover.Content ref={E.registerContentActions} style={{ padding: 'var(--space-3)', width: 200 }}>
                 <Flex direction="column" gap="2">
                     <Text size="1" color="gray" weight="medium">
                         Show holdings as of date

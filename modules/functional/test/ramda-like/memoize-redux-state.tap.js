@@ -1,6 +1,8 @@
 import tap from 'tap'
 import { assocPath } from '../../index.js'
-import memoizeReduxState from '../../src/ramda-like/memoize-redux-state.js'
+import { MemoizeReduxState } from '../../src/ramda-like/memoize-redux-state.js'
+
+const { memoizeReduxState } = MemoizeReduxState
 
 const b0 = { x: 0, y: 0 }
 const b1 = { x: 1, y: 1 }
@@ -12,6 +14,7 @@ let state = { a: 4, b: { b1, b2, b3 }, c: 'unused' }
 let count = 0
 const bsWithXHigherThan = (state, minimum) => {
     count++
+    // eslint-disable-next-line no-restricted-syntax -- test fixture accesses state directly
     return Object.values(state.b).filter(b => b.x >= minimum)
 }
 

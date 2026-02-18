@@ -46,6 +46,17 @@ const { ActionRegistry } = KeymapModule
 
 const SCROLLBAR_CLASS = 'dt-scroll'
 
+// Module-level navigation state — single DataTable instance per actionContext, updated on each render
+let tableNav = {
+    actionContext: null,
+    highlightedId: null,
+    focusableIds: null,
+    rows: [],
+    onHighlightChange: null,
+    onEscape: null,
+}
+let navCleanup = null
+
 const T = {
     // Gets row id, handling both plain objects and ViewRow.Detail structure
     // @sig toRowId :: Object -> String | undefined
@@ -69,10 +80,10 @@ const T = {
               : currentIndex - 1
     },
 
-    // Creates a navigation handler that reads current state from a ref
-    // @sig toNavigateHandler :: (String, Ref) -> () -> void
-    toNavigateHandler: (direction, navRef) => () => {
-        const { highlightedId, focusableIds, rows, onHighlightChange } = navRef.current
+    // Creates a navigation handler that reads current state from tableNav
+    // @sig toNavigateHandler :: String -> () -> void
+    toNavigateHandler: direction => () => {
+        const { highlightedId, focusableIds, rows, onHighlightChange } = tableNav
         if (!onHighlightChange) return
         const ids = T.toNavigableIds(focusableIds, rows)
         if (ids.length === 0) return
@@ -98,16 +109,17 @@ const A = {
 }
 
 const E = {
-    // Action registration effect for keyboard navigation
-    // @sig actionRegistrationEffect :: (String, Ref) -> () -> (() -> void)?
-    actionRegistrationEffect: (actionContext, navRef) => () => {
-        if (!actionContext) return undefined
-
-        return ActionRegistry.register(actionContext, [
-            { id: 'navigate:down', description: 'Move down', execute: T.toNavigateHandler('ArrowDown', navRef) },
-            { id: 'navigate:up', description: 'Move up', execute: T.toNavigateHandler('ArrowUp', navRef) },
-            { id: 'dismiss', description: 'Dismiss', execute: () => navRef.current.onEscape?.() },
-        ])
+    // Registers navigation actions on table container mount (ref callback, React 18 pattern)
+    // @sig registerNavActions :: Element? -> void
+    registerNavActions: element => {
+        navCleanup?.()
+        navCleanup = null
+        if (element)
+            navCleanup = ActionRegistry.register(tableNav.actionContext, [
+                { id: 'navigate:down', description: 'Move down', execute: T.toNavigateHandler('ArrowDown') },
+                { id: 'navigate:up', description: 'Move up', execute: T.toNavigateHandler('ArrowUp') },
+                { id: 'dismiss', description: 'Dismiss', execute: () => tableNav.onEscape?.() },
+            ])
     },
 }
 
@@ -402,10 +414,12 @@ const DataTable = ({
 
     // Refs
     const tableContainerRef = useRef(null)
-    const navRef = useRef({ highlightedId, focusableIds, rows: [], onHighlightChange, onEscape })
 
-    // rows assigned after table.getRowModel() below; preserve previous value until then
-    navRef.current = { highlightedId, focusableIds, rows: navRef.current.rows, onHighlightChange, onEscape }
+    // Module-level nav state — rows assigned after table.getRowModel() below
+    const prevContext = tableNav.actionContext
+    if (process.env.NODE_ENV !== 'production' && prevContext && actionContext && prevContext !== actionContext)
+        console.warn(`DataTable: multiple instances (${prevContext} vs ${actionContext})`)
+    tableNav = { ...tableNav, actionContext, highlightedId, focusableIds, onHighlightChange, onEscape }
 
     // -----------------------------------------------------------------------------------------------------------------
     // TanStack Table instance
@@ -442,7 +456,7 @@ const DataTable = ({
 
     // Derived state
     const { rows } = table.getRowModel()
-    navRef.current.rows = rows
+    tableNav.rows = rows
 
     // -----------------------------------------------------------------------------------------------------------------
     // TanStack Virtualization
@@ -465,13 +479,12 @@ const DataTable = ({
         [highlightedId, rows],
     )
     useEffect(scrollToHighlightedRow, [highlightedId, rows.length, virtualizer])
-    useEffect(E.actionRegistrationEffect(actionContext, navRef), [actionContext])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Main
     // -----------------------------------------------------------------------------------------------------------------
     return (
-        <Flex direction="column" style={{ height, ...columnSizeVars }}>
+        <Flex ref={E.registerNavActions} direction="column" style={{ height, ...columnSizeVars }}>
             <TableHeader
                 headerGroups={table.getHeaderGroups()}
                 onSort={handleSort}

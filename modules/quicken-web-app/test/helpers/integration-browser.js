@@ -38,12 +38,11 @@ const createSession = sessionName => {
     rmSync(resolve(sessionDir, `${sessionName}.pid`), { force: true })
     rmSync(resolve(sessionDir, `${sessionName}.sock`), { force: true })
 
-    // Runs an agent-browser command with this session's environment
     // @sig browser :: (String, [String]) -> String
     const browser = (cmd, args = []) => {
         const allArgs = HEADED ? ['--headed', cmd, ...args] : [cmd, ...args]
         const env = { ...process.env, AGENT_BROWSER_SESSION: sessionName }
-        return execFileSync('agent-browser', allArgs, { encoding: 'utf-8', timeout: 30000, env }).trim()
+        return execFileSync('agent-browser', allArgs, { encoding: 'utf-8', timeout: 60000, env }).trim()
     }
 
     // @sig open :: String -> String

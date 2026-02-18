@@ -19,7 +19,6 @@ import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
 const pageContainerStyle = { height: '100%' }
-const categoryFilterConfig = { accounts: true, categories: true, date: true, groupBy: true, search: true }
 
 /*
  * Category spending report with hierarchical tree display
@@ -33,7 +32,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
-            <FilterChipRow viewId={viewId} filterConfig={categoryFilterConfig}>
+            <FilterChipRow viewId={viewId}>
                 <DateFilterColumn viewId={viewId} />
                 <CategoryFilterColumn viewId={viewId} />
                 <AccountFilterColumn viewId={viewId} />

@@ -20,7 +20,6 @@ const { searchInputRef } = RegisterPageCommands
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
-const bankFilterConfig = { categories: true, date: true, search: true }
 
 /*
  * Bank transaction register with filtering, search, and sortable table
@@ -62,7 +61,7 @@ const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
 
     return (
         <Flex direction="column" style={pageContainerStyle}>
-            <FilterChipRow viewId={viewId} accountId={accountId} filterConfig={bankFilterConfig}>
+            <FilterChipRow viewId={viewId} accountId={accountId}>
                 <DateFilterColumn viewId={viewId} />
                 <CategoryFilterColumn viewId={viewId} />
                 <SearchFilterColumn viewId={viewId} />

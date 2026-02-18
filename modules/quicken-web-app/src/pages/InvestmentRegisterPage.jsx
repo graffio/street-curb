@@ -26,7 +26,6 @@ const { searchInputRef } = RegisterPageCommands
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
-const investmentFilterConfig = { date: true, securities: true, actions: true, search: true }
 
 /*
  * Investment transaction register with filtering, search, and sortable table
@@ -75,7 +74,6 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
                 filteredCount={filteredCount}
                 totalCount={totalCount}
                 itemLabel="transactions"
-                filterConfig={investmentFilterConfig}
             >
                 <DateFilterColumn viewId={viewId} />
                 <SecurityFilterColumn viewId={viewId} />

@@ -17,7 +17,6 @@ import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
 const pageContainerStyle = { height: '100%' }
-const investmentReportFilterConfig = { accounts: true, asOfDate: true, groupBy: true, search: true }
 
 /*
  * Investment holdings report with hierarchical tree display
@@ -41,7 +40,6 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
                 filteredCount={totalHoldingsCount}
                 totalCount={totalHoldingsCount}
                 itemLabel="holdings"
-                filterConfig={investmentReportFilterConfig}
             >
                 <AsOfDateColumn viewId={viewId} />
                 <AccountFilterColumn viewId={viewId} />
