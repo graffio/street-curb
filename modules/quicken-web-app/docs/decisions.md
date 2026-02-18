@@ -38,3 +38,8 @@ Quick decisions that don't warrant full architecture docs. For patterns, see `do
 **Context:** Regex patterns like `/^acc_[a-f0-9]{12}$/` were duplicated across 10+ type definition files.
 **Decision:** Created `quicken-type-definitions/field-types.js` with all 8 ID patterns; type definitions reference `FieldTypes.accountId` etc.
 **Why:** Single source of truth. Also enables optional regex-validated fields: `{ pattern: FieldTypes.accountId, optional: true }`.
+
+### 2026-02-18: Lazy rest-arg stringify in memoizeReduxStatePerKey
+**Context:** Memoizer needed to check `...rest` args but `JSON.stringify` on every selector call is expensive.
+**Decision:** Only stringify rest args when the cheap `keyedValue ===` reference check already passes.
+**Why:** Short-circuit avoids serialization on the hot path; rest args only matter when the cheaper checks can't distinguish callers.

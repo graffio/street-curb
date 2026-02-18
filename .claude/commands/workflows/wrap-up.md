@@ -79,8 +79,8 @@ Determine if a non-trivial problem was solved during this work. Trivial = obviou
 ### 5. Artifact Cleanup
 
 - Delete `.claude/current-task.json`
-- Ask about stale spec files: "Delete specifications/{spec-used-for-this-work}.md?"
-- Check for brainstorm files linked from the spec or current-task.json (`docs/brainstorms/`). Delete if fully consumed; keep if unresolved ideas remain. Always ask before deleting.
+- **Spec file:** Read `specifications/{spec-used-for-this-work}.md`. If every section was implemented and no open questions remain, propose deletion. If it contains unimplemented ideas or future work, keep it.
+- **Brainstorm files:** Only check files explicitly linked from the spec or current-task.json. Read each one before proposing anything. If the file has open questions or unresolved items, say so when asking — Jeff decides whether to keep or delete.
 
 ## Rules
 
