@@ -161,6 +161,7 @@ const CLOSED_POPOVER = {
     prevHighlightIndex: 0,
     highlightedItemId: null,
     filteredItems: [],
+    allItems: [],
 }
 
 const DATE_RANGE_ITEMS = Object.entries(DateRangeUtils.DATE_RANGES)
@@ -184,9 +185,8 @@ const _filterPopoverData = (state, viewId, items) => {
     const allItems = items ?? POPOVER_ITEM_SOURCES[filterPopoverId]?.(state)
     if (!allItems) return CLOSED_POPOVER
     const searchText = filterPopoverSearch
-    const filteredItems = searchText.trim()
-        ? allItems.filter(item => containsIgnoreCase(searchText)(item.label))
-        : allItems
+    const matchesSearch = containsIgnoreCase(searchText)
+    const filteredItems = searchText.trim() ? allItems.filter(item => matchesSearch(item.label)) : allItems
     const count = filteredItems.length
 
     // prettier-ignore
@@ -201,6 +201,7 @@ const _filterPopoverData = (state, viewId, items) => {
         prevHighlightIndex,
         highlightedItemId,
         filteredItems,
+        allItems,
     }
 }
 
