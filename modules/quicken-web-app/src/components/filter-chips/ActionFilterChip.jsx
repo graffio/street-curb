@@ -76,7 +76,7 @@ const Chip = ({ viewId, isActive = false }) => {
     const selectedIds = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
 
     const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
-    const { popoverId, highlightedIndex, nextHighlightIndex, prevHighlightIndex } = popoverData
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex } = popoverData
     const { highlightedItemId, filteredItems } = popoverData
     const isOpen = popoverId === POPOVER_ID
 
@@ -91,11 +91,14 @@ const Chip = ({ viewId, isActive = false }) => {
             selectedIds={selectedIds}
             selectedItems={badges}
             highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
             width={150}
             isActive={isActive}
             actionContext={viewId}
             triggerRef={E.registerTriggerActions}
             contentRef={E.registerContentActions}
+            onSearchChange={text => post(Action.SetFilterPopoverSearch(viewId, text))}
             onToggle={actionId => post(Action.ToggleActionFilter(viewId, actionId))}
             onClear={() => post(Action.SetTransactionFilter(viewId, { selectedInvestmentActions: [] }))}
         />

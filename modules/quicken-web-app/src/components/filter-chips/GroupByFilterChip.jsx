@@ -2,7 +2,6 @@
 // ABOUTME: Provides default and investment group-by item lists
 
 import { KeymapModule } from '@graffio/keymap'
-import { wrapIndex } from '@graffio/functional'
 import { useSelector } from 'react-redux'
 import { SelectableListPopover } from '../SelectableListPopover.jsx'
 import { post } from '../../commands/post.js'
@@ -28,7 +27,7 @@ const investmentGroupByItems = [
 ]
 
 // Module-level state — single instance per view, updated on each render
-let chipState = { viewId: null, next: 0, prev: 0, highlightedIndex: 0, resolvedItems: [] }
+let chipState = { viewId: null, next: 0, prev: 0, highlightedItemId: null }
 let triggerCleanup = null
 let contentCleanup = null
 
@@ -88,8 +87,8 @@ const E = {
                     id: 'select',
                     description: 'Toggle',
                     execute: () => {
-                        const { highlightedIndex, resolvedItems } = chipState
-                        if (resolvedItems[highlightedIndex]) E.handleToggle(resolvedItems[highlightedIndex].id)
+                        const { highlightedItemId } = chipState
+                        if (highlightedItemId) E.handleToggle(highlightedItemId)
                     },
                 },
                 {
@@ -107,32 +106,34 @@ const Chip = ({ viewId, items }) => {
     const { handleToggle, registerTriggerActions, registerContentActions } = E
     const resolvedItems = items ?? defaultGroupByItems
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
-    const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
-    const rawHighlight = useSelector(state => S.UI.filterPopoverHighlight(state, viewId))
-    const isOpen = popoverId === POPOVER_ID
     const selectedId = groupBy || resolvedItems[0]?.id
     const selectedIds = selectedId ? [selectedId] : []
     const selectedItems = T.toSelectedItems(resolvedItems, selectedId)
 
     // prettier-ignore
-    const { index: highlightedIndex, next: nextHighlightIndex, prev: prevHighlightIndex } = wrapIndex(rawHighlight || 0, resolvedItems.length)
+    const { popoverId, searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex,
+        highlightedItemId, filteredItems } = useSelector(state => S.UI.filterPopoverData(state, viewId, resolvedItems))
+    const isOpen = popoverId === POPOVER_ID
 
-    chipState = { viewId, next: nextHighlightIndex, prev: prevHighlightIndex, highlightedIndex, resolvedItems }
+    chipState = { viewId, next: nextHighlightIndex, prev: prevHighlightIndex, highlightedItemId }
 
     return (
         <SelectableListPopover
             label="Group by"
             open={isOpen}
             onOpenChange={nextOpen => post(Action.SetFilterPopoverOpen(viewId, nextOpen ? POPOVER_ID : null))}
-            items={resolvedItems}
+            items={filteredItems}
             selectedIds={selectedIds}
             selectedItems={selectedItems}
             highlightedIndex={highlightedIndex}
+            searchText={searchText}
+            searchable
             singleSelect
             width={155}
             actionContext={viewId}
             triggerRef={registerTriggerActions}
             contentRef={registerContentActions}
+            onSearchChange={text => post(Action.SetFilterPopoverSearch(viewId, text))}
             onToggle={handleToggle}
             onClear={() => post(Action.SetFilterPopoverOpen(viewId, null))}
         />
