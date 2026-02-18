@@ -12,15 +12,20 @@ Run after completing a feature or fixing a non-trivial bug. Handles everything t
 
 ### 1. Integration Test Verification
 
-If the work modified `.jsx` files in `quicken-web-app/src/`, run affected integration tests before reviewing commits:
+If the work modified `.jsx` files in `quicken-web-app/src/`, run affected integration tests before reviewing commits.
+
+**Discovery order:**
+1. If `current-task.json` has an `integration_tests` array, run those files.
+2. Otherwise, grep ABOUTME comments for the affected component names:
+   ```bash
+   cd modules/quicken-web-app
+   grep -l 'ComponentName' test/*.integration-test.js
+   ```
 
 ```bash
 cd modules/quicken-web-app
-grep -l 'ComponentName' test/*.integration-test.js  # find the right test file
 yarn tap:file test/{feature}.integration-test.js
 ```
-
-Find the right test file by grepping ABOUTME comments for the component name. Each test file's ABOUTME lists the components it covers.
 
 **If no `.jsx` files were modified:** Skip to step 2.
 

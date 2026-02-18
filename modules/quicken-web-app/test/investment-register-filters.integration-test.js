@@ -48,7 +48,10 @@ tap.test('investment-filters: security filter VTI shows correct count', async t 
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after clearing security filter')
 })
 
-tap.test('investment-filters: action filter Buy shows 1 selected', async t => {
+tap.test('investment-filters: action filter Buy shows correct count and symbols', async t => {
+    const expected = loadExpected()
+    const fidelityCount = expected.accounts.find(a => a.name === 'Fidelity Brokerage').transactionCount
+
     session.clickByText('Actions:')
     await wait(200)
     session.clickPopoverItem('Buy')
@@ -59,6 +62,16 @@ tap.test('investment-filters: action filter Buy shows 1 selected', async t => {
     const afterFilter = session.browser('snapshot')
     t.notOk(afterFilter.includes('Something went wrong'), 'no crash after action filter')
     t.ok(afterFilter.includes('1 selected'), 'action chip shows "1 selected"')
+
+    // Verify Buy count matches expected
+    const buyCount = expected.actionFiltered.Buy.count
+    t.ok(afterFilter.includes(`${buyCount} transactions`), `shows ${buyCount} Buy transactions`)
+    t.ok(afterFilter.includes(`filtered from ${fidelityCount}`), `shows "filtered from ${fidelityCount}"`)
+
+    // Verify at least one expected Buy symbol appears
+    const buySymbols = expected.actionFiltered.Buy.symbols
+    const foundSymbol = buySymbols.find(s => afterFilter.includes(s))
+    t.ok(foundSymbol, `at least one Buy symbol visible (found: ${foundSymbol})`)
 
     // Clear action filter
     session.clickClear()
@@ -114,6 +127,49 @@ tap.test('investment-filters: custom date filter shows correct filtered count', 
     await wait(200)
     const afterClear = session.browser('snapshot')
     t.ok(afterClear.includes(`${fidelityCount} transactions`), `shows ${fidelityCount} transactions after clearing`)
+})
+
+tap.test('investment-filters: combined security + action filter shows intersection', async t => {
+    const expected = loadExpected()
+    const fidelityCount = expected.accounts.find(a => a.name === 'Fidelity Brokerage').transactionCount
+
+    // Apply security filter (VTI)
+    session.clickByText('Securities:')
+    await wait(200)
+    session.clickPopoverItem('VTI')
+    await wait(200)
+    session.browser('press', ['Escape'])
+    await wait(200)
+
+    // Apply action filter (Buy)
+    session.clickByText('Actions:')
+    await wait(200)
+    session.clickPopoverItem('Buy')
+    await wait(200)
+    session.browser('press', ['Escape'])
+    await wait(200)
+
+    const afterBothFilters = session.browser('snapshot')
+    t.notOk(afterBothFilters.includes('Something went wrong'), 'no crash after combined filters')
+
+    // Verify intersection count
+    const intersectionCount = expected.securityActionIntersection.count
+    t.ok(
+        afterBothFilters.includes(`${intersectionCount} transactions`),
+        `shows ${intersectionCount} transactions (VTI+Buy intersection)`,
+    )
+    t.ok(afterBothFilters.includes(`filtered from ${fidelityCount}`), `shows "filtered from ${fidelityCount}"`)
+
+    // Clear both filters (use nth=0 since two clear buttons are visible)
+    session.browser('click', ['[style*="border-radius: 50%"] >> nth=0'])
+    await wait(200)
+    session.clickClear()
+    await wait(200)
+    const afterClear = session.browser('snapshot')
+    t.ok(
+        afterClear.includes(`${fidelityCount} transactions`),
+        `shows ${fidelityCount} transactions after clearing both filters`,
+    )
 })
 
 tap.test('investment-filters: keyboard x opens actions popover', async t => {

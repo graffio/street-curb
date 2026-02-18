@@ -61,7 +61,9 @@ tap.test('category: GroupBy toggle changes display', async t => {
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after switching back to Category')
 })
 
-tap.test('category: account filter Primary Checking shows 1 selected', async t => {
+tap.test('category: account filter Primary Checking shows correct filtered totals', async t => {
+    const expected = loadExpected()
+
     session.clickByText('Accounts:')
     await wait(200)
     session.clickPopoverItem('Primary Checking')
@@ -72,6 +74,26 @@ tap.test('category: account filter Primary Checking shows 1 selected', async t =
     const afterFilter = session.browser('snapshot')
     t.notOk(afterFilter.includes('Something went wrong'), 'no crash after account filter')
     t.ok(afterFilter.includes('1 selected'), 'account chip shows "1 selected"')
+
+    // Verify filtered category totals for Primary Checking
+    const filteredTotals = expected.categoryTotalsByAccount.PrimaryChecking
+    filteredTotals.forEach(({ category, total }) => {
+        const formatted = Math.abs(total).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })
+        t.ok(afterFilter.includes(formatted), `${category} shows filtered total $${formatted}`)
+    })
+
+    // Negative assertion: unfiltered Food total (all accounts) should NOT appear
+    const unfilteredFood = Math.abs(expected.categoryTotals.find(c => c.category === 'Food').total)
+    const filteredFood = Math.abs(filteredTotals.find(c => c.category === 'Food').total)
+    t.not(unfilteredFood, filteredFood, 'fixture precondition: filtered Food differs from unfiltered')
+    const unfilteredFormatted = unfilteredFood.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })
+    t.notOk(afterFilter.includes(unfilteredFormatted), `unfiltered Food total $${unfilteredFormatted} not visible`)
 
     // Clear account filter
     session.clickClear()

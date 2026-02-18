@@ -424,6 +424,7 @@ Transaction.toSecurityName = (txn, securities) => {
 Transaction.matchesSecurityText = (query, txn, securities) => {
     if (!txn.securityId) return false
     const security = securities.get(txn.securityId)
+    if (!security) return false
     const matches = containsIgnoreCase(query)
     return matches(security.symbol) || matches(security.name)
 }
@@ -475,7 +476,7 @@ Transaction.matchesAllVisibleFields = (query, categories, securities, txn) => {
     return (
         Transaction.matchesAnyText(
             query,
-            ['memo', 'number', 'investmentAction', 'date'],
+            ['memo', 'number', 'date'],
             categories,
             securities,
         )(txn) ||
