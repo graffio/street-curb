@@ -120,9 +120,24 @@ const SelectableListPopover = ({
     onToggle,
     onClear,
 }) => {
-    // Dispatches navigation keys from search input via ActionRegistry (global keymap skips INPUT elements)
+    // Routes navigation keys through ActionRegistry and blocks global shortcuts while popover is open
+    // @sig handleContentKeyDown :: KeyboardEvent -> void
+    const handleContentKeyDown = e => {
+        e.stopPropagation()
+        const tag = e.target.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return
+        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
+        if (!actionId) return
+        const action = ActionRegistry.resolve(actionId, actionContext)
+        if (!action) return
+        e.preventDefault()
+        action.execute()
+    }
+
+    // Dispatches navigation keys from search input via ActionRegistry
     // @sig handleSearchKeyDown :: KeyboardEvent -> void
     const handleSearchKeyDown = e => {
+        e.stopPropagation()
         const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
         if (!actionId) return
         const action = ActionRegistry.resolve(actionId, actionContext)
@@ -188,7 +203,14 @@ const SelectableListPopover = ({
                     )}
                 </button>
             </Popover.Trigger>
-            <Popover.Content ref={contentRef} style={popoverContentStyle} side="right" align="start" sideOffset={4}>
+            <Popover.Content
+                ref={contentRef}
+                style={popoverContentStyle}
+                side="right"
+                align="start"
+                sideOffset={4}
+                onKeyDown={handleContentKeyDown}
+            >
                 {!singleSelect && selectedItems.length > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
                         {selectedItems.map(item => (

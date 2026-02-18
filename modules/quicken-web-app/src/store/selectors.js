@@ -175,7 +175,7 @@ const POPOVER_ITEM_SOURCES = {
     securities: state => Array.from(securities(state)).map(({ id, symbol }) => ({ id, label: symbol })),
 }
 
-// items must be a stable reference (module-level constant) — memoizeReduxStatePerKey does not check ...rest args
+// items must be a stable reference (module-level constant) for cache stability
 const _filterPopoverData = (state, viewId, items) => {
     const ui = viewUi(state, viewId)
     const { filterPopoverId, filterPopoverSearch, filterPopoverHighlight } = ui
