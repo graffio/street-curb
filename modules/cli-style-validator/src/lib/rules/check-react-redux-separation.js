@@ -8,7 +8,7 @@ import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 8
 const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
-const EXEMPT_COMPONENTS = ['DataTable.jsx', 'KeyboardDateInput.jsx', 'SelectableListPopover.jsx']
+const EXEMPT_COMPONENTS = ['DataTable.jsx', 'KeyboardDateInput.jsx']
 const SELECTOR_MAX_LINES = 6
 const SELECTOR_MAX_COLLECTION_CHAIN = 2
 
@@ -192,32 +192,47 @@ const T = {
 
 const violation = FS.createViolation('react-redux-separation', PRIORITY)
 
-// Create a curried violation factory that fixes the message, taking a node to fill line/column
-// @sig createNodeViolation :: String -> ASTNode -> Violation
-const createNodeViolation = message => node => violation(node.line, node.column || 1, message)
-
 const F = {
     // Component hook violations — each takes a node and returns a violation with a fixed message
-    createUseStateViolation: createNodeViolation(
-        'useState in component for domain/business state. FIX: Move state to Redux.',
-    ),
-    createUseMemoViolation: createNodeViolation('useMemo in component body. FIX: Move derived state to a selector.'),
-    createUseCallbackViolation: createNodeViolation(
-        'useCallback in component. FIX: Use dispatch-intent command function instead.',
-    ),
-    createUseEffectViolation: createNodeViolation(
-        'useEffect in component. FIX: Use selector-with-defaults, page titles, or post effect handler.',
-    ),
-    createUseRefViolation: createNodeViolation(
-        'useRef in component. FIX: Use FocusRegistry ref callback or commands/post effect handler.',
-    ),
-    createUseChannelViolation: createNodeViolation('useChannel import. FIX: Use Redux actions/selectors instead.'),
-    createSpreadViolation: createNodeViolation(
-        'Spread in component body. FIX: Pre-compute in selector or use separate style constants.',
-    ),
-    createActionFunctionViolation: createNodeViolation(
-        'Function passed to Action. FIX: Actions should only carry data, not functions.',
-    ),
+    // Creates violation for useState in component body
+    // @sig createUseStateViolation :: ASTNode -> Violation
+    createUseStateViolation: node =>
+        violation(node.line, node.column || 1, 'useState in component. FIX: Move state to Redux.'),
+
+    // Creates violation for useMemo in component body
+    // @sig createUseMemoViolation :: ASTNode -> Violation
+    createUseMemoViolation: node =>
+        violation(node.line, node.column || 1, 'useMemo in component body. FIX: Move derived state to a selector.'),
+
+    // Creates violation for useCallback in component body
+    // @sig createUseCallbackViolation :: ASTNode -> Violation
+    createUseCallbackViolation: node =>
+        violation(node.line, node.column || 1, 'useCallback in component. FIX: Use dispatch-intent command function.'),
+
+    // Creates violation for useEffect in component body
+    // @sig createUseEffectViolation :: ASTNode -> Violation
+    createUseEffectViolation: node =>
+        violation(node.line, node.column || 1, 'useEffect in component. FIX: Use selector-with-defaults or post.'),
+
+    // Creates violation for useRef in component body
+    // @sig createUseRefViolation :: ASTNode -> Violation
+    createUseRefViolation: node =>
+        violation(node.line, node.column || 1, 'useRef in component. FIX: Use FocusRegistry ref callback or post.'),
+
+    // Creates violation for useChannel import
+    // @sig createUseChannelViolation :: ASTNode -> Violation
+    createUseChannelViolation: node =>
+        violation(node.line, node.column || 1, 'useChannel import. FIX: Use Redux actions/selectors instead.'),
+
+    // Creates violation for spread in component body
+    // @sig createSpreadViolation :: ASTNode -> Violation
+    createSpreadViolation: node =>
+        violation(node.line, node.column || 1, 'Spread in component body. FIX: Pre-compute in selector.'),
+
+    // Creates violation for function argument in Action call
+    // @sig createActionFunctionViolation :: ASTNode -> Violation
+    createActionFunctionViolation: node =>
+        violation(node.line, node.column || 1, 'Function passed to Action. FIX: Actions carry data, not functions.'),
 
     // Create violation for collection method in component body
     // @sig createCollectionMethodViolation :: ASTNode -> Violation
@@ -257,7 +272,7 @@ const F = {
         violation(
             line,
             1,
-            `Selector "${name}" chains ${count} collection methods. FIX: Move to Type.from{InputType}() or business module.`,
+            `Selector "${name}" chains ${count} collection methods. FIX: Move to Type or business module.`,
         ),
 
     // Create violation for export that references a cohesion group function
@@ -266,7 +281,7 @@ const F = {
         violation(
             line,
             1,
-            `Export "${exportName}" references ${groupRef}. FIX: Define exported functions at module level, not in cohesion groups.`,
+            `Export "${exportName}" references ${groupRef}. FIX: Define exported functions at module level.`,
         ),
 }
 
@@ -454,6 +469,12 @@ const A = {
         return violations
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run react-redux-separation rule with COMPLEXITY exemption support
 // @sig checkReactReduxSeparation :: (AST?, String, String) -> [Violation]
