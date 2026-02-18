@@ -14,6 +14,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const FIXTURES_DIR = resolve(__dirname, '../test/fixtures')
 const SCHEMA_PATH = resolve(__dirname, '../schema.sql')
 
+// SQL fragment: roll subcategories (e.g., "Food:Groceries") up to parent category ("Food")
+const PARENT_CATEGORY_SQL = `CASE WHEN c.name LIKE '%:%'
+    THEN SUBSTR(c.name, 1, INSTR(c.name, ':') - 1)
+    ELSE COALESCE(c.name, 'Uncategorized') END`
+
 const T = {
     // Transform bank transaction to import format
     // @sig toBankTxn :: Object -> Object
@@ -146,21 +151,17 @@ const T = {
 
     // Query category totals rolled up to parent categories (for CategoryReportPage verification)
     // @sig toCategoryTotals :: Database -> [Object]
-    toCategoryTotals: db => {
-        const parentCategory = `CASE WHEN c.name LIKE '%:%'
-            THEN SUBSTR(c.name, 1, INSTR(c.name, ':') - 1)
-            ELSE COALESCE(c.name, 'Uncategorized') END`
-        return db
+    toCategoryTotals: db =>
+        db
             .prepare(
-                `SELECT ${parentCategory} as category, SUM(t.amount) as total, COUNT(*) as count
+                `SELECT ${PARENT_CATEGORY_SQL} as category, SUM(t.amount) as total, COUNT(*) as count
                  FROM transactions t
                  LEFT JOIN categories c ON t.categoryId = c.id
                  GROUP BY category
                  ORDER BY category`,
             )
             .all()
-            .map(T.toRoundedCategory)
-    },
+            .map(T.toRoundedCategory),
 
     // Query per-account transaction counts for a date range
     // @sig toDateFilteredAccountCounts :: (Database, String, String) -> [Object]
@@ -176,13 +177,10 @@ const T = {
 
     // Query category totals for a date range (rolled up to parent categories)
     // @sig toDateFilteredCategoryTotals :: (Database, String, String) -> [Object]
-    toDateFilteredCategoryTotals: (db, startDate, endDate) => {
-        const parentCategory = `CASE WHEN c.name LIKE '%:%'
-            THEN SUBSTR(c.name, 1, INSTR(c.name, ':') - 1)
-            ELSE COALESCE(c.name, 'Uncategorized') END`
-        return db
+    toDateFilteredCategoryTotals: (db, startDate, endDate) =>
+        db
             .prepare(
-                `SELECT ${parentCategory} as category, SUM(t.amount) as total, COUNT(*) as count
+                `SELECT ${PARENT_CATEGORY_SQL} as category, SUM(t.amount) as total, COUNT(*) as count
                  FROM transactions t
                  LEFT JOIN categories c ON t.categoryId = c.id
                  WHERE t.date BETWEEN ? AND ?
@@ -190,8 +188,23 @@ const T = {
                  ORDER BY category`,
             )
             .all(startDate, endDate)
-            .map(T.toRoundedCategory)
-    },
+            .map(T.toRoundedCategory),
+
+    // Query category totals for a single account (rolled up to parent categories)
+    // @sig toCategoryTotalsByAccount :: (Database, String) -> [Object]
+    toCategoryTotalsByAccount: (db, accountName) =>
+        db
+            .prepare(
+                `SELECT ${PARENT_CATEGORY_SQL} as category, SUM(t.amount) as total, COUNT(*) as count
+                 FROM transactions t
+                 LEFT JOIN categories c ON t.categoryId = c.id
+                 JOIN accounts a ON t.accountId = a.id
+                 WHERE a.name = ?
+                 GROUP BY category
+                 ORDER BY category`,
+            )
+            .all(accountName)
+            .map(T.toRoundedCategory),
 
     // Query payees and count for transactions matching a category on an account
     // @sig toCategoryFilteredPayees :: (Database, String, String) -> { count: Number, payees: [String] }
@@ -427,6 +440,7 @@ const E = {
                 Food: T.toCategoryFilteredPayees(db, 'Primary Checking', 'Food'),
                 nonFoodPayee: T.toNonCategoryPayee(db, 'Primary Checking', 'Food'),
             },
+            categoryTotalsByAccount: { PrimaryChecking: T.toCategoryTotalsByAccount(db, 'Primary Checking') },
             actionFiltered: { Buy: T.toActionFilteredSymbols(db, 'Fidelity Brokerage', 'Buy') },
             dateCategoryIntersection: T.toDateCategoryIntersection(
                 db,

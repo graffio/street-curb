@@ -99,18 +99,31 @@ tap.test('holdings: GroupBy toggle changes display', async t => {
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after group by Account')
 })
 
-tap.test('holdings: account filter Fidelity shows 1 selected', async t => {
+tap.test('holdings: account filter Fidelity shows correct values and changes display', async t => {
+    const expected = loadExpected()
+    const beforeFilter = session.browser('snapshot')
+
     session.clickByText('Accounts:')
     await wait(200)
     session.clickPopoverItem('Fidelity Brokerage')
     await wait(200)
     session.browser('press', ['Escape'])
-    await wait(200)
+    await wait(500)
 
     const afterFilter = session.browser('snapshot')
     t.notOk(afterFilter.includes('Something went wrong'), 'no crash after account filter')
     t.ok(afterFilter.includes('1 selected'), 'account chip shows "1 selected"')
-    t.ok(afterFilter.includes('Fidelity'), 'filtered to Fidelity holdings')
+
+    // Verify Fidelity account-level market value appears
+    const fidelity = expected.accounts.find(a => a.name === 'Fidelity Brokerage')
+    const fidelityFormatted = fidelity.marketValue.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })
+    t.ok(afterFilter.includes(fidelityFormatted), `Fidelity market value $${fidelityFormatted} visible`)
+
+    // Verify filter changed the display (content differs from unfiltered view)
+    t.not(afterFilter, beforeFilter, 'display changes after account filter applied')
 
     // Clear account filter
     session.clickClear()
