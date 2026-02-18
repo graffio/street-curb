@@ -84,10 +84,26 @@ Pages don't dispatch their own title. The routing layer handles page title dispa
 
 ## Actions (Keyboard System)
 
-Interactive components register actions via `ActionRegistry.register()`:
+Interactive components register actions via ref callbacks (React 18 if/else pattern with module-level cleanup):
+
+```jsx
+let cleanup = null
+const registerActions = element => {
+    cleanup?.()
+    cleanup = null
+    if (element)
+        cleanup = ActionRegistry.register(chipState.viewId, [
+            { id: 'filter:accounts', description: 'Accounts', execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, 'accounts')) },
+        ])
+}
+// In JSX: <div ref={registerActions}>...</div>
+```
+
+- Module-level state object updated by component on each render — execute functions read at call time
 - Accept `actionContext` prop (viewId or null for global)
-- Registration currently uses `useEffect` (acknowledged COMPLEXITY — awaiting non-React mechanism)
 - Never reference specific key names — keybindings live in `DEFAULT_BINDINGS` (`keymap-config.js`)
+
+**Exemption:** `KeyboardDateInput.jsx` uses useEffect for action registration (local handleKeyDown, not ref callback).
 
 ## Layer Check
 

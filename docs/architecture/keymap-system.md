@@ -18,9 +18,8 @@ The UI has overlapping contexts (register, popover, date input) where the same k
         ↑
 @graffio/keymap         - ActionRegistry singleton, normalizeKey, formatKey
         ↑
-@graffio/design-system  - KeymapDrawer (display), DataTable/SelectableListPopover (register actions)
-        ↑
 quicken-web-app         - keymap-routing (dispatch), DEFAULT_BINDINGS, wiring
+                        - KeymapDrawer (display), components (register via ref callbacks)
 ```
 
 ### Separation of Concerns
@@ -28,7 +27,7 @@ quicken-web-app         - keymap-routing (dispatch), DEFAULT_BINDINGS, wiring
 | Concern | Location | Example |
 |---------|----------|---------|
 | **Actions** (what to do) | Components via `ActionRegistry.register()` | `{ id: 'navigate:down', execute: moveDown }` |
-| **Bindings** (which key) | `DEFAULT_BINDINGS` in keymap-routing.js | `{ ArrowDown: 'navigate:down', j: 'navigate:down' }` |
+| **Bindings** (which key) | `DEFAULT_BINDINGS` in keymap-config.js | `{ ArrowDown: 'navigate:down', j: 'navigate:down' }` |
 | **Dispatch** (routing) | `KeymapRouting.handleKeydown` | key → binding → resolve → execute |
 | **Display** (shortcuts drawer) | `KeymapDrawer` via `collectAvailableIntents` | Reverse bindings + registered actions |
 
@@ -39,20 +38,30 @@ Components never reference specific key names. Keymap-routing never references s
 Module-level singleton. Components register actions on mount; keymap-routing resolves them.
 
 ```javascript
-// Component registers actions with a context (viewId)
-useEffect(() => {
-    if (!actionContext) return undefined
-    return ActionRegistry.register(actionContext, [
-        { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.onMoveDown() },
-        { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.onMoveUp() },
-    ])
-}, [actionContext])
+// Module-level state + cleanup (React 18 if/else pattern — no cleanup return values)
+let chipState = { viewId: null }
+let cleanup = null
+
+const registerActions = element => {
+    cleanup?.()
+    cleanup = null
+    if (element)
+        cleanup = ActionRegistry.register(chipState.viewId, [
+            { id: 'navigate:down', description: 'Move down', execute: () => post(Action.MoveHighlight(chipState.viewId, 1)) },
+        ])
+}
+
+// Component body updates chipState on each render:
+chipState = { viewId }
+
+// In JSX:
+<div ref={registerActions}>...</div>
 ```
 
-- `register(context, actions)` → returns cleanup function
+- `register(context, actions)` → returns cleanup function (stored in module-level variable)
 - `resolve(actionId, activeContext)` → LIFO match or null
 - `context: null` = global (matches any activeContext)
-- `handlersRef` pattern: execute functions read current callbacks via ref
+- Execute functions read from module-level state at call time — always fresh values
 
 See `.claude/api-cheatsheets/action-registry.md` for full API.
 
@@ -121,16 +130,16 @@ Data derived from `ActionRegistry.collectForContext()` + reverse `DEFAULT_BINDIN
 ## Component Integration Patterns
 
 ### DataTable (navigation actions)
-Registers `navigate:down`, `navigate:up`, `dismiss` with `navRef` for stable execute functions.
+Registers `navigate:down`, `navigate:up`, `dismiss` via ref callback on the outer Flex element. Module-level `tableNav` object holds navigation state (highlightedId, focusableIds, rows). Execute functions read from `tableNav` at call time — navigation index computation stays in the component.
 
-### SelectableListPopover (modal actions)
-Registers same action IDs when open — LIFO shadows DataTable's navigation.
+### Filter chips (per-chip registration)
+Each chip registers its own `filter:*` action via ref callback. Replaces centralized FilterChipRow registration.
+
+### SelectableListPopover (pure presentation)
+Renders items, checkboxes, highlights. Does not register actions — the consuming chip handles registration. LIFO stacking still works: chip's popover-specific actions shadow DataTable's navigation.
 
 ### KeyboardDateInput (display-only)
 Registers date actions with no-op execute. Local `handleKeyDown` handles actual keys (global dispatch skips focused inputs).
-
-### FilterChipRow (filter focus)
-Registers `filter:*` actions that open filter popovers.
 
 ## Future: User-Configurable Bindings
 
