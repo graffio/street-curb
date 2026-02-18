@@ -1,6 +1,6 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
-// COMPLEXITY: react-redux-separation — 3 useEffect for mount-time init and keyboard routing lifecycle
+// COMPLEXITY: react-redux-separation — 2 useEffect for mount-time init and keyboard routing lifecycle
 
 import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
 import { KeymapDrawer } from './KeymapDrawer.jsx'
@@ -31,12 +31,14 @@ const E = {
         post(Action.OpenFile())
     },
 
-    // Registers global toggle-shortcuts action
-    // @sig toggleShortcutsEffect :: () -> () -> void
-    toggleShortcutsEffect: () =>
-        ActionRegistry.register(null, [
-            { id: 'toggle-shortcuts', description: 'Toggle shortcuts', execute: () => post(Action.ToggleDrawer()) },
-        ]),
+    // Registers global toggle-shortcuts action on mount — no cleanup needed (app shell, never unmounts)
+    // @sig registerToggleShortcuts :: Element? -> void
+    registerToggleShortcuts: element => {
+        if (element)
+            ActionRegistry.register(null, [
+                { id: 'toggle-shortcuts', description: 'Toggle shortcuts', execute: () => post(Action.ToggleDrawer()) },
+            ])
+    },
 
     // Keydown handler parameterized by app bindings, reads tabLayout at call time
     // @sig keydownEffect :: () -> () -> void
@@ -72,7 +74,7 @@ const LoadingOverlay = ({ status }) => (
 // Main application layout with sidebar, file handling, and keyboard routing
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
-    const { handleOpenNew, keydownEffect, toggleShortcutsEffect } = E
+    const { handleOpenNew, keydownEffect, registerToggleShortcuts } = E
     const showReopenBanner = useSelector(S.showReopenBanner)
     const showDrawer = useSelector(S.showDrawer)
     const loadingStatus = useSelector(S.loadingStatus)
@@ -83,7 +85,6 @@ const RootLayout = () => {
 
     useEffect(() => post(Action.InitializeSystem()), [])
     useEffect(keydownEffect, [])
-    useEffect(toggleShortcutsEffect, [])
 
     return (
         <MainLayout title={pageTitle} subtitle={pageSubtitle}>
@@ -106,7 +107,7 @@ const RootLayout = () => {
                 onReopen={() => post(Action.ReopenFile())}
                 onOpenNew={handleOpenNew}
             />
-            <Flex direction="column" style={{ flex: 1 }}>
+            <Flex ref={registerToggleShortcuts} direction="column" style={{ flex: 1 }}>
                 <TabGroupContainer />
                 <KeymapDrawer
                     open={showDrawer}
