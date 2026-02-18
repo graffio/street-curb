@@ -1,12 +1,14 @@
 // ABOUTME: Fully controlled filter chip popover for multi-select lists
-// ABOUTME: Zero internal state — all state and navigation callbacks provided by consumer via props
+// ABOUTME: Zero internal state — consumer provides data, ref callbacks handle action registration
 
 import { KeymapModule } from '@graffio/keymap'
 import { Badge, Box, Checkbox, Flex, Popover, ScrollArea, Text, TextField } from '@radix-ui/themes'
 import PropTypes from 'prop-types'
 import React, { useEffect, useRef } from 'react'
+import { KeymapConfig } from '../keymap-config.js'
 
-const { ActionRegistry } = KeymapModule
+const { ActionRegistry, normalizeKey } = KeymapModule
+const { DEFAULT_BINDINGS } = KeymapConfig
 
 const clearButtonStyle = {
     display: 'inline-flex',
@@ -112,23 +114,21 @@ const SelectableListPopover = ({
     width = 175,
     isActive = false,
     actionContext,
+    triggerRef,
+    contentRef,
     onSearchChange,
-    onMoveDown,
-    onMoveUp,
     onToggle,
-    onToggleHighlighted,
-    onDismiss,
     onClear,
 }) => {
-    // Dispatches navigation keys from search input (global keymap skips INPUT elements)
+    // Dispatches navigation keys from search input via ActionRegistry (global keymap skips INPUT elements)
     // @sig handleSearchKeyDown :: KeyboardEvent -> void
     const handleSearchKeyDown = e => {
-        const handler = { ArrowDown: onMoveDown, ArrowUp: onMoveUp, Enter: onToggleHighlighted, Escape: onDismiss }[
-            e.key
-        ]
-        if (!handler) return
+        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
+        if (!actionId) return
+        const action = ActionRegistry.resolve(actionId, actionContext)
+        if (!action) return
         e.preventDefault()
-        handler()
+        action.execute()
     }
 
     const handleClear = e => {
@@ -140,18 +140,6 @@ const SelectableListPopover = ({
     // @sig focusSearchEffect :: () -> void
     const focusSearchEffect = () => {
         if (open && searchable) searchRef.current?.focus()
-    }
-
-    // Registers navigation actions when popover is open
-    // @sig actionRegistrationEffect :: () -> (() -> void)?
-    const actionRegistrationEffect = () => {
-        if (!actionContext || !open) return undefined
-        return ActionRegistry.register(actionContext, [
-            { id: 'navigate:down', description: 'Move down', execute: () => handlersRef.current.onMoveDown() },
-            { id: 'navigate:up', description: 'Move up', execute: () => handlersRef.current.onMoveUp() },
-            { id: 'select', description: 'Toggle', execute: () => handlersRef.current.onToggleHighlighted() },
-            { id: 'dismiss', description: 'Dismiss', execute: () => handlersRef.current.onDismiss() },
-        ])
     }
 
     // Maps an item and its position to an ItemRow or SingleSelectRow element
@@ -170,19 +158,15 @@ const SelectableListPopover = ({
         )
     }
 
-    // Refs to capture latest callbacks without triggering effect re-runs
-    const handlersRef = useRef({ onMoveDown, onMoveUp, onToggleHighlighted, onDismiss })
-    handlersRef.current = { onMoveDown, onMoveUp, onToggleHighlighted, onDismiss }
     const highlightedRef = useRef(null)
     const searchRef = useRef(null)
 
     const { length: selectedCount } = selectedIds
     const selectedSet = new Set(selectedIds)
 
-    // DOM effects: scroll highlighted item into view, focus search input, manage keymap
+    // DOM effects: scroll highlighted item into view, focus search input
     useEffect(() => highlightedRef.current?.scrollIntoView({ block: 'nearest' }), [highlightedIndex])
     useEffect(focusSearchEffect, [open, searchable])
-    useEffect(actionRegistrationEffect, [open, actionContext])
 
     const triggerStyle = F.makeTriggerStyle(width, isActive)
     const multiSelectLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
@@ -193,7 +177,7 @@ const SelectableListPopover = ({
     return (
         <Popover.Root open={open} onOpenChange={onOpenChange}>
             <Popover.Trigger asChild>
-                <button type="button" style={triggerStyle}>
+                <button ref={triggerRef} type="button" style={triggerStyle}>
                     <Text size="1" weight="medium">
                         {label}: {displayLabel}
                     </Text>
@@ -204,7 +188,7 @@ const SelectableListPopover = ({
                     )}
                 </button>
             </Popover.Trigger>
-            <Popover.Content style={popoverContentStyle} side="right" align="start" sideOffset={4}>
+            <Popover.Content ref={contentRef} style={popoverContentStyle} side="right" align="start" sideOffset={4}>
                 {!singleSelect && selectedItems.length > 0 && (
                     <Flex wrap="wrap" gap="1" mb="2">
                         {selectedItems.map(item => (
@@ -254,12 +238,10 @@ SelectableListPopover.propTypes = {
     width: PropTypes.number,
     isActive: PropTypes.bool,
     actionContext: PropTypes.string,
+    triggerRef: PropTypes.func,
+    contentRef: PropTypes.func,
     onSearchChange: PropTypes.func,
-    onMoveDown: PropTypes.func.isRequired,
-    onMoveUp: PropTypes.func.isRequired,
     onToggle: PropTypes.func.isRequired,
-    onToggleHighlighted: PropTypes.func.isRequired,
-    onDismiss: PropTypes.func.isRequired,
     onClear: PropTypes.func.isRequired,
 }
 

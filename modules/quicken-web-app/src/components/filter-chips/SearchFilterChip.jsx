@@ -2,6 +2,7 @@
 // ABOUTME: Renders search trigger with clear button and popover text field
 
 import { Box, Flex, Popover, Text, TextField } from '@radix-ui/themes'
+import { KeymapModule } from '@graffio/keymap'
 import { useSelector } from 'react-redux'
 import { post } from '../../commands/post.js'
 import { Action } from '../../types/action.js'
@@ -9,8 +10,31 @@ import * as S from '../../store/selectors.js'
 import { ChipStyles } from './chip-styles.js'
 import { FilterColumn } from './FilterColumn.jsx'
 
+const { ActionRegistry } = KeymapModule
+
 // Module-level DOM ref — only one popover open at a time
 const searchInputEl = { current: null }
+
+// Module-level state — single instance per view, updated on each render
+let chipState = { viewId: null }
+let triggerCleanup = null
+
+const E = {
+    // Registers filter:search focus action on trigger button mount
+    // @sig registerTriggerActions :: Element? -> void
+    registerTriggerActions: element => {
+        triggerCleanup?.()
+        triggerCleanup = null
+        if (element)
+            triggerCleanup = ActionRegistry.register(chipState.viewId, [
+                {
+                    id: 'filter:search',
+                    description: 'Search',
+                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, 'search')),
+                },
+            ])
+    },
+}
 
 // Search filter chip with inline text input popover
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
@@ -32,10 +56,12 @@ const Chip = ({ viewId, isActive = false }) => {
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
 
+    chipState = { viewId }
+
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
-                <Box style={triggerStyle}>
+                <Box ref={E.registerTriggerActions} style={triggerStyle}>
                     <Text size="1" weight="medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {label}
                     </Text>

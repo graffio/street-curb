@@ -1,17 +1,14 @@
 // ABOUTME: Date filter chip with keyboard-navigable date range options popover
 // ABOUTME: Includes custom date range inputs, helper components for option rendering
-// COMPLEXITY-TODO: react-redux-separation — ActionRegistry useEffect awaits non-React mechanism (expires 2026-04-01)
 
 import { Box, Flex, Popover, Text } from '@radix-ui/themes'
 import { DateRangeUtils } from '../../utils/date-range-utils.js'
 import { KeyboardDateInput } from '../KeyboardDateInput.jsx'
 import { endOfDay } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
-import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../../commands/post.js'
 import * as S from '../../store/selectors.js'
-import { currentStore } from '../../store/index.js'
 import { Action } from '../../types/action.js'
 import { ChipStyles } from './chip-styles.js'
 import { FilterColumn } from './FilterColumn.jsx'
@@ -29,6 +26,11 @@ const dateRangeOptions = Object.entries(DateRangeUtils.DATE_RANGES).map(([key, l
 const startDateEl = { current: null }
 const endDateEl = { current: null }
 
+// Module-level state — single instance per view, updated on each render
+let chipState = { viewId: null, next: 0, prev: 0, highlightedItemId: null, dateRangeKey: null }
+let triggerCleanup = null
+let contentCleanup = null
+
 const F = {
     // Creates option style with selected and highlighted states
     // @sig makeOptionStyle :: (Boolean, Boolean?) -> Style
@@ -40,49 +42,63 @@ const F = {
 
 const E = {
     // Applies highlighted date range option, focuses custom date input if applicable
-    // @sig applyHighlightedDateRange :: String -> void
-    applyHighlightedDateRange: viewId => {
-        const state = currentStore().getState()
-        const { highlightedItemId } = S.UI.filterPopoverData(state, viewId)
+    // @sig applyHighlightedDateRange :: () -> void
+    applyHighlightedDateRange: () => {
+        const { viewId, highlightedItemId } = chipState
         if (!highlightedItemId) return
         const dateRange = DateRangeUtils.calculateDateRange(highlightedItemId) ?? { start: null, end: null }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: highlightedItemId, dateRange }))
         if (highlightedItemId === 'customDates') setTimeout(() => startDateEl.current?.focus('month'), 0)
     },
 
-    // Registers keyboard navigation actions for DateFilter popover when open
-    // @sig registerDateFilterActions :: String -> () -> (() -> void)?
-    registerDateFilterActions: viewId => () => {
-        const popoverId = S.UI.filterPopoverId(currentStore().getState(), viewId)
-        if (popoverId !== 'date') return undefined
-        return ActionRegistry.register(viewId, [
-            {
-                id: 'navigate:down',
-                description: 'Move down',
-                execute: () => {
-                    const { nextHighlightIndex } = S.UI.filterPopoverData(currentStore().getState(), viewId)
-                    post(Action.SetViewUiState(viewId, { filterPopoverHighlight: nextHighlightIndex }))
+    // Registers filter:date focus action on trigger button mount
+    // @sig registerTriggerActions :: Element? -> void
+    registerTriggerActions: element => {
+        triggerCleanup?.()
+        triggerCleanup = null
+        if (element)
+            triggerCleanup = ActionRegistry.register(chipState.viewId, [
+                {
+                    id: 'filter:date',
+                    description: 'Date',
+                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, 'date')),
                 },
-            },
-            {
-                id: 'navigate:up',
-                description: 'Move up',
-                execute: () => {
-                    const { prevHighlightIndex } = S.UI.filterPopoverData(currentStore().getState(), viewId)
-                    post(Action.SetViewUiState(viewId, { filterPopoverHighlight: prevHighlightIndex }))
+            ])
+    },
+
+    // Registers popover navigation actions on content mount
+    // @sig registerContentActions :: Element? -> void
+    registerContentActions: element => {
+        contentCleanup?.()
+        contentCleanup = null
+        if (element)
+            contentCleanup = ActionRegistry.register(chipState.viewId, [
+                {
+                    id: 'navigate:down',
+                    description: 'Move down',
+                    execute: () =>
+                        post(Action.SetViewUiState(chipState.viewId, { filterPopoverHighlight: chipState.next })),
                 },
-            },
-            { id: 'select', description: 'Select', execute: () => E.applyHighlightedDateRange(viewId) },
-            {
-                id: 'navigate:next-apply',
-                description: 'Focus dates',
-                execute: () => {
-                    const dateRangeKey = S.UI.dateRangeKey(currentStore().getState(), viewId)
-                    if (dateRangeKey === 'customDates') startDateEl.current?.focus('month')
+                {
+                    id: 'navigate:up',
+                    description: 'Move up',
+                    execute: () =>
+                        post(Action.SetViewUiState(chipState.viewId, { filterPopoverHighlight: chipState.prev })),
                 },
-            },
-            { id: 'dismiss', description: 'Dismiss', execute: () => post(Action.SetFilterPopoverOpen(viewId, null)) },
-        ])
+                { id: 'select', description: 'Select', execute: () => E.applyHighlightedDateRange() },
+                {
+                    id: 'navigate:next-apply',
+                    description: 'Focus dates',
+                    execute: () => {
+                        if (chipState.dateRangeKey === 'customDates') startDateEl.current?.focus('month')
+                    },
+                },
+                {
+                    id: 'dismiss',
+                    description: 'Dismiss',
+                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, null)),
+                },
+            ])
     },
 }
 
@@ -158,12 +174,12 @@ const Chip = ({ viewId, isActive = false }) => {
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
     const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
-    const { popoverId, highlightedItemId } = popoverData
+    const { popoverId, highlightedItemId, nextHighlightIndex, prevHighlightIndex } = popoverData
     const isOpen = popoverId === 'date'
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, isActive)
     const currentLabel = DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
 
-    useEffect(E.registerDateFilterActions(viewId), [isOpen, viewId])
+    chipState = { viewId, next: nextHighlightIndex, prev: prevHighlightIndex, highlightedItemId, dateRangeKey }
 
     return (
         <Popover.Root
@@ -171,7 +187,7 @@ const Chip = ({ viewId, isActive = false }) => {
             onOpenChange={open => post(Action.SetFilterPopoverOpen(viewId, open ? 'date' : null))}
         >
             <Popover.Trigger>
-                <Box style={triggerStyle}>
+                <Box ref={E.registerTriggerActions} style={triggerStyle}>
                     <Text size="1" weight="medium">
                         Date: {currentLabel}
                     </Text>
@@ -183,6 +199,7 @@ const Chip = ({ viewId, isActive = false }) => {
                 </Box>
             </Popover.Trigger>
             <Popover.Content
+                ref={E.registerContentActions}
                 style={{ padding: 'var(--space-1)', width: 220 }}
                 onOpenAutoFocus={e => e.preventDefault()}
             >
