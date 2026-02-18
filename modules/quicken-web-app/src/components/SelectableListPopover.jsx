@@ -134,10 +134,14 @@ const SelectableListPopover = ({
         action.execute()
     }
 
-    // Dispatches navigation keys from search input via ActionRegistry
+    // Dispatches non-character navigation keys from search input via ActionRegistry.
+    // Single printable characters (j, k, s, etc.) always reach the input.
+    // Non-character keys (ArrowDown, Enter, Escape) route through ActionRegistry if bound.
     // @sig handleSearchKeyDown :: KeyboardEvent -> void
     const handleSearchKeyDown = e => {
         e.stopPropagation()
+        const { key, ctrlKey, altKey, metaKey } = e
+        if (key.length === 1 && !ctrlKey && !altKey && !metaKey) return
         const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
         if (!actionId) return
         const action = ActionRegistry.resolve(actionId, actionContext)
