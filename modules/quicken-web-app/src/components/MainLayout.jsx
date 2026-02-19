@@ -6,6 +6,12 @@ import { Box, Button, Flex, Grid } from '@radix-ui/themes'
 import React from 'react'
 import { TitleAndSubtitle } from './TitleAndSubtitle.jsx'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Renders a single action button in the top bar
 // @sig TopBarAction :: { action: { label: String }, index: Number } -> ReactElement
 const TopBarAction = ({ action, index }) => (
@@ -31,34 +37,43 @@ const TopBar = ({ title, subtitle, actions = [] }) => (
 // Sidebar slot component - renders children in sidebar area
 // @sig Sidebar :: { children: ReactNode } -> ReactElement
 const Sidebar = ({ children }) => (
-    <Flex
-        direction="column"
-        gap="1"
-        height="100%"
-        style={{ backgroundColor: 'var(--gray-1)', minHeight: 0, overflow: 'hidden' }}
-    >
+    <Flex direction="column" gap="1" height="100%" style={SIDEBAR_STYLE}>
         {children}
     </Flex>
 )
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const SIDEBAR_STYLE = { backgroundColor: 'var(--gray-1)', minHeight: 0, overflow: 'hidden' }
+const GRID_STYLE = { height: '100vh', width: '100vw' }
+const GRID_PROPS = {
+    columns: '320px 1fr',
+    rows: '60px 1fr',
+    areas: `
+        "topbar topbar"
+        "sidebar main"
+    `,
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Grid layout for application with topbar, sidebar, and main content areas
 // @sig MainLayout :: { title: String, subtitle: String?, actions: [Action]?, children: ReactNode } -> ReactElement
 const MainLayout = ({ title, subtitle, actions, children }) => {
-    const mainLayoutGridProperties = {
-        columns: '320px 1fr',
-        rows: '60px 1fr',
-        areas: `
-            "topbar topbar"
-            "sidebar main"
-        `,
-    }
-
     const childrenArray = React.Children.toArray(children)
     const sidebar = childrenArray.find(child => child.type === Sidebar)
     const main = childrenArray.filter(child => child.type !== Sidebar)
 
     return (
-        <Grid {...mainLayoutGridProperties} style={{ height: '100vh', width: '100vw' }}>
+        <Grid {...GRID_PROPS} style={GRID_STYLE}>
             <Box gridArea="topbar">
                 <TopBar title={title} subtitle={subtitle} actions={actions} />
             </Box>

@@ -4,6 +4,12 @@
 import { Button, Flex, Text } from '@radix-ui/themes'
 import { Dialog } from './Dialog.jsx'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Dialog prompting user to reopen last file or open new one
 // @sig FileOpenDialog :: { open, onOpenChange, onReopen, onOpenNew } -> ReactElement
 const FileOpenDialog = ({ open, onOpenChange, onReopen, onOpenNew }) => (

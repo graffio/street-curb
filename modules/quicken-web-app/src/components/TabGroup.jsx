@@ -13,8 +13,12 @@ import * as S from '../store/selectors.js'
 import { Account, Action } from '../types/index.js'
 import { TabStyles } from '../utils/tab-styles.js'
 
-const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
-const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Parses drag data JSON, returns null on failure
     // @sig toDragData :: String -> { viewId: String, groupId: String } | null
@@ -40,6 +44,12 @@ const T = {
     }),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Functions
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Returns the appropriate register page component for an account type
     // @sig createRegisterPage :: (Account, String) -> ReactElement
@@ -50,6 +60,12 @@ const F = {
             <TransactionRegisterPage accountId={accountId} />
         ),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Draggable tab with icon, title, and close button
 // @sig Tab :: { view: View, groupId: String, isActive: Boolean, isActiveGroup: Boolean } -> ReactElement
@@ -73,23 +89,24 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
     const { title } = view
     const tagName = view['@@tagName']
     const icon = VIEW_ICONS[tagName] || '○'
+    const tabProps = {
+        draggable: true,
+        onDragStart: handleDragStart,
+        onDragEnd: handleDragEnd,
+        style: TabStyles.toTabStyle(tagName, isActive, isDragging, isActiveGroup),
+        onClick: handleClick,
+    }
 
     return (
         <Tooltip content={title} delayDuration={200}>
-            <Flex
-                draggable
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                style={TabStyles.toTabStyle(tagName, isActive, isDragging, isActiveGroup)}
-                onClick={handleClick}
-            >
+            <Flex {...tabProps}>
                 <Text size="2" color="gray">
                     {icon}
                 </Text>
                 <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
                     {title}
                 </Text>
-                <Button size="1" variant="ghost" onClick={handleClose} style={{ padding: '0 4px', flexShrink: 0 }}>
+                <Button size="1" variant="ghost" onClick={handleClose} style={CLOSE_BUTTON_STYLE}>
                     ×
                 </Button>
             </Flex>
@@ -97,23 +114,17 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
     )
 }
 
-const MAX_GROUPS = 4
-
 // Button to create new tab group, hidden at max group count
 // @sig SplitButton :: { groupCount: Number } -> ReactElement|null
 const SplitButton = ({ groupCount }) => {
+    const onClick = e => {
+        e.stopPropagation()
+        post(Action.CreateTabGroup())
+    }
     if (groupCount >= MAX_GROUPS) return null
 
     return (
-        <Button
-            size="1"
-            variant="ghost"
-            onClick={e => {
-                e.stopPropagation()
-                post(Action.CreateTabGroup())
-            }}
-            style={{ padding: '4px 8px', marginLeft: 'auto' }}
-        >
+        <Button size="1" variant="ghost" onClick={onClick} style={SPLIT_BUTTON_STYLE}>
             Split ▸
         </Button>
     )
@@ -200,6 +211,24 @@ const ViewContent = ({ group }) => {
         ),
     })
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
+const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
+const CLOSE_BUTTON_STYLE = { padding: '0 4px', flexShrink: 0 }
+const SPLIT_BUTTON_STYLE = { padding: '4px 8px', marginLeft: 'auto' }
+const MAX_GROUPS = 4
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Container with tab bar and content area for a group of views
 // @sig TabGroup :: { group: TabGroup } -> ReactElement

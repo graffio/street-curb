@@ -5,9 +5,21 @@ import { Flex, Text } from '@radix-ui/themes'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const containerBaseStyle = { padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--gray-4)' }
 const containerActiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--ruby-3)' }
 const containerInactiveStyle = { ...containerBaseStyle, backgroundColor: 'var(--gray-2)' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Composition layout shell for filter chips — renders count summary, container highlight, and children

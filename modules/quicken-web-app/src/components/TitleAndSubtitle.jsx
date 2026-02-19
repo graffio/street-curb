@@ -1,6 +1,12 @@
 // ABOUTME: Title and subtitle display component with configurable sizing and gap
 // ABOUTME: Used in MainLayout topbar for page title rendering
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Resolves gap variant to CSS value
     // @sig toGapValue :: String -> String
@@ -18,6 +24,12 @@ const T = {
         ({ xs: 'var(--font-size-1)', sm: 'var(--font-size-2)', md: 'var(--font-size-3)' })[size] ||
         'var(--font-size-1)',
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Displays a title with optional subtitle
 // @sig TitleAndSubtitle :: Props -> ReactElement

@@ -50,6 +50,20 @@ const { expandTwoDigitYear, parseDateString, toDisplayDateString, updateDatePart
 
 const { ActionRegistry } = KeymapModule
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const HIDDEN_INPUT_STYLE = { opacity: 0, position: 'absolute', left: '-9999px', width: '1px', height: '1px' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 /*
  * KeyboardDateInput component
  */
@@ -305,18 +319,11 @@ const KeyboardDateInput = forwardRef((props, ref) => {
     }
 
     const renderKeyboardModeWrapper = () => {
-        const hiddenInputStyle = { opacity: 0, position: 'absolute', left: '-9999px', width: '1px', height: '1px' }
+        const inputProps = { ref: inputRef, type: 'text', style: HIDDEN_INPUT_STYLE, onKeyDown: handleKeyDown, onBlur: handleBlur, autoFocus: true }
 
         return (
             <Box>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    style={hiddenInputStyle}
-                    onKeyDown={handleKeyDown}
-                    onBlur={handleBlur}
-                    autoFocus
-                />
+                <input {...inputProps} />
                 {renderKeyboardMode()}
             </Box>
         )
@@ -325,20 +332,9 @@ const KeyboardDateInput = forwardRef((props, ref) => {
     const renderTextMode = () => {
         // Convert Date to string for display in regular input mode
         const displayValue = value ? toDisplayDateString(dateToDateParts(value)) : ''
+        const fieldProps = { ref: inputRef, value: displayValue, onChange: handleChange, onKeyDown: handleKeyDown, onFocus: handleFocus, disabled, placeholder, style, ...restProps }
 
-        return (
-            <TextField.Root
-                ref={inputRef}
-                value={displayValue}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
-                disabled={disabled}
-                placeholder={placeholder}
-                style={style}
-                {...restProps}
-            />
-        )
+        return <TextField.Root {...fieldProps} />
     }
 
     // State variables
