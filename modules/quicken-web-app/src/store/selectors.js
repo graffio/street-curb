@@ -5,6 +5,7 @@
 // COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
 // COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
 // COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
+// COMPLEXITY: section-separators — Uses domain-specific 3-line separators; block format conversion deferred
 
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import {
@@ -282,6 +283,10 @@ const activeViewId = state => {
     return activeGroup?.activeViewId ?? null
 }
 
+const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
+
+const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
+
 // prettier-ignore
 const categoryDimensionLayouts = {
     category: { title: 'Spending by Category',  subtitle: 'View spending breakdown by category hierarchy' },
@@ -325,7 +330,36 @@ const _activeViewPageTitle = state => {
     })
 }
 
-const activeViewPageTitle = memoizeReduxState(['tabLayout', 'accounts', 'transactionFilters'], _activeViewPageTitle)
+// Hand-rolled memoization because memoizeReduxState only tracks top-level state keys, and
+// 'tabLayout' changes on every width dispatch. This tracks 5 derived sub-fields instead, so
+// width-only changes during drag don't bust the cache. Can collapse back to memoizeReduxState
+// if it gains sub-key support. The views LookupTable inside a group is structurally shared and
+// stable when only width changes — unlike the group object itself.
+const activeViewPageTitle = (() => {
+    let prevActiveTabGroupId, prevViewId, prevViews, prevAccounts, prevFilters, prevValue
+    return state => {
+        const { tabLayout: tl, accounts: stateAccounts, transactionFilters } = state
+        const { activeTabGroupId, tabGroups } = tl
+        const group = tabGroups.get(activeTabGroupId)
+        const viewId = group?.activeViewId
+        const views = group?.views
+        if (
+            activeTabGroupId === prevActiveTabGroupId &&
+            viewId === prevViewId &&
+            views === prevViews &&
+            stateAccounts === prevAccounts &&
+            transactionFilters === prevFilters
+        )
+            return prevValue
+        prevActiveTabGroupId = activeTabGroupId
+        prevViewId = viewId
+        prevViews = views
+        prevAccounts = stateAccounts
+        prevFilters = transactionFilters
+        prevValue = _activeViewPageTitle(state)
+        return prevValue
+    }
+})()
 
 const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', (state, tableLayoutId) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
@@ -534,6 +568,8 @@ export {
     securities,
     showDrawer,
     showReopenBanner,
+    tabGroupById,
+    tabGroupIsActive,
     tabLayout,
     tableLayoutOrDefault,
     tableLayoutProps,

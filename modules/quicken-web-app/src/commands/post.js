@@ -1,8 +1,6 @@
 // ABOUTME: Command execution layer for domain Actions
 // ABOUTME: Dispatches Tagged actions to Redux as plain objects
-// ABOUTME: Handles IndexedDB persistence for table layouts (debounced) and tab layout
-// COMPLEXITY: export-structure — post is a function, not a namespace; lowercase matches usage pattern
-
+// ABOUTME: Handles IndexedDB persistence for table layouts (debounced) and tab layout (immediate + debounced)
 import { debounce } from '@graffio/functional'
 import { currentStore, Selectors as S } from '../store/index.js'
 import { Action } from '../types/action.js'
@@ -11,17 +9,33 @@ import { handleInitializeSystem } from './operations/handle-initialize-system.js
 import { handleOpenFile } from './operations/handle-open-file.js'
 import { handleReopenFile } from './operations/handle-reopen-file.js'
 
-const TABLE_LAYOUT_PERSIST_DELAY_MS = 500
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
-// COMPLEXITY: cohesion-structure — side-effect functions (persist*, handle*) don't fit P/T/F/V/A groups
+const E = {
+    // Writes table layouts to IndexedDB (fire-and-forget)
+    // @sig persistTableLayouts :: () -> ()
+    persistTableLayouts: () => IndexedDbStorage.persistTableLayouts(S.tableLayouts(currentStore().getState())),
 
-// Writes table layouts to IndexedDB (fire-and-forget)
-// @sig persistTableLayouts :: () -> ()
-const persistTableLayouts = () => IndexedDbStorage.persistTableLayouts(S.tableLayouts(currentStore().getState()))
+    // Writes tab layout to IndexedDB (guard: tabLayout is null before LoadFile completes)
+    // @sig persistTabLayout :: () -> ()
+    persistTabLayout: () => {
+        const tabLayout = S.tabLayout(currentStore().getState())
+        if (tabLayout) IndexedDbStorage.persistTabLayout(tabLayout)
+    },
+}
 
-// Module-level debounced function preserves timeout state across post() calls
-// @sig debouncedPersistTableLayouts :: () -> ()
-const debouncedPersistTableLayouts = debounce(TABLE_LAYOUT_PERSIST_DELAY_MS, persistTableLayouts)
+E.debouncedPersistTableLayouts = debounce(500, E.persistTableLayouts)
+E.debouncedPersistTabLayout = debounce(500, E.persistTabLayout)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Dispatches an Action to Redux and handles persistence side effects
 // @sig post :: Action -> void
@@ -30,25 +44,25 @@ const post = action => {
     // @sig dispatch :: Action -> ()
     const dispatch = a => currentStore().dispatch({ type: a.constructor.toString(), action: a })
 
-    // Writes tab layout to IndexedDB (fire-and-forget)
-    // @sig persistTabLayout :: () -> ()
-    const persistTabLayout = () => {
-        const tabLayout = S.tabLayout(currentStore().getState())
-        if (tabLayout) IndexedDbStorage.persistTabLayout(tabLayout)
-    }
-
     // Dispatches and persists table layout (debounced)
     // @sig handleSetTableLayout :: () -> ()
     const handleSetTableLayout = () => {
         dispatch(action)
-        debouncedPersistTableLayouts()
+        E.debouncedPersistTableLayouts()
     }
 
     // Dispatches and persists tab layout (immediate)
     // @sig handleTabLayoutAction :: () -> ()
     const handleTabLayoutAction = () => {
         dispatch(action)
-        persistTabLayout()
+        E.persistTabLayout()
+    }
+
+    // Dispatches and debounces tab layout persistence (for high-frequency drag resize)
+    // @sig handleTabGroupWidthAction :: () -> ()
+    const handleTabGroupWidthAction = () => {
+        dispatch(action)
+        E.debouncedPersistTabLayout()
     }
 
     // Writes account list preferences to IndexedDB (fire-and-forget)
@@ -93,7 +107,7 @@ const post = action => {
         CloseTabGroup     : handleTabLayoutAction,
         SetActiveView     : handleTabLayoutAction,
         SetActiveTabGroup : handleTabLayoutAction,
-        SetTabGroupWidth  : handleTabLayoutAction,
+        SetTabGroupWidth  : handleTabGroupWidthAction,
 
         // Account list actions (all persist to IndexedDB)
         SetAccountListSortMode : handleAccountListAction,
