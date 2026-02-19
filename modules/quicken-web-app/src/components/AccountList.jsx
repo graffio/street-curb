@@ -13,25 +13,22 @@ import { Formatters } from '../utils/formatters.js'
 
 const { toFormattedBalance, toFormattedDayChange, toDayChangeColor } = Formatters
 
-const SORT_MODE_OPTIONS = [
-    { value: 'ByType', label: 'By Type' },
-    { value: 'Alphabetical', label: 'A-Z' },
-    { value: 'ByAmount', label: 'By Amount' },
-]
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Displays an enriched account with balance and day change
 // @sig AccountRow :: { enriched: EnrichedAccount } -> ReactElement
 const AccountRow = ({ enriched }) => {
+    const openRegister = () => post(Action.OpenView(View.Register(`reg_${id}`, id, name)))
     const { account, balance, dayChange } = enriched
     const { id, name } = account
     const formattedDayChange = toFormattedDayChange(dayChange)
 
     return (
-        <Button
-            variant="ghost"
-            onClick={() => post(Action.OpenView(View.Register(`reg_${id}`, id, name)))}
-            style={{ justifyContent: 'flex-start', width: '100%', padding: '4px 8px' }}
-        >
+        <Button variant="ghost" onClick={openRegister} style={ACCOUNT_ROW_STYLE}>
             <Flex justify="between" width="100%" align="center" gap="2">
                 <Text size="2" style={{ flex: 1, textAlign: 'left' }}>
                     {account.name}
@@ -51,11 +48,10 @@ const AccountRow = ({ enriched }) => {
     )
 }
 
-const SECTION_CHEVRON_STYLE = { width: '20px', textAlign: 'center', fontSize: '12px', lineHeight: 1 }
-
 // Displays a collapsible section header with balance subtotal
 // @sig SectionHeader :: { section: AccountSection, isCollapsed: Boolean, onToggle: Function } -> ReactElement
 const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
+    const handleClick = () => isCollapsible && onToggle(id)
     const { id, isCollapsible, label, totalBalance, totalCount } = section
 
     const style = {
@@ -66,14 +62,7 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
     }
 
     return (
-        <Flex
-            justify="between"
-            align="center"
-            py="2"
-            px="2"
-            style={style}
-            onClick={() => isCollapsible && onToggle(id)}
-        >
+        <Flex justify="between" align="center" py="2" px="2" style={style} onClick={handleClick}>
             <Flex align="center" gap="2">
                 {isCollapsible && <Text style={SECTION_CHEVRON_STYLE}>{isCollapsed ? '▶' : '▼'}</Text>}
                 <Text size="2" weight="bold">
@@ -93,6 +82,7 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
 // Displays a section with header and accounts (supports nested children)
 // @sig AccountSectionView :: { section: AccountSection, collapsedSections: Set, indent: Number } -> ReactElement
 const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
+    const toggleSection = sectionId => post(Action.ToggleSectionCollapsed(sectionId))
     const { accounts, children, id } = section
     const isCollapsed = collapsedSections.has(id)
     const hasChildren = children.length > 0
@@ -102,12 +92,7 @@ const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
 
     return (
         <Box>
-            <SectionHeader
-                section={section}
-                isCollapsed={isCollapsed}
-                onToggle={sectionId => post(Action.ToggleSectionCollapsed(sectionId))}
-                indent={indent}
-            />
+            <SectionHeader section={section} isCollapsed={isCollapsed} onToggle={toggleSection} indent={indent} />
             {!isCollapsed && (
                 <>
                     {accounts.length > 0 && (
@@ -145,9 +130,31 @@ const SortModeDropdown = ({ value, onChange }) => (
     </Select.Root>
 )
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const SORT_MODE_OPTIONS = [
+    { value: 'ByType', label: 'By Type' },
+    { value: 'Alphabetical', label: 'A-Z' },
+    { value: 'ByAmount', label: 'By Amount' },
+]
+
+const ACCOUNT_ROW_STYLE = { justifyContent: 'flex-start', width: '100%', padding: '4px 8px' }
+const SECTION_CHEVRON_STYLE = { width: '20px', textAlign: 'center', fontSize: '12px', lineHeight: 1 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Main AccountList component
 // @sig AccountList :: () -> ReactElement
 const AccountList = () => {
+    const changeSortMode = value => post(Action.SetAccountListSortMode(SortMode[value]()))
     const accounts = useSelector(S.accounts)
     const sortMode = useSelector(S.UI.sortMode)
     const collapsedSections = useSelector(S.UI.collapsedSections)
@@ -169,10 +176,7 @@ const AccountList = () => {
                 <Heading as="h3" size="3" style={{ fontWeight: 'lighter' }}>
                     Accounts
                 </Heading>
-                <SortModeDropdown
-                    value={sortModeValue}
-                    onChange={value => post(Action.SetAccountListSortMode(SortMode[value]()))}
-                />
+                <SortModeDropdown value={sortModeValue} onChange={changeSortMode} />
             </Flex>
             <ScrollArea style={{ flex: 1 }}>
                 <Flex direction="column" gap="2" mx="2" pb="3">
