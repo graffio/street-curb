@@ -42,6 +42,16 @@ const T = {
         isActive: view.id === activeViewId,
         isActiveGroup,
     }),
+
+    // Determines drop index from cursor position relative to tab elements
+    // @sig toDropIndex :: (Element, Number, Number) -> Number
+    toDropIndex: (container, clientX, tabCount) => {
+        const tabs = Array.from(container.children).slice(0, tabCount)
+        const idx = tabs.findIndex(
+            el => clientX < el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2,
+        )
+        return idx === -1 ? tabCount : idx
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -143,16 +153,17 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
         if (!e.currentTarget.contains(e.relatedTarget)) post(Action.SetDropTarget(null))
     }
 
-    // Handle tab drop - move view from source group to this group
+    // Handle tab drop — move or reorder view
     // @sig handleDrop :: DragEvent -> void
     const handleDrop = e => {
+        const { clientX, currentTarget, dataTransfer } = e
         e.preventDefault()
         post(Action.SetDropTarget(null))
-        const dragData = T.toDragData(e.dataTransfer.getData('application/json'))
+        const dragData = T.toDragData(dataTransfer.getData('application/json'))
         if (!dragData) return
         const { viewId, groupId: sourceGroupId } = dragData
-        if (sourceGroupId === group.id && group.views[viewId]) return // Same group, already there
-        post(Action.MoveView(viewId, sourceGroupId, group.id, null))
+        const toIndex = T.toDropIndex(currentTarget, clientX, group.views.length)
+        post(Action.MoveView(viewId, sourceGroupId, group.id, toIndex))
     }
 
     const isDropTarget = useSelector(S.dropTargetGroupId) === group.id
