@@ -83,7 +83,11 @@ const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear 
         el.blur()
     }
 
-    const searchId = 'search_' + viewId
+    // Registers/unregisters search input in FocusRegistry for keyboard access
+    // @sig refCallback :: Element | null -> void
+    const refCallback = el =>
+        el ? FocusRegistry.register('search_' + viewId, el) : FocusRegistry.unregister('search_' + viewId)
+
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
     const matchCount = searchMatches.length
@@ -99,7 +103,6 @@ const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear 
     if (highlightIdx >= 0) _lastMatchIdx = highlightIdx
     const displayIndex = matchCount > 0 ? _lastMatchIdx + 1 : 0
     const searchFieldProps = {
-        ref: el => (el ? FocusRegistry.register(searchId, el) : FocusRegistry.unregister(searchId)),
         placeholder: 'Search...',
         onChange: e => dispatchSearchQuery(viewId, e.target.value),
         onKeyDown: handleKeyDown,
@@ -109,7 +112,7 @@ const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear 
 
     return (
         <Flex align="center" gap="2" style={containerStyle}>
-            <TextField.Root {...searchFieldProps} />
+            <TextField.Root ref={refCallback} {...searchFieldProps} />
             {searchQuery && (
                 <Flex align="center" gap="1">
                     <Text size="1" color="gray" style={counterStyle}>

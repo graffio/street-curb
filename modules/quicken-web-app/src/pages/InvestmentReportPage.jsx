@@ -1,10 +1,10 @@
 // ABOUTME: Investment holdings report page with hierarchical tree display
 // ABOUTME: Displays portfolio positions grouped by account, security, type, or goal
 import { Flex } from '@radix-ui/themes'
-import { DataTable } from '../components/DataTable.jsx'
 import { useSelector } from 'react-redux'
 import { InvestmentReportColumns } from '../columns/index.js'
 import { post } from '../commands/post.js'
+import { DataTable } from '../components/DataTable.jsx'
 import {
     AccountFilterColumn,
     AsOfDateColumn,
@@ -18,21 +18,12 @@ import { Action } from '../types/action.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const pageContainerStyle = { height: '100%' }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Investment holdings report with hierarchical tree display
- *
  * @sig InvestmentReportPage :: ({ viewId: String, height?: String }) -> ReactElement
  */
 const InvestmentReportPage = ({ viewId, height = '100%' }) => {
@@ -69,7 +60,7 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     }
 
     return (
-        <Flex direction="column" style={pageContainerStyle}>
+        <Flex direction="column" style={{ height: '100%' }}>
             <FilterChipRow {...filterChipRowProps}>
                 <AsOfDateColumn viewId={viewId} />
                 <AccountFilterColumn viewId={viewId} />

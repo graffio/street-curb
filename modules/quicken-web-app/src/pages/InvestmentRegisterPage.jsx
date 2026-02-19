@@ -3,11 +3,12 @@
 
 import { KeymapModule } from '@graffio/keymap'
 import { Flex } from '@radix-ui/themes'
-import { DataTable } from '../components/DataTable.jsx'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { TransactionColumns } from '../columns/index.js'
 import { FocusRegistry } from '../commands/data-sources/focus-registry.js'
 import { post } from '../commands/post.js'
+import { DataTable } from '../components/DataTable.jsx'
 import {
     ActionFilterColumn,
     DateFilterColumn,
@@ -16,7 +17,6 @@ import {
     SecurityFilterColumn,
 } from '../components/index.js'
 import { SearchChip } from '../components/SearchChip.jsx'
-import { TransactionColumns } from '../columns/index.js'
 import { RegisterNavigation } from '../store/register-navigation.js'
 import * as S from '../store/selectors.js'
 import { Action, TableLayout } from '../types/index.js'

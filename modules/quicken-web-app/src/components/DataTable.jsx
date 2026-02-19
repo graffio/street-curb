@@ -239,8 +239,8 @@ const TableHeader = ({ headerGroups, onSort, sorting, columnOrder, onColumnReord
     // Renders a sortable header cell for a column
     // @sig toHeaderCell :: (Header, Number) -> ReactElement
     const toHeaderCell = (header, index) => {
-        const props = { key: header.id, header, sorting, onSort, isEven: index % 2 === 0 }
-        return <SortableHeaderCell {...props} />
+        const props = { header, sorting, onSort, isEven: index % 2 === 0 }
+        return <SortableHeaderCell key={header.id} {...props} />
     }
 
     const handleDragEnd = event => {
