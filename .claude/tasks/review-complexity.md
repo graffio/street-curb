@@ -61,20 +61,20 @@ the code evolves.
 
 4. **Apply simplification strategies** (in order of preference):
 
-| Signal                                  | Simplification               | Destination                                  | Why it helps                            |
-|-----------------------------------------|------------------------------|----------------------------------------------|-----------------------------------------|
-| `useCallback`/`useRef` closure over Redux state | Dispatch-intent pattern    | Operation (`commands/operations/`)         | No closure, reads state at call time    |
-| `useEffect` for init/ensure             | Selector-with-defaults       | `selectors.js` (memoized selector)           | Testable, no mount-time side effect     |
-| `useRef` for DOM focus                  | FocusRegistry ref callback   | `commands/data-sources/focus-registry.js` + JSX ref attr | Plain JS, testable, no hook  |
-| `useEffect` for page title              | Router-layer dispatch        | `router.js`                                  | Pages don't know their own title        |
-| `useMemo` from Redux state              | Memoized selector            | `selectors.js`                               | Testable, reusable, memoized            |
-| `useState` for non-serializable state   | Plain JS data source           | `commands/data-sources/*.js`                | Like FocusRegistry pattern              |
-| Handler with inline logic               | Move to `post(Action.X)`     | `reducer.js`                                 | Logic in reducer = testable             |
-| Style objects in component              | Use semantic CSS vars        | `styles.css` or inline vars                  | Eliminates objects entirely             |
-| Style objects (if vars won't work)      | Move to shared module        | `styles/*.js`                                | Reusable across files                   |
-| `renderFoo` function with logic         | Convert to `<Foo>` component | Same file (if small) or own file (if reused) | Encapsulates, testable                  |
-| Any function not in P/T/F/V/A/E namespace | Add to appropriate namespace | Stays in file                                | Forces categorization, self-documenting |
-| if/else on type field                   | TaggedSum with `.match()`    | Type definition file                         | Exhaustive, self-documenting            |
+| Signal                                          | Simplification               | Destination                                              | Why it helps                            |
+|-------------------------------------------------|------------------------------|----------------------------------------------------------|-----------------------------------------|
+| `useCallback`/`useRef` closure over Redux state | Dispatch-intent pattern      | Operation (`commands/operations/`)                       | No closure, reads state at call time    |
+| `useEffect` for init/ensure                     | Selector-with-defaults       | `selectors.js` (memoized selector)                       | Testable, no mount-time side effect     |
+| `useRef` for DOM focus                          | FocusRegistry ref callback   | `commands/data-sources/focus-registry.js` + JSX ref attr | Plain JS, testable, no hook             |
+| `useEffect` for page title                      | Router-layer dispatch        | `router.js`                                              | Pages don't know their own title        |
+| `useMemo` from Redux state                      | Memoized selector            | `selectors.js`                                           | Testable, reusable, memoized            |
+| `useState` for non-serializable state           | Plain JS data source         | `commands/data-sources/*.js`                             | Like FocusRegistry pattern              |
+| Handler with inline logic                       | Move to `post(Action.X)`     | `reducer.js`                                             | Logic in reducer = testable             |
+| Style objects in component                      | Use semantic CSS vars        | `styles.css` or inline vars                              | Eliminates objects entirely             |
+| Style objects (if vars won't work)              | Move to shared module        | `styles/*.js`                                            | Reusable across files                   |
+| `renderFoo` function with logic                 | Convert to `<Foo>` component | Same file (if small) or own file (if reused)             | Encapsulates, testable                  |
+| Any function not in P/T/F/V/A/E namespace       | Add to appropriate namespace | Stays in file                                            | Forces categorization, self-documenting |
+| if/else on type field                           | TaggedSum with `.match()`    | Type definition file                                     | Exhaustive, self-documenting            |
 
 **Anti-examples (these are NOT simplification):**
 
@@ -87,9 +87,9 @@ the code evolves.
 
 **Valid within-file changes:**
 
-| What it looks like                                | Why it's valid                                                   |
-|---------------------------------------------------|------------------------------------------------------------------|
-| `renderFoo` → `<Foo>` component (same file)       | Disentangles row logic from table orchestration                  |
+| What it looks like                                  | Why it's valid                                                   |
+|-----------------------------------------------------|------------------------------------------------------------------|
+| `renderFoo` → `<Foo>` component (same file)         | Disentangles row logic from table orchestration                  |
 | All functions organized into P/T/F/V/A/E namespaces | Forces categorization, self-documenting (e.g., `P.isPascalCase`) |
 
 5. **Verify each recommendation passes the litmus test:**

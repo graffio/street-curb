@@ -17,11 +17,11 @@ isolation ensures organizations cannot access each other's data.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ Client Application (Firebase SDK)                  │
-│ • Collects email, displayName, phoneNumber         │
-│ • signInWithPhoneNumber() → Firebase sends SMS     │
-│ • confirmationResult.confirm(passcode)             │
-│ • getIdToken() → receives token with uid           │
+│ Client Application (Firebase SDK)                   │
+│ • Collects email, displayName, phoneNumber          │
+│ • signInWithPhoneNumber() → Firebase sends SMS      │
+│ • confirmationResult.confirm(passcode)              │
+│ • getIdToken() → receives token with uid            │
 └────────────────┬────────────────────────────────────┘
                  │ POST /submitActionRequest
                  │ Authorization: Bearer <firebase-token>
@@ -29,17 +29,17 @@ isolation ensures organizations cannot access each other's data.
                  ↓
 ┌─────────────────────────────────────────────────────┐
 │ HTTP Function (submit-action-request.js)            │
-│ • Verifies Firebase token → extracts uid, phone    │
-│ • Creates/looks up User document                   │
-│ • Sets userId custom claim on Firebase Auth user   │
-│ • Logs AuthenticationCompleted action              │
+│ • Verifies Firebase token → extracts uid, phone     │
+│ • Creates/looks up User document                    │
+│ • Sets userId custom claim on Firebase Auth user    │
+│ • Logs AuthenticationCompleted action               │
 └────────────────┬────────────────────────────────────┘
                  │ Returns success
                  ↓
 ┌─────────────────────────────────────────────────────┐
 │ Client Refreshes Token                              │
-│ • getIdToken(true) → receives userId claim         │
-│ • Attaches token to all subsequent requests        │
+│ • getIdToken(true) → receives userId claim          │
+│ • Attaches token to all subsequent requests         │
 │ • Authorization: Bearer <token>                     │
 └────────────────┬────────────────────────────────────┘
                  │ POST /submitActionRequest
@@ -47,16 +47,16 @@ isolation ensures organizations cannot access each other's data.
                  ↓
 ┌─────────────────────────────────────────────────────┐
 │ HTTP Function (submit-action-request.js)            │
-│ • Verifies Firebase Auth token                     │
-│ • Extracts userId from token.userId claim          │
-│ • Injects actorId into action request              │
-│ • Processes action if authorized                   │
+│ • Verifies Firebase Auth token                      │
+│ • Extracts userId from token.userId claim           │
+│ • Injects actorId into action request               │
+│ • Processes action if authorized                    │
 └────────────────┬────────────────────────────────────┘
                  │
                  ↓
 ┌─────────────────────────────────────────────────────┐
 │ Firestore Security Rules                            │
-│ • Client reads: Check user doc organizations map   │
+│ • Client reads: Check user doc organizations map    │
 │ • Client writes: Blocked (server functions only)    │
 │ • Audit trail: completedActions read-only           │
 └─────────────────────────────────────────────────────┘
@@ -131,6 +131,7 @@ account impersonation (not key files) provides developer access with individual 
 See Architecture Map diagram (Section 1.1) for complete flow from passcode request through token verification.
 
 **Implementation**:
+
 - Token verification: `modules/curb-map/functions/src/submit-action-request.js`
 - userId claim sync: `modules/curb-map/functions/src/handlers/handle-user-created.js`
 
@@ -138,7 +139,8 @@ See Architecture Map diagram (Section 1.1) for complete flow from passcode reque
 
 **Role Hierarchy**: admin > member > viewer
 
-Users can have different roles in different organizations (e.g., admin in org_sf, member in org_la). Roles stored in user document:
+Users can have different roles in different organizations (e.g., admin in org_sf, member in org_la). Roles stored in
+user document:
 
 ```
 // Firestore /users/{userId} document
@@ -153,13 +155,13 @@ Users can have different roles in different organizations (e.g., admin in org_sf
 }
 ```
 
-Permission checking: Firestore rules read user doc to check membership. Server operations compare role against required role using hierarchy.
+Permission checking: Firestore rules read user doc to check membership. Server operations compare role against required
+role using hierarchy.
 
-**Implementation**: 
+**Implementation**:
 
 - `modules/curb-map/functions/src/submit-action-request.js:297-336`
 - `modules/curb-map/type-definitions/action.type.js` (see ```mayI``` function)
-
 
 ### 2.3 Service Account Impersonation
 
@@ -197,7 +199,9 @@ Permission checking: Firestore rules read user doc to check membership. Server o
 
 **Current Status**: Deferred to backlog. Not implemented.
 
-**Planned Architecture**: Admins with `impersonate` permission will be able to assume a user's session to debug customer issues while maintaining complete audit trail with ImpersonationStarted/ImpersonationEnded events logged to completedActions.
+**Planned Architecture**: Admins with `impersonate` permission will be able to assume a user's session to debug customer
+issues while maintaining complete audit trail with ImpersonationStarted/ImpersonationEnded events logged to
+completedActions.
 
 ---
 
@@ -217,7 +221,8 @@ SOC2 Type II requirements.
 **Defense in Depth**: Multiple security layers (Firebase Auth token verification, Firestore rules reading user doc,
 HTTP function authorization checks).
 
-**Multi-Tenant Data Isolation**: User doc organizations map + Firestore rules enforce organization boundaries at database
+**Multi-Tenant Data Isolation**: User doc organizations map + Firestore rules enforce organization boundaries at
+database
 level. Always fresh, single source of truth.
 
 **Simple User Experience**: No password management, no password reset flows, no "forgot password" emails.

@@ -34,11 +34,11 @@ abstractions are justified, not just whether they're organized correctly.
 
 ### API Confusion
 
-| Pattern                               | Problem                   | Fix                                    |
-|---------------------------------------|---------------------------|----------------------------------------|
-| Function accepts unrelated types      | `from(string \| ASTNode)` | **CHECKPOINT** — flag for review       |
-| Name implies singular, returns plural | `getItem()` returns array | Rename to `getItems()`                 |
-| Parameter derivable internally        | `foo(x, x.length)`        | Derive length inside                   |
+| Pattern                               | Problem                   | Fix                              |
+|---------------------------------------|---------------------------|----------------------------------|
+| Function accepts unrelated types      | `from(string \| ASTNode)` | **CHECKPOINT** — flag for review |
+| Name implies singular, returns plural | `getItem()` returns array | Rename to `getItems()`           |
+| Parameter derivable internally        | `foo(x, x.length)`        | Derive length inside             |
 
 **Note:** Multi-type inputs are sometimes intentional convenience APIs. Flag for human review, don't assume it's wrong.
 

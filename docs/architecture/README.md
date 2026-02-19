@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Architecture documents explain **connections over code** - how components relate, why decisions were made, and what trade-offs exist. They remain stable as implementation details change.
+Architecture documents explain **connections over code** - how components relate, why decisions were made, and what
+trade-offs exist. They remain stable as implementation details change.
 
 ## For LLM Assistants
 
@@ -27,22 +28,25 @@ Architecture docs describe **patterns**, not **implementations**.
 ## Document Structure
 
 **Required**:
+
 1. **Overview**
-   - ASCII diagram (vertical or horizontal flow)
-   - Why this architecture (1 paragraph: problem → solution)
-   - Key components (what they do, where they live)
+    - ASCII diagram (vertical or horizontal flow)
+    - Why this architecture (1 paragraph: problem → solution)
+    - Key components (what they do, where they live)
 
 2. **Trade-offs**
-   - What this enables
-   - What this constrains (with business context: "when this matters", "why acceptable")
-   - When to revisit
+    - What this enables
+    - What this constrains (with business context: "when this matters", "why acceptable")
+    - When to revisit
 
 **Optional** (include only if Overview doesn't cover it):
+
 - **Architecture Details** - Data structures, configuration, or complex connection patterns not clear from diagram
 - **Problem & Context** - Requirements/constraints if not obvious from Overview
 - **Decision History** - 1 paragraph linking to decisions.md
 
 **Never include**:
+
 - "Implementation Guide" sections (belong in runbooks)
 - "References" sections (use inline links)
 - Pseudocode or implementation functions
@@ -50,6 +54,7 @@ Architecture docs describe **patterns**, not **implementations**.
 ## What Code Can Appear
 
 **✅ Data Structures** (defines contracts):
+
 ```
 // Firestore user document
 {
@@ -61,6 +66,7 @@ Architecture docs describe **patterns**, not **implementations**.
 ```
 
 **✅ Configuration** (defines behavior):
+
 ```
 // firestore.rules
 match /organizations/{orgId} {
@@ -73,13 +79,15 @@ match /organizations/{orgId} {
 Don't copy functions. Describe the pattern + reference file location.
 
 **Wrong**:
+
 ```javascript
 const checkPermission = (token, orgId, role) => {
-  // 20 lines of implementation
+    // 20 lines of implementation
 };
 ```
 
 **Right**:
+
 ```markdown
 Permission checking extracts role from token.organizations[orgId], compares
 against hierarchy (admin > member > viewer). Returns true if sufficient.
@@ -90,12 +98,14 @@ Implementation: modules/curb-map/functions/src/submit-action-request.js:297
 ## Reference Stable Resources
 
 **✅ Always safe to reference**:
+
 - Code files: `modules/curb-map/functions/src/submit-action-request.js`
 - Type definitions: `type-definitions/action.type.js`
 - decisions.md: Permanent decision archive
 - Firestore collections: `/organizations/{id}`, `/users/{id}`
 
 **❌ Don't reference specifications folders**:
+
 - Specification folders are ephemeral (they move to completed-specifications.md when done)
 - Reference **code files** instead of **specification folders**
 - If you must explain implementation, describe the pattern inline
@@ -112,19 +122,22 @@ Don't consolidate just to reduce duplication. Ask: "Does this context help under
 - data-model.md (collection structure)
 - security.md (Firestore rules)
 
-This is **good** - each doc needs that context for its narrative. Consolidating would force readers to jump between documents.
+This is **good** - each doc needs that context for its narrative. Consolidating would force readers to jump between
+documents.
 
 ## ASCII Diagrams Are Essential
 
 Architecture diagrams show connections at a glance. They're the most valuable part of architecture docs.
 
 **Good diagram shows**:
+
 - Component flow (Client → Server → Database)
 - Data transformations (ActionRequest → completedActions)
 - Decision points (if duplicate, return 409)
 - Multiple layers (HTTP → Transaction → Firestore)
 
 **Horizontal flow** (sequence over time):
+
 ```
 Client                    Server                     Firestore
   │                         │                            │
@@ -139,6 +152,7 @@ Client                    Server                     Firestore
 ```
 
 **Vertical flow** (layers or steps):
+
 ```
 ┌─────────────────────────────────────┐
 │ Client Application                  │
@@ -250,6 +264,7 @@ Tables make structure scannable.
 ```
 
 **What makes this exemplary**:
+
 - Shows full flow with layers
 - Includes decision points (duplicate check logic)
 - Explains "why" inline (⚠️ Why Transaction?)
@@ -259,6 +274,7 @@ Tables make structure scannable.
 ## Pre-Commit Checklist
 
 Before committing architecture doc:
+
 - ✓ Has at least one ASCII diagram
 - ✓ No implementation code (only data structures/config)
 - ✓ No references to specification folders
@@ -268,6 +284,7 @@ Before committing architecture doc:
 ## When to Update This Standard
 
 Revisit when:
+
 - Architecture docs feel inconsistent or confusing
 - New team members struggle to understand architecture
 - More than 3 discussions about what belongs in architecture docs
