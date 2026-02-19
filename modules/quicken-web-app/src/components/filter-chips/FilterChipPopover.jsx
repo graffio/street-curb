@@ -223,10 +223,6 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
 
     const handleSearch = e => post(Action.SetFilterPopoverSearch(viewId, e.target.value))
 
-    const scrollStyle = { maxHeight: 200 }
-
-    // prettier-ignore
-    const CONTENT_PROPS = { style: { padding: 'var(--space-2)', minWidth: 250 }, side: 'right', align: 'start', sideOffset: 4 }
     const { popoverId, label, triggerId, width = 175, singleSelect = false } = config
     const { handleContentKey, registerContent, registerTrigger } = E
     const Row = singleSelect ? SingleSelectRow : ItemRow
@@ -275,7 +271,7 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
             <Popover.Content ref={registerContent} {...CONTENT_PROPS} onKeyDown={handleContentKey}>
                 {!singleSelect && <SelectedBadges allItems={allItems} selectedIds={selectedIds} onToggle={onToggle} />}
                 <TextField.Root ref={el => el?.focus()} {...F.makeSearchProps(searchText, handleSearch)} />
-                <ScrollArea style={scrollStyle}>
+                <ScrollArea style={SCROLL_STYLE}>
                     {filteredItems.map((item, i) => {
                         const hl = i === highlightedIndex
                         const sel = selectedSet.has(item.id)
@@ -291,6 +287,17 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
         </Popover.Root>
     )
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// prettier-ignore
+const CONTENT_PROPS = { style: { padding: 'var(--space-2)', minWidth: 250 }, side: 'right', align: 'start', sideOffset: 4 }
+
+const SCROLL_STYLE = { maxHeight: 200 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
