@@ -1,25 +1,89 @@
 // ABOUTME: Bank transaction register page — filtering, search, and sortable transaction table
 // ABOUTME: Composes filter chips and SearchChip as children of FilterChipRow
-// COMPLEXITY: react-redux-separation — 2 useEffect lifecycle dispatches need infrastructure to eliminate
 
+import { KeymapModule } from '@graffio/keymap'
 import { Flex } from '@radix-ui/themes'
 import { DataTable } from '../components/DataTable.jsx'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
+import { FocusRegistry } from '../commands/data-sources/focus-registry.js'
 import { post } from '../commands/post.js'
 import { CategoryFilterColumn, DateFilterColumn, FilterChipRow, SearchFilterColumn } from '../components/index.js'
 import { SearchChip } from '../components/SearchChip.jsx'
 import { TransactionColumns } from '../columns/index.js'
 import { RegisterNavigation } from '../store/register-navigation.js'
-import { RegisterPageCommands } from './register-page-commands.js'
 import * as S from '../store/selectors.js'
 import { Action, TableLayout } from '../types/index.js'
 
+const { ActionRegistry } = KeymapModule
 const { bankColumns } = TransactionColumns
-const { searchInputRef } = RegisterPageCommands
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const E = {
+    // Registers keyboard actions and initializes date range on page mount
+    // @sig registerPageActions :: Element? -> void
+    registerPageActions: element => {
+        actionCleanup?.()
+        actionCleanup = null
+        if (element) {
+            actionCleanup = ActionRegistry.register(pageState.viewId, [
+                {
+                    id: 'select',
+                    description: 'Next match',
+                    execute: () => post(Action.SetViewUiState(pageState.viewId, { navigateSearch: 1 })),
+                },
+                {
+                    id: 'search:prev',
+                    description: 'Previous match',
+                    execute: () => post(Action.SetViewUiState(pageState.viewId, { navigateSearch: -1 })),
+                },
+                {
+                    id: 'search:open',
+                    description: 'Open search',
+                    execute: () => FocusRegistry.focus('search_' + pageState.viewId),
+                },
+            ])
+            post(Action.SetTransactionFilter(pageState.viewId, { initDateRange: true }))
+        }
+    },
+
+    // Clears search input DOM value and resets search filter
+    // @sig clearSearch :: () -> void
+    clearSearch: () => {
+        const el = FocusRegistry.get('search_' + pageState.viewId)
+        if (el) el.value = ''
+        post(Action.SetTransactionFilter(pageState.viewId, { searchQuery: '' }))
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+let pageState = { viewId: null }
+let actionCleanup = null
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Bank transaction register with filtering, search, and sortable table
@@ -29,23 +93,7 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
 const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
     const viewId = `reg_${accountId}`
     const tableLayoutId = RegisterNavigation.toTableLayoutId('account', accountId)
-    const ctx = {
-        sortSelector: S.Transactions.sortedForBankDisplay,
-        highlightSelector: S.Transactions.highlightedIdForBank,
-        viewId,
-        accountId,
-        tableLayoutId,
-        columns: bankColumns,
-    }
-
-    // --- Effects (remaining lifecycle concerns — each documents why useEffect is needed) ---
-    useEffect(RegisterPageCommands.registerSearchActions(ctx), [viewId])
-    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
-    const dateRange = useSelector(state => S.UI.dateRange(state, viewId))
-    useEffect(
-        () => RegisterPageCommands.initDateRange(dateRangeKey, dateRange, viewId),
-        [dateRangeKey, dateRange, viewId],
-    )
+    pageState = { viewId }
 
     // --- Selectors ---
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
@@ -59,49 +107,47 @@ const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
         S.Transactions.highlightedIdForBank(state, viewId, accountId, tableLayoutId, bankColumns),
     )
 
+    const searchChipProps = {
+        viewId,
+        accountId,
+        highlightedId,
+        onNext: () => post(Action.SetViewUiState(viewId, { navigateSearch: 1 })),
+        onPrev: () => post(Action.SetViewUiState(viewId, { navigateSearch: -1 })),
+        onClear: E.clearSearch,
+    }
+
+    const dataTableProps = {
+        columns: bankColumns,
+        data,
+        height,
+        rowHeight: 60,
+        highlightedId,
+        sorting,
+        columnSizing,
+        columnOrder,
+        onSortingChange: updater =>
+            post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting)))),
+        onColumnSizingChange: updater =>
+            post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing)))),
+        onColumnOrderChange: newOrder =>
+            post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder))),
+        onRowClick: row => row.transaction && post(Action.SetViewUiState(viewId, { highlightRow: row.transaction.id })),
+        onHighlightChange: newId => post(Action.SetViewUiState(viewId, { highlightRow: newId })),
+        onEscape: () => searchQuery && E.clearSearch(),
+        actionContext: viewId,
+        context: { searchQuery: searchQuery || filterQuery },
+    }
+
     return (
-        <Flex direction="column" style={pageContainerStyle}>
+        <Flex direction="column" style={pageContainerStyle} ref={E.registerPageActions}>
             <FilterChipRow viewId={viewId} accountId={accountId}>
                 <DateFilterColumn viewId={viewId} />
                 <CategoryFilterColumn viewId={viewId} />
                 <SearchFilterColumn viewId={viewId} />
-                <SearchChip
-                    viewId={viewId}
-                    accountId={accountId}
-                    highlightedId={highlightedId}
-                    inputRef={searchInputRef}
-                    onNext={() => RegisterPageCommands.handleSearchNavigate(ctx, 1)}
-                    onPrev={() => RegisterPageCommands.handleSearchNavigate(ctx, -1)}
-                    onClear={() => RegisterPageCommands.clearSearch(viewId)}
-                />
+                <SearchChip {...searchChipProps} />
             </FilterChipRow>
             <div style={mainContentStyle}>
-                <DataTable
-                    columns={bankColumns}
-                    data={data}
-                    height={height}
-                    rowHeight={60}
-                    highlightedId={highlightedId}
-                    sorting={sorting}
-                    columnSizing={columnSizing}
-                    columnOrder={columnOrder}
-                    onSortingChange={updater =>
-                        post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting))))
-                    }
-                    onColumnSizingChange={updater =>
-                        post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing))))
-                    }
-                    onColumnOrderChange={newOrder =>
-                        post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder)))
-                    }
-                    onRowClick={row =>
-                        row.transaction && RegisterPageCommands.highlightRow(data, viewId, row.transaction.id)
-                    }
-                    onHighlightChange={newId => RegisterPageCommands.highlightRow(data, viewId, newId)}
-                    onEscape={() => searchQuery && RegisterPageCommands.clearSearch(viewId)}
-                    actionContext={viewId}
-                    context={{ searchQuery: searchQuery || filterQuery }}
-                />
+                <DataTable {...dataTableProps} />
             </div>
         </Flex>
     )

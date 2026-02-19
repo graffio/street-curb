@@ -5,6 +5,7 @@ import { debounce } from '@graffio/functional'
 import { Button, Flex, Text, TextField } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { FocusRegistry } from '../commands/data-sources/focus-registry.js'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
@@ -56,31 +57,33 @@ let _prevSearchQuery = ''
  *
  * @sig SearchChip :: SearchChipProps -> ReactElement
  *     SearchChipProps = { viewId: String, accountId: String, highlightedId: String | null,
- *         inputRef: Ref, onNext: () -> void, onPrev: () -> void, onClear: () -> void }
+ *         onNext: () -> void, onPrev: () -> void, onClear: () -> void }
  */
-const SearchChip = ({ viewId, accountId, highlightedId, inputRef, onNext, onPrev, onClear }) => {
+const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear }) => {
     // Enter: flush query immediately, navigate to next match, blur
     // Shift+Enter: navigate to previous match, blur
     // Escape: clear search and blur
     // @sig handleKeyDown :: KeyboardEvent -> void
     const handleKeyDown = e => {
+        const el = FocusRegistry.get('search_' + viewId)
         const { key, shiftKey } = e
         if (key === 'Escape') {
             e.preventDefault()
             e.stopPropagation()
             onClear()
-            inputRef.current.blur()
+            el.blur()
             return
         }
         if (key !== 'Enter') return
         e.preventDefault()
         e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { searchQuery: inputRef.current.value }))
+        post(Action.SetTransactionFilter(viewId, { searchQuery: el.value }))
         if (shiftKey) onPrev()
         else onNext()
-        inputRef.current.blur()
+        el.blur()
     }
 
+    const searchId = 'search_' + viewId
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
     const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
     const matchCount = searchMatches.length
@@ -96,7 +99,7 @@ const SearchChip = ({ viewId, accountId, highlightedId, inputRef, onNext, onPrev
     if (highlightIdx >= 0) _lastMatchIdx = highlightIdx
     const displayIndex = matchCount > 0 ? _lastMatchIdx + 1 : 0
     const searchFieldProps = {
-        ref: inputRef,
+        ref: el => (el ? FocusRegistry.register(searchId, el) : FocusRegistry.unregister(searchId)),
         placeholder: 'Search...',
         onChange: e => dispatchSearchQuery(viewId, e.target.value),
         onKeyDown: handleKeyDown,
