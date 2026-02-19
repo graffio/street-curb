@@ -18,7 +18,19 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const pageContainerStyle = { height: '100%' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Category spending report with hierarchical tree display
@@ -30,6 +42,18 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
 
+    const dataTableProps = {
+        columns: CategoryReportColumns,
+        data: transactionTree,
+        height,
+        rowHeight: 40,
+        getChildRows: row => row.children,
+        getRowCanExpand: row => row.original.children?.length > 0 || row.original.value?.length > 0,
+        renderSubComponent: ({ row }) => <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />,
+        expanded,
+        onExpandedChange: updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater })),
+    }
+
     return (
         <Flex direction="column" style={pageContainerStyle}>
             <FilterChipRow viewId={viewId}>
@@ -39,19 +63,7 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
                 <GroupByFilterColumn viewId={viewId} />
                 <SearchFilterColumn viewId={viewId} />
             </FilterChipRow>
-            <DataTable
-                columns={CategoryReportColumns}
-                data={transactionTree}
-                height={height}
-                rowHeight={40}
-                getChildRows={row => row.children}
-                getRowCanExpand={row => row.original.children?.length > 0 || row.original.value?.length > 0}
-                renderSubComponent={({ row }) => (
-                    <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />
-                )}
-                expanded={expanded}
-                onExpandedChange={updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater }))}
-            />
+            <DataTable {...dataTableProps} />
         </Flex>
     )
 }

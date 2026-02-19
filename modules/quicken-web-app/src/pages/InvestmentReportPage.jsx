@@ -16,7 +16,19 @@ import {
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const pageContainerStyle = { height: '100%' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Investment holdings report with hierarchical tree display
@@ -33,34 +45,38 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
 
     const totalHoldingsCount = holdings.length
 
+    const filterChipRowProps = {
+        viewId,
+        filteredCount: totalHoldingsCount,
+        totalCount: totalHoldingsCount,
+        itemLabel: 'holdings',
+    }
+
+    const dataTableProps = {
+        columns: InvestmentReportColumns,
+        data: holdingsTree,
+        height,
+        rowHeight: 40,
+        getChildRows: row => row.children,
+        getRowCanExpand: row => row.original.children && row.original.children.length > 0,
+        expanded,
+        onExpandedChange: updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater })),
+        columnSizing,
+        onColumnSizingChange: updater => post(Action.SetViewUiState(viewId, { columnSizing: updater })),
+        columnOrder,
+        onColumnOrderChange: order => post(Action.SetViewUiState(viewId, { columnOrder: order })),
+        context: { groupBy },
+    }
+
     return (
         <Flex direction="column" style={pageContainerStyle}>
-            <FilterChipRow
-                viewId={viewId}
-                filteredCount={totalHoldingsCount}
-                totalCount={totalHoldingsCount}
-                itemLabel="holdings"
-            >
+            <FilterChipRow {...filterChipRowProps}>
                 <AsOfDateColumn viewId={viewId} />
                 <AccountFilterColumn viewId={viewId} />
                 <GroupByFilterColumn viewId={viewId} items={investmentGroupByItems} />
                 <SearchFilterColumn viewId={viewId} />
             </FilterChipRow>
-            <DataTable
-                columns={InvestmentReportColumns}
-                data={holdingsTree}
-                height={height}
-                rowHeight={40}
-                getChildRows={row => row.children}
-                getRowCanExpand={row => row.original.children && row.original.children.length > 0}
-                expanded={expanded}
-                onExpandedChange={updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater }))}
-                columnSizing={columnSizing}
-                onColumnSizingChange={updater => post(Action.SetViewUiState(viewId, { columnSizing: updater }))}
-                columnOrder={columnOrder}
-                onColumnOrderChange={order => post(Action.SetViewUiState(viewId, { columnOrder: order }))}
-                context={{ groupBy }}
-            />
+            <DataTable {...dataTableProps} />
         </Flex>
     )
 }
