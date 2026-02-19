@@ -765,9 +765,9 @@ Decision: F = "Factories" in .jsx files, F = "Functions" in .js files. Validator
 Why: Accurately describes what F does in components (creates style objects, props objects).
 
 ### 2026-02-18: Single-use functions and constants stay local
-Context: E namespace and Constants sections were accumulating trivial single-line, single-use entries.
-Decision: Only promote to module-level E or Constants if used in 2+ places or if the function has non-trivial logic. Single-use one-liners belong inline at the call site or as local consts in the consuming function.
-Why: Module-level entries have documentation overhead (sig comments, section membership). If you can inline it and the line still fits, it doesn't earn a named entry.
+Context: E namespace and Constants sections were accumulating trivial single-line, single-use entries. Claude treated cohesion groups as a manufacturing order — "every function goes in a group" was read as an imperative to create functions.
+Decision: Only promote to module-level E or Constants if used in 2+ places or if the function has non-trivial logic. Single-use one-liners belong inline at the call site or as local consts in the consuming function. Style card rewritten with "Inline by Default" section before cohesion groups, enumerated extraction thresholds, exclusion list, and BAD/GOOD examples.
+Why: Module-level entries have documentation overhead (sig comments, section membership). Framing inversion (inline-first) prevents the cohesion group gravitational pull toward unnecessary extraction.
 
 ### 2026-02-14: Rename handlers/ → operations/
 Context: "Handler" means two things — React event handler and post operation.
