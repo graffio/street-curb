@@ -1,37 +1,14 @@
 // ABOUTME: Rule to enforce section separator format, presence, and ordering
-// ABOUTME: Validates block-format separators, requires Exports section, checks canonical order
+// ABOUTME: Validates block-format separators, requires sections for detected declaration kinds, checks canonical order
 
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 0 // Structural — fix first
-
-// Canonical section order (skip any that are absent) — accepts both short and full cohesion group names
-// prettier-ignore
-const CANONICAL_ORDER = [
-    'Predicates', 'Transformers', 'Functions', 'Validators', 'Aggregators', 'Effects',
-    'Components',
-    'Constants',
-    'Actions',
-    'Module-level state',
-    'Exports',
-]
-
-// Aliases — short cohesion group names and alternate full names, all map to canonical names
-// prettier-ignore
-const ALIASES = { P: 'Predicates', T: 'Transformers', F: 'Functions', V: 'Validators', A: 'Aggregators', E: 'Effects', Factories: 'Functions' }
-
-const STANDARD_NAMES = new Set([...CANONICAL_ORDER, ...Object.keys(ALIASES)])
-
-const SEPARATOR_PATTERN = /^\/\/ -{20,}/
-
-const FORMAT_MSG = 'Section separator must use block format (5 lines: separator / blank / name / blank / separator).'
-
-// prettier-ignore
-const ORDER_LABEL = 'Predicates → Transformers → Functions → Validators → Aggregators → Effects → Components → Constants → Actions → Module-level state → Exports'
-
-// prettier-ignore
-const STANDARD_LABEL = 'P/Predicates, T/Transformers, F/Functions/Factories, V/Validators, A/Aggregators, E/Effects, Components, Constants, Actions, Module-level state, Exports'
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// P
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if a line is a separator line (20+ dashes)
@@ -62,7 +39,25 @@ const P = {
     // Check if a section name is standard (accepts both short and full cohesion group names)
     // @sig isStandardName :: String -> Boolean
     isStandardName: name => STANDARD_NAMES.has(name),
+
+    // Check if a line declares a cohesion group object (const P = {, const F = {, etc.)
+    // @sig isCohesionGroupDeclaration :: String -> Boolean
+    isCohesionGroupDeclaration: line => COHESION_GROUP_PATTERN.test(line.trim()),
+
+    // Check if a line declares an UPPER_CASE constant (const FOO_BAR = ...)
+    // @sig isUpperCaseConstant :: String -> Boolean
+    isUpperCaseConstant: line => UPPER_CASE_CONST_PATTERN.test(line.trim()),
+
+    // Check if a line declares a PascalCase arrow function component (const MyComp = (...) =>)
+    // @sig isComponentDeclaration :: String -> Boolean
+    isComponentDeclaration: line => COMPONENT_PATTERN.test(line.trim()),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// T
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Resolve short cohesion group name to full name (P→Predicates, E→Effects, etc.)
@@ -80,9 +75,17 @@ const T = {
     // Convert a separator block to its canonical index — normalizes short names first
     // @sig toCanonicalIndex :: { name } -> Number
     toCanonicalIndex: block => CANONICAL_ORDER.indexOf(T.toFullName(block.name)),
+
+    // Extract the cohesion group letter from a declaration line (const X = { → X)
+    // @sig toCohesionLetter :: String -> String
+    toCohesionLetter: line => line.trim().charAt(6),
 }
 
-const violation = FS.createViolation('section-separators', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// F
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a section-separators violation
@@ -110,7 +113,18 @@ const F = {
             `${msg} FIX: Use a standard name or add COMPLEXITY: section-separators exemption.`,
         )
     },
+
+    // Create missing section violation for a required section that was not found
+    // @sig createMissingSectionViolation :: String -> Violation
+    createMissingSectionViolation: name =>
+        F.createViolation(1, `Missing required "${name}" section separator. FIX: Add a ${name} section.`),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// V
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const V = {
     // Check format: every separator must be block format (5-line)
@@ -118,13 +132,12 @@ const V = {
     checkFormat: (blocks, violations) =>
         blocks.filter(b => !b.valid).forEach(b => violations.push(F.createFormatViolation(b))),
 
-    // Check presence: every non-test file must have an Exports section
-    // @sig checkPresence :: ([Block], [Violation]) -> Void
-    checkPresence: (blocks, violations) => {
-        if (!blocks.some(b => b.name === 'Exports'))
-            violations.push(
-                F.createViolation(1, 'Missing required "Exports" section separator. FIX: Add an Exports section.'),
-            )
+    // Check that all required sections exist — Exports always, plus sections for detected declaration kinds
+    // @sig checkRequiredSections :: ([Block], [Violation], Set<String>) -> Void
+    checkRequiredSections: (blocks, violations, requiredSections) => {
+        const presentNames = new Set(blocks.filter(b => b.valid).map(b => T.toFullName(b.name)))
+        const missing = [...requiredSections].filter(name => !presentNames.has(name))
+        missing.forEach(name => violations.push(F.createMissingSectionViolation(name)))
     },
 
     // Check that a single block is not out of order relative to the previous one
@@ -153,17 +166,25 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
 
-        const blocks = A.collectSeparatorBlocks(sourceCode.split('\n'))
+        const lines = sourceCode.split('\n')
+        const blocks = A.collectSeparatorBlocks(lines)
+        const requiredSections = A.collectRequiredSections(lines, filePath)
         const violations = []
 
         V.checkFormat(blocks, violations)
-        V.checkPresence(blocks, violations)
+        V.checkRequiredSections(blocks, violations, requiredSections)
         V.checkOrder(blocks, violations)
         V.checkStandardNames(blocks, violations)
 
         return violations
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// A
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const A = {
     // Process a single line for separator block detection
@@ -191,7 +212,64 @@ const A = {
     // Find all separator blocks in source code
     // @sig collectSeparatorBlocks :: [String] -> [Block]
     collectSeparatorBlocks: lines => lines.reduce((blocks, line, i) => A.processLine(blocks, lines, line, i), []),
+
+    // Scan source lines to determine which sections are required based on declaration kinds
+    // Exports always required. Cohesion groups → full name. UPPER_CASE → Constants. 2+ PascalCase in .jsx → Components.
+    // @sig collectRequiredSections :: ([String], String) -> Set<String>
+    collectRequiredSections: (lines, filePath) => {
+        const { isCohesionGroupDeclaration, isUpperCaseConstant, isComponentDeclaration } = P
+        const required = new Set(['Exports'])
+        const isJsx = filePath.endsWith('.jsx')
+
+        lines.filter(isCohesionGroupDeclaration).forEach(line => required.add(ALIASES[T.toCohesionLetter(line)]))
+        if (lines.some(isUpperCaseConstant)) required.add('Constants')
+        if (isJsx && lines.filter(isComponentDeclaration).length >= 2) required.add('Components')
+
+        return required
+    },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 0 // Structural — fix first
+
+// Canonical section order (skip any that are absent) — accepts both short and full cohesion group names
+// prettier-ignore
+const CANONICAL_ORDER = [
+    'Predicates', 'Transformers', 'Functions', 'Validators', 'Aggregators', 'Effects',
+    'Components',
+    'Constants',
+    'Actions',
+    'Module-level state',
+    'Exports',
+]
+
+// Aliases — short cohesion group names and alternate full names, all map to canonical names
+// prettier-ignore
+const ALIASES = { P: 'Predicates', T: 'Transformers', F: 'Functions', V: 'Validators', A: 'Aggregators', E: 'Effects', Factories: 'Functions' }
+
+const STANDARD_NAMES = new Set([...CANONICAL_ORDER, ...Object.keys(ALIASES)])
+
+const SEPARATOR_PATTERN = /^\/\/ -{20,}/
+
+// Detection patterns for section presence enforcement (pre-compiled)
+const COHESION_GROUP_PATTERN = /^const [PTFVAE] = \{/
+const UPPER_CASE_CONST_PATTERN = /^const [A-Z][A-Z_0-9]+ /
+const COMPONENT_PATTERN = /^const [A-Z][a-z][a-zA-Z]* = \(/
+
+const FORMAT_MSG = 'Section separator must use block format (5 lines: separator / blank / name / blank / separator).'
+
+// prettier-ignore
+const ORDER_LABEL = 'Predicates → Transformers → Functions → Validators → Aggregators → Effects → Components → Constants → Actions → Module-level state → Exports'
+
+// prettier-ignore
+const STANDARD_LABEL = 'P/Predicates, T/Transformers, F/Functions/Factories, V/Validators, A/Aggregators, E/Effects, Components, Constants, Actions, Module-level state, Exports'
+
+const violation = FS.createViolation('section-separators', PRIORITY)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
