@@ -5,15 +5,16 @@ import { Box, Button, Flex, Heading } from '@radix-ui/themes'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
 
-// prettier-ignore
-const sidebarSections = [
-    { title: 'Dashboard', items: [{ label: 'Overview', to: '/dashboard' }] },
-]
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Renders a navigation button for a sidebar item
 // @sig SidebarItem :: { label: String, to: String } -> ReactElement
 const SidebarItem = ({ label, to }) => (
-    <Button ml="3" mb="3" mr="3" variant="ghost" asChild style={{ justifyContent: 'flex-start' }}>
+    <Button ml="3" mb="3" mr="3" variant="ghost" asChild style={SIDEBAR_ITEM_STYLE}>
         <Link to={to} activeProps={{ style: { backgroundColor: 'var(--accent-3)' } }}>
             {label}
         </Link>
@@ -34,6 +35,25 @@ const SidebarSection = ({ title, items }) => (
         </Flex>
     </Box>
 )
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// prettier-ignore
+const sidebarSections = [
+    { title: 'Dashboard', items: [{ label: 'Overview', to: '/dashboard' }] },
+]
+
+const SIDEBAR_ITEM_STYLE = { justifyContent: 'flex-start' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Renders all sidebar navigation sections
 // @sig SidebarNav :: () -> ReactElement

@@ -9,15 +9,13 @@ import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const DEBOUNCE_MS = 300
-
-const containerStyle = { marginLeft: 'auto' }
-const inputStyle = { width: 180 }
-const counterStyle = { whiteSpace: 'nowrap', minWidth: 50, textAlign: 'center' }
-
-// Module-level mutable state — only one SearchChip renders at a time (singleton)
-let _lastMatchIdx = 0
-let _prevSearchQuery = ''
 
 // Dispatches debounced search query update to Redux
 // Single instance — assumes one SearchChip is rendered at a time
@@ -25,6 +23,32 @@ let _prevSearchQuery = ''
 const dispatchSearchQuery = debounce(DEBOUNCE_MS, (viewId, query) =>
     post(Action.SetTransactionFilter(viewId, { searchQuery: query })),
 )
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const containerStyle = { marginLeft: 'auto' }
+const inputStyle = { width: 180 }
+const counterStyle = { whiteSpace: 'nowrap', minWidth: 50, textAlign: 'center' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Module-level mutable state — only one SearchChip renders at a time (singleton)
+let _lastMatchIdx = 0
+let _prevSearchQuery = ''
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Search input with prev/next navigation and match counter
@@ -71,17 +95,18 @@ const SearchChip = ({ viewId, accountId, highlightedId, inputRef, onNext, onPrev
     const highlightIdx = searchMatches.indexOf(highlightedId)
     if (highlightIdx >= 0) _lastMatchIdx = highlightIdx
     const displayIndex = matchCount > 0 ? _lastMatchIdx + 1 : 0
+    const searchFieldProps = {
+        ref: inputRef,
+        placeholder: 'Search...',
+        onChange: e => dispatchSearchQuery(viewId, e.target.value),
+        onKeyDown: handleKeyDown,
+        style: inputStyle,
+        size: '1',
+    }
 
     return (
         <Flex align="center" gap="2" style={containerStyle}>
-            <TextField.Root
-                ref={inputRef}
-                placeholder="Search..."
-                onChange={e => dispatchSearchQuery(viewId, e.target.value)}
-                onKeyDown={handleKeyDown}
-                style={inputStyle}
-                size="1"
-            />
+            <TextField.Root {...searchFieldProps} />
             {searchQuery && (
                 <Flex align="center" gap="1">
                     <Text size="1" color="gray" style={counterStyle}>

@@ -10,21 +10,11 @@ import { Action } from '../types/action.js'
 import { TabStyles } from '../utils/tab-styles.js'
 import { TabGroup } from './TabGroup.jsx'
 
-const HANDLE_WIDTH = 4
-const MIN_GROUP_WIDTH = 10 // percent
-
-const handleStyle = {
-    width: `${HANDLE_WIDTH}px`,
-    cursor: 'col-resize',
-    backgroundColor: 'var(--color-background)',
-    flexShrink: 0,
-    transition: 'background-color 0.1s',
-}
-
-// Module-level drag state — only one drag at a time
-let currentDrag = null
-let dragHandleEl = null
-const containerEl = { current: null }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Whether a specific handle element is the one being dragged
@@ -85,18 +75,26 @@ const E = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Draggable divider between adjacent tab groups
 // @sig ResizeHandle :: { leftGroup: TabGroup, rightGroup: TabGroup } -> ReactElement
-const ResizeHandle = ({ leftGroup, rightGroup }) => (
-    <Box
-        style={handleStyle}
-        onMouseDown={e => E.handleDragInit(e, leftGroup, rightGroup)}
-        onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--accent-8)')}
-        onMouseLeave={e => {
+const ResizeHandle = ({ leftGroup, rightGroup }) => {
+    const resizeProps = {
+        style: handleStyle,
+        onMouseDown: e => E.handleDragInit(e, leftGroup, rightGroup),
+        onMouseEnter: e => (e.currentTarget.style.backgroundColor = 'var(--accent-8)'),
+        onMouseLeave: e => {
             if (!E.isDraggingHandle(e.currentTarget)) e.currentTarget.style.backgroundColor = 'var(--color-background)'
-        }}
-    />
-)
+        },
+    }
+
+    return <Box {...resizeProps} />
+}
 
 // Renders a tab group with optional resize handle to next group
 // @sig GroupWithHandle :: { group: TabGroup, nextGroup: TabGroup|null } -> ReactElement
@@ -108,6 +106,40 @@ const GroupWithHandle = ({ group, nextGroup }) => (
         )}
     </>
 )
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const HANDLE_WIDTH = 4
+const MIN_GROUP_WIDTH = 10 // percent
+
+const handleStyle = {
+    width: `${HANDLE_WIDTH}px`,
+    cursor: 'col-resize',
+    backgroundColor: 'var(--color-background)',
+    flexShrink: 0,
+    transition: 'background-color 0.1s',
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Module-level drag state — only one drag at a time
+let currentDrag = null
+let dragHandleEl = null
+const containerEl = { current: null }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Horizontal flex container for tab groups with resize handles
 // @sig TabGroupContainer :: () -> ReactElement

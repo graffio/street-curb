@@ -10,6 +10,12 @@ const { formatCurrency, formatDate } = Formatters
 
 const { ACTION_LABELS } = CellRenderers
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Render a single transaction row, hiding column for groupBy dimension
 // @sig TransactionRow :: { transaction: Transaction, groupBy: String? } -> ReactElement
 const TransactionRow = ({ transaction, groupBy }) => {
@@ -52,8 +58,20 @@ const TransactionRow = ({ transaction, groupBy }) => {
     )
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const headerStyle = { borderBottom: '1px solid var(--gray-6)', backgroundColor: 'var(--gray-2)' }
 const bodyStyle = { height: 200, overflow: 'auto', resize: 'vertical', minHeight: 80 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Table showing transactions for an expanded report row
 // @sig TransactionSubTable :: { transactions: [Transaction], groupBy: String? } -> ReactElement

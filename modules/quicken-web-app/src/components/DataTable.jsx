@@ -44,18 +44,11 @@ import React, { useCallback, useEffect, useRef } from 'react'
 
 const { ActionRegistry } = KeymapModule
 
-const SCROLLBAR_CLASS = 'dt-scroll'
-
-// Module-level navigation state — single DataTable instance per actionContext, updated on each render
-let tableNav = {
-    actionContext: null,
-    highlightedId: null,
-    focusableIds: null,
-    rows: [],
-    onHighlightChange: null,
-    onEscape: null,
-}
-let navCleanup = null
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Gets row id, handling both plain objects and ViewRow.Detail structure
@@ -99,6 +92,12 @@ const T = {
             : col,
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Finds index of highlighted row in current row list
     // @sig findHighlightedRowIndex :: (String?, [Row]) -> Number
@@ -107,6 +106,12 @@ const A = {
         return rows.findIndex(row => T.toRowId(row.original) === highlightedId)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Registers navigation actions on table container mount (ref callback, React 18 pattern)
@@ -123,6 +128,12 @@ const E = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Sort indicator component - shows direction and priority for multi-sort
 // @sig SortIndicator :: { direction: String, priority: Number } -> ReactElement
 const SortIndicator = ({ direction, priority }) => {
@@ -134,22 +145,22 @@ const SortIndicator = ({ direction, priority }) => {
 
 // Drag handle icon for column reordering
 // @sig DragHandle :: { listeners: Object, attributes: Object } -> ReactElement
-const DragHandle = ({ listeners, attributes }) => (
-    <Box
-        {...listeners}
-        {...attributes}
-        style={{
+const DragHandle = ({ listeners, attributes }) => {
+    const props = {
+        ...listeners,
+        ...attributes,
+        style: {
             cursor: 'grab',
             padding: '0 4px',
             marginRight: 4,
             opacity: 0.6,
             display: 'inline-flex',
             alignItems: 'center',
-        }}
-    >
-        ⋮⋮
-    </Box>
-)
+        },
+    }
+
+    return <Box {...props}>⋮⋮</Box>
+}
 
 // Sortable header cell with drag-n-drop and resize support
 // @sig SortableHeaderCell :: { header: Header, sorting: Array, onSort: Function, isEven: Boolean } -> ReactElement
@@ -190,34 +201,34 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
         opacity: 0.4,
     }
 
+    const handleSortClick = canSort ? e => onSort(column, e.shiftKey) : undefined
+    const sortLabelStyle = { cursor: canSort ? 'pointer' : 'default', flex: 1 }
+
+    const resizeHandleProps = {
+        onMouseDown: e => {
+            e.stopPropagation()
+            header.getResizeHandler()(e)
+        },
+        onTouchStart: e => {
+            e.stopPropagation()
+            header.getResizeHandler()(e)
+        },
+        onClick: e => e.stopPropagation(),
+        onMouseEnter: e => (e.target.style.opacity = 0.9),
+        onMouseLeave: e => (e.target.style.opacity = 0.4),
+        style: resizeThumbStyle,
+    }
+
     return (
         <Box ref={setNodeRef} style={style}>
             <Flex align="center" justify="between">
-                <Box
-                    onClick={canSort ? e => onSort(column, e.shiftKey) : undefined}
-                    style={{ cursor: canSort ? 'pointer' : 'default', flex: 1 }}
-                >
+                <Box onClick={handleSortClick} style={sortLabelStyle}>
                     {flexRender(column.columnDef.header, header.getContext())}
                     <SortIndicator direction={sortDirection} priority={sortPriority} />
                 </Box>
                 <DragHandle listeners={listeners} attributes={attributes} />
             </Flex>
-            {canResize && (
-                <Box
-                    onMouseDown={e => {
-                        e.stopPropagation()
-                        header.getResizeHandler()(e)
-                    }}
-                    onTouchStart={e => {
-                        e.stopPropagation()
-                        header.getResizeHandler()(e)
-                    }}
-                    onClick={e => e.stopPropagation()}
-                    onMouseEnter={e => (e.target.style.opacity = 0.9)}
-                    onMouseLeave={e => (e.target.style.opacity = 0.4)}
-                    style={resizeThumbStyle}
-                />
-            )}
+            {canResize && <Box {...resizeHandleProps} />}
         </Box>
     )
 }
@@ -227,15 +238,10 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
 const TableHeader = ({ headerGroups, onSort, sorting, columnOrder, onColumnReorder }) => {
     // Renders a sortable header cell for a column
     // @sig toHeaderCell :: (Header, Number) -> ReactElement
-    const toHeaderCell = (header, index) => (
-        <SortableHeaderCell
-            key={header.id}
-            header={header}
-            sorting={sorting}
-            onSort={onSort}
-            isEven={index % 2 === 0}
-        />
-    )
+    const toHeaderCell = (header, index) => {
+        const props = { key: header.id, header, sorting, onSort, isEven: index % 2 === 0 }
+        return <SortableHeaderCell {...props} />
+    }
 
     const handleDragEnd = event => {
         const { active, over } = event
@@ -315,6 +321,38 @@ const TableRow = React.memo(({ row, rowIndex, isHighlighted, onRowClick }) => {
         </Flex>
     )
 })
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const SCROLLBAR_CLASS = 'dt-scroll'
+const SCROLL_CONTAINER_STYLE = { position: 'absolute', inset: 0, overflow: 'auto' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Navigation state — single DataTable instance per actionContext, updated on each render
+let tableNav = {
+    actionContext: null,
+    highlightedId: null,
+    focusableIds: null,
+    rows: [],
+    onHighlightChange: null,
+    onEscape: null,
+}
+let navCleanup = null
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Main DataTable component with TanStack Table, virtualization, and drag-n-drop
 // @sig DataTable :: Props -> ReactElement
@@ -400,17 +438,18 @@ const DataTable = ({
 
     // Renders a virtual row for a given virtual item
     // @sig toVirtualRow :: { index: Number, start: Number } -> ReactElement
-    const toVirtualRow = ({ index, start }) => (
-        <VirtualRow
-            key={rows[index].id}
-            virtualRow={{ index, start }}
-            row={rows[index]}
-            isHighlighted={index === highlightedRowIndex}
-            renderSubComponent={renderSubComponent}
-            measureElement={virtualizer.measureElement}
-            onRowClick={onRowClick}
-        />
-    )
+    const toVirtualRow = ({ index, start }) => {
+        const row = rows[index]
+        const props = {
+            virtualRow: { index, start },
+            row,
+            isHighlighted: index === highlightedRowIndex,
+            renderSubComponent,
+            measureElement: virtualizer.measureElement,
+            onRowClick,
+        }
+        return <VirtualRow key={row.id} {...props} />
+    }
 
     // Refs
     const tableContainerRef = useRef(null)
@@ -483,22 +522,20 @@ const DataTable = ({
     // -----------------------------------------------------------------------------------------------------------------
     // Main
     // -----------------------------------------------------------------------------------------------------------------
+    const headerProps = {
+        headerGroups: table.getHeaderGroups(),
+        onSort: handleSort,
+        sorting,
+        columnOrder,
+        onColumnReorder: handleColumnReorder,
+    }
+
     return (
         <Flex ref={E.registerNavActions} direction="column" style={{ height, ...columnSizeVars }}>
-            <TableHeader
-                headerGroups={table.getHeaderGroups()}
-                onSort={handleSort}
-                sorting={sorting}
-                columnOrder={columnOrder}
-                onColumnReorder={handleColumnReorder}
-            />
+            <TableHeader {...headerProps} />
 
             <Box style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-                <Box
-                    ref={tableContainerRef}
-                    className={SCROLLBAR_CLASS}
-                    style={{ position: 'absolute', inset: 0, overflow: 'auto' }}
-                >
+                <Box ref={tableContainerRef} className={SCROLLBAR_CLASS} style={SCROLL_CONTAINER_STYLE}>
                     <Box style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
                         {virtualizer.getVirtualItems().map(toVirtualRow)}
                     </Box>
