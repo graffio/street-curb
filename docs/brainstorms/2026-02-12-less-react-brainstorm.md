@@ -46,13 +46,8 @@
 - CategoryReportPage.jsx — useMemo → Transactions.tree memoized selector
 - Dialog.jsx — useState/useEffect → F.createPortalContainer lazy singleton
 - SearchChip.jsx — useState/useRef/useEffect → uncontrolled input + module-level state + clearSearch command
-
-### Still needs work
-
-| File | Hooks | What's needed |
-|------|-------|---------------|
-| FilterChips.jsx | 2 useEffect (ActionRegistry) | See `action-registration-outside-react` brainstorm |
-| RootLayout.jsx | 4 useEffect | Init + keyboard lifecycle → move to non-React mechanism |
+- FilterChips.jsx — useEffect for ActionRegistry moved out of React
+- RootLayout.jsx — useEffect for init + keyboard lifecycle moved to main.jsx bootstrap
 
 ### Active exemptions (NOT dead — suppress real validator violations)
 - selectors.js — selector line counts and method chaining
@@ -94,6 +89,5 @@ Decision: Import Radix directly. Move 3 real components to quicken-web-app (exem
 
 ## Related
 
-- `action-registration-outside-react` brainstorm — ActionRegistry useEffect elimination
 - `push-state-reads-to-reducers` brainstorm — currentStore().getState() in E groups
 - `require-action-registry-rule` brainstorm — validator enforcement

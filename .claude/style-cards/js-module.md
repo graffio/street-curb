@@ -19,12 +19,12 @@ Use section separators to organize files. Functions first, data after. Canonical
 | 9  | Module-level state | `let` vars, `Map`s (hybrid files only)           |
 | 10 | Exports            | Exported function(s) + `export` statement        |
 
-**Separator format** — 5-line block:
+**Separator format** — 5-line block, always use the full name (Predicates, not P):
 
 ```js
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Section Name
+// Predicates
 //
 // ---------------------------------------------------------------------------------------------------------------------
 ```

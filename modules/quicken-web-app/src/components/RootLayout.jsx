@@ -1,27 +1,29 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
-// COMPLEXITY: react-redux-separation — 2 useEffect for mount-time init and keyboard routing lifecycle
 
-import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
-import { KeymapDrawer } from './KeymapDrawer.jsx'
-import { MainLayout } from './MainLayout.jsx'
 import { KeymapModule } from '@graffio/keymap'
-import { KeymapConfig } from '../keymap-config.js'
-import { useEffect } from 'react'
+import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
+import { KeymapConfig } from '../keymap-config.js'
 import * as S from '../store/selectors.js'
-import { currentStore } from '../store/index.js'
 import { Action } from '../types/action.js'
 import { AccountList } from './AccountList.jsx'
 import { FileOpenDialog } from './FileOpenDialog.jsx'
+import { KeymapDrawer } from './KeymapDrawer.jsx'
+import { MainLayout } from './MainLayout.jsx'
 import { MainSidebar } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
-const { ActionRegistry, handleKeydown, toAvailableIntents } = KeymapModule
+const { toAvailableIntents } = KeymapModule
 const { DEFAULT_BINDINGS, GROUP_NAMES } = KeymapConfig
-const keydownHandler = handleKeydown(DEFAULT_BINDINGS)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Dismisses banner and opens file picker for new file
@@ -30,35 +32,13 @@ const E = {
         post(Action.SetShowReopenBanner(false))
         post(Action.OpenFile())
     },
-
-    // Registers global toggle-shortcuts action on mount — no cleanup needed (app shell, never unmounts)
-    // @sig registerToggleShortcuts :: Element? -> void
-    registerToggleShortcuts: element => {
-        if (element)
-            ActionRegistry.register(null, [
-                { id: 'toggle-shortcuts', description: 'Toggle shortcuts', execute: () => post(Action.ToggleDrawer()) },
-            ])
-    },
-
-    // Keydown handler parameterized by app bindings, reads tabLayout at call time
-    // @sig keydownEffect :: () -> () -> void
-    keydownEffect: () => {
-        const handler = e => keydownHandler(S.tabLayout(currentStore().getState()), e)
-        window.addEventListener('keydown', handler)
-        return () => window.removeEventListener('keydown', handler)
-    },
 }
 
-const LOADING_OVERLAY_STYLE = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'var(--color-background)',
-    opacity: 0.9,
-    zIndex: 1000,
-}
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Loading overlay shown while file is being loaded
 // @sig LoadingOverlay :: { status: String } -> ReactElement
@@ -74,7 +54,9 @@ const LoadingOverlay = ({ status }) => (
 // Main application layout with sidebar, file handling, and keyboard routing
 // @sig RootLayout :: () -> ReactElement
 const RootLayout = () => {
-    const { handleOpenNew, keydownEffect, registerToggleShortcuts } = E
+    const setShowBanner = show => post(Action.SetShowReopenBanner(show))
+    const reopenFile = () => post(Action.ReopenFile())
+    const setDrawer = show => post(Action.SetShowDrawer(show))
     const showReopenBanner = useSelector(S.showReopenBanner)
     const showDrawer = useSelector(S.showDrawer)
     const loadingStatus = useSelector(S.loadingStatus)
@@ -82,9 +64,12 @@ const RootLayout = () => {
     const activeViewId = useSelector(S.activeViewId)
 
     const availableIntents = showDrawer ? toAvailableIntents(DEFAULT_BINDINGS, GROUP_NAMES, activeViewId) : []
-
-    useEffect(() => post(Action.InitializeSystem()), [])
-    useEffect(keydownEffect, [])
+    const dialogProps = {
+        open: showReopenBanner,
+        onOpenChange: setShowBanner,
+        onReopen: reopenFile,
+        onOpenNew: E.handleOpenNew,
+    }
 
     return (
         <MainLayout title={pageTitle} subtitle={pageSubtitle}>
@@ -101,23 +86,37 @@ const RootLayout = () => {
                     </Button>
                 </Box>
             </MainLayout.Sidebar>
-            <FileOpenDialog
-                open={showReopenBanner}
-                onOpenChange={show => post(Action.SetShowReopenBanner(show))}
-                onReopen={() => post(Action.ReopenFile())}
-                onOpenNew={handleOpenNew}
-            />
-            <Flex ref={registerToggleShortcuts} direction="column" style={{ flex: 1 }}>
+            <FileOpenDialog {...dialogProps} />
+            <Flex direction="column" style={{ flex: 1 }}>
                 <TabGroupContainer />
-                <KeymapDrawer
-                    open={showDrawer}
-                    onOpenChange={show => post(Action.SetShowDrawer(show))}
-                    intents={availableIntents}
-                />
+                <KeymapDrawer open={showDrawer} onOpenChange={setDrawer} intents={availableIntents} />
             </Flex>
             {loadingStatus && <LoadingOverlay status={loadingStatus} />}
         </MainLayout>
     )
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const LOADING_OVERLAY_STYLE = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'var(--color-background)',
+    opacity: 0.9,
+    zIndex: 1000,
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { RootLayout }

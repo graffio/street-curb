@@ -199,6 +199,220 @@ t.test('Given a non-standard section name', t => {
     t.end()
 })
 
+t.test('Given a file with a cohesion group but no section separator for it', t => {
+    t.test('When const P = { ... } exists without a P section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            'const P = { isFoo: x => !!x }',
+            '',
+            section('Exports'),
+            'const MyModule = { P }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const presenceViolation = violations.find(v => v.message.includes('Predicates'))
+        t.ok(presenceViolation, 'Then a presence violation mentioning Predicates should be detected')
+        t.end()
+    })
+
+    t.test('When const F = { ... } exists without an F section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            'const F = { createFoo: () => ({}) }',
+            '',
+            section('Exports'),
+            'const MyModule = { F }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const presenceViolation = violations.find(v => v.message.includes('Functions'))
+        t.ok(presenceViolation, 'Then a presence violation mentioning Functions should be detected')
+        t.end()
+    })
+
+    t.test('When const P = { ... } exists WITH a P section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('P'),
+            'const P = { isFoo: x => !!x }',
+            '',
+            section('Exports'),
+            'const MyModule = { P }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        t.equal(violations.length, 0, 'Then no violations when the section exists')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a file with UPPER_CASE constants but no Constants section', t => {
+    t.test('When UPPER_CASE consts exist without a Constants section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            'const SORT_MODE_OPTIONS = []',
+            'const CHEVRON_STYLE = {}',
+            '',
+            section('Exports'),
+            'const MyModule = { SORT_MODE_OPTIONS }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const presenceViolation = violations.find(v => v.message.includes('Constants'))
+        t.ok(presenceViolation, 'Then a presence violation mentioning Constants should be detected')
+        t.end()
+    })
+
+    t.test('When UPPER_CASE consts exist WITH a Constants section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Constants'),
+            'const SORT_MODE_OPTIONS = []',
+            '',
+            section('Exports'),
+            'const MyModule = { SORT_MODE_OPTIONS }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        t.equal(violations.length, 0, 'Then no violations when Constants section exists')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a .jsx file with PascalCase arrow function components', t => {
+    t.test('When 2+ PascalCase arrow functions exist without a Components section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            'const ItemRow = ({ item }) => (',
+            '    <div>{item.name}</div>',
+            ')',
+            '',
+            'const MainList = () => (',
+            '    <div><ItemRow item={{}} /></div>',
+            ')',
+            '',
+            section('Exports'),
+            'export { MainList }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'components/MyList.jsx')
+
+        const presenceViolation = violations.find(v => v.message.includes('Components'))
+        t.ok(presenceViolation, 'Then a presence violation mentioning Components should be detected')
+        t.end()
+    })
+
+    t.test('When only 1 PascalCase arrow function exists (the export)', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            'const MainList = () => (',
+            '    <div>hello</div>',
+            ')',
+            '',
+            section('Exports'),
+            'export { MainList }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'components/MyList.jsx')
+
+        const presenceViolation = violations.find(v => v.message.includes('Components'))
+        t.notOk(presenceViolation, 'Then no Components violation for a single component (it is the export)')
+        t.end()
+    })
+
+    t.test('When 2+ PascalCase arrow functions are all in the Exports section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Constants'),
+            'const defaultItems = []',
+            '',
+            section('Exports'),
+            'const Chip = ({ viewId }) => null',
+            'const Column = ({ viewId }) => null',
+            'const MyFilterChip = { Chip, Column }',
+            'export { MyFilterChip }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'components/MyFilterChip.jsx')
+
+        const presenceViolation = violations.find(v => v.message.includes('Components'))
+        t.notOk(presenceViolation, 'Then no Components violation (exports are not sub-components)')
+        t.end()
+    })
+
+    t.test('When 2+ PascalCase arrow functions exist in a .js file (not .jsx)', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            'const ItemRow = ({ item }) => item.name',
+            'const MainList = () => null',
+            '',
+            section('Exports'),
+            'const MyModule = { ItemRow, MainList }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const presenceViolation = violations.find(v => v.message.includes('Components'))
+        t.notOk(presenceViolation, 'Then no Components violation for .js files (Components is JSX-only)')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given a file with only an Exports section and no other declaration kinds', t => {
+    t.test('When the file has just a function and export', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Exports'),
+            'const myHelper = x => x + 1',
+            'export { myHelper }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        t.equal(violations.length, 0, 'Then no presence violations beyond Exports')
+        t.end()
+    })
+
+    t.end()
+})
+
 t.test('Given a file with all cohesion sections in correct order', t => {
     t.test('When P, T, F, Constants, and Exports are in canonical order', t => {
         const code = [
