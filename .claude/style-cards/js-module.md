@@ -34,27 +34,49 @@ Use section separators to organize files. Functions first, data after. Canonical
 - **Object** (multi-function file): PascalCase matching file name → `export { MyModule }`
 - **Function** (single-function file): camelCase matching file name → `export { myModule }`
 
+## Inline by Default
+
+Most expressions stay at their call site. **Do not extract a function or constant unless it meets a threshold:**
+
+1. **Used 2+ times** in the file — actual reuse, not hypothetical
+2. **Compound check** — 2+ conditions joined by `&&`/`||` (the combination expresses a domain concept even when individual conditions are simple)
+3. **Indentation at the call site would force a line break** beyond 120 chars
+
+**These are NOT extraction candidates** (even if a cohesion group exists for them): single comparisons, field access, `.includes()`, `.has()`, single-operator checks. These are self-documenting at their call site.
+
+If a single-expression arrow function fits at its call site within 120 chars and is used once — it is NOT a candidate for extraction. Period.
+
+```js
+// BAD — extracted because the P group exists, not because extraction helps
+const isOverBudget = txn => txn.amount > txn.budgetLimit
+// ... used once, 30 lines away ...
+const overBudget = filter(isOverBudget, transactions)
+
+// GOOD — the expression IS the documentation
+const overBudget = filter(txn => txn.amount > txn.budgetLimit, transactions)
+```
+
+```js
+// GOOD extraction — compound check; the name reveals a domain concept
+const isReconciled = txn => txn.clearedStatus === 'R' && !isNil(txn.matchId)
+```
+
 ## Cohesion Groups
 
-Every function goes in a group, even if it's the only one of its type:
+Cohesion groups organize functions **that earned their names** via the thresholds above. They don't create demand for new functions.
+
+Every named function goes in a group:
 
 | Letter | Type         | Name patterns                                        |
 |--------|--------------|------------------------------------------------------|
 | P      | Predicates   | `is*`, `has*`, `should*`, `can*`                     |
-| T      | Transformers | `to*`, `parse*`, `format*`                                        |
-| F      | Factories    | `create*`, `make*`, `build*`                                      |
-| V      | Validators   | `check*`, `validate*`                                             |
-| A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`, `process*`              |
+| T      | Transformers | `to*`, `parse*`, `format*`                           |
+| F      | Factories    | `create*`, `make*`, `build*`                         |
+| V      | Validators   | `check*`, `validate*`                                |
+| A      | Aggregators  | `collect*`, `count*`, `gather*`, `find*`, `process*` |
 | E      | Effects      | `persist*`, `handle*`, `dispatch*`, `emit*`, `send*`, `query*`, `register*`, `set*`, `reset*`, `hydrate*` |
 
 If a function doesn't fit any group — stop and ask. Don't leave it uncategorized.
-
-**Don't over-extract.** Extract into a named function when:
-- Used 3+ times
-- A name makes the purpose clearer than the expression itself (compound checks, non-obvious logic)
-- Indentation would force a line break
-
-Leave inline when the expression is already self-documenting (`MY_SET.has(x)`, `arr.includes(y)`, `obj.field`).
 
 ## Tagged Types
 
