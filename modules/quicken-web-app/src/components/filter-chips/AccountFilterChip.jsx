@@ -10,7 +10,7 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Components
+// Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -19,8 +19,10 @@ import { FilterColumn } from './FilterColumn.jsx'
 const Chip = ({ viewId }) => {
     const handleToggle = accountId => post(Action.ToggleAccountFilter(viewId, accountId))
 
+    const clearFilter = { selectedAccounts: [] }
+    const config = { popoverId: 'accounts', label: 'Accounts', triggerId: 'filter:accounts', width: 175, clearFilter }
     const { selectedIds } = useSelector(state => S.UI.accountFilterData(state, viewId))
-    return <FilterChipPopover config={CONFIG} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
+    return <FilterChipPopover config={config} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
 }
 
 // Self-selecting account filter column — selects chipData and renders AccountFilterChip
@@ -29,21 +31,6 @@ const Column = ({ viewId }) => {
     const { details } = useSelector(state => S.UI.accountChipData(state, viewId))
     return <FilterColumn chip={<Chip viewId={viewId} />} details={details} />
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// prettier-ignore
-const CONFIG = { popoverId: 'accounts', label: 'Accounts', triggerId: 'filter:accounts', width: 175, clearFilter: { selectedAccounts: [] } }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 const AccountFilterChip = { AccountFilterChip: Chip, AccountFilterColumn: Column }
 

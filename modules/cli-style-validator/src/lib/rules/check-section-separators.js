@@ -6,10 +6,10 @@ import { Predicates as PS } from '../shared/predicates.js'
 
 const PRIORITY = 0 // Structural — fix first
 
-// Canonical section order (skip any that are absent)
+// Canonical section order (skip any that are absent) — accepts both short and full cohesion group names
 // prettier-ignore
 const CANONICAL_ORDER = [
-    'P', 'T', 'F', 'V', 'A', 'E',
+    'Predicates', 'Transformers', 'Functions', 'Validators', 'Aggregators', 'Effects',
     'Components',
     'Constants',
     'Actions',
@@ -17,13 +17,21 @@ const CANONICAL_ORDER = [
     'Exports',
 ]
 
-const STANDARD_NAMES = new Set(CANONICAL_ORDER)
+// Aliases — short cohesion group names and alternate full names, all map to canonical names
+// prettier-ignore
+const ALIASES = { P: 'Predicates', T: 'Transformers', F: 'Functions', V: 'Validators', A: 'Aggregators', E: 'Effects', Factories: 'Functions' }
+
+const STANDARD_NAMES = new Set([...CANONICAL_ORDER, ...Object.keys(ALIASES)])
 
 const SEPARATOR_PATTERN = /^\/\/ -{20,}/
 
 const FORMAT_MSG = 'Section separator must use block format (5 lines: separator / blank / name / blank / separator).'
-const ORDER_LABEL = 'P → T → F → V → A → E → Components → Constants → Actions → Module-level state → Exports'
-const STANDARD_LABEL = 'P, T, F, V, A, E, Components, Constants, Actions, Module-level state, Exports'
+
+// prettier-ignore
+const ORDER_LABEL = 'Predicates → Transformers → Functions → Validators → Aggregators → Effects → Components → Constants → Actions → Module-level state → Exports'
+
+// prettier-ignore
+const STANDARD_LABEL = 'P/Predicates, T/Transformers, F/Functions/Factories, V/Validators, A/Aggregators, E/Effects, Components, Constants, Actions, Module-level state, Exports'
 
 const P = {
     // Check if a line is a separator line (20+ dashes)
@@ -51,12 +59,16 @@ const P = {
         return withoutDashes.length > 0
     },
 
-    // Check if a section name is standard
+    // Check if a section name is standard (accepts both short and full cohesion group names)
     // @sig isStandardName :: String -> Boolean
     isStandardName: name => STANDARD_NAMES.has(name),
 }
 
 const T = {
+    // Resolve short cohesion group name to full name (P→Predicates, E→Effects, etc.)
+    // @sig toFullName :: String -> String
+    toFullName: name => ALIASES[name] ?? name,
+
     // Extract section name from a comment line
     // @sig toSectionName :: String -> String
     toSectionName: line =>
@@ -65,9 +77,9 @@ const T = {
             .replace(/^\/\/\s*/, '')
             .trim(),
 
-    // Convert a separator block to its canonical index (-1 if non-standard)
+    // Convert a separator block to its canonical index — normalizes short names first
     // @sig toCanonicalIndex :: { name } -> Number
-    toCanonicalIndex: block => CANONICAL_ORDER.indexOf(block.name),
+    toCanonicalIndex: block => CANONICAL_ORDER.indexOf(T.toFullName(block.name)),
 }
 
 const violation = FS.createViolation('section-separators', PRIORITY)

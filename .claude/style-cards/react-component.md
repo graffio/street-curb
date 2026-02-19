@@ -19,12 +19,17 @@ No full P/T/F/V/A/E cohesion groups — those are for JS modules with business l
 
 ## JSX Single-Line Opening Tags
 
-Every JSX opening tag must fit on a single line within `printWidth: 120`. If it doesn't fit, extract prop values as consts. If it still doesn't fit, the component has too many props — refactor.
+Every JSX opening tag must fit on a single line within `printWidth: 120`. Fix hierarchy:
+
+1. **Extract subcomponent** — reduces nesting depth → reduces indent → line fits naturally
+2. **Extract prop values as consts** — shortens inline expressions (`isHighlighted={highlightedItemId === opt.key}` → `isHighlighted={hl}`)
+3. **JSX prop spread** — last resort for 5+ props: `<TextField.Root {...fieldProps} />`
 
 ## Extract Subcomponents Aggressively
 
 Components should be small and flat. These patterns signal a missing subcomponent:
 
+- **JSX opening tag too long at deep nesting** — the subtree should be its own component, reducing indent depth
 - **`{condition && <...>}`** — the child should select its own visibility via `useSelector` and return null when hidden
 - **`{x ? <A> : <B>}`** — a single subcomponent selects state and renders the right variant
 - **`.map()` with multi-line JSX** — each mapped item is its own component

@@ -1,6 +1,12 @@
 // ABOUTME: Shared filter column layout component for chip + detail lines
 // ABOUTME: Used by all chip column wrappers to render chip above detail text
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const columnStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }
 const detailTextStyle = {
     fontSize: 'var(--font-size-1)',
@@ -8,6 +14,12 @@ const detailTextStyle = {
     lineHeight: 1.3,
     paddingLeft: 'var(--space-2)',
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // A filter column with chip and detail lines below
 // @sig FilterColumn :: { chip: ReactElement, details: [String] } -> ReactElement

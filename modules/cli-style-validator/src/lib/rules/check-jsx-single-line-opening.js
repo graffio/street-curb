@@ -31,7 +31,7 @@ const F = {
             node.loc.start.line,
             node.loc.start.column + 1,
             `JSX opening tag <${name}> must fit on a single line. ` +
-                `FIX: Extract prop values as consts to shorten the line, or refactor the component.`,
+                `FIX: Extract subcomponent to reduce nesting, extract prop values as consts, or use JSX prop spread.`,
         )
     },
 }

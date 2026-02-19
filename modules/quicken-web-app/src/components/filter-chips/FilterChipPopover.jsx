@@ -15,7 +15,7 @@ const { DEFAULT_BINDINGS } = KeymapConfig
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// F
+// Factories
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -55,6 +55,12 @@ const F = {
         return item ? item.label : 'All'
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Routes navigation keys through ActionRegistry — blocks global shortcuts while popover is open
@@ -142,10 +148,6 @@ const E = {
     // Scrolls the highlighted item into view when it receives this ref callback
     // @sig handleScrollRef :: Element? -> void
     handleScrollRef: el => el?.scrollIntoView({ block: 'nearest' }),
-
-    // Focuses the search input when it mounts (popover opens)
-    // @sig handleFocusRef :: Element? -> void
-    handleFocusRef: el => el?.focus(),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -189,7 +191,7 @@ const SingleSelectRow = ({ item, isSelected, highlighted, onToggle }) => {
 // Removable badge for a selected item
 // @sig SelectedItemBadge :: { item, onToggle } -> ReactElement
 const SelectedItemBadge = ({ item, onToggle }) => (
-    <Badge variant="soft" style={badgeStyle} onClick={() => onToggle(item.id)}>
+    <Badge variant="soft" style={{ cursor: 'pointer' }} onClick={() => onToggle(item.id)}>
         {item.label} ×
     </Badge>
 )
@@ -221,8 +223,12 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
 
     const handleSearch = e => post(Action.SetFilterPopoverSearch(viewId, e.target.value))
 
+    const scrollStyle = { maxHeight: 200 }
+
+    // prettier-ignore
+    const CONTENT_PROPS = { style: { padding: 'var(--space-2)', minWidth: 250 }, side: 'right', align: 'start', sideOffset: 4 }
     const { popoverId, label, triggerId, width = 175, singleSelect = false } = config
-    const { handleContentKey, handleFocusRef, registerContent, registerTrigger } = E
+    const { handleContentKey, registerContent, registerTrigger } = E
     const Row = singleSelect ? SingleSelectRow : ItemRow
 
     // prettier-ignore
@@ -268,7 +274,7 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
             </Popover.Trigger>
             <Popover.Content ref={registerContent} {...CONTENT_PROPS} onKeyDown={handleContentKey}>
                 {!singleSelect && <SelectedBadges allItems={allItems} selectedIds={selectedIds} onToggle={onToggle} />}
-                <TextField.Root ref={handleFocusRef} {...F.makeSearchProps(searchText, handleSearch)} />
+                <TextField.Root ref={el => el?.focus()} {...F.makeSearchProps(searchText, handleSearch)} />
                 <ScrollArea style={scrollStyle}>
                     {filteredItems.map((item, i) => {
                         const hl = i === highlightedIndex
@@ -284,21 +290,6 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
             </Popover.Content>
         </Popover.Root>
     )
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const badgeStyle = { cursor: 'pointer' }
-const scrollStyle = { maxHeight: 200 }
-const CONTENT_PROPS = {
-    style: { padding: 'var(--space-2)', minWidth: 250 },
-    side: 'right',
-    align: 'start',
-    sideOffset: 4,
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -11,6 +11,12 @@ import { GroupByFilterChip } from './GroupByFilterChip.jsx'
 import { SearchFilterChip } from './SearchFilterChip.jsx'
 import { SecurityFilterChip } from './SecurityFilterChip.jsx'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const FilterChips = {
     ...AccountFilterChip,
     ...ActionFilterChip,

@@ -10,7 +10,7 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Components
+// Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -19,8 +19,10 @@ import { FilterColumn } from './FilterColumn.jsx'
 const Chip = ({ viewId }) => {
     const handleToggle = securityId => post(Action.ToggleSecurityFilter(viewId, securityId))
 
+    // prettier-ignore
+    const config = { popoverId: 'securities', label: 'Securities', triggerId: 'filter:securities', width: 175, clearFilter: { selectedSecurities: [] } }
     const selectedIds = useSelector(state => S.UI.selectedSecurities(state, viewId))
-    return <FilterChipPopover config={CONFIG} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
+    return <FilterChipPopover config={config} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
 }
 
 // Self-selecting security filter column — selects chipData and renders SecurityFilterChip
@@ -29,21 +31,6 @@ const Column = ({ viewId }) => {
     const { details } = useSelector(state => S.UI.securityChipData(state, viewId))
     return <FilterColumn chip={<Chip viewId={viewId} />} details={details} />
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// prettier-ignore
-const CONFIG = { popoverId: 'securities', label: 'Securities', triggerId: 'filter:securities', width: 175, clearFilter: { selectedSecurities: [] } }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 const SecurityFilterChip = { SecurityFilterChip: Chip, SecurityFilterColumn: Column }
 

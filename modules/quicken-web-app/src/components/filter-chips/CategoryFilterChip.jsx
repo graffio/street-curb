@@ -10,7 +10,7 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// E
+// Effects
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -25,38 +25,6 @@ const E = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Components
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Category filter chip — selects category filter data and renders FilterChipPopover
-// @sig Chip :: { viewId: String } -> ReactElement
-const Chip = ({ viewId }) => {
-    const handleToggle = categoryName => E.handleToggle(viewId, categoryName)
-
-    const { selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
-    chipSelectedIds = selectedIds
-    return <FilterChipPopover config={CONFIG} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
-}
-
-// Self-selecting category filter column — selects chipData and renders CategoryFilterChip
-// @sig Column :: { viewId: String } -> ReactElement
-const Column = ({ viewId }) => {
-    const { details } = useSelector(state => S.UI.categoryChipData(state, viewId))
-    return <FilterColumn chip={<Chip viewId={viewId} />} details={details} />
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// prettier-ignore
-const CONFIG = { popoverId: 'categories', label: 'Categories', triggerId: 'filter:categories', width: 185, clearFilter: { selectedCategories: [] } }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Module-level state
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -68,6 +36,25 @@ let chipSelectedIds = []
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Category filter chip — selects category filter data and renders FilterChipPopover
+// @sig Chip :: { viewId: String } -> ReactElement
+const Chip = ({ viewId }) => {
+    const handleToggle = categoryName => E.handleToggle(viewId, categoryName)
+
+    // prettier-ignore
+    const config = { popoverId: 'categories', label: 'Categories', triggerId: 'filter:categories', width: 185, clearFilter: { selectedCategories: [] } }
+    const { selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
+    chipSelectedIds = selectedIds
+    return <FilterChipPopover config={config} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
+}
+
+// Self-selecting category filter column — selects chipData and renders CategoryFilterChip
+// @sig Column :: { viewId: String } -> ReactElement
+const Column = ({ viewId }) => {
+    const { details } = useSelector(state => S.UI.categoryChipData(state, viewId))
+    return <FilterColumn chip={<Chip viewId={viewId} />} details={details} />
+}
 
 const CategoryFilterChip = { CategoryFilterChip: Chip, CategoryFilterColumn: Column }
 

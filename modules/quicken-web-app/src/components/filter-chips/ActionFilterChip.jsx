@@ -10,7 +10,7 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Components
+// Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -19,8 +19,10 @@ import { FilterColumn } from './FilterColumn.jsx'
 const Chip = ({ viewId }) => {
     const handleToggle = actionId => post(Action.ToggleActionFilter(viewId, actionId))
 
+    const clearFilter = { selectedInvestmentActions: [] }
+    const config = { popoverId: 'actions', label: 'Actions', triggerId: 'filter:actions', width: 150, clearFilter }
     const selectedIds = useSelector(state => S.UI.selectedInvestmentActions(state, viewId))
-    return <FilterChipPopover config={CONFIG} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
+    return <FilterChipPopover config={config} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
 }
 
 // Self-selecting action filter column — selects chipData and renders ActionFilterChip
@@ -29,21 +31,6 @@ const Column = ({ viewId }) => {
     const { details } = useSelector(state => S.UI.actionChipData(state, viewId))
     return <FilterColumn chip={<Chip viewId={viewId} />} details={details} />
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// prettier-ignore
-const CONFIG = { popoverId: 'actions', label: 'Actions', triggerId: 'filter:actions', width: 150, clearFilter: { selectedInvestmentActions: [] } }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 const ActionFilterChip = { ActionFilterChip: Chip, ActionFilterColumn: Column }
 
