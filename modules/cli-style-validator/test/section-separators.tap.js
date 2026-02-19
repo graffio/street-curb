@@ -348,6 +348,28 @@ t.test('Given a .jsx file with PascalCase arrow function components', t => {
         t.end()
     })
 
+    t.test('When 2+ PascalCase arrow functions are all in the Exports section', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Constants'),
+            'const defaultItems = []',
+            '',
+            section('Exports'),
+            'const Chip = ({ viewId }) => null',
+            'const Column = ({ viewId }) => null',
+            'const MyFilterChip = { Chip, Column }',
+            'export { MyFilterChip }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'components/MyFilterChip.jsx')
+
+        const presenceViolation = violations.find(v => v.message.includes('Components'))
+        t.notOk(presenceViolation, 'Then no Components violation (exports are not sub-components)')
+        t.end()
+    })
+
     t.test('When 2+ PascalCase arrow functions exist in a .js file (not .jsx)', t => {
         const code = [
             '// ABOUTME: test file',

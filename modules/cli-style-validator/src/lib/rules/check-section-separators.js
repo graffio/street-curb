@@ -51,6 +51,14 @@ const P = {
     // Check if a line declares a PascalCase arrow function component (const MyComp = (...) =>)
     // @sig isComponentDeclaration :: String -> Boolean
     isComponentDeclaration: line => COMPONENT_PATTERN.test(line.trim()),
+
+    // Check if 2+ PascalCase component declarations exist before the Exports section
+    // @sig hasPreExportComponents :: [String] -> Boolean
+    hasPreExportComponents: lines => {
+        const exportsStart = T.toExportsLineIndex(lines)
+        const preExportLines = exportsStart === -1 ? lines : lines.slice(0, exportsStart)
+        return preExportLines.filter(P.isComponentDeclaration).length >= 2
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -79,6 +87,13 @@ const T = {
     // Extract the cohesion group letter from a declaration line (const X = { → X)
     // @sig toCohesionLetter :: String -> String
     toCohesionLetter: line => line.trim().charAt(6),
+
+    // Find the line index of the Exports section separator (first separator followed by "Exports" name)
+    // @sig toExportsLineIndex :: [String] -> Number
+    toExportsLineIndex: lines =>
+        lines.findIndex(
+            (line, i) => P.isSeparatorLine(line) && i + 2 < lines.length && T.toSectionName(lines[i + 2]) === 'Exports',
+        ),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -214,16 +229,17 @@ const A = {
     collectSeparatorBlocks: lines => lines.reduce((blocks, line, i) => A.processLine(blocks, lines, line, i), []),
 
     // Scan source lines to determine which sections are required based on declaration kinds
-    // Exports always required. Cohesion groups → full name. UPPER_CASE → Constants. 2+ PascalCase in .jsx → Components.
+    // Exports always required. Cohesion groups → full name.
+    // UPPER_CASE → Constants. 2+ PascalCase before Exports in .jsx → Components.
     // @sig collectRequiredSections :: ([String], String) -> Set<String>
     collectRequiredSections: (lines, filePath) => {
-        const { isCohesionGroupDeclaration, isUpperCaseConstant, isComponentDeclaration } = P
+        const { isCohesionGroupDeclaration, isUpperCaseConstant } = P
         const required = new Set(['Exports'])
         const isJsx = filePath.endsWith('.jsx')
 
         lines.filter(isCohesionGroupDeclaration).forEach(line => required.add(ALIASES[T.toCohesionLetter(line)]))
         if (lines.some(isUpperCaseConstant)) required.add('Constants')
-        if (isJsx && lines.filter(isComponentDeclaration).length >= 2) required.add('Components')
+        if (isJsx && P.hasPreExportComponents(lines)) required.add('Components')
 
         return required
     },
