@@ -2,35 +2,11 @@
 // ABOUTME: Groups keybindings by source context with formatted key symbols
 // COMPLEXITY: react-redux-separation — .map() renders JSX from data (not a selector concern)
 
+import { groupBy } from '@graffio/functional'
 import { Box, Button, Flex, Heading, ScrollArea, Text } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'
 
 const { formatKeys } = KeymapModule
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Transformers
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const T = {
-    // Accumulates an intent into the appropriate source group
-    // @sig accumulateBySource :: ({ [source]: [Intent] }, Intent) -> { [source]: [Intent] }
-    accumulateBySource: (groups, intent) => {
-        const source = intent.from || 'Global'
-        if (!groups[source]) groups[source] = []
-        groups[source].push(intent)
-        return groups
-    },
-
-    // Groups intents by their source keymap
-    // @sig groupBySource :: [Intent] -> { [source]: [Intent] }
-    groupBySource: intents => intents.reduce(T.accumulateBySource, {}),
-
-    // Sorts group entries alphabetically by name
-    // @sig toSortedEntries :: { [String]: [Intent] } -> [[String, [Intent]]]
-    toSortedEntries: groups => Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)),
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -78,7 +54,7 @@ const KeybindingGroup = ({ name, intents }) => (
 const KeymapDrawer = ({ open, onOpenChange, intents, height = 290 }) => {
     if (!open) return null
 
-    const groups = T.groupBySource(intents)
+    const groups = groupBy(intent => intent.from || 'Global', intents)
     const drawerStyle = {
         height: `${height}px`,
         flexShrink: 0,
@@ -98,9 +74,11 @@ const KeymapDrawer = ({ open, onOpenChange, intents, height = 290 }) => {
             </Flex>
             <ScrollArea style={{ height: `${height - 40}px` }}>
                 <Flex gap="5" p="3" wrap="wrap">
-                    {T.toSortedEntries(groups).map(([name, groupIntents]) => (
-                        <KeybindingGroup key={name} name={name} intents={groupIntents} />
-                    ))}
+                    {Object.entries(groups)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([name, groupIntents]) => (
+                            <KeybindingGroup key={name} name={name} intents={groupIntents} />
+                        ))}
                 </Flex>
             </ScrollArea>
         </Box>
