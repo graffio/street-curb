@@ -73,7 +73,7 @@ Every state change goes through `post(Action.X(...))`. No exceptions. Components
 
 No `useCallback`, `useEffect`, `useRef`, `useMemo`, `useState` in `quicken-web-app/src/**/*.jsx`.
 
-**Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`, `FilterChipPopover.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) or useEffect for DOM operations — these are unavoidable API surfaces.
+**Exemption:** Design-system wrapper components (`DataTable.jsx`, `KeyboardDateInput.jsx`) may use third-party library hooks (useReactTable, useVirtualizer, useSortable) — these are unavoidable API surfaces.
 
 ### Selector-with-Defaults (replaces init useEffect)
 
