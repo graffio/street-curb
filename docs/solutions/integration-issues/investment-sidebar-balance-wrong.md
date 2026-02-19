@@ -11,6 +11,19 @@ symptoms:
 
 # Investment Account Sidebar Balance Wrong
 
+## Solution
+
+When an investment-type account has zero holdings balance, fall back to
+`cashBalanceFromRunning` which reads the last transaction's `runningBalance` field.
+This DB-computed value respects the `CASH_IMPACT_ACTIONS` set — correctly includes
+XIn/ContribX cash deposits while excluding BuyX/SellX non-cash actions.
+
+## Prevention
+
+For investment accounts, always use `runningBalance` (import-computed) rather than
+summing raw transaction amounts. The `CASH_IMPACT_ACTIONS` filtering is critical
+and only applied during the SQL window function computation.
+
 ## Problem
 
 Investment and 401(k)/403(b) accounts show incorrect balances in the account list sidebar.
@@ -33,16 +46,3 @@ Two issues in `EnrichedAccount.fromAccount`:
 1. Cash-only investment accounts get zero from holdings (no lots → no cash holding created)
 2. Falling back to `sumBankBalance` (sum all amounts) is wrong for investment accounts
    because BuyX/SellX have amounts that don't affect cash (they're not in CASH_IMPACT_ACTIONS)
-
-## Solution
-
-When an investment-type account has zero holdings balance, fall back to
-`cashBalanceFromRunning` which reads the last transaction's `runningBalance` field.
-This DB-computed value respects the `CASH_IMPACT_ACTIONS` set — correctly includes
-XIn/ContribX cash deposits while excluding BuyX/SellX non-cash actions.
-
-## Prevention
-
-For investment accounts, always use `runningBalance` (import-computed) rather than
-summing raw transaction amounts. The `CASH_IMPACT_ACTIONS` filtering is critical
-and only applied during the SQL window function computation.

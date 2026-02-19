@@ -18,14 +18,6 @@ symptoms:
 
 # Migrate Component State to Redux
 
-## Problem
-
-SelectableListPopover managed popover open/close, search text, and highlighted index via React `useState`. This made the state opaque to Redux devtools and untestable through selectors. The component violated the convention that components should be pure wiring between selectors (reads) and actions (writes).
-
-## Root Cause
-
-The original architecture placed popover state inside the design-system component. The component owned its own lifecycle rather than being fully controlled by the consumer.
-
 ## Solution
 
 ### 1. Add fields to the domain type
@@ -118,6 +110,14 @@ import { SelectableListPopover as FilterChipPopoverLogic } from './components/fi
 9. Rewrite consumer with `useSelector` + `post()` only
 10. Move any `.map()` / derived state from component to selector
 11. Verify with `--strict-react` validator
+
+## Problem
+
+SelectableListPopover managed popover open/close, search text, and highlighted index via React `useState`. This made the state opaque to Redux devtools and untestable through selectors. The component violated the convention that components should be pure wiring between selectors (reads) and actions (writes).
+
+## Root Cause
+
+The original architecture placed popover state inside the design-system component. The component owned its own lifecycle rather than being fully controlled by the consumer.
 
 ## Files Modified
 

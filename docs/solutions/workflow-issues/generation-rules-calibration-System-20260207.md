@@ -16,35 +16,6 @@ tags: [workflow-consolidation, generation-rules, context-architecture, style-car
 
 # Workflow Consolidation: Lessons from Rebuilding the SDLC Process
 
-## Problem
-
-Two overlapping workflow systems (original workflow.md + compound engineering) with 500+
-lines of always-on context, 36+ dead files, duplicate commands, and rules that Claude
-partially followed. Style violations caught at commit time (too late) instead of prevented
-at write time.
-
-## Environment
-- Module: System (`.claude/` workflow infrastructure)
-- Date: 2026-02-07
-- Scope: 10 commits, ~12,000 lines removed, ~500 lines added
-
-## Symptoms
-- Claude partially follows conventions.md (300 lines) but reverts to defaults under load
-- Two planning commands (plan + plan-feature), two finish commands (compound + record)
-- 5 unused agents, 3 unused skills adding noise to tool lists
-- Plan generator produces plumbing tests, batches commits, uses wrong style cards
-- jeff-js-reviewer duplicates checks the validator already handles
-
-## What Didn't Work
-
-**Attempted Solution 1:** Large always-on context files (conventions.md 300 lines)
-- **Why it failed:** Claude follows rules in fresh context but drops them as conversation
-  grows. 300 lines at session start gets buried.
-
-**Attempted Solution 2:** Abstract generation rules ("after each logical chunk", "data transformation")
-- **Why it failed:** Claude finds interpretive wiggle room in abstract conditions. Took 4
-  iterations of the TDD rule alone to close all the gaps.
-
 ## Solution
 
 ### 1. Three-Tier Context Architecture
@@ -118,6 +89,35 @@ Don't block on rules you can't yet specify.
 - **Test workflow changes with a real feature spec.** Expect 2-4 calibration rounds.
 - **Audit for dead files periodically.** Installed-but-unused components accumulate.
 - **Match glob patterns to actual file paths.** Check against the real project structure.
+
+## Problem
+
+Two overlapping workflow systems (original workflow.md + compound engineering) with 500+
+lines of always-on context, 36+ dead files, duplicate commands, and rules that Claude
+partially followed. Style violations caught at commit time (too late) instead of prevented
+at write time.
+
+## Environment
+- Module: System (`.claude/` workflow infrastructure)
+- Date: 2026-02-07
+- Scope: 10 commits, ~12,000 lines removed, ~500 lines added
+
+## Symptoms
+- Claude partially follows conventions.md (300 lines) but reverts to defaults under load
+- Two planning commands (plan + plan-feature), two finish commands (compound + record)
+- 5 unused agents, 3 unused skills adding noise to tool lists
+- Plan generator produces plumbing tests, batches commits, uses wrong style cards
+- jeff-js-reviewer duplicates checks the validator already handles
+
+## What Didn't Work
+
+**Attempted Solution 1:** Large always-on context files (conventions.md 300 lines)
+- **Why it failed:** Claude follows rules in fresh context but drops them as conversation
+  grows. 300 lines at session start gets buried.
+
+**Attempted Solution 2:** Abstract generation rules ("after each logical chunk", "data transformation")
+- **Why it failed:** Claude finds interpretive wiggle room in abstract conditions. Took 4
+  iterations of the TDD rule alone to close all the gaps.
 
 ## Related Issues
 

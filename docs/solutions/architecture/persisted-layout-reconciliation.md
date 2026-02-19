@@ -10,16 +10,6 @@ symptoms:
 
 # Persisted Layout Reconciliation
 
-## Problem
-
-When a table gains new columns (e.g., adding payee to the investment register), users with existing persisted `TableLayout` records never see the new column. The `EnsureTableLayout` reducer action was idempotent — if a layout already existed for that ID, it bailed out entirely.
-
-New columns were invisible to those users: no display, no resize handle, no drag-and-drop reorder.
-
-## Root Cause
-
-`EnsureTableLayout` treated "layout exists" as "layout is complete." It only created layouts from scratch; it never checked whether the existing layout was missing descriptors for newly-added columns.
-
 ## Solution
 
 Add `TableLayout.reconcile(existingLayout, currentColumns)` as a method on the Tagged type. It:
@@ -43,3 +33,13 @@ return { ...state, tableLayouts: state.tableLayouts.addItemWithId(reconciled) }
 - When adding columns to a register, always verify they appear in existing (persisted) layouts, not just fresh ones
 - Put layout transformation functions on the Tagged type — they operate on and return `TableLayout` instances
 - Reference equality check (`reconciled === existing`) prevents unnecessary Redux updates on every render
+
+## Problem
+
+When a table gains new columns (e.g., adding payee to the investment register), users with existing persisted `TableLayout` records never see the new column. The `EnsureTableLayout` reducer action was idempotent — if a layout already existed for that ID, it bailed out entirely.
+
+New columns were invisible to those users: no display, no resize handle, no drag-and-drop reorder.
+
+## Root Cause
+
+`EnsureTableLayout` treated "layout exists" as "layout is complete." It only created layouts from scratch; it never checked whether the existing layout was missing descriptors for newly-added columns.

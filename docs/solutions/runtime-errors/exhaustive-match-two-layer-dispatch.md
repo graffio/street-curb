@@ -10,25 +10,6 @@ date: 2026-02-02
 
 # Two-layer exhaustive matching in Redux action dispatch
 
-## Problem
-
-Adding 5 new Tagged Sum action variants caused a runtime crash on any action dispatch:
-
-```
-Uncaught TypeError: Constructors given to match didn't include: ToggleAccountFilter
-```
-
-The reducer's exhaustive `action.match()` was updated correctly. The crash came from a different file.
-
-## Root Cause
-
-Actions route through two independent exhaustive `match()` statements:
-
-1. **`src/commands/post.js`** — command dispatch layer, routes actions for persistence side effects (IndexedDB writes for table layouts, tab layout, account prefs)
-2. **`src/store/reducer.js`** — root reducer, handles state transformation
-
-`post.js` runs first. Its match rejected the new variants before they reached Redux.
-
 ## Solution
 
 Added the 5 missing variants to `post.js`'s `action.match()` as dispatch-only handlers:
@@ -54,6 +35,25 @@ No persistence needed for filter toggles — they just forward to Redux.
 - When adding Action variants, grep for `action.match(` to find ALL exhaustive match sites
 - Updated mental model: Action variants must be added to **both** `reducer.js` and `post.js`
 - Consider adding an integration test that dispatches every Action variant end-to-end
+
+## Problem
+
+Adding 5 new Tagged Sum action variants caused a runtime crash on any action dispatch:
+
+```
+Uncaught TypeError: Constructors given to match didn't include: ToggleAccountFilter
+```
+
+The reducer's exhaustive `action.match()` was updated correctly. The crash came from a different file.
+
+## Root Cause
+
+Actions route through two independent exhaustive `match()` statements:
+
+1. **`src/commands/post.js`** — command dispatch layer, routes actions for persistence side effects (IndexedDB writes for table layouts, tab layout, account prefs)
+2. **`src/store/reducer.js`** — root reducer, handles state transformation
+
+`post.js` runs first. Its match rejected the new variants before they reached Redux.
 
 ## Related
 

@@ -10,24 +10,6 @@ symptoms:
 
 # Handler-per-file dispatch pattern
 
-## Problem
-
-Effect handlers in post.js grew large and called `post()` re-entrantly — a handler triggered by post's match arm
-would call `post(Action.SetLoadingStatus(...))` which re-entered the same match block. This created:
-- Circular dependencies when handlers were extracted to separate files
-- Confusing control flow (post calling post)
-- Tight coupling between handlers and post's routing
-
-## Investigation
-
-`SetLoadingStatus`, `LoadFile`, `SetShowReopenBanner` are all dispatch-only actions in post — no persistence side
-effects. Handlers don't need `post`; they need `dispatch`.
-
-## Root Cause
-
-The original design passed `post` to handlers because it was the only way to dispatch. But `post` does two things:
-routing + side effects. Handlers only need the routing part (dispatch to Redux).
-
 ## Solution
 
 1. **Handlers receive `dispatch`, not `post`** — `dispatch` is the inner function that sends to Redux. Handlers call
@@ -52,3 +34,21 @@ routing + side effects. Handlers only need the routing part (dispatch to Redux).
 
 - Handlers should never import `post` — if they need to dispatch, they receive `dispatch` as a parameter
 - Storage modules should expose domain methods, not generic CRUD — keeps keys internal and API self-documenting
+
+## Problem
+
+Effect handlers in post.js grew large and called `post()` re-entrantly — a handler triggered by post's match arm
+would call `post(Action.SetLoadingStatus(...))` which re-entered the same match block. This created:
+- Circular dependencies when handlers were extracted to separate files
+- Confusing control flow (post calling post)
+- Tight coupling between handlers and post's routing
+
+## Investigation
+
+`SetLoadingStatus`, `LoadFile`, `SetShowReopenBanner` are all dispatch-only actions in post — no persistence side
+effects. Handlers don't need `post`; they need `dispatch`.
+
+## Root Cause
+
+The original design passed `post` to handlers because it was the only way to dispatch. But `post` does two things:
+routing + side effects. Handlers only need the routing part (dispatch to Redux).

@@ -10,6 +10,20 @@ symptoms:
 
 # QIF Security Identity Mismatch
 
+## Solution
+
+DB-level safety net in `importSinglePrice`: before INSERT, query for existing
+`(securityId, date)` row. If found, UPDATE instead of INSERT. This catches all cases
+where different symbol strings resolve to the same security.
+
+Client-side dedup (`T.toMergedPrices`) still handles the common case. The DB check
+is a fallback for edge cases.
+
+## Prevention
+
+When deduplicating data that will be resolved to DB identities, add a DB-level check
+as a safety net. String-level dedup is an optimization, not a guarantee.
+
 ## Problem
 
 Importing QIF files with both `!Type:Prices` and investment transactions crashes with
@@ -29,17 +43,3 @@ But client-side dedup uses raw `symbol` strings, so `"Apple Inc|2024-01-15"` and
 Two-layer identity: QIF data identifies securities by string (name or ticker), but the DB
 identifies by `securityId`. Dedup at the string layer can't catch collisions that only appear
 at the DB layer.
-
-## Solution
-
-DB-level safety net in `importSinglePrice`: before INSERT, query for existing
-`(securityId, date)` row. If found, UPDATE instead of INSERT. This catches all cases
-where different symbol strings resolve to the same security.
-
-Client-side dedup (`T.toMergedPrices`) still handles the common case. The DB check
-is a fallback for edge cases.
-
-## Prevention
-
-When deduplicating data that will be resolved to DB identities, add a DB-level check
-as a safety net. String-level dedup is an optimization, not a guarantee.
