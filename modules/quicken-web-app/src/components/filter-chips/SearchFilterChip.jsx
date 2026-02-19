@@ -12,14 +12,22 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 const { ActionRegistry } = KeymapModule
 
-// Module-level DOM ref — only one popover open at a time
-const searchInputEl = { current: null }
-
-// Module-level state — single instance per view, updated on each render
-let chipState = { viewId: null }
-let triggerCleanup = null
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
+    // Dismisses popover on Escape key
+    // @sig onSearchKey :: KeyboardEvent -> void
+    onSearchKey: e => {
+        if (e.key === 'Escape') {
+            e.preventDefault()
+            post(Action.SetFilterPopoverOpen(chipState.viewId, null))
+        }
+    },
+
     // Registers filter:search focus action on trigger button mount
     // @sig registerTriggerActions :: Element? -> void
     registerTriggerActions: element => {
@@ -35,6 +43,49 @@ const E = {
             ])
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Search input content — selects filterQuery and renders labeled text field
+// @sig SearchContent :: { viewId: String } -> ReactElement
+const SearchContent = ({ viewId }) => {
+    const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
+    const fieldProps = {
+        ref: el => (searchInputEl.current = el),
+        placeholder: 'Type to filter...',
+        value: filterQuery || '',
+        onChange: e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value })),
+        onKeyDown: E.onSearchKey,
+    }
+    return (
+        <Flex direction="column" gap="2">
+            <Text size="1" color="gray" weight="medium">
+                Search transactions
+            </Text>
+            <TextField.Root {...fieldProps} />
+        </Flex>
+    )
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const searchInputEl = { current: null }
+let chipState = { viewId: null }
+let triggerCleanup = null
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Search filter chip with inline text input popover
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
@@ -52,6 +103,8 @@ const Chip = ({ viewId, isActive = false }) => {
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
     const isOpen = popoverId === 'search'
+    const contentStyle = { padding: 'var(--space-2)', width: 250 }
+    const labelStyle = { overflow: 'hidden', textOverflow: 'ellipsis' }
     const triggerStyle = ChipStyles.makeChipTriggerStyle(120, isActive)
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
@@ -62,7 +115,7 @@ const Chip = ({ viewId, isActive = false }) => {
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
                 <Box ref={E.registerTriggerActions} style={triggerStyle}>
-                    <Text size="1" weight="medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <Text size="1" weight="medium" style={labelStyle}>
                         {label}
                     </Text>
                     {hasQuery && (
@@ -72,21 +125,8 @@ const Chip = ({ viewId, isActive = false }) => {
                     )}
                 </Box>
             </Popover.Trigger>
-            <Popover.Content style={{ padding: 'var(--space-2)', width: 250 }}>
-                <Flex direction="column" gap="2">
-                    <Text size="1" color="gray" weight="medium">
-                        Search transactions
-                    </Text>
-                    <TextField.Root
-                        ref={el => (searchInputEl.current = el)}
-                        placeholder="Type to filter..."
-                        value={filterQuery || ''}
-                        onChange={e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value }))}
-                        onKeyDown={e =>
-                            e.key === 'Escape' && (e.preventDefault(), post(Action.SetFilterPopoverOpen(viewId, null)))
-                        }
-                    />
-                </Flex>
+            <Popover.Content style={contentStyle}>
+                <SearchContent viewId={viewId} />
             </Popover.Content>
         </Popover.Root>
     )

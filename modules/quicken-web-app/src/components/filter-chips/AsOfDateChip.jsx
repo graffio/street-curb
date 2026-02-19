@@ -1,27 +1,36 @@
 // ABOUTME: As-of date filter chip with single date picker for holdings view
 // ABOUTME: Escape closes popover, KeyboardDateInput has own keymap
 
-import { Box, Flex, Popover, Text } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'
+import { Box, Flex, Popover, Text } from '@radix-ui/themes'
 import { useSelector } from 'react-redux'
-import { KeyboardDateInput } from '../KeyboardDateInput.jsx'
 import { post } from '../../commands/post.js'
 import * as S from '../../store/selectors.js'
 import { Action } from '../../types/action.js'
+import { KeyboardDateInput } from '../KeyboardDateInput.jsx'
 import { ChipStyles } from './chip-styles.js'
 import { FilterColumn } from './FilterColumn.jsx'
 
 const { ActionRegistry } = KeymapModule
 
-// Module-level DOM ref — only one popover open at a time
-const dateInputEl = { current: null }
-
-// Module-level state — single instance per view, updated on each render
-let chipState = { viewId: null }
-let triggerCleanup = null
-let contentCleanup = null
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
+    // Converts Date to YYYY-MM-DD string and dispatches filter update
+    // @sig onDate :: Date? -> void
+    onDate: date => {
+        if (date) {
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            post(Action.SetTransactionFilter(chipState.viewId, { asOfDate: `${year}-${month}-${day}` }))
+        }
+    },
+
     // Registers filter:asOfDate focus action on trigger button mount
     // @sig registerTriggerActions :: Element? -> void
     registerTriggerActions: element => {
@@ -53,6 +62,50 @@ const E = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Date picker content — selects asOfDate and renders KeyboardDateInput
+// @sig DateContent :: { viewId: String } -> ReactElement
+const DateContent = ({ viewId }) => {
+    const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
+    const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
+    const inputProps = {
+        ref: el => (dateInputEl.current = el),
+        value: dateValue,
+        onChange: E.onDate,
+        actionContext: viewId,
+    }
+    return (
+        <Flex direction="column" gap="2">
+            <Text size="1" color="gray" weight="medium">
+                Show holdings as of date
+            </Text>
+            <KeyboardDateInput {...inputProps} />
+        </Flex>
+    )
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const dateInputEl = { current: null }
+let chipState = { viewId: null }
+let triggerCleanup = null
+let contentCleanup = null
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // As-of date filter chip with single date picker for holdings view
 // @sig Chip :: { viewId: String } -> ReactElement
 const Chip = ({ viewId }) => {
@@ -61,22 +114,12 @@ const Chip = ({ viewId }) => {
         if (open) setTimeout(() => dateInputEl.current?.focus('month'), 0)
     }
 
-    // Converts Date to YYYY-MM-DD string and dispatches filter update
-    // @sig handleDateChange :: Date? -> void
-    const handleDateChange = date => {
-        if (date) {
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-            post(Action.SetTransactionFilter(viewId, { asOfDate: `${year}-${month}-${day}` }))
-        }
-    }
-
     const asOfDate = useSelector(state => S.UI.asOfDate(state, viewId))
     const popoverId = useSelector(state => S.UI.filterPopoverId(state, viewId))
     const isOpen = popoverId === 'asOfDate'
     const dateValue = asOfDate ? new Date(asOfDate + 'T00:00:00') : new Date()
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, false)
+    const contentStyle = { padding: 'var(--space-3)', width: 200 }
     const displayDate = dateValue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
     chipState = { viewId }
@@ -90,18 +133,8 @@ const Chip = ({ viewId }) => {
                     </Text>
                 </Box>
             </Popover.Trigger>
-            <Popover.Content ref={E.registerContentActions} style={{ padding: 'var(--space-3)', width: 200 }}>
-                <Flex direction="column" gap="2">
-                    <Text size="1" color="gray" weight="medium">
-                        Show holdings as of date
-                    </Text>
-                    <KeyboardDateInput
-                        ref={el => (dateInputEl.current = el)}
-                        value={dateValue}
-                        onChange={handleDateChange}
-                        actionContext={viewId}
-                    />
-                </Flex>
+            <Popover.Content ref={E.registerContentActions} style={contentStyle}>
+                <DateContent viewId={viewId} />
             </Popover.Content>
         </Popover.Root>
     )

@@ -734,10 +734,10 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 
 ## Quicken Web App Decisions
 
-### 2026-02-14: No cohesion groups in React components
-Context: Components are wiring (selectors → JSX → post), not business logic.
-Decision: P/T/F/V/A/E namespace objects are forbidden in .jsx files.
-Why: Cohesion groups exist for modules with logic; components have none.
+### 2026-02-14: Cohesion groups in React components (revised 2026-02-18)
+Context: Originally forbidden, but ref-callback registration pattern requires module-level handlers.
+Decision: F (Factories) and E (Effects) allowed in .jsx files. F for style factories, E for action registration, ref callbacks, DOM operations. P/T/V/A remain forbidden (components don't have predicates, transformers, validators, aggregators).
+Why: Ref callbacks need stable function identity and access to module-level state (chipState, cleanup fns).
 
 ### 2026-02-14: Handlers never read current state
 Context: E group functions were reading `currentStore().getState()` to compute next state.
@@ -758,6 +758,16 @@ Why: Single source of truth in test files themselves, no mapping table to mainta
 Context: Brainstorm listed 4 feature files, but bank/investment register filter tests had no destination.
 Decision: Created bank-register-filters and investment-register-filters to receive keyboard-nav tests.
 Why: Dissolving keyboard-nav requires destinations for all its tests; 4 files would leave orphans.
+
+### 2026-02-18: "Factories" section name in .jsx files
+Context: Section separator validator uses canonical names. F = Functions in .js, but .jsx factories (makeOptionStyle, makeItemRowStyle) aren't general-purpose functions.
+Decision: F = "Factories" in .jsx files, F = "Functions" in .js files. Validator alias: `Factories → Functions`.
+Why: Accurately describes what F does in components (creates style objects, props objects).
+
+### 2026-02-18: Single-use functions and constants stay local
+Context: E namespace and Constants sections were accumulating trivial single-line, single-use entries.
+Decision: Only promote to module-level E or Constants if used in 2+ places or if the function has non-trivial logic. Single-use one-liners belong inline at the call site or as local consts in the consuming function.
+Why: Module-level entries have documentation overhead (sig comments, section membership). If you can inline it and the line still fits, it doesn't earn a named entry.
 
 ### 2026-02-14: Rename handlers/ → operations/
 Context: "Handler" means two things — React event handler and post operation.

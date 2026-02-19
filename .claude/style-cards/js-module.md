@@ -2,15 +2,37 @@
 
 Every JS file follows this structure. No exceptions.
 
-## File Structure (top to bottom)
+## File Structure — Section Separators
 
-1. **ABOUTME** — two-line comment at top: what this file does
-2. **Configuration constants** — `PRIORITY`, `MAX_LENGTH`, lookup tables
-3. **Cohesion groups** — P → T → F → V → A → E (only the ones needed)
-4. **Exported function(s)** — at module level, NOT inside cohesion groups
-5. **Export** — one of:
-   - **Object** (multi-function file): PascalCase matching file name → `export { MyModule }`
-   - **Function** (single-function file): camelCase matching file name → `export { myModule }`
+Use section separators to organize files. Functions first, data after. Canonical order (skip empty sections):
+
+| #  | Section            | Contains                                                    |
+|----|--------------------|-------------------------------------------------------------|
+| 1  | P (Predicates)     | `is*`, `has*`, `should*`, `can*`                            |
+| 2  | T (Transforms)     | `to*`, `parse*`, `format*`                                  |
+| 3  | F (Factories)      | `create*`, `make*`, `build*`                                |
+| 4  | V (Validators)     | `check*`, `validate*`                                       |
+| 5  | A (Aggregators)    | `collect*`, `count*`, `gather*`, `find*`                    |
+| 6  | E (Effects)        | `persist*`, `handle*`, `dispatch*`, `register*`             |
+| 7  | Constants          | `const` values, style objects, config                       |
+| 8  | Actions            | `// prettier-ignore` action/trigger table arrays            |
+| 9  | Module-level state | `let` vars, `Map`s (hybrid files only)                      |
+| 10 | Exports            | Exported function(s) + `export` statement                   |
+
+**Separator format** — 5-line block:
+```js
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Section Name
+//
+// ---------------------------------------------------------------------------------------------------------------------
+```
+
+**ABOUTME** always comes before all sections (no separator needed — imports are universal).
+
+**Export naming:**
+- **Object** (multi-function file): PascalCase matching file name → `export { MyModule }`
+- **Function** (single-function file): camelCase matching file name → `export { myModule }`
 
 ## Cohesion Groups
 

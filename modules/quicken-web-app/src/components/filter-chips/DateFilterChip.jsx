@@ -15,32 +15,67 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 const { ActionRegistry } = KeymapModule
 
-const optionStyle = { padding: 'var(--space-2) var(--space-3)', cursor: 'pointer', borderRadius: 'var(--radius-1)' }
-const separatorStyle = { padding: 'var(--space-1) var(--space-3)', userSelect: 'none' }
-
-// Convert DATE_RANGES object to array of {key, label} entries
-// @sig dateRangeOptions :: [{ key: String, label: String }]
-const dateRangeOptions = Object.entries(DateRangeUtils.DATE_RANGES).map(([key, label]) => ({ key, label }))
-
-// Module-level DOM refs — only one popover open at a time
-const startDateEl = { current: null }
-const endDateEl = { current: null }
-
-// Module-level state — single instance per view, updated on each render
-let chipState = { viewId: null, next: 0, prev: 0, highlightedItemId: null, dateRangeKey: null }
-let triggerCleanup = null
-let contentCleanup = null
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Creates option style with selected and highlighted states
     // @sig makeOptionStyle :: (Boolean, Boolean?) -> Style
     makeOptionStyle: (isSelected, isHighlighted = false) => ({
-        ...optionStyle,
+        padding: 'var(--space-2) var(--space-3)',
+        cursor: 'pointer',
+        borderRadius: 'var(--radius-1)',
         backgroundColor: isHighlighted ? 'var(--accent-4)' : isSelected ? 'var(--accent-3)' : 'transparent',
     }),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const E = {
+    // Dispatches open/close for date popover
+    // @sig onOpenChange :: Boolean -> void
+    onOpenChange: open => post(Action.SetFilterPopoverOpen(chipState.viewId, open ? 'date' : null)),
+
+    // Dispatches custom start date change and recalculates range if both dates present
+    // @sig onStartDate :: Date? -> void
+    onStartDate: date => {
+        const { viewId } = chipState
+        post(Action.SetTransactionFilter(viewId, { customStartDate: date }))
+        if (date && chipState.customEndDate)
+            post(
+                Action.SetTransactionFilter(viewId, {
+                    dateRange: { start: date, end: endOfDay(chipState.customEndDate) },
+                }),
+            )
+    },
+
+    // Dispatches custom end date change and recalculates range if both dates present
+    // @sig onEndDate :: Date? -> void
+    onEndDate: date => {
+        const { viewId } = chipState
+        post(Action.SetTransactionFilter(viewId, { customEndDate: date }))
+        if (chipState.customStartDate && date)
+            post(
+                Action.SetTransactionFilter(viewId, {
+                    dateRange: { start: chipState.customStartDate, end: endOfDay(date) },
+                }),
+            )
+    },
+
+    // Selects a date range option and dispatches filter update
+    // @sig onSelect :: String -> void
+    onSelect: key => {
+        const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: null, end: null }
+        post(Action.SetTransactionFilter(chipState.viewId, { dateRangeKey: key, dateRange }))
+    },
+
     // Applies highlighted date range option, focuses custom date input if applicable
     // @sig applyHighlightedDateRange :: () -> void
     applyHighlightedDateRange: () => {
@@ -102,10 +137,16 @@ const E = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Separator line for option lists
 // @sig OptionSeparator :: { id: String } -> ReactElement
 const OptionSeparator = ({ id }) => (
-    <Box key={id} style={separatorStyle}>
+    <Box key={id} style={{ padding: 'var(--space-1) var(--space-3)', userSelect: 'none' }}>
         <Text size="1" color="gray">
             ───────────────
         </Text>
@@ -126,68 +167,134 @@ const SelectableOption = ({ id, label, isSelected, isHighlighted = false, onSele
     return closeOnSelect ? <Popover.Close key={id}>{content}</Popover.Close> : content
 }
 
-// Date range option that handles both separators and selectable options
-// @sig DateRangeOption :: { option: { key, label }, selectedKey, isHighlighted?, onSelect } -> ReactElement
-const DateRangeOption = ({ option, selectedKey, isHighlighted = false, onSelect }) => {
+// Date range option — selects own highlight/selection state, renders separator or selectable row
+// @sig DateRangeOption :: { option: { key, label }, viewId: String } -> ReactElement
+const DateRangeOption = ({ option, viewId }) => {
     const { key, label } = option
+    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const { highlightedItemId } = useSelector(state => S.UI.filterPopoverData(state, viewId))
     if (key.startsWith('separator')) return <OptionSeparator key={key} id={key} />
-    const closeOnSelect = key !== 'customDates'
+    const props = {
+        id: key,
+        label,
+        isSelected: key === dateRangeKey,
+        isHighlighted: key === highlightedItemId,
+        onSelect: E.onSelect,
+        closeOnSelect: key !== 'customDates',
+    }
+    return <SelectableOption key={key} {...props} />
+}
+
+// List of date range options — maps options to self-selecting DateRangeOption components
+// @sig DateRangeList :: { viewId: String } -> ReactElement
+const DateRangeList = ({ viewId }) => (
+    <Flex direction="column">
+        {dateRangeOptions.map(opt => (
+            <DateRangeOption key={opt.key} option={opt} viewId={viewId} />
+        ))}
+    </Flex>
+)
+
+// Custom date range inputs — selects own dates, renders start/end date pickers
+// @sig CustomDateRange :: { viewId: String } -> ReactElement?
+const CustomDateRange = ({ viewId }) => {
+    const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
+    const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
+    const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
+    if (dateRangeKey !== 'customDates') return null
+    const customDateStyle = { borderTop: '1px solid var(--gray-5)' }
+    const startProps = {
+        ref: el => (startDateEl.current = el),
+        value: customStartDate,
+        onChange: E.onStartDate,
+        placeholder: 'MM/DD/YYYY',
+        onTabOut: () => endDateEl.current?.focus('month'),
+        actionContext: viewId,
+    }
+    const endProps = {
+        ref: el => (endDateEl.current = el),
+        value: customEndDate,
+        onChange: E.onEndDate,
+        placeholder: 'MM/DD/YYYY',
+        onTabOut: () => startDateEl.current?.focus('month'),
+        actionContext: viewId,
+    }
     return (
-        <SelectableOption
-            key={key}
-            id={key}
-            label={label}
-            isSelected={key === selectedKey}
-            isHighlighted={isHighlighted}
-            onSelect={onSelect}
-            closeOnSelect={closeOnSelect}
-        />
+        <Flex direction="column" gap="2" mt="2" p="2" style={customDateStyle}>
+            <Flex direction="column" gap="1">
+                <Text size="1" color="gray" weight="medium">
+                    Start Date
+                </Text>
+                <KeyboardDateInput {...startProps} />
+            </Flex>
+            <Flex direction="column" gap="1">
+                <Text size="1" color="gray" weight="medium">
+                    End Date
+                </Text>
+                <KeyboardDateInput {...endProps} />
+            </Flex>
+        </Flex>
     )
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Convert DATE_RANGES object to array of {key, label} entries
+// @sig dateRangeOptions :: [{ key: String, label: String }]
+const dateRangeOptions = Object.entries(DateRangeUtils.DATE_RANGES).map(([key, label]) => ({ key, label }))
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const startDateEl = { current: null }
+const endDateEl = { current: null }
+
+// prettier-ignore
+let chipState = { viewId: null, next: 0, prev: 0, highlightedItemId: null, dateRangeKey: null, customStartDate: null, customEndDate: null }
+let triggerCleanup = null
+let contentCleanup = null
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Date filter chip with keyboard-navigable date range options popover
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleSelect = key => {
-        const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: null, end: null }
-        post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
-    }
-
     const handleClear = e => {
         e.stopPropagation()
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: 'all', dateRange: { start: null, end: null } }))
     }
 
-    const handleCustomStartChange = date => {
-        post(Action.SetTransactionFilter(viewId, { customStartDate: date }))
-        if (date && customEndDate)
-            post(Action.SetTransactionFilter(viewId, { dateRange: { start: date, end: endOfDay(customEndDate) } }))
-    }
+    const preventAutoFocus = e => e.preventDefault()
 
-    const handleCustomEndChange = date => {
-        post(Action.SetTransactionFilter(viewId, { customEndDate: date }))
-        if (customStartDate && date)
-            post(Action.SetTransactionFilter(viewId, { dateRange: { start: customStartDate, end: endOfDay(date) } }))
-    }
-
+    const { onOpenChange, registerContentActions, registerTriggerActions } = E
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
     const popoverData = useSelector(state => S.UI.filterPopoverData(state, viewId))
-    const { popoverId, highlightedItemId, nextHighlightIndex, prevHighlightIndex } = popoverData
+    const { popoverId, nextHighlightIndex, prevHighlightIndex, highlightedItemId } = popoverData
     const isOpen = popoverId === 'date'
     const triggerStyle = ChipStyles.makeChipTriggerStyle(180, isActive)
+    const contentStyle = { padding: 'var(--space-1)', width: 220 }
     const currentLabel = DateRangeUtils.DATE_RANGES[dateRangeKey] || 'All dates'
 
-    chipState = { viewId, next: nextHighlightIndex, prev: prevHighlightIndex, highlightedItemId, dateRangeKey }
+    // prettier-ignore
+    chipState = { viewId, next: nextHighlightIndex, prev: prevHighlightIndex, highlightedItemId, dateRangeKey, customStartDate, customEndDate }
 
     return (
-        <Popover.Root
-            open={isOpen}
-            onOpenChange={open => post(Action.SetFilterPopoverOpen(viewId, open ? 'date' : null))}
-        >
+        <Popover.Root open={isOpen} onOpenChange={onOpenChange}>
             <Popover.Trigger>
-                <Box ref={E.registerTriggerActions} style={triggerStyle}>
+                <Box ref={registerTriggerActions} style={triggerStyle}>
                     <Text size="1" weight="medium">
                         Date: {currentLabel}
                     </Text>
@@ -198,48 +305,9 @@ const Chip = ({ viewId, isActive = false }) => {
                     )}
                 </Box>
             </Popover.Trigger>
-            <Popover.Content
-                ref={E.registerContentActions}
-                style={{ padding: 'var(--space-1)', width: 220 }}
-                onOpenAutoFocus={e => e.preventDefault()}
-            >
-                {/* prettier-ignore */}
-                <Flex direction="column">
-                    {dateRangeOptions.map(opt => (
-                        <DateRangeOption key={opt.key} option={opt} selectedKey={dateRangeKey}
-                            isHighlighted={highlightedItemId === opt.key} onSelect={handleSelect} />
-                    ))}
-                </Flex>
-                {dateRangeKey === 'customDates' && (
-                    <Flex direction="column" gap="2" mt="2" p="2" style={{ borderTop: '1px solid var(--gray-5)' }}>
-                        <Flex direction="column" gap="1">
-                            <Text size="1" color="gray" weight="medium">
-                                Start Date
-                            </Text>
-                            <KeyboardDateInput
-                                ref={el => (startDateEl.current = el)}
-                                value={customStartDate}
-                                onChange={handleCustomStartChange}
-                                placeholder="MM/DD/YYYY"
-                                onTabOut={() => endDateEl.current?.focus('month')}
-                                actionContext={viewId}
-                            />
-                        </Flex>
-                        <Flex direction="column" gap="1">
-                            <Text size="1" color="gray" weight="medium">
-                                End Date
-                            </Text>
-                            <KeyboardDateInput
-                                ref={el => (endDateEl.current = el)}
-                                value={customEndDate}
-                                onChange={handleCustomEndChange}
-                                placeholder="MM/DD/YYYY"
-                                onTabOut={() => startDateEl.current?.focus('month')}
-                                actionContext={viewId}
-                            />
-                        </Flex>
-                    </Flex>
-                )}
+            <Popover.Content ref={registerContentActions} style={contentStyle} onOpenAutoFocus={preventAutoFocus}>
+                <DateRangeList viewId={viewId} />
+                <CustomDateRange viewId={viewId} />
             </Popover.Content>
         </Popover.Root>
     )
