@@ -1,3 +1,10 @@
+---
+summary: "Command Pattern keyboard dispatch with ActionRegistry, LIFO conflict resolution, and separated key bindings"
+keywords: ["keyboard", "keymap", "ActionRegistry", "keybindings", "LIFO", "command-pattern", "ref-callbacks"]
+module: quicken-web-app
+last_updated: "2026-02-14"
+---
+
 # Keyboard System
 
 Command Pattern keyboard dispatch with separated actions and key bindings.

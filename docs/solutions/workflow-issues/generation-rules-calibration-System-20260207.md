@@ -54,12 +54,12 @@ Every reference file needs an explicit trigger mechanism ("how does it know?"):
 | Tier | Size | When loaded | Trigger mechanism |
 |------|------|-------------|-------------------|
 | Always-on | ~100 lines | Session start | `@import` in CLAUDE.md |
-| Per-step | ~40 lines each | Before writing code | `style_card` field in current-task.json |
+| Per-step | ~40 lines each | Before writing code | `style_card` field in task file |
 | On-demand | Full APIs | When pattern detected | Signal table in CLAUDE.md |
 
 ### 2. Style Cards as Pre-Write Priming
 
-40-line focused cards loaded per-step via `style_card` field in current-task.json.
+40-line focused cards loaded per-step via `style_card` field in the task file.
 Each covers judgment rules the validator can't enforce. Same rules as conventions.md,
 but in fresh context at the moment of writing — compliance jumps dramatically.
 

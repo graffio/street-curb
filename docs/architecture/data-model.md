@@ -1,6 +1,7 @@
 ---
 summary: "Multi-tenant data model with event sourcing, flat audit trail, and hierarchical domain collections for SOC2-compliant curb data management"
 keywords: [ "data-model", "event-sourcing", "multi-tenant", "firestore", "organizations", "users", "projects" ]
+module: curb-map
 last_updated: "2025-01-15"
 ---
 

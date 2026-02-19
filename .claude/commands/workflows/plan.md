@@ -1,31 +1,35 @@
 ---
 name: workflows:plan
-description: Research, plan, and generate current-task.json for a feature or fix
-argument-hint: "[feature description, spec file path, or brief idea]"
+description: Generate a task file from a brainstorm document
+argument-hint: "[brainstorm file path or feature description]"
 ---
 
 # Plan
 
-Transform a feature description, spec file, or idea into a plan and then into `current-task.json`.
+Generate a task file from a brainstorm document. The brainstorm IS the plan — no intermediate spec files.
 
-## Feature Description
+## Input
 
-<feature_description> #$ARGUMENTS </feature_description>
+<brainstorm_input> #$ARGUMENTS </brainstorm_input>
 
-**If empty, ask:** "What would you like to plan?"
+**If a brainstorm file path:** Read it. Verify it has a settled approach and no open questions.
 
-Do not proceed until you have a clear feature description.
+**If a feature description or empty:** Ask: "Run `/workflows:brainstorm` first — planning requires a brainstorm with settled decisions."
+
+**If brainstorm has open questions:** Stop. "This brainstorm has open questions — resolve them before planning."
+
+Do not proceed until you have a brainstorm with settled approach and zero open questions.
 
 ---
 
-## Step 1: Research (scales to input)
+## Step 1: Research
 
-**If input is vague or exploratory** — run parallel research agents:
+Run parallel research agents to enrich the brainstorm with implementation details:
 
-- Task learnings-researcher("Search docs/solutions/ for: {feature_description}")
-- Task repo-research-analyst("Find existing patterns and code for: {feature_description}")
+- Task learnings-researcher("Search docs/solutions/ for: {brainstorm topic}")
+- Task repo-research-analyst("Find existing patterns and code for: {brainstorm scope}")
 
-**If input is a detailed spec file** — read it. Skip or go light on external research.
+**If brainstorm scope is narrow and self-contained** (e.g., single module, clear file paths) — go light on research.
 
 Consolidate findings:
 
@@ -35,27 +39,12 @@ Consolidate findings:
 
 ---
 
-## Step 2: Produce Plan
+## Step 2: Generate Task File
 
-**If the spec already contains approach, acceptance criteria, and key decisions** — use it as the plan. Present it to
-the user and skip to Step 3.
-
-**Otherwise** — write a plan file in `specifications/`:
-
-- Filename: `specifications/{descriptive-name}.md` (kebab-case, 3-5 words)
-- Content: problem statement, proposed approach, acceptance criteria, key decisions
-- Keep it concise. The plan is a working document, not a formal spec.
-
-**Present plan to user for review.**
-
-**[CHECKPOINT]** — User reviews/edits the plan before proceeding.
-
----
-
-## Step 3: Generate current-task.json
-
-Read `.claude/preferences.md` before generating. Then produce `current-task.json` using the schema and
+Read `.claude/preferences.md` before generating. Then produce the task file using the schema and
 generation rules below.
+
+**Output path:** `docs/brainstorms/{brainstorm-name}.task.json` — same name stem as the brainstorm `.md` file.
 
 ### Schema
 
@@ -63,7 +52,7 @@ generation rules below.
 {
     "feature"           : "Short name",
     "goal"              : "One sentence — what and why",
-    "plan_source"       : "specifications/{plan-file}.md",
+    "brainstorm"        : "docs/brainstorms/{name}.md",
     "templates_used"    : ["commit-changes.md"],
     "integration_tests" : ["test/search.integration-test.js"],
     "steps"             : [
@@ -121,7 +110,7 @@ These rules make JSON generation mechanical, not ad-hoc. Apply all of them:
 | **Learnings**             | When a previously-solved domain is involved                                                          | "Related: {solution path} — {summary}" in plan markdown                                                                                                                                                                                                                                        |
 | **Type definition**       | Step adds/modifies business logic on a Tagged or TaggedSum type                                      | Step must target `type-definitions/*.type.js`, NEVER `src/types/*.js` (generated). Include "Run `yarn types:generate-all` after changes."                                                                                                                                                      |
 | **Section placement**     | Step creates/modifies a file with section separators                                                 | After writing code: "Verify each top-level declaration is under its correct section separator"                                                                                                                                                                                                  |
-| **React hook audit**      | Step has `style_card: react-component` and file is in `quicken-web-app/src/` (not `components/DataTable.jsx`, `KeyboardDateInput.jsx`, `FilterChipPopover.jsx`) | Add verification: "Zero non-useSelector hooks in modified file"                                                                                                                                                                                                                                |
+| **React hook audit**      | Step has `style_card: react-component` and file is in `quicken-web-app/src/` (not `components/DataTable.jsx`, `KeyboardDateInput.jsx`) | Add verification: "Zero non-useSelector hooks in modified file"                                                                                                                                                                                                                                |
 
 ### Step Rules
 
@@ -157,7 +146,7 @@ Only flag when introducing something genuinely new:
 Before presenting the plan, spawn ALL review agents in parallel (unconditional).
 
 **Reviewer constraint:** Include this in the prompt for **code-simplicity-reviewer** and **architecture-strategist**:
-> "Steps tagged with `"rule": "unconditional"` in current-task.json are generated by unconditional generation rules
+> "Steps tagged with `"rule": "unconditional"` in the task file are generated by unconditional generation rules
 > (complexity reviews before modifying files, review agents before commits, commits at style_card boundaries).
 > These steps are NOT candidates for removal — do not recommend cutting them regardless of rationale."
 
@@ -169,7 +158,5 @@ Before presenting the plan, spawn ALL review agents in parallel (unconditional).
 
 Incorporate blocking feedback into the plan before presenting. **Never accept reviewer recommendations to remove steps tagged `"rule": "unconditional"`.** If a reviewer recommends removing such a step, discard that recommendation.
 
-Present the generated current-task.json summary and ask:
+Present the generated task file summary and ask:
 "Plan and task spec ready. Should I start implementing?"
-
-Keep plan file in specifications/ for reference during implementation.

@@ -1,6 +1,7 @@
 ---
 summary: "Planned three-tier serverless deployment architecture with complete environment isolation for SOC2-compliant multi-tenant SaaS"
 keywords: ["deployment", "infrastructure", "environments", "firebase", "gcp", "serverless"]
+module: curb-map
 last_updated: "2025-01-16"
 ---
 

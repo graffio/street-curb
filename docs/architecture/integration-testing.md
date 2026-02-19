@@ -1,3 +1,10 @@
+---
+summary: "TAP + Playwright integration test infrastructure with fixture-driven assertions, ABOUTME discovery, and per-feature test files"
+keywords: ["integration-tests", "TAP", "Playwright", "agent-browser", "fixtures", "ABOUTME"]
+module: quicken-web-app
+last_updated: "2026-02-18"
+---
+
 # Integration Test Infrastructure
 
 ## Stack
@@ -38,7 +45,7 @@ Tests verify actual data correctness (market values, category totals, filtered c
 
 ## Discovery Mechanism
 
-1. `integration_tests` is a required field in `current-task.json` — the planner populates it by grepping ABOUTME comments for affected component names.
+1. `integration_tests` is a required field in the task file — the planner populates it by grepping ABOUTME comments for affected component names.
 2. During development, run files listed in `integration_tests`.
 3. During wrap-up, run the full suite as a safety net.
 4. Pre-commit hooks stay lint-only — integration tests are too slow for commit hooks.

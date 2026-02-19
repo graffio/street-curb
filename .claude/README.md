@@ -6,12 +6,12 @@ This document explains the system for humans. Claude reads `CLAUDE.md` (which im
 
 Plan a feature:
 ```
-/workflows:plan [description or spec file]
+/workflows:plan [brainstorm file path]
 ```
 
 Resume implementation:
 ```
-Continue implementing current-task.json
+Continue implementing docs/brainstorms/{name}.task.json
 ```
 
 Review files:
@@ -33,7 +33,7 @@ Finish up:
 |------|------|-------------|-------|
 | Always in context | Universal principles, workflow, pattern triggers, functional names | Session start | `CLAUDE.md` (inline) |
 | Per-step | File-type-specific style rules | Before each implementation step | `.claude/style-cards/*.md` |
-| On-demand | Full API references, detailed pattern guides | When signaled by triggers or style cards | `.claude/pattern-catalog/*.md`, `.claude/api-cheatsheets/*.md` |
+| On-demand | Full API references | When signaled by style cards | `.claude/api-cheatsheets/*.md` |
 
 ### Style Cards
 
@@ -43,11 +43,11 @@ Finish up:
 - `js-module.md` — cohesion groups, naming, fail-fast philosophy
 - `test-file.md` — TAP structure, Given/When/Then, TDD flow
 
-Loaded via `style_card` field in current-task.json steps. `/workflows:plan` maps file types to cards automatically.
+Loaded via `style_card` field in task file steps. `/workflows:plan` maps file types to cards automatically.
 
-### current-task.json
+### Task Files
 
-The implementation driver. JSON steps with `done` boolean. Can't be reinterpreted.
+Named JSON files co-located with brainstorms: `docs/brainstorms/{name}.task.json`. Gitignored (`*.task.json`). JSON steps with `done` boolean. Can't be reinterpreted.
 
 Schema adds `style_card` field:
 ```json
@@ -60,13 +60,13 @@ Schema adds `style_card` field:
 |------|------|------|
 | Pre-commit hook | `git commit` | cli-style-validator + eslint/prettier |
 | PostToolUse hook | After Write/Edit on .js/.jsx | eslint --fix + prettier --write |
-| current-task.json | During implementation | Whatever the plan says |
+| Task file | During implementation | Whatever the plan says |
 
 ### Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/workflows:plan` | Research → plan → generate current-task.json |
+| `/workflows:plan` | Read brainstorm → generate task file |
 | `/workflows:wrap-up` | Commit quality → knowledge capture → cleanup |
 | `/workflows:review` | Parallel agent review (pre-merge) |
 | `/workflows:brainstorm` | Exploration before planning |
@@ -92,9 +92,8 @@ Schema adds `style_card` field:
 | `preferences.md` | Architectural judgment calls (imported by CLAUDE.md) |
 | `conventions.md` | Pointer file — where style rules actually live |
 | `workflow.md` | Pointer file — where workflow rules actually live |
-| `current-task.json` | Active task spec |
+| `docs/brainstorms/*.task.json` | Active task spec (gitignored) |
 | `style-cards/*.md` | Per-step style guidance |
-| `pattern-catalog/*.md` | Tactical pattern references |
 | `api-cheatsheets/*.md` | API references for custom data structures |
 | `tasks/*.md` | Templates for specific activities |
 

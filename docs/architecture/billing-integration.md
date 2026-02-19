@@ -1,6 +1,7 @@
 ---
 summary: "Event-driven Stripe billing integration with SOC2-compliant audit trail, multi-format data export, and usage tracking for multi-tenant SaaS"
 keywords: ["billing", "stripe", "webhooks", "export", "usage-tracking", "soc2", "multi-tenant"]
+module: curb-map
 last_updated: "2025-11-02"
 ---
 

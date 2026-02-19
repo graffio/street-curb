@@ -1,3 +1,10 @@
+---
+summary: "Design decisions for QIF-to-SQLite import: stable IDs, signature matching, orphan handling, lot tracking, and incremental reimport strategy"
+keywords: ["qif-import", "stable-ids", "signatures", "orphan-handling", "lots", "incremental-import", "sqlite"]
+module: cli-qif-to-sqlite
+last_updated: "2026-02-05"
+---
+
 # Design Decisions
 
 ## D1: Single Stable ID System

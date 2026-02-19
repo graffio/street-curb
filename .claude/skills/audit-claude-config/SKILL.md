@@ -19,7 +19,6 @@ Systematic review of `.claude/` for health issues. Run every few weeks or after 
 Scan all `.claude/` markdown files for file paths and verify they exist.
 
 **What to grep for:**
-- `pattern-catalog/*.md` references
 - `api-cheatsheets/*.md` references
 - `style-cards/*.md` references
 - `docs/solutions/` paths
@@ -40,10 +39,6 @@ Check for conflicting guidance across tiers:
 - Hook rules in CLAUDE.md should match style card guidance
 - Import rules (Radix direct vs facade) should be consistent
 - Pattern triggers should point to files that exist
-
-**Pattern catalog vs brainstorm decisions:**
-- Read `docs/brainstorms/*.md` for decisions that obsolete patterns
-- Check if pattern catalog files reference deleted modules
 
 **Style cards vs code cheatsheets:**
 - Code examples in cheatsheets should follow current style card rules

@@ -1,6 +1,7 @@
 ---
 summary: "Zero-trust security architecture with passcode-only authentication, RBAC, and SOC2 compliance for multi-tenant curb data management"
 keywords: [ "security", "authentication", "authorization", "rbac", "soc2", "firestore-rules", "zero-trust" ]
+module: curb-map
 last_updated: "2025-01-15"
 ---
 

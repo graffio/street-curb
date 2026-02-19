@@ -74,7 +74,28 @@ Use **AskUserQuestion tool** to ask which approach the user prefers.
 
 Write a brainstorm document to `docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md`.
 
-**Document structure:** See the `brainstorming` skill for the template format. Key sections: What We're Building, Why This Approach, Key Decisions, Open Questions.
+**Required sections** (in this order):
+
+```markdown
+# Title
+**Date:** YYYY-MM-DD
+**Status:** Brainstorm
+
+## What We're Building
+## Why This Matters
+## Settled Approach (or "Settled Decisions")
+## Knowledge Destination
+## Open Questions
+```
+
+The **Knowledge Destination** section declares where content goes at wrap-up:
+
+| Destination | When |
+|-------------|------|
+| `solution:` docs/solutions/{category}/{slug}.md (new/update) | Solved a **problem with symptoms** — bug, perf issue, confusing behavior |
+| `architecture:` docs/architecture/{file}.md (update) | **Changes how a subsystem works** — new data flow, new component relationships |
+| `decisions:` append | **Isolated decision** that doesn't warrant a full doc |
+| `none` | Knowledge lives in the code — no symptoms, no architecture change |
 
 Ensure `docs/brainstorms/` directory exists before writing.
 
