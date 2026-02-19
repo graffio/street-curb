@@ -17,7 +17,7 @@ title: Exhaustive match missed in two-layer dispatch
 date: 2026-02-02
 category: runtime-errors
 module: quicken-web-app
-tags: [tagged-sum, action-dispatch, exhaustive-matching]
+tags: [ tagged-sum, action-dispatch, exhaustive-matching ]
 symptoms:
   - "Uncaught TypeError: Constructors given to match didn't include: ToggleAccountFilter"
 ---
@@ -25,10 +25,10 @@ symptoms:
 
 ## Category → Directory
 
-| Category | Directory |
-|----------|-----------|
-| architecture | `docs/solutions/architecture/` |
-| runtime-errors | `docs/solutions/runtime-errors/` |
-| test-failures | `docs/solutions/test-failures/` |
+| Category           | Directory                            |
+|--------------------|--------------------------------------|
+| architecture       | `docs/solutions/architecture/`       |
+| runtime-errors     | `docs/solutions/runtime-errors/`     |
+| test-failures      | `docs/solutions/test-failures/`      |
 | integration-issues | `docs/solutions/integration-issues/` |
-| workflow-issues | `docs/solutions/workflow-issues/` |
+| workflow-issues    | `docs/solutions/workflow-issues/`    |

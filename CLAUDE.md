@@ -5,7 +5,7 @@ Brevity > thoroughness. Short, correct answers beat comprehensive ones. Bullet p
 ## How we work
 
 See `.claude/README.md` for full protocol explanation. Key files:
-- `.claude/current-task.json` — Active task spec (follow exactly during implementation)
+- `docs/brainstorms/{name}.task.json` — Active task spec (follow exactly during implementation)
 - `.claude/style-cards/` — Read the relevant card BEFORE writing code (per `style_card` field)
 - `.claude/preferences.md` — Architectural preferences (judgment calls)
 - `.claude/tasks/` — Step-by-step templates for common work
@@ -25,8 +25,8 @@ See `.claude/README.md` for full protocol explanation. Key files:
 
 ## Workflow
 
-- **Plan:** `/workflows:plan` → produces plan in specifications/ → generates current-task.json
-- **Implement:** Follow current-task.json exactly. `[CHECKPOINT]` = stop and ask.
+- **Plan:** `/workflows:plan` → reads brainstorm → generates task file (`docs/brainstorms/{name}.task.json`)
+- **Implement:** Follow your active task file exactly. `[CHECKPOINT]` = stop and ask.
 - **Finish:** `/workflows:wrap-up` — commit quality, knowledge capture, cleanup
 - **Complexity-budget failure = CHECKPOINT** — stop, run complexity review, rethink approach. Never shuffle code to pass.
 - **Never add COMPLEXITY or COMPLEXITY-TODO comments** without asking Jeff first.
@@ -35,15 +35,15 @@ See `.claude/README.md` for full protocol explanation. Key files:
 
 ## Pattern Triggers
 
-When you see these signals, read the corresponding pattern file before proceeding.
+When you see these signals, apply the named pattern:
 
-| Signal | Read |
-|--------|------|
-| Collection needing iteration + lookup | `.claude/pattern-catalog/lookup-table.md` |
-| if/else chain on type field | `.claude/pattern-catalog/tagged-sum.md` |
-| Finite set of state changes | `.claude/pattern-catalog/action.md` |
-| Complex derived state from Redux | `.claude/pattern-catalog/selector-composition.md` |
-| Side effect logic | `.claude/pattern-catalog/action.md` |
+| Signal | Pattern |
+|--------|---------|
+| Collection needing iteration + lookup | LookupTable |
+| if/else chain on type field | TaggedSum with `.match()` |
+| Finite set of state changes | Action via `post(Action.X(...))` |
+| Complex derived state from Redux | Selector composition with memoization |
+| Side effect logic | Action via `post(Action.X(...))` |
 
 ## @graffio/functional
 
@@ -79,7 +79,7 @@ Address me as "Jeff". We're colleagues—no hierarchy.
 - Match surrounding code style, even if it differs from conventions
 - Never skip, evade, or disable pre-commit hooks
 - Never delete failing tests—raise the issue instead
-- Track work in current-task.json steps; never discard tasks without approval
+- Track work in task file steps; never discard tasks without approval
 - Fix bugs immediately when found
 - TDD: failing test → make it pass → refactor
 

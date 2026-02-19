@@ -18,26 +18,6 @@ severity: medium
 
 # Fixing Cohesion Group Leaks — Flat Module Export Pattern
 
-## Problem
-
-Two patterns leak internal cohesion group structure through the module boundary:
-
-**Pattern 1 — Direct rename:**
-```js
-const E = { openFile, reopenFile, loadStoredHandle }
-export { E as FileHandling }
-```
-
-**Pattern 2 — Object wrapping groups:**
-```js
-const RegisterPage = { P, T, E }
-export { RegisterPage }
-// Caller: const { T, E } = RegisterPage; T.toTableLayoutId(...)
-```
-
-Both expose P/T/E to consumers, coupling them to internal organization. If a function moves between groups
-(e.g., T → E because it gains a side effect), all callers break.
-
 ## Solution
 
 Mechanical recipe applied 5 times (register-page.js, file-handling.js, keymap-routing.js, storage.js,
@@ -104,3 +84,23 @@ If callers already used `Module.functionName(...)`, no changes needed.
   specifiers for direct renames, and checks property names on exported objects for group letters.
 - **No caller changes when export name is stable**: If the module already exported as `FileHandling` and
   callers used `FileHandling.openFile(...)`, the flat refactoring is invisible to consumers.
+
+## Problem
+
+Two patterns leak internal cohesion group structure through the module boundary:
+
+**Pattern 1 — Direct rename:**
+```js
+const E = { openFile, reopenFile, loadStoredHandle }
+export { E as FileHandling }
+```
+
+**Pattern 2 — Object wrapping groups:**
+```js
+const RegisterPage = { P, T, E }
+export { RegisterPage }
+// Caller: const { T, E } = RegisterPage; T.toTableLayoutId(...)
+```
+
+Both expose P/T/E to consumers, coupling them to internal organization. If a function moves between groups
+(e.g., T → E because it gains a side effect), all callers break.

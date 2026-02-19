@@ -13,27 +13,6 @@ superseded_by: test/helpers/integration-browser.js handles stale session cleanup
 
 # agent-browser smoke tests fail on repeated runs
 
-## Problem
-
-Running `yarn test:smoke:headed` works the first time but fails on subsequent runs with:
-
-```
-✗ Browser not launched. Call launch first.
-```
-
-Or, if a `close` command is attempted against the dead session:
-
-```
-⚠ Could not configure browser: Invalid response: EOF while parsing a value
-✗ Failed to connect: No such file or directory (os error 2)
-```
-
-## Root Cause
-
-agent-browser persists session state as `.pid` and `.sock` files in `~/.agent-browser/`. When HEADED mode left the browser open (intentionally skipping `close`), the next run found stale session files pointing to a dead process. The `open` command refused because the session appeared active.
-
-Calling `close` on a stale session also failed — it tried to communicate via the dead socket, leaving corrupted files that broke the subsequent `open`.
-
 ## Solution
 
 Two changes to `test/ui-smoke.integration-test.js`:
@@ -63,3 +42,24 @@ The same session also uncovered a broken symlink: `public/test-fixtures` pointed
 - Prefer file deletion over IPC commands when cleaning up potentially dead processes
 - Cleanup-on-start is also CI-safe — cleanup-on-exit fails in CI environments that reuse workspaces
 - Consider a regression test that deliberately plants stale session files to verify cleanup works
+
+## Problem
+
+Running `yarn test:smoke:headed` works the first time but fails on subsequent runs with:
+
+```
+✗ Browser not launched. Call launch first.
+```
+
+Or, if a `close` command is attempted against the dead session:
+
+```
+⚠ Could not configure browser: Invalid response: EOF while parsing a value
+✗ Failed to connect: No such file or directory (os error 2)
+```
+
+## Root Cause
+
+agent-browser persists session state as `.pid` and `.sock` files in `~/.agent-browser/`. When HEADED mode left the browser open (intentionally skipping `close`), the next run found stale session files pointing to a dead process. The `open` command refused because the session appeared active.
+
+Calling `close` on a stale session also failed — it tried to communicate via the dead socket, leaving corrupted files that broke the subsequent `open`.

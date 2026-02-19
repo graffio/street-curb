@@ -24,6 +24,30 @@ related:
 
 # memoizeReduxStatePerKey cache poisoning via ignored rest args
 
+## Solution
+
+Added lazy rest-arg disambiguation to `memoizeReduxStatePerKey`:
+
+```javascript
+const cached = cacheByKey.get(key)
+const { keyedValue: cachedKeyed, restStringified: cachedRest, value: cachedValue } = cached || {}
+const cheapHit = cached && cachedKeyed === keyedValue
+const restMatch = cheapHit && (rest.length > 0 ? JSON.stringify(rest) : '') === cachedRest
+if (restMatch) return cachedValue
+```
+
+Key performance decision: `JSON.stringify(rest)` only runs when `cachedKeyed === keyedValue` (the cheap reference check passes). This avoids expensive serialization on every selector call — rest args are only compared when the cheaper checks can't distinguish callers.
+
+## Additional fix: popover key isolation
+
+Discovered during investigation: global keyboard shortcuts (e.g. `s` → `search:open`, `g` → `filter:group-by`) fired inside open popovers because keydown events bubbled up to the window listener. Fixed by adding `e.stopPropagation()` on `Popover.Content`'s `onKeyDown` handler, with ActionRegistry routing for navigation keys within the popover.
+
+## Prevention
+
+- When a memoized selector accepts optional args beyond `(state, key)`, those args MUST participate in cache invalidation. The memoizer now handles this automatically.
+- When two components share a memoized selector instance with different arg signatures, the memoizer must distinguish their cache entries — not just by key, but by the full call signature.
+- Sentinel constants (like `CLOSED_POPOVER`) as return values make cache bugs harder to diagnose because `===` always passes.
+
 ## Problem
 
 GroupBy filter chip popover never opened. Clicking the trigger dispatched `SetFilterPopoverOpen` correctly and the reducer updated state, but `useSelector` returned a stale `CLOSED_POPOVER` constant — React never re-rendered.
@@ -48,27 +72,3 @@ GroupBy filter chip popover never opened. Clicking the trigger dispatched `SetFi
 6. GroupByFilterChip gets wrong result; `useSelector` sees same reference → no re-render
 
 The `CLOSED_POPOVER` sentinel being a shared constant reference made this particularly insidious — the `===` check in `useSelector` always passed, so the component never updated regardless of state changes.
-
-## Solution
-
-Added lazy rest-arg disambiguation to `memoizeReduxStatePerKey`:
-
-```javascript
-const cached = cacheByKey.get(key)
-const { keyedValue: cachedKeyed, restStringified: cachedRest, value: cachedValue } = cached || {}
-const cheapHit = cached && cachedKeyed === keyedValue
-const restMatch = cheapHit && (rest.length > 0 ? JSON.stringify(rest) : '') === cachedRest
-if (restMatch) return cachedValue
-```
-
-Key performance decision: `JSON.stringify(rest)` only runs when `cachedKeyed === keyedValue` (the cheap reference check passes). This avoids expensive serialization on every selector call — rest args are only compared when the cheaper checks can't distinguish callers.
-
-## Additional fix: popover key isolation
-
-Discovered during investigation: global keyboard shortcuts (e.g. `s` → `search:open`, `g` → `filter:group-by`) fired inside open popovers because keydown events bubbled up to the window listener. Fixed by adding `e.stopPropagation()` on `Popover.Content`'s `onKeyDown` handler, with ActionRegistry routing for navigation keys within the popover.
-
-## Prevention
-
-- When a memoized selector accepts optional args beyond `(state, key)`, those args MUST participate in cache invalidation. The memoizer now handles this automatically.
-- When two components share a memoized selector instance with different arg signatures, the memoizer must distinguish their cache entries — not just by key, but by the full call signature.
-- Sentinel constants (like `CLOSED_POPOVER`) as return values make cache bugs harder to diagnose because `===` always passes.

@@ -18,25 +18,7 @@ symptoms:
   - Style validator rejects useCallback/useRef in strict-react mode
 ---
 
-## Problem
-
-RegisterPageView.jsx had 26 hooks (7 useCallback, 4 useEffect, 3 useRef, 12 useSelector). The useCallbacks
-closed over Redux state, requiring useRef workarounds to avoid stale closures. The component was 149 lines
-of hook management with business logic scattered across closures.
-
-## Investigation
-
-Cataloged all 26 hooks and classified each:
-- 12 useSelector: **keep** (allowed by rule)
-- 7 useCallback: **eliminate** via dispatch-intent command functions
-- 3 useRef: **eliminate** via module-level ref object
-- 4 useEffect: **defer** (genuine lifecycle concerns needing infrastructure)
-
-## Root Cause
-
-The fundamental issue: React's closure model forces you to capture Redux state in callbacks, then the state
-goes stale, then you add useRef to work around stale closures, then you add useCallback to memoize, creating
-a cascade of hooks that exist only to manage other hooks.
+# Migrate React Hooks to Dispatch-Intent Pattern
 
 ## Solution
 
@@ -119,36 +101,6 @@ callbacks won't work — it must be an object with `.current`.
 `tableLayoutOrDefault` returns a default TableLayout when none exists in Redux, eliminating the
 `if (!tableLayout) return null` guard and the need for an init effect (for display purposes).
 
-## Gotchas
-
-### Style Validator: function-declaration-ordering
-
-If you define handler variables (`const searchNav = ...`) inside a component body, the validator requires
-all function declarations before any non-function statements. But handlers reference `ctx` (a non-function
-statement). **Fix:** inline the calls directly in JSX instead of extracting handler variables. With the ctx
-pattern, calls are short enough to stay on one line (under 120 chars).
-
-### Style Validator: react-redux-separation + COMPLEXITY
-
-The `--strict-react` pre-commit hook bans ALL useEffect in `.jsx` files. For lifecycle effects that can't
-be eliminated yet, add a file-level COMPLEXITY comment:
-```
-// COMPLEXITY: react-redux-separation — 4 useEffect lifecycle dispatches need infrastructure to eliminate
-```
-The `FS.withExemptions` wrapper in the validator reads this and skips the rule for the entire file.
-**Must get Jeff's approval before adding COMPLEXITY comments** (CLAUDE.md hard rule).
-
-### What CAN'T be a selector
-
-Effects with genuine lifecycle concerns (mount/unmount registration, state initialization) cannot become selectors:
-- `searchActionsEffect` — registers with ActionRegistry (mount/unmount lifecycle)
-- `initDateRange` — dispatches initial date range filter (one-time initialization)
-
-Previously this list included `SetPageTitle` and `ensureTableLayoutEffect`. Both turned out to be derived
-state, not side effects: `ensureTableLayoutEffect` → `tableLayoutOrDefault` selector, `SetPageTitle` →
-`activeViewPageTitle` selector (see `specifications/derived-page-title.md`). Lesson: if the "effect" just
-computes a value from existing state and stores it, it's a selector waiting to be discovered.
-
 ### Pattern 5: Push Updater Resolution to Reducer (2026-02-17)
 
 When the only reason a component reads `currentStore().getState()` is to resolve a TanStack Table updater
@@ -184,6 +136,36 @@ Similarly, boolean toggles (`SetShowDrawer(!S.showDrawer(currentStore().getState
 - **Push to reducer** when the handler's only state read is to resolve an updater or negate a boolean
 - **Keep currentStore()** when the handler needs state for branching, validation, or multi-step logic
 
+## Gotchas
+
+### Style Validator: function-declaration-ordering
+
+If you define handler variables (`const searchNav = ...`) inside a component body, the validator requires
+all function declarations before any non-function statements. But handlers reference `ctx` (a non-function
+statement). **Fix:** inline the calls directly in JSX instead of extracting handler variables. With the ctx
+pattern, calls are short enough to stay on one line (under 120 chars).
+
+### Style Validator: react-redux-separation + COMPLEXITY
+
+The `--strict-react` pre-commit hook bans ALL useEffect in `.jsx` files. For lifecycle effects that can't
+be eliminated yet, add a file-level COMPLEXITY comment:
+```
+// COMPLEXITY: react-redux-separation — 4 useEffect lifecycle dispatches need infrastructure to eliminate
+```
+The `FS.withExemptions` wrapper in the validator reads this and skips the rule for the entire file.
+**Must get Jeff's approval before adding COMPLEXITY comments** (CLAUDE.md hard rule).
+
+### What CAN'T be a selector
+
+Effects with genuine lifecycle concerns (mount/unmount registration, state initialization) cannot become selectors:
+- `searchActionsEffect` — registers with ActionRegistry (mount/unmount lifecycle)
+- `initDateRange` — dispatches initial date range filter (one-time initialization)
+
+Previously this list included `SetPageTitle` and `ensureTableLayoutEffect`. Both turned out to be derived
+state, not side effects: `ensureTableLayoutEffect` → `tableLayoutOrDefault` selector, `SetPageTitle` →
+`activeViewPageTitle` selector (see `specifications/derived-page-title.md`). Lesson: if the "effect" just
+computes a value from existing state and stores it, it's a selector waiting to be discovered.
+
 ## Prevention
 
 - Read `.claude/style-cards/react-component.md` before writing React components
@@ -191,3 +173,23 @@ Similarly, boolean toggles (`SetShowDrawer(!S.showDrawer(currentStore().getState
 - Style validator `--strict-react` catches violations at commit time
 - When tempted to add useCallback: ask "can this read state from currentStore() instead?"
 - When tempted to read state just to resolve an updater: push resolution to the reducer
+
+## Problem
+
+RegisterPageView.jsx had 26 hooks (7 useCallback, 4 useEffect, 3 useRef, 12 useSelector). The useCallbacks
+closed over Redux state, requiring useRef workarounds to avoid stale closures. The component was 149 lines
+of hook management with business logic scattered across closures.
+
+## Investigation
+
+Cataloged all 26 hooks and classified each:
+- 12 useSelector: **keep** (allowed by rule)
+- 7 useCallback: **eliminate** via dispatch-intent command functions
+- 3 useRef: **eliminate** via module-level ref object
+- 4 useEffect: **defer** (genuine lifecycle concerns needing infrastructure)
+
+## Root Cause
+
+The fundamental issue: React's closure model forces you to capture Redux state in callbacks, then the state
+goes stale, then you add useRef to work around stale closures, then you add useCallback to memoize, creating
+a cascade of hooks that exist only to manage other hooks.

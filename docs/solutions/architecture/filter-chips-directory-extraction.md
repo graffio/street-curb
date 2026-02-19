@@ -18,10 +18,6 @@ severity: medium
 
 # FilterChips Directory Extraction — Validator Lessons
 
-## Problem
-
-Extracting an 813-line monolithic `FilterChips.jsx` into a `filter-chips/` directory (one file per chip) caused multiple validator failures that weren't present in the original file.
-
 ## Root Causes
 
 ### 1. COMPLEXITY-TODO parser is line-by-line
@@ -62,3 +58,7 @@ The rule scans each block top-to-bottom. Once it encounters any non-function sta
 - When splitting files, run `node modules/cli-style-validator/src/cli.js <file>` on each new file before attempting commit
 - COMPLEXITY-TODO comments must always be single-line
 - When extracting components with named handlers, prefer inlining one-line handlers in JSX props to avoid function-declaration-ordering issues
+
+## Problem
+
+Extracting an 813-line monolithic `FilterChips.jsx` into a `filter-chips/` directory (one file per chip) caused multiple validator failures that weren't present in the original file.

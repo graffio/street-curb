@@ -18,25 +18,6 @@ severity: medium
 
 # Validator Self-Application Causes Cascading Fixes
 
-## Problem
-
-Adding a new rule to the style validator (export-structure) triggered a cascade: the pre-commit hook runs the
-validator on all staged files, including the validator's own source. The new rule caught violations in:
-
-1. The validator's own export: `ExportStructure = { checkExportStructure }` (single-property object)
-2. The validator's API file: `Api = { checkFile }` (single-property object)
-3. JSX files staged alongside: `TransactionRegisterPage` flagged as should be `transactionRegisterPage`
-4. `hydration.js` staged alongside: 3 named exports
-
-Each fix introduced new issues — renaming `api.js` to `check-file.js`, reordering cohesion groups, adding JSX
-exemptions — across 4 commit attempts before the hook passed.
-
-## Root Cause
-
-The validator has no "bootstrap" exemption. When the pre-commit hook runs, it validates every staged file with
-the current (just-modified) rules. A rule that changes what's valid can invalidate the validator itself and any
-co-staged files that were previously compliant.
-
 ## Solution
 
 **Accept the cascade and fix forward.** The validator eating its own dog food is a feature, not a bug. The fixes
@@ -76,3 +57,22 @@ gives `checkX` exports that satisfy both rules.
 **Abbreviated shared module exports:** When internal code uses short namespace names (AS, PS, TS, FS) but
 export-structure requires file-matching names, use `export { AS as Aggregators }` in the module and
 `import { Aggregators as AS }` at call sites. Export rule satisfied, short names preserved.
+
+## Problem
+
+Adding a new rule to the style validator (export-structure) triggered a cascade: the pre-commit hook runs the
+validator on all staged files, including the validator's own source. The new rule caught violations in:
+
+1. The validator's own export: `ExportStructure = { checkExportStructure }` (single-property object)
+2. The validator's API file: `Api = { checkFile }` (single-property object)
+3. JSX files staged alongside: `TransactionRegisterPage` flagged as should be `transactionRegisterPage`
+4. `hydration.js` staged alongside: 3 named exports
+
+Each fix introduced new issues — renaming `api.js` to `check-file.js`, reordering cohesion groups, adding JSX
+exemptions — across 4 commit attempts before the hook passed.
+
+## Root Cause
+
+The validator has no "bootstrap" exemption. When the pre-commit hook runs, it validates every staged file with
+the current (just-modified) rules. A rule that changes what's valid can invalidate the validator itself and any
+co-staged files that were previously compliant.

@@ -22,8 +22,9 @@ test-results
 .claude/developer-output.md
 .claude/agent-context/
 
-# Specifications are local working documents
-specifications/
+# Task files are ephemeral execution state (co-located with brainstorms)
+*.task.json
+.claude/current-task.json
 
 # don't save files generated in testing type-generation
 modules/cli-type-generator/test/generated/*

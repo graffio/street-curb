@@ -1,7 +1,7 @@
 ---
 name: workflows:wrap-up
 description: Finish a feature — commit quality, knowledge capture, architecture decisions, cleanup
-argument-hint: "[optional: brief context]"
+argument-hint: "[brainstorm file path or brief context]"
 ---
 
 # Wrap Up
@@ -10,12 +10,19 @@ Run after completing a feature or fixing a non-trivial bug. Handles everything t
 
 ## Steps
 
-### 1. Integration Test Verification
+### 1. Identify Task File
+
+Find the active task file from the argument or by scanning `docs/brainstorms/*.task.json`.
+
+If multiple task files exist, ask which one to wrap up.
+
+### 2. Integration Test Verification
 
 If the work modified `.jsx` files in `quicken-web-app/src/`, run affected integration tests before reviewing commits.
 
 **Discovery order:**
-1. If `current-task.json` has an `integration_tests` array, run those files.
+
+1. If the task file has an `integration_tests` array, run those files.
 2. Otherwise, grep ABOUTME comments for the affected component names:
    ```bash
    cd modules/quicken-web-app
@@ -27,9 +34,9 @@ cd modules/quicken-web-app
 yarn tap:file test/{feature}.integration-test.js
 ```
 
-**If no `.jsx` files were modified:** Skip to step 2.
+**If no `.jsx` files were modified:** Skip to step 3.
 
-### 2. Commit Quality Check
+### 3. Commit Quality Check
 
 Review commits since branch diverged from main:
 
@@ -40,51 +47,56 @@ git log main..HEAD --oneline
 Check each commit message for Problem/Solution/Impact format (see `.claude/tasks/commit-changes.md`).
 
 **If commits lack this format or are disorganized:**
+
 - Present the issue to the user
 - Offer to reorganize using `.claude/tasks/reorganize-commits.md`
 - **[CHECKPOINT]** — get approval before any history rewriting
 
-**If commits look good:** Move to step 3.
+**If commits look good:** Move to step 4.
 
-### 3. Knowledge Capture
+### 4. Knowledge Absorption
 
-Determine if a non-trivial problem was solved during this work. Trivial = obvious fix, typo, small config change.
+Read the brainstorm file linked from the task file's `brainstorm` field.
 
-**If non-trivial:**
+**4a. Execute declared Knowledge Destination**
 
-1. Search `docs/solutions/` for existing solutions in the same domain:
-   ```bash
-   ls docs/solutions/*/
-   ```
-2. If near-duplicate found: ask "Similar to existing: [path]. Update existing doc, or create new?"
-3. If no duplicate: generate a solution doc using the `compound-docs` skill format:
-   - File: `docs/solutions/{category}/{slug}.md`
-   - YAML frontmatter with tags, category, module, symptoms
-   - Sections: Problem, Investigation, Root Cause, Solution, Prevention
+The brainstorm's `Knowledge Destination` section declares where content goes. Follow it mechanically:
 
-**If trivial:** Skip. Not every change needs a solution doc.
+| Destination                   | Action                                                                                                                                           |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| `solution:` path (new)        | Create solution doc with YAML frontmatter. Sections in this order: Solution, Prevention, Key Decisions, Problem, Root Cause. Target 50-80 lines. |
+| `solution:` path (update)     | Update the specified solution doc with new content from the brainstorm.                                                                          |
+| `architecture:` path (update) | Update the specified architecture doc to reflect new system state.                                                                               |
+| `decisions:` append           | Append a 3-line entry (Context/Decision/Why) to `docs/decisions.md`.                                                                             |
+| `none`                        | Skip — knowledge lives in the code.                                                                                                              |
 
-### 4. Architecture & Decisions
+**4b. Check for implementation gotchas**
 
-**If architectural decisions were made during this work:**
-- Significant patterns → create doc in `docs/architecture/`
-- Quick decisions → append to project-local `docs/decisions.md`:
-  ```markdown
-  ### YYYY-MM-DD: Title
-  Context/Decision/Why (1 sentence each)
-  ```
+Review the implementation for gotchas or patterns not anticipated in the brainstorm. If found, ask:
+"Implementation revealed {gotcha}. Add to {destination doc}, or skip?"
 
-**If no architectural decisions:** Skip.
+**4c. Architecture decisions**
+
+If architectural decisions were made during implementation that aren't covered by the Knowledge Destination:
+
+- Quick decisions → append to `docs/decisions.md`
+- If a brainstorm had `none` as destination but significant patterns emerged, ask about creating a solution doc.
 
 ### 5. Artifact Cleanup
 
-- Delete `.claude/current-task.json`
-- **Spec file:** Read `specifications/{spec-used-for-this-work}.md`. If every section was implemented and no open questions remain, propose deletion. If it contains unimplemented ideas or future work, keep it.
-- **Brainstorm files:** Only check files explicitly linked from the spec or current-task.json. Read each one before proposing anything. If the file has open questions or unresolved items, say so when asking — Jeff decides whether to keep or delete.
+1. Delete the task file (`docs/brainstorms/{name}.task.json`)
+2. **Brainstorm file:** Read it. If all sections were implemented and Knowledge Destination was executed, propose
+   deletion. If it has unimplemented scope items or is referenced by other brainstorms, say so — Jeff decides.
+3. Always ask before deleting brainstorm files.
+
+### 6. Commit Wrap-Up Changes
+
+`git add` and `git commit` any files created, modified, or deleted during wrap-up.
 
 ## Rules
 
 - Don't skip the commit quality check — it's how we maintain a readable history
-- Knowledge capture is judgment — not every fix deserves a doc
-- Always ask before deleting spec or brainstorm files
-- After all steps complete, `git add` and `git commit` any files created, modified, or deleted during wrap-up
+- Knowledge absorption follows the brainstorm's declared destination — not ad-hoc judgment
+- If the brainstorm has no Knowledge Destination section, treat it as `none` but flag it: "This brainstorm predates the
+  Knowledge Destination convention. Any knowledge worth capturing?"
+- Always ask before deleting brainstorm files

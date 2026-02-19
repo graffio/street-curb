@@ -19,19 +19,6 @@ severity: high
 
 # Keyboard System: Command Pattern Migration
 
-## Problem
-
-The old keymap system coupled actions and bindings: each component built `Keymap` objects containing both what to do and which keys trigger it, then dispatched to Redux. This caused:
-
-1. **Performance** — DataTable re-registered its keymap on every keystroke (3 Redux dispatches)
-2. **Coupling** — Components referenced specific key names (`ArrowDown`, `Escape`)
-3. **Complexity** — Priority numbers (0, 10, 20) for conflict resolution; `blocking` flags
-4. **Prop threading** — 7 keymap props through every DataTable consumer
-
-## Root Cause
-
-No separation between actions (what to do) and bindings (which key). Components were responsible for both, leading to tangled concerns and unnecessary Redux churn.
-
 ## Solution
 
 Command Pattern: separate actions from bindings.
@@ -72,6 +59,19 @@ Command Pattern: separate actions from bindings.
 **Signal:** If you see a component referencing specific key names, importing KeymapModule for binding purposes, or creating keymap objects — stop. Use ActionRegistry.register() for actions and add bindings to DEFAULT_BINDINGS.
 
 **Style card enforces:** react-component.md prohibits keybinding knowledge in components.
+
+## Problem
+
+The old keymap system coupled actions and bindings: each component built `Keymap` objects containing both what to do and which keys trigger it, then dispatched to Redux. This caused:
+
+1. **Performance** — DataTable re-registered its keymap on every keystroke (3 Redux dispatches)
+2. **Coupling** — Components referenced specific key names (`ArrowDown`, `Escape`)
+3. **Complexity** — Priority numbers (0, 10, 20) for conflict resolution; `blocking` flags
+4. **Prop threading** — 7 keymap props through every DataTable consumer
+
+## Root Cause
+
+No separation between actions (what to do) and bindings (which key). Components were responsible for both, leading to tangled concerns and unnecessary Redux churn.
 
 ## Related
 

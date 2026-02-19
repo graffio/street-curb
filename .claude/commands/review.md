@@ -28,8 +28,8 @@ git diff --cached --name-only --diff-filter=ACM | grep -E '\.(jsx?)$' | grep -v 
    Report any violations.
 
 2. **Spawn two review agents in parallel** using Task tool:
-   - `jeff-js-reviewer` — judgment calls (naming, layer placement, pattern choice, fail-fast)
-   - `code-simplicity-reviewer` — unnecessary abstractions, pointless indirection
+    - `jeff-js-reviewer` — judgment calls (naming, layer placement, pattern choice, fail-fast)
+    - `code-simplicity-reviewer` — unnecessary abstractions, pointless indirection
 
 3. **Combine results** into a single report:
 
@@ -37,15 +37,19 @@ git diff --cached --name-only --diff-filter=ACM | grep -E '\.(jsx?)$' | grep -v 
 ## Review: <target>
 
 ### Validator
+
 - <violations or "Clean">
 
 ### Style Review (jeff-js-reviewer)
+
 - <blocking / non-blocking findings>
 
 ### Simplicity Review (code-simplicity-reviewer)
+
 - <findings>
 
 ### Summary
+
 X blocking issues, Y non-blocking. Recommendation: APPROVE / REQUEST CHANGES
 ```
 

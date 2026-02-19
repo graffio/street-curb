@@ -8,11 +8,13 @@ Selectors handle **Redux mechanics and simple derivation**. Complex business log
 - Simple transformations (map, filter, lookup) are fine here
 - Complex domain logic (scoring, matching, tree-building) → delegate to a business module or type.js file
 - Cross-type transformations → use `Type.from{InputType}()` methods, not inline logic
-- When simplifying a selector, consider: does this logic belong as a method on the Tagged type? If so, add it to the type's `.type.js` file (never the generated `.js` file)
+- When simplifying a selector, consider: does this logic belong as a method on the Tagged type? If so, add it to the
+  type's `.type.js` file (never the generated `.js` file)
 
 ## Memoization
 
-Use `memoizeReduxState` (single key) or `memoizeReduxStatePerKey` (keyed by viewId/accountId) from the store module. These track which Redux state slices a selector depends on and only recompute when those slices change.
+Use `memoizeReduxState` (single key) or `memoizeReduxStatePerKey` (keyed by viewId/accountId) from the store module.
+These track which Redux state slices a selector depends on and only recompute when those slices change.
 
 ```javascript
 const _filtered = (state, viewId) => {

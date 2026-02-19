@@ -1,3 +1,10 @@
+---
+summary: "Command Pattern keyboard dispatch with ActionRegistry, LIFO conflict resolution, and separated key bindings"
+keywords: [ "keyboard", "keymap", "ActionRegistry", "keybindings", "LIFO", "command-pattern", "ref-callbacks" ]
+module: quicken-web-app
+last_updated: "2026-02-14"
+---
+
 # Keyboard System
 
 Command Pattern keyboard dispatch with separated actions and key bindings.
@@ -5,11 +12,13 @@ Command Pattern keyboard dispatch with separated actions and key bindings.
 ## The Problem
 
 Users want to:
+
 - Navigate and act without touching the mouse
 - Use vim-style keys (j/k) alongside arrow keys
 - See what keys are available (press `?` to show shortcuts)
 
-The UI has overlapping contexts (register, popover, date input) where the same key means different things. LIFO registration (last registered wins) handles modal stacking.
+The UI has overlapping contexts (register, popover, date input) where the same key means different things. LIFO
+registration (last registered wins) handles modal stacking.
 
 ## Architecture
 
@@ -24,12 +33,12 @@ quicken-web-app         - keymap-routing (dispatch), DEFAULT_BINDINGS, wiring
 
 ### Separation of Concerns
 
-| Concern | Location | Example |
-|---------|----------|---------|
-| **Actions** (what to do) | Components via `ActionRegistry.register()` | `{ id: 'navigate:down', execute: moveDown }` |
-| **Bindings** (which key) | `DEFAULT_BINDINGS` in keymap-config.js | `{ ArrowDown: 'navigate:down', j: 'navigate:down' }` |
-| **Dispatch** (routing) | `KeymapRouting.handleKeydown` | key → binding → resolve → execute |
-| **Display** (shortcuts drawer) | `KeymapDrawer` via `collectAvailableIntents` | Reverse bindings + registered actions |
+| Concern                        | Location                                     | Example                                              |
+|--------------------------------|----------------------------------------------|------------------------------------------------------|
+| **Actions** (what to do)       | Components via `ActionRegistry.register()`   | `{ id: 'navigate:down', execute: moveDown }`         |
+| **Bindings** (which key)       | `DEFAULT_BINDINGS` in keymap-config.js       | `{ ArrowDown: 'navigate:down', j: 'navigate:down' }` |
+| **Dispatch** (routing)         | `KeymapRouting.handleKeydown`                | key → binding → resolve → execute                    |
+| **Display** (shortcuts drawer) | `KeymapDrawer` via `collectAvailableIntents` | Reverse bindings + registered actions                |
 
 Components never reference specific key names. Keymap-routing never references specific components.
 
@@ -47,7 +56,11 @@ const registerActions = element => {
     cleanup = null
     if (element)
         cleanup = ActionRegistry.register(chipState.viewId, [
-            { id: 'navigate:down', description: 'Move down', execute: () => post(Action.MoveHighlight(chipState.viewId, 1)) },
+            {
+                id: 'navigate:down',
+                description: 'Move down',
+                execute: () => post(Action.MoveHighlight(chipState.viewId, 1))
+            },
         ])
 }
 
@@ -71,12 +84,12 @@ Single source of truth for all key-to-action mappings:
 
 ```javascript
 const DEFAULT_BINDINGS = {
-    ArrowDown: 'navigate:down',    j: 'navigate:down',
-    ArrowUp:   'navigate:up',      k: 'navigate:up',
-    Escape:    'dismiss',          '?': 'toggle-shortcuts',
-    Enter:     'select',           Tab: 'navigate:next-apply',
-    a: 'filter:accounts',         c: 'filter:categories',
-    d: 'filter:date',             f: 'filter:search',
+    ArrowDown: 'navigate:down', j: 'navigate:down',
+    ArrowUp: 'navigate:up', k: 'navigate:up',
+    Escape: 'dismiss', '?': 'toggle-shortcuts',
+    Enter: 'select', Tab: 'navigate:next-apply',
+    a: 'filter:accounts', c: 'filter:categories',
+    d: 'filter:date', f: 'filter:search',
     // ... etc
 }
 ```
@@ -108,11 +121,11 @@ No priority numbers needed — mount/unmount order handles everything.
 
 ## Key Normalization
 
-| Event | Normalized |
-|-------|-----------|
-| `key: 'j'` | `'j'` |
-| `key: 'ArrowDown'` | `'ArrowDown'` |
-| `key: 's', metaKey: true` | `'cmd+s'` |
+| Event                                     | Normalized      |
+|-------------------------------------------|-----------------|
+| `key: 'j'`                                | `'j'`           |
+| `key: 'ArrowDown'`                        | `'ArrowDown'`   |
+| `key: 's', metaKey: true`                 | `'cmd+s'`       |
 | `key: 'S', shiftKey: true, metaKey: true` | `'cmd+shift+s'` |
 
 Modifier order: `alt`, `cmd`, `ctrl`, `shift` (alphabetical).
@@ -130,20 +143,29 @@ Data derived from `ActionRegistry.collectForContext()` + reverse `DEFAULT_BINDIN
 ## Component Integration Patterns
 
 ### DataTable (navigation actions)
-Registers `navigate:down`, `navigate:up`, `dismiss` via ref callback on the outer Flex element. Module-level `tableNav` object holds navigation state (highlightedId, focusableIds, rows). Execute functions read from `tableNav` at call time — navigation index computation stays in the component.
+
+Registers `navigate:down`, `navigate:up`, `dismiss` via ref callback on the outer Flex element. Module-level `tableNav`
+object holds navigation state (highlightedId, focusableIds, rows). Execute functions read from `tableNav` at call time —
+navigation index computation stays in the component.
 
 ### Filter chips (per-chip registration)
+
 Each chip registers its own `filter:*` action via ref callback. Replaces centralized FilterChipRow registration.
 
 ### SelectableListPopover (pure presentation)
-Renders items, checkboxes, highlights. Does not register actions — the consuming chip handles registration. LIFO stacking still works: chip's popover-specific actions shadow DataTable's navigation.
+
+Renders items, checkboxes, highlights. Does not register actions — the consuming chip handles registration. LIFO
+stacking still works: chip's popover-specific actions shadow DataTable's navigation.
 
 ### KeyboardDateInput (display-only)
-Registers date actions with no-op execute. Local `handleKeyDown` handles actual keys (global dispatch skips focused inputs).
+
+Registers date actions with no-op execute. Local `handleKeyDown` handles actual keys (global dispatch skips focused
+inputs).
 
 ## Future: User-Configurable Bindings
 
 The Command Pattern separation enables:
+
 - Store user overrides in IndexedDB
 - Merge with `DEFAULT_BINDINGS` at resolution time
 - UI for rebinding keys

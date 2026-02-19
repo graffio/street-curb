@@ -1,6 +1,7 @@
 ---
 summary: 'HTTP-based event sourcing with immutable audit trail for SOC2-compliant multi-tenant curb data management'
 keywords: ['event-sourcing', 'http', 'transactions', 'idempotency', 'soc2', 'audit-trail', 'multi-tenant']
+module: curb-map
 last_updated: '2025-01-15'
 ---
 

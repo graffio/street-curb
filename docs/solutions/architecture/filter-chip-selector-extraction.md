@@ -27,21 +27,6 @@ related:
 
 # Filter Chip Selector Extraction and Polish
 
-## Problem
-
-FilterChipRow was doing significant computation inline:
-- Computing `isActive` flags for each chip type
-- Building detail arrays (category names, account names, security symbols)
-- Truncating lists with "+N more" logic
-- Calculating filter counts and `isFiltering` state
-
-This violated the React/Redux separation principle: components should be pure wiring between selectors and actions.
-
-Additional issues:
-- `FilterChipPopover` name was too specific for a general-purpose component
-- Focus rings appeared on highlighted rows (visual noise)
-- Popover positioning could hide the chip being filtered
-
 ## Solution
 
 ### 1. Extracted Per-Chip Selectors
@@ -138,6 +123,21 @@ Common issues:
 - Function ordering: Define P/T/F/V/A/E groups before functions that use them
 - Destructuring: Collapse to one line if under 120 chars
 - Chain extraction: Extract `state.x` to variable if accessed 3+ times
+
+## Problem
+
+FilterChipRow was doing significant computation inline:
+- Computing `isActive` flags for each chip type
+- Building detail arrays (category names, account names, security symbols)
+- Truncating lists with "+N more" logic
+- Calculating filter counts and `isFiltering` state
+
+This violated the React/Redux separation principle: components should be pure wiring between selectors and actions.
+
+Additional issues:
+- `FilterChipPopover` name was too specific for a general-purpose component
+- Focus rings appeared on highlighted rows (visual noise)
+- Popover positioning could hide the chip being filtered
 
 ## Impact
 

@@ -10,6 +10,31 @@ symptoms:
 
 # Search Must Match Display Text, Not Raw Data
 
+## Solution
+
+**Principle: search checks what the user sees, not what the database stores.**
+
+```js
+// Before: checks raw data
+Transaction.matchesAnyText(query, ['payee', 'memo', ...], ...)
+
+// After: checks display values
+matches(payee || 'Unknown Payee')
+matches(Transaction.ACTION_LABELS[investmentAction] || '')
+```
+
+Key changes:
+- `matchesAllVisibleFields` checks display values with fallbacks
+- ACTION_LABELS moved from CellRenderers (presentation) to Transaction type (domain) —
+  single source of truth
+- Module-level `_prevSearchQuery` resets match index on query change
+
+## Prevention
+
+When adding a cell renderer that transforms raw data into display text, check that
+`matchesAllVisibleFields` also uses the same transform. The two must stay in sync:
+what the cell shows = what search matches.
+
 ## Problem
 
 Cell renderers transform raw data into display text (e.g., null payee → "Unknown Payee",
@@ -36,28 +61,3 @@ Three symptoms led to the root cause:
 `matchesAllVisibleFields` checked raw transaction fields instead of the display values that
 cell renderers show to users. Any transform between raw data and display text created a
 search blind spot.
-
-## Solution
-
-**Principle: search checks what the user sees, not what the database stores.**
-
-```js
-// Before: checks raw data
-Transaction.matchesAnyText(query, ['payee', 'memo', ...], ...)
-
-// After: checks display values
-matches(payee || 'Unknown Payee')
-matches(Transaction.ACTION_LABELS[investmentAction] || '')
-```
-
-Key changes:
-- `matchesAllVisibleFields` checks display values with fallbacks
-- ACTION_LABELS moved from CellRenderers (presentation) to Transaction type (domain) —
-  single source of truth
-- Module-level `_prevSearchQuery` resets match index on query change
-
-## Prevention
-
-When adding a cell renderer that transforms raw data into display text, check that
-`matchesAllVisibleFields` also uses the same transform. The two must stay in sync:
-what the cell shows = what search matches.
