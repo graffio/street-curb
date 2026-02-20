@@ -5,14 +5,11 @@ import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 6
-
-// Union of all recognized verb prefixes across all cohesion groups
-const VERB_PREFIXES =
-    'is|has|should|can|to|parse|format|create|make|build' +
-    '|check|validate|collect|count|gather|find|process|persist|handle|dispatch|emit|send|query|register' +
-    '|set|reset|toggle|post|hydrate|memoize'
-const RECOGNIZED_PREFIX = new RegExp(`^(${VERB_PREFIXES})([A-Z]|$)`)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if name starts with a recognized verb prefix
@@ -20,7 +17,11 @@ const P = {
     hasRecognizedPrefix: name => RECOGNIZED_PREFIX.test(name),
 }
 
-const violation = FS.createViolation('function-naming', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a function-naming violation
@@ -34,6 +35,12 @@ const F = {
         ),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Validate that all module-level function names use recognized verb prefixes
     // @sig check :: (AST?, String, String) -> [Violation]
@@ -46,6 +53,29 @@ const V = {
             .map(({ name, line }) => F.createViolation(line, name))
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 6
+
+// Union of all recognized verb prefixes across all cohesion groups
+const VERB_PREFIXES =
+    'is|has|should|can|to|parse|format|create|make|build' +
+    '|check|validate|collect|count|gather|find|process|persist|handle|dispatch|emit|send|query|register' +
+    '|set|reset|toggle|post|hydrate|memoize|load|open'
+const RECOGNIZED_PREFIX = new RegExp(`^(${VERB_PREFIXES})([A-Z]|$)`)
+
+const violation = FS.createViolation('function-naming', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run function-naming rule with COMPLEXITY exemption support
 // @sig checkFunctionNaming :: (AST?, String, String) -> [Violation]

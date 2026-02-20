@@ -6,7 +6,11 @@ import { IndexedDbStorage } from '../data-sources/indexed-db-storage.js'
 import { StoredFileHandle } from '../data-sources/stored-file-handle.js'
 import { handleLoadFile } from './handle-load-file.js'
 
-const TEST_FILE_PARAM = 'testFile'
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Sets stored handle and shows reopen banner if handle exists
@@ -28,6 +32,20 @@ const E = {
         await handleLoadFile(dispatch, file)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const TEST_FILE_PARAM = 'testFile'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Reads stored file handle from IndexedDB, loads test fixture if URL param present (fire-and-forget)
 // @sig handleInitializeSystem :: (Action -> void) -> void

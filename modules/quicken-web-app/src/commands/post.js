@@ -1,8 +1,6 @@
 // ABOUTME: Command execution layer for domain Actions
 // ABOUTME: Dispatches Tagged actions to Redux as plain objects
 // ABOUTME: Handles IndexedDB persistence for table layouts (debounced) and tab layout (immediate + debounced)
-// COMPLEXITY: export-structure — post is a function, not a namespace; lowercase matches usage pattern
-
 import { debounce } from '@graffio/functional'
 import { TransactionColumns } from '../columns/index.js'
 import { currentStore, Selectors as S } from '../store/index.js'
@@ -156,6 +154,12 @@ const E = {
 E.debouncedPersistTableLayouts = debounce(500, E.persistTableLayouts)
 E.debouncedPersistTabLayout = debounce(500, E.persistTabLayout)
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Dispatches an Action to Redux and handles persistence side effects
 // @sig post :: Action -> void
 const post = action => {
@@ -206,11 +210,5 @@ const post = action => {
         ReopenFile       : () => handleReopenFile(E.dispatch),
     })
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 export { post }

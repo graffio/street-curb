@@ -131,15 +131,15 @@ t.test('Given sections in wrong order', t => {
         t.end()
     })
 
-    t.test('When P comes after T', t => {
+    t.test('When Predicates comes after Transformers', t => {
         const code = [
             '// ABOUTME: test file',
             '// ABOUTME: test file line 2',
             '',
-            section('T'),
+            section('Transformers'),
             'const T = { toFoo: x => x }',
             '',
-            section('P'),
+            section('Predicates'),
             'const P = { isFoo: x => !!x }',
             '',
             section('Exports'),
@@ -219,7 +219,7 @@ t.test('Given a file with a cohesion group but no section separator for it', t =
         t.end()
     })
 
-    t.test('When const F = { ... } exists without an F section', t => {
+    t.test('When const F = { ... } exists without a Factories section', t => {
         const code = [
             '// ABOUTME: test file',
             '// ABOUTME: test file line 2',
@@ -233,17 +233,17 @@ t.test('Given a file with a cohesion group but no section separator for it', t =
         const ast = parseCode(code)
         const violations = checkSectionSeparators(ast, code, 'test-module.js')
 
-        const presenceViolation = violations.find(v => v.message.includes('Functions'))
-        t.ok(presenceViolation, 'Then a presence violation mentioning Functions should be detected')
+        const presenceViolation = violations.find(v => v.message.includes('Factories'))
+        t.ok(presenceViolation, 'Then a presence violation mentioning Factories should be detected')
         t.end()
     })
 
-    t.test('When const P = { ... } exists WITH a P section', t => {
+    t.test('When const P = { ... } exists WITH a Predicates section', t => {
         const code = [
             '// ABOUTME: test file',
             '// ABOUTME: test file line 2',
             '',
-            section('P'),
+            section('Predicates'),
             'const P = { isFoo: x => !!x }',
             '',
             section('Exports'),
@@ -414,18 +414,18 @@ t.test('Given a file with only an Exports section and no other declaration kinds
 })
 
 t.test('Given a file with all cohesion sections in correct order', t => {
-    t.test('When P, T, F, Constants, and Exports are in canonical order', t => {
+    t.test('When Predicates, Transformers, Factories, Constants, and Exports are in canonical order', t => {
         const code = [
             '// ABOUTME: test file',
             '// ABOUTME: test file line 2',
             '',
-            section('P'),
+            section('Predicates'),
             'const P = { isFoo: x => !!x }',
             '',
-            section('T'),
+            section('Transformers'),
             'const T = { toFoo: x => x }',
             '',
-            section('F'),
+            section('Factories'),
             'const F = { createFoo: () => ({}) }',
             '',
             section('Constants'),

@@ -6,7 +6,7 @@ import { Predicates as PS } from '../shared/predicates.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// P
+// Predicates
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -63,15 +63,11 @@ const P = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// T
+// Transformers
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
-    // Resolve short cohesion group name to full name (P→Predicates, E→Effects, etc.)
-    // @sig toFullName :: String -> String
-    toFullName: name => ALIASES[name] ?? name,
-
     // Extract section name from a comment line
     // @sig toSectionName :: String -> String
     toSectionName: line =>
@@ -80,9 +76,9 @@ const T = {
             .replace(/^\/\/\s*/, '')
             .trim(),
 
-    // Convert a separator block to its canonical index — normalizes short names first
+    // Convert a separator block to its canonical index
     // @sig toCanonicalIndex :: { name } -> Number
-    toCanonicalIndex: block => CANONICAL_ORDER.indexOf(T.toFullName(block.name)),
+    toCanonicalIndex: block => CANONICAL_ORDER.indexOf(block.name),
 
     // Extract the cohesion group letter from a declaration line (const X = { → X)
     // @sig toCohesionLetter :: String -> String
@@ -98,7 +94,7 @@ const T = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// F
+// Factories
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -137,7 +133,7 @@ const F = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// V
+// Validators
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -150,7 +146,7 @@ const V = {
     // Check that all required sections exist — Exports always, plus sections for detected declaration kinds
     // @sig checkRequiredSections :: ([Block], [Violation], Set<String>) -> Void
     checkRequiredSections: (blocks, violations, requiredSections) => {
-        const presentNames = new Set(blocks.filter(b => b.valid).map(b => T.toFullName(b.name)))
+        const presentNames = new Set(blocks.filter(b => b.valid).map(b => b.name))
         const missing = [...requiredSections].filter(name => !presentNames.has(name))
         missing.forEach(name => violations.push(F.createMissingSectionViolation(name)))
     },
@@ -197,7 +193,7 @@ const V = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// A
+// Aggregators
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -237,7 +233,9 @@ const A = {
         const required = new Set(['Exports'])
         const isJsx = filePath.endsWith('.jsx')
 
-        lines.filter(isCohesionGroupDeclaration).forEach(line => required.add(ALIASES[T.toCohesionLetter(line)]))
+        lines
+            .filter(isCohesionGroupDeclaration)
+            .forEach(line => required.add(COHESION_GROUPS[T.toCohesionLetter(line)]))
         if (lines.some(isUpperCaseConstant)) required.add('Constants')
         if (isJsx && P.hasPreExportComponents(lines)) required.add('Components')
 
@@ -256,19 +254,18 @@ const PRIORITY = 0 // Structural — fix first
 // Canonical section order (skip any that are absent) — accepts both short and full cohesion group names
 // prettier-ignore
 const CANONICAL_ORDER = [
-    'Predicates', 'Transformers', 'Functions', 'Validators', 'Aggregators', 'Effects',
+    'Predicates', 'Transformers', 'Factories', 'Validators', 'Aggregators', 'Effects',
     'Components',
     'Constants',
-    'Actions',
     'Module-level state',
     'Exports',
 ]
 
-// Aliases — short cohesion group names and alternate full names, all map to canonical names
+// Maps cohesion group letter to required section name
 // prettier-ignore
-const ALIASES = { P: 'Predicates', T: 'Transformers', F: 'Functions', V: 'Validators', A: 'Aggregators', E: 'Effects', Factories: 'Functions' }
+const COHESION_GROUPS = { P: 'Predicates', T: 'Transformers', F: 'Factories', V: 'Validators', A: 'Aggregators', E: 'Effects' }
 
-const STANDARD_NAMES = new Set([...CANONICAL_ORDER, ...Object.keys(ALIASES)])
+const STANDARD_NAMES = new Set(CANONICAL_ORDER)
 
 const SEPARATOR_PATTERN = /^\/\/ -{20,}/
 
@@ -280,10 +277,10 @@ const COMPONENT_PATTERN = /^const [A-Z][a-z][a-zA-Z]* = \(/
 const FORMAT_MSG = 'Section separator must use block format (5 lines: separator / blank / name / blank / separator).'
 
 // prettier-ignore
-const ORDER_LABEL = 'Predicates → Transformers → Functions → Validators → Aggregators → Effects → Components → Constants → Actions → Module-level state → Exports'
+const ORDER_LABEL = 'Predicates → Transformers → Factories → Validators → Aggregators → Effects → Components → Constants → Module-level state → Exports'
 
 // prettier-ignore
-const STANDARD_LABEL = 'P/Predicates, T/Transformers, F/Functions/Factories, V/Validators, A/Aggregators, E/Effects, Components, Constants, Actions, Module-level state, Exports'
+const STANDARD_LABEL = 'Predicates, Transformers, Factories, Validators, Aggregators, Effects, Components, Constants, Module-level state, Exports'
 
 const violation = FS.createViolation('section-separators', PRIORITY)
 

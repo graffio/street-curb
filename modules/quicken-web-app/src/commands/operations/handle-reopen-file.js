@@ -5,6 +5,12 @@ import { Action } from '../../types/action.js'
 import { StoredFileHandle } from '../data-sources/stored-file-handle.js'
 import { handleLoadFile } from './handle-load-file.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Requests permission on stored handle, loads file if granted (fire-and-forget)
 // @sig handleReopenFile :: (Action -> void) -> Promise<void>
 const handleReopenFile = async dispatch => {

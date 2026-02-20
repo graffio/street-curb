@@ -4,6 +4,12 @@
 import { Action } from '../../types/action.js'
 import { loadEntitiesFromFile } from '../data-sources/load-entities-from-file.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Loads entities from file and dispatches LoadFile action with status updates
 // @sig handleLoadFile :: ((Action -> void), File) -> Promise<void>
 const handleLoadFile = async (dispatch, file) => {

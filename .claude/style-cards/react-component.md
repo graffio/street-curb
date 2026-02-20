@@ -10,10 +10,9 @@ Use section separators to organize files. Canonical order (skip empty sections):
 |---|--------------------|------------------------------------------------------------------------|
 | 1 | F (Factories)      | `create*`, `make*`, `build*` (style factories like `makeItemRowStyle`) |
 | 2 | Components         | Sub-components (ItemRow, Badge, etc.)                                  |
-| 3 | Constants          | `const` values, style objects, config                                  |
-| 4 | Actions            | `// prettier-ignore` action/trigger table arrays                       |
-| 5 | Module-level state | `let` vars, `Map`s (hybrid files only)                                 |
-| 6 | Exports            | Exported component(s) + `export` statement                             |
+| 3 | Constants          | `const` values, style objects, config              |
+| 4 | Module-level state | `let` vars, `Map`s (hybrid files only)             |
+| 5 | Exports            | Exported component(s) + `export` statement         |
 
 No full P/T/F/V/A/E cohesion groups — those are for JS modules with business logic. Components may use F for style
 factories. Components are wiring, not logic.
