@@ -12,12 +12,19 @@ const FocusRegistry = {
     // @sig unregister :: (String) -> void
     unregister: id => delete registry[id],
 
+    // Returns a registered element if it exists and is still in the DOM, or null
+    // @sig get :: (String) -> Element | null
+    get: id => {
+        const el = registry[id]
+        return el?.isConnected ? el : null
+    },
+
     // Focuses a registered element if it exists and is still in the DOM
     // Silent no-op when id is unknown — keyboard system may call focus before component mounts
     // @sig focus :: (String) -> void
     focus: id => {
         const el = registry[id]
-        if (el && el.isConnected) el.focus()
+        if (el?.isConnected) el.focus()
     },
 
     // Removes all registered elements (used for test isolation)
@@ -27,4 +34,11 @@ const FocusRegistry = {
         ids.forEach(id => delete registry[id])
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 export { FocusRegistry }

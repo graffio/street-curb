@@ -54,9 +54,9 @@ const createSession = sessionName => {
     // @sig setViewport :: (String, String) -> String
     const setViewport = (width, height) => browser('set', ['viewport', String(width), String(height)])
 
-    // Clicks an element by its visible text content using Playwright text locator
+    // Clicks the first element matching visible text content (nth=0 handles multi-tab-group ambiguity)
     // @sig clickByText :: String -> String
-    const clickByText = text => browser('find', ['text', text, 'click'])
+    const clickByText = text => browser('click', [`text=${text} >> nth=0`])
 
     // Finds an element by text in snapshot and clicks by ref. Throws if not found (fail-fast).
     // @sig clickByRef :: String -> String

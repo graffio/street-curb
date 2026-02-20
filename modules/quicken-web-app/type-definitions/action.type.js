@@ -11,6 +11,12 @@ import { FieldTypes } from './field-types.js'
  *      ResetTransactionFilters
  */
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // prettier-ignore
 export const Action = {
     name: 'Action',
@@ -33,8 +39,7 @@ export const Action = {
         ToggleAccountFilter    : { viewId: 'String', accountId: FieldTypes.accountId },
         ToggleSecurityFilter   : { viewId: 'String', securityId: FieldTypes.securityId },
         ToggleActionFilter     : { viewId: 'String', actionId: 'String' },
-        AddCategoryFilter      : { viewId: 'String', category: 'String' },
-        RemoveCategoryFilter   : { viewId: 'String', category: 'String' },
+        ToggleCategoryFilter   : { viewId: 'String', category: 'String' },
         SetFilterPopoverOpen   : { viewId: 'String', popoverId: 'String?' },
         SetFilterPopoverSearch : { viewId: 'String', searchText: 'String' },
 

@@ -1,4 +1,4 @@
-// ABOUTME: covers Spending by Category report, GroupByFilterChip, AccountFilterChip, DateFilterChip
+// ABOUTME: covers Spending by Category report, GroupByFilterChip, AccountFilterChip, DateFilterChip, tree expansion
 // ABOUTME: Run with: yarn tap:file test/category-report.integration-test.js (-g 'pattern' for single test)
 
 import tap from 'tap'
@@ -20,6 +20,14 @@ tap.before(async () => {
     // Navigate to Spending by Category report
     session.clickByRef('Spending by Category')
     await wait(500)
+
+    // Open second tab group to exercise multi-instance module-level state
+    session.clickByText('Split')
+    await wait(300)
+    session.clickByRef('Primary Checking')
+    await wait(500)
+    session.browser('click', ['text=Spending by Category >> nth=1'])
+    await wait(300)
 })
 
 tap.teardown(() => session.close())
@@ -140,4 +148,35 @@ tap.test('category: custom date filter shows correct filtered totals', async t =
     await wait(200)
     const afterClear = session.browser('snapshot')
     t.ok(afterClear.includes(originalFoodTotal), `Food shows original total $${originalFoodTotal} after clearing`)
+})
+
+tap.test('category: expanding a leaf category shows individual transactions', async t => {
+    // Tree may start expanded (default treeExpansion state), so collapse Income first if needed
+    const beforeExpand = session.browser('snapshot')
+    t.ok(beforeExpand.includes('Income'), 'Income category visible')
+
+    if (beforeExpand.includes('Salary')) {
+        // Income is already expanded — collapse it so we can test the expand flow.
+        // Note: not asserting Salary hidden after collapse — snapshot includes both tab groups.
+        session.browser('click', ['text=▼ >> nth=1'])
+        await wait(300)
+    }
+
+    // Expand Income — click its ▶ chevron.
+    // Tree sorted alphabetically: Food(0), Income(1), Transportation(2), Uncategorized(3), Utilities(4).
+    session.browser('click', ['text=▶ >> nth=1'])
+    await wait(300)
+
+    const afterExpandIncome = session.browser('snapshot')
+    t.notOk(afterExpandIncome.includes('Something went wrong'), 'no crash after expanding Income')
+    t.ok(afterExpandIncome.includes('Salary'), 'Salary subcategory visible after expanding Income')
+
+    // Expand Salary — Income's ▶ became ▼, so Salary takes the nth=1 ▶ position.
+    session.browser('click', ['text=▶ >> nth=1'])
+    await wait(300)
+
+    const afterExpandSalary = session.browser('snapshot')
+    t.notOk(afterExpandSalary.includes('Something went wrong'), 'no crash after expanding Salary')
+    t.ok(afterExpandSalary.includes('Acme Corp'), 'Acme Corp payee visible in expanded transactions')
+    t.ok(afterExpandSalary.includes('4,500'), 'transaction amount $4,500 visible')
 })

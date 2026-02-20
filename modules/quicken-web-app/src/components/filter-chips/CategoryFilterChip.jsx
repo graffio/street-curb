@@ -1,5 +1,5 @@
 // ABOUTME: Category filter chip with keyboard-navigable searchable popover
-// ABOUTME: Fully controlled via Redux — renders category selection with add/remove toggle
+// ABOUTME: Fully controlled via Redux — renders category selection with toggle
 
 import { useSelector } from 'react-redux'
 import { post } from '../../commands/post.js'
@@ -10,29 +10,6 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Effects
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const E = {
-    // Toggles a category filter: adds if not selected, removes if selected
-    // @sig handleToggle :: (String, String) -> void
-    handleToggle: (viewId, categoryName) => {
-        if (chipSelectedIds.includes(categoryName)) post(Action.RemoveCategoryFilter(viewId, categoryName))
-        else post(Action.AddCategoryFilter(viewId, categoryName))
-    },
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Module-level state
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-let chipSelectedIds = []
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -40,12 +17,11 @@ let chipSelectedIds = []
 // Category filter chip — selects category filter data and renders FilterChipPopover
 // @sig Chip :: { viewId: String } -> ReactElement
 const Chip = ({ viewId }) => {
-    const handleToggle = categoryName => E.handleToggle(viewId, categoryName)
+    const handleToggle = category => post(Action.ToggleCategoryFilter(viewId, category))
 
     // prettier-ignore
     const config = { popoverId: 'categories', label: 'Categories', triggerId: 'filter:categories', width: 185, clearFilter: { selectedCategories: [] } }
     const { selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
-    chipSelectedIds = selectedIds
     return <FilterChipPopover config={config} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
 }
 

@@ -21,6 +21,14 @@ tap.before(async () => {
     session.clickByRef('Primary Checking')
     await wait(500)
 
+    // Open second tab group to exercise multi-instance module-level state
+    session.clickByText('Split')
+    await wait(300)
+    session.clickByRef('Spending by Category')
+    await wait(500)
+    session.browser('click', ['text=Primary Checking >> nth=1'])
+    await wait(300)
+
     const registerSnap = session.browser('snapshot')
     if (registerSnap.includes('Something went wrong')) throw new Error('register crashed on load')
 })

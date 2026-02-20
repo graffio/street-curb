@@ -16,6 +16,12 @@ tap.before(async () => {
     session.open(TEST_URL)
     session.setViewport(1280, 1600)
     await wait(1500)
+
+    // Open second tab group to exercise multi-instance module-level state
+    session.clickByRef('Spending by Category')
+    await wait(500)
+    session.clickByText('Split')
+    await wait(300)
 })
 
 tap.teardown(() => session.close())
