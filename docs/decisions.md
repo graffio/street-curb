@@ -653,6 +653,7 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | Authentication claims simplification       | Oct 2025 | Accepted | Rules read user doc, only userId claim, simpler and more secure    |
 | userId claim synchronization               | Oct 2025 | Accepted | authUid in UserCreated for claim bootstrap, avoids deadlock        |
 | Passcode auth via Action pattern           | Oct 2025 | Accepted | SOC2 audit trail, architectural consistency, no separate sessions  |
+| Intent keys in post.js handlers            | Feb 2026 | Accepted | Pages send minimal intent, post.js resolves state — keeps pages presentation-only |
 
 ---
 
