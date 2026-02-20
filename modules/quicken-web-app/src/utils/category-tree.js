@@ -77,10 +77,10 @@ const buildTransactionTree = (dimension, transactions, aggregateFn = collectTran
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Default aggregation: sum amounts and count transactions
+// Default aggregation: sum amounts and count transactions (amount ?? 0 guards null for splits/transfers)
 // @sig collectTransactionTotals :: ([Transaction], [Aggregate]) -> Aggregate
 const collectTransactionTotals = (transactions, childAggregates) => {
-    const ownTotal = transactions.reduce((sum, t) => sum + t.amount, 0)
+    const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
     const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
     const ownCount = transactions.length
     const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
