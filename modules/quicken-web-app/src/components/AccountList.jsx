@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
-import { SortMode } from '../types/sort-mode.js'
+import { SortMode } from '../types/index.js'
 import { View } from '../types/view.js'
 import { Formatters } from '../utils/formatters.js'
 

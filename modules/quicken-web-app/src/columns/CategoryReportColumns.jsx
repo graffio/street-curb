@@ -1,12 +1,10 @@
 // ABOUTME: Column definitions for category spending report with node-type-aware cell renderers
 // ABOUTME: Dispatches on CategoryTreeNode.Group vs Transaction for hierarchical tree display
 
-import { ColumnDefinition } from '../types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
-import { CategoryTreeNode } from '../types/category-tree-node.js'
+import { CategoryTreeNode, ColumnDefinition, Transaction } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
-import { Transaction } from '../types/transaction.js'
 
 const { formatCurrency, formatDate } = Formatters
 

@@ -40,6 +40,8 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const transactionTree = useSelector(state => S.Transactions.tree(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
+    const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
+    const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
 
     const dataTableProps = {
         columns: CategoryReportColumns,
@@ -51,6 +53,10 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         columnVisibility: HIDDEN_COLUMNS_BY_GROUP[groupBy],
         expanded,
         onExpandedChange: updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater })),
+        columnSizing,
+        onColumnSizingChange: updater => post(Action.SetViewUiState(viewId, { columnSizing: updater })),
+        columnOrder,
+        onColumnOrderChange: order => post(Action.SetViewUiState(viewId, { columnOrder: order })),
     }
 
     return (

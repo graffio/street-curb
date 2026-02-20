@@ -2,15 +2,18 @@
 // ABOUTME: Displays HoldingsTreeNode tree with aggregate/holding data and stale price indicators
 // COMPLEXITY: react-redux-separation — Cell renderers use conditional spread for stale styling (display-only)
 
-import { ColumnDefinition } from '../types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
+import { ColumnDefinition, HoldingsTreeNode } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
-import { HoldingsTreeNode } from '../types/holdings-tree-node.js'
 
 const { formatCurrency, formatPercentage, formatPrice, formatQuantity } = Formatters
 
-const NUMERIC = { enableResizing: false, textAlign: 'right' }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Predicates for node type detection (work on raw HoldingsTreeNode data)
 const P = {
@@ -22,6 +25,12 @@ const P = {
     // @sig isHoldingRow :: Row -> Boolean
     isHoldingRow: row => HoldingsTreeNode.Holding.is(row.original),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Data accessors for accessorFn (receive raw HoldingsTreeNode)
 const D = {
@@ -82,6 +91,12 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Cell renderer for expandable tree row with holding/group name
 // @sig ExpandableNameCell :: { row: Row, getValue: Function } -> ReactElement
 const ExpandableNameCell = ({ row, getValue }) => {
@@ -109,9 +124,6 @@ const ExpandableNameCell = ({ row, getValue }) => {
         </div>
     )
 }
-
-// Base style for stale values
-const staleStyle = { fontStyle: 'italic' }
 
 // Cell renderer for currency with stale indicator
 // @sig StaleCurrencyCell :: { row: Row, getValue: Function } -> ReactElement
@@ -206,6 +218,21 @@ const PriceCell = ({ row, table, getValue }) => {
     const style = { textAlign: 'right', display: 'block', ...(isStale ? staleStyle : {}) }
     return <span style={style}>{isStale ? `${formatted}*` : formatted}</span>
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const NUMERIC = { enableResizing: false, textAlign: 'right' }
+const staleStyle = { fontStyle: 'italic' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Column definitions for investment holdings report

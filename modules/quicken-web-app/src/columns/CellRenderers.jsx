@@ -6,13 +6,15 @@ import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors.js'
-import { Transaction } from '../types/transaction.js'
+import { Transaction } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 
 const { formatCurrency, formatDate, formatPrice, formatQuantity } = Formatters
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Cell renderers
+//
+// Components
+//
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Render text with search matches highlighted
@@ -258,6 +260,12 @@ const PriceCell = ({ getValue }) => {
     if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatPrice(value)}</span>
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const CellRenderers = {
     AccountCell,
