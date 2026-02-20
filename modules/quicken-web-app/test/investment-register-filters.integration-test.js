@@ -20,6 +20,14 @@ tap.before(async () => {
     // Navigate to Fidelity Brokerage register
     session.clickByRef('Fidelity Brokerage')
     await wait(500)
+
+    // Open second tab group to exercise multi-instance module-level state
+    session.clickByText('Split')
+    await wait(300)
+    session.clickByRef('Spending by Category')
+    await wait(500)
+    session.browser('click', ['text=Fidelity Brokerage >> nth=1'])
+    await wait(300)
 })
 
 tap.teardown(() => session.close())
@@ -80,7 +88,7 @@ tap.test('investment-filters: action filter Buy shows correct count and symbols'
 })
 
 tap.test('investment-filters: search filter AAPL shows results', async t => {
-    session.browser('click', ['text="Filter"'])
+    session.browser('click', ['text=Filter >> nth=0'])
     await wait(200)
     session.browser('find', ['placeholder', 'Type to filter...', 'fill', 'AAPL'])
     await wait(200)
@@ -92,7 +100,7 @@ tap.test('investment-filters: search filter AAPL shows results', async t => {
     // Clear search via × button, then click Filter to close popover
     session.clickClear()
     await wait(200)
-    session.browser('click', ['text="Filter"'])
+    session.browser('click', ['text=Filter >> nth=0'])
     await wait(200)
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after clearing search')
 })

@@ -20,6 +20,17 @@ tap.before(async () => {
     // Navigate to Primary Checking register
     session.clickByRef('Primary Checking')
     await wait(500)
+
+    // Open a second tab group with Spending by Category report — exercises multi-instance
+    // module-level state bugs (e.g. CategoryFilterChip's chipSelectedIds singleton)
+    session.clickByText('Split')
+    await wait(300)
+    session.clickByRef('Spending by Category')
+    await wait(500)
+
+    // Return focus to register tab group (nth=1 skips the sidebar button)
+    session.browser('click', ['text=Primary Checking >> nth=1'])
+    await wait(300)
 })
 
 tap.teardown(() => session.close())
@@ -71,8 +82,29 @@ tap.test('bank-filters: category filter Food shows correct payees', async t => {
     t.notOk(session.browser('snapshot').includes('Something went wrong'), 'no crash after clearing category')
 })
 
+tap.test('bank-filters: category filter toggle-off removes filter', async t => {
+    session.clickByText('Categories:')
+    await wait(200)
+    session.clickPopoverItem('Food')
+    await wait(200)
+
+    const afterAdd = session.browser('snapshot')
+    t.ok(afterAdd.includes('1 selected'), 'category added (1 selected)')
+
+    // Toggle off by clicking the same item again
+    session.clickPopoverItem('Food')
+    await wait(200)
+
+    const afterRemove = session.browser('snapshot')
+    t.ok(afterRemove.includes('Categories: All'), 'category removed by toggle-off')
+    t.notOk(afterRemove.includes('1 selected'), 'no longer shows selected count')
+
+    session.browser('press', ['Escape'])
+    await wait(200)
+})
+
 tap.test('bank-filters: search filter Acme shows results', async t => {
-    session.browser('click', ['text="Filter"'])
+    session.browser('click', ['text=Filter >> nth=0'])
     await wait(200)
     session.browser('find', ['placeholder', 'Type to filter...', 'fill', 'Acme'])
     await wait(200)

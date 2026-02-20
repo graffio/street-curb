@@ -20,6 +20,14 @@ tap.before(async () => {
     // Navigate to Investment Holdings report
     session.clickByRef('Investment Holdings')
     await wait(500)
+
+    // Open second tab group to exercise multi-instance module-level state
+    session.clickByText('Split')
+    await wait(300)
+    session.clickByRef('Primary Checking')
+    await wait(500)
+    session.browser('click', ['text=Investment Holdings >> nth=1'])
+    await wait(300)
 })
 
 tap.teardown(() => session.close())
@@ -165,10 +173,12 @@ tap.test('holdings: as-of date shows correct historical values', async t => {
 })
 
 tap.test('holdings: AccountFilterChip keyboard search filters list', async t => {
-    session.browser('find', ['text', 'Accounts:', 'click'])
+    session.clickByText('Accounts:')
     await wait(800)
 
-    session.browser('find', ['placeholder', 'Search...', 'fill', 'Fidelity'])
+    session.browser('click', ['[data-radix-popper-content-wrapper] [placeholder="Search..."]'])
+    await wait(200)
+    'Fidelity'.split('').forEach(c => session.browser('press', [c]))
     await wait(500)
 
     const snapshot = session.browser('snapshot')
@@ -180,9 +190,11 @@ tap.test('holdings: AccountFilterChip keyboard search filters list', async t => 
 })
 
 tap.test('holdings: AccountFilterChip keyboard Enter selects highlighted item', async t => {
-    session.browser('find', ['text', 'Accounts:', 'click'])
+    session.clickByText('Accounts:')
     await wait(800)
-    session.browser('find', ['placeholder', 'Search...', 'fill', 'Fidelity'])
+    session.browser('click', ['[data-radix-popper-content-wrapper] [placeholder="Search..."]'])
+    await wait(200)
+    'Fidelity'.split('').forEach(c => session.browser('press', [c]))
     await wait(500)
 
     // Fidelity Brokerage is at index 0 (only match) — Enter toggles it
@@ -202,7 +214,7 @@ tap.test('holdings: AccountFilterChip keyboard Enter selects highlighted item', 
 })
 
 tap.test('holdings: AccountFilterChip keyboard ArrowDown navigates', async t => {
-    session.browser('find', ['text', 'Accounts:', 'click'])
+    session.clickByText('Accounts:')
     await wait(800)
 
     // ArrowDown moves highlight from 0 to 1, Enter selects
@@ -222,7 +234,7 @@ tap.test('holdings: AccountFilterChip keyboard ArrowDown navigates', async t => 
 })
 
 tap.test('holdings: AccountFilterChip keyboard Escape dismisses without change', async t => {
-    session.browser('find', ['text', 'Accounts:', 'click'])
+    session.clickByText('Accounts:')
     await wait(800)
 
     // Navigate but do NOT press Enter
