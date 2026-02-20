@@ -14,10 +14,9 @@ Use section separators to organize files. Functions first, data after. Canonical
 | 4  | V (Validators)     | `check*`, `validate*`                            |
 | 5  | A (Aggregators)    | `collect*`, `count*`, `gather*`, `find*`         |
 | 6  | E (Effects)        | `persist*`, `handle*`, `dispatch*`, `register*`  |
-| 7  | Constants          | `const` values, style objects, config            |
-| 8  | Actions            | `// prettier-ignore` action/trigger table arrays |
-| 9  | Module-level state | `let` vars, `Map`s (hybrid files only)           |
-| 10 | Exports            | Exported function(s) + `export` statement        |
+| 7  | Constants          | `const` values, style objects, config     |
+| 8  | Module-level state | `let` vars, `Map`s (hybrid files only)    |
+| 9  | Exports            | Exported function(s) + `export` statement |
 
 **Separator format** — 5-line block, always use the full name (Predicates, not P):
 
