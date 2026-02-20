@@ -32,6 +32,12 @@ const { openView, setActiveTabGroup, setActiveView, setTabGroupWidth } = TabLayo
 const { createDefaultFilter } = TransactionFilters
 const { createDefaultViewUiState } = ViewUiStateReducer
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
 // COMPLEXITY: Exporting both reducer and state factory is standard Redux pattern
@@ -123,8 +129,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ToggleAccountFilter    : () => TransactionFilters.toggleAccountFilter(state, action),
         ToggleSecurityFilter   : () => TransactionFilters.toggleSecurityFilter(state, action),
         ToggleActionFilter     : () => TransactionFilters.toggleActionFilter(state, action),
-        AddCategoryFilter      : () => TransactionFilters.addCategoryFilter(state, action),
-        RemoveCategoryFilter   : () => TransactionFilters.removeCategoryFilter(state, action),
+        ToggleCategoryFilter   : () => TransactionFilters.toggleCategoryFilter(state, action),
         SetFilterPopoverOpen   : () => ViewUiStateReducer.setFilterPopoverOpen(state, action),
         SetFilterPopoverSearch : () => ViewUiStateReducer.setFilterPopoverSearch(state, action),
 
@@ -158,6 +163,12 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ReopenFile       : () => state,
     })
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const Reducer = { createEmptyState, rootReducer }
 export { Reducer }

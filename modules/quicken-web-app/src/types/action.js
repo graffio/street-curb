@@ -30,10 +30,7 @@
  *  ToggleActionFilter
  *      viewId  : "String",
  *      actionId: "String"
- *  AddCategoryFilter
- *      viewId  : "String",
- *      category: "String"
- *  RemoveCategoryFilter
+ *  ToggleCategoryFilter
  *      viewId  : "String",
  *      category: "String"
  *  SetFilterPopoverOpen
@@ -126,8 +123,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'ToggleAccountFilter',
         'ToggleSecurityFilter',
         'ToggleActionFilter',
-        'AddCategoryFilter',
-        'RemoveCategoryFilter',
+        'ToggleCategoryFilter',
         'SetFilterPopoverOpen',
         'SetFilterPopoverSearch',
         'SetTableLayout',
@@ -186,8 +182,7 @@ const toString = {
     toggleAccountFilter    : function () { return `Action.ToggleAccountFilter(${R._toString(this.viewId)}, ${R._toString(this.accountId)})` },
     toggleSecurityFilter   : function () { return `Action.ToggleSecurityFilter(${R._toString(this.viewId)}, ${R._toString(this.securityId)})` },
     toggleActionFilter     : function () { return `Action.ToggleActionFilter(${R._toString(this.viewId)}, ${R._toString(this.actionId)})` },
-    addCategoryFilter      : function () { return `Action.AddCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
-    removeCategoryFilter   : function () { return `Action.RemoveCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
+    toggleCategoryFilter   : function () { return `Action.ToggleCategoryFilter(${R._toString(this.viewId)}, ${R._toString(this.category)})` },
     setFilterPopoverOpen   : function () { return `Action.SetFilterPopoverOpen(${R._toString(this.viewId)}, ${R._toString(this.popoverId)})` },
     setFilterPopoverSearch : function () { return `Action.SetFilterPopoverSearch(${R._toString(this.viewId)}, ${R._toString(this.searchText)})` },
     setTableLayout         : function () { return `Action.SetTableLayout(${R._toString(this.tableLayout)})` },
@@ -227,8 +222,7 @@ const toJSON = {
     toggleAccountFilter    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleSecurityFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleActionFilter     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    addCategoryFilter      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
-    removeCategoryFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    toggleCategoryFilter   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setFilterPopoverOpen   : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setFilterPopoverSearch : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTableLayout         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -410,40 +404,22 @@ const ToggleActionFilterConstructor = function ToggleActionFilter(viewId, action
 Action.ToggleActionFilter = ToggleActionFilterConstructor
 
 /*
- * Construct a Action.AddCategoryFilter instance
- * @sig AddCategoryFilter :: (String, String) -> Action.AddCategoryFilter
+ * Construct a Action.ToggleCategoryFilter instance
+ * @sig ToggleCategoryFilter :: (String, String) -> Action.ToggleCategoryFilter
  */
-const AddCategoryFilterConstructor = function AddCategoryFilter(viewId, category) {
-    const constructorName = 'Action.AddCategoryFilter(viewId, category)'
+const ToggleCategoryFilterConstructor = function ToggleCategoryFilter(viewId, category) {
+    const constructorName = 'Action.ToggleCategoryFilter(viewId, category)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateString(constructorName, 'viewId', false, viewId)
     R.validateString(constructorName, 'category', false, category)
 
-    const result = Object.create(AddCategoryFilterPrototype)
+    const result = Object.create(ToggleCategoryFilterPrototype)
     result.viewId = viewId
     result.category = category
     return result
 }
 
-Action.AddCategoryFilter = AddCategoryFilterConstructor
-
-/*
- * Construct a Action.RemoveCategoryFilter instance
- * @sig RemoveCategoryFilter :: (String, String) -> Action.RemoveCategoryFilter
- */
-const RemoveCategoryFilterConstructor = function RemoveCategoryFilter(viewId, category) {
-    const constructorName = 'Action.RemoveCategoryFilter(viewId, category)'
-    R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'viewId', false, viewId)
-    R.validateString(constructorName, 'category', false, category)
-
-    const result = Object.create(RemoveCategoryFilterPrototype)
-    result.viewId = viewId
-    result.category = category
-    return result
-}
-
-Action.RemoveCategoryFilter = RemoveCategoryFilterConstructor
+Action.ToggleCategoryFilter = ToggleCategoryFilterConstructor
 
 /*
  * Construct a Action.SetFilterPopoverOpen instance
@@ -889,20 +865,12 @@ const ToggleActionFilterPrototype = Object.create(ActionPrototype, {
     constructor: { value: ToggleActionFilterConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const AddCategoryFilterPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'AddCategoryFilter', enumerable: false },
+const ToggleCategoryFilterPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'ToggleCategoryFilter', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.addCategoryFilter, enumerable: false },
-    toJSON: { value: toJSON.addCategoryFilter, enumerable: false },
-    constructor: { value: AddCategoryFilterConstructor, enumerable: false, writable: true, configurable: true },
-})
-
-const RemoveCategoryFilterPrototype = Object.create(ActionPrototype, {
-    '@@tagName': { value: 'RemoveCategoryFilter', enumerable: false },
-    '@@typeName': { value: 'Action', enumerable: false },
-    toString: { value: toString.removeCategoryFilter, enumerable: false },
-    toJSON: { value: toJSON.removeCategoryFilter, enumerable: false },
-    constructor: { value: RemoveCategoryFilterConstructor, enumerable: false, writable: true, configurable: true },
+    toString: { value: toString.toggleCategoryFilter, enumerable: false },
+    toJSON: { value: toJSON.toggleCategoryFilter, enumerable: false },
+    constructor: { value: ToggleCategoryFilterConstructor, enumerable: false, writable: true, configurable: true },
 })
 
 const SetFilterPopoverOpenPrototype = Object.create(ActionPrototype, {
@@ -1099,8 +1067,7 @@ ResetTransactionFiltersConstructor.prototype = ResetTransactionFiltersPrototype
 ToggleAccountFilterConstructor.prototype = ToggleAccountFilterPrototype
 ToggleSecurityFilterConstructor.prototype = ToggleSecurityFilterPrototype
 ToggleActionFilterConstructor.prototype = ToggleActionFilterPrototype
-AddCategoryFilterConstructor.prototype = AddCategoryFilterPrototype
-RemoveCategoryFilterConstructor.prototype = RemoveCategoryFilterPrototype
+ToggleCategoryFilterConstructor.prototype = ToggleCategoryFilterPrototype
 SetFilterPopoverOpenConstructor.prototype = SetFilterPopoverOpenPrototype
 SetFilterPopoverSearchConstructor.prototype = SetFilterPopoverSearchPrototype
 SetTableLayoutConstructor.prototype = SetTableLayoutPrototype
@@ -1134,8 +1101,7 @@ ResetTransactionFiltersConstructor.is = val => val && val.constructor === ResetT
 ToggleAccountFilterConstructor.is = val => val && val.constructor === ToggleAccountFilterConstructor
 ToggleSecurityFilterConstructor.is = val => val && val.constructor === ToggleSecurityFilterConstructor
 ToggleActionFilterConstructor.is = val => val && val.constructor === ToggleActionFilterConstructor
-AddCategoryFilterConstructor.is = val => val && val.constructor === AddCategoryFilterConstructor
-RemoveCategoryFilterConstructor.is = val => val && val.constructor === RemoveCategoryFilterConstructor
+ToggleCategoryFilterConstructor.is = val => val && val.constructor === ToggleCategoryFilterConstructor
 SetFilterPopoverOpenConstructor.is = val => val && val.constructor === SetFilterPopoverOpenConstructor
 SetFilterPopoverSearchConstructor.is = val => val && val.constructor === SetFilterPopoverSearchConstructor
 SetTableLayoutConstructor.is = val => val && val.constructor === SetTableLayoutConstructor
@@ -1169,8 +1135,7 @@ ResetTransactionFiltersConstructor.toString = () => 'Action.ResetTransactionFilt
 ToggleAccountFilterConstructor.toString = () => 'Action.ToggleAccountFilter'
 ToggleSecurityFilterConstructor.toString = () => 'Action.ToggleSecurityFilter'
 ToggleActionFilterConstructor.toString = () => 'Action.ToggleActionFilter'
-AddCategoryFilterConstructor.toString = () => 'Action.AddCategoryFilter'
-RemoveCategoryFilterConstructor.toString = () => 'Action.RemoveCategoryFilter'
+ToggleCategoryFilterConstructor.toString = () => 'Action.ToggleCategoryFilter'
 SetFilterPopoverOpenConstructor.toString = () => 'Action.SetFilterPopoverOpen'
 SetFilterPopoverSearchConstructor.toString = () => 'Action.SetFilterPopoverSearch'
 SetTableLayoutConstructor.toString = () => 'Action.SetTableLayout'
@@ -1207,8 +1172,7 @@ ResetTransactionFiltersConstructor._from = _input => Action.ResetTransactionFilt
 ToggleAccountFilterConstructor._from = _input => Action.ToggleAccountFilter(_input.viewId, _input.accountId)
 ToggleSecurityFilterConstructor._from = _input => Action.ToggleSecurityFilter(_input.viewId, _input.securityId)
 ToggleActionFilterConstructor._from = _input => Action.ToggleActionFilter(_input.viewId, _input.actionId)
-AddCategoryFilterConstructor._from = _input => Action.AddCategoryFilter(_input.viewId, _input.category)
-RemoveCategoryFilterConstructor._from = _input => Action.RemoveCategoryFilter(_input.viewId, _input.category)
+ToggleCategoryFilterConstructor._from = _input => Action.ToggleCategoryFilter(_input.viewId, _input.category)
 SetFilterPopoverOpenConstructor._from = _input => Action.SetFilterPopoverOpen(_input.viewId, _input.popoverId)
 SetFilterPopoverSearchConstructor._from = _input => Action.SetFilterPopoverSearch(_input.viewId, _input.searchText)
 SetTableLayoutConstructor._from = _input => Action.SetTableLayout(_input.tableLayout)
@@ -1245,8 +1209,7 @@ ResetTransactionFiltersConstructor.from = ResetTransactionFiltersConstructor._fr
 ToggleAccountFilterConstructor.from = ToggleAccountFilterConstructor._from
 ToggleSecurityFilterConstructor.from = ToggleSecurityFilterConstructor._from
 ToggleActionFilterConstructor.from = ToggleActionFilterConstructor._from
-AddCategoryFilterConstructor.from = AddCategoryFilterConstructor._from
-RemoveCategoryFilterConstructor.from = RemoveCategoryFilterConstructor._from
+ToggleCategoryFilterConstructor.from = ToggleCategoryFilterConstructor._from
 SetFilterPopoverOpenConstructor.from = SetFilterPopoverOpenConstructor._from
 SetFilterPopoverSearchConstructor.from = SetFilterPopoverSearchConstructor._from
 SetTableLayoutConstructor.from = SetTableLayoutConstructor._from
@@ -1337,11 +1300,8 @@ ToggleSecurityFilterConstructor.fromFirestore = ToggleSecurityFilterConstructor.
 ToggleActionFilterConstructor.toFirestore = o => ({ ...o })
 ToggleActionFilterConstructor.fromFirestore = ToggleActionFilterConstructor._from
 
-AddCategoryFilterConstructor.toFirestore = o => ({ ...o })
-AddCategoryFilterConstructor.fromFirestore = AddCategoryFilterConstructor._from
-
-RemoveCategoryFilterConstructor.toFirestore = o => ({ ...o })
-RemoveCategoryFilterConstructor.fromFirestore = RemoveCategoryFilterConstructor._from
+ToggleCategoryFilterConstructor.toFirestore = o => ({ ...o })
+ToggleCategoryFilterConstructor.fromFirestore = ToggleCategoryFilterConstructor._from
 
 SetFilterPopoverOpenConstructor.toFirestore = o => ({ ...o })
 SetFilterPopoverOpenConstructor.fromFirestore = SetFilterPopoverOpenConstructor._from
@@ -1476,8 +1436,7 @@ Action.is = v => {
         ToggleAccountFilter,
         ToggleSecurityFilter,
         ToggleActionFilter,
-        AddCategoryFilter,
-        RemoveCategoryFilter,
+        ToggleCategoryFilter,
         SetFilterPopoverOpen,
         SetFilterPopoverSearch,
         SetTableLayout,
@@ -1512,8 +1471,7 @@ Action.is = v => {
         constructor === ToggleAccountFilter ||
         constructor === ToggleSecurityFilter ||
         constructor === ToggleActionFilter ||
-        constructor === AddCategoryFilter ||
-        constructor === RemoveCategoryFilter ||
+        constructor === ToggleCategoryFilter ||
         constructor === SetFilterPopoverOpen ||
         constructor === SetFilterPopoverSearch ||
         constructor === SetTableLayout ||
@@ -1563,8 +1521,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         ToggleAccountFilter,
         ToggleSecurityFilter,
         ToggleActionFilter,
-        AddCategoryFilter,
-        RemoveCategoryFilter,
+        ToggleCategoryFilter,
         SetFilterPopoverOpen,
         SetFilterPopoverSearch,
         SetTableLayout,
@@ -1597,8 +1554,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'ToggleAccountFilter') return ToggleAccountFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleSecurityFilter') return ToggleSecurityFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleActionFilter') return ToggleActionFilter.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'AddCategoryFilter') return AddCategoryFilter.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'RemoveCategoryFilter') return RemoveCategoryFilter.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'ToggleCategoryFilter') return ToggleCategoryFilter.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetFilterPopoverOpen') return SetFilterPopoverOpen.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetFilterPopoverSearch') return SetFilterPopoverSearch.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTableLayout') return SetTableLayout.fromFirestore(doc, decodeTimestamps)

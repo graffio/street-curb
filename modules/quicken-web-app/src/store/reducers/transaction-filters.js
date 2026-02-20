@@ -82,40 +82,33 @@ const toggleActionFilter = (state, action) => {
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
-// Adds a category to the selected categories list for a specific view
-// @sig addCategoryFilter :: (State, Action.AddCategoryFilter) -> State
-const addCategoryFilter = (state, action) => {
+// Toggles a category in the selected categories list for a specific view
+// @sig toggleCategoryFilter :: (State, Action.ToggleCategoryFilter) -> State
+const toggleCategoryFilter = (state, action) => {
     const { viewId, category } = action
 
     const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
     const updated = TransactionFilter.from({
         ...existing,
-        selectedCategories: [...existing.selectedCategories, category],
+        selectedCategories: toggleItem(category, existing.selectedCategories),
     })
 
     return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
 }
 
-// Removes a category from the selected categories list for a specific view
-// @sig removeCategoryFilter :: (State, Action.RemoveCategoryFilter) -> State
-const removeCategoryFilter = (state, action) => {
-    const { viewId, category } = action
-
-    const existing = state.transactionFilters.get(viewId) || createDefaultFilter(viewId)
-    const selectedCategories = existing.selectedCategories.filter(c => c !== category)
-    const updated = TransactionFilter.from({ ...existing, selectedCategories })
-
-    return { ...state, transactionFilters: state.transactionFilters.addItemWithId(updated) }
-}
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const TransactionFilters = {
-    addCategoryFilter,
     createDefaultFilter,
-    removeCategoryFilter,
     resetTransactionFilters,
     setTransactionFilter,
     toggleAccountFilter,
     toggleActionFilter,
+    toggleCategoryFilter,
     toggleSecurityFilter,
 }
 
