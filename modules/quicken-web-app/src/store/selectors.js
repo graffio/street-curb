@@ -30,7 +30,7 @@ import {
 } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
-import { buildTransactionTree } from '../utils/category-tree.js'
+import { CategoryTree } from '../utils/category-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
@@ -480,7 +480,7 @@ const _enriched = (state, viewId) => Transaction.enrichAll(T.filtered(state, vie
 
 const _transactionTree = (state, viewId) => {
     const groupBy = filter(state, viewId).groupBy || 'category'
-    return buildTransactionTree(groupBy, T.enriched(state, viewId))
+    return CategoryTree.buildTransactionTree(groupBy, T.enriched(state, viewId))
 }
 
 const _forAccount = (state, _viewId, accountId) => state.transactions.filter(Transaction.isInAccount(accountId))
