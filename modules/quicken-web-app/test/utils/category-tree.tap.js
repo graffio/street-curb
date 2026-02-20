@@ -3,7 +3,7 @@
 
 import t from 'tap'
 import { groupBy, buildTree, aggregateTree } from '@graffio/functional'
-import { buildCategoryTree } from '../../src/utils/category-tree.js'
+import { CategoryTree } from '../../src/utils/category-tree.js'
 
 // Test helper: derive parent from colon-delimited category path
 const getParent = key => {
@@ -113,7 +113,7 @@ t.test('Category tree building', t => {
     t.end()
 })
 
-t.test('buildCategoryTree utility', t => {
+t.test('buildTransactionTree utility', t => {
     t.test('Given transactions with categories', t => {
         const transactions = [
             { id: 'txn1', categoryName: 'Food:Groceries', amount: -100 },
@@ -121,12 +121,13 @@ t.test('buildCategoryTree utility', t => {
             { id: 'txn3', categoryName: 'Transportation:Gas', amount: -30 },
         ]
 
-        t.test('When calling buildCategoryTree', t => {
-            const tree = buildCategoryTree(transactions)
+        t.test('When calling buildTransactionTree with category dimension', t => {
+            const tree = CategoryTree.buildTransactionTree('category', transactions)
 
-            t.equal(tree.length, 2, 'Then returns aggregated tree with 2 roots')
+            t.equal(tree.length, 2, 'Then returns CategoryTreeNode tree with 2 roots')
             t.equal(tree[0].aggregate.total, -150, 'And Food total is -150')
             t.equal(tree[1].aggregate.total, -30, 'And Transportation total is -30')
+            t.ok(tree[0]['@@typeName'] === 'CategoryTreeNode', 'And root is CategoryTreeNode')
             t.end()
         })
         t.end()
@@ -135,8 +136,8 @@ t.test('buildCategoryTree utility', t => {
     t.test('Given transactions without categoryName', t => {
         const transactions = [{ id: 'txn1', amount: -25 }]
 
-        t.test('When calling buildCategoryTree', t => {
-            const tree = buildCategoryTree(transactions)
+        t.test('When calling buildTransactionTree with category dimension', t => {
+            const tree = CategoryTree.buildTransactionTree('category', transactions)
 
             t.equal(tree.length, 1, 'Then returns 1 root')
             t.equal(tree[0].key, 'Uncategorized', 'And root is Uncategorized')

@@ -4,6 +4,8 @@
 export { AccountSection } from './account-section.js'
 export { Account } from './account.js'
 export { Action } from './action.js'
+export { CategoryAggregate } from './category-aggregate.js'
+export { CategoryTreeNode } from './category-tree-node.js'
 export { Category } from './category.js'
 export { ColumnDefinition } from './column-definition.js'
 export { ColumnDescriptor } from './column-descriptor.js'

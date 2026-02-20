@@ -46,6 +46,31 @@ const formatDateRange = (start, end) => {
 }
 
 /*
+ * Format a Date as relative time (e.g., "3 days ago", "2 weeks ago")
+ *
+ * @sig formatRelativeTime :: Date -> String
+ */
+const formatRelativeTime = date => {
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return '1 day ago'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7)
+        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`
+    }
+    if (diffDays < 365) {
+        const months = Math.floor(diffDays / 30)
+        return months === 1 ? '1 month ago' : `${months} months ago`
+    }
+    const years = Math.floor(diffDays / 365)
+    return years === 1 ? '1 year ago' : `${years} years ago`
+}
+
+/*
  * Format a number with up to 3 decimal places (for share quantities)
  *
  * @sig formatQuantity :: Number -> String
@@ -103,6 +128,27 @@ const toFormattedDayChange = change => {
  */
 const toDayChangeColor = change => (change > 0 ? 'green' : 'red')
 
+/*
+ * Split text into segments with match/non-match flags for search highlighting
+ *
+ * @sig toHighlightSegments :: (String, String) -> [{ text: String, isMatch: Boolean }]
+ */
+const toHighlightSegments = (text, query, fromIndex = 0) => {
+    const index = text.toLowerCase().indexOf(query.toLowerCase(), fromIndex)
+    if (index === -1) return fromIndex < text.length ? [{ text: text.slice(fromIndex), isMatch: false }] : []
+
+    const before = index > fromIndex ? [{ text: text.slice(fromIndex, index), isMatch: false }] : []
+    const match = [{ text: text.slice(index, index + query.length), isMatch: true }]
+    const rest = toHighlightSegments(text, query, index + query.length)
+    return [...before, ...match, ...rest]
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const Formatters = {
     formatCurrency,
     formatDate,
@@ -110,10 +156,12 @@ const Formatters = {
     formatPercentage,
     formatPrice,
     formatQuantity,
+    formatRelativeTime,
     formatShortDate,
     toDayChangeColor,
     toFormattedBalance,
     toFormattedDayChange,
+    toHighlightSegments,
 }
 
 export { Formatters }

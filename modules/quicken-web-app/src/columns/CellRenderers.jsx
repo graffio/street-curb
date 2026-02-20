@@ -1,39 +1,29 @@
 // ABOUTME: Cell renderers for transaction register table columns
 // ABOUTME: TanStack Table components with search highlighting and formatting
-// COMPLEXITY-TODO: react-redux-separation — Presentational cell renderers (expires 2026-04-01)
+// COMPLEXITY: react-redux-separation — TanStack Table cell callbacks, not standard app components
 
 import { containsIgnoreCase } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors.js'
-import { Transaction } from '../types/transaction.js'
+import { Transaction } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
 
-const { formatCurrency, formatDate, formatPrice, formatQuantity } = Formatters
+const { formatCurrency, formatDate, formatPrice, formatQuantity, formatRelativeTime, toHighlightSegments } = Formatters
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Cell renderers
+//
+// Components
+//
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Render text with search matches highlighted
 // @sig HighlightedText :: { text: String, searchQuery: String } -> ReactElement
 const HighlightedText = ({ text, searchQuery }) => {
-    // Find all occurrences of query in text, returning array of match segments
-    // @sig findMatches :: (String, String, Number) -> [{ text: String, isMatch: Boolean }]
-    const findMatches = (text, query, fromIndex = 0) => {
-        const index = text.toLowerCase().indexOf(query.toLowerCase(), fromIndex)
-        if (index === -1) return fromIndex < text.length ? [{ text: text.slice(fromIndex), isMatch: false }] : []
-
-        const before = index > fromIndex ? [{ text: text.slice(fromIndex, index), isMatch: false }] : []
-        const match = [{ text: text.slice(index, index + query.length), isMatch: true }]
-        const rest = findMatches(text, query, index + query.length)
-        return [...before, ...match, ...rest]
-    }
-
     if (!searchQuery?.trim() || !text) return <span>{text || ''}</span>
     if (!containsIgnoreCase(searchQuery)(text)) return <span>{text}</span>
 
-    const matches = findMatches(text, searchQuery)
+    const matches = toHighlightSegments(text, searchQuery)
 
     return (
         <span>
@@ -52,33 +42,11 @@ const chevronStyle = { cursor: 'pointer', userSelect: 'none', width: 20, display
 // Cell renderer for date column with relative time below
 // @sig DateCell :: { getValue: Function, table: Table } -> ReactElement
 const DateCell = ({ getValue, table }) => {
-    // Format relative time from date
-    // @sig getRelativeTime :: Date -> String
-    const getRelativeTime = date => {
-        const now = new Date()
-        const diffMs = now - date
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-        if (diffDays === 0) return 'Today'
-        if (diffDays === 1) return '1 day ago'
-        if (diffDays < 7) return `${diffDays} days ago`
-        if (diffDays < 30) {
-            const weeks = Math.floor(diffDays / 7)
-            return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`
-        }
-        if (diffDays < 365) {
-            const months = Math.floor(diffDays / 30)
-            return months === 1 ? '1 month ago' : `${months} months ago`
-        }
-        const years = Math.floor(diffDays / 365)
-        return years === 1 ? '1 year ago' : `${years} years ago`
-    }
-
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
     const date = typeof value === 'string' ? new Date(value) : value
     const formatted = formatDate(value)
-    const relative = getRelativeTime(date)
+    const relative = formatRelativeTime(date)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
@@ -258,6 +226,12 @@ const PriceCell = ({ getValue }) => {
     if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatPrice(value)}</span>
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const CellRenderers = {
     AccountCell,

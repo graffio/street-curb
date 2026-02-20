@@ -2,15 +2,18 @@
 // ABOUTME: Displays HoldingsTreeNode tree with aggregate/holding data and stale price indicators
 // COMPLEXITY: react-redux-separation — Cell renderers use conditional spread for stale styling (display-only)
 
-import { ColumnDefinition } from '../types/column-definition.js'
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
+import { ColumnDefinition, HoldingsTreeNode } from '../types/index.js'
 import { Formatters } from '../utils/formatters.js'
-import { HoldingsTreeNode } from '../types/holdings-tree-node.js'
 
 const { formatCurrency, formatPercentage, formatPrice, formatQuantity } = Formatters
 
-const NUMERIC = { enableResizing: false, textAlign: 'right' }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Predicates for node type detection (work on raw HoldingsTreeNode data)
 const P = {
@@ -23,64 +26,68 @@ const P = {
     isHoldingRow: row => HoldingsTreeNode.Holding.is(row.original),
 }
 
-// Data accessors for accessorFn (receive raw HoldingsTreeNode)
-const D = {
-    // Get shares/quantity from node (cell renderer decides if aggregate is meaningful)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const T = {
+    // --- Node-level accessors (for TanStack accessorFn — receive raw HoldingsTreeNode) ---
+
+    // Extracts share quantity from holding or aggregate
     // @sig toShares :: HoldingsTreeNode -> Number?
     toShares: node => (P.isHolding(node) ? node.holding.quantity : node.aggregate.shares),
 
-    // Get market value from node
+    // Extracts market value from holding or aggregate
     // @sig toMarketValue :: HoldingsTreeNode -> Number?
     toMarketValue: node => (P.isHolding(node) ? node.holding.marketValue : node.aggregate.marketValue),
 
-    // Get cost basis from node
+    // Extracts cost basis from holding or aggregate
     // @sig toCostBasis :: HoldingsTreeNode -> Number?
     toCostBasis: node => (P.isHolding(node) ? node.holding.costBasis : node.aggregate.costBasis),
 
-    // Get average cost per share (cell renderer decides if aggregate is meaningful)
+    // Extracts average cost per share from holding or aggregate
     // @sig toAverageCostPerShare :: HoldingsTreeNode -> Number?
     toAverageCostPerShare: node =>
         P.isHolding(node) ? node.holding.averageCostPerShare : node.aggregate.averageCostPerShare,
 
-    // Get quote price from node (only for holdings)
+    // Extracts quote price (holdings only, null for groups)
     // @sig toQuotePrice :: HoldingsTreeNode -> Number?
     toQuotePrice: node => (P.isHolding(node) ? node.holding.quotePrice : null),
 
-    // Get day gain/loss from node
+    // Extracts day gain/loss from holding or aggregate
     // @sig toDayGainLoss :: HoldingsTreeNode -> Number?
     toDayGainLoss: node => (P.isHolding(node) ? node.holding.dayGainLoss : node.aggregate.dayGainLoss),
 
-    // Get day gain/loss percent from node
+    // Extracts day gain/loss percentage from holding or aggregate
     // @sig toDayGainLossPercent :: HoldingsTreeNode -> Number?
     toDayGainLossPercent: node =>
         P.isHolding(node) ? node.holding.dayGainLossPercent : node.aggregate.dayGainLossPercent,
 
-    // Get security symbol from node (only for holdings)
+    // Extracts security ticker symbol (holdings only, null for groups)
     // @sig toSecuritySymbol :: HoldingsTreeNode -> String?
     toSecuritySymbol: node => (P.isHolding(node) ? node.holding.securitySymbol : null),
-}
 
-// Row transformers for cell renderers (receive TanStack Row with .original)
-const T = {
-    // Get stale status from row (only holdings have stale prices)
+    // --- Row-level accessors (for cell renderers — receive TanStack Row with .original) ---
+
+    // Checks if holding has a stale price quote
     // @sig toIsStale :: Row -> Boolean
     toIsStale: row => (P.isHoldingRow(row) ? row.original.holding.isStale : false),
 
-    // Get security symbol from row (only for holdings)
-    // @sig toSecuritySymbol :: Row -> String?
-    toSecuritySymbol: row => (P.isHoldingRow(row) ? row.original.holding.securitySymbol : null),
-
-    // Get shares/quantity from row
-    // @sig toShares :: Row -> Number?
-    toShares: row => (P.isHoldingRow(row) ? row.original.holding.quantity : row.original.aggregate.shares),
-
-    // Get first holding child from a group node (for security grouping where all children share values)
+    // Gets the first Holding child's data (for showing security-level info on group rows)
     // @sig toFirstHoldingChild :: HoldingsTreeNode -> Holding?
     toFirstHoldingChild: node => {
         const firstChild = node.children?.[0]
         return firstChild && P.isHolding(firstChild) ? firstChild.holding : null
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Cell renderer for expandable tree row with holding/group name
 // @sig ExpandableNameCell :: { row: Row, getValue: Function } -> ReactElement
@@ -109,9 +116,6 @@ const ExpandableNameCell = ({ row, getValue }) => {
         </div>
     )
 }
-
-// Base style for stale values
-const staleStyle = { fontStyle: 'italic' }
 
 // Cell renderer for currency with stale indicator
 // @sig StaleCurrencyCell :: { row: Row, getValue: Function } -> ReactElement
@@ -207,6 +211,21 @@ const PriceCell = ({ row, table, getValue }) => {
     return <span style={style}>{isStale ? `${formatted}*` : formatted}</span>
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const NUMERIC = { enableResizing: false, textAlign: 'right' }
+const staleStyle = { fontStyle: 'italic' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 /*
  * Column definitions for investment holdings report
  * Row structure: HoldingsTreeNode (Group with aggregate, or Holding with holding)
@@ -214,14 +233,14 @@ const PriceCell = ({ row, table, getValue }) => {
 // prettier-ignore
 const columns = LookupTable([
     ColumnDefinition.from({ id: 'name',      accessorKey: 'key',                              header: 'Name',      size: 200, minSize: 150, cell: ExpandableNameCell,   enableResizing: true }),
-    ColumnDefinition.from({ id: 'symbol',    accessorFn: D.toSecuritySymbol,                  header: 'Symbol',    size: 80,  minSize: 60,  cell: SymbolCell,           enableResizing: true }),
-    ColumnDefinition.from({ id: 'dayPct',    accessorFn: D.toDayGainLossPercent,              header: 'Day %',     size: 80,  minSize: 60,  cell: StalePercentageCell,  ...NUMERIC }),
-    ColumnDefinition.from({ id: 'dayGain',   accessorFn: D.toDayGainLoss,                     header: 'Day Gain',  size: 100, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
-    ColumnDefinition.from({ id: 'price',     accessorFn: D.toQuotePrice,                      header: 'Price',     size: 90,  minSize: 70,  cell: PriceCell,            ...NUMERIC }),
-    ColumnDefinition.from({ id: 'avgCost',   accessorFn: D.toAverageCostPerShare,             header: 'Avg Cost',  size: 90,  minSize: 70,  cell: AvgCostCell,          ...NUMERIC }),
-    ColumnDefinition.from({ id: 'costBasis', accessorFn: D.toCostBasis,                       header: 'Cost Basis',size: 110, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
-    ColumnDefinition.from({ id: 'shares',    accessorFn: D.toShares,                          header: 'Shares',    size: 90,  minSize: 70,  cell: SharesCell,           ...NUMERIC }),
-    ColumnDefinition.from({ id: 'mktValue',  accessorFn: D.toMarketValue,                     header: 'Mkt Value', size: 110, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
+    ColumnDefinition.from({ id: 'symbol',    accessorFn: T.toSecuritySymbol,                  header: 'Symbol',    size: 80,  minSize: 60,  cell: SymbolCell,           enableResizing: true }),
+    ColumnDefinition.from({ id: 'dayPct',    accessorFn: T.toDayGainLossPercent,              header: 'Day %',     size: 80,  minSize: 60,  cell: StalePercentageCell,  ...NUMERIC }),
+    ColumnDefinition.from({ id: 'dayGain',   accessorFn: T.toDayGainLoss,                     header: 'Day Gain',  size: 100, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
+    ColumnDefinition.from({ id: 'price',     accessorFn: T.toQuotePrice,                      header: 'Price',     size: 90,  minSize: 70,  cell: PriceCell,            ...NUMERIC }),
+    ColumnDefinition.from({ id: 'avgCost',   accessorFn: T.toAverageCostPerShare,             header: 'Avg Cost',  size: 90,  minSize: 70,  cell: AvgCostCell,          ...NUMERIC }),
+    ColumnDefinition.from({ id: 'costBasis', accessorFn: T.toCostBasis,                       header: 'Cost Basis',size: 110, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
+    ColumnDefinition.from({ id: 'shares',    accessorFn: T.toShares,                          header: 'Shares',    size: 90,  minSize: 70,  cell: SharesCell,           ...NUMERIC }),
+    ColumnDefinition.from({ id: 'mktValue',  accessorFn: T.toMarketValue,                     header: 'Mkt Value', size: 110, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),
 ], ColumnDefinition, 'id')
 
 export { columns as InvestmentReportColumns }

@@ -3,17 +3,17 @@
 
 import { KeymapModule } from '@graffio/keymap'
 import { Flex } from '@radix-ui/themes'
-import { DataTable } from '../components/DataTable.jsx'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { TransactionColumns } from '../columns/index.js'
 import { FocusRegistry } from '../commands/data-sources/focus-registry.js'
 import { post } from '../commands/post.js'
+import { DataTable } from '../components/DataTable.jsx'
 import { CategoryFilterColumn, DateFilterColumn, FilterChipRow, SearchFilterColumn } from '../components/index.js'
 import { SearchChip } from '../components/SearchChip.jsx'
-import { TransactionColumns } from '../columns/index.js'
 import { RegisterNavigation } from '../store/register-navigation.js'
 import * as S from '../store/selectors.js'
-import { Action, TableLayout } from '../types/index.js'
+import { Action as A, TableLayout as TL } from '../types/index.js'
 
 const { ActionRegistry } = KeymapModule
 const { bankColumns } = TransactionColumns
@@ -30,34 +30,21 @@ const E = {
     registerPageActions: element => {
         actionCleanup?.()
         actionCleanup = null
-        if (element) {
-            actionCleanup = ActionRegistry.register(pageState.viewId, [
-                {
-                    id: 'select',
-                    description: 'Next match',
-                    execute: () => post(Action.SetViewUiState(pageState.viewId, { navigateSearch: 1 })),
-                },
-                {
-                    id: 'search:prev',
-                    description: 'Previous match',
-                    execute: () => post(Action.SetViewUiState(pageState.viewId, { navigateSearch: -1 })),
-                },
-                {
-                    id: 'search:open',
-                    description: 'Open search',
-                    execute: () => FocusRegistry.focus('search_' + pageState.viewId),
-                },
-            ])
-            post(Action.SetTransactionFilter(pageState.viewId, { initDateRange: true }))
-        }
+
+        if (!element) return
+
+        actionCleanup = ActionRegistry.register(pageState.viewId, actions)
+        post(A.SetTransactionFilter(pageState.viewId, { initDateRange: true }))
     },
 
     // Clears search input DOM value and resets search filter
     // @sig clearSearch :: () -> void
     clearSearch: () => {
         const el = FocusRegistry.get('search_' + pageState.viewId)
+
         if (el) el.value = ''
-        post(Action.SetTransactionFilter(pageState.viewId, { searchQuery: '' }))
+
+        post(A.SetTransactionFilter(pageState.viewId, { searchQuery: '' }))
     },
 }
 
@@ -69,6 +56,13 @@ const E = {
 
 const pageContainerStyle = { height: '100%' }
 const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }
+
+// prettier-ignore
+const actions = [
+    { id: 'select'     , description: 'Next match'    , execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: 1 })) },
+    { id: 'search:prev', description: 'Previous match', execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: -1 })) },
+    { id: 'search:open', description: 'Open search'   , execute: () => FocusRegistry.focus('search_' + pageState.viewId) },
+]
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -99,7 +93,7 @@ const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
     const filterQuery = useSelector(state => S.UI.filterQuery(state, viewId))
     const tableLayout = useSelector(state => S.tableLayoutOrDefault(state, tableLayoutId, bankColumns))
-    const { sorting, columnSizing, columnOrder } = TableLayout.toDataTableProps(tableLayout)
+    const { sorting, columnSizing, columnOrder } = TL.toDataTableProps(tableLayout)
     const data = useSelector(state =>
         S.Transactions.sortedForBankDisplay(state, viewId, accountId, tableLayoutId, bankColumns),
     )
@@ -111,8 +105,8 @@ const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
         viewId,
         accountId,
         highlightedId,
-        onNext: () => post(Action.SetViewUiState(viewId, { navigateSearch: 1 })),
-        onPrev: () => post(Action.SetViewUiState(viewId, { navigateSearch: -1 })),
+        onNext: () => post(A.SetViewUiState(viewId, { navigateSearch: 1 })),
+        onPrev: () => post(A.SetViewUiState(viewId, { navigateSearch: -1 })),
         onClear: E.clearSearch,
     }
 
@@ -125,14 +119,12 @@ const TransactionRegisterPage = ({ accountId, height = '100%' }) => {
         sorting,
         columnSizing,
         columnOrder,
-        onSortingChange: updater =>
-            post(Action.SetTableLayout(TableLayout.applySortingChange(tableLayout, updater(sorting)))),
+        onSortingChange: updater => post(A.SetTableLayout(TL.applySortingChange(tableLayout, updater(sorting)))),
         onColumnSizingChange: updater =>
-            post(Action.SetTableLayout(TableLayout.applySizingChange(tableLayout, updater(columnSizing)))),
-        onColumnOrderChange: newOrder =>
-            post(Action.SetTableLayout(TableLayout.applyOrderChange(tableLayout, newOrder))),
-        onRowClick: row => row.transaction && post(Action.SetViewUiState(viewId, { highlightRow: row.transaction.id })),
-        onHighlightChange: newId => post(Action.SetViewUiState(viewId, { highlightRow: newId })),
+            post(A.SetTableLayout(TL.applySizingChange(tableLayout, updater(columnSizing)))),
+        onColumnOrderChange: newOrder => post(A.SetTableLayout(TL.applyOrderChange(tableLayout, newOrder))),
+        onRowClick: row => row.transaction && post(A.SetViewUiState(viewId, { highlightRow: row.transaction.id })),
+        onHighlightChange: newId => post(A.SetViewUiState(viewId, { highlightRow: newId })),
         onEscape: () => searchQuery && E.clearSearch(),
         actionContext: viewId,
         context: { searchQuery: searchQuery || filterQuery },

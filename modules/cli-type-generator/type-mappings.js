@@ -2,12 +2,19 @@
 // ABOUTME: Used by type generator to know where to write generated types
 
 // Simple mapping: source file -> array of target directories
+
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const REPO_ROOT = resolve(__dirname, '../..')
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
 const sources = {
@@ -35,6 +42,12 @@ const targets = {
 // Shorthand aliases for common multi-target combinations
 const t = targets
 const qifAndWeb = [t.quickenWebApp]
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
 export const typeMappings = {
@@ -102,6 +115,8 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/account-section.type.js`] : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/holdings-aggregate.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/holdings-tree-node.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/category-aggregate.type.js`]: [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/category-tree-node.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/register-row.type.js`]    : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 

@@ -17,7 +17,6 @@ export { ReportsList } from './ReportsList.jsx'
 export { RootLayout } from './RootLayout.jsx'
 export { TabGroup } from './TabGroup.jsx'
 export { TabGroupContainer } from './TabGroupContainer.jsx'
-export { TransactionSubTable } from './TransactionSubTable.jsx'
 
 // Re-export self-selecting column wrappers and shared constants
 export const { AccountFilterColumn, ActionFilterColumn, AsOfDateColumn, CategoryFilterColumn } = FilterChips

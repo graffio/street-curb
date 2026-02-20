@@ -13,10 +13,18 @@ import {
     FilterChipRow,
     GroupByFilterColumn,
     SearchFilterColumn,
-    TransactionSubTable,
 } from '../components/index.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Column visibility by groupBy dimension — hide the column that matches the grouping
+const HIDDEN_COLUMNS_BY_GROUP = { account: { account: false }, payee: { payee: false } }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -32,6 +40,8 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
     const transactionTree = useSelector(state => S.Transactions.tree(state, viewId))
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
+    const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
+    const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
 
     const dataTableProps = {
         columns: CategoryReportColumns,
@@ -39,10 +49,14 @@ const CategoryReportPage = ({ viewId, height = '100%' }) => {
         height,
         rowHeight: 40,
         getChildRows: row => row.children,
-        getRowCanExpand: row => row.original.children?.length > 0 || row.original.value?.length > 0,
-        renderSubComponent: ({ row }) => <TransactionSubTable transactions={row.original.value} groupBy={groupBy} />,
+        getRowCanExpand: row => row.original.children.length > 0,
+        columnVisibility: HIDDEN_COLUMNS_BY_GROUP[groupBy],
         expanded,
         onExpandedChange: updater => post(Action.SetViewUiState(viewId, { treeExpansion: updater })),
+        columnSizing,
+        onColumnSizingChange: updater => post(Action.SetViewUiState(viewId, { columnSizing: updater })),
+        columnOrder,
+        onColumnOrderChange: order => post(Action.SetViewUiState(viewId, { columnOrder: order })),
     }
 
     return (
