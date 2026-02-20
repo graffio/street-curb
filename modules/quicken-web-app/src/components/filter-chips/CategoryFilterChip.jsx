@@ -16,20 +16,12 @@ import { FilterColumn } from './FilterColumn.jsx'
 
 const E = {
     // Toggles a category filter: adds if not selected, removes if selected
-    // @sig handleToggle :: (String, String) -> void
-    handleToggle: (viewId, categoryName) => {
-        if (chipSelectedIds.includes(categoryName)) post(Action.RemoveCategoryFilter(viewId, categoryName))
+    // @sig handleToggle :: (String, String, [String]) -> void
+    handleToggle: (viewId, categoryName, selectedIds) => {
+        if (selectedIds.includes(categoryName)) post(Action.RemoveCategoryFilter(viewId, categoryName))
         else post(Action.AddCategoryFilter(viewId, categoryName))
     },
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Module-level state
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-let chipSelectedIds = []
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -40,12 +32,11 @@ let chipSelectedIds = []
 // Category filter chip — selects category filter data and renders FilterChipPopover
 // @sig Chip :: { viewId: String } -> ReactElement
 const Chip = ({ viewId }) => {
-    const handleToggle = categoryName => E.handleToggle(viewId, categoryName)
+    const handleToggle = categoryName => E.handleToggle(viewId, categoryName, selectedIds)
 
     // prettier-ignore
     const config = { popoverId: 'categories', label: 'Categories', triggerId: 'filter:categories', width: 185, clearFilter: { selectedCategories: [] } }
     const { selectedIds } = useSelector(state => S.UI.categoryFilterData(state, viewId))
-    chipSelectedIds = selectedIds
     return <FilterChipPopover config={config} viewId={viewId} selectedIds={selectedIds} onToggle={handleToggle} />
 }
 
