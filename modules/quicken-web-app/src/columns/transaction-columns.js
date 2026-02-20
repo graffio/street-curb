@@ -8,6 +8,12 @@ import { CellRenderers } from './CellRenderers.jsx'
 const { ActionCell, CategoryCell, CurrencyCell, DateCell, DefaultCell } = CellRenderers
 const { PayeeCell, PriceCell, QuantityCell, SecurityCell } = CellRenderers
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 /*
  * Column definitions for bank transactions (checking, savings, credit card)
  * Row structure is RegisterRow with { transaction, runningBalance } fields
