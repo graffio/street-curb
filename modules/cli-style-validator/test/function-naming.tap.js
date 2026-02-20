@@ -41,6 +41,24 @@ t.test('Given a function with a recognized verb prefix', t => {
         t.end()
     })
 
+    t.test('When the function starts with "load"', t => {
+        const code = `const loadEntitiesFromFile = async file => null`
+        const ast = parseCode(code)
+        const violations = checkFunctionNaming(ast, code, 'test-module.js')
+
+        t.equal(violations.length, 0, 'Then no violation is detected')
+        t.end()
+    })
+
+    t.test('When the function starts with "open"', t => {
+        const code = `const openDb = () => null`
+        const ast = parseCode(code)
+        const violations = checkFunctionNaming(ast, code, 'test-module.js')
+
+        t.equal(violations.length, 0, 'Then no violation is detected')
+        t.end()
+    })
+
     t.test('When the function is named exactly "post"', t => {
         const code = `const post = action => dispatch(action)`
         const ast = parseCode(code)
@@ -77,13 +95,13 @@ t.test('Given a function without a recognized verb prefix', t => {
         t.end()
     })
 
-    t.test('When the function is named "loadFile"', t => {
-        const code = `const loadFile = async path => fetch(path)`
+    t.test('When the function is named "extractData"', t => {
+        const code = `const extractData = async path => fetch(path)`
         const ast = parseCode(code)
-        const violations = checkFunctionNaming(ast, code, 'file-loader.js')
+        const violations = checkFunctionNaming(ast, code, 'data-extractor.js')
 
         t.equal(violations.length, 1, 'Then a violation is detected')
-        t.match(violations[0].message, /loadFile/, 'Then the message names the function')
+        t.match(violations[0].message, /extractData/, 'Then the message names the function')
         t.end()
     })
 

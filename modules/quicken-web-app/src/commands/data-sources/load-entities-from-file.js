@@ -1,11 +1,6 @@
 // ABOUTME: SQLite database loader for the browser
 // ABOUTME: Uses sql.js (WebAssembly SQLite) to read .sqlite files and extract all entities
 
-// COMPLEXITY-TODO: lines — Pre-existing debt, needs splitting (expires 2026-04-01)
-// COMPLEXITY-TODO: functions — Pre-existing debt, needs splitting (expires 2026-04-01)
-// COMPLEXITY-TODO: cohesion-structure — Pre-existing debt (expires 2026-04-01)
-// COMPLEXITY-TODO: sig-documentation — Pre-existing debt (expires 2026-04-01)
-
 /* global FileReader */
 
 import LookupTable from '@graffio/functional/src/lookup-table.js'
@@ -21,33 +16,58 @@ import { Split } from '../../types/split.js'
 import { Tag } from '../../types/tag.js'
 import { Transaction } from '../../types/transaction.js'
 
-// Cache sql.js WASM module - initialized once on first use
-let sqlModulePromise = null
-const getSqlModule = () => {
-    if (!sqlModulePromise) sqlModulePromise = initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
-    return sqlModulePromise
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const A = {
+    // Lazily initializes sql.js WASM module (cached across calls)
+    // @sig findSqlModule :: () -> Promise<SqlJsModule>
+    findSqlModule: () => {
+        if (!sqlModulePromise) sqlModulePromise = initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` })
+        return sqlModulePromise
+    },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // SQLite file magic bytes: "SQLite format 3\0"
 const SQLITE_MAGIC = new Uint8Array([
     0x53, 0x51, 0x4c, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x20, 0x33, 0x00,
 ])
 
-/*
- * Validate file has SQLite magic bytes at start
- * @sig isSqliteFile :: ArrayBuffer -> Boolean
- */
-const isSqliteFile = buffer => {
-    const header = new Uint8Array(buffer, 0, 16)
-    return SQLITE_MAGIC.every((byte, i) => header[i] === byte)
-}
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
-/*
- * Load a SQLite file and extract all entities
- * @sig loadEntitiesFromFile :: (File, Function?) -> Promise<Entities>
- *     Entities = { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
- */
+let sqlModulePromise = null
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Loads a SQLite file and extracts all entities into LookupTables
+// @sig loadEntitiesFromFile :: (File, Function?) -> Promise<Entities>
+//     Entities = { accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices }
 const loadEntitiesFromFile = async (file, onProgress) => {
+    // Validates file has SQLite magic bytes at start
+    // @sig isSqliteFile :: ArrayBuffer -> Boolean
+    const isSqliteFile = buffer => {
+        const header = new Uint8Array(buffer, 0, 16)
+        return SQLITE_MAGIC.every((byte, i) => header[i] === byte)
+    }
+
+    // Converts SQL result set to array of plain objects
     // @sig rowsToObjects :: { columns: [String], values: [[Any]] } -> [Object]
     const rowsToObjects = result => {
         const rowToObject = (columns, row) => Object.fromEntries(columns.map((col, i) => [col, row[i]]))
@@ -56,8 +76,10 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return values.map(row => rowToObject(columns, row))
     }
 
+    // Reads a File as an ArrayBuffer using FileReader API
     // @sig readFileAsArrayBuffer :: File -> Promise<ArrayBuffer>
     const readFileAsArrayBuffer = f => {
+        // Wires FileReader events to Promise resolve/reject
         // @sig setupFileReader :: (File, Function, Function) -> void
         const setupFileReader = (fileToRead, resolve, reject) => {
             const reader = new FileReader()
@@ -69,14 +91,18 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return new Promise((resolve, reject) => setupFileReader(f, resolve, reject))
     }
 
+    // Opens a SQLite database from an ArrayBuffer via sql.js
     // @sig loadDatabase :: ArrayBuffer -> Promise<Database>
     const loadDatabase = async buffer => {
-        const SQL = await getSqlModule()
+        const SQL = await A.findSqlModule()
         return new SQL.Database(new Uint8Array(buffer))
     }
 
+    // Loads all accounts from the database
     // @sig queryAccounts :: Database -> LookupTable<Account>
     const queryAccounts = db => {
+        // Maps a raw account row to an Account tagged type
+        // @sig mapRow :: Object -> Account
         const mapRow = row =>
             Account.from({ ...row, description: row.description || null, creditLimit: row.creditLimit || null })
         const results = db.exec(
@@ -85,10 +111,14 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(mapRow), Account, 'id')
     }
 
+    // Loads all categories from the database
     // @sig queryCategories :: Database -> LookupTable<Category>
     const queryCategories = db => {
+        // Converts SQLite integer to boolean (1=true, 0=false, else null)
+        // @sig sqliteBool :: Number? -> Boolean?
         const sqliteBool = val => (val === 1 ? true : val === 0 ? false : null)
 
+        // Maps a raw category row to a Category tagged type
         // @sig mapRow :: Object -> Category
         const mapRow = row => {
             const { budgetAmount, description, id, isIncomeCategory, isTaxRelated, name, taxSchedule } = row
@@ -108,9 +138,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(mapRow), Category, 'id')
     }
 
+    // Loads all securities from the database
     // @sig querySecurities :: Database -> LookupTable<Security>
     const querySecurities = db => {
         // DB schema has name/symbol swapped - compensate when reading
+        // Maps a raw security row to a Security tagged type
         // @sig mapRow :: Object -> Security
         const mapRow = row => {
             const { goal, id, name, symbol, type } = row
@@ -127,8 +159,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(mapRow), Security, 'id')
     }
 
+    // Loads all tags from the database
     // @sig queryTags :: Database -> LookupTable<Tag>
     const queryTags = db => {
+        // Maps a raw tag row to a Tag tagged type
+        // @sig mapRow :: Object -> Tag
         const mapRow = row => {
             const { color, description, id, name } = row
             return Tag.from({ id, name, color: color || null, description: description || null })
@@ -137,8 +172,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(mapRow), Tag, 'id')
     }
 
+    // Loads all transaction splits from the database
     // @sig querySplits :: Database -> LookupTable<Split>
     const querySplits = db => {
+        // Maps a raw split row to a Split tagged type
+        // @sig mapRow :: Object -> Split
         const mapRow = row => {
             const { amount, categoryId, id, memo, transactionId, transferAccountId } = row
             return Split.from({
@@ -157,8 +195,10 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(mapRow), Split, 'id')
     }
 
+    // Loads all transactions from the database, mapping to Bank or Investment variants
     // @sig queryTransactions :: Database -> LookupTable<Transaction>
     const queryTransactions = db => {
+        // Maps a raw row to a Transaction.Bank tagged type
         // @sig mapBankRow :: Object -> Transaction.Bank
         const mapBankRow = row => {
             const { accountId, address, amount, categoryId, cleared, date } = row
@@ -180,6 +220,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             })
         }
 
+        // Maps a raw row to a Transaction.Investment tagged type
         // @sig mapInvestmentRow :: Object -> Transaction.Investment
         const mapInvestmentRow = row => {
             const { accountId, address, amount, categoryId, cleared, commission, date, id, runningBalance } = row
@@ -219,6 +260,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(transactions, Transaction, 'id')
     }
 
+    // Loads all security prices from the database
     // @sig queryPrices :: Database -> LookupTable<Price>
     const queryPrices = db => {
         const results = db.exec(
@@ -227,6 +269,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(Price.from), Price, 'id')
     }
 
+    // Loads all investment lots from the database
     // @sig queryLots :: Database -> LookupTable<Lot>
     const queryLots = db => {
         const mapRow = row => Lot.from({ ...row, closedDate: row.closedDate || null })
@@ -240,6 +283,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         return LookupTable(rowsToObjects(results).map(mapRow), Lot, 'id')
     }
 
+    // Loads all lot allocations from the database
     // @sig queryLotAllocations :: Database -> LookupTable<LotAllocation>
     const queryLotAllocations = db => {
         const sql = `
