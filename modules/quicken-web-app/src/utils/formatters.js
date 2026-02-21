@@ -29,7 +29,7 @@ const formatDate = dateStr => {
  * @sig formatShortDate :: Date? -> String?
  */
 const formatShortDate = date => {
-    if (!date || !(date instanceof Date)) return null
+    if (!date || !(date instanceof Date)) return undefined
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
@@ -41,7 +41,7 @@ const formatShortDate = date => {
 const formatDateRange = (start, end) => {
     const startStr = formatShortDate(start)
     const endStr = formatShortDate(end)
-    if (!startStr || !endStr) return null
+    if (!startStr || !endStr) return undefined
     return `${startStr} – ${endStr}`
 }
 
@@ -111,12 +111,12 @@ const toFormattedBalance = balance => {
 }
 
 /*
- * Format day change with sign (returns null for zero/nil)
+ * Format day change with sign (returns undefined for zero or undefined)
  *
  * @sig toFormattedDayChange :: Number -> String?
  */
 const toFormattedDayChange = change => {
-    if (change === 0 || change == null) return null
+    if (change === 0 || change === undefined) return undefined
     const sign = change > 0 ? '+' : ''
     return `${sign}${change.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`
 }

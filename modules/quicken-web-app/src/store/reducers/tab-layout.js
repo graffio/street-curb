@@ -5,11 +5,17 @@ import { LookupTable, updateLookupTablePath } from '@graffio/functional'
 import { TabGroup, TabLayout as TabLayoutType, View } from '../../types/index.js'
 import { TransactionFilters } from './transaction-filters.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Finds the next active view ID after removing a view
-    // @sig toNextActiveViewId :: (TabGroup, String, LookupTable<View>) -> String|null
+    // @sig toNextActiveViewId :: (TabGroup, String, LookupTable<View>) -> String?
     toNextActiveViewId: (group, removedViewId, remainingViews) =>
-        group.activeViewId === removedViewId ? (remainingViews[0]?.id ?? null) : group.activeViewId,
+        group.activeViewId === removedViewId ? remainingViews[0]?.id : group.activeViewId,
 
     // Removes a group and evenly resizes remaining groups
     // @sig toLayoutWithoutGroup :: (TabLayout, String) -> TabLayout
@@ -27,6 +33,12 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Creates a copy of a tab group with a new width
     // @sig createResizedGroup :: (TabGroup, Number) -> TabGroup
@@ -35,6 +47,12 @@ const F = {
         return TabGroup(id, views, activeViewId, width)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const MAX_GROUPS = 4
 
@@ -118,7 +136,7 @@ const moveView = (state, action) => {
     const updatedFrom = TabGroup(fromId, remainingViews, activeId, fromWidth)
 
     let views = toViews.addItemWithId(view)
-    if (toIndex != null) views = moveViewToIndex(views, viewId, toIndex)
+    if (toIndex !== undefined) views = moveViewToIndex(views, viewId, toIndex)
     const updatedTo = TabGroup(toId, views, view.id, toWidth)
 
     const groups = tabGroups.addItemWithId(updatedFrom).addItemWithId(updatedTo)
@@ -140,7 +158,7 @@ const createTabGroup = state => {
     const newGroupId = `tg_${nextTabGroupId}`
     const evenWidth = 100 / (tabGroups.length + 1)
     const resizedGroups = tabGroups.map(g => F.createResizedGroup(g, evenWidth))
-    const newGroup = TabGroup(newGroupId, LookupTable([], View, 'id'), null, evenWidth)
+    const newGroup = TabGroup(newGroupId, LookupTable([], View, 'id'), undefined, evenWidth)
     const updatedTabGroups = LookupTable([...resizedGroups, newGroup], TabGroup, 'id')
     const updatedLayout = TabLayoutType(id, updatedTabGroups, newGroupId, nextTabGroupId + 1)
 
@@ -193,6 +211,12 @@ const setTabGroupWidth = (state, action) => ({
     ...state,
     tabLayout: updateLookupTablePath(state.tabLayout, ['tabGroups', action.groupId, 'width'], action.width),
 })
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const TabLayout = {
     closeTabGroup,

@@ -129,12 +129,12 @@ const formatDateForInput = date => {
  * @sig parseDateFromInput :: String -> Date?
  */
 const parseDateFromInput = dateString => {
-    if (!dateString) return null
+    if (!dateString) return undefined
 
     // Handle both MM/DD/YYYY and YYYY-MM-DD formats
     const isoString = dateString.includes('/') ? convertSlashToIso(dateString) : dateString
     const date = new Date(isoString + 'T00:00:00')
-    return isNaN(date.getTime()) ? null : date
+    return isNaN(date.getTime()) ? undefined : date
 }
 
 // ==================== FORM DEFAULTS ====================
@@ -180,6 +180,12 @@ const applyDateDefaults = ({ currentStartDate, currentEndDate, startDefault, end
         endUpdated: Boolean(endUpdated),
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const DateInputUtils = {
     createDefaultParts,

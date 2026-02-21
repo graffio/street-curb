@@ -69,7 +69,7 @@ const createEmptyState = () => ({
     transactions: LookupTable([], Transaction, 'id'),
     tabLayout: TabLayout(
         'tl_main',
-        LookupTable([TabGroup('tg_1', LookupTable([], View, 'id'), null, 100)], TabGroup, 'id'),
+        LookupTable([TabGroup('tg_1', LookupTable([], View, 'id'), undefined, 100)], TabGroup, 'id'),
         'tg_1',
         2,
     ),
@@ -79,9 +79,9 @@ const createEmptyState = () => ({
     collapsedSections: new Set(),
     showReopenBanner: false,
     showDrawer: false,
-    loadingStatus: null,
-    draggingViewId: null,
-    dropTargetGroupId: null,
+    loadingStatus: undefined,
+    draggingViewId: undefined,
+    dropTargetGroupId: undefined,
 })
 
 // Main reducer that dispatches actions to specific handlers

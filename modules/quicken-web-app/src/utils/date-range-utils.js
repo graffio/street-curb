@@ -17,7 +17,11 @@ import {
 
 import { DateInputUtils } from './date-input-utils.js'
 
-// ==================== DATE RANGE CONSTANTS ====================
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /*
  * Predefined date range options in display order with separators
@@ -54,15 +58,15 @@ const DATE_RANGES = {
 
 /*
  * Calculate last N days range (N days ago to today)
- * @sig lastNDaysRange :: (Date, Number) -> DateRange
+ * @sig createLastNDaysRange :: (Date, Number) -> DateRange
  */
-const lastNDaysRange = (today, daysAgo) => ({ start: subtractDays(today, daysAgo - 1), end: today })
+const createLastNDaysRange = (today, daysAgo) => ({ start: subtractDays(today, daysAgo - 1), end: today })
 
 /*
  * Calculate last month's date range
- * @sig lastMonthRange :: Date -> DateRange
+ * @sig createLastMonthRange :: Date -> DateRange
  */
-const lastMonthRange = now => {
+const createLastMonthRange = now => {
     const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1
     const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
     return { start: new Date(lastMonthYear, lastMonth, 1), end: new Date(lastMonthYear, lastMonth + 1, 0) }
@@ -70,9 +74,9 @@ const lastMonthRange = now => {
 
 /*
  * Calculate last quarter's date range
- * @sig lastQuarterRange :: Date -> DateRange
+ * @sig createLastQuarterRange :: Date -> DateRange
  */
-const lastQuarterRange = now => {
+const createLastQuarterRange = now => {
     const currentQuarter = Math.floor(now.getMonth() / 3)
     const lastQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1
     const lastQuarterYear = currentQuarter === 0 ? now.getFullYear() - 1 : now.getFullYear()
@@ -84,18 +88,18 @@ const lastQuarterRange = now => {
 
 /*
  * Calculate last year's date range
- * @sig lastYearRange :: Date -> DateRange
+ * @sig createLastYearRange :: Date -> DateRange
  */
-const lastYearRange = now => {
+const createLastYearRange = now => {
     const previousYear = now.getFullYear() - 1
     return { start: new Date(previousYear, 0, 1), end: new Date(previousYear, 11, 31) }
 }
 
 /*
  * Calculate last 12 months range
- * @sig lastTwelveMonthsRange :: (Date, Date) -> DateRange
+ * @sig createLastTwelveMonthsRange :: (Date, Date) -> DateRange
  */
-const lastTwelveMonthsRange = (now, today) => ({
+const createLastTwelveMonthsRange = (now, today) => ({
     start: new Date(now.getFullYear(), now.getMonth() - 11, 1),
     end: today,
 })
@@ -123,22 +127,22 @@ const calculateDateRange = key => {
         if (key === 'yearToDate')       return { start: startOfYear(now),                  end: now                             }
         if (key === 'yesterday')        return { start: subtractDays(now, 1),              end: subtractDays(now, 1)            }
         if (key === 'lastWeek')         return { start: startOfWeek(subtractDays(now, 7)), end: endOfWeek(subtractDays(now, 7)) }
-        if (key === 'lastMonth')        return lastMonthRange(now)
-        if (key === 'lastQuarter')      return lastQuarterRange(now)
-        if (key === 'lastYear')         return lastYearRange(now)
-        if (key === 'lastSevenDays')    return lastNDaysRange(now, 7)
-        if (key === 'lastThirtyDays')   return lastNDaysRange(now, 30)
-        if (key === 'lastTwelveMonths') return lastTwelveMonthsRange(now, now)
+        if (key === 'lastMonth')        return createLastMonthRange(now)
+        if (key === 'lastQuarter')      return createLastQuarterRange(now)
+        if (key === 'lastYear')         return createLastYearRange(now)
+        if (key === 'lastSevenDays')    return createLastNDaysRange(now, 7)
+        if (key === 'lastThirtyDays')   return createLastNDaysRange(now, 30)
+        if (key === 'lastTwelveMonths') return createLastTwelveMonthsRange(now, now)
 
-        return { start: null, end: null }
+        return { start: undefined, end: undefined }
     }
 
-    if (key.startsWith('separator')) return null
-    if (key === 'all') return null
-    if (key === 'customDates') return null
+    if (key.startsWith('separator')) return undefined
+    if (key === 'all') return undefined
+    if (key === 'customDates') return undefined
 
     const { start, end } = startEndDateTimes(key)
-    return start ? { start: startOfDay(start), end: endOfDay(end) } : null
+    return start ? { start: startOfDay(start), end: endOfDay(end) } : undefined
 }
 
 /*
@@ -150,7 +154,7 @@ const createDateRangeFromStrings = (startDateString, endDateString) => {
     const startDate = DateInputUtils.parseDateFromInput(startDateString)
     const endDate = DateInputUtils.parseDateFromInput(endDateString)
 
-    if (!startDate || !endDate) return null
+    if (!startDate || !endDate) return undefined
 
     return { start: startDate, end: endOfDay(endDate) }
 }
@@ -161,20 +165,26 @@ const createDateRangeFromStrings = (startDateString, endDateString) => {
  *     DateRange = { start: Date, end: Date }
  */
 const createDateRangeIfComplete = (startDateString, endDateString) => {
-    if (!startDateString || !endDateString) return null
+    if (!startDateString || !endDateString) return undefined
     return createDateRangeFromStrings(startDateString, endDateString)
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const DateRangeUtils = {
     DATE_RANGES,
     calculateDateRange,
     createDateRangeFromStrings,
     createDateRangeIfComplete,
-    lastNDaysRange,
-    lastMonthRange,
-    lastQuarterRange,
-    lastYearRange,
-    lastTwelveMonthsRange,
+    createLastNDaysRange,
+    createLastMonthRange,
+    createLastQuarterRange,
+    createLastYearRange,
+    createLastTwelveMonthsRange,
 }
 
 export { DateRangeUtils }

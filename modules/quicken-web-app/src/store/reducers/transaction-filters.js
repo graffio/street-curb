@@ -10,7 +10,7 @@ const createDefaultFilter = viewId =>
     TransactionFilter(
         viewId,
         new Date().toISOString().slice(0, 10), // asOfDate
-        { start: null, end: null }, // dateRange
+        { start: undefined, end: undefined }, // dateRange
         'all', // dateRangeKey
         '', // filterQuery
         '', // searchQuery
@@ -18,9 +18,9 @@ const createDefaultFilter = viewId =>
         [], // selectedAccounts
         [], // selectedSecurities
         [], // selectedInvestmentActions
-        null, // groupBy
-        null, // customStartDate
-        null, // customEndDate
+        undefined, // groupBy
+        undefined, // customStartDate
+        undefined, // customEndDate
     )
 
 // Merges partial filter changes into transaction filter state for a specific view

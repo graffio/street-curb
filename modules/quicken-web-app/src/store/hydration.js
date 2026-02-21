@@ -59,7 +59,7 @@ const hydrateTabLayout = async () => {
     // Creates default tab layout with one empty tab group
     // @sig createDefaultTabLayout :: () -> TabLayout
     const createDefaultTabLayout = () => {
-        const emptyGroup = TabGroup('tg_1', LookupTable([], View, 'id'), null, 100)
+        const emptyGroup = TabGroup('tg_1', LookupTable([], View, 'id'), undefined, 100)
         return TabLayout('tl_main', LookupTable([emptyGroup], TabGroup, 'id'), 'tg_1', 2)
     }
 
@@ -110,6 +110,12 @@ const hydrateAccountListPrefs = async () => {
         return defaults
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const Hydration = { hydrateTableLayouts, hydrateTabLayout, hydrateAccountListPrefs }
 export { Hydration }

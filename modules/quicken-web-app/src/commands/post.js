@@ -49,11 +49,7 @@ const E = {
     // @sig persistTableLayouts :: () -> ()
     persistTableLayouts: () => IndexedDbStorage.persistTableLayouts(S.tableLayouts(currentStore().getState())),
 
-    // Module-level debounced functions — initialized after E is defined
-    debouncedPersistTableLayouts: null,
-    debouncedPersistTabLayout: null,
-
-    // Writes tab layout to IndexedDB (guard: tabLayout is null before LoadFile completes)
+    // Writes tab layout to IndexedDB (guard: tabLayout is undefined before LoadFile completes)
     // @sig persistTabLayout :: () -> ()
     persistTabLayout: () => {
         const tabLayout = S.tabLayout(currentStore().getState())

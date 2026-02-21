@@ -16,14 +16,14 @@ const T = {
     // @sig parseCategoryParent :: String -> String?
     parseCategoryParent: key => {
         const idx = key.lastIndexOf(':')
-        return idx === -1 ? null : key.slice(0, idx)
+        return idx === -1 ? undefined : key.slice(0, idx)
     },
 
     // Derive parent year from YYYY-MM month key
     // @sig parseMonthParent :: String -> String?
     parseMonthParent: key => {
         const idx = key.indexOf('-')
-        return idx === -1 ? null : key.slice(0, idx)
+        return idx === -1 ? undefined : key.slice(0, idx)
     },
 
     // Extract YYYY-MM from transaction date
@@ -77,7 +77,7 @@ const buildTransactionTree = (dimension, transactions, aggregateFn = collectTran
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Default aggregation: sum amounts and count transactions (amount ?? 0 guards null for splits/transfers)
+// Default aggregation: sum amounts and count transactions (amount ?? 0 guards undefined for splits/transfers)
 // @sig collectTransactionTotals :: ([Transaction], [Aggregate]) -> Aggregate
 const collectTransactionTotals = (transactions, childAggregates) => {
     const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
@@ -96,8 +96,8 @@ const collectTransactionTotals = (transactions, childAggregates) => {
 // Configuration for each groupBy dimension
 const dimensionConfig = {
     category: { getKey: txn => txn.categoryName || 'Uncategorized', getParent: T.parseCategoryParent },
-    account: { getKey: txn => txn.accountName || 'Unknown Account', getParent: () => null },
-    payee: { getKey: txn => txn.payee || 'No Payee', getParent: () => null },
+    account: { getKey: txn => txn.accountName || 'Unknown Account', getParent: () => undefined },
+    payee: { getKey: txn => txn.payee || 'No Payee', getParent: () => undefined },
     month: { getKey: T.toMonthKey, getParent: T.parseMonthParent },
 }
 

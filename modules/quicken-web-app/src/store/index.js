@@ -1,6 +1,7 @@
 // ABOUTME: Redux store configuration with async initialization
 // ABOUTME: Exports initializeStore() which hydrates from IndexedDB before creating store
 // COMPLEXITY: Exports both store access and initialization - both needed by app and commands
+// COMPLEXITY: function-naming — currentStore is a getter, not an action verb
 
 import { createStore } from 'redux'
 import { Hydration } from './hydration.js'
@@ -8,13 +9,25 @@ import { Reducer } from './reducer.js'
 
 const { createEmptyState, rootReducer } = Reducer
 
-let store = null
+let store
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if running in test mode (skip IndexedDB hydration to start fresh)
     // @sig isTestMode :: () -> Boolean
     isTestMode: () => new URLSearchParams(window.location.search).has('testFile'),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Build promises that resolve to empty state values (for test mode, skipping IndexedDB)
@@ -58,6 +71,12 @@ const initializeStore = async () => {
 // Returns the store (available after initializeStore completes)
 // @sig currentStore :: () -> Store
 const currentStore = () => store
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export * as Selectors from './selectors.js'
 export { currentStore, initializeStore }

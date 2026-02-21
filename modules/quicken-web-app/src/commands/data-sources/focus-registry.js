@@ -18,11 +18,11 @@ const FocusRegistry = {
     // @sig unregister :: (String) -> void
     unregister: id => delete registry[id],
 
-    // Returns a registered element if it exists and is still in the DOM, or null
-    // @sig get :: (String) -> Element | null
+    // Returns a registered element if it exists and is still in the DOM, or undefined
+    // @sig get :: (String) -> Element?
     get: id => {
         const el = registry[id]
-        return el?.isConnected ? el : null
+        return el?.isConnected ? el : undefined
     },
 
     // Focuses a registered element if it exists and is still in the DOM

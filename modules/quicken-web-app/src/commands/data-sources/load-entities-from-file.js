@@ -48,7 +48,7 @@ const SQLITE_MAGIC = new Uint8Array([
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-let sqlModulePromise = null
+let sqlModulePromise
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -104,7 +104,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         // Maps a raw account row to an Account tagged type
         // @sig mapRow :: Object -> Account
         const mapRow = row =>
-            Account.from({ ...row, description: row.description || null, creditLimit: row.creditLimit || null })
+            Account.from({
+                ...row,
+                description: row.description || undefined,
+                creditLimit: row.creditLimit || undefined,
+            })
         const results = db.exec(
             'SELECT id, name, type, description, creditLimit FROM accounts WHERE orphanedAt IS NULL',
         )
@@ -114,9 +118,9 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     // Loads all categories from the database
     // @sig queryCategories :: Database -> LookupTable<Category>
     const queryCategories = db => {
-        // Converts SQLite integer to boolean (1=true, 0=false, else null)
+        // Converts SQLite integer to boolean (1=true, 0=false, else undefined)
         // @sig sqliteBool :: Number? -> Boolean?
-        const sqliteBool = val => (val === 1 ? true : val === 0 ? false : null)
+        const sqliteBool = val => (val === 1 ? true : val === 0 ? false : undefined)
 
         // Maps a raw category row to a Category tagged type
         // @sig mapRow :: Object -> Category
@@ -125,11 +129,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             return Category.from({
                 id,
                 name,
-                description: description || null,
-                budgetAmount: budgetAmount || null,
+                description: description || undefined,
+                budgetAmount: budgetAmount || undefined,
                 isIncomeCategory: sqliteBool(isIncomeCategory),
                 isTaxRelated: sqliteBool(isTaxRelated),
-                taxSchedule: taxSchedule || null,
+                taxSchedule: taxSchedule || undefined,
             })
         }
 
@@ -148,10 +152,10 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             const { goal, id, name, symbol, type } = row
             return Security.from({
                 id,
-                name: name || symbol || null, // default to symbol if there's no name
-                symbol: symbol || name || null, // default to the name if there's no symbol
-                type: type || null,
-                goal: goal || null,
+                name: name || symbol || undefined, // default to symbol if there's no name
+                symbol: symbol || name || undefined, // default to the name if there's no symbol
+                type: type || undefined,
+                goal: goal || undefined,
             })
         }
 
@@ -166,7 +170,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
         // @sig mapRow :: Object -> Tag
         const mapRow = row => {
             const { color, description, id, name } = row
-            return Tag.from({ id, name, color: color || null, description: description || null })
+            return Tag.from({ id, name, color: color || undefined, description: description || undefined })
         }
         const results = db.exec('SELECT id, name, color, description FROM tags WHERE orphanedAt IS NULL')
         return LookupTable(rowsToObjects(results).map(mapRow), Tag, 'id')
@@ -182,10 +186,10 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             return Split.from({
                 id,
                 transactionId,
-                categoryId: categoryId || null,
+                categoryId: categoryId || undefined,
                 amount,
-                memo: memo || null,
-                transferAccountId: transferAccountId || null,
+                memo: memo || undefined,
+                transferAccountId: transferAccountId || undefined,
             })
         }
         const results = db.exec(
@@ -210,13 +214,13 @@ const loadEntitiesFromFile = async (file, onProgress) => {
                 amount,
                 runningBalance,
                 transactionType: 'bank',
-                address: address || null,
-                categoryId: categoryId || null,
-                cleared: cleared || null,
-                memo: memo || null,
-                number: number || null,
-                payee: payee || null,
-                transferAccountId: transferAccountId || null,
+                address: address || undefined,
+                categoryId: categoryId || undefined,
+                cleared: cleared || undefined,
+                memo: memo || undefined,
+                number: number || undefined,
+                payee: payee || undefined,
+                transferAccountId: transferAccountId || undefined,
             })
         }
 
@@ -231,18 +235,18 @@ const loadEntitiesFromFile = async (file, onProgress) => {
                 date,
                 runningBalance,
                 transactionType: 'investment',
-                address: address || null,
-                amount: amount || null,
-                categoryId: categoryId || null,
-                cleared: cleared || null,
-                commission: commission || null,
+                address: address || undefined,
+                amount: amount || undefined,
+                categoryId: categoryId || undefined,
+                cleared: cleared || undefined,
+                commission: commission || undefined,
                 investmentAction,
-                memo: memo || null,
-                payee: payee || null,
-                price: price || null,
-                quantity: quantity || null,
-                securityId: securityId || null,
-                transferAccountId: transferAccountId || null,
+                memo: memo || undefined,
+                payee: payee || undefined,
+                price: price || undefined,
+                quantity: quantity || undefined,
+                securityId: securityId || undefined,
+                transferAccountId: transferAccountId || undefined,
             })
         }
 
@@ -272,7 +276,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     // Loads all investment lots from the database
     // @sig queryLots :: Database -> LookupTable<Lot>
     const queryLots = db => {
-        const mapRow = row => Lot.from({ ...row, closedDate: row.closedDate || null })
+        const mapRow = row => Lot.from({ ...row, closedDate: row.closedDate || undefined })
         const sql = `
             SELECT id, accountId, securityId, purchaseDate, quantity, costBasis,
                    remainingQuantity, closedDate, createdByTransactionId, createdAt

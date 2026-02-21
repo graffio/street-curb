@@ -1,7 +1,7 @@
 // ABOUTME: In-memory state for FileSystemFileHandle (non-serializable, can't go in Redux)
 // ABOUTME: Shared across effect handlers; persisted separately via Storage
 
-let handle = null
+let handle
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
