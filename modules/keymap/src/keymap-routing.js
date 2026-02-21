@@ -4,6 +4,12 @@
 import { ActionRegistry } from './action-registry.js'
 import { normalizeKey } from './keymap.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const P = {
     // Checks if the element is a text input that should receive keystrokes
     // @sig isInputElement :: Element -> Boolean
@@ -13,12 +19,18 @@ const P = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Gets the active view ID from the tab layout
-    // @sig toActiveViewId :: TabLayout -> String | null
+    // @sig toActiveViewId :: TabLayout -> String?
     toActiveViewId: tabLayout => {
         const activeGroup = tabLayout?.tabGroups?.find(g => g.id === tabLayout.activeTabGroupId)
-        return activeGroup?.activeViewId ?? null
+        return activeGroup?.activeViewId
     },
 
     // Inverts bindings: { key: actionId } → { actionId: [key1, key2] }
@@ -47,6 +59,12 @@ const T = {
         ({ id, description }) => ({ description, keys: reverseBindings[id], from: T.toGroupName(groupNames, id) }),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Creates a keydown handler parameterized by bindings
 // @sig handleKeydown :: Object -> (TabLayout, KeyboardEvent) -> void
 const handleKeydown = bindings => (tabLayout, event) => {
@@ -62,7 +80,7 @@ const handleKeydown = bindings => (tabLayout, event) => {
 }
 
 // Collects display intents for KeymapDrawer parameterized by bindings and group names
-// @sig toAvailableIntents :: (Object, Object, String|null) -> [{ description, keys, from }]
+// @sig toAvailableIntents :: (Object, Object, String?) -> [{ description, keys, from }]
 const toAvailableIntents = (bindings, groupNames, activeViewId) => {
     const reverseBindings = T.toReverseBindings(bindings)
     const actions = T.toUniqueActions(ActionRegistry.collectForContext(activeViewId))

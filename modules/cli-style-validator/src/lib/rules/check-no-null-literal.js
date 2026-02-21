@@ -7,6 +7,18 @@ import { Predicates as PS } from '../shared/predicates.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const P = {
+    // Check if file is a boundary utility that must handle null (e.g., isNil, type, clone, equals)
+    // @sig isBoundaryFile :: String -> Boolean
+    isBoundaryFile: filePath => BOUNDARY_PATTERNS.some(pattern => filePath.includes(pattern)),
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
 // Factories
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -32,7 +44,7 @@ const V = {
     // Check source code for null literals by walking the AST
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
-        if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode)) return []
+        if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode) || P.isBoundaryFile(filePath)) return []
 
         return AST.from(ast)
             .filter(node => {
@@ -51,6 +63,20 @@ const V = {
 
 const PRIORITY = 7
 const violation = FS.createViolation('no-null-literal', PRIORITY)
+
+// Boundary utilities in @graffio/functional that must detect null as a distinct type
+const BOUNDARY_PATTERNS = [
+    'ramda-like/isNil.js',
+    'ramda-like/type.js',
+    'ramda-like/clone.js',
+    'ramda-like/equals.js',
+    'ramda-like/internal/set.js',
+    'ramda-like/internal/index-of.js',
+    'ramda-like/diff-objects.js',
+    'ramda-like/path.js',
+    'apply-sort.js',
+    'apply-filter.js',
+]
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

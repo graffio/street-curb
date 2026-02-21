@@ -3,21 +3,39 @@
 
 import { filter, find } from '@graffio/functional'
 
-let registrations = []
-let nextBatchId = 0
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Checks if a registration matches the given action ID and is valid for the active context
-    // @sig isMatchingAction :: (String, String|null) -> Registration -> Boolean
+    // @sig isMatchingAction :: (String, String?) -> Registration -> Boolean
     isMatchingAction:
         (actionId, activeContext) =>
         ({ id, context }) =>
-            id === actionId && (context === null || context === activeContext),
+            id === actionId && (context === undefined || context === activeContext),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+let registrations = []
+let nextBatchId = 0
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const ActionRegistry = {
     // Appends actions for a context; returns cleanup function that removes only this batch
-    // @sig register :: (String|null, [{ id, description, execute }]) -> (() -> void)
+    // @sig register :: (String?, [{ id, description, execute }]) -> (() -> void)
     register: (context, actions) => {
         const batchId = nextBatchId++
         const entries = actions.map(({ id, description, execute }) => ({ batchId, context, id, description, execute }))
@@ -30,13 +48,14 @@ const ActionRegistry = {
     unregister: context => (registrations = filter(r => r.context !== context, registrations)),
 
     // Finds the last-registered action matching id + context (LIFO)
-    // @sig resolve :: (String, String|null) -> { id, description, execute, context } | null
+    // @sig resolve :: (String, String?) -> { id, description, execute, context }?
     resolve: (actionId, activeContext) =>
-        find(P.isMatchingAction(actionId, activeContext), [...registrations].reverse()) ?? null,
+        find(P.isMatchingAction(actionId, activeContext), [...registrations].reverse()),
 
-    // Returns all actions available for a given context (includes global actions with null context)
-    // @sig collectForContext :: String|null -> [{ id, description, context }]
-    collectForContext: activeContext => filter(r => r.context === null || r.context === activeContext, registrations),
+    // Returns all actions available for a given context (includes global actions with undefined context)
+    // @sig collectForContext :: String? -> [{ id, description, context }]
+    collectForContext: activeContext =>
+        filter(r => r.context === undefined || r.context === activeContext, registrations),
 
     // Empties the registry (test-only)
     // @sig clear :: () -> void
