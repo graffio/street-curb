@@ -4,8 +4,11 @@
 import { AST, ASTNode } from '@graffio/ast'
 import { Predicates as PS } from './predicates.js'
 
-const { ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportNamedDeclaration } = ASTNode
-const { FunctionDeclaration, VariableDeclaration, VariableDeclarator } = ASTNode
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const AS = {
     // Count lines in a function's body (for length checks)
@@ -59,27 +62,24 @@ const AS = {
     },
 
     // Convert AST statement to component info if it's a PascalCase component declaration
-    // @sig toComponent :: ASTNode -> { name: String, node: ASTNode, startLine: Number, endLine: Number } | null
+    // @sig toComponent :: ASTNode -> { name: String, node: ASTNode, startLine: Number, endLine: Number }?
     toComponent: node => {
-        const startLine = node.line
-        const endLine = node.endLine
+        const { endLine, line, name } = node
 
-        if (FunctionDeclaration.is(node)) {
-            const name = node.name
-            return PS.isPascalCase(name) ? { name, node, startLine, endLine } : null
-        }
+        if (FunctionDeclaration.is(node))
+            return PS.isPascalCase(name) ? { name, node, startLine: line, endLine } : undefined
 
-        if (!VariableDeclaration.is(node)) return null
+        if (!VariableDeclaration.is(node)) return undefined
 
         const decl = node.declarations[0]
-        if (!decl) return null
-        const name = decl.name
+        if (!decl) return undefined
+        const declName = decl.name
         const init = decl.value
-        if (!name || !PS.isPascalCase(name) || !init) return null
+        if (!declName || !PS.isPascalCase(declName) || !init) return undefined
 
-        if (!PS.isFunctionNode(init)) return null
+        if (!PS.isFunctionNode(init)) return undefined
 
-        return { name, node: init, startLine, endLine }
+        return { name: declName, node: init, startLine: line, endLine }
     },
 
     // Find all PascalCase component declarations at module level
@@ -94,16 +94,20 @@ const AS = {
     // @sig toNodeLineNumbers :: ASTNode -> [Number]
     toNodeLineNumbers: node => AS.lineRange(node.startLine, node.endLine),
 
+    // Transform a statement into function info records for module-level functions
+    // @sig toStatementFunctions :: ASTNode -> [{ name: String, line: Number }]
+    toStatementFunctions: stmt => {
+        const { declarations, line, name } = stmt
+        if (FunctionDeclaration.is(stmt) && name) return [{ name, line }]
+        if (!VariableDeclaration.is(stmt)) return []
+        return declarations
+            .filter(({ value, name: n }) => value && PS.isFunctionNode(value) && n)
+            .map(({ name: n, line: l }) => ({ name: n, line: l }))
+    },
+
     // Collect all module-level function declarations and variable-assigned functions
     // @sig collectModuleLevelFunctions :: AST -> [{ name: String, line: Number }]
-    collectModuleLevelFunctions: ast =>
-        AST.topLevelStatements(ast).flatMap(stmt => {
-            if (FunctionDeclaration.is(stmt) && stmt.name) return [{ name: stmt.name, line: stmt.line }]
-            if (!VariableDeclaration.is(stmt)) return []
-            return stmt.declarations
-                .filter(({ value, name }) => value && PS.isFunctionNode(value) && name)
-                .map(({ name, line }) => ({ name, line }))
-        }),
+    collectModuleLevelFunctions: ast => AST.topLevelStatements(ast).flatMap(AS.toStatementFunctions),
 
     // Transform AST to unique exported names
     // @sig toExportedNames :: ESTreeAST -> [String]
@@ -125,5 +129,20 @@ const AS = {
         return name ? [name] : []
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const { ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportNamedDeclaration } = ASTNode
+const { FunctionDeclaration, VariableDeclaration, VariableDeclarator } = ASTNode
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { AS as Aggregators }

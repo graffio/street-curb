@@ -7,26 +7,11 @@ import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 0 // High priority - structural issue
-
-// Cohesion group names and their naming patterns
-const COHESION_PATTERNS = {
-    P: /^(is|has|should|can)[A-Z]/,
-    T: /^(to|parse|format)[A-Z]/,
-    F: /^(create|make|build)[A-Z]/,
-    V: /^(check|validate)[A-Z]/,
-    A: /^(collect|count|gather|find|process)[A-Z]/,
-    E: /^(persist|handle|dispatch|emit|send|query|register|hydrate)[A-Z]/,
-}
-
-// Vague prefixes that should be replaced with more specific names
-const VAGUE_PREFIXES = /^(get|extract|derive|select|fetch)[A-Z]/
-
-// Required declaration order
-const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A', 'E']
-
-// Names that are exempt from cohesion group requirements
-const EXEMPT_NAMES = ['rootReducer']
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if name is exempt from cohesion requirements
@@ -52,22 +37,27 @@ const P = {
 
     // Match function name to suggested cohesion group based on prefix
     // @sig matchesCohesionPattern :: String -> String?
-    matchesCohesionPattern: name =>
-        Object.entries(COHESION_PATTERNS).find(([, pattern]) => pattern.test(name))?.[0] || null,
+    matchesCohesionPattern: name => Object.entries(COHESION_PATTERNS).find(([, pattern]) => pattern.test(name))?.[0],
 
     // Check if name has a vague prefix
     // @sig hasVaguePrefix :: String -> Boolean
     hasVaguePrefix: name => VAGUE_PREFIXES.test(name),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Transform statement to cohesion group declaration if it is one
     // @sig toCohesionDecl :: Statement -> { name, line, value }?
     toCohesionDecl: stmt => {
-        if (!ASTNode.VariableDeclaration.is(stmt)) return null
+        if (!ASTNode.VariableDeclaration.is(stmt)) return undefined
         const { firstName, firstValue, line } = stmt
-        if (!firstName || !PS.isCohesionGroup(firstName)) return null
-        if (!ASTNode.ObjectExpression.is(firstValue)) return null
+        if (!firstName || !PS.isCohesionGroup(firstName)) return undefined
+        if (!ASTNode.ObjectExpression.is(firstValue)) return undefined
         return { name: firstName, line, value: firstValue }
     },
 
@@ -75,20 +65,24 @@ const T = {
     // @sig toFunctionMember :: Property -> { name, line }?
     toFunctionMember: prop => {
         const { name, value } = prop
-        return name && value && PS.isFunctionNode(value) ? F.createNameInfo(name, prop) : null
+        return name && value && PS.isFunctionNode(value) ? F.createNameInfo(name, prop) : undefined
     },
 
     // Transform object property to external reference info
     // @sig toExternalRef :: (String, Property) -> { group, propName, refName, line }?
     toExternalRef: (groupName, prop) => {
         const { name, value, line } = prop
-        if (!name || !value) return null
-        if (!ASTNode.Identifier.is(value) || PS.isFunctionNode(value)) return null
+        if (!name || !value) return undefined
+        if (!ASTNode.Identifier.is(value) || PS.isFunctionNode(value)) return undefined
         return { group: groupName, propName: name, refName: value.name, line }
     },
 }
 
-const violation = FS.createViolation('cohesion-structure', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a named info object with line from a node
@@ -139,6 +133,12 @@ const F = {
                 `FIX: Use a more specific name that describes what the function actually does.`,
         ),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const V = {
     // Check if declaration is out of order relative to previous
@@ -211,6 +211,12 @@ const V = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Collect all cohesion group declarations from AST
     // @sig collectCohesionDecls :: AST -> [{ name, line, value }]
@@ -243,7 +249,7 @@ const A = {
         Lines.from(sourceCode)
             .map((line, index) => {
                 const match = line.match(/\/\/\s*COMPLEXITY:\s*(.+)/)
-                return match ? { line: index + 1, reason: match[1].trim() } : null
+                return match ? { line: index + 1, reason: match[1].trim() } : undefined
             })
             .filter(Boolean),
 
@@ -258,6 +264,41 @@ const A = {
             .filter(prop => prop.value && ASTNode.Identifier.is(prop.value))
             .map(prop => prop.value.name),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 0 // High priority - structural issue
+
+// Cohesion group names and their naming patterns
+const COHESION_PATTERNS = {
+    P: /^(is|has|should|can)[A-Z]/,
+    T: /^(to|parse|format)[A-Z]/,
+    F: /^(create|make|build)[A-Z]/,
+    V: /^(check|validate)[A-Z]/,
+    A: /^(collect|count|gather|find|process)[A-Z]/,
+    E: /^(persist|handle|dispatch|emit|send|query|register|hydrate)[A-Z]/,
+}
+
+// Vague prefixes that should be replaced with more specific names
+const VAGUE_PREFIXES = /^(get|extract|derive|select|fetch)[A-Z]/
+
+// Required declaration order
+const COHESION_ORDER = ['P', 'T', 'F', 'V', 'A', 'E']
+
+// Names that are exempt from cohesion group requirements
+const EXEMPT_NAMES = ['rootReducer']
+
+const violation = FS.createViolation('cohesion-structure', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run cohesion-structure rule with COMPLEXITY exemption support
 // @sig checkCohesionStructure :: (AST?, String, String) -> [Violation]

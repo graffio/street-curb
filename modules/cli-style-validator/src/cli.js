@@ -5,6 +5,12 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { checkFile } from './lib/check-file.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // COMPLEXITY: cohesion-structure — CLI entry point functions don't fit cohesion model
 // COMPLEXITY: function-naming — CLI entry point; "main" is conventional
 /**
@@ -27,7 +33,7 @@ const main = async () => {
         ),
     )
 
-    results.forEach(r => console.log(JSON.stringify(r, null, 2)))
+    results.forEach(r => console.log(JSON.stringify(r, undefined, 2)))
     process.exit(results.some(r => !r.isCompliant) ? 1 : 0)
 }
 

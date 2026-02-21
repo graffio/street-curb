@@ -5,7 +5,11 @@ import { AST } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 5
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Transform line number to trimmed content of preceding line
@@ -17,7 +21,11 @@ const T = {
     },
 }
 
-const violation = FS.createViolation('function-spacing', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a function-spacing violation
@@ -25,16 +33,22 @@ const F = {
     createViolation: (line, message) => violation(line, 1, message),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Check if a function needs a blank line above it
     // @sig checkFunction :: (ASTNode, ASTNode?, String) -> Violation?
     checkFunction: (node, prevNode, sourceCode) => {
-        if (!prevNode) return null
+        if (!prevNode) return undefined
 
         const startLine = node.startLine
         const prevLineContent = T.toPrevLineContent(startLine, sourceCode)
 
-        if (prevLineContent === '' || PS.isCommentLine(prevLineContent)) return null
+        if (prevLineContent === '' || PS.isCommentLine(prevLineContent)) return undefined
 
         const currentIsMultiline = PS.isMultilineNode(node)
         const prevIsMultiline = PS.isMultilineNode(prevNode)
@@ -48,7 +62,7 @@ const V = {
         const postMultilineMsg = 'Function after multiline needs blank line above. FIX: Add a blank line before it.'
         if (prevIsMultiline) return F.createViolation(startLine, postMultilineMsg)
 
-        return null
+        return undefined
     },
 
     // Validate blank lines between function declarations
@@ -67,6 +81,12 @@ const V = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Filter statements to only function declarations
     // @sig findFunctionsInBlock :: [ASTNode] -> [ASTNode]
@@ -78,7 +98,7 @@ const A = {
     // Check spacing between consecutive functions in a block
     // @sig checkBlockFunctions :: ([ASTNode], String) -> [Violation]
     checkBlockFunctions: (functions, sourceCode) =>
-        functions.map((node, index) => V.checkFunction(node, functions[index - 1], sourceCode)).filter(v => v !== null),
+        functions.map((node, index) => V.checkFunction(node, functions[index - 1], sourceCode)).filter(Boolean),
 
     // Check spacing for functions inside a function body
     // @sig checkInnerFunctions :: (ASTNode, String) -> [Violation]
@@ -87,6 +107,22 @@ const A = {
         return A.checkBlockFunctions(A.findFunctionsInBlock(node.body.body), sourceCode)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 5
+
+const violation = FS.createViolation('function-spacing', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run function-spacing rule with COMPLEXITY exemption support
 // @sig checkFunctionSpacing :: (AST?, String, String) -> [Violation]

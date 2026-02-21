@@ -85,13 +85,13 @@ t.test('Given a PascalCase function name', t => {
 })
 
 t.test('Given a function without a recognized verb prefix', t => {
-    t.test('When the function is named "updateSorting"', t => {
-        const code = `const updateSorting = (layout, updater) => updater(layout)`
+    t.test('When the function is named "mutateSorting"', t => {
+        const code = `const mutateSorting = (layout, updater) => updater(layout)`
         const ast = parseCode(code)
         const violations = checkFunctionNaming(ast, code, 'sorting.js')
 
         t.equal(violations.length, 1, 'Then a violation is detected')
-        t.match(violations[0].message, /updateSorting/, 'Then the message names the function')
+        t.match(violations[0].message, /mutateSorting/, 'Then the message names the function')
         t.end()
     })
 

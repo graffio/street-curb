@@ -1,10 +1,11 @@
 // ABOUTME: Shared transformer functions for style validator rules
 // ABOUTME: Parsing and transformation utilities for COMPLEXITY comments
 
-// Regex patterns for COMPLEXITY comments
-const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/
-const COMPLEXITY_TODO_BASE = /^\/\/\s*COMPLEXITY-TODO:\s*(\S+)/
-const EXPIRES_PATTERN = /\(expires\s+(\S+)\)\s*$/
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const TS = {
     // Convert kebab-case or snake_case to PascalCase
@@ -65,7 +66,7 @@ const TS = {
     },
 
     // Parse a single COMPLEXITY comment line
-    // @sig parseSingleComplexityComment :: String -> { rule, reason?, expires?, error? } | null
+    // @sig parseSingleComplexityComment :: String -> { rule, reason?, expires?, error? }?
     parseSingleComplexityComment: line => {
         const trimmed = line.trim()
 
@@ -75,7 +76,7 @@ const TS = {
         const permanentMatch = trimmed.match(COMPLEXITY_PATTERN)
         if (permanentMatch) return TS.parsePermanentComment(permanentMatch)
 
-        return null
+        return undefined
     },
 
     // Parse all COMPLEXITY comments from source code
@@ -113,5 +114,22 @@ const TS = {
         }
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Regex patterns for COMPLEXITY comments
+const COMPLEXITY_PATTERN = /^\/\/\s*COMPLEXITY:\s*(\S+)\s*(?:—\s*(.+))?$/
+const COMPLEXITY_TODO_BASE = /^\/\/\s*COMPLEXITY-TODO:\s*(\S+)/
+const EXPIRES_PATTERN = /\(expires\s+(\S+)\)\s*$/
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { TS as Transformers }

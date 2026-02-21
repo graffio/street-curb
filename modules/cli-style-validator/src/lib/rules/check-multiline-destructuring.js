@@ -5,8 +5,11 @@ import { AST, ASTNode } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 3
-const MAX_LINE_LENGTH = 120
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if raw ESTree node is an object pattern
@@ -35,30 +38,42 @@ const P = {
     isMultiline: node => node.lineCount > 1,
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
+    // Transform a single object pattern property to its string representation
+    // @sig toPropertyName :: ESTreeProperty -> String?
+    toPropertyName: prop => {
+        if (prop.type === 'RestElement') return '...' + prop.argument?.name
+        const key = prop.key?.name || prop.key?.value
+        const value = prop.value?.name
+        return key === value ? key : `${key}: ${value}`
+    },
+
     // Extract property names from an object pattern (raw ESTree)
     // @sig toPropertyNames :: ESTreeNode -> [String]
     toPropertyNames: pattern => {
         if (!P.isObjectPattern(pattern)) return []
-        return (pattern.properties || [])
-            .map(prop => {
-                if (prop.type === 'RestElement') return '...' + prop.argument?.name
-                const key = prop.key?.name || prop.key?.value
-                const value = prop.value?.name
-                return key === value ? key : `${key}: ${value}`
-            })
-            .filter(Boolean)
+        return (pattern.properties || []).map(T.toPropertyName).filter(Boolean)
+    },
+
+    // Transform a single array pattern element to its name string
+    // @sig toElementName :: ESTreeElement? -> String
+    toElementName: el => {
+        if (!el) return ''
+        if (el.type === 'RestElement') return '...' + el.argument?.name
+        return el.name || ''
     },
 
     // Extract element names from an array pattern (raw ESTree)
     // @sig toElementNames :: ESTreeNode -> [String]
     toElementNames: pattern => {
         if (!P.isArrayPattern(pattern)) return []
-        return (pattern.elements || []).map(el => {
-            if (!el) return ''
-            if (el.type === 'RestElement') return '...' + el.argument?.name
-            return el.name || ''
-        })
+        return (pattern.elements || []).map(T.toElementName)
     },
 
     // Build a single-line version of the destructuring (raw ESTree declarator)
@@ -100,26 +115,15 @@ const T = {
         if (singleLine.length + indentSize <= MAX_LINE_LENGTH) return 1
 
         // Count how many lines needed with proper wrapping
-        let currentLength = prefix.length + indentSize
-        let lines = 1
-
-        names.forEach((name, i) => {
-            const separator = i < names.length - 1 ? ', ' : ''
-            const addition = name + separator
-
-            if (currentLength + addition.length > MAX_LINE_LENGTH) {
-                lines++
-                currentLength = indentSize + addition.length
-            } else {
-                currentLength += addition.length
-            }
-        })
-
-        return lines
+        return A.countWrappedLines(names, prefix.length + indentSize, indentSize)
     },
 }
 
-const violation = FS.createViolation('multiline-destructuring', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a multiline-destructuring violation
@@ -127,30 +131,36 @@ const F = {
     createViolation: (line, message) => violation(line, 1, message),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Check if a multiline destructuring could be compacted
     // @sig checkDeclaration :: ASTNode -> Violation?
     checkDeclaration: node => {
-        if (!P.hasDestructuring(node) || !P.isMultiline(node)) return null
+        const { column, line, lineCount } = node
+        if (!P.hasDestructuring(node) || !P.isMultiline(node)) return undefined
 
         const declarator = node.esTree.declarations[0]
         const keyword = node.esTree.kind
-        const currentLines = node.lineCount
-        const indentSize = node.column - 1
+        const indentSize = column - 1
 
         const requiredLines = T.toRequiredLines(declarator, keyword, indentSize)
 
-        if (requiredLines >= currentLines) return null
+        if (requiredLines >= lineCount) return undefined
 
         const compactForm = T.toCompactForm(declarator, keyword)
         const suggestion =
             requiredLines === 1
                 ? `FIX: Compact to single line: \`${compactForm}\``
-                : `FIX: Can fit on ${requiredLines} lines instead of ${currentLines}.`
+                : `FIX: Can fit on ${requiredLines} lines instead of ${lineCount}.`
 
         return F.createViolation(
-            node.line,
-            `Destructuring spans ${currentLines} lines but could fit on ${requiredLines}. ${suggestion}`,
+            line,
+            `Destructuring spans ${lineCount} lines but could fit on ${requiredLines}. ${suggestion}`,
         )
     },
 
@@ -170,6 +180,50 @@ const V = {
             .filter(Boolean)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const A = {
+    // Accumulate line wrapping state for a single name token
+    // @sig processToken :: (WrapState, String, Number) -> WrapState
+    processToken: (acc, token, indentSize) => {
+        const { currentLength, lines } = acc
+        const { length } = token
+        if (currentLength + length > MAX_LINE_LENGTH) return { lines: lines + 1, currentLength: indentSize + length }
+        return { lines, currentLength: currentLength + length }
+    },
+
+    // Count how many lines are needed to wrap names within the line length limit
+    // @sig countWrappedLines :: ([String], Number, Number) -> Number
+    countWrappedLines: (names, startLength, indentSize) => {
+        const result = names.reduce(
+            (acc, name, i) => A.processToken(acc, name + (i < names.length - 1 ? ', ' : ''), indentSize),
+            { lines: 1, currentLength: startLength },
+        )
+        return result.lines
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 3
+const MAX_LINE_LENGTH = 120
+
+const violation = FS.createViolation('multiline-destructuring', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run multiline-destructuring rule with COMPLEXITY exemption support
 // @sig checkMultilineDestructuring :: (AST?, String, String) -> [Violation]
