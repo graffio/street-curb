@@ -2,6 +2,12 @@
 // ABOUTME: Handles holdings-based (investment) and transaction-based (bank) balance strategies
 import { Transaction } from './transaction.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // prettier-ignore
 export const EnrichedAccount = {
     name: 'EnrichedAccount',
@@ -24,7 +30,7 @@ EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
     const accountHoldings = holdings.filter(h => h.accountId === accountId)
     const balance = accountHoldings.reduce((sum, h) => sum + h.marketValue, 0)
     const dayChange = accountHoldings.reduce((sum, h) => sum + h.dayGainLoss, 0)
-    const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : null
+    const dayChangePct = balance !== 0 ? dayChange / (balance - dayChange) : undefined
     return { balance, dayChange, dayChangePct }
 }
 
@@ -32,7 +38,7 @@ EnrichedAccount.sumHoldingsForAccount = (holdings, accountId) => {
 // @sig sumBankBalance :: ([Transaction], String) -> Number
 EnrichedAccount.sumBankBalance = (transactions, accountId) => {
     if (transactions.length === 0) return 0
-    const accountTransactions = transactions.filter(t => t.accountId === accountId && t.amount != null)
+    const accountTransactions = transactions.filter(t => t.accountId === accountId && t.amount !== undefined)
     return Transaction.currentBalance(accountTransactions)
 }
 
@@ -49,10 +55,11 @@ EnrichedAccount.cashBalanceFromRunning = (transactions, accountId) => {
 EnrichedAccount.fromAccount = (account, holdings, transactions) => {
     const { id } = account
     const isHoldingsType = EnrichedAccount.HOLDINGS_BALANCE_TYPES.includes(account.type)
-    if (!isHoldingsType) return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, null)
+    if (!isHoldingsType)
+        return EnrichedAccount(id, account, EnrichedAccount.sumBankBalance(transactions, id), 0, undefined)
     const { balance, dayChange, dayChangePct } = EnrichedAccount.sumHoldingsForAccount(holdings, id)
     if (balance !== 0 || dayChange !== 0) return EnrichedAccount(id, account, balance, dayChange, dayChangePct)
-    return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, null)
+    return EnrichedAccount(id, account, EnrichedAccount.cashBalanceFromRunning(transactions, id), 0, undefined)
 }
 
 // Enriches all accounts with computed balances

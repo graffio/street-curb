@@ -3,6 +3,12 @@
 
 import { FieldTypes } from './field-types.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // prettier-ignore
 export const TabGroup = {
     name: 'TabGroup',
@@ -10,7 +16,7 @@ export const TabGroup = {
     fields: {
         id          : FieldTypes.tabGroupId,
         views       : '{View:id}',
-        activeViewId: '/^(reg|rpt|rec)_[a-z0-9_]+$/?',   // null when group has no views
+        activeViewId: '/^(reg|rpt|rec)_[a-z0-9_]+$/?',   // undefined when group has no views
         width       : 'Number',
     },
 }

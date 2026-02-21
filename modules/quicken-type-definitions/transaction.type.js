@@ -10,6 +10,12 @@ import {
 } from '@graffio/functional'
 import { FieldTypes } from './field-types.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 export const Transaction = {
     name: 'Transaction',
     kind: 'taggedSum',
@@ -63,17 +69,17 @@ export const Transaction = {
 // Helpers
 // -----------------------------------------------------------------------------
 
-// Resolves a transaction's categoryId to category name (null if no categoryId)
+// Resolves a transaction's categoryId to category name (undefined if no categoryId)
 // @sig toCategoryName :: (Transaction, LookupTable<Category>) -> String?
 Transaction.toCategoryName = (txn, categories) => {
-    if (!txn.categoryId) return null
+    if (!txn.categoryId) return undefined
     return categories.get(txn.categoryId).name
 }
 
-// Resolves a transaction's securityId to symbol or name (null if no securityId)
+// Resolves a transaction's securityId to symbol or name (undefined if no securityId)
 // @sig toSecurityName :: (Transaction, LookupTable<Security>) -> String?
 Transaction.toSecurityName = (txn, securities) => {
-    if (!txn.securityId) return null
+    if (!txn.securityId) return undefined
     const security = securities.get(txn.securityId)
     return security.symbol || security.name
 }
@@ -181,8 +187,8 @@ Transaction.isInDateRange = dateRange => txn => {
     const toDateStr = d => convertSlashToIso(formatDateString(dateToDateParts(d)))
     const { start, end } = dateRange
     if (!start && !end) return true
-    const startStr = start ? toDateStr(start) : null
-    const endStr = end ? toDateStr(end) : null
+    const startStr = start ? toDateStr(start) : undefined
+    const endStr = end ? toDateStr(end) : undefined
     if (startStr && txn.date < startStr) return false
     if (endStr && txn.date > endStr) return false
     return true
@@ -231,10 +237,10 @@ Transaction.toRegisterRows = transactions => transactions.map(Transaction.toRegi
 // Aggregations
 // -----------------------------------------------------------------------------
 
-// Finds the earliest transaction date (null if empty array)
+// Finds the earliest transaction date (undefined if empty array)
 // @sig findEarliest :: [Transaction] -> Date?
 Transaction.findEarliest = transactions => {
-    if (transactions.length === 0) return null
+    if (transactions.length === 0) return undefined
     return transactions.reduce((earliest, txn) => {
         const d = new Date(txn.date)
         return d < earliest ? d : earliest
