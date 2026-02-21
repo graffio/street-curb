@@ -64,8 +64,8 @@ const dropTargetGroupId = state => state.dropTargetGroupId
 // ---------------------------------------------------------------------------------------------------------------------
 
 const accountName = (state, id) => accounts(state).get(id).name
-const securitySymbol = (state, id) => (id ? securities(state).get(id).symbol : null)
-const securityName = (state, id) => (id ? securities(state).get(id).name : null)
+const securitySymbol = (state, id) => (id ? securities(state).get(id).symbol : undefined)
+const securityName = (state, id) => (id ? securities(state).get(id).name : undefined)
 const categoryName = (state, id) => (id ? categories(state).get(id).name : 'Uncategorized')
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -155,12 +155,12 @@ UI.actionFilterData = memoizeReduxStatePerKey([], 'transactionFilters', _actionF
 UI.categoryFilterData = memoizeReduxStatePerKey(['categories'], 'transactionFilters', _categoryFilterData)
 
 const CLOSED_POPOVER = {
-    popoverId: null,
+    popoverId: undefined,
     searchText: '',
     highlightedIndex: 0,
     nextHighlightIndex: 0,
     prevHighlightIndex: 0,
-    highlightedItemId: null,
+    highlightedItemId: undefined,
     filteredItems: [],
     allItems: [],
 }
@@ -192,7 +192,7 @@ const _filterPopoverData = (state, viewId, items) => {
 
     // prettier-ignore
     const { index: highlightedIndex, next: nextHighlightIndex, prev: prevHighlightIndex } = wrapIndex(filterPopoverHighlight, count)
-    const highlightedItemId = highlightedIndex >= 0 && count > 0 ? filteredItems[highlightedIndex].id : null
+    const highlightedItemId = highlightedIndex >= 0 && count > 0 ? filteredItems[highlightedIndex].id : undefined
 
     return {
         popoverId: filterPopoverId,
@@ -217,7 +217,7 @@ const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label
 
 const _dateChipData = (state, viewId) => {
     const { dateRange, dateRangeKey } = filter(state, viewId)
-    const label = dateRange ? Formatters.formatDateRange(dateRange.start, dateRange.end) : null
+    const label = dateRange ? Formatters.formatDateRange(dateRange.start, dateRange.end) : undefined
     return { isActive: dateRangeKey !== 'all', details: label ? [label] : [] }
 }
 
@@ -249,7 +249,7 @@ const _searchChipData = (state, viewId) => {
     return { isActive: query?.length > 0 }
 }
 
-const _filterCounts = (state, viewId, accountId = null) => {
+const _filterCounts = (state, viewId, accountId) => {
     const { categories, securities, transactions } = state
     const f = filter(state, viewId)
     const filteredTxns = TransactionFilter.apply(f, transactions, categories, securities)
@@ -280,7 +280,7 @@ UI.filterCounts = memoizeReduxStatePerKey(
 const activeViewId = state => {
     const { tabLayout } = state
     const activeGroup = tabLayout.tabGroups.get(tabLayout.activeTabGroupId)
-    return activeGroup?.activeViewId ?? null
+    return activeGroup?.activeViewId
 }
 
 const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
@@ -501,7 +501,7 @@ const _makeSortedSelector = filterFn => (state, viewId, accountId, tableLayoutId
 
 const _makeHighlightSelector = sortFn => (state, viewId, accountId, tableLayoutId, columns) => {
     const data = sortFn(state, viewId, accountId, tableLayoutId, columns)
-    return data[UI.currentRowIndex(state, viewId)]?.transaction.id ?? null
+    return data[UI.currentRowIndex(state, viewId)]?.transaction.id
 }
 
 const SORT_STATE_KEYS = ['transactions', 'categories', 'securities', 'tableLayouts']

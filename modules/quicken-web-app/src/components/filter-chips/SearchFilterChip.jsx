@@ -24,7 +24,7 @@ const E = {
     onSearchKey: e => {
         if (e.key === 'Escape') {
             e.preventDefault()
-            post(Action.SetFilterPopoverOpen(chipState.viewId, null))
+            post(Action.SetFilterPopoverOpen(chipState.viewId, undefined))
         }
     },
 
@@ -32,7 +32,7 @@ const E = {
     // @sig registerTriggerActions :: Element? -> void
     registerTriggerActions: element => {
         triggerCleanup?.()
-        triggerCleanup = null
+        triggerCleanup = undefined
         if (element)
             triggerCleanup = ActionRegistry.register(chipState.viewId, [
                 {
@@ -77,9 +77,9 @@ const SearchContent = ({ viewId }) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const searchInputEl = { current: null }
-let chipState = { viewId: null }
-let triggerCleanup = null
+const searchInputEl = { current: undefined }
+let chipState = { viewId: undefined }
+let triggerCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -91,7 +91,7 @@ let triggerCleanup = null
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
     const handleOpenChange = open => {
-        post(Action.SetFilterPopoverOpen(viewId, open ? 'search' : null))
+        post(Action.SetFilterPopoverOpen(viewId, open ? 'search' : undefined))
         if (open) setTimeout(() => searchInputEl.current?.focus(), 0)
     }
 

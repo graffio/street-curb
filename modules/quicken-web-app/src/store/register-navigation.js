@@ -3,6 +3,12 @@
 
 import { endOfDay, startOfMonth } from '@graffio/functional'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Reducer: picks the match closest to fromRowIdx in the given direction (wrapping)
     // @sig toClosestMatch :: ([Row], Number, Number, Number) -> ({ dist, rowIdx }, String) -> { dist, rowIdx }
@@ -15,7 +21,7 @@ const T = {
 }
 
 // Checks if we need to initialize the date range on first render
-// @sig shouldInitializeDateRange :: (String, DateRange | null) -> Boolean
+// @sig shouldInitializeDateRange :: (String, DateRange?) -> Boolean
 const shouldInitializeDateRange = (dateRangeKey, dateRange) => dateRangeKey === 'lastTwelveMonths' && !dateRange
 
 // Finds the index of a transaction by ID in the data array
@@ -46,6 +52,12 @@ const toDefaultDateRange = () => {
 // Generates a unique table layout ID for an account with a type prefix
 // @sig toTableLayoutId :: (String, String) -> String
 const toTableLayoutId = (prefix, id) => `cols_${prefix}_${id}`
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const RegisterNavigation = {
     shouldInitializeDateRange,

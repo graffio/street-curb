@@ -168,8 +168,4 @@ Lot.fromFirestore = Lot._fromFirestore
 
 Lot.averageCostPerShare = lot => lot.costBasis / lot.quantity
 
-Lot.isOpen = lot => lot.closedDate === null
-
-Lot.isClosed = lot => lot.closedDate !== null
-
 export { Lot }

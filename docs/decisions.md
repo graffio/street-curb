@@ -780,6 +780,11 @@ Context: .claude/ docs referenced a nonexistent "service layer" abstraction.
 Decision: The only write API is `post(Action.X(...))`. No intermediate abstractions.
 Why: "Service" had no concrete meaning; `post` is the actual mechanism.
 
+### 2026-02-21: Ban null literals — undefined is sole absent value
+Context: Codebase mixed null and undefined as "no value", causing confusion bugs (=== null misses undefined, !== null misses null). 268 null occurrences across 51 files.
+Decision: Validator rule (check-no-null-literal) bans null literals. Use undefined, omit the field, or use isNil() at system boundaries. React render-nothing uses `return false`. Three legacy modules (ast/, cli-type-generator/, cli-qif-to-sqlite/) exempted via boundary patterns pending validator compliance.
+Why: One absent value eliminates an entire class of bugs. Tagged type `from()` already handles undefined for optional fields, making the migration safe.
+
 ---
 
 ## Decision Framework

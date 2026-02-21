@@ -52,9 +52,9 @@ const T = {
     toAverageCostPerShare: node =>
         P.isHolding(node) ? node.holding.averageCostPerShare : node.aggregate.averageCostPerShare,
 
-    // Extracts quote price (holdings only, null for groups)
+    // Extracts quote price (holdings only, undefined for groups)
     // @sig toQuotePrice :: HoldingsTreeNode -> Number?
-    toQuotePrice: node => (P.isHolding(node) ? node.holding.quotePrice : null),
+    toQuotePrice: node => (P.isHolding(node) ? node.holding.quotePrice : undefined),
 
     // Extracts day gain/loss from holding or aggregate
     // @sig toDayGainLoss :: HoldingsTreeNode -> Number?
@@ -65,9 +65,9 @@ const T = {
     toDayGainLossPercent: node =>
         P.isHolding(node) ? node.holding.dayGainLossPercent : node.aggregate.dayGainLossPercent,
 
-    // Extracts security ticker symbol (holdings only, null for groups)
+    // Extracts security ticker symbol (holdings only, undefined for groups)
     // @sig toSecuritySymbol :: HoldingsTreeNode -> String?
-    toSecuritySymbol: node => (P.isHolding(node) ? node.holding.securitySymbol : null),
+    toSecuritySymbol: node => (P.isHolding(node) ? node.holding.securitySymbol : undefined),
 
     // --- Row-level accessors (for cell renderers — receive TanStack Row with .original) ---
 
@@ -79,7 +79,7 @@ const T = {
     // @sig toFirstHoldingChild :: HoldingsTreeNode -> Holding?
     toFirstHoldingChild: node => {
         const firstChild = node.children?.[0]
-        return firstChild && P.isHolding(firstChild) ? firstChild.holding : null
+        return firstChild && P.isHolding(firstChild) ? firstChild.holding : undefined
     },
 }
 
@@ -123,7 +123,7 @@ const StaleCurrencyCell = ({ row, getValue }) => {
     const value = getValue()
     const isStale = T.toIsStale(row)
 
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const formatted = formatCurrency(value)
     const color = value >= 0 ? 'var(--green-11)' : 'var(--red-11)'
@@ -138,7 +138,7 @@ const StalePercentageCell = ({ row, getValue }) => {
     const value = getValue()
     const isStale = T.toIsStale(row)
 
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const formatted = formatPercentage(value)
     const color = value >= 0 ? 'var(--green-11)' : 'var(--red-11)'
@@ -157,7 +157,7 @@ const SharesCell = ({ row, table }) => {
     if (!isHolding && !showAggregate) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const value = isHolding ? row.original.holding.quantity : row.original.aggregate.shares
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatQuantity(value)}</span>
 }
 
@@ -172,7 +172,7 @@ const AvgCostCell = ({ row, table, getValue }) => {
     if (!isHolding && !showAggregate) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const value = getValue()
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const formatted = formatPrice(value)
     const style = { textAlign: 'right', display: 'block', ...(isStale ? staleStyle : {}) }
@@ -189,7 +189,7 @@ const SymbolCell = ({ row, table }) => {
         ? row.original.holding.securitySymbol
         : showAggregate
           ? T.toFirstHoldingChild(row.original)?.securitySymbol
-          : null
+          : undefined
 
     if (!symbol) return <span style={{ display: 'block' }}>—</span>
     return <span style={{ display: 'block', fontWeight: 500 }}>{symbol}</span>
@@ -202,9 +202,9 @@ const PriceCell = ({ row, table, getValue }) => {
     const showAggregate = table.options.meta?.groupBy === 'security'
     const isStale = T.toIsStale(row)
 
-    const value = isHolding ? getValue() : showAggregate ? T.toFirstHoldingChild(row.original)?.quotePrice : null
+    const value = isHolding ? getValue() : showAggregate ? T.toFirstHoldingChild(row.original)?.quotePrice : undefined
 
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const formatted = formatPrice(value)
     const style = { textAlign: 'right', display: 'block', ...(isStale ? staleStyle : {}) }

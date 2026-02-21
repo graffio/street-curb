@@ -4,8 +4,11 @@
 import { groupBy, LookupTable } from '@graffio/functional'
 import { Holding, Price } from '../types/index.js'
 
-// Reserved securityId for cash positions in investment accounts
-const CASH_SECURITY_ID = 'sec_000000000000'
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Checks if a lot was open (not closed) on a given date
@@ -15,6 +18,12 @@ const P = {
         return purchaseDate <= date && (!closedDate || closedDate > date)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Gets the previous calendar day as ISO date string
@@ -86,7 +95,7 @@ const T = {
 
         const { goal, name, symbol, type } = security
         const quotePrice = priceOnDate?.price ?? 0
-        const priceDt = priceOnDate?.date ?? null
+        const priceDt = priceOnDate?.date
         const isStale = priceDt ? Price.isStale(priceDt, date) : true
 
         const marketValue = quantity * quotePrice
@@ -103,14 +112,26 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Creates a cash pseudo-holding for an investment account
     // @sig createCashHolding :: (String, String, Number) -> Holding
     // prettier-ignore
     createCashHolding: (accountId, accountName, cashBalance) =>
-        Holding(accountId, accountName, CASH_SECURITY_ID, 'Cash', 'CASH', 'Cash', null, cashBalance, cashBalance, 1, 1,
+        Holding(accountId, accountName, CASH_SECURITY_ID, 'Cash', 'CASH', 'Cash', undefined, cashBalance, cashBalance, 1, 1,
             cashBalance, 0, 0, 0, 0, false),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Builds a Map of securityId -> LookupTable for O(1) price lookups
 // @sig buildPriceIndex :: LookupTable<Price> -> Map<String, LookupTable<Price, 'date'>>
@@ -132,8 +153,8 @@ const A = {
     // @sig findPriceAsOf :: (Map<String, LookupTable<Price>>, String, String) -> Price?
     findPriceAsOf: (priceIndex, securityId, date) => {
         const secPrices = priceIndex.get(securityId)
-        if (!secPrices) return null
-        return secPrices.get(date) ?? secPrices.find(p => p.date <= date) ?? null
+        if (!secPrices) return undefined
+        return secPrices.get(date) ?? secPrices.find(p => p.date <= date)
     },
 
     // Filters and aggregates lots that are open on a date
@@ -146,6 +167,15 @@ const A = {
             .filter(h => h.quantity > 0)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Reserved securityId for cash positions in investment accounts
+const CASH_SECURITY_ID = 'sec_000000000000'
 
 // Computes holdings as of a specific date from raw data
 // Accepts optional pre-built indexes to avoid rebuilding on every call
@@ -170,13 +200,19 @@ const computeHoldingsAsOf = config => {
     const cashHoldings = accountIdsWithHoldings
         .map(accId => {
             const balance = T.toCashBalanceAsOf(transactionIndex, accId, asOfDate)
-            return balance !== 0 ? F.createCashHolding(accId, accounts.get(accId).name, balance) : null
+            return balance !== 0 ? F.createCashHolding(accId, accounts.get(accId).name, balance) : undefined
         })
-        .filter(h => h !== null)
+        .filter(h => h !== undefined)
 
     const allHoldings = [...holdings, ...cashHoldings]
     return filterQuery ? allHoldings.filter(h => Holding.matchesSearch(h, filterQuery)) : allHoldings
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const Holdings = { buildAllocationIndex, buildPriceIndex, buildTransactionIndex, computeHoldingsAsOf }
 

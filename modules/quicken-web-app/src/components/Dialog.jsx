@@ -10,7 +10,7 @@ import { forwardRef } from 'react'
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-let _portalContainer = null
+let _portalContainer
 
 const F = {
     // Merges title base style with optional overrides

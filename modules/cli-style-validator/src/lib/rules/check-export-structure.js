@@ -6,7 +6,11 @@ import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 import { Transformers as TS } from '../shared/transformers.js'
 
-const PRIORITY = 0 // High priority - structural issue
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if this is an index file (exempt from single export rule)
@@ -21,6 +25,12 @@ const P = {
     // @sig isJsxFile :: String -> Boolean
     isJsxFile: filePath => /\.jsx$/.test(filePath),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Convert kebab-case to camelCase
@@ -43,17 +53,151 @@ const T = {
         const baseName = T.toBaseName(filePath)
         return isFunction ? T.toCamelCase(baseName) : TS.toPascalCase(baseName)
     },
+
+    // Transform export specifier into record with export metadata
+    // @sig toExportRecord :: (ASTNode, ExportSpecifier) -> { name, localName, line, isDefault }
+    toExportRecord: (node, spec) => {
+        const { exportedName, localName } = spec
+        return { name: exportedName, localName: localName || exportedName, line: node.line, isDefault: false }
+    },
 }
 
-const violation = FS.createViolation('export-structure', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create an export-structure violation
     // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, message) => violation(line, 1, message),
+
+    // Create violation for a function defined inside a cohesion group
+    // @sig createCohesionFunctionViolation :: (Number, String) -> Violation
+    createCohesionFunctionViolation: (line, propName) => {
+        const message =
+            `Exported function "${propName}" is defined inside a cohesion group. ` +
+            `FIX: Define "${propName}" at module level, outside P/T/F/V/A/E groups. ` +
+            'Cohesion groups are for internal helpers only.'
+        return violation(line, 1, message)
+    },
+
+    // Create violation for a default export
+    // @sig createDefaultExportViolation :: Number -> Violation
+    createDefaultExportViolation: line =>
+        violation(line, 1, 'Default export detected. FIX: Use named export instead: export { MyModule }'),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
+    // Check for default exports and push violations
+    // @sig checkDefaultExports :: ([ExportInfo], [Violation]) -> Void
+    checkDefaultExports: (defaultExports, violations) =>
+        defaultExports.forEach(exp => violations.push(F.createDefaultExportViolation(exp.line))),
+
+    // Check for multiple named exports
+    // @sig checkMultipleExports :: ([ExportInfo], [Violation], String) -> Void
+    checkMultipleExports: (namedExports, violations, filePath) => {
+        if (namedExports.length <= 1) return
+        const expectedName = T.toExpectedExportName(filePath, false)
+        const message =
+            `File has ${namedExports.length} named exports. ` +
+            'FIX: Export a single object containing all public functions: ' +
+            `const ${expectedName} = { fn1, fn2 }; export { ${expectedName} }`
+        violations.push(F.createViolation(namedExports[0].line, message))
+    },
+
+    // Check for cohesion group rename in export specifiers
+    // @sig checkCohesionGroupRename :: (ExportInfo, [Violation]) -> Void
+    checkCohesionGroupRename: (exp, violations) => {
+        const { localName, name, line } = exp
+        if (localName === name || !PS.isCohesionGroup(localName)) return
+        const message =
+            `Cohesion group "${localName}" is exported directly as "${name}". ` +
+            'FIX: Define exported functions at module level, then export: ' +
+            `const ${name} = { fn1, fn2 }; export { ${name} }`
+        violations.push(F.createViolation(line, message))
+    },
+
+    // Check that export name matches file name
+    // @sig checkExportNameMatch :: (ExportInfo, String, ASTNode?, [Violation]) -> Void
+    checkExportNameMatch: (exportInfo, filePath, declaration, violations) => {
+        const { name: exportName, line } = exportInfo
+        const isFunction = declaration && P.isFunctionExpression(declaration.firstValue)
+        const expectedName = T.toExpectedExportName(filePath, isFunction)
+        const isJsxComponent = P.isJsxFile(filePath) && isFunction
+        const expectedJsxName = isJsxComponent ? T.toExpectedExportName(filePath, false) : undefined
+
+        if (exportName === expectedName || exportName === expectedJsxName) return
+
+        const casing = isFunction ? 'camelCase' : 'PascalCase'
+        const kind = isFunction ? 'function' : 'object'
+        const message =
+            `Export "${exportName}" does not match file name. ` +
+            `FIX: Rename to "${expectedName}" (${casing} for ${kind} exports).`
+        violations.push(F.createViolation(line, message))
+    },
+
+    // Check that exported object does not leak cohesion groups
+    // @sig checkLeakedGroups :: ([String], String, ASTNode, [Violation]) -> Void
+    checkLeakedGroups: (propertyNames, exportName, declaration, violations) => {
+        const leakedGroups = propertyNames.filter(PS.isCohesionGroup)
+        if (leakedGroups.length === 0) return
+        const message =
+            `Exported object "${exportName}" contains cohesion group references: ${leakedGroups.join(', ')}. ` +
+            'FIX: Export module-level functions directly, not cohesion groups: ' +
+            `const ${exportName} = { fn1, fn2 }; export { ${exportName} }`
+        violations.push(F.createViolation(declaration.line, message))
+    },
+
+    // Check that single-property object wrapping a function exports the function directly
+    // @sig checkSinglePropertyObject :: ([String], String, ASTNode, String, [Violation]) -> Void
+    checkSinglePropertyObject: (propertyNames, exportName, declaration, filePath, violations) => {
+        if (propertyNames.length !== 1) return
+        const propName = propertyNames[0]
+        const expectedFnName = T.toExpectedExportName(filePath, true)
+        const message =
+            `Object export "${exportName}" has a single property "${propName}". ` +
+            `FIX: Export the function directly: const ${expectedFnName} = ...; export { ${expectedFnName} }`
+        violations.push(F.createViolation(declaration.line, message))
+    },
+
+    // Check that exported functions are not defined inside cohesion groups
+    // @sig checkCohesionGroupFunctions :: ([String], ASTNode, AST, [Violation]) -> Void
+    checkCohesionGroupFunctions: (propertyNames, declaration, ast, violations) => {
+        const cohesionFunctions = A.collectCohesionGroupFunctions(ast)
+        propertyNames
+            .filter(propName => cohesionFunctions.has(propName))
+            .forEach(propName => violations.push(F.createCohesionFunctionViolation(declaration.line, propName)))
+    },
+
+    // Validate object export (non-function single export)
+    // @sig checkObjectExport :: (ASTNode, String, AST, String, [Violation]) -> Void
+    checkObjectExport: (declaration, exportName, ast, filePath, violations) => {
+        const value = declaration.firstValue
+        const propertyNames = A.collectObjectPropertyNames(value)
+        V.checkLeakedGroups(propertyNames, exportName, declaration, violations)
+        V.checkSinglePropertyObject(propertyNames, exportName, declaration, filePath, violations)
+        V.checkCohesionGroupFunctions(propertyNames, declaration, ast, violations)
+    },
+
+    // Validate single named export for name match and object structure
+    // @sig checkSingleExport :: ([ExportInfo], AST, String, [Violation]) -> Void
+    checkSingleExport: (namedExports, ast, filePath, violations) => {
+        if (namedExports.length !== 1) return
+        const exportName = namedExports[0].name
+        const declaration = A.findVariableDeclaration(ast, exportName)
+        const isFunction = declaration && P.isFunctionExpression(declaration.firstValue)
+        V.checkExportNameMatch(namedExports[0], filePath, declaration, violations)
+        if (declaration && !isFunction) V.checkObjectExport(declaration, exportName, ast, filePath, violations)
+    },
+
     // Validate export structure for entire file
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
@@ -63,114 +207,23 @@ const V = {
         const namedExports = A.collectNamedExports(ast)
         const defaultExports = A.collectDefaultExports(ast)
 
-        // Check for default exports
-        defaultExports.forEach(exp =>
-            violations.push(
-                F.createViolation(
-                    exp.line,
-                    'Default export detected. FIX: Use named export instead: export { MyModule }',
-                ),
-            ),
-        )
+        V.checkDefaultExports(defaultExports, violations)
 
-        // Check for exactly one named export
-        if (namedExports.length === 0 && defaultExports.length === 0)
-            // No exports at all - might be a utility file, skip
-            return violations
+        if (namedExports.length === 0 && defaultExports.length === 0) return violations
 
-        if (namedExports.length > 1)
-            violations.push(
-                F.createViolation(
-                    namedExports[0].line,
-                    `File has ${namedExports.length} named exports. ` +
-                        'FIX: Export a single object containing all public functions: ' +
-                        `const ${T.toExpectedExportName(filePath, false)} = { fn1, fn2 }; export { ${T.toExpectedExportName(filePath, false)} }`,
-                ),
-            )
-
-        // Check for cohesion group rename: export { E as FileHandling }
-        namedExports.forEach(exp => {
-            if (exp.localName !== exp.name && PS.isCohesionGroup(exp.localName))
-                violations.push(
-                    F.createViolation(
-                        exp.line,
-                        `Cohesion group "${exp.localName}" is exported directly as "${exp.name}". ` +
-                            'FIX: Define exported functions at module level, then export: ' +
-                            `const ${exp.name} = { fn1, fn2 }; export { ${exp.name} }`,
-                    ),
-                )
-        })
-
-        // Check export name matches file name
-        if (namedExports.length === 1) {
-            const exportName = namedExports[0].name
-            const declaration = A.findVariableDeclaration(ast, exportName)
-            const isFunction = declaration && P.isFunctionExpression(declaration.firstValue)
-            const expectedName = T.toExpectedExportName(filePath, isFunction)
-
-            // JSX: React components are PascalCase functions — accept PascalCase as valid
-            const isJsxComponent = P.isJsxFile(filePath) && isFunction
-            const expectedJsxName = isJsxComponent ? T.toExpectedExportName(filePath, false) : null
-
-            if (exportName !== expectedName && exportName !== expectedJsxName) {
-                const casing = isFunction ? 'camelCase' : 'PascalCase'
-                violations.push(
-                    F.createViolation(
-                        namedExports[0].line,
-                        `Export "${exportName}" does not match file name. ` +
-                            `FIX: Rename to "${expectedName}" (${casing} for ${isFunction ? 'function' : 'object'} exports).`,
-                    ),
-                )
-            }
-
-            // Check that exported object's functions are not defined in cohesion groups (objects only)
-            if (declaration && !isFunction) {
-                const value = declaration.firstValue
-                const propertyNames = A.collectObjectPropertyNames(value)
-                const cohesionFunctions = A.collectCohesionGroupFunctions(ast)
-
-                // Object whose properties are cohesion group letters: { P, T, E }
-                const leakedGroups = propertyNames.filter(PS.isCohesionGroup)
-                if (leakedGroups.length > 0)
-                    violations.push(
-                        F.createViolation(
-                            declaration.line,
-                            `Exported object "${exportName}" contains cohesion group references: ${leakedGroups.join(', ')}. ` +
-                                'FIX: Export module-level functions directly, not cohesion groups: ' +
-                                `const ${exportName} = { fn1, fn2 }; export { ${exportName} }`,
-                        ),
-                    )
-
-                // Single-property object wrapping a function — export the function directly
-                if (propertyNames.length === 1) {
-                    const propName = propertyNames[0]
-                    const expectedFnName = T.toExpectedExportName(filePath, true)
-                    violations.push(
-                        F.createViolation(
-                            declaration.line,
-                            `Object export "${exportName}" has a single property "${propName}". ` +
-                                `FIX: Export the function directly: const ${expectedFnName} = ...; export { ${expectedFnName} }`,
-                        ),
-                    )
-                }
-
-                propertyNames.forEach(propName => {
-                    if (cohesionFunctions.has(propName))
-                        violations.push(
-                            F.createViolation(
-                                declaration.line,
-                                `Exported function "${propName}" is defined inside a cohesion group. ` +
-                                    `FIX: Define "${propName}" at module level, outside P/T/F/V/A/E groups. ` +
-                                    'Cohesion groups are for internal helpers only.',
-                            ),
-                        )
-                })
-            }
-        }
+        V.checkMultipleExports(namedExports, violations, filePath)
+        namedExports.forEach(exp => V.checkCohesionGroupRename(exp, violations))
+        V.checkSingleExport(namedExports, ast, filePath, violations)
 
         return violations
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const A = {
     // Collect all named exports from AST
@@ -178,16 +231,7 @@ const A = {
     collectNamedExports: ast =>
         AST.topLevelStatements(ast)
             .filter(node => ASTNode.ExportNamedDeclaration.is(node))
-            .flatMap(node =>
-                node.specifiers
-                    .filter(spec => spec.exportedName)
-                    .map(spec => ({
-                        name: spec.exportedName,
-                        localName: spec.localName || spec.exportedName,
-                        line: node.line,
-                        isDefault: false,
-                    })),
-            ),
+            .flatMap(node => node.specifiers.filter(s => s.exportedName).map(s => T.toExportRecord(node, s))),
 
     // Collect default exports from AST
     // @sig collectDefaultExports :: AST -> [{ line: Number, isDefault: Boolean }]
@@ -209,16 +253,17 @@ const A = {
         const functions = new Set()
         AST.topLevelStatements(ast)
             .filter(node => ASTNode.VariableDeclaration.is(node))
-            .forEach(node => {
-                const name = node.firstName
-                if (!name || !PS.isCohesionGroup(name)) return
-                const value = node.firstValue
-                if (!ASTNode.ObjectExpression.is(value)) return
-                value.properties.forEach(prop => {
-                    if (prop.name) functions.add(prop.name)
-                })
-            })
+            .forEach(node => A.collectGroupProperties(node, functions))
         return functions
+    },
+
+    // Add property names from a cohesion group declaration to the accumulator set
+    // @sig collectGroupProperties :: (ASTNode, Set<String>) -> Void
+    collectGroupProperties: (node, functions) => {
+        const { firstName, firstValue } = node
+        if (!firstName || !PS.isCohesionGroup(firstName)) return
+        if (!ASTNode.ObjectExpression.is(firstValue)) return
+        firstValue.properties.filter(prop => prop.name).forEach(prop => functions.add(prop.name))
     },
 
     // Get property names from an object expression
@@ -228,6 +273,22 @@ const A = {
         return node.properties.map(prop => prop.name).filter(Boolean)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 0 // High priority - structural issue
+
+const violation = FS.createViolation('export-structure', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run export-structure rule with COMPLEXITY exemption support
 // @sig checkExportStructure :: (AST?, String, String) -> [Violation]

@@ -9,7 +9,7 @@ import { ViewUiState as ViewUiStateType } from '../../types/index.js'
 const createDefaultViewUiState = viewId =>
     ViewUiStateType(
         viewId,
-        null, // filterPopoverId
+        undefined, // filterPopoverId
         '', // filterPopoverSearch
         -1, // filterPopoverHighlight
         0, // currentRowIndex
@@ -66,6 +66,12 @@ const resetViewUiState = (state, action) => {
 
     return { ...state, viewUiState: state.viewUiState.addItemWithId(defaultUiState) }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const ViewUiState = {
     createDefaultViewUiState,

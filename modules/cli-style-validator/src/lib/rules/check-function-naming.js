@@ -66,7 +66,8 @@ const PRIORITY = 6
 const VERB_PREFIXES =
     'is|has|should|can|to|parse|format|create|make|build' +
     '|check|validate|collect|count|gather|find|process|persist|handle|dispatch|emit|send|query|register' +
-    '|set|reset|toggle|post|hydrate|memoize|load|open'
+    '|set|reset|toggle|post|hydrate|memoize|load|open|close|move|compute|sum|initialize|calculate' +
+    '|constrain|expand|update|get|apply'
 const RECOGNIZED_PREFIX = new RegExp(`^(${VERB_PREFIXES})([A-Z]|$)`)
 
 const violation = FS.createViolation('function-naming', PRIORITY)

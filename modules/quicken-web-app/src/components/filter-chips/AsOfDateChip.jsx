@@ -35,7 +35,7 @@ const E = {
     // @sig registerTriggerActions :: Element? -> void
     registerTriggerActions: element => {
         triggerCleanup?.()
-        triggerCleanup = null
+        triggerCleanup = undefined
         if (element)
             triggerCleanup = ActionRegistry.register(chipState.viewId, [
                 {
@@ -50,13 +50,13 @@ const E = {
     // @sig registerContentActions :: Element? -> void
     registerContentActions: element => {
         contentCleanup?.()
-        contentCleanup = null
+        contentCleanup = undefined
         if (element)
             contentCleanup = ActionRegistry.register(chipState.viewId, [
                 {
                     id: 'dismiss',
                     description: 'Dismiss',
-                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, null)),
+                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, undefined)),
                 },
             ])
     },
@@ -95,10 +95,10 @@ const DateContent = ({ viewId }) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const dateInputEl = { current: null }
-let chipState = { viewId: null }
-let triggerCleanup = null
-let contentCleanup = null
+const dateInputEl = { current: undefined }
+let chipState = { viewId: undefined }
+let triggerCleanup
+let contentCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -110,7 +110,7 @@ let contentCleanup = null
 // @sig Chip :: { viewId: String } -> ReactElement
 const Chip = ({ viewId }) => {
     const handleOpenChange = open => {
-        post(Action.SetFilterPopoverOpen(viewId, open ? 'asOfDate' : null))
+        post(Action.SetFilterPopoverOpen(viewId, open ? 'asOfDate' : undefined))
         if (open) setTimeout(() => dateInputEl.current?.focus('month'), 0)
     }
 

@@ -22,7 +22,7 @@ test('ActionRegistry.resolve', t => {
             ActionRegistry.register('table-1', [{ id: 'navigate:down', description: 'Move down', execute: () => {} }])
 
             const result = ActionRegistry.resolve('navigate:up', 'table-1')
-            t.equal(result, null, 'Then it returns null')
+            t.equal(result, undefined, 'Then it returns undefined')
             t.end()
         })
         t.end()
@@ -68,18 +68,18 @@ test('ActionRegistry.resolve', t => {
             ActionRegistry.register('table-1', [{ id: 'navigate:down', description: 'Move down', execute: () => {} }])
 
             const result = ActionRegistry.resolve('navigate:down', 'other-context')
-            t.equal(result, null, 'Then it returns null')
+            t.equal(result, undefined, 'Then it returns undefined')
             t.end()
         })
 
-        t.test('When a null context registration exists', t => {
+        t.test('When an undefined context registration exists', t => {
             const globalExecute = () => 'global'
-            ActionRegistry.register(null, [
+            ActionRegistry.register(undefined, [
                 { id: 'toggle-shortcuts', description: 'Toggle shortcuts', execute: globalExecute },
             ])
 
             const result = ActionRegistry.resolve('toggle-shortcuts', 'any-context')
-            t.equal(result.execute, globalExecute, 'Then null context matches any active context')
+            t.equal(result.execute, globalExecute, 'Then undefined context matches any active context')
             t.end()
         })
         t.end()
@@ -141,7 +141,7 @@ test('ActionRegistry.unregister', t => {
 
             ActionRegistry.unregister('table-1')
             const result = ActionRegistry.resolve('navigate:down', 'table-1')
-            t.equal(result, null, 'Then all actions for that context are removed')
+            t.equal(result, undefined, 'Then all actions for that context are removed')
             t.end()
         })
 
@@ -172,8 +172,8 @@ test('ActionRegistry.clear', t => {
 
             const result1 = ActionRegistry.resolve('navigate:down', 'table-1')
             const result2 = ActionRegistry.resolve('select', 'popover-1')
-            t.equal(result1, null, 'Then all registrations are removed')
-            t.equal(result2, null, 'Then all contexts are removed')
+            t.equal(result1, undefined, 'Then all registrations are removed')
+            t.equal(result2, undefined, 'Then all contexts are removed')
             t.end()
         })
         t.end()

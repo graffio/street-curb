@@ -7,11 +7,17 @@ import { HoldingsTreeNode } from '../types/holdings-tree-node.js'
 
 // Configuration for each groupBy dimension
 const dimensionConfig = {
-    account: { getKey: h => h.accountName || 'Unknown Account', getParent: () => null },
-    security: { getKey: h => h.securityName || 'Unknown Security', getParent: () => null },
-    securityType: { getKey: h => h.securityType || 'Unknown Type', getParent: () => null },
-    goal: { getKey: h => h.securityGoal || 'No Goal', getParent: () => null },
+    account: { getKey: h => h.accountName || 'Unknown Account', getParent: () => undefined },
+    security: { getKey: h => h.securityName || 'Unknown Security', getParent: () => undefined },
+    securityType: { getKey: h => h.securityType || 'Unknown Type', getParent: () => undefined },
+    goal: { getKey: h => h.securityGoal || 'No Goal', getParent: () => undefined },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Transforms a plain aggregate object into HoldingsAggregate instance
@@ -90,6 +96,12 @@ const buildHoldingsTree = (dimension, holdings) => {
     const aggregated = aggregateTree(sumHoldings, tree)
     return aggregated.map(T.toGroupNode)
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const HoldingsTree = { buildHoldingsTree, dimensionConfig, sumHoldings }
 

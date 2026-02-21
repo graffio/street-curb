@@ -105,7 +105,7 @@ const MemoCell = ({ row }) => {
 const AmountCell = ({ row }) => {
     const isTransaction = P.isTransactionRow(row)
     const value = isTransaction ? row.original.transaction.amount : row.original.aggregate.total
-    if (value == null) return dash
+    if (value === undefined) return dash
 
     const formatted = formatCurrency(value)
     const style = value >= 0 ? positiveAmountStyle : negativeAmountStyle

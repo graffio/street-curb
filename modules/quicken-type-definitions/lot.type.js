@@ -3,6 +3,12 @@
 
 import { FieldTypes } from './field-types.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 export const Lot = {
     name: 'Lot',
     kind: 'tagged',
@@ -22,5 +28,3 @@ export const Lot = {
 
 // Computed properties
 Lot.averageCostPerShare = lot => lot.costBasis / lot.quantity
-Lot.isOpen = lot => lot.closedDate === null
-Lot.isClosed = lot => lot.closedDate !== null

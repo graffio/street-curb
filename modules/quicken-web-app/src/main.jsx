@@ -31,7 +31,7 @@ const E = {
     bootstrap: store => {
         post(Action.InitializeSystem())
         window.addEventListener('keydown', e => keydownHandler(S.tabLayout(currentStore().getState()), e))
-        ActionRegistry.register(null, [
+        ActionRegistry.register(undefined, [
             { id: 'toggle-shortcuts', description: 'Toggle shortcuts', execute: () => post(Action.ToggleDrawer()) },
         ])
         ReactDOM.createRoot(document.getElementById('root')).render(<App store={store} />)

@@ -6,11 +6,11 @@ import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 8
-const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
-const EXEMPT_COMPONENTS = ['DataTable.jsx', 'KeyboardDateInput.jsx']
-const SELECTOR_MAX_LINES = 6
-const SELECTOR_MAX_COLLECTION_CHAIN = 2
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if node is a hook call with given name
@@ -137,6 +137,12 @@ const P = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Get method name from collection call
     // @sig toMethodName :: ASTNode -> String
@@ -190,7 +196,11 @@ const T = {
     },
 }
 
-const violation = FS.createViolation('react-redux-separation', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Component hook violations — each takes a node and returns a violation with a fixed message
@@ -285,6 +295,12 @@ const F = {
         ),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Validate React component patterns (JSX files)
     // @sig checkComponents :: (AST, String, String) -> [Violation]
@@ -346,6 +362,12 @@ const V = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Find all nodes within component bodies matching predicate
     // @sig findInComponentBodies :: (AST, (ASTNode -> Boolean)) -> [ASTNode]
@@ -364,14 +386,14 @@ const A = {
     // @sig toFunctionInfo :: ASTNode -> {name, line, node}?
     toFunctionInfo: s => {
         const { name, line } = s
-        return name ? { name, line, node: s } : null
+        return name ? { name, line, node: s } : undefined
     },
 
     // Convert variable declaration to function info if it's a function
     // @sig toVarFunctionInfo :: Object -> {name, line, node}?
     toVarFunctionInfo: d => {
         const { name, line, value } = d
-        if (!value || !PS.isFunctionNode(value)) return null
+        if (!value || !PS.isFunctionNode(value)) return undefined
         return { name, line, node: value }
     },
 
@@ -409,9 +431,9 @@ const A = {
     toCohesionRef: prop => {
         const { value } = prop
         const { MemberExpression, Identifier } = ASTNode
-        if (!value || !MemberExpression.is(value)) return null
+        if (!value || !MemberExpression.is(value)) return undefined
         const { base, member } = value
-        if (!Identifier.is(base) || !PS.isCohesionGroup(base.name)) return null
+        if (!Identifier.is(base) || !PS.isCohesionGroup(base.name)) return undefined
         const memberName = member && Identifier.is(member) ? member.name : 'unknown'
         return `${base.name}.${memberName}`
     },
@@ -420,7 +442,7 @@ const A = {
     // @sig toExportViolation :: (Number, ASTNode) -> Violation?
     toExportViolation: (declLine, prop) => {
         const ref = A.toCohesionRef(prop)
-        if (!ref) return null
+        if (!ref) return undefined
         const exportName = prop.name || 'unknown'
         return F.createExportFromCohesionViolation(exportName, ref, prop.line || declLine)
     },
@@ -469,6 +491,20 @@ const A = {
         return violations
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 8
+const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
+const EXEMPT_COMPONENTS = ['DataTable.jsx', 'KeyboardDateInput.jsx']
+const SELECTOR_MAX_LINES = 6
+const SELECTOR_MAX_COLLECTION_CHAIN = 2
+
+const violation = FS.createViolation('react-redux-separation', PRIORITY)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

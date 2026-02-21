@@ -20,13 +20,13 @@ import { TabStyles } from '../utils/tab-styles.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
-    // Parses drag data JSON, returns null on failure
-    // @sig toDragData :: String -> { viewId: String, groupId: String } | null
+    // Parses drag data JSON, returns undefined on failure
+    // @sig toDragData :: String -> { viewId: String, groupId: String }?
     toDragData: data => {
         try {
             return JSON.parse(data)
         } catch {
-            return null
+            return undefined
         }
     },
 
@@ -93,7 +93,7 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
         e.dataTransfer.effectAllowed = 'move'
     }
 
-    const handleDragEnd = () => post(Action.SetDraggingView(null))
+    const handleDragEnd = () => post(Action.SetDraggingView(undefined))
 
     const isDragging = useSelector(S.draggingViewId) === view.id
     const { title } = view
@@ -125,13 +125,13 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
 }
 
 // Button to create new tab group, hidden at max group count
-// @sig SplitButton :: { groupCount: Number } -> ReactElement|null
+// @sig SplitButton :: { groupCount: Number } -> ReactElement | false
 const SplitButton = ({ groupCount }) => {
     const onClick = e => {
         e.stopPropagation()
         post(Action.CreateTabGroup())
     }
-    if (groupCount >= MAX_GROUPS) return null
+    if (groupCount >= MAX_GROUPS) return false
 
     return (
         <Button size="1" variant="ghost" onClick={onClick} style={SPLIT_BUTTON_STYLE}>
@@ -150,7 +150,7 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
     }
 
     const handleDragLeave = e => {
-        if (!e.currentTarget.contains(e.relatedTarget)) post(Action.SetDropTarget(null))
+        if (!e.currentTarget.contains(e.relatedTarget)) post(Action.SetDropTarget(undefined))
     }
 
     // Handle tab drop — move or reorder view
@@ -158,7 +158,7 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
     const handleDrop = e => {
         const { clientX, currentTarget, dataTransfer } = e
         e.preventDefault()
-        post(Action.SetDropTarget(null))
+        post(Action.SetDropTarget(undefined))
         const dragData = T.toDragData(dataTransfer.getData('application/json'))
         if (!dragData) return
         const { viewId, groupId: sourceGroupId } = dragData

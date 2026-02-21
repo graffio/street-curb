@@ -22,7 +22,7 @@ const handleLoadFile = async (dispatch, file) => {
             Action.LoadFile(accounts, categories, securities, tags, splits, transactions, lots, lotAllocations, prices),
         )
     } finally {
-        dispatch(Action.SetLoadingStatus(null))
+        dispatch(Action.SetLoadingStatus(undefined))
     }
 }
 

@@ -36,7 +36,7 @@ const E = {
     // @sig registerPageActions :: Element? -> void
     registerPageActions: element => {
         actionCleanup?.()
-        actionCleanup = null
+        actionCleanup = undefined
         if (element) {
             actionCleanup = ActionRegistry.register(pageState.viewId, actions)
             post(A.SetTransactionFilter(pageState.viewId, { initDateRange: true }))
@@ -74,8 +74,8 @@ const actions = [
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-let pageState = { viewId: null }
-let actionCleanup = null
+let pageState = { viewId: undefined }
+let actionCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

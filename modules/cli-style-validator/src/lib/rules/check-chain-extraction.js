@@ -6,8 +6,11 @@ import { AST, ASTNode } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const THRESHOLD = 3
-const PRIORITY = 1
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if node is the outermost in a chain (not nested in another MemberExpression)
@@ -47,6 +50,12 @@ const P = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Collect property names in a chain (a.b.c -> ['a', 'b', 'c'])
     // @sig toChainParts :: ASTNode -> [String]
@@ -63,18 +72,18 @@ const T = {
     // @sig toAccess :: ASTNode -> { base: String, property: String, line: Number }?
     toAccess: node => {
         const target = P.isMethodCall(node) ? node.base : node
-        if (!target || !ASTNode.MemberExpression.is(target) || target.isComputed) return null
+        if (!target || !ASTNode.MemberExpression.is(target) || target.isComputed) return undefined
 
         const prop = target.member
-        if (!prop || !ASTNode.Identifier.is(prop)) return null
+        if (!prop || !ASTNode.Identifier.is(prop)) return undefined
 
         const obj = target.base
-        if (!obj) return null
+        if (!obj) return undefined
 
         if (ASTNode.Identifier.is(obj)) return { base: obj.name, property: prop.name, line: node.line }
 
         const parts = T.toChainParts(obj)
-        if (parts.length === 0) return null
+        if (parts.length === 0) return undefined
         return { base: parts.join('.'), property: prop.name, line: node.line }
     },
 
@@ -96,7 +105,11 @@ const T = {
     toGroupedBases: accesses => accesses.reduce(T.toUpdatedGroups, {}),
 }
 
-const violation = FS.createViolation('chain-extraction', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a suggestion to destructure repeated property access
@@ -111,6 +124,12 @@ const F = {
         ),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Validate repeated property chains that could be destructured
     // @sig check :: (AST?, String, String) -> [Violation]
@@ -121,6 +140,12 @@ const V = {
         return A.collectFunctionSuggestions(ast, namespaces)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const A = {
     // Collect all namespace import identifiers (import * as X)
@@ -168,6 +193,22 @@ const A = {
             .filter(PS.isFunctionNode)
             .flatMap(funcNode => A.collectSuggestionsForFunction(funcNode, namespaces)),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const THRESHOLD = 3
+const PRIORITY = 1
+const violation = FS.createViolation('chain-extraction', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run chain-extraction rule with COMPLEXITY exemption support
 // @sig checkChainExtraction :: (AST?, String, String) -> [Violation]

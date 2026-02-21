@@ -56,7 +56,7 @@ let _prevSearchQuery = ''
  * Self-selects searchQuery and searchMatches via business identifiers (viewId, accountId)
  *
  * @sig SearchChip :: SearchChipProps -> ReactElement
- *     SearchChipProps = { viewId: String, accountId: String, highlightedId: String | null,
+ *     SearchChipProps = { viewId: String, accountId: String, highlightedId: String?,
  *         onNext: () -> void, onPrev: () -> void, onClear: () -> void }
  */
 const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear }) => {
@@ -84,7 +84,7 @@ const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear 
     }
 
     // Registers/unregisters search input in FocusRegistry for keyboard access
-    // @sig refCallback :: Element | null -> void
+    // @sig refCallback :: Element? -> void
     const refCallback = el =>
         el ? FocusRegistry.register('search_' + viewId, el) : FocusRegistry.unregister('search_' + viewId)
 

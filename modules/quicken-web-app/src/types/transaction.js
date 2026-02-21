@@ -411,12 +411,12 @@ Transaction.fromFirestore = Transaction._fromFirestore
 // -------------------------------------------------------------------------------------------------------------
 
 Transaction.toCategoryName = (txn, categories) => {
-    if (!txn.categoryId) return null
+    if (!txn.categoryId) return undefined
     return categories.get(txn.categoryId).name
 }
 
 Transaction.toSecurityName = (txn, securities) => {
-    if (!txn.securityId) return null
+    if (!txn.securityId) return undefined
     const security = securities.get(txn.securityId)
     return security.symbol || security.name
 }
@@ -499,8 +499,8 @@ Transaction.isInDateRange = dateRange => txn => {
     const toDateStr = d => convertSlashToIso(formatDateString(dateToDateParts(d)))
     const { start, end } = dateRange
     if (!start && !end) return true
-    const startStr = start ? toDateStr(start) : null
-    const endStr = end ? toDateStr(end) : null
+    const startStr = start ? toDateStr(start) : undefined
+    const endStr = end ? toDateStr(end) : undefined
     if (startStr && txn.date < startStr) return false
     if (endStr && txn.date > endStr) return false
     return true
@@ -528,7 +528,7 @@ Transaction.enrichAll = (transactions, categories, accounts) =>
 Transaction.toRegisterRows = transactions => transactions.map(Transaction.toRegisterRow)
 
 Transaction.findEarliest = transactions => {
-    if (transactions.length === 0) return null
+    if (transactions.length === 0) return undefined
     return transactions.reduce((earliest, txn) => {
         const d = new Date(txn.date)
         return d < earliest ? d : earliest

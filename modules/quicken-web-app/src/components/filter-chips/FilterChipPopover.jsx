@@ -97,7 +97,7 @@ const E = {
         const { highlightedItemId, onToggle, singleSelect: isSingle, viewId } = chipState
         if (!highlightedItemId) return
         onToggle(highlightedItemId)
-        if (isSingle) post(Action.SetFilterPopoverOpen(viewId, null))
+        if (isSingle) post(Action.SetFilterPopoverOpen(viewId, undefined))
     },
 
     // Opens the popover for the given triggerId — read from triggerStates at call time
@@ -133,7 +133,7 @@ const E = {
     // @sig registerContent :: Element? -> void
     registerContent: element => {
         contentCleanup?.()
-        contentCleanup = null
+        contentCleanup = undefined
         if (!element) return
 
         // prettier-ignore
@@ -141,7 +141,7 @@ const E = {
             { id: 'navigate:down', description: 'Move down',  execute: () => post(Action.SetViewUiState(chipState.viewId, { filterPopoverHighlight: chipState.next })) },
             { id: 'navigate:up',   description: 'Move up',    execute: () => post(Action.SetViewUiState(chipState.viewId, { filterPopoverHighlight: chipState.prev })) },
             { id: 'select',        description: 'Toggle',     execute: E.handleSelect },
-            { id: 'dismiss',       description: 'Dismiss',    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, null)) },
+            { id: 'dismiss',       description: 'Dismiss',    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, undefined)) },
         ])
     },
 
@@ -174,7 +174,7 @@ const ItemRow = ({ item, isSelected, highlighted, onToggle }) => {
 const SingleSelectRow = ({ item, isSelected, highlighted, onToggle }) => {
     const handleClick = () => {
         onToggle(item.id)
-        post(Action.SetFilterPopoverOpen(chipState.viewId, null))
+        post(Action.SetFilterPopoverOpen(chipState.viewId, undefined))
     }
 
     const ref = highlighted ? E.handleScrollRef : undefined
@@ -200,7 +200,7 @@ const SelectedItemBadge = ({ item, onToggle }) => (
 // @sig SelectedBadges :: { allItems, selectedIds, onToggle } -> ReactElement?
 const SelectedBadges = ({ allItems, selectedIds, onToggle }) => {
     const items = F.findSelectedItems(allItems, selectedIds)
-    if (items.length === 0) return null
+    if (items.length === 0) return false
     return (
         <Flex wrap="wrap" gap="1" mb="2">
             {items.map(item => (
@@ -214,7 +214,7 @@ const SelectedBadges = ({ allItems, selectedIds, onToggle }) => {
 // config: { popoverId, label, triggerId, width?, singleSelect?, clearFilter? }
 // @sig FilterChipPopover :: { config, viewId, selectedIds, onToggle, items? } -> ReactElement
 const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => {
-    const toggleOpen = open => post(Action.SetFilterPopoverOpen(viewId, open ? config.popoverId : null))
+    const toggleOpen = open => post(Action.SetFilterPopoverOpen(viewId, open ? config.popoverId : undefined))
 
     const handleClear = e => {
         e.stopPropagation()
@@ -308,15 +308,15 @@ const SCROLL_STYLE = { maxHeight: 200 }
 const triggerStates = new Map()
 const triggerCleanups = new Map()
 const triggerRefs = new Map()
-let contentCleanup = null
+let contentCleanup
 let chipState = {
-    viewId: null,
-    popoverId: null,
+    viewId: undefined,
+    popoverId: undefined,
     singleSelect: false,
     next: 0,
     prev: 0,
-    highlightedItemId: null,
-    onToggle: null,
+    highlightedItemId: undefined,
+    onToggle: undefined,
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
