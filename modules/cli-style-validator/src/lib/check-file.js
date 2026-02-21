@@ -17,6 +17,7 @@ import { checkImportOrdering } from './rules/check-import-ordering.js'
 import { checkJsxSingleLineOpening } from './rules/check-jsx-single-line-opening.js'
 import { checkLineLength } from './rules/check-line-length.js'
 import { checkMultilineDestructuring } from './rules/check-multiline-destructuring.js'
+import { checkNoNullLiteral } from './rules/check-no-null-literal.js'
 import { checkReactComponentCohesion } from './rules/check-react-component-cohesion.js'
 import { checkReactReduxSeparation } from './rules/check-react-redux-separation.js'
 import { checkSectionSeparators } from './rules/check-section-separators.js'
@@ -31,7 +32,7 @@ import { checkSingleLevelIndentation } from './rules/check-single-level-indentat
 //   4 = function-declaration-ordering, import-ordering (just reordering)
 //   5 = function-spacing (just blank lines)
 //   6 = sig-documentation, function-naming, aboutme-comment (documentation)
-//   7 = file-naming (last - changes file paths)
+//   7 = file-naming (last - changes file paths), no-null-literal (style)
 //   8 = react-redux-separation (React/Redux boundary enforcement)
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -48,7 +49,7 @@ const checkFile = async filePath => {
     // Skip generated files entirely - they're auto-created and shouldn't be validated
     if (PS.isGeneratedFile(sourceCode)) return { filePath, violations: [], isCompliant: true }
 
-    let ast = null
+    let ast
     try {
         ast = Parser.parseCode(sourceCode)
     } catch (parseError) {
@@ -68,6 +69,7 @@ const checkFile = async filePath => {
         ...checkImportOrdering(ast, sourceCode, filePath),
         ...checkLineLength(ast, sourceCode, filePath),
         ...checkMultilineDestructuring(ast, sourceCode, filePath),
+        ...checkNoNullLiteral(ast, sourceCode, filePath),
         ...checkReactComponentCohesion(ast, sourceCode, filePath),
         ...checkReactReduxSeparation(ast, sourceCode, filePath),
         ...checkSigDocumentation(ast, sourceCode, filePath),
