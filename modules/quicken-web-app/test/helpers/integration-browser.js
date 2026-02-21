@@ -58,15 +58,19 @@ const createSession = sessionName => {
     // @sig clickByText :: String -> String
     const clickByText = text => browser('click', [`text=${text} >> nth=0`])
 
-    // Finds an element by text in snapshot and clicks by ref. Throws if not found (fail-fast).
-    // @sig clickByRef :: String -> String
-    const clickByRef = text => {
-        const snapshot = browser('snapshot', ['-i'])
-        const elements = parseSnapshot(snapshot)
-        const element = elements.find(e => e.text.includes(text))
-        if (!element) throw new Error(`clickByRef: no element matching "${text}"`)
-        if (!element.ref) throw new Error(`clickByRef: element "${text}" has no ref`)
-        return browser('click', [`@${element.ref}`])
+    // Polls snapshot until text appears, then clicks by ref. Handles data-dependent elements
+    // that may not be rendered immediately (e.g. account names after SQLite load).
+    // @sig clickByRef :: (String, Number?) -> String
+    const clickByRef = (text, timeoutMs = 10000) => {
+        const deadline = Date.now() + timeoutMs
+        while (Date.now() < deadline) {
+            const snapshot = browser('snapshot', ['-i'])
+            const elements = parseSnapshot(snapshot)
+            const element = elements.find(e => e.text.includes(text))
+            if (element && element.ref) return browser('click', [`@${element.ref}`])
+            execFileSync('sleep', ['0.5'])
+        }
+        throw new Error(`clickByRef: no element matching "${text}" after ${timeoutMs}ms`)
     }
 
     // Clicks an item inside an open Radix popover, scoped to avoid ambiguity with page content.
