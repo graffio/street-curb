@@ -41,11 +41,7 @@ const TS = {
         const reason = afterRule.slice(1, reasonEndIdx).trim()
 
         if (!expiresMatch)
-            return {
-                rule,
-                reason: reason || undefined,
-                error: 'COMPLEXITY-TODO requires expiration date (expires YYYY-MM-DD)',
-            }
+            return { rule, reason, error: 'COMPLEXITY-TODO requires expiration date (expires YYYY-MM-DD)' }
 
         const expires = expiresMatch[1]
 

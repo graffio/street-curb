@@ -101,18 +101,10 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     // Loads all accounts from the database
     // @sig queryAccounts :: Database -> LookupTable<Account>
     const queryAccounts = db => {
-        // Maps a raw account row to an Account tagged type
-        // @sig mapRow :: Object -> Account
-        const mapRow = row =>
-            Account.from({
-                ...row,
-                description: row.description || undefined,
-                creditLimit: row.creditLimit || undefined,
-            })
         const results = db.exec(
             'SELECT id, name, type, description, creditLimit FROM accounts WHERE orphanedAt IS NULL',
         )
-        return LookupTable(rowsToObjects(results).map(mapRow), Account, 'id')
+        return LookupTable(rowsToObjects(results).map(Account.from), Account, 'id')
     }
 
     // Loads all categories from the database
@@ -129,11 +121,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             return Category.from({
                 id,
                 name,
-                description: description || undefined,
-                budgetAmount: budgetAmount || undefined,
+                description,
+                budgetAmount,
                 isIncomeCategory: sqliteBool(isIncomeCategory),
                 isTaxRelated: sqliteBool(isTaxRelated),
-                taxSchedule: taxSchedule || undefined,
+                taxSchedule,
             })
         }
 
@@ -152,10 +144,10 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             const { goal, id, name, symbol, type } = row
             return Security.from({
                 id,
-                name: name || symbol || undefined, // default to symbol if there's no name
-                symbol: symbol || name || undefined, // default to the name if there's no symbol
-                type: type || undefined,
-                goal: goal || undefined,
+                name: name || symbol, // default to symbol if there's no name
+                symbol: symbol || name, // default to the name if there's no symbol
+                type,
+                goal,
             })
         }
 
@@ -166,37 +158,18 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     // Loads all tags from the database
     // @sig queryTags :: Database -> LookupTable<Tag>
     const queryTags = db => {
-        // Maps a raw tag row to a Tag tagged type
-        // @sig mapRow :: Object -> Tag
-        const mapRow = row => {
-            const { color, description, id, name } = row
-            return Tag.from({ id, name, color: color || undefined, description: description || undefined })
-        }
         const results = db.exec('SELECT id, name, color, description FROM tags WHERE orphanedAt IS NULL')
-        return LookupTable(rowsToObjects(results).map(mapRow), Tag, 'id')
+        return LookupTable(rowsToObjects(results).map(Tag.from), Tag, 'id')
     }
 
     // Loads all transaction splits from the database
     // @sig querySplits :: Database -> LookupTable<Split>
     const querySplits = db => {
-        // Maps a raw split row to a Split tagged type
-        // @sig mapRow :: Object -> Split
-        const mapRow = row => {
-            const { amount, categoryId, id, memo, transactionId, transferAccountId } = row
-            return Split.from({
-                id,
-                transactionId,
-                categoryId: categoryId || undefined,
-                amount,
-                memo: memo || undefined,
-                transferAccountId: transferAccountId || undefined,
-            })
-        }
         const results = db.exec(
             `SELECT id, transactionId, categoryId, amount, memo, transferAccountId
             FROM transactionSplits WHERE orphanedAt IS NULL`,
         )
-        return LookupTable(rowsToObjects(results).map(mapRow), Split, 'id')
+        return LookupTable(rowsToObjects(results).map(Split.from), Split, 'id')
     }
 
     // Loads all transactions from the database, mapping to Bank or Investment variants
@@ -204,51 +177,11 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     const queryTransactions = db => {
         // Maps a raw row to a Transaction.Bank tagged type
         // @sig mapBankRow :: Object -> Transaction.Bank
-        const mapBankRow = row => {
-            const { accountId, address, amount, categoryId, cleared, date } = row
-            const { id, memo, number, payee, runningBalance, transferAccountId } = row
-            return Transaction.Bank.from({
-                id,
-                accountId,
-                date,
-                amount,
-                runningBalance,
-                transactionType: 'bank',
-                address: address || undefined,
-                categoryId: categoryId || undefined,
-                cleared: cleared || undefined,
-                memo: memo || undefined,
-                number: number || undefined,
-                payee: payee || undefined,
-                transferAccountId: transferAccountId || undefined,
-            })
-        }
+        const mapBankRow = row => Transaction.Bank.from({ ...row, transactionType: 'bank' })
 
         // Maps a raw row to a Transaction.Investment tagged type
         // @sig mapInvestmentRow :: Object -> Transaction.Investment
-        const mapInvestmentRow = row => {
-            const { accountId, address, amount, categoryId, cleared, commission, date, id, runningBalance } = row
-            const { investmentAction, memo, payee, price, quantity, securityId, transferAccountId } = row
-            return Transaction.Investment.from({
-                id,
-                accountId,
-                date,
-                runningBalance,
-                transactionType: 'investment',
-                address: address || undefined,
-                amount: amount || undefined,
-                categoryId: categoryId || undefined,
-                cleared: cleared || undefined,
-                commission: commission || undefined,
-                investmentAction,
-                memo: memo || undefined,
-                payee: payee || undefined,
-                price: price || undefined,
-                quantity: quantity || undefined,
-                securityId: securityId || undefined,
-                transferAccountId: transferAccountId || undefined,
-            })
-        }
+        const mapInvestmentRow = row => Transaction.Investment.from({ ...row, transactionType: 'investment' })
 
         const sql = `
             SELECT id, accountId, date, amount, transactionType, transferAccountId, payee, memo, number,
@@ -276,7 +209,6 @@ const loadEntitiesFromFile = async (file, onProgress) => {
     // Loads all investment lots from the database
     // @sig queryLots :: Database -> LookupTable<Lot>
     const queryLots = db => {
-        const mapRow = row => Lot.from({ ...row, closedDate: row.closedDate || undefined })
         const sql = `
             SELECT id, accountId, securityId, purchaseDate, quantity, costBasis,
                    remainingQuantity, closedDate, createdByTransactionId, createdAt
@@ -284,7 +216,7 @@ const loadEntitiesFromFile = async (file, onProgress) => {
             ORDER BY accountId, securityId, purchaseDate
         `
         const results = db.exec(sql)
-        return LookupTable(rowsToObjects(results).map(mapRow), Lot, 'id')
+        return LookupTable(rowsToObjects(results).map(Lot.from), Lot, 'id')
     }
 
     // Loads all lot allocations from the database
