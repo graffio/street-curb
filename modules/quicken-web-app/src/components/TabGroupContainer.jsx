@@ -42,8 +42,8 @@ const E = {
     // @sig handleDragUp :: () -> void
     handleDragUp: () => {
         const el = dragHandleEl
-        currentDrag = null
-        dragHandleEl = null
+        currentDrag = undefined
+        dragHandleEl = undefined
         if (el) el.style.backgroundColor = 'var(--color-background)'
         document.removeEventListener('mousemove', E.handleDragMove)
         document.removeEventListener('mouseup', E.handleDragUp)
@@ -97,7 +97,7 @@ const ResizeHandle = ({ leftGroup, rightGroup }) => {
 }
 
 // Renders a tab group with optional resize handle to next group
-// @sig GroupWithHandle :: { group: TabGroup, nextGroup: TabGroup|null } -> ReactElement
+// @sig GroupWithHandle :: { group: TabGroup, nextGroup: TabGroup? } -> ReactElement
 const GroupWithHandle = ({ group, nextGroup }) => (
     <>
         <TabGroup key={group.id} group={group} />
@@ -131,9 +131,9 @@ const handleStyle = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Module-level drag state — only one drag at a time
-let currentDrag = null
-let dragHandleEl = null
-const containerEl = { current: null }
+let currentDrag
+let dragHandleEl
+const containerEl = { current: undefined }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

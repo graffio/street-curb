@@ -29,7 +29,7 @@ const E = {
     // @sig registerPageActions :: Element? -> void
     registerPageActions: element => {
         actionCleanup?.()
-        actionCleanup = null
+        actionCleanup = undefined
 
         if (!element) return
 
@@ -70,8 +70,8 @@ const actions = [
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-let pageState = { viewId: null }
-let actionCleanup = null
+let pageState = { viewId: undefined }
+let actionCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

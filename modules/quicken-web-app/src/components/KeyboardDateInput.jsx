@@ -69,7 +69,7 @@ const HIDDEN_INPUT_STYLE = { opacity: 0, position: 'absolute', left: '-9999px', 
  */
 // prettier-ignore
 const KeyboardDateInput = forwardRef((props, ref) => {
-    const { value = null, onChange, disabled = false, placeholder = 'MM/DD/YYYY', style = {}, onTabOut, onShiftTabOut,
+    const { value, onChange, disabled = false, placeholder = 'MM/DD/YYYY', style = {}, onTabOut, onShiftTabOut,
         actionContext, ...restProps } = props
 
     // Helper functions for keyboard navigation
@@ -125,7 +125,7 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         const timeout = setTimeout(() => {
             applyTypedNumber(newBuffer)
             setTypingBuffer('')
-            setTypingTimeout(null)
+            setTypingTimeout(undefined)
         }, delay)
 
         setTypingTimeout(timeout)
@@ -136,7 +136,7 @@ const KeyboardDateInput = forwardRef((props, ref) => {
         if (typingTimeout) clearTimeout(typingTimeout)
         applyTypedNumber(typingBuffer)
         setTypingBuffer('')
-        setTypingTimeout(null)
+        setTypingTimeout(undefined)
     }
 
     const handleBackspace = () => {
@@ -342,9 +342,9 @@ const KeyboardDateInput = forwardRef((props, ref) => {
     const [dateParts, setDateParts] = useState(() => dateToDateParts(value))
     const [activePart, setActivePart] = useState('month') // 'month', 'day', 'year'
     const [typingBuffer, setTypingBuffer] = useState('') // Buffer for typed numbers
-    const [typingTimeout, setTypingTimeout] = useState(null)
+    const [typingTimeout, setTypingTimeout] = useState()
     const userInitiatedChange = useRef(false)
-    const inputRef = useRef(null)
+    const inputRef = useRef()
 
     // Expose focus method to parent components
     useImperativeHandle(

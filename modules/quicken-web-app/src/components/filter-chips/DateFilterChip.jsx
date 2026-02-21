@@ -39,9 +39,21 @@ const F = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
+    // Clears date filter to default state — stops event propagation for chip clear button
+    // @sig clearFilter :: (String, Event) -> void
+    clearFilter: (viewId, e) => {
+        e.stopPropagation()
+        post(
+            Action.SetTransactionFilter(viewId, {
+                dateRangeKey: 'all',
+                dateRange: { start: undefined, end: undefined },
+            }),
+        )
+    },
+
     // Dispatches open/close for date popover
     // @sig onOpenChange :: (String, Boolean) -> void
-    onOpenChange: (viewId, open) => post(Action.SetFilterPopoverOpen(viewId, open ? 'date' : null)),
+    onOpenChange: (viewId, open) => post(Action.SetFilterPopoverOpen(viewId, open ? 'date' : undefined)),
 
     // Dispatches custom start date change and recalculates range if both dates present
     // @sig onStartDate :: (String, Date?) -> void
@@ -68,7 +80,7 @@ const E = {
     // Selects a date range option and dispatches filter update
     // @sig onSelect :: (String, String) -> void
     onSelect: (viewId, key) => {
-        const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: null, end: null }
+        const dateRange = DateRangeUtils.calculateDateRange(key) ?? { start: undefined, end: undefined }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: key, dateRange }))
     },
 
@@ -77,7 +89,7 @@ const E = {
     applyHighlightedDateRange: viewId => {
         const { highlightedItemId } = chipStates.get(viewId) || {}
         if (!highlightedItemId) return
-        const dateRange = DateRangeUtils.calculateDateRange(highlightedItemId) ?? { start: null, end: null }
+        const dateRange = DateRangeUtils.calculateDateRange(highlightedItemId) ?? { start: undefined, end: undefined }
         post(Action.SetTransactionFilter(viewId, { dateRangeKey: highlightedItemId, dateRange }))
         if (highlightedItemId === 'customDates') setTimeout(() => startDateEl.current?.focus('month'), 0)
     },
@@ -137,7 +149,7 @@ const E = {
                     {
                         id: 'dismiss',
                         description: 'Dismiss',
-                        execute: () => post(Action.SetFilterPopoverOpen(viewId, null)),
+                        execute: () => post(Action.SetFilterPopoverOpen(viewId, undefined)),
                     },
                 ]),
             )
@@ -208,7 +220,7 @@ const CustomDateRange = ({ viewId }) => {
     const dateRangeKey = useSelector(state => S.UI.dateRangeKey(state, viewId))
     const customStartDate = useSelector(state => S.UI.customStartDate(state, viewId))
     const customEndDate = useSelector(state => S.UI.customEndDate(state, viewId))
-    if (dateRangeKey !== 'customDates') return null
+    if (dateRangeKey !== 'customDates') return false
     const customDateStyle = { borderTop: '1px solid var(--gray-5)' }
     const startProps = {
         ref: el => (startDateEl.current = el),
@@ -260,8 +272,8 @@ const dateRangeOptions = Object.entries(DateRangeUtils.DATE_RANGES).map(([key, l
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const startDateEl = { current: null }
-const endDateEl = { current: null }
+const startDateEl = { current: undefined }
+const endDateEl = { current: undefined }
 
 // Per-viewId state maps — prevents multi-instance interference when multiple tab groups are open
 const chipStates = new Map()
@@ -277,11 +289,7 @@ const contentCleanups = new Map()
 // Date filter chip with keyboard-navigable date range options popover
 // @sig Chip :: { viewId: String, isActive?: Boolean } -> ReactElement
 const Chip = ({ viewId, isActive = false }) => {
-    const handleClear = e => {
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { dateRangeKey: 'all', dateRange: { start: null, end: null } }))
-    }
-
+    const handleClear = e => E.clearFilter(viewId, e)
     const preventAutoFocus = e => e.preventDefault()
     const contentRef = el => E.registerContentActions(viewId, el)
 

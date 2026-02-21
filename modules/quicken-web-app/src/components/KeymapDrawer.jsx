@@ -50,9 +50,9 @@ const KeybindingGroup = ({ name, intents }) => (
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Bottom drawer showing keyboard shortcuts grouped by source
-// @sig KeymapDrawer :: { open, onOpenChange, intents, height? } -> ReactElement | null
+// @sig KeymapDrawer :: { open, onOpenChange, intents, height? } -> ReactElement | false
 const KeymapDrawer = ({ open, onOpenChange, intents, height = 290 }) => {
-    if (!open) return null
+    if (!open) return false
 
     const groups = groupBy(intent => intent.from || 'Global', intents)
     const drawerStyle = {

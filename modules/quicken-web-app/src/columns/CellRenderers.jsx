@@ -83,7 +83,7 @@ const CurrencyCell = ({ getValue, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
 
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const formatted = formatCurrency(value)
     const color = value >= 0 ? 'var(--green-11)' : 'var(--red-11)'
@@ -115,7 +115,7 @@ const CategoryCell = ({ getValue, row, table }) => {
     const categoryId = getValue()
     const transferAccountId = row.original.transaction.transferAccountId
     const categoryName = useSelector(state => S.categoryName(state, categoryId))
-    const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : null))
+    const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : undefined))
     const name = transferName ? `[${transferName}]` : categoryName
     const searchQuery = table.options.meta?.searchQuery
 
@@ -131,7 +131,7 @@ const CategoryCell = ({ getValue, row, table }) => {
 const ActionCell = ({ getValue, row, table }) => {
     const code = getValue()
     const transferAccountId = row.original.transaction.transferAccountId
-    const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : null))
+    const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : undefined))
     const searchQuery = table.options.meta?.searchQuery
     const label = Transaction.ACTION_LABELS[code] || code || ''
 
@@ -215,7 +215,7 @@ const AccountCell = ({ getValue, table }) => {
 // @sig QuantityCell :: { getValue: Function } -> ReactElement
 const QuantityCell = ({ getValue }) => {
     const value = getValue()
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatQuantity(value)}</span>
 }
 
@@ -223,7 +223,7 @@ const QuantityCell = ({ getValue }) => {
 // @sig PriceCell :: { getValue: Function } -> ReactElement
 const PriceCell = ({ getValue }) => {
     const value = getValue()
-    if (value == null) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatPrice(value)}</span>
 }
 

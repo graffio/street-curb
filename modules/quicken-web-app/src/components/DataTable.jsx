@@ -63,7 +63,7 @@ const T = {
     // Calculate next index for keyboard navigation (wraps around)
     // @sig toNextIndex :: (String, [String], String?) -> Number
     toNextIndex: (direction, ids, highlightedId) => {
-        const currentIndex = highlightedId != null ? ids.indexOf(highlightedId) : -1
+        const currentIndex = highlightedId !== undefined ? ids.indexOf(highlightedId) : -1
         return direction === 'ArrowDown'
             ? currentIndex >= ids.length - 1
                 ? 0
@@ -102,7 +102,7 @@ const A = {
     // Finds index of highlighted row in current row list
     // @sig findHighlightedRowIndex :: (String?, [Row]) -> Number
     findHighlightedRowIndex: (highlightedId, rows) => {
-        if (highlightedId == null) return -1
+        if (highlightedId === undefined) return -1
         return rows.findIndex(row => T.toRowId(row.original) === highlightedId)
     },
 }
@@ -118,7 +118,7 @@ const E = {
     // @sig registerNavActions :: Element? -> void
     registerNavActions: element => {
         navCleanup?.()
-        navCleanup = null
+        navCleanup = undefined
         if (element)
             navCleanup = ActionRegistry.register(tableNav.actionContext, [
                 { id: 'navigate:down', description: 'Move down', execute: T.toNavigateHandler('ArrowDown') },
@@ -137,7 +137,7 @@ const E = {
 // Sort indicator component - shows direction and priority for multi-sort
 // @sig SortIndicator :: { direction: String, priority: Number } -> ReactElement
 const SortIndicator = ({ direction, priority }) => {
-    if (!direction) return null
+    if (!direction) return false
     const arrow = direction === 'asc' ? '↑' : '↓'
     const label = priority > 0 ? `${arrow}${priority}` : arrow
     return <span style={{ marginLeft: 4, fontWeight: 600 }}>{label}</span>
@@ -339,14 +339,14 @@ const SCROLL_CONTAINER_STYLE = { position: 'absolute', inset: 0, overflow: 'auto
 
 // Navigation state — single DataTable instance per actionContext, updated on each render
 let tableNav = {
-    actionContext: null,
-    highlightedId: null,
-    focusableIds: null,
+    actionContext: undefined,
+    highlightedId: undefined,
+    focusableIds: undefined,
     rows: [],
-    onHighlightChange: null,
-    onEscape: null,
+    onHighlightChange: undefined,
+    onEscape: undefined,
 }
-let navCleanup = null
+let navCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -452,7 +452,7 @@ const DataTable = ({
     }
 
     // Refs
-    const tableContainerRef = useRef(null)
+    const tableContainerRef = useRef()
 
     // Module-level nav state — rows assigned after table.getRowModel() below
     const prevContext = tableNav.actionContext
