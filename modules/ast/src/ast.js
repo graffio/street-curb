@@ -1,8 +1,13 @@
 // ABOUTME: AST entry points and traversal helpers
 // ABOUTME: Wraps raw ESTree from parsers into ASTNode instances
-// COMPLEXITY: functions — AST module provides multiple entry points for different traversal needs
 
 import { ASTNode } from './types/ast-node.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Internal predicates for raw ESTree nodes (used during traversal)
 const P = {
@@ -41,6 +46,12 @@ const P = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Extract child nodes from a property value (array or single node)
     // @sig toChildNodes :: Any -> [ESTreeNode]
@@ -50,6 +61,12 @@ const T = {
         return []
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const A = {
     // Get all direct child nodes of a raw node
@@ -69,18 +86,24 @@ const A = {
     },
 }
 
-const AST = {
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const Ast = {
     // === Entry Points ===
 
     // Collect all nodes from a raw ESTree AST as wrapped ASTNodes
     // @sig from :: ESTreeAST -> [ASTNode]
-    from: ast => A.collectDescendants(ast, null),
+    from: ast => A.collectDescendants(ast, undefined),
 
     // Get just top-level statements as wrapped ASTNodes
     // @sig topLevelStatements :: ESTreeAST -> [ASTNode]
     topLevelStatements: ast => {
         if (!ast?.body) return []
-        const wrappedRoot = ASTNode.wrap(ast, null)
+        const wrappedRoot = ASTNode.wrap(ast, undefined)
         return ast.body.map(node => ASTNode.wrap(node, wrappedRoot))
     },
 
@@ -116,4 +139,4 @@ const AST = {
     children: node => A.toChildren(node.esTree).map(child => ASTNode.wrap(child, node)),
 }
 
-export { AST }
+export { Ast }

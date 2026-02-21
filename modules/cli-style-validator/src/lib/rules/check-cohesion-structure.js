@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce P/T/F/V/A/E cohesion group structure
 // ABOUTME: Detects uncategorized functions, wrong ordering, and external function references
 
-import { AST, ASTNode, Lines } from '@graffio/ast'
+import { Ast, AstNode, Lines } from '@graffio/ast'
 import { NamedLocation } from '../../types/index.js'
 import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
@@ -19,20 +19,20 @@ const P = {
     isExemptName: name => EXEMPT_NAMES.includes(name) || PS.isPascalCase(name),
 
     // Check if statement is a cohesion group containing the node
-    // @sig isStatementContainingNode :: (ASTNode, ASTNode) -> Boolean
+    // @sig isStatementContainingNode :: (AstNode, AstNode) -> Boolean
     isStatementContainingNode: (stmt, node) => {
         const name = stmt.firstName
         if (!name || !PS.isCohesionGroup(name)) return false
         const value = stmt.firstValue
-        if (!ASTNode.ObjectExpression.is(value)) return false
+        if (!AstNode.ObjectExpression.is(value)) return false
         return value.properties.some(prop => prop.value?.isSameAs(node))
     },
 
     // Check if node is defined inside a cohesion group object
-    // @sig isInCohesionGroup :: (ASTNode, AST) -> Boolean
+    // @sig isInCohesionGroup :: (AstNode, AST) -> Boolean
     isInCohesionGroup: (node, ast) =>
-        AST.topLevelStatements(ast)
-            .filter(stmt => ASTNode.VariableDeclaration.is(stmt))
+        Ast.topLevelStatements(ast)
+            .filter(stmt => AstNode.VariableDeclaration.is(stmt))
             .some(stmt => P.isStatementContainingNode(stmt, node)),
 
     // Match function name to suggested cohesion group based on prefix
@@ -54,10 +54,10 @@ const T = {
     // Transform statement to cohesion group declaration if it is one
     // @sig toCohesionDecl :: Statement -> { name, line, value }?
     toCohesionDecl: stmt => {
-        if (!ASTNode.VariableDeclaration.is(stmt)) return undefined
+        if (!AstNode.VariableDeclaration.is(stmt)) return undefined
         const { firstName, firstValue, line } = stmt
         if (!firstName || !PS.isCohesionGroup(firstName)) return undefined
-        if (!ASTNode.ObjectExpression.is(firstValue)) return undefined
+        if (!AstNode.ObjectExpression.is(firstValue)) return undefined
         return { name: firstName, line, value: firstValue }
     },
 
@@ -73,7 +73,7 @@ const T = {
     toExternalRef: (groupName, prop) => {
         const { name, value, line } = prop
         if (!name || !value) return undefined
-        if (!ASTNode.Identifier.is(value) || PS.isFunctionNode(value)) return undefined
+        if (!AstNode.Identifier.is(value) || PS.isFunctionNode(value)) return undefined
         return { group: groupName, propName: name, refName: value.name, line }
     },
 }
@@ -86,7 +86,7 @@ const T = {
 
 const F = {
     // Create a named info object with line from a node
-    // @sig createNameInfo :: (String, ASTNode) -> NamedLocation
+    // @sig createNameInfo :: (String, AstNode) -> NamedLocation
     createNameInfo: (name, node) => NamedLocation(name, node.line),
 
     // Create a cohesion-structure violation at given line
@@ -220,7 +220,7 @@ const V = {
 const A = {
     // Collect all cohesion group declarations from AST
     // @sig collectCohesionDecls :: AST -> [{ name, line, value }]
-    collectCohesionDecls: ast => AST.topLevelStatements(ast).map(T.toCohesionDecl).filter(Boolean),
+    collectCohesionDecls: ast => Ast.topLevelStatements(ast).map(T.toCohesionDecl).filter(Boolean),
 
     // Collect all functions defined inside each cohesion group object
     // @sig collectCohesionGroups :: AST -> { P: [...], T: [...], F: [...], V: [...], A: [...], E: [...] }
@@ -256,12 +256,12 @@ const A = {
     // Collect function names referenced in exported objects (e.g., `const Api = { checkFile }`)
     // @sig collectExportedFunctionRefs :: (AST, Set<String>) -> [String]
     collectExportedFunctionRefs: (ast, exportedNames) =>
-        AST.topLevelStatements(ast)
-            .filter(stmt => ASTNode.VariableDeclaration.is(stmt))
+        Ast.topLevelStatements(ast)
+            .filter(stmt => AstNode.VariableDeclaration.is(stmt))
             .filter(stmt => exportedNames.has(stmt.firstName))
-            .filter(stmt => ASTNode.ObjectExpression.is(stmt.firstValue))
+            .filter(stmt => AstNode.ObjectExpression.is(stmt.firstValue))
             .flatMap(stmt => stmt.firstValue.properties)
-            .filter(prop => prop.value && ASTNode.Identifier.is(prop.value))
+            .filter(prop => prop.value && AstNode.Identifier.is(prop.value))
             .map(prop => prop.value.name),
 }
 

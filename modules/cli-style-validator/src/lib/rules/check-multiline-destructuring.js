@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect wasteful multiline destructuring patterns
 // ABOUTME: Suggests compacting destructuring to fit on fewer lines when possible
 
-import { AST, ASTNode } from '@graffio/ast'
+import { Ast, AstNode } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
@@ -25,16 +25,16 @@ const P = {
     isDestructuringPattern: node => P.isObjectPattern(node) || P.isArrayPattern(node),
 
     // Check if declaration uses destructuring
-    // @sig hasDestructuring :: ASTNode -> Boolean
+    // @sig hasDestructuring :: AstNode -> Boolean
     hasDestructuring: node => {
-        if (!ASTNode.VariableDeclaration.is(node)) return false
+        if (!AstNode.VariableDeclaration.is(node)) return false
         const declarator = node.esTree.declarations?.[0]
         if (!declarator) return false
         return P.isDestructuringPattern(declarator.id)
     },
 
     // Check if destructuring spans multiple lines
-    // @sig isMultiline :: ASTNode -> Boolean
+    // @sig isMultiline :: AstNode -> Boolean
     isMultiline: node => node.lineCount > 1,
 }
 
@@ -139,7 +139,7 @@ const F = {
 
 const V = {
     // Check if a multiline destructuring could be compacted
-    // @sig checkDeclaration :: ASTNode -> Violation?
+    // @sig checkDeclaration :: AstNode -> Violation?
     checkDeclaration: node => {
         const { column, line, lineCount } = node
         if (!P.hasDestructuring(node) || !P.isMultiline(node)) return undefined
@@ -169,13 +169,13 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath)) return []
 
-        return AST.topLevelStatements(ast)
+        return Ast.topLevelStatements(ast)
             .concat(
-                AST.from(ast)
+                Ast.from(ast)
                     .filter(PS.isFunctionNode)
                     .flatMap(f => f.body?.body || []),
             )
-            .filter(ASTNode.VariableDeclaration.is)
+            .filter(AstNode.VariableDeclaration.is)
             .map(V.checkDeclaration)
             .filter(Boolean)
     },

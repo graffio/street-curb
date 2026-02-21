@@ -2,7 +2,7 @@
 // ABOUTME: Flags when base.* appears 3+ times and suggests const { props } = base
 // COMPLEXITY: chain-extraction — Rule files naturally access AST properties repeatedly
 
-import { AST, ASTNode } from '@graffio/ast'
+import { Ast, AstNode } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
@@ -14,18 +14,18 @@ import { Predicates as PS } from '../shared/predicates.js'
 
 const P = {
     // Check if node is the outermost in a chain (not nested in another MemberExpression)
-    // @sig isOutermostMemberExpression :: ASTNode -> Boolean
+    // @sig isOutermostMemberExpression :: AstNode -> Boolean
     isOutermostMemberExpression: node => {
         const { parent } = node
-        if (!parent || !ASTNode.MemberExpression.is(parent)) return true
+        if (!parent || !AstNode.MemberExpression.is(parent)) return true
         return !parent.base?.isSameAs(node)
     },
 
     // Check if node is on left side of assignment
-    // @sig isAssignmentTarget :: ASTNode -> Boolean
+    // @sig isAssignmentTarget :: AstNode -> Boolean
     isAssignmentTarget: node => {
         const { parent } = node
-        if (!parent || !ASTNode.AssignmentExpression.is(parent)) return false
+        if (!parent || !AstNode.AssignmentExpression.is(parent)) return false
         return parent.target?.isSameAs(node)
     },
 
@@ -34,15 +34,15 @@ const P = {
     isNamespaceImport: (base, namespaces) => namespaces.has(base.split('.')[0]),
 
     // Check if node is being called as a method
-    // @sig isMethodCall :: ASTNode -> Boolean
+    // @sig isMethodCall :: AstNode -> Boolean
     isMethodCall: node => {
         const { parent } = node
-        if (!parent || !ASTNode.CallExpression.is(parent)) return false
+        if (!parent || !AstNode.CallExpression.is(parent)) return false
         return parent.target?.isSameAs(node)
     },
 
     // Recursively find first function ancestor, return true if it's NOT targetFunc
-    // @sig findFirstFunctionAncestor :: (ASTNode?, ASTNode) -> Boolean
+    // @sig findFirstFunctionAncestor :: (AstNode?, AstNode) -> Boolean
     findFirstFunctionAncestor: (current, targetFunc) => {
         if (!current) return false
         if (PS.isFunctionNode(current)) return !current.isSameAs(targetFunc)
@@ -58,29 +58,29 @@ const P = {
 
 const T = {
     // Collect property names in a chain (a.b.c -> ['a', 'b', 'c'])
-    // @sig toChainParts :: ASTNode -> [String]
+    // @sig toChainParts :: AstNode -> [String]
     toChainParts: node => {
         if (!node) return []
-        if (ASTNode.Identifier.is(node)) return [node.name]
-        if (!ASTNode.MemberExpression.is(node) || node.isComputed) return []
+        if (AstNode.Identifier.is(node)) return [node.name]
+        if (!AstNode.MemberExpression.is(node) || node.isComputed) return []
         const prop = node.member
-        if (!prop || !ASTNode.Identifier.is(prop)) return []
+        if (!prop || !AstNode.Identifier.is(prop)) return []
         return [...T.toChainParts(node.base), prop.name]
     },
 
     // Convert member expression to { base, property, line } for tracking
-    // @sig toAccess :: ASTNode -> { base: String, property: String, line: Number }?
+    // @sig toAccess :: AstNode -> { base: String, property: String, line: Number }?
     toAccess: node => {
         const target = P.isMethodCall(node) ? node.base : node
-        if (!target || !ASTNode.MemberExpression.is(target) || target.isComputed) return undefined
+        if (!target || !AstNode.MemberExpression.is(target) || target.isComputed) return undefined
 
         const prop = target.member
-        if (!prop || !ASTNode.Identifier.is(prop)) return undefined
+        if (!prop || !AstNode.Identifier.is(prop)) return undefined
 
         const obj = target.base
         if (!obj) return undefined
 
-        if (ASTNode.Identifier.is(obj)) return { base: obj.name, property: prop.name, line: node.line }
+        if (AstNode.Identifier.is(obj)) return { base: obj.name, property: prop.name, line: node.line }
 
         const parts = T.toChainParts(obj)
         if (parts.length === 0) return undefined
@@ -152,18 +152,18 @@ const A = {
     // @sig collectNamespaceImports :: AST -> Set<String>
     collectNamespaceImports: ast =>
         new Set(
-            AST.topLevelStatements(ast)
-                .filter(ASTNode.ImportDeclaration.is)
-                .flatMap(node => (node.esTree.specifiers || []).map(s => ASTNode.wrap(s, node)))
-                .filter(ASTNode.ImportNamespaceSpecifier.is)
+            Ast.topLevelStatements(ast)
+                .filter(AstNode.ImportDeclaration.is)
+                .flatMap(node => (node.esTree.specifiers || []).map(s => AstNode.wrap(s, node)))
+                .filter(AstNode.ImportNamespaceSpecifier.is)
                 .map(spec => spec.esTree.local.name),
         ),
 
     // Collect all property accesses within a function's scope (excluding nested functions)
-    // @sig collectAccessesInScope :: ASTNode -> [{ base: String, property: String, line: Number }]
+    // @sig collectAccessesInScope :: AstNode -> [{ base: String, property: String, line: Number }]
     collectAccessesInScope: funcNode =>
-        AST.descendants(funcNode)
-            .filter(node => ASTNode.MemberExpression.is(node))
+        Ast.descendants(funcNode)
+            .filter(node => AstNode.MemberExpression.is(node))
             .filter(node => !P.findFirstFunctionAncestor(node.parent, funcNode))
             .filter(P.isOutermostMemberExpression)
             .filter(node => !P.isAssignmentTarget(node))
@@ -179,7 +179,7 @@ const A = {
             .map(([base, { line, properties }]) => F.createSuggestion(line, base, [...properties].sort())),
 
     // Analyze a function node and return suggestions for extractable chains
-    // @sig collectSuggestionsForFunction :: (ASTNode, Set<String>) -> [Violation]
+    // @sig collectSuggestionsForFunction :: (AstNode, Set<String>) -> [Violation]
     collectSuggestionsForFunction: (funcNode, namespaces) => {
         const accesses = A.collectAccessesInScope(funcNode)
         const groups = T.toGroupedBases(accesses)
@@ -189,7 +189,7 @@ const A = {
     // Process all functions in AST and return extraction suggestions
     // @sig collectFunctionSuggestions :: (AST, Set<String>) -> [Violation]
     collectFunctionSuggestions: (ast, namespaces) =>
-        AST.from(ast)
+        Ast.from(ast)
             .filter(PS.isFunctionNode)
             .flatMap(funcNode => A.collectSuggestionsForFunction(funcNode, namespaces)),
 }

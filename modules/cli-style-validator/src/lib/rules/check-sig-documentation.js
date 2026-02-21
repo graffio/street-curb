@@ -1,7 +1,7 @@
 // ABOUTME: Rule to detect missing @sig documentation on functions
 // ABOUTME: Enforces documentation standard for top-level and long functions
 
-import { AST, Lines } from '@graffio/ast'
+import { Ast, Lines } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 import { Transformers as TS } from '../shared/transformers.js'
@@ -45,7 +45,7 @@ const P = {
     // @sig requiresSig :: (ASTNode, AST) -> Boolean
     requiresSig: (node, ast) => {
         if (PS.isInnerCurriedFunction(node, node.parent)) return false
-        return AST.isTopLevel(node, ast) || node.lineCount > 5
+        return Ast.isTopLevel(node, ast) || node.lineCount > 5
     },
 }
 
@@ -59,7 +59,7 @@ const T = {
     // Get reason string for why function requires signature documentation
     // @sig toRequirementReason :: (ASTNode, AST) -> String
     toRequirementReason: (node, ast) =>
-        AST.isTopLevel(node, ast) ? 'top-level function' : 'function longer than 5 lines',
+        Ast.isTopLevel(node, ast) ? 'top-level function' : 'function longer than 5 lines',
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ const V = {
     // @sig validateFunction :: (ASTNode, AST, Lines) -> [Violation]
     validateFunction: (node, ast, src) => {
         const { found: hasSig, lineIndex: sigLineIndex } = A.findSigInCommentBlock(src, node)
-        const effectiveLine = AST.associatedCommentLine(node)
+        const effectiveLine = Ast.associatedCommentLine(node)
 
         // Has sig but it's not last in comment block
         if (hasSig && A.hasCommentsBetweenSigAndFunction(src, sigLineIndex, effectiveLine)) {
@@ -114,7 +114,7 @@ const V = {
 
         const src = Lines.from(sourceCode)
 
-        return AST.from(ast)
+        return Ast.from(ast)
             .filter(node => PS.isFunctionNode(node))
             .flatMap(node => V.validateFunction(node, ast, src))
     },
@@ -135,7 +135,7 @@ const A = {
         if (sigIndex === -1) return { found: false, lineIndex: undefined }
 
         // Convert relative index back to absolute line number
-        const effectiveLine = AST.associatedCommentLine(node)
+        const effectiveLine = Ast.associatedCommentLine(node)
         const absoluteIndex = effectiveLine - 2 - sigIndex
         return { found: true, lineIndex: absoluteIndex }
     },

@@ -1,7 +1,7 @@
 // ABOUTME: Rule to ban null literals from source code
 // ABOUTME: Flags any use of the null keyword to enforce undefined as the sole absent value
 
-import { AST } from '@graffio/ast'
+import { Ast } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
@@ -46,7 +46,7 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode) || P.isBoundaryFile(filePath)) return []
 
-        return AST.from(ast)
+        return Ast.from(ast)
             .filter(node => {
                 const { type, raw } = node.esTree
                 return type === 'Literal' && raw === 'null'

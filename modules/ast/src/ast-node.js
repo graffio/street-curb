@@ -1,14 +1,15 @@
-// ABOUTME: Adds instance methods to ASTNode variants
+// ABOUTME: Adds instance methods to AstNode variants
 // ABOUTME: Extends generated TaggedSum with semantic accessors that hide ESTree structure
-// COMPLEXITY: lines — Semantic accessors for all ESTree node types
-// COMPLEXITY: functions — Each node type requires multiple property getters
 
 import { ASTNode } from './types/ast-node.js'
 
-// =============================================================================
-// Shared prototype properties (available on all variants)
-// =============================================================================
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
+// Shared prototype properties (available on all variants)
 Object.defineProperties(ASTNode.prototype, {
     line: {
         get() {
@@ -57,9 +58,7 @@ ASTNode.prototype.isSameAs = function (other) {
     return this.esTree === other?.esTree
 }
 
-// =============================================================================
 // Variant-specific prototype properties
-// =============================================================================
 
 // --- Identifier ---
 Object.defineProperties(ASTNode.Identifier.prototype, {
@@ -82,7 +81,7 @@ Object.defineProperties(ASTNode.FunctionDeclaration.prototype, {
     body: {
         get() {
             const body = this.esTree.body
-            return body ? ASTNode.wrap(body, this) : null
+            return body ? ASTNode.wrap(body, this) : undefined
         },
         enumerable: false,
     },
@@ -99,7 +98,7 @@ Object.defineProperties(ASTNode.FunctionExpression.prototype, {
     body: {
         get() {
             const body = this.esTree.body
-            return body ? ASTNode.wrap(body, this) : null
+            return body ? ASTNode.wrap(body, this) : undefined
         },
         enumerable: false,
     },
@@ -109,14 +108,14 @@ Object.defineProperties(ASTNode.FunctionExpression.prototype, {
 Object.defineProperties(ASTNode.ArrowFunctionExpression.prototype, {
     name: {
         get() {
-            return null
+            return undefined
         },
         enumerable: false,
     },
     body: {
         get() {
             const body = this.esTree.body
-            return body ? ASTNode.wrap(body, this) : null
+            return body ? ASTNode.wrap(body, this) : undefined
         },
         enumerable: false,
     },
@@ -145,7 +144,7 @@ Object.defineProperties(ASTNode.VariableDeclaration.prototype, {
     firstValue: {
         get() {
             const init = this.esTree.declarations?.[0]?.init
-            return init ? ASTNode.wrap(init, this) : null
+            return init ? ASTNode.wrap(init, this) : undefined
         },
         enumerable: false,
     },
@@ -162,7 +161,7 @@ Object.defineProperties(ASTNode.VariableDeclarator.prototype, {
     value: {
         get() {
             const init = this.esTree.init
-            return init ? ASTNode.wrap(init, this) : null
+            return init ? ASTNode.wrap(init, this) : undefined
         },
         enumerable: false,
     },
@@ -173,14 +172,14 @@ Object.defineProperties(ASTNode.MemberExpression.prototype, {
     base: {
         get() {
             const obj = this.esTree.object
-            return obj ? ASTNode.wrap(obj, this) : null
+            return obj ? ASTNode.wrap(obj, this) : undefined
         },
         enumerable: false,
     },
     member: {
         get() {
             const prop = this.esTree.property
-            return prop ? ASTNode.wrap(prop, this) : null
+            return prop ? ASTNode.wrap(prop, this) : undefined
         },
         enumerable: false,
     },
@@ -197,7 +196,7 @@ Object.defineProperties(ASTNode.CallExpression.prototype, {
     target: {
         get() {
             const callee = this.esTree.callee
-            return callee ? ASTNode.wrap(callee, this) : null
+            return callee ? ASTNode.wrap(callee, this) : undefined
         },
         enumerable: false,
     },
@@ -208,7 +207,7 @@ Object.defineProperties(ASTNode.AssignmentExpression.prototype, {
     target: {
         get() {
             const left = this.esTree.left
-            return left ? ASTNode.wrap(left, this) : null
+            return left ? ASTNode.wrap(left, this) : undefined
         },
         enumerable: false,
     },
@@ -229,7 +228,7 @@ Object.defineProperties(ASTNode.ReturnStatement.prototype, {
     value: {
         get() {
             const arg = this.esTree.argument
-            return arg ? ASTNode.wrap(arg, this) : null
+            return arg ? ASTNode.wrap(arg, this) : undefined
         },
         enumerable: false,
     },
@@ -256,7 +255,7 @@ Object.defineProperties(ASTNode.Property.prototype, {
     value: {
         get() {
             const val = this.esTree.value
-            return val ? ASTNode.wrap(val, this) : null
+            return val ? ASTNode.wrap(val, this) : undefined
         },
         enumerable: false,
     },
@@ -298,4 +297,10 @@ Object.defineProperties(ASTNode.ExportSpecifier.prototype, {
     },
 })
 
-export { ASTNode }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+export { ASTNode as AstNode }

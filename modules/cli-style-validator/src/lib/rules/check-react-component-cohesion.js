@@ -1,29 +1,39 @@
 // ABOUTME: Rule to enforce React component cohesion patterns
 // ABOUTME: Detects render* functions and cohesion groups defined inside components
 
-import { AST, ASTNode } from '@graffio/ast'
+import { Ast, AstNode } from '@graffio/ast'
 import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 2
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if node is a cohesion group definition (const P = {}, etc.)
-    // @sig isCohesionGroupDef :: ASTNode -> Boolean
+    // @sig isCohesionGroupDef :: AstNode -> Boolean
     isCohesionGroupDef: node =>
-        ASTNode.VariableDeclarator.is(node) && PS.isCohesionGroup(node.name) && ASTNode.ObjectExpression.is(node.value),
+        AstNode.VariableDeclarator.is(node) && PS.isCohesionGroup(node.name) && AstNode.ObjectExpression.is(node.value),
 
     // Check if node is a render function (declaration or variable with render* name)
-    // @sig isRenderNode :: ASTNode -> Boolean
+    // @sig isRenderNode :: AstNode -> Boolean
     isRenderNode: node => {
-        const name = node.name
+        const { name, value } = node
         if (!name || !/^render[A-Z]/.test(name)) return false
-        if (ASTNode.FunctionDeclaration.is(node)) return true
-        if (ASTNode.VariableDeclarator.is(node)) return node.value && PS.isFunctionNode(node.value)
+        if (AstNode.FunctionDeclaration.is(node)) return true
+        if (AstNode.VariableDeclarator.is(node)) return value && PS.isFunctionNode(value)
         return false
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Convert render function name to component name
@@ -31,21 +41,27 @@ const T = {
     toComponentName: name => name.replace(/^render/, ''),
 }
 
-const violation = FS.createViolation('react-component-cohesion', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create violation for render function
-    // @sig createRenderViolation :: ASTNode -> Violation
-    createRenderViolation: node =>
-        violation(
-            node.line,
+    // @sig createRenderViolation :: AstNode -> Violation
+    createRenderViolation: node => {
+        const { line, name } = node
+        return violation(
+            line,
             1,
-            `"${node.name}" should be extracted to a <${T.toComponentName(node.name)} /> component. ` +
+            `"${name}" should be extracted to a <${T.toComponentName(name)} /> component. ` +
                 `FIX: Move to its own component, not a render function inside the parent.`,
-        ),
+        )
+    },
 
     // Create violation for cohesion group inside component
-    // @sig createCohesionGroupViolation :: (ASTNode, String) -> Violation
+    // @sig createCohesionGroupViolation :: (AstNode, String) -> Violation
     createCohesionGroupViolation: (node, componentName) =>
         violation(
             node.line,
@@ -55,6 +71,12 @@ const F = {
         ),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Validate React component cohesion patterns
     // @sig check :: (AST?, String, String) -> [Violation]
@@ -62,18 +84,24 @@ const V = {
         if (!ast || PS.isTestFile(filePath) || !filePath.endsWith('.jsx')) return []
         if (!PS.hasJSXContext(ast)) return []
 
-        const renderViolations = AST.from(ast).filter(P.isRenderNode).map(F.createRenderViolation)
+        const renderViolations = Ast.from(ast).filter(P.isRenderNode).map(F.createRenderViolation)
         return [...renderViolations, ...A.collectCohesionViolations(ast)]
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Find cohesion groups inside a component function body
-    // @sig findCohesionGroupsIn :: (ASTNode, String) -> [Violation]
+    // @sig findCohesionGroupsIn :: (AstNode, String) -> [Violation]
     findCohesionGroupsIn: (funcNode, name) => {
         if (!PS.isFunctionWithBlockBody(funcNode)) return []
         return funcNode.body.body
-            .filter(ASTNode.VariableDeclaration.is)
+            .filter(AstNode.VariableDeclaration.is)
             .flatMap(decl => decl.declarations)
             .filter(P.isCohesionGroupDef)
             .map(d => F.createCohesionGroupViolation(d, name))
@@ -83,6 +111,22 @@ const A = {
     // @sig collectCohesionViolations :: AST -> [Violation]
     collectCohesionViolations: ast => AS.findComponents(ast).flatMap(c => A.findCohesionGroupsIn(c.node, c.name)),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 2
+
+const violation = FS.createViolation('react-component-cohesion', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run react-component-cohesion rule with COMPLEXITY exemption support
 // @sig checkReactComponentCohesion :: (AST?, String, String) -> [Violation]

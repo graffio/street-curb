@@ -1,12 +1,14 @@
 // ABOUTME: Shared predicate functions for style validator rules
 // ABOUTME: Unified file/AST predicates to avoid duplication across rules
 
-import { AST, ASTNode } from '@graffio/ast'
+import { Ast, AstNode } from '@graffio/ast'
 import { Transformers as TS } from './transformers.js'
 
-const { ArrowFunctionExpression, BlockStatement, DoWhileStatement, ForInStatement } = ASTNode
-const { ForOfStatement, ForStatement, FunctionDeclaration, FunctionExpression } = ASTNode
-const { JSXElement, JSXFragment, ReturnStatement, VariableDeclaration, WhileStatement } = ASTNode
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const PS = {
     // Check if file is a test file that should skip validation
@@ -27,16 +29,16 @@ const PS = {
     },
 
     // Check if a node represents a function (declaration, expression, or arrow)
-    // @sig isFunctionNode :: ASTNode -> Boolean
+    // @sig isFunctionNode :: AstNode -> Boolean
     isFunctionNode: node =>
         FunctionDeclaration.is(node) || FunctionExpression.is(node) || ArrowFunctionExpression.is(node),
 
     // Check if a node is a function declaration statement
-    // @sig isFunctionDeclaration :: ASTNode -> Boolean
+    // @sig isFunctionDeclaration :: AstNode -> Boolean
     isFunctionDeclaration: node => FunctionDeclaration.is(node),
 
     // Check if a node is a variable declaration with a function expression
-    // @sig isFunctionVariableDeclaration :: ASTNode -> Boolean
+    // @sig isFunctionVariableDeclaration :: AstNode -> Boolean
     isFunctionVariableDeclaration: node => {
         if (!VariableDeclaration.is(node)) return false
         return node.declarations.some(declaration => {
@@ -46,7 +48,7 @@ const PS = {
     },
 
     // Check if a node is a function statement (declaration or variable with function)
-    // @sig isFunctionStatement :: ASTNode -> Boolean
+    // @sig isFunctionStatement :: AstNode -> Boolean
     isFunctionStatement: node => PS.isFunctionDeclaration(node) || PS.isFunctionVariableDeclaration(node),
 
     // Check if source code is from a generated file
@@ -57,7 +59,7 @@ const PS = {
     },
 
     // Check if node is a block statement
-    // @sig isBlockStatement :: ASTNode -> Boolean
+    // @sig isBlockStatement :: AstNode -> Boolean
     isBlockStatement: node => BlockStatement.is(node),
 
     // Check if a name is PascalCase (starts with uppercase, alphanumeric)
@@ -69,11 +71,11 @@ const PS = {
     isKebabCase: name => /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(name),
 
     // Check if a node spans multiple lines
-    // @sig isMultilineNode :: ASTNode -> Boolean
+    // @sig isMultilineNode :: AstNode -> Boolean
     isMultilineNode: node => node.endLine > node.startLine,
 
     // Check if node is a function with a block body (not expression)
-    // @sig isFunctionWithBlockBody :: ASTNode -> Boolean
+    // @sig isFunctionWithBlockBody :: AstNode -> Boolean
     isFunctionWithBlockBody: node => {
         if (!PS.isFunctionNode(node)) return false
         const body = node.body
@@ -81,7 +83,7 @@ const PS = {
     },
 
     // Check if statement returns JSX element or fragment
-    // @sig hasJSXReturnStatement :: ASTNode -> Boolean
+    // @sig hasJSXReturnStatement :: AstNode -> Boolean
     hasJSXReturnStatement: statement => {
         if (!ReturnStatement.is(statement)) return false
         const argument = statement.value
@@ -90,7 +92,7 @@ const PS = {
     },
 
     // Check if function returns JSX (arrow expression or block return)
-    // @sig isJSXFunction :: ASTNode -> Boolean
+    // @sig isJSXFunction :: AstNode -> Boolean
     isJSXFunction: node => {
         const body = node.body
         if (!body) return false
@@ -101,7 +103,7 @@ const PS = {
     },
 
     // Check if function is the inner part of a curried function (body of another arrow)
-    // @sig isInnerCurriedFunction :: (ASTNode, ASTNode?) -> Boolean
+    // @sig isInnerCurriedFunction :: (AstNode, AstNode?) -> Boolean
     isInnerCurriedFunction: (node, parent) => {
         if (!parent) return false
         if (!ArrowFunctionExpression.is(parent)) return false
@@ -138,10 +140,10 @@ const PS = {
 
     // Check if AST contains any JSX elements or fragments
     // @sig hasJSXContext :: AST -> Boolean
-    hasJSXContext: ast => AST.from(ast).some(n => ASTNode.JSXElement.is(n) || ASTNode.JSXFragment.is(n)),
+    hasJSXContext: ast => Ast.from(ast).some(n => AstNode.JSXElement.is(n) || AstNode.JSXFragment.is(n)),
 
     // Check if node is a loop statement (for, while, do-while, for-in, for-of)
-    // @sig isLoop :: ASTNode -> Boolean
+    // @sig isLoop :: AstNode -> Boolean
     isLoop: node =>
         ForStatement.is(node) ||
         WhileStatement.is(node) ||
@@ -149,5 +151,21 @@ const PS = {
         ForInStatement.is(node) ||
         ForOfStatement.is(node),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const { ArrowFunctionExpression, BlockStatement, DoWhileStatement, ForInStatement } = AstNode
+const { ForOfStatement, ForStatement, FunctionDeclaration, FunctionExpression } = AstNode
+const { JSXElement, JSXFragment, ReturnStatement, VariableDeclaration, WhileStatement } = AstNode
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { PS as Predicates }

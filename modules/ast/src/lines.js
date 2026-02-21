@@ -1,7 +1,14 @@
 // ABOUTME: Query interface for source code as lines - extends Array with position methods
 // ABOUTME: Enables searching for comments and patterns relative to AST positions
+// COMPLEXITY: export-structure — Lines is a type constructor with statics; PascalCase is correct
 
-import { AST } from './ast.js'
+import { Ast } from './ast.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Create a Lines array from string items with position and query methods
 // @sig Lines :: [String] -> Lines
@@ -18,6 +25,12 @@ Lines.from = sourceCode => Lines(sourceCode.split('\n'))
 // Check if value is a Lines array
 // @sig Lines.is :: Any -> Boolean
 Lines.is = o => Object.getPrototypeOf(o) === LinesPrototype
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const LinesPrototype = Object.create(Array.prototype)
 
@@ -46,9 +59,9 @@ LinesPrototype.between = function (startLine, endLine) {
 }
 
 // Lines before an AST node (uses effective line for parent context)
-// @sig beforeNode :: (ASTNode, ASTNode?) -> Lines
+// @sig beforeNode :: (AstNode, AstNode?) -> Lines
 LinesPrototype.beforeNode = function (node, parent) {
-    const line = AST.associatedCommentLine(node, parent)
+    const line = Ast.associatedCommentLine(node, parent)
     return Lines(this.slice(0, line - 1).reverse())
 }
 
@@ -71,5 +84,11 @@ LinesPrototype.takeWhile = function (predicate) {
     const index = this.findIndex(line => !predicate(line))
     return Lines(index === -1 ? this : this.slice(0, index))
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { Lines }

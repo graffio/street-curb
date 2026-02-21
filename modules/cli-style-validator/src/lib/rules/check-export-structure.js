@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce single named export matching file name
 // ABOUTME: Exported functions must be defined at module level, not inside cohesion groups
 
-import { AST, ASTNode } from '@graffio/ast'
+import { Ast, AstNode } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 import { Transformers as TS } from '../shared/transformers.js'
@@ -18,8 +18,8 @@ const P = {
     isIndexFile: filePath => /(?:^|[/\\])index\.js$/.test(filePath),
 
     // Check if an AST node is a function expression (arrow or traditional)
-    // @sig isFunctionExpression :: ASTNode -> Boolean
-    isFunctionExpression: node => ASTNode.ArrowFunctionExpression.is(node) || ASTNode.FunctionExpression.is(node),
+    // @sig isFunctionExpression :: AstNode -> Boolean
+    isFunctionExpression: node => AstNode.ArrowFunctionExpression.is(node) || AstNode.FunctionExpression.is(node),
 
     // Check if this is a JSX file (React component — PascalCase function exports are valid)
     // @sig isJsxFile :: String -> Boolean
@@ -55,7 +55,7 @@ const T = {
     },
 
     // Transform export specifier into record with export metadata
-    // @sig toExportRecord :: (ASTNode, ExportSpecifier) -> { name, localName, line, isDefault }
+    // @sig toExportRecord :: (AstNode, ExportSpecifier) -> { name, localName, line, isDefault }
     toExportRecord: (node, spec) => {
         const { exportedName, localName } = spec
         return { name: exportedName, localName: localName || exportedName, line: node.line, isDefault: false }
@@ -126,7 +126,7 @@ const V = {
     },
 
     // Check that export name matches file name
-    // @sig checkExportNameMatch :: (ExportInfo, String, ASTNode?, [Violation]) -> Void
+    // @sig checkExportNameMatch :: (ExportInfo, String, AstNode?, [Violation]) -> Void
     checkExportNameMatch: (exportInfo, filePath, declaration, violations) => {
         const { name: exportName, line } = exportInfo
         const isFunction = declaration && P.isFunctionExpression(declaration.firstValue)
@@ -145,7 +145,7 @@ const V = {
     },
 
     // Check that exported object does not leak cohesion groups
-    // @sig checkLeakedGroups :: ([String], String, ASTNode, [Violation]) -> Void
+    // @sig checkLeakedGroups :: ([String], String, AstNode, [Violation]) -> Void
     checkLeakedGroups: (propertyNames, exportName, declaration, violations) => {
         const leakedGroups = propertyNames.filter(PS.isCohesionGroup)
         if (leakedGroups.length === 0) return
@@ -157,7 +157,7 @@ const V = {
     },
 
     // Check that single-property object wrapping a function exports the function directly
-    // @sig checkSinglePropertyObject :: ([String], String, ASTNode, String, [Violation]) -> Void
+    // @sig checkSinglePropertyObject :: ([String], String, AstNode, String, [Violation]) -> Void
     checkSinglePropertyObject: (propertyNames, exportName, declaration, filePath, violations) => {
         if (propertyNames.length !== 1) return
         const propName = propertyNames[0]
@@ -169,7 +169,7 @@ const V = {
     },
 
     // Check that exported functions are not defined inside cohesion groups
-    // @sig checkCohesionGroupFunctions :: ([String], ASTNode, AST, [Violation]) -> Void
+    // @sig checkCohesionGroupFunctions :: ([String], AstNode, AST, [Violation]) -> Void
     checkCohesionGroupFunctions: (propertyNames, declaration, ast, violations) => {
         const cohesionFunctions = A.collectCohesionGroupFunctions(ast)
         propertyNames
@@ -178,7 +178,7 @@ const V = {
     },
 
     // Validate object export (non-function single export)
-    // @sig checkObjectExport :: (ASTNode, String, AST, String, [Violation]) -> Void
+    // @sig checkObjectExport :: (AstNode, String, AST, String, [Violation]) -> Void
     checkObjectExport: (declaration, exportName, ast, filePath, violations) => {
         const value = declaration.firstValue
         const propertyNames = A.collectObjectPropertyNames(value)
@@ -229,47 +229,47 @@ const A = {
     // Collect all named exports from AST
     // @sig collectNamedExports :: AST -> [{ name: String, localName: String, line: Number, isDefault: Boolean }]
     collectNamedExports: ast =>
-        AST.topLevelStatements(ast)
-            .filter(node => ASTNode.ExportNamedDeclaration.is(node))
+        Ast.topLevelStatements(ast)
+            .filter(node => AstNode.ExportNamedDeclaration.is(node))
             .flatMap(node => node.specifiers.filter(s => s.exportedName).map(s => T.toExportRecord(node, s))),
 
     // Collect default exports from AST
     // @sig collectDefaultExports :: AST -> [{ line: Number, isDefault: Boolean }]
     collectDefaultExports: ast =>
-        AST.topLevelStatements(ast)
-            .filter(node => ASTNode.ExportDefaultDeclaration.is(node))
+        Ast.topLevelStatements(ast)
+            .filter(node => AstNode.ExportDefaultDeclaration.is(node))
             .map(node => ({ name: 'default', line: node.line, isDefault: true })),
 
     // Find the variable declaration for a given name
-    // @sig findVariableDeclaration :: (AST, String) -> ASTNode?
+    // @sig findVariableDeclaration :: (AST, String) -> AstNode?
     findVariableDeclaration: (ast, name) =>
-        AST.topLevelStatements(ast)
-            .filter(node => ASTNode.VariableDeclaration.is(node))
+        Ast.topLevelStatements(ast)
+            .filter(node => AstNode.VariableDeclaration.is(node))
             .find(node => node.firstName === name),
 
     // Collect function names defined inside cohesion groups
     // @sig collectCohesionGroupFunctions :: AST -> Set<String>
     collectCohesionGroupFunctions: ast => {
         const functions = new Set()
-        AST.topLevelStatements(ast)
-            .filter(node => ASTNode.VariableDeclaration.is(node))
+        Ast.topLevelStatements(ast)
+            .filter(node => AstNode.VariableDeclaration.is(node))
             .forEach(node => A.collectGroupProperties(node, functions))
         return functions
     },
 
     // Add property names from a cohesion group declaration to the accumulator set
-    // @sig collectGroupProperties :: (ASTNode, Set<String>) -> Void
+    // @sig collectGroupProperties :: (AstNode, Set<String>) -> Void
     collectGroupProperties: (node, functions) => {
         const { firstName, firstValue } = node
         if (!firstName || !PS.isCohesionGroup(firstName)) return
-        if (!ASTNode.ObjectExpression.is(firstValue)) return
+        if (!AstNode.ObjectExpression.is(firstValue)) return
         firstValue.properties.filter(prop => prop.name).forEach(prop => functions.add(prop.name))
     },
 
     // Get property names from an object expression
-    // @sig collectObjectPropertyNames :: ASTNode -> [String]
+    // @sig collectObjectPropertyNames :: AstNode -> [String]
     collectObjectPropertyNames: node => {
-        if (!ASTNode.ObjectExpression.is(node)) return []
+        if (!AstNode.ObjectExpression.is(node)) return []
         return node.properties.map(prop => prop.name).filter(Boolean)
     },
 }

@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce blank lines before multiline function declarations
 // ABOUTME: Single-line functions can be grouped; multiline functions need separation
 
-import { AST } from '@graffio/ast'
+import { Ast } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
@@ -71,11 +71,11 @@ const V = {
         if (!ast || PS.isTestFile(filePath)) return []
 
         const topLevelViolations = A.checkBlockFunctions(
-            A.findFunctionsInBlock(AST.topLevelStatements(ast)),
+            A.findFunctionsInBlock(Ast.topLevelStatements(ast)),
             sourceCode,
         )
         const nestedViolations = []
-        AST.from(ast).forEach(node => nestedViolations.push(...A.checkInnerFunctions(node, sourceCode)))
+        Ast.from(ast).forEach(node => nestedViolations.push(...A.checkInnerFunctions(node, sourceCode)))
 
         return [...topLevelViolations, ...nestedViolations]
     },
