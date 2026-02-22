@@ -64,8 +64,8 @@ const V = {
 const PRIORITY = 7
 const violation = FS.createViolation('no-null-literal', PRIORITY)
 
-// Files that must handle null: boundary utilities, typeof guards, SQL-facing modules, and
-// modules with pre-existing validator violations that block null→undefined migration
+// Files that must handle null: boundary utilities, typeof guards, sort/filter internals,
+// and the sql.js boundary converter (undefined→null at DB interface)
 const BOUNDARY_PATTERNS = [
     'ramda-like/isNil.js',
     'ramda-like/type.js',
@@ -77,9 +77,10 @@ const BOUNDARY_PATTERNS = [
     'ramda-like/path.js',
     'apply-sort.js',
     'apply-filter.js',
-    'ast/src/',
-    'cli-type-generator/src/',
-    'cli-qif-to-sqlite/src/',
+    'cli-type-generator/src/descriptors/field-descriptor.js',
+    'cli-type-generator/src/parse-type-definition-file.js',
+    'cli-type-generator/src/prettier-code.js',
+    'cli-qif-to-sqlite/src/sql-boundary.js',
 ]
 
 // ---------------------------------------------------------------------------------------------------------------------
