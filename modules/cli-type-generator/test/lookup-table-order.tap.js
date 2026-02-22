@@ -3,7 +3,9 @@
 
 import { LookupTable } from '@graffio/functional'
 import tap from 'tap'
-import { lookupTableFromFirestore, lookupTableToFirestore } from '../runtime-for-generated-types.js'
+import { RuntimeForGeneratedTypes } from '../runtime-for-generated-types.js'
+
+const { lookupTableFromFirestore, lookupTableToFirestore } = RuntimeForGeneratedTypes
 
 // Simple test type that mimics generated types
 const TestItem = function (id, name) {

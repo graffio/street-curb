@@ -89,7 +89,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { Account } from './account.js'
 import { Category } from './category.js'
 import { Security } from './security.js'

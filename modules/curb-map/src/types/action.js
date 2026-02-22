@@ -61,7 +61,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { User } from './user.js'
 import { Organization } from './organization.js'
 import { Blockface } from './blockface.js'

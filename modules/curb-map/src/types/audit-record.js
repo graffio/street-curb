@@ -22,7 +22,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 import { OperationDetails } from './operation-details.js'
 

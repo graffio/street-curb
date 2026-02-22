@@ -97,7 +97,7 @@ const generateStaticTaggedType = async typeDefinition => {
 
         ${generateImportsSection(imports)}
         
-        import * as R from '@graffio/cli-type-generator'
+        import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
         ${needsLookupTable ? "import { LookupTable } from '@graffio/functional'" : ''}
         ${childTypeImports || ''}
 
@@ -224,7 +224,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
         ${PrettierCode.formatObjectAsMultilineComment(variants, relativePath, name)}
 
         ${generateImportsSection(imports)}
-        import * as R from '@graffio/cli-type-generator'
+        import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
         ${childTypeImports || ''}
 
         // -------------------------------------------------------------------------------------------------------------

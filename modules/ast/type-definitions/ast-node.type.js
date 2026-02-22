@@ -119,10 +119,16 @@ export const ASTNode = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Wrap a raw ESTree node in the appropriate ASTNode variant
 // Uses ASTNode['@@tagNames'] to check if type has a dedicated variant
 // @sig wrap :: (Object, ASTNode?) -> ASTNode
-ASTNode.wrap = (esTreeNode, parent = null) => {
+ASTNode.wrap = (esTreeNode, parent = undefined) => {
     const type = esTreeNode?.type
     if (!type) return ASTNode.Other(esTreeNode || {}, parent)
     if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](esTreeNode, parent)

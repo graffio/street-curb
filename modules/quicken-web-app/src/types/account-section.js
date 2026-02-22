@@ -14,7 +14,7 @@
  *
  */
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
 import { EnrichedAccount } from './enriched-account.js'
 

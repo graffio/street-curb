@@ -12,7 +12,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
 import { ColumnDescriptor } from './column-descriptor.js'
 import { SortOrder } from './sort-order.js'

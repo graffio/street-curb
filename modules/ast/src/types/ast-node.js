@@ -111,7 +111,7 @@
  *
  */
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -2554,7 +2554,7 @@ ASTNode.fromFirestore = ASTNode._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-ASTNode.wrap = (esTreeNode, parent = null) => {
+ASTNode.wrap = (esTreeNode, parent = undefined) => {
     const type = esTreeNode?.type
     if (!type) return ASTNode.Other(esTreeNode || {}, parent)
     if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](esTreeNode, parent)

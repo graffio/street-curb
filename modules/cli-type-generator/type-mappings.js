@@ -102,6 +102,7 @@ export const typeMappings = {
 
     // quicken-web-app (types must come before Action since Action references them)
     [`${sources.quickenWebApp}/field-types.js`]          : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/column-definition.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/column-descriptor.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/sort-order.type.js`]      : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/table-layout.type.js`]    : [targets.quickenWebApp],
