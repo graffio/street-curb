@@ -59,6 +59,14 @@ const P = {
         const preExportLines = exportsStart === -1 ? lines : lines.slice(0, exportsStart)
         return preExportLines.filter(P.isComponentDeclaration).length >= 2
     },
+
+    // Check if a cohesion section block is missing its cohesion group declaration in the given line range
+    // @sig isMissingCohesionGroup :: (Block, [String]) -> Boolean
+    isMissingCohesionGroup: (block, sectionLines) => {
+        const pattern = COHESION_DECLARATION_PATTERNS[block.name]
+        if (!pattern) return false
+        return !sectionLines.some(line => pattern.test(line.trim()))
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -83,6 +91,14 @@ const T = {
     // Extract the cohesion group letter from a declaration line (const X = { → X)
     // @sig toCohesionLetter :: String -> String
     toCohesionLetter: line => line.trim().charAt(6),
+
+    // Extract the content lines between a block and the next block (or end of file)
+    // @sig toSectionContentLines :: ([Block], Number, [String]) -> [String]
+    toSectionContentLines: (validBlocks, i, lines) => {
+        const contentStart = validBlocks[i].line - 1 + 5
+        const contentEnd = i + 1 < validBlocks.length ? validBlocks[i + 1].line - 1 : lines.length
+        return lines.slice(contentStart, contentEnd)
+    },
 
     // Find the line index of the Exports section separator (first separator followed by "Exports" name)
     // @sig toExportsLineIndex :: [String] -> Number
@@ -129,6 +145,14 @@ const F = {
     // @sig createMissingSectionViolation :: String -> Violation
     createMissingSectionViolation: name =>
         F.createViolation(1, `Missing required "${name}" section separator. FIX: Add a ${name} section.`),
+
+    // Create violation for a cohesion section separator with no cohesion group declaration
+    // @sig createMissingCohesionGroupViolation :: { line, name } -> Violation
+    createMissingCohesionGroupViolation: ({ line, name }) => {
+        const letter = COHESION_NAME_TO_LETTER[name]
+        const msg = `"${name}" section has no cohesion group declaration.`
+        return F.createViolation(line, `${msg} FIX: Add \`const ${letter} = {\` or remove the section separator.`)
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -172,6 +196,15 @@ const V = {
             .filter(b => b.valid && !P.isStandardName(b.name))
             .forEach(b => violations.push(F.createNonStandardViolation(b))),
 
+    // Check that cohesion section separators contain their corresponding cohesion group declaration
+    // @sig checkSectionContent :: ([Block], [Violation], [String]) -> Void
+    checkSectionContent: (blocks, violations, lines) => {
+        const validBlocks = blocks.filter(b => b.valid)
+        validBlocks
+            .filter((block, i) => P.isMissingCohesionGroup(block, T.toSectionContentLines(validBlocks, i, lines)))
+            .forEach(block => violations.push(F.createMissingCohesionGroupViolation(block)))
+    },
+
     // Main validation entry point
     // @sig check :: (AST?, String, String) -> [Violation]
     check: (ast, sourceCode, filePath) => {
@@ -186,6 +219,7 @@ const V = {
         V.checkRequiredSections(blocks, violations, requiredSections)
         V.checkOrder(blocks, violations)
         V.checkStandardNames(blocks, violations)
+        V.checkSectionContent(blocks, violations, lines)
 
         return violations
     },
@@ -264,6 +298,17 @@ const CANONICAL_ORDER = [
 // Maps cohesion group letter to required section name
 // prettier-ignore
 const COHESION_GROUPS = { P: 'Predicates', T: 'Transformers', F: 'Factories', V: 'Validators', A: 'Aggregators', E: 'Effects' }
+
+// Inverse of COHESION_GROUPS: maps section name to expected cohesion letter
+// prettier-ignore
+const COHESION_NAME_TO_LETTER = { Predicates: 'P', Transformers: 'T', Factories: 'F', Validators: 'V', Aggregators: 'A', Effects: 'E' }
+
+// Pre-compiled patterns for detecting cohesion group declarations within sections
+// prettier-ignore
+const COHESION_DECLARATION_PATTERNS = {
+    Predicates: /^const P = \{/, Transformers: /^const T = \{/, Factories: /^const F = \{/,
+    Validators: /^const V = \{/, Aggregators: /^const A = \{/, Effects: /^const E = \{/,
+}
 
 const STANDARD_NAMES = new Set(CANONICAL_ORDER)
 

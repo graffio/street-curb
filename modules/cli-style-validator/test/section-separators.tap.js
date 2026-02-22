@@ -413,6 +413,111 @@ t.test('Given a file with only an Exports section and no other declaration kinds
     t.end()
 })
 
+t.test('Given a cohesion section separator without its cohesion group declaration', t => {
+    t.test('When a Predicates section has no const P = { declaration', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Predicates'),
+            'const isFoo = x => !!x',
+            '',
+            section('Exports'),
+            'const MyModule = { isFoo }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const contentViolation = violations.find(v => v.message.includes('cohesion group'))
+        t.ok(contentViolation, 'Then a violation about missing cohesion group should be detected')
+        t.end()
+    })
+
+    t.test('When a Transformers section has no const T = { declaration', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Transformers'),
+            'const toFoo = x => x',
+            '',
+            section('Exports'),
+            'const MyModule = { toFoo }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const contentViolation = violations.find(v => v.message.includes('cohesion group'))
+        t.ok(contentViolation, 'Then a violation about missing cohesion group should be detected')
+        t.end()
+    })
+
+    t.test('When a Predicates section DOES contain const P = { declaration', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Predicates'),
+            'const P = { isFoo: x => !!x }',
+            '',
+            section('Exports'),
+            'const MyModule = { ...P }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const contentViolation = violations.find(v => v.message.includes('cohesion group'))
+        t.notOk(contentViolation, 'Then no cohesion group violation should be detected')
+        t.end()
+    })
+
+    t.end()
+})
+
+t.test('Given non-cohesion sections (Constants, Exports) without cohesion group declarations', t => {
+    t.test('When Constants section has UPPER_CASE consts but no const C = {', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Constants'),
+            'const FOO_BAR = 42',
+            '',
+            section('Exports'),
+            'const MyModule = { FOO_BAR }',
+            'export { MyModule }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const contentViolation = violations.find(v => v.message.includes('cohesion group'))
+        t.notOk(contentViolation, 'Then no cohesion group violation for Constants section')
+        t.end()
+    })
+
+    t.test('When Exports section has no cohesion group declaration', t => {
+        const code = [
+            '// ABOUTME: test file',
+            '// ABOUTME: test file line 2',
+            '',
+            section('Exports'),
+            'const myHelper = x => x + 1',
+            'export { myHelper }',
+        ].join('\n')
+        const ast = parseCode(code)
+        const violations = checkSectionSeparators(ast, code, 'test-module.js')
+
+        const contentViolation = violations.find(v => v.message.includes('cohesion group'))
+        t.notOk(contentViolation, 'Then no cohesion group violation for Exports section')
+        t.end()
+    })
+
+    t.end()
+})
+
 t.test('Given a file with all cohesion sections in correct order', t => {
     t.test('When Predicates, Transformers, Factories, Constants, and Exports are in canonical order', t => {
         const code = [
