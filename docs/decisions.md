@@ -785,6 +785,11 @@ Context: Codebase mixed null and undefined as "no value", causing confusion bugs
 Decision: Validator rule (check-no-null-literal) bans null literals. Use undefined, omit the field, or use isNil() at system boundaries. React render-nothing uses `return false`. Three legacy modules (ast/, cli-type-generator/, cli-qif-to-sqlite/) exempted via boundary patterns pending validator compliance.
 Why: One absent value eliminates an entire class of bugs. Tagged type `from()` already handles undefined for optional fields, making the migration safe.
 
+### 2026-02-22: Runtime validators accept null for optional fields at system boundary
+Context: Changing runtime validators from `== null` to `=== undefined` crashed type constructors on data from IndexedDB/JSON, which stores null for absent fields. Cell renderers also crashed on null quantity/price values.
+Decision: Optional-field validators use `(value === undefined || value === null)`. Required-field validators use strict `=== undefined` only. Presentation guards use `isNil()`. The null ban applies to source code, not incoming external data.
+Why: Runtime validators are the system boundary between external data (which has null) and internal code (which uses undefined). Rejecting null at this boundary breaks real data flows.
+
 ---
 
 ## Decision Framework
