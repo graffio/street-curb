@@ -1,38 +1,16 @@
 // ABOUTME: FIFO lot tracking computed from investment transactions
 // ABOUTME: Extracted from import.js per D12 because it's algorithmically distinct
+// COMPLEXITY: export-structure — ImportLots exposes single orchestration function; will not grow
 
+import { SqlBoundary } from './sql-boundary.js'
 import { StableIdentity } from './stable-identity.js'
 import { Signatures as SigT } from './signatures.js'
 
-// Investment action categories for lot processing
-const BUY_ACTIONS = ['Buy', 'BuyX', 'CvrShrt']
-const REINVEST_ACTIONS = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'ReinvMd']
-const SHARES_IN_ACTIONS = ['ShrsIn']
-const SELL_ACTIONS = ['Sell', 'SellX', 'ShtSell']
-const SHARES_OUT_ACTIONS = ['ShrsOut']
-const SPLIT_ACTIONS = ['StkSplit']
-const OPTION_ACTIONS = ['Grant', 'Vest', 'Exercise']
-const CASH_ONLY_ACTIONS = [
-    'Div',
-    'DivX',
-    'IntInc',
-    'MiscInc',
-    'MiscIncX',
-    'MiscExp',
-    'MargInt',
-    'Cash',
-    'CGShort',
-    'CGLong',
-    'ContribX',
-    'WithdrwX',
-    'RtrnCapX',
-    'Reminder',
-    'Expire',
-]
-const TRANSFER_ACTIONS = ['XOut', 'XIn']
-
-// Threshold for floating-point comparisons
-const EPSILON = 1e-10
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if quantity is significant (not effectively zero)
@@ -80,6 +58,12 @@ const P = {
     isRelevantAction: action => action && !P.isCashOnlyAction(action) && !P.isTransferAction(action),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Get open lots for an account/security (sorted by openDate for FIFO)
     // @sig toOpenLots :: (Map, String, String) -> [Lot]
@@ -112,7 +96,7 @@ const T = {
                     {
                         lot,
                         newRemainingQuantity: isClosed ? 0 : newRemaining,
-                        closedDate: isClosed ? transactionDate : null,
+                        closedDate: isClosed ? transactionDate : undefined,
                     },
                 ],
                 allocations: [
@@ -137,7 +121,7 @@ const T = {
     // @sig toLotFromBuy :: (Transaction, [Lot], String, String) -> { newLot, modifiedLots, allocations }
     toLotFromBuy: (transaction, openLots, accountId, securityId) => {
         const { amount, date, quantity } = transaction
-        if (!P.isSignificantQuantity(quantity)) return { newLot: null, modifiedLots: [], allocations: [] }
+        if (!P.isSignificantQuantity(quantity)) return { newLot: undefined, modifiedLots: [], allocations: [] }
 
         // First, try to cover any short positions (isSellingLong = false means we're covering shorts)
         const { modifiedLots, allocations, remainingShares } = T.toLotReduction(openLots, quantity, date, false)
@@ -150,7 +134,7 @@ const T = {
                       accountId,
                       securityId,
                   )
-                : null
+                : undefined
 
         return { newLot, modifiedLots, allocations }
     },
@@ -159,7 +143,7 @@ const T = {
     // @sig toLotFromSell :: (Transaction, [Lot], String, String) -> { newLot, modifiedLots, allocations }
     toLotFromSell: (transaction, openLots, accountId, securityId) => {
         const { date, quantity, id } = transaction
-        if (!P.isSignificantQuantity(quantity)) return { newLot: null, modifiedLots: [], allocations: [] }
+        if (!P.isSignificantQuantity(quantity)) return { newLot: undefined, modifiedLots: [], allocations: [] }
 
         // Reduce existing long positions FIFO
         const { modifiedLots, allocations, remainingShares } = T.toLotReduction(openLots, quantity, date, true)
@@ -176,13 +160,13 @@ const T = {
                       remainingQuantity: -remainingShares,
                       costBasis: 0, // Short position has no cost basis until covered
                   }
-                : null
+                : undefined
 
         return { newLot, modifiedLots, allocations }
     },
 
     // Determine cost basis for dividend reinvestment (priority: amount > price*qty > historical price)
-    // @sig toDividendCostBasis :: (Transaction, Database, String) -> Number | null
+    // @sig toDividendCostBasis :: (Transaction, Database, String) -> Number | undefined
     toDividendCostBasis: (transaction, db, securityId) => {
         const { amount, date, price, quantity } = transaction
 
@@ -200,18 +184,18 @@ const T = {
         if (historicalPrice) return historicalPrice.price * quantity
 
         // No price found
-        return null
+        return undefined
     },
 
     // Process dividend reinvestment - creates lot with derived cost basis
     // @sig toLotFromDividend :: (Transaction, Database, String, String) -> { newLot, warning }
     toLotFromDividend: (transaction, db, accountId, securityId) => {
         const { date, quantity, id } = transaction
-        if (!P.isSignificantQuantity(quantity)) return { newLot: null, warning: null }
+        if (!P.isSignificantQuantity(quantity)) return { newLot: undefined, warning: undefined }
 
         const costBasis = T.toDividendCostBasis(transaction, db, securityId)
-        if (costBasis === null)
-            return { newLot: null, warning: `No cost basis found for reinvestment: ${date} ${quantity} shares` }
+        if (costBasis === undefined)
+            return { newLot: undefined, warning: `No cost basis found for reinvestment: ${date} ${quantity} shares` }
 
         const newLot = {
             accountId,
@@ -223,7 +207,7 @@ const T = {
             costBasis,
         }
 
-        return { newLot, warning: null }
+        return { newLot, warning: undefined }
     },
 
     // Apply split ratio to a single lot
@@ -246,7 +230,7 @@ const T = {
     // @sig toLotFromVest :: (Transaction, String, String) -> { newLot }
     toLotFromVest: (transaction, accountId, securityId) => {
         const { date, quantity, id } = transaction
-        if (!P.isSignificantQuantity(quantity)) return { newLot: null }
+        if (!P.isSignificantQuantity(quantity)) return { newLot: undefined }
 
         const newLot = {
             accountId,
@@ -274,6 +258,12 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Create lot data from a buy/reinvest transaction
     // For buys, amount is negative in QIF (money out), but costBasis should be positive
@@ -296,16 +286,16 @@ const F = {
     // @sig createLotId :: (Database, LotData, Map) -> {id, isNew}
     createLotId: (db, lotData, existingLookup) => {
         const { accountId, openDate, openTransactionId, securityId } = lotData
-        const sig = SigT.lotSignature(securityId, accountId, openDate, openTransactionId)
+        const sig = SigT.buildLotSignature(securityId, accountId, openDate, openTransactionId)
         const existingEntries = existingLookup.get(sig)
         if (existingEntries && existingEntries.length > 0) {
             const entry = existingEntries[0]
             const id = typeof entry === 'string' ? entry : entry.id
-            StableIdentity.restoreEntity(db, id)
+            StableIdentity.resetOrphanStatus(db, id)
             return { id, isNew: false }
         }
         const id = StableIdentity.createStableId(db, 'Lot')
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Lot', signature: sig })
+        StableIdentity.persistIdentity(db, { id, entityType: 'Lot', signature: sig })
         return { id, isNew: true }
     },
 
@@ -313,19 +303,25 @@ const F = {
     // Returns {id, isNew}
     // @sig createAllocationId :: (Database, String, String, Map) -> {id, isNew}
     createAllocationId: (db, lotId, transactionId, existingLookup) => {
-        const sig = SigT.lotAllocationSignature(lotId, transactionId)
+        const sig = SigT.buildLotAllocationSignature(lotId, transactionId)
         const existingEntries = existingLookup.get(sig)
         if (existingEntries && existingEntries.length > 0) {
             const entry = existingEntries[0]
             const id = typeof entry === 'string' ? entry : entry.id
-            StableIdentity.restoreEntity(db, id)
+            StableIdentity.resetOrphanStatus(db, id)
             return { id, isNew: false }
         }
         const id = StableIdentity.createStableId(db, 'LotAllocation')
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'LotAllocation', signature: sig })
+        StableIdentity.persistIdentity(db, { id, entityType: 'LotAllocation', signature: sig })
         return { id, isNew: true }
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Add or update lot in memory map
@@ -349,9 +345,19 @@ const E = {
         const moreCols = ['remainingQuantity', 'closedDate', 'createdByTransactionId']
         const allCols = [...cols, ...moreCols].join(', ')
         const sql = `INSERT OR REPLACE INTO lots (${allCols}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        const values = [id, accountId, securityId, openDate, quantity, costBasis]
-        const moreValues = [remainingQuantity, closedDate || null, createdByTransactionId]
-        db.prepare(sql).run(...values, ...moreValues)
+        db.prepare(sql).run(
+            ...SqlBoundary.toSqlParams(
+                id,
+                accountId,
+                securityId,
+                openDate,
+                quantity,
+                costBasis,
+                remainingQuantity,
+                closedDate,
+                createdByTransactionId,
+            ),
+        )
     },
 
     // Insert lot allocation into database
@@ -361,7 +367,7 @@ const E = {
         db.prepare(
             `INSERT OR REPLACE INTO lotAllocations (id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)
             VALUES (?, ?, ?, ?, ?, ?)`,
-        ).run(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)
+        ).run(...SqlBoundary.toSqlParams(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date))
     },
 
     // Save a single modified lot - extracted for forEach compliance
@@ -394,7 +400,7 @@ const E = {
 // @sig importLots :: (Database, Object) -> { warnings }
 const importLots = (db, context) => {
     // Convert database lot row to enriched lot (stable ID is already the lot id)
-    // @sig toEnrichedLot :: DbLot -> Lot | null
+    // @sig toEnrichedLot :: DbLot -> Lot | undefined
     const toEnrichedLot = dbLot => {
         const { id, purchaseDate, accountId, securityId } = dbLot
 
@@ -402,7 +408,7 @@ const importLots = (db, context) => {
         const hasAccount = [...accountLookup.values()].some(e => e.id === accountId)
         const hasSecurityBySymbol = [...securityLookup.bySymbol.values()].flat().some(e => e.id === securityId)
         const hasSecurityByName = [...securityLookup.byName.values()].flat().some(e => e.id === securityId)
-        if (!hasAccount || (!hasSecurityBySymbol && !hasSecurityByName)) return null
+        if (!hasAccount || (!hasSecurityBySymbol && !hasSecurityByName)) return undefined
 
         return { ...dbLot, id, openDate: purchaseDate }
     }
@@ -460,7 +466,7 @@ const importLots = (db, context) => {
     }
 
     // Select appropriate handler function for an investment action
-    // @sig selectHandler :: String -> Function | null
+    // @sig selectHandler :: String -> Function | undefined
     const selectHandler = action => {
         if (P.isBuyAction(action) || P.isSharesInAction(action)) return handleBuyOrSharesIn
         if (P.isSellAction(action) || P.isSharesOutAction(action)) return handleSellOrSharesOut
@@ -468,7 +474,7 @@ const importLots = (db, context) => {
         if (P.isSplitAction(action)) return handleSplit
         if (action === 'Grant' || action === 'Vest') return handleGrantOrVest
         if (action === 'Exercise') return handleExercise
-        return null
+        return undefined
     }
 
     // Process a single investment transaction and update lots accordingly
@@ -525,13 +531,55 @@ const importLots = (db, context) => {
     db.prepare(`SELECT * FROM lots`)
         .all()
         .map(toEnrichedLot)
-        .filter(lot => lot !== null)
+        .filter(lot => lot !== undefined)
         .forEach(lot => E.updateLotsMap(lotsMap, lot))
 
     transactions.forEach(processTransaction)
 
     return { warnings }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Investment action categories for lot processing
+const BUY_ACTIONS = ['Buy', 'BuyX', 'CvrShrt']
+const REINVEST_ACTIONS = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'ReinvMd']
+const SHARES_IN_ACTIONS = ['ShrsIn']
+const SELL_ACTIONS = ['Sell', 'SellX', 'ShtSell']
+const SHARES_OUT_ACTIONS = ['ShrsOut']
+const SPLIT_ACTIONS = ['StkSplit']
+const OPTION_ACTIONS = ['Grant', 'Vest', 'Exercise']
+const CASH_ONLY_ACTIONS = [
+    'Div',
+    'DivX',
+    'IntInc',
+    'MiscInc',
+    'MiscIncX',
+    'MiscExp',
+    'MargInt',
+    'Cash',
+    'CGShort',
+    'CGLong',
+    'ContribX',
+    'WithdrwX',
+    'RtrnCapX',
+    'Reminder',
+    'Expire',
+]
+const TRANSFER_ACTIONS = ['XOut', 'XIn']
+
+// Threshold for floating-point comparisons
+const EPSILON = 1e-10
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const ImportLots = { importLots }
 

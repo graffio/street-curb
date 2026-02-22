@@ -6,7 +6,7 @@ import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
-import { Matching } from '../src/Matching.js'
+import { Matching } from '../src/matching.js'
 import { StableIdentity } from '../src/stable-identity.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -24,8 +24,8 @@ test('buildSecurityLookup', async t =>
         const db = createTestDb()
         t.teardown(() => db.close())
 
-        StableIdentity.insertStableIdentity(db, { id: 'sec_000000000111', entityType: 'Security', signature: 'AAPL' })
-        StableIdentity.insertStableIdentity(db, {
+        StableIdentity.persistIdentity(db, { id: 'sec_000000000111', entityType: 'Security', signature: 'AAPL' })
+        StableIdentity.persistIdentity(db, {
             id: 'sec_000000000222',
             entityType: 'Security',
             signature: 'vanguard total stock',
@@ -73,6 +73,6 @@ test('findSecurityMatch', async t =>
             const security = { name: 'Unknown Fund', symbol: 'UNK' }
             const result = Matching.findSecurityMatch(lookup, security)
 
-            t.test('Then it returns null', async t => t.equal(result, null))
+            t.test('Then it returns undefined', async t => t.equal(result, undefined))
         })
     }))

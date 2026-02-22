@@ -1,5 +1,6 @@
 // ABOUTME: CLI command implementations for QIF database operations with stable identity
 // ABOUTME: Thin wrappers that call services and handle presentation
+// COMPLEXITY: export-structure — Cli exposes single entry point; will not grow
 
 import Database from 'better-sqlite3'
 import { createInterface } from 'readline'
@@ -15,8 +16,11 @@ import { ParseQifData } from './parse-qif-data.js'
 import { Rollback } from './rollback.js'
 import { QifEntry } from './types/index.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const schemaPath = resolve(__dirname, '../schema.sql')
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Validate that required arguments are present for command
@@ -30,10 +34,16 @@ const P = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const T = {
     // Convert boolean to integer for SQLite (which can't bind booleans)
-    // @sig toBoolInt :: Boolean|null -> Number|null
-    toBoolInt: val => (val === true ? 1 : val === false ? 0 : null),
+    // @sig toBoolInt :: Boolean|undefined -> Number|undefined
+    toBoolInt: val => (val === true ? 1 : val === false ? 0 : undefined),
 
     // Transform a category for SQLite (convert booleans to integers)
     // @sig toImportCategory :: Object -> Object
@@ -61,7 +71,7 @@ const T = {
             account,
             accountName: account,
             transactionType,
-            securitySignature: security || null,
+            securitySignature: security || undefined,
         })
     },
 
@@ -76,7 +86,8 @@ const T = {
         ])
         return investTxns
             .filter(
-                ({ transactionType, price, security }) => qualifying.has(transactionType) && price != null && security,
+                ({ transactionType, price, security }) =>
+                    qualifying.has(transactionType) && price !== undefined && security,
             )
             .map(({ security, date, price }) => ({ symbol: security, date, price }))
     },
@@ -224,6 +235,12 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Create import function that captures parsed data and records history
     // Uses real change tracking from Import.processImport
@@ -233,10 +250,16 @@ const F = {
         const txnCount = (data.bankTransactions?.length || 0) + (data.investmentTransactions?.length || 0)
         progress.total = txnCount
         const { changeCounts, changes } = Import.processImport(db, data, msg => console.log(`  ${msg}`))
-        ImportHistory.finalizeImportHistory(db, qifContent, changeCounts, changes)
+        ImportHistory.processImportHistory(db, qifContent, changeCounts, changes)
         return { success: true, changeCounts, changes }
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Output stats to console
@@ -330,7 +353,7 @@ const E = {
         console.error(`Error: ${message}`)
         console.error(`Stage: ${stage}`)
         if (entityType) console.error(`Entity type: ${entityType}`)
-        if (entity) console.error(`Entity: ${JSON.stringify(entity, null, 2)}`)
+        if (entity) console.error(`Entity: ${JSON.stringify(entity, undefined, 2)}`)
         if (total > 0) console.error(`Progress: ${processed}/${total}`)
         if (stack) {
             console.error('\nStack trace:')
@@ -482,11 +505,29 @@ const E = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const schemaPath = resolve(__dirname, '../schema.sql')
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('cli.js')) E.main()
 
-// CLI entry point for programmatic use
-// @sig cli :: () -> void
-const cli = () => E.main()
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
-export { cli }
+const Cli = { handleCli: () => E.main() }
+export { Cli }

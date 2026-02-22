@@ -1,7 +1,15 @@
 // ABOUTME: Copy-then-replace rollback strategy for safe database imports
 // ABOUTME: Copies database before import, replaces on success, discards on error per D16
+// COMPLEXITY: function-naming — withRollback is an established higher-order function pattern (like withTransaction)
+// COMPLEXITY: export-structure — withRollback is an established higher-order function pattern (like withTransaction)
 
 import { copyFileSync, unlinkSync, existsSync, renameSync } from 'fs'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Generate working copy path from original database path
@@ -19,8 +27,8 @@ const T = {
         return {
             message: error.message,
             stack: error.stack,
-            entity: currentEntity || null,
-            entityType: currentEntityType || null,
+            entity: currentEntity || undefined,
+            entityType: currentEntityType || undefined,
             stage: stage || 'unknown',
             processed: processed || 0,
             total: total || 0,
@@ -28,17 +36,29 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Create a progress tracker for detailed error reporting
     // @sig createProgressTracker :: () -> Object
     createProgressTracker: () => ({
         stage: 'initializing',
-        currentEntityType: null,
-        currentEntity: null,
+        currentEntityType: undefined,
+        currentEntity: undefined,
         processed: 0,
         total: 0,
     }),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Copy database file to working copy
@@ -72,9 +92,9 @@ const E = {
         if (existsSync(workingPath)) unlinkSync(workingPath)
     },
 
-    // Clean up any leftover files (working copy, backup)
-    // @sig cleanup :: String -> void
-    cleanup: dbPath => {
+    // Remove any leftover temporary files (working copy, backup)
+    // @sig removeTemporaryFiles :: String -> void
+    removeTemporaryFiles: dbPath => {
         const workingPath = T.toWorkingCopyPath(dbPath)
         const backupPath = T.toBackupPath(dbPath)
         if (existsSync(workingPath)) unlinkSync(workingPath)
@@ -102,6 +122,12 @@ const withRollback = (dbPath, openDatabase, importFn) => {
     }
 }
 
-const Rollback = { withRollback, T, F, E }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const Rollback = { withRollback }
 
 export { Rollback }

@@ -3,7 +3,11 @@
 
 import { randomUUID, createHash } from 'crypto'
 
-const HISTORY_RETENTION_COUNT = 20
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Compute file hash for deduplication detection
@@ -14,6 +18,27 @@ const T = {
     // @sig toSummary :: Object -> String
     toSummary: counts => JSON.stringify(counts),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Orchestrate import history recording: record import, changes, then prune
+// @sig processImportHistory :: (Database, String, Object, [Object]) -> String
+const processImportHistory = (db, qifContent, changeCounts, changes) => {
+    const importId = E.recordImport(db, qifContent, changeCounts)
+    changes.forEach(change => E.recordChange(db, importId, change))
+    pruneOldHistory(db)
+    return importId
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Get import IDs to prune (older than retention count)
@@ -68,18 +93,6 @@ const E = {
             )
             .run(stableId),
 
-    // Remove old imports and their changes beyond retention count
-    // @sig pruneOldHistory :: Database -> Number
-    pruneOldHistory: db => {
-        const oldIds = E.queryOldImportIds(db)
-        if (oldIds.length === 0) return 0
-
-        const placeholders = oldIds.map(() => '?').join(', ')
-        db.prepare(`DELETE FROM entityChanges WHERE importId IN (${placeholders})`).run(...oldIds)
-        db.prepare(`DELETE FROM importHistory WHERE importId IN (${placeholders})`).run(...oldIds)
-        return oldIds.length
-    },
-
     // Record a change and update lastModified if needed (callback for forEach)
     // @sig recordChange :: (Database, String, Object) -> void
     recordChange: (db, importId, change) => {
@@ -89,15 +102,32 @@ const E = {
     },
 }
 
-// Main function to finalize import history after processing
-// @sig finalizeImportHistory :: (Database, String, Object, [Object]) -> String
-const finalizeImportHistory = (db, qifContent, changeCounts, changes) => {
-    const importId = E.recordImport(db, qifContent, changeCounts)
-    changes.forEach(change => E.recordChange(db, importId, change))
-    E.pruneOldHistory(db)
-    return importId
+// Remove old imports and their changes beyond retention count
+// @sig pruneOldHistory :: Database -> Number
+const pruneOldHistory = db => {
+    const oldIds = E.queryOldImportIds(db)
+    if (oldIds.length === 0) return 0
+
+    const placeholders = oldIds.map(() => '?').join(', ')
+    db.prepare(`DELETE FROM entityChanges WHERE importId IN (${placeholders})`).run(...oldIds)
+    db.prepare(`DELETE FROM importHistory WHERE importId IN (${placeholders})`).run(...oldIds)
+    return oldIds.length
 }
 
-const ImportHistory = { finalizeImportHistory, T, E, HISTORY_RETENTION_COUNT }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const HISTORY_RETENTION_COUNT = 20
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const ImportHistory = { processImportHistory, pruneOldHistory, HISTORY_RETENTION_COUNT }
 
 export { ImportHistory }

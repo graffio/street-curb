@@ -1,5 +1,12 @@
 // ABOUTME: Creates placeholder securities and categories for orphaned references
 // ABOUTME: Ensures all referenced IDs exist after import for referential integrity
+// COMPLEXITY: export-structure — PlaceholderCreator exposes single orchestration function; will not grow
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
     // Finds categoryIds referenced by transactions/splits that don't exist in categories table
@@ -74,6 +81,12 @@ const createPlaceholders = (db, changeTracker) => {
 
     return { categories: missingCategoryIds.length, securities: missingSecurityIds.length }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const PlaceholderCreator = { createPlaceholders }
 export { PlaceholderCreator }

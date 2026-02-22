@@ -12,6 +12,12 @@ import { Rollback } from './rollback.js'
 import { Signatures } from './signatures.js'
 import { StableIdentity } from './stable-identity.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 export {
     ParseQifData,
     LineGroupToEntry,
