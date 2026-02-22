@@ -1,25 +1,15 @@
 // ABOUTME: Converts QIF line groups into typed Entry objects
 // ABOUTME: Handles parsing and normalization of accounts, transactions, securities, etc.
+// COMPLEXITY: export-structure — LineGroupToEntry exposes single parse function; will not grow
 
 import { append, assoc, update } from '@graffio/functional'
 import { QifEntry, QifSplit } from './types/index.js'
 
-// prettier-ignore
-const ACCOUNT_TYPES = {
-    Bank            : 'Bank',
-    Cash            : 'Cash',
-    CCard           : 'Credit Card',
-    Invst           : 'Investment',
-    'Oth A'         : 'Other Asset',
-    'Oth L'         : 'Other Liability',
-    Mutual          : 'Investment',
-    Port            : 'Investment',
-    '401(k)/403(b)' : 'Investment',
-}
-
-const SALES_TYPES = ['Sell', 'SellX', 'ShtSell']
-const OUTFLOW_ACTIONS = ['Buy', 'BuyX', 'CvrShrt', 'MargInt', 'MiscExp', 'WithdrwX', 'XOut']
-const ZERO_CASH_ACTIONS = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'StkSplit', 'ShrsIn', 'ShrsOut']
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Parses amounts including fractional values like "543 3/4"
@@ -172,15 +162,21 @@ const T = {
         return SALES_TYPES.includes(transactionType) ? proceeds - comm : proceeds + comm
     },
 
-    // Normalizes amount sign: negative for outflows, null for reinvestments
-    // @sig normalizeAmountSign :: Object -> Number|null
+    // Normalizes amount sign: negative for outflows, undefined for reinvestments
+    // @sig normalizeAmountSign :: Object -> Number|undefined
     normalizeAmountSign: data => {
         const { amount, transactionType } = data
-        if (amount == null) return null
-        if (ZERO_CASH_ACTIONS.includes(transactionType)) return null
+        if (amount === undefined) return undefined
+        if (ZERO_CASH_ACTIONS.includes(transactionType)) return undefined
         return OUTFLOW_ACTIONS.includes(transactionType) ? -Math.abs(amount) : amount
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Creates account object from line group
@@ -221,7 +217,7 @@ const F = {
     createPrices: lineGroup => {
         const toPrice = line => {
             const [symbol, priceValue, date] = line.split(',').map(v => v.trim().replace(/"/g, ''))
-            if (!priceValue) return null
+            if (!priceValue) return undefined
             return QifEntry.Price.from({ symbol, price: T.parseAmount(priceValue), date: T.standardizeDate(date) })
         }
         return lineGroup.map(toPrice).filter(p => p?.price)
@@ -242,6 +238,12 @@ const F = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Validates that each row in the lineGroup starts with an allowed key
     // @sig validateLineGroup :: (String, LineGroup) -> LineGroup
@@ -255,16 +257,45 @@ const V = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// prettier-ignore
+const ACCOUNT_TYPES = {
+    Bank            : 'Bank',
+    Cash            : 'Cash',
+    CCard           : 'Credit Card',
+    Invst           : 'Investment',
+    'Oth A'         : 'Other Asset',
+    'Oth L'         : 'Other Liability',
+    Mutual          : 'Investment',
+    Port            : 'Investment',
+    '401(k)/403(b)' : 'Investment',
+}
+
+const SALES_TYPES = ['Sell', 'SellX', 'ShtSell']
+const OUTFLOW_ACTIONS = ['Buy', 'BuyX', 'CvrShrt', 'MargInt', 'MiscExp', 'WithdrwX', 'XOut']
+const ZERO_CASH_ACTIONS = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'StkSplit', 'ShrsIn', 'ShrsOut']
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 /*
  * Convert a LineGroup pulled from a QIF file to an Entry. QIF is tricky, so the code is too.
  *
  * Context = Account | Bank | Cash | Category | CreditCard | Investment | Invoice
  *         | Memorized | OtherAsset | OtherLiability | Prices | Security | Tag
  * LineGroup = [String]
- * @sig lineGroupToEntry :: (Context, Entry.Account, LineGroup) -> Entry
+ * @sig parseLineGroup :: (Context, Entry.Account, LineGroup) -> Entry
  */
 // prettier-ignore
-const lineGroupToEntry = (currentContext, currentAccount, lineGroup) => {
+const parseLineGroup = (currentContext, currentAccount, lineGroup) => {
     const bankTx = type => QifEntry.TransactionBank.from(F.createTransactionBank(lineGroup, currentAccount, type))
     const { Account, Category, Class, Payee, Security, Tag, TransactionInvestment: TxI } = QifEntry
 
@@ -285,5 +316,5 @@ const lineGroupToEntry = (currentContext, currentAccount, lineGroup) => {
     if (currentContext === 'Tag')             return Tag.from(F.createTag(lineGroup))
 }
 
-const LineGroupToEntry = { lineGroupToEntry }
+const LineGroupToEntry = { parseLineGroup }
 export { LineGroupToEntry }

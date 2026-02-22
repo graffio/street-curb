@@ -1,22 +1,19 @@
-/**
- * @graffio/logger - Environment-aware structured logging with flow tracking
- *
- * Usage:
- *   import { createLogger } from '@graffio/logger'
- *
- *   const logger = createLogger('dev', getContext)
- *   logger.flowStart('Processing started', { queueItemId: '123' })
- *   logger.flowStep('Reading data', {})
- *   logger.flowStop('Processing completed', { durationMs: 45 })
- */
+// ABOUTME: Logger factory — selects dev or production logger based on environment
+// ABOUTME: Dev logger uses console methods, production logger emits structured JSON
 
 import { createDevLogger } from './logger-dev.js'
-import { createProductionLogger } from './logger-production.js'
+import { createProductionLogger } from './create-production-logger.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 /**
  * Create or retrieve a logger instance
+ * F = () => AsyncLocalContext
  * @sig createLogger :: (/dev|production/, F) -> Logger
- *  F = () => AsyncLocalContext
  */
 const createLogger = logType => {
     const loggerCreators = { dev: createDevLogger, production: createProductionLogger }

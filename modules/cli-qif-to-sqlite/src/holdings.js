@@ -1,6 +1,12 @@
 // ABOUTME: Holdings database operations for investment portfolio tracking
 // ABOUTME: Computes current and historical holdings from lot data
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Find current holdings (computed from open lots)
 // Returns holdings per account/security with quantity, costBasis, avgCostPerShare
 // @sig findCurrentHoldings :: Database -> [HoldingRecord]
@@ -91,7 +97,7 @@ const findHoldingsBySecurity = (db, securityId) => {
 }
 
 // Find specific holding by account and security
-// @sig findHoldingByAccountAndSecurity :: (Database, String, String) -> HoldingRecord|null
+// @sig findHoldingByAccountAndSecurity :: (Database, String, String) -> HoldingRecord|undefined
 const findHoldingByAccountAndSecurity = (db, accountId, securityId) => {
     const statement = `
         WITH open_lots AS (
@@ -113,7 +119,7 @@ const findHoldingByAccountAndSecurity = (db, accountId, securityId) => {
         FROM open_lots l
         GROUP BY l.accountId, l.securityId`
 
-    return db.prepare(statement).get(accountId, securityId) || null
+    return db.prepare(statement).get(accountId, securityId) || undefined
 }
 
 // Count total holdings positions

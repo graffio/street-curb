@@ -6,18 +6,17 @@ import Database from 'better-sqlite3'
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
+
+import { isNil } from '@graffio/functional'
 import { Import } from '../src/import.js'
 import { MockDataGenerator } from '../src/mock-data-generator.js'
 import { ParseQifData } from '../src/parse-qif-data.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const FIXTURES_DIR = resolve(__dirname, '../test/fixtures')
-const SCHEMA_PATH = resolve(__dirname, '../schema.sql')
-
-// SQL fragment: roll subcategories (e.g., "Food:Groceries") up to parent category ("Food")
-const PARENT_CATEGORY_SQL = `CASE WHEN c.name LIKE '%:%'
-    THEN SUBSTR(c.name, 1, INSTR(c.name, ':') - 1)
-    ELSE COALESCE(c.name, 'Uncategorized') END`
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Transform bank transaction to import format
@@ -26,7 +25,7 @@ const T = {
 
     // Transform investment transaction to import format
     // @sig toInvestTxn :: Object -> Object
-    toInvestTxn: t => ({ ...t, accountName: t.account, securitySignature: t.security || null }),
+    toInvestTxn: t => ({ ...t, accountName: t.account, securitySignature: t.security || undefined }),
 
     // Transform parsed QIF data into import format
     // @sig toImportData :: Object -> Object
@@ -87,7 +86,7 @@ const T = {
         const cashBalance = cashBalances[name] || 0
 
         // Investment account market value = holdings + cash (from runningBalance)
-        const marketValue = holdingsValue ? Math.round((holdingsValue + cashBalance) * 100) / 100 : null
+        const marketValue = holdingsValue ? Math.round((holdingsValue + cashBalance) * 100) / 100 : undefined
         return { ...row, balance: roundedBalance, marketValue }
     },
 
@@ -336,7 +335,7 @@ const T = {
                  WHERE a.type IN ('Investment', '401(k)/403(b)')`,
             )
             .all({ asOfDate })
-        return Object.fromEntries(rows.filter(r => r.runningBalance != null).map(r => [r.name, r.runningBalance]))
+        return Object.fromEntries(rows.filter(r => !isNil(r.runningBalance)).map(r => [r.name, r.runningBalance]))
     },
 
     // Query holdings by account and security at a historical date
@@ -383,6 +382,12 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const E = {
     // Generate all fixtures for a given seed
     // @sig generateFixtures :: Number -> void
@@ -400,7 +405,7 @@ const E = {
         // Generate mock data and QIF
         console.log('  Generating mock data...')
         const data = MockDataGenerator.generateMockData(seed)
-        const qif = MockDataGenerator.serializeToQif(data)
+        const qif = MockDataGenerator.formatAsQif(data)
         writeFileSync(qifPath, qif)
         console.log(`  Written: ${qifPath}`)
 
@@ -451,7 +456,7 @@ const E = {
             ),
             securityActionIntersection: T.toSecurityActionIntersection(db, 'Fidelity Brokerage', 'VTI', 'Buy'),
         }
-        writeFileSync(expectedPath, JSON.stringify(expected, null, 2))
+        writeFileSync(expectedPath, JSON.stringify(expected, undefined, 2))
         console.log(`  Written: ${expectedPath}`)
 
         db.close()
@@ -459,6 +464,33 @@ const E = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const FIXTURES_DIR = resolve(__dirname, '../test/fixtures')
+const SCHEMA_PATH = resolve(__dirname, '../schema.sql')
+
+// SQL fragment: roll subcategories (e.g., "Food:Groceries") up to parent category ("Food")
+const PARENT_CATEGORY_SQL = `CASE WHEN c.name LIKE '%:%'
+    THEN SUBSTR(c.name, 1, INSTR(c.name, ':') - 1)
+    ELSE COALESCE(c.name, 'Uncategorized') END`
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Run with default seed or from command line
 const seed = parseInt(process.argv[2], 10) || 12345
 E.generateFixtures(seed)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------

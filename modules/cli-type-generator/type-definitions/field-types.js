@@ -11,6 +11,12 @@ const jsIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/
 // Module path: relative (./ or ../) or package name (@scope/pkg or pkg)
 const modulePath = /^(\.\.?\/[^\s]+|@[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+|[a-zA-Z0-9_-]+)$/
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const FieldTypes = { Id, jsIdentifier, modulePath }
 
 export { FieldTypes }

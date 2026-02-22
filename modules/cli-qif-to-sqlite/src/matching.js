@@ -3,11 +3,23 @@
 
 import { Signatures as SigT } from './signatures.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const P = {
     // Check if signature looks like a stock symbol (uppercase, no spaces)
     // @sig isSymbolSignature :: String -> Boolean
     isSymbolSignature: sig => !sig.includes(' ') && sig === sig.toUpperCase(),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Add a security identity to the appropriate lookup map (appends to array for duplicates)
@@ -41,16 +53,6 @@ const buildSecurityLookup = db => {
     return rows.reduce(T.addToSecurityLookup, { bySymbol: new Map(), byName: new Map() })
 }
 
-// Find matching entry for a security (symbol first, then name, shifts from array)
-// Returns {id, orphanedAt} or null
-// @sig findSecurityMatch :: ({bySymbol, byName}, Security) -> {id, orphanedAt} | null
-const findSecurityMatch = ({ bySymbol, byName }, security) => {
-    const sig = SigT.securitySignature(security)
-    const entries = bySymbol.get(sig) || byName.get(sig)
-    if (!entries || entries.length === 0) return null
-    return entries.shift()
-}
-
 // Build lookup map for transaction matching (signature -> [{id, orphanedAt}] for duplicates)
 // @sig buildTransactionLookup :: (Database, String) -> Map
 const buildTransactionLookup = (db, entityType) => {
@@ -61,19 +63,6 @@ const buildTransactionLookup = (db, entityType) => {
     const rows = stmt.all(entityType)
     return rows.reduce(T.addToTransactionLookup, new Map())
 }
-
-// Find matching stable ID for a transaction (shifts from duplicate array)
-// @sig findTransactionMatch :: (Map, String) -> {id, orphanedAt} | null
-const findTransactionMatch = (lookup, signature) => {
-    const entries = lookup.get(signature)
-    if (!entries || entries.length === 0) return null
-    return entries.shift()
-}
-
-// Collect stableIds that weren't consumed during matching (orphan candidates)
-// @sig collectUnmatchedIds :: Map -> [String]
-const collectUnmatchedIds = lookup =>
-    [...lookup.values()].flat().map(entry => (typeof entry === 'string' ? entry : entry.id))
 
 // Build lookup map for split matching (signature -> [stableIds] for duplicates per D4)
 // Split signature format per D20: transactionStableId|categoryStableId|amount
@@ -107,6 +96,15 @@ const buildNameLookup = (db, entityType) => {
     return new Map(rows.map(({ id, signature, orphanedAt }) => [signature, { id, orphanedAt }]))
 }
 
+// Build security lookup with consumption tracking for orphan detection
+// @sig buildSecurityLookupWithTracker :: Database -> {lookup, tracker}
+const buildSecurityLookupWithTracker = db => {
+    const lookup = buildSecurityLookup(db)
+    const allEntries = [...lookup.bySymbol.values(), ...lookup.byName.values()].flat()
+    const tracker = createSeenTracker(new Map(allEntries.map(e => [e.id, e])))
+    return { lookup, tracker }
+}
+
 // Track which stableIds were seen during import (for orphan detection)
 // Handles both simple id values and {id, orphanedAt} objects from buildNameLookup
 // @sig createSeenTracker :: Map -> {markSeen, getUnseen}
@@ -119,14 +117,34 @@ const createSeenTracker = lookup => {
     }
 }
 
-// Build security lookup with consumption tracking for orphan detection
-// @sig buildSecurityLookupWithTracker :: Database -> {lookup, tracker}
-const buildSecurityLookupWithTracker = db => {
-    const lookup = buildSecurityLookup(db)
-    const allEntries = [...lookup.bySymbol.values(), ...lookup.byName.values()].flat()
-    const tracker = createSeenTracker(new Map(allEntries.map(e => [e.id, e])))
-    return { lookup, tracker }
+// Find matching entry for a security (symbol first, then name, shifts from array)
+// Returns {id, orphanedAt} or undefined
+// @sig findSecurityMatch :: ({bySymbol, byName}, Security) -> {id, orphanedAt} | undefined
+const findSecurityMatch = ({ bySymbol, byName }, security) => {
+    const sig = SigT.buildSecuritySignature(security)
+    const entries = bySymbol.get(sig) || byName.get(sig)
+    if (!entries || entries.length === 0) return undefined
+    return entries.shift()
 }
+
+// Find matching stable ID for a transaction (shifts from duplicate array)
+// @sig findTransactionMatch :: (Map, String) -> {id, orphanedAt} | undefined
+const findTransactionMatch = (lookup, signature) => {
+    const entries = lookup.get(signature)
+    if (!entries || entries.length === 0) return undefined
+    return entries.shift()
+}
+
+// Collect stableIds that weren't consumed during matching (orphan candidates)
+// @sig collectUnmatchedIds :: Map -> [String]
+const collectUnmatchedIds = lookup =>
+    [...lookup.values()].flat().map(entry => (typeof entry === 'string' ? entry : entry.id))
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const Matching = {
     buildSecurityLookup,

@@ -43,9 +43,9 @@ const bankTxn = (id, accountId, date, amount) =>
 t.test('Given accounts of various types with SortMode.Alphabetical', t => {
     const accounts = LookupTable(
         [
-            Account('acc_000000000001', 'Checking', 'Bank', null, null),
-            Account('acc_000000000002', 'Savings', 'Bank', null, null),
-            Account('acc_000000000003', 'Credit Card', 'Credit Card', null, null),
+            Account('acc_000000000001', 'Checking', 'Bank', undefined, undefined),
+            Account('acc_000000000002', 'Savings', 'Bank', undefined, undefined),
+            Account('acc_000000000003', 'Credit Card', 'Credit Card', undefined, undefined),
         ],
         Account,
         'id',
@@ -83,9 +83,9 @@ t.test('Given accounts of various types with SortMode.Alphabetical', t => {
 t.test('Given accounts with zero balance (Alphabetical mode with $0 section)', t => {
     const accounts = LookupTable(
         [
-            Account('acc_000000000001', 'Checking', 'Bank', null, null),
-            Account('acc_000000000002', 'Empty Account', 'Bank', null, null),
-            Account('acc_000000000003', 'Savings', 'Bank', null, null),
+            Account('acc_000000000001', 'Checking', 'Bank', undefined, undefined),
+            Account('acc_000000000002', 'Empty Account', 'Bank', undefined, undefined),
+            Account('acc_000000000003', 'Savings', 'Bank', undefined, undefined),
         ],
         Account,
         'id',
@@ -126,9 +126,9 @@ t.test('Given accounts with zero balance (Alphabetical mode with $0 section)', t
 t.test('Given accounts with SortMode.ByType', t => {
     const accounts = LookupTable(
         [
-            Account('acc_000000000001', 'Checking', 'Bank', null, null),
-            Account('acc_000000000002', 'Cash', 'Cash', null, null),
-            Account('acc_000000000003', 'Visa', 'Credit Card', null, null),
+            Account('acc_000000000001', 'Checking', 'Bank', undefined, undefined),
+            Account('acc_000000000002', 'Cash', 'Cash', undefined, undefined),
+            Account('acc_000000000003', 'Visa', 'Credit Card', undefined, undefined),
         ],
         Account,
         'id',

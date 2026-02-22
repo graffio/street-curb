@@ -7,8 +7,8 @@ import fs from 'fs'
 import path, { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { typeMappings } from '../type-mappings.js'
-import { parseTypeDefinitionFile } from './parse-type-definition-file.js'
-import { prettierCode } from './prettier-code.js'
+import { ParseTypeDefinitionFile } from './parse-type-definition-file.js'
+import { PrettierCode } from './prettier-code.js'
 import { generateStaticTaggedSumType, generateStaticTaggedType } from './tagged-type-generator.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -68,7 +68,7 @@ const generateOne = async (inputFile, outputFile) => {
     }
 
     // Parse the type definition file (returns normalized TypeDescriptor)
-    const descriptor = parseTypeDefinitionFile(inputFile)
+    const descriptor = ParseTypeDefinitionFile.parse(inputFile)
     const typeDefinition = { ...descriptor, sourceFile: inputFile, relativePath: inputFile }
 
     const generatedCode = await generateCodeForType(typeDefinition)
@@ -229,7 +229,7 @@ const generateIndexFile = async outputDir => {
 ${exports}
 `
 
-    const formattedContent = await prettierCode(indexContent)
+    const formattedContent = await PrettierCode.formatCode(indexContent)
     const indexFile = path.join(outputDir, 'index.js')
 
     // Make writable, write, then make read-only

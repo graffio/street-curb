@@ -1,8 +1,34 @@
 // ABOUTME: Pattern recognition for JavaScript AST nodes
 // ABOUTME: Detects common patterns like style objects, cohesion groups
+// COMPLEXITY: export-structure — countStyleObjects is the specific public function
 
-import { ASTNode } from './ast-node-methods.js'
-import { AST } from './ast.js'
+import { AstNode } from './ast-node.js'
+import { Ast } from './ast.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const P = {
+    // Check if object expression appears to be a style object (>50% CSS properties)
+    // @sig isStyleObject :: AstNode -> Boolean
+    isStyleObject: node => {
+        if (!AstNode.ObjectExpression.is(node)) return false
+        const props = node.properties
+        if (props.length === 0) return false
+        const names = props.map(p => p.name).filter(Boolean)
+        const cssCount = names.filter(name => STYLE_PROPERTIES.has(name)).length
+        return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
 const STYLE_PROPERTIES = new Set([
@@ -14,23 +40,16 @@ const STYLE_PROPERTIES = new Set([
     'transition', 'whiteSpace', 'width', 'wordBreak', 'zIndex',
 ])
 
-const P = {
-    // Check if object expression appears to be a style object (>50% CSS properties)
-    // @sig isStyleObject :: ASTNode -> Boolean
-    isStyleObject: node => {
-        if (!ASTNode.ObjectExpression.is(node)) return false
-        const props = node.properties
-        if (props.length === 0) return false
-        const names = props.map(p => p.name).filter(Boolean)
-        const cssCount = names.filter(name => STYLE_PROPERTIES.has(name)).length
-        return cssCount >= Math.ceil(names.length / 2) && cssCount >= 2
-    },
-}
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Count style objects in an AST subtree
-// @sig countStyleObjects :: (ESTreeAST | ASTNode) -> Number
+// @sig countStyleObjects :: (ESTreeAST | AstNode) -> Number
 const countStyleObjects = node => {
-    const nodes = ASTNode.isASTNode(node) ? AST.descendants(node) : AST.from(node)
+    const nodes = AstNode.isASTNode(node) ? Ast.descendants(node) : Ast.from(node)
     return nodes.filter(P.isStyleObject).length
 }
 

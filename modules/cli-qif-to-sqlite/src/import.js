@@ -3,35 +3,39 @@
 
 import { CategoryResolver } from './category-resolver.js'
 import { ImportLots } from './import-lots.js'
-import { Matching } from './Matching.js'
+import { Matching } from './matching.js'
 import { PlaceholderCreator } from './placeholder-creator.js'
 import { Signatures as SigT } from './signatures.js'
+import { SqlBoundary } from './sql-boundary.js'
 import { StableIdentity } from './stable-identity.js'
 import { ImportIssue } from './types/index.js'
 
-const BANK_TRANSACTION_TYPES = new Set(['Bank', 'Cash', 'Credit Card', 'Invoice', 'Other Asset', 'Other Liability'])
-
-// Investment actions that affect cash balance (amount is already signed correctly)
-// prettier-ignore
-const CASH_IMPACT_ACTIONS = new Set([
-    'Buy', 'Cash', 'CGLong', 'CGShort', 'ContribX', 'CvrShrt', 'Div', 'IntInc', 'MargInt',
-    'MiscExp', 'MiscInc', 'Sell', 'ShtSell', 'WithdrwX', 'XIn', 'XOut',
-])
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if category string is a special marker that should not resolve to categoryId
     // Includes _RlzdGain, _UnrlzdGain (Quicken internal markers), --Split--, and CGLong/CGShort/CGMid
-    // @sig isSpecialMarker :: String|null -> Boolean
+    // @sig isSpecialMarker :: String|undefined -> Boolean
     isSpecialMarker: cat =>
         cat?.startsWith('_RlzdGain') ||
         cat?.startsWith('_UnrlzdGain') ||
-        CategoryResolver.P.isSplitMarker(cat) ||
-        CategoryResolver.P.isGainMarker(cat),
+        CategoryResolver.isSplitMarker(cat) ||
+        CategoryResolver.isGainMarker(cat),
 
     // Check if QIF transaction type is a bank type (vs investment)
     // @sig isBankTransactionType :: String -> Boolean
     isBankTransactionType: type => BANK_TRANSACTION_TYPES.has(type),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Time and report an import step, returning the result
@@ -45,12 +49,12 @@ const T = {
     },
 
     // Convert boolean or number to integer for SQLite (which can't bind booleans)
-    // @sig toBoolInt :: Boolean|Number|null -> Number|null
-    toBoolInt: val => (val == null ? null : val ? 1 : 0),
+    // @sig toBoolInt :: Boolean|Number|undefined -> Number|undefined
+    toBoolInt: val => (val === undefined ? undefined : val ? 1 : 0),
 
     // Convert address array to newline-separated string for SQLite storage
-    // @sig toAddressString :: [String]|String|null -> String|null
-    toAddressString: address => (Array.isArray(address) ? address.join('\n') : address || null),
+    // @sig toAddressString :: [String]|String|undefined -> String|undefined
+    toAddressString: address => (Array.isArray(address) ? address.join('\n') : address || undefined),
 
     // Convert Date object to ISO date string for SQLite storage
     // @sig toDateString :: Date|String -> String
@@ -58,9 +62,9 @@ const T = {
 
     // Extract base category name from raw category string (strips class suffix, handles markers)
     // Uses CategoryResolver for transfer detection, filters special markers
-    // @sig toBaseCategoryName :: String|null -> String|null
+    // @sig toBaseCategoryName :: String|undefined -> String|undefined
     toBaseCategoryName: cat => {
-        if (!cat || CategoryResolver.P.isTransfer(cat) || P.isSpecialMarker(cat)) return null
+        if (!cat || CategoryResolver.isTransfer(cat) || P.isSpecialMarker(cat)) return undefined
         return cat.split('/')[0]
     },
 
@@ -69,11 +73,12 @@ const T = {
     toSchemaTransactionType: type => (P.isBankTransactionType(type) ? 'bank' : 'investment'),
 
     // Compute transaction signature using stable IDs (per D2)
-    // @sig computeTransactionSignature :: (Transaction, String, String | null) -> String
+    // @sig computeTransactionSignature :: (Transaction, String, String | undefined) -> String
     computeTransactionSignature: (txn, accountId, securityId) => {
-        if (txn.transactionType === 'investment') return SigT.investmentTransactionSignature(txn, accountId, securityId)
+        if (txn.transactionType === 'investment')
+            return SigT.buildInvestmentTransactionSignature(txn, accountId, securityId)
 
-        return SigT.bankTransactionSignature(txn, accountId)
+        return SigT.buildBankTransactionSignature(txn, accountId)
     },
 
     // Build context object needed by importLots
@@ -87,15 +92,21 @@ const T = {
     }),
 
     // Resolve category string to categoryId, transferAccountId, and gainMarkerType
-    // @sig resolveCategoryFields :: (String|null, Map, Map) -> {categoryId, transferAccountId, gainMarkerType}
+    // @sig resolveCategoryFields :: (String|undefined, Map, Map) -> {categoryId, transferAccountId, gainMarkerType}
     resolveCategoryFields: (category, categoryMap, accountMap) => {
-        const { transferAccountName, gainMarkerType } = CategoryResolver.F.resolveCategory(category)
+        const { transferAccountName, gainMarkerType } = CategoryResolver.resolveCategory(category)
         const baseCategoryName = T.toBaseCategoryName(category)
-        const categoryId = baseCategoryName ? (categoryMap.get(baseCategoryName) ?? null) : null
-        const transferAccountId = transferAccountName ? (accountMap.get(transferAccountName) ?? null) : null
+        const categoryId = baseCategoryName ? (categoryMap.get(baseCategoryName) ?? undefined) : undefined
+        const transferAccountId = transferAccountName ? (accountMap.get(transferAccountName) ?? undefined) : undefined
         return { categoryId, transferAccountId, gainMarkerType }
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a change tracker to aggregate import statistics
@@ -115,6 +126,12 @@ const F = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Find all split stableIds that belong to a given transaction (per D13 cascade orphaning)
     // Split signatures start with transactionStableId per D20: transactionStableId|categoryStableId|amount
@@ -129,12 +146,18 @@ const A = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const E = {
     // Restore an orphaned entity and record the change
     // @sig restoreOrphanedEntity :: (Database, String, String, ChangeTracker, Boolean|String) -> void
     restoreOrphanedEntity: (db, entityType, id, changeTracker, orphanedAt) => {
         if (!orphanedAt) return
-        StableIdentity.restoreEntity(db, id)
+        StableIdentity.resetOrphanStatus(db, id)
         changeTracker.record(entityType, id, 'restored')
     },
 
@@ -149,13 +172,13 @@ const E = {
     // @sig recordAndMarkOrphaned :: (Database, ChangeTracker, String, String) -> void
     recordAndMarkOrphaned: (db, changeTracker, entityType, id) => {
         changeTracker.record(entityType, id, 'orphaned')
-        StableIdentity.markOrphaned(db, id)
-        E.markOrphanedInTable(db, entityType, id)
+        StableIdentity.setOrphaned(db, id)
+        E.setOrphanedInTable(db, entityType, id)
     },
 
     // Set orphanedAt in the data table for an entity
-    // @sig markOrphanedInTable :: (Database, String, String) -> void
-    markOrphanedInTable: (db, entityType, id) => {
+    // @sig setOrphanedInTable :: (Database, String, String) -> void
+    setOrphanedInTable: (db, entityType, id) => {
         const tableMap = {
             Account: 'accounts',
             Category: 'categories',
@@ -233,15 +256,15 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(id, name, type, description, creditLimit)
+            insertStatement.run(...SqlBoundary.toSqlParams(id, name, type, description, creditLimit))
             E.restoreOrphanedEntity(db, 'Account', id, changeTracker, orphanedAt)
             accountMap.set(name, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Account')
-        insertStatement.run(id, name, type, description, creditLimit)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Account', signature: name })
+        insertStatement.run(...SqlBoundary.toSqlParams(id, name, type, description, creditLimit))
+        StableIdentity.persistIdentity(db, { id, entityType: 'Account', signature: name })
         accountMap.set(name, id)
         changeTracker.record('Account', id, 'created')
     },
@@ -257,15 +280,19 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(id, name, description, budgetAmount, isIncome, isTax, taxSchedule)
+            insertStatement.run(
+                ...SqlBoundary.toSqlParams(id, name, description, budgetAmount, isIncome, isTax, taxSchedule),
+            )
             E.restoreOrphanedEntity(db, 'Category', id, changeTracker, orphanedAt)
             categoryMap.set(name, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Category')
-        insertStatement.run(id, name, description, budgetAmount, isIncome, isTax, taxSchedule)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Category', signature: name })
+        insertStatement.run(
+            ...SqlBoundary.toSqlParams(id, name, description, budgetAmount, isIncome, isTax, taxSchedule),
+        )
+        StableIdentity.persistIdentity(db, { id, entityType: 'Category', signature: name })
         categoryMap.set(name, id)
         changeTracker.record('Category', id, 'created')
     },
@@ -279,21 +306,21 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(id, name, color, description)
+            insertStatement.run(...SqlBoundary.toSqlParams(id, name, color, description))
             E.restoreOrphanedEntity(db, 'Tag', id, changeTracker, orphanedAt)
             tagMap.set(name, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Tag')
-        insertStatement.run(id, name, color, description)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Tag', signature: name })
+        insertStatement.run(...SqlBoundary.toSqlParams(id, name, color, description))
+        StableIdentity.persistIdentity(db, { id, entityType: 'Tag', signature: name })
         tagMap.set(name, id)
         changeTracker.record('Tag', id, 'created')
     },
 
     // Store security in map by both name and symbol for lookup by either
-    // @sig storeSecurityInMap :: (Map, String, String|null, String) -> void
+    // @sig storeSecurityInMap :: (Map, String, String|undefined, String) -> void
     storeSecurityInMap: (securityMap, name, symbol, id) => {
         symbol && securityMap.set(symbol, id)
         securityMap.set(name, id)
@@ -305,20 +332,20 @@ const E = {
     // @sig importSingleSecurity :: (Database, Statement, {lookup, tracker}, Map, Security, ChangeTracker) -> void
     importSingleSecurity: (db, insertStatement, { lookup, tracker }, securityMap, security, changeTracker) => {
         const { name, symbol, type, goal } = security
-        const signature = SigT.securitySignature(security)
+        const signature = SigT.buildSecuritySignature(security)
         const existing = Matching.findSecurityMatch(lookup, security)
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(id, name, symbol, type, goal)
+            insertStatement.run(...SqlBoundary.toSqlParams(id, name, symbol, type, goal))
             E.restoreOrphanedEntity(db, 'Security', id, changeTracker, orphanedAt)
             E.storeSecurityInMap(securityMap, name, symbol, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Security')
-        insertStatement.run(id, name, symbol, type, goal)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Security', signature })
+        insertStatement.run(...SqlBoundary.toSqlParams(id, name, symbol, type, goal))
+        StableIdentity.persistIdentity(db, { id, entityType: 'Security', signature })
         E.storeSecurityInMap(securityMap, name, symbol, id)
         changeTracker.record('Security', id, 'created')
     },
@@ -331,18 +358,18 @@ const E = {
         const resolved = T.resolveCategoryFields(categoryName, categoryMap, accountMap)
         const { categoryId, transferAccountId } = resolved
 
-        const signature = SigT.splitSignature(split, transactionId, categoryId)
+        const signature = SigT.buildSplitSignature(split, transactionId, categoryId)
         const existing = Matching.findTransactionMatch(splitLookup, signature)
         if (existing) {
             const { id, orphanedAt } = existing
-            stmt.run(id, transactionId, categoryId, transferAccountId, amount, memo)
+            stmt.run(...SqlBoundary.toSqlParams(id, transactionId, categoryId, transferAccountId, amount, memo))
             E.restoreOrphanedEntity(db, 'Split', id, changeTracker, orphanedAt)
             return { id, isNew: false }
         }
 
         const id = StableIdentity.createStableId(db, 'Split')
-        stmt.run(id, transactionId, categoryId, transferAccountId, amount, memo)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Split', signature })
+        stmt.run(...SqlBoundary.toSqlParams(id, transactionId, categoryId, transferAccountId, amount, memo))
+        StableIdentity.persistIdentity(db, { id, entityType: 'Split', signature })
         changeTracker.record('Split', id, 'created')
         return { id, isNew: true }
     },
@@ -364,10 +391,10 @@ const E = {
         // For investment transactions, transactionType IS the action ('Buy', 'Sell')
         // For bank transactions, it's the account type ('Bank', 'Credit Card')
         const isBankType = P.isBankTransactionType(transactionType)
-        const investmentAction = isBankType ? null : transactionType
+        const investmentAction = isBankType ? undefined : transactionType
 
         const accountId = accountMap.get(accountName)
-        const securityId = securityKey ? securityMap.get(securityKey) : null
+        const securityId = securityKey ? securityMap.get(securityKey) : undefined
         const dateString = T.toDateString(date)
         const addressString = T.toAddressString(address)
         const schemaTransactionType = isBankType ? 'bank' : 'investment'
@@ -378,10 +405,10 @@ const E = {
         const { transferAccountId, gainMarkerType } = resolved
 
         // Bank transactions require amount; default to 0 for opening balance entries missing T/U line
-        const normalizedAmount = isBankType && amount == null ? 0 : amount
+        const normalizedAmount = isBankType && amount === undefined ? 0 : amount
 
         // Common values for both INSERT and UPDATE (field order matches statement definitions)
-        const values = [
+        const values = SqlBoundary.toSqlParams(
             accountId,
             dateString,
             normalizedAmount,
@@ -400,7 +427,7 @@ const E = {
             price,
             commission,
             investmentAction,
-        ]
+        )
 
         const signature = T.computeTransactionSignature(txn, accountId, securityId)
         const existing = Matching.findTransactionMatch(txnLookup, signature)
@@ -413,7 +440,7 @@ const E = {
 
         const id = StableIdentity.createStableId(db, 'Transaction')
         statements.insert.run(id, ...values) // INSERT: id at start
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Transaction', signature })
+        StableIdentity.persistIdentity(db, { id, entityType: 'Transaction', signature })
         changeTracker.record('Transaction', id, 'created')
         return { id, isNew: true }
     },
@@ -443,12 +470,12 @@ const E = {
     importSinglePrice: (db, statements, priceLookup, securityMap, price, changeTracker) => {
         const { date, price: priceValue } = price
         const { findBySecurityDate, insert, update } = statements
-        const securityKey = SigT.securitySignature(price)
+        const securityKey = SigT.buildSecuritySignature(price)
         const securityId = securityMap.get(securityKey)
-        if (!securityId) return null
+        if (!securityId) return undefined
 
         const dateString = T.toDateString(date)
-        const signature = SigT.priceSignature(securityId, dateString)
+        const signature = SigT.buildPriceSignature(securityId, dateString)
         const existing = Matching.findTransactionMatch(priceLookup, signature)
         if (existing) {
             const { id, orphanedAt } = existing
@@ -464,8 +491,8 @@ const E = {
         }
 
         const id = StableIdentity.createStableId(db, 'Price')
-        insert.run(id, securityId, dateString, priceValue)
-        StableIdentity.insertStableIdentity(db, { id, entityType: 'Price', signature })
+        insert.run(...SqlBoundary.toSqlParams(id, securityId, dateString, priceValue))
+        StableIdentity.persistIdentity(db, { id, entityType: 'Price', signature })
         changeTracker.record('Price', id, 'created')
         return { id, isNew: true }
     },
@@ -641,8 +668,8 @@ const importPrices = (db, priceLookup, securityMap, prices, changeTracker) => {
 // Mark unmatched entities as orphaned (those not seen during reimport)
 // Per D13: when a transaction is orphaned, its splits are also orphaned
 // Records each orphan to changeTracker for reporting
-// @sig markOrphanedEntities :: (Database, Object, ChangeTracker) -> void
-const markOrphanedEntities = (db, lookups, changeTracker) => {
+// @sig setOrphanedEntities :: (Database, Object, ChangeTracker) -> void
+const setOrphanedEntities = (db, lookups, changeTracker) => {
     const { accounts, categories, tags, securities, transactions, prices } = lookups
 
     accounts.tracker.getUnseen().forEach(id => E.recordAndMarkOrphaned(db, changeTracker, 'Account', id))
@@ -691,10 +718,31 @@ const processImport = (db, data, onProgress) => {
     const moreFns = { securities: importSecurities, transactions: importTransactions, prices: importPrices }
     const allFns = { ...importFns, ...moreFns }
     db.transaction(() =>
-        E.executeImportWork(db, data, lookups, allFns, markOrphanedEntities, changeTracker, onProgress),
+        E.executeImportWork(db, data, lookups, allFns, setOrphanedEntities, changeTracker, onProgress),
     )()
     return { changeCounts: changeTracker.getCounts(), changes: changeTracker.getChanges() }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const BANK_TRANSACTION_TYPES = new Set(['Bank', 'Cash', 'Credit Card', 'Invoice', 'Other Asset', 'Other Liability'])
+
+// Investment actions that affect cash balance (amount is already signed correctly)
+// prettier-ignore
+const CASH_IMPACT_ACTIONS = new Set([
+    'Buy', 'Cash', 'CGLong', 'CGShort', 'ContribX', 'CvrShrt', 'Div', 'IntInc', 'MargInt',
+    'MiscExp', 'MiscInc', 'Sell', 'ShtSell', 'WithdrwX', 'XIn', 'XOut',
+])
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const Import = {
     buildLookupMaps,
@@ -705,7 +753,7 @@ const Import = {
     importTransactions,
     importSplits,
     importPrices,
-    markOrphanedEntities,
+    setOrphanedEntities,
     validateImport,
     processImport,
 }

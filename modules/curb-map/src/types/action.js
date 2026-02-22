@@ -61,7 +61,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { User } from './user.js'
 import { Organization } from './organization.js'
 import { Blockface } from './blockface.js'
@@ -216,7 +216,7 @@ const OrganizationUpdatedConstructor = function OrganizationUpdated(name) {
     R.validateString(constructorName, 'name', true, name)
 
     const result = Object.create(OrganizationUpdatedPrototype)
-    if (name != null) result.name = name
+    if (name !== undefined) result.name = name
     return result
 }
 
@@ -323,7 +323,7 @@ const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
 
     const result = Object.create(UserUpdatedPrototype)
     result.userId = userId
-    if (displayName != null) result.displayName = displayName
+    if (displayName !== undefined) result.displayName = displayName
     return result
 }
 

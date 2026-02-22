@@ -2,20 +2,16 @@
 // ABOUTME: Orchestrates code generation modules to produce JavaScript type files
 
 import { generateConstructorSig } from './codegen/constructor-sig.js'
-import { generateFrom, generateTypeConstructor } from './codegen/expressions.js'
-import {
-    generateFirestoreSerializationForTagged,
-    generateFirestoreSerializationForTaggedSum,
-    generateFirestoreSerializationForTaggedSumVariant,
-} from './codegen/firestore-serialization.js'
+import { Expressions } from './codegen/expressions.js'
+import { FirestoreSerialization } from './codegen/firestore-serialization.js'
 import { generateImportsSection } from './codegen/imports.js'
 import { generateIsMethod } from './codegen/is-method.js'
-import { generateNamedToJSON, generateToJSONObject } from './codegen/to-json.js'
-import { generateNamedToString, generateToStringObject } from './codegen/to-string.js'
-import { generateAllStaticMethods, generateVariantConstructorDef, generateVariantPrototype } from './codegen/variant.js'
-import FieldDescriptor from './descriptors/field-descriptor.js'
-import { getExistingStandardFunctions } from './parse-type-definition-file.js'
-import { prettierCode, stringifyObjectAsMultilineComment } from './prettier-code.js'
+import { ToJson } from './codegen/to-json.js'
+import { ToString } from './codegen/to-string.js'
+import { Variant } from './codegen/variant.js'
+import { FieldDescriptor } from './descriptors/field-descriptor.js'
+import { ParseTypeDefinitionFile } from './parse-type-definition-file.js'
+import { PrettierCode } from './prettier-code.js'
 
 /*
  * Generate ABOUTME header comments for a type file
@@ -33,7 +29,7 @@ const generateAboutMe = (typeName, relativePath) => {
  */
 const validateNoDateArrays = (typeName, fields) => {
     const hasAnUnhandledDateArrayField = fieldType => {
-        const { baseType, arrayDepth } = FieldDescriptor.fromAny(fieldType)
+        const { baseType, arrayDepth } = FieldDescriptor.parseAny(fieldType)
         return baseType === 'Date' && arrayDepth > 0
     }
 
@@ -46,7 +42,7 @@ const validateNoDateArrays = (typeName, fields) => {
  * @sig getChildType :: (String | FieldDescriptor) -> String?
  */
 const getChildType = fieldType => {
-    const { baseType, taggedType } = FieldDescriptor.fromAny(fieldType)
+    const { baseType, taggedType } = FieldDescriptor.parseAny(fieldType)
     if (baseType !== 'LookupTable' && baseType !== 'Tagged') return undefined
     return taggedType
 }
@@ -64,7 +60,7 @@ const generateStaticTaggedType = async typeDefinition => {
 
     const { name, fields, relativePath, imports = [], functions = [] } = typeDefinition
 
-    const existingStandard = getExistingStandardFunctions(functions)
+    const existingStandard = ParseTypeDefinitionFile.findExistingStandardFunctions(functions)
 
     // Validate no [Date] arrays since Firestore facade can't handle them
     validateNoDateArrays(name, fields)
@@ -76,7 +72,7 @@ const generateStaticTaggedType = async typeDefinition => {
     // Check if we need LookupTable import (and user hasn't already imported it)
     const needsLookupTable =
         !existingImports.has('LookupTable') &&
-        Object.values(fields).some(ft => FieldDescriptor.fromAny(ft).baseType === 'LookupTable')
+        Object.values(fields).some(ft => FieldDescriptor.parseAny(ft).baseType === 'LookupTable')
 
     // Collect child types from LookupTable and Tagged fields for import
     const childTypes = new Set(Object.values(fields).map(getChildType).filter(Boolean))
@@ -97,11 +93,11 @@ const generateStaticTaggedType = async typeDefinition => {
     const code = `
         ${generateAboutMe(name, relativePath)}
 
-        ${stringifyObjectAsMultilineComment(fields, relativePath, name)}
+        ${PrettierCode.formatObjectAsMultilineComment(fields, relativePath, name)}
 
         ${generateImportsSection(imports)}
         
-        import * as R from '@graffio/cli-type-generator'
+        import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
         ${needsLookupTable ? "import { LookupTable } from '@graffio/functional'" : ''}
         ${childTypeImports || ''}
 
@@ -111,16 +107,16 @@ const generateStaticTaggedType = async typeDefinition => {
         //
         // -------------------------------------------------------------------------------------------------------------
         ${generateConstructorSig(name, fields)}
-        const ${name} = ${generateTypeConstructor(name, name, fields)}
+        const ${name} = ${Expressions.generateTypeConstructor(name, name, fields)}
 
         // -------------------------------------------------------------------------------------------------------------
         //
         // prototype methods
         //
         // -------------------------------------------------------------------------------------------------------------
-        ${generateNamedToString(name.toLowerCase() + 'ToString', name, fields)}
+        ${ToString.generateNamedToString(name.toLowerCase() + 'ToString', name, fields)}
 
-        ${generateNamedToJSON(name.toLowerCase() + 'ToJSON')}
+        ${ToJson.generateNamedToJSON(name.toLowerCase() + 'ToJSON')}
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -144,10 +140,10 @@ const generateStaticTaggedType = async typeDefinition => {
         ${name}.toString = () => '${name}'
         ${name}.is = v => v && v['@@typeName'] === '${name}'
 
-        ${`${name}._from = ${generateFrom('prototype', name, name, fields)}`}
+        ${`${name}._from = ${Expressions.generateFrom('prototype', name, name, fields)}`}
         ${shouldGenerate('from', existingStandard) ? `${name}.from = ${name}._from` : ''}
 
-        ${generateFirestoreSerializationForTagged(name, fields)}
+        ${FirestoreSerialization.generateFirestoreSerializationForTagged(name, fields)}
 
         // Public aliases (override if necessary)
         ${shouldGenerate('toFirestore', existingStandard) ? `${name}.toFirestore = ${name}._toFirestore` : ''}
@@ -164,7 +160,7 @@ const generateStaticTaggedType = async typeDefinition => {
         export { ${name} }
     `
 
-    return await prettierCode(code)
+    return await PrettierCode.formatCode(code)
 }
 
 /*
@@ -175,7 +171,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
     const lowerFirst = str => str.charAt(0).toLowerCase() + str.slice(1)
 
     const variantConstructorWithSig = vn => `${generateConstructorSig(`${name}.${vn}`, variants[vn])}
-        ${generateVariantConstructorDef(name, vn, generateTypeConstructor(vn, `${name}.${vn}`, variants[vn]))}`
+        ${Variant.generateVariantConstructorDef(name, vn, Expressions.generateTypeConstructor(vn, `${name}.${vn}`, variants[vn]))}`
 
     const { name, variants, relativePath, imports = [], functions = [] } = typeDefinition
     const variantNames = Object.keys(variants)
@@ -185,19 +181,19 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
     // Generate each concern across all variants
     const toStringVariants = variantNames.map(vn => [lowerFirst(vn), `${name}.${vn}`, variants[vn]])
-    const toStrings = generateToStringObject(toStringVariants)
+    const toStrings = ToString.generateToStringObject(toStringVariants)
 
     const toJSONKeys = variantNames.map(lowerFirst)
-    const toJSONs = generateToJSONObject(toJSONKeys)
+    const toJSONs = ToJson.generateToJSONObject(toJSONKeys)
 
     const constructorDefs = variantNames.map(variantConstructorWithSig).join('\n\n')
 
-    const prototypes = variantNames.map(vn => generateVariantPrototype(name, vn)).join('\n\n')
+    const prototypes = variantNames.map(vn => Variant.generateVariantPrototype(name, vn)).join('\n\n')
 
-    const staticMethods = generateAllStaticMethods(name, variantNames, variants)
+    const staticMethods = Variant.generateAllStaticMethods(name, variantNames, variants)
 
     const firestoreMethods = variantNames
-        .map(vn => generateFirestoreSerializationForTaggedSumVariant(vn, variants[vn]))
+        .map(vn => FirestoreSerialization.generateFirestoreSerializationForTaggedSumVariant(vn, variants[vn]))
         .join('\n\n')
 
     // Collect child types from all variant fields for imports
@@ -225,10 +221,10 @@ const generateStaticTaggedSumType = async typeDefinition => {
     const code = `
         ${generateAboutMe(name, relativePath)}
 
-        ${stringifyObjectAsMultilineComment(variants, relativePath, name)}
+        ${PrettierCode.formatObjectAsMultilineComment(variants, relativePath, name)}
 
         ${generateImportsSection(imports)}
-        import * as R from '@graffio/cli-type-generator'
+        import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
         ${childTypeImports || ''}
 
         // -------------------------------------------------------------------------------------------------------------
@@ -301,7 +297,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
         // Define is method after variants are attached (allows destructuring)
         ${generateIsMethod(name, variantNames)}
 
-        ${generateFirestoreSerializationForTaggedSum(name, variants)}
+        ${FirestoreSerialization.generateFirestoreSerializationForTaggedSum(name, variants)}
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -314,7 +310,7 @@ const generateStaticTaggedSumType = async typeDefinition => {
         export { ${name} }
     `
 
-    return await prettierCode(code)
+    return await PrettierCode.formatCode(code)
 }
 
 export { generateStaticTaggedType, generateStaticTaggedSumType }

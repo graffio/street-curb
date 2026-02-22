@@ -23,7 +23,7 @@
 import { FieldTypes } from './field-types.js'
 import { Transaction } from './transaction.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -77,8 +77,8 @@ const TransactionFilter = function TransactionFilter(
 
     const result = Object.create(prototype)
     result.id = id
-    if (asOfDate != null) result.asOfDate = asOfDate
-    if (dateRange != null) result.dateRange = dateRange
+    if (asOfDate !== undefined) result.asOfDate = asOfDate
+    if (dateRange !== undefined) result.dateRange = dateRange
     result.dateRangeKey = dateRangeKey
     result.filterQuery = filterQuery
     result.searchQuery = searchQuery
@@ -86,9 +86,9 @@ const TransactionFilter = function TransactionFilter(
     result.selectedAccounts = selectedAccounts
     result.selectedSecurities = selectedSecurities
     result.selectedInvestmentActions = selectedInvestmentActions
-    if (groupBy != null) result.groupBy = groupBy
-    if (customStartDate != null) result.customStartDate = customStartDate
-    if (customEndDate != null) result.customEndDate = customEndDate
+    if (groupBy !== undefined) result.groupBy = groupBy
+    if (customStartDate !== undefined) result.customStartDate = customStartDate
+    if (customEndDate !== undefined) result.customEndDate = customEndDate
     return result
 }
 

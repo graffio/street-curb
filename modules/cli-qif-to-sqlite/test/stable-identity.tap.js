@@ -84,13 +84,13 @@ test('createStableId', async t => {
     })
 })
 
-test('insertStableIdentity and findBySignature', async t =>
+test('persistIdentity and findBySignature', async t =>
     t.test('Given an empty database', async t => {
         const db = createTestDb()
         t.teardown(() => db.close())
 
         t.test('When inserting a stable identity', async t => {
-            StableIdentity.insertStableIdentity(db, {
+            StableIdentity.persistIdentity(db, {
                 id: 'txn_000000000123',
                 entityType: 'Transaction',
                 signature: 'acc-1|2024-01-15|-50|grocery',
@@ -101,37 +101,29 @@ test('insertStableIdentity and findBySignature', async t =>
                 t.equal(found, 'txn_000000000123')
             })
 
-            t.test('Then findBySignature with wrong signature returns null', async t => {
+            t.test('Then findBySignature with wrong signature returns undefined', async t => {
                 const found = StableIdentity.findBySignature(db, 'Transaction', 'wrong-signature')
-                t.equal(found, null)
+                t.equal(found, undefined)
             })
 
-            t.test('Then findBySignature with wrong entityType returns null', async t => {
+            t.test('Then findBySignature with wrong entityType returns undefined', async t => {
                 const found = StableIdentity.findBySignature(db, 'Security', 'acc-1|2024-01-15|-50|grocery')
-                t.equal(found, null)
+                t.equal(found, undefined)
             })
         })
     }))
 
-test('markOrphaned and findOrphans', async t =>
+test('setOrphaned and findOrphans', async t =>
     t.test('Given a database with stable identities', async t => {
         const db = createTestDb()
         t.teardown(() => db.close())
 
-        StableIdentity.insertStableIdentity(db, {
-            id: 'txn_000000000111',
-            entityType: 'Transaction',
-            signature: 'sig-1',
-        })
-        StableIdentity.insertStableIdentity(db, {
-            id: 'txn_000000000222',
-            entityType: 'Transaction',
-            signature: 'sig-2',
-        })
-        StableIdentity.insertStableIdentity(db, { id: 'sec_000000000333', entityType: 'Security', signature: 'AAPL' })
+        StableIdentity.persistIdentity(db, { id: 'txn_000000000111', entityType: 'Transaction', signature: 'sig-1' })
+        StableIdentity.persistIdentity(db, { id: 'txn_000000000222', entityType: 'Transaction', signature: 'sig-2' })
+        StableIdentity.persistIdentity(db, { id: 'sec_000000000333', entityType: 'Security', signature: 'AAPL' })
 
         t.test('When marking one as orphaned', async t => {
-            StableIdentity.markOrphaned(db, 'txn_000000000111')
+            StableIdentity.setOrphaned(db, 'txn_000000000111')
 
             t.test('Then findOrphans returns only the orphaned one', async t => {
                 const orphans = StableIdentity.findOrphans(db, 'Transaction')

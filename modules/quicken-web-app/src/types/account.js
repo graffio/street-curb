@@ -14,7 +14,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -46,8 +46,8 @@ const Account = function Account(id, name, type, description, creditLimit) {
     result.id = id
     result.name = name
     result.type = type
-    if (description != null) result.description = description
-    if (creditLimit != null) result.creditLimit = creditLimit
+    if (description !== undefined) result.description = description
+    if (creditLimit !== undefined) result.creditLimit = creditLimit
     return result
 }
 

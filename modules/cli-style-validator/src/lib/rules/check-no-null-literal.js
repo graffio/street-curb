@@ -1,7 +1,7 @@
 // ABOUTME: Rule to ban null literals from source code
 // ABOUTME: Flags any use of the null keyword to enforce undefined as the sole absent value
 
-import { AST } from '@graffio/ast'
+import { Ast } from '@graffio/ast'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
@@ -46,7 +46,7 @@ const V = {
     check: (ast, sourceCode, filePath) => {
         if (!ast || PS.isTestFile(filePath) || PS.isGeneratedFile(sourceCode) || P.isBoundaryFile(filePath)) return []
 
-        return AST.from(ast)
+        return Ast.from(ast)
             .filter(node => {
                 const { type, raw } = node.esTree
                 return type === 'Literal' && raw === 'null'
@@ -64,8 +64,8 @@ const V = {
 const PRIORITY = 7
 const violation = FS.createViolation('no-null-literal', PRIORITY)
 
-// Files that must handle null: boundary utilities, typeof guards, SQL-facing modules, and
-// modules with pre-existing validator violations that block null→undefined migration
+// Files that must handle null: boundary utilities, typeof guards, sort/filter internals,
+// and the sql.js boundary converter (undefined→null at DB interface)
 const BOUNDARY_PATTERNS = [
     'ramda-like/isNil.js',
     'ramda-like/type.js',
@@ -77,9 +77,10 @@ const BOUNDARY_PATTERNS = [
     'ramda-like/path.js',
     'apply-sort.js',
     'apply-filter.js',
-    'ast/src/',
-    'cli-type-generator/src/',
-    'cli-qif-to-sqlite/src/',
+    'cli-type-generator/src/descriptors/field-descriptor.js',
+    'cli-type-generator/src/parse-type-definition-file.js',
+    'cli-type-generator/src/prettier-code.js',
+    'cli-qif-to-sqlite/src/sql-boundary.js',
 ]
 
 // ---------------------------------------------------------------------------------------------------------------------

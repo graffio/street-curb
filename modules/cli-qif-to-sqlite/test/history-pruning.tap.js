@@ -28,7 +28,7 @@ test('Import history records import with metadata', async t =>
             const changeCounts = { created: 5, modified: 2, orphaned: 1, restored: 0 }
             const changes = [{ stableId: 'acc_000000000001', changeType: 'created', entityType: 'Account' }]
 
-            const importId = ImportHistory.finalizeImportHistory(db, qifContent, changeCounts, changes)
+            const importId = ImportHistory.processImportHistory(db, qifContent, changeCounts, changes)
 
             t.test('Then import history record is created', async t => {
                 const history = db.prepare('SELECT * FROM importHistory').all()
@@ -71,7 +71,7 @@ test('History pruning keeps only last 20 imports', async t =>
         }
 
         t.test('When pruning old history', async t => {
-            const pruned = ImportHistory.E.pruneOldHistory(db)
+            const pruned = ImportHistory.pruneOldHistory(db)
 
             t.test('Then 5 old imports are removed', async t => t.equal(pruned, 5))
 
@@ -109,7 +109,7 @@ test('Modified entities get lastModifiedAt updated', async t =>
             const changeCounts = { created: 0, modified: 1, orphaned: 0, restored: 0 }
             const changes = [{ stableId: 'acc_000000000001', changeType: 'modified', entityType: 'Account' }]
 
-            ImportHistory.finalizeImportHistory(db, qifContent, changeCounts, changes)
+            ImportHistory.processImportHistory(db, qifContent, changeCounts, changes)
 
             t.test('Then lastModifiedAt is set', async t => {
                 const identity = db

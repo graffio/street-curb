@@ -13,7 +13,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -36,8 +36,8 @@ const Tag = function Tag(id, name, color, description) {
     const result = Object.create(prototype)
     result.id = id
     result.name = name
-    if (color != null) result.color = color
-    if (description != null) result.description = description
+    if (color !== undefined) result.color = color
+    if (description !== undefined) result.description = description
     return result
 }
 

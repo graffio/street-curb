@@ -1,5 +1,6 @@
 // ABOUTME: Code generation for is() type-checking methods
 // ABOUTME: Generates is methods for TaggedSum types with variant detection
+// COMPLEXITY: export-structure — codegen function; generate prefix is the domain verb
 
 /*
  * Generate is method for TaggedSum - uses destructuring if 3+ variants
@@ -48,5 +49,11 @@ const generateIsMethod = (typeName, variants) => {
 
     return variants.length >= 3 ? includeDestructuring() : skipDestrcturing()
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { generateIsMethod }

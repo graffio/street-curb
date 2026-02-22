@@ -6,14 +6,14 @@ import { MockDataGenerator } from '../src/mock-data-generator.js'
 import { ParseQifData } from '../src/parse-qif-data.js'
 import { QifEntry } from '../src/types/index.js'
 
-const { generateMockData, serializeToQif } = MockDataGenerator
+const { generateMockData, formatAsQif } = MockDataGenerator
 
-test('round-trip: generateMockData -> serializeToQif -> parseQifData', async t => {
+test('round-trip: generateMockData -> formatAsQif -> parseQifData', async t => {
     // Generate typed data (Date objects, arrays, Tagged types)
     const original = generateMockData()
 
     // Serialize to QIF string format
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
 
     // Parse back - should produce same structure
     const parsed = ParseQifData.parseQifData(qifString)
@@ -27,7 +27,7 @@ test('round-trip: generateMockData -> serializeToQif -> parseQifData', async t =
 
 test('parsed bank transactions have correct types', async t => {
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const txn = parsed.bankTransactions[0]
@@ -41,7 +41,7 @@ test('parsed bank transactions have correct types', async t => {
 
 test('parsed investment transactions have correct types', async t => {
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const txn = parsed.investmentTransactions[0]
@@ -54,7 +54,7 @@ test('parsed investment transactions have correct types', async t => {
 
 test('parsed prices have correct types', async t => {
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const price = parsed.prices[0]
@@ -68,7 +68,7 @@ test('parsed prices have correct types', async t => {
 
 test('parsed accounts have correct types', async t => {
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const account = parsed.accounts[0]
@@ -81,7 +81,7 @@ test('parsed accounts have correct types', async t => {
 
 test('bank transaction with address has array type', async t => {
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     // Find a transaction that has an address (if any)
@@ -115,7 +115,7 @@ test('original generateMockData produces Tagged types', async t => {
 
 test('parsed data has duplicate accounts from QIF format', async t => {
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     // Check for duplicate account names
@@ -140,7 +140,7 @@ test('full pipeline: parse -> import -> database', async t => {
 
     // Generate QIF data and parse it
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     // Create in-memory database with schema
@@ -173,7 +173,7 @@ test('transfers are resolved to transferAccountId', async t => {
     const schemaPath = resolve(__dirname, '../schema.sql')
 
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const db = new Database(':memory:')
@@ -220,7 +220,7 @@ test('Given a full import with transfers, both sides exist from QIF data', async
     const schemaPath = resolve(__dirname, '../schema.sql')
 
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const db = new Database(':memory:')
@@ -293,7 +293,7 @@ test('gain markers are stored in gainMarkerType', async t => {
     const schemaPath = resolve(__dirname, '../schema.sql')
 
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const db = new Database(':memory:')
@@ -333,7 +333,7 @@ test('first import tracks all entities as created', async t => {
     const schemaPath = resolve(__dirname, '../schema.sql')
 
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const db = new Database(':memory:')
@@ -364,7 +364,7 @@ test('reimport of identical data tracks no new creations', async t => {
     const schemaPath = resolve(__dirname, '../schema.sql')
 
     const original = generateMockData()
-    const qifString = serializeToQif(original)
+    const qifString = formatAsQif(original)
     const parsed = ParseQifData.parseQifData(qifString)
 
     const db = new Database(':memory:')

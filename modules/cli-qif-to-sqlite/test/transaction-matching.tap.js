@@ -6,7 +6,7 @@ import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
-import { Matching } from '../src/Matching.js'
+import { Matching } from '../src/matching.js'
 import { StableIdentity } from '../src/stable-identity.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -25,8 +25,8 @@ test('buildTransactionLookup', async t =>
         t.teardown(() => db.close())
 
         const sig = 'acc-1|2024-01-15|-50|grocery'
-        StableIdentity.insertStableIdentity(db, { id: 'txn_000000000111', entityType: 'Transaction', signature: sig })
-        StableIdentity.insertStableIdentity(db, { id: 'txn_000000000222', entityType: 'Transaction', signature: sig })
+        StableIdentity.persistIdentity(db, { id: 'txn_000000000111', entityType: 'Transaction', signature: sig })
+        StableIdentity.persistIdentity(db, { id: 'txn_000000000222', entityType: 'Transaction', signature: sig })
 
         t.test('When building lookup', async t => {
             const lookup = Matching.buildTransactionLookup(db, 'Transaction')
@@ -68,7 +68,7 @@ test('findTransactionMatch', async t => {
         t.test('When matching third occurrence (exhausted)', async t => {
             const result = Matching.findTransactionMatch(lookup, sig)
 
-            t.test('Then it returns null', async t => t.equal(result, null))
+            t.test('Then it returns undefined', async t => t.equal(result, undefined))
         })
     })
 
@@ -78,7 +78,7 @@ test('findTransactionMatch', async t => {
         t.test('When matching unknown signature', async t => {
             const result = Matching.findTransactionMatch(lookup, 'unknown-sig')
 
-            t.test('Then it returns null', async t => t.equal(result, null))
+            t.test('Then it returns undefined', async t => t.equal(result, undefined))
         })
     })
 })

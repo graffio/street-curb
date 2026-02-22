@@ -1,12 +1,14 @@
 // ABOUTME: Tests for universal redact() function that redacts PII fields in Tagged types
 // ABOUTME: Validates email, displayName, and phoneNumber redaction with recursive support
 
-import { redact } from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes } from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
 import tap from 'tap'
 import { Action } from '../src/types/action.js'
 import { OrganizationMember } from '../src/types/organization-member.js'
 import { User } from '../src/types/user.js'
+
+const { redact } = RuntimeForGeneratedTypes
 
 // Valid test IDs (12+ chars after prefix)
 const TEST_USER_ID = 'usr_123456789abc'

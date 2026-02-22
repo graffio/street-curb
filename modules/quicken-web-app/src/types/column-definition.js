@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for ColumnDefinition
-// ABOUTME: Auto-generated from modules/design-system/type-definitions/column-definition.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/column-definition.type.js - do not edit manually
 
 /** {@link module:ColumnDefinition} */
-/*  ColumnDefinition generated from: modules/design-system/type-definitions/column-definition.type.js
+/*  ColumnDefinition generated from: modules/quicken-web-app/type-definitions/column-definition.type.js
  *
  *  id            : "String",
  *  accessorKey   : "String?",
@@ -19,7 +19,7 @@
  *
  */
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -62,16 +62,16 @@ const ColumnDefinition = function ColumnDefinition(
 
     const result = Object.create(prototype)
     result.id = id
-    if (accessorKey != null) result.accessorKey = accessorKey
-    if (accessorFn != null) result.accessorFn = accessorFn
+    if (accessorKey !== undefined) result.accessorKey = accessorKey
+    if (accessorFn !== undefined) result.accessorFn = accessorFn
     result.header = header
-    if (size != null) result.size = size
-    if (minSize != null) result.minSize = minSize
-    if (maxSize != null) result.maxSize = maxSize
-    if (textAlign != null) result.textAlign = textAlign
-    if (enableSorting != null) result.enableSorting = enableSorting
-    if (enableResizing != null) result.enableResizing = enableResizing
-    if (meta != null) result.meta = meta
+    if (size !== undefined) result.size = size
+    if (minSize !== undefined) result.minSize = minSize
+    if (maxSize !== undefined) result.maxSize = maxSize
+    if (textAlign !== undefined) result.textAlign = textAlign
+    if (enableSorting !== undefined) result.enableSorting = enableSorting
+    if (enableResizing !== undefined) result.enableResizing = enableResizing
+    if (meta !== undefined) result.meta = meta
     result.cell = cell
     return result
 }

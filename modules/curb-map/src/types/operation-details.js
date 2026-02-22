@@ -18,7 +18,7 @@
  *
  */
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -96,8 +96,8 @@ const ShellExecutionConstructor = function ShellExecution(command, duration, out
 
     const result = Object.create(ShellExecutionPrototype)
     result.command = command
-    if (duration != null) result.duration = duration
-    if (outputPreview != null) result.outputPreview = outputPreview
+    if (duration !== undefined) result.duration = duration
+    if (outputPreview !== undefined) result.outputPreview = outputPreview
     return result
 }
 
@@ -117,7 +117,7 @@ const FirestoreOperationConstructor = function FirestoreOperation(operation, col
     const result = Object.create(FirestoreOperationPrototype)
     result.operation = operation
     result.collection = collection
-    if (documentId != null) result.documentId = documentId
+    if (documentId !== undefined) result.documentId = documentId
     return result
 }
 
@@ -136,8 +136,8 @@ const GcpProjectOperationConstructor = function GcpProjectOperation(projectId, f
 
     const result = Object.create(GcpProjectOperationPrototype)
     result.projectId = projectId
-    if (folderId != null) result.folderId = folderId
-    if (region != null) result.region = region
+    if (folderId !== undefined) result.folderId = folderId
+    if (region !== undefined) result.region = region
     return result
 }
 

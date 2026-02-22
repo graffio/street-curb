@@ -20,7 +20,7 @@
 import { FieldTypes } from './field-types.js'
 import { Member } from './member.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
 
 // -------------------------------------------------------------------------------------------------------------
@@ -68,8 +68,8 @@ const Organization = function Organization(
     result.createdBy = createdBy
     result.updatedAt = updatedAt
     result.updatedBy = updatedBy
-    if (deletedAt != null) result.deletedAt = deletedAt
-    if (deletedBy != null) result.deletedBy = deletedBy
+    if (deletedAt !== undefined) result.deletedAt = deletedAt
+    if (deletedBy !== undefined) result.deletedBy = deletedBy
     return result
 }
 
@@ -156,9 +156,9 @@ Organization._toFirestore = (o, encodeTimestamps) => {
         updatedBy: o.updatedBy,
     }
 
-    if (o.deletedAt != null) result.deletedAt = encodeTimestamps(o.deletedAt)
+    if (o.deletedAt !== undefined) result.deletedAt = encodeTimestamps(o.deletedAt)
 
-    if (o.deletedBy != null) result.deletedBy = o.deletedBy
+    if (o.deletedBy !== undefined) result.deletedBy = o.deletedBy
 
     return result
 }
@@ -173,7 +173,7 @@ Organization._fromFirestore = (doc, decodeTimestamps) =>
         createdBy: doc.createdBy,
         updatedAt: decodeTimestamps(doc.updatedAt),
         updatedBy: doc.updatedBy,
-        deletedAt: doc.deletedAt != null ? decodeTimestamps(doc.deletedAt) : undefined,
+        deletedAt: doc.deletedAt !== undefined ? decodeTimestamps(doc.deletedAt) : undefined,
         deletedBy: doc.deletedBy,
     })
 

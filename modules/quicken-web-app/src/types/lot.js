@@ -19,7 +19,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -67,7 +67,7 @@ const Lot = function Lot(
     result.remainingQuantity = remainingQuantity
     result.securityId = securityId
     result.createdByTransactionId = createdByTransactionId
-    if (closedDate != null) result.closedDate = closedDate
+    if (closedDate !== undefined) result.closedDate = closedDate
     return result
 }
 

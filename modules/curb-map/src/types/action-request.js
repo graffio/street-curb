@@ -25,7 +25,7 @@ import { pick } from '@graffio/functional'
 import { Action } from './action.js'
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -80,15 +80,15 @@ const ActionRequest = function ActionRequest(
     result.actorId = actorId
     result.subjectId = subjectId
     result.subjectType = subjectType
-    if (organizationId != null) result.organizationId = organizationId
-    if (projectId != null) result.projectId = projectId
+    if (organizationId !== undefined) result.organizationId = organizationId
+    if (projectId !== undefined) result.projectId = projectId
     result.idempotencyKey = idempotencyKey
-    if (resultData != null) result.resultData = resultData
-    if (error != null) result.error = error
+    if (resultData !== undefined) result.resultData = resultData
+    if (error !== undefined) result.error = error
     result.correlationId = correlationId
     result.schemaVersion = schemaVersion
     result.createdAt = createdAt
-    if (processedAt != null) result.processedAt = processedAt
+    if (processedAt !== undefined) result.processedAt = processedAt
     return result
 }
 
@@ -198,15 +198,15 @@ ActionRequest._toFirestore = (o, encodeTimestamps) => {
         createdAt: encodeTimestamps(o.createdAt),
     }
 
-    if (o.organizationId != null) result.organizationId = o.organizationId
+    if (o.organizationId !== undefined) result.organizationId = o.organizationId
 
-    if (o.projectId != null) result.projectId = o.projectId
+    if (o.projectId !== undefined) result.projectId = o.projectId
 
-    if (o.resultData != null) result.resultData = o.resultData
+    if (o.resultData !== undefined) result.resultData = o.resultData
 
-    if (o.error != null) result.error = o.error
+    if (o.error !== undefined) result.error = o.error
 
-    if (o.processedAt != null) result.processedAt = encodeTimestamps(o.processedAt)
+    if (o.processedAt !== undefined) result.processedAt = encodeTimestamps(o.processedAt)
 
     return result
 }
@@ -226,7 +226,7 @@ ActionRequest._fromFirestore = (doc, decodeTimestamps) =>
         correlationId: doc.correlationId,
         schemaVersion: doc.schemaVersion,
         createdAt: decodeTimestamps(doc.createdAt),
-        processedAt: doc.processedAt != null ? decodeTimestamps(doc.processedAt) : undefined,
+        processedAt: doc.processedAt !== undefined ? decodeTimestamps(doc.processedAt) : undefined,
     })
 
 // Public aliases (override if necessary)

@@ -16,7 +16,7 @@
 
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -45,8 +45,8 @@ const Member = function Member(userId, displayName, role, addedAt, addedBy, remo
     result.role = role
     result.addedAt = addedAt
     result.addedBy = addedBy
-    if (removedAt != null) result.removedAt = removedAt
-    if (removedBy != null) result.removedBy = removedBy
+    if (removedAt !== undefined) result.removedAt = removedAt
+    if (removedBy !== undefined) result.removedBy = removedBy
     return result
 }
 
@@ -115,9 +115,9 @@ Member._toFirestore = (o, encodeTimestamps) => {
         addedBy: o.addedBy,
     }
 
-    if (o.removedAt != null) result.removedAt = encodeTimestamps(o.removedAt)
+    if (o.removedAt !== undefined) result.removedAt = encodeTimestamps(o.removedAt)
 
-    if (o.removedBy != null) result.removedBy = o.removedBy
+    if (o.removedBy !== undefined) result.removedBy = o.removedBy
 
     return result
 }
@@ -129,7 +129,7 @@ Member._fromFirestore = (doc, decodeTimestamps) =>
         role: doc.role,
         addedAt: decodeTimestamps(doc.addedAt),
         addedBy: doc.addedBy,
-        removedAt: doc.removedAt != null ? decodeTimestamps(doc.removedAt) : undefined,
+        removedAt: doc.removedAt !== undefined ? decodeTimestamps(doc.removedAt) : undefined,
         removedBy: doc.removedBy,
     })
 

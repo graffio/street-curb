@@ -1,12 +1,16 @@
 // ABOUTME: Rule to detect lines exceeding 120 characters
 // ABOUTME: Suggests extracting variables rather than wrapping lines
 
-import { AST } from '@graffio/ast'
+import { Ast } from '@graffio/ast'
 import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 3
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if line contains prettier-ignore directive
@@ -18,7 +22,7 @@ const P = {
     isBoundaryLine: line => line.trim() === '' || !PS.isCommentLine(line),
 
     // Check if node has prettier-ignore in preceding comments
-    // @sig nodeHasPrettierIgnore :: (ASTNode, [String]) -> Boolean
+    // @sig nodeHasPrettierIgnore :: (AstNode, [String]) -> Boolean
     nodeHasPrettierIgnore: (node, lines) => {
         if (!node.startLine) return false
         const precedingLines = A.toPrecedingCommentLines(lines, node.startLine - 1)
@@ -30,7 +34,11 @@ const P = {
     shouldReportLine: (line, lineNumber, ignoredLines) => line.length > 120 && !ignoredLines.has(lineNumber),
 }
 
-const violation = FS.createViolation('line-length', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a line-length violation
@@ -43,6 +51,12 @@ const F = {
                 'FIX: Extract a sub-expression into a named variable to shorten. Do NOT just wrap the line.',
         ),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const V = {
     // Validate that no lines exceed 120 characters
@@ -59,6 +73,12 @@ const V = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Transform line array to preceding comment lines before index
     // @sig toPrecedingCommentLines :: ([String], Number) -> [String]
@@ -69,7 +89,7 @@ const A = {
     },
 
     // Get line numbers to ignore if node has prettier-ignore
-    // @sig collectIgnoredLines :: ([String], ASTNode) -> [Number]
+    // @sig collectIgnoredLines :: ([String], AstNode) -> [Number]
     collectIgnoredLines: (lines, node) => (P.nodeHasPrettierIgnore(node, lines) ? AS.toNodeLineNumbers(node) : []),
 
     // Build set of all line numbers that should be ignored
@@ -78,10 +98,25 @@ const A = {
         if (!ast) return new Set()
 
         const allIgnored = []
-        AST.from(ast).forEach(node => allIgnored.push(...A.collectIgnoredLines(lines, node)))
+        Ast.from(ast).forEach(node => allIgnored.push(...A.collectIgnoredLines(lines, node)))
         return new Set(allIgnored)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 3
+const violation = FS.createViolation('line-length', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run line-length rule with COMPLEXITY exemption support
 // @sig checkLineLength :: (AST?, String, String) -> [Violation]

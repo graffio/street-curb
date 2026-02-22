@@ -1,5 +1,6 @@
 // ABOUTME: Parses QIF file content into structured data groups
 // ABOUTME: Converts line-oriented QIF format into typed Entry objects by context
+// COMPLEXITY: export-structure — ParseQifData exposes single parse function; will not grow
 
 /*
  * QIF is a line-oriented format where each row of a file is a single-line entry or a multi-line "LineGroup" (my name)
@@ -23,51 +24,25 @@ import { groupBy } from '@graffio/functional'
 import { LineGroupToEntry } from './line-group-to-entry.js'
 import { QifEntry } from './types/index.js'
 
-const { lineGroupToEntry } = LineGroupToEntry
+const { parseLineGroup } = LineGroupToEntry
 
-/*
- * These lines in a QIF file define the current context for lines that follow it; if you're in the Security context
- * you can expect that each lineGroup thereafter will have entries for a security until the context changes
- * Sometimes the context is set for a single LineGroup (Security and Prices) and sometimes for a slew of LineGroups
- */
-const CONTEXTS = {
-    '!Type:Bank': 'Bank',
-    '!Type:Cash': 'Cash',
-    '!Type:Cat': 'Category',
-    '!Type:CCard': 'Credit Card',
-    '!Type:Class': 'Class',
-    '!Type:Invst': 'Investment',
-    '!Type:Memorized': 'Memorized',
-    '!Type:Oth A': 'Other Asset',
-    '!Type:Oth L': 'Other Liability',
-    '!Type:Payee': 'Payees',
-    '!Type:Port': 'Investment',
-    '!Type:Prices': 'Prices',
-    '!Type:Security': 'Security',
-    '!Type:Tag': 'Tag',
-
-    // probably not in Quicken Premier
-    '!Type:Bill': 'Bill',
-    '!Type:Budget': 'Budget',
-    '!Type:Invitem': 'Invoice Item',
-    '!Type:Invoice': 'Invoice Transactions',
-    '!Type:Tax': 'Tax-related',
-    '!Type:Template': 'Business Template',
-}
-
-// prettier-ignore
-const TRANSACTION_CONTEXTS = [
-    'Bank', 'Cash', 'Credit Card', 'Investment', 'Invoice', 'Other Asset', 'Other Liability'
-]
-
-const { Account, Category, Class: QifClass, Payee, Price, Security, Tag } = QifEntry
-const { TransactionBank, TransactionInvestment } = QifEntry
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Checks if line is a context directive (!Type, !Option, !Clear)
     // @sig isContextDirective :: String -> Boolean
     isContextDirective: line => line.startsWith('!Type') || line.startsWith('!Option') || line.startsWith('!Clear'),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Deduplicates array by key function, keeping first occurrence
@@ -149,7 +124,7 @@ const T = {
     // @sig applyAccountContext :: (State, LineGroup) -> State
     applyAccountContext: (state, lineGroup) => {
         const { entries } = state
-        const account = lineGroupToEntry('Account', undefined, lineGroup.slice(1))
+        const account = parseLineGroup('Account', undefined, lineGroup.slice(1))
         entries.push(account)
         return { ...state, context: 'Account', account }
     },
@@ -161,7 +136,7 @@ const T = {
         if (TRANSACTION_CONTEXTS.includes(context) && !account)
             throw new Error(`Transaction in ${context} context but no current account; line ${lineNumber}`)
 
-        const result = lineGroupToEntry(context, account, lineGroup)
+        const result = parseLineGroup(context, account, lineGroup)
         if (Array.isArray(result)) result.forEach(r => entries.push(r))
         else entries.push(result)
         return { ...state, lineNumber: lineNumber + lineGroup.length + 1 }
@@ -182,7 +157,7 @@ const T = {
             throw new Error(`Don't understand lineGroup: ${lineGroup}`)
         }
 
-        const initialState = { context: null, account: null, options: {}, lineNumber: 1, entries: [] }
+        const initialState = { context: undefined, account: undefined, options: {}, lineNumber: 1, entries: [] }
         const finalState = lineGroups.reduce(processLineGroup, initialState)
         const entries = finalState.entries.filter(e => e)
 
@@ -212,6 +187,12 @@ const T = {
         }
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const V = {
     // Validates parsed QIF data has required relationships
@@ -250,6 +231,56 @@ const parseQifData = qifText => {
     V.validateDataIntegrity(accounts, securities, bankTransactions, investmentTransactions)
     return data
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+/*
+ * These lines in a QIF file define the current context for lines that follow it; if you're in the Security context
+ * you can expect that each lineGroup thereafter will have entries for a security until the context changes
+ * Sometimes the context is set for a single LineGroup (Security and Prices) and sometimes for a slew of LineGroups
+ */
+const CONTEXTS = {
+    '!Type:Bank': 'Bank',
+    '!Type:Cash': 'Cash',
+    '!Type:Cat': 'Category',
+    '!Type:CCard': 'Credit Card',
+    '!Type:Class': 'Class',
+    '!Type:Invst': 'Investment',
+    '!Type:Memorized': 'Memorized',
+    '!Type:Oth A': 'Other Asset',
+    '!Type:Oth L': 'Other Liability',
+    '!Type:Payee': 'Payees',
+    '!Type:Port': 'Investment',
+    '!Type:Prices': 'Prices',
+    '!Type:Security': 'Security',
+    '!Type:Tag': 'Tag',
+
+    // probably not in Quicken Premier
+    '!Type:Bill': 'Bill',
+    '!Type:Budget': 'Budget',
+    '!Type:Invitem': 'Invoice Item',
+    '!Type:Invoice': 'Invoice Transactions',
+    '!Type:Tax': 'Tax-related',
+    '!Type:Template': 'Business Template',
+}
+
+// prettier-ignore
+const TRANSACTION_CONTEXTS = [
+    'Bank', 'Cash', 'Credit Card', 'Investment', 'Invoice', 'Other Asset', 'Other Liability'
+]
+
+const { Account, Category, Class: QifClass, Payee, Price, Security, Tag } = QifEntry
+const { TransactionBank, TransactionInvestment } = QifEntry
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const ParseQifData = { parseQifData }
 export { ParseQifData }

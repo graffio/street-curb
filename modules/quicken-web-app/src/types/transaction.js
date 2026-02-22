@@ -47,7 +47,7 @@ import {
 } from '@graffio/functional'
 import { FieldTypes } from './field-types.js'
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -150,14 +150,14 @@ const BankConstructor = function Bank(
     result.date = date
     result.id = id
     result.transactionType = transactionType
-    if (address != null) result.address = address
-    if (categoryId != null) result.categoryId = categoryId
-    if (cleared != null) result.cleared = cleared
-    if (memo != null) result.memo = memo
-    if (number != null) result.number = number
-    if (payee != null) result.payee = payee
-    if (runningBalance != null) result.runningBalance = runningBalance
-    if (transferAccountId != null) result.transferAccountId = transferAccountId
+    if (address !== undefined) result.address = address
+    if (categoryId !== undefined) result.categoryId = categoryId
+    if (cleared !== undefined) result.cleared = cleared
+    if (memo !== undefined) result.memo = memo
+    if (number !== undefined) result.number = number
+    if (payee !== undefined) result.payee = payee
+    if (runningBalance !== undefined) result.runningBalance = runningBalance
+    if (transferAccountId !== undefined) result.transferAccountId = transferAccountId
     return result
 }
 
@@ -220,19 +220,19 @@ const InvestmentConstructor = function Investment(
     result.date = date
     result.id = id
     result.transactionType = transactionType
-    if (address != null) result.address = address
-    if (amount != null) result.amount = amount
-    if (categoryId != null) result.categoryId = categoryId
-    if (cleared != null) result.cleared = cleared
-    if (commission != null) result.commission = commission
+    if (address !== undefined) result.address = address
+    if (amount !== undefined) result.amount = amount
+    if (categoryId !== undefined) result.categoryId = categoryId
+    if (cleared !== undefined) result.cleared = cleared
+    if (commission !== undefined) result.commission = commission
     result.investmentAction = investmentAction
-    if (memo != null) result.memo = memo
-    if (payee != null) result.payee = payee
-    if (price != null) result.price = price
-    if (quantity != null) result.quantity = quantity
-    if (runningBalance != null) result.runningBalance = runningBalance
-    if (securityId != null) result.securityId = securityId
-    if (transferAccountId != null) result.transferAccountId = transferAccountId
+    if (memo !== undefined) result.memo = memo
+    if (payee !== undefined) result.payee = payee
+    if (price !== undefined) result.price = price
+    if (quantity !== undefined) result.quantity = quantity
+    if (runningBalance !== undefined) result.runningBalance = runningBalance
+    if (securityId !== undefined) result.securityId = securityId
+    if (transferAccountId !== undefined) result.transferAccountId = transferAccountId
     return result
 }
 

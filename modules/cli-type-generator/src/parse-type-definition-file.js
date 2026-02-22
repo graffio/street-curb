@@ -6,7 +6,7 @@ import { parse } from 'acorn'
 import { generate } from 'escodegen'
 import { walk } from 'estree-walker'
 import fs from 'fs'
-import TypeDescriptor from './descriptors/type-descriptor.js'
+import { TypeDescriptor } from './descriptors/type-descriptor.js'
 import { ImportSpecifier } from './types/import-specifier.js'
 
 /*
@@ -221,16 +221,16 @@ const parseTypeDefinitionFile = filePath => {
 
     /**
      * Extract function information for T.f = () => {}; if the typeName doesn't match T.f, skip it
-     * @sig handlePotentialAddedFunction :: (ASTNode, String) -> FunctionInfo | null
+     * @sig handlePotentialAddedFunction :: (ASTNode, String) -> FunctionInfo | undefined
      */
     const handlePotentialAddedFunction = (node, expectedTypeName) => {
         const { left } = node
-        if (left.object?.type !== 'Identifier' || left.property?.type !== 'Identifier') return null
+        if (left.object?.type !== 'Identifier' || left.property?.type !== 'Identifier') return undefined
 
         const typeName = left.object.name
         return typeName === expectedTypeName // T.f = () => {} must match expectedTypeName T
             ? { typeName, functionName: left.property.name, node, sourceCode: generate(node) }
-            : null
+            : undefined
     }
 
     /**
@@ -258,7 +258,7 @@ const parseTypeDefinitionFile = filePath => {
         if (mightBeAddedFunction && typeDef) functions.push(handlePotentialAddedFunction(node, typeDef.name))
     }
 
-    let typeDef = null
+    let typeDef
     const imports = []
     const functions = []
 
@@ -271,7 +271,7 @@ const parseTypeDefinitionFile = filePath => {
 
         // Normalize to TypeDescriptor with all fields converted to FieldDescriptor
         const parseResult = { typeDefinition: typeDef, imports, functions: compact(functions) }
-        const descriptor = TypeDescriptor.normalize(parseResult)
+        const descriptor = TypeDescriptor.toDescriptor(parseResult)
 
         // Add sourceContent for backward compatibility (not part of TypeDescriptor schema)
         return { ...descriptor, sourceContent }
@@ -282,9 +282,9 @@ const parseTypeDefinitionFile = filePath => {
 
 /**
  * Get list of standard functions that exist in the type definition
- * @sig getExistingStandardFunctions :: [FunctionInfo] -> [String]
+ * @sig findExistingStandardFunctions :: [FunctionInfo] -> [String]
  */
-const getExistingStandardFunctions = functions => {
+const findExistingStandardFunctions = functions => {
     /**
      * Check if a function name is a "standard" generated function
      * @sig isStandardFunction :: String -> Boolean
@@ -306,4 +306,12 @@ const getExistingStandardFunctions = functions => {
     return functions.filter(fn => isStandardFunction(fn.functionName)).map(fn => fn.functionName)
 }
 
-export { parseTypeDefinitionFile, getExistingStandardFunctions }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const ParseTypeDefinitionFile = { parse: parseTypeDefinitionFile, findExistingStandardFunctions }
+
+export { ParseTypeDefinitionFile }

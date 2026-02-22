@@ -1,7 +1,7 @@
 // ABOUTME: Code generation for TaggedSum variant prototypes and static methods
 // ABOUTME: Generates prototype objects, is(), toString(), from() for variants
 
-import { generateFrom } from './expressions.js'
+import { Expressions } from './expressions.js'
 
 /*
  * Generate prototype definition for a TaggedSum variant
@@ -39,7 +39,7 @@ const generateAllStaticMethods = (typeName, variantNames, variants) => {
      */
     const generateFromMethod = vn => {
         const fullName = `${typeName}.${vn}`
-        const fromCode = generateFrom('prototype', vn, fullName, variants[vn])
+        const fromCode = Expressions.generateFrom('prototype', vn, fullName, variants[vn])
         return `${vn}Constructor._from = ${fromCode}`
     }
 
@@ -76,4 +76,12 @@ const generateVariantConstructorDef = (typeName, variantName, constructorCode) =
 
         ${typeName}.${variantName} = ${variantName}Constructor`
 
-export { generateVariantPrototype, generateAllStaticMethods, generateVariantConstructorDef }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const Variant = { generateVariantPrototype, generateAllStaticMethods, generateVariantConstructorDef }
+
+export { Variant }

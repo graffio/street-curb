@@ -3,6 +3,13 @@
 
 import { LookupTable } from '@graffio/functional'
 
+// COMPLEXITY: function-naming — all functions in this file are public API consumed by
+//   generated code; renaming requires template changes
+// COMPLEXITY: no-null-literal — null guards are intentional: _toString must handle null
+//   input, validateObject must reject null (typeof null === 'object'), hasPii must guard
+//   against null from typeof-object recursion, optional-field validators must accept null
+//   from external data (IndexedDB, JSON) at the system boundary
+
 /**
  * Create a match function for TaggedSum types
  * @sig match :: [String] -> (Object -> Any)
@@ -30,6 +37,7 @@ const match = tagNames => {
  */
 const _toString = value => {
     if (typeof value === 'undefined') return 'undefined'
+    if (value === null) return 'null'
     if (value['@@typeName']) return value.toString()
     if (Array.isArray(value)) return '[' + value.map(item => _toString(item)).join(', ') + ']'
     if (typeof value === 'string') return '"' + value + '"'
@@ -100,7 +108,7 @@ const validateArgumentLength = (constructorName, expectedCount, args) => {
 const validateRegex = (constructorName, regex, field, optional, s) => {
     validateString(constructorName, field, optional, s)
 
-    if (optional && s == null) return
+    if (optional && (s === undefined || s === null)) return
     if (s.match(regex)) return
 
     // eslint-disable-next-line no-debugger
@@ -114,7 +122,7 @@ const validateRegex = (constructorName, regex, field, optional, s) => {
  * @sig validateNumber :: (String, String, Boolean, Any) -> void
  */
 const validateNumber = (constructorName, field, optional, n) => {
-    if (optional && n == null) return
+    if (optional && (n === undefined || n === null)) return
     if (typeof n === 'number') return
 
     // eslint-disable-next-line no-debugger
@@ -128,7 +136,7 @@ const validateNumber = (constructorName, field, optional, n) => {
  * @sig validateString :: (String, String, Boolean, Any) -> void
  */
 const validateString = (constructorName, field, optional, s) => {
-    if (optional && s == null) return
+    if (optional && (s === undefined || s === null)) return
     if (typeof s === 'string') return
 
     // eslint-disable-next-line no-debugger
@@ -142,8 +150,8 @@ const validateString = (constructorName, field, optional, s) => {
  * @sig validateObject :: (String, String, Boolean, Any) -> void
  */
 const validateObject = (constructorName, field, optional, o) => {
-    if (optional && o == null) return
-    if (typeof o === 'object') return
+    if (optional && (o === undefined || o === null)) return
+    if (typeof o === 'object' && o !== null) return
 
     // eslint-disable-next-line no-debugger
     debugger
@@ -156,7 +164,7 @@ const validateObject = (constructorName, field, optional, o) => {
  * @sig validateDate :: (String, String, Boolean, Any) -> void
  */
 const validateDate = (constructorName, field, optional, d) => {
-    if (optional && d == null) return
+    if (optional && (d === undefined || d === null)) return
     if (d instanceof Date) return
 
     // eslint-disable-next-line no-debugger
@@ -170,7 +178,7 @@ const validateDate = (constructorName, field, optional, d) => {
  * @sig validateBoolean :: (String, String, Boolean, Any) -> void
  */
 const validateBoolean = (constructorName, field, optional, b) => {
-    if (optional && b == null) return
+    if (optional && (b === undefined || b === null)) return
     if (typeof b === 'boolean') return
 
     // eslint-disable-next-line no-debugger
@@ -184,7 +192,7 @@ const validateBoolean = (constructorName, field, optional, b) => {
  * @sig validateTag :: (String, String, String, Boolean, Any) -> void
  */
 const validateTag = (constructorName, expectedType, field, optional, o) => {
-    if (optional && o == null) return
+    if (optional && (o === undefined || o === null)) return
     if (o?.['@@typeName'] === expectedType) return
 
     // eslint-disable-next-line no-debugger
@@ -217,8 +225,8 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
      * @sig checkArrayAtDepth :: (Any, Number) -> { valid: Boolean, element: Any }
      */
     const checkArrayAtDepth = (value, currentDepth) => {
-        if (!Array.isArray(value)) return { valid: false, element: null }
-        if (value.length === 0) return { valid: true, element: null, empty: true }
+        if (!Array.isArray(value)) return { valid: false, element: undefined }
+        if (value.length === 0) return { valid: true, element: undefined, empty: true }
         if (currentDepth + 1 >= arrayDepth) return { valid: true, element: value[0] }
         return checkArrayAtDepth(value[0], currentDepth + 1)
     }
@@ -237,7 +245,7 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
         return false
     }
 
-    if (optional && a == null) return
+    if (optional && (a === undefined || a === null)) return
 
     const { valid, empty, element } = checkArrayAtDepth(a, 0)
     const nestedType = buildNestedTypeString()
@@ -265,7 +273,7 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
  * @sig validateLookupTable :: (String, String, String, Boolean, Any) -> void
  */
 const validateLookupTable = (constructorName, expectedItemType, field, optional, lt) => {
-    if (optional && lt == null) return
+    if (optional && (lt === undefined || lt === null)) return
 
     // Check if it's a LookupTable (has idField property)
     if (!lt || typeof lt !== 'object' || !lt.idField) {
@@ -321,7 +329,8 @@ const redact = value => {
             return false
         }
 
-        if (v == null) return false
+        // null can arrive here via typeof-object recursion (typeof null === 'object')
+        if (v === undefined || v === null) return false
 
         // Check direct PII fields
         const hasDirectPii = Object.keys(piiRedactions).some(field => v[field] && typeof v[field] === 'string')
@@ -367,7 +376,13 @@ const redact = value => {
     return markAsRedacted(constructor.from(redactedObject))
 }
 
-export {
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const RuntimeForGeneratedTypes = {
     validateArgumentLength,
     validateArray,
     validateBoolean,
@@ -384,3 +399,5 @@ export {
     _toString,
     redact,
 }
+
+export { RuntimeForGeneratedTypes }

@@ -111,7 +111,7 @@
  *
  */
 
-import * as R from '@graffio/cli-type-generator'
+import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -288,7 +288,7 @@ const FunctionDeclarationConstructor = function FunctionDeclaration(esTree, pare
 
     const result = Object.create(FunctionDeclarationPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -306,7 +306,7 @@ const ArrowFunctionExpressionConstructor = function ArrowFunctionExpression(esTr
 
     const result = Object.create(ArrowFunctionExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -324,7 +324,7 @@ const FunctionExpressionConstructor = function FunctionExpression(esTree, parent
 
     const result = Object.create(FunctionExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -342,7 +342,7 @@ const VariableDeclarationConstructor = function VariableDeclaration(esTree, pare
 
     const result = Object.create(VariableDeclarationPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -360,7 +360,7 @@ const VariableDeclaratorConstructor = function VariableDeclarator(esTree, parent
 
     const result = Object.create(VariableDeclaratorPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -378,7 +378,7 @@ const ObjectExpressionConstructor = function ObjectExpression(esTree, parent) {
 
     const result = Object.create(ObjectExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -396,7 +396,7 @@ const ArrayExpressionConstructor = function ArrayExpression(esTree, parent) {
 
     const result = Object.create(ArrayExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -414,7 +414,7 @@ const MemberExpressionConstructor = function MemberExpression(esTree, parent) {
 
     const result = Object.create(MemberExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -432,7 +432,7 @@ const CallExpressionConstructor = function CallExpression(esTree, parent) {
 
     const result = Object.create(CallExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -450,7 +450,7 @@ const AssignmentExpressionConstructor = function AssignmentExpression(esTree, pa
 
     const result = Object.create(AssignmentExpressionPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -468,7 +468,7 @@ const IdentifierConstructor = function Identifier(esTree, parent) {
 
     const result = Object.create(IdentifierPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -486,7 +486,7 @@ const PropertyConstructor = function Property(esTree, parent) {
 
     const result = Object.create(PropertyPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -504,7 +504,7 @@ const ExportNamedDeclarationConstructor = function ExportNamedDeclaration(esTree
 
     const result = Object.create(ExportNamedDeclarationPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -522,7 +522,7 @@ const ExportDefaultDeclarationConstructor = function ExportDefaultDeclaration(es
 
     const result = Object.create(ExportDefaultDeclarationPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -540,7 +540,7 @@ const ExportSpecifierConstructor = function ExportSpecifier(esTree, parent) {
 
     const result = Object.create(ExportSpecifierPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -558,7 +558,7 @@ const ImportDeclarationConstructor = function ImportDeclaration(esTree, parent) 
 
     const result = Object.create(ImportDeclarationPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -576,7 +576,7 @@ const ImportNamespaceSpecifierConstructor = function ImportNamespaceSpecifier(es
 
     const result = Object.create(ImportNamespaceSpecifierPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -594,7 +594,7 @@ const BlockStatementConstructor = function BlockStatement(esTree, parent) {
 
     const result = Object.create(BlockStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -612,7 +612,7 @@ const ExpressionStatementConstructor = function ExpressionStatement(esTree, pare
 
     const result = Object.create(ExpressionStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -630,7 +630,7 @@ const ReturnStatementConstructor = function ReturnStatement(esTree, parent) {
 
     const result = Object.create(ReturnStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -648,7 +648,7 @@ const IfStatementConstructor = function IfStatement(esTree, parent) {
 
     const result = Object.create(IfStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -666,7 +666,7 @@ const SwitchStatementConstructor = function SwitchStatement(esTree, parent) {
 
     const result = Object.create(SwitchStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -684,7 +684,7 @@ const TryStatementConstructor = function TryStatement(esTree, parent) {
 
     const result = Object.create(TryStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -702,7 +702,7 @@ const CatchClauseConstructor = function CatchClause(esTree, parent) {
 
     const result = Object.create(CatchClausePrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -720,7 +720,7 @@ const ThrowStatementConstructor = function ThrowStatement(esTree, parent) {
 
     const result = Object.create(ThrowStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -738,7 +738,7 @@ const BreakStatementConstructor = function BreakStatement(esTree, parent) {
 
     const result = Object.create(BreakStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -756,7 +756,7 @@ const ContinueStatementConstructor = function ContinueStatement(esTree, parent) 
 
     const result = Object.create(ContinueStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -774,7 +774,7 @@ const ForStatementConstructor = function ForStatement(esTree, parent) {
 
     const result = Object.create(ForStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -792,7 +792,7 @@ const WhileStatementConstructor = function WhileStatement(esTree, parent) {
 
     const result = Object.create(WhileStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -810,7 +810,7 @@ const DoWhileStatementConstructor = function DoWhileStatement(esTree, parent) {
 
     const result = Object.create(DoWhileStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -828,7 +828,7 @@ const ForInStatementConstructor = function ForInStatement(esTree, parent) {
 
     const result = Object.create(ForInStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -846,7 +846,7 @@ const ForOfStatementConstructor = function ForOfStatement(esTree, parent) {
 
     const result = Object.create(ForOfStatementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -864,7 +864,7 @@ const JSXElementConstructor = function JSXElement(esTree, parent) {
 
     const result = Object.create(JSXElementPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -882,7 +882,7 @@ const JSXFragmentConstructor = function JSXFragment(esTree, parent) {
 
     const result = Object.create(JSXFragmentPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -900,7 +900,7 @@ const OtherConstructor = function Other(esTree, parent) {
 
     const result = Object.create(OtherPrototype)
     result.esTree = esTree
-    if (parent != null) result.parent = parent
+    if (parent !== undefined) result.parent = parent
     return result
 }
 
@@ -2554,7 +2554,7 @@ ASTNode.fromFirestore = ASTNode._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-ASTNode.wrap = (esTreeNode, parent = null) => {
+ASTNode.wrap = (esTreeNode, parent = undefined) => {
     const type = esTreeNode?.type
     if (!type) return ASTNode.Other(esTreeNode || {}, parent)
     if (ASTNode['@@tagNames'].includes(type)) return ASTNode[type](esTreeNode, parent)

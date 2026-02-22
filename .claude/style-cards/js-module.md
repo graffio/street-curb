@@ -67,10 +67,11 @@ const isReconciled = txn => txn.clearedStatus === 'R' && !isNil(txn.matchId)
 
 ## Cohesion Groups
 
-Cohesion groups organize functions **that earned their names** via the thresholds above. They don't create demand for
-new functions.
+Cohesion groups organize **file-internal helpers** that earned their names via the thresholds above. They don't create
+demand for new functions. **Exported functions always go in the Exports section** — even if they meet extraction
+thresholds or have cohesion-style names. Cohesion groups are for private implementation details only.
 
-Every named function goes in a group:
+Every named internal function goes in a group:
 
 | Letter | Type         | Name patterns                                                                                             |
 |--------|--------------|-----------------------------------------------------------------------------------------------------------|

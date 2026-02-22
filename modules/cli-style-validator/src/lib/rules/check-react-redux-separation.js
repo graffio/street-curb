@@ -1,7 +1,7 @@
 // ABOUTME: Rule to enforce strict React/Redux separation patterns
 // ABOUTME: Flags forbidden patterns in components and complex selectors
 
-import { AST, ASTNode } from '@graffio/ast'
+import { Ast, AstNode } from '@graffio/ast'
 import { Aggregators as AS } from '../shared/aggregators.js'
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
@@ -14,32 +14,32 @@ import { Predicates as PS } from '../shared/predicates.js'
 
 const P = {
     // Check if node is a hook call with given name
-    // @sig isHookCall :: String -> ASTNode -> Boolean
+    // @sig isHookCall :: String -> AstNode -> Boolean
     isHookCall: hookName => node => {
-        const { CallExpression, Identifier } = ASTNode
+        const { CallExpression, Identifier } = AstNode
         if (!CallExpression.is(node)) return false
         const { target } = node
         return Identifier.is(target) && target.name === hookName
     },
 
     // Check if node is a call to useState
-    // @sig isUseStateCall :: ASTNode -> Boolean
+    // @sig isUseStateCall :: AstNode -> Boolean
     isUseStateCall: node => P.isHookCall('useState')(node),
 
     // Check if node is a call to useMemo
-    // @sig isUseMemoCall :: ASTNode -> Boolean
+    // @sig isUseMemoCall :: AstNode -> Boolean
     isUseMemoCall: node => P.isHookCall('useMemo')(node),
 
     // Check if node is a call to useCallback
-    // @sig isUseCallbackCall :: ASTNode -> Boolean
+    // @sig isUseCallbackCall :: AstNode -> Boolean
     isUseCallbackCall: node => P.isHookCall('useCallback')(node),
 
     // Check if node is a call to useEffect
-    // @sig isUseEffectCall :: ASTNode -> Boolean
+    // @sig isUseEffectCall :: AstNode -> Boolean
     isUseEffectCall: node => P.isHookCall('useEffect')(node),
 
     // Check if node is a call to useRef
-    // @sig isUseRefCall :: ASTNode -> Boolean
+    // @sig isUseRefCall :: AstNode -> Boolean
     isUseRefCall: node => P.isHookCall('useRef')(node),
 
     // Check if file path is an exempt design-system wrapper component
@@ -47,17 +47,17 @@ const P = {
     isExemptComponent: filePath => EXEMPT_COMPONENTS.some(name => filePath.endsWith('/' + name)),
 
     // Check if node is an import of useChannel
-    // @sig isUseChannelImport :: ASTNode -> Boolean
+    // @sig isUseChannelImport :: AstNode -> Boolean
     isUseChannelImport: node => {
-        if (!ASTNode.ImportDeclaration.is(node)) return false
+        if (!AstNode.ImportDeclaration.is(node)) return false
         const specifiers = node.esTree.specifiers || []
         return specifiers.some(s => s.imported?.name === 'useChannel' || s.local?.name === 'useChannel')
     },
 
     // Check if node is a collection method call (.filter, .map, etc.)
-    // @sig isCollectionMethodCall :: ASTNode -> Boolean
+    // @sig isCollectionMethodCall :: AstNode -> Boolean
     isCollectionMethodCall: node => {
-        const { CallExpression, MemberExpression, Identifier } = ASTNode
+        const { CallExpression, MemberExpression, Identifier } = AstNode
         if (!CallExpression.is(node)) return false
         const { target } = node
         if (!target || !MemberExpression.is(target)) return false
@@ -66,9 +66,9 @@ const P = {
     },
 
     // Check if a .map() call returns JSX (standard React render pattern)
-    // @sig isJsxRenderMap :: ASTNode -> Boolean
+    // @sig isJsxRenderMap :: AstNode -> Boolean
     isJsxRenderMap: node => {
-        const { CallExpression, MemberExpression, Identifier } = ASTNode
+        const { CallExpression, MemberExpression, Identifier } = AstNode
         if (!CallExpression.is(node)) return false
         const { target, esTree } = node
         if (!target || !MemberExpression.is(target)) return false
@@ -89,7 +89,7 @@ const P = {
     },
 
     // Check if node is a spread element {...obj} or [...arr]
-    // @sig isSpreadElement :: ASTNode -> Boolean
+    // @sig isSpreadElement :: AstNode -> Boolean
     isSpreadElement: node => node.esTree?.type === 'SpreadElement',
 
     // Check if file path indicates a selector file
@@ -102,17 +102,17 @@ const P = {
     },
 
     // Check if node is an if statement
-    // @sig isIfStatement :: ASTNode -> Boolean
-    isIfStatement: node => ASTNode.IfStatement.is(node),
+    // @sig isIfStatement :: AstNode -> Boolean
+    isIfStatement: node => AstNode.IfStatement.is(node),
 
     // Check if esTree node is a conditional expression (ternary)
     // @sig isConditionalExpr :: Object -> Boolean
     isConditionalExpr: esNode => esNode?.type === 'ConditionalExpression',
 
     // Check if node is an Action.X() call (e.g., Action.SetDraggingView(...))
-    // @sig isActionCall :: ASTNode -> Boolean
+    // @sig isActionCall :: AstNode -> Boolean
     isActionCall: node => {
-        const { CallExpression, MemberExpression, Identifier } = ASTNode
+        const { CallExpression, MemberExpression, Identifier } = AstNode
         if (!CallExpression.is(node)) return false
         const { target } = node
         if (!target || !MemberExpression.is(target)) return false
@@ -129,7 +129,7 @@ const P = {
     },
 
     // Check if Action call has function arguments
-    // @sig hasActionFunctionArg :: ASTNode -> Boolean
+    // @sig hasActionFunctionArg :: AstNode -> Boolean
     hasActionFunctionArg: node => {
         if (!P.isActionCall(node)) return false
         const args = node.esTree?.arguments || []
@@ -145,16 +145,16 @@ const P = {
 
 const T = {
     // Get method name from collection call
-    // @sig toMethodName :: ASTNode -> String
+    // @sig toMethodName :: AstNode -> String
     toMethodName: node => {
         const target = node.target
-        if (!target || !ASTNode.MemberExpression.is(target)) return ''
+        if (!target || !AstNode.MemberExpression.is(target)) return ''
         const member = target.member
-        return member && ASTNode.Identifier.is(member) ? member.name : ''
+        return member && AstNode.Identifier.is(member) ? member.name : ''
     },
 
     // Count lines in a function body
-    // @sig toLineCount :: ASTNode -> Number
+    // @sig toLineCount :: AstNode -> Number
     toLineCount: funcNode => {
         const { esTree } = funcNode
         if (!esTree) return 0
@@ -163,18 +163,18 @@ const T = {
     },
 
     // Count collection method calls in function body
-    // @sig toCollectionMethodCount :: (AST, ASTNode) -> Number
+    // @sig toCollectionMethodCount :: (AST, AstNode) -> Number
     toCollectionMethodCount: (ast, bodyNode) => {
         if (!bodyNode?.esTree) return 0
-        return AST.from(bodyNode.esTree).filter(P.isCollectionMethodCall).length
+        return Ast.from(bodyNode.esTree).filter(P.isCollectionMethodCall).length
     },
 
     // Check for nested if statements in function body
-    // @sig toHasNestedIf :: (AST, ASTNode) -> Boolean
+    // @sig toHasNestedIf :: (AST, AstNode) -> Boolean
     toHasNestedIf: (ast, bodyNode) => {
         if (!bodyNode?.esTree) return false
-        const ifStatements = AST.from(bodyNode.esTree).filter(P.isIfStatement)
-        return ifStatements.some(ifNode => AST.from(ifNode.esTree).filter(P.isIfStatement).length > 1)
+        const ifStatements = Ast.from(bodyNode.esTree).filter(P.isIfStatement)
+        return ifStatements.some(ifNode => Ast.from(ifNode.esTree).filter(P.isIfStatement).length > 1)
     },
 
     // Check if a single node is a nested ternary
@@ -205,47 +205,47 @@ const T = {
 const F = {
     // Component hook violations — each takes a node and returns a violation with a fixed message
     // Creates violation for useState in component body
-    // @sig createUseStateViolation :: ASTNode -> Violation
+    // @sig createUseStateViolation :: AstNode -> Violation
     createUseStateViolation: node =>
         violation(node.line, node.column || 1, 'useState in component. FIX: Move state to Redux.'),
 
     // Creates violation for useMemo in component body
-    // @sig createUseMemoViolation :: ASTNode -> Violation
+    // @sig createUseMemoViolation :: AstNode -> Violation
     createUseMemoViolation: node =>
         violation(node.line, node.column || 1, 'useMemo in component body. FIX: Move derived state to a selector.'),
 
     // Creates violation for useCallback in component body
-    // @sig createUseCallbackViolation :: ASTNode -> Violation
+    // @sig createUseCallbackViolation :: AstNode -> Violation
     createUseCallbackViolation: node =>
         violation(node.line, node.column || 1, 'useCallback in component. FIX: Use dispatch-intent command function.'),
 
     // Creates violation for useEffect in component body
-    // @sig createUseEffectViolation :: ASTNode -> Violation
+    // @sig createUseEffectViolation :: AstNode -> Violation
     createUseEffectViolation: node =>
         violation(node.line, node.column || 1, 'useEffect in component. FIX: Use selector-with-defaults or post.'),
 
     // Creates violation for useRef in component body
-    // @sig createUseRefViolation :: ASTNode -> Violation
+    // @sig createUseRefViolation :: AstNode -> Violation
     createUseRefViolation: node =>
         violation(node.line, node.column || 1, 'useRef in component. FIX: Use FocusRegistry ref callback or post.'),
 
     // Creates violation for useChannel import
-    // @sig createUseChannelViolation :: ASTNode -> Violation
+    // @sig createUseChannelViolation :: AstNode -> Violation
     createUseChannelViolation: node =>
         violation(node.line, node.column || 1, 'useChannel import. FIX: Use Redux actions/selectors instead.'),
 
     // Creates violation for spread in component body
-    // @sig createSpreadViolation :: ASTNode -> Violation
+    // @sig createSpreadViolation :: AstNode -> Violation
     createSpreadViolation: node =>
         violation(node.line, node.column || 1, 'Spread in component body. FIX: Pre-compute in selector.'),
 
     // Creates violation for function argument in Action call
-    // @sig createActionFunctionViolation :: ASTNode -> Violation
+    // @sig createActionFunctionViolation :: AstNode -> Violation
     createActionFunctionViolation: node =>
         violation(node.line, node.column || 1, 'Function passed to Action. FIX: Actions carry data, not functions.'),
 
     // Create violation for collection method in component body
-    // @sig createCollectionMethodViolation :: ASTNode -> Violation
+    // @sig createCollectionMethodViolation :: AstNode -> Violation
     createCollectionMethodViolation: node =>
         violation(node.line, node.column || 1, `.${T.toMethodName(node)}() in component body. FIX: Move to selector.`),
 
@@ -370,20 +370,20 @@ const V = {
 
 const A = {
     // Find all nodes within component bodies matching predicate
-    // @sig findInComponentBodies :: (AST, (ASTNode -> Boolean)) -> [ASTNode]
+    // @sig findInComponentBodies :: (AST, (AstNode -> Boolean)) -> [AstNode]
     findInComponentBodies: (ast, predicate) =>
         AS.findComponents(ast)
             .map(c => c.node.body)
             .filter(Boolean)
-            .flatMap(body => AST.from(body.esTree).filter(predicate)),
+            .flatMap(body => Ast.from(body.esTree).filter(predicate)),
 
     // Collect useChannel import violations (file-level, not component-level)
     // @sig collectUseChannelViolations :: AST -> [Violation]
     collectUseChannelViolations: ast =>
-        AST.topLevelStatements(ast).filter(P.isUseChannelImport).map(F.createUseChannelViolation),
+        Ast.topLevelStatements(ast).filter(P.isUseChannelImport).map(F.createUseChannelViolation),
 
     // Convert function declaration to function info
-    // @sig toFunctionInfo :: ASTNode -> {name, line, node}?
+    // @sig toFunctionInfo :: AstNode -> {name, line, node}?
     toFunctionInfo: s => {
         const { name, line } = s
         return name ? { name, line, node: s } : undefined
@@ -398,7 +398,7 @@ const A = {
     },
 
     // Convert property to function info for cohesion group
-    // @sig toPropFunctionInfo :: (String, ASTNode) -> {name, line, node}
+    // @sig toPropFunctionInfo :: (String, AstNode) -> {name, line, node}
     toPropFunctionInfo: (groupName, prop) => {
         const { name, line, value } = prop
         return { name: `${groupName}.${name || 'unknown'}`, line: line || value.line, node: value }
@@ -408,17 +408,17 @@ const A = {
     // @sig toCohesionGroupFunctions :: Object -> [{name, line, node}]
     toCohesionGroupFunctions: d => {
         const { name, value } = d
-        if (!PS.isCohesionGroup(name) || !value || !ASTNode.ObjectExpression.is(value)) return []
+        if (!PS.isCohesionGroup(name) || !value || !AstNode.ObjectExpression.is(value)) return []
         const funcProps = value.properties.filter(prop => prop.value && PS.isFunctionNode(prop.value))
         return funcProps.map(prop => A.toPropFunctionInfo(name, prop))
     },
 
     // Collect all functions in selector files (top-level + cohesion groups)
-    // @sig collectSelectorFunctions :: AST -> [{name: String, line: Number, node: ASTNode}]
+    // @sig collectSelectorFunctions :: AST -> [{name: String, line: Number, node: AstNode}]
     collectSelectorFunctions: ast => {
         const { toFunctionInfo, toVarFunctionInfo, toCohesionGroupFunctions } = A
-        const statements = AST.topLevelStatements(ast)
-        const { FunctionDeclaration, VariableDeclaration } = ASTNode
+        const statements = Ast.topLevelStatements(ast)
+        const { FunctionDeclaration, VariableDeclaration } = AstNode
         const funcDecls = statements.filter(FunctionDeclaration.is).map(toFunctionInfo).filter(Boolean)
         const varDeclarations = statements.filter(VariableDeclaration.is).flatMap(decl => decl.declarations)
         const varFunctions = varDeclarations.map(toVarFunctionInfo).filter(Boolean)
@@ -427,10 +427,10 @@ const A = {
     },
 
     // Check if a property value references a cohesion group (e.g., T.foo, A.bar)
-    // @sig toCohesionRef :: ASTNode -> String?
+    // @sig toCohesionRef :: AstNode -> String?
     toCohesionRef: prop => {
         const { value } = prop
-        const { MemberExpression, Identifier } = ASTNode
+        const { MemberExpression, Identifier } = AstNode
         if (!value || !MemberExpression.is(value)) return undefined
         const { base, member } = value
         if (!Identifier.is(base) || !PS.isCohesionGroup(base.name)) return undefined
@@ -439,7 +439,7 @@ const A = {
     },
 
     // Convert property to export violation if it references a cohesion group
-    // @sig toExportViolation :: (Number, ASTNode) -> Violation?
+    // @sig toExportViolation :: (Number, AstNode) -> Violation?
     toExportViolation: (declLine, prop) => {
         const ref = A.toCohesionRef(prop)
         if (!ref) return undefined
@@ -451,14 +451,14 @@ const A = {
     // @sig isExportObject :: Object -> Boolean
     isExportObject: d => {
         const { name, value } = d
-        return value && ASTNode.ObjectExpression.is(value) && PS.isPascalCase(name)
+        return value && AstNode.ObjectExpression.is(value) && PS.isPascalCase(name)
     },
 
     // Collect violations for exports referencing cohesion group functions
     // @sig collectCohesionExportViolations :: AST -> [Violation]
     collectCohesionExportViolations: ast => {
-        const statements = AST.topLevelStatements(ast)
-        const { VariableDeclaration } = ASTNode
+        const statements = Ast.topLevelStatements(ast)
+        const { VariableDeclaration } = AstNode
         const exportObjects = statements
             .filter(VariableDeclaration.is)
             .flatMap(decl => decl.declarations)

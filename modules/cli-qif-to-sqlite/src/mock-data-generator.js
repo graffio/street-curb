@@ -3,58 +3,11 @@
 
 import { QifEntry, QifSplit } from './types/index.js'
 
-// -----------------------------------------------------------------------------------------------------------------
-// Sample data definitions
-// -----------------------------------------------------------------------------------------------------------------
-
-const BANK_ACCOUNTS = [
-    { name: 'Primary Checking', type: 'Bank', description: 'Main checking account' },
-    { name: 'Emergency Savings', type: 'Bank', description: 'Emergency fund' },
-    { name: 'Chase Sapphire', type: 'Credit Card', description: 'Primary credit card' },
-]
-
-const INVESTMENT_ACCOUNTS = [
-    { name: 'Fidelity Brokerage', type: 'Investment', description: 'Taxable brokerage' },
-    { name: '401k Retirement', type: '401(k)/403(b)', description: 'Employer 401k' },
-    { name: 'Roth IRA', type: 'Investment', description: 'Roth IRA' },
-]
-
-const SECURITIES = [
-    { symbol: 'AAPL', name: 'Apple Inc.', type: 'Stock' },
-    { symbol: 'MSFT', name: 'Microsoft Corp.', type: 'Stock' },
-    { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'ETF' },
-    { symbol: 'SPY', name: 'SPDR S&P 500 ETF', type: 'ETF' },
-    { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'ETF' },
-    { symbol: 'VFIAX', name: 'Vanguard 500 Index Fund', type: 'Mutual Fund' },
-    { symbol: 'JNJ', name: 'Johnson & Johnson', type: 'Stock' },
-    { symbol: 'PG', name: 'Procter & Gamble', type: 'Stock' },
-]
-
-const CATEGORIES = [
-    { name: 'Income:Salary', isIncomeCategory: true, description: 'Employment income' },
-    { name: 'Income:Dividends', isIncomeCategory: true, description: 'Stock dividends' },
-    { name: 'Food:Groceries', budgetAmount: 600, description: 'Grocery shopping' },
-    { name: 'Food:Dining', budgetAmount: 300, description: 'Restaurants' },
-    { name: 'Utilities:Electric', budgetAmount: 150, description: 'Electric bill' },
-    { name: 'Housing:Rent', budgetAmount: 2000, description: 'Monthly rent' },
-    { name: 'Transportation:Gas', budgetAmount: 200, description: 'Vehicle fuel' },
-    { name: 'Housing:Mortgage Interest', budgetAmount: 1200, description: 'Mortgage interest' },
-    { name: 'Housing:Escrow', budgetAmount: 500, description: 'Taxes & insurance escrow' },
-]
-
-const EXPENSE_PAYEES = [
-    { name: 'Whole Foods', category: 'Food:Groceries', min: 40, max: 180 },
-    { name: 'Safeway', category: 'Food:Groceries', min: 30, max: 150 },
-    { name: 'Chipotle', category: 'Food:Dining', min: 10, max: 25 },
-    { name: 'PG&E', category: 'Utilities:Electric', min: 80, max: 180 },
-    { name: 'Shell', category: 'Transportation:Gas', min: 35, max: 75 },
-]
-
-const BASE_PRICES = { AAPL: 175, MSFT: 380, VTI: 230, SPY: 450, BND: 75, VFIAX: 420, JNJ: 160, PG: 155 }
-
-// -----------------------------------------------------------------------------------------------------------------
-// T group: Transformers for price duplication
-// -----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Create duplicate price with slight variation (simulates real QIF exports)
@@ -158,7 +111,7 @@ const generateMockData = (seed = 12345) => {
         // Maybe generate expense transaction for a day and payee
         // @sig generateExpenseForDay :: (Date, Payee) -> QifEntry.TransactionBank?
         const generateExpenseForDay = (date, payee) => {
-            if (random() >= 0.15) return null
+            if (random() >= 0.15) return undefined
             const { name, category, min, max } = payee
             const amount = -(min + random() * (max - min))
             const useCard = random() > 0.3
@@ -312,13 +265,13 @@ const generateMockData = (seed = 12345) => {
         }
 
         // Pick a random gain marker type for sell transactions
-        // @sig randomGainMarker :: () -> String|null
+        // @sig randomGainMarker :: () -> String|undefined
         const randomGainMarker = () => {
             const r = random()
             if (r < 0.3) return 'CGLong'
             if (r < 0.5) return 'CGShort'
             if (r < 0.6) return 'CGMid'
-            return null
+            return undefined
         }
 
         // Maybe generate sell transaction for a date
@@ -433,7 +386,7 @@ const generateMockData = (seed = 12345) => {
                         security: symbol,
                         price,
                         quantity: Math.round((divAmount / price) * 1000) / 1000,
-                        amount: null,
+                        amount: undefined,
                         memo: 'Dividend reinvested',
                     }),
                 )
@@ -479,7 +432,7 @@ const generateMockData = (seed = 12345) => {
         // Update running cash balance
         // @sig updateCashBalance :: Number -> void
         const updateCashBalance = amount => {
-            if (amount != null) cashBalance += amount
+            if (amount !== undefined) cashBalance += amount
         }
 
         // Maybe add deposit when cash is low (both investment and bank sides)
@@ -594,10 +547,10 @@ const generateMockData = (seed = 12345) => {
 }
 
 /*
- * Serialize all mock data to QIF format
- * @sig serializeToQif :: MockData -> String
+ * Format all mock data as QIF text
+ * @sig formatAsQif :: MockData -> String
  */
-const serializeToQif = data => {
+const formatAsQif = data => {
     // Format date as QIF date string (MM/DD/YYYY)
     // @sig formatQifDate :: Date -> String
     const formatQifDate = date => {
@@ -742,10 +695,10 @@ const serializeToQif = data => {
             const { date, transactionType, security, price, quantity, amount, commission, memo, category, cleared } = t
             const lines = [`D${formatQifDate(date)}`, `N${transactionType}`]
             if (security) lines.push(`Y${security}`)
-            if (price != null) lines.push(`I${price}`)
-            if (quantity != null) lines.push(`Q${quantity}`)
-            if (amount != null) lines.push(`T${Math.abs(amount).toFixed(2)}`)
-            if (commission != null) lines.push(`O${commission.toFixed(2)}`)
+            if (price !== undefined) lines.push(`I${price}`)
+            if (quantity !== undefined) lines.push(`Q${quantity}`)
+            if (amount !== undefined) lines.push(`T${Math.abs(amount).toFixed(2)}`)
+            if (commission !== undefined) lines.push(`O${commission.toFixed(2)}`)
             if (memo) lines.push(`M${memo}`)
             if (category) lines.push(`L${category}`)
             if (cleared) lines.push(`C${cleared}`)
@@ -795,5 +748,62 @@ const serializeToQif = data => {
     ].join('')
 }
 
-const MockDataGenerator = { generateMockData, serializeToQif }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const BANK_ACCOUNTS = [
+    { name: 'Primary Checking', type: 'Bank', description: 'Main checking account' },
+    { name: 'Emergency Savings', type: 'Bank', description: 'Emergency fund' },
+    { name: 'Chase Sapphire', type: 'Credit Card', description: 'Primary credit card' },
+]
+
+const INVESTMENT_ACCOUNTS = [
+    { name: 'Fidelity Brokerage', type: 'Investment', description: 'Taxable brokerage' },
+    { name: '401k Retirement', type: '401(k)/403(b)', description: 'Employer 401k' },
+    { name: 'Roth IRA', type: 'Investment', description: 'Roth IRA' },
+]
+
+const SECURITIES = [
+    { symbol: 'AAPL', name: 'Apple Inc.', type: 'Stock' },
+    { symbol: 'MSFT', name: 'Microsoft Corp.', type: 'Stock' },
+    { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'ETF' },
+    { symbol: 'SPY', name: 'SPDR S&P 500 ETF', type: 'ETF' },
+    { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'ETF' },
+    { symbol: 'VFIAX', name: 'Vanguard 500 Index Fund', type: 'Mutual Fund' },
+    { symbol: 'JNJ', name: 'Johnson & Johnson', type: 'Stock' },
+    { symbol: 'PG', name: 'Procter & Gamble', type: 'Stock' },
+]
+
+const CATEGORIES = [
+    { name: 'Income:Salary', isIncomeCategory: true, description: 'Employment income' },
+    { name: 'Income:Dividends', isIncomeCategory: true, description: 'Stock dividends' },
+    { name: 'Food:Groceries', budgetAmount: 600, description: 'Grocery shopping' },
+    { name: 'Food:Dining', budgetAmount: 300, description: 'Restaurants' },
+    { name: 'Utilities:Electric', budgetAmount: 150, description: 'Electric bill' },
+    { name: 'Housing:Rent', budgetAmount: 2000, description: 'Monthly rent' },
+    { name: 'Transportation:Gas', budgetAmount: 200, description: 'Vehicle fuel' },
+    { name: 'Housing:Mortgage Interest', budgetAmount: 1200, description: 'Mortgage interest' },
+    { name: 'Housing:Escrow', budgetAmount: 500, description: 'Taxes & insurance escrow' },
+]
+
+const EXPENSE_PAYEES = [
+    { name: 'Whole Foods', category: 'Food:Groceries', min: 40, max: 180 },
+    { name: 'Safeway', category: 'Food:Groceries', min: 30, max: 150 },
+    { name: 'Chipotle', category: 'Food:Dining', min: 10, max: 25 },
+    { name: 'PG&E', category: 'Utilities:Electric', min: 80, max: 180 },
+    { name: 'Shell', category: 'Transportation:Gas', min: 35, max: 75 },
+]
+
+const BASE_PRICES = { AAPL: 175, MSFT: 380, VTI: 230, SPY: 450, BND: 75, VFIAX: 420, JNJ: 160, PG: 155 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const MockDataGenerator = { generateMockData, formatAsQif }
 export { MockDataGenerator }
