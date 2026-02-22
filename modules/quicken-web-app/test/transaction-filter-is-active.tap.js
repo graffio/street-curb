@@ -8,7 +8,7 @@ import { TransactionFilter } from '../src/types/transaction-filter.js'
 const defaultFilter = TransactionFilter(
     'reg_test_1',
     '2026-02-12', // asOfDate
-    { start: null, end: null }, // dateRange
+    { start: undefined, end: undefined }, // dateRange
     'all', // dateRangeKey
     '', // filterQuery
     '', // searchQuery
@@ -16,9 +16,9 @@ const defaultFilter = TransactionFilter(
     [], // selectedAccounts
     [], // selectedSecurities
     [], // selectedInvestmentActions
-    null, // groupBy
-    null, // customStartDate
-    null, // customEndDate
+    undefined, // groupBy
+    undefined, // customStartDate
+    undefined, // customEndDate
 )
 
 t.test('TransactionFilter.isActive', t => {

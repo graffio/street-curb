@@ -14,7 +14,7 @@ const createTestBlockface = (organizationId, projectId, userId) =>
         sourceId: 'test-source-1',
         organizationId,
         projectId,
-        geometry: null,
+        geometry: {},
         streetName: 'Test Street',
         segments: LookupTable(
             [Segment('seg_000000000001', 'Parking', 50), Segment('seg_000000000002', 'Loading', 30)],

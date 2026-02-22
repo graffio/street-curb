@@ -20,7 +20,7 @@ const createBlockface = segments =>
         sourceId: 'test-source',
         organizationId: 'org_000000000001',
         projectId: 'prj_000000000001',
-        geometry: null,
+        geometry: {},
         streetName: 'Test St',
         segments: LookupTable(segments, Segment),
         createdAt: new Date(),

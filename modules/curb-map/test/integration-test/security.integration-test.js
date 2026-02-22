@@ -14,7 +14,7 @@ const blockface = (organizationId, projectId, userId) =>
     Blockface.from({
         id: 'blk_000000000001',
         sourceId: 'test-source-security',
-        geometry: null,
+        geometry: {},
         streetName: 'Main Street',
         segments: LookupTable([], Segment),
         organizationId,
@@ -71,6 +71,7 @@ test('Given user submits project-level action', t => {
                 namespace,
                 token,
                 organizationId,
+
                 // No projectId provided in request
             })
 

@@ -21,7 +21,7 @@ const createBlockface = segments =>
     Blockface.from({
         id: blk1,
         sourceId: srcId,
-        geometry: null,
+        geometry: {},
         streetName: 'Test St',
         segments: LookupTable(segments, Segment),
         organizationId,

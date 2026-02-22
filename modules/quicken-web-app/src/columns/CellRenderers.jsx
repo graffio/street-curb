@@ -2,7 +2,7 @@
 // ABOUTME: TanStack Table components with search highlighting and formatting
 // COMPLEXITY: react-redux-separation — TanStack Table cell callbacks, not standard app components
 
-import { containsIgnoreCase } from '@graffio/functional'
+import { containsIgnoreCase, isNil } from '@graffio/functional'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import * as S from '../store/selectors.js'
@@ -83,7 +83,7 @@ const CurrencyCell = ({ getValue, table }) => {
     const value = getValue()
     const searchQuery = table.options.meta?.searchQuery
 
-    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (isNil(value)) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
 
     const formatted = formatCurrency(value)
     const color = value >= 0 ? 'var(--green-11)' : 'var(--red-11)'
@@ -215,7 +215,7 @@ const AccountCell = ({ getValue, table }) => {
 // @sig QuantityCell :: { getValue: Function } -> ReactElement
 const QuantityCell = ({ getValue }) => {
     const value = getValue()
-    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (isNil(value)) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatQuantity(value)}</span>
 }
 
@@ -223,7 +223,7 @@ const QuantityCell = ({ getValue }) => {
 // @sig PriceCell :: { getValue: Function } -> ReactElement
 const PriceCell = ({ getValue }) => {
     const value = getValue()
-    if (value === undefined) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
+    if (isNil(value)) return <span style={{ textAlign: 'right', display: 'block' }}>—</span>
     return <span style={{ textAlign: 'right', display: 'block' }}>{formatPrice(value)}</span>
 }
 

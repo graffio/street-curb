@@ -7,7 +7,8 @@ import { LookupTable } from '@graffio/functional'
 //   generated code; renaming requires template changes
 // COMPLEXITY: no-null-literal — null guards are intentional: _toString must handle null
 //   input, validateObject must reject null (typeof null === 'object'), hasPii must guard
-//   against null from typeof-object recursion
+//   against null from typeof-object recursion, optional-field validators must accept null
+//   from external data (IndexedDB, JSON) at the system boundary
 
 /**
  * Create a match function for TaggedSum types
@@ -107,7 +108,7 @@ const validateArgumentLength = (constructorName, expectedCount, args) => {
 const validateRegex = (constructorName, regex, field, optional, s) => {
     validateString(constructorName, field, optional, s)
 
-    if (optional && s === undefined) return
+    if (optional && (s === undefined || s === null)) return
     if (s.match(regex)) return
 
     // eslint-disable-next-line no-debugger
@@ -121,7 +122,7 @@ const validateRegex = (constructorName, regex, field, optional, s) => {
  * @sig validateNumber :: (String, String, Boolean, Any) -> void
  */
 const validateNumber = (constructorName, field, optional, n) => {
-    if (optional && n === undefined) return
+    if (optional && (n === undefined || n === null)) return
     if (typeof n === 'number') return
 
     // eslint-disable-next-line no-debugger
@@ -135,7 +136,7 @@ const validateNumber = (constructorName, field, optional, n) => {
  * @sig validateString :: (String, String, Boolean, Any) -> void
  */
 const validateString = (constructorName, field, optional, s) => {
-    if (optional && s === undefined) return
+    if (optional && (s === undefined || s === null)) return
     if (typeof s === 'string') return
 
     // eslint-disable-next-line no-debugger
@@ -149,7 +150,7 @@ const validateString = (constructorName, field, optional, s) => {
  * @sig validateObject :: (String, String, Boolean, Any) -> void
  */
 const validateObject = (constructorName, field, optional, o) => {
-    if (optional && o === undefined) return
+    if (optional && (o === undefined || o === null)) return
     if (typeof o === 'object' && o !== null) return
 
     // eslint-disable-next-line no-debugger
@@ -163,7 +164,7 @@ const validateObject = (constructorName, field, optional, o) => {
  * @sig validateDate :: (String, String, Boolean, Any) -> void
  */
 const validateDate = (constructorName, field, optional, d) => {
-    if (optional && d === undefined) return
+    if (optional && (d === undefined || d === null)) return
     if (d instanceof Date) return
 
     // eslint-disable-next-line no-debugger
@@ -177,7 +178,7 @@ const validateDate = (constructorName, field, optional, d) => {
  * @sig validateBoolean :: (String, String, Boolean, Any) -> void
  */
 const validateBoolean = (constructorName, field, optional, b) => {
-    if (optional && b === undefined) return
+    if (optional && (b === undefined || b === null)) return
     if (typeof b === 'boolean') return
 
     // eslint-disable-next-line no-debugger
@@ -191,7 +192,7 @@ const validateBoolean = (constructorName, field, optional, b) => {
  * @sig validateTag :: (String, String, String, Boolean, Any) -> void
  */
 const validateTag = (constructorName, expectedType, field, optional, o) => {
-    if (optional && o === undefined) return
+    if (optional && (o === undefined || o === null)) return
     if (o?.['@@typeName'] === expectedType) return
 
     // eslint-disable-next-line no-debugger
@@ -244,7 +245,7 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
         return false
     }
 
-    if (optional && a === undefined) return
+    if (optional && (a === undefined || a === null)) return
 
     const { valid, empty, element } = checkArrayAtDepth(a, 0)
     const nestedType = buildNestedTypeString()
@@ -272,7 +273,7 @@ const validateArray = (constructorName, arrayDepth, baseType, taggedType, field,
  * @sig validateLookupTable :: (String, String, String, Boolean, Any) -> void
  */
 const validateLookupTable = (constructorName, expectedItemType, field, optional, lt) => {
-    if (optional && lt === undefined) return
+    if (optional && (lt === undefined || lt === null)) return
 
     // Check if it's a LookupTable (has idField property)
     if (!lt || typeof lt !== 'object' || !lt.idField) {
