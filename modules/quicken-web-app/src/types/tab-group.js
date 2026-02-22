@@ -39,7 +39,7 @@ const TabGroup = function TabGroup(id, views, activeViewId, width) {
     const result = Object.create(prototype)
     result.id = id
     result.views = views
-    if (activeViewId != null) result.activeViewId = activeViewId
+    if (activeViewId !== undefined) result.activeViewId = activeViewId
     result.width = width
     return result
 }
@@ -104,7 +104,7 @@ TabGroup._toFirestore = (o, encodeTimestamps) => {
         width: o.width,
     }
 
-    if (o.activeViewId != null) result.activeViewId = o.activeViewId
+    if (o.activeViewId !== undefined) result.activeViewId = o.activeViewId
 
     return result
 }

@@ -42,7 +42,7 @@ const EnrichedAccount = function EnrichedAccount(id, account, balance, dayChange
     result.account = account
     result.balance = balance
     result.dayChange = dayChange
-    if (dayChangePct != null) result.dayChangePct = dayChangePct
+    if (dayChangePct !== undefined) result.dayChangePct = dayChangePct
     return result
 }
 
@@ -108,7 +108,7 @@ EnrichedAccount._toFirestore = (o, encodeTimestamps) => {
         dayChange: o.dayChange,
     }
 
-    if (o.dayChangePct != null) result.dayChangePct = o.dayChangePct
+    if (o.dayChangePct !== undefined) result.dayChangePct = o.dayChangePct
 
     return result
 }

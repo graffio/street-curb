@@ -40,10 +40,10 @@ const Split = function Split(id, transactionId, categoryId, amount, memo, transf
     const result = Object.create(prototype)
     result.id = id
     result.transactionId = transactionId
-    if (categoryId != null) result.categoryId = categoryId
+    if (categoryId !== undefined) result.categoryId = categoryId
     result.amount = amount
-    if (memo != null) result.memo = memo
-    if (transferAccountId != null) result.transferAccountId = transferAccountId
+    if (memo !== undefined) result.memo = memo
+    if (transferAccountId !== undefined) result.transferAccountId = transferAccountId
     return result
 }
 

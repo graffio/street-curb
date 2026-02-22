@@ -216,7 +216,7 @@ const OrganizationUpdatedConstructor = function OrganizationUpdated(name) {
     R.validateString(constructorName, 'name', true, name)
 
     const result = Object.create(OrganizationUpdatedPrototype)
-    if (name != null) result.name = name
+    if (name !== undefined) result.name = name
     return result
 }
 
@@ -323,7 +323,7 @@ const UserUpdatedConstructor = function UserUpdated(userId, displayName) {
 
     const result = Object.create(UserUpdatedPrototype)
     result.userId = userId
-    if (displayName != null) result.displayName = displayName
+    if (displayName !== undefined) result.displayName = displayName
     return result
 }
 

@@ -38,9 +38,9 @@ const Security = function Security(id, name, symbol, type, goal) {
     const result = Object.create(prototype)
     result.id = id
     result.name = name
-    if (symbol != null) result.symbol = symbol
-    if (type != null) result.type = type
-    if (goal != null) result.goal = goal
+    if (symbol !== undefined) result.symbol = symbol
+    if (type !== undefined) result.type = type
+    if (goal !== undefined) result.goal = goal
     return result
 }
 

@@ -56,14 +56,14 @@ const ViewUiState = function ViewUiState(
 
     const result = Object.create(prototype)
     result.id = id
-    if (filterPopoverId != null) result.filterPopoverId = filterPopoverId
+    if (filterPopoverId !== undefined) result.filterPopoverId = filterPopoverId
     result.filterPopoverSearch = filterPopoverSearch
     result.filterPopoverHighlight = filterPopoverHighlight
     result.currentRowIndex = currentRowIndex
     result.currentSearchIndex = currentSearchIndex
-    if (treeExpansion != null) result.treeExpansion = treeExpansion
-    if (columnSizing != null) result.columnSizing = columnSizing
-    if (columnOrder != null) result.columnOrder = columnOrder
+    if (treeExpansion !== undefined) result.treeExpansion = treeExpansion
+    if (columnSizing !== undefined) result.columnSizing = columnSizing
+    if (columnOrder !== undefined) result.columnOrder = columnOrder
     return result
 }
 

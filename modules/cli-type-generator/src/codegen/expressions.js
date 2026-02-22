@@ -40,8 +40,7 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
     const generateAssignment = f => {
         const { optional } = FieldDescriptor.parseAny(fields[f])
 
-        // x != is JavaScript magic for NEITHER null NOR undefined
-        return optional ? `if (${f} != null) result.${f} = ${f}` : `result.${f} = ${f}`
+        return optional ? `if (${f} !== undefined) result.${f} = ${f}` : `result.${f} = ${f}`
     }
 
     const keys = Object.keys(fields)

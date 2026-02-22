@@ -42,11 +42,11 @@ const Category = function Category(id, name, description, budgetAmount, isIncome
     const result = Object.create(prototype)
     result.id = id
     result.name = name
-    if (description != null) result.description = description
-    if (budgetAmount != null) result.budgetAmount = budgetAmount
-    if (isIncomeCategory != null) result.isIncomeCategory = isIncomeCategory
-    if (isTaxRelated != null) result.isTaxRelated = isTaxRelated
-    if (taxSchedule != null) result.taxSchedule = taxSchedule
+    if (description !== undefined) result.description = description
+    if (budgetAmount !== undefined) result.budgetAmount = budgetAmount
+    if (isIncomeCategory !== undefined) result.isIncomeCategory = isIncomeCategory
+    if (isTaxRelated !== undefined) result.isTaxRelated = isTaxRelated
+    if (taxSchedule !== undefined) result.taxSchedule = taxSchedule
     return result
 }
 

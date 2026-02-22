@@ -178,8 +178,8 @@ const AccountConstructor = function Account(name, type, description, creditLimit
     const result = Object.create(AccountPrototype)
     result.name = name
     result.type = type
-    if (description != null) result.description = description
-    if (creditLimit != null) result.creditLimit = creditLimit
+    if (description !== undefined) result.description = description
+    if (creditLimit !== undefined) result.creditLimit = creditLimit
     return result
 }
 
@@ -211,12 +211,12 @@ const CategoryConstructor = function Category(
 
     const result = Object.create(CategoryPrototype)
     result.name = name
-    if (budgetAmount != null) result.budgetAmount = budgetAmount
-    if (description != null) result.description = description
-    if (excluded != null) result.excluded = excluded
-    if (isIncomeCategory != null) result.isIncomeCategory = isIncomeCategory
-    if (isTaxRelated != null) result.isTaxRelated = isTaxRelated
-    if (taxSchedule != null) result.taxSchedule = taxSchedule
+    if (budgetAmount !== undefined) result.budgetAmount = budgetAmount
+    if (description !== undefined) result.description = description
+    if (excluded !== undefined) result.excluded = excluded
+    if (isIncomeCategory !== undefined) result.isIncomeCategory = isIncomeCategory
+    if (isTaxRelated !== undefined) result.isTaxRelated = isTaxRelated
+    if (taxSchedule !== undefined) result.taxSchedule = taxSchedule
     return result
 }
 
@@ -235,8 +235,8 @@ const ClassConstructor = function Class(name, subclass, description) {
 
     const result = Object.create(ClassPrototype)
     result.name = name
-    if (subclass != null) result.subclass = subclass
-    if (description != null) result.description = description
+    if (subclass !== undefined) result.subclass = subclass
+    if (description !== undefined) result.description = description
     return result
 }
 
@@ -256,9 +256,9 @@ const PayeeConstructor = function Payee(name, address, memo, defaultCategory) {
 
     const result = Object.create(PayeePrototype)
     result.name = name
-    if (address != null) result.address = address
-    if (memo != null) result.memo = memo
-    if (defaultCategory != null) result.defaultCategory = defaultCategory
+    if (address !== undefined) result.address = address
+    if (memo !== undefined) result.memo = memo
+    if (defaultCategory !== undefined) result.defaultCategory = defaultCategory
     return result
 }
 
@@ -298,9 +298,9 @@ const SecurityConstructor = function Security(name, goal, symbol, type) {
 
     const result = Object.create(SecurityPrototype)
     result.name = name
-    if (goal != null) result.goal = goal
-    if (symbol != null) result.symbol = symbol
-    if (type != null) result.type = type
+    if (goal !== undefined) result.goal = goal
+    if (symbol !== undefined) result.symbol = symbol
+    if (type !== undefined) result.type = type
     return result
 }
 
@@ -319,8 +319,8 @@ const TagConstructor = function Tag(name, color, description) {
 
     const result = Object.create(TagPrototype)
     result.name = name
-    if (color != null) result.color = color
-    if (description != null) result.description = description
+    if (color !== undefined) result.color = color
+    if (description !== undefined) result.description = description
     return result
 }
 
@@ -370,13 +370,13 @@ const TransactionBankConstructor = function TransactionBank(
     result.amount = amount
     result.date = date
     result.transactionType = transactionType
-    if (address != null) result.address = address
-    if (category != null) result.category = category
-    if (cleared != null) result.cleared = cleared
-    if (memo != null) result.memo = memo
-    if (number != null) result.number = number
-    if (payee != null) result.payee = payee
-    if (splits != null) result.splits = splits
+    if (address !== undefined) result.address = address
+    if (category !== undefined) result.category = category
+    if (cleared !== undefined) result.cleared = cleared
+    if (memo !== undefined) result.memo = memo
+    if (number !== undefined) result.number = number
+    if (payee !== undefined) result.payee = payee
+    if (splits !== undefined) result.splits = splits
     return result
 }
 
@@ -431,17 +431,17 @@ const TransactionInvestmentConstructor = function TransactionInvestment(
     result.account = account
     result.date = date
     result.transactionType = transactionType
-    if (number != null) result.number = number
-    if (address != null) result.address = address
-    if (amount != null) result.amount = amount
-    if (category != null) result.category = category
-    if (cleared != null) result.cleared = cleared
-    if (commission != null) result.commission = commission
-    if (memo != null) result.memo = memo
-    if (payee != null) result.payee = payee
-    if (price != null) result.price = price
-    if (quantity != null) result.quantity = quantity
-    if (security != null) result.security = security
+    if (number !== undefined) result.number = number
+    if (address !== undefined) result.address = address
+    if (amount !== undefined) result.amount = amount
+    if (category !== undefined) result.category = category
+    if (cleared !== undefined) result.cleared = cleared
+    if (commission !== undefined) result.commission = commission
+    if (memo !== undefined) result.memo = memo
+    if (payee !== undefined) result.payee = payee
+    if (price !== undefined) result.price = price
+    if (quantity !== undefined) result.quantity = quantity
+    if (security !== undefined) result.security = security
     return result
 }
 

@@ -67,7 +67,7 @@ const Lot = function Lot(
     result.remainingQuantity = remainingQuantity
     result.securityId = securityId
     result.createdByTransactionId = createdByTransactionId
-    if (closedDate != null) result.closedDate = closedDate
+    if (closedDate !== undefined) result.closedDate = closedDate
     return result
 }
 

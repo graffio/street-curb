@@ -80,7 +80,7 @@ const AuditRecord = function AuditRecord(
     result.sourceIP = sourceIP
     result.auditVersion = auditVersion
     result.operationDetails = operationDetails
-    if (errorMessage != null) result.errorMessage = errorMessage
+    if (errorMessage !== undefined) result.errorMessage = errorMessage
     result.correlationId = correlationId
     result.environment = environment
     return result
@@ -192,7 +192,7 @@ AuditRecord._toFirestore = (o, encodeTimestamps) => {
         environment: o.environment,
     }
 
-    if (o.errorMessage != null) result.errorMessage = o.errorMessage
+    if (o.errorMessage !== undefined) result.errorMessage = o.errorMessage
 
     return result
 }

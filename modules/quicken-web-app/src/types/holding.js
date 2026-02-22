@@ -85,7 +85,7 @@ const Holding = function Holding(
     result.securityName = securityName
     result.securitySymbol = securitySymbol
     result.securityType = securityType
-    if (securityGoal != null) result.securityGoal = securityGoal
+    if (securityGoal !== undefined) result.securityGoal = securityGoal
     result.quantity = quantity
     result.costBasis = costBasis
     result.averageCostPerShare = averageCostPerShare

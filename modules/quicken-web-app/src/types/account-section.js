@@ -45,8 +45,8 @@ const AccountSection = function AccountSection(id, label, isCollapsible, account
     result.isCollapsible = isCollapsible
     result.accounts = accounts
     result.children = children
-    if (totalBalance != null) result.totalBalance = totalBalance
-    if (totalCount != null) result.totalCount = totalCount
+    if (totalBalance !== undefined) result.totalBalance = totalBalance
+    if (totalCount !== undefined) result.totalCount = totalCount
     return result
 }
 
@@ -115,9 +115,9 @@ AccountSection._toFirestore = (o, encodeTimestamps) => {
         children: R.lookupTableToFirestore(AccountSection, 'id', encodeTimestamps, o.children),
     }
 
-    if (o.totalBalance != null) result.totalBalance = o.totalBalance
+    if (o.totalBalance !== undefined) result.totalBalance = o.totalBalance
 
-    if (o.totalCount != null) result.totalCount = o.totalCount
+    if (o.totalCount !== undefined) result.totalCount = o.totalCount
 
     return result
 }

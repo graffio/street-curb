@@ -55,7 +55,7 @@ const generateFromFirestoreField = (fieldName, fieldType) => {
 
     const processDate = () =>
         parsed.optional
-            ? `${fieldName}: ${accessor} != null ? decodeTimestamps(${accessor}) : undefined`
+            ? `${fieldName}: ${accessor} !== undefined ? decodeTimestamps(${accessor}) : undefined`
             : `${fieldName}: decodeTimestamps(${accessor})`
 
     const processLookupTable = () => {
@@ -130,7 +130,7 @@ const generateFirestoreSerializationForTagged = (typeName, flds) => {
     const requiredFields = requiredEntries.map(formatRequired)
     const optionalFields = optionalEntries.map(formatOptional)
     const optionalFieldIfs = optionalFields.map(
-        ({ fieldName, code }) => `if (o.${fieldName} != null) result.${fieldName} = ${code}`,
+        ({ fieldName, code }) => `if (o.${fieldName} !== undefined) result.${fieldName} = ${code}`,
     )
     const deserializedFields = fieldEntries.map(([fn, ft]) => generateFromFirestoreField(fn, ft)).join(',\n        ')
 

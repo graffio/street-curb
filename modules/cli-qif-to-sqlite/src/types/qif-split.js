@@ -32,7 +32,7 @@ const QifSplit = function QifSplit(amount, categoryName, memo) {
     const result = Object.create(prototype)
     result.amount = amount
     result.categoryName = categoryName
-    if (memo != null) result.memo = memo
+    if (memo !== undefined) result.memo = memo
     return result
 }
 

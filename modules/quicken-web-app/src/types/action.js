@@ -433,7 +433,7 @@ const SetFilterPopoverOpenConstructor = function SetFilterPopoverOpen(viewId, po
 
     const result = Object.create(SetFilterPopoverOpenPrototype)
     result.viewId = viewId
-    if (popoverId != null) result.popoverId = popoverId
+    if (popoverId !== undefined) result.popoverId = popoverId
     return result
 }
 
@@ -503,7 +503,7 @@ const OpenViewConstructor = function OpenView(view, groupId) {
 
     const result = Object.create(OpenViewPrototype)
     result.view = view
-    if (groupId != null) result.groupId = groupId
+    if (groupId !== undefined) result.groupId = groupId
     return result
 }
 
@@ -543,7 +543,7 @@ const MoveViewConstructor = function MoveView(viewId, fromGroupId, toGroupId, to
     result.viewId = viewId
     result.fromGroupId = fromGroupId
     result.toGroupId = toGroupId
-    if (toIndex != null) result.toIndex = toIndex
+    if (toIndex !== undefined) result.toIndex = toIndex
     return result
 }
 
@@ -721,7 +721,7 @@ const SetLoadingStatusConstructor = function SetLoadingStatus(status) {
     R.validateString(constructorName, 'status', true, status)
 
     const result = Object.create(SetLoadingStatusPrototype)
-    if (status != null) result.status = status
+    if (status !== undefined) result.status = status
     return result
 }
 
@@ -737,7 +737,7 @@ const SetDraggingViewConstructor = function SetDraggingView(viewId) {
     R.validateString(constructorName, 'viewId', true, viewId)
 
     const result = Object.create(SetDraggingViewPrototype)
-    if (viewId != null) result.viewId = viewId
+    if (viewId !== undefined) result.viewId = viewId
     return result
 }
 
@@ -753,7 +753,7 @@ const SetDropTargetConstructor = function SetDropTarget(groupId) {
     R.validateString(constructorName, 'groupId', true, groupId)
 
     const result = Object.create(SetDropTargetPrototype)
-    if (groupId != null) result.groupId = groupId
+    if (groupId !== undefined) result.groupId = groupId
     return result
 }
 
