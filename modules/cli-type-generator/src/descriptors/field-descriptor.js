@@ -1,44 +1,41 @@
 // ABOUTME: Normalized descriptor for field types in type definitions
 // ABOUTME: Normalizes string, regex, and object inputs into a consistent schema
 
-// ---------------------------------------------------------------------------------------------------------------------
-// FieldDescriptor Schema
-// ---------------------------------------------------------------------------------------------------------------------
-//
+// FieldDescriptor Schema:
 // {
 //     baseType: 'String' | 'Number' | 'Boolean' | 'Object' | 'Date' | 'Any' | 'Tagged' | 'LookupTable',
 //     optional: false,
 //     arrayDepth: 0,
-//     taggedType: null | 'Account',
-//     idField: null | 'id',
-//     regex: null | /pattern/,
-//     fieldTypesReference: null | { property: 'E164Phone', fullReference: 'FieldTypes.E164Phone' }
+//     taggedType: undefined | 'Account',
+//     idField: undefined | 'id',
+//     regex: undefined | /pattern/,
+//     fieldTypesReference: undefined | { property: 'E164Phone', fullReference: 'FieldTypes.E164Phone' }
 // }
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------------------------------------------------
-// fromAny - Unified entry point with all parsing logic
+//
+// Transformers
+//
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
  * Parse any field type input into a descriptor
  * Handles strings, RegExp, objects, and already-normalized descriptors
- * @sig fromAny :: (String | RegExp | Object | FieldDescriptor) -> FieldDescriptor
+ * @sig parseAny :: (String | RegExp | Object | FieldDescriptor) -> FieldDescriptor
  */
-const fromAny = input => {
+const parseAny = input => {
     /**
      * Create a descriptor with defaults for any unspecified fields
      * @sig create :: Object? -> FieldDescriptor
      */
     const create = (overrides = {}) => ({
-        baseType: null,
+        baseType: undefined,
         optional: false,
         arrayDepth: 0,
-        taggedType: null,
-        idField: null,
-        regex: null,
-        fieldTypesReference: null,
+        taggedType: undefined,
+        idField: undefined,
+        regex: undefined,
+        fieldTypesReference: undefined,
         ...overrides,
     })
 
@@ -70,11 +67,11 @@ const fromAny = input => {
 
         /**
          * Check if string is a regex pattern
-         * @sig checkRegex :: String -> RegExp | null
+         * @sig checkRegex :: String -> RegExp | undefined
          */
         const checkRegex = s => {
             const match = s.match(/\/(.*)\/([dgimsuy]*)/)
-            if (!match) return null
+            if (!match) return undefined
 
             const [, expression, flags] = match
             return RegExp(expression, flags)
@@ -82,11 +79,11 @@ const fromAny = input => {
 
         /**
          * Check if string is LookupTable syntax
-         * @sig checkLookupTable :: String -> { typeName: String, idField: String } | null
+         * @sig checkLookupTable :: String -> { typeName: String, idField: String } | undefined
          */
         const checkLookupTable = s => {
             const match = s.match(/^\{([A-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\}$/)
-            if (!match) return null
+            if (!match) return undefined
 
             const [, typeName, idField] = match
             return { typeName, idField }
@@ -166,25 +163,7 @@ const fromAny = input => {
     return parseObject(input)
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Public API - Entry points that delegate to fromAny
-// ---------------------------------------------------------------------------------------------------------------------
-
-/**
- * Parse a string field type into a descriptor
- * @sig fromString :: String -> FieldDescriptor
- */
-const fromString = input => fromAny(input)
-
-/**
- * Parse an object field type into a descriptor
- * @sig fromObject :: Object -> FieldDescriptor
- */
-const fromObject = input => fromAny(input)
-
-// ---------------------------------------------------------------------------------------------------------------------
-// toSyntax - Convert descriptor back to concise syntax for display
-// ---------------------------------------------------------------------------------------------------------------------
+// Convert descriptor back to concise syntax for display
 
 /**
  * Convert a FieldDescriptor back to the concise type definition syntax
@@ -216,9 +195,11 @@ const toSyntax = descriptor => {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//
 // Exports
+//
 // ---------------------------------------------------------------------------------------------------------------------
 
-const FieldDescriptor = { fromString, fromObject, fromAny, toSyntax }
+const FieldDescriptor = { parseAny, toSyntax }
 
-export default FieldDescriptor
+export { FieldDescriptor }

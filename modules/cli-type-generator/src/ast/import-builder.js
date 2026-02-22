@@ -1,5 +1,6 @@
 // ABOUTME: AST builder for import declarations (proof-of-concept)
 // ABOUTME: Builds ESTree-compatible AST nodes for escodegen
+// COMPLEXITY: cohesion-structure — all functions are build* factories in a namespace; F group wrapper is redundant
 
 import { generate } from 'escodegen'
 
@@ -47,4 +48,12 @@ const generateImportsSectionAST = imports => {
     return generate(buildImportsProgram(imports)) + '\n'
 }
 
-export { generateImportsSectionAST, buildImportDeclaration, buildImportsProgram }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const ImportBuilder = { generateImportsSectionAST, buildImportDeclaration, buildImportsProgram }
+
+export { ImportBuilder }

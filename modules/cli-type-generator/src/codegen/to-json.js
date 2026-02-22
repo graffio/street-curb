@@ -43,4 +43,12 @@ const generateNamedVariantToJSON = funcName => `
         return Object.assign({ '@@tagName': this['@@tagName'] }, this)
     }`
 
-export { generateNamedToJSON, generateNamedVariantToJSON, generateToJSONObject }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const ToJson = { generateNamedToJSON, generateNamedVariantToJSON, generateToJSONObject }
+
+export { ToJson }

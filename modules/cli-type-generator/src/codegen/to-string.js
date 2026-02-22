@@ -72,4 +72,12 @@ const generateNamedToString = (funcName, typeName, fields) => {
     return estimatedLength > 120 ? multipleLineReturnStatement() : singleLineReturnStatement()
 }
 
-export { generateNamedToString, generateToStringObject }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const ToString = { generateNamedToString, generateToStringObject }
+
+export { ToString }

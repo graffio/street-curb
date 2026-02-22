@@ -3,13 +3,13 @@
 
 import prettier from 'prettier'
 
-import FieldDescriptor from './descriptors/field-descriptor.js'
+import { FieldDescriptor } from './descriptors/field-descriptor.js'
 
 /**
  * Format generated code with prettier
- * @sig prettierCode :: String -> Promise String
+ * @sig formatCode :: String -> Promise String
  */
-const prettierCode = async code => {
+const formatCode = async code => {
     try {
         return await prettier.format(code, {
             parser: 'babel',
@@ -27,9 +27,9 @@ const prettierCode = async code => {
 
 /**
  * JSON.stringify without the clutter: no quotes around keys and spaces after the commas
- * @sig stringifyObject :: {k:v} -> String
+ * @sig formatObject :: {k:v} -> String
  */
-const stringifyObject = o =>
+const formatObject = o =>
     JSON.stringify(o)
         .replace(/"([^"]*)":/g, '$1: ') // remove double-quotes from keys
         .replace(/,([^ ])/g, ', $1') // add a space after commas
@@ -38,9 +38,9 @@ const stringifyObject = o =>
 
 /**
  * Convert an object to a multiline JSDoc comment block
- * @sig stringifyObjectAsMultilineComment :: (Object, String, String) -> String
+ * @sig formatObjectAsMultilineComment :: (Object, String, String) -> String
  */
-const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
+const formatObjectAsMultilineComment = (o, generatedFrom, typeName) => {
     /*
      * Check if value looks like a FieldDescriptor (has baseType property)
      * @sig isFieldDescriptor :: Any -> Boolean
@@ -115,4 +115,12 @@ const stringifyObjectAsMultilineComment = (o, generatedFrom, typeName) => {
     return isTaggedSum ? processTaggedSum() : processTagged()
 }
 
-export { prettierCode, stringifyObject, stringifyObjectAsMultilineComment }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PrettierCode = { formatCode, formatObject, formatObjectAsMultilineComment }
+
+export { PrettierCode }

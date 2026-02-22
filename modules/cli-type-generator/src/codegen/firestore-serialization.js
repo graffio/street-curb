@@ -1,7 +1,8 @@
 // ABOUTME: Code generation for Firestore serialization
 // ABOUTME: Generates toFirestore and fromFirestore functions for Tagged and TaggedSum types
+// COMPLEXITY: cohesion-structure — generate* functions are codegen factories; file uses own section separators
 
-import FieldDescriptor from '../descriptors/field-descriptor.js'
+import { FieldDescriptor } from '../descriptors/field-descriptor.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Internal helpers - field-level expression generators
@@ -30,7 +31,7 @@ const generateToFirestoreValue = (fieldName, fieldType) => {
         return possiblyRecurse(parsed.arrayDepth, `o.${fieldName}`)
     }
 
-    const parsed = FieldDescriptor.fromAny(fieldType)
+    const parsed = FieldDescriptor.parseAny(fieldType)
     const { baseType, arrayDepth } = parsed
 
     if (baseType === 'Date') return `encodeTimestamps(o.${fieldName})`
@@ -84,7 +85,7 @@ const generateFromFirestoreField = (fieldName, fieldType) => {
         return `${fieldName}: ${buildMapper(depth, accessor)}`
     }
 
-    const parsed = FieldDescriptor.fromAny(fieldType)
+    const parsed = FieldDescriptor.parseAny(fieldType)
     const { baseType, arrayDepth } = parsed
     const accessor = `doc.${fieldName}`
 
@@ -98,10 +99,10 @@ const generateFromFirestoreField = (fieldName, fieldType) => {
 
 /*
  * Check if a field type needs special Firestore serialization
- * @sig needsFirestoreSerialization :: (String | FieldDescriptor) -> Boolean
+ * @sig hasFirestoreSerialization :: (String | FieldDescriptor) -> Boolean
  */
-const needsFirestoreSerialization = ft =>
-    ['Date', 'Tagged', 'LookupTable'].includes(FieldDescriptor.fromAny(ft).baseType)
+const hasFirestoreSerialization = ft =>
+    ['Date', 'Tagged', 'LookupTable'].includes(FieldDescriptor.parseAny(ft).baseType)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tagged type Firestore serialization
@@ -112,12 +113,12 @@ const needsFirestoreSerialization = ft =>
  * @sig generateFirestoreSerializationForTagged :: (String, FieldMap) -> String
  */
 const generateFirestoreSerializationForTagged = (typeName, flds) => {
-    const isOptionalField = ([_, fieldType]) => FieldDescriptor.fromAny(fieldType).optional
+    const isOptionalField = ([_, fieldType]) => FieldDescriptor.parseAny(fieldType).optional
     const formatRequired = ([fn, ft]) => `${fn}: ${generateToFirestoreValue(fn, ft)}`
     const formatOptional = ([fn, ft]) => ({ fieldName: fn, code: generateToFirestoreValue(fn, ft) })
 
     const fieldEntries = Object.entries(flds)
-    const hasSerialization = fieldEntries.some(([_, ft]) => needsFirestoreSerialization(ft))
+    const hasSerialization = fieldEntries.some(([_, ft]) => hasFirestoreSerialization(ft))
 
     if (!hasSerialization)
         return `${typeName}._toFirestore = (o, encodeTimestamps) => ({ ...o })
@@ -160,7 +161,7 @@ const generateFirestoreSerializationForTaggedSumVariant = (vnn, fs) => {
     const formatToFirestoreField = (fieldName, fieldType) =>
         `${fieldName}: ${generateToFirestoreValue(fieldName, fieldType)}`
 
-    const hasSerializableFields = Object.values(fs).some(needsFirestoreSerialization)
+    const hasSerializableFields = Object.values(fs).some(hasFirestoreSerialization)
 
     if (!hasSerializableFields)
         return `
@@ -297,8 +298,16 @@ const generateFirestoreSerializationForTaggedSum = (typeName, vars) => {
     `
 }
 
-export {
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const FirestoreSerialization = {
     generateFirestoreSerializationForTagged,
     generateFirestoreSerializationForTaggedSum,
     generateFirestoreSerializationForTaggedSumVariant,
 }
+
+export { FirestoreSerialization }

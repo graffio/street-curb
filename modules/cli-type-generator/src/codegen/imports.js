@@ -1,5 +1,6 @@
 // ABOUTME: Code generation for import statements
 // ABOUTME: Generates import section from parsed ImportInfo structures
+// COMPLEXITY: export-structure — codegen function; generate prefix is the domain verb
 
 /*
  * Generate imports section for generated file
@@ -24,5 +25,11 @@ const generateImportsSection = imports => {
 
     return imports && imports.length ? imports.map(formatImport).join('\n') + '\n' : ''
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { generateImportsSection }

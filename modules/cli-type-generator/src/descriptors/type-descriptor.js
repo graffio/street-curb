@@ -1,10 +1,13 @@
 // ABOUTME: Normalized descriptor for entire type definitions
 // ABOUTME: Converts parsed type definitions into a normalized structure for code generation
+// COMPLEXITY: export-structure — TypeDescriptor namespace provides domain context even with single method
 
-import FieldDescriptor from './field-descriptor.js'
+import { FieldDescriptor } from './field-descriptor.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
-// TypeDescriptor Schema
+//
+// Constants
+//
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Tagged:
@@ -35,10 +38,10 @@ import FieldDescriptor from './field-descriptor.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Normalize a parse result into a TypeDescriptor
- * @sig normalize :: ParseResult -> TypeDescriptor
+ * Transform a parse result into a TypeDescriptor
+ * @sig toDescriptor :: ParseResult -> TypeDescriptor
  */
-const normalize = parseResult => {
+const toDescriptor = parseResult => {
     /**
      * Normalize a field map to FieldDescriptor objects, computing childTypes
      * @sig normalizeFields :: Object -> { fields: Object, childTypes: [String], hasLookupTable: Boolean }
@@ -49,7 +52,7 @@ const normalize = parseResult => {
          * @sig processField :: ([String, Any], Object) -> void
          */
         const processField = ([fieldName, fieldType], acc) => {
-            const descriptor = FieldDescriptor.fromAny(fieldType)
+            const descriptor = FieldDescriptor.parseAny(fieldType)
             const { baseType, taggedType } = descriptor
             acc.fields[fieldName] = descriptor
 
@@ -122,9 +125,11 @@ const normalize = parseResult => {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//
 // Exports
+//
 // ---------------------------------------------------------------------------------------------------------------------
 
-const TypeDescriptor = { normalize }
+const TypeDescriptor = { toDescriptor }
 
-export default TypeDescriptor
+export { TypeDescriptor }

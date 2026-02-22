@@ -1,12 +1,11 @@
 // ABOUTME: Code generation for constructor JSDoc signatures
 // ABOUTME: Generates @sig comments showing type signatures for constructors
+// COMPLEXITY: export-structure — codegen function; generate prefix is the domain verb
 
-import FieldDescriptor from '../descriptors/field-descriptor.js'
+import { FieldDescriptor } from '../descriptors/field-descriptor.js'
 
-/*
- * Generate @sig comment for a constructor function
- * @sig generateConstructorSig :: (String, FieldMap) -> String
- */
+// Generate type signature comment for a constructor function
+// @sig generateConstructorSig :: (String, FieldMap) -> String
 const generateConstructorSig = (fullTypeName, fields) => {
     /*
      * Capitalize first letter of a string
@@ -19,7 +18,7 @@ const generateConstructorSig = (fullTypeName, fields) => {
      * @sig formatFieldEntry :: ([String, FieldType]) -> String
      */
     const formatFieldEntry = ([fieldName, fieldType]) => {
-        const parsed = FieldDescriptor.fromAny(fieldType)
+        const parsed = FieldDescriptor.parseAny(fieldType)
         const { baseType, taggedType, optional, arrayDepth, regex } = parsed
 
         // For regex fields, create a type alias from the field name
@@ -50,5 +49,11 @@ const generateConstructorSig = (fullTypeName, fields) => {
          * @sig ${shortName} :: ${params} -> ${fullTypeName}${regexLines}
          */`
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export { generateConstructorSig }

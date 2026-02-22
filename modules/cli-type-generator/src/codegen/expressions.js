@@ -1,7 +1,7 @@
 // ABOUTME: Low-level code generation for constructor expressions
 // ABOUTME: Generates type checks, assignments, and constructor bodies
 
-import FieldDescriptor from '../descriptors/field-descriptor.js'
+import { FieldDescriptor } from '../descriptors/field-descriptor.js'
 
 /*
  * Generate a Type Constructor function given its name and its fields
@@ -14,7 +14,7 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
      */
     // prettier-ignore
     const generateTypeCheck = (cName, name, fieldType) => {
-        const descriptor = FieldDescriptor.fromAny(fieldType)
+        const descriptor = FieldDescriptor.parseAny(fieldType)
         const { arrayDepth, baseType, fieldTypesReference, optional, regex, taggedType } = descriptor
         const tag = taggedType ? `"${taggedType}"` : undefined
 
@@ -38,7 +38,7 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
      * @sig generateAssignment :: String -> String
      */
     const generateAssignment = f => {
-        const { optional } = FieldDescriptor.fromAny(fields[f])
+        const { optional } = FieldDescriptor.parseAny(fields[f])
 
         // x != is JavaScript magic for NEITHER null NOR undefined
         return optional ? `if (${f} != null) result.${f} = ${f}` : `result.${f} = ${f}`
@@ -51,7 +51,7 @@ const generateTypeConstructor = (typeName, fullTypeName, fields) => {
     const assignments = keys.map(generateAssignment)
 
     // if there are optional values, skip the parameter count check
-    const hasOptional = Object.values(fields).some(f => FieldDescriptor.fromAny(f).optional)
+    const hasOptional = Object.values(fields).some(f => FieldDescriptor.parseAny(f).optional)
     const countCheck = hasOptional ? '' : `R.validateArgumentLength(constructorName, ${keys.length}, arguments)`
 
     return `function ${typeName}(${parameterNames}) {
@@ -97,4 +97,12 @@ const generateToString = (fieldType, fields) => {
         }`
 }
 
-export { generateTypeConstructor, generateFrom, generateToString }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const Expressions = { generateTypeConstructor, generateFrom, generateToString }
+
+export { Expressions }
