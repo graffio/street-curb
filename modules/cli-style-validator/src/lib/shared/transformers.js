@@ -1,12 +1,6 @@
 // ABOUTME: Shared transformer functions for style validator rules
 // ABOUTME: Parsing and transformation utilities for COMPLEXITY comments
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Transformers
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 const TS = {
     // Convert kebab-case or snake_case to PascalCase
     // @sig toPascalCase :: String -> String

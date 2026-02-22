@@ -259,7 +259,30 @@ const V = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Aggregators
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// prettier-ignore
+const ACCOUNT_TYPES = {
+    Bank            : 'Bank',
+    Cash            : 'Cash',
+    CCard           : 'Credit Card',
+    Invst           : 'Investment',
+    'Oth A'         : 'Other Asset',
+    'Oth L'         : 'Other Liability',
+    Mutual          : 'Investment',
+    Port            : 'Investment',
+    '401(k)/403(b)' : 'Investment',
+}
+
+const SALES_TYPES = ['Sell', 'SellX', 'ShtSell']
+const OUTFLOW_ACTIONS = ['Buy', 'BuyX', 'CvrShrt', 'MargInt', 'MiscExp', 'WithdrwX', 'XOut']
+const ZERO_CASH_ACTIONS = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'StkSplit', 'ShrsIn', 'ShrsOut']
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -292,35 +315,6 @@ const parseLineGroup = (currentContext, currentAccount, lineGroup) => {
     if (currentContext === 'Security')        return Security.from(F.createSecurity(lineGroup))
     if (currentContext === 'Tag')             return Tag.from(F.createTag(lineGroup))
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// prettier-ignore
-const ACCOUNT_TYPES = {
-    Bank            : 'Bank',
-    Cash            : 'Cash',
-    CCard           : 'Credit Card',
-    Invst           : 'Investment',
-    'Oth A'         : 'Other Asset',
-    'Oth L'         : 'Other Liability',
-    Mutual          : 'Investment',
-    Port            : 'Investment',
-    '401(k)/403(b)' : 'Investment',
-}
-
-const SALES_TYPES = ['Sell', 'SellX', 'ShtSell']
-const OUTFLOW_ACTIONS = ['Buy', 'BuyX', 'CvrShrt', 'MargInt', 'MiscExp', 'WithdrwX', 'XOut']
-const ZERO_CASH_ACTIONS = ['ReinvDiv', 'ReinvInt', 'ReinvLg', 'ReinvSh', 'StkSplit', 'ShrsIn', 'ShrsOut']
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 const LineGroupToEntry = { parseLineGroup }
 export { LineGroupToEntry }

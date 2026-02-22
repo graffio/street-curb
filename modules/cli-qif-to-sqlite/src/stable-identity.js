@@ -1,12 +1,6 @@
 // ABOUTME: Stable identity infrastructure for QIF entity matching across imports
 // ABOUTME: Generates prefixed IDs and manages the stableIdentities table
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Factories
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 // Generate a stable ID with entity-type-specific prefix using counter (D23)
 // Format: prefix + 12-digit zero-padded number (e.g., txn_000000000001)
 // @sig createStableId :: (Database, String) -> String
@@ -16,12 +10,6 @@ const createStableId = (db, entityType) => {
     const id = E.queryNextId(db, entityType)
     return prefix + String(id).padStart(12, '0')
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Aggregators
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 // Lookup stable identity by entityType and signature, returns id or undefined
 // Only returns non-orphaned entities (use findBySignatureIncludingOrphaned for restore logic)

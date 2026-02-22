@@ -4,12 +4,6 @@
 import { Ast, AstNode } from '@graffio/ast'
 import { Transformers as TS } from './transformers.js'
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Predicates
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 const PS = {
     // Check if file is a test file that should skip validation
     // @sig isTestFile :: String -> Boolean

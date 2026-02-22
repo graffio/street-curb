@@ -3,7 +3,15 @@
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Predicates
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const GAIN_MARKERS = ['CGLong', 'CGShort', 'CGMid']
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -18,12 +26,6 @@ const isGainMarker = category => GAIN_MARKERS.includes(category)
 // Check if category is the split marker used in split transactions
 // @sig isSplitMarker :: String? -> Boolean
 const isSplitMarker = category => category === '--Split--'
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Transformers
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 // Extract account name from transfer syntax "[Account]" or "[Account]/Category"
 // @sig toTransferAccountName :: String? -> String?
@@ -46,12 +48,6 @@ const toCategoryName = category => {
     return category
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Factories
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 // Resolve a category field into its components
 // @sig resolveCategory :: String? -> { categoryName, transferAccountName, gainMarkerType }
 const resolveCategory = category => ({
@@ -59,20 +55,6 @@ const resolveCategory = category => ({
     transferAccountName: toTransferAccountName(category),
     gainMarkerType: isGainMarker(category) ? category : undefined,
 })
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const GAIN_MARKERS = ['CGLong', 'CGShort', 'CGMid']
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 const CategoryResolver = {
     isTransfer,

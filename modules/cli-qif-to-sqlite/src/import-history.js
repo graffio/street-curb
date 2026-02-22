@@ -21,21 +21,6 @@ const T = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Aggregators
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Orchestrate import history recording: record import, changes, then prune
-// @sig processImportHistory :: (Database, String, Object, [Object]) -> String
-const processImportHistory = (db, qifContent, changeCounts, changes) => {
-    const importId = E.recordImport(db, qifContent, changeCounts)
-    changes.forEach(change => E.recordChange(db, importId, change))
-    pruneOldHistory(db)
-    return importId
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Effects
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -102,18 +87,6 @@ const E = {
     },
 }
 
-// Remove old imports and their changes beyond retention count
-// @sig pruneOldHistory :: Database -> Number
-const pruneOldHistory = db => {
-    const oldIds = E.queryOldImportIds(db)
-    if (oldIds.length === 0) return 0
-
-    const placeholders = oldIds.map(() => '?').join(', ')
-    db.prepare(`DELETE FROM entityChanges WHERE importId IN (${placeholders})`).run(...oldIds)
-    db.prepare(`DELETE FROM importHistory WHERE importId IN (${placeholders})`).run(...oldIds)
-    return oldIds.length
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Constants
@@ -127,6 +100,27 @@ const HISTORY_RETENTION_COUNT = 20
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Orchestrate import history recording: record import, changes, then prune
+// @sig processImportHistory :: (Database, String, Object, [Object]) -> String
+const processImportHistory = (db, qifContent, changeCounts, changes) => {
+    const importId = E.recordImport(db, qifContent, changeCounts)
+    changes.forEach(change => E.recordChange(db, importId, change))
+    pruneOldHistory(db)
+    return importId
+}
+
+// Remove old imports and their changes beyond retention count
+// @sig pruneOldHistory :: Database -> Number
+const pruneOldHistory = db => {
+    const oldIds = E.queryOldImportIds(db)
+    if (oldIds.length === 0) return 0
+
+    const placeholders = oldIds.map(() => '?').join(', ')
+    db.prepare(`DELETE FROM entityChanges WHERE importId IN (${placeholders})`).run(...oldIds)
+    db.prepare(`DELETE FROM importHistory WHERE importId IN (${placeholders})`).run(...oldIds)
+    return oldIds.length
+}
 
 const ImportHistory = { processImportHistory, pruneOldHistory, HISTORY_RETENTION_COUNT }
 

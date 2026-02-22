@@ -3,7 +3,7 @@
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Transformers
+// Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -54,12 +54,6 @@ const buildLotSignature = (securityStableId, accountStableId, openDate, openTran
 // Generate signature for lot allocation matching
 // @sig buildLotAllocationSignature :: (String, String) -> String
 const buildLotAllocationSignature = (lotStableId, transactionStableId) => [lotStableId, transactionStableId].join('|')
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 const Signatures = {
     toNormalizedPayee,

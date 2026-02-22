@@ -4,12 +4,6 @@
 import { Ast, AstNode } from '@graffio/ast'
 import { Predicates as PS } from './predicates.js'
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Aggregators
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 const AS = {
     // Count lines in a function's body (for length checks)
     // @sig countFunctionLines :: AstNode -> Number

@@ -41,12 +41,6 @@ const T = {
     },
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Factories
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 // Build lookup maps for security matching from existing stableIdentities
 // Includes orphaned securities so they can be restored
 // @sig buildSecurityLookup :: Database -> {bySymbol: Map, byName: Map}
@@ -122,12 +116,6 @@ const createSeenTracker = lookup => {
         getUnseen: () => [...lookup.values()].map(extractId).filter(id => !seen.has(id)),
     }
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Aggregators
-//
-// ---------------------------------------------------------------------------------------------------------------------
 
 // Find matching entry for a security (symbol first, then name, shifts from array)
 // Returns {id, orphanedAt} or undefined

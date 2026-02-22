@@ -12,12 +12,6 @@
 //     fieldTypesReference: undefined | { property: 'E164Phone', fullReference: 'FieldTypes.E164Phone' }
 // }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Transformers
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
 /**
  * Parse any field type input into a descriptor
  * Handles strings, RegExp, objects, and already-normalized descriptors
