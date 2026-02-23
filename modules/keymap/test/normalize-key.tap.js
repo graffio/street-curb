@@ -2,7 +2,7 @@
 // ABOUTME: Covers normalizeKey utility
 
 import { test } from 'tap'
-import { normalizeKey } from '../src/keymap.js'
+import { normalizeKey } from '../src/normalize-key.js'
 
 // Helper to create mock KeyboardEvent
 const mockEvent = (key, { metaKey = false, ctrlKey = false, altKey = false, shiftKey = false } = {}) => ({

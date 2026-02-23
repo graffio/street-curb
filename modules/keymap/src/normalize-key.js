@@ -1,6 +1,12 @@
 // ABOUTME: Key normalization utility for keyboard events
 // ABOUTME: Converts KeyboardEvent to normalized key string with modifiers
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const P = {
     // Special keys that should not be lowercased
     // @sig isSpecialKey :: String -> Boolean
@@ -10,6 +16,12 @@ const P = {
     // @sig isLetter :: String -> Boolean
     isLetter: key => key.length === 1 && /[a-zA-Z]/.test(key),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Converts a KeyboardEvent to a normalized key string with modifiers in alphabetical order
 // @sig normalizeKey :: KeyboardEvent -> String

@@ -2,7 +2,7 @@
 // ABOUTME: Generic resolution functions parameterized by bindings and group names
 
 import { ActionRegistry } from './action-registry.js'
-import { normalizeKey } from './keymap.js'
+import { normalizeKey } from './normalize-key.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
