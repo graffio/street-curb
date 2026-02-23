@@ -2,23 +2,14 @@
 // ABOUTME: Exports ActionRegistry, normalizeKey, and formatKey utilities
 
 import { ActionRegistry } from './action-registry.js'
-import { normalizeKey } from './keymap.js'
+import { normalizeKey } from './normalize-key.js'
 import { KeymapRouting } from './keymap-routing.js'
 
-const KEY_SYMBOLS = {
-    ArrowDown: '↓',
-    ArrowUp: '↑',
-    ArrowLeft: '←',
-    ArrowRight: '→',
-    Delete: 'Del',
-    Backspace: '⌫',
-    Escape: 'Esc',
-    Enter: '↵',
-    Tab: '⇥',
-    ' ': 'Space',
-}
-
-const MODIFIER_SYMBOLS = { cmd: '⌘', ctrl: 'Ctrl+', alt: 'Alt+', shift: '⇧' }
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Formats a single key for display with symbols
@@ -40,6 +31,33 @@ const T = {
     // @sig formatKeys :: [String] -> String
     formatKeys: keys => keys.map(T.formatKey).join(', '),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const KEY_SYMBOLS = {
+    ArrowDown: '↓',
+    ArrowUp: '↑',
+    ArrowLeft: '←',
+    ArrowRight: '→',
+    Delete: 'Del',
+    Backspace: '⌫',
+    Escape: 'Esc',
+    Enter: '↵',
+    Tab: '⇥',
+    ' ': 'Space',
+}
+
+const MODIFIER_SYMBOLS = { cmd: '⌘', ctrl: 'Ctrl+', alt: 'Alt+', shift: '⇧' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const { handleKeydown, toAvailableIntents } = KeymapRouting
 
