@@ -187,9 +187,4 @@ TableLayout.applyOrderChange = (tableLayout, newOrder) => {
     return TableLayout(id, columnDescriptors.pick(newOrder), sortOrder)
 }
 
-TableLayout.fromColumns = (id, columns) => {
-    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
-    return TableLayout(id, LookupTable(descriptors, ColumnDescriptor, 'id'), LookupTable([], SortOrder, 'id'))
-}
-
 export { TableLayout }

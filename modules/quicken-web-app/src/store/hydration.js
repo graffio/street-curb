@@ -93,15 +93,15 @@ const hydrateTabLayout = async () => {
 }
 
 // Rehydrates account list sort mode and collapsed sections from IndexedDB
-// @sig hydrateAccountListPrefs :: () -> Promise<{ sortMode: SortMode, collapsedSections: Set }>
+// @sig hydrateAccountListPrefs :: () -> Promise<{ sortMode: SortMode, collapsedSections: [String] }>
 const hydrateAccountListPrefs = async () => {
-    const defaults = { sortMode: SortMode.ByType(), collapsedSections: new Set() }
+    const defaults = { sortMode: SortMode.ByType(), collapsedSections: [] }
     try {
         const stored = await IndexedDbStorage.queryAccountListPrefs()
         if (!stored) return defaults
 
         const sortMode = SortMode[stored.sortMode]?.() || SortMode.ByType()
-        const collapsedSections = new Set(stored.collapsedSections || [])
+        const collapsedSections = stored.collapsedSections || []
         return { sortMode, collapsedSections }
     } catch (e) {
         console.warn('Failed to read accountListPrefs from IndexedDB', e)

@@ -1,12 +1,5 @@
 // ABOUTME: All Redux selectors in one place
 // ABOUTME: Thin state accessors and memoized derived selectors
-// COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
-// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
-// COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
-// COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
-// COMPLEXITY: section-separators — Domain-specific 3-line separators group selectors by concern
-// COMPLEXITY: react-redux-separation — Selectors join multiple state slices by design
-import { DateRangeUtils } from '../utils/date-range-utils.js'
 import {
     applySort,
     containsIgnoreCase,
@@ -18,13 +11,21 @@ import {
     wrapIndex,
 } from '@graffio/functional'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
-import { toAccountSections } from './to-account-sections.js'
 import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
+import { CategoryTree } from '../utils/category-tree.js'
+
+// COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
+// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
+// COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
+// COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
+// COMPLEXITY: section-separators — Domain-specific 3-line separators group selectors by concern
+// COMPLEXITY: react-redux-separation — Selectors join multiple state slices by design
+import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
-import { CategoryTree } from '../utils/category-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
+import { toAccountSections } from './to-account-sections.js'
 
 const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsModule
 
@@ -83,6 +84,10 @@ const getDefaultViewUi = viewId => {
 }
 
 const viewUi = (state, viewId) => state.viewUiState.get(viewId) || getDefaultViewUi(viewId)
+const _toCollapsedSet = memoizeOnce(
+    arr => arr,
+    arr => new Set(arr),
+)
 
 // prettier-ignore
 const UI = {
@@ -103,7 +108,7 @@ const UI = {
     selectedInvestmentActions: (state, viewId) => filter(state, viewId).selectedInvestmentActions,
     selectedSecurities       : (state, viewId) => filter(state, viewId).selectedSecurities,
     treeExpansion            : (state, viewId) => viewUi(state, viewId).treeExpansion,
-    collapsedSections        : state => state.collapsedSections,
+    collapsedSections        : state => _toCollapsedSet(state.collapsedSections),
     columnSizing             : (state, viewId) => viewUi(state, viewId).columnSizing,
     columnOrder              : (state, viewId) => viewUi(state, viewId).columnOrder,
     sortMode                 : state => state.accountListSortMode,
@@ -449,7 +454,7 @@ const SORT_STATE_KEYS = ['transactions', 'categories', 'securities', 'tableLayou
 const HIGHLIGHT_STATE_KEYS = [...SORT_STATE_KEYS, 'viewUiState']
 
 // prettier-ignore
-const T= {
+const T = {
     enriched             : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'  ], 'transactionFilters', _enriched),
     filtered             : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _filtered),
     forAccount           : memoizeReduxStatePerKey(['transactions'                            ], 'transactionFilters', _forAccount),
@@ -458,31 +463,20 @@ const T= {
     searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _searchMatches),
 }
 
-T.tree = memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree)
+// prettier-ignore
+const T2 = {
+    tree                : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree),
+    sortedForDisplay    : memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForInvestment)),
+    sortedForBankDisplay: memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForAccount)),
+}
 
-// Parameterized sort/highlight pairs — wired after T is defined so factory receives memoized filter functions
-T.sortedForDisplay = memoizeReduxStatePerKey(
-    SORT_STATE_KEYS,
-    'transactionFilters',
-    _makeSortedSelector(T.filteredForInvestment),
-)
-T.sortedForBankDisplay = memoizeReduxStatePerKey(
-    SORT_STATE_KEYS,
-    'transactionFilters',
-    _makeSortedSelector(T.filteredForAccount),
-)
-T.highlightedId = memoizeReduxStatePerKey(
-    HIGHLIGHT_STATE_KEYS,
-    'transactionFilters',
-    _makeHighlightSelector(T.sortedForDisplay),
-)
-T.highlightedIdForBank = memoizeReduxStatePerKey(
-    HIGHLIGHT_STATE_KEYS,
-    'transactionFilters',
-    _makeHighlightSelector(T.sortedForBankDisplay),
-)
+// prettier-ignore
+const T3 = {
+    highlightedId       : memoizeReduxStatePerKey(HIGHLIGHT_STATE_KEYS, 'transactionFilters', _makeHighlightSelector(T2.sortedForDisplay)),
+    highlightedIdForBank: memoizeReduxStatePerKey(HIGHLIGHT_STATE_KEYS, 'transactionFilters', _makeHighlightSelector(T2.sortedForBankDisplay))
+}
 
-const Transactions = T
+const Transactions = { ...T, ...T2, ...T3 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Exports

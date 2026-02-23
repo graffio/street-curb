@@ -785,6 +785,11 @@ Context: Codebase mixed null and undefined as "no value", causing confusion bugs
 Decision: Validator rule (check-no-null-literal) bans null literals. Use undefined, omit the field, or use isNil() at system boundaries. React render-nothing uses `return false`. Three legacy modules (ast/, cli-type-generator/, cli-qif-to-sqlite/) exempted via boundary patterns pending validator compliance.
 Why: One absent value eliminates an entire class of bugs. Tagged type `from()` already handles undefined for optional fields, making the migration safe.
 
+### 2026-02-23: COMPLEXITY comments must document genuine exceptions, not restate conventions
+Context: 5 of 13 COMPLEXITY comments across store/ defended things that weren't actual violations (single-namespace exports, verb-named functions). They added noise and made real exceptions harder to spot.
+Decision: COMPLEXITY comments are only justified when the validator flags something that cannot be fixed by restructuring. Comments that restate project conventions (e.g., "exports both X and Y" when the file already uses a single namespace) should be removed. When removing a COMPLEXITY comment that suppressed sig-documentation, add a real description comment instead.
+Why: COMPLEXITY comments are a complexity budget — each one should represent a genuine tradeoff. Rubber-stamping conventions as "complexity" erodes the signal.
+
 ### 2026-02-22: Runtime validators accept null for optional fields at system boundary
 Context: Changing runtime validators from `== null` to `=== undefined` crashed type constructors on data from IndexedDB/JSON, which stores null for absent fields. Cell renderers also crashed on null quantity/price values.
 Decision: Optional-field validators use `(value === undefined || value === null)`. Required-field validators use strict `=== undefined` only. Presentation guards use `isNil()`. The null ban applies to source code, not incoming external data.

@@ -1,7 +1,7 @@
 // ABOUTME: Root reducer for application state
 // ABOUTME: Manages entities (LookupTables), transaction filters, and view UI state
 
-import { LookupTable } from '@graffio/functional'
+import { LookupTable, toggleItem } from '@graffio/functional'
 import {
     Account,
     Action,
@@ -39,17 +39,6 @@ const { createDefaultViewUiState } = ViewUiStateReducer
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
 // COMPLEXITY: function-naming — rootReducer is standard Redux naming
-// COMPLEXITY: cohesion-structure — Reducer helpers (toggleSectionCollapsed) don't fit P/T/F/V/A/E
-
-// Toggles a section's collapsed state (add if not present, remove if present)
-// @sig toggleSectionCollapsed :: (State, Action.ToggleSectionCollapsed) -> State
-const toggleSectionCollapsed = (state, action) => {
-    const { sectionId } = action
-    const next = new Set(state.collapsedSections)
-    if (next.has(sectionId)) next.delete(sectionId)
-    else next.add(sectionId)
-    return { ...state, collapsedSections: next }
-}
 
 // Creates empty initial state (hydration happens async before store creation)
 // @sig createEmptyState :: () -> State
@@ -74,7 +63,7 @@ const createEmptyState = () => ({
     transactionFilters: LookupTable([createDefaultFilter(ACCOUNT_LIST_VIEW_ID)], TransactionFilter, 'id'),
     viewUiState: LookupTable([createDefaultViewUiState(ACCOUNT_LIST_VIEW_ID)], ViewUiState, 'id'),
     accountListSortMode: SortMode.ByType(),
-    collapsedSections: new Set(),
+    collapsedSections: [],
     showReopenBanner: false,
     showDrawer: false,
     loadingStatus: undefined,
@@ -138,7 +127,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
 
         // Account list actions
         SetAccountListSortMode : () => ({ ...state, accountListSortMode: action.sortMode }),
-        ToggleSectionCollapsed : () => toggleSectionCollapsed(state, action),
+        ToggleSectionCollapsed : () => ({ ...state, collapsedSections: toggleItem(action.sectionId, state.collapsedSections) }),
 
         // Global UI actions
         SetShowReopenBanner : () => ({ ...state, showReopenBanner: action.show }),
