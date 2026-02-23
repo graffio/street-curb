@@ -1,6 +1,5 @@
 // ABOUTME: Pattern recognition for JavaScript AST nodes
 // ABOUTME: Detects common patterns like style objects, cohesion groups
-// COMPLEXITY: export-structure — countStyleObjects is the specific public function
 
 import { AstNode } from './ast-node.js'
 import { Ast } from './ast.js'

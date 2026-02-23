@@ -1,6 +1,6 @@
 // ABOUTME: Query interface for source code as lines - extends Array with position methods
 // ABOUTME: Enables searching for comments and patterns relative to AST positions
-// COMPLEXITY: export-structure — Lines is a type constructor with statics; PascalCase is correct
+// COMPLEXITY: export-structure — Lines is a type constructor; PascalCase is correct
 
 import { Ast } from './ast.js'
 
