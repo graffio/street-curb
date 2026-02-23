@@ -177,6 +177,11 @@ TableLayout.applySizingChange = (tableLayout, newSizing) => {
     return TableLayout(id, updatedDescriptors, sortOrder)
 }
 
+TableLayout.fromColumns = (id, columns) => {
+    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+    return TableLayout(id, LookupTable(descriptors, ColumnDescriptor, 'id'), LookupTable([], SortOrder, 'id'))
+}
+
 TableLayout.applyOrderChange = (tableLayout, newOrder) => {
     const { id, columnDescriptors, sortOrder } = tableLayout
     return TableLayout(id, columnDescriptors.pick(newOrder), sortOrder)

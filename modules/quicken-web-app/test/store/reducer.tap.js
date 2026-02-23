@@ -43,7 +43,7 @@ t.test('Given initial state with no collapsed sections', t => {
         const action = Action.ToggleSectionCollapsed('banking')
         const result = rootReducer(state, { action })
 
-        t.ok(result.collapsedSections.has('banking'), 'Then section is collapsed')
+        t.ok(result.collapsedSections.includes('banking'), 'Then section is collapsed')
         t.end()
     })
     t.end()
@@ -58,7 +58,7 @@ t.test('Given state with a collapsed section', t => {
         const action = Action.ToggleSectionCollapsed('banking')
         const result = rootReducer(state, { action })
 
-        t.notOk(result.collapsedSections.has('banking'), 'Then section is expanded')
+        t.notOk(result.collapsedSections.includes('banking'), 'Then section is expanded')
         t.end()
     })
 
@@ -66,8 +66,8 @@ t.test('Given state with a collapsed section', t => {
         const action = Action.ToggleSectionCollapsed('investments')
         const result = rootReducer(state, { action })
 
-        t.ok(result.collapsedSections.has('banking'), 'Then first section stays collapsed')
-        t.ok(result.collapsedSections.has('investments'), 'Then second section is collapsed')
+        t.ok(result.collapsedSections.includes('banking'), 'Then first section stays collapsed')
+        t.ok(result.collapsedSections.includes('investments'), 'Then second section is collapsed')
         t.end()
     })
     t.end()

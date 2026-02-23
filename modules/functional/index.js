@@ -45,7 +45,7 @@ import mapObject from './src/ramda-like/map-object.js'
 import mapReturningFirst from './src/ramda-like/map-returning-first.js'
 import mapValues from './src/ramda-like/map-values.js'
 import memoizeOnceWithIdenticalParams from './src/ramda-like/memoize-once-with-identical-params.js'
-import memoizeOnce from './src/ramda-like/memoize-once.js'
+import { memoizeOnce } from './src/ramda-like/memoize-once.js'
 import { MemoizeReduxState } from './src/ramda-like/memoize-redux-state.js'
 import mergeDeepRight from './src/ramda-like/merge-deep-right.js'
 import mergeDeepWithKey from './src/ramda-like/merge-deep-with-key.js'
@@ -106,6 +106,12 @@ export {
     datePartsToDate,
     convertSlashToIso,
 } from './src/date-utils.js'
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 export {
     PromiseCache,

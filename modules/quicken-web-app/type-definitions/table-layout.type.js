@@ -21,6 +21,12 @@ export const TableLayout = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Extracts sorting spec for DataTable from sortOrder
 // @sig toSorting :: TableLayout -> [{ id: String, desc: Boolean }]
 TableLayout.toSorting = layout => layout.sortOrder.map(s => ({ id: s.id, desc: s.isDescending }))
@@ -77,6 +83,13 @@ TableLayout.applySizingChange = (tableLayout, newSizing) => {
     const { id, columnDescriptors, sortOrder } = tableLayout
     const updatedDescriptors = columnDescriptors.updateAll(applyWidth)
     return TableLayout(id, updatedDescriptors, sortOrder)
+}
+
+// Constructs a new TableLayout with default column widths and no sorting
+// @sig fromColumns :: (String, [ColumnDefinition]) -> TableLayout
+TableLayout.fromColumns = (id, columns) => {
+    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+    return TableLayout(id, LookupTable(descriptors, ColumnDescriptor, 'id'), LookupTable([], SortOrder, 'id'))
 }
 
 // Applies TanStack column order change to TableLayout

@@ -272,4 +272,15 @@ View.fromFirestore = View._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
+View.DEFAULT_PAGE_TITLE = {
+    title: 'Dashboard',
+    subtitle: '',
+}
+
+View.toReportTitle = (reportType, groupBy) => {
+    if (reportType === 'holdings')
+        return HOLDINGS_DIMENSION_LAYOUTS[groupBy || 'account'] || HOLDINGS_DIMENSION_LAYOUTS.account
+    return CATEGORY_DIMENSION_LAYOUTS[groupBy || 'category'] || CATEGORY_DIMENSION_LAYOUTS.category
+}
+
 export { View }

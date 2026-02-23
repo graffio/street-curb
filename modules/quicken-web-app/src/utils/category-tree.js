@@ -57,38 +57,6 @@ const T = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Factories
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Build aggregated transaction tree by dimension, returning CategoryTreeNode instances
-// @sig buildTransactionTree :: (String?, [Transaction], ((a, [b]) -> b)?) -> [CategoryTreeNode]
-const buildTransactionTree = (dimension, transactions, aggregateFn = collectTransactionTotals) => {
-    const config = dimensionConfig[dimension] || dimensionConfig.category
-    const groups = groupByFn(config.getKey, transactions)
-    const tree = buildTree(config.getParent, groups)
-    const aggregated = aggregateTree(aggregateFn, tree)
-    return aggregated.map(T.toGroupNode)
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Aggregators
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Default aggregation: sum amounts and count transactions (amount ?? 0 guards undefined for splits/transfers)
-// @sig collectTransactionTotals :: ([Transaction], [Aggregate]) -> Aggregate
-const collectTransactionTotals = (transactions, childAggregates) => {
-    const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
-    const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
-    const ownCount = transactions.length
-    const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
-    return { total: ownTotal + childTotal, count: ownCount + childCount }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Constants
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -106,6 +74,26 @@ const dimensionConfig = {
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Default aggregation: sum amounts and count transactions (amount ?? 0 guards undefined for splits/transfers)
+// @sig collectTransactionTotals :: ([Transaction], [Aggregate]) -> Aggregate
+const collectTransactionTotals = (transactions, childAggregates) => {
+    const ownTotal = transactions.reduce((sum, t) => sum + (t.amount ?? 0), 0)
+    const childTotal = childAggregates.reduce((sum, a) => sum + a.total, 0)
+    const ownCount = transactions.length
+    const childCount = childAggregates.reduce((sum, a) => sum + a.count, 0)
+    return { total: ownTotal + childTotal, count: ownCount + childCount }
+}
+
+// Build aggregated transaction tree by dimension, returning CategoryTreeNode instances
+// @sig buildTransactionTree :: (String?, [Transaction], ((a, [b]) -> b)?) -> [CategoryTreeNode]
+const buildTransactionTree = (dimension, transactions, aggregateFn = collectTransactionTotals) => {
+    const config = dimensionConfig[dimension] || dimensionConfig.category
+    const groups = groupByFn(config.getKey, transactions)
+    const tree = buildTree(config.getParent, groups)
+    const aggregated = aggregateTree(aggregateFn, tree)
+    return aggregated.map(T.toGroupNode)
+}
 
 const CategoryTree = { buildTransactionTree, collectTransactionTotals }
 

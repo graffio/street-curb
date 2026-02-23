@@ -1,44 +1,38 @@
 // ABOUTME: All Redux selectors in one place
 // ABOUTME: Thin state accessors and memoized derived selectors
-// COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
-// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
-// COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
-// COMPLEXITY: react-redux-separation — Selectors wire to business modules; line counts are wiring, not logic
-// COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
-// COMPLEXITY: section-separators — Uses domain-specific 3-line separators; block format conversion deferred
-
-import { DateRangeUtils } from '../utils/date-range-utils.js'
 import {
     applySort,
     containsIgnoreCase,
+    LookupTable,
+    memoizeOnce,
     memoizeReduxState,
     memoizeReduxStatePerKey,
     truncateWithCount,
     wrapIndex,
 } from '@graffio/functional'
-import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
-import { toAccountSections } from './to-account-sections.js'
-import {
-    Category,
-    ColumnDescriptor,
-    EnrichedAccount,
-    SortOrder,
-    TableLayout,
-    Transaction,
-    TransactionFilter,
-} from '../types/index.js'
+import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
+import { CategoryTree } from '../utils/category-tree.js'
+
+// COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
+// COMPLEXITY: cohesion-structure — Selectors use domain namespaces (UI, Transactions, Holdings) not P/T/F/V/A/E
+// COMPLEXITY: export-structure — Selectors export multiple domain namespaces by design
+// COMPLEXITY: function-naming — Selectors are noun-named by Redux convention (accounts, tableLayouts, not toAccounts)
+// COMPLEXITY: section-separators — Domain-specific 3-line separators group selectors by concern
+// COMPLEXITY: react-redux-separation — Selectors join multiple state slices by design
+import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
-import { CategoryTree } from '../utils/category-tree.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
+import { toAccountSections } from './to-account-sections.js'
 
 const { buildAllocationIndex, buildPriceIndex, buildTransactionIndex } = HoldingsModule
 
 const defaultTableLayoutProps = { sorting: [], columnSizing: {}, columnOrder: [] }
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 const INVESTMENT_ACTIONS = TransactionFilter.INVESTMENT_ACTIONS
+const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label }) => [id, label]))
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Pure state accessors
@@ -90,6 +84,10 @@ const getDefaultViewUi = viewId => {
 }
 
 const viewUi = (state, viewId) => state.viewUiState.get(viewId) || getDefaultViewUi(viewId)
+const _toCollapsedSet = memoizeOnce(
+    arr => arr,
+    arr => new Set(arr),
+)
 
 // prettier-ignore
 const UI = {
@@ -110,7 +108,7 @@ const UI = {
     selectedInvestmentActions: (state, viewId) => filter(state, viewId).selectedInvestmentActions,
     selectedSecurities       : (state, viewId) => filter(state, viewId).selectedSecurities,
     treeExpansion            : (state, viewId) => viewUi(state, viewId).treeExpansion,
-    collapsedSections        : state => state.collapsedSections,
+    collapsedSections        : state => _toCollapsedSet(state.collapsedSections),
     columnSizing             : (state, viewId) => viewUi(state, viewId).columnSizing,
     columnOrder              : (state, viewId) => viewUi(state, viewId).columnOrder,
     sortMode                 : state => state.accountListSortMode,
@@ -139,7 +137,7 @@ const _securityFilterData = (state, viewId) => {
 const _actionFilterData = (state, viewId) => {
     const selected = filter(state, viewId).selectedInvestmentActions
     const rows = INVESTMENT_ACTIONS.map(({ id, label }) => ({ id, label, isSelected: selected.includes(id) }))
-    const badges = selected.map(id => ({ id, label: INVESTMENT_ACTIONS.find(a => a.id === id)?.label || id }))
+    const badges = selected.map(id => ({ id, label: ACTION_LABELS_MAP[id] || id }))
     return { rows, badges, count: selected.length }
 }
 
@@ -213,7 +211,6 @@ UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'view
 // ---------------------------------------------------------------------------------------------------------------------
 
 const MAX_DETAIL_LINES = 3
-const ACTION_LABELS_MAP = Object.fromEntries(INVESTMENT_ACTIONS.map(({ id, label }) => [id, label]))
 
 const _dateChipData = (state, viewId) => {
     const { dateRange, dateRangeKey } = filter(state, viewId)
@@ -287,79 +284,34 @@ const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
 
 const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
 
-// prettier-ignore
-const categoryDimensionLayouts = {
-    category: { title: 'Spending by Category',  subtitle: 'View spending breakdown by category hierarchy' },
-    account : { title: 'Spending by Account',   subtitle: 'View spending breakdown by account' },
-    payee   : { title: 'Spending by Payee',     subtitle: 'View spending breakdown by payee' },
-    month   : { title: 'Spending by Month',     subtitle: 'View spending breakdown by month' },
-}
-
-// prettier-ignore
-const holdingsDimensionLayouts = {
-    account     : { title: 'Holdings by Account',  subtitle: 'View portfolio positions by account' },
-    security    : { title: 'Holdings by Security',  subtitle: 'View portfolio positions by security' },
-    securityType: { title: 'Holdings by Type',      subtitle: 'View portfolio positions by security type' },
-    goal        : { title: 'Holdings by Goal',      subtitle: 'View portfolio positions by investment goal' },
-}
-
-const defaultPageTitle = { title: 'Dashboard', subtitle: '' }
-
 // Derives page title from active view type + related state
 // @sig _activeViewPageTitle :: State -> { title: String, subtitle: String }
 const _activeViewPageTitle = state => {
     const tl = state.tabLayout
     const group = tl.tabGroups.get(tl.activeTabGroupId)
     const { activeViewId: viewId, views } = group ?? {}
-    if (!viewId) return defaultPageTitle
+    if (!viewId) return View.DEFAULT_PAGE_TITLE
     const view = views.get(viewId)
-    if (!view) return defaultPageTitle
+    if (!view) return View.DEFAULT_PAGE_TITLE
     return view.match({
         Register: () => {
             const account = accounts(state).get(view.accountId)
-            if (!account) return defaultPageTitle
+            if (!account) return View.DEFAULT_PAGE_TITLE
             return { title: account.name, subtitle: account.type }
         },
-        Report: () => {
-            const groupBy = filter(state, view.id).groupBy
-            if (view.reportType === 'holdings')
-                return holdingsDimensionLayouts[groupBy || 'account'] || holdingsDimensionLayouts.account
-            return categoryDimensionLayouts[groupBy || 'category'] || categoryDimensionLayouts.category
-        },
+        Report: () => View.toReportTitle(view.reportType, filter(state, view.id).groupBy),
         Reconciliation: () => ({ title: 'Reconciliation', subtitle: '' }),
     })
 }
 
-// Hand-rolled memoization because memoizeReduxState only tracks top-level state keys, and
-// 'tabLayout' changes on every width dispatch. This tracks 5 derived sub-fields instead, so
-// width-only changes during drag don't bust the cache. Can collapse back to memoizeReduxState
-// if it gains sub-key support. The views LookupTable inside a group is structurally shared and
-// stable when only width changes — unlike the group object itself.
-const activeViewPageTitle = (() => {
-    let prevActiveTabGroupId, prevViewId, prevViews, prevAccounts, prevFilters, prevValue
-    return state => {
-        const { tabLayout: tl, accounts: stateAccounts, transactionFilters } = state
-        const { activeTabGroupId, tabGroups } = tl
-        const group = tabGroups.get(activeTabGroupId)
-        const viewId = group?.activeViewId
-        const views = group?.views
-        if (
-            activeTabGroupId === prevActiveTabGroupId &&
-            viewId === prevViewId &&
-            views === prevViews &&
-            stateAccounts === prevAccounts &&
-            transactionFilters === prevFilters
-        )
-            return prevValue
-        prevActiveTabGroupId = activeTabGroupId
-        prevViewId = viewId
-        prevViews = views
-        prevAccounts = stateAccounts
-        prevFilters = transactionFilters
-        prevValue = _activeViewPageTitle(state)
-        return prevValue
-    }
-})()
+// prettier-ignore
+const _activeViewPageTitleCacheKey = state => {
+    const { tabLayout: { activeTabGroupId, tabGroups }, accounts: stateAccounts, transactionFilters } = state
+    const group = tabGroups.get(activeTabGroupId)
+    return [activeTabGroupId, group?.activeViewId, group?.views, stateAccounts, transactionFilters]
+}
+
+const activeViewPageTitle = memoizeOnce(_activeViewPageTitleCacheKey, _activeViewPageTitle)
 
 const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts', (state, tableLayoutId) => {
     const tableLayout = state.tableLayouts.get(tableLayoutId)
@@ -369,13 +321,7 @@ const tableLayoutProps = memoizeReduxStatePerKey(['tableLayouts'], 'tableLayouts
 // Resolves a tableLayout: reconcile existing or construct default from columns
 const resolveTableLayout = (state, tableLayoutId, columns) => {
     const existing = state.tableLayouts.get(tableLayoutId)
-    if (existing) return TableLayout.reconcile(existing, columns)
-    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
-    return TableLayout(
-        tableLayoutId,
-        LookupTable(descriptors, ColumnDescriptor, 'id'),
-        LookupTable([], SortOrder, 'id'),
-    )
+    return existing ? TableLayout.reconcile(existing, columns) : TableLayout.fromColumns(tableLayoutId, columns)
 }
 
 // Returns existing tableLayout (reconciled with columns) or constructs a default
@@ -508,7 +454,7 @@ const SORT_STATE_KEYS = ['transactions', 'categories', 'securities', 'tableLayou
 const HIGHLIGHT_STATE_KEYS = [...SORT_STATE_KEYS, 'viewUiState']
 
 // prettier-ignore
-const T= {
+const T = {
     enriched             : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'  ], 'transactionFilters', _enriched),
     filtered             : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _filtered),
     forAccount           : memoizeReduxStatePerKey(['transactions'                            ], 'transactionFilters', _forAccount),
@@ -517,31 +463,20 @@ const T= {
     searchMatches        : memoizeReduxStatePerKey(['transactions', 'categories', 'securities'], 'transactionFilters', _searchMatches),
 }
 
-T.tree = memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree)
+// prettier-ignore
+const T2 = {
+    tree                : memoizeReduxStatePerKey(['transactions', 'categories', 'accounts'], 'transactionFilters', _transactionTree),
+    sortedForDisplay    : memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForInvestment)),
+    sortedForBankDisplay: memoizeReduxStatePerKey(SORT_STATE_KEYS, 'transactionFilters'     , _makeSortedSelector(T.filteredForAccount)),
+}
 
-// Parameterized sort/highlight pairs — wired after T is defined so factory receives memoized filter functions
-T.sortedForDisplay = memoizeReduxStatePerKey(
-    SORT_STATE_KEYS,
-    'transactionFilters',
-    _makeSortedSelector(T.filteredForInvestment),
-)
-T.sortedForBankDisplay = memoizeReduxStatePerKey(
-    SORT_STATE_KEYS,
-    'transactionFilters',
-    _makeSortedSelector(T.filteredForAccount),
-)
-T.highlightedId = memoizeReduxStatePerKey(
-    HIGHLIGHT_STATE_KEYS,
-    'transactionFilters',
-    _makeHighlightSelector(T.sortedForDisplay),
-)
-T.highlightedIdForBank = memoizeReduxStatePerKey(
-    HIGHLIGHT_STATE_KEYS,
-    'transactionFilters',
-    _makeHighlightSelector(T.sortedForBankDisplay),
-)
+// prettier-ignore
+const T3 = {
+    highlightedId       : memoizeReduxStatePerKey(HIGHLIGHT_STATE_KEYS, 'transactionFilters', _makeHighlightSelector(T2.sortedForDisplay)),
+    highlightedIdForBank: memoizeReduxStatePerKey(HIGHLIGHT_STATE_KEYS, 'transactionFilters', _makeHighlightSelector(T2.sortedForBankDisplay))
+}
 
-const Transactions = T
+const Transactions = { ...T, ...T2, ...T3 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Exports
