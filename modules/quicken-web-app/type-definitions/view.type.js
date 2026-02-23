@@ -13,3 +13,41 @@ export const View = {
         Reconciliation: { id: FieldTypes.viewId, accountId: 'String', title: 'String' },
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// prettier-ignore
+const CATEGORY_DIMENSION_LAYOUTS = {
+    category: { title: 'Spending by Category',  subtitle: 'View spending breakdown by category hierarchy' },
+    account : { title: 'Spending by Account',   subtitle: 'View spending breakdown by account' },
+    payee   : { title: 'Spending by Payee',     subtitle: 'View spending breakdown by payee' },
+    month   : { title: 'Spending by Month',     subtitle: 'View spending breakdown by month' },
+}
+
+// prettier-ignore
+const HOLDINGS_DIMENSION_LAYOUTS = {
+    account     : { title: 'Holdings by Account',  subtitle: 'View portfolio positions by account' },
+    security    : { title: 'Holdings by Security',  subtitle: 'View portfolio positions by security' },
+    securityType: { title: 'Holdings by Type',      subtitle: 'View portfolio positions by security type' },
+    goal        : { title: 'Holdings by Goal',      subtitle: 'View portfolio positions by investment goal' },
+}
+
+View.DEFAULT_PAGE_TITLE = { title: 'Dashboard', subtitle: '' }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Derives page title for a Report view from its reportType and groupBy dimension
+// @sig toReportTitle :: (String, String) -> { title: String, subtitle: String }
+View.toReportTitle = (reportType, groupBy) => {
+    if (reportType === 'holdings')
+        return HOLDINGS_DIMENSION_LAYOUTS[groupBy || 'account'] || HOLDINGS_DIMENSION_LAYOUTS.account
+    return CATEGORY_DIMENSION_LAYOUTS[groupBy || 'category'] || CATEGORY_DIMENSION_LAYOUTS.category
+}
