@@ -1,12 +1,10 @@
 // ABOUTME: Hydrates Redux state from IndexedDB on startup
 // ABOUTME: Provides async hydration functions called before store creation
-// COMPLEXITY: Exports both table and tab layout hydration - single responsibility per entity type
-
 import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { IndexedDbStorage } from '../commands/data-sources/indexed-db-storage.js'
 import { ColumnDescriptor, SortMode, SortOrder, TabGroup, TabLayout, TableLayout, View } from '../types/index.js'
 
-// COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
+// Rehydrates all table layouts from IndexedDB
 // @sig hydrateTableLayouts :: () -> Promise<LookupTable<TableLayout>>
 const hydrateTableLayouts = async () => {
     // Reconstructs a TableLayout from stored JSON object
@@ -53,7 +51,7 @@ const hydrateTableLayouts = async () => {
     }
 }
 
-// COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
+// Rehydrates tab layout (groups, views, widths) from IndexedDB
 // @sig hydrateTabLayout :: () -> Promise<TabLayout>
 const hydrateTabLayout = async () => {
     // Creates default tab layout with one empty tab group
@@ -94,7 +92,7 @@ const hydrateTabLayout = async () => {
     }
 }
 
-// COMPLEXITY: "hydrate" is Redux convention for rehydrating state from storage
+// Rehydrates account list sort mode and collapsed sections from IndexedDB
 // @sig hydrateAccountListPrefs :: () -> Promise<{ sortMode: SortMode, collapsedSections: Set }>
 const hydrateAccountListPrefs = async () => {
     const defaults = { sortMode: SortMode.ByType(), collapsedSections: new Set() }
