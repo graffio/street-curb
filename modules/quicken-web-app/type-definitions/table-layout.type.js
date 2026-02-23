@@ -85,9 +85,23 @@ TableLayout.applySizingChange = (tableLayout, newSizing) => {
     return TableLayout(id, updatedDescriptors, sortOrder)
 }
 
+// Constructs a new TableLayout with default column widths and no sorting
+// @sig fromColumns :: (String, [ColumnDefinition]) -> TableLayout
+TableLayout.fromColumns = (id, columns) => {
+    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+    return TableLayout(id, LookupTable(descriptors, ColumnDescriptor, 'id'), LookupTable([], SortOrder, 'id'))
+}
+
 // Applies TanStack column order change to TableLayout
 // @sig applyOrderChange :: (TableLayout, [String]) -> TableLayout
 TableLayout.applyOrderChange = (tableLayout, newOrder) => {
     const { id, columnDescriptors, sortOrder } = tableLayout
     return TableLayout(id, columnDescriptors.pick(newOrder), sortOrder)
+}
+
+// Constructs a default TableLayout from column definitions (no sorting)
+// @sig fromColumns :: (String, [{ id: String, size: Number }]) -> TableLayout
+TableLayout.fromColumns = (id, columns) => {
+    const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
+    return TableLayout(id, LookupTable(descriptors, ColumnDescriptor, 'id'), LookupTable([], SortOrder, 'id'))
 }

@@ -6,13 +6,11 @@ import {
     Account,
     Action,
     Category,
-    ColumnDescriptor,
     Lot,
     LotAllocation,
     Price,
     Security,
     SortMode,
-    SortOrder,
     Split,
     TabGroup,
     TabLayout,
@@ -40,8 +38,8 @@ const { createDefaultViewUiState } = ViewUiStateReducer
 
 const ACCOUNT_LIST_VIEW_ID = 'rpt_account_list'
 
-// COMPLEXITY: Exporting both reducer and state factory is standard Redux pattern
-// COMPLEXITY: function-naming — rootReducer and toggleSectionCollapsed are standard Redux naming
+// COMPLEXITY: function-naming — rootReducer is standard Redux naming
+// COMPLEXITY: cohesion-structure — Reducer helpers (toggleSectionCollapsed) don't fit P/T/F/V/A/E
 
 // Toggles a section's collapsed state (add if not present, remove if present)
 // @sig toggleSectionCollapsed :: (State, Action.ToggleSectionCollapsed) -> State
@@ -97,12 +95,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         const { tableLayoutId, columns } = action
         const existing = state.tableLayouts[tableLayoutId]
         if (!existing) {
-            const descriptors = columns.map(col => ColumnDescriptor(col.id, col.size || 100, 'none'))
-            const layout = TableLayout(
-                tableLayoutId,
-                LookupTable(descriptors, ColumnDescriptor, 'id'),
-                LookupTable([], SortOrder, 'id'),
-            )
+            const layout = TableLayout.fromColumns(tableLayoutId, columns)
             return { ...state, tableLayouts: state.tableLayouts.addItemWithId(layout) }
         }
         const reconciled = TableLayout.reconcile(existing, columns)
