@@ -1,6 +1,12 @@
 // ABOUTME: App-specific keyboard binding configuration
 // ABOUTME: Maps physical keys to action IDs and action prefixes to display group names
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 // prettier-ignore
 const DEFAULT_BINDINGS = {
     ArrowDown : 'navigate:down',
@@ -36,6 +42,12 @@ const GROUP_NAMES = {
     dismiss: 'Search',
     select: 'Navigation',
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const KeymapConfig = { DEFAULT_BINDINGS, GROUP_NAMES }
 export { KeymapConfig }

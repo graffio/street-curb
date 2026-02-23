@@ -5,25 +5,23 @@ import LookupTable from '@graffio/functional/src/lookup-table.js'
 import { AccountSection } from '../types/account-section.js'
 import { EnrichedAccount } from '../types/enriched-account.js'
 
-// Maps account types to display sections
-const TYPE_TO_SECTION = {
-    Bank: 'Cash',
-    Cash: 'Cash',
-    'Credit Card': 'Credit',
-    Investment: 'Investments',
-    '401(k)/403(b)': 'Investments',
-    'Other Asset': 'Other Assets',
-    'Other Liability': 'Other Liabilities',
-}
-
-// Ordered list of section labels for consistent display
-const SECTION_ORDER = ['Cash', 'Credit', 'Investments', 'Other Assets', 'Other Liabilities', 'Other']
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Checks if an enriched account has zero balance (within 1 cent, treats NaN as zero)
     // @sig hasZeroBalance :: EnrichedAccount -> Boolean
     hasZeroBalance: enriched => !Number.isFinite(enriched.balance) || Math.abs(enriched.balance) < 0.01,
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const T = {
     // Returns balance as a number, treating NaN/Infinity as 0
@@ -65,6 +63,12 @@ const T = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const F = {
     // Creates an AccountSection from enriched accounts, computing subtotals
     // @sig createSection :: (String, [EnrichedAccount], Boolean, [AccountSection]?) -> AccountSection
@@ -90,6 +94,12 @@ const F = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Creates sections for ByType sort mode with $0 nested subsections
     // @sig collectByTypeSections :: ([EnrichedAccount], [EnrichedAccount]) -> [AccountSection]
@@ -101,6 +111,32 @@ const A = {
         return result
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Maps account types to display sections
+const TYPE_TO_SECTION = {
+    Bank: 'Cash',
+    Cash: 'Cash',
+    'Credit Card': 'Credit',
+    Investment: 'Investments',
+    '401(k)/403(b)': 'Investments',
+    'Other Asset': 'Other Assets',
+    'Other Liability': 'Other Liabilities',
+}
+
+// Ordered list of section labels for consistent display
+const SECTION_ORDER = ['Cash', 'Credit', 'Investments', 'Other Assets', 'Other Liabilities', 'Other']
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Organizes accounts into sections based on sort mode (always segregates $0)
 // @sig toAccountSections :: (LookupTable<EnrichedAccount>, SortMode) -> LookupTable<AccountSection>
