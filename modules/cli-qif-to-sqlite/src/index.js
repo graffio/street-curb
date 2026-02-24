@@ -1,16 +1,17 @@
 // ABOUTME: QIF parsing module with stable identity tracking
 // ABOUTME: Converts Quicken QIF files to structured data for SQLite import
 
+import { handleCli } from './cli.js'
 import { ImportHistory } from './import-history.js'
-import { ImportLots } from './import-lots.js'
+import { importLots } from './import-lots.js'
 import { Import } from './import.js'
-import { LineGroupToEntry } from './line-group-to-entry.js'
 import { Matching } from './matching.js'
 import { OrphanManagement } from './orphan-management.js'
-import { ParseQifData } from './parse-qif-data.js'
-import { Rollback } from './rollback.js'
+import { parseLineGroup } from './parse-line-group.js'
+import { parseQifData } from './parse-qif-data.js'
 import { Signatures } from './signatures.js'
 import { StableIdentity } from './stable-identity.js'
+import { withRollback } from './with-rollback.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -19,14 +20,15 @@ import { StableIdentity } from './stable-identity.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 export {
-    ParseQifData,
-    LineGroupToEntry,
+    parseQifData,
+    parseLineGroup,
     Signatures,
     StableIdentity,
     Matching,
     Import,
-    ImportLots,
+    importLots,
     ImportHistory,
-    Rollback,
+    withRollback,
+    handleCli,
     OrphanManagement,
 }

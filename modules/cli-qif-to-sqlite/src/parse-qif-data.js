@@ -1,7 +1,5 @@
 // ABOUTME: Parses QIF file content into structured data groups
 // ABOUTME: Converts line-oriented QIF format into typed Entry objects by context
-// COMPLEXITY: export-structure — ParseQifData exposes single parse function; will not grow
-
 /*
  * QIF is a line-oriented format where each row of a file is a single-line entry or a multi-line "LineGroup" (my name)
  * Each row of a LineGroup specifies some attribute of the LineGroup, and the LineGroup as a whole is within some
@@ -21,10 +19,8 @@
  */
 
 import { groupBy } from '@graffio/functional'
-import { LineGroupToEntry } from './line-group-to-entry.js'
+import { parseLineGroup } from './parse-line-group.js'
 import { QifEntry } from './types/index.js'
-
-const { parseLineGroup } = LineGroupToEntry
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -282,5 +278,4 @@ const { TransactionBank, TransactionInvestment } = QifEntry
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const ParseQifData = { parseQifData }
-export { ParseQifData }
+export { parseQifData }

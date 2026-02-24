@@ -1,8 +1,5 @@
 // ABOUTME: Copy-then-replace rollback strategy for safe database imports
 // ABOUTME: Copies database before import, replaces on success, discards on error per D16
-// COMPLEXITY: function-naming — withRollback is an established higher-order function pattern (like withTransaction)
-// COMPLEXITY: export-structure — withRollback is an established higher-order function pattern (like withTransaction)
-
 import { copyFileSync, unlinkSync, existsSync, renameSync } from 'fs'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -128,6 +125,4 @@ const withRollback = (dbPath, openDatabase, importFn) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const Rollback = { withRollback }
-
-export { Rollback }
+export { withRollback }

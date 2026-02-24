@@ -1,7 +1,5 @@
 // ABOUTME: Converts QIF line groups into typed Entry objects
 // ABOUTME: Handles parsing and normalization of accounts, transactions, securities, etc.
-// COMPLEXITY: export-structure — LineGroupToEntry exposes single parse function; will not grow
-
 import { append, assoc, update } from '@graffio/functional'
 import { QifEntry, QifSplit } from './types/index.js'
 
@@ -316,5 +314,4 @@ const parseLineGroup = (currentContext, currentAccount, lineGroup) => {
     if (currentContext === 'Tag')             return Tag.from(F.createTag(lineGroup))
 }
 
-const LineGroupToEntry = { parseLineGroup }
-export { LineGroupToEntry }
+export { parseLineGroup }

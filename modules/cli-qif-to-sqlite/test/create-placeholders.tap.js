@@ -6,7 +6,7 @@ import Database from 'better-sqlite3'
 import { readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
-import { PlaceholderCreator } from '../src/placeholder-creator.js'
+import { createPlaceholders } from '../src/create-placeholders.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const schemaPath = resolve(__dirname, '../schema.sql')
@@ -73,7 +73,7 @@ t.test('Given a database with missing category references', t => {
         insertAccount(db, 'acc_1', 'Checking')
         insertTransaction(db, 'txn_1', 'acc_1', 'cat_missing', null)
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.categories, 1, 'Then one placeholder category should be created')
         const placeholder = db.prepare('SELECT * FROM categories WHERE id = ?').get('cat_missing')
@@ -88,7 +88,7 @@ t.test('Given a database with missing category references', t => {
         insertTransaction(db, 'txn_1', 'acc_1', null, null)
         insertSplit(db, 'split_1', 'txn_1', 'cat_split_missing')
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.categories, 1, 'Then one placeholder category should be created')
         const placeholder = db.prepare('SELECT * FROM categories WHERE id = ?').get('cat_split_missing')
@@ -102,7 +102,7 @@ t.test('Given a database with missing category references', t => {
         insertTransaction(db, 'txn_1', 'acc_1', 'cat_orphan', null)
         db.prepare("UPDATE transactions SET orphanedAt = datetime('now') WHERE id = ?").run('txn_1')
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.categories, 0, 'Then no placeholder should be created for orphaned transaction')
         t.end()
@@ -117,7 +117,7 @@ t.test('Given a database with missing security references', t => {
         insertAccount(db, 'acc_1', 'Investment')
         insertTransaction(db, 'txn_1', 'acc_1', null, 'sec_missing')
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.securities, 1, 'Then one placeholder security should be created')
         const placeholder = db.prepare('SELECT * FROM securities WHERE id = ?').get('sec_missing')
@@ -131,7 +131,7 @@ t.test('Given a database with missing security references', t => {
         const db = createTestDb()
         insertPrice(db, 'price_1', 'sec_price_missing')
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.securities, 1, 'Then one placeholder security should be created')
         t.end()
@@ -142,7 +142,7 @@ t.test('Given a database with missing security references', t => {
         insertAccount(db, 'acc_1', 'Investment')
         insertLot(db, 'lot_1', 'sec_lot_missing')
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.securities, 1, 'Then one placeholder security should be created')
         t.end()
@@ -159,7 +159,7 @@ t.test('Given a database with existing categories and securities', t => {
         insertSecurity(db, 'sec_1', 'Apple Inc', 'AAPL')
         insertTransaction(db, 'txn_1', 'acc_1', 'cat_1', 'sec_1')
 
-        const result = PlaceholderCreator.createPlaceholders(db)
+        const result = createPlaceholders(db)
 
         t.equal(result.categories, 0, 'Then no placeholder categories should be created')
         t.equal(result.securities, 0, 'Then no placeholder securities should be created')
@@ -178,7 +178,7 @@ t.test('Given a change tracker', t => {
         const changes = []
         const changeTracker = { recordChange: (id, type, action) => changes.push({ id, type, action }) }
 
-        PlaceholderCreator.createPlaceholders(db, changeTracker)
+        createPlaceholders(db, changeTracker)
 
         t.equal(changes.length, 2, 'Then two changes should be recorded')
         t.ok(

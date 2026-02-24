@@ -1,7 +1,5 @@
 // ABOUTME: Creates placeholder securities and categories for orphaned references
 // ABOUTME: Ensures all referenced IDs exist after import for referential integrity
-// COMPLEXITY: export-structure — PlaceholderCreator exposes single orchestration function; will not grow
-
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Effects
@@ -88,5 +86,4 @@ const createPlaceholders = (db, changeTracker) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const PlaceholderCreator = { createPlaceholders }
-export { PlaceholderCreator }
+export { createPlaceholders }

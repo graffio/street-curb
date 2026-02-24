@@ -6,7 +6,7 @@ import { existsSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import Database from 'better-sqlite3'
-import { Rollback } from '../src/rollback.js'
+import { withRollback } from '../src/with-rollback.js'
 
 const createTestDbPath = () => join(tmpdir(), `test-rollback-${Date.now()}.db`)
 
@@ -35,7 +35,7 @@ test('Rollback on success replaces original with working copy', async t =>
                 return { success: true }
             }
 
-            const result = Rollback.withRollback(dbPath, openDatabase, importFn)
+            const result = withRollback(dbPath, openDatabase, importFn)
 
             t.test('Then result indicates success', async t => t.equal(result.success, true))
 
@@ -63,7 +63,7 @@ test('Rollback on failure preserves original database', async t =>
                 throw new Error('Import failed!')
             }
 
-            const result = Rollback.withRollback(dbPath, openDatabase, importFn)
+            const result = withRollback(dbPath, openDatabase, importFn)
 
             t.test('Then result indicates failure', async t => {
                 t.equal(result.success, false)
@@ -98,7 +98,7 @@ test('Error context includes progress information', async t =>
                 throw new Error('Failed on transaction')
             }
 
-            const result = Rollback.withRollback(dbPath, openDatabase, importFn)
+            const result = withRollback(dbPath, openDatabase, importFn)
 
             t.test('Then error context includes stage and progress', async t => {
                 t.equal(result.error.stage, 'importing')
