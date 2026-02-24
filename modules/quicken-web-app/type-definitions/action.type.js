@@ -62,10 +62,11 @@ export const Action = {
         ToggleSectionCollapsed : { sectionId: 'String' },
 
         // Global UI actions
-        SetShowReopenBanner : { show: 'Boolean' },
-        SetShowDrawer       : { show: 'Boolean' },
-        ToggleDrawer        : {},
-        SetLoadingStatus    : { status: 'String?' },
+        SetShowReopenBanner    : { show: 'Boolean' },
+        SetShowDrawer          : { show: 'Boolean' },
+        ToggleDrawer           : {},
+        SetLoadingStatus       : { status: 'String?' },
+        SetTransferNavPending  : { pending: 'Object?' },
 
         // Drag state actions
         SetDraggingView  : { viewId: 'String?' },

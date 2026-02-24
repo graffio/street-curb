@@ -1,6 +1,7 @@
 // ABOUTME: Column definitions for investment holdings report
 // ABOUTME: Displays HoldingsTreeNode tree with aggregate/holding data and stale price indicators
 // COMPLEXITY: react-redux-separation — Cell renderers use conditional spread for stale styling (display-only)
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { LookupTable } from '@graffio/functional'
 import React from 'react'

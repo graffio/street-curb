@@ -17,9 +17,11 @@ import {
     SecurityFilterColumn,
 } from '../components/index.js'
 import { SearchChip } from '../components/SearchChip.jsx'
+import { TransferNavConfirmDialog } from '../components/TransferNavConfirmDialog.jsx'
+import { currentStore } from '../store/index.js'
 import { RegisterNavigation } from '../store/register-navigation.js'
 import * as S from '../store/selectors.js'
-import { Action as A } from '../types/index.js'
+import { Action as A, View } from '../types/index.js'
 import { TableLayout as TL } from '../types/table-layout.js'
 
 const { ActionRegistry } = KeymapModule
@@ -50,6 +52,72 @@ const E = {
         if (el) el.value = ''
         post(A.SetTransactionFilter(pageState.viewId, { searchQuery: '' }))
     },
+
+    // Navigates to the matching transfer in the target account — shows confirm dialog if date filter excludes it
+    // @sig navigateToTransfer :: Transaction -> void
+    navigateToTransfer: transaction => {
+        const state = currentStore().getState()
+        const match = S.Transactions.matchingTransfer(state, transaction)
+        const { accountId: targetAccountId, date: matchDate, id: matchId } = match
+        const targetViewId = `reg_${targetAccountId}`
+        const targetName = S.accountName(state, targetAccountId)
+        const targetDateRange = S.UI.dateRange(state, targetViewId)
+        const excluded = targetDateRange && (matchDate < targetDateRange.start || matchDate > targetDateRange.end)
+
+        if (excluded) {
+            post(
+                A.SetTransferNavPending({
+                    targetViewId,
+                    targetAccountId,
+                    accountName: targetName,
+                    transactionId: matchId,
+                    matchDate,
+                }),
+            )
+            return
+        }
+
+        post(A.OpenView(View.Register(targetViewId, targetAccountId, targetName)))
+        post(A.SetViewUiState(targetViewId, { highlightRow: matchId }))
+    },
+
+    // Confirms transfer navigation — adjusts date filter to include the transfer, then navigates
+    // @sig confirmTransferNav :: () -> void
+    confirmTransferNav: () => {
+        const state = currentStore().getState()
+        const pending = S.transferNavPending(state)
+        const { targetViewId, targetAccountId, accountName, transactionId, matchDate } = pending
+        const { start, end } = S.UI.dateRange(state, targetViewId)
+        const expandedStart = matchDate < start ? matchDate : start
+        const expandedEnd = matchDate > end ? matchDate : end
+
+        post(
+            A.SetTransactionFilter(targetViewId, {
+                dateRange: { start: expandedStart, end: expandedEnd },
+                dateRangeKey: 'custom',
+            }),
+        )
+        post(A.OpenView(View.Register(targetViewId, targetAccountId, accountName)))
+        post(A.SetViewUiState(targetViewId, { highlightRow: transactionId }))
+        post(A.SetTransferNavPending(undefined))
+    },
+
+    // Cancels transfer navigation — clears pending state
+    // @sig cancelTransferNav :: () -> void
+    cancelTransferNav: () => post(A.SetTransferNavPending(undefined)),
+
+    // Keyboard action for transfer:navigate — finds highlighted row's transaction and navigates if it's a transfer
+    // @sig executeTransferNavigate :: () -> void
+    executeTransferNavigate: () => {
+        const state = currentStore().getState()
+        const { viewId, accountId, tableLayoutId } = pageState
+        const data = S.Transactions.sortedForDisplay(state, viewId, accountId, tableLayoutId, investmentColumns)
+        const highlightedId = S.Transactions.highlightedId(state, viewId, accountId, tableLayoutId, investmentColumns)
+        const row = data.find(r => r.transaction.id === highlightedId)
+        if (!row) return
+        if (!row.transaction.transferAccountId) return
+        E.navigateToTransfer(row.transaction)
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -63,9 +131,10 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
 
 // prettier-ignore
 const actions = [
-    { id: 'select'     , description: 'Next match'    , execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: 1 })) },
-    { id: 'search:prev', description: 'Previous match', execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: -1 })) },
-    { id: 'search:open', description: 'Open search'   , execute: () => FocusRegistry.focus('search_' + pageState.viewId) },
+    { id: 'select'            , description: 'Next match'    , execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: 1 })) },
+    { id: 'search:prev'      , description: 'Previous match', execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: -1 })) },
+    { id: 'search:open'      , description: 'Open search'   , execute: () => FocusRegistry.focus('search_' + pageState.viewId) },
+    { id: 'transfer:navigate', description: 'Go to transfer', execute: E.executeTransferNavigate },
 ]
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -74,7 +143,7 @@ const actions = [
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-let pageState = { viewId: undefined }
+let pageState = { viewId: undefined, accountId: undefined, tableLayoutId: undefined }
 let actionCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -89,9 +158,10 @@ let actionCleanup
  * @sig InvestmentRegisterPage :: ({ accountId: String, height?: Number }) -> ReactElement
  */
 const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
+    const { cancelTransferNav, clearSearch, confirmTransferNav, navigateToTransfer, registerPageActions } = E
     const viewId = `reg_${accountId}`
     const tableLayoutId = RegisterNavigation.toTableLayoutId('investment', accountId)
-    pageState = { viewId }
+    pageState = { viewId, accountId, tableLayoutId }
 
     // --- Selectors ---
     const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
@@ -115,7 +185,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
         highlightedId,
         onNext: () => post(A.SetViewUiState(viewId, { navigateSearch: 1 })),
         onPrev: () => post(A.SetViewUiState(viewId, { navigateSearch: -1 })),
-        onClear: E.clearSearch,
+        onClear: clearSearch,
     }
 
     const dataTableProps = {
@@ -133,13 +203,13 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
         onColumnOrderChange: newOrder => post(A.SetTableLayout(TL.applyOrderChange(tableLayout, newOrder))),
         onRowClick: row => row.transaction && post(A.SetViewUiState(viewId, { highlightRow: row.transaction.id })),
         onHighlightChange: newId => post(A.SetViewUiState(viewId, { highlightRow: newId })),
-        onEscape: () => searchQuery && E.clearSearch(),
+        onEscape: () => searchQuery && clearSearch(),
         actionContext: viewId,
-        context: { searchQuery: searchQuery || filterQuery },
+        context: { searchQuery: searchQuery || filterQuery, onTransferClick: navigateToTransfer },
     }
 
     return (
-        <Flex direction="column" style={pageContainerStyle} ref={E.registerPageActions}>
+        <Flex direction="column" style={pageContainerStyle} ref={registerPageActions}>
             <FilterChipRow {...filterChipRowProps}>
                 <DateFilterColumn viewId={viewId} />
                 <SecurityFilterColumn viewId={viewId} />
@@ -150,6 +220,7 @@ const InvestmentRegisterPage = ({ accountId, height = '100%' }) => {
             <div style={mainContentStyle}>
                 <DataTable {...dataTableProps} />
             </div>
+            <TransferNavConfirmDialog onConfirm={confirmTransferNav} onCancel={cancelTransferNav} />
         </Flex>
     )
 }

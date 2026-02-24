@@ -191,10 +191,11 @@ const post = action => {
         ToggleSectionCollapsed : () => E.handleAccountListAction(E.dispatch, action),
 
         // Global UI actions (no persistence needed)
-        SetShowReopenBanner : () => E.dispatch(action),
-        SetShowDrawer       : () => E.dispatch(action),
-        ToggleDrawer        : () => E.dispatch(action),
-        SetLoadingStatus    : () => E.dispatch(action),
+        SetShowReopenBanner    : () => E.dispatch(action),
+        SetShowDrawer          : () => E.dispatch(action),
+        ToggleDrawer           : () => E.dispatch(action),
+        SetLoadingStatus       : () => E.dispatch(action),
+        SetTransferNavPending  : () => E.dispatch(action),
 
         // Drag state actions (no persistence needed)
         SetDraggingView : () => E.dispatch(action),

@@ -52,6 +52,7 @@ const showDrawer = state => state.showDrawer
 const loadingStatus = state => state.loadingStatus
 const draggingViewId = state => state.draggingViewId
 const dropTargetGroupId = state => state.dropTargetGroupId
+const transferNavPending = state => state.transferNavPending
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Entity lookups (state, id) -> value
@@ -476,7 +477,31 @@ const T3 = {
     highlightedIdForBank: memoizeReduxStatePerKey(HIGHLIGHT_STATE_KEYS, 'transactionFilters', _makeHighlightSelector(T2.sortedForBankDisplay))
 }
 
-const Transactions = { ...T, ...T2, ...T3 }
+// @sig _isCounterpart :: Transaction -> Transaction -> Boolean
+const _isCounterpart =
+    ({ accountId, transferAccountId, amount, date }) =>
+    ({
+        accountId: candidateAccountId,
+        transferAccountId: candidateTransferAccountId,
+        amount: candidateAmount,
+        date: candidateDate,
+    }) =>
+        candidateAccountId === transferAccountId &&
+        candidateTransferAccountId === accountId &&
+        candidateAmount === -amount &&
+        candidateDate === date
+
+// @sig matchingTransfer :: (State, Transaction) -> Transaction
+const matchingTransfer = (state, source) => {
+    const matches = transactions(state).filter(_isCounterpart(source))
+    if (matches.length === 0)
+        throw new Error(
+            `No matching transfer found for transaction ${source.id} in account ${source.transferAccountId}`,
+        )
+    return matches[0]
+}
+
+const Transactions = { ...T, ...T2, ...T3, matchingTransfer }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Exports
@@ -510,6 +535,7 @@ export {
     tableLayoutProps,
     tableLayouts,
     transactions,
+    transferNavPending,
 
     // Entity lookups
     accountName,

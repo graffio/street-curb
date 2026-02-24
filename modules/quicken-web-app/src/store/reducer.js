@@ -69,6 +69,7 @@ const createEmptyState = () => ({
     loadingStatus: undefined,
     draggingViewId: undefined,
     dropTargetGroupId: undefined,
+    transferNavPending: undefined,
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -130,10 +131,11 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ToggleSectionCollapsed : () => ({ ...state, collapsedSections: toggleItem(action.sectionId, state.collapsedSections) }),
 
         // Global UI actions
-        SetShowReopenBanner : () => ({ ...state, showReopenBanner: action.show }),
-        SetShowDrawer       : () => ({ ...state, showDrawer: action.show }),
-        ToggleDrawer        : () => ({ ...state, showDrawer: !state.showDrawer }),
-        SetLoadingStatus    : () => ({ ...state, loadingStatus: action.status }),
+        SetShowReopenBanner    : () => ({ ...state, showReopenBanner: action.show }),
+        SetShowDrawer          : () => ({ ...state, showDrawer: action.show }),
+        ToggleDrawer           : () => ({ ...state, showDrawer: !state.showDrawer }),
+        SetLoadingStatus       : () => ({ ...state, loadingStatus: action.status }),
+        SetTransferNavPending  : () => ({ ...state, transferNavPending: action.pending }),
 
         // Drag state actions
         SetDraggingView : () => ({ ...state, draggingViewId: action.viewId }),

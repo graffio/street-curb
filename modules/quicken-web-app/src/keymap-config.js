@@ -30,8 +30,9 @@ const DEFAULT_BINDINGS = {
     g         : 'filter:group-by',
     f         : 'filter:search',
     '/'       : 'filter:search',
-    s             : 'search:open',
-    'shift+Enter' : 'search:prev',
+    s                 : 'search:open',
+    'shift+Enter'     : 'search:prev',
+    'ctrl+shift+x'    : 'transfer:navigate',
 }
 
 const GROUP_NAMES = {
@@ -41,6 +42,7 @@ const GROUP_NAMES = {
     date: 'Date',
     dismiss: 'Search',
     select: 'Navigation',
+    transfer: 'Transfer',
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

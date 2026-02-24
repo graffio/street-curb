@@ -1,6 +1,7 @@
 // ABOUTME: Cell renderers for transaction register table columns
 // ABOUTME: TanStack Table components with search highlighting and formatting
 // COMPLEXITY: react-redux-separation — TanStack Table cell callbacks, not standard app components
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { containsIgnoreCase, isNil } from '@graffio/functional'
 import React from 'react'
@@ -109,31 +110,47 @@ const DefaultCell = ({ getValue, column, table }) => {
     )
 }
 
-// Cell renderer for category column — shows [Account Name] for transfers, category name otherwise
+// Cell renderer for category column — shows clickable [Account Name] for transfers, category name otherwise
 // @sig CategoryCell :: { getValue: Function, row: Row, table: Table } -> ReactElement
 const CategoryCell = ({ getValue, row, table }) => {
+    const handleTransferClick = e => {
+        e.stopPropagation()
+        table.options.meta?.onTransferClick?.(row.original.transaction)
+    }
     const categoryId = getValue()
-    const transferAccountId = row.original.transaction.transferAccountId
+    const { transferAccountId } = row.original.transaction
+    const searchQuery = table.options.meta?.searchQuery
     const categoryName = useSelector(state => S.categoryName(state, categoryId))
     const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : undefined))
-    const name = transferName ? `[${transferName}]` : categoryName
-    const searchQuery = table.options.meta?.searchQuery
+
+    if (transferName)
+        return (
+            <span className="transfer-link" style={{ display: 'block' }} onClick={handleTransferClick}>
+                <HighlightedText text={`[${transferName}]`} searchQuery={searchQuery} />
+            </span>
+        )
 
     return (
         <span style={{ display: 'block' }}>
-            <HighlightedText text={name} searchQuery={searchQuery} />
+            <HighlightedText text={categoryName} searchQuery={searchQuery} />
         </span>
     )
 }
 
-// Cell renderer for investment action column — shows transfer account as subtitle when present
+// Cell renderer for investment action column — shows clickable transfer account as subtitle when present
 // @sig ActionCell :: { getValue: Function, row: Row, table: Table } -> ReactElement
 const ActionCell = ({ getValue, row, table }) => {
+    const handleTransferClick = e => {
+        e.stopPropagation()
+        table.options.meta?.onTransferClick?.(row.original.transaction)
+    }
     const code = getValue()
     const transferAccountId = row.original.transaction.transferAccountId
     const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : undefined))
     const searchQuery = table.options.meta?.searchQuery
     const label = Transaction.ACTION_LABELS[code] || code || ''
+
+    const linkStyle = { fontSize: 'var(--font-size-1)', ...ellipsisStyle }
 
     if (!transferName)
         return (
@@ -147,7 +164,7 @@ const ActionCell = ({ getValue, row, table }) => {
             <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
                 <HighlightedText text={label} searchQuery={searchQuery} />
             </div>
-            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>
+            <div className="transfer-link" style={linkStyle} onClick={handleTransferClick}>
                 <HighlightedText text={transferName} searchQuery={searchQuery} />
             </div>
         </div>

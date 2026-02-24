@@ -1,5 +1,6 @@
 // ABOUTME: Sidebar reports list that opens report tabs on click
 // ABOUTME: Dispatches OpenView actions for report views
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { Box, Button, Flex, Heading, Text } from '@radix-ui/themes'
 import React from 'react'

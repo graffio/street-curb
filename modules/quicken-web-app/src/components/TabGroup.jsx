@@ -1,5 +1,6 @@
 // ABOUTME: Individual tab group with tab bar and content area
 // ABOUTME: Uses View.match() for exhaustive content rendering
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { Box, Button, Flex, Text, Tooltip } from '@radix-ui/themes'
 import React from 'react'

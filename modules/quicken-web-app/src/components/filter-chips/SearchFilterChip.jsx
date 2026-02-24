@@ -1,5 +1,6 @@
 // ABOUTME: Search filter chip with inline text input popover
 // ABOUTME: Renders search trigger with clear button and popover text field
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { Box, Flex, Popover, Text, TextField } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'

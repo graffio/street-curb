@@ -1,5 +1,6 @@
 // ABOUTME: Sidebar account list with collapsible sections and sort modes
 // ABOUTME: Reads accounts from Redux and dispatches OpenView actions
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@radix-ui/themes'
 import React from 'react'

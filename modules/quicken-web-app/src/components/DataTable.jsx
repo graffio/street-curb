@@ -1,5 +1,6 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
 // ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import '../styles/datatable.css'
 
@@ -430,7 +431,7 @@ const DataTable = ({
         if (highlightedRowIndex >= startIndex && highlightedRowIndex <= endIndex) return
 
         try {
-            virtualizer.scrollToIndex(highlightedRowIndex, { align: 'auto' })
+            virtualizer.scrollToIndex(highlightedRowIndex, { align: 'center' })
         } catch {
             // Scroll failures are non-critical
         }

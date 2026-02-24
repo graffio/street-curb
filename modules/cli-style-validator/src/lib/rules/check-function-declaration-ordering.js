@@ -70,8 +70,8 @@ const T = {
     // Build error message explaining why function must be moved
     // @sig buildFunctionOrderingMessage :: (String, String) -> String
     buildFunctionOrderingMessage: (funcType, funcName) =>
-        `${funcType} '${funcName}' must be defined before hooks. ` +
-        'FIX: Move the function definition above the first useSelector/useState call. ' +
+        `${funcType} '${funcName}' must be defined before non-function statements. ` +
+        'FIX: Move the function definition to the top of its block, before any variable declarations. ' +
         'Safe because: closures capture variable bindings, not values - ' +
         'variables will be initialized before the function is called.',
 }
