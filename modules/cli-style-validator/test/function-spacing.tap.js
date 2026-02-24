@@ -3,9 +3,7 @@
 
 import t from 'tap'
 import { checkFunctionSpacing } from '../src/lib/rules/check-function-spacing.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given multiline function declarations', t => {
     t.test('When a multiline function has no blank line above', t => {

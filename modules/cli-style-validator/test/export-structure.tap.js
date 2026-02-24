@@ -1,8 +1,6 @@
 import t from 'tap'
 import { checkExportStructure } from '../src/lib/rules/check-export-structure.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given a file with default export', t => {
     t.test('When the file uses export default', t => {

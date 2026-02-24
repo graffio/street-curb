@@ -2,7 +2,7 @@
 // ABOUTME: Covers toDescriptor function for Tagged and TaggedSum types
 
 import t from 'tap'
-import { TypeDescriptor } from '../src/descriptors/type-descriptor.js'
+import { toDescriptor } from '../src/descriptors/to-descriptor.js'
 
 t.test('TypeDescriptor', t => {
     t.test('toDescriptor', t => {
@@ -14,7 +14,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
                 const { childTypes, fields, kind, name, needsLookupTable } = descriptor
 
                 t.equal(kind, 'tagged', 'Then kind is tagged')
@@ -37,7 +37,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
 
                 t.equal(descriptor.kind, 'tagged', 'Then kind is tagged')
                 t.equal(descriptor.fields.account.baseType, 'Tagged', 'Then account field baseType is Tagged')
@@ -54,7 +54,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
                 const { childTypes, needsLookupTable } = descriptor
                 const { baseType, idField, taggedType } = descriptor.fields.accounts
 
@@ -75,7 +75,7 @@ t.test('TypeDescriptor', t => {
                     functions,
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
 
                 t.same(descriptor.imports, imports, 'Then imports are preserved')
                 t.same(descriptor.functions, functions, 'Then functions are preserved')
@@ -97,7 +97,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
                 const { childTypes, kind, name, needsLookupTable, variants } = descriptor
 
                 t.equal(kind, 'taggedSum', 'Then kind is taggedSum')
@@ -125,7 +125,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
 
                 t.same(descriptor.childTypes, ['Account'], 'Then childTypes contains Account')
                 t.equal(descriptor.variants.Register.account.taggedType, 'Account', 'Then Register.account is Account')
@@ -143,7 +143,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                const descriptor = TypeDescriptor.toDescriptor(parseResult)
+                const descriptor = toDescriptor(parseResult)
 
                 t.equal(descriptor.variants.WithItems.items.baseType, 'LookupTable', 'Then items is LookupTable')
                 t.same(descriptor.childTypes, ['Item'], 'Then childTypes contains Item')
@@ -162,7 +162,7 @@ t.test('TypeDescriptor', t => {
                     functions: [],
                 }
 
-                t.throws(() => TypeDescriptor.toDescriptor(parseResult), 'Then throws an error')
+                t.throws(() => toDescriptor(parseResult), 'Then throws an error')
                 t.end()
             })
 

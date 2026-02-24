@@ -8,10 +8,11 @@ import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 import { Transformers as TS } from '../shared/transformers.js'
 
-const PRIORITY = 7
-
-// Entry point files that are allowed to be lowercase
-const ENTRY_POINT_FILES = new Set(['main.jsx', 'index.jsx', 'app.jsx', 'main.js', 'index.js', 'app.js'])
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if name is simple lowercase (no hyphens)
@@ -52,13 +53,23 @@ const P = {
     },
 }
 
-const violation = FS.createViolation('file-naming', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a file-naming violation
     // @sig createViolation :: String -> Violation
     createViolation: message => violation(1, 1, message),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const V = {
     // Validate JSX component file naming (should be PascalCase)
@@ -115,6 +126,25 @@ const V = {
         return []
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 7
+
+// Entry point files that are allowed to be lowercase
+const ENTRY_POINT_FILES = new Set(['main.jsx', 'index.jsx', 'app.jsx', 'main.js', 'index.js', 'app.js'])
+
+const violation = FS.createViolation('file-naming', PRIORITY)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run file-naming rule with COMPLEXITY exemption support
 // @sig checkFileNaming :: (AST?, String, String) -> [Violation]

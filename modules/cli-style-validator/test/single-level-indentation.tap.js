@@ -1,8 +1,6 @@
 import t from 'tap'
 import { checkSingleLevelIndentation } from '../src/lib/rules/check-single-level-indentation.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given a function with nested indentation violations', t => {
     t.test('When the function contains nested if statements', t => {

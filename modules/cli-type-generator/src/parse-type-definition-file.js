@@ -6,7 +6,7 @@ import { parse } from 'acorn'
 import { generate } from 'escodegen'
 import { walk } from 'estree-walker'
 import fs from 'fs'
-import { TypeDescriptor } from './descriptors/type-descriptor.js'
+import { toDescriptor } from './descriptors/to-descriptor.js'
 import { ImportSpecifier } from './types/import-specifier.js'
 
 /*
@@ -271,7 +271,7 @@ const parseTypeDefinitionFile = filePath => {
 
         // Normalize to TypeDescriptor with all fields converted to FieldDescriptor
         const parseResult = { typeDefinition: typeDef, imports, functions: compact(functions) }
-        const descriptor = TypeDescriptor.toDescriptor(parseResult)
+        const descriptor = toDescriptor(parseResult)
 
         // Add sourceContent for backward compatibility (not part of TypeDescriptor schema)
         return { ...descriptor, sourceContent }

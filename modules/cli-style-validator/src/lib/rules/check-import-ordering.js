@@ -4,19 +4,35 @@
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const P = {
     // Check if line uses CommonJS require syntax
     // @sig hasRequire :: String -> Boolean
     hasRequire: line => /\brequire\s*\(/.test(line),
 }
 
-const violation = FS.createViolation('import-ordering', 4)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create an import-ordering violation
     // @sig createViolation :: (Number, String) -> Violation
     createViolation: (line, message) => violation(line, 1, message),
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const V = {
     // Validate import statements in source file
@@ -32,6 +48,12 @@ const V = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const A = {
     // Check a single line for import violations and add to array
     // @sig collectLineViolations :: (String, Number, [Violation]) -> Void
@@ -40,6 +62,20 @@ const A = {
             violations.push(F.createViolation(lineNum, 'Use ES6 import syntax instead of CommonJS require'))
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const violation = FS.createViolation('import-ordering', 4)
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Run import-ordering rule with COMPLEXITY exemption support
 // @sig checkImportOrdering :: (AST?, String, String) -> [Violation]

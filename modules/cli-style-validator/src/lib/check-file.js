@@ -2,7 +2,7 @@
 // ABOUTME: Orchestrates running all style rules on source files
 
 import { readFile } from 'fs/promises'
-import { Parser } from './parser.js'
+import { parseCode } from './parse-code.js'
 import { Predicates as PS } from './shared/predicates.js'
 import { checkAboutmeComment } from './rules/check-aboutme-comment.js'
 import { checkChainExtraction } from './rules/check-chain-extraction.js'
@@ -51,7 +51,7 @@ const checkFile = async filePath => {
 
     let ast
     try {
-        ast = Parser.parseCode(sourceCode)
+        ast = parseCode(sourceCode)
     } catch (parseError) {
         console.warn(`AST parsing failed for ${filePath}: ${parseError.message}`)
     }
