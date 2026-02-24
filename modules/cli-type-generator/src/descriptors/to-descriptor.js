@@ -1,6 +1,5 @@
 // ABOUTME: Normalized descriptor for entire type definitions
 // ABOUTME: Converts parsed type definitions into a normalized structure for code generation
-// COMPLEXITY: export-structure — TypeDescriptor namespace provides domain context even with single method
 
 import { FieldDescriptor } from './field-descriptor.js'
 
@@ -130,6 +129,4 @@ const toDescriptor = parseResult => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const TypeDescriptor = { toDescriptor }
-
-export { TypeDescriptor }
+export { toDescriptor }
