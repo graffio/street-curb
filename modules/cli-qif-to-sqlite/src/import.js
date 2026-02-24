@@ -2,11 +2,11 @@
 // ABOUTME: Coordinates account/security/transaction import and orphan detection
 
 import { CategoryResolver } from './category-resolver.js'
-import { ImportLots } from './import-lots.js'
+import { importLots } from './import-lots.js'
 import { Matching } from './matching.js'
-import { PlaceholderCreator } from './placeholder-creator.js'
+import { createPlaceholders } from './create-placeholders.js'
 import { Signatures as SigT } from './signatures.js'
-import { SqlBoundary } from './sql-boundary.js'
+import { toSqlParams } from './to-sql-params.js'
 import { StableIdentity } from './stable-identity.js'
 import { ImportIssue } from './types/index.js'
 
@@ -233,10 +233,10 @@ const E = {
 
         T.toTimedResult(report, 'Computing running balances', () => E.updateRunningBalances(db))
 
-        T.toTimedResult(report, 'Computing lots', () => ImportLots.importLots(db, T.toLotContext(db)))
+        T.toTimedResult(report, 'Computing lots', () => importLots(db, T.toLotContext(db)))
 
         T.toTimedResult(report, 'Creating placeholders for missing references', () =>
-            PlaceholderCreator.createPlaceholders(db, changeTracker),
+            createPlaceholders(db, changeTracker),
         )
 
         const orphanLookups = { accounts: accLookup, categories: catLookup, tags: tagLookup }
@@ -256,14 +256,14 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(...SqlBoundary.toSqlParams(id, name, type, description, creditLimit))
+            insertStatement.run(...toSqlParams(id, name, type, description, creditLimit))
             E.restoreOrphanedEntity(db, 'Account', id, changeTracker, orphanedAt)
             accountMap.set(name, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Account')
-        insertStatement.run(...SqlBoundary.toSqlParams(id, name, type, description, creditLimit))
+        insertStatement.run(...toSqlParams(id, name, type, description, creditLimit))
         StableIdentity.persistIdentity(db, { id, entityType: 'Account', signature: name })
         accountMap.set(name, id)
         changeTracker.record('Account', id, 'created')
@@ -280,18 +280,14 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(
-                ...SqlBoundary.toSqlParams(id, name, description, budgetAmount, isIncome, isTax, taxSchedule),
-            )
+            insertStatement.run(...toSqlParams(id, name, description, budgetAmount, isIncome, isTax, taxSchedule))
             E.restoreOrphanedEntity(db, 'Category', id, changeTracker, orphanedAt)
             categoryMap.set(name, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Category')
-        insertStatement.run(
-            ...SqlBoundary.toSqlParams(id, name, description, budgetAmount, isIncome, isTax, taxSchedule),
-        )
+        insertStatement.run(...toSqlParams(id, name, description, budgetAmount, isIncome, isTax, taxSchedule))
         StableIdentity.persistIdentity(db, { id, entityType: 'Category', signature: name })
         categoryMap.set(name, id)
         changeTracker.record('Category', id, 'created')
@@ -306,14 +302,14 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(...SqlBoundary.toSqlParams(id, name, color, description))
+            insertStatement.run(...toSqlParams(id, name, color, description))
             E.restoreOrphanedEntity(db, 'Tag', id, changeTracker, orphanedAt)
             tagMap.set(name, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Tag')
-        insertStatement.run(...SqlBoundary.toSqlParams(id, name, color, description))
+        insertStatement.run(...toSqlParams(id, name, color, description))
         StableIdentity.persistIdentity(db, { id, entityType: 'Tag', signature: name })
         tagMap.set(name, id)
         changeTracker.record('Tag', id, 'created')
@@ -337,14 +333,14 @@ const E = {
         if (existing) {
             const { id, orphanedAt } = existing
             tracker.markSeen(id)
-            insertStatement.run(...SqlBoundary.toSqlParams(id, name, symbol, type, goal))
+            insertStatement.run(...toSqlParams(id, name, symbol, type, goal))
             E.restoreOrphanedEntity(db, 'Security', id, changeTracker, orphanedAt)
             E.storeSecurityInMap(securityMap, name, symbol, id)
             return
         }
 
         const id = StableIdentity.createStableId(db, 'Security')
-        insertStatement.run(...SqlBoundary.toSqlParams(id, name, symbol, type, goal))
+        insertStatement.run(...toSqlParams(id, name, symbol, type, goal))
         StableIdentity.persistIdentity(db, { id, entityType: 'Security', signature })
         E.storeSecurityInMap(securityMap, name, symbol, id)
         changeTracker.record('Security', id, 'created')
@@ -362,13 +358,13 @@ const E = {
         const existing = Matching.findTransactionMatch(splitLookup, signature)
         if (existing) {
             const { id, orphanedAt } = existing
-            stmt.run(...SqlBoundary.toSqlParams(id, transactionId, categoryId, transferAccountId, amount, memo))
+            stmt.run(...toSqlParams(id, transactionId, categoryId, transferAccountId, amount, memo))
             E.restoreOrphanedEntity(db, 'Split', id, changeTracker, orphanedAt)
             return { id, isNew: false }
         }
 
         const id = StableIdentity.createStableId(db, 'Split')
-        stmt.run(...SqlBoundary.toSqlParams(id, transactionId, categoryId, transferAccountId, amount, memo))
+        stmt.run(...toSqlParams(id, transactionId, categoryId, transferAccountId, amount, memo))
         StableIdentity.persistIdentity(db, { id, entityType: 'Split', signature })
         changeTracker.record('Split', id, 'created')
         return { id, isNew: true }
@@ -408,7 +404,7 @@ const E = {
         const normalizedAmount = isBankType && amount === undefined ? 0 : amount
 
         // Common values for both INSERT and UPDATE (field order matches statement definitions)
-        const values = SqlBoundary.toSqlParams(
+        const values = toSqlParams(
             accountId,
             dateString,
             normalizedAmount,
@@ -491,7 +487,7 @@ const E = {
         }
 
         const id = StableIdentity.createStableId(db, 'Price')
-        insert.run(...SqlBoundary.toSqlParams(id, securityId, dateString, priceValue))
+        insert.run(...toSqlParams(id, securityId, dateString, priceValue))
         StableIdentity.persistIdentity(db, { id, entityType: 'Price', signature })
         changeTracker.record('Price', id, 'created')
         return { id, isNew: true }

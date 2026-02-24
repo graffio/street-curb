@@ -1,6 +1,6 @@
 // ABOUTME: Boundary converter for sql.js parameter binding
 // ABOUTME: Converts undefined to null at the sql.js interface boundary
-// COMPLEXITY: export-structure — SqlBoundary namespace documents boundary intent; will grow as needed
+// COMPLEXITY: no-null-literal — toSqlParams is the sql.js boundary; null is required by the driver API
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -14,6 +14,4 @@
 // @sig toSqlParams :: ...Any -> [Any]
 const toSqlParams = (...values) => values.map(v => (v === undefined ? null : v))
 
-const SqlBoundary = { toSqlParams }
-
-export { SqlBoundary }
+export { toSqlParams }

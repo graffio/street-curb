@@ -1,6 +1,6 @@
 // ABOUTME: CLI command implementations for QIF database operations with stable identity
 // ABOUTME: Thin wrappers that call services and handle presentation
-// COMPLEXITY: export-structure — Cli exposes single entry point; will not grow
+// COMPLEXITY: export-structure — handleCli is the CLI entry point; cli.js is the conventional name
 
 import Database from 'better-sqlite3'
 import { createInterface } from 'readline'
@@ -12,8 +12,8 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { ImportHistory } from './import-history.js'
 import { Import } from './import.js'
-import { ParseQifData } from './parse-qif-data.js'
-import { Rollback } from './rollback.js'
+import { parseQifData } from './parse-qif-data.js'
+import { withRollback } from './with-rollback.js'
 import { QifEntry } from './types/index.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -395,7 +395,7 @@ const E = {
 
         console.log(`Parsing QIF file: ${file}`)
         const qifContent = readFileSync(file, 'utf-8')
-        const parsed = ParseQifData.parseQifData(qifContent)
+        const parsed = parseQifData(qifContent)
         const data = T.toImportData(parsed)
 
         console.log(`\nParsed: ${data.accounts.length} accounts, ${data.transactions.length} transactions`)
@@ -408,7 +408,7 @@ const E = {
         }
 
         const importFn = F.createImportFn(data, qifContent)
-        const { success, result, error } = Rollback.withRollback(database, T.toOpenDatabase, importFn)
+        const { success, result, error } = withRollback(database, T.toOpenDatabase, importFn)
 
         if (success) {
             E.emitChangeSummary(result.changeCounts, result.changes)
@@ -529,5 +529,7 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const Cli = { handleCli: () => E.main() }
-export { Cli }
+// @sig handleCli :: () -> Promise void
+const handleCli = () => E.main()
+
+export { handleCli }

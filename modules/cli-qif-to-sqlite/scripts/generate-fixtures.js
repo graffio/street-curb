@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url'
 import { isNil } from '@graffio/functional'
 import { Import } from '../src/import.js'
 import { MockDataGenerator } from '../src/mock-data-generator.js'
-import { ParseQifData } from '../src/parse-qif-data.js'
+import { parseQifData } from '../src/parse-qif-data.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -412,7 +412,7 @@ const E = {
         // Parse QIF and import to SQLite
         console.log('  Importing to SQLite...')
         if (existsSync(sqlitePath)) unlinkSync(sqlitePath)
-        const parsed = ParseQifData.parseQifData(qif)
+        const parsed = parseQifData(qif)
         const importData = T.toImportData(parsed)
         const db = new Database(sqlitePath)
         db.exec(readFileSync(SCHEMA_PATH, 'utf-8'))

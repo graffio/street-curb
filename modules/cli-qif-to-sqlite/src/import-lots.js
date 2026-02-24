@@ -1,8 +1,6 @@
 // ABOUTME: FIFO lot tracking computed from investment transactions
 // ABOUTME: Extracted from import.js per D12 because it's algorithmically distinct
-// COMPLEXITY: export-structure — ImportLots exposes single orchestration function; will not grow
-
-import { SqlBoundary } from './sql-boundary.js'
+import { toSqlParams } from './to-sql-params.js'
 import { StableIdentity } from './stable-identity.js'
 import { Signatures as SigT } from './signatures.js'
 
@@ -346,7 +344,7 @@ const E = {
         const allCols = [...cols, ...moreCols].join(', ')
         const sql = `INSERT OR REPLACE INTO lots (${allCols}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
         db.prepare(sql).run(
-            ...SqlBoundary.toSqlParams(
+            ...toSqlParams(
                 id,
                 accountId,
                 securityId,
@@ -367,7 +365,7 @@ const E = {
         db.prepare(
             `INSERT OR REPLACE INTO lotAllocations (id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)
             VALUES (?, ?, ?, ?, ?, ?)`,
-        ).run(...SqlBoundary.toSqlParams(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date))
+        ).run(...toSqlParams(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date))
     },
 
     // Save a single modified lot - extracted for forEach compliance
@@ -581,6 +579,4 @@ const EPSILON = 1e-10
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const ImportLots = { importLots }
-
-export { ImportLots }
+export { importLots }
