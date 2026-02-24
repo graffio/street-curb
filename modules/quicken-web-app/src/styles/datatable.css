@@ -8,3 +8,11 @@
     border-radius: 4px;
     background-color: rgba(0, 0, 0, 0.3);
 }
+
+/* Clickable transfer link in category cell */
+.transfer-link {
+    cursor: pointer;
+}
+.transfer-link:hover {
+    text-decoration: underline;
+}

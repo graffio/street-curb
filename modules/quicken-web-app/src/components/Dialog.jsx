@@ -1,8 +1,14 @@
 // ABOUTME: Portal-aware Dialog wrapping @radix-ui/react-dialog with proper theme inheritance
-// ABOUTME: Automatically creates themed portal container for dialogs rendered outside app tree
+// ABOUTME: Includes OkCancel content variant with ActionRegistry keyboard support for dismiss/select
 
+import { KeymapModule } from '@graffio/keymap'
 import * as RadixDialog from '@radix-ui/react-dialog'
+import { Button, Flex } from '@radix-ui/themes'
 import { forwardRef } from 'react'
+import { KeymapConfig } from '../keymap-config.js'
+
+const { ActionRegistry, normalizeKey } = KeymapModule
+const { DEFAULT_BINDINGS } = KeymapConfig
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -74,6 +80,28 @@ const F = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const E = {
+    // Routes keys through ActionRegistry — blocks global shortcuts while dialog is open
+    // @sig handleContentKey :: KeyboardEvent -> void
+    handleContentKey: e => {
+        e.stopPropagation()
+        const tag = e.target.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return
+        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
+        if (!actionId) return
+        const action = ActionRegistry.resolve(actionId, undefined)
+        if (!action) return
+        e.preventDefault()
+        action.execute()
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
 // Components
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -119,7 +147,7 @@ const Overlay = forwardRef(({ className, style, ...props }, ref) => (
 ))
 Overlay.displayName = 'Dialog.Overlay'
 
-// Dialog Content component with automatic centering
+// Dialog Content with keyboard routing when used with ConfirmButtons
 // @sig Content :: Props -> JSXElement
 const Content = forwardRef(({ children, className, style, maxWidth = '90vw', ...props }, ref) => (
     <RadixDialog.Content ref={ref} className={className} style={F.toContentStyle(maxWidth, style)} {...props}>
@@ -128,11 +156,50 @@ const Content = forwardRef(({ children, className, style, maxWidth = '90vw', ...
 ))
 Content.displayName = 'Dialog.Content'
 
+// Content variant with OK/Cancel buttons and ActionRegistry keyboard support (dismiss/select)
+// Ref callback registers actions at effect-time — no render-time side effects
+// @sig OkCancel :: { onConfirm, onCancel, confirmLabel?, cancelLabel?, children, ...contentProps } -> ReactElement
+const OkCancel = ({ onConfirm, onCancel, confirmLabel = 'OK', cancelLabel = 'Cancel', children, ...contentProps }) => {
+    // Registers dismiss/select actions on mount, cleans up on unmount
+    // @sig ref :: Element? -> void
+    const ref = element => {
+        confirmCleanup?.()
+        confirmCleanup = undefined
+        if (!element) return
+        confirmCleanup = ActionRegistry.register(undefined, [
+            { id: 'dismiss', description: 'Cancel', execute: () => onCancel() },
+            { id: 'select', description: 'Confirm', execute: () => onConfirm() },
+        ])
+    }
+
+    return (
+        <Content ref={ref} onKeyDown={E.handleContentKey} onEscapeKeyDown={e => e.preventDefault()} {...contentProps}>
+            {children}
+            <Flex gap="3" justify="end">
+                <Button variant="soft" onClick={onCancel}>
+                    {cancelLabel}
+                </Button>
+                <Button variant="solid" onClick={onConfirm}>
+                    {confirmLabel}
+                </Button>
+            </Flex>
+        </Content>
+    )
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+let confirmCleanup
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const Dialog = { Root, Portal, Trigger, Overlay, Content, Title, Description, Close }
+const Dialog = { Root, Portal, Trigger, Overlay, Content, Title, Description, Close, OkCancel }
 export { Dialog }
