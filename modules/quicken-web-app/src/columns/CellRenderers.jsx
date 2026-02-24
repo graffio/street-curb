@@ -137,14 +137,20 @@ const CategoryCell = ({ getValue, row, table }) => {
     )
 }
 
-// Cell renderer for investment action column — shows transfer account as subtitle when present
+// Cell renderer for investment action column — shows clickable transfer account as subtitle when present
 // @sig ActionCell :: { getValue: Function, row: Row, table: Table } -> ReactElement
 const ActionCell = ({ getValue, row, table }) => {
+    const handleTransferClick = e => {
+        e.stopPropagation()
+        table.options.meta?.onTransferClick?.(row.original.transaction)
+    }
     const code = getValue()
     const transferAccountId = row.original.transaction.transferAccountId
     const transferName = useSelector(state => (transferAccountId ? S.accountName(state, transferAccountId) : undefined))
     const searchQuery = table.options.meta?.searchQuery
     const label = Transaction.ACTION_LABELS[code] || code || ''
+
+    const linkStyle = { fontSize: 'var(--font-size-1)', ...ellipsisStyle }
 
     if (!transferName)
         return (
@@ -158,7 +164,7 @@ const ActionCell = ({ getValue, row, table }) => {
             <div style={{ color: 'var(--gray-12)', ...ellipsisStyle }}>
                 <HighlightedText text={label} searchQuery={searchQuery} />
             </div>
-            <div style={{ color: 'var(--gray-11)', fontSize: 'var(--font-size-1)', ...ellipsisStyle }}>
+            <div className="transfer-link" style={linkStyle} onClick={handleTransferClick}>
                 <HighlightedText text={transferName} searchQuery={searchQuery} />
             </div>
         </div>
