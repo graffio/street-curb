@@ -77,6 +77,8 @@
  *  ToggleDrawer
  *  SetLoadingStatus
  *      status: "String?"
+ *  SetTransferNavPending
+ *      pending: "Object?"
  *  SetDraggingView
  *      viewId: "String?"
  *  SetDropTarget
@@ -142,6 +144,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetShowDrawer',
         'ToggleDrawer',
         'SetLoadingStatus',
+        'SetTransferNavPending',
         'SetDraggingView',
         'SetDropTarget',
         'InitializeSystem',
@@ -201,6 +204,7 @@ const toString = {
     setShowDrawer          : function () { return `Action.SetShowDrawer(${R._toString(this.show)})` },
     toggleDrawer           : function () { return `Action.ToggleDrawer()` },
     setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
+    setTransferNavPending  : function () { return `Action.SetTransferNavPending(${R._toString(this.pending)})` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
     initializeSystem       : function () { return `Action.InitializeSystem()` },
@@ -241,6 +245,7 @@ const toJSON = {
     setShowDrawer          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleDrawer           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setTransferNavPending  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     initializeSystem       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -728,6 +733,22 @@ const SetLoadingStatusConstructor = function SetLoadingStatus(status) {
 Action.SetLoadingStatus = SetLoadingStatusConstructor
 
 /*
+ * Construct a Action.SetTransferNavPending instance
+ * @sig SetTransferNavPending :: (Object?) -> Action.SetTransferNavPending
+ */
+const SetTransferNavPendingConstructor = function SetTransferNavPending(pending) {
+    const constructorName = 'Action.SetTransferNavPending(pending)'
+
+    R.validateObject(constructorName, 'pending', true, pending)
+
+    const result = Object.create(SetTransferNavPendingPrototype)
+    if (pending !== undefined) result.pending = pending
+    return result
+}
+
+Action.SetTransferNavPending = SetTransferNavPendingConstructor
+
+/*
  * Construct a Action.SetDraggingView instance
  * @sig SetDraggingView :: (String?) -> Action.SetDraggingView
  */
@@ -1017,6 +1038,14 @@ const SetLoadingStatusPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetLoadingStatusConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetTransferNavPendingPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetTransferNavPending', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setTransferNavPending, enumerable: false },
+    toJSON: { value: toJSON.setTransferNavPending, enumerable: false },
+    constructor: { value: SetTransferNavPendingConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SetDraggingViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetDraggingView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1086,6 +1115,7 @@ SetShowReopenBannerConstructor.prototype = SetShowReopenBannerPrototype
 SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
 ToggleDrawerConstructor.prototype = ToggleDrawerPrototype
 SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
+SetTransferNavPendingConstructor.prototype = SetTransferNavPendingPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
 InitializeSystemConstructor.prototype = InitializeSystemPrototype
@@ -1120,6 +1150,7 @@ SetShowReopenBannerConstructor.is = val => val && val.constructor === SetShowReo
 SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerConstructor
 ToggleDrawerConstructor.is = val => val && val.constructor === ToggleDrawerConstructor
 SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
+SetTransferNavPendingConstructor.is = val => val && val.constructor === SetTransferNavPendingConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
 InitializeSystemConstructor.is = val => val && val.constructor === InitializeSystemConstructor
@@ -1154,6 +1185,7 @@ SetShowReopenBannerConstructor.toString = () => 'Action.SetShowReopenBanner'
 SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
 ToggleDrawerConstructor.toString = () => 'Action.ToggleDrawer'
 SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
+SetTransferNavPendingConstructor.toString = () => 'Action.SetTransferNavPending'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
 InitializeSystemConstructor.toString = () => 'Action.InitializeSystem'
@@ -1194,6 +1226,7 @@ SetShowReopenBannerConstructor._from = _input => Action.SetShowReopenBanner(_inp
 SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
 ToggleDrawerConstructor._from = _input => Action.ToggleDrawer()
 SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
+SetTransferNavPendingConstructor._from = _input => Action.SetTransferNavPending(_input.pending)
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
 InitializeSystemConstructor._from = _input => Action.InitializeSystem()
@@ -1228,6 +1261,7 @@ SetShowReopenBannerConstructor.from = SetShowReopenBannerConstructor._from
 SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
 ToggleDrawerConstructor.from = ToggleDrawerConstructor._from
 SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
+SetTransferNavPendingConstructor.from = SetTransferNavPendingConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
 InitializeSystemConstructor.from = InitializeSystemConstructor._from
@@ -1406,6 +1440,9 @@ ToggleDrawerConstructor.fromFirestore = ToggleDrawerConstructor._from
 SetLoadingStatusConstructor.toFirestore = o => ({ ...o })
 SetLoadingStatusConstructor.fromFirestore = SetLoadingStatusConstructor._from
 
+SetTransferNavPendingConstructor.toFirestore = o => ({ ...o })
+SetTransferNavPendingConstructor.fromFirestore = SetTransferNavPendingConstructor._from
+
 SetDraggingViewConstructor.toFirestore = o => ({ ...o })
 SetDraggingViewConstructor.fromFirestore = SetDraggingViewConstructor._from
 
@@ -1455,6 +1492,7 @@ Action.is = v => {
         SetShowDrawer,
         ToggleDrawer,
         SetLoadingStatus,
+        SetTransferNavPending,
         SetDraggingView,
         SetDropTarget,
         InitializeSystem,
@@ -1490,6 +1528,7 @@ Action.is = v => {
         constructor === SetShowDrawer ||
         constructor === ToggleDrawer ||
         constructor === SetLoadingStatus ||
+        constructor === SetTransferNavPending ||
         constructor === SetDraggingView ||
         constructor === SetDropTarget ||
         constructor === InitializeSystem ||
@@ -1540,6 +1579,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetShowDrawer,
         ToggleDrawer,
         SetLoadingStatus,
+        SetTransferNavPending,
         SetDraggingView,
         SetDropTarget,
         InitializeSystem,
@@ -1573,6 +1613,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetShowDrawer') return SetShowDrawer.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleDrawer') return ToggleDrawer.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetTransferNavPending') return SetTransferNavPending.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'InitializeSystem') return InitializeSystem.fromFirestore(doc, decodeTimestamps)

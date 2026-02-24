@@ -52,6 +52,7 @@ const showDrawer = state => state.showDrawer
 const loadingStatus = state => state.loadingStatus
 const draggingViewId = state => state.draggingViewId
 const dropTargetGroupId = state => state.dropTargetGroupId
+const transferNavPending = state => state.transferNavPending
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Entity lookups (state, id) -> value
@@ -492,7 +493,7 @@ const _isCounterpart =
 
 // @sig matchingTransfer :: (State, Transaction) -> Transaction
 const matchingTransfer = (state, source) => {
-    const matches = state.transactions.filter(_isCounterpart(source))
+    const matches = transactions(state).filter(_isCounterpart(source))
     if (matches.length === 0)
         throw new Error(
             `No matching transfer found for transaction ${source.id} in account ${source.transferAccountId}`,
@@ -534,6 +535,7 @@ export {
     tableLayoutProps,
     tableLayouts,
     transactions,
+    transferNavPending,
 
     // Entity lookups
     accountName,
