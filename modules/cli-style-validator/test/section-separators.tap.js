@@ -1,8 +1,6 @@
 import t from 'tap'
 import { checkSectionSeparators } from '../src/lib/rules/check-section-separators.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 // Helper: build a block-format section separator
 const section = name =>

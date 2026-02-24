@@ -1,8 +1,6 @@
 import t from 'tap'
 import { checkJsxSingleLineOpening } from '../src/lib/rules/check-jsx-single-line-opening.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given a JSX opening element on a single line', t => {
     t.test('When all props fit on one line', t => {

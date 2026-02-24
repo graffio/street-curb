@@ -4,7 +4,11 @@
 import { Factories as FS } from '../shared/factories.js'
 import { Predicates as PS } from '../shared/predicates.js'
 
-const PRIORITY = 3 // Same tier as line-length — fix after extractions
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Predicates
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const P = {
     // Check if file is a JSX file
@@ -20,7 +24,11 @@ const P = {
     isMultiline: node => node.loc.start.line !== node.loc.end.line,
 }
 
-const violation = FS.createViolation('jsx-single-line-opening', PRIORITY)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Factories
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const F = {
     // Create a violation for multiline JSX opening tag
@@ -36,6 +44,12 @@ const F = {
     },
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Validators
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 const V = {
     // Main validation entry point
     // @sig check :: (AST?, String, String) -> [Violation]
@@ -45,6 +59,12 @@ const V = {
         return A.collectJsxOpeningElements(ast).filter(P.isMultiline).map(F.createViolation)
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
 const A = {
     // Accumulate JSXOpeningElement nodes from a single child value
@@ -63,6 +83,16 @@ const A = {
         return Object.values(node).reduce(A.collectFromChild, [])
     },
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const PRIORITY = 3 // Same tier as line-length — fix after extractions
+
+const violation = FS.createViolation('jsx-single-line-opening', PRIORITY)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

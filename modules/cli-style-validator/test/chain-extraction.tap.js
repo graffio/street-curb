@@ -3,9 +3,7 @@
 
 import t from 'tap'
 import { checkChainExtraction } from '../src/lib/rules/check-chain-extraction.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given property chains in a function', t => {
     t.test('When same base is accessed 3+ times across different properties', t => {

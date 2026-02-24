@@ -1,8 +1,6 @@
 import t from 'tap'
 import { checkFunctionNaming } from '../src/lib/rules/check-function-naming.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given a function with a recognized verb prefix', t => {
     t.test('When the function starts with "is"', t => {

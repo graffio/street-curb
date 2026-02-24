@@ -1,8 +1,6 @@
 import t from 'tap'
 import { checkNoNullLiteral } from '../src/lib/rules/check-no-null-literal.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given code containing a null literal', t => {
     t.test('When a variable is initialized to null', t => {

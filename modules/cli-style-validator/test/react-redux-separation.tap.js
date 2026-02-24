@@ -3,9 +3,7 @@
 
 import t from 'tap'
 import { checkReactReduxSeparation } from '../src/lib/rules/check-react-redux-separation.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 t.test('Given a JSX file with useState', t => {
     t.test('When useState is called in component body', t => {

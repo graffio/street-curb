@@ -1,8 +1,6 @@
 import { test } from 'tap'
 import { checkFunctionDeclarationOrdering } from '../src/lib/rules/check-function-declaration-ordering.js'
-import { Parser } from '../src/lib/parser.js'
-
-const { parseCode } = Parser
+import { parseCode } from '../src/lib/parse-code.js'
 
 test('Function declaration ordering rule tests', t => {
     t.test('Given functions are correctly at the block top', t => {
