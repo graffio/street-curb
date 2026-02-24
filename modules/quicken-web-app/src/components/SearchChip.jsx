@@ -1,5 +1,6 @@
 // ABOUTME: Search input with navigation controls for transaction register search
 // ABOUTME: Always-visible text input with debounced dispatch, prev/next buttons, and match counter
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { debounce } from '@graffio/functional'
 import { Button, Flex, Text, TextField } from '@radix-ui/themes'
@@ -12,25 +13,11 @@ import { Action } from '../types/action.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Effects
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const DEBOUNCE_MS = 300
-
-// Dispatches debounced search query update to Redux
-// Single instance — assumes one SearchChip is rendered at a time
-// @sig dispatchSearchQuery :: (String, String) -> void
-const dispatchSearchQuery = debounce(DEBOUNCE_MS, (viewId, query) =>
-    post(Action.SetTransactionFilter(viewId, { searchQuery: query })),
-)
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Constants
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
+const DEBOUNCE_MS = 300
 const containerStyle = { marginLeft: 'auto' }
 const inputStyle = { width: 180 }
 const counterStyle = { whiteSpace: 'nowrap', minWidth: 50, textAlign: 'center' }
@@ -44,6 +31,13 @@ const counterStyle = { whiteSpace: 'nowrap', minWidth: 50, textAlign: 'center' }
 // Module-level mutable state — only one SearchChip renders at a time (singleton)
 let _lastMatchIdx = 0
 let _prevSearchQuery = ''
+
+// Dispatches debounced search query update to Redux
+// Single instance — assumes one SearchChip is rendered at a time
+// @sig dispatchSearchQuery :: (String, String) -> void
+const dispatchSearchQuery = debounce(DEBOUNCE_MS, (viewId, query) =>
+    post(Action.SetTransactionFilter(viewId, { searchQuery: query })),
+)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

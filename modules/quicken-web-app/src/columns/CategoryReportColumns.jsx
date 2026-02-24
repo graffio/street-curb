@@ -1,5 +1,6 @@
 // ABOUTME: Column definitions for category spending report with node-type-aware cell renderers
 // ABOUTME: Dispatches on CategoryTreeNode.Group vs Transaction for hierarchical tree display
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { LookupTable } from '@graffio/functional'
 import React from 'react'

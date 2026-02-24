@@ -1,5 +1,6 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'

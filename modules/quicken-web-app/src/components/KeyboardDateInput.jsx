@@ -6,6 +6,7 @@
 // COMPLEXITY-TODO: single-level-indentation — React hooks require inline callbacks (expires 2026-04-01)
 // COMPLEXITY-TODO: sig-documentation — Handlers are self-documenting by name (expires 2026-04-01)
 // COMPLEXITY-TODO: chain-extraction — Event destructuring would break prettier alignment (expires 2026-04-01)
+// COMPLEXITY: require-action-registry — Low-level date segment keyboard navigation is non-remappable
 /*
  * KeyboardDateInput - A custom date input with arrow key navigation
  *

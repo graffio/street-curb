@@ -1,5 +1,6 @@
 // ABOUTME: Dialog for reopening last file or opening a new one
 // ABOUTME: Shown on app startup when a previous file handle exists
+// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { Button, Flex, Text } from '@radix-ui/themes'
 import { Dialog } from './Dialog.jsx'
