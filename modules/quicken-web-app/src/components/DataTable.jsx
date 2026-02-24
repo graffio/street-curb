@@ -431,7 +431,7 @@ const DataTable = ({
         if (highlightedRowIndex >= startIndex && highlightedRowIndex <= endIndex) return
 
         try {
-            virtualizer.scrollToIndex(highlightedRowIndex, { align: 'auto' })
+            virtualizer.scrollToIndex(highlightedRowIndex, { align: 'center' })
         } catch {
             // Scroll failures are non-critical
         }
