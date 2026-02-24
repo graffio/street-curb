@@ -20,6 +20,7 @@ import { checkMultilineDestructuring } from './rules/check-multiline-destructuri
 import { checkNoNullLiteral } from './rules/check-no-null-literal.js'
 import { checkReactComponentCohesion } from './rules/check-react-component-cohesion.js'
 import { checkReactReduxSeparation } from './rules/check-react-redux-separation.js'
+import { checkRequireActionRegistry } from './rules/check-require-action-registry.js'
 import { checkSectionSeparators } from './rules/check-section-separators.js'
 import { checkSigDocumentation } from './rules/check-sig-documentation.js'
 import { checkSingleLevelIndentation } from './rules/check-single-level-indentation.js'
@@ -72,6 +73,7 @@ const checkFile = async filePath => {
         ...checkNoNullLiteral(ast, sourceCode, filePath),
         ...checkReactComponentCohesion(ast, sourceCode, filePath),
         ...checkReactReduxSeparation(ast, sourceCode, filePath),
+        ...checkRequireActionRegistry(ast, sourceCode, filePath),
         ...checkSigDocumentation(ast, sourceCode, filePath),
         ...checkSectionSeparators(ast, sourceCode, filePath),
         ...checkSingleLevelIndentation(ast, sourceCode, filePath),
