@@ -1,17 +1,18 @@
 // ABOUTME: Search filter chip with inline text input popover
 // ABOUTME: Renders search trigger with clear button and popover text field
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { Box, Flex, Popover, Text, TextField } from '@radix-ui/themes'
 import { KeymapModule } from '@graffio/keymap'
 import { useSelector } from 'react-redux'
 import { post } from '../../commands/post.js'
+import { KeymapConfig } from '../../keymap-config.js'
 import { Action } from '../../types/action.js'
 import * as S from '../../store/selectors.js'
 import { ChipStyles } from './chip-styles.js'
 import { FilterColumn } from './FilterColumn.jsx'
 
-const { ActionRegistry } = KeymapModule
+const { ActionRegistry, normalizeKey } = KeymapModule
+const { DEFAULT_BINDINGS } = KeymapConfig
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -20,28 +21,60 @@ const { ActionRegistry } = KeymapModule
 // ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
-    // Dismisses popover on Escape key
-    // @sig onSearchKey :: KeyboardEvent -> void
-    onSearchKey: e => {
-        if (e.key === 'Escape') {
-            e.preventDefault()
-            post(Action.SetFilterPopoverOpen(chipState.viewId, undefined))
-        }
+    // Routes non-character keys from search input via ActionRegistry — lets printable characters through
+    // @sig handleSearchKey :: KeyboardEvent -> void
+    handleSearchKey: e => {
+        e.stopPropagation()
+        const { key, ctrlKey, altKey, metaKey } = e
+        if (key.length === 1 && !ctrlKey && !altKey && !metaKey) return
+        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
+        if (!actionId) return
+        const action = ActionRegistry.resolve(actionId, activeViewId)
+        if (!action) return
+        e.preventDefault()
+        action.execute()
     },
 
-    // Registers filter:search focus action on trigger button mount
-    // @sig registerTriggerActions :: Element? -> void
-    registerTriggerActions: element => {
-        triggerCleanup?.()
-        triggerCleanup = undefined
-        if (element)
-            triggerCleanup = ActionRegistry.register(chipState.viewId, [
+    // Registers filter:search focus action on trigger button mount — keyed by viewId for multi-instance safety
+    // @sig registerTriggerElement :: (String, Element?) -> void
+    registerTriggerElement: (viewId, element) => {
+        triggerCleanups.get(viewId)?.()
+        triggerCleanups.delete(viewId)
+        if (!element) return
+
+        triggerCleanups.set(
+            viewId,
+            ActionRegistry.register(viewId, [
                 {
                     id: 'filter:search',
                     description: 'Search',
-                    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, 'search')),
+                    execute: () => post(Action.SetFilterPopoverOpen(viewId, 'search')),
                 },
-            ])
+            ]),
+        )
+    },
+
+    // Returns a stable ref callback for a trigger — creates on first use, caches thereafter
+    // @sig toTriggerRef :: String -> (Element? -> void)
+    toTriggerRef: viewId => {
+        if (!triggerRefs.has(viewId)) triggerRefs.set(viewId, element => E.registerTriggerElement(viewId, element))
+        return triggerRefs.get(viewId)
+    },
+
+    // Registers dismiss action when popover content mounts — reads activeViewId lazily at execute time
+    // @sig registerContent :: Element? -> void
+    registerContent: element => {
+        contentCleanup?.()
+        contentCleanup = undefined
+        if (!element) return
+
+        contentCleanup = ActionRegistry.register(activeViewId, [
+            {
+                id: 'dismiss',
+                description: 'Dismiss',
+                execute: () => post(Action.SetFilterPopoverOpen(activeViewId, undefined)),
+            },
+        ])
     },
 }
 
@@ -60,7 +93,7 @@ const SearchContent = ({ viewId }) => {
         placeholder: 'Type to filter...',
         value: filterQuery || '',
         onChange: e => post(Action.SetTransactionFilter(viewId, { filterQuery: e.target.value })),
-        onKeyDown: E.onSearchKey,
+        onKeyDown: E.handleSearchKey,
     }
     return (
         <Flex direction="column" gap="2">
@@ -79,8 +112,10 @@ const SearchContent = ({ viewId }) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const searchInputEl = { current: undefined }
-let chipState = { viewId: undefined }
-let triggerCleanup
+const triggerCleanups = new Map()
+const triggerRefs = new Map()
+let activeViewId
+let contentCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -110,12 +145,12 @@ const Chip = ({ viewId, isActive = false }) => {
     const hasQuery = filterQuery && filterQuery.length > 0
     const label = hasQuery ? filterQuery : 'Filter'
 
-    chipState = { viewId }
+    activeViewId = viewId
 
     return (
         <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
             <Popover.Trigger>
-                <Box ref={E.registerTriggerActions} style={triggerStyle}>
+                <Box ref={E.toTriggerRef(viewId)} style={triggerStyle}>
                     <Text size="1" weight="medium" style={labelStyle}>
                         {label}
                     </Text>
@@ -126,7 +161,7 @@ const Chip = ({ viewId, isActive = false }) => {
                     )}
                 </Box>
             </Popover.Trigger>
-            <Popover.Content style={contentStyle}>
+            <Popover.Content ref={E.registerContent} style={contentStyle}>
                 <SearchContent viewId={viewId} />
             </Popover.Content>
         </Popover.Root>
