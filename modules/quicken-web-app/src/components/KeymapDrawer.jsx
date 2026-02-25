@@ -1,7 +1,7 @@
 // ABOUTME: Bottom drawer showing available keyboard shortcuts
 // ABOUTME: Groups keybindings by source context with formatted key symbols
 // COMPLEXITY: react-redux-separation — .map() renders JSX from data (not a selector concern)
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
+// COMPLEXITY: require-action-registry — keyboard equivalent is toggle-shortcuts (? key), registered in main.jsx
 
 import { groupBy } from '@graffio/functional'
 import { Box, Button, Flex, Heading, ScrollArea, Text } from '@radix-ui/themes'
