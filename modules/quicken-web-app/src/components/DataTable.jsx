@@ -74,17 +74,6 @@ const T = {
               : currentIndex - 1
     },
 
-    // Creates a navigation handler that reads current state from tableNav
-    // @sig toNavigateHandler :: String -> () -> void
-    toNavigateHandler: direction => () => {
-        const { highlightedId, focusableIds, rows, onHighlightChange } = tableNav
-        if (!onHighlightChange) return
-        const ids = T.toNavigableIds(focusableIds, rows)
-        if (ids.length === 0) return
-        const nextIndex = T.toNextIndex(direction, ids, highlightedId)
-        onHighlightChange(ids[nextIndex])
-    },
-
     // Converts nested accessorKey paths to accessorFn to avoid TanStack "deeply nested key" warnings
     // @sig toSafeAccessor :: ColumnDefinition -> ColumnDefinition
     toSafeAccessor: col =>
@@ -116,16 +105,30 @@ const A = {
 
 const E = {
     // Registers navigation actions on table container mount (ref callback, React 18 pattern)
-    // @sig registerNavActions :: Element? -> void
-    registerNavActions: element => {
-        navCleanup?.()
-        navCleanup = undefined
-        if (element)
-            navCleanup = ActionRegistry.register(tableNav.actionContext, [
-                { id: 'navigate:down', description: 'Move down', execute: T.toNavigateHandler('ArrowDown') },
-                { id: 'navigate:up', description: 'Move up', execute: T.toNavigateHandler('ArrowUp') },
-                { id: 'dismiss', description: 'Dismiss', execute: () => tableNav.onEscape?.() },
-            ])
+    // @sig registerNavActions :: (String, Element?) -> void
+    registerNavActions: (context, element) => {
+        // Creates a navigate handler that reads per-instance state at execute time
+        // @sig toNavigateExecute :: String -> () -> void
+        const toNavigateExecute = direction => () => {
+            const { focusableIds, highlightedId, onHighlightChange, rows } = navStates.get(context) ?? {}
+            if (!onHighlightChange) return
+            const ids = T.toNavigableIds(focusableIds, rows)
+            if (ids.length === 0) return
+            const nextIndex = T.toNextIndex(direction, ids, highlightedId)
+            onHighlightChange(ids[nextIndex])
+        }
+
+        navCleanups.get(context)?.()
+        if (!element) {
+            navCleanups.delete(context)
+            return
+        }
+        const cleanup = ActionRegistry.register(context, [
+            { id: 'navigate:down', description: 'Move down', execute: toNavigateExecute('ArrowDown') },
+            { id: 'navigate:up', description: 'Move up', execute: toNavigateExecute('ArrowUp') },
+            { id: 'dismiss', description: 'Dismiss', execute: () => navStates.get(context)?.onEscape?.() },
+        ])
+        navCleanups.set(context, cleanup)
     },
 }
 
@@ -338,16 +341,9 @@ const SCROLL_CONTAINER_STYLE = { position: 'absolute', inset: 0, overflow: 'auto
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Navigation state — single DataTable instance per actionContext, updated on each render
-let tableNav = {
-    actionContext: undefined,
-    highlightedId: undefined,
-    focusableIds: undefined,
-    rows: [],
-    onHighlightChange: undefined,
-    onEscape: undefined,
-}
-let navCleanup
+// Per-instance nav state — prevents multi-instance interference when multiple tab groups are open
+const navStates = new Map() // actionContext -> { highlightedId, focusableIds, rows, onHighlightChange, onEscape }
+const navCleanups = new Map() // actionContext -> cleanup fn
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -383,6 +379,8 @@ const DataTable = ({
     actionContext,
     context = {},
 }) => {
+    const registerNav = el => E.registerNavActions(actionContext, el)
+
     // Toggles sort on a column
     // @sig sortColumn :: (Column, Boolean) -> void
     const sortColumn = (column, isMulti) => {
@@ -455,12 +453,6 @@ const DataTable = ({
     // Refs
     const tableContainerRef = useRef()
 
-    // Module-level nav state — rows assigned after table.getRowModel() below
-    const prevContext = tableNav.actionContext
-    if (process.env.NODE_ENV !== 'production' && prevContext && actionContext && prevContext !== actionContext)
-        console.warn(`DataTable: multiple instances (${prevContext} vs ${actionContext})`)
-    tableNav = { ...tableNav, actionContext, highlightedId, focusableIds, onHighlightChange, onEscape }
-
     // -----------------------------------------------------------------------------------------------------------------
     // TanStack Table instance
     // -----------------------------------------------------------------------------------------------------------------
@@ -496,7 +488,7 @@ const DataTable = ({
 
     // Derived state
     const { rows } = table.getRowModel()
-    tableNav.rows = rows
+    navStates.set(actionContext, { highlightedId, focusableIds, rows, onHighlightChange, onEscape })
 
     // -----------------------------------------------------------------------------------------------------------------
     // TanStack Virtualization
@@ -532,7 +524,7 @@ const DataTable = ({
     }
 
     return (
-        <Flex ref={E.registerNavActions} direction="column" style={{ height, ...columnSizeVars }}>
+        <Flex ref={registerNav} direction="column" style={{ height, ...columnSizeVars }}>
             <TableHeader {...headerProps} />
 
             <Box style={{ flex: 1, position: 'relative', minHeight: 0 }}>
