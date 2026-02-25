@@ -40,6 +40,9 @@ const DEFAULT_BINDINGS = {
     'shift+s'         : 'search:clear',
     'ctrl+shift+x'    : 'transfer:navigate',
     o                 : 'file:open',
+    'shift+o'         : 'file:open-new',
+    'shift+r'         : 'file:reopen',
+    r                 : 'report:picker',
     w                 : 'tab:close',
     '\\'              : 'tab:split',
 }
@@ -53,6 +56,7 @@ const GROUP_NAMES = {
     select: 'Navigation',
     transfer: 'Transfer',
     file: 'File',
+    report: 'Reports',
     tab: 'Tabs',
 }
 
