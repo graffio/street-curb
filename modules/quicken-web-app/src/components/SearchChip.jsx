@@ -1,15 +1,116 @@
 // ABOUTME: Search input with navigation controls for transaction register search
 // ABOUTME: Always-visible text input with debounced dispatch, prev/next buttons, and match counter
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
+// Singleton — only one SearchChip renders at a time. Breaks if rendered twice.
+// See docs/solutions/architecture/filter-chip-module-level-singleton-bug.md
 
 import { debounce } from '@graffio/functional'
 import { Button, Flex, Text, TextField } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { KeymapModule } from '@graffio/keymap'
 import { FocusRegistry } from '../commands/data-sources/focus-registry.js'
 import { post } from '../commands/post.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
+
+const { ActionRegistry } = KeymapModule
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// COMPLEXITY: require-action-registry — Escape/Enter are standard text input keys in input-focused context
+// (P.isInputElement skips ActionRegistry dispatch). These are not remappable keybindings.
+const E = {
+    // Registers/unregisters search actions with ActionRegistry for keyboard discoverability
+    // @sig registerSearchActions :: Element? -> void
+    registerSearchActions: element => {
+        _searchActionsCleanup?.()
+        _searchActionsCleanup = undefined
+        if (!element) return
+        _searchActionsCleanup = ActionRegistry.register(_viewId, [
+            { id: 'search:next', description: 'Next match', execute: () => _searchCallbacks.onNext() },
+            { id: 'search:prev', description: 'Previous match', execute: () => _searchCallbacks.onPrev() },
+            { id: 'search:clear', description: 'Clear search', execute: () => _searchCallbacks.onClear() },
+        ])
+    },
+
+    // Registers/unregisters search input in FocusRegistry for keyboard access
+    // @sig registerSearchInput :: Element? -> void
+    registerSearchInput: element =>
+        element ? FocusRegistry.register('search_' + _viewId, element) : FocusRegistry.unregister('search_' + _viewId),
+
+    // Input-focused key handler — standard text input cancel/submit
+    // @sig handleKeyDown :: KeyboardEvent -> void
+    handleKeyDown: e => {
+        const { key, shiftKey } = e
+        if (key === 'Escape') {
+            e.preventDefault()
+            e.stopPropagation()
+            _searchCallbacks.onClear()
+            FocusRegistry.get('search_' + _viewId)?.blur()
+            return
+        }
+        if (key !== 'Enter') return
+        e.preventDefault()
+        e.stopPropagation()
+        const el = FocusRegistry.get('search_' + _viewId)
+        if (!el) return
+        post(Action.SetTransactionFilter(_viewId, { searchQuery: el.value }))
+        el.blur()
+        if (shiftKey) _searchCallbacks.onPrev()
+        else _searchCallbacks.onNext()
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Components
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Match counter and prev/next/clear navigation buttons
+// Self-selects searchQuery for visibility and searchMatches for counter
+// @sig SearchNavControls :: { viewId: String, accountId: String, highlightedId: String? } -> ReactElement?
+const SearchNavControls = ({ viewId, accountId, highlightedId }) => {
+    const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
+    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
+
+    if (!searchQuery) return false
+
+    // Reset match position when search query changes (new search = start from 0)
+    if (searchQuery !== _prevSearchQuery) {
+        _lastMatchIdx = 0
+        _prevSearchQuery = searchQuery
+    }
+
+    const matchCount = searchMatches.length
+
+    // Track last known match position so j/k to non-match rows doesn't reset counter
+    const highlightIdx = searchMatches.indexOf(highlightedId)
+    if (highlightIdx >= 0) _lastMatchIdx = highlightIdx
+    const displayIndex = matchCount > 0 ? _lastMatchIdx + 1 : 0
+    const { onPrev, onNext, onClear } = _searchCallbacks
+
+    return (
+        <Flex align="center" gap="1">
+            <Text size="1" color="gray" style={counterStyle}>
+                {displayIndex} of {matchCount}
+            </Text>
+            <Button size="1" variant="ghost" onClick={onPrev}>
+                ▲
+            </Button>
+            <Button size="1" variant="ghost" onClick={onNext}>
+                ▼
+            </Button>
+            <Button size="1" variant="ghost" onClick={onClear}>
+                ×
+            </Button>
+        </Flex>
+    )
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -28,12 +129,14 @@ const counterStyle = { whiteSpace: 'nowrap', minWidth: 50, textAlign: 'center' }
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Module-level mutable state — only one SearchChip renders at a time (singleton)
+// Singleton state — see ABOUTME comment at top of file
+let _viewId
+let _searchCallbacks = { onNext: undefined, onPrev: undefined, onClear: undefined }
+let _searchActionsCleanup
 let _lastMatchIdx = 0
 let _prevSearchQuery = ''
 
 // Dispatches debounced search query update to Redux
-// Single instance — assumes one SearchChip is rendered at a time
 // @sig dispatchSearchQuery :: (String, String) -> void
 const dispatchSearchQuery = debounce(DEBOUNCE_MS, (viewId, query) =>
     post(Action.SetTransactionFilter(viewId, { searchQuery: query })),
@@ -47,55 +150,17 @@ const dispatchSearchQuery = debounce(DEBOUNCE_MS, (viewId, query) =>
 
 /*
  * Search input with prev/next navigation and match counter
- * Self-selects searchQuery and searchMatches via business identifiers (viewId, accountId)
+ * Syncs _searchCallbacks each render for stable ActionRegistry execute identity
  *
  * @sig SearchChip :: SearchChipProps -> ReactElement
  *     SearchChipProps = { viewId: String, accountId: String, highlightedId: String?,
  *         onNext: () -> void, onPrev: () -> void, onClear: () -> void }
  */
 const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear }) => {
-    // Enter: flush query immediately, navigate to next match, blur
-    // Shift+Enter: navigate to previous match, blur
-    // Escape: clear search and blur
-    // @sig handleKeyDown :: KeyboardEvent -> void
-    const handleKeyDown = e => {
-        const el = FocusRegistry.get('search_' + viewId)
-        const { key, shiftKey } = e
-        if (key === 'Escape') {
-            e.preventDefault()
-            e.stopPropagation()
-            onClear()
-            el.blur()
-            return
-        }
-        if (key !== 'Enter') return
-        e.preventDefault()
-        e.stopPropagation()
-        post(Action.SetTransactionFilter(viewId, { searchQuery: el.value }))
-        if (shiftKey) onPrev()
-        else onNext()
-        el.blur()
-    }
+    _viewId = viewId
+    _searchCallbacks = { onNext, onPrev, onClear }
+    const { handleKeyDown, registerSearchActions, registerSearchInput } = E
 
-    // Registers/unregisters search input in FocusRegistry for keyboard access
-    // @sig refCallback :: Element? -> void
-    const refCallback = el =>
-        el ? FocusRegistry.register('search_' + viewId, el) : FocusRegistry.unregister('search_' + viewId)
-
-    const searchQuery = useSelector(state => S.UI.searchQuery(state, viewId))
-    const searchMatches = useSelector(state => S.Transactions.searchMatches(state, viewId, accountId))
-    const matchCount = searchMatches.length
-
-    // Reset match position when search query changes (new search = start from 0)
-    if (searchQuery !== _prevSearchQuery) {
-        _lastMatchIdx = 0
-        _prevSearchQuery = searchQuery
-    }
-
-    // Track last known match position so j/k to non-match rows doesn't reset counter
-    const highlightIdx = searchMatches.indexOf(highlightedId)
-    if (highlightIdx >= 0) _lastMatchIdx = highlightIdx
-    const displayIndex = matchCount > 0 ? _lastMatchIdx + 1 : 0
     const searchFieldProps = {
         placeholder: 'Search...',
         onChange: e => dispatchSearchQuery(viewId, e.target.value),
@@ -105,24 +170,9 @@ const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear 
     }
 
     return (
-        <Flex align="center" gap="2" style={containerStyle}>
-            <TextField.Root ref={refCallback} {...searchFieldProps} />
-            {searchQuery && (
-                <Flex align="center" gap="1">
-                    <Text size="1" color="gray" style={counterStyle}>
-                        {displayIndex} of {matchCount}
-                    </Text>
-                    <Button size="1" variant="ghost" onClick={onPrev}>
-                        ▲
-                    </Button>
-                    <Button size="1" variant="ghost" onClick={onNext}>
-                        ▼
-                    </Button>
-                    <Button size="1" variant="ghost" onClick={onClear}>
-                        ×
-                    </Button>
-                </Flex>
-            )}
+        <Flex align="center" gap="2" style={containerStyle} ref={registerSearchActions}>
+            <TextField.Root ref={registerSearchInput} {...searchFieldProps} />
+            <SearchNavControls viewId={viewId} accountId={accountId} highlightedId={highlightedId} />
         </Flex>
     )
 }

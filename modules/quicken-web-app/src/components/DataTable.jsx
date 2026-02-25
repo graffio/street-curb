@@ -1,6 +1,5 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
 // ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import '../styles/datatable.css'
 
@@ -65,7 +64,7 @@ const T = {
     // @sig toNextIndex :: (String, [String], String?) -> Number
     toNextIndex: (direction, ids, highlightedId) => {
         const currentIndex = highlightedId !== undefined ? ids.indexOf(highlightedId) : -1
-        return direction === 'ArrowDown'
+        return direction === 'next'
             ? currentIndex >= ids.length - 1
                 ? 0
                 : currentIndex + 1
@@ -124,8 +123,8 @@ const E = {
             return
         }
         const cleanup = ActionRegistry.register(context, [
-            { id: 'navigate:down', description: 'Move down', execute: toNavigateExecute('ArrowDown') },
-            { id: 'navigate:up', description: 'Move up', execute: toNavigateExecute('ArrowUp') },
+            { id: 'navigate:down', description: 'Move down', execute: toNavigateExecute('next') },
+            { id: 'navigate:up', description: 'Move up', execute: toNavigateExecute('previous') },
             { id: 'dismiss', description: 'Dismiss', execute: () => navStates.get(context)?.onEscape?.() },
         ])
         navCleanups.set(context, cleanup)
