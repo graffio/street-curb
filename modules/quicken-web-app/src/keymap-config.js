@@ -31,9 +31,13 @@ const DEFAULT_BINDINGS = {
     f         : 'filter:search',
     '/'       : 'filter:search',
     s                 : 'search:open',
+    n                 : 'search:next',
     'shift+Enter'     : 'search:prev',
+    'shift+s'         : 'search:clear',
     'ctrl+shift+x'    : 'transfer:navigate',
     o                 : 'file:open',
+    w                 : 'tab:close',
+    '\\'              : 'tab:split',
 }
 
 const GROUP_NAMES = {
@@ -45,6 +49,7 @@ const GROUP_NAMES = {
     select: 'Navigation',
     transfer: 'Transfer',
     file: 'File',
+    tab: 'Tabs',
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
