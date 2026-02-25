@@ -33,6 +33,7 @@ const DEFAULT_BINDINGS = {
     s                 : 'search:open',
     'shift+Enter'     : 'search:prev',
     'ctrl+shift+x'    : 'transfer:navigate',
+    o                 : 'file:open',
 }
 
 const GROUP_NAMES = {
@@ -43,6 +44,7 @@ const GROUP_NAMES = {
     dismiss: 'Search',
     select: 'Navigation',
     transfer: 'Transfer',
+    file: 'File',
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

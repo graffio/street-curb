@@ -1,6 +1,5 @@
 // ABOUTME: Main application layout with sidebar and file handling
 // ABOUTME: Renders MainLayout shell with navigation sidebar and TabGroupContainer
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
@@ -17,7 +16,7 @@ import { MainSidebar } from './MainSidebar.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
-const { toAvailableIntents } = KeymapModule
+const { ActionRegistry, toAvailableIntents } = KeymapModule
 const { DEFAULT_BINDINGS, GROUP_NAMES } = KeymapConfig
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -32,6 +31,17 @@ const E = {
     handleOpenNew: () => {
         post(Action.SetShowReopenBanner(false))
         post(Action.OpenFile())
+    },
+
+    // Registers file:open action when Open File button mounts — global scope (undefined viewId)
+    // @sig registerOpenFile :: Element? -> void
+    registerOpenFile: element => {
+        openFileCleanup?.()
+        openFileCleanup = undefined
+        if (!element) return
+        openFileCleanup = ActionRegistry.register(undefined, [
+            { id: 'file:open', description: 'Open File', execute: () => post(Action.OpenFile()) },
+        ])
     },
 }
 
@@ -71,6 +81,12 @@ const RootLayout = () => {
         onReopen: reopenFile,
         onOpenNew: E.handleOpenNew,
     }
+    const openFileProps = {
+        ref: E.registerOpenFile,
+        variant: 'soft',
+        style: OPEN_FILE_BUTTON_STYLE,
+        onClick: () => post(Action.OpenFile()),
+    }
 
     return (
         <MainLayout title={pageTitle} subtitle={pageSubtitle}>
@@ -82,9 +98,7 @@ const RootLayout = () => {
                 <ReportsList />
                 <Separator size="4" my="3" />
                 <Box mx="3">
-                    <Button variant="soft" style={{ width: '100%' }} onClick={() => post(Action.OpenFile())}>
-                        Open File
-                    </Button>
+                    <Button {...openFileProps}>Open File</Button>
                 </Box>
             </MainLayout.Sidebar>
             <FileOpenDialog {...dialogProps} />
@@ -103,6 +117,8 @@ const RootLayout = () => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
+const OPEN_FILE_BUTTON_STYLE = { width: '100%' }
+
 const LOADING_OVERLAY_STYLE = {
     position: 'fixed',
     top: 0,
@@ -113,6 +129,14 @@ const LOADING_OVERLAY_STYLE = {
     opacity: 0.9,
     zIndex: 1000,
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+let openFileCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
