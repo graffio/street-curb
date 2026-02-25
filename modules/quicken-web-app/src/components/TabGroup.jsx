@@ -16,33 +16,20 @@ import { TabStyles } from '../utils/tab-styles.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Transformers
+// Factories
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const T = {
+const F = {
     // Parses drag data JSON, returns undefined on failure
-    // @sig toDragData :: String -> { viewId: String, groupId: String }?
-    toDragData: data => {
+    // @sig parseDragData :: String -> { viewId: String, groupId: String }?
+    parseDragData: data => {
         try {
             return JSON.parse(data)
         } catch {
             return undefined
         }
     },
-
-    // Serializes view and group IDs for drag transfer
-    // @sig toSerializedDragData :: (String, String) -> String
-    toSerializedDragData: (viewId, groupId) => JSON.stringify({ viewId, groupId }),
-
-    // Builds props for Tab component from view and group state
-    // @sig toTabProps :: (View, String, String, Boolean) -> Object
-    toTabProps: (view, groupId, activeViewId, isActiveGroup) => ({
-        view,
-        groupId,
-        isActive: view.id === activeViewId,
-        isActiveGroup,
-    }),
 
     // Determines drop index from cursor position relative to tab elements
     // @sig toDropIndex :: (Element, Number, Number) -> Number
@@ -57,55 +44,63 @@ const T = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Factories
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const F = {
-    // Returns the appropriate register page component for an account type
-    // @sig createRegisterPage :: (Account, String) -> ReactElement
-    createRegisterPage: (account, accountId) =>
-        Account.isInvestment(account) ? (
-            <InvestmentRegisterPage accountId={accountId} />
-        ) : (
-            <TransactionRegisterPage accountId={accountId} />
-        ),
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Components
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Draggable tab with icon, title, and close button
-// @sig Tab :: { view: View, groupId: String, isActive: Boolean, isActiveGroup: Boolean } -> ReactElement
-const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
-    const handleClick = () => post(Action.SetActiveView(groupId, view.id))
+// Placeholder shown when no tabs are open in a group
+// @sig EmptyState :: () -> ReactElement
+const EmptyState = () => (
+    <Flex align="center" justify="center" style={EMPTY_STATE_STYLE}>
+        <Text size="2" color="gray">
+            No tabs open
+        </Text>
+    </Flex>
+)
 
+// Self-selecting register page — picks account from state, renders correct register type
+// @sig RegisterPage :: { accountId: String } -> ReactElement
+const RegisterPage = ({ accountId }) => {
+    const accounts = useSelector(S.accounts)
+    const account = accounts.get(accountId)
+    if (!account) return <EmptyState />
+    return Account.isInvestment(account) ? (
+        <InvestmentRegisterPage accountId={accountId} />
+    ) : (
+        <TransactionRegisterPage accountId={accountId} />
+    )
+}
+
+// Draggable tab — self-selects view, isActive, isActiveGroup from state
+// @sig Tab :: { viewId: String, groupId: String } -> ReactElement
+const Tab = ({ viewId, groupId }) => {
     const handleClose = e => {
         e.stopPropagation()
-        post(Action.CloseView(view.id, groupId))
+        post(Action.CloseView(viewId, groupId))
     }
 
     const handleDragStart = e => {
-        post(Action.SetDraggingView(view.id))
-        e.dataTransfer.setData('application/json', T.toSerializedDragData(view.id, groupId))
+        post(Action.SetDraggingView(viewId))
+        e.dataTransfer.setData('application/json', JSON.stringify({ viewId, groupId }))
         e.dataTransfer.effectAllowed = 'move'
     }
 
-    const handleDragEnd = () => post(Action.SetDraggingView(undefined))
-
-    const isDragging = useSelector(S.draggingViewId) === view.id
+    const tabLayout = useSelector(S.tabLayout)
+    const isDragging = useSelector(S.draggingViewId) === viewId
+    const group = tabLayout.tabGroups.get(groupId)
+    const view = group.views.get(viewId)
+    const isActive = group.activeViewId === viewId
+    const isActiveGroup = tabLayout.activeTabGroupId === groupId
     const { title } = view
     const tagName = view['@@tagName']
     const icon = VIEW_ICONS[tagName] || '○'
+
     const tabProps = {
         draggable: true,
         onDragStart: handleDragStart,
-        onDragEnd: handleDragEnd,
+        onDragEnd: () => post(Action.SetDraggingView(undefined)),
         style: TabStyles.toTabStyle(tagName, isActive, isDragging, isActiveGroup),
-        onClick: handleClick,
+        onClick: () => post(Action.SetActiveView(groupId, viewId)),
     }
 
     return (
@@ -125,29 +120,31 @@ const Tab = ({ view, groupId, isActive, isActiveGroup }) => {
     )
 }
 
-// Button to create new tab group, hidden at max group count
-// @sig SplitButton :: { groupCount: Number } -> ReactElement | false
-const SplitButton = ({ groupCount }) => {
-    const onClick = e => {
+// Split button — self-selects group count, hidden at max
+// @sig SplitButton :: () -> ReactElement | false
+const SplitButton = () => {
+    const handleClick = e => {
         e.stopPropagation()
         post(Action.CreateTabGroup())
     }
+
+    const groupCount = useSelector(S.tabLayout).tabGroups.length
     if (groupCount >= MAX_GROUPS) return false
 
     return (
-        <Button size="1" variant="ghost" onClick={onClick} style={SPLIT_BUTTON_STYLE}>
+        <Button size="1" variant="ghost" onClick={handleClick} style={SPLIT_BUTTON_STYLE}>
             Split ▸
         </Button>
     )
 }
 
-// Handle drop of a tab onto this tab bar
-// @sig TabBar :: { group: TabGroup, groupCount: Number, isActiveGroup: Boolean } -> ReactElement
-const TabBar = ({ group, groupCount, isActiveGroup }) => {
+// Tab bar with drag-and-drop support — self-selects group from state
+// @sig TabBar :: { groupId: String } -> ReactElement
+const TabBar = ({ groupId }) => {
     const handleDragOver = e => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'move'
-        post(Action.SetDropTarget(group.id))
+        post(Action.SetDropTarget(groupId))
     }
 
     const handleDragLeave = e => {
@@ -160,14 +157,16 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
         const { clientX, currentTarget, dataTransfer } = e
         e.preventDefault()
         post(Action.SetDropTarget(undefined))
-        const dragData = T.toDragData(dataTransfer.getData('application/json'))
+        const dragData = F.parseDragData(dataTransfer.getData('application/json'))
         if (!dragData) return
-        const { viewId, groupId: sourceGroupId } = dragData
-        const toIndex = T.toDropIndex(currentTarget, clientX, group.views.length)
-        post(Action.MoveView(viewId, sourceGroupId, group.id, toIndex))
+        const toIndex = F.toDropIndex(currentTarget, clientX, group.views.length)
+        post(Action.MoveView(dragData.viewId, dragData.groupId, groupId, toIndex))
     }
 
-    const isDropTarget = useSelector(S.dropTargetGroupId) === group.id
+    const tabLayout = useSelector(S.tabLayout)
+    const group = tabLayout.tabGroups.get(groupId)
+    const isDropTarget = useSelector(S.dropTargetGroupId) === groupId
+
     const style = {
         backgroundColor: isDropTarget ? 'var(--accent-3)' : 'var(--color-background)',
         minHeight: '40px',
@@ -178,46 +177,34 @@ const TabBar = ({ group, groupCount, isActiveGroup }) => {
     return (
         <Flex align="end" style={style} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
             {group.views.map(v => (
-                <Tab key={v.id} {...T.toTabProps(v, group.id, group.activeViewId, isActiveGroup)} />
+                <Tab key={v.id} viewId={v.id} groupId={groupId} />
             ))}
-            <SplitButton groupCount={groupCount} />
+            <SplitButton />
         </Flex>
     )
 }
 
-// Placeholder shown when no tabs are open in a group
-// @sig EmptyState :: () -> ReactElement
-const EmptyState = () => (
-    <Flex align="center" justify="center" style={{ height: '100%' }}>
-        <Text size="2" color="gray">
-            No tabs open
-        </Text>
-    </Flex>
-)
+// Self-selecting report page — renders correct report type based on reportType
+// @sig ReportPage :: { viewId: String, reportType: String } -> ReactElement
+const ReportPage = ({ viewId, reportType }) =>
+    reportType === 'holdings' ? <InvestmentReportPage viewId={viewId} /> : <CategoryReportPage viewId={viewId} />
 
-// Renders the appropriate page component for the active view
-// @sig ViewContent :: { group: TabGroup } -> ReactElement
-const ViewContent = ({ group }) => {
-    const accounts = useSelector(S.accounts)
+// Renders the appropriate page component for the active view — self-selects group from state
+// @sig ViewContent :: { groupId: String } -> ReactElement
+const ViewContent = ({ groupId }) => {
+    const tabLayout = useSelector(S.tabLayout)
+    const { activeViewId, views } = tabLayout.tabGroups.get(groupId)
 
-    if (!group.activeViewId) return <EmptyState />
-
-    const activeView = group.views[group.activeViewId]
+    if (!activeViewId) return <EmptyState />
+    const activeView = views.get(activeViewId)
     if (!activeView) return <EmptyState />
 
-    const { accountId, id, reportType } = activeView
+    const { accountId, id: viewId, reportType } = activeView
     return activeView.match({
-        Register: () => {
-            const account = accounts.get(accountId)
-            if (!account) return <EmptyState /> // Account not loaded yet
-            return F.createRegisterPage(account, accountId)
-        },
-        Report: () => {
-            if (reportType === 'holdings') return <InvestmentReportPage viewId={id} />
-            return <CategoryReportPage viewId={id} />
-        },
+        Register: () => <RegisterPage accountId={accountId} />,
+        Report: () => <ReportPage viewId={viewId} reportType={reportType} />,
         Reconciliation: () => (
-            <Flex align="center" justify="center" style={{ height: '100%' }}>
+            <Flex align="center" justify="center" style={EMPTY_STATE_STYLE}>
                 <Text>Reconciliation: {accountId}</Text>
             </Flex>
         ),
@@ -234,6 +221,7 @@ const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
 const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
 const CLOSE_BUTTON_STYLE = { padding: '0 4px', flexShrink: 0 }
 const SPLIT_BUTTON_STYLE = { padding: '4px 8px', marginLeft: 'auto' }
+const EMPTY_STATE_STYLE = { height: '100%' }
 const MAX_GROUPS = 4
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -245,11 +233,10 @@ const MAX_GROUPS = 4
 // Container with tab bar and content area for a group of views
 // @sig TabGroup :: { group: TabGroup } -> ReactElement
 const TabGroup = ({ group }) => {
-    const { activeViewId, id, views, width } = group
+    const { activeViewId, id, width } = group
     const tabLayout = useSelector(S.tabLayout)
     const isActive = tabLayout.activeTabGroupId === id
-    const groupCount = tabLayout.tabGroups.length
-    const activeView = views.get ? views.get(activeViewId) : views[activeViewId]
+    const activeView = group.views.get(activeViewId)
     const activeColor = TabStyles.toViewColor(activeView, isActive)
 
     const style = { width: `${width}%`, height: '100%', borderRight: '4px solid var(--color-background)' }
@@ -257,11 +244,11 @@ const TabGroup = ({ group }) => {
     const innerStyle = { backgroundColor: 'var(--color-background)', height: '100%', overflow: 'auto' }
 
     return (
-        <Flex direction="column" onClick={() => !isActive && post(Action.SetActiveTabGroup(id))} style={style}>
-            <TabBar group={group} groupCount={groupCount} isActiveGroup={isActive} />
+        <Flex direction="column" onClick={() => post(Action.SetActiveTabGroup(id))} style={style}>
+            <TabBar groupId={id} />
             <Box style={contentStyle}>
                 <Box style={innerStyle}>
-                    <ViewContent group={group} />
+                    <ViewContent groupId={id} />
                 </Box>
             </Box>
         </Flex>

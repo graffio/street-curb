@@ -5,6 +5,7 @@ import { KeymapModule } from '@graffio/keymap'
 import { Box, Button, Flex, Separator, Spinner, Text } from '@radix-ui/themes'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
+import { currentStore } from '../store/index.js'
 import { KeymapConfig } from '../keymap-config.js'
 import * as S from '../store/selectors.js'
 import { Action } from '../types/action.js'
@@ -33,14 +34,26 @@ const E = {
         post(Action.OpenFile())
     },
 
-    // Registers file:open action when Open File button mounts — global scope (undefined viewId)
-    // @sig registerOpenFile :: Element? -> void
-    registerOpenFile: element => {
-        openFileCleanup?.()
-        openFileCleanup = undefined
+    // Closes the active tab in the active group — reads state at call time (dispatch-intent)
+    // @sig closeActiveTab :: () -> void
+    closeActiveTab: () => {
+        const tabLayout = S.tabLayout(currentStore().getState())
+        const group = tabLayout.tabGroups.get(tabLayout.activeTabGroupId)
+        if (!group) return // no groups when no file is open
+        const { activeViewId, id } = group
+        if (activeViewId) post(Action.CloseView(activeViewId, id))
+    },
+
+    // Registers global actions when Open File button mounts — global scope (undefined viewId)
+    // @sig registerGlobalActions :: Element? -> void
+    registerGlobalActions: element => {
+        globalActionsCleanup?.()
+        globalActionsCleanup = undefined
         if (!element) return
-        openFileCleanup = ActionRegistry.register(undefined, [
+        globalActionsCleanup = ActionRegistry.register(undefined, [
             { id: 'file:open', description: 'Open File', execute: () => post(Action.OpenFile()) },
+            { id: 'tab:close', description: 'Close tab', execute: E.closeActiveTab },
+            { id: 'tab-group:create', description: 'Split', execute: () => post(Action.CreateTabGroup()) },
         ])
     },
 }
@@ -82,7 +95,7 @@ const RootLayout = () => {
         onOpenNew: E.handleOpenNew,
     }
     const openFileProps = {
-        ref: E.registerOpenFile,
+        ref: E.registerGlobalActions,
         variant: 'soft',
         style: OPEN_FILE_BUTTON_STYLE,
         onClick: () => post(Action.OpenFile()),
@@ -136,7 +149,7 @@ const LOADING_OVERLAY_STYLE = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-let openFileCleanup
+let globalActionsCleanup
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
