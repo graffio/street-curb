@@ -72,6 +72,7 @@ const createEmptyState = () => ({
     transferNavPending: undefined,
     pickerType: undefined,
     pickerHighlight: 0,
+    actionRegistryVersion: 0,
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -140,6 +141,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         SetTransferNavPending  : () => ({ ...state, transferNavPending: action.pending }),
         SetPickerOpen          : () => ({ ...state, pickerType: action.pickerType, pickerHighlight: 0 }),
         SetPickerHighlight     : () => ({ ...state, pickerHighlight: action.index }),
+        BumpActionRegistry     : () => ({ ...state, actionRegistryVersion: state.actionRegistryVersion + 1 }),
 
         // Drag state actions
         SetDraggingView : () => ({ ...state, draggingViewId: action.viewId }),

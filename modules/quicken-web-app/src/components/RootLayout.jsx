@@ -87,6 +87,8 @@ const RootLayout = () => {
     const loadingStatus = useSelector(S.loadingStatus)
     const { title: pageTitle, subtitle: pageSubtitle } = useSelector(S.activeViewPageTitle)
     const activeViewId = useSelector(S.activeViewId)
+    // eslint-disable-next-line no-unused-vars -- forces re-render when ActionRegistry changes
+    const _registryVersion = useSelector(S.actionRegistryVersion)
 
     const availableIntents = showDrawer ? toAvailableIntents(DEFAULT_BINDINGS, GROUP_NAMES, activeViewId) : []
     const dialogProps = {

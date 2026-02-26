@@ -2,6 +2,7 @@
 // ABOUTME: Dispatches Tagged actions to Redux as plain objects
 // ABOUTME: Handles IndexedDB persistence for table layouts (debounced) and tab layout (immediate + debounced)
 import { debounce } from '@graffio/functional'
+import { KeymapModule } from '@graffio/keymap'
 import { TransactionColumns } from '../columns/index.js'
 import { currentStore, Selectors as S } from '../store/index.js'
 import { RegisterNavigation } from '../store/register-navigation.js'
@@ -198,6 +199,7 @@ const post = action => {
         SetTransferNavPending  : () => E.dispatch(action),
         SetPickerOpen          : () => E.dispatch(action),
         SetPickerHighlight     : () => E.dispatch(action),
+        BumpActionRegistry     : () => E.dispatch(action),
 
         // Drag state actions (no persistence needed)
         SetDraggingView : () => E.dispatch(action),
@@ -209,5 +211,8 @@ const post = action => {
         ReopenFile       : () => handleReopenFile(E.dispatch),
     })
 }
+
+// Notify Redux when ActionRegistry changes so drawer re-renders with current actions
+KeymapModule.ActionRegistry.setOnChange(() => post(Action.BumpActionRegistry()))
 
 export { post }

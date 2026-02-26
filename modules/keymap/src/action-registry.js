@@ -20,12 +20,59 @@ const P = {
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
+// Transformers
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const T = {
+    // Snapshot of registration IDs+contexts for change detection
+    // @sig toSnapshot :: [Registration] -> String
+    toSnapshot: regs =>
+        regs
+            .map(r => r.id + '\0' + (r.context ?? ''))
+            .sort()
+            .join('\n'),
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const E = {
+    // Processes pending change notification — fires onChange if registration set actually changed
+    // @sig handlePendingNotify :: () -> void
+    handlePendingNotify: () => {
+        pendingNotify = false
+        const snapshot = T.toSnapshot(registrations)
+        if (snapshot === lastNotifiedSnapshot) return
+        lastNotifiedSnapshot = snapshot
+        onChange?.()
+    },
+
+    // Batches change notifications via microtask and deduplicates by content
+    // Inline ref callbacks fire cleanup+register on every re-render — same net registration set.
+    // Without dedup, this causes: register → onChange → re-render → register → onChange → infinite loop.
+    // @sig emitChange :: () -> void
+    emitChange: () => {
+        if (pendingNotify) return
+        pendingNotify = true
+        queueMicrotask(E.handlePendingNotify)
+    },
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
 // Module-level state
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
 let registrations = []
 let nextBatchId = 0
+let onChange
+let pendingNotify = false
+let lastNotifiedSnapshot = ''
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -40,12 +87,23 @@ const ActionRegistry = {
         const batchId = nextBatchId++
         const entries = actions.map(({ id, description, execute }) => ({ batchId, context, id, description, execute }))
         registrations = [...registrations, ...entries]
-        return () => (registrations = filter(r => r.batchId !== batchId, registrations))
+        E.emitChange()
+        return () => {
+            registrations = filter(r => r.batchId !== batchId, registrations)
+            E.emitChange()
+        }
     },
 
     // Removes all actions registered under a context
     // @sig unregister :: String -> void
-    unregister: context => (registrations = filter(r => r.context !== context, registrations)),
+    unregister: context => {
+        registrations = filter(r => r.context !== context, registrations)
+        E.emitChange()
+    },
+
+    // Sets the change listener — called (via microtask) when registered action set actually changes
+    // @sig setOnChange :: (() -> void) -> void
+    setOnChange: fn => (onChange = fn),
 
     // Finds the last-registered action matching id + context (LIFO)
     // @sig resolve :: (String, String?) -> { id, description, execute, context }?
@@ -62,6 +120,7 @@ const ActionRegistry = {
     clear: () => {
         registrations = []
         nextBatchId = 0
+        lastNotifiedSnapshot = ''
     },
 }
 

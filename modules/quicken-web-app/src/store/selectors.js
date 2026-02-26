@@ -55,6 +55,7 @@ const dropTargetGroupId = state => state.dropTargetGroupId
 const transferNavPending = state => state.transferNavPending
 const pickerType = state => state.pickerType
 const pickerHighlight = state => state.pickerHighlight
+const actionRegistryVersion = state => state.actionRegistryVersion
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Entity lookups (state, id) -> value
@@ -540,6 +541,7 @@ export {
     transferNavPending,
     pickerType,
     pickerHighlight,
+    actionRegistryVersion,
 
     // Entity lookups
     accountName,

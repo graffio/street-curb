@@ -69,6 +69,7 @@ export const Action = {
         SetTransferNavPending  : { pending: 'Object?' },
         SetPickerOpen          : { pickerType: 'String?' },
         SetPickerHighlight     : { index: 'Number' },
+        BumpActionRegistry     : {},
 
         // Drag state actions
         SetDraggingView  : { viewId: 'String?' },
