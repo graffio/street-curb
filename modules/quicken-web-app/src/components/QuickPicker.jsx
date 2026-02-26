@@ -209,7 +209,10 @@ const QuickPicker = () => {
     const contentProps = { onKeyDown: handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '360px' }
     const pickerType = useSelector(S.pickerType)
     const config = pickerType ? PickerConfig[pickerType] : undefined
-    const data = useSelector(state => S.pickerData(state, config?.items ?? []))
+    const data = useSelector(state => {
+        const items = typeof config?.items === 'function' ? config.items(state) : (config?.items ?? [])
+        return S.pickerData(state, items)
+    })
     const { searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex, filteredItems, position } = data
 
     // Update module-level state for E functions to read at call-time

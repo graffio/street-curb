@@ -13,6 +13,10 @@ const { ActionRegistry, normalizeKey } = KeymapModule
 
 // prettier-ignore
 const GROUPS = {
+    Accounts: {
+        'shift+a'     : 'account:picker',
+    },
+
     Date: {
         '['           : 'date:decrement-day',
         ']'           : 'date:increment-day',

@@ -49,20 +49,18 @@ Key opens a search modal, user picks from a filtered list, selection executes an
 **When to use:** Choosing one item from a set where the user knows the item by name, not position. Reports, accounts,
 open tabs, any named-entity list.
 
-**Examples:** `r` → report picker, `p` → tab picker (pick from open tabs)
+**Examples:** `r` → report picker, `Shift+A` → account picker, `p` → tab picker (pick from open tabs)
 
-**Pattern:** A generic `QuickPicker` component (Dialog-based, centered overlay). Caller registers an action whose
-execute posts `Action.OpenPicker(pickerId)`. A selector maps the pickerId to an item list. The picker handles search
-filtering, highlight navigation (arrow keys), selection (Enter), and dismissal (Escape) internally. On select, the
-picker posts the item's pre-defined action.
+**Pattern:** `QuickPicker.jsx` — Dialog-based centered overlay. Caller registers an action whose execute posts
+`Action.SetPickerOpen(pickerId)`. `picker-config.js` maps each pickerId to a config with `title` and `items` (a
+function `state => [{id, label, execute}]`). Each item carries its own `execute` function — the picker doesn't know
+what selection does, it just calls `item.execute()`. QuickPicker handles search filtering, highlight navigation (arrow
+keys / j/k), selection (Enter), and dismissal (Escape) internally.
 
-**State:** Redux stores `openPickerId`, picker search text, and highlight index. Each picker ID has a selector that
-returns `[{ id, label, execute }]`.
+**State:** Redux stores `openPickerId`, picker search text, and highlight index.
 
-**Reference (closest existing):** `FilterChipPopover.jsx` — search input + highlight navigation + keyboard routing.
-The picker generalizes this pattern into a standalone modal.
-
-**Not yet built.** First implementation: reports picker (2 static items).
+**Reference:** `QuickPicker.jsx`, `picker-config.js`, `ReportsList.jsx` (report:picker), `AccountList.jsx`
+(account:picker)
 
 ### 3. Navigation + Contextual Action
 
@@ -162,13 +160,13 @@ The style validator rule `require-action-registry` enforces that files with `onC
 | Key routing (single key + modifiers) | Working |
 | KeymapDrawer (discoverability) | Working |
 | Direct actions (paradigm 1) | Working — file:open, dismiss, navigate, filters |
+| Picker (paradigm 2) | Working — report:picker, account:picker via QuickPicker |
 | Navigation + contextual (paradigm 3) | Working — FilterChipPopover, DataTable rows |
 
 ### What's missing
 
 | Piece | Needed for |
 |-------|-----------|
-| QuickPicker component | Paradigm 2 — reports, tabs, accounts, any named-entity selection |
 | Chord/sequence key detection | Future enhancement — `g t`, `g r` prefix keys. Not blocking; single keys work for now |
 | Next/prev tab cycling | Paradigm 4 — tab navigation across groups |
 | Binding remapping UI | WCAG 2.1.4 compliance for assistive technology users |

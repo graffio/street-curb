@@ -100,20 +100,18 @@ Dependency: wire `highlightedId` from report page state into DataTable.
 
 ## Settled Approach
 
-- **Completed:** Group 1 (SearchFilterChip, DataTable) + RootLayout. Mechanical migrations — done.
+- **Completed:** Group 1 (SearchFilterChip, DataTable), RootLayout, SearchChip, ReportsList, FileOpenDialog,
+  KeymapDrawer. TabGroup direct actions (tab:close, tab:split) done.
 - **Architecture:** Keyboard interaction paradigms are defined in
   `docs/architecture/keyboard-interaction.md (root)`. Each remaining file maps to a paradigm; future work should
   be planned per-paradigm, not per-file-group.
 - **Paradigm mapping for remaining files:**
-    - ReportsList, AccountList, TabGroup (switch) → **Picker** (QuickPicker component, not yet built)
-    - TabGroup (close active, split) → **Direct action** — done
+    - AccountList, TabGroup (switch) → **Picker** (QuickPicker built, needs wiring)
     - TabGroup (delete/merge group) → **Direct action** (needs design — see open question 7)
     - TabGroup (move tab between groups) → **Direct action or Picker** (needs design — see open question 8)
     - TabGroup (cycle group), next/prev tab → **Cycling** (not yet built)
     - Group 3 tree toggles → **Navigation + contextual** (needs focused row in reports)
-    - SearchChip → **Direct action** — done
-    - FileOpenDialog, KeymapDrawer → **Exempt candidates**
-- **AccountList** — UI will change, but the picker pattern will survive the redesign. Include in first picker pass.
+- **AccountList** — UI will change, but the picker pattern will survive the redesign. Include in next picker pass.
 - **Chords** — Not needed yet. Single keys are sufficient; chord system is a future enhancement.
 - **Fuzzy search** — Substring matching (containsIgnoreCase) is sufficient for small lists. Fuzzy later if needed.
 - **Accessibility** — Single-key shortcuts need a remapping UI for WCAG 2.1.4 compliance. Architecture supports
@@ -146,12 +144,12 @@ exempted.
 - [x] SearchFilterChip.jsx (Group 1) — hardcoded Escape replaced with ActionRegistry dismiss pattern
 - [x] DataTable.jsx (Group 1) — direction values renamed to 'next'/'previous'
 - [x] RootLayout.jsx (Group 2) — file:open action registered, bound to 'o'
-- [ ] ReportsList.jsx — Picker paradigm. First QuickPicker test case.
+- [x] ReportsList.jsx — Picker paradigm. report:open registered, bound to 'r', opens QuickPicker
 - [~] TabGroup.jsx — Direct actions done (tab:close, tab:split). Remaining: delete/merge group (Q7), move tab (Q8), Picker (switch tab), Cycling (cycle group)
-- [ ] AccountList.jsx — Picker paradigm. Include in first picker pass.
+- [x] AccountList.jsx — Picker paradigm. account:picker registered, bound to Shift+A, opens QuickPicker
 - [ ] CategoryReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
 - [ ] CellRenderers.jsx — Navigation+contextual. Blocked on: focused row in reports.
 - [ ] InvestmentReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
 - [x] SearchChip.jsx — search:next/prev/clear registered via ActionRegistry, self-selecting SearchNavControls
-- [ ] FileOpenDialog.jsx — Permanent exemption candidate.
-- [ ] KeymapDrawer.jsx — Permanent exemption candidate.
+- [x] FileOpenDialog.jsx — file:open-new and file:reopen-last registered via ActionRegistry
+- [x] KeymapDrawer.jsx — keymap:dismiss registered via ActionRegistry
