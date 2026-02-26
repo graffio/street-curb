@@ -31,6 +31,43 @@ const T = {
         const newActiveId = activeTabGroupId === groupIdToRemove ? resizedGroups[0].id : activeTabGroupId
         return TabLayoutType(id, resizedGroups, newActiveId, nextTabGroupId)
     },
+
+    // Flattens tab groups into a single ordered list of { view, groupId } entries
+    // @sig toFlatTabList :: LookupTable<TabGroup> -> [{ view: View, groupId: String }]
+    toFlatTabList: tabGroups =>
+        tabGroups.reduce(
+            (acc, group) => [...acc, ...Array.from(group.views, v => ({ view: v, groupId: group.id }))],
+            [],
+        ),
+
+    // Creates a new group at the edge and moves a tab into it; auto-closes empty source
+    // @sig toLayoutWithEdgeGroup :: (TabLayout, String, String, String) -> TabLayout
+    toLayoutWithEdgeGroup: (tabLayout, viewId, sourceGroupId, direction) => {
+        const { id, tabGroups, nextTabGroupId } = tabLayout
+        const { views, width } = tabGroups[sourceGroupId]
+        const view = views[viewId]
+        const newGroupId = `tg_${nextTabGroupId}`
+        const newGroup = TabGroup(newGroupId, LookupTable([view], View, 'id'), viewId, 0)
+
+        const remainingViews = views.removeItemWithId(viewId)
+        const newActiveViewId = T.toNextActiveViewId(tabGroups[sourceGroupId], viewId, remainingViews)
+        const updatedSource = TabGroup(sourceGroupId, remainingViews, newActiveViewId, width)
+
+        const sourceIndex = tabGroups.findIndex(g => g.id === sourceGroupId)
+        const insertIndex = direction === 'right' ? sourceIndex + 1 : sourceIndex
+        const groupArray = [...tabGroups.addItemWithId(updatedSource)]
+        const withNewGroup = [...groupArray.slice(0, insertIndex), newGroup, ...groupArray.slice(insertIndex)]
+
+        const evenWidth = 100 / withNewGroup.length
+        const resized = withNewGroup.map(g => F.createResizedGroup(g, evenWidth))
+        const newTabGroups = LookupTable(resized, TabGroup, 'id')
+        let layout = TabLayoutType(id, newTabGroups, newGroupId, nextTabGroupId + 1)
+
+        if (updatedSource.views.length === 0 && layout.tabGroups.length > 1)
+            layout = T.toLayoutWithoutGroup(layout, sourceGroupId)
+
+        return layout
+    },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -212,6 +249,101 @@ const setTabGroupWidth = (state, action) => ({
     tabLayout: updateLookupTablePath(state.tabLayout, ['tabGroups', action.groupId, 'width'], action.width),
 })
 
+// Cycles active tab one position in the flat cross-group list (wraps at edges)
+// @sig handleCycleTab :: (State, Action.CycleTab) -> State
+const handleCycleTab = (state, action) => {
+    const { direction } = action
+    if (direction !== 'left' && direction !== 'right') throw new Error(`CycleTab: invalid direction '${direction}'`)
+
+    const { tabLayout } = state
+    const { tabGroups, activeTabGroupId } = tabLayout
+    const activeGroup = tabGroups[activeTabGroupId]
+    const flatList = T.toFlatTabList(tabGroups)
+    const { length } = flatList
+    if (length <= 1) return state
+
+    const currentIndex = flatList.findIndex(entry => entry.view.id === activeGroup.activeViewId)
+    const offset = direction === 'right' ? 1 : -1
+    const { view, groupId: targetGroupId } = flatList[(currentIndex + offset + length) % length]
+
+    let layout = updateLookupTablePath(tabLayout, ['tabGroups', targetGroupId, 'activeViewId'], view.id)
+    layout = updateLookupTablePath(layout, ['activeTabGroupId'], targetGroupId)
+    return { ...state, tabLayout: layout }
+}
+
+// Moves a specific tab one position in the flat list (reorder, cross-group, or create group)
+// @sig moveTab :: (State, Action.MoveTab) -> State
+const moveTab = (state, action) => {
+    const { direction, viewId, groupId } = action
+    if (direction !== 'left' && direction !== 'right') throw new Error(`MoveTab: invalid direction '${direction}'`)
+
+    const { tabLayout } = state
+    const { id, tabGroups, nextTabGroupId } = tabLayout
+    const group = tabGroups[groupId]
+
+    // Context menu captures viewId/groupId at render time; a rapid close or move can make them stale
+    if (!group || !group.views[viewId]) return state
+
+    const { views, width } = group
+    const flatList = T.toFlatTabList(tabGroups)
+    const { length } = flatList
+    const currentFlatIndex = flatList.findIndex(entry => entry.view.id === viewId && entry.groupId === groupId)
+    const offset = direction === 'right' ? 1 : -1
+    const targetFlatIndex = currentFlatIndex + offset
+    const isAtEdge = targetFlatIndex < 0 || targetFlatIndex >= length
+
+    // At outermost edge with MAX_GROUPS — no-op
+    if (isAtEdge && tabGroups.length >= MAX_GROUPS) return state
+
+    // At outermost edge — create new group and move tab there
+    if (isAtEdge) return { ...state, tabLayout: T.toLayoutWithEdgeGroup(tabLayout, viewId, groupId, direction) }
+
+    const { groupId: targetGroupId } = flatList[targetFlatIndex]
+
+    // Within-group reorder
+    if (targetGroupId === groupId) {
+        const viewIndex = views.findIndex(v => v.id === viewId)
+        const reorderedViews = views.moveElement(viewIndex, viewIndex + offset)
+        const updatedGroup = TabGroup(groupId, reorderedViews, viewId, width)
+        const groups = tabGroups.addItemWithId(updatedGroup)
+        return { ...state, tabLayout: TabLayoutType(id, groups, groupId, nextTabGroupId) }
+    }
+
+    // Cross-group move
+    const view = views[viewId]
+    const targetGroup = tabGroups[targetGroupId]
+
+    const remainingViews = views.removeItemWithId(viewId)
+    const newActiveViewId = T.toNextActiveViewId(group, viewId, remainingViews)
+    const updatedSource = TabGroup(groupId, remainingViews, newActiveViewId, width)
+
+    const toIndex = direction === 'right' ? 0 : targetGroup.views.length
+    let destViews = targetGroup.views.addItemWithId(view)
+    const currentIdx = destViews.findIndex(v => v.id === viewId)
+    if (currentIdx !== toIndex) destViews = destViews.moveElement(currentIdx, toIndex)
+    const updatedDest = TabGroup(targetGroupId, destViews, viewId, targetGroup.width)
+
+    const groups = tabGroups.addItemWithId(updatedSource).addItemWithId(updatedDest)
+    let newLayout = TabLayoutType(id, groups, targetGroupId, nextTabGroupId)
+
+    if (updatedSource.views.length === 0 && newLayout.tabGroups.length > 1)
+        newLayout = T.toLayoutWithoutGroup(newLayout, groupId)
+
+    return { ...state, tabLayout: newLayout }
+}
+
+// Moves a tab into a new group to the right; no-op at MAX_GROUPS
+// @sig moveToNewGroup :: (State, Action.MoveToNewGroup) -> State
+const moveToNewGroup = (state, action) => {
+    const { viewId, groupId } = action
+    const { tabLayout } = state
+    const { tabGroups } = tabLayout
+    if (tabGroups.length >= MAX_GROUPS) return state
+    const group = tabGroups[groupId]
+    if (!group || !group.views[viewId]) return state
+    return { ...state, tabLayout: T.toLayoutWithEdgeGroup(tabLayout, viewId, groupId, 'right') }
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Exports
@@ -219,9 +351,13 @@ const setTabGroupWidth = (state, action) => ({
 // ---------------------------------------------------------------------------------------------------------------------
 
 const TabLayout = {
+    MAX_GROUPS,
     closeTabGroup,
     closeView,
     createTabGroup,
+    cycleTab: handleCycleTab,
+    moveTab,
+    moveToNewGroup,
     moveView,
     openView,
     setActiveTabGroup,

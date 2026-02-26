@@ -56,6 +56,9 @@ export const Action = {
         SetActiveView     : { groupId: 'String', viewId: 'String' },
         SetActiveTabGroup : { groupId: 'String' },
         SetTabGroupWidth  : { groupId: 'String', width: 'Number' },
+        CycleTab          : { direction: 'String' },
+        MoveTab           : { direction: 'String', viewId: 'String', groupId: 'String' },
+        MoveToNewGroup    : { viewId: 'String', groupId: 'String' },
 
         // Account list actions
         SetAccountListSortMode : { sortMode: 'SortMode' },

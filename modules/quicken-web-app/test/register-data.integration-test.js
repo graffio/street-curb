@@ -20,7 +20,7 @@ tap.before(async () => {
     // Open second tab group to exercise multi-instance module-level state
     session.clickByRef('Spending by Category')
     await wait(500)
-    session.clickByText('Split')
+    await session.pressKey('Control+Shift+l')
     await wait(300)
 })
 

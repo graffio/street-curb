@@ -71,8 +71,11 @@ const GROUPS = {
 
     Tabs: {
         w             : 'tab:close',
+        'ctrl+h'      : 'tab:cycle-left',
+        'ctrl+l'      : 'tab:cycle-right',
+        'ctrl+shift+h': 'tab:move-left',
+        'ctrl+shift+l': 'tab:move-right',
         'shift+t'     : 'tab:picker',
-        '\\'          : 'tab:split',
     },
 
     Transfer: {

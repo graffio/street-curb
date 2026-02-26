@@ -45,6 +45,16 @@ const E = {
         if (activeViewId) post(Action.CloseView(activeViewId, id))
     },
 
+    // Moves the active tab one position in the given direction — reads state at call time
+    // @sig moveActiveTab :: String -> void
+    moveActiveTab: direction => {
+        const tabLayout = S.tabLayout(currentStore().getState())
+        const group = tabLayout.tabGroups.get(tabLayout.activeTabGroupId)
+        if (!group) return
+        const { activeViewId, id } = group
+        if (activeViewId) post(Action.MoveTab(direction, activeViewId, id))
+    },
+
     // Registers global actions when Open File button mounts — global scope (undefined viewId)
     // @sig registerGlobalActions :: Element? -> void
     registerGlobalActions: element => {
@@ -54,8 +64,11 @@ const E = {
         globalActionsCleanup = ActionRegistry.register(undefined, [
             { id: 'file:open', description: 'Open File', execute: () => post(Action.OpenFile()) },
             { id: 'tab:close', description: 'Close tab', execute: E.closeActiveTab },
+            { id: 'tab:cycle-left', description: 'Previous tab', execute: () => post(Action.CycleTab('left')) },
+            { id: 'tab:cycle-right', description: 'Next tab', execute: () => post(Action.CycleTab('right')) },
+            { id: 'tab:move-left', description: 'Move tab left', execute: () => E.moveActiveTab('left') },
+            { id: 'tab:move-right', description: 'Move tab right', execute: () => E.moveActiveTab('right') },
             { id: 'tab:picker', description: 'Switch tab', execute: () => post(Action.SetPickerOpen('tabs')) },
-            { id: 'tab:split', description: 'Split', execute: () => post(Action.CreateTabGroup()) },
         ])
     },
 }

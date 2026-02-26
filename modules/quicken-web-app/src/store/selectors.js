@@ -23,6 +23,7 @@ import { CategoryTree } from '../utils/category-tree.js'
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
+import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
@@ -325,6 +326,28 @@ const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
 
 const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
 
+const atMaxGroups = state => state.tabLayout.tabGroups.length >= TabLayoutReducers.MAX_GROUPS
+
+// Stable reference table for tabMoveDisabled — indexed by (left | right<<1) to avoid new object allocation
+const TAB_MOVE_DISABLED_REFS = [
+    { left: false, right: false },
+    { left: true, right: false },
+    { left: false, right: true },
+    { left: true, right: true },
+]
+
+// Whether Move Left/Right is disabled for a tab at its current position (at edge with MAX_GROUPS)
+// Returns a stable reference per boolean combination to avoid unnecessary rerenders
+const tabMoveDisabled = (state, viewId, groupId) => {
+    const { tabGroups } = state.tabLayout
+    const group = tabGroups.get(groupId)
+    const atMax = tabGroups.length >= TabLayoutReducers.MAX_GROUPS
+    const left = atMax && tabGroups[0].id === groupId && group.views[0].id === viewId
+    const right =
+        atMax && tabGroups[tabGroups.length - 1].id === groupId && group.views[group.views.length - 1].id === viewId
+    return TAB_MOVE_DISABLED_REFS[left | (right << 1)]
+}
+
 // Flat list of all views across all tab groups for the tab picker
 // Carries groupId because SetActiveView(groupId, viewId) requires both
 const _pickerTabItems = state =>
@@ -566,6 +589,7 @@ export {
     // Base state
     accounts,
     activeViewId,
+    atMaxGroups,
     activeViewPageTitle,
     categories,
     draggingViewId,
@@ -580,6 +604,7 @@ export {
     tabGroupById,
     tabGroupIsActive,
     tabLayout,
+    tabMoveDisabled,
     tableLayoutOrDefault,
     tableLayoutProps,
     tableLayouts,
