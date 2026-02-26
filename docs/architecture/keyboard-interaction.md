@@ -49,7 +49,7 @@ Key opens a search modal, user picks from a filtered list, selection executes an
 **When to use:** Choosing one item from a set where the user knows the item by name, not position. Reports, accounts,
 open tabs, any named-entity list.
 
-**Examples:** `r` → report picker, `Shift+A` → account picker, `p` → tab picker (pick from open tabs)
+**Examples:** `r` → report picker, `Shift+A` → account picker, `Shift+T` → tab picker (pick from open tabs)
 
 **Pattern:** `QuickPicker.jsx` — Dialog-based centered overlay. Caller registers an action whose execute posts
 `Action.SetPickerOpen(pickerId)`. `picker-config.js` maps each pickerId to a config with `title` and `items` (a
@@ -59,8 +59,12 @@ keys / j/k), selection (Enter), and dismissal (Escape) internally.
 
 **State:** Redux stores `openPickerId`, picker search text, and highlight index.
 
+**Gotcha:** When a picker selects an item that belongs to a different tab group, `SetActiveView` alone is not enough —
+it only updates the view within the group, not which group is active. Dispatch `SetActiveTabGroup` first, then
+`SetActiveView`.
+
 **Reference:** `QuickPicker.jsx`, `picker-config.js`, `ReportsList.jsx` (report:picker), `AccountList.jsx`
-(account:picker)
+(account:picker), `RootLayout.jsx` (tab:picker)
 
 ### 3. Navigation + Contextual Action
 
@@ -160,7 +164,7 @@ The style validator rule `require-action-registry` enforces that files with `onC
 | Key routing (single key + modifiers) | Working |
 | KeymapDrawer (discoverability) | Working |
 | Direct actions (paradigm 1) | Working — file:open, dismiss, navigate, filters |
-| Picker (paradigm 2) | Working — report:picker, account:picker via QuickPicker |
+| Picker (paradigm 2) | Working — report:picker, account:picker, tab:picker via QuickPicker |
 | Navigation + contextual (paradigm 3) | Working — FilterChipPopover, DataTable rows |
 
 ### What's missing
