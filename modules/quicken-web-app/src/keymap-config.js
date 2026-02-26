@@ -71,6 +71,7 @@ const GROUPS = {
 
     Tabs: {
         w             : 'tab:close',
+        'shift+t'     : 'tab:picker',
         '\\'          : 'tab:split',
     },
 

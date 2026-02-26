@@ -54,6 +54,7 @@ const E = {
         globalActionsCleanup = ActionRegistry.register(undefined, [
             { id: 'file:open', description: 'Open File', execute: () => post(Action.OpenFile()) },
             { id: 'tab:close', description: 'Close tab', execute: E.closeActiveTab },
+            { id: 'tab:picker', description: 'Switch tab', execute: () => post(Action.SetPickerOpen('tabs')) },
             { id: 'tab:split', description: 'Split', execute: () => post(Action.CreateTabGroup()) },
         ])
     },
