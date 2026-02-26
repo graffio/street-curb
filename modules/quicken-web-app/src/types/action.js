@@ -83,6 +83,11 @@
  *      pickerType: "String?"
  *  SetPickerHighlight
  *      index: "Number"
+ *  SetPickerSearch
+ *      searchText: "String"
+ *  SetPickerPosition
+ *      x: "Number",
+ *      y: "Number"
  *  BumpActionRegistry
  *  SetDraggingView
  *      viewId: "String?"
@@ -152,6 +157,8 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetTransferNavPending',
         'SetPickerOpen',
         'SetPickerHighlight',
+        'SetPickerSearch',
+        'SetPickerPosition',
         'BumpActionRegistry',
         'SetDraggingView',
         'SetDropTarget',
@@ -215,6 +222,8 @@ const toString = {
     setTransferNavPending  : function () { return `Action.SetTransferNavPending(${R._toString(this.pending)})` },
     setPickerOpen          : function () { return `Action.SetPickerOpen(${R._toString(this.pickerType)})` },
     setPickerHighlight     : function () { return `Action.SetPickerHighlight(${R._toString(this.index)})` },
+    setPickerSearch        : function () { return `Action.SetPickerSearch(${R._toString(this.searchText)})` },
+    setPickerPosition      : function () { return `Action.SetPickerPosition(${R._toString(this.x)}, ${R._toString(this.y)})` },
     bumpActionRegistry     : function () { return `Action.BumpActionRegistry()` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
@@ -259,6 +268,8 @@ const toJSON = {
     setTransferNavPending  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setPickerOpen          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setPickerHighlight     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setPickerSearch        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setPickerPosition      : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     bumpActionRegistry     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -795,6 +806,40 @@ const SetPickerHighlightConstructor = function SetPickerHighlight(index) {
 Action.SetPickerHighlight = SetPickerHighlightConstructor
 
 /*
+ * Construct a Action.SetPickerSearch instance
+ * @sig SetPickerSearch :: (String) -> Action.SetPickerSearch
+ */
+const SetPickerSearchConstructor = function SetPickerSearch(searchText) {
+    const constructorName = 'Action.SetPickerSearch(searchText)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateString(constructorName, 'searchText', false, searchText)
+
+    const result = Object.create(SetPickerSearchPrototype)
+    result.searchText = searchText
+    return result
+}
+
+Action.SetPickerSearch = SetPickerSearchConstructor
+
+/*
+ * Construct a Action.SetPickerPosition instance
+ * @sig SetPickerPosition :: (Number, Number) -> Action.SetPickerPosition
+ */
+const SetPickerPositionConstructor = function SetPickerPosition(x, y) {
+    const constructorName = 'Action.SetPickerPosition(x, y)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateNumber(constructorName, 'x', false, x)
+    R.validateNumber(constructorName, 'y', false, y)
+
+    const result = Object.create(SetPickerPositionPrototype)
+    result.x = x
+    result.y = y
+    return result
+}
+
+Action.SetPickerPosition = SetPickerPositionConstructor
+
+/*
  * Construct a Action.BumpActionRegistry instance
  * @sig BumpActionRegistry :: () -> Action.BumpActionRegistry
  */
@@ -1123,6 +1168,22 @@ const SetPickerHighlightPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetPickerHighlightConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetPickerSearchPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetPickerSearch', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setPickerSearch, enumerable: false },
+    toJSON: { value: toJSON.setPickerSearch, enumerable: false },
+    constructor: { value: SetPickerSearchConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetPickerPositionPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetPickerPosition', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setPickerPosition, enumerable: false },
+    toJSON: { value: toJSON.setPickerPosition, enumerable: false },
+    constructor: { value: SetPickerPositionConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const BumpActionRegistryPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'BumpActionRegistry', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1203,6 +1264,8 @@ SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
 SetTransferNavPendingConstructor.prototype = SetTransferNavPendingPrototype
 SetPickerOpenConstructor.prototype = SetPickerOpenPrototype
 SetPickerHighlightConstructor.prototype = SetPickerHighlightPrototype
+SetPickerSearchConstructor.prototype = SetPickerSearchPrototype
+SetPickerPositionConstructor.prototype = SetPickerPositionPrototype
 BumpActionRegistryConstructor.prototype = BumpActionRegistryPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
@@ -1241,6 +1304,8 @@ SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingSta
 SetTransferNavPendingConstructor.is = val => val && val.constructor === SetTransferNavPendingConstructor
 SetPickerOpenConstructor.is = val => val && val.constructor === SetPickerOpenConstructor
 SetPickerHighlightConstructor.is = val => val && val.constructor === SetPickerHighlightConstructor
+SetPickerSearchConstructor.is = val => val && val.constructor === SetPickerSearchConstructor
+SetPickerPositionConstructor.is = val => val && val.constructor === SetPickerPositionConstructor
 BumpActionRegistryConstructor.is = val => val && val.constructor === BumpActionRegistryConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
@@ -1279,6 +1344,8 @@ SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
 SetTransferNavPendingConstructor.toString = () => 'Action.SetTransferNavPending'
 SetPickerOpenConstructor.toString = () => 'Action.SetPickerOpen'
 SetPickerHighlightConstructor.toString = () => 'Action.SetPickerHighlight'
+SetPickerSearchConstructor.toString = () => 'Action.SetPickerSearch'
+SetPickerPositionConstructor.toString = () => 'Action.SetPickerPosition'
 BumpActionRegistryConstructor.toString = () => 'Action.BumpActionRegistry'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
@@ -1323,6 +1390,8 @@ SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.sta
 SetTransferNavPendingConstructor._from = _input => Action.SetTransferNavPending(_input.pending)
 SetPickerOpenConstructor._from = _input => Action.SetPickerOpen(_input.pickerType)
 SetPickerHighlightConstructor._from = _input => Action.SetPickerHighlight(_input.index)
+SetPickerSearchConstructor._from = _input => Action.SetPickerSearch(_input.searchText)
+SetPickerPositionConstructor._from = _input => Action.SetPickerPosition(_input.x, _input.y)
 BumpActionRegistryConstructor._from = _input => Action.BumpActionRegistry()
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
@@ -1361,6 +1430,8 @@ SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
 SetTransferNavPendingConstructor.from = SetTransferNavPendingConstructor._from
 SetPickerOpenConstructor.from = SetPickerOpenConstructor._from
 SetPickerHighlightConstructor.from = SetPickerHighlightConstructor._from
+SetPickerSearchConstructor.from = SetPickerSearchConstructor._from
+SetPickerPositionConstructor.from = SetPickerPositionConstructor._from
 BumpActionRegistryConstructor.from = BumpActionRegistryConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
@@ -1549,6 +1620,12 @@ SetPickerOpenConstructor.fromFirestore = SetPickerOpenConstructor._from
 SetPickerHighlightConstructor.toFirestore = o => ({ ...o })
 SetPickerHighlightConstructor.fromFirestore = SetPickerHighlightConstructor._from
 
+SetPickerSearchConstructor.toFirestore = o => ({ ...o })
+SetPickerSearchConstructor.fromFirestore = SetPickerSearchConstructor._from
+
+SetPickerPositionConstructor.toFirestore = o => ({ ...o })
+SetPickerPositionConstructor.fromFirestore = SetPickerPositionConstructor._from
+
 BumpActionRegistryConstructor.toFirestore = o => ({ ...o })
 BumpActionRegistryConstructor.fromFirestore = BumpActionRegistryConstructor._from
 
@@ -1604,6 +1681,8 @@ Action.is = v => {
         SetTransferNavPending,
         SetPickerOpen,
         SetPickerHighlight,
+        SetPickerSearch,
+        SetPickerPosition,
         BumpActionRegistry,
         SetDraggingView,
         SetDropTarget,
@@ -1643,6 +1722,8 @@ Action.is = v => {
         constructor === SetTransferNavPending ||
         constructor === SetPickerOpen ||
         constructor === SetPickerHighlight ||
+        constructor === SetPickerSearch ||
+        constructor === SetPickerPosition ||
         constructor === BumpActionRegistry ||
         constructor === SetDraggingView ||
         constructor === SetDropTarget ||
@@ -1697,6 +1778,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetTransferNavPending,
         SetPickerOpen,
         SetPickerHighlight,
+        SetPickerSearch,
+        SetPickerPosition,
         BumpActionRegistry,
         SetDraggingView,
         SetDropTarget,
@@ -1734,6 +1817,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetTransferNavPending') return SetTransferNavPending.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetPickerOpen') return SetPickerOpen.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetPickerHighlight') return SetPickerHighlight.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetPickerSearch') return SetPickerSearch.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetPickerPosition') return SetPickerPosition.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'BumpActionRegistry') return BumpActionRegistry.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)

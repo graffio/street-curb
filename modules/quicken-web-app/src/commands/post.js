@@ -199,6 +199,8 @@ const post = action => {
         SetTransferNavPending  : () => E.dispatch(action),
         SetPickerOpen          : () => E.dispatch(action),
         SetPickerHighlight     : () => E.dispatch(action),
+        SetPickerSearch        : () => E.dispatch(action),
+        SetPickerPosition      : () => E.dispatch(action),
         BumpActionRegistry     : () => E.dispatch(action),
 
         // Drag state actions (no persistence needed)

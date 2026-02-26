@@ -72,6 +72,8 @@ const createEmptyState = () => ({
     transferNavPending: undefined,
     pickerType: undefined,
     pickerHighlight: 0,
+    pickerSearch: '',
+    pickerPosition: undefined,
     actionRegistryVersion: 0,
 })
 
@@ -139,8 +141,10 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ToggleDrawer           : () => ({ ...state, showDrawer: !state.showDrawer }),
         SetLoadingStatus       : () => ({ ...state, loadingStatus: action.status }),
         SetTransferNavPending  : () => ({ ...state, transferNavPending: action.pending }),
-        SetPickerOpen          : () => ({ ...state, pickerType: action.pickerType, pickerHighlight: 0 }),
+        SetPickerOpen          : () => ({ ...state, pickerType: action.pickerType, pickerHighlight: 0, pickerSearch: '' }),
         SetPickerHighlight     : () => ({ ...state, pickerHighlight: action.index }),
+        SetPickerSearch        : () => ({ ...state, pickerSearch: action.searchText, pickerHighlight: 0 }),
+        SetPickerPosition      : () => { const { x, y } = action; return { ...state, pickerPosition: Number.isFinite(x) && Number.isFinite(y) ? { x, y } : undefined } },
         BumpActionRegistry     : () => ({ ...state, actionRegistryVersion: state.actionRegistryVersion + 1 }),
 
         // Drag state actions
