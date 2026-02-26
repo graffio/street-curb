@@ -339,6 +339,7 @@ const moveTab = (state, action) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const TabLayout = {
+    MAX_GROUPS,
     closeTabGroup,
     closeView,
     createTabGroup,

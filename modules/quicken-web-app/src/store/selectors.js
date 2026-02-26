@@ -23,6 +23,7 @@ import { CategoryTree } from '../utils/category-tree.js'
 import { DateRangeUtils } from '../utils/date-range-utils.js'
 import { Formatters } from '../utils/formatters.js'
 import { HoldingsTree } from '../utils/holdings-tree.js'
+import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 import { toAccountSections } from './to-account-sections.js'
@@ -325,6 +326,16 @@ const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
 
 const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
 
+// Whether Move Left/Right is disabled for a tab at its current position (at edge with MAX_GROUPS)
+const tabMoveDisabled = (state, viewId, groupId) => {
+    const { tabGroups } = state.tabLayout
+    const group = tabGroups.get(groupId)
+    const atMax = tabGroups.length >= TabLayoutReducers.MAX_GROUPS
+    const isFirst = tabGroups[0].id === groupId && group.views[0].id === viewId
+    const isLast = tabGroups[tabGroups.length - 1].id === groupId && group.views[group.views.length - 1].id === viewId
+    return { left: isFirst && atMax, right: isLast && atMax }
+}
+
 // Flat list of all views across all tab groups for the tab picker
 // Carries groupId because SetActiveView(groupId, viewId) requires both
 const _pickerTabItems = state =>
@@ -580,6 +591,7 @@ export {
     tabGroupById,
     tabGroupIsActive,
     tabLayout,
+    tabMoveDisabled,
     tableLayoutOrDefault,
     tableLayoutProps,
     tableLayouts,

@@ -2,7 +2,7 @@
 // ABOUTME: Uses View.match() for exhaustive content rendering
 // COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
-import { Box, Button, Flex, Text, Tooltip } from '@radix-ui/themes'
+import { Box, Button, ContextMenu, Flex, Kbd, Text, Tooltip } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
@@ -71,7 +71,7 @@ const RegisterPage = ({ accountId }) => {
     )
 }
 
-// Draggable tab — self-selects view, isActive, isActiveGroup from state
+// Draggable tab with right-click context menu — self-selects view, isActive, isActiveGroup
 // @sig Tab :: { viewId: String, groupId: String } -> ReactElement
 const Tab = ({ viewId, groupId }) => {
     const handleClose = e => {
@@ -85,8 +85,13 @@ const Tab = ({ viewId, groupId }) => {
         e.dataTransfer.effectAllowed = 'move'
     }
 
+    const handleMoveLeft = () => post(Action.MoveTab('left', viewId, groupId))
+    const handleMoveRight = () => post(Action.MoveTab('right', viewId, groupId))
+    const handleCloseMenu = () => post(Action.CloseView(viewId, groupId))
+
     const tabLayout = useSelector(S.tabLayout)
     const isDragging = useSelector(S.draggingViewId) === viewId
+    const { left: moveLeftDisabled, right: moveRightDisabled } = useSelector(s => S.tabMoveDisabled(s, viewId, groupId))
     const group = tabLayout.tabGroups.get(groupId)
     const view = group.views.get(viewId)
     const isActive = group.activeViewId === viewId
@@ -104,37 +109,35 @@ const Tab = ({ viewId, groupId }) => {
     }
 
     return (
-        <Tooltip content={title} delayDuration={200}>
-            <Flex {...tabProps}>
-                <Text size="2" color="gray">
-                    {icon}
-                </Text>
-                <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
-                    {title}
-                </Text>
-                <Button size="1" variant="ghost" onClick={handleClose} style={CLOSE_BUTTON_STYLE}>
-                    ×
-                </Button>
-            </Flex>
-        </Tooltip>
-    )
-}
-
-// Split button — self-selects group count, hidden at max
-// @sig SplitButton :: () -> ReactElement | false
-const SplitButton = () => {
-    const handleClick = e => {
-        e.stopPropagation()
-        post(Action.CreateTabGroup())
-    }
-
-    const groupCount = useSelector(S.tabLayout).tabGroups.length
-    if (groupCount >= MAX_GROUPS) return false
-
-    return (
-        <Button size="1" variant="ghost" onClick={handleClick} style={SPLIT_BUTTON_STYLE}>
-            Split ▸
-        </Button>
+        <ContextMenu.Root>
+            <ContextMenu.Trigger>
+                <Tooltip content={title} delayDuration={200}>
+                    <Flex {...tabProps}>
+                        <Text size="2" color="gray">
+                            {icon}
+                        </Text>
+                        <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
+                            {title}
+                        </Text>
+                        <Button size="1" variant="ghost" onClick={handleClose} style={CLOSE_BUTTON_STYLE}>
+                            ×
+                        </Button>
+                    </Flex>
+                </Tooltip>
+            </ContextMenu.Trigger>
+            <ContextMenu.Content>
+                <ContextMenu.Item disabled={moveLeftDisabled} onSelect={handleMoveLeft}>
+                    Move Left <Kbd>Ctrl+Shift+H</Kbd>
+                </ContextMenu.Item>
+                <ContextMenu.Item disabled={moveRightDisabled} onSelect={handleMoveRight}>
+                    Move Right <Kbd>Ctrl+Shift+L</Kbd>
+                </ContextMenu.Item>
+                <ContextMenu.Separator />
+                <ContextMenu.Item onSelect={handleCloseMenu}>
+                    Close <Kbd>W</Kbd>
+                </ContextMenu.Item>
+            </ContextMenu.Content>
+        </ContextMenu.Root>
     )
 }
 
@@ -179,7 +182,6 @@ const TabBar = ({ groupId }) => {
             {group.views.map(v => (
                 <Tab key={v.id} viewId={v.id} groupId={groupId} />
             ))}
-            <SplitButton />
         </Flex>
     )
 }
@@ -220,9 +222,7 @@ const ViewContent = ({ groupId }) => {
 const VIEW_ICONS = { Register: '☰', Report: '◑', Reconciliation: '✓' }
 const TAB_TITLE_STYLE = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }
 const CLOSE_BUTTON_STYLE = { padding: '0 4px', flexShrink: 0 }
-const SPLIT_BUTTON_STYLE = { padding: '4px 8px', marginLeft: 'auto' }
 const EMPTY_STATE_STYLE = { height: '100%' }
-const MAX_GROUPS = 4
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
