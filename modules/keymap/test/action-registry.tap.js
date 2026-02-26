@@ -162,6 +162,66 @@ test('ActionRegistry.unregister', t => {
     t.end()
 })
 
+test('ActionRegistry.collectForContext with modal registrations', t => {
+    t.beforeEach(() => ActionRegistry.clear())
+
+    t.test('Given no modal registrations', t => {
+        t.test('When collecting for a context', t => {
+            ActionRegistry.register(undefined, [{ id: 'file:open', description: 'Open File', execute: () => {} }])
+            ActionRegistry.register('view-1', [{ id: 'navigate:down', description: 'Move down', execute: () => {} }])
+
+            const result = ActionRegistry.collectForContext('view-1')
+            t.equal(result.length, 2, 'Then it returns global + context actions')
+            t.end()
+        })
+        t.end()
+    })
+
+    t.test('Given a modal registration exists', t => {
+        t.test('When collecting for a context', t => {
+            ActionRegistry.register(undefined, [{ id: 'file:open', description: 'Open File', execute: () => {} }])
+            ActionRegistry.register('view-1', [{ id: 'navigate:down', description: 'Move down', execute: () => {} }])
+            ActionRegistry.register(
+                undefined,
+                [
+                    { id: 'dismiss', description: 'Close', execute: () => {} },
+                    { id: 'select', description: 'Select', execute: () => {} },
+                ],
+                { modal: true },
+            )
+
+            const result = ActionRegistry.collectForContext('view-1')
+            t.equal(result.length, 2, 'Then it returns only modal actions')
+            t.ok(
+                result.every(r => r.modal),
+                'Then all returned actions are modal',
+            )
+            t.end()
+        })
+
+        t.test('When the modal cleanup runs', t => {
+            ActionRegistry.register(undefined, [{ id: 'file:open', description: 'Open File', execute: () => {} }])
+            ActionRegistry.register('view-1', [{ id: 'navigate:down', description: 'Move down', execute: () => {} }])
+            const cleanup = ActionRegistry.register(
+                undefined,
+                [{ id: 'dismiss', description: 'Close', execute: () => {} }],
+                { modal: true },
+            )
+
+            cleanup()
+            const result = ActionRegistry.collectForContext('view-1')
+            t.equal(result.length, 2, 'Then normal context filtering resumes')
+            t.notOk(
+                result.some(r => r.modal),
+                'Then no modal actions remain',
+            )
+            t.end()
+        })
+        t.end()
+    })
+    t.end()
+})
+
 test('ActionRegistry.clear', t => {
     t.test('Given registrations exist', t => {
         t.test('When I clear the registry', t => {

@@ -199,10 +199,10 @@ const QuickPicker = () => {
         // prettier-ignore
         pickerCleanup = ActionRegistry.register(undefined, [
             { id: 'dismiss',       description: 'Close picker',  execute: closePicker },
-            { id: 'select',        description: 'Open selected', execute: executeHighlighted },
-            { id: 'navigate:up',   description: 'Previous item', execute: moveUp },
-            { id: 'navigate:down', description: 'Next item',     execute: moveDown },
-        ])
+            { id: 'select',        description: 'Open selected', execute: executeHighlighted, keys: ['Enter'] },
+            { id: 'navigate:up',   description: 'Previous item', execute: moveUp,   keys: ['ctrl+k', 'ArrowUp'] },
+            { id: 'navigate:down', description: 'Next item',     execute: moveDown, keys: ['ctrl+j', 'ArrowDown'] },
+        ], { modal: true })
     }
 
     const { closePicker, handleDragStart, handleSearchKey } = E

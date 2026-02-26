@@ -32,6 +32,12 @@ const T = {
             .map(r => r.id + '\0' + (r.context ?? ''))
             .sort()
             .join('\n'),
+
+    // Stamps a batch of actions with registry metadata (batchId, context, modal flag)
+    // @sig toEntry :: (Number, String?, Boolean) -> Action -> Registration
+    toEntry:
+        (batchId, context, modal) =>
+        ({ id, description, execute, keys }) => ({ batchId, context, id, description, execute, keys, modal }),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -82,10 +88,10 @@ let lastNotifiedSnapshot = ''
 
 const ActionRegistry = {
     // Appends actions for a context; returns cleanup function that removes only this batch
-    // @sig register :: (String?, [{ id, description, execute }]) -> (() -> void)
-    register: (context, actions) => {
+    // @sig register :: (String?, [{ id, description, execute }], { modal: Boolean }?) -> (() -> void)
+    register: (context, actions, { modal } = {}) => {
         const batchId = nextBatchId++
-        const entries = actions.map(({ id, description, execute }) => ({ batchId, context, id, description, execute }))
+        const entries = actions.map(T.toEntry(batchId, context, modal === true))
         registrations = [...registrations, ...entries]
         E.emitChange()
         return () => {
@@ -111,9 +117,13 @@ const ActionRegistry = {
         find(P.isMatchingAction(actionId, activeContext), [...registrations].reverse()),
 
     // Returns all actions available for a given context (includes global actions with undefined context)
+    // When any modal registration exists, returns only modal actions (modal layer hides everything else)
     // @sig collectForContext :: String? -> [{ id, description, context }]
-    collectForContext: activeContext =>
-        filter(r => r.context === undefined || r.context === activeContext, registrations),
+    collectForContext: activeContext => {
+        const hasModal = registrations.some(r => r.modal)
+        if (hasModal) return filter(r => r.modal, registrations)
+        return filter(r => r.context === undefined || r.context === activeContext, registrations)
+    },
 
     // Empties the registry (test-only)
     // @sig clear :: () -> void

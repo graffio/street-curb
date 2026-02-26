@@ -52,11 +52,15 @@ const T = {
     // @sig toUniqueActions :: [{ id }] -> [{ id }]
     toUniqueActions: actions => [...new Map(actions.map(a => [a.id, a])).values()],
 
-    // Maps a registered action to a display intent using reverse bindings and group names
-    // @sig toIntent :: (Object, Object) -> { id, description } -> { description, keys, from }
+    // Maps a registered action to a display intent — prefers action-declared keys over reverse bindings
+    // @sig toIntent :: (Object, Object) -> { id, description, keys? } -> { description, keys, from }
     toIntent:
         (reverseBindings, groupNames) =>
-        ({ id, description }) => ({ description, keys: reverseBindings[id], from: T.toGroupName(groupNames, id) }),
+        ({ id, description, keys }) => ({
+            description,
+            keys: keys ?? reverseBindings[id],
+            from: T.toGroupName(groupNames, id),
+        }),
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

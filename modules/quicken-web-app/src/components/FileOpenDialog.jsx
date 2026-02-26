@@ -38,7 +38,7 @@ const FileOpenDialog = ({ open, onOpenChange, onReopen, onOpenNew }) => {
             { id: 'dismiss',       description: 'Close',       execute: () => onOpenChange(false) },
             { id: 'file:reopen',   description: 'Reopen Last', execute: () => onReopen() },
             { id: 'file:open-new', description: 'Open New',    execute: () => onOpenNew() },
-        ])
+        ], { modal: true })
     }
 
     const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
