@@ -2,7 +2,7 @@
 // ABOUTME: Uses View.match() for exhaustive content rendering
 // COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
-import { Box, Button, ContextMenu, Flex, Kbd, Text, Tooltip } from '@radix-ui/themes'
+import { Box, Button, ContextMenu, Flex, Kbd, Text } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { post } from '../commands/post.js'
@@ -113,19 +113,17 @@ const Tab = ({ viewId, groupId }) => {
     return (
         <ContextMenu.Root>
             <ContextMenu.Trigger>
-                <Tooltip content={title} delayDuration={200}>
-                    <Flex {...tabProps}>
-                        <Text size="2" color="gray">
-                            {icon}
-                        </Text>
-                        <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
-                            {title}
-                        </Text>
-                        <Button size="1" variant="ghost" onClick={handleClose} style={CLOSE_BUTTON_STYLE}>
-                            ×
-                        </Button>
-                    </Flex>
-                </Tooltip>
+                <Flex title={title} {...tabProps}>
+                    <Text size="2" color="gray">
+                        {icon}
+                    </Text>
+                    <Text size="2" weight={isActive ? 'medium' : 'regular'} style={TAB_TITLE_STYLE}>
+                        {title}
+                    </Text>
+                    <Button size="1" variant="ghost" onClick={handleClose} style={CLOSE_BUTTON_STYLE}>
+                        ×
+                    </Button>
+                </Flex>
             </ContextMenu.Trigger>
             <ContextMenu.Content>
                 <ContextMenu.Item disabled={moveLeftDisabled} onSelect={handleMoveLeft}>
