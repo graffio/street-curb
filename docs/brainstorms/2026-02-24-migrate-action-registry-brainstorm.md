@@ -70,20 +70,18 @@ low-value — likely permanent exemption.
 A key (e.g. `r`) opens the QuickPicker populated with reports. Only 2 items — simplest possible first test of the
 picker infrastructure. Proves the full vertical: key binding → action → picker modal → select → execute.
 
-### TabGroup — Mixed paradigms
+### TabGroup — Mixed paradigms (mostly resolved)
 
-The onClick sites decompose into multiple paradigms:
-
-- **Close active tab** → Direct action. Active tab is known state. No identity problem. **Done** — `tab:close` bound to `w`.
-- **Split (create tab group)** → Direct action. **Done** — `tab:split` bound to `\`. But see open question below about
-  whether this should be "move active tab to new split" instead of "create empty group."
-- **Delete tab group** → Direct action. Removing the last tab auto-removes the group, but `tab:split` creates an empty
-  group — so we need an explicit `tab:delete` or `tab:merge` to undo a split without closing all tabs individually.
-- **Move tab between groups** → No keyboard equivalent for drag-and-drop (`onDragStart`/`onDrop` → `Action.MoveView`).
-  Could be: direct action on focused tab (`tab:move-left`, `tab:move-right`), or a picker showing available groups.
-- **Switch tab** → Picker (key opens QuickPicker with open tab names) or Cycling (next/prev tab left-to-right across
-  all groups, ignoring group boundaries). Both are useful; cycling for quick flipping, picker for jumping by name.
-- **Set active group** → Cycling (next/prev group).
+- **Close active tab** → Direct action. **Done** — `tab:close` bound to `w`.
+- **Move tab** → Direct action + Cycling. **Done** — `tab:move-left`/`tab:move-right` (ctrl+shift+h/l). Flat-list
+  movement handles within-group reorder, cross-group move, and edge group creation. Context menu provides Move
+  Left/Right/New Group/Close for mouse users.
+- **Switch tab** → Picker + Cycling. **Done** — `tab:picker` (Shift+T) for jump-by-name, `tab:cycle-left`/`tab:cycle-right`
+  (ctrl+h/l) for sequential navigation.
+- **Split** → Subsumed by move-to-edge. `tab:split` removed. Empty groups auto-close. No `tab:delete` needed.
+- **Set active group** → Implicit via tab cycling/movement. No separate action needed.
+- **Remaining:** Per-tab onClick (switch tab, set active group) still has no ActionRegistry equivalent — these are
+  per-item actions that would need per-element registration. COMPLEXITY-TODO deferred.
 
 ### Group 3 — Navigation + contextual (toggle-expand on focused row)
 
@@ -101,15 +99,11 @@ Dependency: wire `highlightedId` from report page state into DataTable.
 ## Settled Approach
 
 - **Completed:** Group 1 (SearchFilterChip, DataTable), RootLayout, SearchChip, ReportsList, FileOpenDialog,
-  KeymapDrawer. TabGroup direct actions (tab:close, tab:split) done.
+  KeymapDrawer, AccountList, TabGroup (tab:close, tab:cycle-left/right, tab:move-left/right, tab:picker, context menu).
 - **Architecture:** Keyboard interaction paradigms are defined in
   `docs/architecture/keyboard-interaction.md (root)`. Each remaining file maps to a paradigm; future work should
   be planned per-paradigm, not per-file-group.
 - **Paradigm mapping for remaining files:**
-    - AccountList, TabGroup (switch) → **Picker** (QuickPicker built, needs wiring)
-    - TabGroup (delete/merge group) → **Direct action** (needs design — see open question 7)
-    - TabGroup (move tab between groups) → **Direct action or Picker** (needs design — see open question 8)
-    - TabGroup (cycle group), next/prev tab → **Cycling** (not yet built)
     - Group 3 tree toggles → **Navigation + contextual** (needs focused row in reports)
 - **AccountList** — UI will change, but the picker pattern will survive the redesign. Include in next picker pass.
 - **Chords** — Not needed yet. Single keys are sufficient; chord system is a future enhancement.
@@ -129,12 +123,13 @@ architecture: docs/architecture/keyboard-interaction.md (root) (new)
 4. ~~**AccountList**~~ — RESOLVED: Include in first picker pass despite upcoming UI changes.
 5. ~~**FileOpenDialog / KeymapDrawer**~~ — RESOLVED: Not exempt. Every UI needs keyboard equivalent. Low priority — last wave.
 6. ~~**Binding remapping UI**~~ — RESOLVED: Deferred. UI for user-customizable bindings is out of scope for this migration.
-7. **Tab split semantics** — `tab:split` currently creates an empty group. Should it instead be "move active tab to new
-   split"? An empty group needs an explicit delete/merge action to undo; moving the tab is self-contained and matches
-   editor behavior (VS Code split moves the active file). If we change the semantics, `tab:delete` may not be needed.
-8. **Move tab between groups** — Drag-and-drop (`onDragStart`/`onDrop` → `Action.MoveView`) has no keyboard equivalent.
-   Options: `tab:move-left`/`tab:move-right` (directional, needs concept of group ordering), or a picker showing target
-   groups. The style validator (`require-action-registry`) does not inspect drag-and-drop handlers — this is a blind spot.
+7. ~~**Tab split semantics**~~ — RESOLVED: `tab:split` removed. Flat-list movement (`tab:move-left`/`tab:move-right`)
+   creates new groups on demand at the edge (up to MAX_GROUPS=4). Context menu "Move to New Group" provides direct
+   split-to-new-group for mouse users. Empty groups auto-close. No `tab:delete` needed.
+8. ~~**Move tab between groups**~~ — RESOLVED: `tab:move-left`/`tab:move-right` (ctrl+shift+h/l) move tabs one position
+   in the flat list — within-group reorder, cross-group move, or edge group creation. Context menu provides the same
+   actions targeted at the right-clicked tab. Drag-and-drop still works but has no ActionRegistry equivalent (blind spot
+   remains).
 
 ## Remaining Work Tracker
 
@@ -145,7 +140,7 @@ exempted.
 - [x] DataTable.jsx (Group 1) — direction values renamed to 'next'/'previous'
 - [x] RootLayout.jsx (Group 2) — file:open action registered, bound to 'o'
 - [x] ReportsList.jsx — Picker paradigm. report:open registered, bound to 'r', opens QuickPicker
-- [~] TabGroup.jsx — Direct actions done (tab:close, tab:split). Picker done (tab:picker, Shift+T). Remaining: delete/merge group (Q7), move tab (Q8), Cycling (cycle group)
+- [x] TabGroup.jsx — Direct actions: tab:close (w), tab:cycle-left/right (ctrl+h/l), tab:move-left/right (ctrl+shift+h/l). Picker: tab:picker (Shift+T). Context menu: Move Left/Right/New Group/Close. tab:split removed. COMPLEXITY-TODO remains (expires 2026-04-01) for per-tab onClick sites (switch tab, set active group) that need per-item ActionRegistry — deferred, low value.
 - [x] AccountList.jsx — Picker paradigm. account:picker registered, bound to Shift+A, opens QuickPicker
 - [ ] CategoryReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
 - [ ] CellRenderers.jsx — Navigation+contextual. Blocked on: focused row in reports.
