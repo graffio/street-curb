@@ -173,8 +173,10 @@ const DATE_RANGE_ITEMS = Object.entries(DateRangeUtils.DATE_RANGES)
     .filter(([key]) => !key.startsWith('separator'))
     .map(([key, label]) => ({ id: key, label }))
 
+const _pickerAccountItems = state => Array.from(accounts(state)).map(({ id, name }) => ({ id, label: name }))
+
 const POPOVER_ITEM_SOURCES = {
-    accounts: state => Array.from(accounts(state)).map(({ id, name }) => ({ id, label: name })),
+    accounts: _pickerAccountItems,
     actions: () => INVESTMENT_ACTIONS.map(({ id, label }) => ({ id, label })),
     categories: state => Category.collectAllNames(categories(state)).map(name => ({ id: name, label: name })),
     date: () => DATE_RANGE_ITEMS,
@@ -242,6 +244,8 @@ const _pickerData = (state, items) => {
 }
 
 const pickerData = memoizeReduxState(['pickerType', 'pickerSearch', 'pickerHighlight', 'pickerPosition'], _pickerData)
+
+const pickerAccountItems = memoizeReduxState(['accounts'], _pickerAccountItems)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Per-chip selectors (each returns { isActive, details } for FilterChipRow)
@@ -576,6 +580,7 @@ export {
     pickerHighlight,
     pickerSearch,
     pickerPosition,
+    pickerAccountItems,
     pickerData,
     CLOSED_PICKER,
     actionRegistryVersion,
