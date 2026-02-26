@@ -326,14 +326,24 @@ const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
 
 const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
 
+// Stable reference table for tabMoveDisabled — indexed by (left | right<<1) to avoid new object allocation
+const TAB_MOVE_DISABLED_REFS = [
+    { left: false, right: false },
+    { left: true, right: false },
+    { left: false, right: true },
+    { left: true, right: true },
+]
+
 // Whether Move Left/Right is disabled for a tab at its current position (at edge with MAX_GROUPS)
+// Returns a stable reference per boolean combination to avoid unnecessary rerenders
 const tabMoveDisabled = (state, viewId, groupId) => {
     const { tabGroups } = state.tabLayout
     const group = tabGroups.get(groupId)
     const atMax = tabGroups.length >= TabLayoutReducers.MAX_GROUPS
-    const isFirst = tabGroups[0].id === groupId && group.views[0].id === viewId
-    const isLast = tabGroups[tabGroups.length - 1].id === groupId && group.views[group.views.length - 1].id === viewId
-    return { left: isFirst && atMax, right: isLast && atMax }
+    const left = atMax && tabGroups[0].id === groupId && group.views[0].id === viewId
+    const right =
+        atMax && tabGroups[tabGroups.length - 1].id === groupId && group.views[group.views.length - 1].id === viewId
+    return TAB_MOVE_DISABLED_REFS[left | (right << 1)]
 }
 
 // Flat list of all views across all tab groups for the tab picker
