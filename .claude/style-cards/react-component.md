@@ -10,9 +10,13 @@ Use section separators to organize files. Canonical order (skip empty sections):
 |---|--------------------|------------------------------------------------------------------------|
 | 1 | F (Factories)      | `create*`, `make*`, `build*` (style factories like `makeItemRowStyle`) |
 | 2 | Components         | Sub-components (ItemRow, Badge, etc.)                                  |
-| 3 | Constants          | `const` values, style objects, config              |
+| 3 | Constants          | `const` values used 2+ times — single-use values stay at call site |
 | 4 | Module-level state | `let` vars, `Map`s (hybrid files only)             |
 | 5 | Exports            | Exported component(s) + `export` statement         |
+
+**Single-use values stay inline.** Style objects, config objects, and prop bundles used once belong at their call site,
+not in a Constants section. Only extract to module level for genuine reuse (2+ call sites) or referential stability
+provably needed by a memoized consumer.
 
 No full P/T/F/V/A/E cohesion groups — those are for JS modules with business logic. Components may use F for style
 factories. Components are wiring, not logic.

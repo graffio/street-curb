@@ -11,7 +11,7 @@ import { Action } from '../../types/action.js'
 import { ChipStyles } from './chip-styles.js'
 
 const { ActionRegistry, normalizeKey } = KeymapModule
-const { DEFAULT_BINDINGS } = KeymapConfig
+const { DEFAULT_BINDINGS, createContentKeyHandler } = KeymapConfig
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -64,18 +64,8 @@ const F = {
 
 const E = {
     // Routes navigation keys through ActionRegistry — blocks global shortcuts while popover is open
-    // @sig handleContentKey :: KeyboardEvent -> void
-    handleContentKey: e => {
-        e.stopPropagation()
-        const tag = e.target.tagName
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return
-        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
-        if (!actionId) return
-        const action = ActionRegistry.resolve(actionId, chipState.viewId)
-        if (!action) return
-        e.preventDefault()
-        action.execute()
-    },
+    // @sig handleContentKey :: (KeyboardEvent -> void)
+    handleContentKey: createContentKeyHandler(() => chipState.viewId),
 
     // Routes non-character keys from search input via ActionRegistry — lets printable characters through
     // @sig handleSearchKey :: KeyboardEvent -> void

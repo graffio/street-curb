@@ -14,7 +14,7 @@ Use section separators to organize files. Functions first, data after. Canonical
 | 4  | V (Validators)     | `check*`, `validate*`                            |
 | 5  | A (Aggregators)    | `collect*`, `count*`, `gather*`, `find*`         |
 | 6  | E (Effects)        | `persist*`, `handle*`, `dispatch*`, `register*`  |
-| 7  | Constants          | `const` values, style objects, config     |
+| 7  | Constants          | `const` values used 2+ times — single-use values stay at call site |
 | 8  | Module-level state | `let` vars, `Map`s (hybrid files only)    |
 | 9  | Exports            | Exported function(s) + `export` statement |
 

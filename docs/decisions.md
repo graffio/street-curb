@@ -654,6 +654,7 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | userId claim synchronization               | Oct 2025 | Accepted | authUid in UserCreated for claim bootstrap, avoids deadlock        |
 | Passcode auth via Action pattern           | Oct 2025 | Accepted | SOC2 audit trail, architectural consistency, no separate sessions  |
 | Intent keys in post.js handlers            | Feb 2026 | Accepted | Pages send minimal intent, post.js resolves state — keeps pages presentation-only |
+| Modal layer in ActionRegistry              | Feb 2026 | Accepted | `{ modal: true }` flag hides background keybindings from drawer when modal is open |
 
 ---
 
@@ -794,6 +795,11 @@ Why: COMPLEXITY comments are a complexity budget — each one should represent a
 Context: Changing runtime validators from `== null` to `=== undefined` crashed type constructors on data from IndexedDB/JSON, which stores null for absent fields. Cell renderers also crashed on null quantity/price values.
 Decision: Optional-field validators use `(value === undefined || value === null)`. Required-field validators use strict `=== undefined` only. Presentation guards use `isNil()`. The null ban applies to source code, not incoming external data.
 Why: Runtime validators are the system boundary between external data (which has null) and internal code (which uses undefined). Rejecting null at this boundary breaks real data flows.
+
+### 2026-02-26: Modal layer in ActionRegistry hides background keybindings
+Context: When a modal (QuickPicker, FileOpenDialog) is open, the keyboard drawer still shows all background keybindings that can't fire. Modals capture keys via stopPropagation but the drawer doesn't know.
+Decision: `ActionRegistry.register` accepts `{ modal: true }`. When any modal registration exists, `collectForContext` returns only modal actions. Actions can also declare explicit `keys` arrays to override reverse binding lookup (e.g. show ctrl+j instead of j when a search input is focused).
+Why: Generic opt-in mechanism — any future modal adds one flag. No Redux state, no drawer changes, no routing changes. Filtering at the source (collectForContext) keeps the rest of the system ignorant of modals.
 
 ---
 

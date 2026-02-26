@@ -53,6 +53,11 @@ const loadingStatus = state => state.loadingStatus
 const draggingViewId = state => state.draggingViewId
 const dropTargetGroupId = state => state.dropTargetGroupId
 const transferNavPending = state => state.transferNavPending
+const pickerType = state => state.pickerType
+const pickerHighlight = state => state.pickerHighlight
+const pickerSearch = state => state.pickerSearch
+const pickerPosition = state => state.pickerPosition
+const actionRegistryVersion = state => state.actionRegistryVersion
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Entity lookups (state, id) -> value
@@ -206,6 +211,37 @@ const _filterPopoverData = (state, viewId, items) => {
 }
 
 UI.filterPopoverData = memoizeReduxStatePerKey(['accounts', 'securities'], 'viewUiState', _filterPopoverData)
+
+const CLOSED_PICKER = {
+    searchText: '',
+    highlightedIndex: -1,
+    nextHighlightIndex: -1,
+    prevHighlightIndex: -1,
+    filteredItems: [],
+    position: undefined,
+}
+
+const _pickerData = (state, items) => {
+    const { pickerType, pickerSearch, pickerHighlight, pickerPosition } = state
+    if (!pickerType) return CLOSED_PICKER
+    const matchesSearch = containsIgnoreCase(pickerSearch)
+    const filteredItems = pickerSearch.trim() ? items.filter(item => matchesSearch(item.label)) : items
+    const count = filteredItems.length
+
+    // prettier-ignore
+    const { index: highlightedIndex, next: nextHighlightIndex, prev: prevHighlightIndex } = wrapIndex(pickerHighlight, count)
+
+    return {
+        searchText: pickerSearch,
+        highlightedIndex,
+        nextHighlightIndex,
+        prevHighlightIndex,
+        filteredItems,
+        position: pickerPosition,
+    }
+}
+
+const pickerData = memoizeReduxState(['pickerType', 'pickerSearch', 'pickerHighlight', 'pickerPosition'], _pickerData)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Per-chip selectors (each returns { isActive, details } for FilterChipRow)
@@ -536,6 +572,13 @@ export {
     tableLayouts,
     transactions,
     transferNavPending,
+    pickerType,
+    pickerHighlight,
+    pickerSearch,
+    pickerPosition,
+    pickerData,
+    CLOSED_PICKER,
+    actionRegistryVersion,
 
     // Entity lookups
     accountName,

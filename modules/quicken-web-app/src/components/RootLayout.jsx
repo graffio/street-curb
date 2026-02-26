@@ -14,6 +14,7 @@ import { FileOpenDialog } from './FileOpenDialog.jsx'
 import { KeymapDrawer } from './KeymapDrawer.jsx'
 import { MainLayout } from './MainLayout.jsx'
 import { MainSidebar } from './MainSidebar.jsx'
+import { QuickPicker } from './QuickPicker.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
@@ -86,6 +87,8 @@ const RootLayout = () => {
     const loadingStatus = useSelector(S.loadingStatus)
     const { title: pageTitle, subtitle: pageSubtitle } = useSelector(S.activeViewPageTitle)
     const activeViewId = useSelector(S.activeViewId)
+    // eslint-disable-next-line no-unused-vars -- forces re-render when ActionRegistry changes
+    const _registryVersion = useSelector(S.actionRegistryVersion)
 
     const availableIntents = showDrawer ? toAvailableIntents(DEFAULT_BINDINGS, GROUP_NAMES, activeViewId) : []
     const dialogProps = {
@@ -115,6 +118,7 @@ const RootLayout = () => {
                 </Box>
             </MainLayout.Sidebar>
             <FileOpenDialog {...dialogProps} />
+            <QuickPicker />
             <Flex direction="column" style={{ flex: 1 }}>
                 <TabGroupContainer />
                 <KeymapDrawer open={showDrawer} onOpenChange={setDrawer} intents={availableIntents} />
