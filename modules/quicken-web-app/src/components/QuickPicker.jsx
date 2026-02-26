@@ -160,22 +160,8 @@ const PickerItem = ({ item, isHighlighted }) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const searchProps = {
-    placeholder: 'Search...',
-    onChange: e => post(Action.SetPickerSearch(e.target.value)),
-    onKeyDown: E.handleSearchKey,
-    style: { marginBottom: 'var(--space-2)' },
-}
-
-const EMPTY_ITEMS = []
-
-const SCROLL_STYLE = { maxHeight: 200 }
-
-const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
-
-const TITLE_STYLE = { cursor: 'grab' }
-
-const CONTENT_PROPS = { onKeyDown: handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '360px' }
+const S_DRAG_BAR = { cursor: 'grab', padding: 'var(--space-1) 0', marginBottom: 'var(--space-1)' }
+const S_DRAG_GRIP = { width: 32, height: 4, borderRadius: 2, backgroundColor: 'var(--gray-6)' }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -187,6 +173,7 @@ let pickerCleanup
 let currentDrag
 let pickerState = { next: 0, prev: 0, filteredItems: [], highlightedIndex: -1, position: undefined }
 const contentEl = { current: undefined }
+const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -202,21 +189,27 @@ const QuickPicker = () => {
     const ref = element => {
         pickerCleanup?.()
         pickerCleanup = undefined
+
         if (currentDrag) E.handleDragEnd()
+
         contentEl.current = element ?? undefined
         if (!element) return
         const { closePicker, executeHighlighted, moveUp, moveDown } = E
+
+        // prettier-ignore
         pickerCleanup = ActionRegistry.register(undefined, [
-            { id: 'dismiss', description: 'Close picker', execute: closePicker },
-            { id: 'select', description: 'Open selected', execute: executeHighlighted },
-            { id: 'navigate:up', description: 'Previous item', execute: moveUp },
-            { id: 'navigate:down', description: 'Next item', execute: moveDown },
+            { id: 'dismiss',       description: 'Close picker',  execute: closePicker },
+            { id: 'select',        description: 'Open selected', execute: executeHighlighted },
+            { id: 'navigate:up',   description: 'Previous item', execute: moveUp },
+            { id: 'navigate:down', description: 'Next item',     execute: moveDown },
         ])
     }
 
+    const { closePicker, handleDragStart, handleSearchKey } = E
+    const contentProps = { onKeyDown: handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '360px' }
     const pickerType = useSelector(S.pickerType)
     const config = pickerType ? PickerConfig[pickerType] : undefined
-    const data = useSelector(state => S.pickerData(state, config?.items ?? EMPTY_ITEMS))
+    const data = useSelector(state => S.pickerData(state, config?.items ?? []))
     const { searchText, highlightedIndex, nextHighlightIndex, prevHighlightIndex, filteredItems, position } = data
 
     // Update module-level state for E functions to read at call-time
@@ -227,16 +220,26 @@ const QuickPicker = () => {
 
     const contentStyle = F.makeContentStyle(position)
 
+    const searchProps = {
+        ref: el => el?.focus(),
+        placeholder: 'Search...',
+        onChange: e => post(Action.SetPickerSearch(e.target.value)),
+        onKeyDown: handleSearchKey,
+        style: { marginBottom: 'var(--space-2)' },
+        value: searchText,
+    }
+
     return (
-        <Dialog.Root open onOpenChange={E.closePicker}>
+        <Dialog.Root open onOpenChange={closePicker}>
             <Dialog.Portal>
                 <Dialog.Overlay />
-                <Dialog.Content ref={ref} style={contentStyle} {...CONTENT_PROPS}>
-                    <Dialog.Title style={TITLE_STYLE} onMouseDown={E.handleDragStart}>
-                        {config.title}
-                    </Dialog.Title>
-                    <TextField.Root ref={el => el?.focus()} {...searchProps} value={searchText} />
-                    <ScrollArea style={SCROLL_STYLE}>
+                <Dialog.Content ref={ref} style={contentStyle} {...contentProps}>
+                    <Flex justify="center" style={S_DRAG_BAR} onMouseDown={handleDragStart}>
+                        <div style={S_DRAG_GRIP} />
+                    </Flex>
+                    <Dialog.Title>{config.title}</Dialog.Title>
+                    <TextField.Root {...searchProps} />
+                    <ScrollArea style={{ maxHeight: 200 }}>
                         {filteredItems.map((item, i) => (
                             <PickerItem key={item.id} item={item} isHighlighted={i === highlightedIndex} />
                         ))}
