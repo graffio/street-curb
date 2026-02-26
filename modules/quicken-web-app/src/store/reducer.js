@@ -70,6 +70,8 @@ const createEmptyState = () => ({
     draggingViewId: undefined,
     dropTargetGroupId: undefined,
     transferNavPending: undefined,
+    pickerType: undefined,
+    pickerHighlight: 0,
 })
 
 // Main reducer that dispatches actions to specific handlers
@@ -136,6 +138,8 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         ToggleDrawer           : () => ({ ...state, showDrawer: !state.showDrawer }),
         SetLoadingStatus       : () => ({ ...state, loadingStatus: action.status }),
         SetTransferNavPending  : () => ({ ...state, transferNavPending: action.pending }),
+        SetPickerOpen          : () => ({ ...state, pickerType: action.pickerType, pickerHighlight: 0 }),
+        SetPickerHighlight     : () => ({ ...state, pickerHighlight: action.index }),
 
         // Drag state actions
         SetDraggingView : () => ({ ...state, draggingViewId: action.viewId }),

@@ -79,6 +79,10 @@
  *      status: "String?"
  *  SetTransferNavPending
  *      pending: "Object?"
+ *  SetPickerOpen
+ *      pickerType: "String?"
+ *  SetPickerHighlight
+ *      index: "Number"
  *  SetDraggingView
  *      viewId: "String?"
  *  SetDropTarget
@@ -145,6 +149,8 @@ Object.defineProperty(Action, '@@tagNames', {
         'ToggleDrawer',
         'SetLoadingStatus',
         'SetTransferNavPending',
+        'SetPickerOpen',
+        'SetPickerHighlight',
         'SetDraggingView',
         'SetDropTarget',
         'InitializeSystem',
@@ -205,6 +211,8 @@ const toString = {
     toggleDrawer           : function () { return `Action.ToggleDrawer()` },
     setLoadingStatus       : function () { return `Action.SetLoadingStatus(${R._toString(this.status)})` },
     setTransferNavPending  : function () { return `Action.SetTransferNavPending(${R._toString(this.pending)})` },
+    setPickerOpen          : function () { return `Action.SetPickerOpen(${R._toString(this.pickerType)})` },
+    setPickerHighlight     : function () { return `Action.SetPickerHighlight(${R._toString(this.index)})` },
     setDraggingView        : function () { return `Action.SetDraggingView(${R._toString(this.viewId)})` },
     setDropTarget          : function () { return `Action.SetDropTarget(${R._toString(this.groupId)})` },
     initializeSystem       : function () { return `Action.InitializeSystem()` },
@@ -246,6 +254,8 @@ const toJSON = {
     toggleDrawer           : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setLoadingStatus       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setTransferNavPending  : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setPickerOpen          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    setPickerHighlight     : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDraggingView        : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setDropTarget          : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     initializeSystem       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -749,6 +759,38 @@ const SetTransferNavPendingConstructor = function SetTransferNavPending(pending)
 Action.SetTransferNavPending = SetTransferNavPendingConstructor
 
 /*
+ * Construct a Action.SetPickerOpen instance
+ * @sig SetPickerOpen :: (String?) -> Action.SetPickerOpen
+ */
+const SetPickerOpenConstructor = function SetPickerOpen(pickerType) {
+    const constructorName = 'Action.SetPickerOpen(pickerType)'
+
+    R.validateString(constructorName, 'pickerType', true, pickerType)
+
+    const result = Object.create(SetPickerOpenPrototype)
+    if (pickerType !== undefined) result.pickerType = pickerType
+    return result
+}
+
+Action.SetPickerOpen = SetPickerOpenConstructor
+
+/*
+ * Construct a Action.SetPickerHighlight instance
+ * @sig SetPickerHighlight :: (Number) -> Action.SetPickerHighlight
+ */
+const SetPickerHighlightConstructor = function SetPickerHighlight(index) {
+    const constructorName = 'Action.SetPickerHighlight(index)'
+    R.validateArgumentLength(constructorName, 1, arguments)
+    R.validateNumber(constructorName, 'index', false, index)
+
+    const result = Object.create(SetPickerHighlightPrototype)
+    result.index = index
+    return result
+}
+
+Action.SetPickerHighlight = SetPickerHighlightConstructor
+
+/*
  * Construct a Action.SetDraggingView instance
  * @sig SetDraggingView :: (String?) -> Action.SetDraggingView
  */
@@ -1046,6 +1088,22 @@ const SetTransferNavPendingPrototype = Object.create(ActionPrototype, {
     constructor: { value: SetTransferNavPendingConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const SetPickerOpenPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetPickerOpen', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setPickerOpen, enumerable: false },
+    toJSON: { value: toJSON.setPickerOpen, enumerable: false },
+    constructor: { value: SetPickerOpenConstructor, enumerable: false, writable: true, configurable: true },
+})
+
+const SetPickerHighlightPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'SetPickerHighlight', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.setPickerHighlight, enumerable: false },
+    toJSON: { value: toJSON.setPickerHighlight, enumerable: false },
+    constructor: { value: SetPickerHighlightConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SetDraggingViewPrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetDraggingView', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1116,6 +1174,8 @@ SetShowDrawerConstructor.prototype = SetShowDrawerPrototype
 ToggleDrawerConstructor.prototype = ToggleDrawerPrototype
 SetLoadingStatusConstructor.prototype = SetLoadingStatusPrototype
 SetTransferNavPendingConstructor.prototype = SetTransferNavPendingPrototype
+SetPickerOpenConstructor.prototype = SetPickerOpenPrototype
+SetPickerHighlightConstructor.prototype = SetPickerHighlightPrototype
 SetDraggingViewConstructor.prototype = SetDraggingViewPrototype
 SetDropTargetConstructor.prototype = SetDropTargetPrototype
 InitializeSystemConstructor.prototype = InitializeSystemPrototype
@@ -1151,6 +1211,8 @@ SetShowDrawerConstructor.is = val => val && val.constructor === SetShowDrawerCon
 ToggleDrawerConstructor.is = val => val && val.constructor === ToggleDrawerConstructor
 SetLoadingStatusConstructor.is = val => val && val.constructor === SetLoadingStatusConstructor
 SetTransferNavPendingConstructor.is = val => val && val.constructor === SetTransferNavPendingConstructor
+SetPickerOpenConstructor.is = val => val && val.constructor === SetPickerOpenConstructor
+SetPickerHighlightConstructor.is = val => val && val.constructor === SetPickerHighlightConstructor
 SetDraggingViewConstructor.is = val => val && val.constructor === SetDraggingViewConstructor
 SetDropTargetConstructor.is = val => val && val.constructor === SetDropTargetConstructor
 InitializeSystemConstructor.is = val => val && val.constructor === InitializeSystemConstructor
@@ -1186,6 +1248,8 @@ SetShowDrawerConstructor.toString = () => 'Action.SetShowDrawer'
 ToggleDrawerConstructor.toString = () => 'Action.ToggleDrawer'
 SetLoadingStatusConstructor.toString = () => 'Action.SetLoadingStatus'
 SetTransferNavPendingConstructor.toString = () => 'Action.SetTransferNavPending'
+SetPickerOpenConstructor.toString = () => 'Action.SetPickerOpen'
+SetPickerHighlightConstructor.toString = () => 'Action.SetPickerHighlight'
 SetDraggingViewConstructor.toString = () => 'Action.SetDraggingView'
 SetDropTargetConstructor.toString = () => 'Action.SetDropTarget'
 InitializeSystemConstructor.toString = () => 'Action.InitializeSystem'
@@ -1227,6 +1291,8 @@ SetShowDrawerConstructor._from = _input => Action.SetShowDrawer(_input.show)
 ToggleDrawerConstructor._from = _input => Action.ToggleDrawer()
 SetLoadingStatusConstructor._from = _input => Action.SetLoadingStatus(_input.status)
 SetTransferNavPendingConstructor._from = _input => Action.SetTransferNavPending(_input.pending)
+SetPickerOpenConstructor._from = _input => Action.SetPickerOpen(_input.pickerType)
+SetPickerHighlightConstructor._from = _input => Action.SetPickerHighlight(_input.index)
 SetDraggingViewConstructor._from = _input => Action.SetDraggingView(_input.viewId)
 SetDropTargetConstructor._from = _input => Action.SetDropTarget(_input.groupId)
 InitializeSystemConstructor._from = _input => Action.InitializeSystem()
@@ -1262,6 +1328,8 @@ SetShowDrawerConstructor.from = SetShowDrawerConstructor._from
 ToggleDrawerConstructor.from = ToggleDrawerConstructor._from
 SetLoadingStatusConstructor.from = SetLoadingStatusConstructor._from
 SetTransferNavPendingConstructor.from = SetTransferNavPendingConstructor._from
+SetPickerOpenConstructor.from = SetPickerOpenConstructor._from
+SetPickerHighlightConstructor.from = SetPickerHighlightConstructor._from
 SetDraggingViewConstructor.from = SetDraggingViewConstructor._from
 SetDropTargetConstructor.from = SetDropTargetConstructor._from
 InitializeSystemConstructor.from = InitializeSystemConstructor._from
@@ -1443,6 +1511,12 @@ SetLoadingStatusConstructor.fromFirestore = SetLoadingStatusConstructor._from
 SetTransferNavPendingConstructor.toFirestore = o => ({ ...o })
 SetTransferNavPendingConstructor.fromFirestore = SetTransferNavPendingConstructor._from
 
+SetPickerOpenConstructor.toFirestore = o => ({ ...o })
+SetPickerOpenConstructor.fromFirestore = SetPickerOpenConstructor._from
+
+SetPickerHighlightConstructor.toFirestore = o => ({ ...o })
+SetPickerHighlightConstructor.fromFirestore = SetPickerHighlightConstructor._from
+
 SetDraggingViewConstructor.toFirestore = o => ({ ...o })
 SetDraggingViewConstructor.fromFirestore = SetDraggingViewConstructor._from
 
@@ -1493,6 +1567,8 @@ Action.is = v => {
         ToggleDrawer,
         SetLoadingStatus,
         SetTransferNavPending,
+        SetPickerOpen,
+        SetPickerHighlight,
         SetDraggingView,
         SetDropTarget,
         InitializeSystem,
@@ -1529,6 +1605,8 @@ Action.is = v => {
         constructor === ToggleDrawer ||
         constructor === SetLoadingStatus ||
         constructor === SetTransferNavPending ||
+        constructor === SetPickerOpen ||
+        constructor === SetPickerHighlight ||
         constructor === SetDraggingView ||
         constructor === SetDropTarget ||
         constructor === InitializeSystem ||
@@ -1580,6 +1658,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         ToggleDrawer,
         SetLoadingStatus,
         SetTransferNavPending,
+        SetPickerOpen,
+        SetPickerHighlight,
         SetDraggingView,
         SetDropTarget,
         InitializeSystem,
@@ -1614,6 +1694,8 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'ToggleDrawer') return ToggleDrawer.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetLoadingStatus') return SetLoadingStatus.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetTransferNavPending') return SetTransferNavPending.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetPickerOpen') return SetPickerOpen.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'SetPickerHighlight') return SetPickerHighlight.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDraggingView') return SetDraggingView.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetDropTarget') return SetDropTarget.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'InitializeSystem') return InitializeSystem.fromFirestore(doc, decodeTimestamps)

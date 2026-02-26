@@ -14,6 +14,7 @@ import { FileOpenDialog } from './FileOpenDialog.jsx'
 import { KeymapDrawer } from './KeymapDrawer.jsx'
 import { MainLayout } from './MainLayout.jsx'
 import { MainSidebar } from './MainSidebar.jsx'
+import { QuickPicker } from './QuickPicker.jsx'
 import { ReportsList } from './ReportsList.jsx'
 import { TabGroupContainer } from './TabGroupContainer.jsx'
 
@@ -115,6 +116,7 @@ const RootLayout = () => {
                 </Box>
             </MainLayout.Sidebar>
             <FileOpenDialog {...dialogProps} />
+            <QuickPicker />
             <Flex direction="column" style={{ flex: 1 }}>
                 <TabGroupContainer />
                 <KeymapDrawer open={showDrawer} onOpenChange={setDrawer} intents={availableIntents} />

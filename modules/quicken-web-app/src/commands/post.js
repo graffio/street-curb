@@ -196,6 +196,8 @@ const post = action => {
         ToggleDrawer           : () => E.dispatch(action),
         SetLoadingStatus       : () => E.dispatch(action),
         SetTransferNavPending  : () => E.dispatch(action),
+        SetPickerOpen          : () => E.dispatch(action),
+        SetPickerHighlight     : () => E.dispatch(action),
 
         // Drag state actions (no persistence needed)
         SetDraggingView : () => E.dispatch(action),

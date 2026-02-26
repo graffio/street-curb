@@ -6,30 +6,7 @@ import { Button, Flex, Text } from '@radix-ui/themes'
 import { KeymapConfig } from '../keymap-config.js'
 import { Dialog } from './Dialog.jsx'
 
-const { ActionRegistry, normalizeKey } = KeymapModule
-const { DEFAULT_BINDINGS } = KeymapConfig
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Effects
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const E = {
-    // Routes keys through ActionRegistry — blocks global shortcuts while dialog is open
-    // @sig handleContentKey :: KeyboardEvent -> void
-    handleContentKey: e => {
-        e.stopPropagation()
-        const tag = e.target.tagName
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return
-        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
-        if (!actionId) return
-        const action = ActionRegistry.resolve(actionId, undefined)
-        if (!action) return
-        e.preventDefault()
-        action.execute()
-    },
-}
+const { ActionRegistry } = KeymapModule
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -37,7 +14,9 @@ const E = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const CONTENT_PROPS = { onKeyDown: E.handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '320px' }
+const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
+
+const CONTENT_PROPS = { onKeyDown: handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '320px' }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

@@ -53,6 +53,8 @@ const loadingStatus = state => state.loadingStatus
 const draggingViewId = state => state.draggingViewId
 const dropTargetGroupId = state => state.dropTargetGroupId
 const transferNavPending = state => state.transferNavPending
+const pickerType = state => state.pickerType
+const pickerHighlight = state => state.pickerHighlight
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Entity lookups (state, id) -> value
@@ -536,6 +538,8 @@ export {
     tableLayouts,
     transactions,
     transferNavPending,
+    pickerType,
+    pickerHighlight,
 
     // Entity lookups
     accountName,

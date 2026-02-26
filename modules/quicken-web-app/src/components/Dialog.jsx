@@ -7,8 +7,7 @@ import { Button, Flex } from '@radix-ui/themes'
 import { forwardRef } from 'react'
 import { KeymapConfig } from '../keymap-config.js'
 
-const { ActionRegistry, normalizeKey } = KeymapModule
-const { DEFAULT_BINDINGS } = KeymapConfig
+const { ActionRegistry } = KeymapModule
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -75,28 +74,6 @@ const F = {
             document.body.appendChild(_portalContainer)
         }
         return _portalContainer
-    },
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Effects
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const E = {
-    // Routes keys through ActionRegistry — blocks global shortcuts while dialog is open
-    // @sig handleContentKey :: KeyboardEvent -> void
-    handleContentKey: e => {
-        e.stopPropagation()
-        const tag = e.target.tagName
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return
-        const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
-        if (!actionId) return
-        const action = ActionRegistry.resolve(actionId, undefined)
-        if (!action) return
-        e.preventDefault()
-        action.execute()
     },
 }
 
@@ -173,7 +150,7 @@ const OkCancel = ({ onConfirm, onCancel, confirmLabel = 'OK', cancelLabel = 'Can
     }
 
     return (
-        <Content ref={ref} onKeyDown={E.handleContentKey} onEscapeKeyDown={e => e.preventDefault()} {...contentProps}>
+        <Content ref={ref} onKeyDown={handleContentKey} onEscapeKeyDown={e => e.preventDefault()} {...contentProps}>
             {children}
             <Flex gap="3" justify="end">
                 <Button variant="soft" onClick={onCancel}>
@@ -186,6 +163,14 @@ const OkCancel = ({ onConfirm, onCancel, confirmLabel = 'OK', cancelLabel = 'Can
         </Content>
     )
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Constants
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

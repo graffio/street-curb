@@ -67,6 +67,8 @@ export const Action = {
         ToggleDrawer           : {},
         SetLoadingStatus       : { status: 'String?' },
         SetTransferNavPending  : { pending: 'Object?' },
+        SetPickerOpen          : { pickerType: 'String?' },
+        SetPickerHighlight     : { index: 'Number' },
 
         // Drag state actions
         SetDraggingView  : { viewId: 'String?' },
