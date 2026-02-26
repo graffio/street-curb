@@ -25,6 +25,21 @@ const T = {
 // @sig toAccountPickerItems :: State -> [{ id: String, label: String, execute: () -> void }]
 T.toAccountPickerItems = state => S.pickerAccountItems(state).map(T.toAccountPickerItem)
 
+// Adds execute callback that activates both the tab group and view
+// @sig toTabPickerItem :: PickerTabItem -> { id: String, label: String, execute: () -> void }
+T.toTabPickerItem = ({ id, label, groupId }) => ({
+    id,
+    label,
+    execute: () => {
+        post(Action.SetActiveTabGroup(groupId))
+        post(Action.SetActiveView(groupId, id))
+    },
+})
+
+// Maps tab views from state into picker items with execute callbacks
+// @sig toTabPickerItems :: State -> [{ id: String, label: String, execute: () -> void }]
+T.toTabPickerItems = state => S.pickerTabItems(state).map(T.toTabPickerItem)
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Constants
@@ -48,6 +63,7 @@ const PickerConfig = {
         ],
     },
     accounts: { title: 'Open Account', items: T.toAccountPickerItems },
+    tabs: { title: 'Switch Tab', items: T.toTabPickerItems },
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
