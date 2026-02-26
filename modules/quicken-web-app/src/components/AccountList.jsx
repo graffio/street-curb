@@ -1,7 +1,7 @@
 // ABOUTME: Sidebar account list with collapsible sections and sort modes
 // ABOUTME: Reads accounts from Redux and dispatches OpenView actions
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
 
+import { KeymapModule } from '@graffio/keymap'
 import { Box, Button, Flex, Heading, ScrollArea, Select, Text } from '@radix-ui/themes'
 import React from 'react'
 import { useSelector } from 'react-redux'
@@ -12,7 +12,31 @@ import { SortMode } from '../types/index.js'
 import { View } from '../types/view.js'
 import { Formatters } from '../utils/formatters.js'
 
+const { ActionRegistry } = KeymapModule
 const { toFormattedBalance, toFormattedDayChange, toDayChangeColor } = Formatters
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Effects
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+const E = {
+    // Registers account:picker action when sidebar mounts — global scope (undefined viewId)
+    // @sig registerActions :: Element? -> void
+    registerActions: element => {
+        accountsCleanup?.()
+        accountsCleanup = undefined
+        if (!element) return
+        accountsCleanup = ActionRegistry.register(undefined, [
+            {
+                id: 'account:picker',
+                description: 'Open account picker',
+                execute: () => post(Action.SetPickerOpen('accounts')),
+            },
+        ])
+    },
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -20,6 +44,7 @@ const { toFormattedBalance, toFormattedDayChange, toDayChangeColor } = Formatter
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
+// COMPLEXITY: require-action-registry — keyboard equivalent is account:picker via QuickPicker (Shift+A)
 // Displays an enriched account with balance and day change
 // @sig AccountRow :: { enriched: EnrichedAccount } -> ReactElement
 const AccountRow = ({ enriched }) => {
@@ -80,6 +105,7 @@ const SectionHeader = ({ section, isCollapsed, onToggle, indent = 0 }) => {
     )
 }
 
+// COMPLEXITY: require-action-registry — permanent exemption, low-value collapse toggle
 // Displays a section with header and accounts (supports nested children)
 // @sig AccountSectionView :: { section: AccountSection, collapsedSections: Set, indent: Number } -> ReactElement
 const AccountSectionView = ({ section, collapsedSections, indent = 0 }) => {
@@ -148,6 +174,14 @@ const SECTION_CHEVRON_STYLE = { width: '20px', textAlign: 'center', fontSize: '1
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
+// Module-level state
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+let accountsCleanup
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
 // Exports
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -172,7 +206,7 @@ const AccountList = () => {
     const sortModeValue = sortMode['@@tagName']
 
     return (
-        <Box style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <Box ref={E.registerActions} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <Flex justify="between" align="center" m="3">
                 <Heading as="h3" size="3" style={{ fontWeight: 'lighter' }}>
                     Accounts
