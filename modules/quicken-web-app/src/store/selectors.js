@@ -325,6 +325,15 @@ const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
 
 const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
 
+// Flat list of all views across all tab groups for the tab picker
+// Carries groupId because SetActiveView(groupId, viewId) requires both
+const _pickerTabItems = state =>
+    state.tabLayout.tabGroups.flatMap(group =>
+        group.views.map(view => ({ id: view.id, label: view.title, groupId: group.id })),
+    )
+
+const pickerTabItems = memoizeReduxState(['tabLayout'], _pickerTabItems)
+
 // Derives page title from active view type + related state
 // @sig _activeViewPageTitle :: State -> { title: String, subtitle: String }
 const _activeViewPageTitle = state => {
@@ -581,6 +590,7 @@ export {
     pickerSearch,
     pickerPosition,
     pickerAccountItems,
+    pickerTabItems,
     pickerData,
     CLOSED_PICKER,
     actionRegistryVersion,
