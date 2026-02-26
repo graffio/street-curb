@@ -90,9 +90,30 @@ switching, group switching.
 **Examples:** Next tab / previous tab (left-to-right across all groups, ignoring group boundaries).
 
 **Pattern:** Action reads current position from state, computes next/previous, dispatches the change. Single action
-registration, no UI — just state mutation.
+registration, no UI — just state mutation. The reducer owns the flat-list traversal logic (wrapping, cross-group
+boundary crossing). The action registration in RootLayout reads the active tab from state at call time (dispatch-intent
+pattern, matching `E.closeActiveTab`).
 
-**Not yet built.** First implementation: next-tab / prev-tab.
+**Reference:** `tab-layout.js` (handleCycleTab — flat-list with wrapping), `RootLayout.jsx` (tab:cycle-left/right
+registrations), `keymap-config.js` (ctrl+h/l bindings)
+
+### 5. Context Menu (targeted action)
+
+Right-click on an element shows actions that target *that specific element*, not the globally active one.
+
+**When to use:** The same actions as keyboard shortcuts, but targeted at a clicked element. Provides discoverability
+(keyboard shortcut hints) and mouse access to keyboard-first actions.
+
+**Examples:** Tab context menu — Move Left, Move Right, Move to New Group, Close. Each targets the right-clicked tab,
+which may differ from the active tab.
+
+**Pattern:** Radix `ContextMenu` wrapping the element. Menu items call `post(Action.X(elementId, containerId))` with
+IDs captured at render time. Disabled states computed via selectors. Keyboard shortcut hints shown with `<Kbd>`.
+
+**Gotcha:** Radix Tooltip inside ContextMenu.Trigger intercepts the contextmenu event, causing the browser's native
+menu to appear instead. Use native `title` attribute for overflow hints, not Tooltip.
+
+**Reference:** `TabGroup.jsx` (Tab component — Move Left/Right/New Group/Close)
 
 ## Accessibility
 
@@ -166,13 +187,14 @@ The style validator rule `require-action-registry` enforces that files with `onC
 | Direct actions (paradigm 1) | Working — file:open, dismiss, navigate, filters |
 | Picker (paradigm 2) | Working — report:picker, account:picker, tab:picker via QuickPicker |
 | Navigation + contextual (paradigm 3) | Working — FilterChipPopover, DataTable rows |
+| Cycling (paradigm 4) | Working — tab cycling with ctrl+h/l, wraps across groups |
+| Context menu (paradigm 5) | Working — tab context menu with Move Left/Right/New Group/Close |
 
 ### What's missing
 
 | Piece | Needed for |
 |-------|-----------|
 | Chord/sequence key detection | Future enhancement — `g t`, `g r` prefix keys. Not blocking; single keys work for now |
-| Next/prev tab cycling | Paradigm 4 — tab navigation across groups |
 | Binding remapping UI | WCAG 2.1.4 compliance for assistive technology users |
 | Focused row in report DataTables | Paradigm 3 — tree expand/collapse in report tables |
 | Fuzzy matching | Future enhancement — substring search is sufficient for small lists |
@@ -187,6 +209,7 @@ When adding keyboard interaction to a component, pick the paradigm based on the 
 | Choose one from a named set | Picker | Open a report, switch to a tab by name, open an account |
 | Step through an ordered sequence | Cycling | Next/prev tab, next/prev group |
 | Act on the currently focused item in a visible list | Navigation + contextual | Expand/collapse a table row, select a filter option |
+| Same actions as keyboard, targeted at a clicked element | Context menu | Move/close a specific tab via right-click |
 
 **Permanent exemptions** are appropriate when the element is inside a focus-trapped dialog or overlay where standard
 HTML keyboard semantics (Enter/Space on buttons, Escape to dismiss) already provide full access.
