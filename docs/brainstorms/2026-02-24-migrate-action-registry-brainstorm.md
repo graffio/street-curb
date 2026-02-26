@@ -146,7 +146,7 @@ exempted.
 - [x] RootLayout.jsx (Group 2) — file:open action registered, bound to 'o'
 - [x] ReportsList.jsx — Picker paradigm. report:open registered, bound to 'r', opens QuickPicker
 - [~] TabGroup.jsx — Direct actions done (tab:close, tab:split). Remaining: delete/merge group (Q7), move tab (Q8), Picker (switch tab), Cycling (cycle group)
-- [ ] AccountList.jsx — Picker paradigm. Include in next picker pass.
+- [x] AccountList.jsx — Picker paradigm. account:picker registered, bound to Shift+A, opens QuickPicker
 - [ ] CategoryReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
 - [ ] CellRenderers.jsx — Navigation+contextual. Blocked on: focused row in reports.
 - [ ] InvestmentReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
