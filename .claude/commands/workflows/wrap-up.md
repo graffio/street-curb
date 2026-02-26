@@ -70,10 +70,11 @@ The brainstorm's `Knowledge Destination` section declares where content goes. Fo
 | `decisions:` append           | Append a 3-line entry (Context/Decision/Why) to `docs/decisions.md`.                                                                             |
 | `none`                        | Skip — knowledge lives in the code.                                                                                                              |
 
-**4b. Check for implementation gotchas**
+**4b. Review step notes for gotchas**
 
-Review the implementation for gotchas or patterns not anticipated in the brainstorm. If found, ask:
-"Implementation revealed {gotcha}. Add to {destination doc}, or skip?"
+Read all step notes from the task file. For any note that isn't "As planned," evaluate whether the deviation or surprise
+should be captured in the Knowledge Destination doc. Ask:
+"Step {N} noted: {note}. Add to {destination}, or skip?"
 
 **4c. Architecture decisions**
 
