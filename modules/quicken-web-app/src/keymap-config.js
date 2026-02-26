@@ -12,53 +12,77 @@ const { ActionRegistry, normalizeKey } = KeymapModule
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-const DEFAULT_BINDINGS = {
-    ArrowDown : 'navigate:down',
-    ArrowUp   : 'navigate:up',
-    j         : 'navigate:down',
-    k         : 'navigate:up',
-    Escape    : 'dismiss',
-    Enter     : 'select',
-    '?'       : 'toggle-shortcuts',
-    ArrowLeft : 'navigate:left',
-    ArrowRight: 'navigate:right',
-    t         : 'date:today',
-    '['       : 'date:decrement-day',
-    ']'       : 'date:increment-day',
-    Tab       : 'navigate:next-apply',
-    a         : 'filter:accounts',
-    c         : 'filter:categories',
-    d         : 'filter:date',
-    x         : 'filter:actions',
-    h         : 'filter:securities',
-    g         : 'filter:group-by',
-    f         : 'filter:search',
-    '/'       : 'filter:search',
-    s                 : 'search:open',
-    n                 : 'search:next',
-    'shift+Enter'     : 'search:prev',
-    'shift+s'         : 'search:clear',
-    'ctrl+shift+x'    : 'transfer:navigate',
-    o                 : 'file:open',
-    'shift+o'         : 'file:open-new',
-    'shift+r'         : 'file:reopen',
-    r                 : 'report:picker',
-    w                 : 'tab:close',
-    '\\'              : 'tab:split',
+const GROUPS = {
+    Date: {
+        '['           : 'date:decrement-day',
+        ']'           : 'date:increment-day',
+        t             : 'date:today',
+    },
+
+    File: {
+        o             : 'file:open',
+        'shift+o'     : 'file:open-new',
+        'shift+r'     : 'file:reopen',
+    },
+
+    Filters: {
+        a             : 'filter:accounts',
+        x             : 'filter:actions',
+        c             : 'filter:categories',
+        d             : 'filter:date',
+        g             : 'filter:group-by',
+        '/'           : 'filter:search',
+        f             : 'filter:search',
+        h             : 'filter:securities',
+    },
+
+    Global: {
+        Escape        : 'dismiss',
+        '?'           : 'toggle-shortcuts',
+    },
+
+    Navigation: {
+        ArrowDown     : 'navigate:down',
+        'ctrl+j'      : 'navigate:down',
+        j             : 'navigate:down',
+        ArrowLeft     : 'navigate:left',
+        Tab           : 'navigate:next-apply',
+        ArrowRight    : 'navigate:right',
+        ArrowUp       : 'navigate:up',
+        'ctrl+k'      : 'navigate:up',
+        k             : 'navigate:up',
+        Enter         : 'select',
+    },
+
+    Reports: {
+        r             : 'report:picker',
+    },
+
+    Search: {
+        'shift+s'     : 'search:clear',
+        n             : 'search:next',
+        s             : 'search:open',
+        'shift+Enter' : 'search:prev',
+    },
+
+    Tabs: {
+        w             : 'tab:close',
+        '\\'          : 'tab:split',
+    },
+
+    Transfer: {
+        'ctrl+shift+x': 'transfer:navigate',
+    },
 }
 
-const GROUP_NAMES = {
-    navigate: 'Navigation',
-    filter: 'Filters',
-    search: 'Search',
-    date: 'Date',
-    dismiss: 'Search',
-    select: 'Navigation',
-    transfer: 'Transfer',
-    file: 'File',
-    report: 'Reports',
-    tab: 'Tabs',
-}
+const DEFAULT_BINDINGS = Object.assign({}, ...Object.values(GROUPS))
+
+const GROUP_NAMES = Object.fromEntries(
+    Object.entries(GROUPS).flatMap(([name, bindings]) => {
+        const prefixes = [...new Set(Object.values(bindings).map(id => id.split(':')[0]))]
+        return prefixes.map(p => [p, name])
+    }),
+)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //

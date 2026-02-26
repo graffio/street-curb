@@ -10,16 +10,6 @@ const { ActionRegistry } = KeymapModule
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
-// Constants
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
-
-const CONTENT_PROPS = { onKeyDown: handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '320px' }
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
 // Module-level state
 //
 // ---------------------------------------------------------------------------------------------------------------------
@@ -40,19 +30,25 @@ const FileOpenDialog = ({ open, onOpenChange, onReopen, onOpenNew }) => {
     const ref = element => {
         fileOpenCleanup?.()
         fileOpenCleanup = undefined
+
         if (!element) return
+
+        // prettier-ignore
         fileOpenCleanup = ActionRegistry.register(undefined, [
-            { id: 'dismiss', description: 'Close', execute: () => onOpenChange(false) },
-            { id: 'file:reopen', description: 'Reopen Last', execute: () => onReopen() },
-            { id: 'file:open-new', description: 'Open New', execute: () => onOpenNew() },
+            { id: 'dismiss',       description: 'Close',       execute: () => onOpenChange(false) },
+            { id: 'file:reopen',   description: 'Reopen Last', execute: () => onReopen() },
+            { id: 'file:open-new', description: 'Open New',    execute: () => onOpenNew() },
         ])
     }
+
+    const handleContentKey = KeymapConfig.createContentKeyHandler(() => undefined)
+    const props = { onKeyDown: handleContentKey, onEscapeKeyDown: e => e.preventDefault(), maxWidth: '320px' }
 
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
             <Dialog.Portal>
                 <Dialog.Overlay />
-                <Dialog.Content ref={ref} {...CONTENT_PROPS}>
+                <Dialog.Content ref={ref} {...props}>
                     <Dialog.Title>Open File</Dialog.Title>
                     <Dialog.Description asChild>
                         <Text size="2" style={{ marginBottom: 'var(--space-4)' }}>
