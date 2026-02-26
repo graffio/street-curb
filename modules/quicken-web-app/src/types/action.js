@@ -72,6 +72,9 @@
  *      direction: "String",
  *      viewId   : "String",
  *      groupId  : "String"
+ *  MoveToNewGroup
+ *      viewId : "String",
+ *      groupId: "String"
  *  SetAccountListSortMode
  *      sortMode: "SortMode"
  *  ToggleSectionCollapsed
@@ -156,6 +159,7 @@ Object.defineProperty(Action, '@@tagNames', {
         'SetTabGroupWidth',
         'CycleTab',
         'MoveTab',
+        'MoveToNewGroup',
         'SetAccountListSortMode',
         'ToggleSectionCollapsed',
         'SetShowReopenBanner',
@@ -223,6 +227,7 @@ const toString = {
     setTabGroupWidth       : function () { return `Action.SetTabGroupWidth(${R._toString(this.groupId)}, ${R._toString(this.width)})` },
     cycleTab               : function () { return `Action.CycleTab(${R._toString(this.direction)})` },
     moveTab                : function () { return `Action.MoveTab(${R._toString(this.direction)}, ${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
+    moveToNewGroup         : function () { return `Action.MoveToNewGroup(${R._toString(this.viewId)}, ${R._toString(this.groupId)})` },
     setAccountListSortMode : function () { return `Action.SetAccountListSortMode(${R._toString(this.sortMode)})` },
     toggleSectionCollapsed : function () { return `Action.ToggleSectionCollapsed(${R._toString(this.sectionId)})` },
     setShowReopenBanner    : function () { return `Action.SetShowReopenBanner(${R._toString(this.show)})` },
@@ -271,6 +276,7 @@ const toJSON = {
     setTabGroupWidth       : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     cycleTab               : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     moveTab                : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
+    moveToNewGroup         : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setAccountListSortMode : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     toggleSectionCollapsed : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
     setShowReopenBanner    : function () { return Object.assign({ '@@tagName': this['@@tagName'] }, this) },
@@ -709,6 +715,24 @@ const MoveTabConstructor = function MoveTab(direction, viewId, groupId) {
 }
 
 Action.MoveTab = MoveTabConstructor
+
+/*
+ * Construct a Action.MoveToNewGroup instance
+ * @sig MoveToNewGroup :: (String, String) -> Action.MoveToNewGroup
+ */
+const MoveToNewGroupConstructor = function MoveToNewGroup(viewId, groupId) {
+    const constructorName = 'Action.MoveToNewGroup(viewId, groupId)'
+    R.validateArgumentLength(constructorName, 2, arguments)
+    R.validateString(constructorName, 'viewId', false, viewId)
+    R.validateString(constructorName, 'groupId', false, groupId)
+
+    const result = Object.create(MoveToNewGroupPrototype)
+    result.viewId = viewId
+    result.groupId = groupId
+    return result
+}
+
+Action.MoveToNewGroup = MoveToNewGroupConstructor
 
 /*
  * Construct a Action.SetAccountListSortMode instance
@@ -1160,6 +1184,14 @@ const MoveTabPrototype = Object.create(ActionPrototype, {
     constructor: { value: MoveTabConstructor, enumerable: false, writable: true, configurable: true },
 })
 
+const MoveToNewGroupPrototype = Object.create(ActionPrototype, {
+    '@@tagName': { value: 'MoveToNewGroup', enumerable: false },
+    '@@typeName': { value: 'Action', enumerable: false },
+    toString: { value: toString.moveToNewGroup, enumerable: false },
+    toJSON: { value: toJSON.moveToNewGroup, enumerable: false },
+    constructor: { value: MoveToNewGroupConstructor, enumerable: false, writable: true, configurable: true },
+})
+
 const SetAccountListSortModePrototype = Object.create(ActionPrototype, {
     '@@tagName': { value: 'SetAccountListSortMode', enumerable: false },
     '@@typeName': { value: 'Action', enumerable: false },
@@ -1321,6 +1353,7 @@ SetActiveTabGroupConstructor.prototype = SetActiveTabGroupPrototype
 SetTabGroupWidthConstructor.prototype = SetTabGroupWidthPrototype
 CycleTabConstructor.prototype = CycleTabPrototype
 MoveTabConstructor.prototype = MoveTabPrototype
+MoveToNewGroupConstructor.prototype = MoveToNewGroupPrototype
 SetAccountListSortModeConstructor.prototype = SetAccountListSortModePrototype
 ToggleSectionCollapsedConstructor.prototype = ToggleSectionCollapsedPrototype
 SetShowReopenBannerConstructor.prototype = SetShowReopenBannerPrototype
@@ -1363,6 +1396,7 @@ SetActiveTabGroupConstructor.is = val => val && val.constructor === SetActiveTab
 SetTabGroupWidthConstructor.is = val => val && val.constructor === SetTabGroupWidthConstructor
 CycleTabConstructor.is = val => val && val.constructor === CycleTabConstructor
 MoveTabConstructor.is = val => val && val.constructor === MoveTabConstructor
+MoveToNewGroupConstructor.is = val => val && val.constructor === MoveToNewGroupConstructor
 SetAccountListSortModeConstructor.is = val => val && val.constructor === SetAccountListSortModeConstructor
 ToggleSectionCollapsedConstructor.is = val => val && val.constructor === ToggleSectionCollapsedConstructor
 SetShowReopenBannerConstructor.is = val => val && val.constructor === SetShowReopenBannerConstructor
@@ -1405,6 +1439,7 @@ SetActiveTabGroupConstructor.toString = () => 'Action.SetActiveTabGroup'
 SetTabGroupWidthConstructor.toString = () => 'Action.SetTabGroupWidth'
 CycleTabConstructor.toString = () => 'Action.CycleTab'
 MoveTabConstructor.toString = () => 'Action.MoveTab'
+MoveToNewGroupConstructor.toString = () => 'Action.MoveToNewGroup'
 SetAccountListSortModeConstructor.toString = () => 'Action.SetAccountListSortMode'
 ToggleSectionCollapsedConstructor.toString = () => 'Action.ToggleSectionCollapsed'
 SetShowReopenBannerConstructor.toString = () => 'Action.SetShowReopenBanner'
@@ -1456,6 +1491,7 @@ MoveTabConstructor._from = _input => {
     const { direction, viewId, groupId } = _input
     return Action.MoveTab(direction, viewId, groupId)
 }
+MoveToNewGroupConstructor._from = _input => Action.MoveToNewGroup(_input.viewId, _input.groupId)
 SetAccountListSortModeConstructor._from = _input => Action.SetAccountListSortMode(_input.sortMode)
 ToggleSectionCollapsedConstructor._from = _input => Action.ToggleSectionCollapsed(_input.sectionId)
 SetShowReopenBannerConstructor._from = _input => Action.SetShowReopenBanner(_input.show)
@@ -1498,6 +1534,7 @@ SetActiveTabGroupConstructor.from = SetActiveTabGroupConstructor._from
 SetTabGroupWidthConstructor.from = SetTabGroupWidthConstructor._from
 CycleTabConstructor.from = CycleTabConstructor._from
 MoveTabConstructor.from = MoveTabConstructor._from
+MoveToNewGroupConstructor.from = MoveToNewGroupConstructor._from
 SetAccountListSortModeConstructor.from = SetAccountListSortModeConstructor._from
 ToggleSectionCollapsedConstructor.from = ToggleSectionCollapsedConstructor._from
 SetShowReopenBannerConstructor.from = SetShowReopenBannerConstructor._from
@@ -1664,6 +1701,9 @@ CycleTabConstructor.fromFirestore = CycleTabConstructor._from
 MoveTabConstructor.toFirestore = o => ({ ...o })
 MoveTabConstructor.fromFirestore = MoveTabConstructor._from
 
+MoveToNewGroupConstructor.toFirestore = o => ({ ...o })
+MoveToNewGroupConstructor.fromFirestore = MoveToNewGroupConstructor._from
+
 SetAccountListSortModeConstructor._toFirestore = (o, encodeTimestamps) => ({
     sortMode: SortMode.toFirestore(o.sortMode, encodeTimestamps),
 })
@@ -1757,6 +1797,7 @@ Action.is = v => {
         SetTabGroupWidth,
         CycleTab,
         MoveTab,
+        MoveToNewGroup,
         SetAccountListSortMode,
         ToggleSectionCollapsed,
         SetShowReopenBanner,
@@ -1800,6 +1841,7 @@ Action.is = v => {
         constructor === SetTabGroupWidth ||
         constructor === CycleTab ||
         constructor === MoveTab ||
+        constructor === MoveToNewGroup ||
         constructor === SetAccountListSortMode ||
         constructor === ToggleSectionCollapsed ||
         constructor === SetShowReopenBanner ||
@@ -1858,6 +1900,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
         SetTabGroupWidth,
         CycleTab,
         MoveTab,
+        MoveToNewGroup,
         SetAccountListSortMode,
         ToggleSectionCollapsed,
         SetShowReopenBanner,
@@ -1899,6 +1942,7 @@ Action._fromFirestore = (doc, decodeTimestamps) => {
     if (tagName === 'SetTabGroupWidth') return SetTabGroupWidth.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'CycleTab') return CycleTab.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'MoveTab') return MoveTab.fromFirestore(doc, decodeTimestamps)
+    if (tagName === 'MoveToNewGroup') return MoveToNewGroup.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetAccountListSortMode') return SetAccountListSortMode.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'ToggleSectionCollapsed') return ToggleSectionCollapsed.fromFirestore(doc, decodeTimestamps)
     if (tagName === 'SetShowReopenBanner') return SetShowReopenBanner.fromFirestore(doc, decodeTimestamps)

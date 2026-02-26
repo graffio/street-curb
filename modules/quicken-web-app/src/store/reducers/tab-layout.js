@@ -332,6 +332,18 @@ const moveTab = (state, action) => {
     return { ...state, tabLayout: newLayout }
 }
 
+// Moves a tab into a new group to the right; no-op at MAX_GROUPS
+// @sig moveToNewGroup :: (State, Action.MoveToNewGroup) -> State
+const moveToNewGroup = (state, action) => {
+    const { viewId, groupId } = action
+    const { tabLayout } = state
+    const { tabGroups } = tabLayout
+    if (tabGroups.length >= MAX_GROUPS) return state
+    const group = tabGroups[groupId]
+    if (!group || !group.views[viewId]) return state
+    return { ...state, tabLayout: T.toLayoutWithEdgeGroup(tabLayout, viewId, groupId, 'right') }
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Exports
@@ -345,6 +357,7 @@ const TabLayout = {
     createTabGroup,
     cycleTab: handleCycleTab,
     moveTab,
+    moveToNewGroup,
     moveView,
     openView,
     setActiveTabGroup,

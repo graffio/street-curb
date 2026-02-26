@@ -326,6 +326,8 @@ const tabGroupById = (state, groupId) => state.tabLayout.tabGroups.get(groupId)
 
 const tabGroupIsActive = (state, groupId) => state.tabLayout.activeTabGroupId === groupId
 
+const atMaxGroups = state => state.tabLayout.tabGroups.length >= TabLayoutReducers.MAX_GROUPS
+
 // Stable reference table for tabMoveDisabled — indexed by (left | right<<1) to avoid new object allocation
 const TAB_MOVE_DISABLED_REFS = [
     { left: false, right: false },
@@ -587,6 +589,7 @@ export {
     // Base state
     accounts,
     activeViewId,
+    atMaxGroups,
     activeViewPageTitle,
     categories,
     draggingViewId,

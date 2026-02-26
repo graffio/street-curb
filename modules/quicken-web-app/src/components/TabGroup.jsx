@@ -87,10 +87,12 @@ const Tab = ({ viewId, groupId }) => {
 
     const handleMoveLeft = () => post(Action.MoveTab('left', viewId, groupId))
     const handleMoveRight = () => post(Action.MoveTab('right', viewId, groupId))
+    const handleMoveToNewGroup = () => post(Action.MoveToNewGroup(viewId, groupId))
     const handleCloseMenu = () => post(Action.CloseView(viewId, groupId))
 
     const tabLayout = useSelector(S.tabLayout)
     const isDragging = useSelector(S.draggingViewId) === viewId
+    const newGroupDisabled = useSelector(S.atMaxGroups)
     const { left: moveLeftDisabled, right: moveRightDisabled } = useSelector(s => S.tabMoveDisabled(s, viewId, groupId))
     const group = tabLayout.tabGroups.get(groupId)
     const view = group.views.get(viewId)
@@ -131,6 +133,9 @@ const Tab = ({ viewId, groupId }) => {
                 </ContextMenu.Item>
                 <ContextMenu.Item disabled={moveRightDisabled} onSelect={handleMoveRight}>
                     Move Right <Kbd>Ctrl+Shift+L</Kbd>
+                </ContextMenu.Item>
+                <ContextMenu.Item disabled={newGroupDisabled} onSelect={handleMoveToNewGroup}>
+                    Move to New Group
                 </ContextMenu.Item>
                 <ContextMenu.Separator />
                 <ContextMenu.Item onSelect={handleCloseMenu}>

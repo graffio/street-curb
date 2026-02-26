@@ -25,7 +25,7 @@ import { TabLayout as TabLayoutReducers } from './reducers/tab-layout.js'
 import { TransactionFilters } from './reducers/transaction-filters.js'
 import { ViewUiState as ViewUiStateReducer } from './reducers/view-ui-state.js'
 
-const { closeTabGroup, closeView, createTabGroup, cycleTab, moveTab, moveView } = TabLayoutReducers
+const { closeTabGroup, closeView, createTabGroup, cycleTab, moveTab, moveToNewGroup, moveView } = TabLayoutReducers
 const { openView, setActiveTabGroup, setActiveView, setTabGroupWidth } = TabLayoutReducers
 const { createDefaultFilter } = TransactionFilters
 const { createDefaultViewUiState } = ViewUiStateReducer
@@ -132,6 +132,7 @@ const rootReducer = (state = createEmptyState(), reduxAction) => {
         SetTabGroupWidth  : () => setTabGroupWidth(state, action),
         CycleTab          : () => cycleTab(state, action),
         MoveTab           : () => moveTab(state, action),
+        MoveToNewGroup    : () => moveToNewGroup(state, action),
 
         // Account list actions
         SetAccountListSortMode : () => ({ ...state, accountListSortMode: action.sortMode }),

@@ -188,6 +188,7 @@ const post = action => {
         SetTabGroupWidth  : () => E.handleTabGroupWidthAction(E.dispatch, action),
         CycleTab          : () => E.handleTabLayoutAction(E.dispatch, action),
         MoveTab           : () => E.handleTabLayoutAction(E.dispatch, action),
+        MoveToNewGroup    : () => E.handleTabLayoutAction(E.dispatch, action),
 
         // Account list actions (all persist to IndexedDB)
         SetAccountListSortMode : () => E.handleAccountListAction(E.dispatch, action),
