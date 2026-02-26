@@ -24,17 +24,39 @@ const { ActionRegistry } = KeymapModule
 // COMPLEXITY: require-action-registry — Escape/Enter are standard text input keys in input-focused context
 // (P.isInputElement skips ActionRegistry dispatch). These are not remappable keybindings.
 const E = {
-    // Registers/unregisters search actions with ActionRegistry for keyboard discoverability
-    // @sig registerSearchActions :: Element? -> void
-    registerSearchActions: element => {
+    // Registers search nav actions when nav controls are mounted AND input is not focused
+    // @sig syncSearchActions :: () -> void
+    syncSearchActions: () => {
         _searchActionsCleanup?.()
         _searchActionsCleanup = undefined
-        if (!element) return
+        if (!_searchNavMounted || _searchInputFocused) return
         _searchActionsCleanup = ActionRegistry.register(_viewId, [
+            { id: 'select', description: 'Next match', execute: () => _searchCallbacks.onNext() },
             { id: 'search:next', description: 'Next match', execute: () => _searchCallbacks.onNext() },
             { id: 'search:prev', description: 'Previous match', execute: () => _searchCallbacks.onPrev() },
             { id: 'search:clear', description: 'Clear search', execute: () => _searchCallbacks.onClear() },
         ])
+    },
+
+    // Tracks SearchNavControls mount/unmount — triggers sync
+    // @sig registerSearchNav :: Element? -> void
+    registerSearchNav: element => {
+        _searchNavMounted = !!element
+        E.syncSearchActions()
+    },
+
+    // Unregisters search actions while input is focused — user is still typing
+    // @sig handleSearchInputFocus :: () -> void
+    handleSearchInputFocus: () => {
+        _searchInputFocused = true
+        E.syncSearchActions()
+    },
+
+    // Re-registers search actions when input loses focus — user has committed the search
+    // @sig handleSearchInputBlur :: () -> void
+    handleSearchInputBlur: () => {
+        _searchInputFocused = false
+        E.syncSearchActions()
     },
 
     // Registers/unregisters search input in FocusRegistry for keyboard access
@@ -95,7 +117,7 @@ const SearchNavControls = ({ viewId, accountId, highlightedId }) => {
     const { onPrev, onNext, onClear } = _searchCallbacks
 
     return (
-        <Flex align="center" gap="1">
+        <Flex ref={E.registerSearchNav} align="center" gap="1">
             <Text size="1" color="gray" style={counterStyle}>
                 {displayIndex} of {matchCount}
             </Text>
@@ -133,6 +155,8 @@ const counterStyle = { whiteSpace: 'nowrap', minWidth: 50, textAlign: 'center' }
 let _viewId
 let _searchCallbacks = { onNext: undefined, onPrev: undefined, onClear: undefined }
 let _searchActionsCleanup
+let _searchNavMounted = false
+let _searchInputFocused = false
 let _lastMatchIdx = 0
 let _prevSearchQuery = ''
 
@@ -159,18 +183,20 @@ const dispatchSearchQuery = debounce(DEBOUNCE_MS, (viewId, query) =>
 const SearchChip = ({ viewId, accountId, highlightedId, onNext, onPrev, onClear }) => {
     _viewId = viewId
     _searchCallbacks = { onNext, onPrev, onClear }
-    const { handleKeyDown, registerSearchActions, registerSearchInput } = E
+    const { handleKeyDown, registerSearchInput } = E
 
     const searchFieldProps = {
         placeholder: 'Search...',
         onChange: e => dispatchSearchQuery(viewId, e.target.value),
         onKeyDown: handleKeyDown,
+        onFocus: E.handleSearchInputFocus,
+        onBlur: E.handleSearchInputBlur,
         style: inputStyle,
         size: '1',
     }
 
     return (
-        <Flex align="center" gap="2" style={containerStyle} ref={registerSearchActions}>
+        <Flex align="center" gap="2" style={containerStyle}>
             <TextField.Root ref={registerSearchInput} {...searchFieldProps} />
             <SearchNavControls viewId={viewId} accountId={accountId} highlightedId={highlightedId} />
         </Flex>

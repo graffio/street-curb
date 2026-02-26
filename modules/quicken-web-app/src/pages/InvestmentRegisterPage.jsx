@@ -131,8 +131,6 @@ const mainContentStyle = { flex: 1, minWidth: 0, overflow: 'hidden', height: '10
 
 // prettier-ignore
 const actions = [
-    { id: 'select'            , description: 'Next match'    , execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: 1 })) },
-    { id: 'search:prev'      , description: 'Previous match', execute: () => post(A.SetViewUiState(pageState.viewId, { navigateSearch: -1 })) },
     { id: 'search:open'      , description: 'Open search'   , execute: () => FocusRegistry.focus('search_' + pageState.viewId) },
     { id: 'transfer:navigate', description: 'Go to transfer', execute: E.executeTransferNavigate },
 ]
