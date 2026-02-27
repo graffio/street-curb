@@ -56,6 +56,7 @@ const GROUPS = {
         'ctrl+k'      : 'navigate:up',
         k             : 'navigate:up',
         Enter         : 'select',
+        ' '           : 'row:toggle-expand',
     },
 
     Reports: {
