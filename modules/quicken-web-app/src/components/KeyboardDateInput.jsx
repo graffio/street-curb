@@ -1,5 +1,7 @@
 // ABOUTME: Custom date input with keyboard-only navigation between month/day/year segments
 // ABOUTME: Supports arrow keys, Tab, slash navigation, and smart 2-digit year expansion
+// Permanently exempt from react-redux-separation — design-system wrapper requiring React hooks
+// for local keyboard state, typing buffers, and segment navigation that can't round-trip through Redux
 // COMPLEXITY-TODO: lines — Complex keyboard navigation requires many handlers (expires 2026-04-01)
 // COMPLEXITY-TODO: function-declaration-ordering — Handlers reference state that must exist (expires 2026-04-01)
 // COMPLEXITY-TODO: react-component-cohesion — Render functions share state tightly (expires 2026-04-01)

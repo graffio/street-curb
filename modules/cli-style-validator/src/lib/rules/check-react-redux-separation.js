@@ -500,6 +500,9 @@ const A = {
 
 const PRIORITY = 8
 const COLLECTION_METHODS = ['filter', 'map', 'find', 'includes', 'reduce', 'slice']
+
+// Permanently exempt — design-system wrappers that require React hooks for virtualization,
+// keyboard input handling, and local UI state that would be too expensive to round-trip through Redux.
 const EXEMPT_COMPONENTS = ['DataTable.jsx', 'KeyboardDateInput.jsx']
 const SELECTOR_MAX_LINES = 6
 const SELECTOR_MAX_COLLECTION_CHAIN = 2

@@ -1,5 +1,7 @@
 // ABOUTME: DataTable component with TanStack Table, virtualization, and @dnd-kit drag-n-drop
 // ABOUTME: Provides sorting, column resizing, reordering, tree data, and expandable sub-components
+// Permanently exempt from react-redux-separation — design-system wrapper requiring React hooks
+// for virtualization, local highlight state (performance), and TanStack Table integration
 
 import '../styles/datatable.css'
 
