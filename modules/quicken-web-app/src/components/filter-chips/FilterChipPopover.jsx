@@ -31,12 +31,12 @@ const F = {
     }),
 
     // Creates search input props with current search text and handler
-    // @sig makeSearchProps :: (String, Function) -> Object
-    makeSearchProps: (text, onChange) => ({
+    // @sig makeSearchProps :: (String, Function, String) -> Object
+    makeSearchProps: (text, onChange, viewId) => ({
         placeholder: 'Search...',
         value: text,
         onChange,
-        onKeyDown: E.handleSearchKey,
+        onKeyDown: e => E.handleSearchKey(viewId, e),
         style: { marginBottom: 'var(--space-2)' },
     }),
 
@@ -63,76 +63,92 @@ const F = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
-    // Routes navigation keys through ActionRegistry — blocks global shortcuts while popover is open
-    // @sig handleContentKey :: (KeyboardEvent -> void)
-    handleContentKey: createContentKeyHandler(() => chipState.viewId),
+    // Returns a cached content key handler for the given viewId
+    // @sig handleContentKey :: String -> (KeyboardEvent -> void)
+    handleContentKey: viewId => {
+        if (!contentKeyHandlers.has(viewId))
+            contentKeyHandlers.set(
+                viewId,
+                createContentKeyHandler(() => viewId),
+            )
+        return contentKeyHandlers.get(viewId)
+    },
 
     // Routes non-character keys from search input via ActionRegistry — lets printable characters through
-    // @sig handleSearchKey :: KeyboardEvent -> void
-    handleSearchKey: e => {
+    // @sig handleSearchKey :: (String, KeyboardEvent) -> void
+    handleSearchKey: (viewId, e) => {
         e.stopPropagation()
         const { key, ctrlKey, altKey, metaKey } = e
         if (key.length === 1 && !ctrlKey && !altKey && !metaKey) return
         const actionId = DEFAULT_BINDINGS[normalizeKey(e)]
         if (!actionId) return
-        const action = ActionRegistry.resolve(actionId, chipState.viewId)
+        const action = ActionRegistry.resolve(actionId, viewId)
         if (!action) return
         e.preventDefault()
         action.execute()
     },
 
     // Handles select action — toggles highlighted item, auto-closes for single-select
-    // @sig handleSelect :: () -> void
-    handleSelect: () => {
-        const { highlightedItemId, onToggle, singleSelect: isSingle, viewId } = chipState
+    // @sig handleSelect :: String -> void
+    handleSelect: viewId => {
+        const { highlightedItemId, onToggle, singleSelect: isSingle } = chipStates.get(viewId)
         if (!highlightedItemId) return
         onToggle(highlightedItemId)
         if (isSingle) post(Action.SetFilterPopoverOpen(viewId, undefined))
     },
 
-    // Opens the popover for the given triggerId — read from triggerStates at call time
-    // @sig handleTriggerExecute :: String -> void
-    handleTriggerExecute: triggerId => {
-        const trigger = triggerStates.get(triggerId)
-        post(Action.SetFilterPopoverOpen(trigger.viewId, trigger.popoverId))
+    // Processes trigger element mount/unmount keyed by triggerId + viewId
+    // Also registers a clear action if the trigger has clearFilter config
+    // @sig registerTriggerElement :: (String, String, Element?) -> void
+    registerTriggerElement: (triggerId, viewId, element) => {
+        const key = triggerId + '\t' + viewId
+        triggerCleanups.get(key)?.()
+        triggerCleanups.delete(key)
+        if (!element) return
+        const { clearFilter, label, popoverId } = triggerStates.get(key)
+
+        const actions = [
+            { id: triggerId, description: label, execute: () => post(Action.SetFilterPopoverOpen(viewId, popoverId)) },
+        ]
+        if (clearFilter)
+            actions.push({
+                id: `${triggerId}-clear`,
+                description: `Clear ${label}`,
+                execute: () => post(Action.SetTransactionFilter(viewId, clearFilter)),
+            })
+
+        triggerCleanups.set(key, ActionRegistry.register(viewId, actions))
     },
 
-    // Processes trigger element mount/unmount for a single triggerId
-    // @sig registerTriggerElement :: (String, Element?) -> void
-    registerTriggerElement: (triggerId, element) => {
-        triggerCleanups.get(triggerId)?.()
-        triggerCleanups.delete(triggerId)
+    // Returns a stable ref callback for a trigger+view pair — creates on first use, caches thereafter
+    // @sig registerTrigger :: (String, String) -> (Element? -> void)
+    registerTrigger: (triggerId, viewId) => {
+        const key = triggerId + '\t' + viewId
+        if (!triggerRefs.has(key)) triggerRefs.set(key, element => E.registerTriggerElement(triggerId, viewId, element))
+        return triggerRefs.get(key)
+    },
+
+    // Processes content element mount/unmount — registers navigate/select/dismiss actions per viewId
+    // @sig registerContentElement :: (String, Element?) -> void
+    registerContentElement: (viewId, element) => {
+        contentCleanups.get(viewId)?.()
+        contentCleanups.delete(viewId)
         if (!element) return
-        const trigger = triggerStates.get(triggerId)
 
         // prettier-ignore
-        triggerCleanups.set(triggerId, ActionRegistry.register(trigger.viewId, [
-            { id: triggerId, description: trigger.label, execute: () => E.handleTriggerExecute(triggerId) },
+        contentCleanups.set(viewId, ActionRegistry.register(viewId, [
+            { id: 'navigate:down', description: 'Move down',  execute: () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: chipStates.get(viewId).next })) },
+            { id: 'navigate:up',   description: 'Move up',    execute: () => post(Action.SetViewUiState(viewId, { filterPopoverHighlight: chipStates.get(viewId).prev })) },
+            { id: 'select',        description: 'Toggle',     execute: () => E.handleSelect(viewId) },
+            { id: 'dismiss',       description: 'Dismiss',    execute: () => post(Action.SetFilterPopoverOpen(viewId, undefined)) },
         ]))
     },
 
-    // Returns a stable ref callback for a trigger — creates on first use, caches thereafter
-    // @sig registerTrigger :: String -> (Element? -> void)
-    registerTrigger: triggerId => {
-        if (!triggerRefs.has(triggerId))
-            triggerRefs.set(triggerId, element => E.registerTriggerElement(triggerId, element))
-        return triggerRefs.get(triggerId)
-    },
-
-    // Registers navigate/select/dismiss actions when popover content mounts — reads chipState at call time
-    // @sig registerContent :: Element? -> void
-    registerContent: element => {
-        contentCleanup?.()
-        contentCleanup = undefined
-        if (!element) return
-
-        // prettier-ignore
-        contentCleanup = ActionRegistry.register(chipState.viewId, [
-            { id: 'navigate:down', description: 'Move down',  execute: () => post(Action.SetViewUiState(chipState.viewId, { filterPopoverHighlight: chipState.next })) },
-            { id: 'navigate:up',   description: 'Move up',    execute: () => post(Action.SetViewUiState(chipState.viewId, { filterPopoverHighlight: chipState.prev })) },
-            { id: 'select',        description: 'Toggle',     execute: E.handleSelect },
-            { id: 'dismiss',       description: 'Dismiss',    execute: () => post(Action.SetFilterPopoverOpen(chipState.viewId, undefined)) },
-        ])
+    // Returns a stable ref callback for content per viewId — creates on first use, caches thereafter
+    // @sig registerContent :: String -> (Element? -> void)
+    registerContent: viewId => {
+        if (!contentRefs.has(viewId)) contentRefs.set(viewId, element => E.registerContentElement(viewId, element))
+        return contentRefs.get(viewId)
     },
 
     // Scrolls the highlighted item into view when it receives this ref callback
@@ -160,11 +176,11 @@ const ItemRow = ({ item, isSelected, highlighted, onToggle }) => {
 }
 
 // Single-select row without checkbox — auto-closes popover on click
-// @sig SingleSelectRow :: { item, isSelected, highlighted, onToggle } -> ReactElement
-const SingleSelectRow = ({ item, isSelected, highlighted, onToggle }) => {
+// @sig SingleSelectRow :: { item, isSelected, highlighted, onToggle, viewId } -> ReactElement
+const SingleSelectRow = ({ item, isSelected, highlighted, onToggle, viewId }) => {
     const handleClick = () => {
         onToggle(item.id)
-        post(Action.SetFilterPopoverOpen(chipState.viewId, undefined))
+        post(Action.SetFilterPopoverOpen(viewId, undefined))
     }
 
     const ref = highlighted ? E.handleScrollRef : undefined
@@ -214,7 +230,6 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
     const handleSearch = e => post(Action.SetFilterPopoverSearch(viewId, e.target.value))
 
     const { popoverId, label, triggerId, width = 175, singleSelect = false } = config
-    const { handleContentKey, registerContent, registerTrigger } = E
     const Row = singleSelect ? SingleSelectRow : ItemRow
 
     // prettier-ignore
@@ -226,18 +241,17 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
     const selectedCount = selectedIds.length
     const selectedSet = new Set(selectedIds)
 
-    // Update module-level state for trigger and content actions
-    triggerStates.set(triggerId, { viewId, popoverId, label })
+    // Update module-level state for trigger and content actions (per-viewId Maps)
+    triggerStates.set(triggerId + '\t' + viewId, { popoverId, label, clearFilter: config.clearFilter })
     if (isOpen)
-        chipState = {
-            viewId,
+        chipStates.set(viewId, {
             popoverId,
             singleSelect,
             next: nextHighlightIndex,
             prev: prevHighlightIndex,
             highlightedItemId,
             onToggle,
-        }
+        })
 
     const triggerStyle = ChipStyles.makeChipTriggerStyle(width, isActive)
     const multiLabel = selectedCount > 0 ? `${selectedCount} selected` : 'All'
@@ -247,7 +261,7 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
     return (
         <Popover.Root open={isOpen} onOpenChange={toggleOpen}>
             <Popover.Trigger asChild>
-                <button ref={registerTrigger(triggerId)} type="button" style={triggerStyle}>
+                <button ref={E.registerTrigger(triggerId, viewId)} type="button" style={triggerStyle}>
                     <Text size="1" weight="medium">
                         {label}: {displayLabel}
                     </Text>
@@ -258,14 +272,14 @@ const FilterChipPopover = ({ config, viewId, selectedIds, onToggle, items }) => 
                     )}
                 </button>
             </Popover.Trigger>
-            <Popover.Content ref={registerContent} {...CONTENT_PROPS} onKeyDown={handleContentKey}>
+            <Popover.Content ref={E.registerContent(viewId)} {...CONTENT_PROPS} onKeyDown={E.handleContentKey(viewId)}>
                 {!singleSelect && <SelectedBadges allItems={allItems} selectedIds={selectedIds} onToggle={onToggle} />}
-                <TextField.Root ref={el => el?.focus()} {...F.makeSearchProps(searchText, handleSearch)} />
+                <TextField.Root ref={el => el?.focus()} {...F.makeSearchProps(searchText, handleSearch, viewId)} />
                 <ScrollArea style={SCROLL_STYLE}>
                     {filteredItems.map((item, i) => {
                         const hl = i === highlightedIndex
                         const sel = selectedSet.has(item.id)
-                        return <Row key={item.id} item={item} isSelected={sel} highlighted={hl} onToggle={onToggle} />
+                        return <Row key={item.id} {...{ item, isSelected: sel, highlighted: hl, onToggle, viewId }} />
                     })}
                     {filteredItems.length === 0 && (
                         <Text size="2" color="gray">
@@ -298,16 +312,10 @@ const SCROLL_STYLE = { maxHeight: 200 }
 const triggerStates = new Map()
 const triggerCleanups = new Map()
 const triggerRefs = new Map()
-let contentCleanup
-let chipState = {
-    viewId: undefined,
-    popoverId: undefined,
-    singleSelect: false,
-    next: 0,
-    prev: 0,
-    highlightedItemId: undefined,
-    onToggle: undefined,
-}
+const contentCleanups = new Map()
+const contentRefs = new Map()
+const contentKeyHandlers = new Map()
+const chipStates = new Map()
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
