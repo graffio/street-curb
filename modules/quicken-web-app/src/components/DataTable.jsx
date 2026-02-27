@@ -117,6 +117,15 @@ const E = {
             onHighlightChange(ids[nextIndex])
         }
 
+        // Toggles expand/collapse on the currently highlighted row if expandable
+        // @sig expandExecute :: () -> void
+        const expandExecute = () => {
+            const { highlightedId, rows } = navStates.get(context) ?? {}
+            if (!rows) return
+            const idx = A.findHighlightedRowIndex(highlightedId, rows)
+            if (idx >= 0 && rows[idx].getCanExpand()) rows[idx].toggleExpanded()
+        }
+
         navCleanups.get(context)?.()
         if (!element) {
             navCleanups.delete(context)
@@ -125,6 +134,7 @@ const E = {
         const cleanup = ActionRegistry.register(context, [
             { id: 'navigate:down', description: 'Move down', execute: toNavigateExecute('next') },
             { id: 'navigate:up', description: 'Move up', execute: toNavigateExecute('previous') },
+            { id: 'row:toggle-expand', description: 'Toggle expand/collapse', execute: expandExecute },
             { id: 'dismiss', description: 'Dismiss', execute: () => navStates.get(context)?.onEscape?.() },
         ])
         navCleanups.set(context, cleanup)

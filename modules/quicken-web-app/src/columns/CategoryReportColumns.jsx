@@ -1,6 +1,6 @@
 // ABOUTME: Column definitions for category spending report with node-type-aware cell renderers
 // ABOUTME: Dispatches on CategoryTreeNode.Group vs Transaction for hierarchical tree display
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
+// COMPLEXITY: require-action-registry — Chevron onClick retained for mouse; keyboard uses row:toggle-expand
 
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
@@ -148,13 +148,13 @@ const empty = <span />
  */
 // prettier-ignore
 const columns = LookupTable([
-    ColumnDefinition.from({ id: 'category', accessorKey: 'key',             header: 'Category', size: 300, minSize: 150, cell: ExpandableCategoryCell, ...RESIZABLE }),
-    ColumnDefinition.from({ id: 'date',     accessorKey: 'key',             header: 'Date',     size: 90,  minSize: 70,  cell: DateCell,               ...RESIZABLE }),
-    ColumnDefinition.from({ id: 'account',  accessorKey: 'key',             header: 'Account',  size: 120, minSize: 80,  cell: AccountCell,            ...RESIZABLE }),
-    ColumnDefinition.from({ id: 'payee',    accessorKey: 'key',             header: 'Payee',    size: 150, minSize: 100, cell: PayeeCell,               ...RESIZABLE }),
-    ColumnDefinition.from({ id: 'action',   accessorKey: 'key',             header: 'Action',   size: 80,  minSize: 60,  cell: ActionCell,              ...RESIZABLE }),
-    ColumnDefinition.from({ id: 'memo',     accessorKey: 'key',             header: 'Memo',     size: 150, minSize: 80,  cell: MemoCell,                ...RESIZABLE }),
-    ColumnDefinition.from({ id: 'amount',   accessorKey: 'key',             header: 'Amount',   size: 120, minSize: 80,  cell: AmountCell,              ...NUMERIC }),
+    ColumnDefinition.from({ id: 'category', accessorKey: 'id',             header: 'Category', size: 300, minSize: 150, cell: ExpandableCategoryCell, ...RESIZABLE }),
+    ColumnDefinition.from({ id: 'date',     accessorKey: 'id',             header: 'Date',     size: 90,  minSize: 70,  cell: DateCell,               ...RESIZABLE }),
+    ColumnDefinition.from({ id: 'account',  accessorKey: 'id',             header: 'Account',  size: 120, minSize: 80,  cell: AccountCell,            ...RESIZABLE }),
+    ColumnDefinition.from({ id: 'payee',    accessorKey: 'id',             header: 'Payee',    size: 150, minSize: 100, cell: PayeeCell,               ...RESIZABLE }),
+    ColumnDefinition.from({ id: 'action',   accessorKey: 'id',             header: 'Action',   size: 80,  minSize: 60,  cell: ActionCell,              ...RESIZABLE }),
+    ColumnDefinition.from({ id: 'memo',     accessorKey: 'id',             header: 'Memo',     size: 150, minSize: 80,  cell: MemoCell,                ...RESIZABLE }),
+    ColumnDefinition.from({ id: 'amount',   accessorKey: 'id',             header: 'Amount',   size: 120, minSize: 80,  cell: AmountCell,              ...NUMERIC }),
     ColumnDefinition.from({ id: 'count',    accessorKey: 'aggregate.count', header: 'Count',    size: 80,  minSize: 60,  cell: CountCell,               ...NUMERIC }),
 ], ColumnDefinition, 'id')
 

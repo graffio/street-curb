@@ -1,7 +1,7 @@
 // ABOUTME: Column definitions for investment holdings report
 // ABOUTME: Displays HoldingsTreeNode tree with aggregate/holding data and stale price indicators
 // COMPLEXITY: react-redux-separation — Cell renderers use conditional spread for stale styling (display-only)
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
+// COMPLEXITY: require-action-registry — Chevron onClick retained for mouse; keyboard uses row:toggle-expand
 
 import { LookupTable } from '@graffio/functional'
 import React from 'react'
@@ -35,6 +35,10 @@ const P = {
 
 const T = {
     // --- Node-level accessors (for TanStack accessorFn — receive raw HoldingsTreeNode) ---
+
+    // Returns display name — securityName for holdings, id for groups
+    // @sig toDisplayName :: HoldingsTreeNode -> String
+    toDisplayName: node => (P.isHolding(node) ? node.holding.securityName : node.id),
 
     // Extracts share quantity from holding or aggregate
     // @sig toShares :: HoldingsTreeNode -> Number?
@@ -233,7 +237,7 @@ const staleStyle = { fontStyle: 'italic' }
  */
 // prettier-ignore
 const columns = LookupTable([
-    ColumnDefinition.from({ id: 'name',      accessorKey: 'key',                              header: 'Name',      size: 200, minSize: 150, cell: ExpandableNameCell,   enableResizing: true }),
+    ColumnDefinition.from({ id: 'name',      accessorFn: T.toDisplayName,                     header: 'Name',      size: 200, minSize: 150, cell: ExpandableNameCell,   enableResizing: true }),
     ColumnDefinition.from({ id: 'symbol',    accessorFn: T.toSecuritySymbol,                  header: 'Symbol',    size: 80,  minSize: 60,  cell: SymbolCell,           enableResizing: true }),
     ColumnDefinition.from({ id: 'dayPct',    accessorFn: T.toDayGainLossPercent,              header: 'Day %',     size: 80,  minSize: 60,  cell: StalePercentageCell,  ...NUMERIC }),
     ColumnDefinition.from({ id: 'dayGain',   accessorFn: T.toDayGainLoss,                     header: 'Day Gain',  size: 100, minSize: 80,  cell: StaleCurrencyCell,    ...NUMERIC }),

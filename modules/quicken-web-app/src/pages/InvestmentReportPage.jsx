@@ -33,6 +33,7 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
     const expanded = useSelector(state => S.UI.treeExpansion(state, viewId))
     const columnSizing = useSelector(state => S.UI.columnSizing(state, viewId))
     const columnOrder = useSelector(state => S.UI.columnOrder(state, viewId))
+    const highlightedRowId = useSelector(state => S.UI.highlightedRowId(state, viewId))
 
     const totalHoldingsCount = holdings.length
 
@@ -56,6 +57,9 @@ const InvestmentReportPage = ({ viewId, height = '100%' }) => {
         onColumnSizingChange: updater => post(Action.SetViewUiState(viewId, { columnSizing: updater })),
         columnOrder,
         onColumnOrderChange: order => post(Action.SetViewUiState(viewId, { columnOrder: order })),
+        highlightedId: highlightedRowId,
+        actionContext: viewId,
+        onHighlightChange: newId => post(Action.SetViewUiState(viewId, { highlightedRowId: newId })),
         context: { groupBy },
     }
 

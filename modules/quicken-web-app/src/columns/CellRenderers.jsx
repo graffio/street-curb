@@ -1,7 +1,7 @@
 // ABOUTME: Cell renderers for transaction register table columns
 // ABOUTME: TanStack Table components with search highlighting and formatting
 // COMPLEXITY: react-redux-separation — TanStack Table cell callbacks, not standard app components
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
+// COMPLEXITY: require-action-registry — Transfer links and chevron onClick retained for mouse interaction
 
 import { containsIgnoreCase, isNil } from '@graffio/functional'
 import React from 'react'
