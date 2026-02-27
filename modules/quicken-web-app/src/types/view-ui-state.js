@@ -12,7 +12,8 @@
  *  currentSearchIndex    : "Number",
  *  treeExpansion         : "Object?",
  *  columnSizing          : "Object?",
- *  columnOrder           : "[String]?"
+ *  columnOrder           : "[String]?",
+ *  highlightedRowId      : "String?"
  *
  */
 
@@ -28,7 +29,7 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 /*
  * Construct a ViewUiState instance
- * @sig ViewUiState :: (String, String?, String, Number, Number, Number, Object?, Object?, [String]?) -> ViewUiState
+ * @sig ViewUiState :: (String, String?, String, Number, Number, Number, Object?, Object?, [String]?, String?) -> ViewUiState
  */
 const ViewUiState = function ViewUiState(
     id,
@@ -40,9 +41,10 @@ const ViewUiState = function ViewUiState(
     treeExpansion,
     columnSizing,
     columnOrder,
+    highlightedRowId,
 ) {
     const constructorName =
-        'ViewUiState(id, filterPopoverId, filterPopoverSearch, filterPopoverHighlight, currentRowIndex, currentSearchIndex, treeExpansion, columnSizing, columnOrder)'
+        'ViewUiState(id, filterPopoverId, filterPopoverSearch, filterPopoverHighlight, currentRowIndex, currentSearchIndex, treeExpansion, columnSizing, columnOrder, highlightedRowId)'
 
     R.validateRegex(constructorName, FieldTypes.viewId, 'id', false, id)
     R.validateString(constructorName, 'filterPopoverId', true, filterPopoverId)
@@ -53,6 +55,7 @@ const ViewUiState = function ViewUiState(
     R.validateObject(constructorName, 'treeExpansion', true, treeExpansion)
     R.validateObject(constructorName, 'columnSizing', true, columnSizing)
     R.validateArray(constructorName, 1, 'String', undefined, 'columnOrder', true, columnOrder)
+    R.validateString(constructorName, 'highlightedRowId', true, highlightedRowId)
 
     const result = Object.create(prototype)
     result.id = id
@@ -64,6 +67,7 @@ const ViewUiState = function ViewUiState(
     if (treeExpansion !== undefined) result.treeExpansion = treeExpansion
     if (columnSizing !== undefined) result.columnSizing = columnSizing
     if (columnOrder !== undefined) result.columnOrder = columnOrder
+    if (highlightedRowId !== undefined) result.highlightedRowId = highlightedRowId
     return result
 }
 
@@ -86,7 +90,8 @@ const viewuistateToString = function () {
         ${R._toString(this.currentSearchIndex)},
         ${R._toString(this.treeExpansion)},
         ${R._toString(this.columnSizing)},
-        ${R._toString(this.columnOrder)})`
+        ${R._toString(this.columnOrder)},
+        ${R._toString(this.highlightedRowId)})`
 }
 
 /*
@@ -130,6 +135,7 @@ ViewUiState._from = _input => {
         treeExpansion,
         columnSizing,
         columnOrder,
+        highlightedRowId,
     } = _input
     return ViewUiState(
         id,
@@ -141,6 +147,7 @@ ViewUiState._from = _input => {
         treeExpansion,
         columnSizing,
         columnOrder,
+        highlightedRowId,
     )
 }
 ViewUiState.from = ViewUiState._from

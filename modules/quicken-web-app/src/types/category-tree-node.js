@@ -4,11 +4,11 @@
 /*  CategoryTreeNode generated from: modules/quicken-web-app/type-definitions/category-tree-node.type.js
  *
  *  Group
- *      key      : "String",
+ *      id       : "String",
  *      children : "[CategoryTreeNode]",
  *      aggregate: "CategoryAggregate"
  *  Transaction
- *      key        : "String",
+ *      id         : "String",
  *      children   : "[CategoryTreeNode]",
  *      transaction: "Object"
  *
@@ -54,8 +54,8 @@ CategoryTreeNode.prototype = CategoryTreeNodePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    group      : function () { return `CategoryTreeNode.Group(${R._toString(this.key)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
-    transaction: function () { return `CategoryTreeNode.Transaction(${R._toString(this.key)}, ${R._toString(this.children)}, ${R._toString(this.transaction)})` },
+    group      : function () { return `CategoryTreeNode.Group(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
+    transaction: function () { return `CategoryTreeNode.Transaction(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.transaction)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -79,15 +79,15 @@ const toJSON = {
  * Construct a CategoryTreeNode.Group instance
  * @sig Group :: (String, [CategoryTreeNode], CategoryAggregate) -> CategoryTreeNode.Group
  */
-const GroupConstructor = function Group(key, children, aggregate) {
-    const constructorName = 'CategoryTreeNode.Group(key, children, aggregate)'
+const GroupConstructor = function Group(id, children, aggregate) {
+    const constructorName = 'CategoryTreeNode.Group(id, children, aggregate)'
     R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateString(constructorName, 'key', false, key)
+    R.validateString(constructorName, 'id', false, id)
     R.validateArray(constructorName, 1, 'Tagged', 'CategoryTreeNode', 'children', false, children)
     R.validateTag(constructorName, 'CategoryAggregate', 'aggregate', false, aggregate)
 
     const result = Object.create(GroupPrototype)
-    result.key = key
+    result.id = id
     result.children = children
     result.aggregate = aggregate
     return result
@@ -99,15 +99,15 @@ CategoryTreeNode.Group = GroupConstructor
  * Construct a CategoryTreeNode.Transaction instance
  * @sig Transaction :: (String, [CategoryTreeNode], Object) -> CategoryTreeNode.Transaction
  */
-const TransactionConstructor = function Transaction(key, children, transaction) {
-    const constructorName = 'CategoryTreeNode.Transaction(key, children, transaction)'
+const TransactionConstructor = function Transaction(id, children, transaction) {
+    const constructorName = 'CategoryTreeNode.Transaction(id, children, transaction)'
     R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateString(constructorName, 'key', false, key)
+    R.validateString(constructorName, 'id', false, id)
     R.validateArray(constructorName, 1, 'Tagged', 'CategoryTreeNode', 'children', false, children)
     R.validateObject(constructorName, 'transaction', false, transaction)
 
     const result = Object.create(TransactionPrototype)
-    result.key = key
+    result.id = id
     result.children = children
     result.transaction = transaction
     return result
@@ -155,12 +155,12 @@ TransactionConstructor.toString = () => 'CategoryTreeNode.Transaction'
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 GroupConstructor._from = _input => {
-    const { key, children, aggregate } = _input
-    return CategoryTreeNode.Group(key, children, aggregate)
+    const { id, children, aggregate } = _input
+    return CategoryTreeNode.Group(id, children, aggregate)
 }
 TransactionConstructor._from = _input => {
-    const { key, children, transaction } = _input
-    return CategoryTreeNode.Transaction(key, children, transaction)
+    const { id, children, transaction } = _input
+    return CategoryTreeNode.Transaction(id, children, transaction)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
@@ -179,9 +179,9 @@ TransactionConstructor.from = TransactionConstructor._from
  * @sig _toFirestore :: (Group, Function) -> Object
  */
 GroupConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { key, children, aggregate } = o
+    const { id, children, aggregate } = o
     return {
-        key: key,
+        id: id,
         children: children.map(item1 => CategoryTreeNode.toFirestore(item1, encodeTimestamps)),
         aggregate: CategoryAggregate.toFirestore(aggregate, encodeTimestamps),
     }
@@ -192,9 +192,9 @@ GroupConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Group
  */
 GroupConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { key, children, aggregate } = doc
+    const { id, children, aggregate } = doc
     return GroupConstructor._from({
-        key: key,
+        id: id,
         children: children.map(item1 =>
             CategoryTreeNode.fromFirestore
                 ? CategoryTreeNode.fromFirestore(item1, decodeTimestamps)
@@ -215,9 +215,9 @@ GroupConstructor.fromFirestore = GroupConstructor._fromFirestore
  * @sig _toFirestore :: (Transaction, Function) -> Object
  */
 TransactionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { key, children, transaction } = o
+    const { id, children, transaction } = o
     return {
-        key: key,
+        id: id,
         children: children.map(item1 => CategoryTreeNode.toFirestore(item1, encodeTimestamps)),
         transaction: transaction,
     }
@@ -228,9 +228,9 @@ TransactionConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Transaction
  */
 TransactionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { key, children, transaction } = doc
+    const { id, children, transaction } = doc
     return TransactionConstructor._from({
-        key: key,
+        id: id,
         children: children.map(item1 =>
             CategoryTreeNode.fromFirestore
                 ? CategoryTreeNode.fromFirestore(item1, decodeTimestamps)

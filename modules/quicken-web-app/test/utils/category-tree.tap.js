@@ -140,7 +140,7 @@ t.test('buildTransactionTree utility', t => {
             const tree = CategoryTree.buildTransactionTree('category', transactions)
 
             t.equal(tree.length, 1, 'Then returns 1 root')
-            t.equal(tree[0].key, 'Uncategorized', 'And root is Uncategorized')
+            t.equal(tree[0].id, 'Uncategorized', 'And root is Uncategorized')
             t.equal(tree[0].aggregate.total, -25, 'And total is -25')
             t.end()
         })

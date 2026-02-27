@@ -12,7 +12,7 @@ export const CategoryTreeNode = {
     name: 'CategoryTreeNode',
     kind: 'taggedSum',
     variants: {
-        Group: { key: 'String', children: '[CategoryTreeNode]', aggregate: 'CategoryAggregate' },
-        Transaction: { key: 'String', children: '[CategoryTreeNode]', transaction: 'Object' },
+        Group: { id: 'String', children: '[CategoryTreeNode]', aggregate: 'CategoryAggregate' },
+        Transaction: { id: 'String', children: '[CategoryTreeNode]', transaction: 'Object' },
     },
 }

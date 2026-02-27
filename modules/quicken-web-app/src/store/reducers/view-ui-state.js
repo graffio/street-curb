@@ -17,6 +17,7 @@ const createDefaultViewUiState = viewId =>
         {}, // treeExpansion
         {}, // columnSizing
         [], // columnOrder
+        undefined, // highlightedRowId
     )
 
 // Merges partial UI state changes into view UI state for a specific view

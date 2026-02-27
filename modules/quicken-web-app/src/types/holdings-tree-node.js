@@ -4,11 +4,11 @@
 /*  HoldingsTreeNode generated from: modules/quicken-web-app/type-definitions/holdings-tree-node.type.js
  *
  *  Group
- *      key      : "String",
+ *      id       : "String",
  *      children : "[HoldingsTreeNode]",
  *      aggregate: "HoldingsAggregate"
  *  Holding
- *      key     : "String",
+ *      id      : "String",
  *      children: "[HoldingsTreeNode]",
  *      holding : "Holding"
  *
@@ -55,8 +55,8 @@ HoldingsTreeNode.prototype = HoldingsTreeNodePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    group  : function () { return `HoldingsTreeNode.Group(${R._toString(this.key)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
-    holding: function () { return `HoldingsTreeNode.Holding(${R._toString(this.key)}, ${R._toString(this.children)}, ${R._toString(this.holding)})` },
+    group  : function () { return `HoldingsTreeNode.Group(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
+    holding: function () { return `HoldingsTreeNode.Holding(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.holding)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -80,15 +80,15 @@ const toJSON = {
  * Construct a HoldingsTreeNode.Group instance
  * @sig Group :: (String, [HoldingsTreeNode], HoldingsAggregate) -> HoldingsTreeNode.Group
  */
-const GroupConstructor = function Group(key, children, aggregate) {
-    const constructorName = 'HoldingsTreeNode.Group(key, children, aggregate)'
+const GroupConstructor = function Group(id, children, aggregate) {
+    const constructorName = 'HoldingsTreeNode.Group(id, children, aggregate)'
     R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateString(constructorName, 'key', false, key)
+    R.validateString(constructorName, 'id', false, id)
     R.validateArray(constructorName, 1, 'Tagged', 'HoldingsTreeNode', 'children', false, children)
     R.validateTag(constructorName, 'HoldingsAggregate', 'aggregate', false, aggregate)
 
     const result = Object.create(GroupPrototype)
-    result.key = key
+    result.id = id
     result.children = children
     result.aggregate = aggregate
     return result
@@ -100,15 +100,15 @@ HoldingsTreeNode.Group = GroupConstructor
  * Construct a HoldingsTreeNode.Holding instance
  * @sig Holding :: (String, [HoldingsTreeNode], Holding) -> HoldingsTreeNode.Holding
  */
-const HoldingConstructor = function Holding(key, children, holding) {
-    const constructorName = 'HoldingsTreeNode.Holding(key, children, holding)'
+const HoldingConstructor = function Holding(id, children, holding) {
+    const constructorName = 'HoldingsTreeNode.Holding(id, children, holding)'
     R.validateArgumentLength(constructorName, 3, arguments)
-    R.validateString(constructorName, 'key', false, key)
+    R.validateString(constructorName, 'id', false, id)
     R.validateArray(constructorName, 1, 'Tagged', 'HoldingsTreeNode', 'children', false, children)
     R.validateTag(constructorName, 'Holding', 'holding', false, holding)
 
     const result = Object.create(HoldingPrototype)
-    result.key = key
+    result.id = id
     result.children = children
     result.holding = holding
     return result
@@ -156,12 +156,12 @@ HoldingConstructor.toString = () => 'HoldingsTreeNode.Holding'
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
 GroupConstructor._from = _input => {
-    const { key, children, aggregate } = _input
-    return HoldingsTreeNode.Group(key, children, aggregate)
+    const { id, children, aggregate } = _input
+    return HoldingsTreeNode.Group(id, children, aggregate)
 }
 HoldingConstructor._from = _input => {
-    const { key, children, holding } = _input
-    return HoldingsTreeNode.Holding(key, children, holding)
+    const { id, children, holding } = _input
+    return HoldingsTreeNode.Holding(id, children, holding)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
@@ -180,9 +180,9 @@ HoldingConstructor.from = HoldingConstructor._from
  * @sig _toFirestore :: (Group, Function) -> Object
  */
 GroupConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { key, children, aggregate } = o
+    const { id, children, aggregate } = o
     return {
-        key: key,
+        id: id,
         children: children.map(item1 => HoldingsTreeNode.toFirestore(item1, encodeTimestamps)),
         aggregate: HoldingsAggregate.toFirestore(aggregate, encodeTimestamps),
     }
@@ -193,9 +193,9 @@ GroupConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Group
  */
 GroupConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { key, children, aggregate } = doc
+    const { id, children, aggregate } = doc
     return GroupConstructor._from({
-        key: key,
+        id: id,
         children: children.map(item1 =>
             HoldingsTreeNode.fromFirestore
                 ? HoldingsTreeNode.fromFirestore(item1, decodeTimestamps)
@@ -216,9 +216,9 @@ GroupConstructor.fromFirestore = GroupConstructor._fromFirestore
  * @sig _toFirestore :: (Holding, Function) -> Object
  */
 HoldingConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { key, children, holding } = o
+    const { id, children, holding } = o
     return {
-        key: key,
+        id: id,
         children: children.map(item1 => HoldingsTreeNode.toFirestore(item1, encodeTimestamps)),
         holding: Holding.toFirestore(holding, encodeTimestamps),
     }
@@ -229,9 +229,9 @@ HoldingConstructor._toFirestore = (o, encodeTimestamps) => {
  * @sig _fromFirestore :: (Object, Function) -> Holding
  */
 HoldingConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { key, children, holding } = doc
+    const { id, children, holding } = doc
     return HoldingConstructor._from({
-        key: key,
+        id: id,
         children: children.map(item1 =>
             HoldingsTreeNode.fromFirestore
                 ? HoldingsTreeNode.fromFirestore(item1, decodeTimestamps)

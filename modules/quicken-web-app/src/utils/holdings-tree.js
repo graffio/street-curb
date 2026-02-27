@@ -40,7 +40,7 @@ const T = {
 
     // Transforms a Holding into HoldingsTreeNode.Holding (leaf node)
     // @sig toHoldingNode :: Holding -> HoldingsTreeNode.Holding
-    toHoldingNode: holding => HoldingsTreeNode.Holding(holding.securityName || 'Unknown', [], holding),
+    toHoldingNode: holding => HoldingsTreeNode.Holding(`${holding.accountId}|${holding.securityId}`, [], holding),
 
     // Transforms an aggregated tree node into HoldingsTreeNode.Group
     // @sig toGroupNode :: TreeNode -> HoldingsTreeNode.Group

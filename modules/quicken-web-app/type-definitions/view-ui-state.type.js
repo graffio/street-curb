@@ -3,6 +3,12 @@
 
 import { FieldTypes } from './field-types.js'
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 export const ViewUiState = {
     name: 'ViewUiState',
     kind: 'tagged',
@@ -16,5 +22,6 @@ export const ViewUiState = {
         treeExpansion: 'Object?',
         columnSizing: 'Object?',
         columnOrder: '[String]?',
+        highlightedRowId: 'String?',
     },
 }
