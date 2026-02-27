@@ -28,7 +28,7 @@ import '../styles/datatable.css'
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { path, throttle } from '@graffio/functional'
+import { path } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex } from '@radix-ui/themes'
 import {
@@ -40,7 +40,7 @@ import {
 } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import PropTypes from 'prop-types'
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 const { ActionRegistry } = KeymapModule
 
@@ -106,18 +106,16 @@ const E = {
     // Registers navigation actions on table container mount (ref callback, React 18 pattern)
     // @sig registerNavActions :: (String, Element?) -> void
     registerNavActions: (context, element) => {
-        // Creates a navigate handler that updates navStates immediately for correct sequential
-        // computation during rapid keystrokes, then throttles the Redux dispatch
+        // Creates a navigate handler that updates local highlight state directly (no Redux round-trip)
         // @sig toNavigateExecute :: String -> () -> void
         const toNavigateExecute = direction => () => {
             const nav = navStates.get(context)
-            if (!nav?.onHighlightChange) return
+            if (!nav?.setLocalHighlight) return
             const { focusableIds, highlightedId, rows } = nav
             const ids = T.toNavigableIds(focusableIds, rows)
             if (ids.length === 0) return
             const nextIndex = T.toNextIndex(direction, ids, highlightedId)
-            nav.highlightedId = ids[nextIndex]
-            throttledHighlight()
+            nav.setLocalHighlight(ids[nextIndex])
         }
 
         // Toggles expand/collapse on the currently highlighted row if expandable
@@ -128,13 +126,6 @@ const E = {
             const idx = A.findHighlightedRowIndex(highlightedId, rows)
             if (idx >= 0 && rows[idx].getCanExpand()) rows[idx].toggleExpanded()
         }
-
-        // Throttled highlight dispatch — reads latest position from navStates at fire time
-        // @sig throttledHighlight :: () -> void
-        const throttledHighlight = throttle(80, () => {
-            const nav = navStates.get(context)
-            nav?.onHighlightChange?.(nav.highlightedId)
-        })
 
         navCleanups.get(context)?.()
         if (!element) {
@@ -361,7 +352,7 @@ const SCROLL_CONTAINER_STYLE = { position: 'absolute', inset: 0, overflow: 'auto
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Per-instance nav state — prevents multi-instance interference when multiple tab groups are open
-const navStates = new Map() // actionContext -> { highlightedId, focusableIds, rows, onHighlightChange, onEscape }
+const navStates = new Map() // actionContext -> { highlightedId, focusableIds, rows, setLocalHighlight, onEscape }
 const navCleanups = new Map() // actionContext -> cleanup fn
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -440,7 +431,7 @@ const DataTable = ({
     // Scrolls to highlighted row if not visible
     // @sig scrollToHighlightedRow :: () -> void
     const scrollToHighlightedRow = () => {
-        const highlightedRowIndex = A.findHighlightedRowIndex(highlightedId, rows)
+        const highlightedRowIndex = A.findHighlightedRowIndex(localHighlightId, rows)
         if (highlightedRowIndex < 0 || highlightedRowIndex >= rows.length) return
 
         // Skip scroll if row is already visible
@@ -467,6 +458,14 @@ const DataTable = ({
             onRowClick,
         }
         return <VirtualRow key={row.id} {...props} />
+    }
+
+    // Notifies parent for persistence after navigation settles (debounced 150ms)
+    // @sig notifyHighlightChange :: () -> (() -> void)?
+    const notifyHighlightChange = () => {
+        if (localHighlightId === highlightedId) return
+        const timer = setTimeout(() => onHighlightChangeRef.current?.(localHighlightId), 150)
+        return () => clearTimeout(timer)
     }
 
     // Refs
@@ -507,12 +506,16 @@ const DataTable = ({
 
     // Derived state
     const { rows } = table.getRowModel()
-    const prevHighlight = navStates.get(actionContext)?.highlightedId
-    navStates.set(actionContext, { highlightedId, focusableIds, rows, onHighlightChange, onEscape })
+    const [localHighlightId, setLocalHighlight] = useState(highlightedId)
 
-    // Preserve local highlight mutation ahead of props (throttled dispatch pending)
-    if (prevHighlight !== undefined && prevHighlight !== highlightedId)
-        navStates.get(actionContext).highlightedId = prevHighlight
+    // Sync local highlight when prop changes from outside (e.g., persisted state restoration)
+    useEffect(() => setLocalHighlight(highlightedId), [highlightedId])
+
+    const onHighlightChangeRef = useRef(onHighlightChange)
+    onHighlightChangeRef.current = onHighlightChange
+    useEffect(notifyHighlightChange, [localHighlightId, highlightedId])
+
+    navStates.set(actionContext, { highlightedId: localHighlightId, focusableIds, rows, setLocalHighlight, onEscape })
 
     // -----------------------------------------------------------------------------------------------------------------
     // TanStack Virtualization
@@ -531,10 +534,10 @@ const DataTable = ({
     const handleColumnReorder = useCallback(reorderColumns, [onColumnOrderChange, table, columns])
     const columnSizeVars = React.useMemo(computeColumnSizeVars, [columnSizing, columns, table])
     const highlightedRowIndex = React.useMemo(
-        () => A.findHighlightedRowIndex(highlightedId, rows),
-        [highlightedId, rows],
+        () => A.findHighlightedRowIndex(localHighlightId, rows),
+        [localHighlightId, rows],
     )
-    useEffect(scrollToHighlightedRow, [highlightedId, rows.length, virtualizer])
+    useEffect(scrollToHighlightedRow, [localHighlightId, rows.length, virtualizer])
 
     // -----------------------------------------------------------------------------------------------------------------
     // Main
