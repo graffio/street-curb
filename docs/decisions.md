@@ -825,3 +825,15 @@ Why: Generic opt-in mechanism — any future modal adds one flag. No Redux state
 ### Success Criteria
 
 Future architecture decisions are data-driven and support sustainable business growth.
+
+### Relay Race over Per-Cluster Orchestration (2026-02-27)
+
+**Context:** Long task.json implementations degrade as context fills. Needed autonomous handoff for AFK sessions.
+**Decision:** Relay-race model (one agent runs until context thins, hands off to a fresh agent via task.json) over per-commit-cluster subagent orchestration.
+**Why:** Task.json already has done/note fields — it IS the communication protocol. Relay-race adds no grouping decisions, no parent/child complexity. Per-cluster orchestration would require deciding how to batch steps and add a complex dispatcher.
+
+### Worktree Isolation for Spikes (2026-02-27)
+
+**Context:** Spike code needs to be accessible during real implementation for reference, but must not pollute the main branch.
+**Decision:** Run spikes in a git worktree. Worktree persists until wrap-up.
+**Why:** Worktree gives clean isolation AND persistent reference. Alternative (branch + rollback) loses the code after reset. Alternative (keep on main with [SPIKE] prefix) pollutes main branch history.
