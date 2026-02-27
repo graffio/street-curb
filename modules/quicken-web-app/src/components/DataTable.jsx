@@ -474,7 +474,7 @@ const DataTable = ({
         ...(expanded                                             && { expanded }),
     }
 
-    const safeColumns = columns.map(T.toSafeAccessor)
+    const safeColumns = React.useMemo(() => columns.map(T.toSafeAccessor), [columns])
 
     const table = useReactTable({
         data,
