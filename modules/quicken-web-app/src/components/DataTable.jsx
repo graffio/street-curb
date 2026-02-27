@@ -28,7 +28,7 @@ import '../styles/datatable.css'
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { path } from '@graffio/functional'
+import { path, throttle } from '@graffio/functional'
 import { KeymapModule } from '@graffio/keymap'
 import { Box, Flex } from '@radix-ui/themes'
 import {
@@ -106,15 +106,18 @@ const E = {
     // Registers navigation actions on table container mount (ref callback, React 18 pattern)
     // @sig registerNavActions :: (String, Element?) -> void
     registerNavActions: (context, element) => {
-        // Creates a navigate handler that reads per-instance state at execute time
+        // Creates a navigate handler that updates navStates immediately for correct sequential
+        // computation during rapid keystrokes, then throttles the Redux dispatch
         // @sig toNavigateExecute :: String -> () -> void
         const toNavigateExecute = direction => () => {
-            const { focusableIds, highlightedId, onHighlightChange, rows } = navStates.get(context) ?? {}
-            if (!onHighlightChange) return
+            const nav = navStates.get(context)
+            if (!nav?.onHighlightChange) return
+            const { focusableIds, highlightedId, rows } = nav
             const ids = T.toNavigableIds(focusableIds, rows)
             if (ids.length === 0) return
             const nextIndex = T.toNextIndex(direction, ids, highlightedId)
-            onHighlightChange(ids[nextIndex])
+            nav.highlightedId = ids[nextIndex]
+            throttledHighlight()
         }
 
         // Toggles expand/collapse on the currently highlighted row if expandable
@@ -125,6 +128,13 @@ const E = {
             const idx = A.findHighlightedRowIndex(highlightedId, rows)
             if (idx >= 0 && rows[idx].getCanExpand()) rows[idx].toggleExpanded()
         }
+
+        // Throttled highlight dispatch — reads latest position from navStates at fire time
+        // @sig throttledHighlight :: () -> void
+        const throttledHighlight = throttle(80, () => {
+            const nav = navStates.get(context)
+            nav?.onHighlightChange?.(nav.highlightedId)
+        })
 
         navCleanups.get(context)?.()
         if (!element) {
@@ -497,7 +507,12 @@ const DataTable = ({
 
     // Derived state
     const { rows } = table.getRowModel()
+    const prevHighlight = navStates.get(actionContext)?.highlightedId
     navStates.set(actionContext, { highlightedId, focusableIds, rows, onHighlightChange, onEscape })
+
+    // Preserve local highlight mutation ahead of props (throttled dispatch pending)
+    if (prevHighlight !== undefined && prevHighlight !== highlightedId)
+        navStates.get(actionContext).highlightedId = prevHighlight
 
     // -----------------------------------------------------------------------------------------------------------------
     // TanStack Virtualization
