@@ -44,14 +44,23 @@ const T = {
     // @sig toTransactionNode :: Transaction -> CategoryTreeNode.Transaction
     toTransactionNode: txn => CategoryTreeNode.Transaction(String(txn.id), [], txn),
 
+    // Wraps direct transactions in a synthetic <Others> group under a parent that also has child groups
+    // @sig toOthersGroup :: (String, [Transaction]) -> CategoryTreeNode.Group
+    toOthersGroup: (parentKey, transactions) => {
+        const nodes = transactions.map(T.toTransactionNode)
+        const total = transactions.reduce((sum, t) => sum + t.amount, 0)
+        return CategoryTreeNode.Group(`${parentKey}:<Others>`, nodes, CategoryAggregate(total, transactions.length))
+    },
+
     // Transforms an aggregated tree node into CategoryTreeNode.Group
     // @sig toGroupNode :: TreeNode -> CategoryTreeNode.Group
     toGroupNode: node => {
         const { key, value, children, aggregate } = node
-        const transactionNodes = value.map(T.toTransactionNode)
         const groupNodes = children.map(T.toGroupNode)
-        const allChildren = [...groupNodes, ...transactionNodes]
-        return CategoryTreeNode.Group(key, allChildren, T.toCategoryAggregate(aggregate))
+        const hasGroups = groupNodes.length > 0
+        const hasDirectTxns = value.length > 0
+        const txnChildren = hasGroups && hasDirectTxns ? [T.toOthersGroup(key, value)] : value.map(T.toTransactionNode)
+        return CategoryTreeNode.Group(key, [...groupNodes, ...txnChildren], T.toCategoryAggregate(aggregate))
     },
 }
 

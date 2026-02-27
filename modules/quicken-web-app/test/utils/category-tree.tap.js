@@ -133,6 +133,78 @@ t.test('buildTransactionTree utility', t => {
         t.end()
     })
 
+    t.test('Given category with both subcategories and direct transactions', t => {
+        const transactions = [
+            { id: 'txn1', categoryName: 'Food:Groceries', amount: -100 },
+            { id: 'txn2', categoryName: 'Food', amount: -50 },
+            { id: 'txn3', categoryName: 'Food', amount: -20 },
+        ]
+
+        t.test('When calling buildTransactionTree', t => {
+            const tree = CategoryTree.buildTransactionTree('category', transactions)
+            const food = tree[0]
+
+            t.equal(food.id, 'Food', 'Then root is Food')
+            t.equal(food.aggregate.total, -170, 'And Food total includes all transactions')
+
+            const othersNode = food.children.find(c => c.id === 'Food:<Others>')
+            t.ok(othersNode, 'And an <Others> group wraps direct transactions')
+            t.equal(othersNode.aggregate.total, -70, 'And <Others> total is sum of direct transactions')
+            t.equal(othersNode.aggregate.count, 2, 'And <Others> count is 2')
+            t.equal(othersNode.children.length, 2, 'And <Others> has 2 transaction children')
+            t.ok(
+                othersNode.children.every(c => c['@@tagName'] === 'Transaction'),
+                'And all <Others> children are Transaction nodes',
+            )
+
+            const groceriesNode = food.children.find(c => c.id === 'Food:Groceries')
+            t.ok(groceriesNode, 'And Groceries group is still present')
+            t.equal(groceriesNode.aggregate.total, -100, 'And Groceries total is unchanged')
+            t.end()
+        })
+        t.end()
+    })
+
+    t.test('Given category with only subcategories (no direct transactions)', t => {
+        const transactions = [
+            { id: 'txn1', categoryName: 'Food:Groceries', amount: -100 },
+            { id: 'txn2', categoryName: 'Food:Restaurants', amount: -50 },
+        ]
+
+        t.test('When calling buildTransactionTree', t => {
+            const tree = CategoryTree.buildTransactionTree('category', transactions)
+            const food = tree[0]
+
+            const othersNode = food.children.find(c => c.id === 'Food:<Others>')
+            t.notOk(othersNode, 'Then no <Others> node is created')
+            t.equal(food.children.length, 2, 'And only subcategory groups exist')
+            t.end()
+        })
+        t.end()
+    })
+
+    t.test('Given category with only direct transactions (no subcategories)', t => {
+        const transactions = [
+            { id: 'txn1', categoryName: 'Food', amount: -50 },
+            { id: 'txn2', categoryName: 'Food', amount: -20 },
+        ]
+
+        t.test('When calling buildTransactionTree', t => {
+            const tree = CategoryTree.buildTransactionTree('category', transactions)
+            const food = tree[0]
+
+            const othersNode = food.children.find(c => c.id === 'Food:<Others>')
+            t.notOk(othersNode, 'Then no <Others> node is created')
+            t.ok(
+                food.children.every(c => c['@@tagName'] === 'Transaction'),
+                'And children are Transaction nodes directly',
+            )
+            t.equal(food.children.length, 2, 'And both transactions are direct children')
+            t.end()
+        })
+        t.end()
+    })
+
     t.test('Given transactions without categoryName', t => {
         const transactions = [{ id: 'txn1', amount: -25 }]
 
