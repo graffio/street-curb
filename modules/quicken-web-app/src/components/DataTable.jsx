@@ -309,9 +309,11 @@ const VirtualRow = ({ virtualRow, row, isHighlighted, renderSubComponent, measur
     const isLeaf = !row.subRows || row.subRows.length === 0
     const showSubComponent = renderSubComponent && row.getIsExpanded() && isLeaf
 
+    const rowProps = { row, cells: row.getVisibleCells(), rowIndex: index, isHighlighted, onRowClick }
+
     return (
         <Box data-index={index} ref={measureElement} style={style}>
-            <TableRow row={row} rowIndex={index} isHighlighted={isHighlighted} onRowClick={onRowClick} />
+            <TableRow {...rowProps} />
             {showSubComponent && (
                 <Box px="2" py="2" style={{ backgroundColor: 'var(--gray-2)' }}>
                     {renderSubComponent({ row })}
@@ -322,8 +324,8 @@ const VirtualRow = ({ virtualRow, row, isHighlighted, renderSubComponent, measur
 }
 
 // Table row component with zebra striping and highlight support
-// @sig TableRow :: { row, rowIndex, isHighlighted, onRowClick } -> ReactElement
-const TableRow = React.memo(({ row, rowIndex, isHighlighted, onRowClick }) => {
+// @sig TableRow :: { row, cells, rowIndex, isHighlighted, onRowClick } -> ReactElement
+const TableRow = React.memo(({ row, cells, rowIndex, isHighlighted, onRowClick }) => {
     const zebraColor = rowIndex % 2 === 0 ? 'var(--gray-1)' : 'var(--gray-2)'
     const backgroundColor = isHighlighted ? 'var(--yellow-5)' : zebraColor
     const handleClick = onRowClick ? () => onRowClick(row.original, rowIndex) : undefined
@@ -331,7 +333,7 @@ const TableRow = React.memo(({ row, rowIndex, isHighlighted, onRowClick }) => {
 
     return (
         <Flex align="start" gap="1" px="2" py="1" onClick={handleClick} style={style}>
-            {row.getVisibleCells().map(cell => (
+            {cells.map(cell => (
                 <TableCell key={cell.id} cell={cell} />
             ))}
         </Flex>
