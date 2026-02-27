@@ -109,6 +109,7 @@ const UI = {
     filterPopoverHighlight   : (state, viewId) => viewUi(state, viewId).filterPopoverHighlight,
     filterQuery              : (state, viewId) => filter(state, viewId).filterQuery,
     groupBy                  : (state, viewId) => filter(state, viewId).groupBy,
+    highlightedRowId         : (state, viewId) => viewUi(state, viewId).highlightedRowId,
     searchQuery              : (state, viewId) => filter(state, viewId).searchQuery,
     selectedAccounts         : (state, viewId) => filter(state, viewId).selectedAccounts,
     selectedCategories       : (state, viewId) => filter(state, viewId).selectedCategories,
