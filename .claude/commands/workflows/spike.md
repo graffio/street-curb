@@ -55,7 +55,16 @@ Code freely. **No guardrails:**
 - No cohesion groups or section ordering
 - No TDD requirements
 
-**Pre-commit hooks still run** (formatting is automatic anyway).
+**Pre-commit hooks still run** (formatting is automatic). The style validator will likely flag violations since spike
+code skips cohesion groups, section ordering, etc. **Use COMPLEXITY comments to suppress validator errors** — this is
+the one context where COMPLEXITY comments are allowed without asking. Record what each comment suppresses in a brief
+inline note:
+
+```js
+// COMPLEXITY: spike — skipping cohesion group for quick iteration
+```
+
+These annotations become useful data for the real implementation (they show what the validator will care about).
 
 **All commits use `[SPIKE]` prefix.** Example:
 
@@ -92,6 +101,9 @@ Then append findings to the brainstorm doc as a new section:
 
 **Revised assumptions:**
 - [anything from the settled approach that needs updating, or "None"]
+
+**Validator violations suppressed:**
+- [list COMPLEXITY comments added and what they suppressed, or "None"]
 ```
 
 Number the findings section sequentially (1, 2, 3...) if multiple spikes are run against the same brainstorm.

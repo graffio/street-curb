@@ -22,6 +22,7 @@ test-results
 .claude/developer-output.md
 .claude/agent-context/
 .claude/.context-low
+.claude/worktrees/
 
 # Task files are ephemeral execution state (co-located with brainstorms)
 .claude/current-task.json
