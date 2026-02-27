@@ -14,7 +14,7 @@ const { ActionRegistry, normalizeKey } = KeymapModule
 // prettier-ignore
 const GROUPS = {
     Accounts: {
-        'shift+a'     : 'account:picker',
+        'ctrl+a'      : 'account:picker',
     },
 
     Date: {
@@ -31,13 +31,19 @@ const GROUPS = {
 
     Filters: {
         a             : 'filter:accounts',
+        'shift+a'     : 'filter:accounts-clear',
         x             : 'filter:actions',
+        'shift+x'     : 'filter:actions-clear',
         c             : 'filter:categories',
+        'shift+c'     : 'filter:categories-clear',
         d             : 'filter:date',
+        'shift+d'     : 'filter:date-clear',
         g             : 'filter:group-by',
+        'shift+g'     : 'filter:group-by-clear',
         '/'           : 'filter:search',
         f             : 'filter:search',
         h             : 'filter:securities',
+        'shift+h'     : 'filter:securities-clear',
     },
 
     Global: {
@@ -65,6 +71,7 @@ const GROUPS = {
 
     Search: {
         'shift+s'     : 'search:clear',
+        'shift+f'     : 'search:clear',
         n             : 'search:next',
         s             : 'search:open',
         'shift+Enter' : 'search:prev',
