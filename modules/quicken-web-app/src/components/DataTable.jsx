@@ -262,9 +262,27 @@ const SortableHeaderCell = ({ header, sorting, onSort, onAutoSize, isEven }) => 
     )
 }
 
+// Small button to auto-size all resizable columns
+// @sig AutoSizeAllButton :: { onClick: Function } -> ReactElement
+const AutoSizeAllButton = ({ onClick }) => {
+    const onEnter = e => (e.target.style.opacity = 1)
+    const onLeave = e => (e.target.style.opacity = 0.6)
+    const style = {
+        cursor: 'pointer',
+        opacity: 0.6,
+        padding: '0 6px',
+        fontSize: '11px',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+    }
+    const props = { onClick, onMouseEnter: onEnter, onMouseLeave: onLeave, style, title: 'Auto-size all columns' }
+
+    return <Box {...props}>Fit All</Box>
+}
+
 // Table header component with @dnd-kit drag-n-drop
 // @sig TableHeader :: { headerGroups, onSort, sorting, columnOrder, onColumnReorder } -> ReactElement
-const TableHeader = ({ headerGroups, onSort, onAutoSize, sorting, columnOrder, onColumnReorder }) => {
+const TableHeader = ({ headerGroups, onSort, onAutoSize, onAutoSizeAll, sorting, columnOrder, onColumnReorder }) => {
     // Renders a sortable header cell for a column
     // @sig toHeaderCell :: (Header, Number) -> ReactElement
     const toHeaderCell = (header, index) => {
@@ -287,6 +305,7 @@ const TableHeader = ({ headerGroups, onSort, onAutoSize, sorting, columnOrder, o
             <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                 <Flex align="center" gap="1" px="2" py="1" style={style}>
                     {headers.map(toHeaderCell)}
+                    {onAutoSizeAll && <AutoSizeAllButton onClick={onAutoSizeAll} />}
                 </Flex>
             </SortableContext>
         </DndContext>
@@ -490,6 +509,14 @@ const DataTable = ({
         onColumnSizingChange(prev => ({ ...prev, [columnId]: width }))
     }
 
+    // Auto-sizes all resizable columns to fit their content
+    // @sig autoSizeAllColumns :: () -> void
+    const autoSizeAllColumns = () =>
+        table
+            .getVisibleLeafColumns()
+            .filter(col => col.getCanResize())
+            .map(col => autoSizeColumn(col.id))
+
     // Computes CSS variables for column widths
     // @sig computeColumnSizeVars :: () -> Object
     const computeColumnSizeVars = () => {
@@ -607,6 +634,7 @@ const DataTable = ({
     const handleSort = useCallback(sortColumn, [onSortingChange])
     const handleColumnReorder = useCallback(reorderColumns, [onColumnOrderChange, table, columns])
     const handleAutoSize = useCallback(autoSizeColumn, [onColumnSizingChange, table])
+    const handleAutoSizeAll = useCallback(autoSizeAllColumns, [table, onColumnSizingChange])
     const columnSizeVars = React.useMemo(computeColumnSizeVars, [columnSizing, columns, table])
     const highlightedRowIndex = React.useMemo(
         () => A.findHighlightedRowIndex(localHighlightId, rows),
@@ -621,6 +649,7 @@ const DataTable = ({
         headerGroups: table.getHeaderGroups(),
         onSort: handleSort,
         onAutoSize: handleAutoSize,
+        onAutoSizeAll: onColumnSizingChange ? handleAutoSizeAll : undefined,
         sorting,
         columnOrder,
         onColumnReorder: handleColumnReorder,
