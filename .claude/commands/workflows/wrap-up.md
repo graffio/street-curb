@@ -86,9 +86,11 @@ If architectural decisions were made during implementation that aren't covered b
 ### 5. Artifact Cleanup
 
 1. Delete the task file (`docs/brainstorms/{name}.task.json`)
-2. **Brainstorm file:** Read it. If all sections were implemented and Knowledge Destination was executed, propose
+2. **Spike worktrees:** Check for spike worktrees related to this feature (`git worktree list`). If any exist, offer to
+   remove them — the real implementation is on the current branch now. Always ask before removing.
+3. **Brainstorm file:** Read it. If all sections were implemented and Knowledge Destination was executed, propose
    deletion. If it has unimplemented scope items or is referenced by other brainstorms, say so — Jeff decides.
-3. Always ask before deleting brainstorm files.
+4. Always ask before deleting brainstorm files.
 
 ### 6. Commit Wrap-Up Changes
 
