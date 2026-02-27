@@ -87,7 +87,23 @@ picker infrastructure. Proves the full vertical: key binding → action → pick
 
 DataTable has `navigate:down`/`navigate:up` with a focused row concept, but report pages don't pass `highlightedId` to
 DataTable. Once reports opt in to row highlighting, expand/collapse on the focused row is a `select` or `Space` action.
-Dependency: wire `highlightedId` from report page state into DataTable.
+
+**Unblocking plan (2026-02-26):**
+
+1. **Rename `key` → `id`** in CategoryTreeNode and HoldingsTreeNode type definitions. Both tree node types use a `key`
+   field that serves as grouping key, display name, and identity simultaneously. Rename to `id` so DataTable's
+   `toRowId` (`row.id ?? row.transaction?.id`) picks it up automatically.
+
+2. **Fix holdings leaf identity** — `toHoldingNode` currently sets `id` (was `key`) to `securityName`, which isn't
+   unique (same security in multiple accounts). Change to composite `accountId|securityId`. Display name is derived
+   separately by cell renderers from `holding.securityName`.
+
+3. **Add `row:toggle-expand` action in DataTable** — alongside existing `navigate:up`/`navigate:down`. DataTable owns
+   it because it already has the highlighted row index, the flat row list, and the TanStack table instance. Action
+   calls `rows[highlightedIndex].toggleExpanded()`.
+
+4. **Wire report pages** — CategoryReportPage and InvestmentReportPage pass `highlightedId`, `actionContext` (viewId),
+   and `onHighlightChange` to DataTable. Same pattern as TransactionRegisterPage.
 
 ### Group 4 — Mixed
 
@@ -105,6 +121,9 @@ Dependency: wire `highlightedId` from report page state into DataTable.
   be planned per-paradigm, not per-file-group.
 - **Paradigm mapping for remaining files:**
     - Group 3 tree toggles → **Navigation + contextual** (needs focused row in reports)
+- **Group 3 unblocking** — Rename `key` → `id` in tree node types so `toRowId` works. Fix holdings leaf ID to
+  composite `accountId|securityId`. DataTable owns `row:toggle-expand` action. Report pages wire `highlightedId`,
+  `actionContext`, `onHighlightChange`.
 - **AccountList** — UI will change, but the picker pattern will survive the redesign. Include in next picker pass.
 - **Chords** — Not needed yet. Single keys are sufficient; chord system is a future enhancement.
 - **Fuzzy search** — Substring matching (containsIgnoreCase) is sufficient for small lists. Fuzzy later if needed.
@@ -142,9 +161,9 @@ exempted.
 - [x] ReportsList.jsx — Picker paradigm. report:open registered, bound to 'r', opens QuickPicker
 - [x] TabGroup.jsx — Direct actions: tab:close (w), tab:cycle-left/right (ctrl+h/l), tab:move-left/right (ctrl+shift+h/l). Picker: tab:picker (Shift+T). Context menu: Move Left/Right/New Group/Close. tab:split removed. COMPLEXITY-TODO remains (expires 2026-04-01) for per-tab onClick sites (switch tab, set active group) that need per-item ActionRegistry — deferred, low value.
 - [x] AccountList.jsx — Picker paradigm. account:picker registered, bound to Shift+A, opens QuickPicker
-- [ ] CategoryReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
-- [ ] CellRenderers.jsx — Navigation+contextual. Blocked on: focused row in reports.
-- [ ] InvestmentReportColumns.jsx — Navigation+contextual. Blocked on: focused row in reports.
+- [ ] CategoryReportColumns.jsx — Navigation+contextual. Unblocked: rename `key`→`id`, wire highlight, `row:toggle-expand`
+- [ ] CellRenderers.jsx — Navigation+contextual. Unblocked: same as CategoryReportColumns
+- [ ] InvestmentReportColumns.jsx — Navigation+contextual. Unblocked: fix holdings leaf ID, wire highlight, `row:toggle-expand`
 - [x] SearchChip.jsx — search:next/prev/clear registered via ActionRegistry, self-selecting SearchNavControls
 - [x] FileOpenDialog.jsx — file:open-new and file:reopen-last registered via ActionRegistry
 - [x] KeymapDrawer.jsx — keymap:dismiss registered via ActionRegistry
