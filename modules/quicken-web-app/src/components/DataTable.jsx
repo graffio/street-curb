@@ -105,6 +105,14 @@ const A = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 const E = {
+    // Removes overflow/width constraints on an element for unconstrained measurement
+    // @sig unconstrainCell :: (_, Element) -> undefined
+    unconstrainCell: (_, el) => {
+        el.style.overflow = 'visible'
+        el.style.width = 'auto'
+        el.style.flexShrink = '0'
+    },
+
     // Registers navigation actions on table container mount (ref callback, React 18 pattern)
     // @sig registerNavActions :: (String, Element?) -> void
     registerNavActions: (context, element) => {
@@ -180,7 +188,7 @@ const DragHandle = ({ listeners, attributes }) => {
 
 // Sortable header cell with drag-n-drop and resize support
 // @sig SortableHeaderCell :: { header: Header, sorting: Array, onSort: Function, isEven: Boolean } -> ReactElement
-const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
+const SortableHeaderCell = ({ header, sorting, onSort, onAutoSize, isEven }) => {
     const { column, id } = header
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: column.id })
 
@@ -201,6 +209,7 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
         transition,
         backgroundColor: isEven ? 'var(--accent-10)' : 'transparent',
         borderRadius: 'var(--radius-1)',
+        borderRight: '1px solid var(--gray-4)',
         padding: '0 var(--space-1)',
     }
 
@@ -230,6 +239,10 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
             header.getResizeHandler()(e)
         },
         onClick: e => e.stopPropagation(),
+        onDoubleClick: e => {
+            e.stopPropagation()
+            onAutoSize?.(column.id)
+        },
         onMouseEnter: e => (e.target.style.opacity = 0.9),
         onMouseLeave: e => (e.target.style.opacity = 0.4),
         style: resizeThumbStyle,
@@ -251,11 +264,11 @@ const SortableHeaderCell = ({ header, sorting, onSort, isEven }) => {
 
 // Table header component with @dnd-kit drag-n-drop
 // @sig TableHeader :: { headerGroups, onSort, sorting, columnOrder, onColumnReorder } -> ReactElement
-const TableHeader = ({ headerGroups, onSort, sorting, columnOrder, onColumnReorder }) => {
+const TableHeader = ({ headerGroups, onSort, onAutoSize, sorting, columnOrder, onColumnReorder }) => {
     // Renders a sortable header cell for a column
     // @sig toHeaderCell :: (Header, Number) -> ReactElement
     const toHeaderCell = (header, index) => {
-        const props = { header, sorting, onSort, isEven: index % 2 === 0 }
+        const props = { header, sorting, onSort, onAutoSize, isEven: index % 2 === 0 }
         return <SortableHeaderCell key={header.id} {...props} />
     }
 
@@ -292,6 +305,8 @@ const TableCell = ({ cell }) => {
         whiteSpace: 'nowrap',
         color: 'var(--gray-11)',
         textAlign: column.columnDef.textAlign || 'left',
+        padding: 'var(--space-1) var(--space-2)',
+        borderRight: '1px solid var(--gray-4)',
     }
 
     return (
@@ -332,7 +347,7 @@ const TableRow = React.memo(({ row, cells, rowIndex, isHighlighted, onRowClick }
     const style = { backgroundColor, cursor: handleClick ? 'pointer' : undefined }
 
     return (
-        <Flex align="start" gap="1" px="2" py="1" onClick={handleClick} style={style}>
+        <Flex align="stretch" px="2" onClick={handleClick} style={style}>
             {cells.map(cell => (
                 <TableCell key={cell.id} cell={cell} />
             ))}
@@ -418,6 +433,61 @@ const DataTable = ({
         newOrder.splice(draggedIndex, 1)
         newOrder.splice(targetIndex, 0, draggedId)
         onColumnOrderChange(newOrder)
+    }
+
+    // Auto-sizes a column to fit its widest content by measuring actual rendered DOM cells.
+    // Temporarily removes overflow/width constraints on each cell, measures with
+    // getBoundingClientRect (sub-pixel accurate), then restores. This captures custom cell
+    // renderers, formatted text, icons, and inherited fonts without a synthetic probe.
+    // @sig autoSizeColumn :: String -> void
+    const autoSizeColumn = columnId => {
+        const unconstrain = el => Object.assign(el.style, { overflow: 'visible', width: 'auto', flexShrink: '0' })
+
+        if (!onColumnSizingChange) return
+        const column = table.getColumn(columnId)
+        if (!column) return
+
+        const colIndex = table.getVisibleLeafColumns().findIndex(c => c.id === columnId)
+        if (colIndex === -1) return
+
+        const container = tableContainerRef.current
+        if (!container) return
+
+        // Header cell: outer Flex > header Flex (first child) > SortableHeaderCell Boxes
+        // DndContext and SortableContext are context-only providers — no wrapper DOM nodes
+        const outerFlex = container.parentElement?.parentElement
+        const headerFlex = outerFlex?.firstChild
+        const headerCell = headerFlex?.children[colIndex]
+
+        // Body cells: query all virtualized rows, pick the cell at colIndex
+        // VirtualRow(Box[data-index]) → TableRow(Flex) → TableCell(Box)
+        const rowEls = Array.from(container.querySelectorAll('[data-index]'))
+        const bodyCells = rowEls.reduce((cells, rowEl) => {
+            const cell = rowEl.firstChild?.children[colIndex]
+            return cell ? [...cells, cell] : cells
+        }, [])
+
+        // Batch: save styles, remove constraints, measure all in one reflow, restore
+        const allCells = headerCell ? [headerCell, ...bodyCells] : bodyCells
+        const savedStyles = allCells.map(el => el.style.cssText)
+        allCells.map(unconstrain)
+
+        // Single reflow: measure all unconstrained widths
+        const headerWidth = headerCell ? headerCell.getBoundingClientRect().width : 0
+        const maxBodyWidth = bodyCells.reduce((max, cell) => Math.max(max, cell.getBoundingClientRect().width), 0)
+
+        // Restore all inline styles
+        allCells.reduce((i, el) => {
+            el.style.cssText = savedStyles[i]
+            return i + 1
+        }, 0)
+
+        // +2 accounts for sub-pixel rounding after Math.ceil
+        const measured = Math.ceil(Math.max(headerWidth, maxBodyWidth)) + 2
+        const { minSize = 0, maxSize = Number.MAX_SAFE_INTEGER } = column.columnDef
+        const width = Math.max(minSize, Math.min(maxSize, measured))
+
+        onColumnSizingChange(prev => ({ ...prev, [columnId]: width }))
     }
 
     // Computes CSS variables for column widths
@@ -536,6 +606,7 @@ const DataTable = ({
     // -----------------------------------------------------------------------------------------------------------------
     const handleSort = useCallback(sortColumn, [onSortingChange])
     const handleColumnReorder = useCallback(reorderColumns, [onColumnOrderChange, table, columns])
+    const handleAutoSize = useCallback(autoSizeColumn, [onColumnSizingChange, table])
     const columnSizeVars = React.useMemo(computeColumnSizeVars, [columnSizing, columns, table])
     const highlightedRowIndex = React.useMemo(
         () => A.findHighlightedRowIndex(localHighlightId, rows),
@@ -549,6 +620,7 @@ const DataTable = ({
     const headerProps = {
         headerGroups: table.getHeaderGroups(),
         onSort: handleSort,
+        onAutoSize: handleAutoSize,
         sorting,
         columnOrder,
         onColumnReorder: handleColumnReorder,
