@@ -96,7 +96,8 @@ Rules for spike-weight steps:
 - Coarse steps — not file-level granularity
 - No `style_card` fields
 - No `rule: "unconditional"` steps (no review agents, no complexity reviews)
-- Include commit steps with `[SPIKE]` prefix at natural boundaries
+- Commit at the end of each coding step, not as separate steps — "build X and commit" not "build X" then "commit".
+  Use `[SPIKE]` prefix on commit messages.
 - The style validator auto-skips on `worktree-spike-*` branches — no COMPLEXITY-TODO comments needed.
   Prettier and ESLint still run (formatting is automatic).
 - Last step is always:
