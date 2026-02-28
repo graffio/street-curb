@@ -37,6 +37,14 @@ Keep the scope narrow. A spike that takes more than ~30 minutes of coding has to
 
 ## Phase 2: Create Worktree
 
+**Before creating the worktree**, ensure the brainstorm file is committed to main. The worktree checks out HEAD —
+untracked files won't be copied. If the brainstorm is untracked, commit it now:
+
+```bash
+git add docs/brainstorms/{name}.md
+git commit -m "Add {name} brainstorm"
+```
+
 Create an isolated worktree using git commands directly (do NOT use the EnterWorktree tool):
 
 ```bash
