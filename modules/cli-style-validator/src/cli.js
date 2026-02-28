@@ -1,6 +1,7 @@
 // ABOUTME: CLI entry point for the style validator
 // ABOUTME: Parses arguments and runs validation on specified files
 
+import { execSync } from 'child_process'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { checkFile } from './lib/check-file.js'
@@ -18,6 +19,12 @@ import { checkFile } from './lib/check-file.js'
  * @sig main :: () -> Promise<Void>
  */
 const main = async () => {
+    const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim()
+    if (branch.startsWith('worktree-spike-')) {
+        console.log('Spike branch detected — skipping style validation')
+        process.exit(0)
+    }
+
     const argv = yargs(hideBin(process.argv))
         .usage('Usage: $0 <file...> [options]')
         .command('$0 <file...>', 'Check JavaScript files for coding standards violations', yargs =>

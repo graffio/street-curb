@@ -91,13 +91,8 @@ Rules for spike-weight steps:
 - No `style_card` fields
 - No `rule: "unconditional"` steps (no review agents, no complexity reviews)
 - Include commit steps with `[SPIKE]` prefix at natural boundaries
-- Use `COMPLEXITY-TODO` (not `COMPLEXITY`) to suppress validator errors. Exact format required:
-  ```
-  // COMPLEXITY-TODO: {validator-rule-name} — spike (expires {tomorrow's date})
-  ```
-  The rule name must match the validator rule (e.g., `cohesion-structure`, `function-declaration-ordering`,
-  `sig-documentation`, `lines`, `single-level-indentation`, `react-component-cohesion`, `chain-extraction`).
-  Do not ask for permission — spikes are pre-approved for COMPLEXITY-TODO comments.
+- The style validator auto-skips on `worktree-spike-*` branches — no COMPLEXITY-TODO comments needed.
+  Prettier and ESLint still run (formatting is automatic).
 - Last step is always:
 
 > Capture spike findings — review code diff against main (`git diff main...HEAD`), ask the user what they learned,
