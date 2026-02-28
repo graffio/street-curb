@@ -43,10 +43,10 @@ Create an isolated worktree using git commands directly (do NOT use the EnterWor
 git worktree add /Users/Shared/projects/worktrees/spike-{name} -b worktree-spike-{name} HEAD
 ```
 
-Then install dependencies in the worktree:
+Then install dependencies in the worktree (use `--cwd` to avoid changing this session's working directory):
 
 ```bash
-cd /Users/Shared/projects/worktrees/spike-{name} && yarn install --frozen-lockfile
+yarn --cwd /Users/Shared/projects/worktrees/spike-{name} install --frozen-lockfile
 ```
 
 **Naming conventions** (must match `worktree-create.sh` hook):
