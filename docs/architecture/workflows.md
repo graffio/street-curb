@@ -47,7 +47,7 @@ Worktree persists as reference during real implementation
 
 ## Context Relay
 
-Automatic session handoff when context window runs low. Designed for AFK operation.
+Automatic session handoff when context window runs low. An external bash loop starts fresh interactive sessions.
 
 ```
 Statusline (every message exchange)
@@ -61,17 +61,21 @@ PostToolUse hook (relay-on-context-low.sh)
 Agent sees "CONTEXT LOW" instruction
     │  Reads .claude/tasks/context-relay.md
     │  Completes current step with detailed notes
-    │  Spawns fresh subagent to continue task.json
+    │  Stops (no subagent spawn)
     ▼
-New agent picks up from first undone step
+bash/relay-loop.sh detects session exited
+    │  Checks task.json for remaining undone steps
+    │  Starts fresh interactive claude session
+    ▼
+New session picks up from first undone step
 ```
 
 **Key components:**
+- `bash/relay-loop.sh` — external loop that starts fresh interactive `claude` sessions
 - `~/.claude/statusline.sh` — writes `.context-low` flag (user-level config, outside repo)
 - `.claude/hooks/relay-on-context-low.sh` — PostToolUse hook, atomic flag consumption
-- `.claude/tasks/context-relay.md` — protocol the agent follows on relay
-- Relay number passed via subagent prompt (no schema change to task.json)
-- Soft limit: 3 relays, then warn user and stop
+- `.claude/tasks/context-relay.md` — protocol the agent follows: finish step, write notes, stop
+- Safety cap: max iterations (default 10) prevents runaway loops
 
 ## File Layout
 
@@ -82,6 +86,7 @@ New agent picks up from first undone step
 | `.claude/commands/workflows/plan.md` | Phase 2: generate task.json |
 | `.claude/commands/workflows/wrap-up.md` | Phase 4: commit quality, knowledge, cleanup |
 | `.claude/commands/workflows/review.md` | PR review (parallel agents) |
-| `.claude/tasks/context-relay.md` | Relay handoff protocol |
+| `bash/relay-loop.sh` | External loop: fresh interactive sessions on context relay |
+| `.claude/tasks/context-relay.md` | Context-low protocol: finish step, write notes, stop |
 | `.claude/hooks/relay-on-context-low.sh` | Context flag detection hook |
 | `~/.claude/statusline.sh` | Context monitoring + flag writer |
