@@ -4,6 +4,12 @@
 
 set -e
 
+# Skip style validation on spike branches (formatting still runs via lint-staged)
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ "$branch" == worktree-spike-* ]]; then
+    exit 0
+fi
+
 # Get list of staged .js/.jsx files (excluding generated src/types/, type-definitions/, cli-style-validator/, and stories)
 staged_files=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(jsx?)$' | grep -v -e 'src/types/' -e 'type-definitions/' -e 'cli-style-validator/' -e '\.stories\.' || true)
 

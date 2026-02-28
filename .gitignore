@@ -18,7 +18,6 @@ playwright-report
 test-results
 
 # Claude Code settings
-.claude/settings.local.json
 .claude/developer-output.md
 .claude/agent-context/
 .claude/.context-low

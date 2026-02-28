@@ -35,11 +35,15 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
         exit 0
     fi
 
-    echo "--- Relay iteration $i/$MAX_ITERATIONS ($remaining steps remaining) ---"
+    next_step=$(jq '[.steps[] | select(.done == false)][0].step' "$TASK_FILE")
 
-    claude "Continue implementing $TASK_FILE — you are relay iteration #$i.
-Read the task file, find the first step with done: false, and continue from there.
-Read all previous step notes for context on deviations and decisions."
+    echo "--- Relay iteration $i/$MAX_ITERATIONS — step $next_step ($remaining steps remaining) ---"
+
+    claude "You are relay iteration #$i for $TASK_FILE. Your assignment is step $next_step.
+Read the task file. Read all previous step notes for context.
+Complete ONLY step $next_step. If step $next_step is already done, find the first undone step instead.
+When done, mark it done with a note in the task file, then EXIT this session.
+Do not continue to the next step — the relay loop will start a fresh session for it."
     exit_code=$?
     if [ "$exit_code" -ne 0 ]; then
         echo "Warning: claude exited with non-zero status ($exit_code). Stopping loop."
