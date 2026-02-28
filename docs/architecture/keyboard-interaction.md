@@ -196,7 +196,6 @@ The style validator rule `require-action-registry` enforces that files with `onC
 |-------|-----------|
 | Chord/sequence key detection | Future enhancement — `g t`, `g r` prefix keys. Not blocking; single keys work for now |
 | Binding remapping UI | WCAG 2.1.4 compliance for assistive technology users |
-| Focused row in report DataTables | Paradigm 3 — tree expand/collapse in report tables |
 | Fuzzy matching | Future enhancement — substring search is sufficient for small lists |
 
 ## Paradigm Selection Guide

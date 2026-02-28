@@ -41,9 +41,8 @@ Create an isolated worktree for the spike:
 Use the EnterWorktree tool with name: "spike-{brainstorm-topic}"
 ```
 
-Note the worktree path from the tool's response — you'll need it for the findings section.
-
-All spike work happens in the worktree. The main branch stays clean.
+The WorktreeCreate hook places worktrees outside the main repo to prevent path drift. Note the worktree path from the
+tool's response — all spike work happens there. The main branch stays clean.
 
 ## Phase 3: Code
 
@@ -108,25 +107,25 @@ Then append findings to the brainstorm doc as a new section:
 
 Number the findings section sequentially (1, 2, 3...) if multiple spikes are run against the same brainstorm.
 
-**Important:** The worktree persists after the spike. During real implementation, you can reference the spike code via
-file reads from the worktree path. This is **read-only reference** — never cherry-pick or copy-paste spike code
-directly into the real implementation. The real code goes through the full plan/review cycle.
+**Important:** Findings are written to the worktree's copy of the brainstorm doc. Commit them on the spike branch —
+`/workflows:wrap-up` harvests doc changes back to main via `git restore --source`. Never cherry-pick or copy-paste
+spike code directly into the real implementation. The real code goes through the full plan/review cycle.
 
 ## Phase 5: Next Steps
 
 Use **AskUserQuestion**:
 
-"Spike findings captured. Worktree persists for reference at the path shown during setup. What next?"
+"Spike findings captured and committed on the spike branch. `/workflows:wrap-up` will harvest doc changes back to main. What next?"
 
 Options:
 
 1. **Spike again** — Explore a different aspect of the same brainstorm
-2. **Proceed to planning** — Run `/workflows:plan` (will read the updated brainstorm with spike findings)
+2. **Proceed to planning** — Run `/workflows:plan` (will read the brainstorm; run wrap-up first to harvest spike findings)
 3. **Done for now** — Return later
 
 ## Rules
 
 - Keep spikes short and focused — if scope creep happens, stop and narrow
 - Always capture findings before ending, even if the spike "failed" — failure is valuable data
-- Never modify the main branch — all spike code stays in the worktree
-- The brainstorm doc (on main branch) is the only artifact that crosses the boundary
+- Never modify the main branch — all spike work stays in the worktree
+- Doc changes cross the boundary at wrap-up via harvest, not during the spike

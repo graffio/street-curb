@@ -40,7 +40,7 @@ const Chip = ({ viewId, items }) => {
     const onToggle = value => post(Action.SetTransactionFilter(viewId, { groupBy: value }))
 
     // prettier-ignore
-    const config = { popoverId: 'groupBy', label: 'Group by', triggerId: 'filter:group-by', width: 155, singleSelect: true }
+    const config = { popoverId: 'groupBy', label: 'Group by', triggerId: 'filter:group-by', width: 155, singleSelect: true, clearFilter: { groupBy: undefined } }
     const allItems = items ?? defaultGroupByItems
     const groupBy = useSelector(state => S.UI.groupBy(state, viewId))
     const selected = groupBy || allItems[0]?.id

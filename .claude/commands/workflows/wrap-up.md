@@ -83,11 +83,16 @@ If architectural decisions were made during implementation that aren't covered b
 - Quick decisions → append to `docs/decisions.md`
 - If a brainstorm had `none` as destination but significant patterns emerged, ask about creating a solution doc.
 
-### 5. Artifact Cleanup
+### 5. Spike Harvest & Artifact Cleanup
 
 1. Delete the task file (`docs/brainstorms/{name}.task.json`)
-2. **Spike worktrees:** Check for spike worktrees related to this feature (`git worktree list`). If any exist, offer to
-   remove them — the real implementation is on the current branch now. Always ask before removing.
+2. **Spike harvest & cleanup:** Check for spike worktrees related to this feature (`git worktree list`). For each:
+   a. Identify the spike branch name from the worktree listing.
+   b. Show non-code changes: `git diff main...<spike-branch> --name-only | grep -v '\.\(js\|jsx\)$'`
+   c. If any files changed, ask: "These files changed in the spike. Bring any back to main?"
+   d. For selected files: `git restore --source=<spike-branch> -- <paths>`
+   e. Stage harvested files for the wrap-up commit (Step 6).
+   f. Offer to remove the worktree. Always ask before removing.
 3. **Brainstorm file:** Read it. If all sections were implemented and Knowledge Destination was executed, propose
    deletion. If it has unimplemented scope items or is referenced by other brainstorms, say so — Jeff decides.
 4. Always ask before deleting brainstorm files.

@@ -94,22 +94,31 @@ const E = {
         if (highlightedItemId === 'customDates') setTimeout(() => startDateEl.current?.focus('month'), 0)
     },
 
-    // Registers filter:date focus action on trigger button mount
+    // Clears date filter to default state (all dates, no range) via keyboard shortcut
+    // @sig clearDateFilter :: String -> void
+    clearDateFilter: viewId =>
+        post(
+            Action.SetTransactionFilter(viewId, {
+                dateRangeKey: 'all',
+                dateRange: { start: undefined, end: undefined },
+            }),
+        ),
+
+    // Registers filter:date and filter:date-clear actions on trigger button mount
     // @sig registerTriggerActions :: (String, Element?) -> void
     registerTriggerActions: (viewId, element) => {
         triggerCleanups.get(viewId)?.()
         triggerCleanups.delete(viewId)
-        if (element)
-            triggerCleanups.set(
-                viewId,
-                ActionRegistry.register(viewId, [
-                    {
-                        id: 'filter:date',
-                        description: 'Date',
-                        execute: () => post(Action.SetFilterPopoverOpen(viewId, 'date')),
-                    },
-                ]),
-            )
+        if (!element) return
+        const actions = [
+            {
+                id: 'filter:date',
+                description: 'Date',
+                execute: () => post(Action.SetFilterPopoverOpen(viewId, 'date')),
+            },
+            { id: 'filter:date-clear', description: 'Clear Date', execute: () => E.clearDateFilter(viewId) },
+        ]
+        triggerCleanups.set(viewId, ActionRegistry.register(viewId, actions))
     },
 
     // Registers popover navigation actions on content mount

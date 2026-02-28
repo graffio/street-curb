@@ -1,6 +1,7 @@
 // ABOUTME: Individual tab group with tab bar and content area
 // ABOUTME: Uses View.match() for exhaustive content rendering
-// COMPLEXITY-TODO: require-action-registry — Predates require-action-registry rule (expires 2026-04-01)
+// COMPLEXITY: require-action-registry — per-tab onClick (switch tab, set active group) has no direct
+// ActionRegistry equivalent. Covered by tab:cycle-left/right, tab:move-left/right, and tab:picker.
 
 import { Box, Button, ContextMenu, Flex, Kbd, Text } from '@radix-ui/themes'
 import React from 'react'
