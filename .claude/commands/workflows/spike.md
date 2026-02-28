@@ -1,7 +1,7 @@
 ---
 name: workflows:spike
 description: Fast vibe-code validation of a brainstorm idea in an isolated worktree
-argument-hint: "[brainstorm file path]"
+argument-hint: "[brainstorm file path] [--unattended]"
 ---
 
 # Spike
@@ -17,10 +17,12 @@ correct branch.
 
 <brainstorm_input> #$ARGUMENTS </brainstorm_input>
 
+Parse arguments: extract the brainstorm file path and check for `--unattended` flag.
+
 **If a brainstorm file path:** Read it. Verify it has a settled approach.
 
-**If empty:** Scan `docs/brainstorms/*.md` for recent brainstorms (exclude `deferred-*`). Present choices using
-AskUserQuestion.
+**If empty (no path):** Scan `docs/brainstorms/*.md` for recent brainstorms (exclude `deferred-*`). Present choices using
+AskUserQuestion. (If `--unattended` and no path, abort — unattended mode requires an explicit brainstorm path.)
 
 **If no brainstorm exists:** Say: "Run `/workflows:brainstorm` first — spiking requires a brainstorm with settled
 decisions."
@@ -29,7 +31,11 @@ decisions."
 
 Read the brainstorm's **Settled Approach** (or **Settled Decisions**) section.
 
-Infer what to spike — propose a focused scope. Use **AskUserQuestion**:
+Infer what to spike — propose a focused scope.
+
+**If `--unattended`:** Accept the inferred scope. Print what you chose but do not ask for confirmation.
+
+**Otherwise:** Use **AskUserQuestion**:
 
 "Based on the brainstorm, I'd spike: **[description]**. Sound right, or would you like to focus on something specific?"
 
@@ -95,7 +101,7 @@ Rules for spike-weight steps:
   Prettier and ESLint still run (formatting is automatic).
 - Last step is always:
 
-> Capture spike findings — review code diff against main (`git diff main...HEAD`), ask the user what they learned,
+> Capture spike findings — review code diff against main (`git diff main...HEAD`),
 > synthesize into brainstorm doc's `## Spike Findings (N)` section, commit on spike branch with `[SPIKE]` prefix.
 >
 > Findings format:
@@ -111,7 +117,21 @@ Rules for spike-weight steps:
 
 ## Phase 4: Handoff
 
-Print a block the user copies into their terminal:
+**If `--unattended`:** Launch the relay-loop directly via Bash (with `run_in_background: true`):
+
+```bash
+cd /Users/Shared/projects/worktrees/spike-{name} && bash bash/relay-loop.sh docs/brainstorms/{name}.task.json
+```
+
+Then say:
+
+"Spike launched in background at `/Users/Shared/projects/worktrees/spike-{name}` on branch `worktree-spike-{name}`.
+The relay-loop is running. When finished, run `/workflows:wrap-up` from the main repo to harvest doc changes back to
+main."
+
+This session is done. Do not continue — the spike happens in the background relay-loop session(s).
+
+**Otherwise:** Print a block the user copies into their terminal:
 
 ````
 Run this in your terminal:
