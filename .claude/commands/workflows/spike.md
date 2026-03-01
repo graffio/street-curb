@@ -93,6 +93,12 @@ Generate a spike-weight task.json and write it to `<worktree>/docs/brainstorms/{
 
 Rules for spike-weight steps:
 
+- Step count is a tension, not a target. Each relay iteration pays full context setup cost (read brainstorm,
+  task file, prior notes, orient in code). But large steps risk filling the context window mid-work — the
+  session auto-compacts, losing earlier context and potentially losing orientation on what's been done vs.
+  what remains. Prefer fewer steps (2-3 for a typical spike), combine sequential phases (build → test →
+  document), but split when a single step would require heavy exploratory work (debugging, reading many files)
+  that could trigger compaction before the step completes.
 - Coarse steps — not file-level granularity
 - No `style_card` fields
 - No `rule: "unconditional"` steps (no review agents, no complexity reviews)
