@@ -254,6 +254,55 @@ Flywheel: first time → Claude conversation → query → save. After that → 
 4. **Sign-aware ratio** — normalize signs for cross-domain ratios
 5. **Unified metric extraction** — domain-typed extractors instead of fallback chains
 
+## Spike 2 Findings
+
+**Commits:** `1665fe50`, `779dbcf1` (branch `worktree-spike-query-language`)
+
+### What we tested
+
+- Designed a keyword-driven surface syntax (named query blocks with `from`, `where`, `date`, `group by`, `show`, `compare`, `compute`, `format` clauses)
+- Hand-written recursive descent parser (~280 lines) emitting IR
+- 46 parser tests: 4 example queries, date/filter variants, expression precedence, 8 error cases
+- Claude generation test: Haiku subagents (fresh context, no prior knowledge) given a ~180-line prompt with schema + syntax reference + 4 examples, then asked 4 NEW questions
+
+### What the spike proved
+
+- **Claude can produce valid queries from examples alone.** 4/4 new questions parsed correctly with correct semantics. Haiku (cheapest model) was sufficient — no need for Sonnet/Opus.
+- **Semantic disambiguation works.** "Compare quarter by quarter" correctly became `group by quarter` (trend), not a `compare` clause (two-period diff). Claude understood intent, not just keyword matching.
+- **Convention adherence without explicit instruction.** Claude used `abs()` for ratio queries after seeing it in examples — picked up the sign convention implicitly.
+- **Filter composition is correct.** Multiple `where` clauses on the same source stacked correctly (AND semantics).
+- **Hand-written parser is tractable.** Recursive descent with clause dispatch covers all 4 computation types. Expression parser handles standard precedence. Good error messages with line/col positions.
+- **4 computation types suffice.** Spike 1's 7 types collapsed to 4 (identity, compare, expression, filter_entities) — ratio and aggregate_sum fold into expression.
+
+### What the spike didn't prove
+
+- **Execution.** No queries were actually run against data. Parser → IR is validated; IR → results is not.
+- **Semantic validation.** Queries reference categories like "Entertainment" that may not exist in user data. Parser can't check this.
+- **Adversarial/ambiguous questions.** Only 4 well-formed questions tested. No out-of-scope, unanswerable, or deliberately tricky inputs.
+- **Multi-turn clarification.** No "what do you mean by housing?" dialogue tested.
+- **Scale.** A production evaluation needs 20-50 queries covering edge cases.
+
+### Design observation
+
+The surface syntax and the IR are structurally close — both are declarative, both use similar vocabulary (sources, filters, date ranges, computations). This is fine for a spike, but worth exploring whether a more distinct surface syntax (more natural-language-flavored, or more terse/symbolic) would serve different audiences better. The compilation model (surface → IR) supports multiple surface syntaxes by design.
+
+### Open questions answered
+
+| Question | Answer |
+|---|---|
+| Surface syntax design | Keyword-driven blocks work. Grammar is stable when computation catalog grows (new functions, not new keywords). |
+| IR design | QueryIR with named sources, 4 computation types, expression AST. Clean separation from surface syntax. |
+| How Claude learns the language | ~180 lines of schema + syntax reference + 4 examples is enough. Few-shot examples are the key ingredient. |
+| Expression language scope | Arithmetic (`+`, `-`, `*`, `/`) + `abs()` + `source.field` references. Sufficient for all target questions. |
+
+### Open questions remaining
+
+- Semantic validation (categories/accounts exist in user data)
+- Parameterization (relative dates beyond what's built in, semantic category groups)
+- Result view components (tables, scalars, comparisons, charts)
+- Community sharing mechanism
+- Whether a second, more distinct surface syntax is worth building
+
 ## Settled Decisions
 
 - **Query language is the core artifact** — not Claude's output format, not JSON blobs. A real language with syntax and a parser.
@@ -265,13 +314,14 @@ Flywheel: first time → Claude conversation → query → save. After that → 
 
 ## Open Questions
 
-- **Surface syntax design** — what does the human-facing query language actually look like? SQL-ish? Report-flavored? Multiple surface syntaxes?
-- **IR design** — refine the spike's JSON spec into a proper internal representation
-- **How Claude learns the language** — give it the schema + computation catalog + grammar? Few-shot examples?
+- ~~**Surface syntax design**~~ — answered by spike 2. Keyword-driven blocks. May explore a second, more distinct syntax.
+- ~~**IR design**~~ — answered by spike 2. QueryIR with named sources, 4 computation types, expression AST.
+- ~~**How Claude learns the language**~~ — answered by spike 2. Schema + syntax reference + 4 examples (~180 lines). Haiku sufficient.
 - **Semantic validation** — parser can check syntax, but how do you validate that referenced categories/accounts exist in the user's data?
 - **Parameterization syntax** — how do relative dates, "all dining categories", account groups work in the surface syntax?
-- **Expression language scope** — just arithmetic (`+`, `-`, `*`, `/`, `abs`)? Or richer (aggregation functions, conditionals)?
+- ~~**Expression language scope**~~ — answered by spike 2. Arithmetic + `abs()` + `source.field` references.
 - **Community sharing mechanism** — git repo? in-app marketplace? URL import?
+- **Alternative surface syntax** — the current DSL is structurally close to the IR. Worth exploring a more distinct format for different audiences?
 
 ## Knowledge Destination
 
