@@ -392,7 +392,7 @@ model (surface → IR) supports multiple surface syntaxes by design.
 
 - ~~Semantic validation (categories/accounts exist in user data)~~ — answered by spike 3
 - Parameterization (relative dates beyond what's built in, semantic category groups)
-- Result view components (tables, scalars, comparisons, charts)
+- ~~Result view components (tables, scalars, comparisons, charts)~~ — answered by spike 5
 - Community sharing mechanism
 - Whether a second, more distinct surface syntax is worth building
 
@@ -477,6 +477,101 @@ model (surface → IR) supports multiple surface syntaxes by design.
 - **Schema as vocabulary** — SQLite schema defines the nouns/filters. Selector catalog defines the computations. Grammar
   is stable; new computations = new registry entries, not grammar changes.
 
+## Spike 5 Findings
+
+**Commit:** `019671da` (branch `worktree-spike-query-result-view`)
+
+### What we tested
+
+- Generic `QueryResultPage` component that dispatches on `viewType` (tree, scalar, comparison)
+- Generic `buildTreeColumns` that builds column definitions from metadata arrays, replacing domain-specific column
+  files (CategoryReportColumns, InvestmentReportColumns)
+- 9 renderer types: expandable, expandableAll, currency, percentage, text, date, count, quantity, price
+- Metadata configs replicating both CategoryReportPage (7 columns, 5 filters) and InvestmentReportPage (9 columns,
+  4 filters)
+- Scalar display (single formatted value) and comparison view (two periods + diff indicator)
+
+### What the spike proved
+
+- **Generic cell renderers work.** The `leafAccessor`/`groupAccessor` pair replaces all TaggedSum-specific cell dispatch
+  logic. Investment report: 9/9 columns fully expressible. Category report: 6/7 columns fully expressible (action
+  column needs custom `cell` override for ACTION_LABELS — the escape hatch handles it).
+- **Five metadata primitives suffice for both domains:**
+    - `showAggregate.onlyWhenGroupBy` — restricts group-row values to a specific groupBy dimension (e.g., price/symbol
+      only show when grouped by security)
+    - `firstChildFallback` — peeks at first child leaf for group rows sharing a property (security symbol, quote price)
+    - `staleFn` — extracts stale-price indicator per row (italic + asterisk)
+    - `truncatePath` — strips parent path for category display ("Food:Groceries" → "Groceries")
+    - `emptyForLeaf`/`emptyForGroup` — conditional visibility per row type
+- **Filter chips are registry-driven.** `FILTER_COMPONENTS` maps filter IDs to React components. Metadata specifies
+  `filters: ['date', 'category', 'account', 'groupBy', 'search']` — the page renders exactly those chips.
+- **View type dispatch is trivial.** `VIEW_COMPONENTS` registry maps viewType → component. Adding new view types (e.g.,
+  chart) requires one new component + one registry entry.
+- **UI state scoping works unchanged.** Tree expansion, column sizing, column order, highlighted row — all driven by
+  `viewId`-scoped Redux state via existing `S.UI.*` selectors and `Action.SetViewUiState`. No new infrastructure
+  needed.
+
+### What the spike didn't prove
+
+- **No rendering test.** Components are prototyped but not mounted in the app or tested against real data. The metadata
+  configs are structurally correct (matching existing column shapes) but haven't been visually verified.
+- **Execution engine integration.** Scalar and comparison values are hardcoded placeholders. The path from IR →
+  execution → view props is not wired.
+- **Routing.** How queries navigate to QueryResultPage is not explored. Existing report pages are route-driven; query
+  results may need a different navigation model.
+- **Column sorting.** Generic columns use `accessorKey: 'id'` as a stable placeholder — actual sort functions need
+  accessor-based comparison, not yet implemented.
+- **GroupBy switching.** Metadata specifies `groupByItems` and `hiddenColumnsByGroup`, but the runtime behavior
+  (re-running selector with new groupBy, toggling column visibility) wasn't tested end-to-end.
+
+### IR metadata shape (emerged)
+
+```
+{
+  viewType: 'tree' | 'scalar' | 'comparison',
+  domain: 'transactions' | 'holdings',
+  selector: (state, viewId) -> treeData,
+  isLeaf: node -> Boolean,
+  filters: ['date', 'category', 'account', 'groupBy', 'search', 'asOfDate'],
+  groupByItems: [{ id, label }],
+  defaultGroupBy: String,
+  hiddenColumnsByGroup: { [groupBy]: { [columnId]: Boolean } },
+  columns: [{
+    id, header, type, size, minSize,
+    leafAccessor: node -> value,
+    groupAccessor: node -> value,
+    emptyForLeaf, emptyForGroup, truncatePath, resizable,
+    staleFn: row -> Boolean,
+    showAggregate: { onlyWhenGroupBy: String },
+    firstChildFallback: leafNode -> value,
+    cell: Component  // escape hatch for fully custom renderers
+  }]
+}
+```
+
+### Design decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Accessor functions, not path strings | Functions handle nested access, TaggedSum extraction, computed values. Path strings would need a DSL for the same expressiveness. |
+| `cell` escape hatch per column | 1 of 16 columns (category action) needs fully custom rendering. Escape hatch avoids over-generalizing the renderer registry. |
+| Renderer factory pattern | Each renderer type is `(colMeta, isLeaf) -> CellComponent`. Factories close over metadata; components receive TanStack Row props. Clean separation. |
+| Filter registry, not inline config | Filter components are complex (date pickers, category trees, search). Registry maps IDs to existing components rather than trying to parameterize them. |
+| Hardcoded domain knowledge in metadata | `isLeaf`, `staleFn`, accessors reference `CategoryTreeNode`, `HoldingsTreeNode` directly. The *metadata* is domain-specific; the *page and column builder* are generic. |
+
+### Production considerations
+
+1. **Metadata generation from IR.** Current metadata configs are hand-written. Production path: IR execution engine
+   produces metadata + data. The IR's column/filter/groupBy declarations compile into the metadata shape above.
+2. **Sorting.** Generic columns need sort comparators that use the same accessor functions. TanStack supports custom
+   `sortingFn` per column — wire it to `leafAccessor`/`groupAccessor`.
+3. **Column sorting by accessor.** `accessorKey: 'id'` is a placeholder. Production needs `accessorFn` that calls the
+   appropriate accessor, or custom sort functions.
+4. **Existing report pages.** If this approach ships, CategoryReportPage and InvestmentReportPage become thin wrappers
+   that pass metadata to QueryResultPage — or disappear entirely if routing changes.
+5. **Chart view type.** The `VIEW_COMPONENTS` registry makes adding charts straightforward. Chart component would
+   receive the same metadata + data shape.
+
 ## Open Questions
 
 - ~~**Surface syntax design**~~ — answered by spike 2. Keyword-driven blocks. May explore a second, more distinct
@@ -489,6 +584,8 @@ model (surface → IR) supports multiple surface syntaxes by design.
 - **Parameterization syntax** — how do relative dates, "all dining categories", account groups work in the surface
   syntax?
 - ~~**Expression language scope**~~ — answered by spike 2. Arithmetic + `abs()` + `source.field` references.
+- ~~**Result view components**~~ — answered by spike 5. Generic QueryResultPage with metadata-driven columns, filter
+  registry, and view type dispatch (tree, scalar, comparison). 9 renderer types cover both domains.
 - **Community sharing mechanism** — git repo? in-app marketplace? URL import?
 - **Alternative surface syntax** — the current DSL is structurally close to the IR. Worth exploring a more distinct
   format for different audiences?
