@@ -297,11 +297,58 @@ The surface syntax and the IR are structurally close — both are declarative, b
 
 ### Open questions remaining
 
-- Semantic validation (categories/accounts exist in user data)
+- ~~Semantic validation (categories/accounts exist in user data)~~ — answered by spike 3
 - Parameterization (relative dates beyond what's built in, semantic category groups)
 - Result view components (tables, scalars, comparisons, charts)
 - Community sharing mechanism
 - Whether a second, more distinct surface syntax is worth building
+
+## Spike 3 Findings
+
+**Commits:** `04775177` (branch `worktree-spike-semantic-validation`)
+
+### What we tested
+
+- QueryValidator: takes QueryIR + DataSummary and returns validation results with suggestions
+- Four matching strategies: Levenshtein distance (typos), prefix matching, substring matching, hierarchical category path matching ("Dining" → "Food:Dining")
+- 21 tests: unit tests for Levenshtein/suggestions, integration tests parsing queries through parser → validator
+- 8 demo queries against realistic data (57 categories, 11 accounts, 22 payees)
+- Error types: misspelled categories, bare subcategory names, nonexistent accounts, wrong account types, misspelled payees, multiple errors per query
+
+### What the spike proved
+
+- **Semantic validation is tractable.** ~150 LOC for the validator (excluding Levenshtein). The DataSummary extraction is trivial — just category names, account name/type pairs, and unique payees.
+- **Hierarchical category matching is the key insight.** Users (and Claude) naturally write "Dining" when they mean "Food:Dining". Splitting category paths on `:` and matching against segments catches this reliably.
+- **Multiple matching strategies complement each other.** Prefix catches partial names ("Food" → "Food:Dining"), Levenshtein catches typos ("Fod" → "Food"), hierarchical catches bare subcategories ("Dining" → "Food:Dining"), substring catches partial matches.
+- **Error messages are actionable.** "Unknown category 'Dining' in source '_default'. Did you mean: 'Food:Dining'?" — users/Claude can fix this immediately.
+- **Multi-error reporting works.** Validator collects all errors across all sources before returning, so users see everything wrong at once rather than fix-one-rerun loops.
+- **Computation source refs validate cleanly.** Expression AST refs, compare left/right, and identity/filter_entities source names are checked against defined sources.
+- **Category prefix matching (existing behavior) needs explicit validation.** The parser accepts `where category = "Food"` and the execution engine matches it against `Food:Dining`, `Food:Groceries` etc. The validator must replicate this logic — checking both exact match AND prefix match.
+
+### What the spike didn't prove
+
+- **Real SQLite data.** Tested against hand-built realistic summaries, not actual hydrated Redux state from a QIF import. The DataSummary shape is designed for this, but the extraction path (`dataSummaryFromEntities`) hasn't been tested against live LookupTables.
+- **Suggestion ranking quality at scale.** With 57 categories, suggestions are reasonable. With 200+ categories (real Quicken data), Levenshtein may return too many candidates. May need scoring/ranking rather than simple distance threshold.
+- **Payee matching at scale.** Real Quicken data has hundreds of payees. Fuzzy matching may need tighter thresholds or smarter ranking.
+- **Validation integrated into parser pipeline.** Currently parser and validator are separate steps. Production should chain them: parse → validate → execute.
+
+### Design decisions
+
+| Decision | Rationale |
+|---|---|
+| DataSummary is a plain object, not Redux state | Decouples validation from store structure. Selector extracts summary; validator doesn't touch state. |
+| Multiple matching strategies, priority-ordered | No single strategy handles all error types. Priority: prefix → hierarchical → substring → Levenshtein. |
+| Levenshtein max distance = 3 | Catches 1-3 character typos without producing nonsense suggestions. |
+| Max 3 suggestions | More than 3 is overwhelming. Ordered by match quality (prefix > hierarchical > substring > Levenshtein). |
+| Category prefix matching mirrors execution engine | "Food" is valid if any category starts with "Food:" — same semantics as `Transaction.matchesCategories`. |
+
+### Production considerations
+
+1. **Selector for DataSummary** — memoized selector that extracts `{categories, accounts, accountTypes, payees}` from Redux state. Cheap to compute, cache-friendly.
+2. **Suggestion ranking** — current approach returns first N matches by strategy priority. At scale, may need to score by (strategy weight × Levenshtein distance) and sort.
+3. **Payee deduplication** — real payee data is messy ("COSTCO #123", "COSTCO WHOLESALE"). May need payee normalization before matching.
+4. **Integration point** — validator should run between parser and execution engine. Invalid queries should show errors in the UI before any selectors fire.
+5. **Claude feedback loop** — when Claude generates a query that fails validation, the error messages + suggestions should feed back to Claude for self-correction. This is a natural fit for the "formulate" role.
 
 ## Settled Decisions
 
@@ -317,7 +364,7 @@ The surface syntax and the IR are structurally close — both are declarative, b
 - ~~**Surface syntax design**~~ — answered by spike 2. Keyword-driven blocks. May explore a second, more distinct syntax.
 - ~~**IR design**~~ — answered by spike 2. QueryIR with named sources, 4 computation types, expression AST.
 - ~~**How Claude learns the language**~~ — answered by spike 2. Schema + syntax reference + 4 examples (~180 lines). Haiku sufficient.
-- **Semantic validation** — parser can check syntax, but how do you validate that referenced categories/accounts exist in the user's data?
+- ~~**Semantic validation**~~ — answered by spike 3. Levenshtein + prefix + hierarchical matching against DataSummary. ~150 LOC validator with actionable error messages.
 - **Parameterization syntax** — how do relative dates, "all dining categories", account groups work in the surface syntax?
 - ~~**Expression language scope**~~ — answered by spike 2. Arithmetic + `abs()` + `source.field` references.
 - **Community sharing mechanism** — git repo? in-app marketplace? URL import?
@@ -339,7 +386,7 @@ Design a minimal surface syntax for 3-4 of the target questions. Build a parser 
 ### Potential further spikes
 
 - **Spike 3: Expression parser** — build the safe math expression evaluator (replaces spike's `eval()`). Needed regardless of query language decisions.
-- **Spike 4: Semantic validation** — given live user data, can the system validate that categories/accounts referenced in a query actually exist? Test fuzzy matching and "did you mean?" suggestions.
+- ~~**Spike 4: Semantic validation**~~ — completed as spike 3. Validator with Levenshtein/prefix/hierarchical matching, 21 tests, actionable error messages.
 - **Spike 5: Result view components** — what React components are needed beyond DataTable? Test scalar displays, comparison views, time series charts. Likely useful for the app independent of this feature.
 - **Spike 6: Claude formulation end-to-end** — full loop: natural language → Claude → surface syntax → parse → execute → results. How much schema context does Claude need? What's the error rate?
 - **Spike 7: Parameterization** — relative dates (`last_quarter`, `trailing_12_months`), semantic category groups (`all dining`), saved query portability across users with different category structures.
