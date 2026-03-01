@@ -619,3 +619,52 @@ These were listed as potential spikes but don't need separate validation — the
 ### Future (independent of query language)
 
 - **Charting** (was spike 8) — chart components for time series and comparisons. Needed for the app regardless. Not blocked on the query language — can be spiked/built independently.
+
+## Plan Sequence
+
+Two plans, sequenced by dependency. Each is independently shippable.
+
+### Plan A: Query engine (no UI changes)
+
+Parser + execution engine + validation + expression evaluator. Everything needed to take a query string, parse it,
+validate it against user data, and execute it against Redux state — returning structured results.
+
+**Scope:**
+
+- Surface syntax parser (recursive descent, spike 2 reference code)
+- QueryIR data structure
+- Semantic validator with fuzzy matching (spike 3 reference code)
+- Safe expression evaluator (replaces spike 1's `eval()`)
+- Execution engine: IR → selector calls → results
+- DataSummary selector for live validation data
+- Tests for all of the above
+
+**End state:** `parse(queryString) → validate(ir, dataSummary) → execute(ir, state) → results`. No UI, no pages,
+no components. Testable entirely from tap tests.
+
+**Reference worktrees:** `spike-semantic-validation` (parser + validator), `spike-query-result-view` (IR shape)
+
+### Plan B: Generic result views (replaces report pages)
+
+Generic QueryResultPage that replaces CategoryReportPage and InvestmentReportPage. Depends on Plan A's execution
+engine for data.
+
+**Scope:**
+
+- Metadata-driven column builder with generic cell renderer types (spike 5 reference code)
+- QueryResultPage with view type dispatch (tree, scalar, comparison)
+- ScalarDisplay and ComparisonView components
+- Filter chip registry driven by IR metadata
+- Migration: CategoryReportPage and InvestmentReportPage become saved query configs rendered by QueryResultPage
+- viewId / UI state management for query results
+
+**End state:** Two existing report pages replaced by one generic page. Scalar and comparison views working.
+New queries get result views automatically from IR metadata.
+
+**Reference worktree:** `spike-query-result-view`
+
+### Not planned yet
+
+- **Claude integration** (formulate, summarize, suggest) — deferred per settled decisions
+- **Charting** — independent spike/plan when needed
+- **Parameterization** — can be added to Plan A's parser or as a follow-up
