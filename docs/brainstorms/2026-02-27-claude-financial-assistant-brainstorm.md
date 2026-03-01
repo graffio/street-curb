@@ -597,38 +597,25 @@ model (surface → IR) supports multiple surface syntaxes by design.
 | `architecture:` docs/architecture/financial-query-language.md | Query language architecture, layer separation, execution model    |
 | `decisions:` append                                           | Claude's role scoped to three narrow interfaces; chat UI deferred |
 
-## Next Steps
+## Spike Status
 
-### Spike 2: Surface syntax + parser
+All validation spikes are complete. The spike phase answered its core questions:
 
-Design a minimal surface syntax for 3-4 of the target questions. Build a parser that emits IR. Test whether the syntax
-is writable by humans and producible by Claude (give Claude schema + computation catalog + examples, see if it generates
-valid queries).
+| Spike | Question | Answer |
+|-------|----------|--------|
+| 1 | Do existing selectors cover the target questions? | Yes — TransactionFilter, CategoryTree, HoldingsTree, etc. map 1:1 |
+| 2 | Can we design a parseable surface syntax? Can Claude produce valid queries? | Yes — keyword-driven blocks, recursive descent parser, Haiku 4/4 |
+| 3 | Can we validate queries against user data with useful error messages? | Yes — Levenshtein + prefix + hierarchical matching, ~150 LOC |
+| 5 | Can a generic page replace both report pages? | Yes — 9 renderer types, 15/16 columns generic, scalar/comparison views |
 
-### Potential further spikes
+### Absorbed into implementation
 
-- **Spike 3: Expression parser** — build the safe math expression evaluator (replaces spike's `eval()`). Needed
-  regardless of query language decisions.
-- ~~**Spike 4: Semantic validation**~~ — completed as spike 3. Validator with Levenshtein/prefix/hierarchical matching,
-  21 tests, actionable error messages.
-- **Spike 5: Generic query result view** — Can a single QueryResultPage replace both CategoryReportPage and
-  InvestmentReportPage while also supporting new view types (scalar, comparison)? Key questions:
-    - **Report replication:** Build a generic page driven by IR metadata that reproduces the interactive experience of
-      the two existing report pages — filter chips, groupBy switching, tree expansion, column resize. Architecture stays
-      clean (presentation-only components, selectors, `post(Action.X(...))` for mutations).
-    - **Cell renderer generalization:** Current report columns have inline renderers dispatching on domain-specific
-      TaggedSum types (CategoryTreeNode vs HoldingsTreeNode). How does a generic page render cells without knowing the
-      domain type at compile time? Try to generalize; find where it breaks.
-    - **New view types:** Prototype scalar displays ("savings rate: 82.2%") and comparison views (this quarter vs last).
-      Charts deferred to spike 8.
-    - **IR metadata design:** What does the IR need to carry so a generic page knows which filters, columns, renderers,
-      and view type to use?
-    - The underlying bet: the query system subsumes existing report pages, becoming the rendering layer for all
-      analytical views. Query capacity and UI capability co-evolve — as the query language grows, the result views grow
-      with it.
-- **Spike 6: Claude formulation end-to-end** — full loop: natural language → Claude → surface syntax → parse → execute →
-  results. How much schema context does Claude need? What's the error rate?
-- **Spike 7: Parameterization** — relative dates (`last_quarter`, `trailing_12_months`), semantic category groups (
-  `all dining`), saved query portability across users with different category structures.
-- **Spike 8: Charting** — chart component for time series and comparisons. Needed for the app regardless — not specific
-  to this feature.
+These were listed as potential spikes but don't need separate validation — they're implementation tasks:
+
+- **Expression parser** (was spike 3) — safe math evaluator replacing `eval()`. Known requirement, no design risk.
+- **Claude formulation end-to-end** (was spike 6) — spike 2 already proved Claude produces valid queries. Full loop testing happens during implementation.
+- **Parameterization** (was spike 7) — relative dates, category groups, portability. Design work, not a validation question.
+
+### Future (independent of query language)
+
+- **Charting** (was spike 8) — chart components for time series and comparisons. Needed for the app regardless. Not blocked on the query language — can be spiked/built independently.
