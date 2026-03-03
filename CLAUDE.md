@@ -83,6 +83,7 @@ Address me as "Jeff". We're colleagues—no hierarchy.
 - Track work in task file steps; never discard tasks without approval
 - Fix bugs immediately when found
 - TDD: failing test → make it pass → refactor
+- Bash: no `cd` (use absolute paths / `--cwd` / `-C`), no `&&` or `;` (separate tool calls), pipes only to output filters (`tail`, `head`, `grep`, `jq`, etc.)
 
 ## Debugging
 
@@ -110,3 +111,6 @@ columns/    # Table column definitions
 ```
 
 Use `yarn`, never `npm`. Run `yarn types:generate` after changing type definitions.
+Tests: `yarn tap` (single file: `yarn tap test/path.tap.js`). Never `npx tap`.
+Style validator: `node modules/cli-style-validator/src/cli.js <file>` from monorepo root. Fix all violations in one pass.
+Style validator pass = `"isCompliant": true` in JSON output. Any other result is a failure regardless of priority level.
