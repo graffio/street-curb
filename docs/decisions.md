@@ -655,6 +655,8 @@ and [security.md](architecture/security.md#firestore-security-rules) for access 
 | Passcode auth via Action pattern           | Oct 2025 | Accepted | SOC2 audit trail, architectural consistency, no separate sessions  |
 | Intent keys in post.js handlers            | Feb 2026 | Accepted | Pages send minimal intent, post.js resolves state — keeps pages presentation-only |
 | Modal layer in ActionRegistry              | Feb 2026 | Accepted | `{ modal: true }` flag hides background keybindings from drawer when modal is open |
+| Claude scoped to 3 narrow interfaces       | Mar 2026 | Accepted | Text-in/text-out roles (formulate, summarize, suggest); chat UI deferred            |
+| Query engine types fully Tagged            | Mar 2026 | Accepted | All IR nodes Tagged/TaggedSum with .match(); sources as LookupTable                 |
 
 ---
 
@@ -838,8 +840,20 @@ Future architecture decisions are data-driven and support sustainable business g
 **Decision:** Run spikes in a git worktree. Worktree persists until wrap-up.
 **Why:** Worktree gives clean isolation AND persistent reference. Alternative (branch + rollback) loses the code after reset. Alternative (keep on main with [SPIKE] prefix) pollutes main branch history.
 
-### Spike Handoff via relay-loop, not EnterWorktree (2026-02-28)
+### Spike Handoff via new session in worktree, not EnterWorktree (2026-02-28)
 
 **Context:** EnterWorktree changes the session's cwd, but Task/Explore subagents still use the original primary directory — reading/writing files on the wrong branch.
-**Decision:** Spike session creates worktree via `git worktree add`, generates spike-weight task.json, prints relay-loop command, and exits. Implementation happens in fresh `claude` sessions whose primary cwd IS the worktree.
+**Decision:** Spike session creates worktree via `git worktree add`, generates spike-weight task.json, and exits. User starts a fresh `claude` session whose primary cwd IS the worktree.
 **Why:** Structural fix — subagents inherit primary cwd from the `claude` process, not from EnterWorktree's session-level cwd change. Advisory "use the right path" is fragile; making the process start in the worktree is mechanical.
+
+### Claude's role scoped to three narrow interfaces; chat UI deferred (2026-03-03)
+
+**Context:** Financial query language could give Claude broad analytical power over user data (proactive insights, pattern detection, financial advice). Explored and rejected for Phase 1.
+**Decision:** Claude has three narrow text-in/text-out roles: (1) formulate queries from natural language, (2) summarize query results, (3) suggest follow-up queries. Chat UI deferred — users paste queries for now.
+**Why:** Proactive insights require broad context Claude doesn't have (full history, what's "normal", seasonal patterns). Each richer role is an idiosyncratic integration point. Three narrow roles share the same interface shape (text in, text out) — testable, replaceable, no deep app coupling.
+
+### Query engine types: all IR nodes are Tagged/TaggedSum, sources are LookupTable (2026-03-03)
+
+**Context:** Query engine had 12 `Object`/`[Object]`/loose `String` fields across 5 type definitions. Parser produced plain objects with `{type}` fields dispatched via if/else chains.
+**Decision:** Every IR node is a Tagged/TaggedSum type with `.match()` dispatch. Sources stored as `LookupTable<QuerySource>`. 13 type definitions total with cross-type references and FieldType regex validation.
+**Why:** `.match()` is exhaustive — adding a variant forces handler updates at all dispatch sites. Eliminates "what shape does this field have?" questions. FieldType regexes validate at construction time.
