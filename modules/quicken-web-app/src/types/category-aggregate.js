@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for CategoryAggregate
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/category-aggregate.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/category-aggregate.type.js - do not edit manually
 
 /** {@link module:CategoryAggregate} */
-/*  CategoryAggregate generated from: modules/quicken-web-app/type-definitions/category-aggregate.type.js
+/*  CategoryAggregate generated from: modules/quicken-web-app/type-definitions/derived/category-aggregate.type.js
  *
  *  total: "Number",
  *  count: "Number"

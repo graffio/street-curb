@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Price
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/price.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/price.type.js - do not edit manually
 
 /** {@link module:Price} */
-/*  Price generated from: modules/quicken-web-app/type-definitions/price.type.js
+/*  Price generated from: modules/quicken-web-app/type-definitions/entities/price.type.js
  *
  *  id        : FieldTypes.priceId,
  *  securityId: FieldTypes.securityId,

@@ -2,7 +2,7 @@
 // ABOUTME: LookupTable of MetricDefinition, accessed by name — fail-fast on unknown metrics
 
 import { LookupTable } from '@graffio/functional'
-import { MetricDefinition } from '../types/index.js'
+import { MetricDefinition } from '../../type-definitions/metric-definition.type.js'
 import { computeBenchmarkReturn } from './compute-benchmark-return.js'
 import { computeDividendIncome } from './compute-dividend-income.js'
 import { computeIrr } from './compute-irr.js'

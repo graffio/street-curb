@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for ColumnDescriptor
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/column-descriptor.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/column-descriptor.type.js - do not edit manually
 
 /** {@link module:ColumnDescriptor} */
-/*  ColumnDescriptor generated from: modules/quicken-web-app/type-definitions/column-descriptor.type.js
+/*  ColumnDescriptor generated from: modules/quicken-web-app/type-definitions/ui-state/column-descriptor.type.js
  *
  *  id           : FieldTypes.columnDescriptorId,
  *  width        : "Number",

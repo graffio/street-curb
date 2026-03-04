@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Split
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/split.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/split.type.js - do not edit manually
 
 /** {@link module:Split} */
-/*  Split generated from: modules/quicken-web-app/type-definitions/split.type.js
+/*  Split generated from: modules/quicken-web-app/type-definitions/entities/split.type.js
  *
  *  id               : "String",
  *  transactionId    : FieldTypes.transactionId,

@@ -1,8 +1,7 @@
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'
+import { AccountSummary, DataSummary } from '../../src/types/index.js'
 import {
-    AccountSummary,
-    DataSummary,
     IRComputation,
     IRDateRange,
     IRDomain,
@@ -11,7 +10,7 @@ import {
     IROutput,
     IRSource,
     Query,
-} from '../../src/types/index.js'
+} from '../../src/query-language/types/index.js'
 import { queryValidator } from '../../src/query-language/query-validator.js'
 
 // ═════════════════════════════════════════════════

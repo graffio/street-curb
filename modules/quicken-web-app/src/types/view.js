@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for View
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/view.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/view.type.js - do not edit manually
 
-/*  View generated from: modules/quicken-web-app/type-definitions/view.type.js
+/*  View generated from: modules/quicken-web-app/type-definitions/ui-state/view.type.js
  *
  *  Register
  *      id       : FieldTypes.viewId,

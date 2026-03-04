@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for SortMode
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/sort-mode.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/sort-mode.type.js - do not edit manually
 
-/*  SortMode generated from: modules/quicken-web-app/type-definitions/sort-mode.type.js
+/*  SortMode generated from: modules/quicken-web-app/type-definitions/ui-state/sort-mode.type.js
  *
  *  Alphabetical
  *  ByAmount

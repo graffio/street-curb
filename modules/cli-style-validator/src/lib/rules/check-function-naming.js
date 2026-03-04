@@ -65,7 +65,7 @@ const PRIORITY = 6
 // Union of all recognized verb prefixes across all cohesion groups
 const VERB_PREFIXES =
     'is|has|should|can|to|parse|format|create|make|build' +
-    '|check|validate|collect|count|gather|generate|find|process|persist|handle|dispatch|emit|send|query|register' +
+    '|check|validate|collect|count|gather|generate|find|process|persist|handle|dispatch|emit|send|query|register|run' +
     '|set|reset|toggle|post|hydrate|memoize|load|open|close|move|compute|sum|import|initialize|calculate' +
     '|constrain|expand|update|get|apply|resolve|record|prune|remove|copy|replace|discard|normalize|with'
 const RECOGNIZED_PREFIX = new RegExp(`^(${VERB_PREFIXES})([A-Z]|$)`)

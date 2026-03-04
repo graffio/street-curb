@@ -896,3 +896,9 @@ Future architecture decisions are data-driven and support sustainable business g
 **Context:** Position enrichment needs IRR, benchmark return, alpha, total return — extensible set of computed metrics.
 **Decision:** MetricDefinition Tagged type in a LookupTable registry. Compute signature: `(position, context) => Number`. 7 initial metrics. New metrics = new registry entries.
 **Why:** Extensible without grammar changes. Matches the query language's "stable grammar" principle. LookupTable.get() is fail-fast on unknown names.
+
+### Type-definitions organized by domain lifecycle (2026-03-04)
+
+**Context:** 30+ type-definition files in a flat directory, hard to find by purpose. Generator copies FieldTypes import paths verbatim, complicating subdirectory moves.
+**Decision:** Four subdirectories: entities/ (domain concepts), derived/ (computed display types), ui-state/ (view/layout config), ir/ (query language internals). Generator normalizes relative FieldTypes imports to `./field-types.js`. Distinction rule: entities = concepts an accountant would recognize; derived = our app's type safety machinery.
+**Why:** Clear domain boundaries without changing generated output. FieldTypes path normalization makes future subdirectory moves trivial.

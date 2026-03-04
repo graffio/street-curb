@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for PositionAggregate
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/position-aggregate.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/position-aggregate.type.js - do not edit manually
 
 /** {@link module:PositionAggregate} */
-/*  PositionAggregate generated from: modules/quicken-web-app/type-definitions/position-aggregate.type.js
+/*  PositionAggregate generated from: modules/quicken-web-app/type-definitions/derived/position-aggregate.type.js
  *
  *  shares                   : "Number",
  *  costBasis                : "Number",

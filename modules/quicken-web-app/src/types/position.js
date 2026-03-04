@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Position
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/position.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/position.type.js - do not edit manually
 
 /** {@link module:Position} */
-/*  Position generated from: modules/quicken-web-app/type-definitions/position.type.js
+/*  Position generated from: modules/quicken-web-app/type-definitions/entities/position.type.js
  *
  *  accountId                : FieldTypes.accountId,
  *  accountName              : "String",

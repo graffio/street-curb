@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for SortOrder
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/sort-order.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ui-state/sort-order.type.js - do not edit manually
 
 /** {@link module:SortOrder} */
-/*  SortOrder generated from: modules/quicken-web-app/type-definitions/sort-order.type.js
+/*  SortOrder generated from: modules/quicken-web-app/type-definitions/ui-state/sort-order.type.js
  *
  *  id          : FieldTypes.columnDescriptorId,
  *  isDescending: "Boolean"

@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Tag
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/tag.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/entities/tag.type.js - do not edit manually
 
 /** {@link module:Tag} */
-/*  Tag generated from: modules/quicken-web-app/type-definitions/tag.type.js
+/*  Tag generated from: modules/quicken-web-app/type-definitions/entities/tag.type.js
  *
  *  id         : FieldTypes.tagId,
  *  name       : "String",

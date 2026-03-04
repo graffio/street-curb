@@ -1,7 +1,7 @@
 // ABOUTME: Generated type definition for CategoryTreeNode
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/category-tree-node.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/category-tree-node.type.js - do not edit manually
 
-/*  CategoryTreeNode generated from: modules/quicken-web-app/type-definitions/category-tree-node.type.js
+/*  CategoryTreeNode generated from: modules/quicken-web-app/type-definitions/derived/category-tree-node.type.js
  *
  *  Group
  *      id       : "String",

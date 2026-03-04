@@ -34,8 +34,14 @@ const arrowExpressionBodyRule = {
     create: context => ({ ArrowFunctionExpression: node => checkArrowBody(context, node) }),
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 export default defineConfig([
-    { ignores: ['**/dist/*.js', '**/docs/**/*.js', '**/src/types/*.js'] },
+    { ignores: ['**/dist/*.js', '**/docs/**/*.js', '**/src/types/*.js', '**/src/**/types/*.js'] },
     ...compat.extends('standard'),
     ...compat.extends('prettier'),
     {

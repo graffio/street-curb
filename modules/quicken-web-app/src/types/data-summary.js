@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for DataSummary
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/data-summary.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/data-summary.type.js - do not edit manually
 
 /** {@link module:DataSummary} */
-/*  DataSummary generated from: modules/quicken-web-app/type-definitions/data-summary.type.js
+/*  DataSummary generated from: modules/quicken-web-app/type-definitions/derived/data-summary.type.js
  *
  *  categories  : "[String]",
  *  accounts    : "[AccountSummary]",

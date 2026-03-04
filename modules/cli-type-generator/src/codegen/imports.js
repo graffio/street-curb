@@ -18,9 +18,19 @@ const generateImportsSection = imports => {
         return imported === local ? imported : `${imported} as ${local}`
     }
 
+    /*
+     * Normalize source path — relative FieldTypes imports always resolve to sibling
+     * @sig normalizeSource :: ImportInfo -> String
+     */
+    const normalizeSource = ({ source, specifiers }) => {
+        const isRelativeFieldTypes =
+            source.startsWith('.') && specifiers.some(s => s.imported === 'FieldTypes' || s.local === 'FieldTypes')
+        return isRelativeFieldTypes ? './field-types.js' : source
+    }
+
     const formatImport = imp => {
         const specifiers = imp.specifiers.map(formatSpecifier).join(', ')
-        return `import { ${specifiers} } from '${imp.source}'`
+        return `import { ${specifiers} } from '${normalizeSource(imp)}'`
     }
 
     return imports && imports.length ? imports.map(formatImport).join('\n') + '\n' : ''

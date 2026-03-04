@@ -3,8 +3,8 @@
 
 import t from 'tap'
 import LookupTable from '@graffio/functional/src/lookup-table.js'
-import { Category } from '../type-definitions/category.type.js'
-import { Security } from '../type-definitions/security.type.js'
+import { Category } from '../type-definitions/entities/category.type.js'
+import { Security } from '../type-definitions/entities/security.type.js'
 import { Transaction } from '../src/types/transaction.js'
 
 // -----------------------------------------------------------------------------

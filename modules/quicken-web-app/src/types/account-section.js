@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for AccountSection
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/account-section.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/derived/account-section.type.js - do not edit manually
 
 /** {@link module:AccountSection} */
-/*  AccountSection generated from: modules/quicken-web-app/type-definitions/account-section.type.js
+/*  AccountSection generated from: modules/quicken-web-app/type-definitions/derived/account-section.type.js
  *
  *  id           : "String",
  *  label        : "String",

@@ -7,19 +7,21 @@ import {
     Account,
     AccountSummary,
     DataSummary,
+    Lot,
+    LotAllocation,
+    Price,
+    QueryResult,
+    Security,
+    Transaction,
+} from '../../src/types/index.js'
+import {
     IRComputation,
     IRDateRange,
     IRDomain,
     IROutput,
-    IRResult,
     IRSource,
-    Lot,
-    LotAllocation,
-    Price,
     Query,
-    Security,
-    Transaction,
-} from '../../src/types/index.js'
+} from '../../src/query-language/types/index.js'
 import { queryValidator } from '../../src/query-language/query-validator.js'
 import { queryExecutionEngine } from '../../src/query-language/query-execution-engine.js'
 
@@ -374,7 +376,7 @@ test('Execution — orderBy desc produces correctly sorted positions', t => {
             const output = IROutput(['marketValue'], undefined, 'unrealizedGainLossPercent', 'desc')
             const ir = positionsQuery('sorted_desc', source, undefined, output)
             const result = queryExecutionEngine(ir, STATE)
-            t.ok(IRResult.Identity.is(result), 'Then result is IRResult.Identity')
+            t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
             const positions = result.tree.nodes
             t.ok(positions.length >= 2, 'Then at least 2 positions are returned')
 
@@ -419,7 +421,7 @@ test('Execution — orderBy without groupBy returns flat list', t => {
             const output = IROutput(['marketValue'], undefined, 'marketValue', 'desc')
             const ir = positionsQuery('flat_sorted', source, undefined, output)
             const result = queryExecutionEngine(ir, STATE)
-            t.ok(IRResult.Identity.is(result), 'Then result is IRResult.Identity')
+            t.ok(QueryResult.Identity.is(result), 'Then result is QueryResult.Identity')
 
             // Flat list: nodes are Position leaf nodes, not Group nodes
             const nodes = result.tree.nodes
@@ -516,7 +518,7 @@ test('Execution — timeSeries monthly over 3 months produces 3 snapshots', t =>
             const computation = IRComputation.TimeSeries(source.name, 'monthly')
             const ir = positionsQuery('monthly_net_worth', source, computation)
             const result = queryExecutionEngine(ir, STATE)
-            t.ok(IRResult.TimeSeries.is(result), 'Then result is IRResult.TimeSeries')
+            t.ok(QueryResult.TimeSeries.is(result), 'Then result is QueryResult.TimeSeries')
             t.equal(result.snapshots.length, 3, 'Then 3 monthly snapshots are produced')
             t.end()
         })
