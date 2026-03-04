@@ -511,16 +511,14 @@ Depends on: Plan B (generic page infrastructure) + Plan C (position data).
 
 ## Open Questions
 
-- **IRR computation** — requires ordered cash flow history per position. How to efficiently extract
-  buy/sell/dividend transactions in order for a given (account, security)?
-- **Benchmark security identification** — how does the user specify which security is "the S&P"? Global
-  setting? Per-query parameter? Assumed from a well-known symbol?
-- **Time series performance** — 12 monthly snapshots means 12 calls to `computePositionsAsOf`. Profile
-  with real data. If too slow, add a SQLite cache table for periodic snapshots.
-- **Reinvested dividends** — ReinvDiv creates new lots AND is dividend income. Does the dividend income
-  metric double-count (once as dividend, once as increased cost basis)?
-- **Short sales** — positions with negative quantity (short positions). Do metrics like total_return_pct
-  need sign-aware logic?
+- ~~**IRR computation**~~ — RESOLVED (spike 6). Filter investment transactions by (account, security),
+  extract cash flows by action type. Newton's method converges in ~5 iterations.
+- ~~**Reinvested dividends**~~ — RESOLVED (spike 6). ReinvDiv does NOT double-count. Dividend is in
+  `dividendIncome`, new lot's cost basis offsets in `unrealizedGainLoss`. Counted exactly once.
+- ~~**Benchmark security identification**~~ — RESOLVED. Use SPY from user's existing securities/prices data
+  (no external download). Hardcoded ticker for now; configurable benchmark is future work.
+- **Time series performance** — deferred to profiling. Build it, measure, add SQLite cache only if needed.
+- **Short sales** — deferred. Edge case handled during implementation if data exists.
 
 ## Spike Findings (6): Position Enrichment
 
