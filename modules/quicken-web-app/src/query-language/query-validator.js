@@ -11,7 +11,7 @@ import { filter, reduce, map, uniq } from '@graffio/functional'
 
 const P = {
     // Check if a filter references a user data entity (category, account, payee, accountType)
-    // @sig isEntityFilter :: QueryFilter -> Boolean
+    // @sig isEntityFilter :: IRFilter -> Boolean
     isEntityFilter: f => ENTITY_FIELDS[f.field] !== undefined,
 
     // Check if a category matches via exact match or prefix (Food matches Food:Dining)
@@ -127,8 +127,8 @@ const A = {
     },
 
     // Collect validation errors for a single entity filter
-    // Only called for QueryFilter.Equals variants (OlderThan is not an entity filter)
-    // @sig collectFilterErrors :: (QueryFilter, DataSummary, String) -> [Object]
+    // Only called for IRFilter.Equals variants (OlderThan is not an entity filter)
+    // @sig collectFilterErrors :: (IRFilter, DataSummary, String) -> [Object]
     collectFilterErrors: (f, summary, sourceName) => {
         if (!P.isEntityFilter(f)) return []
 
@@ -151,11 +151,11 @@ const A = {
     },
 
     // Collect validation errors for all filters in a source
-    // @sig collectSourceErrors :: (QuerySource, String, DataSummary) -> [Object]
+    // @sig collectSourceErrors :: (IRSource, String, DataSummary) -> [Object]
     collectSourceErrors: (source, sourceName, summary) =>
         reduce((errors, f) => [...errors, ...A.collectFilterErrors(f, summary, sourceName)], [], source.filters),
 
-    // Collect validation errors for a single ExpressionNode.Reference
+    // Collect validation errors for a single IRExpression.Reference
     // @sig collectReferenceErrors :: (String, [String]) -> [Object]
     collectReferenceErrors: (source, sourceNames) => {
         if (sourceNames.includes(source)) return []
@@ -169,8 +169,8 @@ const A = {
         ]
     },
 
-    // Collect validation errors for ExpressionNode source references
-    // @sig collectExpressionErrors :: (ExpressionNode, [String]) -> [Object]
+    // Collect validation errors for IRExpression source references
+    // @sig collectExpressionErrors :: (IRExpression, [String]) -> [Object]
     collectExpressionErrors: (node, sourceNames) =>
         node.match({
             Literal: () => [],
@@ -201,7 +201,7 @@ const A = {
     },
 
     // Collect validation errors for computation source references
-    // @sig collectComputationErrors :: (Computation, LookupTable) -> [Object]
+    // @sig collectComputationErrors :: (IRComputation, LookupTable) -> [Object]
     collectComputationErrors: (computation, sources) => {
         const sourceNames = map(s => s.name, Array.from(sources))
 
@@ -234,7 +234,7 @@ const ENTITY_LABELS = { category: 'category', account: 'account', accountType: '
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Validate a query IR against a data summary, returning errors with suggestions
-// @sig queryValidator :: (QueryIR, DataSummary) -> { valid: Boolean, errors: [Object] }
+// @sig queryValidator :: (Query, DataSummary) -> { valid: Boolean, errors: [Object] }
 const queryValidator = ({ sources, computation }, summary) => {
     const sourceErrors = reduce(
         (errors, source) => [...errors, ...A.collectSourceErrors(source, source.name, summary)],

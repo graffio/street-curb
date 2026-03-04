@@ -1,22 +1,22 @@
-// ABOUTME: Generated type definition for QueryIR
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-ir.type.js - do not edit manually
+// ABOUTME: Generated type definition for Query
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query.type.js - do not edit manually
 
-/** {@link module:QueryIR} */
-/*  QueryIR generated from: modules/quicken-web-app/type-definitions/query-ir.type.js
+/** {@link module:Query} */
+/*  Query generated from: modules/quicken-web-app/type-definitions/query.type.js
  *
  *  name       : "String",
  *  description: "String?",
- *  sources    : "{QuerySource:name}",
- *  computation: "Computation",
- *  output     : "QueryOutput?"
+ *  sources    : "{IRSource:name}",
+ *  computation: "IRComputation",
+ *  output     : "IROutput?"
  *
  */
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 import { LookupTable } from '@graffio/functional'
-import { QuerySource } from './query-source.js'
-import { Computation } from './computation.js'
-import { QueryOutput } from './query-output.js'
+import { IRSource } from './ir-source.js'
+import { IRComputation } from './ir-computation.js'
+import { IROutput } from './ir-output.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -25,17 +25,17 @@ import { QueryOutput } from './query-output.js'
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a QueryIR instance
- * @sig QueryIR :: (String, String?, {QuerySource}, Computation, QueryOutput?) -> QueryIR
+ * Construct a Query instance
+ * @sig Query :: (String, String?, {IRSource}, IRComputation, IROutput?) -> Query
  */
-const QueryIR = function QueryIR(name, description, sources, computation, output) {
-    const constructorName = 'QueryIR(name, description, sources, computation, output)'
+const Query = function Query(name, description, sources, computation, output) {
+    const constructorName = 'Query(name, description, sources, computation, output)'
 
     R.validateString(constructorName, 'name', false, name)
     R.validateString(constructorName, 'description', true, description)
-    R.validateLookupTable(constructorName, 'QuerySource', 'sources', false, sources)
-    R.validateTag(constructorName, 'Computation', 'computation', false, computation)
-    R.validateTag(constructorName, 'QueryOutput', 'output', true, output)
+    R.validateLookupTable(constructorName, 'IRSource', 'sources', false, sources)
+    R.validateTag(constructorName, 'IRComputation', 'computation', false, computation)
+    R.validateTag(constructorName, 'IROutput', 'output', true, output)
 
     const result = Object.create(prototype)
     result.name = name
@@ -54,10 +54,10 @@ const QueryIR = function QueryIR(name, description, sources, computation, output
 
 /*
  * Convert to string representation
- * @sig queryirToString :: () -> String
+ * @sig queryToString :: () -> String
  */
-const queryirToString = function () {
-    return `QueryIR(${R._toString(this.name)},
+const queryToString = function () {
+    return `Query(${R._toString(this.name)},
         ${R._toString(this.description)},
         ${R._toString(this.sources)},
         ${R._toString(this.computation)},
@@ -66,9 +66,9 @@ const queryirToString = function () {
 
 /*
  * Convert to JSON representation
- * @sig queryirToJSON :: () -> Object
+ * @sig queryToJSON :: () -> Object
  */
-const queryirToJSON = function () {
+const queryToJSON = function () {
     return this
 }
 
@@ -78,27 +78,27 @@ const queryirToJSON = function () {
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'QueryIR', enumerable: false },
-    toString: { value: queryirToString, enumerable: false },
-    toJSON: { value: queryirToJSON, enumerable: false },
-    constructor: { value: QueryIR, enumerable: false, writable: true, configurable: true },
+    '@@typeName': { value: 'Query', enumerable: false },
+    toString: { value: queryToString, enumerable: false },
+    toJSON: { value: queryToJSON, enumerable: false },
+    constructor: { value: Query, enumerable: false, writable: true, configurable: true },
 })
 
-QueryIR.prototype = prototype
+Query.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-QueryIR.toString = () => 'QueryIR'
-QueryIR.is = v => v && v['@@typeName'] === 'QueryIR'
+Query.toString = () => 'Query'
+Query.is = v => v && v['@@typeName'] === 'Query'
 
-QueryIR._from = _input => {
+Query._from = _input => {
     const { name, description, sources, computation, output } = _input
-    return QueryIR(name, description, sources, computation, output)
+    return Query(name, description, sources, computation, output)
 }
-QueryIR.from = QueryIR._from
+Query.from = Query._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -106,4 +106,4 @@ QueryIR.from = QueryIR._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { QueryIR }
+export { Query }

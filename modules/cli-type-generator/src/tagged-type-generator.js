@@ -86,7 +86,10 @@ const generateStaticTaggedType = async typeDefinition => {
     const childTypeImports = newChildTypes
         .map(
             typeName =>
-                `import { ${typeName} } from './${typeName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}.js'`,
+                `import { ${typeName} } from './${typeName
+                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+                    .replace(/([a-z])([A-Z])/g, '$1-$2')
+                    .toLowerCase()}.js'`,
         )
         .join('\n        ')
 
@@ -217,7 +220,10 @@ const generateStaticTaggedSumType = async typeDefinition => {
     const childTypeImports = newChildTypes
         .map(
             typeName =>
-                `import { ${typeName} } from './${typeName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}.js'`,
+                `import { ${typeName} } from './${typeName
+                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+                    .replace(/([a-z])([A-Z])/g, '$1-$2')
+                    .toLowerCase()}.js'`,
         )
         .join('\n        ')
 

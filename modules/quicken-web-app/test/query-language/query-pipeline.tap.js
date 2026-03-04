@@ -7,17 +7,17 @@ import {
     Account,
     AccountSummary,
     Category,
-    Computation,
+    IRComputation,
     DataSummary,
-    DateRange,
-    Domain,
-    ExpressionNode,
-    QueryFilter,
-    QueryIR,
-    QueryOutput,
-    QueryResult,
-    QuerySource,
-    ResultTree,
+    IRDateRange,
+    IRDomain,
+    IRExpression,
+    IRFilter,
+    Query,
+    IROutput,
+    IRResult,
+    IRSource,
+    IRResultTree,
     Security,
     Transaction,
 } from '../../src/types/index.js'
@@ -82,11 +82,11 @@ const SUMMARY = DataSummary(
 )
 
 // ═════════════════════════════════════════════════
-// Helper: build a QuerySource for transactions with a category filter
+// Helper: build an IRSource for transactions with a category filter
 // ═════════════════════════════════════════════════
 
 const txnSource = (name, category, dateRange) =>
-    QuerySource(name, Domain.Transactions(), [QueryFilter.Equals('category', category)], dateRange)
+    IRSource(name, IRDomain.Transactions(), [IRFilter.Equals('category', category)], dateRange)
 
 // ═════════════════════════════════════════════════
 // (a) Full pipeline — transaction IR → tree result
@@ -95,19 +95,19 @@ const txnSource = (name, category, dateRange) =>
 test('Full pipeline — transaction IR produces tree result', t => {
     t.test('Given an IR filtering transactions by Food category', t => {
         t.test('When running through the pipeline', t => {
-            const ir = QueryIR(
+            const ir = Query(
                 'food',
                 'Food spending',
-                LookupTable([txnSource('_default', 'Food', DateRange.Year(2025))], QuerySource, 'name'),
-                Computation.Identity('_default'),
-                QueryOutput(['total']),
+                LookupTable([txnSource('_default', 'Food', IRDateRange.Year(2025))], IRSource, 'name'),
+                IRComputation.Identity('_default'),
+                IROutput(['total']),
             )
 
             const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
-            t.ok(QueryResult.Identity.is(result.result), 'Then result is QueryResult.Identity')
-            t.ok(ResultTree.Category.is(result.result.tree), 'Then result contains a category tree')
+            t.ok(IRResult.Identity.is(result.result), 'Then result is IRResult.Identity')
+            t.ok(IRResultTree.Category.is(result.result.tree), 'Then result contains a category tree')
             t.ok(result.result.tree.nodes.length > 0, 'Then tree is not empty')
             t.end()
         })
@@ -124,27 +124,27 @@ test('Full pipeline — transaction IR produces tree result', t => {
 test('Full pipeline — comparison IR produces two-period result', t => {
     t.test('Given an IR comparing Q1 vs Q2 food spending', t => {
         t.test('When running through the pipeline', t => {
-            const ir = QueryIR(
+            const ir = Query(
                 'compare',
                 'Q1 vs Q2 food',
                 LookupTable(
                     [
-                        txnSource('q1', 'Food', DateRange.Quarter(1, 2025)),
-                        txnSource('q2', 'Food', DateRange.Quarter(2, 2025)),
+                        txnSource('q1', 'Food', IRDateRange.Quarter(1, 2025)),
+                        txnSource('q2', 'Food', IRDateRange.Quarter(2, 2025)),
                     ],
-                    QuerySource,
+                    IRSource,
                     'name',
                 ),
-                Computation.Compare('q1', 'q2'),
-                QueryOutput(['total']),
+                IRComputation.Compare('q1', 'q2'),
+                IROutput(['total']),
             )
 
             const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
-            t.ok(QueryResult.Comparison.is(result.result), 'Then result is QueryResult.Comparison')
-            t.ok(ResultTree.Category.is(result.result.left), 'Then left result is a category tree')
-            t.ok(ResultTree.Category.is(result.result.right), 'Then right result is a category tree')
+            t.ok(IRResult.Comparison.is(result.result), 'Then result is IRResult.Comparison')
+            t.ok(IRResultTree.Category.is(result.result.left), 'Then left result is a category tree')
+            t.ok(IRResultTree.Category.is(result.result.right), 'Then right result is a category tree')
             t.end()
         })
         t.end()
@@ -160,35 +160,35 @@ test('Full pipeline — comparison IR produces two-period result', t => {
 test('Full pipeline — expression IR produces scalar', t => {
     t.test('Given an IR computing abs(food.total) / abs(income.total) * 100', t => {
         t.test('When running through the pipeline', t => {
-            const ir = QueryIR(
+            const ir = Query(
                 'ratio',
                 'Food ratio',
                 LookupTable(
                     [
-                        txnSource('income', 'Income', DateRange.Year(2025)),
-                        txnSource('food', 'Food', DateRange.Year(2025)),
+                        txnSource('income', 'Income', IRDateRange.Year(2025)),
+                        txnSource('food', 'Food', IRDateRange.Year(2025)),
                     ],
-                    QuerySource,
+                    IRSource,
                     'name',
                 ),
-                Computation.Expression(
-                    ExpressionNode.Binary(
+                IRComputation.Expression(
+                    IRExpression.Binary(
                         '*',
-                        ExpressionNode.Binary(
+                        IRExpression.Binary(
                             '/',
-                            ExpressionNode.Call('abs', [ExpressionNode.Reference('food', 'total')]),
-                            ExpressionNode.Call('abs', [ExpressionNode.Reference('income', 'total')]),
+                            IRExpression.Call('abs', [IRExpression.Reference('food', 'total')]),
+                            IRExpression.Call('abs', [IRExpression.Reference('income', 'total')]),
                         ),
-                        ExpressionNode.Literal(100),
+                        IRExpression.Literal(100),
                     ),
                 ),
-                QueryOutput(undefined, 'percent'),
+                IROutput(undefined, 'percent'),
             )
 
             const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
-            t.ok(QueryResult.Scalar.is(result.result), 'Then result is QueryResult.Scalar')
+            t.ok(IRResult.Scalar.is(result.result), 'Then result is IRResult.Scalar')
             t.type(result.result.value, 'number', 'Then value is a number')
             t.end()
         })
@@ -205,12 +205,12 @@ test('Full pipeline — expression IR produces scalar', t => {
 test('Validation error — misspelled category returns phase validate', t => {
     t.test('Given an IR with a misspelled category name', t => {
         t.test('When running through the pipeline', t => {
-            const ir = QueryIR(
+            const ir = Query(
                 'bad',
                 'Bad category',
-                LookupTable([txnSource('_default', 'Fod', DateRange.Year(2025))], QuerySource, 'name'),
-                Computation.Identity('_default'),
-                QueryOutput(['total']),
+                LookupTable([txnSource('_default', 'Fod', IRDateRange.Year(2025))], IRSource, 'name'),
+                IRComputation.Identity('_default'),
+                IROutput(['total']),
             )
 
             const result = queryPipeline(ir, SUMMARY, STATE)
@@ -234,23 +234,23 @@ test('Validation error — misspelled category returns phase validate', t => {
 test('Validation catches before execution — never reaches executor', t => {
     t.test('Given an IR with a nonexistent account filter', t => {
         t.test('When running through the pipeline', t => {
-            const ir = QueryIR(
+            const ir = Query(
                 'bad',
                 'Bad account',
                 LookupTable(
                     [
-                        QuerySource(
+                        IRSource(
                             '_default',
-                            Domain.Transactions(),
-                            [QueryFilter.Equals('account', 'Nonexistent Bank')],
-                            DateRange.Year(2025),
+                            IRDomain.Transactions(),
+                            [IRFilter.Equals('account', 'Nonexistent Bank')],
+                            IRDateRange.Year(2025),
                         ),
                     ],
-                    QuerySource,
+                    IRSource,
                     'name',
                 ),
-                Computation.Identity('_default'),
-                QueryOutput(['total']),
+                IRComputation.Identity('_default'),
+                IROutput(['total']),
             )
 
             const result = queryPipeline(ir, SUMMARY, STATE)

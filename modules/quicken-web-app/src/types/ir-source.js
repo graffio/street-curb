@@ -1,13 +1,13 @@
-// ABOUTME: Generated type definition for QuerySource
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-source.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRSource
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-source.type.js - do not edit manually
 
-/** {@link module:QuerySource} */
-/*  QuerySource generated from: modules/quicken-web-app/type-definitions/query-source.type.js
+/** {@link module:IRSource} */
+/*  IRSource generated from: modules/quicken-web-app/type-definitions/ir-source.type.js
  *
  *  name     : FieldTypes.sourceName,
- *  domain   : "Domain",
- *  filters  : "[QueryFilter]",
- *  dateRange: "DateRange?",
+ *  domain   : "IRDomain",
+ *  filters  : "[IRFilter]",
+ *  dateRange: "IRDateRange?",
  *  groupBy  : FieldTypes.groupDimension
  *
  */
@@ -16,9 +16,9 @@ import { FieldTypes } from './field-types.js'
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
-import { Domain } from './domain.js'
-import { QueryFilter } from './query-filter.js'
-import { DateRange } from './date-range.js'
+import { IRDomain } from './ir-domain.js'
+import { IRFilter } from './ir-filter.js'
+import { IRDateRange } from './ir-date-range.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -27,16 +27,16 @@ import { DateRange } from './date-range.js'
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a QuerySource instance
- * @sig QuerySource :: (String, Domain, [QueryFilter], DateRange?, String?) -> QuerySource
+ * Construct a IRSource instance
+ * @sig IRSource :: (String, IRDomain, [IRFilter], IRDateRange?, String?) -> IRSource
  */
-const QuerySource = function QuerySource(name, domain, filters, dateRange, groupBy) {
-    const constructorName = 'QuerySource(name, domain, filters, dateRange, groupBy)'
+const IRSource = function IRSource(name, domain, filters, dateRange, groupBy) {
+    const constructorName = 'IRSource(name, domain, filters, dateRange, groupBy)'
 
     R.validateRegex(constructorName, FieldTypes.sourceName, 'name', false, name)
-    R.validateTag(constructorName, 'Domain', 'domain', false, domain)
-    R.validateArray(constructorName, 1, 'Tagged', 'QueryFilter', 'filters', false, filters)
-    R.validateTag(constructorName, 'DateRange', 'dateRange', true, dateRange)
+    R.validateTag(constructorName, 'IRDomain', 'domain', false, domain)
+    R.validateArray(constructorName, 1, 'Tagged', 'IRFilter', 'filters', false, filters)
+    R.validateTag(constructorName, 'IRDateRange', 'dateRange', true, dateRange)
     R.validateRegex(constructorName, FieldTypes.groupDimension, 'groupBy', true, groupBy)
 
     const result = Object.create(prototype)
@@ -56,10 +56,10 @@ const QuerySource = function QuerySource(name, domain, filters, dateRange, group
 
 /*
  * Convert to string representation
- * @sig querysourceToString :: () -> String
+ * @sig irsourceToString :: () -> String
  */
-const querysourceToString = function () {
-    return `QuerySource(${R._toString(this.name)},
+const irsourceToString = function () {
+    return `IRSource(${R._toString(this.name)},
         ${R._toString(this.domain)},
         ${R._toString(this.filters)},
         ${R._toString(this.dateRange)},
@@ -68,9 +68,9 @@ const querysourceToString = function () {
 
 /*
  * Convert to JSON representation
- * @sig querysourceToJSON :: () -> Object
+ * @sig irsourceToJSON :: () -> Object
  */
-const querysourceToJSON = function () {
+const irsourceToJSON = function () {
     return this
 }
 
@@ -80,27 +80,27 @@ const querysourceToJSON = function () {
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'QuerySource', enumerable: false },
-    toString: { value: querysourceToString, enumerable: false },
-    toJSON: { value: querysourceToJSON, enumerable: false },
-    constructor: { value: QuerySource, enumerable: false, writable: true, configurable: true },
+    '@@typeName': { value: 'IRSource', enumerable: false },
+    toString: { value: irsourceToString, enumerable: false },
+    toJSON: { value: irsourceToJSON, enumerable: false },
+    constructor: { value: IRSource, enumerable: false, writable: true, configurable: true },
 })
 
-QuerySource.prototype = prototype
+IRSource.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-QuerySource.toString = () => 'QuerySource'
-QuerySource.is = v => v && v['@@typeName'] === 'QuerySource'
+IRSource.toString = () => 'IRSource'
+IRSource.is = v => v && v['@@typeName'] === 'IRSource'
 
-QuerySource._from = _input => {
+IRSource._from = _input => {
     const { name, domain, filters, dateRange, groupBy } = _input
-    return QuerySource(name, domain, filters, dateRange, groupBy)
+    return IRSource(name, domain, filters, dateRange, groupBy)
 }
-QuerySource.from = QuerySource._from
+IRSource.from = IRSource._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -108,4 +108,4 @@ QuerySource.from = QuerySource._from
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { QuerySource }
+export { IRSource }

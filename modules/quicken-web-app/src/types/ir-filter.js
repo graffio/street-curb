@@ -1,13 +1,13 @@
-// ABOUTME: Generated type definition for QueryFilter
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-filter.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRFilter
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-filter.type.js - do not edit manually
 
-/*  QueryFilter generated from: modules/quicken-web-app/type-definitions/query-filter.type.js
+/*  IRFilter generated from: modules/quicken-web-app/type-definitions/ir-filter.type.js
  *
  *  Equals
- *      field: "String",
+ *      field: /^(category|account|payee|accountType)$/,
  *      value: "String"
  *  OlderThan
- *      field: "String",
+ *      field: /^lastActivity$/,
  *      days : "Number"
  *
  */
@@ -16,33 +16,33 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// QueryFilter constructor
+// IRFilter constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const QueryFilter = {
-    toString: () => 'QueryFilter',
+const IRFilter = {
+    toString: () => 'IRFilter',
 }
 
 // Add hidden properties
-Object.defineProperty(QueryFilter, '@@typeName', { value: 'QueryFilter', enumerable: false })
-Object.defineProperty(QueryFilter, '@@tagNames', { value: ['Equals', 'OlderThan'], enumerable: false })
+Object.defineProperty(IRFilter, '@@typeName', { value: 'IRFilter', enumerable: false })
+Object.defineProperty(IRFilter, '@@tagNames', { value: ['Equals', 'OlderThan'], enumerable: false })
 
 // Type prototype with match method
-const QueryFilterPrototype = {}
+const IRFilterPrototype = {}
 
-Object.defineProperty(QueryFilterPrototype, 'match', {
-    value: R.match(QueryFilter['@@tagNames']),
+Object.defineProperty(IRFilterPrototype, 'match', {
+    value: R.match(IRFilter['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(QueryFilterPrototype, 'constructor', {
-    value: QueryFilter,
+Object.defineProperty(IRFilterPrototype, 'constructor', {
+    value: IRFilter,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-QueryFilter.prototype = QueryFilterPrototype
+IRFilter.prototype = IRFilterPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -51,8 +51,8 @@ QueryFilter.prototype = QueryFilterPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    equals   : function () { return `QueryFilter.Equals(${R._toString(this.field)}, ${R._toString(this.value)})` },
-    olderThan: function () { return `QueryFilter.OlderThan(${R._toString(this.field)}, ${R._toString(this.days)})` },
+    equals   : function () { return `IRFilter.Equals(${R._toString(this.field)}, ${R._toString(this.value)})` },
+    olderThan: function () { return `IRFilter.OlderThan(${R._toString(this.field)}, ${R._toString(this.days)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -73,13 +73,14 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a QueryFilter.Equals instance
- * @sig Equals :: (String, String) -> QueryFilter.Equals
+ * Construct a IRFilter.Equals instance
+ * @sig Equals :: (Field, String) -> IRFilter.Equals
+ *     Field = /^(category|account|payee|accountType)$/
  */
 const EqualsConstructor = function Equals(field, value) {
-    const constructorName = 'QueryFilter.Equals(field, value)'
+    const constructorName = 'IRFilter.Equals(field, value)'
     R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'field', false, field)
+    R.validateRegex(constructorName, /^(category|account|payee|accountType)$/, 'field', false, field)
     R.validateString(constructorName, 'value', false, value)
 
     const result = Object.create(EqualsPrototype)
@@ -88,16 +89,17 @@ const EqualsConstructor = function Equals(field, value) {
     return result
 }
 
-QueryFilter.Equals = EqualsConstructor
+IRFilter.Equals = EqualsConstructor
 
 /*
- * Construct a QueryFilter.OlderThan instance
- * @sig OlderThan :: (String, Number) -> QueryFilter.OlderThan
+ * Construct a IRFilter.OlderThan instance
+ * @sig OlderThan :: (Field, Number) -> IRFilter.OlderThan
+ *     Field = /^lastActivity$/
  */
 const OlderThanConstructor = function OlderThan(field, days) {
-    const constructorName = 'QueryFilter.OlderThan(field, days)'
+    const constructorName = 'IRFilter.OlderThan(field, days)'
     R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateString(constructorName, 'field', false, field)
+    R.validateRegex(constructorName, /^lastActivity$/, 'field', false, field)
     R.validateNumber(constructorName, 'days', false, days)
 
     const result = Object.create(OlderThanPrototype)
@@ -106,24 +108,24 @@ const OlderThanConstructor = function OlderThan(field, days) {
     return result
 }
 
-QueryFilter.OlderThan = OlderThanConstructor
+IRFilter.OlderThan = OlderThanConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const EqualsPrototype = Object.create(QueryFilterPrototype, {
+const EqualsPrototype = Object.create(IRFilterPrototype, {
     '@@tagName': { value: 'Equals', enumerable: false },
-    '@@typeName': { value: 'QueryFilter', enumerable: false },
+    '@@typeName': { value: 'IRFilter', enumerable: false },
     toString: { value: toString.equals, enumerable: false },
     toJSON: { value: toJSON.equals, enumerable: false },
     constructor: { value: EqualsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const OlderThanPrototype = Object.create(QueryFilterPrototype, {
+const OlderThanPrototype = Object.create(IRFilterPrototype, {
     '@@tagName': { value: 'OlderThan', enumerable: false },
-    '@@typeName': { value: 'QueryFilter', enumerable: false },
+    '@@typeName': { value: 'IRFilter', enumerable: false },
     toString: { value: toString.olderThan, enumerable: false },
     toJSON: { value: toJSON.olderThan, enumerable: false },
     constructor: { value: OlderThanConstructor, enumerable: false, writable: true, configurable: true },
@@ -142,13 +144,13 @@ OlderThanConstructor.is = val => val && val.constructor === OlderThanConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-EqualsConstructor.toString = () => 'QueryFilter.Equals'
-OlderThanConstructor.toString = () => 'QueryFilter.OlderThan'
+EqualsConstructor.toString = () => 'IRFilter.Equals'
+OlderThanConstructor.toString = () => 'IRFilter.OlderThan'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-EqualsConstructor._from = _input => QueryFilter.Equals(_input.field, _input.value)
-OlderThanConstructor._from = _input => QueryFilter.OlderThan(_input.field, _input.days)
+EqualsConstructor._from = _input => IRFilter.Equals(_input.field, _input.value)
+OlderThanConstructor._from = _input => IRFilter.OlderThan(_input.field, _input.days)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -158,13 +160,13 @@ OlderThanConstructor.from = OlderThanConstructor._from
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a QueryFilter instance
+ * Check if value is a IRFilter instance
  * @sig is :: Any -> Boolean
  */
-QueryFilter.is = v => {
+IRFilter.is = v => {
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
-    return constructor === QueryFilter.Equals || constructor === QueryFilter.OlderThan
+    return constructor === IRFilter.Equals || constructor === IRFilter.OlderThan
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -173,4 +175,4 @@ QueryFilter.is = v => {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { QueryFilter }
+export { IRFilter }

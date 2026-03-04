@@ -1,14 +1,14 @@
 import { test } from 'tap'
-import { ExpressionNode } from '../../src/types/index.js'
+import { IRExpression } from '../../src/types/index.js'
 import { resolveExpression } from '../../src/query-language/resolve-expression.js'
 
 const evaluate = resolveExpression
 
-// AST node constructors using ExpressionNode TaggedSum
-const literal = value => ExpressionNode.Literal(value)
-const ref = (source, field) => ExpressionNode.Reference(source, field)
-const binary = (op, left, right) => ExpressionNode.Binary(op, left, right)
-const call = (fn, args) => ExpressionNode.Call(fn, args)
+// AST node constructors using IRExpression TaggedSum
+const literal = value => IRExpression.Literal(value)
+const ref = (source, field) => IRExpression.Reference(source, field)
+const binary = (op, left, right) => IRExpression.Binary(op, left, right)
+const call = (fn, args) => IRExpression.Call(fn, args)
 
 // ═════════════════════════════════════════════════
 // (a) Literal numbers
@@ -283,11 +283,11 @@ test('Depth limit', t => {
 })
 
 // ═════════════════════════════════════════════════
-// (k) Invalid AST node — non-ExpressionNode object
+// (k) Invalid AST node — non-IRExpression object
 // ═════════════════════════════════════════════════
 
 test('Invalid AST node', t => {
-    t.test('Given a plain object instead of an ExpressionNode', t => {
+    t.test('Given a plain object instead of an IRExpression', t => {
         t.test('When evaluating', t => {
             t.throws(() => evaluate({ type: 'unknown_node' }, {}), 'Then it throws because .match() is not available')
             t.end()

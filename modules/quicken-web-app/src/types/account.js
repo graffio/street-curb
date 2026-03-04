@@ -6,7 +6,7 @@
  *
  *  id         : FieldTypes.accountId,
  *  name       : "String",
- *  type       : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
+ *  type       : FieldTypes.accountType,
  *  description: "String?",
  *  creditLimit: "Number?"
  *
@@ -24,21 +24,14 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 /*
  * Construct a Account instance
- * @sig Account :: (String, String, Type, String?, Number?) -> Account
- *     Type = /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/
+ * @sig Account :: (String, String, String, String?, Number?) -> Account
  */
 const Account = function Account(id, name, type, description, creditLimit) {
     const constructorName = 'Account(id, name, type, description, creditLimit)'
 
     R.validateRegex(constructorName, FieldTypes.accountId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
-    R.validateRegex(
-        constructorName,
-        /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
-        'type',
-        false,
-        type,
-    )
+    R.validateRegex(constructorName, FieldTypes.accountType, 'type', false, type)
     R.validateString(constructorName, 'description', true, description)
     R.validateNumber(constructorName, 'creditLimit', true, creditLimit)
 

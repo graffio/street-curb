@@ -11,7 +11,7 @@ import { queryValidator } from './query-validator.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Run an IR through validate → execute, returning structured results
-// @sig queryPipeline :: (QueryIR, DataSummary, Object) -> PipelineResult
+// @sig queryPipeline :: (Query, DataSummary, Object) -> PipelineResult
 const queryPipeline = (ir, dataSummary, state) => {
     const validated = queryValidator(ir, dataSummary)
     return validated.valid

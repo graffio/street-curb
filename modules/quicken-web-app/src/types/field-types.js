@@ -27,6 +27,10 @@ const FieldTypes = {
     tabLayoutId        : /^tl_[a-z0-9_]+$/,              // tab layout id: tl_main
     sourceName         : /^[a-z_][a-z0-9_]*$/,           // query source name: food, income_q1
     groupDimension     : /^(month|quarter|year|category|account|security)$/,
+    arithmeticOp       : /^[/+*-]$/,                     // binary expression operators
+    timeUnit           : /^(months|days|weeks|years)$/,  // relative date range units
+    namedPeriod        : /^(last_quarter|last_month|last_year|this_quarter|this_month|this_year|year_to_date)$/,
+    accountType        : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
 }
 
 export { FieldTypes }

@@ -1,8 +1,8 @@
 // ABOUTME: Query execution engine — routes IR sources to state queries and computes results
-// ABOUTME: Resolves dates, filters data, dispatches computations via QueryResult types
+// ABOUTME: Resolves dates, filters data, dispatches computations via IRResult types
 
 import { filter, find, map, reduce } from '@graffio/functional'
-import { QueryResult, ResultTree, Transaction } from '../types/index.js'
+import { IRResult, IRResultTree, Transaction } from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
 import { resolveExpression } from './resolve-expression.js'
 
@@ -75,7 +75,7 @@ const T = {
     },
 
     // Resolve IR date descriptor to absolute { start, end } ISO date strings
-    // @sig toDateRange :: DateRange? -> { start: String, end: String } | undefined
+    // @sig toDateRange :: IRDateRange? -> { start: String, end: String } | undefined
     toDateRange: descriptor => {
         if (!descriptor) return undefined
         return descriptor.match({
@@ -111,8 +111,8 @@ const T = {
     },
 
     // Extract filter values for a specific field from IR source filters
-    // Only called for entity fields (category, account, payee) which are always QueryFilter.Equals
-    // @sig toFilterValues :: (String, [QueryFilter]) -> [String]
+    // Only called for entity fields (category, account, payee) which are always IRFilter.Equals
+    // @sig toFilterValues :: (String, [IRFilter]) -> [String]
     toFilterValues: (field, filters) =>
         map(
             f => f.value,
@@ -128,7 +128,7 @@ const T = {
 
 const A = {
     // Execute a transaction source: apply filters, resolve dates, build tree
-    // @sig collectTransactionResult :: (QuerySource, Object) -> [CategoryTreeNode]
+    // @sig collectTransactionResult :: (IRSource, Object) -> [CategoryTreeNode]
     collectTransactionResult: (source, state) => {
         const { accounts, categories, transactions } = state
         const { dateRange: dateDescriptor, filters, groupBy } = source
@@ -147,7 +147,7 @@ const A = {
     },
 
     // Execute an accounts source: filter by accountType if specified
-    // @sig collectAccountResult :: (QuerySource, Object) -> [Account]
+    // @sig collectAccountResult :: (IRSource, Object) -> [Account]
     collectAccountResult: ({ filters }, { accounts }) => {
         const typeFilters = T.toFilterValues('accountType', filters)
         return typeFilters.length > 0
@@ -156,20 +156,20 @@ const A = {
     },
 
     // Execute a holdings source (placeholder — returns empty tree)
-    // @sig collectHoldingsResult :: (QuerySource, Object) -> [HoldingsTreeNode]
+    // @sig collectHoldingsResult :: (IRSource, Object) -> [HoldingsTreeNode]
     collectHoldingsResult: (_source, _state) => [],
 
-    // Route a source to the correct domain executor via Domain.match()
-    // @sig collectSourceResult :: (QuerySource, Object) -> ResultTree | [Account]
+    // Route a source to the correct domain executor via IRDomain.match()
+    // @sig collectSourceResult :: (IRSource, Object) -> IRResultTree | [Account]
     collectSourceResult: (source, state) =>
         source.domain.match({
-            Transactions: () => ResultTree.Category(A.collectTransactionResult(source, state)),
+            Transactions: () => IRResultTree.Category(A.collectTransactionResult(source, state)),
             Accounts: () => A.collectAccountResult(source, state),
-            Holdings: () => ResultTree.Holdings(A.collectHoldingsResult(source, state)),
+            Holdings: () => IRResultTree.Holdings(A.collectHoldingsResult(source, state)),
         }),
 
-    // Sum top-level node totals from a ResultTree (Category: .total, Holdings: .marketValue)
-    // @sig collectTotal :: ResultTree -> Number
+    // Sum top-level node totals from an IRResultTree (Category: .total, Holdings: .marketValue)
+    // @sig collectTotal :: IRResultTree -> Number
     collectTotal: resultTree =>
         resultTree.match({
             Category: ({ nodes }) => reduce((sum, node) => sum + node.aggregate.total, 0, nodes),
@@ -182,7 +182,7 @@ const A = {
         reduce(
             (values, [name, data]) => ({
                 ...values,
-                [name]: { total: ResultTree.is(data) ? A.collectTotal(data) : 0 },
+                [name]: { total: IRResultTree.is(data) ? A.collectTotal(data) : 0 },
             }),
             {},
             Object.entries(executed),
@@ -196,7 +196,7 @@ const A = {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Execute a query IR against Redux state, dispatching on computation type
-// @sig queryExecutionEngine :: (QueryIR, Object) -> QueryResult
+// @sig queryExecutionEngine :: (Query, Object) -> IRResult
 const queryExecutionEngine = ({ sources, computation }, state) => {
     const executed = reduce(
         (results, source) => ({ ...results, [source.name]: A.collectSourceResult(source, state) }),
@@ -205,11 +205,11 @@ const queryExecutionEngine = ({ sources, computation }, state) => {
     )
 
     return computation.match({
-        Identity: ({ source }) => QueryResult.Identity(executed[source], source),
-        Compare: ({ left, right }) => QueryResult.Comparison(executed[left], executed[right], left),
+        Identity: ({ source }) => IRResult.Identity(executed[source], source),
+        Compare: ({ left, right }) => IRResult.Comparison(executed[left], executed[right], left),
         Expression: ({ expression }) =>
-            QueryResult.Scalar(resolveExpression(expression, A.collectBoundValues(executed)), expression),
-        FilterEntities: ({ source }) => QueryResult.FilteredEntities(executed[source], source),
+            IRResult.Scalar(resolveExpression(expression, A.collectBoundValues(executed)), expression),
+        FilterEntities: ({ source }) => IRResult.FilteredEntities(executed[source], source),
     })
 }
 export { queryExecutionEngine }

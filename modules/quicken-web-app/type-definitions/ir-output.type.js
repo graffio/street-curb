@@ -1,5 +1,5 @@
-// ABOUTME: TaggedSum type for query source domains
-// ABOUTME: Closed set of three — Transactions, Holdings, Accounts
+// ABOUTME: Tagged type for query output configuration
+// ABOUTME: Controls which fields to show and output format
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -8,8 +8,11 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const Domain = {
-    name: 'Domain',
-    kind: 'taggedSum',
-    variants: { Transactions: {}, Holdings: {}, Accounts: {} },
+export const IROutput = {
+    name: 'IROutput',
+    kind: 'tagged',
+    fields: {
+        show:   '[String]?',
+        format: 'String?',
+    },
 }

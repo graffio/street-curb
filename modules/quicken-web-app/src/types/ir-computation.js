@@ -1,7 +1,7 @@
-// ABOUTME: Generated type definition for Computation
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/computation.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRComputation
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-computation.type.js - do not edit manually
 
-/*  Computation generated from: modules/quicken-web-app/type-definitions/computation.type.js
+/*  IRComputation generated from: modules/quicken-web-app/type-definitions/ir-computation.type.js
  *
  *  Identity
  *      source: FieldTypes.sourceName
@@ -9,7 +9,7 @@
  *      left : FieldTypes.sourceName,
  *      right: FieldTypes.sourceName
  *  Expression
- *      expression: "ExpressionNode"
+ *      expression: "IRExpression"
  *  FilterEntities
  *      source: FieldTypes.sourceName
  *
@@ -18,40 +18,40 @@
 import { FieldTypes } from './field-types.js'
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
-import { ExpressionNode } from './expression-node.js'
+import { IRExpression } from './ir-expression.js'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Computation constructor
+// IRComputation constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const Computation = {
-    toString: () => 'Computation',
+const IRComputation = {
+    toString: () => 'IRComputation',
 }
 
 // Add hidden properties
-Object.defineProperty(Computation, '@@typeName', { value: 'Computation', enumerable: false })
-Object.defineProperty(Computation, '@@tagNames', {
+Object.defineProperty(IRComputation, '@@typeName', { value: 'IRComputation', enumerable: false })
+Object.defineProperty(IRComputation, '@@tagNames', {
     value: ['Identity', 'Compare', 'Expression', 'FilterEntities'],
     enumerable: false,
 })
 
 // Type prototype with match method
-const ComputationPrototype = {}
+const IRComputationPrototype = {}
 
-Object.defineProperty(ComputationPrototype, 'match', {
-    value: R.match(Computation['@@tagNames']),
+Object.defineProperty(IRComputationPrototype, 'match', {
+    value: R.match(IRComputation['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(ComputationPrototype, 'constructor', {
-    value: Computation,
+Object.defineProperty(IRComputationPrototype, 'constructor', {
+    value: IRComputation,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-Computation.prototype = ComputationPrototype
+IRComputation.prototype = IRComputationPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -60,10 +60,10 @@ Computation.prototype = ComputationPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    identity      : function () { return `Computation.Identity(${R._toString(this.source)})` },
-    compare       : function () { return `Computation.Compare(${R._toString(this.left)}, ${R._toString(this.right)})` },
-    expression    : function () { return `Computation.Expression(${R._toString(this.expression)})` },
-    filterEntities: function () { return `Computation.FilterEntities(${R._toString(this.source)})` },
+    identity      : function () { return `IRComputation.Identity(${R._toString(this.source)})` },
+    compare       : function () { return `IRComputation.Compare(${R._toString(this.left)}, ${R._toString(this.right)})` },
+    expression    : function () { return `IRComputation.Expression(${R._toString(this.expression)})` },
+    filterEntities: function () { return `IRComputation.FilterEntities(${R._toString(this.source)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -86,11 +86,11 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a Computation.Identity instance
- * @sig Identity :: (String) -> Computation.Identity
+ * Construct a IRComputation.Identity instance
+ * @sig Identity :: (String) -> IRComputation.Identity
  */
 const IdentityConstructor = function Identity(source) {
-    const constructorName = 'Computation.Identity(source)'
+    const constructorName = 'IRComputation.Identity(source)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
 
@@ -99,14 +99,14 @@ const IdentityConstructor = function Identity(source) {
     return result
 }
 
-Computation.Identity = IdentityConstructor
+IRComputation.Identity = IdentityConstructor
 
 /*
- * Construct a Computation.Compare instance
- * @sig Compare :: (String, String) -> Computation.Compare
+ * Construct a IRComputation.Compare instance
+ * @sig Compare :: (String, String) -> IRComputation.Compare
  */
 const CompareConstructor = function Compare(left, right) {
-    const constructorName = 'Computation.Compare(left, right)'
+    const constructorName = 'IRComputation.Compare(left, right)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'left', false, left)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'right', false, right)
@@ -117,30 +117,30 @@ const CompareConstructor = function Compare(left, right) {
     return result
 }
 
-Computation.Compare = CompareConstructor
+IRComputation.Compare = CompareConstructor
 
 /*
- * Construct a Computation.Expression instance
- * @sig Expression :: (ExpressionNode) -> Computation.Expression
+ * Construct a IRComputation.Expression instance
+ * @sig Expression :: (IRExpression) -> IRComputation.Expression
  */
 const ExpressionConstructor = function Expression(expression) {
-    const constructorName = 'Computation.Expression(expression)'
+    const constructorName = 'IRComputation.Expression(expression)'
     R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateTag(constructorName, 'ExpressionNode', 'expression', false, expression)
+    R.validateTag(constructorName, 'IRExpression', 'expression', false, expression)
 
     const result = Object.create(ExpressionPrototype)
     result.expression = expression
     return result
 }
 
-Computation.Expression = ExpressionConstructor
+IRComputation.Expression = ExpressionConstructor
 
 /*
- * Construct a Computation.FilterEntities instance
- * @sig FilterEntities :: (String) -> Computation.FilterEntities
+ * Construct a IRComputation.FilterEntities instance
+ * @sig FilterEntities :: (String) -> IRComputation.FilterEntities
  */
 const FilterEntitiesConstructor = function FilterEntities(source) {
-    const constructorName = 'Computation.FilterEntities(source)'
+    const constructorName = 'IRComputation.FilterEntities(source)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateRegex(constructorName, FieldTypes.sourceName, 'source', false, source)
 
@@ -149,40 +149,40 @@ const FilterEntitiesConstructor = function FilterEntities(source) {
     return result
 }
 
-Computation.FilterEntities = FilterEntitiesConstructor
+IRComputation.FilterEntities = FilterEntitiesConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const IdentityPrototype = Object.create(ComputationPrototype, {
+const IdentityPrototype = Object.create(IRComputationPrototype, {
     '@@tagName': { value: 'Identity', enumerable: false },
-    '@@typeName': { value: 'Computation', enumerable: false },
+    '@@typeName': { value: 'IRComputation', enumerable: false },
     toString: { value: toString.identity, enumerable: false },
     toJSON: { value: toJSON.identity, enumerable: false },
     constructor: { value: IdentityConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const ComparePrototype = Object.create(ComputationPrototype, {
+const ComparePrototype = Object.create(IRComputationPrototype, {
     '@@tagName': { value: 'Compare', enumerable: false },
-    '@@typeName': { value: 'Computation', enumerable: false },
+    '@@typeName': { value: 'IRComputation', enumerable: false },
     toString: { value: toString.compare, enumerable: false },
     toJSON: { value: toJSON.compare, enumerable: false },
     constructor: { value: CompareConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const ExpressionPrototype = Object.create(ComputationPrototype, {
+const ExpressionPrototype = Object.create(IRComputationPrototype, {
     '@@tagName': { value: 'Expression', enumerable: false },
-    '@@typeName': { value: 'Computation', enumerable: false },
+    '@@typeName': { value: 'IRComputation', enumerable: false },
     toString: { value: toString.expression, enumerable: false },
     toJSON: { value: toJSON.expression, enumerable: false },
     constructor: { value: ExpressionConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const FilterEntitiesPrototype = Object.create(ComputationPrototype, {
+const FilterEntitiesPrototype = Object.create(IRComputationPrototype, {
     '@@tagName': { value: 'FilterEntities', enumerable: false },
-    '@@typeName': { value: 'Computation', enumerable: false },
+    '@@typeName': { value: 'IRComputation', enumerable: false },
     toString: { value: toString.filterEntities, enumerable: false },
     toJSON: { value: toJSON.filterEntities, enumerable: false },
     constructor: { value: FilterEntitiesConstructor, enumerable: false, writable: true, configurable: true },
@@ -205,17 +205,17 @@ FilterEntitiesConstructor.is = val => val && val.constructor === FilterEntitiesC
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-IdentityConstructor.toString = () => 'Computation.Identity'
-CompareConstructor.toString = () => 'Computation.Compare'
-ExpressionConstructor.toString = () => 'Computation.Expression'
-FilterEntitiesConstructor.toString = () => 'Computation.FilterEntities'
+IdentityConstructor.toString = () => 'IRComputation.Identity'
+CompareConstructor.toString = () => 'IRComputation.Compare'
+ExpressionConstructor.toString = () => 'IRComputation.Expression'
+FilterEntitiesConstructor.toString = () => 'IRComputation.FilterEntities'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-IdentityConstructor._from = _input => Computation.Identity(_input.source)
-CompareConstructor._from = _input => Computation.Compare(_input.left, _input.right)
-ExpressionConstructor._from = _input => Computation.Expression(_input.expression)
-FilterEntitiesConstructor._from = _input => Computation.FilterEntities(_input.source)
+IdentityConstructor._from = _input => IRComputation.Identity(_input.source)
+CompareConstructor._from = _input => IRComputation.Compare(_input.left, _input.right)
+ExpressionConstructor._from = _input => IRComputation.Expression(_input.expression)
+FilterEntitiesConstructor._from = _input => IRComputation.FilterEntities(_input.source)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -227,11 +227,11 @@ FilterEntitiesConstructor.from = FilterEntitiesConstructor._from
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a Computation instance
+ * Check if value is a IRComputation instance
  * @sig is :: Any -> Boolean
  */
-Computation.is = v => {
-    const { Identity, Compare, Expression, FilterEntities } = Computation
+IRComputation.is = v => {
+    const { Identity, Compare, Expression, FilterEntities } = IRComputation
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
@@ -248,4 +248,4 @@ Computation.is = v => {
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { Computation }
+export { IRComputation }

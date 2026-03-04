@@ -10,13 +10,13 @@ import { FieldTypes } from './field-types.js'
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const Computation = {
-    name: 'Computation',
+export const IRComputation = {
+    name: 'IRComputation',
     kind: 'taggedSum',
     variants: {
         Identity:       { source: FieldTypes.sourceName },
         Compare:        { left: FieldTypes.sourceName, right: FieldTypes.sourceName },
-        Expression:     { expression: 'ExpressionNode' },
+        Expression:     { expression: 'IRExpression' },
         FilterEntities: { source: FieldTypes.sourceName },
     },
 }
