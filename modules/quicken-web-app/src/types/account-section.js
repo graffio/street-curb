@@ -106,37 +106,6 @@ AccountSection._from = _input => {
 }
 AccountSection.from = AccountSection._from
 
-AccountSection._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        id: o.id,
-        label: o.label,
-        isCollapsible: o.isCollapsible,
-        accounts: R.lookupTableToFirestore(EnrichedAccount, 'id', encodeTimestamps, o.accounts),
-        children: R.lookupTableToFirestore(AccountSection, 'id', encodeTimestamps, o.children),
-    }
-
-    if (o.totalBalance !== undefined) result.totalBalance = o.totalBalance
-
-    if (o.totalCount !== undefined) result.totalCount = o.totalCount
-
-    return result
-}
-
-AccountSection._fromFirestore = (doc, decodeTimestamps) =>
-    AccountSection._from({
-        id: doc.id,
-        label: doc.label,
-        isCollapsible: doc.isCollapsible,
-        accounts: R.lookupTableFromFirestore(EnrichedAccount, 'id', decodeTimestamps, doc.accounts),
-        children: R.lookupTableFromFirestore(AccountSection, 'id', decodeTimestamps, doc.children),
-        totalBalance: doc.totalBalance,
-        totalCount: doc.totalCount,
-    })
-
-// Public aliases (override if necessary)
-AccountSection.toFirestore = AccountSection._toFirestore
-AccountSection.fromFirestore = AccountSection._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

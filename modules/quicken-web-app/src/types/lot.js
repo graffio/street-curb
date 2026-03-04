@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Lot
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/lot.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/lot.type.js - do not edit manually
 
 /** {@link module:Lot} */
-/*  Lot generated from: modules/quicken-type-definitions/lot.type.js
+/*  Lot generated from: modules/quicken-web-app/type-definitions/lot.type.js
  *
  *  accountId             : FieldTypes.accountId,
  *  costBasis             : "Number",
@@ -151,14 +151,6 @@ Lot._from = _input => {
     )
 }
 Lot.from = Lot._from
-
-Lot._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Lot._fromFirestore = (doc, decodeTimestamps) => Lot._from(doc)
-
-// Public aliases (override if necessary)
-Lot.toFirestore = Lot._toFirestore
-Lot.fromFirestore = Lot._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

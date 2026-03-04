@@ -9,7 +9,7 @@ export const Account = {
     fields: {
         id: FieldTypes.accountId,
         name: 'String',
-        type: /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
+        type: FieldTypes.accountType,
         description: 'String?',
         creditLimit: 'Number?',
     },

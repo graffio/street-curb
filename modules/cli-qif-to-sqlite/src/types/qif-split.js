@@ -86,14 +86,6 @@ QifSplit._from = _input => {
 }
 QifSplit.from = QifSplit._from
 
-QifSplit._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-QifSplit._fromFirestore = (doc, decodeTimestamps) => QifSplit._from(doc)
-
-// Public aliases (override if necessary)
-QifSplit.toFirestore = QifSplit._toFirestore
-QifSplit.fromFirestore = QifSplit._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

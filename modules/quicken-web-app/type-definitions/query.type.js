@@ -1,5 +1,5 @@
-// ABOUTME: Tagged type for parsed query intermediate representation
-// ABOUTME: Central artifact between parser and executor — name, sources, computation, output
+// ABOUTME: Tagged type for query intermediate representation
+// ABOUTME: Central artifact between Claude and executor — name, sources, computation, output
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -8,14 +8,14 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const QueryIR = {
-    name: 'QueryIR',
+export const Query = {
+    name: 'Query',
     kind: 'tagged',
     fields: {
         name:        'String',
         description: 'String?',
-        sources:     '{QuerySource:name}',
-        computation: 'Computation',
-        output:      'QueryOutput?',
+        sources:     '{IRSource:name}',
+        computation: 'IRComputation',
+        output:      'IROutput?',
     },
 }

@@ -1,3 +1,5 @@
+// ABOUTME: Organization Tagged type definition for curb-map
+// ABOUTME: A tenant entity grouping users and projects, with a LookupTable of Members
 /** @module Organization */
 import { FieldTypes } from './field-types.js'
 import { Member } from './member.js'
@@ -10,6 +12,7 @@ import { Member } from './member.js'
 export const Organization = {
     name: 'Organization',
     kind: 'tagged',
+    firestore: true,
     fields: {
         id              : FieldTypes.organizationId,
         name            : "String",

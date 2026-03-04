@@ -8,11 +8,11 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 // prettier-ignore
-export const QueryFilter = {
-    name: 'QueryFilter',
+export const IRFilter = {
+    name: 'IRFilter',
     kind: 'taggedSum',
     variants: {
-        Equals:    { field: 'String', value: 'String' },
-        OlderThan: { field: 'String', days: 'Number' },
+        Equals:    { field: /^(category|account|payee|accountType)$/, value: 'String' },
+        OlderThan: { field: /^lastActivity$/, days: 'Number' },
     },
 }

@@ -23,7 +23,6 @@ const sources = {
     curbMap                 : `${REPO_ROOT}/modules/curb-map/type-definitions`,
     cliQifToSqlite          : `${REPO_ROOT}/modules/cli-qif-to-sqlite/type-definitions`,
     functional              : `${REPO_ROOT}/modules/functional/type-definitions`,
-    quickenTypes            : `${REPO_ROOT}/modules/quicken-type-definitions`,
     quickenWebApp           : `${REPO_ROOT}/modules/quicken-web-app/type-definitions`,
     typesGeneration         : `${REPO_ROOT}/modules/cli-type-generator/type-definitions`
 }
@@ -38,10 +37,6 @@ const targets = {
     quickenWebApp        : `${REPO_ROOT}/modules/quicken-web-app/src/types`,
     typesGeneration      : `${REPO_ROOT}/modules/cli-type-generator/src/types`
 }
-
-// Shorthand aliases for common multi-target combinations
-const t = targets
-const qifAndWeb = [t.quickenWebApp]
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -83,18 +78,6 @@ export const typeMappings = {
     [`${sources.functional}/filter-spec.type.js`]         : [targets.functional],
 
 
-    // quicken shared domain types (from quicken-type-definitions)
-    [`${sources.quickenTypes}/account.type.js`]           : qifAndWeb,
-    [`${sources.quickenTypes}/category.type.js`]          : qifAndWeb,
-    [`${sources.quickenTypes}/holding.type.js`]           : qifAndWeb,
-    [`${sources.quickenTypes}/lot.type.js`]               : qifAndWeb,
-    [`${sources.quickenTypes}/lot-allocation.type.js`]    : qifAndWeb,
-    [`${sources.quickenTypes}/price.type.js`]             : qifAndWeb,
-    [`${sources.quickenTypes}/security.type.js`]          : qifAndWeb,
-    [`${sources.quickenTypes}/split.type.js`]             : qifAndWeb,
-    [`${sources.quickenTypes}/tag.type.js`]               : qifAndWeb,
-    [`${sources.quickenTypes}/transaction.type.js`]       : qifAndWeb,
-
     // cli-qif-to-sqlite
     [`${sources.cliQifToSqlite}/qif-entry.type.js`]       : [targets.cliQifToSqlite],
     [`${sources.cliQifToSqlite}/qif-split.type.js`]       : [targets.cliQifToSqlite],
@@ -118,19 +101,32 @@ export const typeMappings = {
     [`${sources.quickenWebApp}/holdings-tree-node.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/category-aggregate.type.js`]: [targets.quickenWebApp],
     [`${sources.quickenWebApp}/category-tree-node.type.js`]: [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/result-tree.type.js`]     : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/register-row.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/expression-node.type.js`] : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/domain.type.js`]          : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/date-range.type.js`]      : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query-filter.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query-source.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query-output.type.js`]    : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/register-row.type.js`]     : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/account-summary.type.js`] : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/computation.type.js`]     : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query-result.type.js`]    : [targets.quickenWebApp],
-    [`${sources.quickenWebApp}/query-ir.type.js`]        : [targets.quickenWebApp],
     [`${sources.quickenWebApp}/data-summary.type.js`]    : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-domain.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-date-range.type.js`]   : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-filter.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-expression.type.js`]   : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-computation.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-source.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-output.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-result-tree.type.js`]  : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/ir-result.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/query.type.js`]           : [targets.quickenWebApp],
+
+    // quicken-web-app entity types (moved from quicken-type-definitions)
+    [`${sources.quickenWebApp}/account.type.js`]        : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/category.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/holding.type.js`]        : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/lot.type.js`]            : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/lot-allocation.type.js`] : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/price.type.js`]          : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/security.type.js`]       : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/split.type.js`]          : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/tag.type.js`]            : [targets.quickenWebApp],
+    [`${sources.quickenWebApp}/transaction.type.js`]    : [targets.quickenWebApp],
+
     [`${sources.quickenWebApp}/action.type.js`]          : [targets.quickenWebApp],
 
 

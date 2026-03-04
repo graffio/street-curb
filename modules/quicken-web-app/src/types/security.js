@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Security
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/security.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/security.type.js - do not edit manually
 
 /** {@link module:Security} */
-/*  Security generated from: modules/quicken-type-definitions/security.type.js
+/*  Security generated from: modules/quicken-web-app/type-definitions/security.type.js
  *
  *  id    : FieldTypes.securityId,
  *  name  : "String",
@@ -97,14 +97,6 @@ Security._from = _input => {
     return Security(id, name, symbol, type, goal)
 }
 Security.from = Security._from
-
-Security._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Security._fromFirestore = (doc, decodeTimestamps) => Security._from(doc)
-
-// Public aliases (override if necessary)
-Security.toFirestore = Security._toFirestore
-Security.fromFirestore = Security._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

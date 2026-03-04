@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Price
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/price.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/price.type.js - do not edit manually
 
 /** {@link module:Price} */
-/*  Price generated from: modules/quicken-type-definitions/price.type.js
+/*  Price generated from: modules/quicken-web-app/type-definitions/price.type.js
  *
  *  id        : FieldTypes.priceId,
  *  securityId: FieldTypes.securityId,
@@ -93,14 +93,6 @@ Price._from = _input => {
     return Price(id, securityId, date, price)
 }
 Price.from = Price._from
-
-Price._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Price._fromFirestore = (doc, decodeTimestamps) => Price._from(doc)
-
-// Public aliases (override if necessary)
-Price.toFirestore = Price._toFirestore
-Price.fromFirestore = Price._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

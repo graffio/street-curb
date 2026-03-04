@@ -152,14 +152,6 @@ ViewUiState._from = _input => {
 }
 ViewUiState.from = ViewUiState._from
 
-ViewUiState._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-ViewUiState._fromFirestore = (doc, decodeTimestamps) => ViewUiState._from(doc)
-
-// Public aliases (override if necessary)
-ViewUiState.toFirestore = ViewUiState._toFirestore
-ViewUiState.fromFirestore = ViewUiState._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

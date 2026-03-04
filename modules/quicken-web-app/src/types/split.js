@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Split
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/split.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/split.type.js - do not edit manually
 
 /** {@link module:Split} */
-/*  Split generated from: modules/quicken-type-definitions/split.type.js
+/*  Split generated from: modules/quicken-web-app/type-definitions/split.type.js
  *
  *  id               : "String",
  *  transactionId    : FieldTypes.transactionId,
@@ -101,14 +101,6 @@ Split._from = _input => {
     return Split(id, transactionId, categoryId, amount, memo, transferAccountId)
 }
 Split.from = Split._from
-
-Split._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Split._fromFirestore = (doc, decodeTimestamps) => Split._from(doc)
-
-// Public aliases (override if necessary)
-Split.toFirestore = Split._toFirestore
-Split.fromFirestore = Split._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -100,14 +100,6 @@ Violation._from = _input => {
 }
 Violation.from = Violation._from
 
-Violation._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Violation._fromFirestore = (doc, decodeTimestamps) => Violation._from(doc)
-
-// Public aliases (override if necessary)
-Violation.toFirestore = Violation._toFirestore
-Violation.fromFirestore = Violation._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

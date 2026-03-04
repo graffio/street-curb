@@ -1,3 +1,5 @@
+// ABOUTME: Action TaggedSum type definition for curb-map
+// ABOUTME: Domain events (org, member, user, blockface, segment) that can be queued and dispatched
 /** @module Action */
 
 import { FieldTypes } from './field-types.js'
@@ -30,6 +32,7 @@ import { FieldTypes } from './field-types.js'
 export const Action = {
     name: 'Action',
     kind: 'taggedSum',
+    firestore: true,
     variants: {
         // Organization Actions
         OrganizationCreated  : { name: 'String' , projectId: FieldTypes.projectId, },

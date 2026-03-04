@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Holding
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/holding.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/holding.type.js - do not edit manually
 
 /** {@link module:Holding} */
-/*  Holding generated from: modules/quicken-type-definitions/holding.type.js
+/*  Holding generated from: modules/quicken-web-app/type-definitions/holding.type.js
  *
  *  accountId                : FieldTypes.accountId,
  *  accountName              : "String",
@@ -200,14 +200,6 @@ Holding._from = _input => {
     )
 }
 Holding.from = Holding._from
-
-Holding._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Holding._fromFirestore = (doc, decodeTimestamps) => Holding._from(doc)
-
-// Public aliases (override if necessary)
-Holding.toFirestore = Holding._toFirestore
-Holding.fromFirestore = Holding._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

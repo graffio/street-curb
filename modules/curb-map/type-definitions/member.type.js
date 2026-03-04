@@ -1,3 +1,5 @@
+// ABOUTME: Member Tagged type definition for curb-map
+// ABOUTME: A user's role assignment within an organization, with add/remove tracking
 /** @module Member */
 import { FieldTypes } from './field-types.js'
 
@@ -8,6 +10,7 @@ import { FieldTypes } from './field-types.js'
 export const Member = {
     name: 'Member',
     kind: 'tagged',
+    firestore: true,
     fields: {
         userId     : FieldTypes.userId,
         displayName: 'String',

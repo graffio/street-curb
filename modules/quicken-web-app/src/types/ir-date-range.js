@@ -1,7 +1,7 @@
-// ABOUTME: Generated type definition for DateRange
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/date-range.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRDateRange
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-date-range.type.js - do not edit manually
 
-/*  DateRange generated from: modules/quicken-web-app/type-definitions/date-range.type.js
+/*  IRDateRange generated from: modules/quicken-web-app/type-definitions/ir-date-range.type.js
  *
  *  Year
  *      year: "Number"
@@ -12,50 +12,52 @@
  *      month: "Number",
  *      year : "Number"
  *  Relative
- *      unit : /^(months|days|weeks|years)$/,
+ *      unit : FieldTypes.timeUnit,
  *      count: "Number"
  *  Range
  *      start: "String",
  *      end  : "String"
  *  Named
- *      name: /^(last_quarter|last_month|last_year|this_quarter|this_month|this_year|year_to_date)$/
+ *      name: FieldTypes.namedPeriod
  *
  */
+
+import { FieldTypes } from './field-types.js'
 
 import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// DateRange constructor
+// IRDateRange constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const DateRange = {
-    toString: () => 'DateRange',
+const IRDateRange = {
+    toString: () => 'IRDateRange',
 }
 
 // Add hidden properties
-Object.defineProperty(DateRange, '@@typeName', { value: 'DateRange', enumerable: false })
-Object.defineProperty(DateRange, '@@tagNames', {
+Object.defineProperty(IRDateRange, '@@typeName', { value: 'IRDateRange', enumerable: false })
+Object.defineProperty(IRDateRange, '@@tagNames', {
     value: ['Year', 'Quarter', 'Month', 'Relative', 'Range', 'Named'],
     enumerable: false,
 })
 
 // Type prototype with match method
-const DateRangePrototype = {}
+const IRDateRangePrototype = {}
 
-Object.defineProperty(DateRangePrototype, 'match', {
-    value: R.match(DateRange['@@tagNames']),
+Object.defineProperty(IRDateRangePrototype, 'match', {
+    value: R.match(IRDateRange['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(DateRangePrototype, 'constructor', {
-    value: DateRange,
+Object.defineProperty(IRDateRangePrototype, 'constructor', {
+    value: IRDateRange,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-DateRange.prototype = DateRangePrototype
+IRDateRange.prototype = IRDateRangePrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -64,12 +66,12 @@ DateRange.prototype = DateRangePrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    year    : function () { return `DateRange.Year(${R._toString(this.year)})` },
-    quarter : function () { return `DateRange.Quarter(${R._toString(this.quarter)}, ${R._toString(this.year)})` },
-    month   : function () { return `DateRange.Month(${R._toString(this.month)}, ${R._toString(this.year)})` },
-    relative: function () { return `DateRange.Relative(${R._toString(this.unit)}, ${R._toString(this.count)})` },
-    range   : function () { return `DateRange.Range(${R._toString(this.start)}, ${R._toString(this.end)})` },
-    named   : function () { return `DateRange.Named(${R._toString(this.name)})` },
+    year    : function () { return `IRDateRange.Year(${R._toString(this.year)})` },
+    quarter : function () { return `IRDateRange.Quarter(${R._toString(this.quarter)}, ${R._toString(this.year)})` },
+    month   : function () { return `IRDateRange.Month(${R._toString(this.month)}, ${R._toString(this.year)})` },
+    relative: function () { return `IRDateRange.Relative(${R._toString(this.unit)}, ${R._toString(this.count)})` },
+    range   : function () { return `IRDateRange.Range(${R._toString(this.start)}, ${R._toString(this.end)})` },
+    named   : function () { return `IRDateRange.Named(${R._toString(this.name)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -94,11 +96,11 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a DateRange.Year instance
- * @sig Year :: (Number) -> DateRange.Year
+ * Construct a IRDateRange.Year instance
+ * @sig Year :: (Number) -> IRDateRange.Year
  */
 const YearConstructor = function Year(year) {
-    const constructorName = 'DateRange.Year(year)'
+    const constructorName = 'IRDateRange.Year(year)'
     R.validateArgumentLength(constructorName, 1, arguments)
     R.validateNumber(constructorName, 'year', false, year)
 
@@ -107,14 +109,14 @@ const YearConstructor = function Year(year) {
     return result
 }
 
-DateRange.Year = YearConstructor
+IRDateRange.Year = YearConstructor
 
 /*
- * Construct a DateRange.Quarter instance
- * @sig Quarter :: (Number, Number) -> DateRange.Quarter
+ * Construct a IRDateRange.Quarter instance
+ * @sig Quarter :: (Number, Number) -> IRDateRange.Quarter
  */
 const QuarterConstructor = function Quarter(quarter, year) {
-    const constructorName = 'DateRange.Quarter(quarter, year)'
+    const constructorName = 'IRDateRange.Quarter(quarter, year)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateNumber(constructorName, 'quarter', false, quarter)
     R.validateNumber(constructorName, 'year', false, year)
@@ -125,14 +127,14 @@ const QuarterConstructor = function Quarter(quarter, year) {
     return result
 }
 
-DateRange.Quarter = QuarterConstructor
+IRDateRange.Quarter = QuarterConstructor
 
 /*
- * Construct a DateRange.Month instance
- * @sig Month :: (Number, Number) -> DateRange.Month
+ * Construct a IRDateRange.Month instance
+ * @sig Month :: (Number, Number) -> IRDateRange.Month
  */
 const MonthConstructor = function Month(month, year) {
-    const constructorName = 'DateRange.Month(month, year)'
+    const constructorName = 'IRDateRange.Month(month, year)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateNumber(constructorName, 'month', false, month)
     R.validateNumber(constructorName, 'year', false, year)
@@ -143,17 +145,16 @@ const MonthConstructor = function Month(month, year) {
     return result
 }
 
-DateRange.Month = MonthConstructor
+IRDateRange.Month = MonthConstructor
 
 /*
- * Construct a DateRange.Relative instance
- * @sig Relative :: (Unit, Number) -> DateRange.Relative
- *     Unit = /^(months|days|weeks|years)$/
+ * Construct a IRDateRange.Relative instance
+ * @sig Relative :: (String, Number) -> IRDateRange.Relative
  */
 const RelativeConstructor = function Relative(unit, count) {
-    const constructorName = 'DateRange.Relative(unit, count)'
+    const constructorName = 'IRDateRange.Relative(unit, count)'
     R.validateArgumentLength(constructorName, 2, arguments)
-    R.validateRegex(constructorName, /^(months|days|weeks|years)$/, 'unit', false, unit)
+    R.validateRegex(constructorName, FieldTypes.timeUnit, 'unit', false, unit)
     R.validateNumber(constructorName, 'count', false, count)
 
     const result = Object.create(RelativePrototype)
@@ -162,14 +163,14 @@ const RelativeConstructor = function Relative(unit, count) {
     return result
 }
 
-DateRange.Relative = RelativeConstructor
+IRDateRange.Relative = RelativeConstructor
 
 /*
- * Construct a DateRange.Range instance
- * @sig Range :: (String, String) -> DateRange.Range
+ * Construct a IRDateRange.Range instance
+ * @sig Range :: (String, String) -> IRDateRange.Range
  */
 const RangeConstructor = function Range(start, end) {
-    const constructorName = 'DateRange.Range(start, end)'
+    const constructorName = 'IRDateRange.Range(start, end)'
     R.validateArgumentLength(constructorName, 2, arguments)
     R.validateString(constructorName, 'start', false, start)
     R.validateString(constructorName, 'end', false, end)
@@ -180,79 +181,72 @@ const RangeConstructor = function Range(start, end) {
     return result
 }
 
-DateRange.Range = RangeConstructor
+IRDateRange.Range = RangeConstructor
 
 /*
- * Construct a DateRange.Named instance
- * @sig Named :: (Name) -> DateRange.Named
- *     Name = /^(last_quarter|last_month|last_year|this_quarter|this_month|this_year|year_to_date)$/
+ * Construct a IRDateRange.Named instance
+ * @sig Named :: (String) -> IRDateRange.Named
  */
 const NamedConstructor = function Named(name) {
-    const constructorName = 'DateRange.Named(name)'
+    const constructorName = 'IRDateRange.Named(name)'
     R.validateArgumentLength(constructorName, 1, arguments)
-    R.validateRegex(
-        constructorName,
-        /^(last_quarter|last_month|last_year|this_quarter|this_month|this_year|year_to_date)$/,
-        'name',
-        false,
-        name,
-    )
+    R.validateRegex(constructorName, FieldTypes.namedPeriod, 'name', false, name)
 
     const result = Object.create(NamedPrototype)
     result.name = name
     return result
 }
 
-DateRange.Named = NamedConstructor
+IRDateRange.Named = NamedConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const YearPrototype = Object.create(DateRangePrototype, {
+const YearPrototype = Object.create(IRDateRangePrototype, {
     '@@tagName': { value: 'Year', enumerable: false },
-    '@@typeName': { value: 'DateRange', enumerable: false },
+    '@@typeName': { value: 'IRDateRange', enumerable: false },
     toString: { value: toString.year, enumerable: false },
     toJSON: { value: toJSON.year, enumerable: false },
     constructor: { value: YearConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const QuarterPrototype = Object.create(DateRangePrototype, {
+const QuarterPrototype = Object.create(IRDateRangePrototype, {
     '@@tagName': { value: 'Quarter', enumerable: false },
-    '@@typeName': { value: 'DateRange', enumerable: false },
+    '@@typeName': { value: 'IRDateRange', enumerable: false },
     toString: { value: toString.quarter, enumerable: false },
     toJSON: { value: toJSON.quarter, enumerable: false },
     constructor: { value: QuarterConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const MonthPrototype = Object.create(DateRangePrototype, {
+const MonthPrototype = Object.create(IRDateRangePrototype, {
     '@@tagName': { value: 'Month', enumerable: false },
-    '@@typeName': { value: 'DateRange', enumerable: false },
+    '@@typeName': { value: 'IRDateRange', enumerable: false },
     toString: { value: toString.month, enumerable: false },
     toJSON: { value: toJSON.month, enumerable: false },
     constructor: { value: MonthConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const RelativePrototype = Object.create(DateRangePrototype, {
+const RelativePrototype = Object.create(IRDateRangePrototype, {
     '@@tagName': { value: 'Relative', enumerable: false },
-    '@@typeName': { value: 'DateRange', enumerable: false },
+    '@@typeName': { value: 'IRDateRange', enumerable: false },
     toString: { value: toString.relative, enumerable: false },
     toJSON: { value: toJSON.relative, enumerable: false },
     constructor: { value: RelativeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const RangePrototype = Object.create(DateRangePrototype, {
+const RangePrototype = Object.create(IRDateRangePrototype, {
     '@@tagName': { value: 'Range', enumerable: false },
-    '@@typeName': { value: 'DateRange', enumerable: false },
+    '@@typeName': { value: 'IRDateRange', enumerable: false },
     toString: { value: toString.range, enumerable: false },
     toJSON: { value: toJSON.range, enumerable: false },
     constructor: { value: RangeConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const NamedPrototype = Object.create(DateRangePrototype, {
+const NamedPrototype = Object.create(IRDateRangePrototype, {
     '@@tagName': { value: 'Named', enumerable: false },
-    '@@typeName': { value: 'DateRange', enumerable: false },
+    '@@typeName': { value: 'IRDateRange', enumerable: false },
     toString: { value: toString.named, enumerable: false },
     toJSON: { value: toJSON.named, enumerable: false },
     constructor: { value: NamedConstructor, enumerable: false, writable: true, configurable: true },
@@ -279,21 +273,21 @@ NamedConstructor.is = val => val && val.constructor === NamedConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-YearConstructor.toString = () => 'DateRange.Year'
-QuarterConstructor.toString = () => 'DateRange.Quarter'
-MonthConstructor.toString = () => 'DateRange.Month'
-RelativeConstructor.toString = () => 'DateRange.Relative'
-RangeConstructor.toString = () => 'DateRange.Range'
-NamedConstructor.toString = () => 'DateRange.Named'
+YearConstructor.toString = () => 'IRDateRange.Year'
+QuarterConstructor.toString = () => 'IRDateRange.Quarter'
+MonthConstructor.toString = () => 'IRDateRange.Month'
+RelativeConstructor.toString = () => 'IRDateRange.Relative'
+RangeConstructor.toString = () => 'IRDateRange.Range'
+NamedConstructor.toString = () => 'IRDateRange.Named'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-YearConstructor._from = _input => DateRange.Year(_input.year)
-QuarterConstructor._from = _input => DateRange.Quarter(_input.quarter, _input.year)
-MonthConstructor._from = _input => DateRange.Month(_input.month, _input.year)
-RelativeConstructor._from = _input => DateRange.Relative(_input.unit, _input.count)
-RangeConstructor._from = _input => DateRange.Range(_input.start, _input.end)
-NamedConstructor._from = _input => DateRange.Named(_input.name)
+YearConstructor._from = _input => IRDateRange.Year(_input.year)
+QuarterConstructor._from = _input => IRDateRange.Quarter(_input.quarter, _input.year)
+MonthConstructor._from = _input => IRDateRange.Month(_input.month, _input.year)
+RelativeConstructor._from = _input => IRDateRange.Relative(_input.unit, _input.count)
+RangeConstructor._from = _input => IRDateRange.Range(_input.start, _input.end)
+NamedConstructor._from = _input => IRDateRange.Named(_input.name)
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -304,38 +298,14 @@ RelativeConstructor.from = RelativeConstructor._from
 RangeConstructor.from = RangeConstructor._from
 NamedConstructor.from = NamedConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-YearConstructor.toFirestore = o => ({ ...o })
-YearConstructor.fromFirestore = YearConstructor._from
-
-QuarterConstructor.toFirestore = o => ({ ...o })
-QuarterConstructor.fromFirestore = QuarterConstructor._from
-
-MonthConstructor.toFirestore = o => ({ ...o })
-MonthConstructor.fromFirestore = MonthConstructor._from
-
-RelativeConstructor.toFirestore = o => ({ ...o })
-RelativeConstructor.fromFirestore = RelativeConstructor._from
-
-RangeConstructor.toFirestore = o => ({ ...o })
-RangeConstructor.fromFirestore = RangeConstructor._from
-
-NamedConstructor.toFirestore = o => ({ ...o })
-NamedConstructor.fromFirestore = NamedConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a DateRange instance
+ * Check if value is a IRDateRange instance
  * @sig is :: Any -> Boolean
  */
-DateRange.is = v => {
-    const { Year, Quarter, Month, Relative, Range, Named } = DateRange
+IRDateRange.is = v => {
+    const { Year, Quarter, Month, Relative, Range, Named } = IRDateRange
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return (
@@ -348,40 +318,10 @@ DateRange.is = v => {
     )
 }
 
-/**
- * Serialize DateRange to Firestore format
- * @sig _toFirestore :: (DateRange, Function) -> Object
- */
-DateRange._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = DateRange[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize DateRange from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> DateRange
- */
-DateRange._fromFirestore = (doc, decodeTimestamps) => {
-    const { Year, Quarter, Month, Relative, Range, Named } = DateRange
-    const tagName = doc['@@tagName']
-    if (tagName === 'Year') return Year.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Quarter') return Quarter.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Month') return Month.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Relative') return Relative.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Range') return Range.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Named') return Named.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized DateRange variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-DateRange.toFirestore = DateRange._toFirestore
-DateRange.fromFirestore = DateRange._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { DateRange }
+export { IRDateRange }

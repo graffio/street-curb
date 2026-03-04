@@ -1,6 +1,9 @@
+// ABOUTME: ActionRequest Tagged type definition for curb-map
+// ABOUTME: Immutable audit trail document wrapping an Action with SOC2 actor/subject/tenant metadata
 /** @module ActionRequest */
 
 import { pick } from '@graffio/functional'
+
 /**
  * ActionRequest represents a document in the completedActions collection
  * (immutable audit trail for SOC2 compliance)
@@ -13,6 +16,7 @@ import { FieldTypes } from './field-types.js'
 export const ActionRequest = {
     name: 'ActionRequest',
     kind: 'tagged',
+    firestore: true,
     fields: {
         // Identity
         id             : FieldTypes.actionRequestId,

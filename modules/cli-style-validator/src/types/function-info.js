@@ -86,14 +86,6 @@ FunctionInfo._from = _input => {
 }
 FunctionInfo.from = FunctionInfo._from
 
-FunctionInfo._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-FunctionInfo._fromFirestore = (doc, decodeTimestamps) => FunctionInfo._from(doc)
-
-// Public aliases (override if necessary)
-FunctionInfo.toFirestore = FunctionInfo._toFirestore
-FunctionInfo.fromFirestore = FunctionInfo._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

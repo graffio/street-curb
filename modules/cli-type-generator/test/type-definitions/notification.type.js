@@ -4,6 +4,7 @@
 export const Notification = {
     name: 'Notification',
     kind: 'taggedSum',
+    firestore: true,
     variants: {
         Scheduled: { message: 'String', scheduledFor: 'Date' },
         Sent:      { message: 'String', sentAt: 'Date', deliveredAt: 'Date?' },

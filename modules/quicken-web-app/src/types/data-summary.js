@@ -94,33 +94,6 @@ DataSummary._from = _input => {
 }
 DataSummary.from = DataSummary._from
 
-DataSummary._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        categories: o.categories,
-        accounts: o.accounts.map(item1 => AccountSummary.toFirestore(item1, encodeTimestamps)),
-        accountTypes: o.accountTypes,
-        payees: o.payees,
-    }
-
-    return result
-}
-
-DataSummary._fromFirestore = (doc, decodeTimestamps) =>
-    DataSummary._from({
-        categories: doc.categories,
-        accounts: doc.accounts.map(item1 =>
-            AccountSummary.fromFirestore
-                ? AccountSummary.fromFirestore(item1, decodeTimestamps)
-                : AccountSummary.from(item1),
-        ),
-        accountTypes: doc.accountTypes,
-        payees: doc.payees,
-    })
-
-// Public aliases (override if necessary)
-DataSummary.toFirestore = DataSummary._toFirestore
-DataSummary.fromFirestore = DataSummary._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -1,8 +1,8 @@
-// ABOUTME: Generated type definition for QueryOutput
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/query-output.type.js - do not edit manually
+// ABOUTME: Generated type definition for IROutput
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-output.type.js - do not edit manually
 
-/** {@link module:QueryOutput} */
-/*  QueryOutput generated from: modules/quicken-web-app/type-definitions/query-output.type.js
+/** {@link module:IROutput} */
+/*  IROutput generated from: modules/quicken-web-app/type-definitions/ir-output.type.js
  *
  *  show  : "[String]?",
  *  format: "String?"
@@ -18,11 +18,11 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a QueryOutput instance
- * @sig QueryOutput :: ([String]?, String?) -> QueryOutput
+ * Construct a IROutput instance
+ * @sig IROutput :: ([String]?, String?) -> IROutput
  */
-const QueryOutput = function QueryOutput(show, format) {
-    const constructorName = 'QueryOutput(show, format)'
+const IROutput = function IROutput(show, format) {
+    const constructorName = 'IROutput(show, format)'
 
     R.validateArray(constructorName, 1, 'String', undefined, 'show', true, show)
     R.validateString(constructorName, 'format', true, format)
@@ -41,17 +41,17 @@ const QueryOutput = function QueryOutput(show, format) {
 
 /**
  * Convert to string representation
- * @sig queryoutputToString :: () -> String
+ * @sig iroutputToString :: () -> String
  */
-const queryoutputToString = function () {
-    return `QueryOutput(${R._toString(this.show)}, ${R._toString(this.format)})`
+const iroutputToString = function () {
+    return `IROutput(${R._toString(this.show)}, ${R._toString(this.format)})`
 }
 
 /*
  * Convert to JSON representation
- * @sig queryoutputToJSON :: () -> Object
+ * @sig iroutputToJSON :: () -> Object
  */
-const queryoutputToJSON = function () {
+const iroutputToJSON = function () {
     return this
 }
 
@@ -61,32 +61,24 @@ const queryoutputToJSON = function () {
 //
 // -------------------------------------------------------------------------------------------------------------
 const prototype = Object.create(Object.prototype, {
-    '@@typeName': { value: 'QueryOutput', enumerable: false },
-    toString: { value: queryoutputToString, enumerable: false },
-    toJSON: { value: queryoutputToJSON, enumerable: false },
-    constructor: { value: QueryOutput, enumerable: false, writable: true, configurable: true },
+    '@@typeName': { value: 'IROutput', enumerable: false },
+    toString: { value: iroutputToString, enumerable: false },
+    toJSON: { value: iroutputToJSON, enumerable: false },
+    constructor: { value: IROutput, enumerable: false, writable: true, configurable: true },
 })
 
-QueryOutput.prototype = prototype
+IROutput.prototype = prototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // static methods
 //
 // -------------------------------------------------------------------------------------------------------------
-QueryOutput.toString = () => 'QueryOutput'
-QueryOutput.is = v => v && v['@@typeName'] === 'QueryOutput'
+IROutput.toString = () => 'IROutput'
+IROutput.is = v => v && v['@@typeName'] === 'IROutput'
 
-QueryOutput._from = _input => QueryOutput(_input.show, _input.format)
-QueryOutput.from = QueryOutput._from
-
-QueryOutput._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-QueryOutput._fromFirestore = (doc, decodeTimestamps) => QueryOutput._from(doc)
-
-// Public aliases (override if necessary)
-QueryOutput.toFirestore = QueryOutput._toFirestore
-QueryOutput.fromFirestore = QueryOutput._fromFirestore
+IROutput._from = _input => IROutput(_input.show, _input.format)
+IROutput.from = IROutput._from
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -94,4 +86,4 @@ QueryOutput.fromFirestore = QueryOutput._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { QueryOutput }
+export { IROutput }

@@ -82,14 +82,6 @@ SortOrder.is = v => v && v['@@typeName'] === 'SortOrder'
 SortOrder._from = _input => SortOrder(_input.id, _input.isDescending)
 SortOrder.from = SortOrder._from
 
-SortOrder._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-SortOrder._fromFirestore = (doc, decodeTimestamps) => SortOrder._from(doc)
-
-// Public aliases (override if necessary)
-SortOrder.toFirestore = SortOrder._toFirestore
-SortOrder.fromFirestore = SortOrder._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

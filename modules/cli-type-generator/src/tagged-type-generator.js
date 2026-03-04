@@ -58,12 +58,12 @@ const generateStaticTaggedType = async typeDefinition => {
      */
     const shouldGenerate = (functionName, existingFunctions) => !existingFunctions.includes(functionName)
 
-    const { name, fields, relativePath, imports = [], functions = [] } = typeDefinition
+    const { name, fields, relativePath, firestore, imports = [], functions = [] } = typeDefinition
 
     const existingStandard = ParseTypeDefinitionFile.findExistingStandardFunctions(functions)
 
     // Validate no [Date] arrays since Firestore facade can't handle them
-    validateNoDateArrays(name, fields)
+    if (firestore) validateNoDateArrays(name, fields)
 
     // Filter out child types that are already imported by the user
     // Import info has structure: { source, specifiers: [{ type, imported, local }] }
@@ -86,7 +86,10 @@ const generateStaticTaggedType = async typeDefinition => {
     const childTypeImports = newChildTypes
         .map(
             typeName =>
-                `import { ${typeName} } from './${typeName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}.js'`,
+                `import { ${typeName} } from './${typeName
+                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+                    .replace(/([a-z])([A-Z])/g, '$1-$2')
+                    .toLowerCase()}.js'`,
         )
         .join('\n        ')
 
@@ -143,11 +146,15 @@ const generateStaticTaggedType = async typeDefinition => {
         ${`${name}._from = ${Expressions.generateFrom('prototype', name, name, fields)}`}
         ${shouldGenerate('from', existingStandard) ? `${name}.from = ${name}._from` : ''}
 
-        ${FirestoreSerialization.generateFirestoreSerializationForTagged(name, fields)}
+        ${firestore ? FirestoreSerialization.generateFirestoreSerializationForTagged(name, fields) : ''}
 
-        // Public aliases (override if necessary)
+        ${
+            firestore
+                ? `// Public aliases (override if necessary)
         ${shouldGenerate('toFirestore', existingStandard) ? `${name}.toFirestore = ${name}._toFirestore` : ''}
-        ${shouldGenerate('fromFirestore', existingStandard) ? `${name}.fromFirestore = ${name}._fromFirestore` : ''}
+        ${shouldGenerate('fromFirestore', existingStandard) ? `${name}.fromFirestore = ${name}._fromFirestore` : ''}`
+                : ''
+        }
 
         // -------------------------------------------------------------------------------------------------------------
         //
@@ -173,11 +180,11 @@ const generateStaticTaggedSumType = async typeDefinition => {
     const variantConstructorWithSig = vn => `${generateConstructorSig(`${name}.${vn}`, variants[vn])}
         ${Variant.generateVariantConstructorDef(name, vn, Expressions.generateTypeConstructor(vn, `${name}.${vn}`, variants[vn]))}`
 
-    const { name, variants, relativePath, imports = [], functions = [] } = typeDefinition
+    const { name, variants, relativePath, firestore, imports = [], functions = [] } = typeDefinition
     const variantNames = Object.keys(variants)
 
     // Validate all variants upfront
-    variantNames.forEach(vn => validateNoDateArrays(`${name}.${vn}`, variants[vn]))
+    if (firestore) variantNames.forEach(vn => validateNoDateArrays(`${name}.${vn}`, variants[vn]))
 
     // Generate each concern across all variants
     const toStringVariants = variantNames.map(vn => [lowerFirst(vn), `${name}.${vn}`, variants[vn]])
@@ -192,9 +199,11 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
     const staticMethods = Variant.generateAllStaticMethods(name, variantNames, variants)
 
-    const firestoreMethods = variantNames
-        .map(vn => FirestoreSerialization.generateFirestoreSerializationForTaggedSumVariant(vn, variants[vn]))
-        .join('\n\n')
+    const firestoreMethods = firestore
+        ? variantNames
+              .map(vn => FirestoreSerialization.generateFirestoreSerializationForTaggedSumVariant(vn, variants[vn]))
+              .join('\n\n')
+        : ''
 
     // Collect child types from all variant fields for imports
     const childTypes = new Set(
@@ -211,7 +220,10 @@ const generateStaticTaggedSumType = async typeDefinition => {
     const childTypeImports = newChildTypes
         .map(
             typeName =>
-                `import { ${typeName} } from './${typeName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}.js'`,
+                `import { ${typeName} } from './${typeName
+                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+                    .replace(/([a-z])([A-Z])/g, '$1-$2')
+                    .toLowerCase()}.js'`,
         )
         .join('\n        ')
 
@@ -287,17 +299,21 @@ const generateStaticTaggedSumType = async typeDefinition => {
 
         ${staticMethods}
 
-        // -------------------------------------------------------------------------------------------------------------
+        ${
+            firestore
+                ? `// -------------------------------------------------------------------------------------------------------------
         //
         // Variant Firestore serialization
         //
         // -------------------------------------------------------------------------------------------------------------
-        ${firestoreMethods}
+        ${firestoreMethods}`
+                : ''
+        }
 
         // Define is method after variants are attached (allows destructuring)
         ${generateIsMethod(name, variantNames)}
 
-        ${FirestoreSerialization.generateFirestoreSerializationForTaggedSum(name, variants)}
+        ${firestore ? FirestoreSerialization.generateFirestoreSerializationForTaggedSum(name, variants) : ''}
 
         // -------------------------------------------------------------------------------------------------------------
         //

@@ -1,3 +1,5 @@
+// ABOUTME: OperationDetails TaggedSum type definition for curb-map
+// ABOUTME: Structured technical details for infrastructure ops: shell, Firestore, or GCP project operations
 /** @module OperationDetails */
 /**
  * OperationDetails represents structured technical details for different types of infrastructure operations
@@ -8,6 +10,7 @@
 export const OperationDetails = {
     name: 'OperationDetails',
     kind: 'taggedSum',
+    firestore: true,
     variants: {
         ShellExecution: {
             command      : 'String',

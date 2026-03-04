@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for LotAllocation
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/lot-allocation.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/lot-allocation.type.js - do not edit manually
 
 /** {@link module:LotAllocation} */
-/*  LotAllocation generated from: modules/quicken-type-definitions/lot-allocation.type.js
+/*  LotAllocation generated from: modules/quicken-web-app/type-definitions/lot-allocation.type.js
  *
  *  id                : FieldTypes.lotAllocationId,
  *  lotId             : FieldTypes.lotId,
@@ -101,14 +101,6 @@ LotAllocation._from = _input => {
     return LotAllocation(id, lotId, transactionId, sharesAllocated, costBasisAllocated, date)
 }
 LotAllocation.from = LotAllocation._from
-
-LotAllocation._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-LotAllocation._fromFirestore = (doc, decodeTimestamps) => LotAllocation._from(doc)
-
-// Public aliases (override if necessary)
-LotAllocation.toFirestore = LotAllocation._toFirestore
-LotAllocation.fromFirestore = LotAllocation._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

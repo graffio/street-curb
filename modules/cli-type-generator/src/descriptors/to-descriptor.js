@@ -72,10 +72,20 @@ const toDescriptor = parseResult => {
      */
     const normalizeTagged = pr => {
         const { typeDefinition, imports, functions } = pr
-        const { name, fields: rawFields } = typeDefinition
+        const { name, fields: rawFields, firestore } = typeDefinition
         const { fields, childTypes, hasLookupTable } = normalizeFields(rawFields)
+        const result = {
+            kind: 'tagged',
+            name,
+            fields,
+            childTypes,
+            needsLookupTable: hasLookupTable,
+            imports,
+            functions,
+        }
 
-        return { kind: 'tagged', name, fields, childTypes, needsLookupTable: hasLookupTable, imports, functions }
+        if (firestore) result.firestore = true
+        return result
     }
 
     /**
@@ -105,14 +115,16 @@ const toDescriptor = parseResult => {
         }
 
         const { typeDefinition, imports, functions } = pr
-        const { name, variants: rawVariants } = typeDefinition
+        const { name, variants: rawVariants, firestore } = typeDefinition
 
         const variants = {}
         const childTypes = []
         let needsLookupTable = false
         Object.entries(rawVariants).forEach(processVariant)
 
-        return { kind: 'taggedSum', name, variants, childTypes, needsLookupTable, imports, functions }
+        const result = { kind: 'taggedSum', name, variants, childTypes, needsLookupTable, imports, functions }
+        if (firestore) result.firestore = true
+        return result
     }
 
     const { kind } = parseResult.typeDefinition

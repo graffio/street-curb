@@ -1,7 +1,7 @@
-// ABOUTME: Generated type definition for Domain
-// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/domain.type.js - do not edit manually
+// ABOUTME: Generated type definition for IRDomain
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/ir-domain.type.js - do not edit manually
 
-/*  Domain generated from: modules/quicken-web-app/type-definitions/domain.type.js
+/*  IRDomain generated from: modules/quicken-web-app/type-definitions/ir-domain.type.js
  *
  *  Transactions
  *  Holdings
@@ -13,33 +13,33 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 // -------------------------------------------------------------------------------------------------------------
 //
-// Domain constructor
+// IRDomain constructor
 //
 // -------------------------------------------------------------------------------------------------------------
-const Domain = {
-    toString: () => 'Domain',
+const IRDomain = {
+    toString: () => 'IRDomain',
 }
 
 // Add hidden properties
-Object.defineProperty(Domain, '@@typeName', { value: 'Domain', enumerable: false })
-Object.defineProperty(Domain, '@@tagNames', { value: ['Transactions', 'Holdings', 'Accounts'], enumerable: false })
+Object.defineProperty(IRDomain, '@@typeName', { value: 'IRDomain', enumerable: false })
+Object.defineProperty(IRDomain, '@@tagNames', { value: ['Transactions', 'Holdings', 'Accounts'], enumerable: false })
 
 // Type prototype with match method
-const DomainPrototype = {}
+const IRDomainPrototype = {}
 
-Object.defineProperty(DomainPrototype, 'match', {
-    value: R.match(Domain['@@tagNames']),
+Object.defineProperty(IRDomainPrototype, 'match', {
+    value: R.match(IRDomain['@@tagNames']),
     enumerable: false,
 })
 
-Object.defineProperty(DomainPrototype, 'constructor', {
-    value: Domain,
+Object.defineProperty(IRDomainPrototype, 'constructor', {
+    value: IRDomain,
     enumerable: false,
     writable: true,
     configurable: true,
 })
 
-Domain.prototype = DomainPrototype
+IRDomain.prototype = IRDomainPrototype
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -48,9 +48,9 @@ Domain.prototype = DomainPrototype
 // -------------------------------------------------------------------------------------------------------------
 // prettier-ignore
 const toString = {
-    transactions: function () { return `Domain.Transactions()` },
-    holdings    : function () { return `Domain.Holdings()` },
-    accounts    : function () { return `Domain.Accounts()` },
+    transactions: function () { return `IRDomain.Transactions()` },
+    holdings    : function () { return `IRDomain.Holdings()` },
+    accounts    : function () { return `IRDomain.Accounts()` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -72,11 +72,11 @@ const toJSON = {
 // -------------------------------------------------------------------------------------------------------------
 
 /*
- * Construct a Domain.Transactions instance
- * @sig Transactions :: () -> Domain.Transactions
+ * Construct a IRDomain.Transactions instance
+ * @sig Transactions :: () -> IRDomain.Transactions
  */
 const TransactionsConstructor = function Transactions() {
-    const constructorName = 'Domain.Transactions()'
+    const constructorName = 'IRDomain.Transactions()'
     R.validateArgumentLength(constructorName, 0, arguments)
 
     const result = Object.create(TransactionsPrototype)
@@ -84,14 +84,14 @@ const TransactionsConstructor = function Transactions() {
     return result
 }
 
-Domain.Transactions = TransactionsConstructor
+IRDomain.Transactions = TransactionsConstructor
 
 /*
- * Construct a Domain.Holdings instance
- * @sig Holdings :: () -> Domain.Holdings
+ * Construct a IRDomain.Holdings instance
+ * @sig Holdings :: () -> IRDomain.Holdings
  */
 const HoldingsConstructor = function Holdings() {
-    const constructorName = 'Domain.Holdings()'
+    const constructorName = 'IRDomain.Holdings()'
     R.validateArgumentLength(constructorName, 0, arguments)
 
     const result = Object.create(HoldingsPrototype)
@@ -99,14 +99,14 @@ const HoldingsConstructor = function Holdings() {
     return result
 }
 
-Domain.Holdings = HoldingsConstructor
+IRDomain.Holdings = HoldingsConstructor
 
 /*
- * Construct a Domain.Accounts instance
- * @sig Accounts :: () -> Domain.Accounts
+ * Construct a IRDomain.Accounts instance
+ * @sig Accounts :: () -> IRDomain.Accounts
  */
 const AccountsConstructor = function Accounts() {
-    const constructorName = 'Domain.Accounts()'
+    const constructorName = 'IRDomain.Accounts()'
     R.validateArgumentLength(constructorName, 0, arguments)
 
     const result = Object.create(AccountsPrototype)
@@ -114,32 +114,32 @@ const AccountsConstructor = function Accounts() {
     return result
 }
 
-Domain.Accounts = AccountsConstructor
+IRDomain.Accounts = AccountsConstructor
 
 // -------------------------------------------------------------------------------------------------------------
 //
 // Variant prototypes
 //
 // -------------------------------------------------------------------------------------------------------------
-const TransactionsPrototype = Object.create(DomainPrototype, {
+const TransactionsPrototype = Object.create(IRDomainPrototype, {
     '@@tagName': { value: 'Transactions', enumerable: false },
-    '@@typeName': { value: 'Domain', enumerable: false },
+    '@@typeName': { value: 'IRDomain', enumerable: false },
     toString: { value: toString.transactions, enumerable: false },
     toJSON: { value: toJSON.transactions, enumerable: false },
     constructor: { value: TransactionsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const HoldingsPrototype = Object.create(DomainPrototype, {
+const HoldingsPrototype = Object.create(IRDomainPrototype, {
     '@@tagName': { value: 'Holdings', enumerable: false },
-    '@@typeName': { value: 'Domain', enumerable: false },
+    '@@typeName': { value: 'IRDomain', enumerable: false },
     toString: { value: toString.holdings, enumerable: false },
     toJSON: { value: toJSON.holdings, enumerable: false },
     constructor: { value: HoldingsConstructor, enumerable: false, writable: true, configurable: true },
 })
 
-const AccountsPrototype = Object.create(DomainPrototype, {
+const AccountsPrototype = Object.create(IRDomainPrototype, {
     '@@tagName': { value: 'Accounts', enumerable: false },
-    '@@typeName': { value: 'Domain', enumerable: false },
+    '@@typeName': { value: 'IRDomain', enumerable: false },
     toString: { value: toString.accounts, enumerable: false },
     toJSON: { value: toJSON.accounts, enumerable: false },
     constructor: { value: AccountsConstructor, enumerable: false, writable: true, configurable: true },
@@ -160,15 +160,15 @@ AccountsConstructor.is = val => val && val.constructor === AccountsConstructor
 // -------------------------------------------------------------------------------------------------------------
 // Variant static toString
 // -------------------------------------------------------------------------------------------------------------
-TransactionsConstructor.toString = () => 'Domain.Transactions'
-HoldingsConstructor.toString = () => 'Domain.Holdings'
-AccountsConstructor.toString = () => 'Domain.Accounts'
+TransactionsConstructor.toString = () => 'IRDomain.Transactions'
+HoldingsConstructor.toString = () => 'IRDomain.Holdings'
+AccountsConstructor.toString = () => 'IRDomain.Accounts'
 // -------------------------------------------------------------------------------------------------------------
 // Variant static _from
 // -------------------------------------------------------------------------------------------------------------
-TransactionsConstructor._from = _input => Domain.Transactions()
-HoldingsConstructor._from = _input => Domain.Holdings()
-AccountsConstructor._from = _input => Domain.Accounts()
+TransactionsConstructor._from = _input => IRDomain.Transactions()
+HoldingsConstructor._from = _input => IRDomain.Holdings()
+AccountsConstructor._from = _input => IRDomain.Accounts()
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
 // -------------------------------------------------------------------------------------------------------------
@@ -176,60 +176,18 @@ TransactionsConstructor.from = TransactionsConstructor._from
 HoldingsConstructor.from = HoldingsConstructor._from
 AccountsConstructor.from = AccountsConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-TransactionsConstructor.toFirestore = o => ({ ...o })
-TransactionsConstructor.fromFirestore = TransactionsConstructor._from
-
-HoldingsConstructor.toFirestore = o => ({ ...o })
-HoldingsConstructor.fromFirestore = HoldingsConstructor._from
-
-AccountsConstructor.toFirestore = o => ({ ...o })
-AccountsConstructor.fromFirestore = AccountsConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
- * Check if value is a Domain instance
+ * Check if value is a IRDomain instance
  * @sig is :: Any -> Boolean
  */
-Domain.is = v => {
-    const { Transactions, Holdings, Accounts } = Domain
+IRDomain.is = v => {
+    const { Transactions, Holdings, Accounts } = IRDomain
     if (typeof v !== 'object') return false
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Transactions || constructor === Holdings || constructor === Accounts
 }
-
-/**
- * Serialize Domain to Firestore format
- * @sig _toFirestore :: (Domain, Function) -> Object
- */
-Domain._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = Domain[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize Domain from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Domain
- */
-Domain._fromFirestore = (doc, decodeTimestamps) => {
-    const { Transactions, Holdings, Accounts } = Domain
-    const tagName = doc['@@tagName']
-    if (tagName === 'Transactions') return Transactions.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Holdings') return Holdings.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Accounts') return Accounts.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized Domain variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-Domain.toFirestore = Domain._toFirestore
-Domain.fromFirestore = Domain._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //
@@ -237,4 +195,4 @@ Domain.fromFirestore = Domain._fromFirestore
 //
 // -------------------------------------------------------------------------------------------------------------
 
-export { Domain }
+export { IRDomain }

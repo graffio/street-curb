@@ -1,3 +1,5 @@
+// ABOUTME: AuditRecord Tagged type definition for curb-map
+// ABOUTME: SOC2-compliant infrastructure audit log entry with event, actor, resource, and outcome fields
 /** @module AuditRecord */
 
 import { FieldTypes } from './field-types.js'
@@ -9,6 +11,7 @@ import { FieldTypes } from './field-types.js'
 export const AuditRecord = {
     name: 'AuditRecord',
     kind: 'tagged',
+    firestore: true,
     fields: {
         id              : FieldTypes.auditRecordId,
         

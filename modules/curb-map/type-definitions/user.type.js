@@ -1,3 +1,5 @@
+// ABOUTME: User Tagged type definition for curb-map
+// ABOUTME: An authenticated user with email, display name, and organization memberships
 /** @module User */
 import { FieldTypes } from './field-types.js'
 
@@ -10,6 +12,7 @@ import { FieldTypes } from './field-types.js'
 export const User = {
     name: 'User',
     kind: 'tagged',
+    firestore: true,
     fields: {
         id              : FieldTypes.userId,
         email           : FieldTypes.email,

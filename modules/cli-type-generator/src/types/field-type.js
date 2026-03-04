@@ -195,31 +195,6 @@ StringTypeConstructor.from = StringTypeConstructor._from
 RegexTypeConstructor.from = RegexTypeConstructor._from
 ImportPlaceholderConstructor.from = ImportPlaceholderConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-StringTypeConstructor.toFirestore = o => ({ ...o })
-StringTypeConstructor.fromFirestore = StringTypeConstructor._from
-
-RegexTypeConstructor._toFirestore = (o, encodeTimestamps) => ({
-    value: RegExp.toFirestore(o.value, encodeTimestamps),
-})
-
-RegexTypeConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    RegexTypeConstructor._from({
-        value: RegExp.fromFirestore ? RegExp.fromFirestore(doc.value, decodeTimestamps) : RegExp.from(doc.value),
-    })
-
-// Public aliases (can be overridden)
-RegexTypeConstructor.toFirestore = RegexTypeConstructor._toFirestore
-RegexTypeConstructor.fromFirestore = RegexTypeConstructor._fromFirestore
-
-ImportPlaceholderConstructor.toFirestore = o => ({ ...o })
-ImportPlaceholderConstructor.fromFirestore = ImportPlaceholderConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -232,33 +207,6 @@ FieldType.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === StringType || constructor === RegexType || constructor === ImportPlaceholder
 }
-
-/**
- * Serialize FieldType to Firestore format
- * @sig _toFirestore :: (FieldType, Function) -> Object
- */
-FieldType._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = FieldType[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize FieldType from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> FieldType
- */
-FieldType._fromFirestore = (doc, decodeTimestamps) => {
-    const { StringType, RegexType, ImportPlaceholder } = FieldType
-    const tagName = doc['@@tagName']
-    if (tagName === 'StringType') return StringType.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'RegexType') return RegexType.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'ImportPlaceholder') return ImportPlaceholder.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized FieldType variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-FieldType.toFirestore = FieldType._toFirestore
-FieldType.fromFirestore = FieldType._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

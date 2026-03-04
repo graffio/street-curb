@@ -654,84 +654,6 @@ TagConstructor.from = TagConstructor._from
 TransactionBankConstructor.from = TransactionBankConstructor._from
 TransactionInvestmentConstructor.from = TransactionInvestmentConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-AccountConstructor.toFirestore = o => ({ ...o })
-AccountConstructor.fromFirestore = AccountConstructor._from
-
-CategoryConstructor.toFirestore = o => ({ ...o })
-CategoryConstructor.fromFirestore = CategoryConstructor._from
-
-ClassConstructor.toFirestore = o => ({ ...o })
-ClassConstructor.fromFirestore = ClassConstructor._from
-
-PayeeConstructor.toFirestore = o => ({ ...o })
-PayeeConstructor.fromFirestore = PayeeConstructor._from
-
-PriceConstructor.toFirestore = o => ({ ...o })
-PriceConstructor.fromFirestore = PriceConstructor._from
-
-SecurityConstructor.toFirestore = o => ({ ...o })
-SecurityConstructor.fromFirestore = SecurityConstructor._from
-
-TagConstructor.toFirestore = o => ({ ...o })
-TagConstructor.fromFirestore = TagConstructor._from
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (TransactionBank, Function) -> Object
- */
-TransactionBankConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = o
-    return {
-        account: account,
-        amount: amount,
-        date: date,
-        transactionType: transactionType,
-        address: address,
-        category: category,
-        cleared: cleared,
-        memo: memo,
-        number: number,
-        payee: payee,
-        splits: splits.map(item1 => QifSplit.toFirestore(item1, encodeTimestamps)),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> TransactionBank
- */
-TransactionBankConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { account, amount, date, transactionType, address, category, cleared, memo, number, payee, splits } = doc
-    return TransactionBankConstructor._from({
-        account: account,
-        amount: amount,
-        date: date,
-        transactionType: transactionType,
-        address: address,
-        category: category,
-        cleared: cleared,
-        memo: memo,
-        number: number,
-        payee: payee,
-        splits: splits.map(item1 =>
-            QifSplit.fromFirestore ? QifSplit.fromFirestore(item1, decodeTimestamps) : QifSplit.from(item1),
-        ),
-    })
-}
-
-// Public aliases (can be overridden)
-TransactionBankConstructor.toFirestore = TransactionBankConstructor._toFirestore
-TransactionBankConstructor.fromFirestore = TransactionBankConstructor._fromFirestore
-
-TransactionInvestmentConstructor.toFirestore = o => ({ ...o })
-TransactionInvestmentConstructor.fromFirestore = TransactionInvestmentConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -754,39 +676,6 @@ QifEntry.is = v => {
         constructor === TransactionInvestment
     )
 }
-
-/**
- * Serialize QifEntry to Firestore format
- * @sig _toFirestore :: (QifEntry, Function) -> Object
- */
-QifEntry._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = QifEntry[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize QifEntry from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> QifEntry
- */
-QifEntry._fromFirestore = (doc, decodeTimestamps) => {
-    const { Account, Category, Class, Payee, Price, Security, Tag, TransactionBank, TransactionInvestment } = QifEntry
-    const tagName = doc['@@tagName']
-    if (tagName === 'Account') return Account.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Category') return Category.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Class') return Class.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Payee') return Payee.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Price') return Price.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Security') return Security.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Tag') return Tag.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'TransactionBank') return TransactionBank.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'TransactionInvestment') return TransactionInvestment.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized QifEntry variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-QifEntry.toFirestore = QifEntry._toFirestore
-QifEntry.fromFirestore = QifEntry._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -1,12 +1,12 @@
 // ABOUTME: Generated type definition for Account
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/account.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/account.type.js - do not edit manually
 
 /** {@link module:Account} */
-/*  Account generated from: modules/quicken-type-definitions/account.type.js
+/*  Account generated from: modules/quicken-web-app/type-definitions/account.type.js
  *
  *  id         : FieldTypes.accountId,
  *  name       : "String",
- *  type       : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
+ *  type       : FieldTypes.accountType,
  *  description: "String?",
  *  creditLimit: "Number?"
  *
@@ -24,21 +24,14 @@ import { RuntimeForGeneratedTypes as R } from '@graffio/cli-type-generator'
 
 /*
  * Construct a Account instance
- * @sig Account :: (String, String, Type, String?, Number?) -> Account
- *     Type = /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/
+ * @sig Account :: (String, String, String, String?, Number?) -> Account
  */
 const Account = function Account(id, name, type, description, creditLimit) {
     const constructorName = 'Account(id, name, type, description, creditLimit)'
 
     R.validateRegex(constructorName, FieldTypes.accountId, 'id', false, id)
     R.validateString(constructorName, 'name', false, name)
-    R.validateRegex(
-        constructorName,
-        /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
-        'type',
-        false,
-        type,
-    )
+    R.validateRegex(constructorName, FieldTypes.accountType, 'type', false, type)
     R.validateString(constructorName, 'description', true, description)
     R.validateNumber(constructorName, 'creditLimit', true, creditLimit)
 
@@ -104,14 +97,6 @@ Account._from = _input => {
     return Account(id, name, type, description, creditLimit)
 }
 Account.from = Account._from
-
-Account._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Account._fromFirestore = (doc, decodeTimestamps) => Account._from(doc)
-
-// Public aliases (override if necessary)
-Account.toFirestore = Account._toFirestore
-Account.fromFirestore = Account._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

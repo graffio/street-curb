@@ -1,8 +1,8 @@
 // ABOUTME: Generated type definition for Category
-// ABOUTME: Auto-generated from modules/quicken-type-definitions/category.type.js - do not edit manually
+// ABOUTME: Auto-generated from modules/quicken-web-app/type-definitions/category.type.js - do not edit manually
 
 /** {@link module:Category} */
-/*  Category generated from: modules/quicken-type-definitions/category.type.js
+/*  Category generated from: modules/quicken-web-app/type-definitions/category.type.js
  *
  *  id              : FieldTypes.categoryId,
  *  name            : "String",
@@ -105,14 +105,6 @@ Category._from = _input => {
     return Category(id, name, description, budgetAmount, isIncomeCategory, isTaxRelated, taxSchedule)
 }
 Category.from = Category._from
-
-Category._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Category._fromFirestore = (doc, decodeTimestamps) => Category._from(doc)
-
-// Public aliases (override if necessary)
-Category.toFirestore = Category._toFirestore
-Category.fromFirestore = Category._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

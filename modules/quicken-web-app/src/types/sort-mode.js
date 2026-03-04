@@ -210,24 +210,6 @@ ByAmountConstructor.from = ByAmountConstructor._from
 ByTypeConstructor.from = ByTypeConstructor._from
 ManualConstructor.from = ManualConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-AlphabeticalConstructor.toFirestore = o => ({ ...o })
-AlphabeticalConstructor.fromFirestore = AlphabeticalConstructor._from
-
-ByAmountConstructor.toFirestore = o => ({ ...o })
-ByAmountConstructor.fromFirestore = ByAmountConstructor._from
-
-ByTypeConstructor.toFirestore = o => ({ ...o })
-ByTypeConstructor.fromFirestore = ByTypeConstructor._from
-
-ManualConstructor.toFirestore = o => ({ ...o })
-ManualConstructor.fromFirestore = ManualConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -240,34 +222,6 @@ SortMode.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Alphabetical || constructor === ByAmount || constructor === ByType || constructor === Manual
 }
-
-/**
- * Serialize SortMode to Firestore format
- * @sig _toFirestore :: (SortMode, Function) -> Object
- */
-SortMode._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = SortMode[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize SortMode from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> SortMode
- */
-SortMode._fromFirestore = (doc, decodeTimestamps) => {
-    const { Alphabetical, ByAmount, ByType, Manual } = SortMode
-    const tagName = doc['@@tagName']
-    if (tagName === 'Alphabetical') return Alphabetical.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'ByAmount') return ByAmount.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'ByType') return ByType.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Manual') return Manual.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized SortMode variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-SortMode.toFirestore = SortMode._toFirestore
-SortMode.fromFirestore = SortMode._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

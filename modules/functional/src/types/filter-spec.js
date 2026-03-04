@@ -237,78 +237,6 @@ DateRangeConstructor.from = DateRangeConstructor._from
 CategoryMatchConstructor.from = CategoryMatchConstructor._from
 CompoundConstructor.from = CompoundConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-TextMatchConstructor.toFirestore = o => ({ ...o })
-TextMatchConstructor.fromFirestore = TextMatchConstructor._from
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (DateRange, Function) -> Object
- */
-DateRangeConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { field, start, end } = o
-    return {
-        field: field,
-        start: encodeTimestamps(start),
-        end: encodeTimestamps(end),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> DateRange
- */
-DateRangeConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { field, start, end } = doc
-    return DateRangeConstructor._from({
-        field: field,
-        start: decodeTimestamps(start),
-        end: decodeTimestamps(end),
-    })
-}
-
-// Public aliases (can be overridden)
-DateRangeConstructor.toFirestore = DateRangeConstructor._toFirestore
-DateRangeConstructor.fromFirestore = DateRangeConstructor._fromFirestore
-
-CategoryMatchConstructor.toFirestore = o => ({ ...o })
-CategoryMatchConstructor.fromFirestore = CategoryMatchConstructor._from
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Compound, Function) -> Object
- */
-CompoundConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { filters, mode } = o
-    return {
-        filters: filters.map(item1 => FilterSpec.toFirestore(item1, encodeTimestamps)),
-        mode: mode,
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Compound
- */
-CompoundConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { filters, mode } = doc
-    return CompoundConstructor._from({
-        filters: filters.map(item1 =>
-            FilterSpec.fromFirestore ? FilterSpec.fromFirestore(item1, decodeTimestamps) : FilterSpec.from(item1),
-        ),
-        mode: mode,
-    })
-}
-
-// Public aliases (can be overridden)
-CompoundConstructor.toFirestore = CompoundConstructor._toFirestore
-CompoundConstructor.fromFirestore = CompoundConstructor._fromFirestore
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -326,34 +254,6 @@ FilterSpec.is = v => {
         constructor === Compound
     )
 }
-
-/**
- * Serialize FilterSpec to Firestore format
- * @sig _toFirestore :: (FilterSpec, Function) -> Object
- */
-FilterSpec._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = FilterSpec[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize FilterSpec from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> FilterSpec
- */
-FilterSpec._fromFirestore = (doc, decodeTimestamps) => {
-    const { TextMatch, DateRange, CategoryMatch, Compound } = FilterSpec
-    const tagName = doc['@@tagName']
-    if (tagName === 'TextMatch') return TextMatch.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'DateRange') return DateRange.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'CategoryMatch') return CategoryMatch.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Compound') return Compound.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized FilterSpec variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-FilterSpec.toFirestore = FilterSpec._toFirestore
-FilterSpec.fromFirestore = FilterSpec._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

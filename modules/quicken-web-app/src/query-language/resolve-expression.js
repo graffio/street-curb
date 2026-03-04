@@ -1,4 +1,4 @@
-// ABOUTME: Safe expression evaluator — walks ExpressionNode AST via .match() against bound source values
+// ABOUTME: Safe expression evaluator — walks IRExpression AST via .match() against bound source values
 // ABOUTME: Replaces eval() with constrained arithmetic: literals, refs, binary ops, abs()
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -35,8 +35,8 @@ const T = {
         return FUNCTIONS[fn](...resolvedArgs)
     },
 
-    // Recursively resolve an ExpressionNode against bound source values
-    // @sig resolveNode :: (ExpressionNode, Object, Number) -> Number
+    // Recursively resolve an IRExpression against bound source values
+    // @sig resolveNode :: (IRExpression, Object, Number) -> Number
     resolveNode: (node, boundValues, depth) => {
         V.checkDepth(depth)
 
@@ -123,7 +123,7 @@ const FUNCTIONS = { abs: Math.abs }
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Evaluate an ExpressionNode AST against a map of source values
-// @sig resolveExpression :: (ExpressionNode, Object) -> Number
+// Evaluate an IRExpression AST against a map of source values
+// @sig resolveExpression :: (IRExpression, Object) -> Number
 const resolveExpression = (ast, boundValues) => T.resolveNode(ast, boundValues, 0)
 export { resolveExpression }
