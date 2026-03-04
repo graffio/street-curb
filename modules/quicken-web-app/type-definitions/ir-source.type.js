@@ -19,5 +19,6 @@ export const IRSource = {
         filters:   '[IRFilter]',
         dateRange: 'IRDateRange?',
         groupBy:   { pattern: FieldTypes.groupDimension, optional: true },
+        metrics:   '[String]?',
     },
 }

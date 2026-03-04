@@ -30,7 +30,9 @@ const FieldTypes = {
     arithmeticOp       : /^[/+*-]$/,                     // binary expression operators
     timeUnit           : /^(months|days|weeks|years)$/,  // relative date range units
     namedPeriod        : /^(last_quarter|last_month|last_year|this_quarter|this_month|this_year|year_to_date)$/,
-    accountType        : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
+    accountType           : /^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\(k\)\/403\(b\))$/,
+    sortDirection         : /^(asc|desc)$/,
+    timeSeriesInterval    : /^(daily|weekly|monthly|quarterly|yearly)$/,
 }
 
 export { FieldTypes }

@@ -1,7 +1,8 @@
 // ABOUTME: Semantic validator for query IR — checks entity references against live user data
 // ABOUTME: Provides fuzzy suggestions via Levenshtein distance, prefix, hierarchical, and substring matching
 
-import { filter, reduce, map, uniq } from '@graffio/functional'
+import { filter, find, reduce, map, uniq } from '@graffio/functional'
+import { MetricRegistry } from '../financial-computations/metric-registry.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
 //
@@ -210,7 +211,96 @@ const A = {
             Compare: ({ left, right }) => A.collectCompareErrors(left, right, sourceNames),
             Expression: ({ expression }) => A.collectExpressionErrors(expression, sourceNames),
             FilterEntities: ({ source }) => A.collectSingleSourceErrors(source, sourceNames),
+            TimeSeries: ({ source, interval }) => [
+                ...A.collectSingleSourceErrors(source, sourceNames),
+                ...A.collectTimeSeriesErrors(source, interval, sources),
+            ],
         })
+    },
+
+    // Validate timeSeries date range produces <= MAX_TIME_SERIES_POINTS snapshots
+    // @sig collectTimeSeriesErrors :: (String, String, LookupTable) -> [Object]
+    collectTimeSeriesErrors: (sourceName, interval, sources) => {
+        const source = find(s => s.name === sourceName, Array.from(sources))
+        if (!source || !source.dateRange) return []
+        const { start, end } = source.dateRange
+        if (!start || !end) return []
+        const days = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24))
+        const intervalDays = INTERVAL_DAYS[interval] || 1
+        const points = Math.ceil(days / intervalDays)
+        if (points > MAX_TIME_SERIES_POINTS)
+            return [
+                F.createError(
+                    'computation.timeSeries',
+                    interval,
+                    `Time series would produce ${points} data points, exceeding maximum of ${MAX_TIME_SERIES_POINTS}`,
+                ),
+            ]
+        return []
+    },
+
+    // Validate a single metric name against registered metrics
+    // @sig collectSingleMetricError :: ([String], String, String) -> [Object]
+    collectSingleMetricError: (registeredNames, sourceName, name) => {
+        if (registeredNames.includes(name)) return []
+        return [
+            F.createError(
+                `${sourceName}.metrics`,
+                name,
+                `Unknown metric '${name}'. Available: ${registeredNames.join(', ')}`,
+            ),
+        ]
+    },
+
+    // Validate metric names on a source against the MetricRegistry
+    // @sig collectMetricErrors :: (IRSource) -> [Object]
+    collectMetricErrors: source => {
+        if (!source.metrics) return []
+        const registeredNames = map(m => m.name, Array.from(MetricRegistry))
+        return reduce(
+            (errors, name) => [...errors, ...A.collectSingleMetricError(registeredNames, source.name, name)],
+            [],
+            source.metrics,
+        )
+    },
+
+    // Validate orderBy field against known position fields and metric names
+    // @sig collectOrderByErrors :: (IROutput) -> [Object]
+    collectOrderByErrors: output => {
+        if (!output || !output.orderByField) return []
+        const field = output.orderByField
+        const registeredNames = map(m => m.name, Array.from(MetricRegistry))
+        if (POSITION_FIELDS.includes(field) || registeredNames.includes(field)) return []
+        return [
+            F.createError(
+                'output.orderBy',
+                field,
+                `Unknown orderBy field '${field}'. Must be a position field or registered metric name`,
+            ),
+        ]
+    },
+
+    // Collect all validation errors for a single source (entity filters + metrics)
+    // @sig collectAllSourceErrors :: (IRSource, DataSummary) -> [Object]
+    collectAllSourceErrors: (source, summary) => [
+        ...A.collectSourceErrors(source, source.name, summary),
+        ...A.collectMetricErrors(source),
+    ],
+
+    // Validate limit is a positive integer and not combined with groupBy
+    // @sig collectLimitErrors :: (IROutput, LookupTable) -> [Object]
+    collectLimitErrors: (output, sources) => {
+        if (!output || output.limit === undefined) return []
+        const { limit } = output
+        const hasGroupBy = Array.from(sources).some(s => s.groupBy !== undefined)
+        return [
+            ...(limit <= 0
+                ? [F.createError('output.limit', String(limit), `Limit must be a positive integer, got ${limit}`)]
+                : []),
+            ...(hasGroupBy
+                ? [F.createError('output.limit', String(limit), `Limit cannot be combined with groupBy`)]
+                : []),
+        ]
     },
 }
 
@@ -227,6 +317,16 @@ const ENTITY_FIELDS = { category: 'categories', account: 'accounts', accountType
 
 const ENTITY_LABELS = { category: 'category', account: 'account', accountType: 'account type', payee: 'payee' }
 
+const MAX_TIME_SERIES_POINTS = 100
+
+const INTERVAL_DAYS = { daily: 1, weekly: 7, monthly: 30, quarterly: 91, yearly: 365 }
+
+// prettier-ignore
+const POSITION_FIELDS = [
+    'marketValue', 'costBasis', 'quantity', 'unrealizedGainLoss', 'unrealizedGainLossPercent',
+    'dayGainLoss', 'dayGainLossPercent', 'averageCostPerShare', 'quotePrice',
+]
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Exports
@@ -235,14 +335,16 @@ const ENTITY_LABELS = { category: 'category', account: 'account', accountType: '
 
 // Validate a query IR against a data summary, returning errors with suggestions
 // @sig queryValidator :: (Query, DataSummary) -> { valid: Boolean, errors: [Object] }
-const queryValidator = ({ sources, computation }, summary) => {
+const queryValidator = ({ sources, computation, output }, summary) => {
     const sourceErrors = reduce(
-        (errors, source) => [...errors, ...A.collectSourceErrors(source, source.name, summary)],
+        (errors, source) => [...errors, ...A.collectAllSourceErrors(source, summary)],
         [],
         Array.from(sources),
     )
     const computationErrors = A.collectComputationErrors(computation, sources)
-    const allErrors = [...sourceErrors, ...computationErrors]
+    const orderByErrors = A.collectOrderByErrors(output)
+    const limitErrors = A.collectLimitErrors(output, sources)
+    const allErrors = [...sourceErrors, ...computationErrors, ...orderByErrors, ...limitErrors]
 
     return { valid: allErrors.length === 0, errors: allErrors }
 }

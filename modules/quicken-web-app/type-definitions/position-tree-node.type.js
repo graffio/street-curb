@@ -12,6 +12,6 @@ export const PositionTreeNode = {
     kind: 'taggedSum',
     variants: {
         Group: { id: 'String', children: '[PositionTreeNode]', aggregate: 'PositionAggregate' },
-        Position: { id: 'String', children: '[PositionTreeNode]', position: 'Position' },
+        Position: { id: 'String', children: '[PositionTreeNode]', position: 'Position', metrics: 'Object?' },
     },
 }

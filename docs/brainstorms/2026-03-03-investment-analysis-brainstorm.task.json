@@ -122,15 +122,15 @@
             "step"      : 16,
             "action"    : "Write failing tests for query language extensions (modules/quicken-web-app/test/query-language/).\n\nValidator tests:\n- Accepts valid orderBy (field + direction), limit (positive integer), metrics (array of registered names)\n- Accepts valid timeSeries (interval enum: daily|weekly|monthly|quarterly|yearly)\n- Rejects unknown metric names, negative/zero limits, unknown orderBy field, invalid timeSeries interval\n- Rejects limit combined with groupBy\n- Rejects timeSeries with excessive date points (e.g., daily over 2 years = 730 points; enforce max ~100)\n\nExecution engine tests:\n- orderBy produces correctly sorted results (asc/desc)\n- orderBy without groupBy → flat list; orderBy with groupBy → sorted within groups\n- limit truncates after sort (flat results only)\n- metrics attaches computed values to each position via registry\n- metrics with unknown name → throws (fail-fast via LookupTable.get)\n- timeSeries produces array of { date, positions } snapshots at correct interval dates\n- timeSeries monthly over 3 months → 3 snapshots with correct end-of-month dates\n\nRun tests — all should fail",
             "style_card": "test-file",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "25 tests fail: IROutput/IRSource reject new fields, IRComputation.TimeSeries doesn't exist, execution engine returns [] for positions"
         },
         {
             "step"      : 17,
             "action"    : "Implement query language extensions. Read docs/architecture/financial-query-language.md for current IR shape.\n\nType definitions (modules/quicken-web-app/type-definitions/):\n- Add orderBy to IRComputation or IROutput (read architecture doc to determine correct placement — orderBy is a post-computation modifier on results)\n- Add limit to same IR type as orderBy\n- Add metrics to IRSource (specifies which metrics to compute — a data concern)\n- Add timeSeries to IRComputation (computation modifier, not a source field — per architecture reviewer). Fields: interval (daily|weekly|monthly|quarterly|yearly)\n- Add TimeSeries variant to IRResult for the new result shape ({ date, positions }[])\n- Run yarn types:generate-all\n- Ensure IRResult.match() exhaustiveness is maintained (grep for all match sites per exhaustive-match-two-layer-dispatch.md)\n\nValidator (query-language/query-validator.js):\n- orderBy field validated against metric registry names + entity field names\n- limit must be positive integer; reject if groupBy is also present\n- metrics names validated against metric registry (LookupTable — unknown name throws)\n- timeSeries interval must be valid enum; guard max date points (compute ceil((end-start)/intervalDays), reject if > 100)\n\nExecution engine (query-language/query-execution-engine.js):\n- Import metric registry from financial-computations/ (new coupling, conscious decision)\n- metrics: compute requested metrics on each position via registry\n- orderBy: sort result array by metric value after computation\n- limit: slice after sort\n- timeSeries: pre-build allocationIndex/priceIndex/transactionIndex ONCE from selectors, then loop over generated date points calling computePositionsAsOf with pre-built indexes. Return TimeSeries result variant.\n\nRun style validator on all changed files — verify isCompliant: true\nRun tests from step 16 — all should pass",
             "style_card": "js-module",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "Types extended (orderBy/limit on IROutput, metrics on IRSource, TimeSeries on IRComputation+IRResult). Validator and execution engine updated. 512 tests pass, both files style-compliant."
         },
         {
             "step"  : 18,

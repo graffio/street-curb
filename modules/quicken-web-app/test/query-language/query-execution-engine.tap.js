@@ -12,6 +12,9 @@ import {
     IRResult,
     IRResultTree,
     IRSource,
+    Lot,
+    LotAllocation,
+    Price,
     Query,
     Security,
     Transaction,
@@ -95,6 +98,9 @@ const STATE = {
     categories: CATEGORIES,
     transactions: TRANSACTIONS,
     securities: LookupTable([], Security, 'id'),
+    lots: LookupTable([], Lot, 'id'),
+    lotAllocations: LookupTable([], LotAllocation, 'id'),
+    prices: LookupTable([], Price, 'id'),
 }
 
 // ═════════════════════════════════════════════════

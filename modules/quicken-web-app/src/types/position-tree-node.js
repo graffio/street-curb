@@ -10,7 +10,8 @@
  *  Position
  *      id      : "String",
  *      children: "[PositionTreeNode]",
- *      position: "Position"
+ *      position: "Position",
+ *      metrics : "Object?"
  *
  */
 
@@ -56,7 +57,7 @@ PositionTreeNode.prototype = PositionTreeNodePrototype
 // prettier-ignore
 const toString = {
     group   : function () { return `PositionTreeNode.Group(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.aggregate)})` },
-    position: function () { return `PositionTreeNode.Position(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.position)})` },
+    position: function () { return `PositionTreeNode.Position(${R._toString(this.id)}, ${R._toString(this.children)}, ${R._toString(this.position)}, ${R._toString(this.metrics)})` },
 }
 
 // -------------------------------------------------------------------------------------------------------------
@@ -98,19 +99,21 @@ PositionTreeNode.Group = GroupConstructor
 
 /*
  * Construct a PositionTreeNode.Position instance
- * @sig Position :: (String, [PositionTreeNode], Position) -> PositionTreeNode.Position
+ * @sig Position :: (String, [PositionTreeNode], Position, Object?) -> PositionTreeNode.Position
  */
-const PositionConstructor = function Position(id, children, position) {
-    const constructorName = 'PositionTreeNode.Position(id, children, position)'
-    R.validateArgumentLength(constructorName, 3, arguments)
+const PositionConstructor = function Position(id, children, position, metrics) {
+    const constructorName = 'PositionTreeNode.Position(id, children, position, metrics)'
+
     R.validateString(constructorName, 'id', false, id)
     R.validateArray(constructorName, 1, 'Tagged', 'PositionTreeNode', 'children', false, children)
     R.validateTag(constructorName, 'Position', 'position', false, position)
+    R.validateObject(constructorName, 'metrics', true, metrics)
 
     const result = Object.create(PositionPrototype)
     result.id = id
     result.children = children
     result.position = position
+    if (metrics !== undefined) result.metrics = metrics
     return result
 }
 
@@ -160,8 +163,8 @@ GroupConstructor._from = _input => {
     return PositionTreeNode.Group(id, children, aggregate)
 }
 PositionConstructor._from = _input => {
-    const { id, children, position } = _input
-    return PositionTreeNode.Position(id, children, position)
+    const { id, children, position, metrics } = _input
+    return PositionTreeNode.Position(id, children, position, metrics)
 }
 // -------------------------------------------------------------------------------------------------------------
 // Variant static from
