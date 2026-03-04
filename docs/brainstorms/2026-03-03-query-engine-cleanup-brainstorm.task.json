@@ -209,16 +209,16 @@
         {
             "step"  : 30,
             "action": "git add changed files. Commit: 'Rename query engine types with IR prefix, tighten field validation'. Use commit-changes.md format.",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "As planned. Commit acfa9c19. 37 files changed, 943 insertions, 972 deletions. Pre-commit hooks passed (lint-staged: eslint, prettier, style validator)."
         },
 
 
         {
             "step"  : 31,
             "action": "Update docs/architecture/financial-query-language.md: remove DSL/parser references, document IR-direct construction model, update all type names to new IR-prefixed names.",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "As planned. Removed parser section, parser design decisions, 100KB limit, parser key file entry. Updated architecture diagram, module table, type system section, key files table. Added IR prefix convention to design decisions."
         },
         {
             "step"  : 32,
