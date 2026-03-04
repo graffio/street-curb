@@ -1437,6 +1437,7 @@ tap.test('Date array validation throws error during type generation', t => {
         const typeDefWithDateArray = {
             name: 'EventWithDateArray',
             kind: 'tagged',
+            firestore: true,
             fields: { name: 'String', milestones: '[Date]' },
             relativePath: 'test/fixtures/EventWithDateArray.type.js',
         }
@@ -1454,6 +1455,7 @@ tap.test('Date array validation throws error during type generation', t => {
         const typeDefWithDateArray = {
             name: 'NotificationWithDateArray',
             kind: 'taggedSum',
+            firestore: true,
             variants: { Scheduled: { message: 'String', reminders: '[Date]' } },
             relativePath: 'test/fixtures/NotificationWithDateArray.type.js',
         }
@@ -1985,6 +1987,77 @@ tap.test('Given OptionalFieldTypesTest with { pattern: FieldTypes.X, optional: t
         t.equal(optionalEmail, undefined, 'Then optionalEmail is undefined')
         t.equal(requiredCorrelationId, validCorrelationId, 'Then requiredCorrelationId is set')
         t.equal(optionalCorrelationId, undefined, 'Then optionalCorrelationId is undefined')
+        t.end()
+    })
+
+    t.end()
+})
+
+/*
+ * Firestore codegen opt-in tests
+ */
+tap.test('Given a Tagged type with a Date field but no firestore flag', t => {
+    t.test('When I generate the type', async t => {
+        const code = await generateStaticTaggedType({
+            name: 'NoFirestore',
+            fields: { id: 'String', createdAt: 'Date' },
+            relativePath: 'test/no-firestore.type.js',
+        })
+
+        t.notMatch(code, /toFirestore/, 'Then output does not contain toFirestore')
+        t.notMatch(code, /fromFirestore/, 'Then output does not contain fromFirestore')
+        t.notMatch(code, /_toFirestore/, 'Then output does not contain _toFirestore')
+        t.notMatch(code, /_fromFirestore/, 'Then output does not contain _fromFirestore')
+        t.end()
+    })
+
+    t.end()
+})
+
+tap.test('Given a Tagged type with firestore: true and a Date field', t => {
+    t.test('When I generate the type', async t => {
+        const code = await generateStaticTaggedType({
+            name: 'WithFirestore',
+            firestore: true,
+            fields: { id: 'String', createdAt: 'Date' },
+            relativePath: 'test/with-firestore.type.js',
+        })
+
+        t.match(code, /toFirestore/, 'Then output contains toFirestore')
+        t.match(code, /fromFirestore/, 'Then output contains fromFirestore')
+        t.end()
+    })
+
+    t.end()
+})
+
+tap.test('Given a TaggedSum type with a Date field but no firestore flag', t => {
+    t.test('When I generate the type', async t => {
+        const code = await generateStaticTaggedSumType({
+            name: 'NoFirestoreSum',
+            variants: { Alpha: { id: 'String', createdAt: 'Date' }, Beta: { value: 'Number' } },
+            relativePath: 'test/no-firestore-sum.type.js',
+        })
+
+        t.notMatch(code, /toFirestore/, 'Then output does not contain toFirestore')
+        t.notMatch(code, /fromFirestore/, 'Then output does not contain fromFirestore')
+        t.end()
+    })
+
+    t.end()
+})
+
+tap.test('Given a TaggedSum type with firestore: true and a Date field', t => {
+    t.test('When I generate the type', async t => {
+        const code = await generateStaticTaggedSumType({
+            name: 'WithFirestoreSum',
+            firestore: true,
+            variants: { Alpha: { id: 'String', createdAt: 'Date' }, Beta: { value: 'Number' } },
+            relativePath: 'test/with-firestore-sum.type.js',
+        })
+
+        t.match(code, /toFirestore/, 'Then output contains toFirestore')
+        t.match(code, /fromFirestore/, 'Then output contains fromFirestore')
         t.end()
     })
 

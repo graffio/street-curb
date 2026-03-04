@@ -224,36 +224,6 @@ CompareConstructor.from = CompareConstructor._from
 ExpressionConstructor.from = ExpressionConstructor._from
 FilterEntitiesConstructor.from = FilterEntitiesConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-IdentityConstructor.toFirestore = o => ({ ...o })
-IdentityConstructor.fromFirestore = IdentityConstructor._from
-
-CompareConstructor.toFirestore = o => ({ ...o })
-CompareConstructor.fromFirestore = CompareConstructor._from
-
-ExpressionConstructor._toFirestore = (o, encodeTimestamps) => ({
-    expression: ExpressionNode.toFirestore(o.expression, encodeTimestamps),
-})
-
-ExpressionConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    ExpressionConstructor._from({
-        expression: ExpressionNode.fromFirestore
-            ? ExpressionNode.fromFirestore(doc.expression, decodeTimestamps)
-            : ExpressionNode.from(doc.expression),
-    })
-
-// Public aliases (can be overridden)
-ExpressionConstructor.toFirestore = ExpressionConstructor._toFirestore
-ExpressionConstructor.fromFirestore = ExpressionConstructor._fromFirestore
-
-FilterEntitiesConstructor.toFirestore = o => ({ ...o })
-FilterEntitiesConstructor.fromFirestore = FilterEntitiesConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -271,34 +241,6 @@ Computation.is = v => {
         constructor === FilterEntities
     )
 }
-
-/**
- * Serialize Computation to Firestore format
- * @sig _toFirestore :: (Computation, Function) -> Object
- */
-Computation._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = Computation[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize Computation from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Computation
- */
-Computation._fromFirestore = (doc, decodeTimestamps) => {
-    const { Identity, Compare, Expression, FilterEntities } = Computation
-    const tagName = doc['@@tagName']
-    if (tagName === 'Identity') return Identity.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Compare') return Compare.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Expression') return Expression.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'FilterEntities') return FilterEntities.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized Computation variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-Computation.toFirestore = Computation._toFirestore
-Computation.fromFirestore = Computation._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

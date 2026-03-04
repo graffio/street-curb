@@ -82,27 +82,6 @@ RegisterRow.is = v => v && v['@@typeName'] === 'RegisterRow'
 RegisterRow._from = _input => RegisterRow(_input.transaction, _input.runningBalance)
 RegisterRow.from = RegisterRow._from
 
-RegisterRow._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        transaction: Transaction.toFirestore(o.transaction, encodeTimestamps),
-        runningBalance: o.runningBalance,
-    }
-
-    return result
-}
-
-RegisterRow._fromFirestore = (doc, decodeTimestamps) =>
-    RegisterRow._from({
-        transaction: Transaction.fromFirestore
-            ? Transaction.fromFirestore(doc.transaction, decodeTimestamps)
-            : Transaction.from(doc.transaction),
-        runningBalance: doc.runningBalance,
-    })
-
-// Public aliases (override if necessary)
-RegisterRow.toFirestore = RegisterRow._toFirestore
-RegisterRow.fromFirestore = RegisterRow._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

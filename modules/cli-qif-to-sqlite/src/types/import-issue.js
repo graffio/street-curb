@@ -149,18 +149,6 @@ MissingAccountsConstructor._from = _input => ImportIssue.MissingAccounts(_input.
 SingleAccountConstructor.from = SingleAccountConstructor._from
 MissingAccountsConstructor.from = MissingAccountsConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-SingleAccountConstructor.toFirestore = o => ({ ...o })
-SingleAccountConstructor.fromFirestore = SingleAccountConstructor._from
-
-MissingAccountsConstructor.toFirestore = o => ({ ...o })
-MissingAccountsConstructor.fromFirestore = MissingAccountsConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -172,31 +160,6 @@ ImportIssue.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === ImportIssue.SingleAccount || constructor === ImportIssue.MissingAccounts
 }
-
-/**
- * Serialize ImportIssue to Firestore format
- * @sig _toFirestore :: (ImportIssue, Function) -> Object
- */
-ImportIssue._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = ImportIssue[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize ImportIssue from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> ImportIssue
- */
-ImportIssue._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'SingleAccount') return ImportIssue.SingleAccount.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'MissingAccounts') return ImportIssue.MissingAccounts.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized ImportIssue variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-ImportIssue.toFirestore = ImportIssue._toFirestore
-ImportIssue.fromFirestore = ImportIssue._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

@@ -211,21 +211,6 @@ RegisterConstructor.from = RegisterConstructor._from
 ReportConstructor.from = ReportConstructor._from
 ReconciliationConstructor.from = ReconciliationConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-RegisterConstructor.toFirestore = o => ({ ...o })
-RegisterConstructor.fromFirestore = RegisterConstructor._from
-
-ReportConstructor.toFirestore = o => ({ ...o })
-ReportConstructor.fromFirestore = ReportConstructor._from
-
-ReconciliationConstructor.toFirestore = o => ({ ...o })
-ReconciliationConstructor.fromFirestore = ReconciliationConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -238,33 +223,6 @@ View.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Register || constructor === Report || constructor === Reconciliation
 }
-
-/**
- * Serialize View to Firestore format
- * @sig _toFirestore :: (View, Function) -> Object
- */
-View._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = View[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize View from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> View
- */
-View._fromFirestore = (doc, decodeTimestamps) => {
-    const { Register, Report, Reconciliation } = View
-    const tagName = doc['@@tagName']
-    if (tagName === 'Register') return Register.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Report') return Report.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Reconciliation') return Reconciliation.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized View variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-View.toFirestore = View._toFirestore
-View.fromFirestore = View._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

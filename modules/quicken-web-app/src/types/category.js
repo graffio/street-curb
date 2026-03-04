@@ -106,14 +106,6 @@ Category._from = _input => {
 }
 Category.from = Category._from
 
-Category._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Category._fromFirestore = (doc, decodeTimestamps) => Category._from(doc)
-
-// Public aliases (override if necessary)
-Category.toFirestore = Category._toFirestore
-Category.fromFirestore = Category._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

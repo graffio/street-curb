@@ -304,30 +304,6 @@ RelativeConstructor.from = RelativeConstructor._from
 RangeConstructor.from = RangeConstructor._from
 NamedConstructor.from = NamedConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-YearConstructor.toFirestore = o => ({ ...o })
-YearConstructor.fromFirestore = YearConstructor._from
-
-QuarterConstructor.toFirestore = o => ({ ...o })
-QuarterConstructor.fromFirestore = QuarterConstructor._from
-
-MonthConstructor.toFirestore = o => ({ ...o })
-MonthConstructor.fromFirestore = MonthConstructor._from
-
-RelativeConstructor.toFirestore = o => ({ ...o })
-RelativeConstructor.fromFirestore = RelativeConstructor._from
-
-RangeConstructor.toFirestore = o => ({ ...o })
-RangeConstructor.fromFirestore = RangeConstructor._from
-
-NamedConstructor.toFirestore = o => ({ ...o })
-NamedConstructor.fromFirestore = NamedConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -347,36 +323,6 @@ DateRange.is = v => {
         constructor === Named
     )
 }
-
-/**
- * Serialize DateRange to Firestore format
- * @sig _toFirestore :: (DateRange, Function) -> Object
- */
-DateRange._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = DateRange[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize DateRange from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> DateRange
- */
-DateRange._fromFirestore = (doc, decodeTimestamps) => {
-    const { Year, Quarter, Month, Relative, Range, Named } = DateRange
-    const tagName = doc['@@tagName']
-    if (tagName === 'Year') return Year.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Quarter') return Quarter.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Month') return Month.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Relative') return Relative.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Range') return Range.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Named') return Named.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized DateRange variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-DateRange.toFirestore = DateRange._toFirestore
-DateRange.fromFirestore = DateRange._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

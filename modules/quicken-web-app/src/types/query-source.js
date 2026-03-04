@@ -102,37 +102,6 @@ QuerySource._from = _input => {
 }
 QuerySource.from = QuerySource._from
 
-QuerySource._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        name: o.name,
-        domain: Domain.toFirestore(o.domain, encodeTimestamps),
-        filters: o.filters.map(item1 => QueryFilter.toFirestore(item1, encodeTimestamps)),
-    }
-
-    if (o.dateRange !== undefined) result.dateRange = DateRange.toFirestore(o.dateRange, encodeTimestamps)
-
-    if (o.groupBy !== undefined) result.groupBy = o.groupBy
-
-    return result
-}
-
-QuerySource._fromFirestore = (doc, decodeTimestamps) =>
-    QuerySource._from({
-        name: doc.name,
-        domain: Domain.fromFirestore ? Domain.fromFirestore(doc.domain, decodeTimestamps) : Domain.from(doc.domain),
-        filters: doc.filters.map(item1 =>
-            QueryFilter.fromFirestore ? QueryFilter.fromFirestore(item1, decodeTimestamps) : QueryFilter.from(item1),
-        ),
-        dateRange: DateRange.fromFirestore
-            ? DateRange.fromFirestore(doc.dateRange, decodeTimestamps)
-            : DateRange.from(doc.dateRange),
-        groupBy: doc.groupBy,
-    })
-
-// Public aliases (override if necessary)
-QuerySource.toFirestore = QuerySource._toFirestore
-QuerySource.fromFirestore = QuerySource._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

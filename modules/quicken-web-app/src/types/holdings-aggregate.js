@@ -143,14 +143,6 @@ HoldingsAggregate._from = _input => {
 }
 HoldingsAggregate.from = HoldingsAggregate._from
 
-HoldingsAggregate._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-HoldingsAggregate._fromFirestore = (doc, decodeTimestamps) => HoldingsAggregate._from(doc)
-
-// Public aliases (override if necessary)
-HoldingsAggregate.toFirestore = HoldingsAggregate._toFirestore
-HoldingsAggregate.fromFirestore = HoldingsAggregate._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

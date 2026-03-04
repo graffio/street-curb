@@ -169,82 +169,6 @@ HoldingConstructor._from = _input => {
 GroupConstructor.from = GroupConstructor._from
 HoldingConstructor.from = HoldingConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Group, Function) -> Object
- */
-GroupConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { id, children, aggregate } = o
-    return {
-        id: id,
-        children: children.map(item1 => HoldingsTreeNode.toFirestore(item1, encodeTimestamps)),
-        aggregate: HoldingsAggregate.toFirestore(aggregate, encodeTimestamps),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Group
- */
-GroupConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { id, children, aggregate } = doc
-    return GroupConstructor._from({
-        id: id,
-        children: children.map(item1 =>
-            HoldingsTreeNode.fromFirestore
-                ? HoldingsTreeNode.fromFirestore(item1, decodeTimestamps)
-                : HoldingsTreeNode.from(item1),
-        ),
-        aggregate: HoldingsAggregate.fromFirestore
-            ? HoldingsAggregate.fromFirestore(aggregate, decodeTimestamps)
-            : HoldingsAggregate.from(aggregate),
-    })
-}
-
-// Public aliases (can be overridden)
-GroupConstructor.toFirestore = GroupConstructor._toFirestore
-GroupConstructor.fromFirestore = GroupConstructor._fromFirestore
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Holding, Function) -> Object
- */
-HoldingConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { id, children, holding } = o
-    return {
-        id: id,
-        children: children.map(item1 => HoldingsTreeNode.toFirestore(item1, encodeTimestamps)),
-        holding: Holding.toFirestore(holding, encodeTimestamps),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Holding
- */
-HoldingConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { id, children, holding } = doc
-    return HoldingConstructor._from({
-        id: id,
-        children: children.map(item1 =>
-            HoldingsTreeNode.fromFirestore
-                ? HoldingsTreeNode.fromFirestore(item1, decodeTimestamps)
-                : HoldingsTreeNode.from(item1),
-        ),
-        holding: Holding.fromFirestore ? Holding.fromFirestore(holding, decodeTimestamps) : Holding.from(holding),
-    })
-}
-
-// Public aliases (can be overridden)
-HoldingConstructor.toFirestore = HoldingConstructor._toFirestore
-HoldingConstructor.fromFirestore = HoldingConstructor._fromFirestore
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -256,31 +180,6 @@ HoldingsTreeNode.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === HoldingsTreeNode.Group || constructor === HoldingsTreeNode.Holding
 }
-
-/**
- * Serialize HoldingsTreeNode to Firestore format
- * @sig _toFirestore :: (HoldingsTreeNode, Function) -> Object
- */
-HoldingsTreeNode._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = HoldingsTreeNode[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize HoldingsTreeNode from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> HoldingsTreeNode
- */
-HoldingsTreeNode._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'Group') return HoldingsTreeNode.Group.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Holding') return HoldingsTreeNode.Holding.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized HoldingsTreeNode variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-HoldingsTreeNode.toFirestore = HoldingsTreeNode._toFirestore
-HoldingsTreeNode.fromFirestore = HoldingsTreeNode._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

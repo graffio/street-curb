@@ -1,6 +1,9 @@
+// ABOUTME: Blockface Tagged type definition for curb-map
+// ABOUTME: A street segment with geometry, metadata, and an ordered collection of curb Segments
 /** @module Blockface */
 
 import { LookupTable } from '@graffio/functional'
+
 /**
  * Blockface represents a street segment with geometry, metadata, and curb segments
  * @sig Blockface :: { id: String, geometry: Object, streetName: String, cnnId: String?, segments: [Segment] }
@@ -13,6 +16,7 @@ import { Segment } from './segment.js'
 export const Blockface = {
     name: 'Blockface',
     kind: 'tagged',
+    firestore: true,
     fields: {
         id            : FieldTypes.blockfaceId,
         sourceId      : 'String', // city-specific id for the Feature related to the blockface (or hashed geometry)

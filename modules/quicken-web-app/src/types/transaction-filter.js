@@ -182,14 +182,6 @@ TransactionFilter._from = _input => {
 }
 TransactionFilter.from = TransactionFilter._from
 
-TransactionFilter._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-TransactionFilter._fromFirestore = (doc, decodeTimestamps) => TransactionFilter._from(doc)
-
-// Public aliases (override if necessary)
-TransactionFilter.toFirestore = TransactionFilter._toFirestore
-TransactionFilter.fromFirestore = TransactionFilter._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

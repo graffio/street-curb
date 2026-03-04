@@ -1,3 +1,5 @@
+// ABOUTME: Segment Tagged type definition for curb-map
+// ABOUTME: A portion of a blockface with a specific curb use designation and length in feet
 /** @module Segment */
 
 import { FieldTypes } from './field-types.js'
@@ -11,6 +13,7 @@ import { FieldTypes } from './field-types.js'
 export const Segment = {
     name: 'Segment',
     kind: 'tagged',
+    firestore: true,
     fields: {
         id    : FieldTypes.segmentId,
         use   : 'String',

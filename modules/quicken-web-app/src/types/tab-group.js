@@ -97,30 +97,6 @@ TabGroup._from = _input => {
 }
 TabGroup.from = TabGroup._from
 
-TabGroup._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        id: o.id,
-        views: R.lookupTableToFirestore(View, 'id', encodeTimestamps, o.views),
-        width: o.width,
-    }
-
-    if (o.activeViewId !== undefined) result.activeViewId = o.activeViewId
-
-    return result
-}
-
-TabGroup._fromFirestore = (doc, decodeTimestamps) =>
-    TabGroup._from({
-        id: doc.id,
-        views: R.lookupTableFromFirestore(View, 'id', decodeTimestamps, doc.views),
-        activeViewId: doc.activeViewId,
-        width: doc.width,
-    })
-
-// Public aliases (override if necessary)
-TabGroup.toFirestore = TabGroup._toFirestore
-TabGroup.fromFirestore = TabGroup._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

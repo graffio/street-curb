@@ -6,6 +6,7 @@
 export const ManyLookupTables = {
     name: 'ManyLookupTables',
     kind: 'tagged',
+    firestore: true,
     fields: {
         notifications        : '{Notification:message}',
         optionalNotifications: '{Notification:message}?',

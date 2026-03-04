@@ -201,14 +201,6 @@ Holding._from = _input => {
 }
 Holding.from = Holding._from
 
-Holding._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Holding._fromFirestore = (doc, decodeTimestamps) => Holding._from(doc)
-
-// Public aliases (override if necessary)
-Holding.toFirestore = Holding._toFirestore
-Holding.fromFirestore = Holding._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

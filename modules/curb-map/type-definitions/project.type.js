@@ -1,3 +1,5 @@
+// ABOUTME: Project Tagged type definition for curb-map
+// ABOUTME: A scoped workspace within an organization for collecting blockface survey data
 /** @module Project */
 import { FieldTypes } from './field-types.js'
 
@@ -10,6 +12,7 @@ import { FieldTypes } from './field-types.js'
 export const Project = {
     name: 'Project',
     kind: 'tagged',
+    firestore: true,
     fields: {
         id            : FieldTypes.projectId,
         organizationId: FieldTypes.organizationId,

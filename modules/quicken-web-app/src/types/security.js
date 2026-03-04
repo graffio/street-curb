@@ -98,14 +98,6 @@ Security._from = _input => {
 }
 Security.from = Security._from
 
-Security._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Security._fromFirestore = (doc, decodeTimestamps) => Security._from(doc)
-
-// Public aliases (override if necessary)
-Security.toFirestore = Security._toFirestore
-Security.fromFirestore = Security._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

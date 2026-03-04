@@ -187,21 +187,6 @@ DefaultConstructor.from = DefaultConstructor._from
 NamespaceConstructor.from = NamespaceConstructor._from
 NamedConstructor.from = NamedConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-DefaultConstructor.toFirestore = o => ({ ...o })
-DefaultConstructor.fromFirestore = DefaultConstructor._from
-
-NamespaceConstructor.toFirestore = o => ({ ...o })
-NamespaceConstructor.fromFirestore = NamespaceConstructor._from
-
-NamedConstructor.toFirestore = o => ({ ...o })
-NamedConstructor.fromFirestore = NamedConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -214,33 +199,6 @@ ImportSpecifier.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Default || constructor === Namespace || constructor === Named
 }
-
-/**
- * Serialize ImportSpecifier to Firestore format
- * @sig _toFirestore :: (ImportSpecifier, Function) -> Object
- */
-ImportSpecifier._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = ImportSpecifier[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize ImportSpecifier from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> ImportSpecifier
- */
-ImportSpecifier._fromFirestore = (doc, decodeTimestamps) => {
-    const { Default, Namespace, Named } = ImportSpecifier
-    const tagName = doc['@@tagName']
-    if (tagName === 'Default') return Default.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Namespace') return Namespace.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Named') return Named.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized ImportSpecifier variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-ImportSpecifier.toFirestore = ImportSpecifier._toFirestore
-ImportSpecifier.fromFirestore = ImportSpecifier._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

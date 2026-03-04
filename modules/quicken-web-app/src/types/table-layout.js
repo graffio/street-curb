@@ -91,27 +91,6 @@ TableLayout._from = _input => {
 }
 TableLayout.from = TableLayout._from
 
-TableLayout._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        id: o.id,
-        columnDescriptors: R.lookupTableToFirestore(ColumnDescriptor, 'id', encodeTimestamps, o.columnDescriptors),
-        sortOrder: R.lookupTableToFirestore(SortOrder, 'id', encodeTimestamps, o.sortOrder),
-    }
-
-    return result
-}
-
-TableLayout._fromFirestore = (doc, decodeTimestamps) =>
-    TableLayout._from({
-        id: doc.id,
-        columnDescriptors: R.lookupTableFromFirestore(ColumnDescriptor, 'id', decodeTimestamps, doc.columnDescriptors),
-        sortOrder: R.lookupTableFromFirestore(SortOrder, 'id', decodeTimestamps, doc.sortOrder),
-    })
-
-// Public aliases (override if necessary)
-TableLayout.toFirestore = TableLayout._toFirestore
-TableLayout.fromFirestore = TableLayout._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

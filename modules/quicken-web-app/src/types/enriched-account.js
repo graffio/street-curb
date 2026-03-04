@@ -100,34 +100,6 @@ EnrichedAccount._from = _input => {
 }
 EnrichedAccount.from = EnrichedAccount._from
 
-EnrichedAccount._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        id: o.id,
-        account: Account.toFirestore(o.account, encodeTimestamps),
-        balance: o.balance,
-        dayChange: o.dayChange,
-    }
-
-    if (o.dayChangePct !== undefined) result.dayChangePct = o.dayChangePct
-
-    return result
-}
-
-EnrichedAccount._fromFirestore = (doc, decodeTimestamps) =>
-    EnrichedAccount._from({
-        id: doc.id,
-        account: Account.fromFirestore
-            ? Account.fromFirestore(doc.account, decodeTimestamps)
-            : Account.from(doc.account),
-        balance: doc.balance,
-        dayChange: doc.dayChange,
-        dayChangePct: doc.dayChangePct,
-    })
-
-// Public aliases (override if necessary)
-EnrichedAccount.toFirestore = EnrichedAccount._toFirestore
-EnrichedAccount.fromFirestore = EnrichedAccount._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

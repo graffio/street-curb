@@ -80,14 +80,6 @@ QueryOutput.is = v => v && v['@@typeName'] === 'QueryOutput'
 QueryOutput._from = _input => QueryOutput(_input.show, _input.format)
 QueryOutput.from = QueryOutput._from
 
-QueryOutput._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-QueryOutput._fromFirestore = (doc, decodeTimestamps) => QueryOutput._from(doc)
-
-// Public aliases (override if necessary)
-QueryOutput.toFirestore = QueryOutput._toFirestore
-QueryOutput.fromFirestore = QueryOutput._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

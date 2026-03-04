@@ -1,0 +1,242 @@
+{
+    "feature"          : "Query Engine Cleanup",
+    "goal"             : "Remove DSL parser, consolidate modules, add Firestore codegen opt-in, rename IR types, tighten field validation — pre-Plan C cleanup",
+    "brainstorm"       : "docs/brainstorms/2026-03-03-query-engine-cleanup-brainstorm.md",
+    "templates_used"   : ["commit-changes.md"],
+    "integration_tests": [],
+    "steps"            : [
+
+        {
+            "step"  : 1,
+            "action": "[CHECKPOINT] Run complexity review on modules/cli-type-generator/src/tagged-type-generator.js and src/codegen/firestore-serialization.js. Report style card violations found. Wait for approval before proceeding.",
+            "rule"  : "unconditional",
+            "done"  : true,
+            "note"  : "Both files isCompliant: true. firestore-serialization.js has COMPLEXITY: cohesion-structure (informational). toDescriptor drops unknown properties — need to pass firestore through."
+        },
+        {
+            "step"      : 2,
+            "action"    : "Write failing test: generate a Tagged type WITHOUT firestore field — output must not contain toFirestore/fromFirestore methods. Generate same type WITH firestore: true — output must contain them. Add to existing generator test file. Run style validator on test file.",
+            "style_card": "test-file",
+            "done"      : true,
+            "note"      : "As planned. 6 failures: 4 Tagged (no flag) + 2 TaggedSum (no flag). With-firestore tests pass already."
+        },
+        {
+            "step"      : 3,
+            "action"    : "Modify tagged-type-generator.js: check type definition for `firestore: true`. When absent/false, skip FirestoreSerialization codegen (toFirestore, fromFirestore, _toFirestore, _fromFirestore). When true, generate as before. Also handle TaggedSum types in the same file. Run style validator — verify isCompliant: true.",
+            "style_card": "js-module",
+            "done"      : true,
+            "note"      : "As planned. Also modified to-descriptor.js to pass firestore through. Updated 4 test type definitions (many-lookup-tables, custom-serialization, event, notification) and 2 Date array validation tests to include firestore: true. 497 tests passing."
+        },
+        {
+            "step"      : 4,
+            "action"    : "Add `firestore: true` to all curb-map type definitions (11 files in modules/curb-map/type-definitions/: action, action-request, audit-record, operation-details, blockface, member, organization, organization-member, project, segment, user). Run style validator on changed files.",
+            "style_card": "js-module",
+            "done"      : true,
+            "note"      : "As planned. All 11 files updated (9 tagged, 2 taggedSum)."
+        },
+        {
+            "step"  : 5,
+            "action": "Run `yarn types:generate-all`. Verify: (a) curb-map generated types still have toFirestore/fromFirestore, (b) quicken-web-app generated types no longer have them. Update cli-type-generator test expectations for non-firestore output where needed. Run all generator tests and quicken-web-app tests.",
+            "done"  : true,
+            "note"  : "As planned. curb-map: 11 files with Firestore methods. quicken-web-app: 0 files. 497+604 tests pass."
+        },
+        {
+            "step"  : 6,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule"  : "unconditional",
+            "done"  : true,
+            "note"  : "Both reviewers: 0 blocking, APPROVE."
+        },
+        {
+            "step"  : 7,
+            "action": "git add changed files. Commit: 'Add Firestore codegen opt-in — default off, curb-map opts in'. Use commit-changes.md format.",
+            "done"  : false,
+            "note"  : ""
+        },
+
+
+        {
+            "step"      : 8,
+            "action"    : "Merge quicken-type-definitions/field-types.js into quicken-web-app/type-definitions/field-types.js: add 6 entity ID regexes (categoryId, lotAllocationId, lotId, priceId, tagId, transactionId). Remove duplicates (accountId, securityId already exist). Run style validator.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"      : 9,
+            "action"    : "Move 10 entity .type.js files from modules/quicken-type-definitions/ to modules/quicken-web-app/type-definitions/ (account, category, holding, lot, lot-allocation, price, security, split, tag, transaction). Update type-mappings.js: remove sources.quickenTypes, remove qifAndWeb alias, add entries under quicken-web-app source using `const s = sources; const t = targets` shorthand. Insert entity type entries BEFORE action.type.js (ordering constraint — Action references them). Delete modules/quicken-type-definitions/ directory. Run style validator on type-mappings.js.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"  : 10,
+            "action": "Run `yarn types:generate-all`. Run quicken-web-app tests (`yarn --cwd modules/quicken-web-app tap`). Fix any test failures caused by the consolidation (e.g., test fixtures using short-form IDs that now fail transactionId regex validation). Run all tests until green.",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 11,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule"  : "unconditional",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 12,
+            "action": "git add changed files. Commit: 'Consolidate quicken-type-definitions into quicken-web-app — single module, merged field-types'. Use commit-changes.md format.",
+            "done"  : false,
+            "note"  : ""
+        },
+
+
+        {
+            "step"  : 13,
+            "action": "Delete src/query-language/query-parser.js (692 lines), test/query-language/query-parser.tap.js (1,006 lines), and src/query-language/claude-generation-prompt.md (163 lines — DSL documentation, no longer relevant).",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 14,
+            "action": "[CHECKPOINT] Run complexity review on src/query-language/query-pipeline.js (38 lines). Report violations. Wait for approval.",
+            "rule"  : "unconditional",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"      : 15,
+            "action"    : "Modify query-pipeline.js: change signature from queryPipeline(queryString, dataSummary, state) to queryPipeline(ir, dataSummary, state). Remove parser import, parse step, and MAX_QUERY_SIZE string-length guard (dead code after signature change). Pipeline becomes: validate IR → execute IR → return result. Run style validator.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"  : 16,
+            "action": "[CHECKPOINT] Run complexity review on test/query-language/query-pipeline.tap.js (280 lines). Report violations. Wait for approval.",
+            "rule"  : "unconditional",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"      : 17,
+            "action"    : "Rewrite query-pipeline.tap.js: replace query string inputs with direct IR construction using current type constructors (QueryIR(), QuerySource(), QueryFilter(), Computation(), etc. — rename has not happened yet, step 27 will update names). Tests should verify validate → execute flow with well-formed IR objects. Run style validator.",
+            "style_card": "test-file",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"  : 18,
+            "action": "Run all quicken-web-app tests. Verify parser-dependent tests are gone and remaining tests pass.",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 19,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule"  : "unconditional",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 20,
+            "action": "git add changed files. Commit: 'Remove DSL parser — Claude constructs IR directly'. Use commit-changes.md format.",
+            "done"  : false,
+            "note"  : ""
+        },
+
+
+        {
+            "step"      : 21,
+            "action"    : "Add new FieldTypes entries to quicken-web-app/type-definitions/field-types.js: arithmeticOp (/^[/+*-]$/), timeUnit (/^(months|days|weeks|years)$/), namedPeriod (/^(last_quarter|last_month|last_year|this_quarter|this_month|this_year|year_to_date)$/), accountType (/^(Bank|Cash|Credit Card|Investment|Other Asset|Other Liability|401\\(k\\)\\/403\\(b\\))$/). Do NOT add filterField or builtinFunction — single-consumer regexes stay inline in the type definition. Run style validator.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"      : 22,
+            "action"    : "Rename and tighten type definitions (batch 1 — 5 files): (a) domain.type.js → ir-domain.type.js (name: 'IRDomain'), (b) date-range.type.js → ir-date-range.type.js (name: 'IRDateRange', Relative.unit → FieldTypes.timeUnit, Named.name → FieldTypes.namedPeriod), (c) expression-node.type.js → ir-expression.type.js (name: 'IRExpression', Binary.op → FieldTypes.arithmeticOp, Call.fn: keep inline /^abs$/, Reference.field → /^[a-zA-Z_][a-zA-Z0-9_]*$/), (d) computation.type.js → ir-computation.type.js (name: 'IRComputation'), (e) result-tree.type.js → ir-result-tree.type.js (name: 'IRResultTree'). Run style validator on each.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"      : 23,
+            "action"    : "Rename and tighten type definitions (batch 2 — 5 files): (a) query-ir.type.js → query.type.js (name: 'Query'), (b) query-source.type.js → ir-source.type.js (name: 'IRSource'), (c) query-filter.type.js → ir-filter.type.js (name: 'IRFilter', Equals.field → inline /^(category|account|payee|accountType)$/, OlderThan.field → /^lastActivity$/), (d) query-output.type.js → ir-output.type.js (name: 'IROutput'), (e) query-result.type.js → ir-result.type.js (name: 'IRResult', source fields on Identity, Comparison, and FilteredEntities variants only → FieldTypes.sourceName — Scalar has no source field). Update cross-references in Query type definition (IRSource, IRComputation, IROutput). Also tighten Account.type → FieldTypes.accountType in the moved entity type file (account.type.js). Run style validator.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"      : 24,
+            "action"    : "Update type-mappings.js: replace old file names with new names for all 10 renamed type definitions. Remove old entries, add new ones in alphabetical order. Run style validator.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"  : 25,
+            "action": "Delete old generated type files from src/types/ (query-ir.js, query-source.js, query-filter.js, query-output.js, query-result.js, computation.js, expression-node.js, domain.js, date-range.js, result-tree.js). Run `yarn types:generate-all` to create new files with new names. Verify new generated files exist and index.js is updated.",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"      : 26,
+            "action"    : "Update imports in src/query-language/ files (4 files: query-pipeline.js, query-execution-engine.js, query-validator.js, resolve-expression.js). Replace old type names with new IR-prefixed names in imports and all references. Run style validator on each.",
+            "style_card": "js-module",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"      : 27,
+            "action"    : "Update imports in test/ files (4 files: query-execution-engine.tap.js, query-validator.tap.js, query-pipeline.tap.js, expression-evaluator.tap.js). Replace old type names with new IR-prefixed names in imports and all references. Run style validator on each.",
+            "style_card": "test-file",
+            "done"      : false,
+            "note"      : ""
+        },
+        {
+            "step"  : 28,
+            "action": "Run all quicken-web-app tests. Verify all pass.",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 29,
+            "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
+            "rule"  : "unconditional",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 30,
+            "action": "git add changed files. Commit: 'Rename query engine types with IR prefix, tighten field validation'. Use commit-changes.md format.",
+            "done"  : false,
+            "note"  : ""
+        },
+
+
+        {
+            "step"  : 31,
+            "action": "Update docs/architecture/financial-query-language.md: remove DSL/parser references, document IR-direct construction model, update all type names to new IR-prefixed names.",
+            "done"  : false,
+            "note"  : ""
+        },
+        {
+            "step"  : 32,
+            "action": "git add changed files. Commit: 'Update architecture docs for IR-direct model and type renames'. Use commit-changes.md format.",
+            "done"  : false,
+            "note"  : ""
+        }
+    ],
+    "verification"     : [
+        "All quicken-web-app tests pass (yarn --cwd modules/quicken-web-app tap)",
+        "All cli-type-generator tests pass",
+        "curb-map generated types have toFirestore/fromFirestore",
+        "quicken-web-app generated types do NOT have toFirestore/fromFirestore",
+        "modules/quicken-type-definitions/ directory no longer exists",
+        "query-parser.js and query-parser.tap.js are deleted",
+        "All query engine types have IR prefix (IRSource, IRFilter, IRComputation, IRExpression, IRDateRange, IRDomain, IRResultTree, IROutput, IRResult) with root type named Query",
+        "DataSummary and AccountSummary keep their names (not IR types)",
+        "No generic 'String' fields remain where a specific regex/FieldTypes reference was identified in the brainstorm",
+        "yarn types:generate-all succeeds with no errors"
+    ]
+}

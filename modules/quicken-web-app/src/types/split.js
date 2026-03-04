@@ -102,14 +102,6 @@ Split._from = _input => {
 }
 Split.from = Split._from
 
-Split._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Split._fromFirestore = (doc, decodeTimestamps) => Split._from(doc)
-
-// Public aliases (override if necessary)
-Split.toFirestore = Split._toFirestore
-Split.fromFirestore = Split._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

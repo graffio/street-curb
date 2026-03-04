@@ -167,18 +167,6 @@ TaggedSumConstructor._from = _input => {
 TaggedConstructor.from = TaggedConstructor._from
 TaggedSumConstructor.from = TaggedSumConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-TaggedConstructor.toFirestore = o => ({ ...o })
-TaggedConstructor.fromFirestore = TaggedConstructor._from
-
-TaggedSumConstructor.toFirestore = o => ({ ...o })
-TaggedSumConstructor.fromFirestore = TaggedSumConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -190,31 +178,6 @@ TypeDefinition.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === TypeDefinition.Tagged || constructor === TypeDefinition.TaggedSum
 }
-
-/**
- * Serialize TypeDefinition to Firestore format
- * @sig _toFirestore :: (TypeDefinition, Function) -> Object
- */
-TypeDefinition._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = TypeDefinition[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize TypeDefinition from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> TypeDefinition
- */
-TypeDefinition._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'Tagged') return TypeDefinition.Tagged.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'TaggedSum') return TypeDefinition.TaggedSum.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized TypeDefinition variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-TypeDefinition.toFirestore = TypeDefinition._toFirestore
-TypeDefinition.fromFirestore = TypeDefinition._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

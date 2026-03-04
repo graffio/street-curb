@@ -94,14 +94,6 @@ Price._from = _input => {
 }
 Price.from = Price._from
 
-Price._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Price._fromFirestore = (doc, decodeTimestamps) => Price._from(doc)
-
-// Public aliases (override if necessary)
-Price.toFirestore = Price._toFirestore
-Price.fromFirestore = Price._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

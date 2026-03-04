@@ -94,14 +94,6 @@ Tag._from = _input => {
 }
 Tag.from = Tag._from
 
-Tag._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Tag._fromFirestore = (doc, decodeTimestamps) => Tag._from(doc)
-
-// Public aliases (override if necessary)
-Tag.toFirestore = Tag._toFirestore
-Tag.fromFirestore = Tag._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

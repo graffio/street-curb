@@ -80,14 +80,6 @@ NamedLocation.is = v => v && v['@@typeName'] === 'NamedLocation'
 NamedLocation._from = _input => NamedLocation(_input.name, _input.line)
 NamedLocation.from = NamedLocation._from
 
-NamedLocation._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-NamedLocation._fromFirestore = (doc, decodeTimestamps) => NamedLocation._from(doc)
-
-// Public aliases (override if necessary)
-NamedLocation.toFirestore = NamedLocation._toFirestore
-NamedLocation.fromFirestore = NamedLocation._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

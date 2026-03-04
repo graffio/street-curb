@@ -87,14 +87,6 @@ AccountSummary.is = v => v && v['@@typeName'] === 'AccountSummary'
 AccountSummary._from = _input => AccountSummary(_input.name, _input.type)
 AccountSummary.from = AccountSummary._from
 
-AccountSummary._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-AccountSummary._fromFirestore = (doc, decodeTimestamps) => AccountSummary._from(doc)
-
-// Public aliases (override if necessary)
-AccountSummary.toFirestore = AccountSummary._toFirestore
-AccountSummary.fromFirestore = AccountSummary._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -355,18 +355,6 @@ InvestmentConstructor._from = _input => {
 BankConstructor.from = BankConstructor._from
 InvestmentConstructor.from = InvestmentConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-BankConstructor.toFirestore = o => ({ ...o })
-BankConstructor.fromFirestore = BankConstructor._from
-
-InvestmentConstructor.toFirestore = o => ({ ...o })
-InvestmentConstructor.fromFirestore = InvestmentConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -378,31 +366,6 @@ Transaction.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Transaction.Bank || constructor === Transaction.Investment
 }
-
-/**
- * Serialize Transaction to Firestore format
- * @sig _toFirestore :: (Transaction, Function) -> Object
- */
-Transaction._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = Transaction[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize Transaction from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Transaction
- */
-Transaction._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'Bank') return Transaction.Bank.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Investment') return Transaction.Investment.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized Transaction variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-Transaction.toFirestore = Transaction._toFirestore
-Transaction.fromFirestore = Transaction._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

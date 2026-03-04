@@ -102,14 +102,6 @@ LotAllocation._from = _input => {
 }
 LotAllocation.from = LotAllocation._from
 
-LotAllocation._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-LotAllocation._fromFirestore = (doc, decodeTimestamps) => LotAllocation._from(doc)
-
-// Public aliases (override if necessary)
-LotAllocation.toFirestore = LotAllocation._toFirestore
-LotAllocation.fromFirestore = LotAllocation._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -236,84 +236,6 @@ BinaryConstructor.from = BinaryConstructor._from
 CallConstructor.from = CallConstructor._from
 ReferenceConstructor.from = ReferenceConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-LiteralConstructor.toFirestore = o => ({ ...o })
-LiteralConstructor.fromFirestore = LiteralConstructor._from
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Binary, Function) -> Object
- */
-BinaryConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { op, left, right } = o
-    return {
-        op: op,
-        left: ExpressionNode.toFirestore(left, encodeTimestamps),
-        right: ExpressionNode.toFirestore(right, encodeTimestamps),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Binary
- */
-BinaryConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { op, left, right } = doc
-    return BinaryConstructor._from({
-        op: op,
-        left: ExpressionNode.fromFirestore
-            ? ExpressionNode.fromFirestore(left, decodeTimestamps)
-            : ExpressionNode.from(left),
-        right: ExpressionNode.fromFirestore
-            ? ExpressionNode.fromFirestore(right, decodeTimestamps)
-            : ExpressionNode.from(right),
-    })
-}
-
-// Public aliases (can be overridden)
-BinaryConstructor.toFirestore = BinaryConstructor._toFirestore
-BinaryConstructor.fromFirestore = BinaryConstructor._fromFirestore
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Call, Function) -> Object
- */
-CallConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { fn, args } = o
-    return {
-        fn: fn,
-        args: args.map(item1 => ExpressionNode.toFirestore(item1, encodeTimestamps)),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Call
- */
-CallConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { fn, args } = doc
-    return CallConstructor._from({
-        fn: fn,
-        args: args.map(item1 =>
-            ExpressionNode.fromFirestore
-                ? ExpressionNode.fromFirestore(item1, decodeTimestamps)
-                : ExpressionNode.from(item1),
-        ),
-    })
-}
-
-// Public aliases (can be overridden)
-CallConstructor.toFirestore = CallConstructor._toFirestore
-CallConstructor.fromFirestore = CallConstructor._fromFirestore
-
-ReferenceConstructor.toFirestore = o => ({ ...o })
-ReferenceConstructor.fromFirestore = ReferenceConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -326,34 +248,6 @@ ExpressionNode.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Literal || constructor === Binary || constructor === Call || constructor === Reference
 }
-
-/**
- * Serialize ExpressionNode to Firestore format
- * @sig _toFirestore :: (ExpressionNode, Function) -> Object
- */
-ExpressionNode._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = ExpressionNode[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize ExpressionNode from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> ExpressionNode
- */
-ExpressionNode._fromFirestore = (doc, decodeTimestamps) => {
-    const { Literal, Binary, Call, Reference } = ExpressionNode
-    const tagName = doc['@@tagName']
-    if (tagName === 'Literal') return Literal.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Binary') return Binary.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Call') return Call.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Reference') return Reference.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized ExpressionNode variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-ExpressionNode.toFirestore = ExpressionNode._toFirestore
-ExpressionNode.fromFirestore = ExpressionNode._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

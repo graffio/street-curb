@@ -96,29 +96,6 @@ TabLayout._from = _input => {
 }
 TabLayout.from = TabLayout._from
 
-TabLayout._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        id: o.id,
-        tabGroups: R.lookupTableToFirestore(TabGroup, 'id', encodeTimestamps, o.tabGroups),
-        activeTabGroupId: o.activeTabGroupId,
-        nextTabGroupId: o.nextTabGroupId,
-    }
-
-    return result
-}
-
-TabLayout._fromFirestore = (doc, decodeTimestamps) =>
-    TabLayout._from({
-        id: doc.id,
-        tabGroups: R.lookupTableFromFirestore(TabGroup, 'id', decodeTimestamps, doc.tabGroups),
-        activeTabGroupId: doc.activeTabGroupId,
-        nextTabGroupId: doc.nextTabGroupId,
-    })
-
-// Public aliases (override if necessary)
-TabLayout.toFirestore = TabLayout._toFirestore
-TabLayout.fromFirestore = TabLayout._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

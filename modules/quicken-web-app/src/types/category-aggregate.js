@@ -80,14 +80,6 @@ CategoryAggregate.is = v => v && v['@@typeName'] === 'CategoryAggregate'
 CategoryAggregate._from = _input => CategoryAggregate(_input.total, _input.count)
 CategoryAggregate.from = CategoryAggregate._from
 
-CategoryAggregate._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-CategoryAggregate._fromFirestore = (doc, decodeTimestamps) => CategoryAggregate._from(doc)
-
-// Public aliases (override if necessary)
-CategoryAggregate.toFirestore = CategoryAggregate._toFirestore
-CategoryAggregate.fromFirestore = CategoryAggregate._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

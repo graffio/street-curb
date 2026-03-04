@@ -88,14 +88,6 @@ ColumnDescriptor._from = _input => {
 }
 ColumnDescriptor.from = ColumnDescriptor._from
 
-ColumnDescriptor._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-ColumnDescriptor._fromFirestore = (doc, decodeTimestamps) => ColumnDescriptor._from(doc)
-
-// Public aliases (override if necessary)
-ColumnDescriptor.toFirestore = ColumnDescriptor._toFirestore
-ColumnDescriptor.fromFirestore = ColumnDescriptor._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

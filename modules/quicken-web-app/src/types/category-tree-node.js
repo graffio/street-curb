@@ -168,82 +168,6 @@ TransactionConstructor._from = _input => {
 GroupConstructor.from = GroupConstructor._from
 TransactionConstructor.from = TransactionConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Group, Function) -> Object
- */
-GroupConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { id, children, aggregate } = o
-    return {
-        id: id,
-        children: children.map(item1 => CategoryTreeNode.toFirestore(item1, encodeTimestamps)),
-        aggregate: CategoryAggregate.toFirestore(aggregate, encodeTimestamps),
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Group
- */
-GroupConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { id, children, aggregate } = doc
-    return GroupConstructor._from({
-        id: id,
-        children: children.map(item1 =>
-            CategoryTreeNode.fromFirestore
-                ? CategoryTreeNode.fromFirestore(item1, decodeTimestamps)
-                : CategoryTreeNode.from(item1),
-        ),
-        aggregate: CategoryAggregate.fromFirestore
-            ? CategoryAggregate.fromFirestore(aggregate, decodeTimestamps)
-            : CategoryAggregate.from(aggregate),
-    })
-}
-
-// Public aliases (can be overridden)
-GroupConstructor.toFirestore = GroupConstructor._toFirestore
-GroupConstructor.fromFirestore = GroupConstructor._fromFirestore
-
-/**
- * Serialize to Firestore format
- * @sig _toFirestore :: (Transaction, Function) -> Object
- */
-TransactionConstructor._toFirestore = (o, encodeTimestamps) => {
-    const { id, children, transaction } = o
-    return {
-        id: id,
-        children: children.map(item1 => CategoryTreeNode.toFirestore(item1, encodeTimestamps)),
-        transaction: transaction,
-    }
-}
-
-/**
- * Deserialize from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Transaction
- */
-TransactionConstructor._fromFirestore = (doc, decodeTimestamps) => {
-    const { id, children, transaction } = doc
-    return TransactionConstructor._from({
-        id: id,
-        children: children.map(item1 =>
-            CategoryTreeNode.fromFirestore
-                ? CategoryTreeNode.fromFirestore(item1, decodeTimestamps)
-                : CategoryTreeNode.from(item1),
-        ),
-        transaction: transaction,
-    })
-}
-
-// Public aliases (can be overridden)
-TransactionConstructor.toFirestore = TransactionConstructor._toFirestore
-TransactionConstructor.fromFirestore = TransactionConstructor._fromFirestore
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -255,31 +179,6 @@ CategoryTreeNode.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === CategoryTreeNode.Group || constructor === CategoryTreeNode.Transaction
 }
-
-/**
- * Serialize CategoryTreeNode to Firestore format
- * @sig _toFirestore :: (CategoryTreeNode, Function) -> Object
- */
-CategoryTreeNode._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = CategoryTreeNode[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize CategoryTreeNode from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> CategoryTreeNode
- */
-CategoryTreeNode._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'Group') return CategoryTreeNode.Group.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Transaction') return CategoryTreeNode.Transaction.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized CategoryTreeNode variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-CategoryTreeNode.toFirestore = CategoryTreeNode._toFirestore
-CategoryTreeNode.fromFirestore = CategoryTreeNode._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

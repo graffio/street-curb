@@ -105,14 +105,6 @@ Account._from = _input => {
 }
 Account.from = Account._from
 
-Account._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-Account._fromFirestore = (doc, decodeTimestamps) => Account._from(doc)
-
-// Public aliases (override if necessary)
-Account.toFirestore = Account._toFirestore
-Account.fromFirestore = Account._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

@@ -155,18 +155,6 @@ OlderThanConstructor._from = _input => QueryFilter.OlderThan(_input.field, _inpu
 EqualsConstructor.from = EqualsConstructor._from
 OlderThanConstructor.from = OlderThanConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-EqualsConstructor.toFirestore = o => ({ ...o })
-EqualsConstructor.fromFirestore = EqualsConstructor._from
-
-OlderThanConstructor.toFirestore = o => ({ ...o })
-OlderThanConstructor.fromFirestore = OlderThanConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -178,31 +166,6 @@ QueryFilter.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === QueryFilter.Equals || constructor === QueryFilter.OlderThan
 }
-
-/**
- * Serialize QueryFilter to Firestore format
- * @sig _toFirestore :: (QueryFilter, Function) -> Object
- */
-QueryFilter._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = QueryFilter[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize QueryFilter from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> QueryFilter
- */
-QueryFilter._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'Equals') return QueryFilter.Equals.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'OlderThan') return QueryFilter.OlderThan.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized QueryFilter variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-QueryFilter.toFirestore = QueryFilter._toFirestore
-QueryFilter.fromFirestore = QueryFilter._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

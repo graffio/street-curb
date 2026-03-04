@@ -94,31 +94,6 @@ ParseResult._from = _input => {
 }
 ParseResult.from = ParseResult._from
 
-ParseResult._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        typeDefinition: o.typeDefinition,
-        imports: Array.toFirestore(o.imports, encodeTimestamps),
-        functions: Array.toFirestore(o.functions, encodeTimestamps),
-        sourceContent: o.sourceContent,
-    }
-
-    return result
-}
-
-ParseResult._fromFirestore = (doc, decodeTimestamps) =>
-    ParseResult._from({
-        typeDefinition: doc.typeDefinition,
-        imports: Array.fromFirestore ? Array.fromFirestore(doc.imports, decodeTimestamps) : Array.from(doc.imports),
-        functions: Array.fromFirestore
-            ? Array.fromFirestore(doc.functions, decodeTimestamps)
-            : Array.from(doc.functions),
-        sourceContent: doc.sourceContent,
-    })
-
-// Public aliases (override if necessary)
-ParseResult.toFirestore = ParseResult._toFirestore
-ParseResult.fromFirestore = ParseResult._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

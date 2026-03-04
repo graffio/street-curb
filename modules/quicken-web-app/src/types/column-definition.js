@@ -163,14 +163,6 @@ ColumnDefinition._from = _input => {
 }
 ColumnDefinition.from = ColumnDefinition._from
 
-ColumnDefinition._toFirestore = (o, encodeTimestamps) => ({ ...o })
-
-ColumnDefinition._fromFirestore = (doc, decodeTimestamps) => ColumnDefinition._from(doc)
-
-// Public aliases (override if necessary)
-ColumnDefinition.toFirestore = ColumnDefinition._toFirestore
-ColumnDefinition.fromFirestore = ColumnDefinition._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

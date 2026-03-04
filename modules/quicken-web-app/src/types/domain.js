@@ -176,21 +176,6 @@ TransactionsConstructor.from = TransactionsConstructor._from
 HoldingsConstructor.from = HoldingsConstructor._from
 AccountsConstructor.from = AccountsConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-TransactionsConstructor.toFirestore = o => ({ ...o })
-TransactionsConstructor.fromFirestore = TransactionsConstructor._from
-
-HoldingsConstructor.toFirestore = o => ({ ...o })
-HoldingsConstructor.fromFirestore = HoldingsConstructor._from
-
-AccountsConstructor.toFirestore = o => ({ ...o })
-AccountsConstructor.fromFirestore = AccountsConstructor._from
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -203,33 +188,6 @@ Domain.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === Transactions || constructor === Holdings || constructor === Accounts
 }
-
-/**
- * Serialize Domain to Firestore format
- * @sig _toFirestore :: (Domain, Function) -> Object
- */
-Domain._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = Domain[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize Domain from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> Domain
- */
-Domain._fromFirestore = (doc, decodeTimestamps) => {
-    const { Transactions, Holdings, Accounts } = Domain
-    const tagName = doc['@@tagName']
-    if (tagName === 'Transactions') return Transactions.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Holdings') return Holdings.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Accounts') return Accounts.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized Domain variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-Domain.toFirestore = Domain._toFirestore
-Domain.fromFirestore = Domain._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

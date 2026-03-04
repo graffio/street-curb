@@ -84,29 +84,6 @@ ImportInfo.is = v => v && v['@@typeName'] === 'ImportInfo'
 ImportInfo._from = _input => ImportInfo(_input.source, _input.specifiers)
 ImportInfo.from = ImportInfo._from
 
-ImportInfo._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        source: o.source,
-        specifiers: o.specifiers.map(item1 => ImportSpecifier.toFirestore(item1, encodeTimestamps)),
-    }
-
-    return result
-}
-
-ImportInfo._fromFirestore = (doc, decodeTimestamps) =>
-    ImportInfo._from({
-        source: doc.source,
-        specifiers: doc.specifiers.map(item1 =>
-            ImportSpecifier.fromFirestore
-                ? ImportSpecifier.fromFirestore(item1, decodeTimestamps)
-                : ImportSpecifier.from(item1),
-        ),
-    })
-
-// Public aliases (override if necessary)
-ImportInfo.toFirestore = ImportInfo._toFirestore
-ImportInfo.fromFirestore = ImportInfo._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file

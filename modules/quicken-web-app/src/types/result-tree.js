@@ -151,46 +151,6 @@ HoldingsConstructor._from = _input => ResultTree.Holdings(_input.nodes)
 CategoryConstructor.from = CategoryConstructor._from
 HoldingsConstructor.from = HoldingsConstructor._from
 
-// -------------------------------------------------------------------------------------------------------------
-//
-// Variant Firestore serialization
-//
-// -------------------------------------------------------------------------------------------------------------
-
-CategoryConstructor._toFirestore = (o, encodeTimestamps) => ({
-    nodes: o.nodes.map(item1 => CategoryTreeNode.toFirestore(item1, encodeTimestamps)),
-})
-
-CategoryConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    CategoryConstructor._from({
-        nodes: doc.nodes.map(item1 =>
-            CategoryTreeNode.fromFirestore
-                ? CategoryTreeNode.fromFirestore(item1, decodeTimestamps)
-                : CategoryTreeNode.from(item1),
-        ),
-    })
-
-// Public aliases (can be overridden)
-CategoryConstructor.toFirestore = CategoryConstructor._toFirestore
-CategoryConstructor.fromFirestore = CategoryConstructor._fromFirestore
-
-HoldingsConstructor._toFirestore = (o, encodeTimestamps) => ({
-    nodes: o.nodes.map(item1 => HoldingsTreeNode.toFirestore(item1, encodeTimestamps)),
-})
-
-HoldingsConstructor._fromFirestore = (doc, decodeTimestamps) =>
-    HoldingsConstructor._from({
-        nodes: doc.nodes.map(item1 =>
-            HoldingsTreeNode.fromFirestore
-                ? HoldingsTreeNode.fromFirestore(item1, decodeTimestamps)
-                : HoldingsTreeNode.from(item1),
-        ),
-    })
-
-// Public aliases (can be overridden)
-HoldingsConstructor.toFirestore = HoldingsConstructor._toFirestore
-HoldingsConstructor.fromFirestore = HoldingsConstructor._fromFirestore
-
 // Define is method after variants are attached (allows destructuring)
 
 /*
@@ -202,31 +162,6 @@ ResultTree.is = v => {
     const constructor = Object.getPrototypeOf(v).constructor
     return constructor === ResultTree.Category || constructor === ResultTree.Holdings
 }
-
-/**
- * Serialize ResultTree to Firestore format
- * @sig _toFirestore :: (ResultTree, Function) -> Object
- */
-ResultTree._toFirestore = (o, encodeTimestamps) => {
-    const tagName = o['@@tagName']
-    const variant = ResultTree[tagName]
-    return { ...variant.toFirestore(o, encodeTimestamps), '@@tagName': tagName }
-}
-
-/**
- * Deserialize ResultTree from Firestore format
- * @sig _fromFirestore :: (Object, Function) -> ResultTree
- */
-ResultTree._fromFirestore = (doc, decodeTimestamps) => {
-    const tagName = doc['@@tagName']
-    if (tagName === 'Category') return ResultTree.Category.fromFirestore(doc, decodeTimestamps)
-    if (tagName === 'Holdings') return ResultTree.Holdings.fromFirestore(doc, decodeTimestamps)
-    throw new Error(`Unrecognized ResultTree variant: ${tagName}`)
-}
-
-// Public aliases (can be overridden)
-ResultTree.toFirestore = ResultTree._toFirestore
-ResultTree.fromFirestore = ResultTree._fromFirestore
 
 // -------------------------------------------------------------------------------------------------------------
 //

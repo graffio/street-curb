@@ -100,37 +100,6 @@ QueryIR._from = _input => {
 }
 QueryIR.from = QueryIR._from
 
-QueryIR._toFirestore = (o, encodeTimestamps) => {
-    const result = {
-        name: o.name,
-        sources: R.lookupTableToFirestore(QuerySource, 'name', encodeTimestamps, o.sources),
-        computation: Computation.toFirestore(o.computation, encodeTimestamps),
-    }
-
-    if (o.description !== undefined) result.description = o.description
-
-    if (o.output !== undefined) result.output = QueryOutput.toFirestore(o.output, encodeTimestamps)
-
-    return result
-}
-
-QueryIR._fromFirestore = (doc, decodeTimestamps) =>
-    QueryIR._from({
-        name: doc.name,
-        description: doc.description,
-        sources: R.lookupTableFromFirestore(QuerySource, 'name', decodeTimestamps, doc.sources),
-        computation: Computation.fromFirestore
-            ? Computation.fromFirestore(doc.computation, decodeTimestamps)
-            : Computation.from(doc.computation),
-        output: QueryOutput.fromFirestore
-            ? QueryOutput.fromFirestore(doc.output, decodeTimestamps)
-            : QueryOutput.from(doc.output),
-    })
-
-// Public aliases (override if necessary)
-QueryIR.toFirestore = QueryIR._toFirestore
-QueryIR.fromFirestore = QueryIR._fromFirestore
-
 // -------------------------------------------------------------------------------------------------------------
 //
 // Additional functions copied from type definition file
