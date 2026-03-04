@@ -85,57 +85,57 @@
         {
             "step"  : 12,
             "action": "git add changed files. Commit: 'Consolidate quicken-type-definitions into quicken-web-app — single module, merged field-types'. Use commit-changes.md format.",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "As planned. Commit 6f57ae84."
         },
 
 
         {
             "step"  : 13,
             "action": "Delete src/query-language/query-parser.js (692 lines), test/query-language/query-parser.tap.js (1,006 lines), and src/query-language/claude-generation-prompt.md (163 lines — DSL documentation, no longer relevant).",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "As planned. 3 files deleted. Remaining imports in query-pipeline.js, query-validator.tap.js, query-execution-engine.tap.js will be addressed in steps 15, 27."
         },
         {
             "step"  : 14,
             "action": "[CHECKPOINT] Run complexity review on src/query-language/query-pipeline.js (38 lines). Report violations. Wait for approval.",
             "rule"  : "unconditional",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "isCompliant: true, 0 violations. 38-line file with clean parse→validate→execute pipeline."
         },
         {
             "step"      : 15,
             "action"    : "Modify query-pipeline.js: change signature from queryPipeline(queryString, dataSummary, state) to queryPipeline(ir, dataSummary, state). Remove parser import, parse step, and MAX_QUERY_SIZE string-length guard (dead code after signature change). Pipeline becomes: validate IR → execute IR → return result. Run style validator.",
             "style_card": "js-module",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "As planned. Removed parser import, MAX_QUERY_SIZE constant, and parse step. Pipeline is now validate→execute. isCompliant: true."
         },
         {
             "step"  : 16,
             "action": "[CHECKPOINT] Run complexity review on test/query-language/query-pipeline.tap.js (280 lines). Report violations. Wait for approval.",
             "rule"  : "unconditional",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "isCompliant: true, 0 violations. 280 lines."
         },
         {
             "step"      : 17,
             "action"    : "Rewrite query-pipeline.tap.js: replace query string inputs with direct IR construction using current type constructors (QueryIR(), QuerySource(), QueryFilter(), Computation(), etc. — rename has not happened yet, step 27 will update names). Tests should verify validate → execute flow with well-formed IR objects. Run style validator.",
             "style_card": "test-file",
-            "done"      : false,
-            "note"      : ""
+            "done"      : true,
+            "note"      : "As planned. Removed 2 parse-dependent tests (oversized query, bad syntax) since parser is gone. Remaining 5 tests construct IR directly using QueryIR(), QuerySource(), etc. isCompliant: true."
         },
         {
             "step"  : 18,
             "action": "Run all quicken-web-app tests. Verify parser-dependent tests are gone and remaining tests pass.",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "366 passing, 2 failing (query-execution-engine + query-validator still import deleted parser — fixed in step 27). Parser test file deleted. Pipeline test rewritten with direct IR."
         },
         {
             "step"  : 19,
             "action": "Spawn jeff-js-reviewer and code-simplicity-reviewer on staged changes. Fix blocking issues.",
             "rule"  : "unconditional",
-            "done"  : false,
-            "note"  : ""
+            "done"  : true,
+            "note"  : "Both flagged same bug: expression IR in pipeline test didn't match description (Binary('-'...) vs abs(food.total)). Fixed. Both APPROVE after fix."
         },
         {
             "step"  : 20,

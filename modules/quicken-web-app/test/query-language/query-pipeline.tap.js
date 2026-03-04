@@ -1,11 +1,22 @@
+// ABOUTME: Tests for query pipeline — validate → execute flow with direct IR construction
+// ABOUTME: Verifies pipeline produces correct results for identity, comparison, and expression queries
+
 import { test } from 'tap'
 import { LookupTable } from '@graffio/functional'
 import {
     Account,
     AccountSummary,
     Category,
+    Computation,
     DataSummary,
+    DateRange,
+    Domain,
+    ExpressionNode,
+    QueryFilter,
+    QueryIR,
+    QueryOutput,
     QueryResult,
+    QuerySource,
     ResultTree,
     Security,
     Transaction,
@@ -71,24 +82,28 @@ const SUMMARY = DataSummary(
 )
 
 // ═════════════════════════════════════════════════
-// (a) Full pipeline — transaction query → tree result
+// Helper: build a QuerySource for transactions with a category filter
 // ═════════════════════════════════════════════════
 
-test('Full pipeline — transaction query produces tree result', t => {
-    t.test('Given a valid transaction query filtering by Food category', t => {
-        t.test('When running through the full pipeline', t => {
-            const result = queryPipeline(
-                `
-query food "Food spending" {
-  from transactions
-  where category = "Food"
-  date 2025
-  show total
-}
-`,
-                SUMMARY,
-                STATE,
+const txnSource = (name, category, dateRange) =>
+    QuerySource(name, Domain.Transactions(), [QueryFilter.Equals('category', category)], dateRange)
+
+// ═════════════════════════════════════════════════
+// (a) Full pipeline — transaction IR → tree result
+// ═════════════════════════════════════════════════
+
+test('Full pipeline — transaction IR produces tree result', t => {
+    t.test('Given an IR filtering transactions by Food category', t => {
+        t.test('When running through the pipeline', t => {
+            const ir = QueryIR(
+                'food',
+                'Food spending',
+                LookupTable([txnSource('_default', 'Food', DateRange.Year(2025))], QuerySource, 'name'),
+                Computation.Identity('_default'),
+                QueryOutput(['total']),
             )
+
+            const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
             t.ok(QueryResult.Identity.is(result.result), 'Then result is QueryResult.Identity')
@@ -103,28 +118,28 @@ query food "Food spending" {
 })
 
 // ═════════════════════════════════════════════════
-// (b) Full pipeline — comparison query → two-period result
+// (b) Full pipeline — comparison IR → two-period result
 // ═════════════════════════════════════════════════
 
-test('Full pipeline — comparison query produces two-period result', t => {
-    t.test('Given a valid compare query with Q1 vs Q2', t => {
-        t.test('When running through the full pipeline', t => {
-            const result = queryPipeline(
-                `
-query compare "Q1 vs Q2 food" {
-  q1: from transactions
-      where category = "Food"
-      date Q1 2025
-  q2: from transactions
-      where category = "Food"
-      date Q2 2025
-  compare q1 vs q2
-  show total
-}
-`,
-                SUMMARY,
-                STATE,
+test('Full pipeline — comparison IR produces two-period result', t => {
+    t.test('Given an IR comparing Q1 vs Q2 food spending', t => {
+        t.test('When running through the pipeline', t => {
+            const ir = QueryIR(
+                'compare',
+                'Q1 vs Q2 food',
+                LookupTable(
+                    [
+                        txnSource('q1', 'Food', DateRange.Quarter(1, 2025)),
+                        txnSource('q2', 'Food', DateRange.Quarter(2, 2025)),
+                    ],
+                    QuerySource,
+                    'name',
+                ),
+                Computation.Compare('q1', 'q2'),
+                QueryOutput(['total']),
             )
+
+            const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
             t.ok(QueryResult.Comparison.is(result.result), 'Then result is QueryResult.Comparison')
@@ -139,28 +154,38 @@ query compare "Q1 vs Q2 food" {
 })
 
 // ═════════════════════════════════════════════════
-// (c) Full pipeline — expression query → scalar number
+// (c) Full pipeline — expression IR → scalar number
 // ═════════════════════════════════════════════════
 
-test('Full pipeline — expression query produces scalar', t => {
-    t.test('Given a valid compute expression query', t => {
-        t.test('When running through the full pipeline', t => {
-            const result = queryPipeline(
-                `
-query ratio "Food ratio" {
-  income: from transactions
-          where category = "Income"
-          date 2025
-  food: from transactions
-        where category = "Food"
-        date 2025
-  compute abs(food.total) / abs(income.total) * 100
-  format percent
-}
-`,
-                SUMMARY,
-                STATE,
+test('Full pipeline — expression IR produces scalar', t => {
+    t.test('Given an IR computing abs(food.total) / abs(income.total) * 100', t => {
+        t.test('When running through the pipeline', t => {
+            const ir = QueryIR(
+                'ratio',
+                'Food ratio',
+                LookupTable(
+                    [
+                        txnSource('income', 'Income', DateRange.Year(2025)),
+                        txnSource('food', 'Food', DateRange.Year(2025)),
+                    ],
+                    QuerySource,
+                    'name',
+                ),
+                Computation.Expression(
+                    ExpressionNode.Binary(
+                        '*',
+                        ExpressionNode.Binary(
+                            '/',
+                            ExpressionNode.Call('abs', [ExpressionNode.Reference('food', 'total')]),
+                            ExpressionNode.Call('abs', [ExpressionNode.Reference('income', 'total')]),
+                        ),
+                        ExpressionNode.Literal(100),
+                    ),
+                ),
+                QueryOutput(undefined, 'percent'),
             )
+
+            const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, true, 'Then pipeline succeeds')
             t.ok(QueryResult.Scalar.is(result.result), 'Then result is QueryResult.Scalar')
@@ -174,67 +199,21 @@ query ratio "Food ratio" {
 })
 
 // ═════════════════════════════════════════════════
-// (d) Parse error — oversized query rejected
-// ═════════════════════════════════════════════════
-
-test('Parse error — oversized query rejected', t => {
-    t.test('Given a query string exceeding 100KB', t => {
-        t.test('When running through the pipeline', t => {
-            const oversized = 'x'.repeat(102401)
-            const result = queryPipeline(oversized, SUMMARY, STATE)
-
-            t.equal(result.success, false, 'Then pipeline fails')
-            t.equal(result.phase, 'parse', 'Then phase is parse')
-            t.ok(result.errors[0].message.includes('maximum size'), 'Then error mentions size limit')
-            t.end()
-        })
-        t.end()
-    })
-
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (e) Parse error — bad syntax returns phase parse
-// ═════════════════════════════════════════════════
-
-test('Parse error — bad syntax returns phase parse', t => {
-    t.test('Given a query with invalid syntax', t => {
-        t.test('When running through the pipeline', t => {
-            const result = queryPipeline('not a valid query {{{', SUMMARY, STATE)
-
-            t.equal(result.success, false, 'Then pipeline fails')
-            t.equal(result.phase, 'parse', 'Then phase is parse')
-            t.ok(Array.isArray(result.errors), 'Then errors array is present')
-            t.ok(result.errors.length > 0, 'Then at least one error is returned')
-            t.ok(result.errors[0].message, 'Then error has a message')
-            t.end()
-        })
-        t.end()
-    })
-
-    t.end()
-})
-
-// ═════════════════════════════════════════════════
-// (f) Validation error — misspelled category returns phase 'validate'
+// (d) Validation error — misspelled category returns phase 'validate'
 // ═════════════════════════════════════════════════
 
 test('Validation error — misspelled category returns phase validate', t => {
-    t.test('Given a query with a misspelled category name', t => {
+    t.test('Given an IR with a misspelled category name', t => {
         t.test('When running through the pipeline', t => {
-            const result = queryPipeline(
-                `
-query bad "Bad category" {
-  from transactions
-  where category = "Fod"
-  date 2025
-  show total
-}
-`,
-                SUMMARY,
-                STATE,
+            const ir = QueryIR(
+                'bad',
+                'Bad category',
+                LookupTable([txnSource('_default', 'Fod', DateRange.Year(2025))], QuerySource, 'name'),
+                Computation.Identity('_default'),
+                QueryOutput(['total']),
             )
+
+            const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, false, 'Then pipeline fails')
             t.equal(result.phase, 'validate', 'Then phase is validate')
@@ -249,24 +228,32 @@ query bad "Bad category" {
 })
 
 // ═════════════════════════════════════════════════
-// (g) Validation catches before execution — valid parse + invalid data
+// (e) Validation catches before execution — nonexistent account
 // ═════════════════════════════════════════════════
 
 test('Validation catches before execution — never reaches executor', t => {
-    t.test('Given a syntactically valid query with a nonexistent account', t => {
+    t.test('Given an IR with a nonexistent account filter', t => {
         t.test('When running through the pipeline', t => {
-            const result = queryPipeline(
-                `
-query bad "Bad account" {
-  from transactions
-  where account = "Nonexistent Bank"
-  date 2025
-  show total
-}
-`,
-                SUMMARY,
-                STATE,
+            const ir = QueryIR(
+                'bad',
+                'Bad account',
+                LookupTable(
+                    [
+                        QuerySource(
+                            '_default',
+                            Domain.Transactions(),
+                            [QueryFilter.Equals('account', 'Nonexistent Bank')],
+                            DateRange.Year(2025),
+                        ),
+                    ],
+                    QuerySource,
+                    'name',
+                ),
+                Computation.Identity('_default'),
+                QueryOutput(['total']),
             )
+
+            const result = queryPipeline(ir, SUMMARY, STATE)
 
             t.equal(result.success, false, 'Then pipeline fails')
             t.equal(result.phase, 'validate', 'Then phase is validate (not execute)')
