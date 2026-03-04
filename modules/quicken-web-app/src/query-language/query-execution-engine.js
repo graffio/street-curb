@@ -1,7 +1,7 @@
 // ABOUTME: Query execution engine — routes IR sources to state queries and computes results
 // ABOUTME: Resolves dates, filters data, dispatches computations via IRResult types
 
-import { filter, find, map, range, reduce } from '@graffio/functional'
+import { filter, find, iterate, map, reduce } from '@graffio/functional'
 import { IRResult, IRResultTree, PositionTreeNode, Transaction } from '../types/index.js'
 import { computePositions } from '../financial-computations/compute-positions.js'
 import { buildPositionsTree } from '../financial-computations/build-positions-tree.js'
@@ -285,7 +285,7 @@ const A = {
         const endDate = T.toLocalDate(end)
         const initial = T.toInitialDatePoint(startDate, interval)
         const seed = { current: initial, points: initial <= endDate ? [T.toIsoDate(initial)] : [] }
-        return reduce((acc, _) => A.collectNextDatePoint(acc, endDate, interval), seed, range(0, SAFETY_LIMIT)).points
+        return iterate(SAFETY_LIMIT, acc => A.collectNextDatePoint(acc, endDate, interval), seed).points
     },
 
     // Create a position snapshot for a given date

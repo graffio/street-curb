@@ -1,7 +1,7 @@
 // ABOUTME: Semantic validator for query IR — checks entity references against live user data
 // ABOUTME: Provides fuzzy suggestions via Levenshtein distance, prefix, hierarchical, and substring matching
 
-import { filter, find, reduce, map, uniq } from '@graffio/functional'
+import { filter, find, flatMap, reduce, map, uniq } from '@graffio/functional'
 import { MetricRegistry } from '../financial-computations/metric-registry.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ const A = {
     // Collect validation errors for all filters in a source
     // @sig collectSourceErrors :: (IRSource, String, DataSummary) -> [Object]
     collectSourceErrors: (source, sourceName, summary) =>
-        reduce((errors, f) => [...errors, ...A.collectFilterErrors(f, summary, sourceName)], [], source.filters),
+        flatMap(f => A.collectFilterErrors(f, summary, sourceName), source.filters),
 
     // Collect validation errors for a single IRExpression.Reference
     // @sig collectReferenceErrors :: (String, [String]) -> [Object]
@@ -180,8 +180,7 @@ const A = {
                 ...A.collectExpressionErrors(left, sourceNames),
                 ...A.collectExpressionErrors(right, sourceNames),
             ],
-            Call: ({ args }) =>
-                reduce((errors, arg) => [...errors, ...A.collectExpressionErrors(arg, sourceNames)], [], args),
+            Call: ({ args }) => flatMap(arg => A.collectExpressionErrors(arg, sourceNames), args),
         }),
 
     // Validate Identity/FilterEntities computation — check single source ref
@@ -257,11 +256,7 @@ const A = {
     collectMetricErrors: source => {
         if (!source.metrics) return []
         const registeredNames = map(m => m.name, Array.from(MetricRegistry))
-        return reduce(
-            (errors, name) => [...errors, ...A.collectSingleMetricError(registeredNames, source.name, name)],
-            [],
-            source.metrics,
-        )
+        return flatMap(name => A.collectSingleMetricError(registeredNames, source.name, name), source.metrics)
     },
 
     // Validate orderBy field against known position fields and metric names
@@ -336,11 +331,7 @@ const POSITION_FIELDS = [
 // Validate a query IR against a data summary, returning errors with suggestions
 // @sig queryValidator :: (Query, DataSummary) -> { valid: Boolean, errors: [Object] }
 const queryValidator = ({ sources, computation, output }, summary) => {
-    const sourceErrors = reduce(
-        (errors, source) => [...errors, ...A.collectAllSourceErrors(source, summary)],
-        [],
-        Array.from(sources),
-    )
+    const sourceErrors = flatMap(source => A.collectAllSourceErrors(source, summary), Array.from(sources))
     const computationErrors = A.collectComputationErrors(computation, sources)
     const orderByErrors = A.collectOrderByErrors(output)
     const limitErrors = A.collectLimitErrors(output, sources)

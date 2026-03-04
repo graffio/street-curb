@@ -1,6 +1,8 @@
 // ABOUTME: Computes internal rate of return (IRR) for a position using Newton's method
 // ABOUTME: Pure function — (Position, Context) → Number
 
+import { iterate } from '@graffio/functional'
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 // Predicates
@@ -80,7 +82,7 @@ const computeIrr = (position, context) => {
     const referenceDate = cashFlows[0]?.date ?? asOfDate
     const yearFractions = cashFlows.map(({ amount, date }) => ({ amount, t: T.toYearFraction(date, referenceDate) }))
 
-    return Array.from({ length: 20 }).reduce(rate => T.toNewtonStep(yearFractions, rate), 0.1)
+    return iterate(20, rate => T.toNewtonStep(yearFractions, rate), 0.1)
 }
 
 export { computeIrr }

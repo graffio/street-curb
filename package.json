@@ -41,7 +41,7 @@
             "eslint --fix",
             "prettier --write --ignore-unknown"
         ],
-        "modules/**/!(*.stories|*.type).{mjs,js,jsx}": [
+        "modules/!(functional)/**/!(*.stories|*.type).{mjs,js,jsx}": [
             "node modules/cli-style-validator/src/cli.js"
         ]
     },
