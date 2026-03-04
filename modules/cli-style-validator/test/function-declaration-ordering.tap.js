@@ -56,7 +56,7 @@ test('Function declaration ordering rule tests', t => {
             )
             t.match(
                 violations[0].message,
-                /Arrow function 'enrichUserData' must be defined before hooks/,
+                /Arrow function 'enrichUserData' must be defined before non-function statements/,
                 'Then the message should indicate the function should be at the top',
             )
             t.end()
@@ -84,7 +84,7 @@ test('Function declaration ordering rule tests', t => {
             t.equal(violations.length, 1, 'Then one violation should be detected')
             t.match(
                 violations[0].message,
-                /Arrow function 'enrichUserData' must be defined before hooks/,
+                /Arrow function 'enrichUserData' must be defined before non-function statements/,
                 'Then the message should indicate the arrow function should be at the top',
             )
             t.end()
@@ -131,7 +131,7 @@ test('Function declaration ordering rule tests', t => {
             t.equal(violations.length, 1, 'Then one violation should be detected in the nested block')
             t.match(
                 violations[0].message,
-                /Arrow function 'validateAndEnrich' must be defined before hooks/,
+                /Arrow function 'validateAndEnrich' must be defined before non-function statements/,
                 'Then the message should indicate the function should be at the top of its block',
             )
             t.end()
@@ -157,7 +157,7 @@ test('Function declaration ordering rule tests', t => {
             t.equal(violations.length, 1, 'Then one violation should be detected')
             t.match(
                 violations[0].message,
-                /Function 'helperFunction' must be defined before hooks/,
+                /Function 'helperFunction' must be defined before non-function statements/,
                 'Then the message should indicate the function should be at the top',
             )
             t.end()

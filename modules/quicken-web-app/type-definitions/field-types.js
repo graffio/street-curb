@@ -19,6 +19,8 @@ const FieldTypes = {
     viewId             : viewIdRegex,                    // derived from content: reg_acc_xxx, rpt_xxx, rec_acc_xxx
     tabGroupId         : /^tg_\d+$/,                     // monotonically increasing: tg_1, tg_2, ...
     tabLayoutId        : /^tl_[a-z0-9_]+$/,              // tab layout id: tl_main
+    sourceName         : /^[a-z_][a-z0-9_]*$/,           // query source name: food, income_q1
+    groupDimension     : /^(month|quarter|year|category|account|security)$/,
 }
 
 export { FieldTypes }

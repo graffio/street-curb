@@ -2,16 +2,27 @@
 // ABOUTME: Thin state accessors and memoized derived selectors
 import {
     applySort,
+    compactMap,
     containsIgnoreCase,
     LookupTable,
     memoizeOnce,
     memoizeReduxState,
     memoizeReduxStatePerKey,
     truncateWithCount,
+    uniq,
     wrapIndex,
 } from '@graffio/functional'
 import { Holdings as HoldingsModule } from '../financial-computations/holdings.js'
-import { Category, EnrichedAccount, TableLayout, Transaction, TransactionFilter, View } from '../types/index.js'
+import {
+    AccountSummary,
+    Category,
+    DataSummary,
+    EnrichedAccount,
+    TableLayout,
+    Transaction,
+    TransactionFilter,
+    View,
+} from '../types/index.js'
 import { CategoryTree } from '../utils/category-tree.js'
 
 // COMPLEXITY: sig-documentation — Trivial state accessors don't need @sig
@@ -434,6 +445,21 @@ const _organizedAccounts = state => {
 const Accounts = { organized: memoizeReduxState(ACCOUNT_STATE_KEYS, _organizedAccounts) }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// DataSummary — query validation context
+// ---------------------------------------------------------------------------------------------------------------------
+
+const _dataSummary = state => {
+    const { accounts, categories, transactions } = state
+    const categoryNames = Category.collectAllNames(categories)
+    const accountPairs = Array.from(accounts).map(({ name, type }) => AccountSummary(name, type))
+    const accountTypes = uniq(accountPairs.map(a => a.type))
+    const payees = uniq(compactMap(t => t.payee, Array.from(transactions)))
+    return DataSummary(categoryNames, accountPairs, accountTypes, payees)
+}
+
+const dataSummary = memoizeReduxState(['categories', 'accounts', 'transactions'], _dataSummary)
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Holdings
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -589,6 +615,7 @@ export {
 
     // Base state
     accounts,
+    dataSummary,
     activeViewId,
     atMaxGroups,
     activeViewPageTitle,

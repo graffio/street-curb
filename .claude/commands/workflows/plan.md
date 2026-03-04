@@ -123,7 +123,7 @@ These rules make JSON generation mechanical, not ad-hoc. Apply all of them:
 - **Note on completion** — when marking a step `done`, add a `note` field. If the step went as planned, write
   "As planned." If you deviated or hit something unexpected, describe what and why. Absence of a note on a done step
   is a rule violation.
-- **Validator after each implementation step** — add: "Run style validator on changed files, fix violations"
+- **Validator after each implementation step** — add: "Run style validator on changed files — verify `isCompliant: true`, fix all violations"
 - **Commit at style_card boundaries** — when steps transition from one `style_card` to another, insert review + commit
   before continuing. Always include a final commit at the end.
 - Mark decision points with `[CHECKPOINT]` prefix
