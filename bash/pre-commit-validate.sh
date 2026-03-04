@@ -1,6 +1,6 @@
 #!/bin/bash
 # ABOUTME: Git pre-commit hook that validates staged JS/JSX files
-# ABOUTME: Creates .needs-reread flag on success to trigger Claude reread reminder
+# ABOUTME: Runs cli-style-validator on staged .js/.jsx files and blocks commit on violations
 
 set -e
 
@@ -41,11 +41,5 @@ if [ "$has_violations" = "true" ]; then
     echo "Fix these issues before committing."
     exit 1
 fi
-
-# Validation passed - create flag for Claude reread reminder
-touch "$project_dir/.claude/.needs-reread"
-
-# Remind Claude of commit message format
-echo "Commit message format: Problem/Solution/Impact (see .claude/tasks/commit-changes.md)"
 
 exit 0

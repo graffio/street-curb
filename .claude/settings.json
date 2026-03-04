@@ -45,16 +45,6 @@
                     }
                 ]
             }
-        ],
-        "UserPromptSubmit": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "\"$CLAUDE_PROJECT_DIR\"/bash/check-reread-flag.sh"
-                    }
-                ]
-            }
         ]
     }
 }
