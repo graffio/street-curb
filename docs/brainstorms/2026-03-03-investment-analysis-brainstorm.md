@@ -522,6 +522,47 @@ Depends on: Plan B (generic page infrastructure) + Plan C (position data).
 - **Short sales** — positions with negative quantity (short positions). Do metrics like total_return_pct
   need sign-aware logic?
 
+## Spike Findings (6): Position Enrichment
+
+**Date:** 2026-03-03
+**What we tested:**
+- Realized gain computation from lot allocations with proceeds proration across multi-lot sells
+- Dividend income extraction from all dividend action types (Div, DivX, ReinvDiv, ReinvInt, ReinvLg, ReinvMd, ReinvSh)
+- Whether ReinvDiv double-counts as both dividend income and increased cost basis
+- IRR computation via Newton's method on transaction-derived cash flows
+- 365-day holding period boundary for short-term vs long-term tax classification
+- Edge cases: orphan allocations, empty cash flows, date boundary math
+
+**Results:**
+- All three computation paths work correctly on real-shaped fixture data (68 tests passing)
+- Proceeds proration across multi-lot sells sums to total proceeds (no rounding loss significant enough to matter)
+- IRR converges in ~5 iterations for typical portfolios — Newton's method is more than fast enough
+- Real AAPL-shaped position with buys, sells, dividends, reinvestments: IRR = 21.26%
+- Dollar-cost averaging correctly shows higher IRR than simple return (time-weighted: 27.1% vs 20% simple)
+
+**Key learnings:**
+- **ReinvDiv does NOT double-count.** ReinvDiv creates a lot with cost basis = dividend amount. In total return
+  (unrealized + realized + dividends), the dividend is in `dividendIncome`, and the new lot's cost basis is
+  subtracted in `unrealizedGainLoss = marketValue - costBasis`. Net: counted exactly once. This was the
+  brainstorm's top open question — now settled.
+- **ReinvDiv has zero external cash flow for IRR.** Money goes from "dividend received" to "shares purchased"
+  with no cash leaving/entering the account. Excluding ReinvDiv from IRR cash flows is correct.
+- **The 365-day boundary is strict: `holdingPeriodDays > 365` (not >=).** Exactly 365 days = short-term.
+  This matches IRS rules (must hold "more than one year"). Test caught a wrong assumption.
+- **`proceedsAllocated` can be computed at runtime, not just import-time.** The brainstorm proposed adding it
+  to `LotAllocation` during import. The spike computes it inline from the sell transaction. Both work. Runtime
+  is simpler for the spike, but import-time avoids looking up the sell transaction at query time. Decision:
+  keep import-time plan (matches existing `costBasisAllocated` pattern) but it's not blocking.
+- **Cash flows for IRR need only investment transactions for the target (account, security).** The filter
+  chain is: `isInvestmentTransaction → isForSecurity → isInAccount → isCashFlowAction`. Efficient enough
+  for personal portfolios (typically < 1000 investment transactions total).
+
+**Revised assumptions:**
+- None. All settled decisions from the brainstorm hold. The computation strategy (in-memory, memoized selectors)
+  is validated — millisecond-range performance for typical portfolios.
+
+**Validator violations suppressed:** None
+
 ## Knowledge Destination
 
 | Destination                                                            | Content                                                                             |
