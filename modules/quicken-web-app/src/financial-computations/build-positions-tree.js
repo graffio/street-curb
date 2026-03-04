@@ -53,36 +53,42 @@ const T = {
     },
 }
 
-/*
- * Aggregate positions: sum quantities, cost basis, market value, and gains
- * @sig sumPositions :: ([Position], [Object]) -> Object
- */
-const sumPositions = (positions, childAggregates) => {
-    const sumField = field => positions.reduce((sum, p) => sum + (p[field] ?? 0), 0)
-    const sumChildField = field => childAggregates.reduce((sum, a) => sum + (a[field] ?? 0), 0)
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Aggregators
+//
+// ---------------------------------------------------------------------------------------------------------------------
 
-    const shares = sumField('quantity') + sumChildField('shares')
-    const costBasis = sumField('costBasis') + sumChildField('costBasis')
-    const marketValue = sumField('marketValue') + sumChildField('marketValue')
-    const dayGainLoss = sumField('dayGainLoss') + sumChildField('dayGainLoss')
-    const unrealizedGainLoss = sumField('unrealizedGainLoss') + sumChildField('unrealizedGainLoss')
-    const count = positions.length + childAggregates.reduce((sum, a) => sum + a.count, 0)
+const A = {
+    // Sum quantities, cost basis, market value, and gains across positions and child aggregates
+    // @sig sumPositions :: ([Position], [Object]) -> Object
+    sumPositions: (positions, childAggregates) => {
+        const sumField = field => positions.reduce((sum, p) => sum + (p[field] ?? 0), 0)
+        const sumChildField = field => childAggregates.reduce((sum, a) => sum + (a[field] ?? 0), 0)
 
-    const averageCostPerShare = shares !== 0 ? costBasis / shares : 0
-    const unrealizedGainLossPercent = costBasis !== 0 ? unrealizedGainLoss / costBasis : 0
-    const dayGainLossPercent = marketValue !== 0 ? dayGainLoss / (marketValue - dayGainLoss) : 0
+        const shares = sumField('quantity') + sumChildField('shares')
+        const costBasis = sumField('costBasis') + sumChildField('costBasis')
+        const marketValue = sumField('marketValue') + sumChildField('marketValue')
+        const dayGainLoss = sumField('dayGainLoss') + sumChildField('dayGainLoss')
+        const unrealizedGainLoss = sumField('unrealizedGainLoss') + sumChildField('unrealizedGainLoss')
+        const count = positions.length + childAggregates.reduce((sum, a) => sum + a.count, 0)
 
-    return {
-        shares,
-        costBasis,
-        marketValue,
-        averageCostPerShare,
-        dayGainLoss,
-        dayGainLossPercent,
-        unrealizedGainLoss,
-        unrealizedGainLossPercent,
-        count,
-    }
+        const averageCostPerShare = shares !== 0 ? costBasis / shares : 0
+        const unrealizedGainLossPercent = costBasis !== 0 ? unrealizedGainLoss / costBasis : 0
+        const dayGainLossPercent = marketValue !== 0 ? dayGainLoss / (marketValue - dayGainLoss) : 0
+
+        return {
+            shares,
+            costBasis,
+            marketValue,
+            averageCostPerShare,
+            dayGainLoss,
+            dayGainLossPercent,
+            unrealizedGainLoss,
+            unrealizedGainLossPercent,
+            count,
+        }
+    },
 }
 
 /*
@@ -93,7 +99,7 @@ const buildPositionsTree = (dimension, positions) => {
     const config = dimensionConfig[dimension] || dimensionConfig.account
     const groups = groupByFn(config.getKey, positions)
     const tree = buildTree(config.getParent, groups)
-    const aggregated = aggregateTree(sumPositions, tree)
+    const aggregated = aggregateTree(A.sumPositions, tree)
     return aggregated.map(T.toGroupNode)
 }
 
@@ -103,6 +109,4 @@ const buildPositionsTree = (dimension, positions) => {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-const PositionsTree = { buildPositionsTree, dimensionConfig, sumPositions }
-
-export { PositionsTree }
+export { buildPositionsTree }

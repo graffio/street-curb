@@ -1,4 +1,4 @@
-// ABOUTME: Position computation as of a specific date
+// ABOUTME: Computes positions as of a specific date from lots, allocations, prices, and transactions
 // ABOUTME: Aggregates lots, applies allocations, enriches with prices and market values
 
 import { groupBy, LookupTable } from '@graffio/functional'
@@ -133,22 +133,22 @@ const F = {
 //
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Builds a Map of securityId -> LookupTable for O(1) price lookups
-// @sig buildPriceIndex :: LookupTable<Price> -> Map<String, LookupTable<Price, 'date'>>
-const buildPriceIndex = prices => {
-    const grouped = groupBy(p => p.securityId, prices)
-    return new Map(Object.entries(grouped).map(([secId, arr]) => [secId, LookupTable(arr, Price, 'date')]))
-}
-
-// Builds a Map of lotId -> allocations for O(1) lookups
-// @sig buildAllocationIndex :: LookupTable<LotAllocation> -> Map<String, [LotAllocation]>
-const buildAllocationIndex = allocations => new Map(Object.entries(groupBy(a => a.lotId, allocations)))
-
-// Builds a Map of accountId -> transactions for O(1) lookups
-// @sig buildTransactionIndex :: LookupTable<Transaction> -> Map<String, [Transaction]>
-const buildTransactionIndex = transactions => new Map(Object.entries(groupBy(t => t.accountId, transactions)))
-
 const A = {
+    // Builds a Map of securityId -> LookupTable for O(1) price lookups
+    // @sig buildPriceIndex :: LookupTable<Price> -> Map<String, LookupTable<Price, 'date'>>
+    buildPriceIndex: prices => {
+        const grouped = groupBy(p => p.securityId, prices)
+        return new Map(Object.entries(grouped).map(([secId, arr]) => [secId, LookupTable(arr, Price, 'date')]))
+    },
+
+    // Builds a Map of lotId -> allocations for O(1) lookups
+    // @sig buildAllocationIndex :: LookupTable<LotAllocation> -> Map<String, [LotAllocation]>
+    buildAllocationIndex: allocations => new Map(Object.entries(groupBy(a => a.lotId, allocations))),
+
+    // Builds a Map of accountId -> transactions for O(1) lookups
+    // @sig buildTransactionIndex :: LookupTable<Transaction> -> Map<String, [Transaction]>
+    buildTransactionIndex: transactions => new Map(Object.entries(groupBy(t => t.accountId, transactions))),
+
     // Finds the most recent price for a security as of a date
     // @sig findPriceAsOf :: (Map<String, LookupTable<Price>>, String, String) -> Price?
     findPriceAsOf: (priceIndex, securityId, date) => {
@@ -177,20 +177,22 @@ const A = {
 // Reserved securityId for cash positions in investment accounts
 const CASH_SECURITY_ID = 'sec_000000000000'
 
-// Computes positions as of a specific date from raw data
-// Accepts optional pre-built indexes to avoid rebuilding on every call
-// @sig computePositionsAsOf :: PositionsConfig -> [Position]
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exports
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// @sig computePositions :: PositionsConfig -> [Position]
 // prettier-ignore
-const computePositionsAsOf = config => {
+const computePositions = config => {
     const { lots, lotAllocations, prices, accounts, securities, transactions, asOfDate } = config
     const { selectedAccountIds, filterQuery } = config
-    const { allocationIndex: prebuiltAlloc, priceIndex: prebuiltPrice, transactionIndex: prebuiltTx } = config
     if (lots.length === 0) return []
 
-    // Use pre-built indexes if provided, otherwise build them
-    const allocationIndex = prebuiltAlloc ?? A.buildAllocationIndex(lotAllocations)
-    const priceIndex = prebuiltPrice ?? A.buildPriceIndex(prices)
-    const transactionIndex = prebuiltTx ?? A.buildTransactionIndex(transactions)
+    const allocationIndex = A.buildAllocationIndex(lotAllocations)
+    const priceIndex = A.buildPriceIndex(prices)
+    const transactionIndex = A.buildTransactionIndex(transactions)
 
     const filteredLots = selectedAccountIds.length > 0 ? lots.filter(l => selectedAccountIds.includes(l.accountId)) : lots
     const aggregatedLots = A.collectAggregatedLots(filteredLots, allocationIndex, asOfDate)
@@ -208,12 +210,4 @@ const computePositionsAsOf = config => {
     return filterQuery ? allPositions.filter(p => Position.matchesSearch(p, filterQuery)) : allPositions
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exports
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-const Positions = { buildAllocationIndex, buildPriceIndex, buildTransactionIndex, computePositionsAsOf }
-
-export { Positions }
+export { computePositions }
